@@ -170,7 +170,7 @@
       "label": "Incluir en Novedades - Torrent",
       "default": true,
       "enabled": true,
-      "visible": true
+      "visible": false
     }
   ]
 }

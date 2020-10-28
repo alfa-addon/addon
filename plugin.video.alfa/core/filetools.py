@@ -10,12 +10,13 @@ from builtins import range
 from past.utils import old_div
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; basestring = str
 
 import os
 import traceback
 
 from core import scrapertools
+from core.item import Item
 from platformcode import platformtools, logger
 
 try:
@@ -59,7 +60,7 @@ def validate_path(path):
     @rtype: str
     @return: devuelve la cadena sin los caracteres no permitidos
     """
-    if not path:
+    if not path or not isinstance(path, (unicode, basestring, bytes)):
         path = ''
 
     chars = ":*?<>|"
@@ -87,8 +88,9 @@ def translatePath(path):
     @rtype: str
     @return: devuelve la cadena con el path real
     """
-    if not path:
-        return ''
+    if not path or not isinstance(path, (unicode, basestring, bytes)):
+        if path is None: path = ''
+        return path
 
     if PY3 and xbmc_vfs:
         if PY3 and isinstance(path, bytes):
@@ -111,8 +113,9 @@ def makeLegalFilename(path):
     @rtype: str
     @return: devuelve la cadena con el path ajustado
     """
-    if not path:
-        return ''
+    if not path or not isinstance(path, (unicode, basestring, bytes)):
+        if path is None: path = ''
+        return path
 
     if PY3 and xbmc_vfs:
         if PY3 and isinstance(path, bytes):
@@ -135,8 +138,9 @@ def validatePath(path):
     @rtype: str
     @return: devuelve la cadena con el path ajustado
     """
-    if not path:
-        return ''
+    if not path or not isinstance(path, (unicode, basestring, bytes)):
+        if path is None: path = ''
+        return path
 
     if PY3 and xbmc_vfs:
         if PY3 and isinstance(path, bytes):
@@ -162,10 +166,11 @@ def encode(path, _samba=False):
     @rtype: str
     @return ruta codificada en juego de caracteres del sistema o utf-8 si samba
     """
-    if not path:
-        return ''
-    
-    if path.startswith("special://"):
+    if not path or isinstance(path, (list, dict)):
+        if path is None: path = ''
+        return path
+
+    if isinstance(path, (unicode, basestring, bytes)) and "special://" in path:
         path = translatePath(path)
     
     if not isinstance(path, unicode):
@@ -185,29 +190,40 @@ def encode(path, _samba=False):
 
 def decode(path):
     """
-    Convierte una cadena de texto al juego de caracteres utf-8
+    Convierte una cadena de texto, lista o dict al juego de caracteres utf-8
     eliminando los caracteres que no estén permitidos en utf-8
-    @type: str, unicode, list de str o unicode
-    @param path: puede ser una ruta o un list() con varias rutas
+    @type: str, unicode, list de str o unicode, dict list de str o unicode o list
+    @param path: puede ser una ruta o un list() o un dict{} con varias rutas
     @rtype: str
     @return: ruta codificado en UTF-8
     """
     if not path:
-        return ''
+        if path is None: path = ''
+        return path
+        
+    if isinstance(path, (unicode, basestring, bytes)) and "special://" in path:
+        path = translatePath(path)
     
     if isinstance(path, list):
         for x in range(len(path)):
-            if not isinstance(path[x], unicode):
-                path[x] = path[x].decode(fs_encoding, "ignore")
-            path[x] = path[x].encode("utf-8", "ignore")
-    else:
-        if not isinstance(path, unicode):
-            path = path.decode(fs_encoding, "ignore")
-        path = path.encode("utf-8", "ignore")
+            path[x] = decode(path[x])
+    elif isinstance(path, tuple):
+        path = tuple(decode(list(path)))
+    elif isinstance(path, dict):
+        newdct = {}
+        for key in path:
+            value_unc = decode(path[key])
+            key_unc = decode(key)
+            newdct[key_unc] = value_unc
+        return newdct
+    elif isinstance(path, unicode):
+        path = path.encode("utf8")
+    elif not PY3 and isinstance(path, basestring):
+        path = unicode(path, "utf8", "ignore").encode("utf8")
     
     if PY3 and isinstance(path, bytes):
         path = path.decode(fs_encoding)
-    
+
     return path
 
 
@@ -1057,7 +1073,7 @@ def listdir(path, silent=False, vfs=True, file_inf=False):
                     else:
                         ls_la += ['%s%s  %s  %s  %s  %s  %s  %s' % ('#', '#', '#', '#', '#', '#', '#', file)]
                 res = ls_la
-            return res
+            return decode(res)
         
         elif path.lower().startswith("smb://"):
             return decode(samba.listdir(path))
@@ -1109,7 +1125,10 @@ def split(path, vfs=True):
             path = path.replace(protocol, protocol + "/", 1)
         return path.rsplit('/', 1)
     else:
-        return os.path.split(path)
+        try:
+            return decode(os.path.split(path))
+        except:
+            return os.path.split(path)
 
 
 def basename(path, vfs=True):

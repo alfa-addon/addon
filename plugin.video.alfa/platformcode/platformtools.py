@@ -662,8 +662,12 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
         if item.channel != "videolibrary":
             # Añadir Serie a la videoteca
             if item.action in ["episodios", "get_episodios", "seasons"] and item.contentSerieName:
+                if item.action == "seasons":
+                    action = "episodios"
+                else:
+                    action = item.action
                 context_commands.append((config.get_localized_string(60352), "RunPlugin(%s?%s&%s)" %
-                                         (sys.argv[0], item_url, 'action=add_serie_to_library&from_action=' + item.action)))
+                                         (sys.argv[0], item_url, 'action=add_serie_to_library&from_action=' + action)))
             # Añadir Pelicula a videoteca
             elif item.action in ["detail", "findvideos"] and item.contentType == 'movie' and item.contentTitle:
                 context_commands.append((config.get_localized_string(60353), "RunPlugin(%s?%s&%s)" %
@@ -737,7 +741,7 @@ def is_playing():
 def play_video(item, strm=False, force_direct=False, autoplay=False):
     logger.info()
     # logger.debug(item.tostring('\n'))
-    logger.debug('item play: %s' % item)
+    # logger.debug('item play: %s' % item)
     xbmc_player = XBMCPlayer()
     if item.channel == 'downloads':
         logger.info("Reproducir video local: %s [%s]" % (item.title, item.url))
@@ -1187,7 +1191,7 @@ def set_player(item, xlistitem, mediaurl, view, strm, autoplay):
             if strm or item.strm_path:
                 from platformcode import xbmc_videolibrary
                 xbmc_videolibrary.mark_auto_as_watched(item)
-            logger.debug(item)
+            # logger.debug(item)
             xlistitem.setPath(mediaurl)
             xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, xlistitem)
             xbmc.sleep(2500)
@@ -1227,6 +1231,10 @@ def torrent_client_installed(show_tuple=False):
     torrent_options = []
     for client in torrent_clients:
         if xbmc.getCondVisibility('System.HasAddon("%s")' % client["id"]):
+            try:
+                __settings__ = xbmcaddon.Addon(id="%s" % client["id"])
+            except:
+                continue
             if show_tuple:
                 torrent_options.append([config.get_localized_string(60366) % client["name"], client["url"]])
             else:
