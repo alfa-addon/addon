@@ -1139,10 +1139,12 @@ def post_tmdb_episodios(item, itemlist):
         logger.error(traceback.format_exc())
     
     #Permitimos la actualización de los títulos, bien para uso inmediato, o para añadir a la videoteca
+    poster = item.infoLabels['temporada_poster']
+    if not poster: poster = item.infoLabels['thumbnail']
     if not item.downloadFilename:                           #... si no viene de Descargas
         itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", 
                     action="actualizar_titulos", tmdb_stat=False, from_action=item.action, contentType='episode', 
-                    from_title_tmdb=item.title, from_update=True))
+                    from_title_tmdb=item.title, from_update=True, thumbnail=poster))
     
     #Borro num. Temporada si no viene de menú de Añadir a Videoteca y no está actualizando la Videoteca
     if not item.library_playcounts:                         #si no está actualizando la Videoteca
@@ -1280,10 +1282,6 @@ def post_tmdb_findvideos(item, itemlist):
     num_episodios = item.contentEpisodeNumber
     if item.infoLabels['temporada_num_episodios'] and item.contentEpisodeNumber <= item.infoLabels['temporada_num_episodios']:
         num_episodios = item.infoLabels['temporada_num_episodios']
-        
-    #Si no existe "clean_plot" se crea a partir de "plot"
-    if not item.clean_plot and item.infoLabels['plot']:
-        item.clean_plot = item.infoLabels['plot']
 
     # Obtener la información actualizada del vídeo.  En una segunda lectura de TMDB da más información que en la primera
     #if not item.infoLabels['tmdb_id'] or (not item.infoLabels['episodio_titulo'] and item.contentType == 'episode'):
@@ -1306,6 +1304,10 @@ def post_tmdb_findvideos(item, itemlist):
     except:
         logger.error(traceback.format_exc())
 
+    #Si no existe "clean_plot" se crea a partir de "plot"
+    if not item.clean_plot and item.infoLabels['plot']:
+        item.clean_plot = item.infoLabels['plot']
+    
     #Ajustamos el nombre de la categoría
     if item.channel == channel_py:
         category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()

@@ -307,7 +307,15 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = '%spelicula+%s+%s&o=2' % (item.url, texto, item.link_type)
+    url = '%spelicula+%s+%s&o=2' % (item.url, texto, item.link_type)
+    #Parche busqueda global (solo vale para peliculas en streaming)
+    if not item.url:
+        item.type = 'peliculas'
+        item.link_type = 'flash'
+        ajax = '%s/%s/es/ajax/1/' % (host, item.type)
+        url = '%s?q=%s+%s+%s&o=2' % (ajax, item.type, texto, item.link_type)
+
+    item.url = url
 
     if texto != '':
         return list_all(item)

@@ -29,7 +29,7 @@ list_servers = ['directo', 'xstreamcdn']
 list_quality = ['default']
 
 
-host = "https://www2.watchmovie.io/"
+host = "https://ww1.watchmovie.movie/"
 
 
 

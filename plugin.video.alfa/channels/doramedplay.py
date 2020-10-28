@@ -75,30 +75,32 @@ def list_all(item):
 
         url = scrapedurl
         year = scrapedyear
+        filtro_tmdb = list({"first_air_date": year}.items())
         contentname = scrapedtitle
         title = '%s (%s) [%s]'%(contentname, scrapedrating, year)
         thumbnail = scrapedthumbnail
         new_item = Item(channel=item.channel,
                         title=title,
+                        contentSerieName=contentname,
                         plot=scrapedplot,
                         url=url,
                         thumbnail=thumbnail,
-                        infoLabels={'year':year}
+                        infoLabels={'year':year, 'filtro': filtro_tmdb}
                         )
 
-        new_item.contentSerieName = contentname
         if item.type == 'tvshows':
             new_item.action = 'seasons'
         else:
             new_item.action = 'findvideos'
             
         itemlist.append(new_item)
-    tmdb.set_infoLabels_itemlist(itemlist, False)
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
 
     #  Paginación
     url_next_page = scrapertools.find_single_match(data,"<span class=\"current\">.?<\/span>.*?<a href='([^']+)'")
     if url_next_page:
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
+        itemlist.append(Item(channel=item.channel, type=item.type, title="Siguiente >>", url=url_next_page, action='list_all'))
     return itemlist
 
 
@@ -213,8 +215,9 @@ def findvideos(item):
                 video_matches = re.compile(patron, re.DOTALL).findall(metadata)
                 for video_resolution, video_url in video_matches:
                     final_url = "http" + video_url
+                    url_video = final_url + "|referer="+ final_url
                     logger.info(final_url)
-                    itemlist.append(Item(channel=item.channel, title='%s (' + video_resolution.strip() + ')', url=final_url, action='play'))
+                    itemlist.append(Item(channel=item.channel, title='%s (' + video_resolution.strip() + ')', url=url_video, action='play'))
                 # https://1/cdn/hls/9be120188fe6b91e70db037b674c686d/master.txt
             else:
                 itemlist.append(Item(channel=item.channel, title='%s', url=source_json['embed_url'], action='play'))
