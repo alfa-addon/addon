@@ -377,8 +377,14 @@ def get_environment():
             environment['log_size'] = ''
         
         environment['debug'] = str(config.get_setting('debug'))
-        environment['addon_version'] = str(config.get_addon_version())
+        environment['addon_version'] = '%s (Upd: %s h.)' % (str(config.get_addon_version()), \
+                                str(config.get_setting("addon_update_timer", default=12)).replace('0', 'No'))
 
+        environment['assistant_version'] = str(None)
+        if filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
+            environment['assistant_version'] = filetools.read(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version'))
+        environment['assistant_cf_ua'] = str(config.get_setting('cf_assistant_ua', None))
+    
     except:
         logger.error(traceback.format_exc())
         environment = {}
@@ -421,6 +427,8 @@ def get_environment():
         environment['torrentcli_lib_path'] = ''
         environment['torrentcli_unrar'] = ''
         environment['torrent_error'] = ''
+        environment['assistant_version'] = ''
+        environment['assistant_cf_ua'] = ''
         
     return environment
 
@@ -436,7 +444,7 @@ def list_env(environment={}):
     logger.info('Variables de entorno Alfa: ' + environment['addon_version'] + 
                 ' Debug: ' + environment['debug'])
     logger.info("----------------------------------------------")
-    logger.info(os.environ)
+    logger.info('** OS Environ: %s' % os.environ)
     logger.info("----------------------------------------------")
 
     logger.info(environment['os_name'] + ' ' + environment['os_release'] + ' ' + 
@@ -488,6 +496,9 @@ def list_env(environment={}):
     
     logger.info('Proxy: ' + environment['proxy_active'])
     
+    logger.info('Assistant ver.: ' + environment['assistant_version'] + \
+                            ' - Assistant UA: ' + environment['assistant_cf_ua'])
+    
     logger.info('TAMAÑO del LOG: ' + environment['log_size'].replace('.', ',') + ' MB')
     logger.info("----------------------------------------------")
     
@@ -512,6 +523,7 @@ def paint_env(item, environment={}):
     cabecera = """\
     Muestra las [COLOR yellow]variables[/COLOR] del ecosistema de Kodi que puden ser relevantes para el diagnóstico de problema en Alfa:
         - Versión de Alfa con Fix
+        - (Upd): Intervalo de actualización en horas, o NO actualización
         - Debug Alfa: True/False
     """
     plataform = """\
@@ -585,6 +597,9 @@ def paint_env(item, environment={}):
     proxy = """\
     Muestra las direcciones de canales o servidores que necesitan [COLOR yellow]Proxy[/COLOR]
     """
+    assistant = """\
+    Muestra la versión del [COLOR yellow]Assistant[/COLOR] instalado y el [COLOR yellow]User Agent[/COLOR] usado
+    """
     log = """\
     Muestra el tamaño actual del [COLOR yellow]Log[/COLOR]
     """
@@ -650,13 +665,18 @@ def paint_env(item, environment={}):
                 cliente_alt = cliente.copy()
                 del cliente_alt['Plug_in']
                 cliente_alt['Libre'] = cliente_alt['Libre'].replace('.', ',') + ' GB'
-                itemlist.append(Item(channel=item.channel, title='[COLOR yellow]- %s: [/COLOR]: %s' % 
+                itemlist.append(Item(channel=item.channel, title='[COLOR yellow]- %s: [/COLOR]%s' % 
                             (str(cliente['Plug_in']), str(cliente_alt).replace('{', '').replace('}', '')\
                             .replace("'", '').replace('\\\\', '\\')), action="", plot=torrent_cliente, 
                             thumbnail=thumb, folder=False))
     
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Proxy: [/COLOR]' + 
                     environment['proxy_active'], action="", plot=proxy, thumbnail=thumb, 
+                    folder=False))
+    
+    itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Assistant ver.: [/COLOR]' + 
+                    environment['assistant_version'] + ' - [COLOR yellow]Assistant UA: [/COLOR]' + 
+                    environment['assistant_cf_ua'], action="", plot=assistant, thumbnail=thumb, 
                     folder=False))
     
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]TAMAÑO del LOG: [/COLOR]' + 
