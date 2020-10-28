@@ -213,7 +213,8 @@ def findvideos(item):
 
     soup = create_soup(item.url)
     matches = soup.find("ul", id="playeroptionsul")
-
+    if not matches:
+        return itemlist
     for elem in matches.find_all("li"):
         if "youtube" in elem.find("span", class_="server").text:
             continue
@@ -258,8 +259,12 @@ def get_premium(item, url, lang):
     itemlist = list()
 
     from lib.generictools import dejuice
-    data = httptools.downloadpage(url).data
-    dejuiced = dejuice(data)
+    try:
+        data = httptools.downloadpage(url, timeout=5).data
+        dejuiced = dejuice(data)
+    except:
+        return itemlist
+    
     patron = r'"file":"([^"]+)","label":"(\d+P)"'
     matches = re.compile(patron, re.DOTALL).findall(dejuiced)
     for url, qlty in matches:
@@ -273,7 +278,7 @@ def unhideload(url):
     logger.info()
     server_dict = {"ad": "https://videobin.co/embed-",
                    "jd": "https://clipwatching.com/embed-",
-                   "vd": "https://jetload.net/e/",
+                   #"vd": "https://jetload.net/e/",
                    "ud": "https://dood.watch/e/",
                    "ld": "https://dood.watch/e/",
                    "gd": "https://mixdrop.co/e/",
@@ -281,7 +286,8 @@ def unhideload(url):
                    "kd": "https://play.pelis123.fun/e/",
                    "pd": "https://cloudvideo.tv/embed-",
                    "md": "https://feurl.com/v/",
-                   "td": "https://videomega.co/e/"}
+                   #"td": "https://videomega.co/e/"
+                   }
 
     server = scrapertools.find_single_match(url, r"(\wd)=")
     server = server_dict.get(server, server)

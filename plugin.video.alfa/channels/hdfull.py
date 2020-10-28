@@ -119,16 +119,22 @@ def agrupa_datos(url, post=None, referer=True, json=False):
         headers.pop('Referer')
     # if cookie:
     #     headers.update('Cookie:' 'language=es')
-    # if isinstance(referer, str):
-    #     headers.update({'Referer': referer})
+    if isinstance(referer, str):
+        headers.update({'Referer': referer})
 
     if len(urlparse.urlparse(host).path) > 1:
         parse_url = "https://%s/" % urlparse.urlparse(host).netloc
         config.set_setting("current_host", parse_url, channel="hdfull")
+    
+    url = re.sub(r'http(?:s|)://[^/]+/', host, url)
     page = httptools.downloadpage(url, post=post, headers=headers, ignore_response_code=True)
     new_host = scrapertools.find_single_match(page.data,
-                    r'location.replace\("(https://hdfull.\w{2})')
-    #location.replace\("(https://hdfull.\w{2})
+                    r'location.replace\("(http(?:s|)://\w+.hdfull.\w{2,4})')
+
+    backup =  scrapertools.find_single_match(page.data,
+                    r'onclick="redirect\(\)"><strong>(http[^<]+)')
+    if not new_host and backup and 'dominio temporalmente' in page.data:
+        new_host = backup
     if new_host:
         
         if not new_host.endswith('/'):
@@ -222,10 +228,10 @@ def menupeliculas(item):
              url=host, text_bold=True, type='peliculas',
              thumbnail=get_thumb('genres', auto=True)))
     
-    itemlist.append(
-        Item(channel=item.channel, action="fichas", title="ABC",
-             url=urlparse.urljoin(host, "/peliculas/abc"), text_bold=True,
-             thumbnail=get_thumb('alphabet', auto=True)))
+    # itemlist.append(
+    #     Item(channel=item.channel, action="fichas", title="ABC",
+    #          url=urlparse.urljoin(host, "/peliculas/abc"), text_bold=True,
+    #          thumbnail=get_thumb('alphabet', auto=True)))
     
     if account:
         itemlist.append(Item(channel=item.channel, action="items_usuario",
@@ -457,6 +463,8 @@ def fichas(item):
                                                                                        ' ') + "[/COLOR] sin resultados")]
         else:
             data = s_p[0] + s_p[1]
+    elif 'series/abc' in item.url:
+        data = agrupa_datos(item.url, referer=item.url)
     else:
         data = agrupa_datos(item.url)
 
@@ -795,8 +803,6 @@ def findvideos(item):
 
     ## Carga estados
     status = check_status()
-
-    item.url = re.sub(r'https://hdfull.\w{2}/', host, item.url)
     
     url_targets = item.url
 
