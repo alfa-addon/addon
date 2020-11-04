@@ -494,11 +494,18 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
     if torrents_path != None:
         logger.info("path = " + torrents_path)
         if url != torrents_path:
-            logger.info("url = " + url)
+            logger.info("url = " + str(url))
     else:
-        logger.info("url = " + url)
+        logger.info("url = " + str(url))
     if referer and post:
-        logger.info('REFERER: ' + referer)
+        logger.info('REFERER: ' + str(referer))
+    
+    if not isinstance(url, (str, unicode, bytes)):
+        logger.error('Formato de url incompatible: %s (%s)' % (str(url), str(type(url))))
+        torrents_path = ''
+        if data_torrent:
+            return (torrents_path, '', [])
+        return torrents_path, []                                                #Si hay un error, devolvemos el "path" vacío
 
     torrent_file = ''
     t_hash = ''
@@ -1003,7 +1010,10 @@ def torrent_dirs():
         __settings__ = ''
         
         if torr_client != 'BT' and torr_client != 'MCT':
-            __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)  # Apunta settings del cliente torrent externo
+            try:
+                __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)  # Apunta settings del cliente torrent externo
+            except:
+                continue
         if torr_client == 'BT'and str(config.get_setting("bt_download_path", \
                             server="torrent", default='')):
             if torrent_paths['TORR_libtorrent_path']:
@@ -1684,8 +1694,10 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                 if filetools.exists(folder_srt) and not filetools.listdir(folder_srt) and folder:
                     filetools.rmdir(folder_srt, silent=True)
                 path = filetools.join(config.get_setting("downloadlistpath"), item.path)
-                if path.endswith('.json'):
-                    filetools.remove(path, silent=True)
+                if filetools.exists(path):
+                    item = Item().fromjson(filetools.read(path))
+                    if path.endswith('.json') and item.downloadProgress > 0:
+                        filetools.remove(path, silent=True)
                 logger.error('%s session aborted: %s' % (str(torr_client).upper(), str(folder)))
                 return ('', '', folder, rar_control)                            # Volvemos
 

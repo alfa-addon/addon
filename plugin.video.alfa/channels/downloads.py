@@ -476,6 +476,7 @@ def menu(item):
     # Eliminar TODO
     if opciones[seleccion] == op[4]:
         filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, item.path), silent=True)
+        logger.info("Archivo de control ELIMINADO (%s): %s" % (opciones[seleccion], item.path))
     
     platformtools.itemlist_refresh()
 
@@ -1232,7 +1233,8 @@ def get_episodes(item):
                     if episode.emergency_urls: del episode.emergency_urls
                     if episode.torrent_info: del episode.torrent_info
                     if episode.server: del episode.server
-                if episode.emergency_urls and not episode.emergency_urls[0][0].startswith('http') \
+                if episode.emergency_urls and isinstance(episode.emergency_urls[0][0], str) \
+                                    and not episode.emergency_urls[0][0].startswith('http') \
                                     and episode.emergency_urls[0][0].endswith('.torrent'):
                     episode.server = 'torrent'
                     episode.action = 'play'

@@ -94,6 +94,7 @@ def lista(item):
 
 def findvideos(item):
     logger.info(item)
+    itemlist = []
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
     itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 
@@ -103,6 +104,7 @@ def findvideos(item):
 
 def play(item):
     logger.info(item)
+    itemlist = []
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
     itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 

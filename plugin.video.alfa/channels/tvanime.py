@@ -285,7 +285,7 @@ def folders(item):
                              foldereps=True))
         count += 1
 
-    if item.contentSerieName != '' and config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra == "epìsodios":
+    if item.contentSerieName != '' and config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra == "episodios":
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,

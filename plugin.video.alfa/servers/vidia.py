@@ -34,8 +34,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     for video_url in videos:
         extension = scrapertools.get_filename_from_url(video_url)[-4:]
         if extension not in [".vtt", ".srt"]:
+            video_url += '|verifypeer=false'
             if extension == ".mpd":
-                video_urls.append(["[vidia] %s" % extension, video_url, 0, subtitulo, "mpd"])
+                continue
+                #video_urls.append(["[vidia] %s" % extension, video_url, 0, subtitulo, "mpd"])
             else:
                 video_urls.append(["[vidia] %s" % extension, video_url, 0, subtitulo])
 

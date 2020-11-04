@@ -662,6 +662,7 @@ def findvideos(item):
     post = None
     if item.post:
         post = item.post
+        del item.post
     
     if not item.matches:
         data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
@@ -670,20 +671,16 @@ def findvideos(item):
         data = data.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
 
     """ Procesamos los datos de las páginas """
-    
-    if item.post:
-        del item.post
 
     # Salvamos el enlace .torrent
     #Patron para .torrent
-    patron = '<div\s*class=\s*"ctn-download-torrent"[^>]*>\s*<a\s*href=\s*"javascript:[^"]+"'
-    patron += '\s*id=\s*"btn-download-torrent"\s*data-ut=\s*"([^"]+)"'
+    patron = '<div\s*class=\s*"ctn[^"]+"[^>]*>\s*<a\s*href=\s*"javascript:[^"]+"'
+    patron += '\s*id=\s*"btn-[^"]+"\s*data-ut=\s*"([^"]+)"'
     if not scrapertools.find_single_match(data, patron):
-        patron = '<div\s*class=\s*"ctn-download-torrent"[^>]*>\s*<a\s*href=\s*"(?:javascript:)?([^"]+)"'
-        patron += '\s*id=\s*"btn-download-torrent"'
-    #logger.debug("PATRON Torrent: " + patron)
+        patron = '<div\s*class=\s*"ctn[^"]+"[^>]*>\s*<a\s*href=\s*"(?:javascript:)?([^"]+)"'
+        patron += '\s*id=\s*"btn-[^"]+"'
     url_torr = scrapertools.find_single_match(data, patron)
-    if 'javascript:;' in url_torr: url_torr = ''
+    if 'javascript:' in url_torr: url_torr = ''
     if url_torr:
         url_torr = urlparse.urljoin(host, url_torr)
     url_torr = url_torr.replace(" ", "%20")                                     #sustituimos espacios por %20, por si acaso
@@ -733,6 +730,7 @@ def findvideos(item):
             matches = item.matches
             del item.matches
 
+    #logger.debug("PATRON Torrent: " + patron)
     #logger.debug("PATRON directos: " + patron_directos)
     #logger.debug(enlaces_ver)
     #logger.debug(enlaces_descargar)
@@ -742,6 +740,7 @@ def findvideos(item):
     #Si es un lookup para cargar las urls de emergencia en la Videoteca, lo iniciamos
     if item.videolibray_emergency_urls:
         item.emergency_urls = []
+        item.emergency_urls.append([url_torr])                                  #Guardamos el enlace del .torrent
     
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     if not item.videolibray_emergency_urls:
@@ -804,10 +803,8 @@ def findvideos(item):
                 item_local.password = item.password
 
         # Guardamos urls de emergencia si se viene desde un Lookup de creación de Videoteca
-        if item.videolibray_emergency_urls:
-            item.emergency_urls.append([item_local.url])                        #Guardamos el enlace del .torrent
-        #... si no, ejecutamos el proceso normal
-        else:
+        if not item.videolibray_emergency_urls:
+            #... ejecutamos el proceso normal
             if item.armagedon:
                 item_local.quality = '[COLOR hotpink][E][/COLOR] [COLOR limegreen]%s[/COLOR]' % item_local.quality
             

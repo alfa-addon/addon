@@ -177,25 +177,29 @@ def findvideos(item):
     logger.info()
     itemlist = []
     aux_url = []
+    serv_dict = {'jkfembed': 'https://feurl.com/v/',
+                'jk': '%s/' % host,
+                'jkvmixdrop': 'https://mixdrop.co/e/',
+                'jkokru': 'https://ok.ru/videoembed/'
+                }
     data = httptools.downloadpage(item.url).data
-    list_videos = scrapertools.find_multiple_matches(data, '<iframe class="player_conte" src="([^"]+)"')
+    list_videos = scrapertools.find_multiple_matches(data, '\'<iframe.*? src="([^"]+)"')
     list_down = scrapertools.find_multiple_matches(data, "blank\" href='(.*?)'>Descargar")
     index = 1
     for e in list_videos:
         if e.startswith(host + "/jk") or "um.php" in e:
-            headers = {"Referer": item.url}
-            data = httptools.downloadpage(e, headers=headers).data
-            url = scrapertools.find_single_match(data, '<embed class="player_conte".*?&file=([^\"]+)\"')
-            if "um.php?" in e:
-                url = decode_url(data)
             
-            if not url:
-                url = scrapertools.find_single_match(data, 'source src="([^\"]+)\"')
+            if "um.php?" in e:
+                headers = {"Referer": item.url}
+                data = httptools.downloadpage(e, headers=headers).data
+                url = scrapertools.find_single_match(data, "url: '([^']+)',")
+            
+            else:
+                serv, hash_ = scrapertools.find_single_match(e, r'%s/(\w+).php\?u=(.*)' % host)
+                serv = serv_dict.get(serv, serv)
+                url = serv + hash_
 
-            if not url:
-                url = scrapertools.find_single_match(data, '<iframe class="player_conte" src="([^\"]+)\"')
-
-            if "jkanime" in url:
+            if host in url:
                 url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
 
             if url:
@@ -214,21 +218,21 @@ def findvideos(item):
         videoitem.thumbnail = item.thumbnail
     return itemlist
 
-def btoa(s):
-    import base64
-    return base64.b64encode(s.to_string().value)
+# def btoa(s):
+#     import base64
+#     return base64.b64encode(s.to_string().value)
     
-def decode_url(data):
-    from lib import js2py
-    import re
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    js = scrapertools.find_single_match(data, '<script>(l.*?)</script>')
+# def decode_url(data):
+#     from lib import js2py
+#     import re
+#     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+#     js = scrapertools.find_single_match(data, '<script>(l.*?)</script>')
     
-    part = js.split("+ll")
-    part0 = part[1].split("String['fromCharCode'")[0]
-    part1 = part[1].replace(part0, "")
-    part1 = re.sub(r'(l.*?)\(\(\[', 'window.btoa(([', part1)
-    context = js2py.EvalJs({ "btoa": btoa });
-    url = "htt%s" % context.eval(part1)
-    logger.info(url)
-    return url
+#     part = js.split("+ll")
+#     part0 = part[1].split("String['fromCharCode'")[0]
+#     part1 = part[1].replace(part0, "")
+#     part1 = re.sub(r'(l.*?)\(\(\[', 'window.btoa(([', part1)
+#     context = js2py.EvalJs({ "btoa": btoa });
+#     url = "htt%s" % context.eval(part1)
+#     logger.info(url)
+#     return url

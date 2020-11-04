@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "streamsb.net/(?:embed-|)([A-z0-9]+)",
+        "pattern": "streamsb.net/(?:embed-|d/)([A-z0-9]+)",
         "url": "https://streamsb.net/embed-\\1.html"
       }
     ]

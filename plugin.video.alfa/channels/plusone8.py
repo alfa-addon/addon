@@ -25,10 +25,10 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/?filter=date"))
     itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/?filter=popular"))
     itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/?orderby=likes"))
-    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/pornstars"))
+    # itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/pornstars"))
 
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/porn-categories"))
     itemlist.append(item.clone(title="Buscar", action="search"))
@@ -51,13 +51,13 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('div', class_='videos-list')
-    matches = soup.find_all('article', id=re.compile(r"^post-\d+"))
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
         thumbnail = elem.img['data-lazy-src']
-        url = url.replace("?actors=","/star/")
+        # url = url.replace("?actors=","/star/")
         plot = ""
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
@@ -67,6 +67,7 @@ def categorias(item):
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
+
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
@@ -83,16 +84,15 @@ def create_soup(url, referer=None, unescape=False):
 def lista(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('div', class_='content-area')
-    matches = soup.find_all('article', id=re.compile(r"^post-\d+"))
+    soup = create_soup(item.url).find('main', id='main')
+    matches = soup.find_all('div', id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
-        if "data-lazy-src=" in str(elem):
-                thumbnail = elem.img['data-lazy-src']
-        else:
-            thumbnail = elem.img['data-src']
-        time = elem.find('span', class_='duration')
+        thumbnail = elem.img['src']
+        if "svg" in thumbnail:
+            thumbnail = elem.img['data-lazy-src']
+        time = elem.find('span', class_='length')
         actors = elem['class']
         actriz = ""
         for x in actors:
