@@ -3,7 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
-import sys
+import sys, re
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
@@ -26,7 +26,7 @@ list_servers = ['okru']
 
 __channel__='lacartoons'
 
-host = "https://www.lacartoons.com"
+host = "http://www.lacartoons.com"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -74,21 +74,27 @@ def lista(item):
     for url, thumbnail, title in matches:
         itemlist.append(Item(channel = item.channel,
                              action = "episodios",
-                             contentserieName = title,
+                             contentSerieName = title,
                              thumbnail = host + thumbnail,
                              title = title,
                              url = host + url
                         ))
     tmdb.set_infoLabels(itemlist)
+    
     page = item.page + 1
+    page_url = re.sub(r'page=\d+', 'page=%s' % page, item.url)
+    if page == 2:
+        page_url = "%s?page=%s" %(item.url, page)
+    
     if not item.extra:
+        thumbnail += '|verifypeer=false'
         itemlist.append(Item(channel = item.channel,
                                 action = "lista",
-                                contentserieName = title,
+                                contentSerieName = title,
                                 page = page,
                                 thumbnail = host + thumbnail,
-                                title = "Pagina: %s" %page,
-                                url = item.url + "?page=%s" %(page)
+                                title = "Pagina: %s" % page,
+                                url = page_url
                     ))
     return itemlist
 

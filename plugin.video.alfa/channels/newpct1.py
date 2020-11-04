@@ -1394,6 +1394,7 @@ def findvideos(item):
     if item.videolibray_emergency_urls:
         if item.channel_host: del item.channel_host
         item.emergency_urls = []
+        item.emergency_urls.append([url_torr])                                  #Guardamos el enlace del .torrent
         
     item.quality = re.sub(r'(?i)\s*\d+(?:.\d+)?\s*(?:gb|mb)', '', item.quality)    # Quitamos el tamaño que viene de Search
     
@@ -1469,10 +1470,8 @@ def findvideos(item):
                 item_local.password = item.password
 
         # Guardamos urls de emergencia si se viene desde un Lookup de creación de Videoteca
-        if item.videolibray_emergency_urls:
-            item.emergency_urls.append([item_local.url])                        #Guardamos el enlace del .torrent
-        #... si no, ejecutamos el proceso normal
-        else:
+        if not item.videolibray_emergency_urls:
+            #... ejecutamos el proceso normal
             if item.armagedon:
                 item_local.quality = '[COLOR hotpink][E][/COLOR] [COLOR limegreen]%s[/COLOR]' % item_local.quality
             

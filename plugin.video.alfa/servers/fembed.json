@@ -4,11 +4,11 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:ilovefembed|fembed|fembad|feurl|youtvgratis|myurlshort|videobb|femax20).\\w{2,4}/(?:f|v)/([A-z0-9_-]+)",
+        "pattern": "(?:ilovefembed|fembed|fembad|feurl|youtvgratis|myurlshort|videobb|femax20|cloudyport).\\w{2,4}/(?:f|v)/([A-z0-9_-]+)",
         "url": "https://www.feurl.com/api/source/\\1"
       },
       {
-        "pattern": "(?:animekao|sypl).(?:xyz)/(?:f|v)/([A-z0-9_-]+)",
+        "pattern": "(?:animekao|sypl|xstreamcdn).\\w{2,4}/(?:f|v)/([A-z0-9_-]+)",
         "url": "https://www.feurl.com/api/source/\\1"
       }
     ]

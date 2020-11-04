@@ -1,17 +1,38 @@
 {
-  "id": "dontorrent",
-  "name": "Dontorrent",
+  "id": "mejortorrent",
+  "name": "MejorTorrent",
   "active": true,
   "adult": false,
-  "language": ["cast"],
-  "thumbnail": "https://dontorrent.com/images/imagen_logo.png",
+  "language": ["cast", "lat"],
+  "thumbnail": "http://www.mejortorrentt.net/imagenes_web/bicho6.jpg",
   "categories": [
     "torrent",
     "movie",
     "tvshow",
+    "documentary",
     "vos"
   ],
   "settings": [
+    {
+      "id": "choose_domain",
+      "type": "list",
+      "label": "Seleccione el dominino primario para el Canal",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "mejortorrentt.net",
+        "mejortorrent1.net"
+      ]
+    },{
+      "id": "alternate_domain",
+      "type": "list",
+      "label": "Seleccione el dominino primario para el Canal",
+      "default": -1,
+      "enabled": true,
+      "visible": false,
+      "lvalues": []
+    },
     {
       "default": true, 
       "enabled": true, 
@@ -27,7 +48,7 @@
       "label": "Buscar información extra (TMDB)", 
       "type": "bool", 
       "visible": true
-    },
+    }, 
     {
       "id": "modo_grafico_lang",
       "type": "list",
@@ -157,6 +178,30 @@
       "id": "include_in_newest_series",
       "type": "bool",
       "label": "Incluir en Novedades - Series",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_documentales",
+      "type": "bool",
+      "label": "Incluir en Novedades - Documentales",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_4k",
+      "type": "bool",
+      "label": "Incluir en Novedades - 4K",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_torrent",
+      "type": "bool",
+      "label": "Incluir en Novedades - Torrent",
       "default": true,
       "enabled": true,
       "visible": false

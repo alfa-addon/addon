@@ -52,7 +52,7 @@ idioma_busqueda = 'es'
 def downloadpage(url, post=None, headers=None, random_headers=False, replace_headers=False, 
                  only_headers=False, referer=None, follow_redirects=True, timeout=None, 
                  proxy=True, proxy_web=False, proxy_addr_forced={}, forced_proxy=None, 
-                 proxy_retries=1, CF=False, file=None, filename=None, ignore_response_code=True, 
+                 proxy_retries=1, CF=False, CF_test=True, file=None, filename=None, ignore_response_code=True, 
                  alfa_s=False, decode_code='', json=False, s2=None, patron='', quote_rep=False, 
                  no_comments=True, item={}, itemlist=[]):
     
@@ -79,6 +79,9 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
     success = False
     code = 999
     if not item: item = Item()
+    if not isinstance(url, (str, unicode, bytes)):
+        logger.error('Formato de url incompatible: %s (%s)' % (str(url), str(type(url))))
+        return ('', success, code, item, itemlist)
     
     try:
         response = httptools.downloadpage(url, post=post, headers=headers, random_headers=random_headers, 
@@ -86,7 +89,7 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                                           follow_redirects=follow_redirects, encoding=decode_code, 
                                           timeout=timeout, proxy=proxy, proxy_web=proxy_web, 
                                           proxy_addr_forced=proxy_addr_forced, forced_proxy=forced_proxy, 
-                                          proxy_retries=proxy_retries, CF=CF, file=file, filename=filename, 
+                                          proxy_retries=proxy_retries, CF=CF, CF_test=CF_test, file=file, filename=filename, 
                                           ignore_response_code=ignore_response_code, alfa_s=alfa_s)
         if response:
             if json and response.json:
@@ -149,7 +152,7 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                     itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
                              '[COLOR yellow]' + str(code) + '[/COLOR]: ERROR 01: ' + ERROR_01))
     except:
-        logger.error(traceback.format_exc(1))
+        logger.error(traceback.format_exc())
     
     return (data, success, code, item, itemlist)
 
@@ -775,7 +778,10 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
             item_season.contentType = 'season'
             item_season.title = 'Temporada %s' % item_season.contentSeason
             if url != 'serie':
-                item_season.url = item_local.url
+                if item_local.url_tvshow:
+                    item_season.url = item_local.url_tvshow
+                else:
+                    item_season.url = item_local.url
             itemlist_temporadas.append(item_season.clone(from_title_season_colapse=item.title))
             
     #Si hay más de una temporada se sigue, o se ha forzado a listar por temporadas, si no se devuelve el Itemlist original
@@ -979,7 +985,8 @@ def post_tmdb_episodios(item, itemlist):
         item_local.unify = 'xyz'
         del item_local.unify
         item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
-        item_local.url_tvshow = item.url                                        # Salvamos la url de la serie para descargas
+        if not item_local.url_tvshow:
+            item_local.url_tvshow = item.url                                    # Salvamos la url de la serie/temporada para descargas
         
         #logger.debug(item_local)
 
@@ -1592,7 +1599,7 @@ def find_rar_password(item):
 
 
 def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, \
-                        timeout=5, file_list=False, lookup=True, local_torr=None, headers={}, \
+                        timeout=5, file_list=False, lookup=True, local_torr=None, headers=None, \
                         force=False, short_pad=False, subtitles=False):
     logger.info()
     from servers import torrent
@@ -2321,6 +2328,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     json_path_list = []
     emergency_urls_force = False
     status_migration =  False
+    patron_category = 'http.*\:\/\/(?:.*ww[^\.]*\.)?([^\.]+)\.[^\/]+(?:\/|\?|$)'
     
     #if item.ow_force == '1':                                       #Ha podido qudar activado de una pasada anteriores
     #    del item.ow_force
@@ -2359,7 +2367,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #primero tratamos los clones de Newpct1
     channel_alt = item.channel
     #if item.url and not it.library_urls:
-    #    channel_alt = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()     #Salvamos en nombre del canal o clone
+    #    channel_alt = scrapertools.find_single_match(item.url, patron_category).lower()     #Salvamos en nombre del canal o clone
     #    if not channel_alt:
     #        channel_alt = item.channel
     channel = "'%s'" % channel_alt
@@ -2370,7 +2378,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     channel_py_alt = 'xyz123'
     if channel in fail_over_list :                      #Si es un clone de Newpct1, se actualiza el canal y la categoría
         item.channel = channel_py
-        item.category = scrapertools.find_single_match(item.url, 'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+        item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()
         channel_py_alt = "'%s'" % channel_py
         if item.channel_host:                                               #y se borran resto de pasadas anteriores
             del item.channel_host
@@ -2524,7 +2532,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
             if ow_force == 'del' or ow_force == 'emerg':    #Si es un borrado de estructuras erroneas, hacemos un proceso aparte
                 canal_des_def = canal_des                   #Si hay canal de sustitución para item.library_urls, lo usamos
                 if not canal_des_def and canal_org in item.library_urls and len(item.library_urls) == 1:    #Si no, lo extraemos de la url
-                    canal_des_def = scrapertools.find_single_match(item.library_urls[canal_org], 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()            #salvamos la url actual de la estructura a borrar
+                    canal_des_def = scrapertools.find_single_match(item.library_urls[canal_org], patron_category).lower()            #salvamos la url actual de la estructura a borrar
                 url_total = ''
                 if item.url:
                     url_total = item.url                                    #Si existe item.url, lo salvamos para futuro uso
@@ -2555,8 +2563,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                                 item.url = url_vid                          
                                 break
                         if canal_vid_alt in fail_over_list:         #Si es un clone de Newpct1, salvamos la nueva categoría
-                            item.category = scrapertools.find_single_match(item.url, \
-                                    'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()   #Salvamos categoría
+                            item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()      #Salvamos categoría
                         else:
                             item.category = canal_vid.capitalize()          #si no, salvamos nueva categoría
                     logger.error('item.library_urls ACTUALIZADA: ' + str(item.library_urls))
@@ -2587,7 +2594,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 if item.contentType and item.contentType not in content_inc and "*" not in content_inc:  #Está el contenido el la lista de incluidos
                     continue
                 
-                if item.contentType and item.contentType in content_exc:                         #Está el contenido excluido?
+                if item.contentType and item.contentType in content_exc:    #Está el contenido excluido?
                     continue
                 channel_enabled = 0
                 channel_enabled_alt = 1
@@ -2602,7 +2609,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     continue                                                #... una intervención que afecte solo a una región
                 #if ow_force == 'no' and it.library_urls:                    #Esta regla solo vale para findvideos...
                 #    continue                                                #... salidmos si estamos actualizando
-                if lookup == True:                                  #Queremos que el canal solo visualice sin migración?
+                if lookup == True:                                          #Queremos que el canal solo visualice sin migración?
                     if ow_force != 'no':
                         overwrite = True                                    #Avisamos que hay cambios
                     continue                                                #Salimos sin tocar archivos
@@ -2614,22 +2621,21 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     url_total = item.library_urls[canal_org]
                 
                 if item.channel == channel_py:                  #Si es un clone de Newpct1, salvamos la nueva categoría
-                    item.category = scrapertools.find_single_match(item.url, \
-                            'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()   #Salvamos categoría
+                    item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()      #Salvamos categoría
                     if canal_org != item.category.lower():
                         item.category_alt = canal_org.capitalize()
                 else:
                     item.category = canal_des.capitalize()                      #si no, salvamos nueva categoría
                 
                 if url_org == '*':                                              #Si se quiere cambiar desde cualquier url ...
-                    url_host = scrapertools.find_single_match(url_total, '(http.*\:\/\/(?:www.)?\w+\.\w+)\/|\?')
+                    url_host = scrapertools.find_single_match(url_total, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
                     url_total = url_total.replace(url_host, url_des)            #reemplazamos una parte de url
                 elif url_des.startswith('http'):
                     if item.channel != channel_py or (item.channel == channel_py \
                             and item.category.lower() == canal_org):
                         url_total = scrapertools.find_single_match(url_total, \
-                            'http.*\:\/\/(?:www\.)?[^\?|\/]+(.*?$)')            #quitamos el http*:// inicial
-                        url_total = urlparse.urljoin(url_des, url_total)          #reemplazamos una parte de url
+                            'http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+(.*?$)')     #quitamos el http*:// inicial
+                        url_total = urlparse.urljoin(url_des, url_total)        #reemplazamos una parte de url
                 else:
                     url_total = url_total.replace(url_org, url_des)             #reemplazamos una parte de url
                 url = ''
