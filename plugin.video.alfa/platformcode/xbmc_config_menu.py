@@ -377,18 +377,18 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
     def add_control_list(self, c):
         control = xbmcgui.ControlButton(0, -100, self.controls_width, self.height_control,
                                         c["label"], os.path.join(self.mediapath, 'Controls', 'MenuItemFO.png'),
-                                        os.path.join(self.mediapath, 'Controls', 'MenuItemNF.png'),
+                                        os.path.join(self.mediapath, 'Controls', ''),
                                         0, textColor=c["color"],
                                         font=self.font)
 
         label = xbmcgui.ControlLabel(0, -100, self.controls_width - 30, self.height_control,
                                      "", font=self.font, textColor=c["color"], alignment=4 | 1)
 
-        upBtn = xbmcgui.ControlButton(0, -100, 20, 15, "",
+        upBtn = xbmcgui.ControlButton(0, -100, 20, 40, "",
                                       focusTexture=os.path.join(self.mediapath, 'Controls', 'spinUp-Focus.png'),
                                       noFocusTexture=os.path.join(self.mediapath, 'Controls', 'spinUp-noFocus.png'))
 
-        downBtn = xbmcgui.ControlButton(0, -100 + 15, 20, 15, "",
+        downBtn = xbmcgui.ControlButton(0, -100 + 15, 20, 40, "",
                                         focusTexture=os.path.join(self.mediapath, 'Controls', 'spinDown-Focus.png'),
                                         noFocusTexture=os.path.join(self.mediapath, 'Controls', 'spinDown-noFocus.png'))
 
@@ -398,6 +398,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
         self.addControl(downBtn)
 
         control.setVisible(False)
+        #control.setColorDiffuse("button_focus")
         label.setVisible(False)
         upBtn.setVisible(False)
         downBtn.setVisible(False)
@@ -412,18 +413,18 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
         if xbmcgui.ControlEdit == ControlEdit:
             control = xbmcgui.ControlEdit(0, -100, self.controls_width, self.height_control,
                                           c["label"], os.path.join(self.mediapath, 'Controls', 'MenuItemFO.png'),
-                                          os.path.join(self.mediapath, 'Controls', 'MenuItemNF.png'),
+                                          os.path.join(self.mediapath, 'Controls', ''),
                                           0, textColor=c["color"],
                                           font=self.font, isPassword=c["hidden"], window=self)
 
         elif xbmcgui.__version__ in ["3.0", "3.0.0"]:
-            control = xbmcgui.ControlEdit(0, -100, self.controls_width - 5, self.height_control,
+            control = xbmcgui.ControlEdit(0, -100, self.controls_width, self.height_control,
                                           c["label"], self.font, c["color"], '', 4)
         else:
-            control = xbmcgui.ControlEdit(0, -100, self.controls_width - 5, self.height_control,
+            control = xbmcgui.ControlEdit(0, -100, self.controls_width, self.height_control,
                                           c["label"], self.font, c["color"], '', 4, isPassword=c["hidden"],
                                           focusTexture=os.path.join(self.mediapath, 'Controls', 'MenuItemFO.png'),
-                                          noFocusTexture=os.path.join(self.mediapath, 'Controls', 'MenuItemNF.png'))
+                                          noFocusTexture=os.path.join(self.mediapath, 'Controls', ''))
 
         self.addControl(control)
 
@@ -435,7 +436,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
             s = ''
         control.setText(s)
         # control.setText(self.values[c["id"]])
-        control.setWidth(self.controls_width - 5)
+        control.setWidth(self.controls_width)
         control.setHeight(self.height_control)
 
         c["control"] = control
@@ -451,7 +452,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
                                                  focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                            'MenuItemFO.png'),
                                                  noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                             'MenuItemNF.png'))
+                                                                             ''))
         else:
             control = xbmcgui.ControlRadioButton(0 - 10, -100, self.controls_width + 10,
                                                  self.height_control, label=c["label"], font=self.font,
@@ -459,7 +460,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
                                                  focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                            'MenuItemFO.png'),
                                                  noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                             'MenuItemNF.png'),
+                                                                             ''),
                                                  focusOnTexture=os.path.join(self.mediapath, 'Controls',
                                                                              'radiobutton-focus.png'),
                                                  noFocusOnTexture=os.path.join(self.mediapath, 'Controls',
@@ -472,8 +473,8 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
         self.addControl(control)
 
         control.setVisible(False)
-        control.setRadioDimension(x=self.controls_width + 10 - (self.height_control - 5), y=0,
-                                  width=self.height_control - 5, height=self.height_control - 5)
+        control.setRadioDimension(x=self.controls_width - 15 - (self.height_control), y=0,
+                                  width=self.height_control + 40, height=self.height_control + 40)
         control.setSelected(self.values[c["id"]])
 
         c["control"] = control
@@ -509,9 +510,9 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
         self.controls_width = self.getControl(10007).getWidth() - 20
         self.controls_height = self.getControl(10007).getHeight()
         self.controls_pos_x = self.getControl(10007).getPosition()[0] + self.getControl(10001).getPosition()[0] + 10
-        self.controls_pos_y = self.getControl(10007).getPosition()[1] + self.getControl(10001).getPosition()[1]
-        self.height_control = 35
-        self.font = "font12"
+        self.controls_pos_y = self.getControl(10007).getPosition()[1] + self.getControl(10001).getPosition()[1] + 20
+        self.height_control = 40
+        self.font = "font25_narrow"
 
         # En versiones antiguas: creamos 5 controles, de lo conrtario al hacer click al segundo control,
         # automaticamente cambia el label del tercero a "Short By: Name" no se porque...
@@ -560,7 +561,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
                 default = ""
 
             c["default"] = c.get("default", default)
-            c["color"] = c.get("color", "0xFF0066CC")
+            c["color"] = c.get("color", "0xFFFFFFFF")
             c["visible"] = c.get("visible", True)
             c["enabled"] = c.get("enabled", True)
 
@@ -634,18 +635,18 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
 
                     if c["type"] != "list":
                         if c["type"] == "bool":
-                            c["control"].setPosition(self.controls_pos_x - 10, c["y"])
+                            c["control"].setPosition(self.controls_pos_x - 10, c["y"] - 10)
                         else:
-                            c["control"].setPosition(self.controls_pos_x, c["y"])
+                            c["control"].setPosition(self.controls_pos_x, c["y"] - 10)
 
                     else:
-                        c["control"].setPosition(self.controls_pos_x, c["y"])
+                        c["control"].setPosition(self.controls_pos_x, c["y"] - 10)
                         if xbmcgui.__version__ == "1.2":
-                            c["label"].setPosition(self.controls_pos_x + self.controls_width - 30, c["y"])
+                            c["label"].setPosition(self.controls_pos_x + self.controls_width - 10, c["y"])
                         else:
-                            c["label"].setPosition(self.controls_pos_x, c["y"])
-                        c["upBtn"].setPosition(self.controls_pos_x + c["control"].getWidth() - 25, c["y"] + 3)
-                        c["downBtn"].setPosition(self.controls_pos_x + c["control"].getWidth() - 25, c["y"] + 18)
+                            c["label"].setPosition(self.controls_pos_x - 15, c["y"] - 10)
+                        c["upBtn"].setPosition(self.controls_pos_x + c["control"].getWidth() - 38, c["y"] - 10)
+                        c["downBtn"].setPosition(self.controls_pos_x + c["control"].getWidth() - 24, c["y"] - 10)
 
                     self.set_visible(c, True)
 
