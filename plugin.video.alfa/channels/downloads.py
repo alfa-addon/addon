@@ -45,6 +45,7 @@ null = 'None'
 def mainlist(item):
     logger.info()
     itemlist = []
+    torrent = False
 
     # Lista de archivos
     for file in sorted(filetools.listdir(DOWNLOAD_LIST_PATH)):
@@ -53,12 +54,18 @@ def mainlist(item):
 
         # cargamos el item
         file = filetools.join(DOWNLOAD_LIST_PATH, file)
-        i = Item(path=file).fromjson(filetools.read(file))
+        try:
+            i = Item(path=file).fromjson(filetools.read(file))
+            if 'downloadStatus' not in i: continue
+        except:
+            continue
         i.thumbnail = i.contentThumbnail
         i.unify = True
         del i.unify
         i.folder = True
         del i.folder
+        if i.server == 'torrent' and i.downloadProgress > -1:
+            torrent = True
 
         # Listado principal
         if not item.contentType == "tvshow":
@@ -129,6 +136,12 @@ def mainlist(item):
         itemlist.insert(0, Item(channel=item.channel, action="restart_all", title=config.get_localized_string(70227),
                                 contentType=item.contentType, contentChannel=item.contentChannel,
                                 contentSerieName=item.contentSerieName, text_color="orange"))
+                                
+    # Pausar todos
+    if len(itemlist) and torrent:
+        itemlist.insert(0, Item(channel=item.channel, action="pause_all", title="Pausar descargas",
+                                contentType=item.contentType, contentChannel=item.contentChannel,
+                                contentSerieName=item.contentSerieName, text_color="orange"))
     
     # Si hay alguno pendiente
     if 1 in estados or 0 in estados or 4 in estados or 5 in estados or (2 in estados and item.downloadProgress != 100):
@@ -164,6 +177,10 @@ def browser(item):
     extensions_list = ['.aaf', '.3gp', '.asf', '.avi', '.flv', '.mpeg',
                        '.m1v', '.m2v', '.m4v', '.mkv', '.mov', '.mpg',
                        '.mpe', '.mp4', '.ogg', '.wmv']
+                       
+    context = [{"title": config.get_localized_string(70221),
+                 "action": "delete_video",
+                 "channel": item.channel}]
     
     torrent_paths = torrent.torrent_dirs()
 
@@ -172,10 +189,10 @@ def browser(item):
         if filetools.isdir(filetools.join(item.url, file)):
             if not file.endswith(']'): continue
             itemlist.append(
-                Item(channel=item.channel, title=file, action=item.action, url=filetools.join(item.url, file)))
+                Item(channel=item.channel, title=file, action=item.action, url=filetools.join(item.url, file), context=context))
         else:
             if scrapertools.find_single_match(file, '(\.\w+)$') in extensions_list:
-                itemlist.append(Item(channel=item.channel, title=file, action="play", url=filetools.join(item.url, file)))
+                itemlist.append(Item(channel=item.channel, title=file, action="play", url=filetools.join(item.url, file), context=context))
             
     if item.title == 'Ver archivos descargados':
         for file in sorted(filetools.listdir(DOWNLOAD_LIST_PATH)):
@@ -193,14 +210,28 @@ def browser(item):
                     title = title + ' [%s]' % download_item.category.lower()
                     if filetools.isdir(filetools.join(torrent_paths[torr_client], filetools.dirname(path))):
                         itemlist.append(
-                            Item(channel=item.channel, title=title, action=item.action, 
+                            Item(channel=item.channel, title=title, action=item.action, context=context, 
                                         url=filetools.join(torrent_paths[torr_client], filetools.dirname(path))))
                     else:
                         if scrapertools.find_single_match(file, '(\.\w+)$') in extensions_list:
-                            itemlist.append(Item(channel=item.channel, title=file, action="play", 
+                            itemlist.append(Item(channel=item.channel, title=file, action="play", context=context, 
                                         url=filetools.join(torrent_paths[torr_client], path)))
 
     return itemlist
+
+
+def delete_video(item):
+    logger.info()
+    
+    msg = config.get_localized_string(60044) % item.url
+    if platformtools.dialog_yesno(config.get_localized_string(70221), msg):
+
+        if filetools.isdir(item.url):
+            filetools.rmdirtree(item.url)
+        elif filetools.isfile(item.url):
+            filetools.remove(item.url)
+            
+        platformtools.itemlist_refresh()
 
 
 def clean_all(item):
@@ -295,6 +326,31 @@ def restart_all(item):
                 update_json(fichero,
                             {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, \
                                         "downloadProgress": 0, "downloadQueued": download_item.downloadQueued, \
+                                        "contentAction": contentAction})
+
+    platformtools.itemlist_refresh()
+
+
+def pause_all(item):
+    logger.info()
+    for fichero in sorted(filetools.listdir(DOWNLOAD_LIST_PATH)):
+        if fichero.endswith(".json"):
+            download_item = Item().fromjson(filetools.read(filetools.join(DOWNLOAD_LIST_PATH, fichero)))
+
+            if not item.contentType == "tvshow" or (
+                            item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
+
+                if download_item.server == 'torrent' and download_item.downloadProgress > -1:
+                    pause_torrent_session(download_item)
+                else:
+                    return
+
+                contentAction = download_item.contentAction
+                if download_item.contentAction == 'play' and not download_item.downloadServer and not download_item.torr_folder:
+                    contentAction = 'findvideos'
+                update_json(fichero,
+                            {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, \
+                                        "downloadProgress": -1, "downloadQueued": 0, \
                                         "contentAction": contentAction})
 
     platformtools.itemlist_refresh()
@@ -560,11 +616,100 @@ def delete_torrent_session(item, delete_RAR=True):
                 
         config.set_setting("LIBTORRENT_in_use", False, server="torrent")        # Marcamos Libtorrent como disponible
 
-    # Vuelve a  actualiza el .json de control después de que el gestor de torrent termine su función (timing...)
+    # Vuelve a actualizar el .json de control después de que el gestor de torrent termine su función (timing...)
     time.sleep(1)
     if item.url_control:
         item.url = item.url_control
     update_json(item.path, {"downloadStatus": item.downloadStatus, "downloadProgress": 0, "downloadQueued": 0,
+                                "downloadServer": {}, "url": item.url})
+    
+    return torr_data, deamon_url, index
+
+
+def pause_torrent_session(item):
+    logger.info()
+
+    # Detiene la descarga de forma específica al gestor de torrent en uso
+    torr_data = ''
+    deamon_url = ''
+    index = -1
+    filebase = ''
+    folder_new = ''
+    
+    if item.downloadProgress < 0:
+        return torr_data, deamon_url, index
+    
+    # Obtenemos los datos del gestor de torrents
+    torrent_paths = torrent.torrent_dirs()
+    torr_client = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:')
+    folder_new = scrapertools.find_single_match(item.downloadFilename, '^\:\w+\:\s*(.*?)$')
+    if filetools.dirname(folder_new):
+        folder_new = filetools.dirname(folder_new)
+    if item.torr_folder:
+        folder = item.torr_folder
+    else:
+        folder = folder_new.replace('\\', '').replace('/', '')
+    if folder_new:
+        if folder_new.startswith('\\') or folder_new.startswith('/'):
+            folder_new = folder_new[1:]
+        if '\\' in folder_new:
+            folder_new = folder_new.split('\\')[0]
+        elif '/' in folder_new:
+            folder_new = folder_new.split('/')[0]
+        if folder_new:
+            folder_new = filetools.join(torrent_paths[torr_client.upper()], folder_new)
+    
+    # Actualiza el .json de control
+    if item.downloadStatus in [5]:
+        item.downloadStatus = 2                                                 # Pasa de foreground a background
+    update_json(item.path, {"downloadStatus": item.downloadStatus, "downloadProgress": -1, "downloadQueued": 0,
+                                "downloadServer": {}})
+
+    # Detiene y borra la sesion de los clientes externos Quasar y Elementum
+    if torr_client in ['QUASAR', 'ELEMENTUM']:
+        torr_data, deamon_url, index = torrent.get_tclient_data(folder, torr_client.lower(), \
+                                torrent_paths['ELEMENTUM_port'], pause=True)
+        
+    # Detiene y borra la sesion de los clientes Internos
+    if torr_client in ['BT', 'MCT']:
+        if item.downloadServer and 'url' in str(item.downloadServer) and not item.downloadServer['url'].startswith('http'): 
+            filebase = filetools.basename(item.downloadServer['url']).upper()
+        elif item.url and not item.url.startswith('http') and not item.url.startswith('magnet:'):
+            filebase = filetools.basename(item.url).upper()
+        elif item.url_control and not item.url_control.startswith('http'):
+            filebase = filetools.basename(item.url_control).upper()
+        if filebase:
+            file = filetools.join(torrent_paths[torr_client+'_torrents'], filebase)
+            if filetools.exists(file):
+                filetools.remove(file, silent=True)
+        
+                #Espera a que el gestor termine de borrar la sesion (timing...)            
+                time.sleep(8)
+            
+        downloadFilename = scrapertools.find_single_match(item.downloadFilename, '\:\w+\:\s*(.*?)$')
+        if downloadFilename and delete_RAR:
+            if downloadFilename.startswith('\\') or downloadFilename.startswith('/'):
+                downloadFilename = downloadFilename[1:]
+            downloadFolder = filetools.dirname(downloadFilename)
+            if '\\' in downloadFolder:
+                downloadFolder = downloadFolder.split('\\')[0]
+            elif '/' in downloadFolder:
+                downloadFolder = downloadFolder.split('/')[0]
+            if downloadFolder:
+                if filetools.isdir(filetools.join(torrent_paths[torr_client], downloadFolder)):
+                    filetools.rmdirtree(filetools.join(torrent_paths[torr_client], downloadFolder), silent=True)
+                else:
+                    filetools.remove(filetools.join(torrent_paths[torr_client], downloadFolder), silent=True)
+            elif downloadFilename:
+                filetools.remove(filetools.join(torrent_paths[torr_client], downloadFilename), silent=True)
+                
+        config.set_setting("LIBTORRENT_in_use", False, server="torrent")        # Marcamos Libtorrent como disponible
+
+    # Vuelve a actualizar el .json de control después de que el gestor de torrent termine su función (timing...)
+    time.sleep(1)
+    if item.url_control:
+        item.url = item.url_control
+    update_json(item.path, {"downloadStatus": item.downloadStatus, "downloadProgress": -1, "downloadQueued": 0,
                                 "downloadServer": {}, "url": item.url})
     
     return torr_data, deamon_url, index
@@ -901,6 +1046,10 @@ def download_from_server(item, silent=False):
             item.downloadCompleted = result["downloadCompleted"]
             if item.post or item.post is None or item.post_back: result["post"] = item.post
             if item.post or item.post is None or item.post_back: result["post_back"] = item.post_back
+            if item.referer or item.referer is None or item.referer_back: result["referer"] = item.referer
+            if item.referer or item.referer is None or item.referer_back: result["referer_back"] = item.referer_back
+            if item.headers or item.headers is None or item.headers_back: result["headers"] = item.headers
+            if item.headers or item.headers is None or item.headers_back: result["headers_back"] = item.headers_back
             return result
         
         import xbmcgui
@@ -937,6 +1086,10 @@ def download_from_server(item, silent=False):
         result["downloadCompleted"] = 0
         if item.post or item.post is None or item.post_back: result["post"] = item.post
         if item.post or item.post is None or item.post_back: result["post_back"] = item.post_back
+        if item.referer or item.referer is None or item.referer_back: result["referer"] = item.referer
+        if item.referer or item.referer is None or item.referer_back: result["referer_back"] = item.referer_back
+        if item.headers or item.headers is None or item.headers_back: result["headers"] = item.headers
+        if item.headers or item.headers is None or item.headers_back: result["headers_back"] = item.headers_back
         item.downloadCompleted = result["downloadCompleted"]
         item.downloadStatus = result["downloadStatus"]
         item.downloadProgress = result["downloadProgress"]
@@ -953,6 +1106,10 @@ def download_from_server(item, silent=False):
         result["downloadServer"] = item.downloadServer
         if item.post or item.post is None or item.post_back: result["post"] = item.post
         if item.post or item.post is None or item.post_back: result["post_back"] = item.post_back
+        if item.referer or item.referer is None or item.referer_back: result["referer"] = item.referer
+        if item.referer or item.referer is None or item.referer_back: result["referer_back"] = item.referer_back
+        if item.headers or item.headers is None or item.headers_back: result["headers"] = item.headers
+        if item.headers or item.headers is None or item.headers_back: result["headers_back"] = item.headers_back
 
         return result
     
@@ -1026,6 +1183,12 @@ def download_from_best_server(item, silent=False):
         if not play_item.post and item.post:
             item.post_back = item.post
             item.post = None
+        if not play_item.referer and item.referer:
+            item.referer_back = item.referer
+            item.referer = None
+        if not play_item.headers and item.headers:
+            item.headers_back = item.headers
+            item.headers = None
         play_item = item.clone(**play_item.__dict__)
         play_item.contentAction = play_item.action
         play_item.infoLabels = item.infoLabels
@@ -1122,8 +1285,13 @@ def get_episodes(item):
     
     if not item.nfo and item.path and not item.path.endswith('.json') and not event:
         item.nfo = filetools.join(SERIES, item.path, 'tvshow.nfo')
+    if not item.nfo and item.video_path and not event:
+        item.nfo = filetools.join(SERIES, item.video_path, 'tvshow.nfo')
     if item.nfo:
-        head, nfo_json = videolibrarytools.read_nfo(item.nfo)                   #... tratamos de recuperar la info de la Serie
+        if filetools.exists(item.nfo):
+            head, nfo_json = videolibrarytools.read_nfo(item.nfo)               #... tratamos de recuperar la info de la Serie
+        else:
+            del item.nfo
 
     # Miramos si los episodio se van a mover a un site remoto, con lo que no pueden usar archivos locales
     move_to_remote = config.get_setting("move_to_remote", "downloads", default=[])
@@ -1151,9 +1319,8 @@ def get_episodes(item):
                 xbmc_videolibrary.update(folder='_scan_series')                 # Se escanea el directorio de series para catalogar en Kodi
                 while xbmc.getCondVisibility('Library.IsScanningVideo()'):      # Se espera a que acabe
                     time.sleep(1)
-                xbmc_videolibrary.mark_content_as_watched_on_alfa(item.nfo)     # Sincronizamos los Vistos de Kodi con Alfa
-                
-                head, nfo_json = videolibrarytools.read_nfo(item.nfo)           #... tratamos de recuperar la info de la Serie
+                xbmc_videolibrary.mark_content_as_watched_on_alfa(item.nfo)     # Sincronizamos los Vistos de Kodi con Alfa ...
+                head, nfo_json = videolibrarytools.read_nfo(item.nfo)           #... refrescamos la info de la Serie
             if item.url_tvshow:
                 item.url = item.url_tvshow
             elif nfo_json:
@@ -1197,6 +1364,12 @@ def get_episodes(item):
                 else:
                     return []
             
+            if item.sub_action in ["unseen"] and item.from_action != 'episodios':
+                item.from_action = 'episodios'
+                item.contentAction = item.from_action
+                if item.post: del item.post
+                if item.referer: del item.referer
+                if item.headers: del item.headers
             if not item.from_action: item.from_action = 'episodios'
             if not item.contentAction: item.contentAction = item.from_action
             if item.sub_action in ["tvshow", "unseen", "auto"]:
@@ -1213,7 +1386,7 @@ def get_episodes(item):
             if item.torrent_info: del item.torrent_info
             if item.torrent_alt: del item.torrent_alt
 
-        if (item.strm_path or item.nfo):                                        # Si viene de Videoteca, usamos los .jsons
+        if (item.strm_path or item.nfo) and not item.video_path:                # Si viene de Videoteca, usamos los .jsons
             if item.strm_path: serie_path = filetools.dirname(item.strm_path)
             if not serie_path and item.nfo: serie_path = filetools.dirname(item.nfo)
             serie_listdir = sorted(filetools.listdir(serie_path))
@@ -1248,17 +1421,20 @@ def get_episodes(item):
                 episodes.append(episode.clone())
         
         else:
+            if item.sub_action in ["tvshow", "unseen", "auto"] and not nfo_json:
+                return []
             episodes = getattr(channel, item.contentAction)(item)               # Si no viene de Videoteca, descargamos desde la web
 
     itemlist = []
 
     # Tenemos las lista, ahora vamos a comprobar
     for episode in episodes:
+        
         if episode.action in ["add_serie_to_library", "actualizar_titulos"] or not episode.action:
             continue
 
         # Si se ha llamado con la opción de NO Vistos, se comprueba contra el .NFO de la serie
-        if item.sub_action in ["unseen", "auto"] and nfo_json.library_playcounts \
+        if item.sub_action in ["unseen", "auto"] and nfo_json and nfo_json.library_playcounts \
                         and episode.contentSeason and episode.contentEpisodeNumber:   # Descargamos solo los episodios NO vistos
             seaxepi = '%sx%s' % (str(episode.contentSeason), str(episode.contentEpisodeNumber).zfill(2))
             try:
@@ -1340,7 +1516,7 @@ def get_episodes(item):
         # Cualquier otro resultado no nos vale, lo ignoramos
         else:
             logger.info("Omitiendo item no válido: %s" % episode.action)
-            
+    
     try:
         from core import tmdb
         if len(itemlist) > 1:

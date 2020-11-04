@@ -486,6 +486,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
             if e.videolibray_emergency_urls:
                 del e.videolibray_emergency_urls
+            if e.video_path:
+                del e.video_path
             if e.channel_redir:
                 del e.channel_redir                                         #... y se borran las marcas de redirecciones
             new_episodelist.append(e)
@@ -720,6 +722,8 @@ def add_movie(item):
     #    del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
     
     new_item = item.clone(action="findvideos")
+    new_item.contentTitle = re.sub('^(V)-', '', new_item.title)
+    new_item.title = re.sub('^(V)-', '', new_item.title)
     insertados, sobreescritos, fallidos = save_movie(new_item)
 
     if fallidos == 0:
@@ -754,6 +758,7 @@ def add_tvshow(item, channel=None):
     """
     logger.info("show=#" + item.show + "#")
     logger.debug("item en videolibrary add tvshow: %s" % item)
+    item.title = re.sub('^(V)-', '', item.title)
     if item.channel == "downloads":
         itemlist = [item.clone()]
 
