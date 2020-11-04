@@ -267,6 +267,12 @@ def listado(item):                                                              
         
     if not item.extra2:                                                         # Si viene de Catálogo o de Alfabeto
         item.extra2 = ''
+    
+    if item.chapter:                                                            # Tipo de vídeo en búsquedas, novedades, alfabeto
+        chapter = item.chapter
+        del item.chapter
+    else:
+        chapter = ''
         
     post = None
     if item.post:                                                               # Rescatamos el Post, si lo hay
@@ -374,7 +380,6 @@ def listado(item):                                                              
         #logger.debug('curr_page: ' + str(curr_page) + ' / last_page: ' + str(last_page) + ' / last_page_print: ' + str(last_page_print))        
         
         #Empezamos el procesado de matches
-        chapter = ''                                                            # Tipo de vídeo en búsquedas, novedades, alfabeto
         for _chapter, scrapedurl, _scrapedthumbnail, scrapedtitle, scrapedquality, _chapter2 in matches:
             cnt_match += 1
             
@@ -397,9 +402,10 @@ def listado(item):                                                              
             # Ignoramos los tipos de vídeos que no correspondan con las categorías gestionadas
             if (item.extra == 'search' or item.extra2 == 'novedades') and 'pelicula' \
                             not in chapter and 'serie' not in chapter and 'documental' \
-                            not in chapter:
+                            not in chapter and 'capitulo' not in chapter :
                 continue
-            if item.extra == 'search' and item.extra2 == 'episodios' and 'serie' not in chapter:
+            if item.extra == 'search' and item.extra2 == 'episodios' and 'serie' \
+                            not in chapter and 'documental' not in chapter:
                 continue
             
             # Salvo que venga la llamada desde Episodios, se filtran las entradas para evitar duplicados de Temporadas
@@ -411,7 +417,7 @@ def listado(item):                                                              
                     url_list = re.sub('\/\d+\/\d+\/', '/', url)
                 url_list = re.sub('(?i)-(\d+)-Temporada(?:-\D|-\.|\.)?', '-X-Temporada', url_list)
                 url_list_alt = re.sub('(?i)-temporada-\d+', '', url_list)
-                if url_list_alt in title_lista:                                 # Si ya hemos procesado el título, lo ignoramos
+                if url_list_alt in str(title_lista):                            # Si ya hemos procesado el título, lo ignoramos
                     continue
                 else:
                     title_lista += [url_list_alt]                               # la añadimos a la lista de títulos
@@ -440,18 +446,20 @@ def listado(item):                                                              
             del item_local.text_bold
             item_local.text_color = True
             del item_local.text_color
-            
+
             # Después de un Search se restablecen las categorías
             if item_local.extra == 'search' or item.extra2 == 'novedades':
                 if 'pelicula' in url or 'pelicula' in chapter:
-                    if item.extra2 == 'novedades' and 'pelicula' not in chapter:    # Si viene del Menú de movedades de Alfa, se filtra por tipos
+                    if item.extra2 == 'novedades' and item_local.extra and item_local.extra != 'peliculas':  # Se filtra se de Menú de movedades
                         continue
                     item_local.extra = 'peliculas'                              # Película búsqueda, novedades
-                elif 'serie' in url or 'serie' in chapter:
-                    if item.extra2 == 'novedades' and 'serie' not in chapter:   # Si viene del Menú de movedades de Alfa, se filtra por tipos
+                elif 'serie' in url or 'serie' in chapter or 'capitulo' in chapter:
+                    if item.extra2 == 'novedades' and item_local.extra and item_local.extra != 'series':  # Se filtra se de Menú de movedades
                         continue
                     item_local.extra = 'series'                                 # Serie búsqueda, novedades
                 else:
+                    if item.extra2 == 'novedades' and item_local.extra and item_local.extra != 'documentales':  # Se filtra se de Menú de movedades
+                        continue
                     item_local.extra = 'documentales'                           # Documental búsqueda, novedades
             
             # Guardamos los formatos para películas
@@ -483,27 +491,27 @@ def listado(item):                                                              
             if scrapedquality:
                 item_local.quality = scrapertools.remove_htmltags(scrapedquality)   # iniciamos calidad
             if item_local.contentType == "tvshow":
-                if '720p' in title:
+                if '720p' in title or '720p' in scrapedquality:
                     item_local.quality = 'HDTV-720p'
                     if not item.extra2 == 'novedades' and not 'hd' in item.url.lower() and item.extra not in ['search', 'documentales']: continue
-                elif '1080p' in title:
+                elif '1080p' in title or '1080p' in scrapedquality:
                     item_local.quality = '1080p'
                     if not item.extra2 == 'novedades' and not 'hd' in item.url.lower() and item.extra not in ['search', 'documentales']: continue
                 else:
                     item_local.quality = 'HDTV'
                     if not item.extra2 == 'novedades' and 'hd' in item.url.lower() and item.extra not in ['search', 'documentales']: continue
+            elif scrapedquality:
+                item_local.quality = scrapedquality
             elif not scrapedquality:
                 item_local.quality = 'HDRip'
                 if scrapertools.find_single_match(title, patron_quality):
                     item_local.quality = scrapertools.find_single_match(title, patron_quality)
-            elif scrapedquality:
-                item_local.quality = scrapedquality
             if '4k' in title.lower() and not '4k' in item_local.quality.lower():
                 item_local.quality += ', 4K'
             if '3d' in title.lower() and not '3d' in item_local.quality.lower():
                 item_local.quality += ', 3D'
             if item_local.contentType == 'movie' and scrapertools.find_single_match(title, patron_quality):
-                patron_quality = '(?i)\[(.*?)\]'
+                #patron_quality = '(?i)\[(.*?)\]'
                 title = re.sub(patron_quality, '', title)
             title = re.sub(r'(?i)[\[|\(]?\d{3,4}p[\]|\)]?|[\[|\(]?(?:4k|3d)[\]|\)]?', '', title)
             
@@ -516,24 +524,25 @@ def listado(item):                                                              
             patron_epi = '(?i)[-|\s*](\d{1,2})(?:x|&#215;)(\d{1,2})(?:[-|\s*]al'
             patron_epi += '[-|\s*](?:\d{1,2}(?:x|&#215;))?(\d{1,2}))?'
             if item_local.contentType == 'tvshow' and domain_alt in host:
-                if scrapertools.find_single_match(title, patron_epi):
-                    if scrapertools.find_single_match(item_local.url, patron_epi):
-                        url_list_alt = re.sub(patron_epi, '', item_local.url)
-                        season, epi, epi_al = scrapertools.find_single_match(item_local.url, patron_epi)
-                        url = re.sub(patron_epi, '-temporada-%s' % season, item_local.url)
-                    else:
-                        fin = inicio + 10                                       # Después de este tiempo pintamos (segundos)
-                        url, success, code, item_local, itemlist = generictools.downloadpage(item_local.url, 
-                                              timeout=timeout, item=item_local, itemlist=itemlist)       # Descargamos la página)
-                        url = scrapertools.find_single_match(url, '<link\s*rel="canonical"\s*href="([^"]+)"')\
-                                              .replace('-720p', '').replace('-1080p', '')
+                url = ''
+                url_list_alt = ''
+                if scrapertools.find_single_match(item_local.url, patron_epi):
+                    url_list_alt = re.sub(patron_epi, '', item_local.url)
+                    season, epi, epi_al = scrapertools.find_single_match(item_local.url, patron_epi)
+                    url = re.sub(patron_epi, '-temporada-%s' % season, item_local.url)
+                elif item_local.extra == 'series' and not (item.extra == 'search' and item.extra2 == 'episodios'):
+                    fin = inicio + 10                                           # Después de este tiempo pintamos (segundos)
+                    url, success, code, item_local, itemlist = generictools.downloadpage(item_local.url, 
+                                          timeout=timeout, item=item_local, itemlist=itemlist)       # Descargamos la página)
+                    url = scrapertools.find_single_match(url, '<link\s*rel="canonical"\s*href="([^"]+)"')\
+                                          .replace('-720p', '').replace('-1080p', '')
+                    if url != item_local.url:
                         url_list_alt = re.sub('(?i)temporada-\d+', '', url)
-                    if url: item_local.url = urlparse.urljoin(host, url)        # guardamos la url final
-                    if url_list_alt in title_lista:                             # Si ya hemos procesado el título, lo ignoramos
-                        continue
-                    else:
-                        title_lista += [url_list_alt]                           # la añadimos a la lista de títulos
-            
+                if url: item_local.url = urlparse.urljoin(host, url)            # guardamos la url final
+                if url_list_alt and url_list_alt in str(title_lista):           # Si ya hemos procesado el título, lo ignoramos
+                    continue
+                else:
+                    title_lista += [url_list_alt]                               # la añadimos a la lista de títulos
             if item_local.contentType == 'tvshow' and item.extra2 == 'novedades' \
                                 and scrapertools.find_single_match(title, patron_epi):
                 season, epi, epi_al = scrapertools.find_single_match(title, patron_epi)
@@ -563,7 +572,7 @@ def listado(item):                                                              
 
             item_local.title = title.strip().lower().title()
             if not item_local.title: continue
-                
+
             #Analizamos el año.  Si no está claro ponemos '-'
             item_local.infoLabels["year"] = '-'
             
@@ -613,7 +622,8 @@ def listado(item):                                                              
                         + title, title_lista=title_lista, url=next_page_url, extra=item.extra, 
                         extra2=item.extra2, last_page=str(last_page), curr_page=str(curr_page), 
                         page_factor=str(page_factor), cnt_tot_match=str(cnt_tot_match), matches=matches, 
-                        last_page_print=last_page_print, post=post, referer=referer, headers=headers))
+                        last_page_print=last_page_print, post=post, referer=referer, headers=headers, 
+                        chapter=chapter))
 
     return itemlist
 
@@ -632,7 +642,7 @@ def findvideos(item):
     headers = None
     referer = None
     
-    logger.debug(item)
+    #logger.debug(item)
     
     if item.post or item.post is None:
         post = item.post
@@ -861,7 +871,6 @@ def findvideos(item):
 
     #Si es un lookup para cargar las urls de emergencia en la Videoteca...
     if item.videolibray_emergency_urls:
-        logger.error(item.post)
         return item                                                             # ... nos vamos
     
     if len(itemlist_f) > 0:                                                     # Si hay entradas filtradas...
@@ -1311,23 +1320,15 @@ def newest(categoria):
         item.url = host + 'secciones.php?sec=ultimos_torrents'
     
     try:
-        if categoria == 'peliculas':
-            item.extra = "peliculas"
-            item.extra2 = "novedades"
-            item.action = "listado"
-            itemlist = listado(item)
+        for cat in ['peliculas', 'series', 'documentales', 'torrent']:
+            if cat != categoria: continue
                 
-        elif categoria == 'series':
-            item.extra = "series"
+            item.extra = cat
+            if cat == 'torrent': item.extra = ''
             item.extra2 = "novedades"
             item.action = "listado"
             itemlist = listado(item)
-        
-        elif categoria == 'documentales':
-            item.extra = "documentales"
-            item.extra2 = "novedades"
-            item.action = "listado"
-            itemlist = listado(item)
+            break
 
         if len(itemlist) > 0 and (">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title):
             itemlist.pop()

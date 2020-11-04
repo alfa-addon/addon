@@ -37,7 +37,7 @@ idioma_busqueda = 'es'
 
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel) #Actualización sólo últ. Temporada?
-timeout = config.get_setting('timeout_downloadpage', channel)
+timeout = config.get_setting('timeout_downloadpage', channel) * 2
 season_colapse = config.get_setting('season_colapse', channel)                  # Season colapse?
 filter_languages = config.get_setting('filter_languages', channel)              # Filtrado de idiomas?
 
