@@ -7,10 +7,6 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-if PY3:
-    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
 
 from builtins import range
 from builtins import object
@@ -89,6 +85,20 @@ tmdb_langs = ['es', 'es-MX', 'en', 'it', 'pt', 'fr', 'de']
 langs = config.get_setting('tmdb_lang', default=0)
 tmdb_lang = tmdb_langs[langs]
 
+
+def drop_bd():
+    time_list = {0: '-1 day', 1: '-7 day', 2: '-15 day', 3: '-30 day', 4: None}
+
+    cache_expire = config.get_setting("tmdb_cache_expire", default=2)
+    time_delete = time_list.get(cache_expire, '-15 day')
+
+    conn = sqlite3.connect(fname)
+    c = conn.cursor()
+    if time_delete:
+        c.execute("DELETE FROM tmdb_cache WHERE added <= strftime('%s', datetime('now', ?))", (time_delete,))
+    conn.commit()
+    conn.close()
+
 def create_bd():
     conn = sqlite3.connect(fname)
     c = conn.cursor()
@@ -97,18 +107,8 @@ def create_bd():
     conn.close()
 
 
-def drop_bd():
-    conn = sqlite3.connect(fname)
-    c = conn.cursor()
-    c.execute('DROP TABLE IF EXISTS tmdb_cache')
-    conn.commit()
-    conn.close()
-
-    return True
-
-
 create_bd()
-
+drop_bd()
 
 # El nombre de la funcion es el nombre del decorador y recibe la funcion que decora.
 def cache_response(fn):
@@ -119,51 +119,7 @@ def cache_response(fn):
 
     def wrapper(*args):
         import base64
-
-        def check_expired(ts):
-            import datetime
-
-            valided = False
-
-            cache_expire = config.get_setting("tmdb_cache_expire", default=0)
-
-            saved_date = datetime.datetime.fromtimestamp(ts)
-            current_date = datetime.datetime.fromtimestamp(time.time())
-            elapsed = current_date - saved_date
-
-            # 1 day
-            if cache_expire == 0:
-                if elapsed > datetime.timedelta(days=1):
-                    valided = False
-                else:
-                    valided = True
-            # 7 days
-            elif cache_expire == 1:
-                if elapsed > datetime.timedelta(days=7):
-                    valided = False
-                else:
-                    valided = True
-
-            # 15 days
-            elif cache_expire == 2:
-                if elapsed > datetime.timedelta(days=15):
-                    valided = False
-                else:
-                    valided = True
-
-            # 1 month - 30 days
-            elif cache_expire == 3:
-                # no tenemos en cuenta febrero o meses con 31 días
-                if elapsed > datetime.timedelta(days=30):
-                    valided = False
-                else:
-                    valided = True
-            # no expire
-            elif cache_expire == 4:
-                valided = True
-
-            return valided
-
+        
         result = {}
         try:
 
@@ -171,18 +127,20 @@ def cache_response(fn):
             if not config.get_setting("tmdb_cache", default=False):
                 result = fn(*args)
             else:
-
                 conn = sqlite3.connect(fname, timeout=15)
                 c = conn.cursor()
+
                 url = re.sub('&year=-', '', args[0])
                 if PY3: url = str.encode(url)
                 url_base64 = base64.b64encode(url)
+                
                 c.execute("SELECT response, added FROM tmdb_cache WHERE url=?", (url_base64,))
                 row = c.fetchone()
 
-                if row and check_expired(float(row[1])):
+                if row:
+                    #logger.error("Entra en BD %s" % args[0])
                     result = eval(base64.b64decode(row[0]))
-
+                
                 # si no se ha obtenido información, llamamos a la funcion
                 if not result:
                     result = fn(*args)
@@ -207,6 +165,7 @@ def cache_response(fn):
         return result
 
     return wrapper
+
 
 
 def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang, forced=False):
@@ -954,8 +913,8 @@ class Tmdb(object):
     def __search(self, index_results=0, page=1):
         self.result = ResultDictDefault()
         results = []
-        text_simple = self.busqueda_texto.lower()
-        text_quote = urllib.quote(text_simple)
+        text_simple, self.busqueda_year = scrapertools.simplify(self.busqueda_texto, self.busqueda_year)
+        text_quote = scrapertools.quote(text_simple)
         total_results = 0
         total_pages = 0
         buscando = ""
@@ -967,8 +926,10 @@ class Tmdb(object):
                    '&include_adult=%s&page=%s' % (self.busqueda_tipo, text_quote,
                                                   self.busqueda_idioma, self.busqueda_include_adult, page))
 
-            if self.busqueda_year:
-                url += '&year=%s' % self.busqueda_year
+            if self.busqueda_year and self.busqueda_tipo == 'movie':
+                url += '&primary_release_year=%s' % self.busqueda_year
+            elif self.busqueda_year and self.busqueda_tipo == 'tv':
+                url += '&first_air_date_year=%s' % self.busqueda_year
 
             buscando = self.busqueda_texto.capitalize()
             logger.info("[Tmdb.py] Buscando %s en pagina %s:\n%s" % (buscando, page, url))
@@ -1137,6 +1098,11 @@ class Tmdb(object):
 
         if not origen:
             origen = self.result
+        # Reellenar diccionario de generos si es necesario
+        if (self.busqueda_tipo == 'movie' or self.busqueda_tipo == "tv") and \
+                (self.busqueda_idioma not in Tmdb.dic_generos or
+                         self.busqueda_tipo not in Tmdb.dic_generos[self.busqueda_idioma]):
+            self.rellenar_dic_generos(self.busqueda_tipo, self.busqueda_idioma)
 
         if "genre_ids" in origen:
             # Buscar lista de generos por IDs

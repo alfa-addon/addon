@@ -11,6 +11,13 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urllib
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+    import urlparse
+
 import re
 import time
 
@@ -344,20 +351,12 @@ def remove_show_from_title(title, show):
 
 
 def get_filename_from_url(url):
-    if PY3:
-        import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-    else:
-        import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-    
+
     parsed_url = urlparse.urlparse(url)
     try:
-        filename = parsed_url.path
+        filename = parsed_url[2]
     except:
-        # Si falla es porque la implementación de parsed_url no reconoce los atributos como "path"
-        if len(parsed_url) >= 4:
-            filename = parsed_url[2]
-        else:
-            filename = ""
+        filename = ""
 
     if "/" in filename:
         filename = filename.split("/")[-1]
@@ -365,23 +364,76 @@ def get_filename_from_url(url):
     return filename
 
 
-# def get_domain_from_url(url):
-#    if PY3:
-#        import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-#    else:
-#        import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-#
-#     parsed_url = urlparse.urlparse(url)
-#     try:
-#         filename = parsed_url.netloc
-#     except:
-#         # Si falla es porque la implementación de parsed_url no reconoce los atributos como "path"
-#         if len(parsed_url) >= 4:
-#             filename = parsed_url[1]
-#         else:
-#             filename = ""
-#
-#     return filename
+def get_domain_from_url(url):
+
+    parsed_url = urlparse.urlparse(url)
+    try:
+        domain = parsed_url[1]
+    except:
+        domain = ""
+
+    return domain
+
+def urlencode(params):
+    encoded_url = ''
+    if isinstance(params, dict):
+        encoded_url = urllib.urlencode(params)
+    return encoded_url
+
+def urldecode(url):
+    params = dict()
+    query_data = urlparse.urlparse(url).query
+    if query_data:
+        params = dict(urlparse.parse_qsl(query_data))
+
+    return params
+
+def unquote(url, plus=False):
+    if plus:
+        url = urllib.unquote_plus(url)
+    else:
+        url = urllib.unquote(url)
+    
+    return url
+
+def quote(url, plus=False):
+    if plus:
+        url = urllib.quote_plus(url)
+    else:
+        url = urllib.quote(url)
+    return url
+
+def remove_format(string):
+    #logger.info()
+    string = string.rstrip()
+    string = re.sub(r'(\[|\[\/)(?:color|COLOR|b|B|i|I).*?\]', '', string)
+    string = re.sub(r'\:|\.|\-|\_|\,|\¿|\?|\¡|\!', ' ', string)
+    string = re.sub(r'\s+|\(.*?\)|\[.*?\]', ' ', string).strip()
+    #logger.debug('sale de remove: %s' % string)
+    return string
+
+def normalize(string):
+    import unicodedata
+    if not PY3 and isinstance(string, str):
+        string = string.decode('utf-8')
+    normal = ''.join((c for c in unicodedata.normalize('NFD', unicode(string)) if unicodedata.category(c) != 'Mn'))
+    return normal
+
+def simplify(title, year):
+    
+    if not year or year == '-':
+        year = find_single_match(title, r"^.+?\s*(?:(\(\d{4}\)$|\[\d{4}\]))")
+        if year:
+            title = title.replace(year, "").strip()
+            year = year[1:-1]
+        else:
+            year = '-'
+    
+    title = remove_format(title)
+    title = normalize(title)
+
+    #logger.error(title.lower())
+    return title.lower(), year
 
 
 def get_season_and_episode(title):
