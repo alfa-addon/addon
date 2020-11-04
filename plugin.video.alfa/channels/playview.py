@@ -21,7 +21,7 @@ from channels import filtertools
 from bs4 import BeautifulSoup
 import base64
 
-host = 'https://playview.io/'
+host = 'https://www.playview.io/'
 
 IDIOMAS = {"Latino": "LAT", "Español": "CAST", "Subtitulado": "VOSE"}
 list_language = list(IDIOMAS.values())
@@ -74,6 +74,8 @@ def sub_menu(item):
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
+
+    url = re.sub('/(\w+.\w{2,3}/)', '/www.\\1', url)
 
     if referer:
         data = httptools.downloadpage(url, headers={'Referer': referer}).data
