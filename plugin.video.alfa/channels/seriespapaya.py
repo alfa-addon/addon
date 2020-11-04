@@ -298,7 +298,7 @@ def episodesxseasons(item):
         languages = " ".join(
             ["[%s]" % IDIOMAS.get(lang, lang) for lang in re.findall('images/s-([^\.]+)', langs)])
         filter_lang = languages.replace("[", "").replace("]", "").split(" ")
-        logger.error(filter_lang)
+        #logger.error(filter_lang)
         itemlist.append(item.clone(action="findvideos",
                                    infoLabels = infoLabels,
                                    language=filter_lang,
@@ -327,7 +327,7 @@ def search(item, texto):
     infoLabels = ()
     try:
         post = urllib.urlencode({'searchquery': texto})
-        data = httptools.downloadpage(urlparse.urljoin(HOST, "/busqueda/"), post=post).data
+        data = httptools.downloadpage(urlparse.urljoin(HOST, "/busqueda.php"), post=post).data
         data = re.sub(r'|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
         patron = r"location.href='(.*?)'.*?background-image: url\('(.*?)'\).*?"
         patron += '<div style="display.*?>([^<]+)'
@@ -439,7 +439,7 @@ def play(item):
 
         return itemlist
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, headers={'Referer': item.url}).data
     
     item.server = ''
     item.url = scrapertools.find_single_match(data, "location.href='([^']+)'")

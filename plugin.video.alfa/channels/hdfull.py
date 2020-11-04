@@ -88,12 +88,12 @@ def login():
 
 def settingCanal(item):
     platformtools.show_channel_settings()
-    #platformtools.itemlist_refresh()
-    return
+    platformtools.itemlist_refresh()
+    return 
     
 def logout(item):
     logger.info()
-    domain = urlparse(host).netloc
+    domain = urlparse.urlparse(host).netloc
     dict_cookie = {"domain": domain, 'expires': 0}
     #borramos cookies de hdfullme
     httptools.set_cookies(dict_cookie)

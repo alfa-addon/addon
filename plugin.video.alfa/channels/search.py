@@ -87,13 +87,26 @@ def saved_search(item):
 
 
     for saved_search_text in saved_searches_list:
-        itemlist.append(
-            Item(channel=item.channel,
-                 action="new_search",
-                 title=saved_search_text.split('{}')[0],
-                 search_text=saved_search_text.split('{}')[0],
-                 mode='all',
-                 thumbnail=get_thumb('search.png')))
+        
+        if isinstance(saved_search_text, dict):
+            url_item = list(saved_search_text.values())[0]
+            search_text = list(saved_search_text.keys())[0]
+
+            new_item = Item().fromurl(url_item)
+            new_item.plot = '[I][B]%s[/B][/I]' % new_item.title
+            new_item.title = search_text
+            new_item.search_text = search_text
+
+            itemlist.append(new_item)
+        
+        else:
+            itemlist.append(
+                Item(channel=item.channel,
+                     action="new_search",
+                     title=saved_search_text.split('{}')[0],
+                     search_text=saved_search_text.split('{}')[0],
+                     mode='all',
+                     thumbnail=get_thumb('search.png')))
 
     if len(saved_searches_list) > 0:
         itemlist.append(
@@ -120,7 +133,7 @@ def new_search(item):
     else:
         searched_text = platformtools.dialog_input(default=last_search, heading='')
 
-    save_search(searched_text)
+    save_search(searched_text, item.tourl())
     if not searched_text:
         return
 
@@ -240,8 +253,9 @@ def channel_search(item):
 
                 if elem.infoLabels['tmdb_id'] == searched_id:
                     elem.from_channel = key
+                    
                     if not config.get_setting('unify'):
-                        elem.title += ' [%s]' % key
+                        elem.title = '[%s] %s' % (key.capitalize(), elem.title)
                     valid.append(elem)
 
         for it in value:
@@ -716,13 +730,14 @@ def get_from_temp(item):
     tmdb.set_infoLabels_itemlist(results, True)
     for elem in results:
         if not elem.infoLabels.get('year', ""):
+            
             elem.infoLabels['year'] = '-'
             tmdb.set_infoLabels_item(elem, True)
 
     return results
 
 
-def save_search(text):
+def save_search(text, item_tourl):
     if text:
         saved_searches_limit = int((10, 20, 30, 40)[int(config.get_setting("saved_searches_limit", "search"))])
 
@@ -732,10 +747,14 @@ def save_search(text):
         else:
             saved_searches_list = list(current_saved_searches_list)
 
+        for n, sv in enumerate(saved_searches_list):
+            if isinstance(sv, dict) and sv.get(text, ''):
+                del saved_searches_list[n]
+
         if text in saved_searches_list:
             saved_searches_list.remove(text)
 
-        saved_searches_list.insert(0, text)
+        saved_searches_list.insert(0, {text: item_tourl})
 
         config.set_setting("saved_searches_list", saved_searches_list[:saved_searches_limit], "search")
 
