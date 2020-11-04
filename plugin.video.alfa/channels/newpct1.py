@@ -897,12 +897,12 @@ def listado(item):                                                              
                 if not data_serie:                                              #Si no ha logrado encontrar nada, salimos
                     title_subs += ["ERR"]
                     
-                elif item_local.channel_alt:                                #Si ha habido fail-over, lo comento
+                elif item_local.channel_alt:                                    #Si ha habido fail-over, lo comento
                     url = url.replace(item_local.channel_alt, item_local.category.lower())
                     title_subs += ["ALT"]
 
                 try:
-                    item_local.url = scrapertools.find_single_match(data_serie, pattern)
+                    item_local.url = urlparse.urljoin(host, scrapertools.find_single_match(data_serie, pattern))
                     #Son series VO mal formadas?
                     if (item.post and '775' in item.post and 'vo/' not in item_local.url) or 'vo/' in url:      
                         item_local.url = item_local.url.replace('/series/', '/series-vo/')
