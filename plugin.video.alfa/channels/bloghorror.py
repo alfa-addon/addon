@@ -12,6 +12,7 @@ import re
 from bs4 import BeautifulSoup
 from core import httptools
 from core import scrapertools
+from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger, subtitletools
@@ -130,8 +131,10 @@ def findvideos(item):
         qlty = quality[qlty_cnt]
         qlty_cnt += 1
 
-        itemlist.append(Item(channel=item.channel, title="%s", url=url, action="play", quality=qlty,
-                             language=lang, subtitle=sub_url, server="torrent", infoLabels=item.infoLabels))
+        itemlist.append(Item(channel=item.channel, title="[%s][%s][%s]", url=url, action="play", quality=qlty,
+                             language=lang, subtitle=sub_url, infoLabels=item.infoLabels))
+
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % (i.server, i.language, i.quality))
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(Item(channel=item.channel,

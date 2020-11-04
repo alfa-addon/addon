@@ -22,6 +22,9 @@ from platformcode import config, logger
 from channelselector import get_thumb
 import ast
 
+import time
+import base64
+
 host = 'https://www.estrenosdoramas.net/'
 
 IDIOMAS = {'Latino': 'LAT', 'Vo':'VO', 'Vose': 'VOSE'}
@@ -29,6 +32,12 @@ IDIOMA = "no filtrar"
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['openload', 'streamango', 'netutv', 'okru', 'mp4upload']
+
+source_headers = dict()
+source_headers["Content-Type"] = "application/x-www-form-urlencoded; charset=UTF-8"
+source_headers["X-Requested-With"] = "XMLHttpRequest"
+source_headers["Origin"] = "https://repro3.estrenosdoramas.us"
+
 
 def get_source(url, referer=None):
     logger.info()
@@ -217,31 +226,43 @@ def findvideos(item):
         elif scrapedurl.find("pi76823.php") > 0:
             logger.info("Caso 1")
             source_data = get_source(scrapedurl)
-            source_regex = 'post\( "(.*?)", { acc: "(.*?)", id: \'(.*?)\', tk: \'(.*?)\' }'
+            source_regex = 'post\( "(.*?)", { key: \'(.*?)\''
             source_matches = re.compile(source_regex, re.DOTALL).findall(source_data)
-            for source_page, source_acc, source_id, source_tk in source_matches:
-                source_url = scrapedurl[0:scrapedurl.find("pi76823.php")] + source_page
-                source_result = httptools.downloadpage(source_url, post='acc=' + source_acc + '&id=' + 
-                                                       source_id + '&tk=' + source_tk, headers=source_headers)
-                if source_result.code == 200:
-                    source_json = jsontools.load(source_result.data)
-                    if source_json['urlremoto']:
-                        itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))
+            for source_page, source_key in source_matches:
+                base_url = scrapedurl.rsplit('/', 1)[0] + '/'
+                source_headers["Origin"] = base_url
+                source_url = base_url + source_page
+                # logger.info(source_key)
+                token_get = str(int(round(time.time())))
+                token = base64.b64encode(token_get)
+                source_result = httptools.downloadpage(source_url, post='key=' + source_key 
+                                                    + '&token=' + token, headers=source_headers)
+                source_json = source_result.json
+                if source_json["link"]:
+                    video_url = base64.b64decode(source_json["link"])
+                    # logger.info(video_url)
+                    itemlist.append(Item(channel=item.channel, title=option, url=video_url, 
+                                         action='play', language=IDIOMA))
         elif scrapedurl.find("pi7.php") > 0:
             logger.info("Caso 2")
             source_data = get_source(scrapedurl)
-            # logger.info(source_data)
-            # source_regex = 'post\( "(.*?)", { acc: "(.*?)", id: \'(.*?)\', tk: \'(.*?)\' }'
-            source_regex = 'post\("(.*?)",{acc: "(.*?)", id: \'(.*?)\', tk: \'(.*?)\'}'
+            source_regex = 'post\("(.*?)",{key: \'(.*?)\''
             source_matches = re.compile(source_regex, re.DOTALL).findall(source_data)
-            for source_page, source_acc, source_id, source_tk in source_matches:
-                source_url = scrapedurl[0:scrapedurl.find("pi7.php")] + source_page
-                source_result = httptools.downloadpage(source_url, post='acc=' + source_acc + '&id=' + 
-                                                       source_id + '&tk=' + source_tk, headers=source_headers)
-                if source_result.code == 200:
-                    source_json = jsontools.load(source_result.data)
-                    if source_json['urlremoto']:
-                        itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))
+            for source_page, source_key in source_matches:
+                base_url = scrapedurl.rsplit('/', 1)[0] + '/'
+                source_headers["Origin"] = base_url
+                source_url = base_url + source_page
+                # logger.info(source_key)
+                token_get = str(int(round(time.time())))
+                token = base64.b64encode(token_get)
+                source_result = httptools.downloadpage(source_url, post='key=' + source_key 
+                                                    + '&token=' + token, headers=source_headers)
+                source_json = source_result.json
+                if source_json["link"]:
+                    video_url = base64.b64decode(source_json["link"])
+                    # logger.info(video_url)
+                    itemlist.append(Item(channel=item.channel, title=option, url=video_url, 
+                                         action='play', language=IDIOMA))
         elif scrapedurl.find("reproducir120.php") > 0:
             logger.info("Caso 3")
             source_data = get_source(scrapedurl)

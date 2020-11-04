@@ -1,6 +1,7 @@
 {
   "id": "cinemahd",
   "name": "CinemaHD",
+  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat"],
@@ -28,7 +29,9 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "LAT"
+        "LAT",
+        "CAST",
+        "VOSE"
       ]
     },
     {
@@ -43,14 +46,6 @@
       "id": "include_in_newest_infantiles",
       "type": "bool",
       "label": "Incluir en Novedades - Infantiles",
-      "default": true,
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "include_in_newest_latino",
-      "type": "bool",
-      "label": "Incluir en Novedades - latino",
       "default": true,
       "enabled": true,
       "visible": true
