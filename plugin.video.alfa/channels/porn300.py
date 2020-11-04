@@ -90,10 +90,10 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a href="([^"]+)" data-video-id=.*?'
     patron += 'data-src="([^"]+)".*?'
-    patron += 'grid__item__title--videos">([^<]+)<.*?'
-    patron += '</svg>([^<]+)<'
+    patron += '</svg>([^<]+)<.*?'
+    patron += 'grid__item__title--videos">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime  in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtime,scrapedtitle  in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
         scrapedtime = scrapedtime.strip()
         title = "[COLOR yellow]%s[/COLOR] %s" % (scrapedtime,scrapedtitle)
@@ -119,7 +119,6 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    logger.debug(data)
     patron  = '<source src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url  in matches:

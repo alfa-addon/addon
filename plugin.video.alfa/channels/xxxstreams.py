@@ -75,7 +75,7 @@ def categorias(item):
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
+        itemlist.append(item.clone(action="findvideos", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
     return itemlist
 
@@ -121,7 +121,6 @@ def findvideos(item):
     for elem in matches:
         url = elem['href']
         if not "imgcloud." in url:
-            logger.debug(url)
             itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     # Requerido para FilterTools
