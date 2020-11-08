@@ -11,6 +11,7 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 import errno
 import math
 import traceback
+import re
 
 from core import filetools
 from core import scraper
@@ -216,6 +217,15 @@ def save_movie(item):
                 if config.is_xbmc():
                     from platformcode import xbmc_videolibrary
                     xbmc_videolibrary.update(FOLDER_MOVIES, '_scan_series')
+                # Si el usuario quiere un backup de la película (local o remoto), se toma la dirección/direcciones de destino y se copia
+                videolibrary_backup =  config.get_setting('videolibrary_backup', channel='videolibrary')
+                if videolibrary_backup:
+                    try:
+                        import threading
+                        threading.Thread(target=videolibrary_backup_exec, args=(item_nfo, videolibrary_backup)).start()
+                    except:
+                        logger.error('Error en el backup de la película %s' % item_nfo.strm_path)
+                        logger.error(traceback.format_exc(1))
 
                 p_dialog.close()
                 return insertados, sobreescritos, fallidos
@@ -320,6 +330,7 @@ def save_tvshow(item, episodelist):
                            infoLabels=item.infoLabels, path=path.replace(TVSHOWS_PATH, ""))
         item_tvshow.library_playcounts = {}
         item_tvshow.library_urls = {item.channel: item.url}
+        if item.serie_info: item_tvshow.serie_info = item.serie_info
 
     else:
         # Si existe tvshow.nfo, pero estamos añadiendo un nuevo canal actualizamos el listado de urls
@@ -475,6 +486,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
             if e.videolibray_emergency_urls:
                 del e.videolibray_emergency_urls
+            if e.video_path:
+                del e.video_path
             if e.channel_redir:
                 del e.channel_redir                                         #... y se borran las marcas de redirecciones
             new_episodelist.append(e)
@@ -631,6 +644,10 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             if tvshow_item.infoLabels["tmdb_id"] == serie.infoLabels["tmdb_id"]:
                 tvshow_item.infoLabels = serie.infoLabels
                 tvshow_item.infoLabels["title"] = tvshow_item.infoLabels["tvshowtitle"] 
+                tvshow_item.infoLabels["thumbnail"] = tvshow_item.infoLabels["thumbnail"].replace('http:', 'https:')
+                if tvshow_item.infoLabels["thumbnail"]: tvshow_item.thumbnail = tvshow_item.infoLabels["thumbnail"]
+                tvshow_item.infoLabels["fanart"] = tvshow_item.infoLabels["fanart"].replace('http:', 'https:')
+                if tvshow_item.infoLabels["fanart"]: tvshow_item.fanart = tvshow_item.infoLabels["fanart"]
 
             if max_sea == high_sea and max_epi == high_epi and (tvshow_item.infoLabels["status"] == "Ended" 
                             or tvshow_item.infoLabels["status"] == "Canceled") and insertados == 0 and fallidos == 0:
@@ -638,6 +655,9 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 logger.debug("%s [%s]: serie 'Terminada' o 'Cancelada'.  Se desactiva la actualización periódica" % \
                             (serie.contentSerieName, serie.channel))
             
+            
+            
+            # Actualiza la fecha de la próxima actualización
             update_last = datetime.date.today()
             tvshow_item.update_last = update_last.strftime('%Y-%m-%d')
             update_next = datetime.date.today() + datetime.timedelta(days=int(tvshow_item.active))
@@ -654,6 +674,15 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             if config.is_xbmc() and not silent:
                 from platformcode import xbmc_videolibrary
                 xbmc_videolibrary.update(FOLDER_TVSHOWS, '_scan_series')
+            # Si el usuario quiere un backup de la serie (local o remoto), se toma la dirección/direcciones de destino y se copia lo nuevo
+            videolibrary_backup =  config.get_setting('videolibrary_backup', channel='videolibrary')
+            if videolibrary_backup:
+                try:
+                    import threading
+                    threading.Thread(target=videolibrary_backup_exec, args=(tvshow_item, videolibrary_backup)).start()
+                except:
+                    logger.error('Error en el backup de la serie %s' % tvshow_item.path)
+                    logger.error(traceback.format_exc(1))
 
     if fallidos == len(episodelist):
         fallidos = -1
@@ -693,6 +722,8 @@ def add_movie(item):
     #    del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
     
     new_item = item.clone(action="findvideos")
+    new_item.contentTitle = re.sub('^(V)-', '', new_item.title)
+    new_item.title = re.sub('^(V)-', '', new_item.title)
     insertados, sobreescritos, fallidos = save_movie(new_item)
 
     if fallidos == 0:
@@ -726,7 +757,8 @@ def add_tvshow(item, channel=None):
 
     """
     logger.info("show=#" + item.show + "#")
-
+    logger.debug("item en videolibrary add tvshow: %s" % item)
+    item.title = re.sub('^(V)-', '', item.title)
     if item.channel == "downloads":
         itemlist = [item.clone()]
 
@@ -739,6 +771,9 @@ def add_tvshow(item, channel=None):
 
         if item.from_action:
             item.__dict__["action"] = item.__dict__.pop("from_action")
+            item.__dict__["extra"] = item.__dict__["action"]
+
+
         if item.from_channel:
             item.__dict__["channel"] = item.__dict__.pop("from_channel")
 
@@ -821,6 +856,9 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             item.videolibray_emergency_urls = True                          #... se marca como "lookup"
             channel_save = item.channel                 #... guarda el canal original por si hay fail-over en Newpct1
             category_save = item.category               #... guarda la categoría original por si hay fail-over o redirección en Newpct1
+            post_save = item.post                       #... guarda el post original
+            referer_save = item.referer                 #... guarda el referer original
+            headers_save = item.headers                 #... guarda el headers original
             if item.channel_redir:                      #... si hay un redir, se restaura temporamente el canal alternativo
                 item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
                 item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
@@ -841,12 +879,16 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             del item_res.videolibray_emergency_urls                         #... y se borra la marca de lookup
         if item.videolibray_emergency_urls:
             del item.videolibray_emergency_urls                             #... y se borra la marca de lookup original
+        item_res.referer = referer_save
+        item_res.headers = headers_save
+        item_res.post = post_save
     
     #Si el usuario ha activado la opción "emergency_urls_torrents", se descargarán los archivos .torrent de cada título
     else:                                                                   #Si se han cacheado con éxito los enlaces...
         try:
             referer = None
             post = None
+            subtitles_list =[]
             channel_bis = generictools.verify_channel(item.channel)
             if config.get_setting("emergency_urls_torrents", channel_bis) and item_res.emergency_urls and path != None:
                 videolibrary_path = config.get_videolibrary_path()              #detectamos el path absoluto del título
@@ -864,28 +906,120 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                     torrents_path = re.sub(r'(?:\.\w+$)', '_%s.torrent' % str(i).zfill(2), path)
                     path_real = ''
                     if magnet_caching_e or not url.startswith('magnet'):
-                        path_real = torrent.caching_torrents(url, referer, post, \
+                        path_real, subtitles_list = torrent.caching_torrents(url, referer, post, \
                                 torrents_path=torrents_path, headers=headers)   #...  para descargar los .torrents
                     if path_real:                                               #Si ha tenido éxito...
                         item_res.emergency_urls[0][i-1] = path_real.replace(videolibrary_path, '')  #se guarda el "path" relativo
                         if 'ERROR' in item.torrent_info: item.torrent_info = ''
+                    if subtitles_list and not item_res.subtitle:
+                        item_res.subtitle = subtitles_list[0].replace(videolibrary_path, '')  #se guarda el "path" relativo
                     i += 1
                     
                 #Restauramos variables originales
-                if item.referer:
-                    item_res.referer = item.referer
-                elif item_res.referer:
-                    del item_res.referer
-                if item.referer:
-                    item_res.referer = item.referer
-                elif item_res.referer:
-                    del item_res.referer
+                if referer_save and not item_res.referer:
+                    item_res.referer = referer_save
+                if headers_save and not item_res.headers:
+                    item_res.headers = headers_save
+                if post_save and not item_res.post:
+                    item_res.post = post_save
                 item_res.url = item.url
                 
         except:
             logger.error('ERROR al cachear el .torrent de: ' + item.channel + ' / ' + item.title)
             logger.error(traceback.format_exc())
-            item_res = item.clone()                             #Si ha habido un error, se devuelve el Item original
+            item_res = item.clone()                                             #Si ha habido un error, se devuelve el Item original
+            item_res.channel = channel_save                     #... restaura el canal original por si hay fail-over o redirección en Newpct1
+            item_res.category = category_save                   #... restaura la categoría original por si hay fail-over o redirección en Newpct1
+            if item_res.videolibray_emergency_urls:
+                del item_res.videolibray_emergency_urls                         #... y se borra la marca de lookup
+            if item.videolibray_emergency_urls:
+                del item.videolibray_emergency_urls                             #... y se borra la marca de lookup original
+            item_res.referer = referer_save
+            item_res.headers = headers_save
+            item_res.post = post_save
 
     #logger.debug(item_res.emergency_urls)
-    return item_res                                             #Devolvemos el Item actualizado con los enlaces de emergencia
+    return item_res                                                             #Devolvemos el Item actualizado con los enlaces de emergencia
+
+
+def videolibrary_backup_exec(item, videolibrary_backup):
+    try: 
+        if item.strm_path:
+            contentType = config.get_setting("folder_movies")
+            video_path = filetools.join(config.get_videolibrary_path(), contentType, filetools.dirname(item.strm_path))
+        else:
+            contentType = config.get_setting("folder_tvshows")
+            video_path = filetools.join(config.get_videolibrary_path(), contentType, item.path)
+        logger.info(filetools.basename(video_path))
+
+        if not item or not videolibrary_backup:
+            logger.error('Peli/Serie o Ruta incorrectos')
+            raise
+        if not filetools.exists(video_path):
+            logger.error('Ruta a Videolibrary incorrecta: %s' % video_path)
+            raise
+
+        backup_addr_list = videolibrary_backup.split(',')
+        backup_addr_list_alt = backup_addr_list[:]
+        # Verificamos que las direcciones están accesibles
+        for addr in backup_addr_list_alt:
+            addr_alt = addr
+            if scrapertools.find_single_match(addr_alt, '^\w+:\/\/') and '@' in addr_alt:
+                addr_alt = re.sub(':\/\/.*?\:.*?\@', '://USERNAME:PASSWORD@', addr_alt)
+            if not filetools.exists(addr):
+                logger.error('Dirección no accesible: %s' % addr_alt)
+                backup_addr_list.remove(addr)
+            else:
+                path = filetools.join(addr, contentType)
+                if not filetools.exists(path):
+                    filetools.mkdir(path)
+                if not filetools.exists(path) and path.startswith('ftp'):
+                    path = path.replace('ftp://', 'smb://')
+                    filetools.mkdir(path)
+                if filetools.exists(path):
+                    res = filetools.write(filetools.join(path, 'back_up_test'), contentType, silent=True)
+                    if res:
+                        res = filetools.remove(filetools.join(path, 'back_up_test'), silent=True)
+                        if not res and path.startswith('ftp'):
+                            path = path.replace('ftp://', 'smb://')
+                            res = filetools.remove(filetools.join(path, 'back_up_test'), silent=True)
+                        continue
+                logger.error('Dirección no accesible para escritura: %s' % filetools.join(addr_alt, contentType))
+                backup_addr_list.remove(addr)
+                    
+        if not backup_addr_list:
+            logger.error('No hay direcciones accesibles para el backup.  Operación terminada')
+            return False
+            
+        # Una vez validadas la(s) ruta(s) se procede a la copia de los archivos que no están en el destino, más el tvshow.nfo de Series
+        for addr in backup_addr_list:
+            backup_path = filetools.join(addr, contentType, filetools.basename(video_path))
+            if not filetools.exists(backup_path):
+                filetools.mkdir(backup_path)
+            if not filetools.exists(backup_path) and backup_path.startswith('ftp'):
+                backup_path_alt = backup_path.replace('ftp://', 'smb://')
+                filetools.mkdir(backup_path_alt)
+            if filetools.exists(backup_path):
+                list_video = filetools.listdir(video_path)
+                list_backup = filetools.listdir(backup_path)
+                addr_alt = backup_path
+                if scrapertools.find_single_match(addr_alt, '^\w+:\/\/') and '@' in addr_alt:
+                    addr_alt = re.sub(':\/\/.*?\:.*?\@', '://USERNAME:PASSWORD@', addr_alt)
+                    logger.info('Haciendo backup en %s' % addr_alt)
+                for file in list_video:
+                    if file not in str(list_backup) or file == 'tvshow.nfo':
+                        res = filetools.copy(filetools.join(video_path, file), filetools.join(backup_path, file), silent=True)
+                        if not res and backup_path.startswith('ftp'):
+                            backup_path = backup_path.replace('ftp://', 'smb://')
+                            addr_alt = addr_alt.replace('ftp://', 'smb://')
+                            logger.error('Dirección no accesible para escritura.  Cambiado a SMB: %s' % filetools.join(addr_alt, contentType))
+                            res = filetools.copy(filetools.join(video_path, file), filetools.join(backup_path, file), silent=True)
+                        logger.info('%s %s, Status: %s' % (backup_path[:4], file, str(res)))
+            else:
+                logger.error('Dirección no accesible para escritura: %s' % backup_path)
+                
+    except:
+        logger.error(traceback.format_exc())
+        return False
+    
+    return True

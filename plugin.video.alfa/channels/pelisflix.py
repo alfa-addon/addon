@@ -53,7 +53,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas','latino']:
-            item.url = host
+            item.url = host + "/ver-peliculas-online-gratis/"
         elif categoria == 'infantiles':
             item.url = host + '/genero/animacion/'
         elif categoria == 'terror':

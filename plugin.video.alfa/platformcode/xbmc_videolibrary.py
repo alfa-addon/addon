@@ -320,20 +320,124 @@ def mark_season_as_watched_on_kodi(item, value=1):
         value = 'Null'
 
     request_season = ''
-    if item.contentSeason > -1:
+    if item.contentSeason:
         request_season = ' and c12= %s' % item.contentSeason
 
-    tvshows_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
-    item_path1 = "%" + item.path.replace("\\\\", "\\").replace(tvshows_path, "")
+    request_episode = ''
+    if item.contentSeason and item.contentEpisodeNumber:
+        season_episode = '%sx%s.strm' % (str(item.contentSeason), str(item.contentEpisodeNumber).zfill(2))
+        request_episode = ' and strFileName= "%s"' % season_episode
+    
+    if item.video_path:
+        path = item.video_path
+    else:
+        path = item.path
+
+    if item.contentType == 'movie':
+        video_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
+        view = 'movie'
+    else:
+        video_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
+        view = 'episode'
+
+    item_path1 = "%" + path.replace("\\\\", "\\").replace(video_path, "")
     if item_path1[:-1] != "\\":
         item_path1 += "\\"
     item_path2 = item_path1.replace("\\", "/")
 
     sql = 'update files set playCount= %s where idFile  in ' \
-          '(select idfile from episode_view where (strPath like "%s" or strPath like "%s")%s)' % \
-          (value, item_path1, item_path2, request_season)
+          '(select idfile from %s_view where (strPath like "%s" or strPath like "%s")%s%s)' % \
+          (value, view, item_path1, item_path2, request_season, request_episode)
 
-    execute_sql_kodi(sql)
+    nun_records, records = execute_sql_kodi(sql)
+    
+    if not nun_records:
+        return
+    
+    # Lanzamos un scan de la Videoteca de Kodi contra un directorio vacío para forzar el refresco de los widgets de pelis y series
+    payload = {
+        "jsonrpc": "2.0",
+        "method": "VideoLibrary.Scan",
+        "id": 1,
+        "params": {"directory": filetools.join(config.get_runtime_path(), 'tools')}
+    }
+    while xbmc.getCondVisibility('Library.IsScanningVideo()'):
+        return                                                                  # Ya está actualizando
+    
+    try:
+        data = get_data(payload)
+        
+        """
+        # Recargamos el Skin para que actualice los widgets.  Dejamos un tiempo para que termine la actualización
+        xbmc.executebuiltin('ReloadSkin()')
+        time.sleep(1)
+        """
+    except:
+        pass
+
+
+def get_videos_watched_on_kodi(item, value=1, list_videos=False):
+    """
+        Obtiene la lista de videos vistos o no vistos en la libreria de Kodi
+        @type item: item
+        @param item: elemento a obtener
+        @type value: int
+        @param value: >0 para visto, 0 para no visto
+        @type list_videos: bool
+        @param list_videos: True: devuelve la lista obtenida en la query
+        @type Return: bool si list_videos=False
+        @param Return: True si list_videos=False y todos tiene el estado "value".  Si list_videos=True, devuelve lista de vídeos
+        """
+    logger.info()
+    # logger.debug("item:\n" + item.tostring('\n'))
+
+    # Solo podemos obtener los vídeos como vistos en la BBDD de Kodi si la BBDD es local,
+    # en caso de compartir BBDD esta funcionalidad no funcionara
+    if config.get_setting("db_mode", "videolibrary"):
+        return
+
+    request_season = ''
+    if item.contentSeason:
+        request_season = ' and c12= %s' % item.contentSeason
+    
+    if item.video_path:
+        path = item.video_path
+    else:
+        path = item.path
+    
+    if item.contentType == 'movie':
+        video_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
+        view = 'movie'
+    else:
+        video_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
+        view = 'episode'
+    
+    tvshows_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
+    item_path1 = "%" + path.replace("\\\\", "\\").replace(tvshows_path, "")
+    if item_path1[:-1] != "\\":
+        item_path1 += "\\"
+    item_path2 = item_path1.replace("\\", "/")
+
+    sql = 'select strFileName, playCount from %s_view where (strPath like "%s" or strPath like "%s")' % (view, item_path1, item_path2)
+
+    nun_records, records = execute_sql_kodi(sql, silent=True)
+
+    if not nun_records:
+        if list_videos:
+            return {}
+        else:
+            return False
+
+    records = filetools.decode(records, trans_none=0)
+    records = dict(records)
+    
+    if list_videos:
+        return records
+        
+    for path, mark in list(records.items()):
+        if mark != value:
+            return False
+    return True
 
 
 def mark_content_as_watched_on_alfa(path):
@@ -789,7 +893,7 @@ def set_content(content_type, silent=False):
     logger.info("%s: %s" % (heading, msg_text))
 
 
-def execute_sql_kodi(sql):
+def execute_sql_kodi(sql, silent=False):
     """
     Ejecuta la consulta sql contra la base de datos de kodi
     @param sql: Consulta sql valida
@@ -799,7 +903,7 @@ def execute_sql_kodi(sql):
     @return: lista con el resultado de la consulta
     @rtype records: list of tuples
     """
-    logger.info()
+    if not silent: logger.info()
     file_db = ""
     nun_records = 0
     records = None
@@ -820,14 +924,14 @@ def execute_sql_kodi(sql):
                 break
 
     if file_db:
-        logger.info("Archivo de BD: %s" % file_db)
+        if not silent: logger.info("Archivo de BD: %s" % file_db)
         conn = None
         try:
             import sqlite3
             conn = sqlite3.connect(file_db)
             cursor = conn.cursor()
 
-            logger.info("Ejecutando sql: %s" % sql)
+            if not silent: logger.info("Ejecutando sql: %s" % sql)
             cursor.execute(sql)
             conn.commit()
 
@@ -841,7 +945,7 @@ def execute_sql_kodi(sql):
                 nun_records = conn.total_changes
 
             conn.close()
-            logger.info("Consulta ejecutada. Registros: %s" % nun_records)
+            if not silent: logger.info("Consulta ejecutada. Registros: %s" % nun_records)
 
         except:
             logger.error("Error al ejecutar la consulta sql")

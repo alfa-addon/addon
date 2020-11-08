@@ -1,7 +1,7 @@
 {
   "id": "pedropolis",
   "name": "PedroPolis",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "fanart": "https://s33.postimg.cc/d3ioghaof/image.png",

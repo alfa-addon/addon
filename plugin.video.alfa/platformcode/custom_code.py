@@ -65,6 +65,10 @@ def init():
     """
 
     try:
+        #Se realizan algunas funciones con cada nueva versión de Alfa
+        if not filetools.exists(filetools.join(config.get_runtime_path(), 'custom_code.json')):
+            config.set_setting('cf_assistant_ua', '')                   # Se limpia CF_UA. Mejora de rendimiento en httptools CF
+        
         #Comprime la BD de cache de TMDB para evitar que crezca demasiado
         bd_tmdb_maintenance()
         if config.get_setting('tmdb_cache_expire', default=4) == 4:
@@ -77,8 +81,15 @@ def init():
         version = 'plugin.video.alfa-%s.zip' % config.get_addon_version(with_fix=False)
         filetools.remove(filetools.join('special://home', 'addons', 'packages', version), True)
         
-        #Borrar contenido de carpeta de Torrents
+        #Borrar contenido de carpeta de Torrents y de Subtitles
         filetools.rmdirtree(filetools.join(config.get_videolibrary_path(), 'temp_torrents_Alfa'), silent=True)
+        subtitle_path = config.get_kodi_setting("subtitles.custompath")
+        if subtitle_path:
+            ret = filetools.rmdirtree(subtitle_path, silent=True)
+            if not ret: logger.error('RMDIR: ' + subtitle_path)
+            time.sleep(1)
+            ret = filetools.mkdir(subtitle_path, silent=True)
+            if not ret: logger.error('MKDIR: ' + subtitle_path)
 
         #Verifica si Kodi tiene algún achivo de Base de Datos de Vídeo de versiones anteriores, entonces los borra
         verify_Kodi_video_DB()
@@ -321,8 +332,14 @@ def update_external_addon(addon_name):
             alfa_addon_updates_mig = filetools.join(config.get_runtime_path(), "lib")
             alfa_addon_updates = filetools.join(alfa_addon_updates_mig, addon_name)
             
+            #Está el addon activo?
+            try:
+                __settings__ = xbmcaddon.Addon(id="plugin.video." + addon_name)
+            except:
+                logger.error('Addon %s desactivado' % (addon_name.upper()))
+                return True
+
             #Path de destino en addon externo
-            __settings__ = xbmcaddon.Addon(id="plugin.video." + addon_name)
             if addon_name.lower() in ['quasar', 'elementum']:
                 addon_path_root = filetools.translatePath(__settings__.getAddonInfo('Path'))
                 addon_path_mig = filetools.join(addon_path_root, filetools.join("resources", "site-packages"))
@@ -361,6 +378,7 @@ def update_external_addon(addon_name):
                 return True
             else:
                 logger.error('Alguna carpeta no existe: Alfa: %s o %s: %s' % (alfa_addon_updates, addon_name, addon_path_mig))
+
         # Se ha desinstalado Quasar, reseteamos la opción
         else:
             config.set_setting('addon_quasar_update', False)
@@ -389,6 +407,12 @@ def update_libtorrent():
             config.set_setting("bt_download_path", config.get_setting("downloadpath"), server="torrent")
         config.set_setting("mct_download_limit", "", server="torrent")
         config.set_setting("magnet2torrent", False, server="torrent")
+        
+    if not filetools.exists(filetools.join(config.get_setting("bt_download_path", server="torrent"), 'BT-torrents')):
+        filetools.mkdir(filetools.join(config.get_setting("bt_download_path", server="torrent"), 'BT-torrents'))
+    if not filetools.exists(filetools.join(config.get_setting("mct_download_path", server="torrent"), 'MCT-torrent-videos')):
+        filetools.mkdir(filetools.join(config.get_setting("mct_download_path", server="torrent"), 'MCT-torrent-videos'))
+        filetools.mkdir(filetools.join(config.get_setting("mct_download_path", server="torrent"), 'MCT-torrents'))
         
     if not filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json")) or not \
                     config.get_setting("unrar_path", server="torrent", default=""):
@@ -447,7 +471,7 @@ def update_libtorrent():
         
         if unrar: config.set_setting("unrar_path", unrar, server="torrent")
 
-    # Ahora descargamos la última versión disponible de Liborrent para esta plataforma
+    # Ahora descargamos la última versión disponible de Libtorrent para esta plataforma
     try:
         version_base = filetools.join(config.get_runtime_path(), 'lib', 'python_libtorrent')
         if config.get_setting("libtorrent_version", server="torrent", default=""):
@@ -538,7 +562,7 @@ def set_Kodi_video_DB_useFolderNames():
     
     from platformcode import xbmc_videolibrary
 
-    strPath = filetools.join(config.get_setting("videolibrarypath"), config.get_setting("folder_movies"), ' ').strip()
+    strPath = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"), ' ').strip()
     scanRecursive = 2147483647
         
     sql = 'UPDATE path SET useFolderNames=1 WHERE (strPath="%s" and scanRecursive=%s and strContent="movies" ' \

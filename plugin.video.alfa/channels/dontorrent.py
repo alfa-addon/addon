@@ -34,6 +34,8 @@ channel = 'dontorrent'
 categoria = channel.capitalize()
 
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
+IDIOMAS_TMDB = {0: 'es', 1: 'en', 2: 'es,en'}
+idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', channel)]        # Season colapse?]
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel) #Actualización sólo últ. Temporada?
 timeout = config.get_setting('timeout_downloadpage', channel)
 season_colapse = config.get_setting('season_colapse', channel)                  # Season colapse?
@@ -101,7 +103,7 @@ def submenu(item):
     thumb_genero = get_thumb("genres.png")
     thumb_anno = get_thumb("years.png")
 
-    patron = '<h1\s*class="list-group-item top"\s*style="[^"]+">.*?<\/h1>\s*(.*?)<\/span><\/div>'
+    patron = '<h1\s*class="list-group-item top"\s*style="[^"]+">.*?<\/h1>\s*(.*?)<\/span>(?:<\/a><div|<\/div>)'
     data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
                                           patron=patron, item=item, itemlist=[])    # Descargamos la página
 
@@ -447,9 +449,7 @@ def listado(item):                                                              
                 if not title:
                     title = scrapedurl
 
-            logger.error(title)
             title = scrapertools.remove_htmltags(title).rstrip('.')             # Removemos Tags del título
-            logger.error(title)
             url = scrapedurl
             if '/aviso-legal' in url:                                           # Ignoramos estas entradas
                 continue
@@ -600,7 +600,7 @@ def listado(item):                                                              
         cnt_tot_match += cnt_match                                              # Calcular el num. total de items mostrados
     
     #Pasamos a TMDB la lista completa Itemlist
-    tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda='es')
+    tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda=idioma_busqueda)
     
     #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
     item, itemlist = generictools.post_tmdb_listado(item, itemlist)
@@ -831,6 +831,10 @@ def findvideos(item):
             itemlist.append(Item(channel=item.channel, url=host, 
                         title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", 
                         thumbnail=thumb_separador, folder=False))
+        
+        if len(itemlist_t) == 0:
+            if len(itemlist) == 0 or (len(itemlist) > 0 and itemlist[-1].server != 'torrent'):
+                return []
         itemlist.extend(itemlist_t)                                             #Pintar pantalla con todo si no hay filtrado
     
     # Requerido para AutoPlay
@@ -843,6 +847,7 @@ def episodios(item):
     logger.info()
     
     itemlist = []
+    search_seasons = True
     item.category = categoria
     
     #logger.debug(item)
@@ -871,7 +876,7 @@ def episodios(item):
 
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
     try:
-        tmdb.set_infoLabels(item, True, idioma_busqueda='es,en')
+        tmdb.set_infoLabels(item, True, idioma_busqueda=idioma_busqueda)
     except:
         pass
         
@@ -900,7 +905,7 @@ def episodios(item):
         
     # Obtenemos todas las Temporada de la Serie desde Search
     # Si no hay TMDB o es sólo una temporada, listamos lo que tenemos
-    if season_display == 0 and item.infoLabels['tmdb_id'] and max_temp > 1:
+    if search_seasons and season_display == 0 and item.infoLabels['tmdb_id'] and max_temp > 1:
         # Si hay varias temporadas, buscamos todas las ocurrencias y las filtraos por TMDB y calidad
         list_temp = find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo)
 
@@ -933,6 +938,7 @@ def episodios(item):
             item_local = item.clone()
             item_local.action = "findvideos"
             item_local.contentType = "episode"
+            item_local.extra = "episodios"
             if item_local.library_playcounts:
                 del item_local.library_playcounts
             if item_local.library_urls:
@@ -991,9 +997,7 @@ def episodios(item):
             except:
                 logger.error('ERROR al extraer Temporada/Episodio: ' + title)
                 item_local.contentSeason = 1
-                item_local.contentEpisodeNumber = 0
-                if item.extra == 'documentales':
-                    item_local.contentEpisodeNumber = 1
+                item_local.contentEpisodeNumber = 1
 
             if epi_rango:                                                       #Si son episodi os múltiples, lo guardamos
                 item_local.infoLabels['episodio_titulo'] = 'al %s' % str(alt_epi).zfill(2)
@@ -1021,7 +1025,7 @@ def episodios(item):
 
     if not item.season_colapse:                                                 #Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
-        tmdb.set_infoLabels(itemlist, True, idioma_busqueda='es,en')
+        tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma_busqueda)
 
         #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
         item, itemlist = generictools.post_tmdb_episodios(item, itemlist)
@@ -1151,7 +1155,7 @@ def newest(categoria):
             item.action = "novedades"
             itemlist = novedades(item)
 
-        if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
+        if len(itemlist) > 0 and (">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla

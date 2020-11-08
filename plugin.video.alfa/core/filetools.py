@@ -10,12 +10,13 @@ from builtins import range
 from past.utils import old_div
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; basestring = str
 
 import os
 import traceback
 
 from core import scrapertools
+from core.item import Item
 from platformcode import platformtools, logger
 
 try:
@@ -51,7 +52,7 @@ else:
 
 
 
-def validate_path(path):
+def validate_path(path, trans_none=''):
     """
     Elimina cáracteres no permitidos
     @param path: cadena a validar
@@ -59,6 +60,9 @@ def validate_path(path):
     @rtype: str
     @return: devuelve la cadena sin los caracteres no permitidos
     """
+    if not path or not isinstance(path, (unicode, basestring, bytes)):
+        if path is None: path = trans_none
+
     chars = ":*?<>|"
     if scrapertools.find_single_match(path, '(^\w+:\/\/)'):
         protocolo = scrapertools.find_single_match(path, '(^\w+:\/\/)')
@@ -76,7 +80,7 @@ def validate_path(path):
         return unidad + ''.join([c for c in path if c not in chars])
 
 
-def translatePath(path):
+def translatePath(path, trans_none=''):
     """
     Kodi 19: xbmc.translatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.translatePath instead.
     @param path: cadena con path special://
@@ -84,6 +88,10 @@ def translatePath(path):
     @rtype: str
     @return: devuelve la cadena con el path real
     """
+    if not path or not isinstance(path, (unicode, basestring, bytes)):
+        if path is None: path = trans_none
+        return path
+
     if PY3 and xbmc_vfs:
         if PY3 and isinstance(path, bytes):
             path = path.decode(fs_encoding)
@@ -97,7 +105,7 @@ def translatePath(path):
     return path
 
 
-def makeLegalFilename(path):
+def makeLegalFilename(path, trans_none=''):
     """
     Kodi 19: xbmc.makeLegalFilename is deprecated and might be removed in future kodi versions. Please use xbmcvfs.makeLegalFilename instead.
     @param path: cadena a convertir platform specific
@@ -105,6 +113,10 @@ def makeLegalFilename(path):
     @rtype: str
     @return: devuelve la cadena con el path ajustado
     """
+    if not path or not isinstance(path, (unicode, basestring, bytes)):
+        if path is None: path = trans_none
+        return path
+
     if PY3 and xbmc_vfs:
         if PY3 and isinstance(path, bytes):
             path = path.decode(fs_encoding)
@@ -118,7 +130,7 @@ def makeLegalFilename(path):
     return path
 
 
-def validatePath(path):
+def validatePath(path, trans_none=''):
     """
     Kodi 19: xbmc.validatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.validatePath instead.
     @param path: cadena a convertir platform specific
@@ -126,6 +138,10 @@ def validatePath(path):
     @rtype: str
     @return: devuelve la cadena con el path ajustado
     """
+    if not path or not isinstance(path, (unicode, basestring, bytes)):
+        if path is None: path = trans_none
+        return path
+
     if PY3 and xbmc_vfs:
         if PY3 and isinstance(path, bytes):
             path = path.decode(fs_encoding)
@@ -139,7 +155,7 @@ def validatePath(path):
     return path
 
 
-def encode(path, _samba=False):
+def encode(path, _samba=False, trans_none=''):
     """
     Codifica una ruta según el sistema operativo que estemos utilizando.
     El argumento path tiene que estar codificado en utf-8
@@ -150,7 +166,11 @@ def encode(path, _samba=False):
     @rtype: str
     @return ruta codificada en juego de caracteres del sistema o utf-8 si samba
     """
-    if path.startswith("special://"):
+    if not path or isinstance(path, (list, dict)):
+        if path is None: path = trans_none
+        return path
+
+    if isinstance(path, (unicode, basestring, bytes)) and "special://" in path:
         path = translatePath(path)
     
     if not isinstance(path, unicode):
@@ -168,28 +188,42 @@ def encode(path, _samba=False):
     return path
 
 
-def decode(path):
+def decode(path, trans_none=''):
     """
-    Convierte una cadena de texto al juego de caracteres utf-8
+    Convierte una cadena de texto, lista o dict al juego de caracteres utf-8
     eliminando los caracteres que no estén permitidos en utf-8
-    @type: str, unicode, list de str o unicode
-    @param path: puede ser una ruta o un list() con varias rutas
+    @type: str, unicode, list de str o unicode, dict list de str o unicode o list
+    @param path: puede ser una ruta o un list() o un dict{} con varias rutas
     @rtype: str
     @return: ruta codificado en UTF-8
     """
+    if not path:
+        if path is None: path = trans_none
+        return path
+        
+    if isinstance(path, (unicode, basestring, bytes)) and "special://" in path:
+        path = translatePath(path)
+    
     if isinstance(path, list):
         for x in range(len(path)):
-            if not isinstance(path[x], unicode):
-                path[x] = path[x].decode(fs_encoding, "ignore")
-            path[x] = path[x].encode("utf-8", "ignore")
-    else:
-        if not isinstance(path, unicode):
-            path = path.decode(fs_encoding, "ignore")
-        path = path.encode("utf-8", "ignore")
+            path[x] = decode(path[x], trans_none=trans_none)
+    elif isinstance(path, tuple):
+        path = tuple(decode(list(path), trans_none=trans_none))
+    elif isinstance(path, dict):
+        newdct = {}
+        for key in path:
+            value_unc = decode(path[key], trans_none=trans_none)
+            key_unc = decode(key, trans_none=trans_none)
+            newdct[key_unc] = value_unc
+        return newdct
+    elif isinstance(path, unicode):
+        path = path.encode("utf8")
+    elif not PY3 and isinstance(path, basestring):
+        path = unicode(path, "utf8", "ignore").encode("utf8")
     
     if PY3 and isinstance(path, bytes):
         path = path.decode(fs_encoding)
-    
+
     return path
 
 
@@ -1039,7 +1073,7 @@ def listdir(path, silent=False, vfs=True, file_inf=False):
                     else:
                         ls_la += ['%s%s  %s  %s  %s  %s  %s  %s' % ('#', '#', '#', '#', '#', '#', '#', file)]
                 res = ls_la
-            return res
+            return decode(res)
         
         elif path.lower().startswith("smb://"):
             return decode(samba.listdir(path))
@@ -1084,13 +1118,17 @@ def split(path, vfs=True):
     @return: (dirname, basename)
     @rtype: tuple
     """
+    path = encode(path)
     if scrapertools.find_single_match(path, '(^\w+:\/\/)'):
         protocol = scrapertools.find_single_match(path, '(^\w+:\/\/)')
         if '/' not in path[6:]:
             path = path.replace(protocol, protocol + "/", 1)
         return path.rsplit('/', 1)
     else:
-        return os.path.split(path)
+        try:
+            return decode(os.path.split(path))
+        except:
+            return os.path.split(path)
 
 
 def basename(path, vfs=True):
@@ -1101,7 +1139,11 @@ def basename(path, vfs=True):
     @return: fichero de la ruta
     @rtype: str
     """
-    return split(path)[1]
+    path = encode(path)
+    try:
+        return decode(split(path)[1])
+    except:
+        return split(path)[1]
 
 
 def dirname(path, vfs=True):
@@ -1112,7 +1154,11 @@ def dirname(path, vfs=True):
     @return: directorio de la ruta
     @rtype: str
     """
-    return split(path)[0]
+    path = encode(path)
+    try:
+        return decode(split(path)[0])
+    except:
+        return split(path)[0]
 
 
 def is_relative(path):

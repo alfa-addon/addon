@@ -35,8 +35,7 @@ list_servers = ['torrent']
 
 channel = 'zooqle'
 host = 'https://zooqle.com/'
-host_alt = ['https://zooqle.com/', 'https://zooqle1.unblocked.is/', 'https://zooqle.unblocked.win/', 
-            'https://zooqle-com.prox2.info/']
+host_alt = ['https://zooqle.com/', 'https://zooqle.unblockit.top/', 'https://zooqle.unblockninja.com/']
 """
 https://torrents.io/proxy/zooqle
 host_alt = ['https://zooqle.com/', 'https://zooqle1.unblocked.is/', 'https://zooqle.unblocked.win/', 
@@ -312,6 +311,9 @@ def listado(item):
             patron += '"([^"]+)")?><\/a><\/td>.*?<div class="mov_head">\s*<a href="'
             patron += '([^"]+)">(.*?)<\/a>\s*<span class="[^"]+">\((\d+)\)<\/span>()'
             
+        #logger.debug("PATRON: " + patron)
+        #logger.debug(data)
+        
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches and item.extra != 'search':                              #error
             item = generictools.web_intervenida(item, data)                     #Verificamos que no haya sido clausurada
@@ -334,9 +336,7 @@ def listado(item):
         elif item.extra3 == 'novedades':
             matches = matches[mat_len:]
         
-        #logger.debug("PATRON: " + patron)
         #logger.debug(matches)
-        #logger.debug(data)
         
         #Buscamos la próxima y la última página
         if item.extra == 'search' or item.extra3 == 'novedades' or item.extra3 == 'populares': # Si es Search, no hay paginado
@@ -540,17 +540,17 @@ def findvideos(item):
 
     #Bajamos los datos de las páginas
     data = ''
-    patron = '<tr><td class="text-muted[^>]+>(\d+).<\/td><td class="text-nowrap[^>]+>'
-    patron += '<a .*?href="([^"]+)">([^<]+)<\/a>\s*.*?(?:<span class="[^"]+"><i class='
-    patron += '"[^"]+zqf-comments pad-r"><\/i>\d+<\/span>)?\s*<div class=[^>]+>\s*.*?'
-    patron += '(?:<span class=[^>]+Audio format"><i class=[^>]+zqf-mi-audio[^>]+><\/i>'
-    patron += '(.*?)<\/span>)?\s*(?:<span class="smaller[^"]+"\s*title="Detected languages">'
-    patron += '(.*?)<\/span>)?.*?(?:<span class=[^>]+hidden-md hidden-xs[^>]+><i class='
-    patron += '[^>]+zqf-mi-width[^>]+><\/i>\s*(.*?)<\/span>)?<\/div><\/td>(?:<td class='
-    patron += '[^>]+><div class="progress[^>]+><div class="progress-bar[^"]+" style=[^>]+>'
-    patron += '(.*?)<\/div><\/div><\/td>)?.*?<td class=[^>]+>.*?<\/td><td class[^>]+>'
-    patron += '<div class="[^"]+" title="Seeders:\s*(.*?)\s*\|[^>]+>.*?<\/div><\/div>'
-    patron += '<\/td><\/tr>'
+    patron = '<tr>\s*<td\s*class="text-muted[^>]+>(\d+).<\/td>\s*<td\s*class='
+    patron += '"text-nowrap[^>]+>\s*<a[^h]+href="([^"]+)">\s*([^<]+)<\/a>\s*'
+    patron += '(?:<div[^<]+)?\s*(?:<span\s*class=[^>]+Audio\s*format">\s*<i\s*class='
+    patron += '[^>]+zqf-mi-audio[^>]+>\s*<\/i>([^>]+)<\/span>(?:\s*&nbsp;)?\s*)?\s*'
+    patron += '(?:<span\s*class="smaller[^"]+"\s*title="Detected\s*languages">([^<]+)<\/span>'
+    patron += '(?:\s*&nbsp;)?\s*)?(?:<span\s*class="text-nowrap[^>]+>\s*<i\s*class='
+    patron += '"zqf[^>]+>\s*<\/i>\s*([^<]+)<\/span>(?:\s*&nbsp;)?\s*<\/div>\s*)?\s*'
+    patron += '<\/td>\s*<td\s*class="[^<]+<div\s*class="progress[^<]+<div\s*class='
+    patron += '"progress-bar[^>]+>\s*([^<]+)<\/div>\s*<\/div>\s*<\/td>\s*(?:<td\s*'
+    patron += 'class=[^>]+>[^<]+<\/td>\s*<td\s*class[^>]+>\s*<div\s*class="progress[^"]+"'
+    patron += '\s*title="Seeders:\s*(.*?)\s*\|[^>]+>)?'
         
     while curr_page <= last_page:                                               # Leemos todas las páginas
         data = ''
@@ -923,8 +923,8 @@ def episodios(item):
     if item.infoLabels['number_of_seasons']:
         max_temp = item.infoLabels['number_of_seasons']
     y = []
+    patron = 'season (\d+)'
     if modo_ultima_temp_alt and item.library_playcounts:        #Averiguar cuantas temporadas hay en Videoteca
-        patron = 'season (\d+)'
         matches = re.compile(patron, re.DOTALL).findall(str(item.library_playcounts))
         for x in matches:
             y += [int(x)]
@@ -969,7 +969,7 @@ def episodios(item):
             return itemlist                                                     #Salimos
         
         logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " 
-                        + " / PATRON: " + patron + " / DATA: " + temporada)
+                        + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + 
                         ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  ' 
                         + 'Reportar el error con el log'))
@@ -1088,7 +1088,7 @@ def check_blocked_IP(data, itemlist, url, timeout=timeout):
     logger.info()
     thumb_separador = get_thumb("next.png")
     
-    host = scrapertools.find_single_match(url, '(http.?\:\/\/(?:www.)?.*?\.\w+(?:\.\w+)?\/)')
+    host = scrapertools.find_single_match(url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
     
     if 'Please wait while we try to verify your browser...' in data:
         logger.error("ERROR 99: La IP ha sido bloqueada por la Web" + " / URL: " 
@@ -1114,9 +1114,10 @@ def retry_alt(url, timeout=timeout):                                            
     logger.info()
     
     random.shuffle(host_alt)
-    host_a = scrapertools.find_single_match(url, '(http.?\:\/\/(?:www.)?.*?\.\w+(?:\.\w+)?\/)')
+    host_a = scrapertools.find_single_match(url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
     
     logger.error("ERROR 98: Web caída, reintentando..." + " / URL: " + url)
+    config.set_setting('domain_name', host, channel)                            # Reseteamos el dominio
     
     for host_b in host_alt:
         if host_b in url:

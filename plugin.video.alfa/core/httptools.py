@@ -51,8 +51,13 @@ ficherocookies = os.path.join(config.get_data_path(), "cookies.dat")
 
 # Headers por defecto, si no se especifica nada
 default_headers = dict()
-#default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) Chrome/79.0.3945.117"
-default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
+# default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) Chrome/79.0.3945.117"
+
+ver = config.get_setting("chrome_ua_version")
+ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Safari/537.36" % ver
+
+default_headers["User-Agent"] = ua
+#default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
 default_headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
 default_headers["Accept-Language"] = "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3"
 default_headers["Accept-Charset"] = "UTF-8"
@@ -69,6 +74,26 @@ def get_user_agent():
     # Devuelve el user agent global para ser utilizado cuando es necesario para la url.
     return default_headers["User-Agent"]
 
+def get_cookie(url, name, follow_redirects=False):
+    if follow_redirects:
+        try:
+            import requests
+            headers = requests.head(url, headers=default_headers).headers
+            url = headers['location']
+        except:
+            pass
+        
+    domain = urlparse.urlparse(url).netloc
+    split_lst = domain.split(".")
+
+    if len(split_lst) > 2:
+        domain = domain.replace(split_lst[0], "")
+    
+    for cookie in cj:
+        if cookie.name == name and domain in cookie.domain:
+            return cookie.value
+    return False
+
 def get_url_headers(url, forced=False):
     from . import scrapertools
     
@@ -84,6 +109,9 @@ def get_url_headers(url, forced=False):
             return url
 
     headers = dict()
+    cf_ua = config.get_setting('cf_assistant_ua', None)
+    if cf_ua and cf_ua != 'Default':
+        default_headers["User-Agent"] = cf_ua
     headers["User-Agent"] = default_headers["User-Agent"]
     headers["Cookie"] = "; ".join(["%s=%s" % (c.name, c.value) for c in list(domain_cookies.values())])
 
@@ -458,6 +486,9 @@ def downloadpage(url, **opt):
     load_cookies()
     import requests
 
+    cf_ua = config.get_setting('cf_assistant_ua', None)
+    url = url.strip()
+
     # Headers por defecto, si no se especifica nada
     req_headers = default_headers.copy()
     if opt.get('add_referer', False):
@@ -488,11 +519,13 @@ def downloadpage(url, **opt):
 
         domain = urlparse.urlparse(url)[1]
         global CS_stat
-        if domain in CF_LIST or opt.get('CF', False):                           #Está en la lista de CF o viene en la llamada
+        if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True):    #Está en la lista de CF o viene en la llamada
             from lib import cloudscraper
             session = cloudscraper.create_scraper()                             #El dominio necesita CloudScraper
             session.verify = True
             CS_stat = True
+            if cf_ua and cf_ua != 'Default' and get_cookie(url, 'cf_clearance'):
+                req_headers['User-Agent'] = cf_ua
         else:
             session = requests.session()
             session.verify = False
@@ -500,6 +533,11 @@ def downloadpage(url, **opt):
 
         if opt.get('cookies', True):
             session.cookies = cj
+        
+        if not opt.get('keep_alive', True):
+            #session.keep_alive =  opt['keep_alive']
+            req_headers['Connection'] = "close"
+        
         session.headers.update(req_headers)
         
         # Prepara la url en caso de necesitar proxy, o si se envía "proxy_addr_forced" desde el canal
@@ -595,7 +633,8 @@ def downloadpage(url, **opt):
         
         response_code = req.status_code
 
-        if req.headers.get('Server', '').startswith('cloudflare') and response_code in [429, 503, 403] and not opt.get('CF', False):
+        if req.headers.get('Server', '').startswith('cloudflare') and response_code in [429, 503, 403] \
+                        and not opt.get('CF', False) and opt.get('CF_test', True):
             domain = urlparse.urlparse(url)[1]
             if domain not in CF_LIST:
                 opt["CF"] = True
@@ -603,6 +642,12 @@ def downloadpage(url, **opt):
                     CF_File.write("%s\n" % domain)
                 logger.debug("CF retry... for domain: %s" % domain)
                 return downloadpage(url, **opt)
+        
+        if req.headers.get('Server', '') == 'Alfa' and response_code in [429, 503, 403] \
+                        and not opt.get('cf_v2', False) and opt.get('CF_test', True):
+            opt["cf_v2"] = True
+            logger.debug("CF Assistant retry... for domain: %s" % urlparse.urlparse(url)[1])
+            return downloadpage(url, **opt)
 
         response['data'] = req.content
         try:
@@ -693,6 +738,12 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
         info_dict.append(('Dominio', urlparse.urlparse(url)[1]))
         if CS_stat:
             info_dict.append(('Dominio_CF', True))
+        if not opt.get('CF_test', True):
+            info_dict.append(('CF_test', False))
+        if not opt.get('keep_alive', True):
+            info_dict.append(('Keep Alive', opt.get('keep_alive', True)))
+        if opt.get('cf_v2', False):
+            info_dict.append(('CF v2 Assistant', opt.get('cf_v2', False)))
         if opt.get('post', None):
             info_dict.append(('Peticion', 'POST' + proxy_data.get('stat', '')))
         elif opt.get('only_headers', False):

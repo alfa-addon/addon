@@ -12,8 +12,8 @@ from core.item import Item
 from lib import generictools
 from platformcode import logger
 
-URL_BROWSE = "https://yts.am/browse-movies"
-URL = "https://yts.am"
+URL_BROWSE = "https://yts.mx/browse-movies/"
+URL = "https://yts.mx"
 
 def mainlist(item):
     logger.info()
@@ -148,7 +148,7 @@ def search(item, text):
     logger.info('search: ' + text)
 
     try:
-        item.url = URL_BROWSE + text + '/all/all/0/latest'
+        item.url = URL_BROWSE + text + '/all/all/0/latest/0/all'
         itemlist = movies(item)
 
         return itemlist

@@ -27,6 +27,7 @@ list_servers = ['rapidvideo', 'verystream', 'streamplay']
 
 host = 'https://verencasa.com/'
 referer = 'https://pepecine.to/'
+sec_host = 'https://pepechino.hopto.org/'
 
 
 def mainlist(item):
@@ -69,7 +70,7 @@ def submenu(item):
     itemlist.append(Item(channel=item.channel, title='Generos', url='%ssecure/titles%s&genre=' % (host, item.url),
                          action='genres', thumbnail=get_thumb('genres', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + 'secure/search/',
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url= sec_host + 'secure/search/',
                          thumbnail=get_thumb("search", auto=True), search_type=item.title.lower()))
 
     return itemlist
@@ -287,6 +288,7 @@ def findvideos(item):
     logger.info()
 
     itemlist = []
+    item.url = re.sub(host, sec_host, item.url)
     is_tvshow = False
     json_data = httptools.downloadpage(item.url, headers={'Referer': referer}).json
 
@@ -352,7 +354,7 @@ def search_results(item):
 
     if json_data.get('results', ''):
         for elem in json_data['results']:
-            url = '%ssecure/titles/%s?titleId=%s' % (host, elem['id'], elem['id'])
+            url = '%ssecure/titles/%s?titleId=%s' % (item.host, elem['id'], elem['id'])
             if not 'videos' in elem:
                 continue
             try:
@@ -398,8 +400,10 @@ def search_results(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
+    #item.host = "https://pepecine.tv/"
+    #item.url =  item.host + 'secure/search/'
     if not item.url:
-        item.url = host + 'secure/search/'
+        item.url = sec_host + 'secure/search/'
 
     item.url = '%s%s?type=&limit=30' % (item.url, texto)
 

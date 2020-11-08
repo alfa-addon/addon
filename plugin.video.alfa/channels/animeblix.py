@@ -24,7 +24,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['directo', 'fembed', 'streamtape']
 
-host = "https://animeblix.com/"
+host = "https://animeblix.com/api/"
 
 def mainlist(item):
     logger.info()
@@ -89,12 +89,11 @@ def new_episodes(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url).find("section", class_="latest-episodes")
-    matches = soup.find("div", class_="row mx-n2").find_all("article", class_="card")
-
+    soup = create_soup(item.url.replace("api/", "")).find("section", class_="latestEpisodes")
+    matches = soup.find("div", class_="row mx-n1 mx-xl-n2").find_all("article", class_="xC")
     for elem in matches:
         title = elem.img["alt"]
-        thumb = elem.img["data-src"]
+        thumb = host + elem.img["data-src"]
         url = elem.a["href"]
         itemlist.append(Item(channel=item.channel, title=title, thumbnail=thumb, url=url, action="findvideos"))
 
@@ -107,12 +106,12 @@ def episodios(item):
     itemlist = list()
 
     data = httptools.downloadpage(item.url).data
-    matches = scrapertools.find_single_match(data, 'episodes="([^"]+)')
+    matches = scrapertools.find_single_match(data, 'initial-episodes="([^"]+)"').replace("&quot;", '"')
     matches = jsontools.load(scrapertools.unescape(matches))
     infoLabels = item.infoLabels
 
-    for elem in matches["data"]:
-        url = "%s%s-%s-%s" % (host, elem["anime"]["slug"], elem["number"], elem["uuid"])
+    for elem in matches:
+        url = "%s" % (elem["url"])
         uuid = elem["uuid"]
         title = "1x%s - Episodio %s" % (elem["number"], elem["number"])
         epi_num = elem["number"]
@@ -139,7 +138,7 @@ def list_all(item):
 
     itemlist = list()
     base_url = "%s/%s" % (item.url, item.s_type)
-    headers = {"referer": item.url, "x-requested-with": "XMLHttpRequest"}
+    headers = {"referer": item.url.replace("api/", ""), "x-requested-with": "XMLHttpRequest"}
     matches = httptools.downloadpage(base_url, headers=headers).json
 
     for elem in matches["data"]:
@@ -152,7 +151,7 @@ def list_all(item):
         elif "castellano" in title.lower():
             title = title.replace(" Castellano", "")
             lang = "CAST"
-        thumb = host + elem["imgPortait"]
+        thumb = host + elem["imgPoster"]
         plot = elem["synopsis"]
 
         new_item = Item(channel=item.channel, title=title, url=url, action='episodios', plot=plot,
@@ -185,12 +184,13 @@ def findvideos(item):
     else:
         item.uuid = scrapertools.find_single_match(item.url, "\d+-(.+)")
         ref = host
-    base_url = "%sepisodes/player-options/%s" % (host, item.uuid)
+    base_url = "%sepisodes/%s/player-options" % (host, item.uuid)
     headers = {"referer": ref, "x-requested-with": "XMLHttpRequest"}
     urls = httptools.downloadpage(base_url, headers=headers).json
-
+    if not item.language:
+        item.language = "VOSE"
     for url in urls:
-        url = url["code"]
+        url = url["url"]
         if "/stream/" in url:
             data = httptools.downloadpage(url, headers={'Referer': item.url}).data
             url = scrapertools.find_single_match(data, 'file: "([^"]+)"')

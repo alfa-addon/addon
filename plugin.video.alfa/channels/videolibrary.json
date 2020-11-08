@@ -31,7 +31,9 @@
         "@60609",
         "@60610",
         "@60611",
-        "@60612"
+        "@60612",
+        "2 min",
+        "5 min"
       ]
     },
     {
@@ -338,6 +340,13 @@
       "type": "bool",
       "label": "Verificación de los contadores de vídeos vistos/no vistos (desmarcar para verificar)",
       "default": false
+    },
+    {
+      "id": "videolibrary_backup",
+      "type": "text",
+      "label": "Direccion(es) local o remota para hacer Backup de la Videoteca  ",
+      "enabled": true,
+      "visible": true
     }
   ]
 }

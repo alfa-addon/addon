@@ -29,6 +29,9 @@ def translatePath(path):
     @rtype: str
     @return: devuelve la cadena con el path real
     """
+    if not path:
+        return ''
+
     if PY3:
         if isinstance(path, bytes):
             path = path.decode('utf-8')
@@ -85,7 +88,7 @@ def get_platform(full_version=False):
     code_db = {'10': 'MyVideos37.db', '11': 'MyVideos60.db', '12': 'MyVideos75.db',
                '13': 'MyVideos78.db', '14': 'MyVideos90.db', '15': 'MyVideos93.db',
                '16': 'MyVideos99.db', '17': 'MyVideos107.db', '18': 'MyVideos116.db', 
-               '19': 'MyVideos118.db'}
+               '19': 'MyVideos119.db'}
 
     num_version = xbmc.getInfoLabel('System.BuildVersion')
     num_version = re.match("\d+\.\d+", num_version).group(0)
@@ -384,6 +387,53 @@ def set_setting(name, value, channel="", server=""):
         return value
 
 
+def get_kodi_setting(name, total=False):
+    """
+    Retorna el valor de configuracion del parametro solicitado.
+
+    Devuelve el valor del parametro 'name' en la configuracion global de Kodi
+
+    @param default: valor devuelto en caso de que no exista el parametro name
+    @type default: any
+
+    @return: El valor del parametro 'name'
+    @rtype: any
+
+    """
+
+    # Global Kodi setting
+    from core import scrapertools
+
+    infile = open(os.path.join(translatePath('special://masterprofile/'), "guisettings.xml"), "r")
+    data = infile.read()
+    infile.close()
+
+    ret = {}
+    matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/setting>')
+
+    for _id, value in matches:
+        # hack para devolver el tipo correspondiente
+        if value == "true":
+            value = True
+        elif value == "false":
+            value =  False
+        else:
+            try:
+                value = int(value)
+            except ValueError:
+                value = str(value)
+        
+        if _id == name and not total:
+            return value
+        
+        ret[_id] = value
+    
+    if not total:
+        return None
+    else:
+        return ret
+
+
 def get_localized_string(code):
     dev = __language__(code)
 
@@ -417,7 +467,7 @@ def get_localized_category(categ):
 
 def get_videolibrary_config_path():
     value = get_setting("videolibrarypath")
-    if value == "":
+    if not value:
         verify_directories_created()
         value = get_setting("videolibrarypath")
     return value

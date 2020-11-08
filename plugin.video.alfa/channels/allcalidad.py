@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import sys
+import sys, base64
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
@@ -173,7 +173,7 @@ def findvideos(item):
     data1 = httptools.downloadpage(host + "/wp-json/elifilms/movies?id=" + match, encoding=encoding).json
     for url in data1["data"]["server_list"]:
         url1 = clear_url(url["link"])
-        if url1 in encontrado or "youtube.com" in url1 or "search" in url1:
+        if url1 in encontrado or "youtube.com" in url1 or "search" in url1 or 'salaload.com' in url1:
             continue
         encontrado.append(url1)
         itemlist.append(Item(
@@ -186,19 +186,26 @@ def findvideos(item):
                         url=url1
                        ))
 
-    patron = '<a href="([^"]+)" class="btn btn-xs btn-info.*?<span>([^<]+)</span>'
+    patron = '<a href="([^"]+)" class="bits-download btn btn-xs.*?<span>([^<]+)</span>'
     matches = scrapertools.find_multiple_matches(data, patron)
-    
     for url, srv in matches:
         url = clear_url(url)
         if url in encontrado or ".srt" in url or "search" in url:
             continue
-        encontrado.append(url)
-        new_item= Item(channel=item.channel, url=url, title='%s', action="play", contentTitle=item.contentTitle, contentThumbnail=item.thumbnail,
-                       infoLabels=item.infoLabels, language="Latino")
-        if "torrent" in srv.lower():
-            new_item.server = "Torrent"
-        itemlist.append(new_item)
+        
+        elif '#aHR0' in url:
+            b_url = scrapertools.find_single_match(url, '(aHR0.*)')
+            try:
+                url = base64.b64decode(b_url)
+            except:
+                continue
+        if url:
+            encontrado.append(url)
+            new_item= Item(channel=item.channel, url=url, title='%s', action="play", contentTitle=item.contentTitle,
+                           contentThumbnail=item.thumbnail, infoLabels=item.infoLabels, language="Latino")
+            if "torrent" in srv.lower():
+                new_item.server = "Torrent"
+            itemlist.append(new_item)
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 

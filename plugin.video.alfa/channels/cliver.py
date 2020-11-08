@@ -423,7 +423,7 @@ def findvideos(item):
                 itemlist.append(Item(channel=item.channel,
                         url='',
                         title= title,
-                        contentTitle=item.title,
+                        contentTitle=item.contentTitle,
                         action='play',
                         infoLabels = item.infoLabels,
                         server=server,
@@ -448,7 +448,7 @@ def findvideos(item):
             itemlist.append(Item(channel=item.channel,
                         url=scrapedurl,
                         title= title,
-                        contentSerieName=item.title,
+                        contentSerieName=item.contentSerieName,
                         action='play',
                         infoLabels = item.infoLabels,
                         server=server,
@@ -469,6 +469,7 @@ def findvideos(item):
                  title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
                  url=item.url,
                  action="add_pelicula_to_library",
+                 content_id=item.content_id,
                  extra="findvideos",
                  contentTitle=item.contentTitle,
                  ))
@@ -486,7 +487,7 @@ def play(item):
 
 def js2py_conversion(data):
     logger.info()
-    import js2py
+    from lib import js2py
     import base64
         
     patron = ",\s*S='([^']+)'"

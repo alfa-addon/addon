@@ -125,7 +125,6 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,title)
         if "px.gif" in thumbnail:
             thumbnail = elem.img['data-src']
-        logger.debug(thumbnail)
         plot = ""
         itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))

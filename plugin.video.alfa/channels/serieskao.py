@@ -20,7 +20,7 @@ from platformcode import config, logger
 from channels import filtertools, autoplay
 
 
-IDIOMAS = {'subtitulado': 'VOSE', "latino": "LAT", u"español": "CAST"}
+IDIOMAS = {'2': 'VOSE', "0": "LAT", "1": "CAST"}
 
 list_language = list(IDIOMAS.values())
 
@@ -88,7 +88,6 @@ def create_soup(url, referer=None, unescape=False):
 
     if unescape:
         data = scrapertools.unescape(data)
-
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
     return soup
@@ -248,13 +247,11 @@ def findvideos(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find("ul", id="playeroptionsul")
+    matches = soup.find("div", class_="navEP2")
     if not matches:
         return itemlist
 
-    for elem in matches.find_all("li"):
-
-        lang = elem.find("span", class_="title").text.lower()
+    for elem in matches.find_all("li", class_="dooplay_player_option"):
 
         post = {"action": "doo_player_ajax", "post": elem["data-post"], "nume": elem["data-nume"],
                 "type": elem["data-type"]}
@@ -262,6 +259,7 @@ def findvideos(item):
         doo_url = "%swp-admin/admin-ajax.php" % host
 
         data = httptools.downloadpage(doo_url, post=post, headers=headers).data
+
         if not data:
             continue
         player_url = BeautifulSoup(data, "html5lib").find("iframe")["src"]
@@ -269,6 +267,8 @@ def findvideos(item):
         player = httptools.downloadpage(player_url, headers={"referer": item.url}).data
         soup = BeautifulSoup(player, "html5lib")
         matches = soup.find_all("li", {"onclick": True})
+        lang = soup.find("li", class_="SLD_A")["data-lang"]
+
         for elem in matches:
             url = base64.b64decode(elem["data-r"])
 
@@ -290,7 +290,14 @@ def findvideos(item):
                 v_id = scrapertools.find_single_match(new_data, 'var shareId = "([^"]+)"')
                 url = "https://www.amazon.com/drive/v1/shares/%s" % v_id
             elif "playhydrax.com" in url:
-                continue
+                slug = scrapertools.find_single_match(url, 'v=(\w+)')
+                post = "slug=%s&dataType=mp4" % slug
+                data = httptools.downloadpage("https://ping.iamcdn.net/", post=post).json
+                url = data.get("url", '')
+                if url:
+                    url = "https://www.%s" % base64.b64decode(url[-1:]+url[:-1])
+                    url += '|Referer=https://playhydrax.com/?v=%s&verifypeer=false' % slug
+
             itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                                  language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())

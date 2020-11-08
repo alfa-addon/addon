@@ -30,7 +30,7 @@ list_servers = [
     'fembed'
     ]
 
-host = 'https://poseidonhdd.com/'
+host = 'https://tekilaz.co/'
 
 
 def mainlist(item):
@@ -298,7 +298,7 @@ def play(item):
         base_url = "%sr.php" % host
         post = {"data": data}
         url = httptools.downloadpage(base_url, post=post).url
-        if "fs.poseidonhdd.com" in url:
+        if "fs.%s" % host.replace("https://", "") in url:
             api_url = "%sr.php" % host.replace("https://", "https://fs.")
             v_id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
             post = {"h": v_id}

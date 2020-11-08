@@ -12,6 +12,7 @@ from core import filetools
 from core import scrapertools
 from core import videolibrarytools
 from core.item import Item
+from core import tmdb
 from platformcode import config, logger
 from platformcode import platformtools
 from lib import generictools
@@ -39,9 +40,12 @@ def channel_config(item):
 
 def list_movies(item, silent=False):
     logger.info()
+
     itemlist = []
     dead_list = []
     zombie_list = []
+    tmdb_upd = False
+    
     for raiz, subcarpetas, ficheros in filetools.walk(videolibrarytools.MOVIES_PATH):
         for f in ficheros:
             if f.endswith(".nfo"):
@@ -156,7 +160,21 @@ def list_movies(item, silent=False):
                 # "action": "",
                 # "channel": "videolibrary"}]
                 # logger.debug("new_item: " + new_item.tostring('\n'))
+                
+                if new_item.infoLabels['tmdb_id']: tmdb_upd = True
+
                 itemlist.append(new_item)
+
+    if tmdb_upd:
+        #Pasamos a TMDB la lista completa Itemlist para actualizar Thumbnail y Fanart
+        tmdb.set_infoLabels(itemlist, True)
+
+        for item_tmdb in itemlist:
+            # Actualiza Thumbnail y Fanart
+            item_tmdb.infoLabels["thumbnail"] = item_tmdb.infoLabels["thumbnail"].replace('http:', 'https:')
+            if item_tmdb.infoLabels["thumbnail"]: item_tmdb.thumbnail = item_tmdb.infoLabels["thumbnail"]
+            item_tmdb.infoLabels["fanart"] = item_tmdb.infoLabels["fanart"].replace('http:', 'https:')
+            if item_tmdb.infoLabels["fanart"]: item_tmdb.fanart = item_tmdb.infoLabels["fanart"]
 
     if silent == False:
         return sorted(itemlist, key=lambda it: it.title.lower())
@@ -169,6 +187,7 @@ def list_tvshows(item):
     itemlist = []
     dead_list = []
     zombie_list = []
+    
     # Obtenemos todos los tvshow.nfo de la videoteca de SERIES recursivamente
     for raiz, subcarpetas, ficheros in filetools.walk(videolibrarytools.TVSHOWS_PATH):
         for f in ficheros:
@@ -297,11 +316,16 @@ def list_tvshows(item):
 
                 # logger.debug("item_tvshow:\n" + item_tvshow.tostring('\n'))
 
+                # Actualiza Thumbnail y Fanart desde InfoLabels
+                if item_tvshow.infoLabels["tmdb_id"]:
+                    item_tvshow.infoLabels["thumbnail"] = item_tvshow.infoLabels["thumbnail"].replace('http:', 'https:')
+                    if item_tvshow.infoLabels["thumbnail"]: item_tvshow.thumbnail = item_tvshow.infoLabels["thumbnail"]
+                    item_tvshow.infoLabels["fanart"] = item_tvshow.infoLabels["fanart"].replace('http:', 'https:')
+                    if item_tvshow.infoLabels["fanart"]: item_tvshow.fanart = item_tvshow.infoLabels["fanart"]
+                
                 ## verifica la existencia de los canales ##
                 if len(item_tvshow.library_urls) > 0:
                     itemlist.append(item_tvshow)
-
-
 
     if itemlist:
         itemlist = sorted(itemlist, key=lambda it: it.title.lower())
@@ -317,6 +341,7 @@ def get_seasons(item):
     # logger.debug("item:\n" + item.tostring('\n'))
     itemlist = []
     dict_temp = {}
+    tmdb_upd = False
 
     raiz, carpetas_series, ficheros = next(filetools.walk(item.path))
 
@@ -362,6 +387,8 @@ def get_seasons(item):
                                  "channel": "videolibrary",
                                  "playcount": value}]
 
+            if new_item.infoLabels['tmdb_id']: tmdb_upd = True
+            
             # logger.debug("new_item:\n" + new_item.tostring('\n'))
             itemlist.append(new_item)
 
@@ -373,6 +400,18 @@ def get_seasons(item):
             new_item.infoLabels["playcount"] = 0
             itemlist.insert(0, new_item)
 
+    if tmdb_upd:
+        #Pasamos a TMDB la lista completa Itemlist para actualizar Thumbnail y Fanart
+        tmdb.set_infoLabels(itemlist, True)
+
+        for item_tmdb in itemlist:
+            # Actualiza Thumbnail y Fanart
+            item_tmdb.infoLabels["thumbnail"] = item_tmdb.infoLabels["thumbnail"].replace('http:', 'https:')
+            item_tmdb.infoLabels["poster_path"] = item_tmdb.infoLabels["poster_path"].replace('http:', 'https:')
+            if item_tmdb.infoLabels["poster_path"]: item_tmdb.thumbnail = item_tmdb.infoLabels["poster_path"]
+            item_tmdb.infoLabels["fanart"] = item_tmdb.infoLabels["fanart"].replace('http:', 'https:')
+            if item_tmdb.infoLabels["fanart"]: item_tmdb.fanart = item_tmdb.infoLabels["fanart"]
+
     return itemlist
 
 
@@ -380,6 +419,7 @@ def get_episodes(item):
     logger.info()
     # logger.debug("item:\n" + item.tostring('\n'))
     itemlist = []
+    tmdb_upd = False
 
     # Obtenemos los archivos de los episodios
     raiz, carpetas_series, ficheros = next(filetools.walk(item.path))
@@ -431,9 +471,24 @@ def get_episodes(item):
                             "playcount": value,
                             "nfo": item.nfo}]
 
+            if epi.infoLabels['tmdb_id']: tmdb_upd = True
+            
             # logger.debug("epi:\n" + epi.tostring('\n'))
             itemlist.append(epi)
 
+    if tmdb_upd:
+        #Pasamos a TMDB la lista completa Itemlist para actualizar Thumbnail y Fanart
+        tmdb.set_infoLabels(itemlist, True)
+
+        for item_tmdb in itemlist:
+            # Actualiza Thumbnail y Fanart
+            item_tmdb.infoLabels["thumbnail"] = item_tmdb.infoLabels["thumbnail"].replace('http:', 'https:')
+            item_tmdb.infoLabels["poster_path"] = item_tmdb.infoLabels["poster_path"].replace('http:', 'https:')
+            if item_tmdb.infoLabels["poster_path"]: item_tmdb.thumbnail = item_tmdb.infoLabels["poster_path"]
+            item_tmdb.infoLabels["fanart"] = item_tmdb.infoLabels["fanart"].replace('http:', 'https:')
+            if item_tmdb.infoLabels["fanart"]: item_tmdb.fanart = item_tmdb.infoLabels["fanart"]
+            item_tmdb.contentTitle = "%sx%s" % (item_tmdb.contentSeason, str(item_tmdb.contentEpisodeNumber).zfill(2))
+    
     return sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
 
 
@@ -538,6 +593,23 @@ def findvideos(item):
 
         item_json = Item().fromjson(filetools.read(json_path))
         item_json.nfo = item.nfo
+
+        # Obtener la información actualizada del vídeo.  En una segunda lectura de TMDB da más información que en la primera
+        try:
+            if item_json.infoLabels['tmdb_id']:
+                tmdb.set_infoLabels_item(item_json, seekTmdb=True)
+                
+                item_json.infoLabels["thumbnail"] = item_json.infoLabels["thumbnail"].replace('http:', 'https:')
+                if item.contentType == 'movie':
+                    if item_json.infoLabels["thumbnail"]: item_json.thumbnail = item_json.infoLabels["thumbnail"]
+                else:
+                    item_json.infoLabels["poster_path"] = item_json.infoLabels["poster_path"].replace('http:', 'https:')
+                    if item_json.infoLabels["poster_path"]: item_json.thumbnail = item_json.infoLabels["poster_path"]
+                item_json.infoLabels["fanart"] = item_json.infoLabels["fanart"].replace('http:', 'https:')
+                if item_json.infoLabels["fanart"]: item_json.fanart = item_json.infoLabels["fanart"]
+        except:
+            logger.error(traceback.format_exc())
+
         ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
         try:
             if item_json:
@@ -586,6 +658,8 @@ def findvideos(item):
         for x, server in enumerate(list_servers):
             #if not server.action:  # Ignorar/PERMITIR las etiquetas
             #    continue
+            if server.action == "add_pelicula_to_library":
+                continue
             server.contentChannel = server.channel
             server.channel = "videolibrary"
             server.nfo = item.nfo
@@ -692,19 +766,28 @@ def update_tvshow(item):
     heading = config.get_localized_string(60037)
     p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(20000), heading)
     p_dialog.update(0, heading, item.contentSerieName)
+    
+    # Si viene de canales torrent con Series vinculadas a la Videoteca, se usa el .nfo de la serie para la actualización
+    if item.video_path:
+        path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"), item.video_path, 'tvshow.nfo')
+        head_nfo, it = videolibrarytools.read_nfo(path)
+        it.nfo = path
+        it.path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"), it.path)
+    else:
+        it = item.clone()
 
     import videolibrary_service
-    if videolibrary_service.update(item.path, p_dialog, 1, 1, item, False) and config.is_xbmc():
+    if videolibrary_service.update(it.path, p_dialog, 1, 1, it, False) and config.is_xbmc():
         from platformcode import xbmc_videolibrary
-        xbmc_videolibrary.update(folder=filetools.basename(item.path))
+        xbmc_videolibrary.update(folder=filetools.basename(it.path))
 
     p_dialog.close()
     
-    for channel, url in list(item.library_urls.items()):
+    for channel, url in list(it.library_urls.items()):
         channel_f = generictools.verify_channel(channel)
         if config.get_setting('auto_download_new', channel_f):
             from channels import downloads
-            downloads.download_auto(item)
+            downloads.download_auto(it)
             break
 
 
@@ -861,6 +944,18 @@ def mark_content_as_watched(item):
                 xbmc_videolibrary.mark_content_as_watched_on_kodi(item, item.playcount)
 
             platformtools.itemlist_refresh()
+
+
+def mark_video_as_watched(item):
+    logger.info()
+    # logger.debug("item:\n" + item.tostring('\n'))
+
+    if config.is_xbmc():
+        # Actualizamos la BBDD de Kodi
+        from platformcode import xbmc_videolibrary
+        xbmc_videolibrary.mark_season_as_watched_on_kodi(item, item.playcount)
+
+    platformtools.itemlist_refresh()
 
 
 def mark_season_as_watched(item):

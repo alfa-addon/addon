@@ -16,7 +16,7 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },
@@ -33,6 +33,18 @@
         "LAT",
         "VOSE",
         "VOS"
+      ]
+    },
+    {
+      "id": "show_users_links",
+      "type": "list",
+      "label": "Mostrar enlaces de usuarios...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Si",
+        "No"
       ]
     },
     {

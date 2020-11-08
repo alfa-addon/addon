@@ -150,10 +150,19 @@ def findvideos(item):
         url = elem["data-src"]
 
         id = scrapertools.find_single_match(url, '\?h=(.*)')
+        logger.error(url)
 
         if 'cuevana3.io' in url:
             base_url = "https://api.cuevana3.io/ir/rd.php"
-            url = httptools.downloadpage(base_url, post={"url": id}, follow_redirects=False).headers['location']
+            param = 'url'
+            
+            if '/sc/' in url:
+                base_url = "https://api.cuevana3.io/sc/r.php"
+                param = 'h'
+            
+
+            url = httptools.downloadpage(base_url, post={param: id},
+                                        follow_redirects=False).headers.get('location', '')
 
         if url:
             itemlist.append(Item(channel=item.channel, title="%s", url=url, action="play", language=lang))

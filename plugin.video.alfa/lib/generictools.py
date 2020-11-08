@@ -45,13 +45,14 @@ intervenido_judicial = 'Dominio intervenido por la Autoridad Judicial'
 intervenido_policia = 'Judicial_Policia_Nacional'
 intervenido_guardia = 'Judicial_Guardia_Civil'
 intervenido_sucuri = 'Access Denied - Sucuri Website Firewall'
+idioma_busqueda = 'es'
 
 
 
 def downloadpage(url, post=None, headers=None, random_headers=False, replace_headers=False, 
                  only_headers=False, referer=None, follow_redirects=True, timeout=None, 
                  proxy=True, proxy_web=False, proxy_addr_forced={}, forced_proxy=None, 
-                 proxy_retries=1, CF=False, file=None, filename=None, ignore_response_code=True, 
+                 proxy_retries=1, CF=False, CF_test=True, file=None, filename=None, ignore_response_code=True, 
                  alfa_s=False, decode_code='', json=False, s2=None, patron='', quote_rep=False, 
                  no_comments=True, item={}, itemlist=[]):
     
@@ -78,6 +79,9 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
     success = False
     code = 999
     if not item: item = Item()
+    if not isinstance(url, (str, unicode, bytes)):
+        logger.error('Formato de url incompatible: %s (%s)' % (str(url), str(type(url))))
+        return ('', success, code, item, itemlist)
     
     try:
         response = httptools.downloadpage(url, post=post, headers=headers, random_headers=random_headers, 
@@ -85,7 +89,7 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                                           follow_redirects=follow_redirects, encoding=decode_code, 
                                           timeout=timeout, proxy=proxy, proxy_web=proxy_web, 
                                           proxy_addr_forced=proxy_addr_forced, forced_proxy=forced_proxy, 
-                                          proxy_retries=proxy_retries, CF=CF, file=file, filename=filename, 
+                                          proxy_retries=proxy_retries, CF=CF, CF_test=CF_test, file=file, filename=filename, 
                                           ignore_response_code=ignore_response_code, alfa_s=alfa_s)
         if response:
             if json and response.json:
@@ -141,14 +145,14 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                             clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + 
                             '. Reportar el problema en el foro', thumbnail=thumb_intervenido, 
                             folder=False))
-            else:
+            elif not success:
                 logger.error('ERROR 01: ' + ERROR_01 + str(item.url) + " CODE: " + str(code) 
                                  + " PATRON: " + str(patron) + " DATA: ")
                 if funcion != 'episodios':
                     itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
                              '[COLOR yellow]' + str(code) + '[/COLOR]: ERROR 01: ' + ERROR_01))
     except:
-        logger.error(traceback.format_exc(1))
+        logger.error(traceback.format_exc())
     
     return (data, success, code, item, itemlist)
 
@@ -366,6 +370,8 @@ def refresh_screen(item):
     
 def post_tmdb_listado(item, itemlist):
     logger.info()
+    global video_list
+    
     itemlist_fo = []
     
     """
@@ -399,14 +405,21 @@ def post_tmdb_listado(item, itemlist):
         item.from_channel = 'news'
         del item.category_new
 
+    #Cargo la lista de peliculas, series y documentales de la videoteca.  Se usa luego para Descargas
+    res, video_list = check_title_in_videolibray(item, video_list_init=True)
+    #logger.debug(video_list)
+    
     for item_local in itemlist:                                 #Recorremos el Itemlist generado por el canal
         item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
         #item_local.title = re.sub(r'online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title, flags=re.IGNORECASE).strip()
         title = item_local.title
+        season = 0
+        episode = 0
         #logger.debug(item_local)
         
         item_local.last_page = 0
         del item_local.last_page                                #Borramos restos de paginación
+        en_videoteca = ''
 
         if item_local.contentSeason_save:                       #Restauramos el num. de Temporada
             item_local.contentSeason = item_local.contentSeason_save
@@ -472,7 +485,7 @@ def post_tmdb_listado(item, itemlist):
             logger.info("*** TMDB-ID erroneo, reseteamos y reintentamos: %s" % item_local.infoLabels['tmdb_id'])
             del item_local.infoLabels['tmdb_id']                        #puede traer un TMDB-ID erroneo
             try:
-                tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda='es,en') #pasamos otra vez por TMDB
+                tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda=idioma_busqueda) #pasamos otra vez por TMDB
             except:
                 logger.error(traceback.format_exc())
             logger.info("*** TMDB-ID erroneo reseteado: %s" % item_local.infoLabels['tmdb_id'])
@@ -483,7 +496,7 @@ def post_tmdb_listado(item, itemlist):
                 year = item_local.infoLabels['year']            #salvamos el año por si no tiene éxito la nueva búsqueda
                 item_local.infoLabels['year'] = "-"             #reseteo el año
                 try:
-                    tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda='es,en') #pasamos otra vez por TMDB
+                    tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda=idioma_busqueda) #pasamos otra vez por TMDB
                 except:
                     logger.error(traceback.format_exc())
                 if not item_local.infoLabels['tmdb_id']:        #ha tenido éxito?
@@ -529,7 +542,7 @@ def post_tmdb_listado(item, itemlist):
             
             try:
                 if item_local.infoLabels['tmdb_id']:
-                    tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda='es,en')  #TMDB de la serie
+                    tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma_busqueda)  #TMDB de la serie
             except:
                 logger.error(traceback.format_exc())
                 
@@ -538,7 +551,7 @@ def post_tmdb_listado(item, itemlist):
                 item_local.infoLabels['year'] = scrapertools.find_single_match(item_local.infoLabels['aired'], r'\d{4}')
                 if item_local.infoLabels.get('temporada_num_episodios', 0) >= episode_max:
                     tot_epis = ' (de %s' % str(item_local.infoLabels['temporada_num_episodios'])
-                    if item_local.infoLabels.get('number_of_seasons', 0) > int(season) \
+                    if item_local.infoLabels.get('number_of_seasons', 0) > 1 \
                             and item_local.infoLabels.get('number_of_episodes', 0) > 0:
                         tot_epis += ', de %sx%s' % (str(item_local.infoLabels['number_of_seasons']), \
                             str(item_local.infoLabels['number_of_episodes']))
@@ -608,6 +621,25 @@ def post_tmdb_listado(item, itemlist):
             if item_local.from_channel == "news":
                 title_add += " -Varios-"
         
+        if item_local.contentType != 'movie' and item_local.infoLabels['tmdb_id'] \
+                        and ((item_local.infoLabels['imdb_id'] \
+                        and item_local.infoLabels['imdb_id'] in str(video_list)) \
+                        or 'tmdb_'+item_local.infoLabels['tmdb_id'] in str(video_list) \
+                        or item_local.contentTitle.lower()+' [' in str(video_list)):
+            id_tmdb = item_local.infoLabels['imdb_id']
+            if not id_tmdb:
+                id_tmdb = "tmdb_%s" % item_local.infoLabels['tmdb_id']
+            item_local.video_path = "%s [%s]" % (item_local.contentSerieName, id_tmdb)
+            item_local.url_tvshow = item_local.url
+            season_episode = ''
+            if season and episode:
+                season_episode = '%sx%s.strm' % (str(season), str(episode).zfill(2))
+            if check_marks_in_videolibray(item_local, strm=season_episode):
+                item_local.infoLabels["playcount"] = 1
+            if item_local.video_path:
+                item_local = context_for_videolibray(item_local)
+                en_videoteca = '(V)-'
+
         title += title_add.replace(' (MAX_EPISODIOS)', '')                      #Se añaden etiquetas adicionales, si las hay
 
         #Ahora maquillamos un poco los titulos dependiendo de si se han seleccionado títulos inteleigentes o no
@@ -649,7 +681,8 @@ def post_tmdb_listado(item, itemlist):
                         or item_local.infoLabels['status'].lower() == "canceled"):
             title += ' [TERM]'
         
-        item_local.title = title
+        item_local.title = en_videoteca + title
+        item_local.contentTitle = en_videoteca + item_local.contentTitle
         
         #logger.debug("url: " + item_local.url + " / title: " + item_local.title + " / content title: " + item_local.contentTitle + "/" + item_local.contentSerieName + " / calidad: " + item_local.quality + "[" + str(item_local.language) + "]" + " / year: " + str(item_local.infoLabels['year']))
         
@@ -730,10 +763,15 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
         item.url = item.url_alt
         del item.url_alt
     
+    # Si está en la videoteca, listamos los episodios vistos/no vistos
+    episode_list = {}
+    if item.video_path:
+        res, episode_list = check_marks_in_videolibray(item, video_list_init=True)
+    
     # Primero creamos un título para TODAS las Temporadas
     # Pasada por TMDB a Serie, para datos adicionales
     try:
-        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es,en')  #TMDB de la serie
+        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=idioma_busqueda)  #TMDB de la serie
     except:
         logger.error(traceback.format_exc())
     
@@ -766,16 +804,37 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
         itemlist_temporadas.append(item_season.clone(title=title, from_title_season_colapse=item.title))
     
     #Repasamos todos los episodios para detectar las diferentes temporadas
+    marca_visto = None
     for item_local in itemlist:
         if item_local.contentSeason != season:
             season = item_local.contentSeason                                   #Si se detecta una temporada distinta se prepara un título
+            if marca_visto and len(itemlist_temporadas) > 0 and itemlist_temporadas[-1].contentSeason:
+                itemlist_temporadas[-1].infoLabels['playcount'] = 1
+            marca_visto = None
             item_season = item.clone()
             item_season.contentSeason = item_local.contentSeason                #Se pone el núm de Temporada para obtener mejores datos de TMDB
             item_season.contentType = 'season'
             item_season.title = 'Temporada %s' % item_season.contentSeason
+            if item_season.video_path:
+                item_season = context_for_videolibray(item_season)
             if url != 'serie':
-                item_season.url = item_local.url
+                if item_local.url_tvshow:
+                    item_season.url = item_local.url_tvshow
+                else:
+                    item_season.url = item_local.url
             itemlist_temporadas.append(item_season.clone(from_title_season_colapse=item.title))
+
+        if item_local.video_path: 
+            season_episode = '%sx%s.strm' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
+            if episode_list.get(season_episode, 0) >= 1:
+                if marca_visto or marca_visto is None:
+                    marca_visto = True
+            else:
+                marca_visto = False
+    else:
+        # Trata la última temporada
+        if marca_visto and len(itemlist_temporadas) > 0 and itemlist_temporadas[-1].contentSeason:
+            itemlist_temporadas[-1].infoLabels['playcount'] = 1
             
     #Si hay más de una temporada se sigue, o se ha forzado a listar por temporadas, si no se devuelve el Itemlist original
     if len(itemlist_temporadas) > 2 or config.get_setting("no_pile_on_seasons", 'videolibrary') == 0:
@@ -785,7 +844,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
             
             # Pasada por TMDB a las Temporada
             try:
-                tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda='es,en')    #TMDB de cada Temp
+                tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma_busqueda)    #TMDB de cada Temp
             except:
                 logger.error(traceback.format_exc())
         
@@ -885,6 +944,12 @@ def post_tmdb_episodios(item, itemlist):
     num_temporada = 1
     num_temporada_max = 99
     num_episodios_flag = True
+    episode_list = {}
+    if item.library_urls or item.add_videolibrary:
+        if item.video_path:
+            del item.video_path
+    elif item.video_path:
+        res, episode_list = check_marks_in_videolibray(item, video_list_init=True)
     
     #Restauramos el num de Temporada para hacer más flexible la elección de Videoteca
     contentSeason = item.contentSeason
@@ -967,6 +1032,8 @@ def post_tmdb_episodios(item, itemlist):
             del item_local.library_filter_show
         if item_local.extra2:
             del item_local.extra2
+        if (item.library_urls or item.add_videolibrary) and item_local.video_path:
+            del item_local.video_path
         item_local.wanted = 'xyz'
         del item_local.wanted
         item_local.text_color = 'xyz'
@@ -978,7 +1045,8 @@ def post_tmdb_episodios(item, itemlist):
         item_local.unify = 'xyz'
         del item_local.unify
         item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
-        item_local.url_tvshow = item.url                                        # Salvamos la url de la serie para descargas
+        if not item_local.url_tvshow:
+            item_local.url_tvshow = item.url                                    # Salvamos la url de la serie/temporada para descargas
         
         #logger.debug(item_local)
 
@@ -1086,6 +1154,13 @@ def post_tmdb_episodios(item, itemlist):
             item_local.title = '%s %s' % (item_local.title, item_local.contentSerieName)
             item_local.infoLabels['episodio_titulo'] = '%s [%s] [%s]' % (item_local.contentSerieName, item_local.infoLabels['year'], rating)
         
+        #Si está en la Videoteca, se verifica y está visto/no visto
+        season_episode = '%sx%s.strm' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
+        if item_local.video_path and episode_list.get(season_episode, 0) >= 1:
+            item_local.infoLabels["playcount"] = 1
+        if item_local.video_path:
+            item_local = context_for_videolibray(item_local)
+        
         #Componemos el título final, aunque con Unify usará infoLabels['episodio_titulo']
         item_local.infoLabels['title'] = item_local.infoLabels['episodio_titulo']
         if item_local.action:
@@ -1138,10 +1213,12 @@ def post_tmdb_episodios(item, itemlist):
         logger.error(traceback.format_exc())
     
     #Permitimos la actualización de los títulos, bien para uso inmediato, o para añadir a la videoteca
+    poster = item.infoLabels['temporada_poster']
+    if not poster: poster = item.infoLabels['thumbnail']
     if not item.downloadFilename:                           #... si no viene de Descargas
         itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", 
                     action="actualizar_titulos", tmdb_stat=False, from_action=item.action, contentType='episode', 
-                    from_title_tmdb=item.title, from_update=True))
+                    from_title_tmdb=item.title, from_update=True, thumbnail=poster))
     
     #Borro num. Temporada si no viene de menú de Añadir a Videoteca y no está actualizando la Videoteca
     if not item.library_playcounts:                         #si no está actualizando la Videoteca
@@ -1279,10 +1356,6 @@ def post_tmdb_findvideos(item, itemlist):
     num_episodios = item.contentEpisodeNumber
     if item.infoLabels['temporada_num_episodios'] and item.contentEpisodeNumber <= item.infoLabels['temporada_num_episodios']:
         num_episodios = item.infoLabels['temporada_num_episodios']
-        
-    #Si no existe "clean_plot" se crea a partir de "plot"
-    if not item.clean_plot and item.infoLabels['plot']:
-        item.clean_plot = item.infoLabels['plot']
 
     # Obtener la información actualizada del vídeo.  En una segunda lectura de TMDB da más información que en la primera
     #if not item.infoLabels['tmdb_id'] or (not item.infoLabels['episodio_titulo'] and item.contentType == 'episode'):
@@ -1290,7 +1363,7 @@ def post_tmdb_findvideos(item, itemlist):
     #elif (not item.infoLabels['tvdb_id'] and item.contentType == 'episode') or item.contentChannel == "videolibrary":
     #    tmdb.set_infoLabels_item(item, True)
     try:
-        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es,en')  #TMDB de cada Temp
+        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=idioma_busqueda)  #TMDB de cada Temp
     except:
         logger.error(traceback.format_exc())
     #Restauramos la información de max num. de episodios por temporada despues de TMDB
@@ -1305,13 +1378,24 @@ def post_tmdb_findvideos(item, itemlist):
     except:
         logger.error(traceback.format_exc())
 
+    #Si no existe "clean_plot" se crea a partir de "plot"
+    if not item.clean_plot and item.infoLabels['plot']:
+        item.clean_plot = item.infoLabels['plot']
+    
     #Ajustamos el nombre de la categoría
     if item.channel == channel_py:
         category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
         if category:
             item.category = category
             
+    # Comprobamos las marcas de visto/no visto
+    playcount = 0
+    if item.video_path and check_marks_in_videolibray(item):
+        playcount = 1
+    
     if not config.get_setting("pseudo_titulos", item.channel, default=False) or item.downloadFilename:
+        if playcount:
+            item.infoLabels["playcount"] = 1
         return (item, itemlist)
     
     if item.armagedon:                                                          #Es una situación catastrófica?
@@ -1488,6 +1572,9 @@ def post_tmdb_findvideos(item, itemlist):
         itemlist.append(item.clone(title="-Descargar %s-" % contentType, channel="downloads", server='torrent', 
                         action="save_download", from_channel=item.channel, from_action='play', folder=False))
         if item.contentType == 'episode':
+            itemlist.append(item.clone(title="-Descargar Epis NO Vistos-", channel="downloads", contentType="tvshow", 
+                        action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
+                        sub_action="unseen"))
             item.quality = scrapertools.find_single_match(item.quality, '(.*?)\s\[')
             itemlist.append(item.clone(title="-Descargar Temporada-", channel="downloads", contentType="season", 
                         action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
@@ -1495,15 +1582,113 @@ def post_tmdb_findvideos(item, itemlist):
             itemlist.append(item.clone(title="-Descargar Serie-", channel="downloads", contentType="tvshow", 
                         action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
                         sub_action="tvshow"))
-            itemlist.append(item.clone(title="-Descargar NO Vistos-", channel="downloads", contentType="tvshow", 
-                        action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
-                        sub_action="unseen"))
-    
+
+    if playcount:
+        item.infoLabels["playcount"] = 1
     #logger.debug(item)
     
     return (item, itemlist)
+
+
+def check_title_in_videolibray(item, video_list_init=False):
+    logger.info()
     
+    """
+    Comprueba si el item listado está en la videoteca Alfa.  Si lo está devuelve True
+    Si se ha marcado "video_list_init", se devuleve la lista de peliculas y series en la videoteca Alfa
+    """
     
+    global video_list
+    res = False
+
+    if not item.infoLabels['tmdb_id'] and not video_list_init:
+        return res, ''
+        
+    if item.video_path and not video_list_init:
+        return True, ''
+    
+    if item.contentType == 'movie' or video_list_init:
+        videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
+        if video_list_init:
+            video_list = filetools.listdir(videolibrary_path)
+    if item.contentType != 'movie' or video_list_init:
+        videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
+        if video_list_init:
+            video_list += filetools.listdir(videolibrary_path)
+            return True, video_list
+
+    if not filetools.exists(videolibrary_path):
+        return res, ''
+    
+    for title in filetools.listdir(videolibrary_path):
+        if item.infoLabels['imdb_id'] in title or item.infoLabels['tmdb_id'] in title:
+            res = True
+            break
+
+    return res, video_list
+
+
+def check_marks_in_videolibray(item, strm='', video_list_init=False):
+    logger.info()
+    
+    """
+    Comprueba si el item listado está visto/no visto en la videoteca Kodi.  Si lo está devuelve True
+    """
+    
+    from platformcode import xbmc_videolibrary
+    ret = False
+    
+    season_episode = strm
+    if not season_episode and item.contentSeason and item.contentEpisodeNumber:
+        season_episode = '%sx%s.strm' % (str(item.contentSeason), str(item.contentEpisodeNumber).zfill(2))
+    
+    episode_list = xbmc_videolibrary.get_videos_watched_on_kodi(item, list_videos=True)
+
+    if video_list_init:
+        if episode_list: ret = True
+        return ret, episode_list
+
+    if not episode_list and item.video_path:
+        del item.video_path
+        return False
+    
+    if season_episode and episode_list.get(season_episode, 0) >= 1:
+        return True
+    else:
+        return False
+
+
+def context_for_videolibray(item):
+    logger.info()
+
+    if not item.video_path:
+        return item
+
+    if item.contentType == 'tvshow':
+        poner_marca = config.get_localized_string(60021)
+        quitar_marca = config.get_localized_string(60020)
+    elif item.contentType == 'season':
+        poner_marca = config.get_localized_string(60029)
+        quitar_marca = config.get_localized_string(60028)
+    else:
+        poner_marca = config.get_localized_string(60033)
+        quitar_marca = config.get_localized_string(60032)
+
+    item.context = [{"title": quitar_marca,
+                     "action": "mark_video_as_watched",
+                     "channel": "videolibrary",
+                     "playcount": 0},
+                    {"title": poner_marca,
+                     "action": "mark_video_as_watched",
+                     "channel": "videolibrary",
+                     "playcount": 1},
+                    {"title": config.get_localized_string(70269),
+                     "action": "update_tvshow",
+                     "channel": "videolibrary"}]
+
+    return item
+
+
 def find_rar_password(item):
     logger.info()
     
@@ -1589,7 +1774,8 @@ def find_rar_password(item):
 
 
 def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, \
-                        timeout=5, file_list=False, lookup=True, local_torr=None, headers={}, short_pad=False):
+                        timeout=5, file_list=False, lookup=True, local_torr=None, headers=None, \
+                        force=False, short_pad=False, subtitles=False):
     logger.info()
     from servers import torrent
     
@@ -1691,9 +1877,19 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
         
+        # Si es lookup, verifica si el canal tiene activado el Autoplay.  Si es así, retorna sin hacer el lookup
+        if lookup and not force and not local_torr:
+            is_channel = inspect.getmodule(inspect.currentframe().f_back)
+            is_channel = scrapertools.find_single_match(str(is_channel), "<module\s*'channels\.(.*?)'")
+            if is_channel:
+                from channels import autoplay
+                res = autoplay.is_active(is_channel)
+                if res:
+                    return 'autoplay'
+        
         if not lookup: timeout = timeout * 3
         if ((url and not local_torr) or url.startswith('magnet')):
-            torrents_path, torrent_file = torrent.caching_torrents(url, \
+            torrents_path, torrent_file, subtitles_list = torrent.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
                         timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
         elif local_torr:
@@ -1726,7 +1922,9 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                 else:
                     size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
             
-            if not lookup:
+            if not lookup and subtitles:
+                return (size, torrents_path, torrent_f, files, subtitles_list)
+            elif not lookup:
                 return (size, torrents_path, torrent_f, files)
             elif file_list and data_torrent:
                 return (size, torrent_f, files)
@@ -1784,7 +1982,9 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     #logger.debug(str(url))
     logger.info(str(size))
     
-    if not lookup:
+    if not lookup and subtitles:
+        return (size, torrents_path, torrent_f, files, subtitles_list)
+    elif not lookup:
         return (size, torrents_path, torrent_f, files)
     elif file_list and data_torrent:
         return (size, torrent_f, files)
@@ -1867,6 +2067,7 @@ def get_field_from_kodi_DB(item, from_fields='*', files='file'):
         if config.is_xbmc():
             from platformcode import xbmc_videolibrary
             nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql)      #ejecución de la SQL
+            records = filetools.decode(records, trans_none=0)                   # Decode de records, cambiando None por 0
             if nun_records == 0:                                                #hay error?
                 logger.error("Error en la SQL: " + sql + ": 0 registros")       #No estará catalogada o hay un error en el SQL
     except:
@@ -1926,6 +2127,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
             patron = patron1
         except:
             logger.error(traceback.format_exc())
+    patron = patron.replace('¡', '|')
         
     #Array con los datos de los canales alternativos
     #Cargamos en .json del canal para ver las listas de valores en settings
@@ -2142,7 +2344,6 @@ def verify_channel_regex(item, clone_list):
 
             info_clone = info_clone.split(';')
             for pareja in info_clone:
-                logger.debug(pareja)
                 par = pareja.split(',')
                 if par[1] == 'null':
                     par[1] = ''
@@ -2302,6 +2503,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     json_path_list = []
     emergency_urls_force = False
     status_migration =  False
+    patron_category = 'http.*\:\/\/(?:.*ww[^\.]*\.)?([^\.]+)\.[^\/]+(?:\/|\?|$)'
     
     #if item.ow_force == '1':                                       #Ha podido qudar activado de una pasada anteriores
     #    del item.ow_force
@@ -2340,7 +2542,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #primero tratamos los clones de Newpct1
     channel_alt = item.channel
     #if item.url and not it.library_urls:
-    #    channel_alt = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()     #Salvamos en nombre del canal o clone
+    #    channel_alt = scrapertools.find_single_match(item.url, patron_category).lower()     #Salvamos en nombre del canal o clone
     #    if not channel_alt:
     #        channel_alt = item.channel
     channel = "'%s'" % channel_alt
@@ -2351,7 +2553,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     channel_py_alt = 'xyz123'
     if channel in fail_over_list :                      #Si es un clone de Newpct1, se actualiza el canal y la categoría
         item.channel = channel_py
-        item.category = scrapertools.find_single_match(item.url, 'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+        item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()
         channel_py_alt = "'%s'" % channel_py
         if item.channel_host:                                               #y se borran resto de pasadas anteriores
             del item.channel_host
@@ -2505,7 +2707,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
             if ow_force == 'del' or ow_force == 'emerg':    #Si es un borrado de estructuras erroneas, hacemos un proceso aparte
                 canal_des_def = canal_des                   #Si hay canal de sustitución para item.library_urls, lo usamos
                 if not canal_des_def and canal_org in item.library_urls and len(item.library_urls) == 1:    #Si no, lo extraemos de la url
-                    canal_des_def = scrapertools.find_single_match(item.library_urls[canal_org], 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()            #salvamos la url actual de la estructura a borrar
+                    canal_des_def = scrapertools.find_single_match(item.library_urls[canal_org], patron_category).lower()            #salvamos la url actual de la estructura a borrar
                 url_total = ''
                 if item.url:
                     url_total = item.url                                    #Si existe item.url, lo salvamos para futuro uso
@@ -2536,8 +2738,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                                 item.url = url_vid                          
                                 break
                         if canal_vid_alt in fail_over_list:         #Si es un clone de Newpct1, salvamos la nueva categoría
-                            item.category = scrapertools.find_single_match(item.url, \
-                                    'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()   #Salvamos categoría
+                            item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()      #Salvamos categoría
                         else:
                             item.category = canal_vid.capitalize()          #si no, salvamos nueva categoría
                     logger.error('item.library_urls ACTUALIZADA: ' + str(item.library_urls))
@@ -2568,7 +2769,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 if item.contentType and item.contentType not in content_inc and "*" not in content_inc:  #Está el contenido el la lista de incluidos
                     continue
                 
-                if item.contentType and item.contentType in content_exc:                         #Está el contenido excluido?
+                if item.contentType and item.contentType in content_exc:    #Está el contenido excluido?
                     continue
                 channel_enabled = 0
                 channel_enabled_alt = 1
@@ -2583,7 +2784,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     continue                                                #... una intervención que afecte solo a una región
                 #if ow_force == 'no' and it.library_urls:                    #Esta regla solo vale para findvideos...
                 #    continue                                                #... salidmos si estamos actualizando
-                if lookup == True:                                  #Queremos que el canal solo visualice sin migración?
+                if lookup == True:                                          #Queremos que el canal solo visualice sin migración?
                     if ow_force != 'no':
                         overwrite = True                                    #Avisamos que hay cambios
                     continue                                                #Salimos sin tocar archivos
@@ -2595,22 +2796,21 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     url_total = item.library_urls[canal_org]
                 
                 if item.channel == channel_py:                  #Si es un clone de Newpct1, salvamos la nueva categoría
-                    item.category = scrapertools.find_single_match(item.url, \
-                            'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()   #Salvamos categoría
+                    item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()      #Salvamos categoría
                     if canal_org != item.category.lower():
                         item.category_alt = canal_org.capitalize()
                 else:
                     item.category = canal_des.capitalize()                      #si no, salvamos nueva categoría
                 
                 if url_org == '*':                                              #Si se quiere cambiar desde cualquier url ...
-                    url_host = scrapertools.find_single_match(url_total, '(http.*\:\/\/(?:www.)?\w+\.\w+)\/|\?')
+                    url_host = scrapertools.find_single_match(url_total, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
                     url_total = url_total.replace(url_host, url_des)            #reemplazamos una parte de url
                 elif url_des.startswith('http'):
                     if item.channel != channel_py or (item.channel == channel_py \
                             and item.category.lower() == canal_org):
                         url_total = scrapertools.find_single_match(url_total, \
-                            'http.*\:\/\/(?:www\.)?[^\?|\/]+(.*?$)')            #quitamos el http*:// inicial
-                        url_total = urlparse.urljoin(url_des, url_total)          #reemplazamos una parte de url
+                            'http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+(.*?$)')     #quitamos el http*:// inicial
+                        url_total = urlparse.urljoin(url_des, url_total)        #reemplazamos una parte de url
                 else:
                     url_total = url_total.replace(url_org, url_des)             #reemplazamos una parte de url
                 url = ''
@@ -3272,7 +3472,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
                         PM_LIST = PM_LIST.decode()
                     PM_LIST = PM_LIST.replace('\n', ', ')
                 
-            logger.info('PACKAGE LIST: %s' % PM_LIST, force=True)
+            #logger.info('PACKAGE LIST: %s' % PM_LIST, force=True)
 
             PREF_PATHS = [ANDROID_STORAGE + '/emulated/0/Android/data']
             PREF_PATHS += [os.getenv('ANDROID_DATA') + '/user/0']
@@ -3457,25 +3657,22 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
                 browser_prefs = filetools.read(prefs_file, silent=True)
                 res = scrapertools.find_single_match(browser_prefs, browser_params[browser][3]).replace('\\\\', '\\')
                 if not res and browser_prefs:
-                    try:
-                        logger.error('Archivo de Preferencias en ERROR %s: %s' % (prefs_file, str(browser_prefs[:60])))
-                    except:
-                        logger.error('Archivo de Preferencias en ERROR no PRINTABLE %s' % (prefs_file))  
+                    logger.debug('Archivo de Preferencias sin PARÁMETRO %s: %s' % (prefs_file, str(browser_params[browser][3])))
                 elif not res:
                     logger.error('Archivo de preferencias no encontrado/accesible: %s' % (prefs_file))
                     for prefs_dir in PREF_PATHS:
-                        logger.error('Listado de %s - %s' % (prefs_dir, sorted(filetools.listdir(prefs_dir))))
+                        logger.debug('Listado de %s - %s' % (prefs_dir, sorted(filetools.listdir(prefs_dir))))
 
                 # En Android puede haber problemas de permisos.  Si no se encuentra el path, se asume un path por defecto
                 if SAVED_D_PATH and not filetools.exists(SAVED_D_PATH):
-                    logger.error('Path de DESCARGAS almacenado NO EXISTE.  Reseteado: %s' % SAVED_D_PATH)
+                    logger.debug('Path de DESCARGAS almacenado NO EXISTE.  Reseteado: %s' % SAVED_D_PATH)
                     SAVED_D_PATH = ''
                     config.set_setting("capture_thru_browser_path", SAVED_D_PATH, server="torrent")
                 if not res and not download_path and not SAVED_D_PATH:
                     for folder in DOWNLOADS_PATH:
                         if filetools.exists(folder):
                             res = folder
-                            logger.error('Path de DESCARGAS por defecto: %s' % (folder))
+                            logger.debug('Path de DESCARGAS por defecto: %s' % (folder))
                             break
 
                 # Si se ha pasado la opción de download_path y difiere del path obtenido, se pasa a otro browser
@@ -3517,11 +3714,12 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
             else:
                 # Si no se ha encontrado ningún browser que cumpla las condiciones, se vuelve con error
                 logger.error('No se ha encontrado ningún BROWSER: %s' % str(exePath))
-                logger.error('Listado de APPS INSTALADAS en %s: %s' % (PATHS[0], sorted(filetools.listdir(PATHS[0]))))
+                if PM_LIST: logger.debug('PACKAGE LIST: %s' % PM_LIST)
+                logger.debug('Listado de APPS INSTALADAS en %s: %s' % (PATHS[0], sorted(filetools.listdir(PATHS[0]))))
                 if len(PATHS) > 1:
-                    logger.error('Listado de APPS INSTALADAS en %s: %s' % (PATHS[1], sorted(filetools.listdir(PATHS[1]))))
+                    logger.debug('Listado de APPS INSTALADAS en %s: %s' % (PATHS[1], sorted(filetools.listdir(PATHS[1]))))
                 for prefs_dir in PREF_PATHS:
-                    logger.error('Listado de %s - %s' % (prefs_dir, sorted(filetools.listdir(prefs_dir))))
+                    logger.debug('Listado de %s - %s' % (prefs_dir, sorted(filetools.listdir(prefs_dir))))
                 return (False, False)
         
         if lookup:
@@ -3533,7 +3731,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
         # Si la plataforma es Android, se llama de una forma diferente.
         if xbmc.getCondVisibility("system.platform.Android"):
             cmd = "StartAndroidActivity(%s,%s,%s,%s)" % (filetools.basename(path), intent, dataType, url)
-            logger.info(cmd, force=True)
+            logger.info('Android Browser call: %s' % cmd, force=True)
             xbmc.executebuiltin(cmd)
         
         else:

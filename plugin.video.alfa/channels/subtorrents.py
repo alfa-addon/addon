@@ -99,8 +99,8 @@ def submenu(item):
     
     if item.extra == "series":
 
-        itemlist.append(item.clone(title="Series", action="listado", url=item.url + "series/", thumbnail=thumb_series, extra="series"))
-        itemlist.append(item.clone(title="    Alfabético A-Z", action="alfabeto", url=item.url + "series/?s=letra-%s", thumbnail=thumb_series_AZ, extra="series"))
+        itemlist.append(item.clone(title="Series", action="listado", url=item.url + "series-2/", thumbnail=thumb_series, extra="series"))
+        itemlist.append(item.clone(title="    Alfabético A-Z", action="alfabeto", url=item.url + "series-2/?s=letra-%s", thumbnail=thumb_series_AZ, extra="series"))
 
     return itemlist
     
@@ -112,7 +112,7 @@ def alfabeto(item):
     itemlist.append(item.clone(action="listado", title="0-9", url=item.url % "0"))
 
     for letra in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
-        itemlist.append(item.clone(action="listado", title=letra, url=item.url % letra.lower()))
+        itemlist.append(item.clone(action="listado", title=letra, url=item.url % letra))
 
     return itemlist
 
@@ -136,7 +136,7 @@ def listado(item):
     cnt_tot = 40                                                                # Poner el num. máximo de items por página
     cnt_title = 0                                                               # Contador de líneas insertadas en Itemlist
     inicio = time.time()                                    # Controlaremos que el proceso no exceda de un tiempo razonable
-    fin = inicio + 5                                                               # Después de este tiempo pintamos (segundos)
+    fin = inicio + 5                                                            # Después de este tiempo pintamos (segundos)
     timeout_search = timeout                                                    # Timeout para descargas
     if item.extra == 'search':
         timeout_search = timeout * 2                                            # Timeout un poco más largo para las búsquedas
@@ -536,7 +536,6 @@ def findvideos(item):
         if not size and not item.armagedon:
             size = generictools.get_torrent_size(scrapedurl)                    #Buscamos el tamaño en el .torrent
         if size:
-            logger.error(size)
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                         .replace('Mb', 'M·b').replace('.', ',').replace('G B', 'G·B').replace('M B', 'M·B')
             item_local.title = re.sub(r'\s*\[\d+,?\d*?\s\w\s*[b|B]\]', '', item_local.title)    #Quitamos size de título, si lo traía
@@ -601,15 +600,15 @@ def play(item):                                                                 
     
     if item.subtitle:                                                           #Si hay urls de sub-títulos, se descargan
         headers.append(["User-Agent", httptools.random_useragent()])            #Se busca un User-Agent aleatorio
-        if not os.path.exists(os.path.join(config.get_setting("videolibrarypath"), "subtitles")):   #Si no hay carpeta se Sub-títulos, se crea
-            os.mkdir(os.path.join(config.get_setting("videolibrarypath"), "subtitles"))
+        if not os.path.exists(os.path.join(config.get_videolibrary_path(), "subtitles")):   #Si no hay carpeta se Sub-títulos, se crea
+            os.mkdir(os.path.join(config.get_videolibrary_path(), "subtitles"))
         subtitles = []
         subtitles.extend(item.subtitle)
         item.subtitle = subtitles[0]                                            #ponemos por defecto el primeroç
-        #item.subtitle = os.path.join(config.get_setting("videolibrarypath"), os.path.join("subtitles", scrapertools.find_single_match(subtitles[0], '\/\d{2}\/(.*?\.\w+)$')))
+        #item.subtitle = os.path.join(config.get_videolibrary_path(), os.path.join("subtitles", scrapertools.find_single_match(subtitles[0], '\/\d{2}\/(.*?\.\w+)$')))
         for subtitle in subtitles:                                              #recorremos la lista
             subtitle_name = scrapertools.find_single_match(subtitle, '\/\d{2}\/(.*?\.\w+)$')                #se pone el nombre del Sub-título
-            subtitle_folder_path = os.path.join(config.get_setting("videolibrarypath"), "subtitles", subtitle_name)         #Path de descarga
+            subtitle_folder_path = os.path.join(config.get_videolibrary_path(), "subtitles", subtitle_name)         #Path de descarga
             ret = downloadtools.downloadfile(subtitle, subtitle_folder_path, headers=headers, continuar=True, silent=True)  #Descarga
 
     itemlist.append(item.clone())                                               #Reproducción normal

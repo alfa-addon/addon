@@ -15,6 +15,7 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from channels import filtertools, autoplay
+from channels import renumbertools
 from core import tmdb
 
 
@@ -48,6 +49,8 @@ def mainlist(item):
                          thumbnail=get_thumb('search', auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
+
+    itemlist = renumbertools.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -127,8 +130,11 @@ def list_all(item):
         url = elem.a["href"]
         title = elem.a["title"]
         thumb = elem.img["src"]
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='episodios',
-                             thumbnail=thumb, contentSerieName=title))
+                             thumbnail=thumb, contentSerieName=title, context=context))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
     return itemlist

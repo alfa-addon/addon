@@ -5,7 +5,7 @@
     "patterns": [
       {
         "pattern": "(?:v|w)idto(?:d|b)o.com/(?:embed-|)([a-z0-9]+)(?:.html|)",
-        "url": "https://widtodo.com/\\1"
+        "url": "https://vidtodo.com/\\1"
       }
     ]
   },
