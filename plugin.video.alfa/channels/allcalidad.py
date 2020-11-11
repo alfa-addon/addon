@@ -135,17 +135,11 @@ def peliculas(item):
         url = scrapertools.find_single_match(datos, 'href="([^"]+)')
         titulo = scrapertools.htmlclean(scrapertools.find_single_match(datos, 'short_header">([^<]+)').strip())
         datapostid = scrapertools.find_single_match(datos, 'data-postid="([^"]+)')
-        thumbnail = scrapertools.find_single_match(datos, 'img w.*?src="([^"]+)')
+        thumbnail = scrapertools.find_single_match(datos, 'data-src="([^"]+)')
         post = 'action=get_movie_details&postID=%s' %datapostid
-        data1 = httptools.downloadpage(host + "/wp-admin/admin-ajax.php", post=post, encoding=encoding).data
         idioma = "Latino"
         mtitulo = titulo + " (" + idioma + ")"
-        year = scrapertools.find_single_match(data1, "Año:.*?(\d{4})")
-        if year:
-            mtitulo += " (" + year + ")"
-            item.infoLabels['year'] = int(year)
-        else:
-            item.infoLabels['year'] = "-"
+        item.infoLabels['year'] = "-"
         itemlist.append(item.clone(channel = item.channel,
                                    action = "findvideos",
                                    title = mtitulo,
@@ -189,16 +183,15 @@ def findvideos(item):
     patron = '<a href="([^"]+)" class="bits-download btn btn-xs.*?<span>([^<]+)</span>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, srv in matches:
-        url = clear_url(url)
-        if url in encontrado or ".srt" in url or "search" in url:
-            continue
-        
-        elif '#aHR0' in url:
+        if '#aHR0' in url:
             b_url = scrapertools.find_single_match(url, '(aHR0.*)')
             try:
                 url = base64.b64decode(b_url)
             except:
                 continue
+        url = clear_url(url)
+        if url in encontrado or ".srt" in url or "search" in url:
+            continue
         if url:
             encontrado.append(url)
             new_item= Item(channel=item.channel, url=url, title='%s', action="play", contentTitle=item.contentTitle,
@@ -208,6 +201,7 @@ def findvideos(item):
             itemlist.append(new_item)
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
@@ -231,7 +225,8 @@ def findvideos(item):
 
 def clear_url(url):
     url = url.replace("fembed.com/v","fembed.com/f").replace("mega.nz/embed/","mega.nz/file/").replace("streamtape.com/e/","streamtape.com/v/")
-    if "streamtape" in url: url = scrapertools.find_single_match(url, '(https://streamtape.com/v/\w+)')
+    if "streamtape" in url:
+        url = scrapertools.find_single_match(url, '(https://streamtape.com/v/\w+)')
     return url
 
 
