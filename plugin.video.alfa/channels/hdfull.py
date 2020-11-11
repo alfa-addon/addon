@@ -43,7 +43,7 @@ account = config.get_setting("logged", channel="hdfull")
 IDIOMAS = {'lat': 'LAT', 'spa': 'CAST', 'esp': 'CAST', 'sub': 'VOSE', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
 list_language = list(IDIOMAS.values())
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP', 'RHDTV', 'DVDSCR']
-list_servers = ['flix555', 'clipwatching', 'verystream', 'gamovideo', 'powvideo', 'streamplay', 'vidoza', 'vidtodo', 'openload', 'uptobox']
+list_servers = ['clipwatching', 'gamovideo', 'vidoza', 'vidtodo', 'openload', 'uptobox']
 
 
 def login():
@@ -95,7 +95,7 @@ def logout(item):
     logger.info()
     domain = urlparse.urlparse(host).netloc
     dict_cookie = {"domain": domain, 'expires': 0}
-    #borramos cookies de hdfullme
+    #borramos cookies de hdfull
     httptools.set_cookies(dict_cookie)
 
     #borramos el login
@@ -121,9 +121,11 @@ def agrupa_datos(url, post=None, referer=True, json=False):
     #     headers.update('Cookie:' 'language=es')
     if isinstance(referer, str):
         headers.update({'Referer': referer})
-
-    if len(urlparse.urlparse(host).path) > 1:
-        parse_url = "https://%s/" % urlparse.urlparse(host).netloc
+    
+    parsed = urlparse.urlparse(host)
+    
+    if len(parsed.path) > 1:
+        parse_url = "https://%s/" % parsed.netloc
         config.set_setting("current_host", parse_url, channel="hdfull")
     
     url = re.sub(r'http(?:s|)://[^/]+/', host, url)
@@ -210,7 +212,7 @@ def menupeliculas(item):
     
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Últimas Películas",
-             url=urlparse.urljoin(host, "/movies"), text_bold=True,
+             url=urlparse.urljoin(host, "/peliculas"), text_bold=True,
              thumbnail=get_thumb('last', auto=True)))
     
     itemlist.append(
@@ -262,7 +264,7 @@ def menuseries(item):
              thumbnail=get_thumb('newest', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="novedades_episodios", title="Últimos Emitidos",
-             url=urlparse.urljoin(host, "/a/episodes?action=latest&start=-24&limit=24&elang=ALLanim"), text_bold=True,
+             url=urlparse.urljoin(host, "/a/episodes?action=latest&start=-24&limit=24&elang=ALL"), text_bold=True,
              thumbnail=get_thumb('new episodes', auto=True)))
 
     itemlist.append(
@@ -550,6 +552,10 @@ def fichas(item):
     if next_page_url != "":
         itemlist.append(Item(channel=item.channel, action="fichas", title=">> Página siguiente",
                              url=urlparse.urljoin(item.url, next_page_url), text_bold=True))
+        
+        itemlist.append(Item(channel=item.channel, action="get_page", title=">> Ir a Página...",
+                             url=urlparse.urljoin(item.url, next_page_url), text_bold=True,
+                             thumbnail=get_thumb('add.png'), text_color='turquoise'))
 
     elif item.page != '':
         if item.page + 40 < len(or_matches):
@@ -1013,3 +1019,11 @@ def get_status(status, type, id):
     if str1 != "" or str2 != "":
         str = ' '+ str1 + str2
     return str
+
+def get_page(item):
+    from platformcode import platformtools
+    heading = 'Introduzca nº de la Página'
+    page_num = platformtools.dialog_numeric(0, heading, default="")
+    item.url = re.sub(r'\d+$', page_num, item.url)
+    if page_num:
+        return fichas(item)
