@@ -48,10 +48,9 @@ intervenido_sucuri = 'Access Denied - Sucuri Website Firewall'
 idioma_busqueda = 'es'
 
 
-
 def downloadpage(url, post=None, headers=None, random_headers=False, replace_headers=False, 
                  only_headers=False, referer=None, follow_redirects=True, timeout=None, 
-                 proxy=True, proxy_web=False, proxy_addr_forced={}, forced_proxy=None, 
+                 proxy=True, proxy_web=False, proxy_addr_forced={}, forced_proxy=None, domain_name='', 
                  proxy_retries=1, CF=False, CF_test=True, file=None, filename=None, ignore_response_code=True, 
                  alfa_s=False, decode_code='', json=False, s2=None, patron='', quote_rep=False, 
                  no_comments=True, item={}, itemlist=[]):
@@ -110,6 +109,9 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                 return (data, success, code, item, itemlist)
 
         if data:
+            data = js2py_conversion(data, url, domain_name=domain_name, timeout=timeout, headers=headers, referer=referer, 
+                                post=post, follow_redirects=follow_redirects)   # En caso de que sea necesario la conversión js2py
+            
             data = re.sub(r"\n|\r|\t", "", data).replace("'", '"')              # Reemplaza caracteres innecesarios
             if quote_rep:
                 data = data.replace("'", '"')                                   # Reemplaza ' por "
@@ -155,6 +157,92 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
         logger.error(traceback.format_exc())
     
     return (data, success, code, item, itemlist)
+
+
+def convert_url_base64(url):
+    logger.info()
+    import base64
+    
+    url_base64 = url
+    if not 'magnet:' in url_base64 and not '.torrent' in url_base64:
+        #url_base64 = scrapertools.find_single_match(url_base64, 'php#(.*?$)')
+        try:
+            # Da hasta 20 pasadas o hasta que de error
+            for x in range(20):
+                url_base64 = base64.b64decode(url_base64).decode('utf-8')
+            logger.info('Url base64 después de 20 pasadas (incompleta): %s' % url_base64)
+        except:
+            logger.info('Url base64 convertida: %s' % url_base64)
+            #logger.error(traceback.format_exc())
+            if not url_base64:
+                url_base64 = url
+    
+    return url_base64
+
+
+def js2py_conversion(data, url, domain_name='', post=None, referer=None, headers=None, timeout=10, follow_redirects=True):
+
+    if not 'Javascript is required' in data:
+        return data
+    
+    if not domain_name:
+        domain_name = scrapertools.find_single_match(url, 'http.*\:\/\/((?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
+    logger.info(domain_name)
+    
+    patron = ',\s*S="([^"]+)"'
+    data_new = scrapertools.find_single_match(data, patron)
+    if not data_new:
+        patron = ",\s*S='([^']+)'"
+        data_new = scrapertools.find_single_match(data, patron)
+    if not data_new:
+        logger.error('js2py_conversion: NO data_new')
+        return data
+        
+    try:
+        for x in range(10):                                          # Da hasta 10 pasadas o hasta que de error
+            data_end = base64.b64decode(data_new).decode('utf-8')
+            data_new = data_end
+    except:
+        js2py_code = data_new
+    else:
+        logger.error('js2py_conversion: base64 data_new NO Funciona: ' + str(data_new))
+        return data
+    if not js2py_code:
+        logger.error('js2py_conversion: NO js2py_code BASE64')
+        return data
+        
+    js2py_code = js2py_code.replace('document', 'window').replace(" location.reload();", "")
+    js2py.disable_pyimport()
+    context = js2py.EvalJs({'atob': atob})
+    new_cookie = context.eval(js2py_code)
+    new_cookie = context.eval(js2py_code)
+    
+    logger.info('new_cookie: ' + new_cookie)
+
+    dict_cookie = {'domain': domain_name,
+                }
+
+    if ';' in new_cookie:
+        new_cookie = new_cookie.split(';')[0].strip()
+        namec, valuec = new_cookie.split('=')
+        dict_cookie['name'] = namec.strip()
+        dict_cookie['value'] = valuec.strip()
+    zanga = httptools.set_cookies(dict_cookie)
+    config.set_setting("cookie_ren", True, channel=channel)
+
+    data_new = ''
+    data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(url, 
+                timeout=timeout, headers=headers, referer=referer, post=post, 
+                follow_redirects=follow_redirects).data)
+    if data_new:
+        data = data_new
+    
+    return data
+    
+    
+def atob(s):
+    import base64
+    return base64.b64decode(s.to_string().value)
 
 
 def update_title(item):
@@ -1311,7 +1399,78 @@ def post_tmdb_episodios(item, itemlist):
     #logger.debug(item)
     
     return (item, itemlist)
+
+
+def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[]):
+    logger.info()
     
+    # Si hay varias temporadas, buscamos todas las ocurrencias y las filtrados por TMDB, calidad e idioma
+    list_temp = []
+    itemlist = []
+
+    patron_quality = '(?i)(?:Temporada|Miniserie)(?:-(.*?)(?:\.|-$|$))'
+    try:
+        item_search = item.clone()
+        item_search.extra = 'search'
+        item_search.extra2 = 'episodios'
+        title = scrapertools.find_single_match(item_search.contentSerieName, '(^.*?)\s*(?:$|\(|\[)')    # Limpiamos un poco el título
+        item_search.title = title
+        item_search.infoLabels = {}                                             # Limpiamos infoLabels
+        
+        # Llamamos a 'Listado' para que procese la búsqueda
+        channel = __import__('channels.%s' % item_search.channel, None, None, ["channels.%s" % item_search.channel])
+        itemlist = getattr(channel, "search")(item_search, title.lower())
+
+        if len(itemlist) == 0:
+            list_temps.append(item.url)
+
+        for item_found in itemlist:                                             # Procesamos el Itemlist de respuesta
+            #logger.debug(item_found.infoLabels['tmdb_id'] + ' / ' + item.infoLabels['tmdb_id'])
+            #logger.debug(str(item_found.language) + ' / ' + str(item.language))
+            #logger.debug(str(item_found.quality) + ' / ' + str(item.quality))
+            if item_found.url in str(list_temps):                               # Si ya está la url, pasamos a la siguiente
+                continue
+            if not item_found.infoLabels['tmdb_id']:                            # tiene TMDB?
+                continue
+            if item_found.infoLabels['tmdb_id'] != item.infoLabels['tmdb_id']:  # Es el mismo TMDB?
+                continue
+            if item.language and item_found.language:                           # Es el mismo Idioma?
+                if item.language != item_found.language:
+                    continue
+            if item.quality and item_found.quality:                             # Es la misma Calidad?, si la hay...
+                if item.quality != item_found.quality:
+                    continue
+            elif scrapertools.find_single_match(item.url, patron_quality) != \
+                        scrapertools.find_single_match(item_found.url, patron_quality):  # Coincide la calidad? (alternativo)
+                continue
+            list_temps.append(item_found.url)                                   # Si hay ocurrencia, guardamos la url
+        
+        if len(list_temps) > 1:
+            list_temps = sorted(list_temps)                                     # Clasificamos las urls
+            item.url = list_temps[-1]                                           # Guardamos la url de la última Temporada en .NFO
+
+        if max_temp >= max_nfo and item.library_playcounts and modo_ultima_temp_alt:    # Si viene de videoteca, solo tratamos lo nuevo
+            for url in list_temps:
+                if scrapertools.find_single_match(url, patron_season):          # Está la Temporada en la url?
+                    try:                                                        # Miramos si la Temporada está procesada
+                        if int(scrapertools.find_single_match(url, patron_season)) >= max_nfo:
+                            list_temp.append(url)                               # No está procesada, la añadimos
+                    except:
+                        list_temp.append(url)
+                else:                                                           # Si no está la Temporada en la url, se añade la url
+                    list_temp.append(url)                                       # Por seguridad, la añadimos
+        else:
+            list_temp = list_temps[:]
+    
+    except:
+        list_temp = []
+        list_temp.append(item.url)
+        logger.error(traceback.format_exc())
+    
+    #logger.debug(list_temp)
+    
+    return list_temp
+
     
 def post_tmdb_findvideos(item, itemlist):
     logger.info()
@@ -1588,6 +1747,30 @@ def post_tmdb_findvideos(item, itemlist):
     #logger.debug(item)
     
     return (item, itemlist)
+
+
+def identifying_links(data, timeout=15, headers=None, referer=None, post=None, follow_redirects=True):
+    if not PY3:
+        from lib import alfaresolver
+    else:
+        from lib import alfaresolver_py3 as alfaresolver
+    
+    patron = '<script\s*src="([^"]+\/lazy\/js\/\S*.js)"\s*type="text\/\w+script">\s*<\/script>'
+    url = scrapertools.find_single_match(data, patron)
+    data_new = httptools.downloadpage(url, timeout=timeout, headers=headers, referer=referer, 
+                                      post=post, follow_redirects=follow_redirects, alfa_s=True).data
+    if PY3 and isinstance(data_new, bytes):
+        data_new = "".join(chr(x) for x in bytes(data_new))
+    data_new = re.sub(r"\n|\r|\t", "", data_new)
+    
+    try:
+        for x in range(10):
+            data_new = alfaresolver.identifying_links(data_new)
+            
+    except:
+        pass
+
+    return data_new.replace("'", '"')
 
 
 def check_title_in_videolibray(item, video_list_init=False):

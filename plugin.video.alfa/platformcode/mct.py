@@ -308,7 +308,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
         item.downloadFilename = ':%s: %s' % ('MCT', video_file)
     item.downloadQueued = 0
     time.sleep(1)
-    torr.update_control(item)
+    torr.update_control(item, function='mct_start')
 
     dp_cerrado = True
     rar = False
@@ -417,9 +417,38 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
         #log("##### exists: %s" % str(filetools.exists(torrent_file)))
         if ((download > 1 and (str(x).endswith('0') or str(x).endswith('5'))) \
                         or (download == 0 and x > 30)) and not filetools.exists(torrent_file):
-            bkg_user = False
-            item.downloadProgress = 0
-            remove_files( 1, '', video_file, ses, h, ren_video_file, item )
+            
+            log('LISTADO de .torrent %s' % (filetools.listdir(filetools.dirname(torrent_file))))
+            if filetools.exists(torrent_file.lower().replace('.torrent', '.pause')):
+                torrent_paused = True
+                torrent_stop = True
+                action = 'pause'
+                item.downloadProgress = -1
+                res = filetools.rename(torrent_file.replace('.torrent', '.PAUSE').replace('.TORRENT', '.PAUSE'), \
+                                        filetools.basename(torrent_file), strict=True, silent=True)
+                log("##### Progreso: %s, .torrent pausado: %s" % (str(porcent), video_file))
+            elif filetools.exists(torrent_file.lower().replace('.torrent', '.reset')):
+                torrent_reseted = True
+                torrent_stop = True
+                action = 'reset'
+                item.downloadProgress = 0
+                res = filetools.rename(torrent_file.replace('.torrent', '.RESET').replace('.TORRENT', '.RESET'), \
+                                        filetools.basename(torrent_file), strict=True, silent=True)
+                log("##### Progreso: %s, .torrent reseteado: %s" % (str(porcent), video_file))
+            else:
+                torrent_deleted = True
+                torrent_stop = True
+                action = 'delete'
+                item.downloadProgress = 0
+                res = True
+                log("##### Progreso: %s, .torrent borrado: %s" % (str(porcent), video_file))
+
+            if not res:
+                log('ERROR Renombrando desde -%s- el .torrent %s' % (action, filetools.listdir(filetools.dirname(torrent_file))))
+            
+            if item.downloadProgress == 0:
+                bkg_user = False
+                remove_files( 1, '', video_file, ses, h, ren_video_file, item )
             dp.close()
             return
 
@@ -915,10 +944,10 @@ def remove_files( download, torrent_file, video_file, ses, h, ren_video_file="",
     # Actualizado .json de control de descargas
     if not torrent_file or item.downloadProgress == 0:
         item.downloadProgress = 0
-        log("##### .torrent borrado: %s" % erase_file_path)
+        #log("##### .torrent borrado: %s" % erase_file_path)
     else:
         item.downloadProgress = 100
-    torr.update_control(item)
+    torr.update_control(item, function='mct_remove_files')
     if item.downloadStatus in [2, 4] and item.downloadProgress in [100]:
         dialog_view = False
     
