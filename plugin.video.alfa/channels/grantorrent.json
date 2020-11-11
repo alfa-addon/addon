@@ -4,7 +4,7 @@
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "https://i.postimg.cc/crqnx0Kc/grantorrent.jpg",
+  "thumbnail": "https://i.postimg.cc/vHTLvmbC/grantorrent.jpg",
   "banner": "grantorrent.png",
   "fanart": "https://i.postimg.cc/jjYFR6dY/grantorrent.png",
   "categories": [
@@ -15,20 +15,52 @@
   ],
   "settings": [
     {
-      "id": "include_in_global_search",
-      "type": "bool",
-      "label": "Incluir en busqueda global",
-      "default": false,
+      "id": "choose_domain",
+      "type": "list",
+      "label": "Seleccione el dominino primario para el Canal",
+      "default": 0,
       "enabled": true,
-      "visible": true
+      "visible": true,
+      "lvalues": [
+        "grantorrent.nl"
+      ]
+    },{
+      "id": "alternate_domain",
+      "type": "list",
+      "label": "Seleccione el dominino primario para el Canal",
+      "default": -1,
+      "enabled": true,
+      "visible": false,
+      "lvalues": []
     },
     {
-      "id": "modo_grafico",
-      "type": "bool",
-      "label": "Buscar información extra (TMDB)",
-      "default": true,
-      "enabled": true,
+      "default": false, 
+      "enabled": true, 
+      "id": "include_in_global_search", 
+      "label": "Incluir en busqueda global", 
+      "type": "bool", 
       "visible": true
+    }, 
+    {
+      "default": true, 
+      "enabled": true, 
+      "id": "modo_grafico", 
+      "label": "Buscar información extra (TMDB)", 
+      "type": "bool", 
+      "visible": true
+    }, 
+    {
+      "id": "modo_grafico_lang",
+      "type": "list",
+      "label": "Idioma para buscar información extra (TMDB)",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Español",
+        "Inglés",
+        "Español+Inglés"
+      ]
     },
     {
       "id": "pseudo_titulos",
@@ -93,26 +125,6 @@
       "visible": "!eq(-1,'No')"
     },
     {
-      "id": "seleccionar_serie_temporada",
-      "type": "list",
-      "label": "Seleccionar agrupar por Serie o Temporada",
-      "default": 0,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "Temporada",
-        "Serie"
-      ]
-    },
-    {
-      "id": "seleccionar_ult_temporadda_activa",
-      "type": "bool",
-      "label": "Seleccionar para Videoteca si estará activa solo la última Temporada",
-      "default": true,
-      "enabled": true,
-      "visible": true
-    },
-    {
       "id": "timeout_downloadpage",
       "type": "list",
       "label": "Timeout (segs.) en descarga de páginas o verificación de servidores",
@@ -139,12 +151,44 @@
       ]
     },
     {
+      "id": "season_colapse",
+      "type": "bool",
+      "label": "Seleccionar si quiere colapsar las Temporadas de Series",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "seleccionar_ult_temporadda_activa",
+      "type": "bool",
+      "label": "Seleccionar para Videoteca si estará activa solo la última Temporada",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_series",
+      "type": "bool",
+      "label": "Incluir en Novedades - Series",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
       "id": "include_in_newest_4k",
       "type": "bool",
       "label": "Incluir en Novedades - 4K",
       "default": true,
       "enabled": true,
-      "visible": true
+      "visible": false
     }
   ]
 }
