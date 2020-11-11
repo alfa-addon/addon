@@ -271,7 +271,7 @@ def findvideos(item):
 
     itemlist = list()
     srv_list = {"fembed": "fembed", "playstp": "streamtape", "stream": "mystream", "goplay": "gounlimited",
-                "drive": "gvideo", "meplay": "netutv"}
+                "drive": "gvideo", "meplay": "netutv", "evoplay": "netutv", "uqload": "uqload"}
 
     soup = create_soup(item.url)
     matches = soup.find("div", id="playeroptions")
@@ -320,7 +320,6 @@ def play(item):
     url = "%sedge-data" % player
     post = {"streaming": item.url}
     url = httptools.downloadpage(url, post=post).data
-
     if "/pembed" in url:
         v_id = scrapertools.find_single_match(url, "=CXx8MB([^$]+)")
         url = "https://feurl.com/v/%s" % v_id
