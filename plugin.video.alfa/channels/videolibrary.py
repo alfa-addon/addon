@@ -766,19 +766,28 @@ def update_tvshow(item):
     heading = config.get_localized_string(60037)
     p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(20000), heading)
     p_dialog.update(0, heading, item.contentSerieName)
+    
+    # Si viene de canales torrent con Series vinculadas a la Videoteca, se usa el .nfo de la serie para la actualización
+    if item.video_path:
+        path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"), item.video_path, 'tvshow.nfo')
+        head_nfo, it = videolibrarytools.read_nfo(path)
+        it.nfo = path
+        it.path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"), it.path)
+    else:
+        it = item.clone()
 
     import videolibrary_service
-    if videolibrary_service.update(item.path, p_dialog, 1, 1, item, False) and config.is_xbmc():
+    if videolibrary_service.update(it.path, p_dialog, 1, 1, it, False) and config.is_xbmc():
         from platformcode import xbmc_videolibrary
-        xbmc_videolibrary.update(folder=filetools.basename(item.path))
+        xbmc_videolibrary.update(folder=filetools.basename(it.path))
 
     p_dialog.close()
     
-    for channel, url in list(item.library_urls.items()):
+    for channel, url in list(it.library_urls.items()):
         channel_f = generictools.verify_channel(channel)
         if config.get_setting('auto_download_new', channel_f):
             from channels import downloads
-            downloads.download_auto(item)
+            downloads.download_auto(it)
             break
 
 
@@ -935,6 +944,18 @@ def mark_content_as_watched(item):
                 xbmc_videolibrary.mark_content_as_watched_on_kodi(item, item.playcount)
 
             platformtools.itemlist_refresh()
+
+
+def mark_video_as_watched(item):
+    logger.info()
+    # logger.debug("item:\n" + item.tostring('\n'))
+
+    if config.is_xbmc():
+        # Actualizamos la BBDD de Kodi
+        from platformcode import xbmc_videolibrary
+        xbmc_videolibrary.mark_season_as_watched_on_kodi(item, item.playcount)
+
+    platformtools.itemlist_refresh()
 
 
 def mark_season_as_watched(item):

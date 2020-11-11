@@ -370,6 +370,8 @@ def refresh_screen(item):
     
 def post_tmdb_listado(item, itemlist):
     logger.info()
+    global video_list
+    
     itemlist_fo = []
     
     """
@@ -403,14 +405,21 @@ def post_tmdb_listado(item, itemlist):
         item.from_channel = 'news'
         del item.category_new
 
+    #Cargo la lista de peliculas, series y documentales de la videoteca.  Se usa luego para Descargas
+    res, video_list = check_title_in_videolibray(item, video_list_init=True)
+    #logger.debug(video_list)
+    
     for item_local in itemlist:                                 #Recorremos el Itemlist generado por el canal
         item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
         #item_local.title = re.sub(r'online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title, flags=re.IGNORECASE).strip()
         title = item_local.title
+        season = 0
+        episode = 0
         #logger.debug(item_local)
         
         item_local.last_page = 0
         del item_local.last_page                                #Borramos restos de paginación
+        en_videoteca = ''
 
         if item_local.contentSeason_save:                       #Restauramos el num. de Temporada
             item_local.contentSeason = item_local.contentSeason_save
@@ -612,6 +621,25 @@ def post_tmdb_listado(item, itemlist):
             if item_local.from_channel == "news":
                 title_add += " -Varios-"
         
+        if item_local.contentType != 'movie' and item_local.infoLabels['tmdb_id'] \
+                        and ((item_local.infoLabels['imdb_id'] \
+                        and item_local.infoLabels['imdb_id'] in str(video_list)) \
+                        or 'tmdb_'+item_local.infoLabels['tmdb_id'] in str(video_list) \
+                        or item_local.contentTitle.lower()+' [' in str(video_list)):
+            id_tmdb = item_local.infoLabels['imdb_id']
+            if not id_tmdb:
+                id_tmdb = "tmdb_%s" % item_local.infoLabels['tmdb_id']
+            item_local.video_path = "%s [%s]" % (item_local.contentSerieName, id_tmdb)
+            item_local.url_tvshow = item_local.url
+            season_episode = ''
+            if season and episode:
+                season_episode = '%sx%s.strm' % (str(season), str(episode).zfill(2))
+            if check_marks_in_videolibray(item_local, strm=season_episode):
+                item_local.infoLabels["playcount"] = 1
+            if item_local.video_path:
+                item_local = context_for_videolibray(item_local)
+                en_videoteca = '(V)-'
+
         title += title_add.replace(' (MAX_EPISODIOS)', '')                      #Se añaden etiquetas adicionales, si las hay
 
         #Ahora maquillamos un poco los titulos dependiendo de si se han seleccionado títulos inteleigentes o no
@@ -653,7 +681,8 @@ def post_tmdb_listado(item, itemlist):
                         or item_local.infoLabels['status'].lower() == "canceled"):
             title += ' [TERM]'
         
-        item_local.title = title
+        item_local.title = en_videoteca + title
+        item_local.contentTitle = en_videoteca + item_local.contentTitle
         
         #logger.debug("url: " + item_local.url + " / title: " + item_local.title + " / content title: " + item_local.contentTitle + "/" + item_local.contentSerieName + " / calidad: " + item_local.quality + "[" + str(item_local.language) + "]" + " / year: " + str(item_local.infoLabels['year']))
         
@@ -734,6 +763,11 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
         item.url = item.url_alt
         del item.url_alt
     
+    # Si está en la videoteca, listamos los episodios vistos/no vistos
+    episode_list = {}
+    if item.video_path:
+        res, episode_list = check_marks_in_videolibray(item, video_list_init=True)
+    
     # Primero creamos un título para TODAS las Temporadas
     # Pasada por TMDB a Serie, para datos adicionales
     try:
@@ -770,19 +804,37 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
         itemlist_temporadas.append(item_season.clone(title=title, from_title_season_colapse=item.title))
     
     #Repasamos todos los episodios para detectar las diferentes temporadas
+    marca_visto = None
     for item_local in itemlist:
         if item_local.contentSeason != season:
             season = item_local.contentSeason                                   #Si se detecta una temporada distinta se prepara un título
+            if marca_visto and len(itemlist_temporadas) > 0 and itemlist_temporadas[-1].contentSeason:
+                itemlist_temporadas[-1].infoLabels['playcount'] = 1
+            marca_visto = None
             item_season = item.clone()
             item_season.contentSeason = item_local.contentSeason                #Se pone el núm de Temporada para obtener mejores datos de TMDB
             item_season.contentType = 'season'
             item_season.title = 'Temporada %s' % item_season.contentSeason
+            if item_season.video_path:
+                item_season = context_for_videolibray(item_season)
             if url != 'serie':
                 if item_local.url_tvshow:
                     item_season.url = item_local.url_tvshow
                 else:
                     item_season.url = item_local.url
             itemlist_temporadas.append(item_season.clone(from_title_season_colapse=item.title))
+
+        if item_local.video_path: 
+            season_episode = '%sx%s.strm' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
+            if episode_list.get(season_episode, 0) >= 1:
+                if marca_visto or marca_visto is None:
+                    marca_visto = True
+            else:
+                marca_visto = False
+    else:
+        # Trata la última temporada
+        if marca_visto and len(itemlist_temporadas) > 0 and itemlist_temporadas[-1].contentSeason:
+            itemlist_temporadas[-1].infoLabels['playcount'] = 1
             
     #Si hay más de una temporada se sigue, o se ha forzado a listar por temporadas, si no se devuelve el Itemlist original
     if len(itemlist_temporadas) > 2 or config.get_setting("no_pile_on_seasons", 'videolibrary') == 0:
@@ -892,6 +944,12 @@ def post_tmdb_episodios(item, itemlist):
     num_temporada = 1
     num_temporada_max = 99
     num_episodios_flag = True
+    episode_list = {}
+    if item.library_urls or item.add_videolibrary:
+        if item.video_path:
+            del item.video_path
+    elif item.video_path:
+        res, episode_list = check_marks_in_videolibray(item, video_list_init=True)
     
     #Restauramos el num de Temporada para hacer más flexible la elección de Videoteca
     contentSeason = item.contentSeason
@@ -974,6 +1032,8 @@ def post_tmdb_episodios(item, itemlist):
             del item_local.library_filter_show
         if item_local.extra2:
             del item_local.extra2
+        if (item.library_urls or item.add_videolibrary) and item_local.video_path:
+            del item_local.video_path
         item_local.wanted = 'xyz'
         del item_local.wanted
         item_local.text_color = 'xyz'
@@ -1093,6 +1153,13 @@ def post_tmdb_episodios(item, itemlist):
         else:                                           #Si no hay título de episodio, ponermos el nombre de la serie
             item_local.title = '%s %s' % (item_local.title, item_local.contentSerieName)
             item_local.infoLabels['episodio_titulo'] = '%s [%s] [%s]' % (item_local.contentSerieName, item_local.infoLabels['year'], rating)
+        
+        #Si está en la Videoteca, se verifica y está visto/no visto
+        season_episode = '%sx%s.strm' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
+        if item_local.video_path and episode_list.get(season_episode, 0) >= 1:
+            item_local.infoLabels["playcount"] = 1
+        if item_local.video_path:
+            item_local = context_for_videolibray(item_local)
         
         #Componemos el título final, aunque con Unify usará infoLabels['episodio_titulo']
         item_local.infoLabels['title'] = item_local.infoLabels['episodio_titulo']
@@ -1321,7 +1388,14 @@ def post_tmdb_findvideos(item, itemlist):
         if category:
             item.category = category
             
+    # Comprobamos las marcas de visto/no visto
+    playcount = 0
+    if item.video_path and check_marks_in_videolibray(item):
+        playcount = 1
+    
     if not config.get_setting("pseudo_titulos", item.channel, default=False) or item.downloadFilename:
+        if playcount:
+            item.infoLabels["playcount"] = 1
         return (item, itemlist)
     
     if item.armagedon:                                                          #Es una situación catastrófica?
@@ -1498,6 +1572,9 @@ def post_tmdb_findvideos(item, itemlist):
         itemlist.append(item.clone(title="-Descargar %s-" % contentType, channel="downloads", server='torrent', 
                         action="save_download", from_channel=item.channel, from_action='play', folder=False))
         if item.contentType == 'episode':
+            itemlist.append(item.clone(title="-Descargar Epis NO Vistos-", channel="downloads", contentType="tvshow", 
+                        action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
+                        sub_action="unseen"))
             item.quality = scrapertools.find_single_match(item.quality, '(.*?)\s\[')
             itemlist.append(item.clone(title="-Descargar Temporada-", channel="downloads", contentType="season", 
                         action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
@@ -1505,15 +1582,113 @@ def post_tmdb_findvideos(item, itemlist):
             itemlist.append(item.clone(title="-Descargar Serie-", channel="downloads", contentType="tvshow", 
                         action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
                         sub_action="tvshow"))
-            itemlist.append(item.clone(title="-Descargar NO Vistos-", channel="downloads", contentType="tvshow", 
-                        action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
-                        sub_action="unseen"))
-    
+
+    if playcount:
+        item.infoLabels["playcount"] = 1
     #logger.debug(item)
     
     return (item, itemlist)
+
+
+def check_title_in_videolibray(item, video_list_init=False):
+    logger.info()
     
+    """
+    Comprueba si el item listado está en la videoteca Alfa.  Si lo está devuelve True
+    Si se ha marcado "video_list_init", se devuleve la lista de peliculas y series en la videoteca Alfa
+    """
     
+    global video_list
+    res = False
+
+    if not item.infoLabels['tmdb_id'] and not video_list_init:
+        return res, ''
+        
+    if item.video_path and not video_list_init:
+        return True, ''
+    
+    if item.contentType == 'movie' or video_list_init:
+        videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
+        if video_list_init:
+            video_list = filetools.listdir(videolibrary_path)
+    if item.contentType != 'movie' or video_list_init:
+        videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
+        if video_list_init:
+            video_list += filetools.listdir(videolibrary_path)
+            return True, video_list
+
+    if not filetools.exists(videolibrary_path):
+        return res, ''
+    
+    for title in filetools.listdir(videolibrary_path):
+        if item.infoLabels['imdb_id'] in title or item.infoLabels['tmdb_id'] in title:
+            res = True
+            break
+
+    return res, video_list
+
+
+def check_marks_in_videolibray(item, strm='', video_list_init=False):
+    logger.info()
+    
+    """
+    Comprueba si el item listado está visto/no visto en la videoteca Kodi.  Si lo está devuelve True
+    """
+    
+    from platformcode import xbmc_videolibrary
+    ret = False
+    
+    season_episode = strm
+    if not season_episode and item.contentSeason and item.contentEpisodeNumber:
+        season_episode = '%sx%s.strm' % (str(item.contentSeason), str(item.contentEpisodeNumber).zfill(2))
+    
+    episode_list = xbmc_videolibrary.get_videos_watched_on_kodi(item, list_videos=True)
+
+    if video_list_init:
+        if episode_list: ret = True
+        return ret, episode_list
+
+    if not episode_list and item.video_path:
+        del item.video_path
+        return False
+    
+    if season_episode and episode_list.get(season_episode, 0) >= 1:
+        return True
+    else:
+        return False
+
+
+def context_for_videolibray(item):
+    logger.info()
+
+    if not item.video_path:
+        return item
+
+    if item.contentType == 'tvshow':
+        poner_marca = config.get_localized_string(60021)
+        quitar_marca = config.get_localized_string(60020)
+    elif item.contentType == 'season':
+        poner_marca = config.get_localized_string(60029)
+        quitar_marca = config.get_localized_string(60028)
+    else:
+        poner_marca = config.get_localized_string(60033)
+        quitar_marca = config.get_localized_string(60032)
+
+    item.context = [{"title": quitar_marca,
+                     "action": "mark_video_as_watched",
+                     "channel": "videolibrary",
+                     "playcount": 0},
+                    {"title": poner_marca,
+                     "action": "mark_video_as_watched",
+                     "channel": "videolibrary",
+                     "playcount": 1},
+                    {"title": config.get_localized_string(70269),
+                     "action": "update_tvshow",
+                     "channel": "videolibrary"}]
+
+    return item
+
+
 def find_rar_password(item):
     logger.info()
     
@@ -1892,6 +2067,7 @@ def get_field_from_kodi_DB(item, from_fields='*', files='file'):
         if config.is_xbmc():
             from platformcode import xbmc_videolibrary
             nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql)      #ejecución de la SQL
+            records = filetools.decode(records, trans_none=0)                   # Decode de records, cambiando None por 0
             if nun_records == 0:                                                #hay error?
                 logger.error("Error en la SQL: " + sql + ": 0 registros")       #No estará catalogada o hay un error en el SQL
     except:
@@ -2168,7 +2344,6 @@ def verify_channel_regex(item, clone_list):
 
             info_clone = info_clone.split(';')
             for pareja in info_clone:
-                logger.debug(pareja)
                 par = pareja.split(',')
                 if par[1] == 'null':
                     par[1] = ''

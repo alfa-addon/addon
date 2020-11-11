@@ -540,17 +540,17 @@ def findvideos(item):
 
     #Bajamos los datos de las páginas
     data = ''
-    patron = '<tr><td class="text-muted[^>]+>(\d+).<\/td><td class="text-nowrap[^>]+>'
-    patron += '<a .*?href="([^"]+)">([^<]+)<\/a>\s*.*?(?:<span class="[^"]+"><i class='
-    patron += '"[^"]+zqf-comments pad-r"><\/i>\d+<\/span>)?\s*<div class=[^>]+>\s*.*?'
-    patron += '(?:<span class=[^>]+Audio format"><i class=[^>]+zqf-mi-audio[^>]+><\/i>'
-    patron += '(.*?)<\/span>)?\s*(?:<span class="smaller[^"]+"\s*title="Detected languages">'
-    patron += '(.*?)<\/span>)?.*?(?:<span class=[^>]+hidden-md hidden-xs[^>]+><i class='
-    patron += '[^>]+zqf-mi-width[^>]+><\/i>\s*(.*?)<\/span>)?<\/div><\/td>(?:<td class='
-    patron += '[^>]+><div class="progress[^>]+><div class="progress-bar[^"]+" style=[^>]+>'
-    patron += '(.*?)<\/div><\/div><\/td>)?.*?<td class=[^>]+>.*?<\/td><td class[^>]+>'
-    patron += '<div class="[^"]+" title="Seeders:\s*(.*?)\s*\|[^>]+>.*?<\/div><\/div>'
-    patron += '<\/td><\/tr>'
+    patron = '<tr>\s*<td\s*class="text-muted[^>]+>(\d+).<\/td>\s*<td\s*class='
+    patron += '"text-nowrap[^>]+>\s*<a[^h]+href="([^"]+)">\s*([^<]+)<\/a>\s*'
+    patron += '(?:<div[^<]+)?\s*(?:<span\s*class=[^>]+Audio\s*format">\s*<i\s*class='
+    patron += '[^>]+zqf-mi-audio[^>]+>\s*<\/i>([^>]+)<\/span>(?:\s*&nbsp;)?\s*)?\s*'
+    patron += '(?:<span\s*class="smaller[^"]+"\s*title="Detected\s*languages">([^<]+)<\/span>'
+    patron += '(?:\s*&nbsp;)?\s*)?(?:<span\s*class="text-nowrap[^>]+>\s*<i\s*class='
+    patron += '"zqf[^>]+>\s*<\/i>\s*([^<]+)<\/span>(?:\s*&nbsp;)?\s*<\/div>\s*)?\s*'
+    patron += '<\/td>\s*<td\s*class="[^<]+<div\s*class="progress[^<]+<div\s*class='
+    patron += '"progress-bar[^>]+>\s*([^<]+)<\/div>\s*<\/div>\s*<\/td>\s*(?:<td\s*'
+    patron += 'class=[^>]+>[^<]+<\/td>\s*<td\s*class[^>]+>\s*<div\s*class="progress[^"]+"'
+    patron += '\s*title="Seeders:\s*(.*?)\s*\|[^>]+>)?'
         
     while curr_page <= last_page:                                               # Leemos todas las páginas
         data = ''
@@ -958,9 +958,9 @@ def episodios(item):
     patron_temp = '<ul class="list-group eplist" id="eps_(\d+)">(.*?)<\/ul><\/div><\/div><\/div>'
     temp_serie = re.compile(patron_temp, re.DOTALL).findall(data)
     
-    logger.debug("PATRON: " + patron)
-    logger.debug(temp_serie)
-    logger.debug(data)
+    #logger.debug("PATRON: " + patron)
+    #logger.debug(temp_serie)
+    #logger.debug(data)
     
     if not temp_serie:                                                          #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
@@ -1088,7 +1088,7 @@ def check_blocked_IP(data, itemlist, url, timeout=timeout):
     logger.info()
     thumb_separador = get_thumb("next.png")
     
-    host = scrapertools.find_single_match(url, '(http.?\:\/\/(?:www.)?.*?\.\w+(?:\.\w+)?\/)')
+    host = scrapertools.find_single_match(url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
     
     if 'Please wait while we try to verify your browser...' in data:
         logger.error("ERROR 99: La IP ha sido bloqueada por la Web" + " / URL: " 
@@ -1114,7 +1114,7 @@ def retry_alt(url, timeout=timeout):                                            
     logger.info()
     
     random.shuffle(host_alt)
-    host_a = scrapertools.find_single_match(url, '(http.?\:\/\/(?:www.)?.*?\.\w+(?:\.\w+)?\/)')
+    host_a = scrapertools.find_single_match(url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
     
     logger.error("ERROR 98: Web caída, reintentando..." + " / URL: " + url)
     config.set_setting('domain_name', host, channel)                            # Reseteamos el dominio

@@ -59,7 +59,6 @@ def catalogo(item):
         title = Video["title"]
         thumbnail = Video["img"]
         id = dir[:2]
-        logger.debug(id)
         url = host + "/api/json/model/3600/%s/%s.json" %(id,dir)
         itemlist.append(item.clone(action="actriz", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
@@ -108,7 +107,6 @@ def lista(item):
     logger.info()
     itemlist = []
     headers = {'Referer': host }
-    logger.debug(item.url)
     data = httptools.downloadpage(item.url, headers=headers).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     JSONData = json.load(data)
