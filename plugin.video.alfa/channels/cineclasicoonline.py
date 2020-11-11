@@ -33,7 +33,7 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Todas", url=host+'pelicula', action="list_all",
+    itemlist.append(Item(channel=item.channel, title="Todas", url=host+'pelicula/', action="list_all",
                          thumbnail=get_thumb('all', auto=True), first=0))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="genres",
@@ -92,8 +92,12 @@ def list_all(item):
         info_2 = elem.find("div", class_="data")
 
         thumb = info_1.img["src"]
-        title = info_1.img["alt"].split("-")[0].strip() if "-" in info_1.img["alt"] else info_1.img["alt"]
-        title = re.sub("VOSE", "", title)
+        patron = r'–.*|VOSE|- .*| “.*|\d{4}$'
+        if PY3:
+            title = re.sub(patron, "", info_1.img["alt"]).strip()
+        else:
+            title = re.sub(patron, "", info_1.img["alt"].encode('utf-8')).strip()
+        
         url = info_1.a["href"]
         try:
             year = info_2.find("span", text=re.compile(r"\d{4}")).text.split(",")[-1].strip()
@@ -201,24 +205,27 @@ def findvideos(item):
     soup = create_soup(item.url).find("div", id="videos")
     matches = soup.find("div", class_="links_table")
     added = list()
-    from channels.clubdecine import findvideos as fv
+    
     for elem in matches.find_all("tr", id=re.compile(r"link-\d+")):
         links = elem.find_all("td")
 
         url = links[0].a["href"]
         lang = links[1].text
+        language = IDIOMAS.get(lang, "VOSE")
         server = scrapertools.find_single_match(links[0].img["src"], r"domain=([^\.]+)\.")
+        #title = "%s [%s]" % (server.capitalize(), language)
         if server == "my":
             server = "mailru"
         if server == "mycinedesiempre":
+            from channels.clubdecine import findvideos as fv
             redir = create_soup(url)
             url = redir.find("a", id="link")["href"]
             if re.sub(r"-\d+/", "/", url) not in added:
                 itemlist.extend(fv(item.clone(url=url))[:-1])
                 added.append(url)
         else:
-            itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, server=server,
-                                 language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels))
+            itemlist.append(Item(channel=item.channel, title=server.capitalize(), action='play', url=url, server=server,
+                                 language=language, infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist)
 

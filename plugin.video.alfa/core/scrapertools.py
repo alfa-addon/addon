@@ -407,8 +407,9 @@ def remove_format(string):
     #logger.info()
     string = string.rstrip()
     string = re.sub(r'(\[|\[\/)(?:color|COLOR|b|B|i|I).*?\]', '', string)
-    string = re.sub(r'\:|\.|\-|\_|\,|\¿|\?|\¡|\!', ' ', string)
-    string = re.sub(r'\s+|\(.*?\)|\[.*?\]', ' ', string).strip()
+    string = re.sub(r'\:|\.|\-|\_|\,|\¿|\?|\¡|\!|\"|\'|\&', ' ', string)
+    string = re.sub(r'\(.*?\).*|\[.*?\].*', ' ', string)
+    string = re.sub(r'\s+', ' ', string).strip()
     #logger.debug('sale de remove: %s' % string)
     return string
 

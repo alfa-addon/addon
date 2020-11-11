@@ -408,7 +408,7 @@ def setting_channel_new(item):
         channel_parameters = channeltools.get_channel_parameters(channel.channel)
 
         # Do not include if "include_in_global_search" does not exist in the channel configuration
-        if not channel_parameters['include_in_global_search']:
+        if not channel_parameters.get('include_in_global_search', ''):
             continue
 
         lbl = '%s' % channel_parameters['language']

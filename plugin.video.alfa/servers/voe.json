@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://zplayer.live/(?:e|v)/([A-z0-9]+)",
-        "url": "https://v2.zplayer.live/embed/\\12"
-      },
-      {
-        "pattern": "https://v2.zplayer.live/(?:embed|video)/([A-z0-9]+)",
-        "url": "https://v2.zplayer.live/embed/\\1"
+        "pattern": "voe.sx/(?:e/|)([A-z0-9]+)",
+        "url": "https://voe.sx/e/\\1"
       }
     ]
   },
   "free": true,
-  "id": "zplayer",
-  "name": "zplayer",
+  "id": "voe",
+  "name": "voe",
   "settings": [
     {
       "default": false,
@@ -42,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/rpWLRJcT/zplayer.png"
+  "thumbnail": "https://i.imgur.com/oYgi4a9.png"
 }
