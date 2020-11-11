@@ -52,7 +52,7 @@ else:
 
 
 
-def validate_path(path):
+def validate_path(path, trans_none=''):
     """
     Elimina cáracteres no permitidos
     @param path: cadena a validar
@@ -61,7 +61,7 @@ def validate_path(path):
     @return: devuelve la cadena sin los caracteres no permitidos
     """
     if not path or not isinstance(path, (unicode, basestring, bytes)):
-        path = ''
+        if path is None: path = trans_none
 
     chars = ":*?<>|"
     if scrapertools.find_single_match(path, '(^\w+:\/\/)'):
@@ -80,7 +80,7 @@ def validate_path(path):
         return unidad + ''.join([c for c in path if c not in chars])
 
 
-def translatePath(path):
+def translatePath(path, trans_none=''):
     """
     Kodi 19: xbmc.translatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.translatePath instead.
     @param path: cadena con path special://
@@ -89,7 +89,7 @@ def translatePath(path):
     @return: devuelve la cadena con el path real
     """
     if not path or not isinstance(path, (unicode, basestring, bytes)):
-        if path is None: path = ''
+        if path is None: path = trans_none
         return path
 
     if PY3 and xbmc_vfs:
@@ -105,7 +105,7 @@ def translatePath(path):
     return path
 
 
-def makeLegalFilename(path):
+def makeLegalFilename(path, trans_none=''):
     """
     Kodi 19: xbmc.makeLegalFilename is deprecated and might be removed in future kodi versions. Please use xbmcvfs.makeLegalFilename instead.
     @param path: cadena a convertir platform specific
@@ -114,7 +114,7 @@ def makeLegalFilename(path):
     @return: devuelve la cadena con el path ajustado
     """
     if not path or not isinstance(path, (unicode, basestring, bytes)):
-        if path is None: path = ''
+        if path is None: path = trans_none
         return path
 
     if PY3 and xbmc_vfs:
@@ -130,7 +130,7 @@ def makeLegalFilename(path):
     return path
 
 
-def validatePath(path):
+def validatePath(path, trans_none=''):
     """
     Kodi 19: xbmc.validatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.validatePath instead.
     @param path: cadena a convertir platform specific
@@ -139,7 +139,7 @@ def validatePath(path):
     @return: devuelve la cadena con el path ajustado
     """
     if not path or not isinstance(path, (unicode, basestring, bytes)):
-        if path is None: path = ''
+        if path is None: path = trans_none
         return path
 
     if PY3 and xbmc_vfs:
@@ -155,7 +155,7 @@ def validatePath(path):
     return path
 
 
-def encode(path, _samba=False):
+def encode(path, _samba=False, trans_none=''):
     """
     Codifica una ruta según el sistema operativo que estemos utilizando.
     El argumento path tiene que estar codificado en utf-8
@@ -167,7 +167,7 @@ def encode(path, _samba=False):
     @return ruta codificada en juego de caracteres del sistema o utf-8 si samba
     """
     if not path or isinstance(path, (list, dict)):
-        if path is None: path = ''
+        if path is None: path = trans_none
         return path
 
     if isinstance(path, (unicode, basestring, bytes)) and "special://" in path:
@@ -188,7 +188,7 @@ def encode(path, _samba=False):
     return path
 
 
-def decode(path):
+def decode(path, trans_none=''):
     """
     Convierte una cadena de texto, lista o dict al juego de caracteres utf-8
     eliminando los caracteres que no estén permitidos en utf-8
@@ -198,7 +198,7 @@ def decode(path):
     @return: ruta codificado en UTF-8
     """
     if not path:
-        if path is None: path = ''
+        if path is None: path = trans_none
         return path
         
     if isinstance(path, (unicode, basestring, bytes)) and "special://" in path:
@@ -206,14 +206,14 @@ def decode(path):
     
     if isinstance(path, list):
         for x in range(len(path)):
-            path[x] = decode(path[x])
+            path[x] = decode(path[x], trans_none=trans_none)
     elif isinstance(path, tuple):
-        path = tuple(decode(list(path)))
+        path = tuple(decode(list(path), trans_none=trans_none))
     elif isinstance(path, dict):
         newdct = {}
         for key in path:
-            value_unc = decode(path[key])
-            key_unc = decode(key)
+            value_unc = decode(path[key], trans_none=trans_none)
+            key_unc = decode(key, trans_none=trans_none)
             newdct[key_unc] = value_unc
         return newdct
     elif isinstance(path, unicode):

@@ -96,7 +96,7 @@ def create_soup(url):
     logger.info()
     data = ""
     if ssl.OPENSSL_VERSION_INFO >= (1, 1, 1):
-        response = httptools.downloadpage(url + "|verifypeer=false", ignore_response_code=True)
+        response = httptools.downloadpage(url, ignore_response_code=True)
         if response.sucess:
             data = response.data
     elif alfa_assistant.open_alfa_assistant():
@@ -111,8 +111,11 @@ def create_soup(url):
             data = data.get('source', '')
             if not data:
                 return False
+    logger.debug(data)
+
     if data:
         soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+        logger.debug(soup)
         return soup
     
     return False

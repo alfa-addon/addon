@@ -143,6 +143,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     bkg_user = False
     progress_file = 0
     torrent_deleted = False
+    torrent_paused = False
     DOWNGROUND = False
     if item.downloadFilename and item.downloadStatus in [2, 4]:                 # Descargas AUTO
         bkg_user = True
@@ -247,7 +248,8 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
 
     x = 1
     try:
-        while not c.closed and not torrent_deleted and not ((monitor and monitor.abortRequested()) \
+        while not c.closed and not torrent_deleted and not torrent_paused and not \
+                                    ((monitor and monitor.abortRequested()) \
                                     or (not monitor and xbmc.abortRequested)):
             # Obtenemos el estado del torrent
             x += 1
@@ -276,8 +278,11 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
             time.sleep(1)
             if ((s.progress_file > 1 and (str(x).endswith('0') or str(x).endswith('5'))) \
                         or (s.progress_file == 0 and x > 30)) and not filetools.exists(torrent_path):
+                if filetools.exists(torrent_path.lower().replace('.torrent', '.pause')):
+                    torrent_paused = True
+                else:
+                    torrent_deleted = True
                 progress_file = s.progress_file
-                torrent_deleted = True
                 finalizado = False
                 
 
@@ -457,6 +462,9 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     if torrent_deleted:
         item.downloadProgress = 0
         log("##### Progreso: %s, .torrent borrado: %s" % (str(progress_file), erase_file_path))
+    if torrent_paused:
+        item.downloadProgress = -1
+        log("##### Progreso: %s, .torrent pausado: %s" % (str(progress_file), erase_file_path))
     update_control(item)
     if item.downloadStatus in [2, 4]:
         if item.downloadProgress in [100]:
@@ -864,7 +872,7 @@ def call_torrent_via_web(mediaurl, torr_client):
     return response.sucess
 
 
-def get_tclient_data(folder, torr_client, elementum_port=65220, delete=False, folder_new=''):
+def get_tclient_data(folder, torr_client, elementum_port=65220, delete=False, pause=False, folder_new=''):
     # Monitoriza el estado de descarga del torrent en Quasar y Elementum
 
     local_host = {"quasar": "http://localhost:65251/torrents/", "elementum": "http://localhost:%s/torrents/" % elementum_port}
@@ -872,6 +880,9 @@ def get_tclient_data(folder, torr_client, elementum_port=65220, delete=False, fo
     torr_id = ''
     x = 0
     y = ''
+    action = ''
+    if delete: action = 'delete'
+    if pause: action = 'pause'
     
     if torr_client not in str(local_host):
         log('##### Servicio para %s no disponible' % (torr_client))
@@ -906,9 +917,9 @@ def get_tclient_data(folder, torr_client, elementum_port=65220, delete=False, fo
                 y = torr_id
             else:
                 y = x
-            if delete:
+            if delete or pause:
                 for z in range(10): 
-                    res = httptools.downloadpage('%sdelete/%s' % (local_host[torr_client], y), timeout=10,
+                    res = httptools.downloadpage('%s%s/%s' % (local_host[torr_client], action, y), timeout=10,
                                               alfa_s=True, ignore_response_code=True)
                     if not res.sucess:
                         time.sleep(1)
@@ -916,11 +927,11 @@ def get_tclient_data(folder, torr_client, elementum_port=65220, delete=False, fo
                     else:
                         break
                 if res.sucess:
-                    log('##### Descarga BORRADA de %s: %s' % (str(torr_client).upper(), str(y)))
+                    log('##### Descarga %sD de %s: %s' % (action.upper(), str(torr_client).upper(), str(y)))
                 else:
-                    log('##### ERROR en BORRADO de %s: %s - ERROR Code: %s' % (str(torr_client).upper(), str(y), str(res.code)))
+                    log('##### ERROR en %s de %s: %s - ERROR Code: %s' % (action.upper(), str(torr_client).upper(), str(y), str(res.code)))
                 time.sleep(1)
-                if folder_new:
+                if delete and folder_new:
                     delete_torrent_folder(folder_new)
             break
         else:
@@ -1236,7 +1247,7 @@ def restart_unfinished_downloads():
                             continue
                         if item.server != 'torrent' and config.get_setting("DOWNLOADER_in_use", "downloads"):
                             continue
-                        if torr_client not in ['BT', 'MCT', 'TORRENTER', 'QUASAR', 'ELEMENTUM'] and item.downloadProgress > 0:
+                        if torr_client not in ['BT', 'MCT', 'TORRENTER', 'QUASAR', 'ELEMENTUM'] and item.downloadProgress != 0:
                             continue
                         if torr_client in ['QUASAR', 'ELEMENTUM'] and item.downloadProgress > 0 \
                                         and item.downloadProgress < 100 and init and not 'RAR-' in item.torrent_info:
@@ -1244,9 +1255,9 @@ def restart_unfinished_downloads():
                                 logger.info('BORRANDO descarga INACTIVA de %s: %s' % (torr_client, title))
                                 filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, fichero))
                             continue
-                        elif torr_client in ['QUASAR', 'ELEMENTUM'] and item.downloadProgress > 0:
+                        elif torr_client in ['QUASAR', 'ELEMENTUM'] and item.downloadProgress != 0:
                             continue
-                        if (item.downloadProgress == 0 or not item.downloadProgress) \
+                        if (item.downloadProgress in [-1, 0] or not item.downloadProgress) \
                                         and (item.downloadQueued == 0 or not item.downloadQueued):
                             continue
                         if item.downloadProgress < 4 or (item.downloadQueued > 0 \
@@ -1422,25 +1433,25 @@ def check_seen_torrents():
 
                     sql = 'select * from files where (strFilename like "%s" and playCount not like "")' % filename
                     if config.is_xbmc():
-                        nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql)  # ejecución de la SQL
-                        if nun_records > 0:                                             # si el vídeo está visto...
-                            xbmc_videolibrary.mark_content_as_watched_on_kodi(item, 1)  # ... marcamos en Kodi como visto
+                        nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql, silent=True)     # ejecución de la SQL
+                        if nun_records > 0:                                                             # si el vídeo está visto...
+                            xbmc_videolibrary.mark_content_as_watched_on_kodi(item, 1)                  # ... marcamos en Kodi como visto
                             if item.nfo:
-                                xbmc_videolibrary.mark_content_as_watched_on_alfa(item.nfo) # ... y sincronizamos los Vistos de Kodi con Alfa
-                                logger.info("Status: %s | Progress: %s | Queued: %s | File: %s | Title: %s" % \
-                                                (item.downloadStatus, item.downloadProgress, item.downloadQueued, fichero, filename))
+                                xbmc_videolibrary.mark_content_as_watched_on_alfa(item.nfo)     # ... y sincronizamos los Vistos de Kodi con Alfa
+                                logger.info("Status: %s | Progress: %s | Queued: %s | Viewed: %s | File: %s | Title: %s" % \
+                                                (item.downloadStatus, item.downloadProgress, item.downloadQueued, nun_records, fichero, filename))
                                 filename = ''
 
-                check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PATH, LISTDIR, fichero, filename)
+                check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PATH, LISTDIR, fichero, filename, nun_records)
     except:
         logger.error(traceback.format_exc())
 
 
-def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PATH, LISTDIR, fichero, filename=''):
+def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PATH, LISTDIR, fichero, filename='', nun_records=0):
     try:
         if filename:
-            logger.info("Status: %s | Progress: %s | Queued: %s | File: %s | Title: %s" % \
-                                (item.downloadStatus, item.downloadProgress, item.downloadQueued, fichero, filename))
+            logger.info("Status: %s | Progress: %s | Queued: %s  | Viewed: %s | File: %s | Title: %s" % \
+                                (item.downloadStatus, item.downloadProgress, item.downloadQueued, nun_records, fichero, filename))
 
         # Busca sesiones y archivos de descarga "zombies" y los borra
         torr_client = scrapertools.find_single_match(item.downloadFilename, '\:(\w+)\:')
@@ -1483,7 +1494,7 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
             return
         if item.downloadProgress in [0]:
             return
-        if item.downloadProgress in [1, 2, 3] and file and filetools.exists(file):
+        if item.downloadProgress in [-1, 1, 2, 3] and file and filetools.exists(file):
             return
         
         if not filetools.exists(filetools.join(torrent_paths[torr_client], downloadFilename)):
@@ -1696,7 +1707,7 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                 path = filetools.join(config.get_setting("downloadlistpath"), item.path)
                 if filetools.exists(path):
                     item = Item().fromjson(filetools.read(path))
-                    if path.endswith('.json') and item.downloadProgress > 0:
+                    if path.endswith('.json') and item.downloadProgress != 0:
                         filetools.remove(path, silent=True)
                 logger.error('%s session aborted: %s' % (str(torr_client).upper(), str(folder)))
                 return ('', '', folder, rar_control)                            # Volvemos
