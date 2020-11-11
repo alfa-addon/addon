@@ -44,6 +44,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://www.tabooporn.tv/videos/[0-9]+/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://pornwild.to/videos/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       }

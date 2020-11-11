@@ -79,6 +79,11 @@ def run(item=None):
         if not config.get_setting('tmdb_active'):
             config.set_setting('tmdb_active', True)
 
+        # Cleans infoLabels["playcount"] if set by generictools
+        if item.video_path:
+            item.infoLabels["playcount"] = 1
+            del item.infoLabels["playcount"]
+        
         # If item has no action, stops here
         if item.action == "":
             logger.info("Item sin accion")

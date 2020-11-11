@@ -691,9 +691,9 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
                                              (sys.argv[0], item_url, 'channel=downloads&action=save_download&from_channel=' + channel_p + '&sub_action=tvshow' +
                                                   '&from_action=' + item.action)))
                 # Descargar serie NO vistos
-                if item.contentType == "episode" and item.server == 'torrent' and item.channel == 'videolibrary':
+                if (item.contentType == "episode" and item.server == 'torrent' and item.channel == 'videolibrary') or item.video_path:
                     context_commands.append(
-                        (config.get_localized_string(60355) + ' NO Vistos', "RunPlugin(%s?%s&%s)" %
+                        ('Descargar Epis NO Vistos', "RunPlugin(%s?%s&%s)" %
                          (sys.argv[0], item_url, 'channel=downloads&action=save_download&from_channel=' + channel_p + '&sub_action=unseen' +
                                                   '&from_action=' + item.action)))
                 # Descargar episodio

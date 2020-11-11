@@ -57,7 +57,7 @@ def mainlist(item):
                          plot="افلام اجنبي", extra="film"))
 
     itemlist.append(Item(channel=item.channel, title="Turkish Movies", text_color="0xFF5AC0E0",
-                         text_bold=True,action="listall", url=host + "category/فلام-تركية/",
+                         text_bold=True,action="listall", url=host + "category/افلام-تركية/",
                          thumbnail="https://cdn.countryflags.com/thumbs/turkey/flag-button-square-250.png",
                          plot="فلام تركية", extra="film"))
     

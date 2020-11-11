@@ -530,9 +530,9 @@ def findvideos(item):
         else:
             matches = item.matches
     
-    logger.debug("PATRON: " + patron)
-    logger.debug(matches)
-    logger.debug(data)
+    #logger.debug("PATRON: " + patron)
+    #logger.debug(matches)
+    #logger.debug(data)
     
     if not matches:                                                             #error
         return itemlist
@@ -555,7 +555,6 @@ def findvideos(item):
         item_local = item.clone()
 
         item_local.url = convert_url_base64(scrapedurl)
-        logger.error(item_local.url)
 
         # Restauramos urls de emergencia si es necesario
         local_torr = ''
