@@ -31,7 +31,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
 
     video_urls = []
-    url = "https:" + scrapertools.find_single_match(data, 'innerHTML = "([^"]+)')
-    url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
+    url = "https:" + scrapertools.find_single_match(data, "elem\['innerHTML'\]\='([^']+)")
     video_urls.append(['MP4 [streamtape]', url])
     return video_urls
