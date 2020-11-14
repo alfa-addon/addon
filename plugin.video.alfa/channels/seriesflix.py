@@ -20,7 +20,7 @@ from platformcode import config, logger
 from channelselector import get_thumb
 
 host = 'https://seriesflix.to/'
-IDIOMAS = {"Latino": "LAT"}
+IDIOMAS = {"Latino": "LAT", "Castellano": "CAST", "Subtitulado": "VOSE"}
 list_language = list(IDIOMAS.values())
 list_servers = ['uqload', 'fembed', 'mixdrop', 'supervideo', 'mystream']
 list_quality = []
@@ -30,6 +30,7 @@ def create_soup(url, post=None, headers=None):
     logger.info()
 
     data = httptools.downloadpage(url, post=post, headers=headers).data
+    logger.debug(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
     return soup
@@ -41,14 +42,14 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all",
-                         url="%swp-admin/admin-ajax.php" % host, thumbnail=get_thumb("last", auto=True), first=0))
+    # itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all",
+    #                      url="%swp-admin/admin-ajax.php" % host, thumbnail=get_thumb("last", auto=True), first=0))
 
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="list_all",
-                         url="%swp-admin/admin-ajax.php" % host, thumbnail=get_thumb("more watched", auto=True), first=0))
+    #itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="list_all",
+    #                     url="%swp-admin/admin-ajax.php" % host, thumbnail=get_thumb("more watched", auto=True), first=0))
 
-    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + "ver-series-online",
-                         thumbnail=get_thumb("all", auto=True), first=0))
+    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all", url=host + "ver-series-online",
+                         thumbnail=get_thumb("last", auto=True), first=0))
 
     itemlist.append(Item(channel=item.channel, title="Productoras", action="sub_menu", url=host))
 
@@ -90,15 +91,15 @@ def list_all(item):
 
     itemlist = list()
     next = False
-    if item.title == "Mas Vistas":
-        post = {"action": "action_changue_post_by", "type": "#Views", "posttype": "series"}
-        matches = create_soup(item.url, post=post)
-    elif item.title == "Ultimas":
-        post = {"action": "action_changue_post_by", "type": "#Latest", "posttype": "series"}
-        matches = create_soup(item.url, post=post)
-    else:
-        soup = create_soup(item.url)
-        matches = soup.find("ul", class_=re.compile(r"MovieList Rows AX A04 B03 C20 D03 E20 Alt"))
+    # if item.title == "Mas Vistas":
+    #     post = {"action": "action_changue_post_by", "type": "#Views", "posttype": "series"}
+    #     matches = create_soup(item.url, post=post, headers={"referer": host})
+    # elif item.title == "Ultimas":
+    #     post = {"action": "action_changue_post_by", "type": "#Latest", "posttype": "series"}
+    #     matches = create_soup(item.url, post=post)
+    # else:
+    soup = create_soup(item.url)
+    matches = soup.find("ul", class_=re.compile(r"MovieList Rows AX A04 B03 C20 D03 E20 Alt"))
 
     if not matches:
         return itemlist
@@ -265,6 +266,7 @@ def findvideos(item):
         if server.lower() == "embed":
             server = "Mystream"
         lang = elem.find("p", class_="AAIco-language").text.split(' ')[1]
+        logger.debug(lang)
         qlty = elem.find("p", class_="AAIco-equalizer").text
         title = "%s [%s]" % (server, lang)
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
@@ -289,6 +291,11 @@ def play(item):
     itemlist = list()
 
     url = create_soup(item.url).find("div", class_="Video").iframe["src"]
+    if "%sstreamcheck" % host in url:
+        api_url = "%sstreamcheck/r.php" % host
+        v_id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
+        post = {"h": v_id}
+        url = httptools.downloadpage(api_url, post=post).url
 
     itemlist.append(item.clone(url=url, server=""))
     itemlist = servertools.get_servers_itemlist(itemlist)

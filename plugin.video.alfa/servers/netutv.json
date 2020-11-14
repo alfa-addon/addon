@@ -26,7 +26,12 @@
       {
         "pattern": "(?:hqq|waaw|netu|waaw1)(?:\\.tv\\/|\\.watch\\/|.to\\/|\\.php\\?)(e/|f/)([A-z0-9]+)",
         "url": "http://hqq.tv/player/hash.php?hash=\\1"
+      },
+      {
+        "pattern": "https://megaplay.cc/player/embed_player.php?vid=([A-z0-9]+)",
+        "url": "http://hqq.tv/player/hash.php?hash=\\1"
       }
+
     ]
   },
   "free": true,

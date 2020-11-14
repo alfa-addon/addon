@@ -259,14 +259,17 @@ def findvideos(item):
 
     data = get_source(item.url)
     #return
-    patron = 'video\[\d+\] = \'<iframe.*?src="([^"]+)"'
+    patron = r'video\[\d+\] = \'<iframe.*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl in matches:
 
-        if 'animeboom' in scrapedurl:
+        if host in scrapedurl:
             new_data = get_source(scrapedurl)
             scrapedurl = scrapertools.find_single_match(new_data, "'file':'([^']+)")
+            if not scrapedurl:
+                scrapedurl = scrapertools.find_single_match(new_data, r'var shareId\s*=\s*"([^"]+)')
+                scrapedurl = 'https://www.amazon.com/drive/v1/shares/%s' % scrapedurl
 
         if scrapedurl != '':
             itemlist.append(Item(channel=item.channel, title='%s', url=scrapedurl, action='play', language = item.language,
