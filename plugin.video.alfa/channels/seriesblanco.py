@@ -341,7 +341,7 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<imgsrc="([^"]+)".*?<a class="open-link" data-enlace="([^"]+)".*?<td>([^<]+)</td>'
+    patron = '<imgsrc="([^"]+)".*?data-enlace="([^"]+)".*?<td>([^<]+)</td>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for lang_data, scrapedurl, quality in matches:

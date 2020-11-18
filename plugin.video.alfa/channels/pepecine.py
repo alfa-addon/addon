@@ -400,7 +400,7 @@ def search_results(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    #item.host = "https://pepecine.tv/"
+    item.host =  sec_host
     #item.url =  item.host + 'secure/search/'
     if not item.url:
         item.url = sec_host + 'secure/search/'

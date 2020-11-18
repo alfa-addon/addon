@@ -25,7 +25,6 @@ list_servers = ['supervideo', "vidcloud", "myvy"]
 
 host = "https://mycinedesiempre.blogspot.com/"
 
-
 def mainlist(item):
     logger.info()
 
@@ -36,14 +35,14 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Ultimas", url=host, action="list_all",
                          thumbnail=get_thumb('last', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Español", url=host + "search/label/Espa%C3%B1a",
+    itemlist.append(Item(channel=item.channel, title="Cine Español", url=host + "search/label/España",
                          action="list_all", thumbnail=get_thumb('españolas', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Latino", url=host + "search/label/Latino", action="list_all",
-                         thumbnail=get_thumb('latino', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Cine Latino", url=host + "search/label/Latino", 
+                         action="list_all", thumbnail=get_thumb('latino', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Asiaticas", url=host + "search/label/Asi%C3%A1tico", action="list_all",
-                         thumbnail=get_thumb('asiaticas', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Asiaticas", url=host + "search/label/Asiático",
+                         action="list_all", thumbnail=get_thumb('asiaticas', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="section",
                          thumbnail=get_thumb('genres', auto=True)))
@@ -81,7 +80,7 @@ def list_all(item):
 
     for elem in matches:
         url = elem.h2.a["href"]
-        title = elem.h2.text.split(" - ")[0].strip()
+        title = re.sub(r'-.*|\(.*', '', elem.h2.text).strip()
         thumb = elem.img["src"]
         try:
             year = elem.find("dd", itemprop="datePublished").text
@@ -92,10 +91,12 @@ def list_all(item):
                             thumbnail=thumb, contentTitle=title, infoLabels={'year': year}))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
-
-    url_next_page = soup.find("a", class_="blog-pager-older-link")["href"]
-    if url_next_page and len(itemlist) > 8:
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
+    try:
+        url_next_page = soup.find("a", class_="blog-pager-older-link")["href"]
+        if url_next_page and len(itemlist) > 0:
+            itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
+    except:
+        pass
 
 
     return itemlist
@@ -110,7 +111,7 @@ def section(item):
     if item.title == "Generos":
         matches = soup.find_all("a", href=re.compile(r"%ssearch.*?" % host), rel="tag")
     for elem in matches:
-        url = elem["href"]
+        url = elem["href"] + query
         title = elem.text
         if url not in listed:
             itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url))
@@ -127,7 +128,11 @@ def findvideos(item):
     red_links = soup.find_all("a", target="_blank")
     for link in red_links:
         url = link["href"]
-        itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, infoLabels=item.infoLabels))
+        if 'filmaffinity' in url:
+            continue
+        language = get_lang(link.text)
+        itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
+                             infoLabels=item.infoLabels, language=language))
     try:
         player_src = (soup.find("iframe")["src"])
         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=player_src, infoLabels=item.infoLabels))
@@ -166,3 +171,17 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
+
+def get_lang(title):
+    language = ''
+    title = title.lower()
+    dict_lang = {'castellano': 'CAST', 'spanish': 'CAST',
+                  'latino':  'LATINO', 'vose': 'VOSE',
+                  'subtitulado': 'VOSE'
+                    }
+    for lang in list(dict_lang.keys()):
+        if lang in title:
+            language = dict_lang[lang]
+            break
+
+    return language

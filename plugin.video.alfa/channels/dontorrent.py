@@ -907,7 +907,7 @@ def episodios(item):
     # Si no hay TMDB o es sólo una temporada, listamos lo que tenemos
     if search_seasons and season_display == 0 and item.infoLabels['tmdb_id'] and max_temp > 1:
         # Si hay varias temporadas, buscamos todas las ocurrencias y las filtraos por TMDB y calidad
-        list_temp = find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo)
+        list_temp = generictools.find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo)
 
     if not list_temp:
         list_temp = list_temps[:]                                               # Lista final de Temporadas a procesar
@@ -959,6 +959,7 @@ def episodios(item):
                 del item_local.season_colapse
 
             item_local.url = url                                                # Usamos las url de la temporada, no hay de episodio
+            item_local.url_tvshow = url
             item_local.title = ''
             #item.matches = [matches[x]]                                         # Salvado Matches de cada episodio
             x += 1
@@ -1033,73 +1034,6 @@ def episodios(item):
     #logger.debug(item)
 
     return itemlist
-    
-    
-def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[]):
-    logger.info()
-    
-    # Si hay varias temporadas, buscamos todas las ocurrencias y las filtrados por TMDB, calidad e idioma
-    list_temp = []
-    itemlist = []
-    #patron_quality = '(?:Temporada|Miniserie)(?:-(.*?)(?:\.|$)|()\.|()$)'
-    patron_quality = '(?:Temporada|Miniserie)(?:-(.*?)(?:\.|-$|$))'
-
-    try:
-        item_search = item.clone()
-        item_search.extra = 'search'
-        item_search.extra2 = 'episodios'
-        title = scrapertools.find_single_match(item_search.contentSerieName, '(^.*?)\s*(?:$|\(|\[)')    # Limpiamos un poco el título
-        item_search.title = title
-        item_search.infoLabels = {}                                             # Limpiamos infoLabels
-        
-        itemlist = search(item_search, title.lower())                           # Llamamos a 'Listado' para que procese la búsqueda
-
-        if len(itemlist) == 0:
-            list_temps.append(item.url)
-
-        for item_found in itemlist:                                             # Procesamos el Itemlist de respuesta
-            if item_found.url in str(list_temps):                               # Si ya está la url, pasamos a la siguiente
-                continue
-            if not item_found.infoLabels['tmdb_id']:                            # tiene TMDB?
-                continue
-            if item_found.infoLabels['tmdb_id'] != item.infoLabels['tmdb_id']:  # Es el mismo TMDB?
-                continue
-            if item.language and item_found.language:                           # Es el mismo Idioma?
-                if item.language != item_found.language:
-                    continue
-            if item.quality and item_found.quality:                             # Es la misma Calidad?, si la hay...
-                if item.quality != item_found.quality:
-                    continue
-            elif scrapertools.find_single_match(item.url, patron_quality) != \
-                        scrapertools.find_single_match(item_found.url, patron_quality):  # Coincide la calidad? (alternativo)
-                continue
-            list_temps.append(item_found.url)                                   # Si hay ocurrencia, guardamos la url
-        
-        if len(list_temps) > 1:
-            list_temps = sorted(list_temps)                                     # Clasificamos las urls
-            item.url = list_temps[-1]                                           # Guardamos la url de la última Temporada en .NFO
-
-        if max_temp >= max_nfo and item.library_playcounts and modo_ultima_temp_alt:    # Si viene de videoteca, solo tratamos lo nuevo
-            for url in list_temps:
-                if scrapertools.find_single_match(url, '-(\d+)-Temporada'):     # Está la Temporada en la url?
-                    try:                                                        # Miramos si la Temporada está procesada
-                        if int(scrapertools.find_single_match(url, '-(\d+)-Temporada')) >= max_nfo:
-                            list_temp.append(url)                               # No está procesada, la añadimos
-                    except:
-                        list_temp.append(url)
-                else:                                                           # Si no está la Temporada en la url, se añade la url
-                    list_temp.append(url)                                       # Por seguridad, la añadimos
-        else:
-            list_temp = list_temps[:]
-    
-    except:
-        list_temp = []
-        list_temp.append(item.url)
-        logger.error(traceback.format_exc(1))
-    
-    #logger.debug(list_temp)
-    
-    return list_temp
 
 
 def actualizar_titulos(item):
