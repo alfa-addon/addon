@@ -360,18 +360,23 @@ def findvideos(item):
                 return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     #data = unicode(data, "utf-8", errors="replace")
 
-    patron_t = '<div class="enlace_descarga".*?<a href="(.*?\.torrent)"'
-    patron_m = '<div class="enlace_descarga".*?<a href="(magnet:?.*?)"'
+    patron_t = '(?:<div\s*class="enlace_descarga"[^>]+>\s*<a\s*href=)?"([^"]+\.torrent)"'
+    patron_m = '(?:<div\s*class="enlace_descarga"[^>]+>\s*<a\s*href=)?"(magnet:?[^"]+)"'
     if not item.armagedon:                                                      #Si es un proceso normal, seguimos
-        link_torrent = scrapertools.find_single_match(data, patron_t)
-        link_torrent = urlparse.urljoin(item.url, link_torrent)
-        link_torrent = link_torrent.replace(" ", "%20")                         #sustituimos espacios por %20, por si acaso
-        #logger.info("link Torrent: " + link_torrent)
+        data_links = data
+        for x in range(2):
+            link_torrent = scrapertools.find_single_match(data_links, patron_t)
+            if link_torrent:
+                link_torrent = urlparse.urljoin(host, link_torrent)
+                link_torrent = link_torrent.replace(" ", "%20")                 #sustituimos espacios por %20, por si acaso
+            #logger.info("link Torrent: " + link_torrent)
+            
+            link_magnet = scrapertools.find_single_match(data_links, patron_m)
+            #logger.info("link Magnet: " + link_magnet)
         
-        link_magnet = scrapertools.find_single_match(data, patron_m)
-        link_magnet = urlparse.urljoin(item.url, link_magnet)
-        #logger.info("link Magnet: " + link_magnet)
-    
+            if not (link_torrent and link_magnet) and x == 0:
+                data_links = generictools.identifying_links(data_links)
+
     #Si es un lookup para cargar las urls de emergencia en la Videoteca...
     if (link_torrent or link_magnet) and item.videolibray_emergency_urls:
         item.emergency_urls = []
@@ -439,9 +444,24 @@ def findvideos(item):
         item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
         item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
                 
-        item_local.alive = "??"                                                 #Calidad del link sin verificar
-        item_local.action = "play"                                              #Visualizar vídeo
-        item_local.server = "torrent"                                           #Seridor Torrent
+        if not size or 'Magnet' in size:
+            item_local.alive = "??"                                             # Calidad del link sin verificar
+        elif 'ERROR' in size and 'Pincha' in size:
+            item_local.alive = "ok"                                             # link en error, CF challenge, Chrome disponible
+        elif 'ERROR' in size and 'Introduce' in size:
+            item_local.alive = "??"                                             # link en error, CF challenge, ruta de descarga no disponible
+            item_local.channel = 'setting'
+            item_local.action = 'setting_torrent'
+            item_local.unify = False
+            item_local.folder = False
+            item_local.item_org = item.tourl()
+        elif 'ERROR' in size:
+            item_local.alive = "no"                                             # Calidad del link en error, CF challenge?
+        else:
+            item_local.alive = "ok"                                             # Calidad del link verificada
+        if item_local.channel != 'setting':
+            item_local.action = "play"                                          # Visualizar vídeo
+            item_local.server = "torrent"                                       # Seridor Torrent
         
         itemlist_t.append(item_local.clone())                                   #Pintar pantalla, si no se filtran idiomas
         

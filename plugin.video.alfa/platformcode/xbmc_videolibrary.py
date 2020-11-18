@@ -641,11 +641,25 @@ def clean(mostrar_dialogo=False):
 
 
 def search_library_path():
-    sql = 'SELECT strPath FROM path WHERE strPath LIKE "special://%/plugin.video.alfa/library/" AND idParentPath ISNULL'
+    logger.info()
+    
+    cine = config.get_setting('folder_movies', default='CINE')
+    series = config.get_setting('folder_tvshows', default='SERIES')
+    cine_win = '\\%s\\' % cine
+    cine_res = '/%s/' % cine
+    series_win = '\\%s\\' % series
+    series_res = '/%s/' % series
+    
+    sql = 'SELECT strPath FROM path WHERE (idParentPath ISNULL AND (strPath LIKE "%videolibrary%"' + \
+                ' or strPath LIKE "%' + cine_win + '" or strPath LIKE "%' + cine_res + \
+                '" or strPath LIKE "%' + series_win + '" or strPath LIKE "%' + series_res + '"))'
     nun_records, records = execute_sql_kodi(sql)
+    
     if nun_records >= 1:
-        logger.debug(records[0][0])
-        return records[0][0]
+        logger.debug(records)
+        resp = filetools.join(filetools.dirname(records[0][0][:-1]), ' ').rstrip()
+        if filetools.exists(resp):
+            return resp
     return None
 
 
@@ -948,7 +962,7 @@ def execute_sql_kodi(sql, silent=False):
             if not silent: logger.info("Consulta ejecutada. Registros: %s" % nun_records)
 
         except:
-            logger.error("Error al ejecutar la consulta sql")
+            logger.error("Error al ejecutar la consulta sql: " + str(sql))
             if conn:
                 conn.close()
 
