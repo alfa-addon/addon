@@ -32,7 +32,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     video_urls = list()
     host = "https://dood.watch"
-
     label = scrapertools.find_single_match(data, 'type:\s*"video/([^"]+)"')
 
     js_code = scrapertools.find_single_match(data, ("(function makePlay.*?;})"))
@@ -40,7 +39,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     js = js2py.eval_js(js_code)
     makeplay = js() + str(int(time.time()*1000))
 
-    base_url = scrapertools.find_single_match(data, r"\$.get\('([^']+)'")
+    base_url = scrapertools.find_single_match(data, r"\$.get\('(/pass[^']+)'")
     data = httptools.downloadpage("%s%s" % (host, base_url), headers={"referer": page_url}).data
     data = re.sub(r'\s+', '', data)
 
