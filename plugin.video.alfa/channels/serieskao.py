@@ -15,6 +15,7 @@ from core import httptools
 from core.item import Item
 from core import servertools
 from core import scrapertools
+from core import jsontools
 from channelselector import get_thumb
 from platformcode import config, logger
 from channels import filtertools, autoplay
@@ -245,7 +246,7 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
-
+    sub = ""
     soup = create_soup(item.url)
     matches = soup.find("div", class_="navEP2")
     if not matches:
@@ -297,9 +298,15 @@ def findvideos(item):
                 if url:
                     url = "https://www.%s" % base64.b64decode(url[-1:]+url[:-1])
                     url += '|Referer=https://playhydrax.com/?v=%s&verifypeer=false' % slug
+            elif "kplayer" in url:
+                data = httptools.downloadpage(url).data
+                src = scrapertools.find_single_match(data, "source: '([^']+)'")
+                sgn = scrapertools.find_single_match(data, "signature: '([^']+)'")
+                sub = scrapertools.find_single_match(data, 'file: "([^"]+)"')
+                url = "%s%s" % (src, sgn)
 
             itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
-                                 language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels))
+                                 language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels, subtitle=sub))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     # Requerido para FilterTools
