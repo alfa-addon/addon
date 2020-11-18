@@ -28,6 +28,7 @@ import time
 import traceback
 import inspect
 import json
+import base64
 
 from channelselector import get_thumb
 from core import httptools
@@ -46,6 +47,9 @@ intervenido_policia = 'Judicial_Policia_Nacional'
 intervenido_guardia = 'Judicial_Guardia_Civil'
 intervenido_sucuri = 'Access Denied - Sucuri Website Firewall'
 idioma_busqueda = 'es'
+movies_videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
+series_videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
+list_nfos = []
 
 
 def downloadpage(url, post=None, headers=None, random_headers=False, replace_headers=False, 
@@ -109,7 +113,8 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                 return (data, success, code, item, itemlist)
 
         if data:
-            data = js2py_conversion(data, url, domain_name=domain_name, timeout=timeout, headers=headers, referer=referer, 
+            data = js2py_conversion(data, url, domain_name=domain_name, timeout=timeout, 
+                                channel=item.channel, headers=headers, referer=referer, 
                                 post=post, follow_redirects=follow_redirects)   # En caso de que sea necesario la conversión js2py
             
             data = re.sub(r"\n|\r|\t", "", data).replace("'", '"')              # Reemplaza caracteres innecesarios
@@ -161,8 +166,7 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
 
 def convert_url_base64(url):
     logger.info()
-    import base64
-    
+
     url_base64 = url
     if not 'magnet:' in url_base64 and not '.torrent' in url_base64:
         #url_base64 = scrapertools.find_single_match(url_base64, 'php#(.*?$)')
@@ -180,15 +184,33 @@ def convert_url_base64(url):
     return url_base64
 
 
-def js2py_conversion(data, url, domain_name='', post=None, referer=None, headers=None, timeout=10, follow_redirects=True):
+def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=None, headers=None, 
+                     timeout=10, follow_redirects=True, proxy_retries=1):
 
-    if not 'Javascript is required' in data:
+    if PY3 and isinstance(data, bytes):
+        if not b'Javascript is required' in data:
+            return data
+    elif not 'Javascript is required' in data:
         return data
     
-    if not domain_name:
-        domain_name = scrapertools.find_single_match(url, 'http.*\:\/\/((?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
-    logger.info(domain_name)
+    from lib import js2py
     
+    # Obtiene nombre del dominio para la cookie
+    if not domain_name:
+        domain_name = scrapertools.find_single_match(url, 'http.*\:\/\/(?:.*ww[^\.]*)?(\.?[^\.]+\.\w+(?:\.\w+)?)(?:\/|\?|$)')
+    logger.info(domain_name)
+
+    # Obtiene nombre del canal que hace la llamada para marcarlo en su settings.xml
+    if not channel and channel is not None:
+        channel = inspect.getmodule(inspect.currentframe().f_back.f_back)
+        try:
+            channel = channel.__name__.split('.')[1]
+        except:
+            channel = ""
+    
+    # Obtiene el código JS
+    if PY3 and isinstance(data, bytes):
+        data = "".join(chr(x) for x in bytes(data))
     patron = ',\s*S="([^"]+)"'
     data_new = scrapertools.find_single_match(data, patron)
     if not data_new:
@@ -198,8 +220,10 @@ def js2py_conversion(data, url, domain_name='', post=None, referer=None, headers
         logger.error('js2py_conversion: NO data_new')
         return data
         
+    # Descompone el código Base64
     try:
-        for x in range(10):                                          # Da hasta 10 pasadas o hasta que de error
+        # Da hasta 10 pasadas o hasta que de error
+        for x in range(10):
             data_end = base64.b64decode(data_new).decode('utf-8')
             data_new = data_end
     except:
@@ -210,39 +234,45 @@ def js2py_conversion(data, url, domain_name='', post=None, referer=None, headers
     if not js2py_code:
         logger.error('js2py_conversion: NO js2py_code BASE64')
         return data
-        
+
+    def atob(s):
+        import base64
+        return base64.b64decode('{}'.format(s)).decode('utf-8')
+     
+    # Hace las llamadas a js2py para obtener la cookie
     js2py_code = js2py_code.replace('document', 'window').replace(" location.reload();", "")
     js2py.disable_pyimport()
     context = js2py.EvalJs({'atob': atob})
     new_cookie = context.eval(js2py_code)
-    new_cookie = context.eval(js2py_code)
     
     logger.info('new_cookie: ' + new_cookie)
 
-    dict_cookie = {'domain': domain_name,
-                }
+    # Construye y salva la la cookie
+    dict_cookie = {'domain': domain_name,}
 
     if ';' in new_cookie:
         new_cookie = new_cookie.split(';')[0].strip()
         namec, valuec = new_cookie.split('=')
         dict_cookie['name'] = namec.strip()
         dict_cookie['value'] = valuec.strip()
-    zanga = httptools.set_cookies(dict_cookie)
-    config.set_setting("cookie_ren", True, channel=channel)
+    res = httptools.set_cookies(dict_cookie)
+    
+    # Si existe channel se marca en settings como cookie regenerada
+    if channel:
+        try:
+            config.set_setting("cookie_ren", True, channel=channel)
+        except:
+            pass
 
+    # Se ejecuta de nuevo la descarga de la página, ya con la nueva cookie
     data_new = ''
     data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(url, 
                 timeout=timeout, headers=headers, referer=referer, post=post, 
-                follow_redirects=follow_redirects).data)
+                follow_redirects=follow_redirects, proxy_retries=proxy_retries).data)
     if data_new:
         data = data_new
     
     return data
-    
-    
-def atob(s):
-    import base64
-    return base64.b64decode(s.to_string().value)
 
 
 def update_title(item):
@@ -713,7 +743,7 @@ def post_tmdb_listado(item, itemlist):
                         and ((item_local.infoLabels['imdb_id'] \
                         and item_local.infoLabels['imdb_id'] in str(video_list)) \
                         or 'tmdb_'+item_local.infoLabels['tmdb_id'] in str(video_list) \
-                        or item_local.contentTitle.lower()+' [' in str(video_list)):
+                    or item_local.contentTitle.lower()+' [' in str(video_list)):
             id_tmdb = item_local.infoLabels['imdb_id']
             if not id_tmdb:
                 id_tmdb = "tmdb_%s" % item_local.infoLabels['tmdb_id']
@@ -1791,11 +1821,11 @@ def check_title_in_videolibray(item, video_list_init=False):
         return True, ''
     
     if item.contentType == 'movie' or video_list_init:
-        videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
+        videolibrary_path = movies_videolibrary_path
         if video_list_init:
             video_list = filetools.listdir(videolibrary_path)
     if item.contentType != 'movie' or video_list_init:
-        videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
+        videolibrary_path = series_videolibrary_path
         if video_list_init:
             video_list += filetools.listdir(videolibrary_path)
             return True, video_list
@@ -1809,6 +1839,39 @@ def check_title_in_videolibray(item, video_list_init=False):
             break
 
     return res, video_list
+
+
+def check_nfo_quality(item):
+    logger.info("%s [%s], %s" % (item.contentSerieName.lower(), item.infoLabels['imdb_id'] \
+                    or 'tmdb_'+item.infoLabels['tmdb_id'], item.infoLabels['quality']))
+    global list_nfos
+    
+    """
+    Comprueba si la calidad del item listado coincide con la del .nfo de la serie en la videoteca.  Devuelve True si coincide
+    """
+    
+    if not item.infoLabels['imdb_id'] and not item.infoLabels['tmdb_id']:
+        return False
+    
+    id_tmdb = item.infoLabels['imdb_id']
+    if not id_tmdb:
+        id_tmdb = "tmdb_%s" % item.infoLabels['tmdb_id']
+    serie_name = "%s [%s]" % (item.contentSerieName.lower(), id_tmdb)
+    serie_name_tmdb = "%s [tmdb_%s]" % (item.contentSerieName.lower(), item.infoLabels['tmdb_id'])
+        
+    if serie_name not in str(list_nfos):
+        from core import videolibrarytools
+        head_nfo, nfo = videolibrarytools.read_nfo(filetools.join(series_videolibrary_path, serie_name, 'tvshow.nfo'))
+
+        if nfo and nfo.infoLabels['quality'] and serie_name not in str(list_nfos):
+            list_nfos.append((serie_name, nfo.infoLabels['quality']))
+            list_nfos.append((serie_name_tmdb, nfo.infoLabels['quality']))
+
+    for serie, quality in list_nfos:
+        if (serie == serie_name or serie == serie_name_tmdb) and quality == item.infoLabels['quality']:
+            return True
+
+    return False
 
 
 def check_marks_in_videolibray(item, strm='', video_list_init=False):
@@ -3308,11 +3371,9 @@ def verify_cached_torrents():
         json_error_path = filetools.join(config.get_runtime_path(), 'error_cached_torrents.json')
         json_error_path_BK = filetools.join(config.get_runtime_path(), 'error_cached_torrents_BK.json')
             
-        videolibrary_path = config.get_videolibrary_path()          #Calculamos el path absoluto a partir de la Videoteca
-        movies = config.get_setting("folder_movies")
-        series = config.get_setting("folder_tvshows")
-        torrents_movies = filetools.join(videolibrary_path, config.get_setting("folder_movies"))    #path de CINE
-        torrents_series = filetools.join(videolibrary_path, config.get_setting("folder_tvshows"))   #path de SERIES
+        #Calculamos el path absoluto a partir de la Videoteca
+        torrents_movies = movies_videolibrary_path                              #path de CINE
+        torrents_series = series_videolibrary_path                              #path de SERIES
         
         #Inicializa variables
         torren_list = []
@@ -3404,11 +3465,9 @@ def regenerate_clones():
         json_error_path = filetools.join(config.get_runtime_path(), 'error_cached_torrents.json')
         json_error_path_BK = filetools.join(config.get_runtime_path(), 'error_cached_torrents_BK.json')
             
-        videolibrary_path = config.get_videolibrary_path()          #Calculamos el path absoluto a partir de la Videoteca
-        movies = config.get_setting("folder_movies")
-        series = config.get_setting("folder_tvshows")
-        torrents_movies = filetools.join(videolibrary_path, config.get_setting("folder_movies"))    #path de CINE
-        torrents_series = filetools.join(videolibrary_path, config.get_setting("folder_tvshows"))   #path de SERIES
+        #Calculamos el path absoluto a partir de la Videoteca
+        torrents_movies = movies_videolibrary_path                              #path de CINE
+        torrents_series = series_videolibrary_path                              #path de SERIES
         
         #Cargamos en .json de Newpct1 para ver las listas de valores en settings
         fail_over_list = channeltools.get_channel_json(channel_py)
@@ -3958,9 +4017,6 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
 def dejuice(data):
     logger.info()
     # Metodo para desobfuscar datos de JuicyCodes
-    
-    import base64
-    from lib import jsunpack
 
     juiced = scrapertools.find_single_match(data, 'JuicyCodes.Run\((.*?)\);')
     b64_data = juiced.replace('+', '').replace('"', '')
