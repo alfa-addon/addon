@@ -275,8 +275,14 @@ def findvideos(item):
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return sorted(itemlist, key=lambda i: i.language)
 
-
-
+def play(item):
+    itemlist = [item]
+    if not item.url.startswith('http'):
+        data = get_source(host+item.url)
+        item.server = ''
+        item.url = scrapertools.find_single_match(data, 'href="([^"]+)">Acceder al enlace</a>')
+        itemlist = servertools.get_servers_itemlist(itemlist)
+    return itemlist
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
