@@ -107,7 +107,7 @@ def submenu(item):
         data = ''
         try:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)
-            data = js2py_conversion(data, item.url)
+            data = generictools.js2py_conversion(data, item.url, timeout=timeout, headers=headers)
             if not PY3:
                 data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
@@ -136,7 +136,7 @@ def categorias(item):
     data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)
-        data = js2py_conversion(data, item.url)
+        data = generictools.js2py_conversion(data, item.url, timeout=timeout, headers=headers)
         if not PY3:
             data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:
@@ -256,7 +256,7 @@ def listado(item):
         data = ''
         try:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(next_page_url, timeout=timeout_search, headers=headers).data)
-            data = js2py_conversion(data, next_page_url)
+            data = generictools.js2py_conversion(data, next_page_url, timeout=timeout_search, headers=headers)
             if not PY3:
                 data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
@@ -335,7 +335,7 @@ def listado(item):
                 data_serie = ''
                 try:
                     data_serie = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(scrapedurl, timeout=timeout, headers=headers).data)
-                    data_serie = js2py_conversion(data_serie, scrapedurl)
+                    data_serie = generictools.js2py_conversion(data_serie, scrapedurl, timeout=timeout, headers=headers)
                     if not PY3:
                         data_serie = unicode(data_serie, "utf-8", errors="replace").encode("utf-8")
                 except:
@@ -580,7 +580,7 @@ def findvideos(item):
     if item.contentType == 'movie':                                                 #Es una peli
         try:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)
-            data = js2py_conversion(data, item.url)
+            data = generictools.js2py_conversion(data, item.url, timeout=timeout, headers=headers)
             if not PY3:
                 data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
@@ -761,7 +761,7 @@ def episodios(item):
     data = ''                                                                               #Inserto en num de página en la url
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)
-        data = js2py_conversion(data, item.url)
+        data = generictools.js2py_conversion(data, item.url, timeout=timeout, headers=headers)
         if not PY3:
             data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:                                                                                 #Algún error de proceso, salimos
@@ -923,67 +923,6 @@ def actualizar_titulos(item):
     return item
 
     
-def js2py_conversion(data, url, post=None, follow_redirects=True):
-    logger.info()
-    import base64
-    
-    if not 'Javascript is required' in data:
-        return data
-        
-    patron = ',\s*S="([^"]+)"'
-    data_new = scrapertools.find_single_match(data, patron)
-    if not data_new:
-        patron = ",\s*S='([^']+)'"
-        data_new = scrapertools.find_single_match(data, patron)
-    if not data_new:
-        logger.error('js2py_conversion: NO data_new')
-        return data
-        
-    try:
-        for x in range(10):                                          # Da hasta 10 pasadas o hasta que de error
-            data_end = base64.b64decode(data_new).decode('utf-8')
-            data_new = data_end
-    except:
-        js2py_code = data_new
-    else:
-        logger.error('js2py_conversion: base64 data_new NO Funciona: ' + str(data_new))
-        return data
-    if not js2py_code:
-        logger.error('js2py_conversion: NO js2py_code BASE64')
-        return data
-        
-    js2py_code = js2py_code.replace('document', 'window').replace(" location.reload();", "")
-    js2py.disable_pyimport()
-    context = js2py.EvalJs({'atob': atob})
-    new_cookie = context.eval(js2py_code)
-    
-    logger.info('new_cookie: ' + new_cookie)
-
-    dict_cookie = {'domain': domain,
-                }
-
-    if ';' in new_cookie:
-        new_cookie = new_cookie.split(';')[0].strip()
-        namec, valuec = new_cookie.split('=')
-        dict_cookie['name'] = namec.strip()
-        dict_cookie['value'] = valuec.strip()
-    zanga = httptools.set_cookies(dict_cookie)
-
-    data_new = ''
-    data_new = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url, \
-                timeout=timeout, headers=headers, post=post, follow_redirects=follow_redirects).data)
-    data_new = re.sub('\r\n', '', data_new).decode('utf8').encode('utf8')
-    if data_new:
-        data = data_new
-    
-    return data
-    
-    
-def atob(s):
-    import base64
-    return base64.b64decode(s.to_string().value)
-    
-
 def search(item, texto):
     logger.info()
     #texto = texto.replace(" ", "+")
