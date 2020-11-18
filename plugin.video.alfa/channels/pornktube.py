@@ -17,7 +17,7 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://www.pornktube.porn'     # https://www.tubxxporn.com   'https://www.pornky.com/'
+host = 'https://www.pornktube.porn'     # https://www.tubxxporn.com   'https://www.pornky.com/'  'https://www.joysporn.com/'
 
 def mainlist(item):
     logger.info()
