@@ -44,6 +44,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,title="Películas",
                     action="list_all",
                     thumbnail=get_thumb('movies', auto=True),
+                    url='%s%s' % (host, '/peliculas/'),
+                    first=0
                     ))
 
     itemlist.append(Item(channel=item.channel,title="Series",

@@ -106,12 +106,13 @@ def list_all(item):
             if year:
                 title += ' [COLOR silver](%s)[/COLOR]' % year
 
-            if full_title:
+            if full_title and not ' 0Eps' in info:
                 title += ' [COLOR aquamarine](%s)[/COLOR]' % info.replace('Eps', ' Eps')
 
         itemlist.append(Item(channel=item.channel, title=title, url=url,
                              action='seasons', info_p=info, plot=plot,
-                             thumbnail=thumb, contentSerieName=stitle))
+                             thumbnail=thumb, contentSerieName=stitle,
+                             infoLabels={'year': year}))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
         

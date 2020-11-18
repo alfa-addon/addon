@@ -3,12 +3,13 @@
   "name": "SeriesFlix",
   "active": true,
   "adult": false,
-  "force_unify": true,
-  "language": ["lat"],
+  "force_unify": false,
+  "language": ["lat","cast"],
   "thumbnail": "https://seriesflix.to/wp-content/uploads/2019/12/cropped-seriesflix-logo-1.png?x64271",
   "banner": "",
   "categories": [
-    "tvshow"
+    "tvshow",
+    "vos"
   ],
   "settings": [
     {
@@ -28,7 +29,9 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "Latino"
+        "LAT",
+        "CAST",
+        "VOSE"
       ]
     },
     {

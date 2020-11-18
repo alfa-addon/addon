@@ -203,7 +203,10 @@ def get_all_settings_addon():
     infile.close()
 
     ret = {}
+
     matches = scrapertools.find_multiple_matches(data, '<setting id="([^"]*)" value="([^"]*)')
+    if not matches:
+        matches = scrapertools.find_multiple_matches(data, '<setting id="([^"]*)".*?>([^<]*)')
 
     for _id, value in matches:
         ret[_id] = get_setting(_id)
@@ -215,6 +218,7 @@ def open_settings():
     settings_pre = get_all_settings_addon()
     __settings__.openSettings()
     settings_post = get_all_settings_addon()
+
 
     # cb_validate_config (util para validar cambios realizados en el cuadro de dialogo)
     if settings_post.get('adult_aux_intro_password', None):
