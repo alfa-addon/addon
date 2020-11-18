@@ -431,7 +431,7 @@ def simplify(title, year):
             year = '-'
     
     title = remove_format(title)
-    title = normalize(title)
+    #title = normalize(title)
 
     #logger.error(title.lower())
     return title.lower(), year
