@@ -20,7 +20,6 @@ from bs4 import BeautifulSoup
 
 host = 'https://plusone8.com'
 
-
 def mainlist(item):
     logger.info()
     itemlist = []
