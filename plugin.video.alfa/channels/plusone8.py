@@ -56,7 +56,7 @@ def categorias(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
-        thumbnail = elem.img['data-lazy-src']
+        thumbnail = elem.img['src']
         # url = url.replace("?actors=","/star/")
         plot = ""
         itemlist.append(item.clone(action="lista", title=title, url=url,
@@ -123,6 +123,7 @@ def findvideos(item):
     matches = soup.find_all('source')
     for elem in matches:
         url = elem['src']
+        url = url.replace(" ", "%20")
         url = url + "|verifypeer=false"
         itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
@@ -135,6 +136,7 @@ def play(item):
     matches = soup.find_all('source')
     for elem in matches:
         url = elem['src']
+        url = url.replace(" ", "%20")
         url = url + "|verifypeer=false"
         itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
