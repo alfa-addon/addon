@@ -19,7 +19,8 @@ def get_video_url(page_url, video_password):
     video_urls = []
     data = httptools.downloadpage(page_url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = "EP: {vid: '([^']+)',hash: '([^']+)'"
+    logger.debug(data)
+    patron = "EP.video.player.vid = '([^']+)';EP.video.player.hash = '([^']+)'"
     vid, hash = re.compile(patron, re.DOTALL).findall(data)[0]
     hash = int_to_base36(int(hash[0:8], 16)) + int_to_base36(int(hash[8:16], 16)) + int_to_base36(
         int(hash[16:24], 16)) + int_to_base36(int(hash[24:32], 16))

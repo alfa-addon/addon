@@ -120,7 +120,7 @@ def findvideos(item):
     matches = soup.find_all("a")
     for elem in matches:
         url = elem['href']
-        if not "imgcloud." in url:
+        if not "imgcloud." in url and not "ubiqfile" in url:
             itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     # Requerido para FilterTools

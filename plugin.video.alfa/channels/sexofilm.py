@@ -87,12 +87,14 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
+    url = ""
     data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data,'<div class="entry-inner">(.*?)<h4>')
-    url = scrapertools.find_single_match(data,'<source src="([^"]+)"')
+    url = scrapertools.find_single_match(data,'<source src=\'([^\']+)\'')
     if not url:
-        url = scrapertools.find_single_match(data,'<source src=\'([^\']+)\'')
-    itemlist = servertools.find_video_items(item.clone(url = item.url))
+        url = scrapertools.find_single_match(data,'<source src="([^"]+)"')
+    if not url:
+        itemlist = servertools.find_video_items(item.clone(url = item.url))
     if url:
         itemlist.append(item.clone(action="play", title= url, url=url, contentTitle = item.title, timeout=40))
     return itemlist

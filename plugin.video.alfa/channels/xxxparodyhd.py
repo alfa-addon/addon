@@ -104,9 +104,9 @@ def findvideos(item):
     patron = ' - on ([^"]+)" href="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedtitle,url in matches:
-        if "streamz" in url:
-            url = url.replace("streamz.cc", "stream2.vg").replace("streamz.vg", "stream2.vg")
-        if not "waaws.tk" in url: #netu
+        # if "streamz" in url:
+            # url = url.replace("streamz.cc", "stream2.vg").replace("streamz.vg", "stream2.vg")
+        if not "vidup" in url and not "vev.io/" in url:
             itemlist.append(item.clone(action="play", title = "%s", contentTitle=item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para FilterTools
