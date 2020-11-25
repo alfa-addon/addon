@@ -47,6 +47,7 @@ intervenido_policia = 'Judicial_Policia_Nacional'
 intervenido_guardia = 'Judicial_Guardia_Civil'
 intervenido_sucuri = 'Access Denied - Sucuri Website Firewall'
 idioma_busqueda = 'es'
+idioma_busqueda_VO = 'es,en'
 movies_videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
 series_videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
 list_nfos = []
@@ -169,7 +170,7 @@ def convert_url_base64(url):
 
     url_base64 = url
     if not 'magnet:' in url_base64 and not '.torrent' in url_base64:
-        #url_base64 = scrapertools.find_single_match(url_base64, 'php#(.*?$)')
+        if 'php#' in url: url_base64 = scrapertools.find_single_match(url_base64, 'php#(.*?$)')
         try:
             # Da hasta 20 pasadas o hasta que de error
             for x in range(20):
@@ -533,6 +534,9 @@ def post_tmdb_listado(item, itemlist):
         title = item_local.title
         season = 0
         episode = 0
+        idioma = idioma_busqueda
+        if 'VO' in str(item_local.language):
+            idioma = idioma_busqueda_VO
         #logger.debug(item_local)
         
         item_local.last_page = 0
@@ -603,7 +607,7 @@ def post_tmdb_listado(item, itemlist):
             logger.info("*** TMDB-ID erroneo, reseteamos y reintentamos: %s" % item_local.infoLabels['tmdb_id'])
             del item_local.infoLabels['tmdb_id']                        #puede traer un TMDB-ID erroneo
             try:
-                tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda=idioma_busqueda) #pasamos otra vez por TMDB
+                tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda=idioma) #pasamos otra vez por TMDB
             except:
                 logger.error(traceback.format_exc())
             logger.info("*** TMDB-ID erroneo reseteado: %s" % item_local.infoLabels['tmdb_id'])
@@ -614,7 +618,7 @@ def post_tmdb_listado(item, itemlist):
                 year = item_local.infoLabels['year']            #salvamos el año por si no tiene éxito la nueva búsqueda
                 item_local.infoLabels['year'] = "-"             #reseteo el año
                 try:
-                    tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda=idioma_busqueda) #pasamos otra vez por TMDB
+                    tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda=idioma) #pasamos otra vez por TMDB
                 except:
                     logger.error(traceback.format_exc())
                 if not item_local.infoLabels['tmdb_id']:        #ha tenido éxito?
@@ -660,7 +664,7 @@ def post_tmdb_listado(item, itemlist):
             
             try:
                 if item_local.infoLabels['tmdb_id']:
-                    tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma_busqueda)  #TMDB de la serie
+                    tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma)  #TMDB de la serie
             except:
                 logger.error(traceback.format_exc())
                 
@@ -888,8 +892,11 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
     
     # Primero creamos un título para TODAS las Temporadas
     # Pasada por TMDB a Serie, para datos adicionales
+    idioma = idioma_busqueda
+    if 'VO' in str(item.language):
+        idioma = idioma_busqueda_VO
     try:
-        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=idioma_busqueda)  #TMDB de la serie
+        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=idioma)  #TMDB de la serie
     except:
         logger.error(traceback.format_exc())
     
@@ -962,7 +969,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
             
             # Pasada por TMDB a las Temporada
             try:
-                tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma_busqueda)    #TMDB de cada Temp
+                tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma)    #TMDB de cada Temp
             except:
                 logger.error(traceback.format_exc())
         
@@ -1551,8 +1558,11 @@ def post_tmdb_findvideos(item, itemlist):
     #    tmdb.set_infoLabels_item(item, True)
     #elif (not item.infoLabels['tvdb_id'] and item.contentType == 'episode') or item.contentChannel == "videolibrary":
     #    tmdb.set_infoLabels_item(item, True)
+    idioma = idioma_busqueda
+    if 'VO' in str(item.language):
+        idioma = idioma_busqueda_VO
     try:
-        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=idioma_busqueda)  #TMDB de cada Temp
+        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=idioma)   #TMDB de cada Temp
     except:
         logger.error(traceback.format_exc())
     #Restauramos la información de max num. de episodios por temporada despues de TMDB
@@ -2113,6 +2123,10 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     torrent_f = ''
     torrent_file = ''
     files = {}
+    if PY3:
+        magnet = b'magnet:'
+    else:
+        magnet = 'magnet:'
     try:
         #torrents_path = config.get_videolibrary_path() + '/torrents'            #path para dejar el .torrent
 
@@ -2134,7 +2148,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                     return 'autoplay'
         
         if not lookup: timeout = timeout * 3
-        if ((url and not local_torr) or url.startswith('magnet')):
+        if ((url and not local_torr) or url.startswith(magnet)):
             torrents_path, torrent_file, subtitles_list = torrent.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
                         timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
@@ -2142,7 +2156,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
             torrent_file = filetools.read(local_torr, mode='rb')
             torrents_path = local_torr
         
-        if not torrents_path or torrents_path == 'CF_BLOCKED':
+        if not torrents_path or torrents_path == 'CF_BLOCKED' or torrent_file.startswith(magnet):
             size = 'ERROR'
             
             # si el archivo .torrent está bloqueado con CF, se intentará descargarlo a través de un browser externo
@@ -2570,13 +2584,15 @@ def verify_channel(channel):
     #Lista con los datos de los canales alternativos
     #Cargamos en .json del canal para ver las listas de valores en settings
     clones = channeltools.get_channel_json(channel_py)
-    for settings in clones['settings']:                                 #Se recorren todos los settings
-        if settings['id'] == "clonenewpct1_channels_list":              #Encontramos en setting
-            clones = settings['default']                                #Carga lista de clones
+    for settings in clones['settings']:                                         #Se recorren todos los settings
+        if settings['id'] == "clonenewpct1_channels_list":                      #Encontramos en setting
+            clones = settings['default']                                        #Carga lista de clones
             channel_alt = "'%s'" % channel
-            if channel_alt in str(clones):                              #Si es un clon se pone como canal newpct1, si no se deja
+            if channel_alt in str(clones):                                      #Si es un clon se pone como canal newpct1, si no se deja
                 channel = channel_py
-            return channel
+            break
+
+    return channel
     
 
 def verify_channel_regex(item, clone_list):
