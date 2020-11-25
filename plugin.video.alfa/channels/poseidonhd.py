@@ -20,7 +20,8 @@ from platformcode import config, logger
 from channels import filtertools, autoplay
 
 IDIOMAS = {'mx': 'Latino', 'dk': 'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb': 'VOSE', 'de': 'Alemán',
-           "Latino": "Latino", "Español": "Castellano", "Subtitulado": "VOSE"}
+           "Latino": "Latino", "Español": "Castellano", "Subtitulado": "VOSE", "usa": "VOSE", "mexico": "Latino",
+           "espana": "Castellano"}
 list_language = list(IDIOMAS.values())
 
 list_quality = []
@@ -95,16 +96,13 @@ def create_soup(url, post=None, unescape=False):
 
 def get_language(lang_data):
     logger.info()
-
     language = list()
 
-    lang_list = lang_data.find_all("span", class_="flag")
+    lang_list = lang_data.find_all("img")
     for lang in lang_list:
-        lang = scrapertools.find_single_match(lang["style"], '/flags/(.*?).png\)')
-        if lang == 'en':
-            lang = 'vose'
+        lang = scrapertools.find_single_match(lang["src"], '/flag-([^\.]+)\.')
         if lang not in language:
-            language.append(lang)
+            language.append(IDIOMAS[lang])
     return language
 
 
@@ -142,7 +140,6 @@ def list_all(item):
     if not matches:
         matches = soup.find("div", id="aa-movies")
     for elem in matches.find_all("article", class_=re.compile(r"post (?:dfx|fcl|movies)")):
-
         type = item.type
         url = elem.a["href"]
 
@@ -151,6 +148,10 @@ def list_all(item):
 
         title = elem.h2.text
         thumb = elem.img["src"]
+        try:
+            lang = get_language(elem.find("span", class_="lang"))
+        except:
+            lang = ""
 
         year = "-"
         if not "series" in url:
@@ -159,7 +160,8 @@ def list_all(item):
             except:
                 pass
 
-        new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
+        new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, language=lang,
+                        infoLabels={"year": year})
 
         if "series" in url:
             new_item.contentSerieName = title
@@ -254,12 +256,13 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
-    servers = {'drive': 'gvideo', 'fembed': 'fembed', "player": "oprem", "openplay": "oprem"}
+    servers = {'drive': 'gvideo', 'fembed': 'fembed', "player": "oprem", "openplay": "oprem", "embed": "mystream"}
     soup = create_soup(item.url)
     matches = soup.find("ul", class_="aa-tbs aa-tbs-video").find_all("li")
 
     for elem in matches:
-        srv, lang = elem.find("span", class_="server").text.replace(" - ", "-").split("-")
+
+        srv, lang = re.sub(r"\s+", "", elem.find("span", class_="server").text).split("-")
         opt = elem.a["href"].replace("#","")
         try:
             url = soup.find("div", id="%s" % opt).find("iframe")["data-src"]
