@@ -45,6 +45,7 @@ CF_BLOCKING_ERRORS = ['Detected a Cloudflare version 2']
 
 VFS = True
 
+
 trackers = [
         "udp://tracker.openbittorrent.com:80/announce",
         "http://tracker.torrentbay.to:6969/announce",
@@ -165,20 +166,28 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     
     if not rar_files and item.url.startswith('magnet:') and item.downloadServer \
                         and 'url' in str(item.downloadServer):
-        for x in range(600):
+        for x in range(60):
             if filetools.exists(item.downloadServer['url']):
                 break
             time.sleep(1)
             continue
         time.sleep(5)
         if filetools.exists(item.downloadServer['url']):
-            for x in range(30):
+            for x in range(12):
                 size, url, torrent_f, rar_files = generictools.get_torrent_size(item.downloadServer['url'], 
                             file_list=True, lookup=False, torrents_path=item.downloadServer['url'], 
                             local_torr=item.downloadServer['url'])
                 if 'ERROR' not in size:
                     break
                 time.sleep(5)
+            else:
+                torrent_stop =  True
+        if not filetools.exists(item.downloadServer['url']) or torrent_stop:
+            torrent_stop =  True
+            if not DOWNGROUND:
+                platformtools.dialog_notification("Magnet a Torrent", "No se convierte a .torrent.  Cancelado")
+            if not rar_files:
+                rar_files = []
 
     for entry in rar_files:
         for file, path in list(entry.items()):
@@ -201,6 +210,9 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     
     if item.url.startswith('magnet:') and video_path:
         item.downloadFilename = ':%s: %s' % (torr_client, filetools.join(video_path, video_file))
+    elif item.url.startswith('magnet:') and not video_path:
+        item.downloadStatus = 3
+        item.downloadProgress = 0
     item.downloadQueued = 0
     time.sleep(1)
     update_control(item, function='bt_client_start')
@@ -240,7 +252,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
         break
 
     # Mostramos el progreso
-    if (rar and RAR and BACKGROUND) or DOWNGROUND:                                              # Si se descarga un RAR...
+    if (rar and RAR and BACKGROUND) or DOWNGROUND:                              # Si se descarga un RAR...
         progreso = platformtools.dialog_progress_bg(msg_header)
         if not DOWNGROUND:
             platformtools.dialog_notification("Descarga de RAR en curso", "Puedes realizar otras tareas en Kodi mientrastanto. " + \
@@ -281,26 +293,28 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
             time.sleep(1)
             if ((s.progress_file > 1 and (str(x).endswith('0') or str(x).endswith('5'))) \
                         or (s.progress_file == 0 and x > 30)) and not filetools.exists(torrent_path):
-                logger.error('LISTADO de .torrent %s' % (filetools.listdir(filetools.dirname(torrent_path))))
-                if filetools.exists(torrent_path.lower().replace('.torrent', '.pause')):
+                logger.info('LISTADO de .torrent %s' % (filetools.listdir(filetools.dirname(torrent_path))), force=True)
+                if filetools.exists(torrent_path.replace('.torrent', '.pause')) or filetools.exists(torrent_path.replace('.TORRENT', '.pause')):
                     torrent_paused = True
                     torrent_stop = True
                     action = 'pause'
-                    res = filetools.rename(torrent_path.replace('.torrent', '.PAUSE').replace('.TORRENT', '.PAUSE'), \
-                                            filetools.basename(torrent_path), strict=True, silent=True)
-                elif filetools.exists(torrent_path.lower().replace('.torrent', '.reset')):
+                    res = filetools.remove(torrent_path.replace('.torrent', '.pause').replace('.TORRENT', '.pause'), silent=True)
+                    #res = filetools.rename(torrent_path.replace('.torrent', '.pause').replace('.TORRENT', '.pause'), \
+                    #                        filetools.basename(torrent_path), strict=True, silent=True)
+                elif filetools.exists(torrent_path.replace('.torrent', '.reset')) or filetools.exists(torrent_path.replace('.TORRENT', '.reset')):
                     torrent_reseted = True
                     torrent_stop = True
                     action = 'reset'
-                    res = filetools.rename(torrent_path.replace('.torrent', '.RESET').replace('.TORRENT', '.RESET'), \
-                                            filetools.basename(torrent_path), strict=True, silent=True)
+                    res = filetools.remove(torrent_path.replace('.torrent', '.reset').replace('.TORRENT', '.reset'), silent=True)
+                    #res = filetools.rename(torrent_path.replace('.torrent', '.reset').replace('.TORRENT', '.reset'), \
+                    #                        filetools.basename(torrent_path), strict=True, silent=True)
                 else:
                     torrent_deleted = True
                     torrent_stop = True
                     action = 'delete'
                     res = True
                 if not res:
-                    logger.error('ERROR Renombrando desde -%s- el .torrent %s' % (action, filetools.listdir(filetools.dirname(torrent_path))))
+                    logger.error('ERROR borrando por -%s- el .torrent %s' % (action, filetools.basename(torrent_path)))
                 progress_file = s.progress_file
                 finalizado = False
                 
@@ -478,7 +492,10 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     
     # Actualizado .json de control de descargas
     item.downloadProgress = 100
-    if torrent_deleted :
+    if item.downloadStatus == 3:
+        item.downloadProgress = 0
+        log("##### Progreso: %s, .torrent ERROR: %s" % (str(progress_file), erase_file_path))
+    elif torrent_deleted :
         item.downloadProgress = 0
         log("##### Progreso: %s, .torrent borrado: %s" % (str(progress_file), erase_file_path))
     elif torrent_reseted:
@@ -511,8 +528,8 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
             if not filetools.exists(erase_file_path):
                 break
     
-    if not filetools.exists(erase_file_path) and not torrent_reseted:
-        if item.path.endswith('.json'):
+    if (not filetools.exists(erase_file_path) or item.downloadStatus == 3) and not torrent_reseted:
+        if item.path.endswith('.json') and item.downloadStatus != 3:
             log("##### BORRANDO Archivo de CONTROL: %s" % item.path)
             filetools.remove(filetools.join(config.get_setting("downloadlistpath"), item.path), silent=True)
         if filetools.exists(torrent_path):
@@ -584,6 +601,7 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
                 torrent_file = magnet2torrent(url, headers=headers)             #Convierte el Magnet en un archivo Torrent
             else:
                 if data_torrent:
+                    torrent_file = url
                     return (url, torrent_file, subtitles)
                 return url, subtitles
             if not torrent_file:
@@ -1120,10 +1138,6 @@ def torrent_dirs():
 def update_control(item, function=''):
     if not function:
         function = inspect.currentframe().f_back.f_back.f_code.co_name
-    
-    logger.info(
-        "function: %s | path: %s | contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | url: %s" % \
-                    (function, item.path, item.contentAction, item.contentChannel, item.downloadProgress, item.downloadQueued, item.url))
 
     file = False
     ret = False
@@ -1177,11 +1191,17 @@ def update_control(item, function=''):
             elif not item_control.contentAction:
                 item_control.contentAction = item.action
                 item_control.action = 'menu'
+            if item.contentChannel != item.category.lower():
+                if not item.channel or item.channel in ['list']:
+                    item.channel = generictools.verify_channel(item.category.lower())
+                if not item.contentChannel or item.contentChannel in ['list', 'downloads']:
+                    item.contentChannel = generictools.verify_channel(item.category.lower())
+                item_control.contentChannel = ''
             if item.contentChannel:
                 item_control.contentChannel = item.contentChannel
             elif not item_control.contentChannel:
-                item_control.contentChannel = item.channel
-                item_control.channel = 'downloads'
+                item_control.contentChannel = generictools.verify_channel(item.category.lower())
+            item_control.channel = 'downloads'
             if item.server:
                 item_control.server = item.server
             item_control.downloadQueued = item.downloadQueued
@@ -1209,8 +1229,17 @@ def update_control(item, function=''):
 
     if file:
         ret = filetools.write(filetools.join(config.get_setting("downloadlistpath"), item.path), item_control.tojson())
+    else:
+        item_control = item.clone()
+        logger.info('No hay modificaciones: ' + path)
+    
     if not file or not ret:
         logger.error('No hay archivo de CONTROL: ' + path)
+        
+    logger.info(
+        "function: %s | path: %s | contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | url: %s" % \
+                    (function, item_control.path, item_control.contentAction, item_control.contentChannel, \
+                    item_control.downloadProgress, item_control.downloadQueued, item_control.url))
 
 
 def mark_torrent_as_watched():
@@ -1263,6 +1292,7 @@ def restart_unfinished_downloads():
     try:
         config.set_setting("LIBTORRENT_in_use", False, server="torrent")        # Marcamos Libtorrent como disponible
         config.set_setting("DOWNLOADER_in_use", False, "downloads")             # Marcamos Downloader como disponible
+        config.set_setting("RESTART_DOWNLOADS", False, "downloads")             # Marcamos restart downloads como disponible
         init = True
 
         # Si hay una descarga de BT o MCT inacabada, se reinicia la descarga.  También gestiona las colas de todos los gestores torrent
@@ -1303,7 +1333,7 @@ def restart_unfinished_downloads():
                                 logger.info('BORRANDO descarga INACTIVA de %s: %s' % (torr_client, title))
                                 filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, fichero))
                             continue
-                        elif torr_client in ['QUASAR', 'ELEMENTUM'] and item.downloadProgress != 0:
+                        elif torr_client in ['BT', 'MCT', 'TORRENTER', 'QUASAR', 'ELEMENTUM'] and item.downloadProgress not in [-1, 0]:
                             continue
                         if (item.downloadProgress in [-1, 0] or not item.downloadProgress) \
                                         and (item.downloadQueued == 0 or not item.downloadQueued):
@@ -1333,15 +1363,21 @@ def restart_unfinished_downloads():
                                     logger.info("RECUPERANDO: Status: %s | Progress: %s | Queued: %s | File: %s | Title: %s: %s" % \
                                             (item.downloadStatus, item.downloadProgress, item.downloadQueued, fichero, torr_client, title))
                                     from channels import downloads
-                                    ret = downloads.start_download(item)
+                                    threading.Thread(target=downloads.start_download, args=(item,)).start()     # Creamos un Thread independiente
+                                    time.sleep(5)                               # Dejamos terminar la inicialización...
                                 except:
                                     logger.error(item)
                                     logger.error(traceback.format_exc())
                                 time.sleep(5)
 
                 init = False
-                if monitor.waitForAbort(120):                                   # ... cada 2' se reactiva
-                    break
+                for x in range(24):                                             # ... cada 2' se reactiva
+                    if monitor.waitForAbort(5):
+                        break
+                    if config.get_setting("RESTART_DOWNLOADS", "downloads", default=False):     # ... a menos que se active externamente
+                        logger.info('RESTART_DOWNLOADS Activado externamente')
+                        config.set_setting("RESTART_DOWNLOADS", False, "downloads") 
+                        break
     except:
         logger.error(traceback.format_exc())
 
@@ -2163,10 +2199,15 @@ def rename_rar_dir(rar_file, save_path_videos, video_path, torr_client):
     logger.info()
 
     rename_status = False
+    
+    if not xbmc.getCondVisibility("system.platform.windows"):                   # Si no es Windows, no hay problema de longitud del path
+        return rename_status, rar_file
+    
     if config.get_platform(True)['num_version'] >= 14:
         monitor = xbmc.Monitor()                                                # For Kodi >= 14
     else:
         monitor = None
+    
     folders = rar_file.split("/")
     if filetools.exists(filetools.join(save_path_videos, folders[0])) and video_path not in folders[0]:
         if not PY3:

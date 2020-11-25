@@ -35,6 +35,7 @@ color1, color2, color3 = ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)        #Actualización sólo últ. Temporada?
 timeout = config.get_setting('timeout_downloadpage', channel)
+idioma_busqueda = 'es,en'
 
 
 def mainlist(item):
@@ -171,7 +172,7 @@ def listado(item):
             break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         #Patrón para todo, menos para Series completas, incluido búsquedas en cualquier caso
-        patron = '<td class="vertThseccion"><img src="([^"]+)"[^>]+><a href="([^"]+)"\s*title="([^"]+)"\s*>[^<]+<\/a><\/td><td>.*?(\d+)?<\/td><td>([^<]+)?<\/td><td>([^<]+)?<\/td><\/tr>'
+        patron = '<td\s*class="vertThseccion"[^>]*>\s*<img\s*src="([^"]+)"[^>]*>\s*<a\s*href="([^"]+)"\s*title="([^"]+)"\s*>[^<]+<\/a>\s*<\/td>\s*(?:<td>[^<]*(\d+)?<\/td>)?\s*<td>([^<]+)?<\/td>\s*<td>([^<]+)?<\/td>\s*<\/tr>'
         
         #Si son series completas, ponemos un patrón especializado
         if item.extra == 'series':
@@ -193,7 +194,7 @@ def listado(item):
         #logger.debug(data)
         
         #Buscamos la próxima y la última página
-        patron_last = "<div class='pagination'>.*?<a href='([^']+\/page\/(\d+)[^']+)'\s*>(?:&raquo;)?(?:\d+)?<\/a><\/div>"
+        patron_last = "<div\s*class='pagination'[^>]*>.*?<a\s*href='([^']+\/page\/(\d+)[^']+)'\s*>(?:&raquo;)?(?:\d+)?<\/a>\s*<\/div>"
         
         if last_page == 99999:                                                          #Si es el valor inicial, buscamos last page
             try:
@@ -353,7 +354,7 @@ def listado(item):
             #logger.debug(item_local)
 
     #Pasamos a TMDB la lista completa Itemlist
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda=idioma_busqueda)
     
     #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
     item, itemlist = generictools.post_tmdb_listado(item, itemlist)
@@ -650,7 +651,7 @@ def episodios(item):
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
     #if not item.infoLabels['tmdb_id']:
     try:
-        tmdb.set_infoLabels(item, True)                                                     #TMDB de cada Temp
+        tmdb.set_infoLabels(item, True, idioma_busqueda=idioma_busqueda)                    #TMDB de cada Temp
     except:
         pass
         
@@ -682,7 +683,7 @@ def episodios(item):
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist
 
-    patron = '<td class="capitulonombre"><img src="([^"]+)[^>]+>(?:<a href="[^>]+>)(.*?)<\/a><\/td><td class="capitulodescarga"><a href="([^"]+)[^>]+>.*?(?:<td class="capitulofecha">.*?(\d{4})?.*?<\/td>)?(?:<td class="capitulosubtitulo"><a href="([^"]+)[^>]+>.*?<\/td>)?<td class="capitulodescarga"><\/tr>'
+    patron = '<td\s*class="capitulonombre">\s*<img\s*src="([^"]+)[^>]+>(?:<a\s*href="[^>]+>)(.*?)<\/a>\s*<\/td>\s*<td\s*class="capitulodescarga">\s*<a\s*href="([^"]+)[^>]+>.*?(?:<td\s*class="capitulofecha">.*?(\d{4})?.*?<\/td>)?(?:<td\s*class="capitulosubtitulo">\s*<a\s*href="([^"]+)[^>]+>.*?<\/td>)?'
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                                             #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
@@ -793,7 +794,7 @@ def episodios(item):
 
     if not item.season_colapse:                                                 #Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
-        tmdb.set_infoLabels(itemlist, True)
+        tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma_busqueda)
 
         #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
         item, itemlist = generictools.post_tmdb_episodios(item, itemlist)

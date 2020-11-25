@@ -34,7 +34,10 @@ domain = 'mitorrent.org'
 channel = 'mitorrent'
 categoria = channel.capitalize()
 
-__modo_grafico__ = config.get_setting('modo_grafico', channel)
+__modo_grafico__ = config.get_setting('modo_grafico', channel)                  # TMDB?
+IDIOMAS_TMDB = {0: 'es', 1: 'en', 2: 'es,en'}
+idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', channel)]    # Idioma base para TMDB
+idioma_busqueda_VO = IDIOMAS_TMDB[2]                                                # Idioma para VO
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel) #Actualización sólo últ. Temporada?
 timeout = config.get_setting('timeout_downloadpage', channel)
 season_colapse = config.get_setting('season_colapse', channel)                  # Season colapse?
@@ -624,7 +627,7 @@ def listado(item):                                                              
         cnt_tot_match += cnt_match                                              # Calcular el num. total de items mostrados
     
     #Pasamos a TMDB la lista completa Itemlist
-    tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda='es')
+    tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda=idioma_busqueda)
     
     #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
     item, itemlist = generictools.post_tmdb_listado(item, itemlist)
@@ -686,8 +689,8 @@ def findvideos(item):
 
     patron = '<div\s*class="modal-torrent">\s*<div\s*class="modal-quality"\s*'
     patron += 'id="[^"]+">\s*<span>([^<]+)<\/span>\s*<\/div>\s*(?:<p\s*class='
-    patron += '"quality-size">[^<]+<\/p>)?.*?class="quality-size">([^<]+)<\/p>\s*'
-    patron += '<a\s*download="[^"]*" \s*class="[^"]+" \s*href="([^"]+)"'
+    patron += '"quality-size">[^<]+<\/p>)?\s*(?:<br>\s*<p>[^<]*<\/p>\s*<p\s*class='
+    patron += '"quality-size">([^<]*)<\/p>)?<a\s*[^>]*class="[^"]+"\s*href="([^"]+)"'
     
     if not item.armagedon:
         if not item.matches:
@@ -713,7 +716,8 @@ def findvideos(item):
         item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent con las diferentes calidades
-    for scrapedquality, scrapedsize, scrapedurl in matches:
+    for scrapedquality, scrapedsize, _scrapedurl in matches:
+        scrapedurl = urlparse.urljoin(host, generictools.convert_url_base64(_scrapedurl))
         scrapedpassword = ''
         scrapedlanguage = ''
 
@@ -894,8 +898,11 @@ def episodios(item):
         season_display = item.from_num_season_colapse
 
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
+    idioma = idioma_busqueda
+    if 'VO' in str(item.language):
+        idioma = idioma_busqueda_VO
     try:
-        tmdb.set_infoLabels(item, True, idioma_busqueda='es,en')
+        tmdb.set_infoLabels(item, True, idioma_busqueda=idioma)
     except:
         pass
         
@@ -930,9 +937,10 @@ def episodios(item):
             return itemlist                                                     # ... Salimos
 
         patron = '(?:\s*<button\s*class="accordion"><i\s*class="fa[^"]+"><\/i>'
-        patron += '.*?Temporada (\d+)<\/button>\s*<div\s*class="panel">\s*<ul\s*class="download-links">)?'
-        patron += '\s*<li>\s*<a\s*href="([^"]+)"\s*target="[^"]+">\s*<i\s*class='
-        patron += '"fas[^"]+d">\s*<\/i>.*?Descargar Capitulo (\d+)\s*<\/a>\s*<\/li>'
+        patron += '.*?Temporada\s*(\d+)<\/button>\s*<div\s*class="panel">\s*'
+        patron += '<ul\s*class="download-links">)?\s*<li>\s*<a\s*href="([^"]+)"\s*'
+        patron += 'target="[^"]+">\s*<i\s*class="fas[^"]+d">\s*<\/i>.*?Descargar\s*'
+        patron += 'Capitulo\s*(\d+)\s*<\/a>\s*<\/li>'
         
         matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -1040,7 +1048,7 @@ def episodios(item):
 
     if not item.season_colapse:                                                 #Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
-        tmdb.set_infoLabels(itemlist, True, idioma_busqueda='es,en')
+        tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma)
 
         #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
         item, itemlist = generictools.post_tmdb_episodios(item, itemlist)
