@@ -90,8 +90,8 @@ def dialog_yesno(heading, line1, line2="", line3="", nolabel="No", yeslabel="Si"
                             yeslabel=yeslabel)
 
 
-def dialog_select(heading, _list):
-    return xbmcgui.Dialog().select(heading, _list)
+def dialog_select(heading, _list, useDetails=False):
+    return xbmcgui.Dialog().select(heading, _list, useDetails=useDetails)
 
 
 def dialog_multiselect(heading, _list, autoclose=0, preselect=[], useDetails=False):

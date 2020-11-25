@@ -88,6 +88,7 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
+    url =""
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     data = scrapertools.find_single_match(data, '<div class="video-container">(.*?)</div>')
@@ -95,5 +96,9 @@ def play(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for quality, url in matches:
         itemlist.append(['.mp4 %s' %quality, url])
+    if not url:
+        url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
+        itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

@@ -116,6 +116,7 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, "sendCdnInfo.'([^']+)")
+    url = url.replace("&amp;", "&")
     itemlist.append(
         Item(channel=item.channel, action="play", title=item.title, url=url, thumbnail=item.thumbnail,
              plot=item.plot, folder=False))

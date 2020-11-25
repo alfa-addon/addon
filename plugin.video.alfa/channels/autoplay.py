@@ -238,11 +238,11 @@ def start(itemlist, item):
                 autoplay_elem["indice_lang"] = favorite_langs.index(item.language)
                 autoplay_elem["indice_quality"] = favorite_quality.index(item.quality)
 
-            else:  # No ordenar
-
-                # si la url esta repetida, descartamos el item
-                if item.url in url_list_valid:
-                    continue
+            # else:  # No ordenar
+            #
+            #     # si la url esta repetida, descartamos el item
+            #     if item.url in url_list_valid:
+            #         continue
 
             # Si el item llega hasta aqui lo añadimos al listado de urls validas y a autoplay_list
             url_list_valid.append(item.url)
@@ -287,7 +287,7 @@ def start(itemlist, item):
             # Si se esta reproduciendo algo detiene la reproduccion
             if platformtools.is_playing():
                 platformtools.stop_video()
-
+            tried = list()
             for autoplay_elem in autoplay_list:
                 play_item = Item
 
@@ -321,6 +321,14 @@ def start(itemlist, item):
                                 videoitem.video_urls = resolved_item
                             else:
                                 videoitem = resolved_item[0]
+
+                    # Comprueba si el enlace ya fue probado
+
+                    if videoitem.url not in tried:
+                        tried.append(videoitem.url)
+                    else:
+                        continue
+
 
                     # Si no directamente reproduce y marca como visto
 

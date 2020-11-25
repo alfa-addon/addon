@@ -3,6 +3,7 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 import sys
+
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
@@ -18,7 +19,6 @@ from channelselector import get_thumb
 from platformcode import config, logger
 from channels import filtertools, autoplay
 
-
 IDIOMAS = {'mx': 'Latino', 'dk': 'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb': 'VOSE', 'de': 'Alemán'}
 list_language = list(IDIOMAS.values())
 
@@ -28,7 +28,7 @@ list_servers = [
     'clipwatching',
     'upstream',
     'streamz'
-    ]
+]
 
 host = 'https://www.dospelis.online/'
 
@@ -46,7 +46,6 @@ def mainlist(item):
                          thumbnail=get_thumb('tvshows', auto=True), first=0))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
                          thumbnail=get_thumb("search", auto=True)))
-
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -72,7 +71,7 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
     else:
         data = httptools.downloadpage(url).data
 
@@ -146,6 +145,8 @@ def list_all(item):
             year = info_2.find("span", text=re.compile(r"\d{4}")).text.split(",")[-1].strip()
         except:
             year = "-"
+        if year in title:
+            title = re.sub(year, "", title).strip()
 
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
 
@@ -172,7 +173,8 @@ def list_all(item):
         url_next_page = '%s' % url_next_page
         first = 0
     if url_next_page and len(matches) > 16:
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all', first=first))
+        itemlist.append(
+            Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all', first=first))
 
     return itemlist
 
@@ -257,26 +259,21 @@ def findvideos(item):
     matches = soup.find("ul", id="playeroptionsul")
     if not matches:
         return itemlist
+
     for elem in matches.find_all("li"):
-        if "youtube" in elem.find("span", class_="server").text:
-            continue
-        post = {"action": "doo_player_ajax", "post": elem["data-post"], "nume": elem["data-nume"],
-                "type": elem["data-type"]}
-        headers = {"Referer": item.url}
-        doo_url = "%swp-admin/admin-ajax.php" % host
         try:
             lang = elem.find("span", class_="flag").img["src"]
             lang = scrapertools.find_single_match(lang, r"flags/([^\.]+)\.png")
         except:
             lang = ""
-        data = httptools.downloadpage(doo_url, post=post, headers=headers).data
-        if not data or not "iframe" in data:
+        v_id = "source-%s" % elem["id"].replace("-option", "")
+        try:
+            url = soup.find("div", id=v_id).iframe["src"]
+        except:
             continue
-        url = BeautifulSoup(data, "html5lib").find("iframe")["src"]
-        if "streamcrypt.net" in url:
-            url = httptools.downloadpage(url).url
         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                              language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels))
+
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     # Requerido para FilterTools
@@ -288,9 +285,10 @@ def findvideos(item):
     autoplay.start(itemlist, item)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-        itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                             url=item.url, action="add_pelicula_to_library", extra="findvideos",
-                             contentTitle=item.contentTitle))
+        itemlist.append(
+            Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                 url=item.url, action="add_pelicula_to_library", extra="findvideos",
+                 contentTitle=item.contentTitle))
 
     return itemlist
 

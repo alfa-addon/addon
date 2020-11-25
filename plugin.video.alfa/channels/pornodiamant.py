@@ -52,10 +52,10 @@ def catalogo(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a itemprop="url" href="([^"]+)".*?'
     patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
-    patron += '</svg>([^<]+)<'
+    patron += '</svg>([^<]+)</'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle, cantidad in matches:
-        title = "%s (%s)" %(scrapedtitle,cantidad)
+        title = "%s (%s)" %(scrapedtitle,cantidad.strip())
         thumbnail = scrapedthumbnail
         url = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append(item.clone(action="lista", title=title, url=url,
@@ -77,7 +77,7 @@ def categorias(item):
     patron += '</svg>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
-        title = "%s (%s)" %(scrapedtitle,cantidad)
+        title = "%s (%s)" %(scrapedtitle,cantidad.strip())
         thumbnail = scrapedthumbnail
         url = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append(item.clone(action="lista", title=title, url=url,
@@ -121,6 +121,8 @@ def play(item):
     patron = '<source src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url in matches:
-        itemlist.append(['[Directo]' , url])
+        url = url.replace("&amp;", "&")
+        itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
