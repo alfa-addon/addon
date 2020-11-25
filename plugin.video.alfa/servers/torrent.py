@@ -603,9 +603,12 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
         else:
             if lookup:
                 proxy_retries = 0
-            if post:                                                            #Descarga con POST
+            follow_redirects = True
+            if post:
+                #Descarga con POST
+                follow_redirects = False
                 response = httptools.downloadpage(url, headers=headers, post=post, \
-                            follow_redirects=False, timeout=(timeout, timeout), proxy_retries=proxy_retries)
+                            follow_redirects=follow_redirects, timeout=(timeout, timeout), proxy_retries=proxy_retries)
             else:                                                               #Descarga sin post
                 response = httptools.downloadpage(url, headers=headers, timeout=(timeout, timeout), \
                             proxy_retries=proxy_retries)
@@ -639,6 +642,10 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
             
             else:
                 torrent_file = response.data
+                # En caso de que sea necesaria la conversión js2py
+                torrent_file = generictools.js2py_conversion(torrent_file, url, timeout=(timeout, timeout), 
+                               headers=headers, referer=referer, post=post, follow_redirects=follow_redirects, 
+                               proxy_retries=proxy_retries, channel=None)
 
         #Si no hay datos o son incosistentes, salimos
         if not torrent_file or not isinstance(torrent_file, (str, bytes)):
@@ -2280,10 +2287,19 @@ def shorten_rar_path(item):
     video_path = ''
     
     if item.contentType == 'movie':
-        video_path = '%s-%s' % (item.contentTitle.strip(), item.infoLabels['tmdb_id'])
+        video_path = '%s [%s] [%s]' % (item.contentTitle.strip(), item.infoLabels['quality'], \
+                            item.infoLabels['tmdb_id'])
     else:
-        video_path = '%s-%sx%s-%s' % (item.contentSerieName.strip(), item.contentSeason, \
-                            item.contentEpisodeNumber, item.infoLabels['tmdb_id'])
+        epi_al = scrapertools.find_single_match(item.infoLabels['episodio_titulo'], '(?i)al\s*(\d+)')
+        if not epi_al:
+            epi_al = scrapertools.find_single_match(item.downloadFilename, '(?i)\[\s*cap\.?\s*\d+_\d+(\d{2})\]')
+        if epi_al:
+            epi_al = ' al %s' % str(epi_al).zfill(2)
+        else:
+            epi_al= ''
+        video_path = '%s %sx%s%s [%s] [%s]' % (item.contentSerieName.strip(), str(item.contentSeason), \
+                            str(item.contentEpisodeNumber).zfill(2), epi_al, item.infoLabels['quality']\
+                            .replace(' AC3 5.1', ''), item.infoLabels['tmdb_id'])
 
     video_path = video_path.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o")\
                            .replace("ú", "u").replace("ü", "u").replace("ñ", "n")\

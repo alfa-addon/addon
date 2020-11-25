@@ -77,12 +77,12 @@ def categorias(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('div', class_='row grouped')
-    matches = soup.find_all('li')
+    matches = soup.find_all('div', class_='categories-row')
     for elem in matches:
         url = elem.a['href']
         title = elem.img['alt']
         thumbnail = elem.img['data-original']
-        cantidad = elem.find('span', class_='views').text
+        cantidad = elem.find('span').text
         title = "%s (%s)" %(title,cantidad)
         url = urlparse.urljoin(item.url,url)
         itemlist.append(item.clone(action="lista", title=title, url=url,

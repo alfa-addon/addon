@@ -58,6 +58,9 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Por Años", action="section", url=host + 'catalogue',
                          thumbnail=get_thumb('year', auto=True)))
 
+    itemlist.append(Item(channel=item.channel, title="Por País", action="section", url=host + 'catalogue',
+                         thumbnail=get_thumb('country', auto=True)))
+
     itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host+'search?s=',
                          thumbnail=get_thumb('search', auto=True)))
 
@@ -108,17 +111,20 @@ def section(item):
     itemlist = []
     data=get_source(item.url)
 
+    patron = 'input" id="([^"]+)".*?name="([^"]+)".*?'
+    patron += '<label.*?>([^<]+)</label>'
+
     if item.title == 'Generos':
         data = scrapertools.find_single_match(data, '>Todos los generos</button>.*?<button class')
     elif 'Años' in item.title:
         data = scrapertools.find_single_match(data, '>Todos los años</button>.*?<button class')
 
-    patron = 'input" id="([^"]+)".*?name="([^"]+)"'
+    elif 'País' in item.title:
+        data = scrapertools.find_single_match(data, '>Todos los países</button>.*?<button class')
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for id, name in matches:
-        title = id.capitalize()
+    for id, name, title in matches:
         id = id.replace('-','+')
         url = '%s?%s=%s' % (item.url, name, id)
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='list_all'))

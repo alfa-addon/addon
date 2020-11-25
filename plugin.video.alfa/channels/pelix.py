@@ -136,10 +136,15 @@ def findvideos(item):
     content_id = scrapertools.find_single_match(item.url, "/(\d+)")
 
     soup = create_soup(item.url)
-    url = soup.find("a", href=re.compile("magnet:"))["href"]
-    itemlist.append(Item(channel=item.channel, title="Torrent", url=url, server="torrent", action="play",
-                         language="LAT", infoLabels=item.infoLabels))
+    try:
+        import base64
+        url = soup.find("a", href=re.compile("pelix.php#bWFnbm"))["href"]
+        url = base64.b64decode(url.split('.php#', 1)[1])
+        itemlist.append(Item(channel=item.channel, title="Torrent", url=url, server="torrent", action="play",
+                            language="LAT", infoLabels=item.infoLabels))
 
+    except:
+        pass
     strm_url = "https://pelix.tv/wp-json/elifilms/movies/?id=%s" % content_id
 
     json_data = httptools.downloadpage(strm_url).json
