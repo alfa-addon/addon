@@ -470,6 +470,7 @@ def episodios(item):
                 url = host + scpurl
             )
         )
+    itemlist.reverse()
     if config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra:
         if premiere:
             itemlist.append(
@@ -500,7 +501,7 @@ def episodios(item):
                     thumbnail = item.thumbnail,
                 )
             )
-    # tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = False)
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = False)
     return itemlist
 
 def episodesxseason(item):
