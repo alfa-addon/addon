@@ -246,6 +246,7 @@ def seasons(item):
 
     if len(matches) == 1:
         item.contentSeasonNumber = '1'
+        item.season1 = True
         return episodesxseasons(item)
     elif len(matches) < 1:
         title = '[COLOR=grey]Aún no hay episodios disponibles para esta serie[/COLOR]'
@@ -313,7 +314,7 @@ def episodesxseasons(item):
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     
     # Opción "Añadir esta serie a la videoteca de KODI"
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentSeasonNumber == '1':
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.season1:
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
