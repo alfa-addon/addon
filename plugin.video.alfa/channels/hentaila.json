@@ -1,0 +1,20 @@
+{
+	"id": "hentaila",
+	"name": "HentaiLA",
+	"active": true,
+	"adult": true,
+	"language": ["vose"],
+	"fanart": "https://hentaila.com/uploads/fondos/1.jpg",
+	"thumbnail": "https://hentaila.com/assets/img/media.webp",
+	"categories": ["adult"],
+	"settings": [
+		{
+			"id": "include_in_global_search",
+			"type": "bool",
+			"label": "Incluir en busqueda global",
+			"default": false,
+			"enabled": false,
+			"visible": false
+		}
+	]
+}
