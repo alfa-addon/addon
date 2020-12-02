@@ -35,7 +35,10 @@ domain = 'magnetpelis.com'
 channel = 'magnetpelis'
 categoria = channel.capitalize()
 
-__modo_grafico__ = config.get_setting('modo_grafico', channel)
+__modo_grafico__ = config.get_setting('modo_grafico', channel)                  # TMDB?
+IDIOMAS_TMDB = {0: 'es', 1: 'en', 2: 'es,en'}
+idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', channel)]    # Idioma base para TMDB
+idioma_busqueda_VO = IDIOMAS_TMDB[2]                                                # Idioma para VO
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel) #Actualización sólo últ. Temporada?
 timeout = config.get_setting('timeout_downloadpage', channel)
 season_colapse = config.get_setting('season_colapse', channel)                  # Season colapse?
@@ -59,8 +62,8 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Películas", action="listado", 
-                url=host + "peliculas/page/1", thumbnail=thumb_pelis, extra="peliculas"))
+    itemlist.append(Item(channel=item.channel, title="Películas", action="submenu", 
+                url=host, thumbnail=thumb_pelis, extra="peliculas"))
     itemlist.append(Item(channel=item.channel, title="    - por Género", action="genero", 
                 url=host, thumbnail=thumb_genero, extra="peliculas"))
     itemlist.append(Item(channel=item.channel, title="    - por Año", action="anno", 
@@ -68,8 +71,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="    - por Calidad", action="calidad", 
                 url=host, thumbnail=thumb_calidad, extra="peliculas"))
     
-    itemlist.append(Item(channel=item.channel, title="Series", action="listado", 
-                url=host + "series/page/1", thumbnail=thumb_series, extra="series"))
+    itemlist.append(Item(channel=item.channel, title="Series", action="submenu", 
+                url=host, thumbnail=thumb_series, extra="series"))
     itemlist.append(Item(channel=item.channel, title="    - por Año", action="anno", 
                 url=host, thumbnail=thumb_anno, extra="series"))
     
@@ -91,6 +94,39 @@ def configuracion(item):
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
     return
+
+
+def submenu(item):
+
+    patron = '<li\s*class="header__nav-item">\s*<a\s*href="([^"]+)"\s*class="header__nav-link">([^<]+)<\/a>'
+
+    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout,  s2=False, 
+                                          patron=patron, item=item, itemlist=[])    # Descargamos la página
+
+    #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
+    if not success or itemlist:                                                 # Si ERROR o lista de errores ..
+        return itemlist                                                         # ... Salimos
+
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    #logger.debug(patron)
+    #logger.debug(matches)
+    #logger.debug(data)
+
+    if not matches:
+        logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + 
+                        " / PATRON: " + patron + " / DATA: " + data)
+        itemlist.append(item.clone(action='', title=item.category + 
+                        ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  '
+                        + 'Reportar el error con el log'))
+        return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        
+    for scrapedurl, scrapedtitle in matches:
+        if scrapertools.slugify(scrapedtitle) in item.extra:
+            item.url = scrapedurl + 'page/1'
+            return listado(item)
+            
+    return itemlist
 
 
 def anno(item):
@@ -458,7 +494,7 @@ def listado(item):                                                              
         cnt_tot_match += cnt_match                                              # Calcular el num. total de items mostrados
     
     #Pasamos a TMDB la lista completa Itemlist
-    tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda='es')
+    tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda=idioma_busqueda)
     
     #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
     item, itemlist = generictools.post_tmdb_listado(item, itemlist)
@@ -554,7 +590,7 @@ def findvideos(item):
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
 
-        item_local.url = convert_url_base64(scrapedurl)
+        item_local.url = urlparse.urljoin(host, generictools.convert_url_base64(scrapedurl))
         
         # Restauramos urls de emergencia si es necesario
         local_torr = ''
@@ -730,8 +766,11 @@ def episodios(item):
         season_display = item.from_num_season_colapse
 
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
+    idioma = idioma_busqueda
+    if 'VO' in str(item.language):
+        idioma = idioma_busqueda_VO
     try:
-        tmdb.set_infoLabels(item, True, idioma_busqueda='es,en')
+        tmdb.set_infoLabels(item, True, idioma_busqueda=idioma)
     except:
         pass
         
@@ -812,7 +851,7 @@ def episodios(item):
                     del item_local.season_colapse
 
                 item_local.url = url                                            # Usamos las url de la temporada, no hay de episodio
-                url_base64 = convert_url_base64(scrapedurl)
+                url_base64 = urlparse.urljoin(host, generictools.convert_url_base64(scrapedurl))
                 item_local.matches = []
                 item_local.matches.append((episode_num, scrapedquality, scrapedlanguage, scrapedsize, url_base64))  # Salvado Matches de cada episodio
                 item_local.context = "['buscar_trailer']"
@@ -880,7 +919,7 @@ def episodios(item):
 
     if not item.season_colapse:                                                 #Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
-        tmdb.set_infoLabels(itemlist, True, idioma_busqueda='es,en')
+        tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma)
 
         #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
         item, itemlist = generictools.post_tmdb_episodios(item, itemlist)
@@ -900,24 +939,6 @@ def actualizar_titulos(item):
     return item
 
 
-def convert_url_base64(url):
-    logger.info()
-    
-    url_base64 = url
-    if not 'magnet:' in url_base64 and not '.torrent' in url_base64:
-        url_base64 = scrapertools.find_single_match(url_base64, 'php#(.*?$)')
-        try:
-            for x in range(20):                                                 # Da hasta 20 pasadas o hasta que de error
-                url_base64 = base64.b64decode(url_base64).decode('utf-8')
-            logger.info('Url base64 después de 20 pasadas (incompleta): %s' % url_base64)
-        except:
-            logger.info('Url base64 convertida: %s' % url_base64)
-            if not url_base64:
-                url_base64 = url
-    
-    return url_base64
-
-    
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")

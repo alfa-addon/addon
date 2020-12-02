@@ -12,7 +12,7 @@ else:
 import re
 
 from core import jsontools as json
-from platformcode import config, logger
+from platformcode import config, logger, platformtools
 from core import scrapertools
 from core.item import Item
 from core import servertools
@@ -40,7 +40,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/api/video/search.json?segment=Straight&limit=33&query=%s&page=1" % (host, texto)
+    item.url = "%s/api/search?segment=Straight&sort=submitted&limit=33&query=%s&page=1" % (host, texto)
     try:
         return lista(item)
     except:
@@ -139,10 +139,14 @@ def play(item):
     logger.info()
     itemlist = []
     json_data = httptools.downloadpage(item.url).json
-    url = json_data["HLS"]
-    itemlist.append(["1080p", url])
-    for quality, url in json_data["videos"].items():
-        url = url.replace("%3D", "=").replace("%2B", "+")
-        itemlist.append(['%s' %quality.replace("quality_", ""), url])
+    if not json_data:
+        platformtools.dialog_ok("Spankwire: Error", "El archivo no existe o  ha sido borrado")
+        return
+    else:
+        url = json_data["HLS"]
+        itemlist.append(["1080p", url])
+        for quality, url in json_data["videos"].items():
+            url = url.replace("%3D", "=").replace("%2B", "+")
+            itemlist.append(['%s' %quality.replace("quality_", ""), url])
     return itemlist
 

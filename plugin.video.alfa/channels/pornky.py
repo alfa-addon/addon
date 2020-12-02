@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.pornky.com/'   #  'https://www.tubxxporn.com'  https://www.pornktube.porn  'https://www.joysporn.com/'
+host = 'https://www.pornky.com/'   #   'https://www.tubxxporn.com'  https://www.pornktube.porn  'https://www.joysporn.com/'
 
 
 def mainlist(item):

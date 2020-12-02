@@ -27,6 +27,19 @@
       "label": "Buscar información extra (TMDB)", 
       "type": "bool", 
       "visible": true
+    }, 
+    {
+      "id": "modo_grafico_lang",
+      "type": "list",
+      "label": "Idioma para buscar información extra (TMDB)",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Español",
+        "Inglés",
+        "Español+Inglés"
+      ]
     },
     {
       "id": "pseudo_titulos",

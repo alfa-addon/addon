@@ -31,7 +31,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
 
     video_urls = list()
-    host = "https://dood.watch"
+    host = "https://dood.to"
     label = scrapertools.find_single_match(data, 'type:\s*"video/([^"]+)"')
 
     js_code = scrapertools.find_single_match(data, ("(function makePlay.*?;})"))

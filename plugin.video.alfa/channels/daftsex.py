@@ -20,6 +20,9 @@ import base64
 
 host = 'https://daftsex.com'
 
+# Categoria bigtits las url que no recoge funcionan despues de refrescar la pagina
+
+
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -113,7 +116,6 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     url = scrapertools.find_single_match(data, 'class="frame_wrapper">.*?src="([^"]+)"')
     headers = {'Referer': item.url}
     data = httptools.downloadpage(url, headers=headers).data

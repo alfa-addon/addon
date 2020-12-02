@@ -25,7 +25,7 @@ list_quality = ['default']
 list_servers = ['mangovideo']
 
 
-host = 'https://pandamovies.pw'     #'https://watchpornfree.info'   'https://xxxparodyhd.net'  'http://www.veporns.com'  'http://streamporno.eu'  playpornx
+host = 'https://pandamovies.pw'     #  'https://watchpornfree.info'   'https://xxxparodyhd.net'  'http://www.veporns.com'  'http://streamporno.eu'  playpornx
 
 def mainlist(item):
     logger.info()
