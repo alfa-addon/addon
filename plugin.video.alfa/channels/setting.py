@@ -79,7 +79,12 @@ def menu_channels(item):
     for channel in channel_list:
         if not channel.channel:
             continue
+        
         channel_parameters = channeltools.get_channel_parameters(channel.channel)
+
+        if channel_parameters["adult"] and not config.get_setting("adult_mode"):
+            continue
+        
         if channel_parameters["has_settings"]:
             itemlist.append(Item(channel=CHANNELNAME, title=".    " + config.get_localized_string(60547) % channel.title,
                                  action="channel_config", config=channel.channel, folder=False,

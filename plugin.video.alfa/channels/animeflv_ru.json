@@ -1,7 +1,7 @@
 {
   "id": "animeflv_ru",
   "name": "AnimeFLV.RU",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/5nRR9qq.png",
