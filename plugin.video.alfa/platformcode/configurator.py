@@ -68,6 +68,14 @@ class Main(xbmcgui.WindowXMLDialog):
             self.addControl(btn)
             self.buttons.append(btn)
             posy += 70
+
+        self.hand = xbmcgui.ControlImage(0, 0, 40, 40, media_path + "click.png")
+
+        self.addControl(self.hand)
+        self.hand.setVisible(False)
+        self.hand.setAnimations(
+            [("isVisible", "effect=zoom delay=120 center=auto start=80 end=50  time=350 loop=true condition=true")])
+
         self.setFocus(self.buttons[1])
         self.focus = 1
 
@@ -113,6 +121,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.start_btn)
         self.setFocus(self.start_btn)
 
+
     def close_greeter(self):
         self.removeControl(self.start_btn)
         self.removeControl(self.welcome)
@@ -139,10 +148,11 @@ class Main(xbmcgui.WindowXMLDialog):
         self.main_window()
 
     def onFocus(self, control):
+        animate = False
+        control_label = self.getControl(control).getLabel()
+        if control_label == "Videoteca":
 
-        control = self.getControl(control).getLabel()
-
-        if control == "Videoteca":
+            animate = True
 
             btn_info = "[B] - Configura la videoteca de Alfa - [/B]\n\n\nPodrás hacer seguimiento de tus series," \
                        " llevar el control de los episodios vistos, recibir actualizaciones de episodios de series" \
@@ -154,14 +164,20 @@ class Main(xbmcgui.WindowXMLDialog):
             self.setProperty("button_info", btn_info)
             self.getControl(3078).setImage("https://i.postimg.cc/ht3BL9F1/ss6.png")
 
-        elif control == "Cliente Torrent":
+        elif control_label == "Cliente Torrent":
+
+            animate = True
+
             btn_info = "[B] - Configura tu cliente para reproducir torrents - [/B]\n\n\n - Escoge tu cliente por defecto.\n "\
                        "- Configura también otras opciones relacionadas a este tipo de contenido."
 
             self.setProperty("button_info", btn_info)
             self.getControl(3078).setImage("https://i.postimg.cc/nLChjPFR/ss90.png")
 
-        elif control == "Titulos Inteligentes":
+        elif control_label == "Titulos Inteligentes":
+
+            animate = True
+
             btn_info = "[B] - Activa Títulos inteligentes - [/B]\n\n\nObtendrás información mas clara sobre el contenido " \
                        "(año, puntuación, sinopsis), todo diferenciado por colores.\n\n" \
                        "- Escoge un estilo de color predefinido o personaliza de manera sencilla."
@@ -169,19 +185,34 @@ class Main(xbmcgui.WindowXMLDialog):
             self.setProperty("button_info", btn_info)
             self.getControl(3078).setImage("https://i.postimg.cc/QCbLH7k5/ss7.png")
 
-        elif control == "Set De Iconos":
+        elif control_label == "Set De Iconos":
+
+            animate = True
+
             btn_info = "[B] - Escoge tu set de iconos favorito - [/B]\n\n\nAlfa cuenta con varios temas de iconos entre " \
                        "los cuales puedes escoger, elige el que mas te guste y disfruta tu alfa mas bonito."
 
             self.setProperty("button_info", btn_info)
             self.getControl(3078).setImage("https://i.postimg.cc/T1TFMwMP/ss3.png")
 
-        elif control == "Ajustes Avanzados":
+        elif control_label == "Ajustes Avanzados":
+
+            animate = True
+
             btn_info = "[B] - Configura Alfa al Máximo - [/B]\n\n\nPuedes utilizar la configuración avanzada para ajustar " \
                        "muchos mas aspectos y funciones del addon."
 
             self.setProperty("button_info", btn_info)
             self.getControl(3078).setImage("https://i.postimg.cc/3wLMQ82W/0.jpg")
+        elif control_label == "Comenzar":
+            pass
+        else:
+                self.hand.setVisible(False)
+
+        if animate:
+            self.hand.setPosition(self.getControl(control).getX() + 140, self.getControl(control).getY() + 35)
+            self.hand.setVisible(True)
+
 
     def onAction(self, action):
 
@@ -209,6 +240,7 @@ class Main(xbmcgui.WindowXMLDialog):
                     self.setFocus(self.buttons[self.focus])
                     break
                 self.focus -= 1
+
 
     def onClick(self, control):
         if control == 3075:

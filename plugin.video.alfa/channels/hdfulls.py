@@ -299,7 +299,11 @@ def findvideos(item):
     for provider, e, l in providers:
         provs[provider] = [e, l]
 
-    data_decrypt = jsontools.load(alfaresolver.obfs(data, js_data))
+    try:
+        data_decrypt = jsontools.load(alfaresolver.obfs(data, js_data))
+    except:
+        return itemlist
+
     infolabels = item.infoLabels
     year = scrapertools.find_single_match(data, '<span>A&ntilde;o:\s*</span>.*?(\d{4})')
     infolabels["year"] = year
