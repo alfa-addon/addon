@@ -211,7 +211,9 @@ def newest(categoria):
     itemlist = []
     item = Item()
     try:
-        if categoria == 'infantiles':
+        if categoria == 'peliculas':
+            item.url = host+'estrenos'
+        elif categoria == 'infantiles':
             item.url = host+'/category/animacion'
         elif categoria == 'terror':
             item.url = host+'/category/terror'

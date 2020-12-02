@@ -3,7 +3,7 @@
   "name": "Futurama-Latino",
   "thumbnail":"https://futurama-latino.net/wp-content/themes/vizer/assets/img/logo.png",
   "banner":"",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "categories": [
