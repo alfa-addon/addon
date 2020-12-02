@@ -20,42 +20,49 @@ def mainlist(item):
                                     title = "Novedades",
                                     action = "newest",
                                     url = host + base_url_start + '/-/ESTRENO' + base_url_end,
+                                    fanart = item.fanart,
                                     thumbnail = get_thumb("newest", auto=True)
                                     ))
     itemlist.append(Item(channel =  item.channel,
                                     title = "Destacadas",
                                     action = "list_all",
                                     url = host + base_url_start + '/-/POPULARES' + base_url_end,
+                                    fanart = item.fanart,
                                     thumbnail = get_thumb("hot", auto=True)
                                     ))
     itemlist.append(Item(channel =  item.channel,
                                     title = "Series de los 80s",
                                     action = "list_all",
                                     url = host + base_url_start + '/-/80s' + base_url_end,
+                                    fanart = item.fanart,
                                     thumbnail = get_thumb("year", auto=True)
                                     ))
     itemlist.append(Item(channel =  item.channel,
                                     title = "Series de los 90s",
                                     action = "list_all",
                                     url = host + base_url_start + '/-/90s' + base_url_end,
+                                    fanart = item.fanart,
                                     thumbnail = get_thumb("year", auto=True)
                                     ))
     itemlist.append(Item(channel =  item.channel,
                                     title = "Series del 2000",
                                     action = "list_all",
                                     url = host + base_url_start + '/-/00s' + base_url_end,
+                                    fanart = item.fanart,
                                     thumbnail = get_thumb("year", auto=True)
                                     ))
     itemlist.append(Item(channel =  item.channel,
                                     title = "Todas las series",
                                     action = "list_all",
                                     url = host + base_url_start + base_url_end,
+                                    fanart = item.fanart,
                                     thumbnail = get_thumb("all", auto=True)
                                     ))
     itemlist.append(Item(channel =  item.channel,
                                     title = "Buscar...",
                                     action = "search",
                                     url = host+'/search/?q=',
+                                    fanart = item.fanart,
                                     thumbnail = get_thumb("search", auto=True)
                                     ))
     return itemlist
@@ -109,17 +116,17 @@ def list_all(item):
         resultmatch = scrapertools.find_multiple_matches(html, resultptn)
         for scrapedthumbnail, scrapedurl, scrapedplot in resultmatch:
             infoLabels['plot'] = scrapertools.unescape(scrapedplot)
-            infoLabels['fanart'] = scrapedthumbnail
             itemlist.append(
                 check_item_for_exception(
                     Item(
                         action = "seasons",
                         channel = item.channel,
+                        contentSerieName = format_ascii(i['title']['$t']),
+                        fanart = scrapedthumbnail,
+                        infoLabels = infoLabels,
                         title = format_ascii(i['title']['$t']),
                         thumbnail = scrapedthumbnail,
-                        url = scrapedurl,
-                        contentSerieName = format_ascii(i['title']['$t']),
-                        infoLabels = infoLabels
+                        url = scrapedurl
                     )
                 )
             )
@@ -134,7 +141,6 @@ def list_all(item):
                 url = nextpage
             )
         )
-    logger.error(str(nextpage))
     tmdb.set_infoLabels(itemlist, seekTmdb = True, idioma_busqueda = 'es')
     return itemlist
 
@@ -156,7 +162,7 @@ def get_nextrow_url(current_url, total_results):
         itemlist.append(
             check_item_for_exception(
                 Item(
-                    action =   "seasons",
+                    action = "seasons",
                     channel = item.channel,
                     title = format_ascii(scrapedtitle),
                     thumbnail = scrapedthumbnail,
@@ -183,9 +189,9 @@ def seasons(item):
             Item(
                 action = "episodios",
                 channel = item.channel,
+                infoLabels = infoLabels,
                 title = "Temporada %s" % infoLabels['season'],
                 url = scpurl,
-                infoLabels = infoLabels
             )
         )
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True, idioma_busqueda = 'es')
@@ -232,10 +238,10 @@ def episodios(item):
             Item(
                 action =   "findvideos",
                 channel = item.channel,
+                infoLabels = infoLabels,
                 title = str(infoLabels['season']) + 'x' + str(infoLabels['episode']) + ': ' + title,
                 thumbnail = scpthumbnail,
-                url = scpurl,
-                infoLabels = infoLabels
+                url = scpurl
             )
         )
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True, idioma_busqueda = 'es')
@@ -259,12 +265,30 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
     itemlist = []
-    if texto != '':
+    if texto:
         try:
             texto = texto.replace(" ", "+")
             texto = format_ascii(texto)
             item.url += texto
-            return list_all(item)
+            data = httptools.downloadpage(item.url).data
+            pattern = '(?s)class=\'post hentry.*?a href="([^"]+).*?img alt=\'([^\']+).*?src=\'([^\']+)'
+            matches = scrapertools.find_multiple_matches(data, pattern)
+            infoLabels = item.infoLabels
+            for scpurl, scptitle, scpthumbnail in matches:
+                itemlist.append(
+                    Item(
+                        action = "seasons",
+                        channel = item.channel,
+                        contentSerieName = scptitle,
+                        fanart = scpthumbnail,
+                        infoLabels = infoLabels,
+                        title = scptitle,
+                        thumbnail = scpthumbnail,
+                        url = scpurl
+                    )
+                )
+            tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True, idioma_busqueda = 'es')
+            return itemlist
         except:
             for line in sys.exc_info():
                 logger.error("%s" % line)

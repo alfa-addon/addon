@@ -21,7 +21,7 @@ from channels import filtertools
 from bs4 import BeautifulSoup
 import base64
 
-host = 'https://www.playview.io/'
+host = 'https://playview.io/'
 
 IDIOMAS = {"Latino": "LAT", "Español": "CAST", "Subtitulado": "VOSE"}
 list_language = list(IDIOMAS.values())
@@ -225,7 +225,7 @@ def episodesxseason(item):
     set_option = "LoadOptionsEpisode"
     info = info_soup.find("div", id="ficha")
     post = {"set": set_option, 'action': "EpisodesInfo", "id": info["data-id"], "type": info["data-type"]}
-    episodesinfo = httptools.downloadpage(host + 'playview', post=post).data
+    episodesinfo = httptools.downloadpage(host + 'playview', post=post, proxy=True, forced_proxy="ProxyDirect").data
     matches = BeautifulSoup(episodesinfo, "html5lib").find_all("div", class_="episodeBlock")
     infoLabels = item.infoLabels
 
@@ -262,13 +262,13 @@ def findvideos(item):
         dtype = info["data-type"]
         post = {"set": set_option, 'action': "Step1", "id": id, "type": dtype}
 
-    step1 = httptools.downloadpage(host + 'playview', post=post).data
+    step1 = httptools.downloadpage(host + 'playview', post=post, proxy=True, forced_proxy="ProxyDirect").data
     matches = BeautifulSoup(step1, "html5lib").find_all("button", class_="select-quality")
 
     for step2 in matches:
         post = {"set": set_option, "action": "Step2", "id": id, "type": dtype,
                 "quality": step2["data-quality"], "episode": episode}
-        options = httptools.downloadpage(host + 'playview', post=post).data
+        options = httptools.downloadpage(host + 'playview', post=post, proxy=True, forced_proxy="ProxyDirect").data
         soup = BeautifulSoup(options, "html5lib").find_all("li", class_="tb-data-single")
         for elem in soup:
             lang = elem.find("h4").text
@@ -303,7 +303,7 @@ def findvideos(item):
 def play(item):
     logger.info()
 
-    data = httptools.downloadpage(host + 'playview', post=item.post).data
+    data = httptools.downloadpage(host + 'playview', post=item.post, proxy=True, forced_proxy="ProxyDirect").data
     url_data = BeautifulSoup(data, "html5lib")
     try:
         iframe = url_data.find("iframe", class_="embed-responsive-item")["src"]

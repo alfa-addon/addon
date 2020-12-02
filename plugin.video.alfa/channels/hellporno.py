@@ -24,7 +24,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "/?page=1"))
-    # itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -47,6 +47,7 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    data = scrapertools.find_single_match(data,'<div class="container">(.*?)<div id="aside">')
     patron  = '<a href="([^"]+)">.*?'
     patron += '<img src="([^"]+)" alt="([^"]+) - Porn videos">.*?'
     patron += '<span>(\d+) videos</span>'

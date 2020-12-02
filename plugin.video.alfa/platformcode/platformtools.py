@@ -1281,6 +1281,11 @@ def play_torrent(item, xlistitem, mediaurl):
     UNRAR = config.get_setting("unrar_path", server="torrent", default="")
     LIBTORRENT = config.get_setting("libtorrent_path", server="torrent", default='')
     LIBTORRENT_in_use_local = False
+    LIBTORRENT_version = config.get_setting("libtorrent_version", server="torrent", default=1)
+    try:
+        LIBTORRENT_version = int(scrapertoolsV2.find_single_match(LIBTORRENT_version, '\/(\d+)\.\d+\.\d+'))
+    except:
+        LIBTORRENT_version = 1
     RAR_UNPACK = config.get_setting("mct_rar_unpack", server="torrent", default='')
     BACKGROUND_DOWNLOAD = config.get_setting("mct_background_download", server="torrent", default='')
     subtitle_path = config.get_kodi_setting("subtitles.custompath")
@@ -1568,8 +1573,8 @@ def play_torrent(item, xlistitem, mediaurl):
                         item.downloadProgress = 0
                     if item.downloadStatus == 5:
                         dialog_notification("LIBTORRENT en USO", "Descarga encolada.  Puedes seguir haciendo otras cosas...", time=10000)
-                else:
-                    config.set_setting("LIBTORRENT_in_use", True, server="torrent")     # Marcamos Libtorrent como en uso
+                elif LIBTORRENT_version < 99:
+                    config.set_setting("LIBTORRENT_in_use", True, server="torrent")     # Marcamos Libtorrent como en uso, si es antiguo
                     
             item.torr_folder = video_path
             torrent.update_control(item, function='play_torrent_crear_control')
@@ -1594,6 +1599,8 @@ def play_torrent(item, xlistitem, mediaurl):
                     itemlist_refresh()
                     torrent.bt_client(mediaurl, xlistitem, rar_files, subtitle=item.subtitle, password=password, item=item)
                     config.set_setting("LIBTORRENT_in_use", False, server="torrent")   # Marcamos Libtorrent como disponible
+                    config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
+                    itemlist_refresh()
 
             # Reproductor propio MCT (libtorrent)
             elif seleccion == 1:
@@ -1605,6 +1612,8 @@ def play_torrent(item, xlistitem, mediaurl):
                     from platformcode import mct
                     mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=password, item=item)
                     config.set_setting("LIBTORRENT_in_use", False, server="torrent")    # Marcamos Libtorrent como disponible
+                    config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
+                    itemlist_refresh()
 
             # Plugins externos
             else:
@@ -1747,6 +1756,8 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
             item.downloadProgress = 100                                         # ... si no, se da por terminada la monitorización
     item.downloadQueued = 0
     torrent.update_control(item, function='rar_control_mng')
+    config.set_setting("RESTART_DOWNLOADS", True, "downloads")                  # Forzamos restart downloads
+    itemlist_refresh()
 
     # Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan
     if not item.downloadFilename or item.downloadStatus == 5:
