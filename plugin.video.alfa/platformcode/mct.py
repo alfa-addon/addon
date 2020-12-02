@@ -130,6 +130,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
     bkg_user = False
     dp_BG = False
     DOWNGROUND = False
+    torrent_stop = False
     BACKGROUND = config.get_setting("mct_background_download", server="torrent", default=True)
     if item.downloadFilename and item.downloadStatus in [2, 4]:                 # Descargas AUTO
         BACKGROUND = True
@@ -168,11 +169,12 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
         f.close()
     elif os.path.isfile(url):
         # -- file - para usar torrens desde el HD ---------------
-        torrent_file = filetools.join(save_path_torrents, filetools.basename(url).upper())
+        torrent_file = filetools.join(save_path_torrents, filetools.basename(url).upper()).replace('.TORRENT', '.torrent')
         filetools.copy(url, torrent_file, silent=True)
     else:
         # -- magnet ---------------------------------------------
         torrent_file = url
+    torrent_file = torrent_file.replace('.TORRENT', '.torrent')
     # -----------------------------------------------------------
 
     # -- MCT - MiniClienteTorrent -------------------------------
@@ -419,21 +421,23 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
                         or (download == 0 and x > 30)) and not filetools.exists(torrent_file):
             
             log('LISTADO de .torrent %s' % (filetools.listdir(filetools.dirname(torrent_file))))
-            if filetools.exists(torrent_file.lower().replace('.torrent', '.pause')):
+            if filetools.exists(torrent_file.replace('.torrent', '.pause')) or filetools.exists(torrent_file.replace('.TORRENT', '.pause')):
                 torrent_paused = True
                 torrent_stop = True
                 action = 'pause'
                 item.downloadProgress = -1
-                res = filetools.rename(torrent_file.replace('.torrent', '.PAUSE').replace('.TORRENT', '.PAUSE'), \
-                                        filetools.basename(torrent_file), strict=True, silent=True)
+                res = filetools.remove(torrent_file.replace('.torrent', '.pause').replace('.TORRENT', '.pause'), silent=True)
+                #res = filetools.rename(torrent_file.replace('.torrent', '.pause').replace('.TORRENT', '.pause'), \
+                #                        filetools.basename(torrent_file), strict=True, silent=True)
                 log("##### Progreso: %s, .torrent pausado: %s" % (str(porcent), video_file))
-            elif filetools.exists(torrent_file.lower().replace('.torrent', '.reset')):
+            elif filetools.exists(torrent_file.replace('.torrent', '.reset')) or filetools.exists(torrent_file.replace('.TORRENT', '.reset')):
                 torrent_reseted = True
                 torrent_stop = True
                 action = 'reset'
                 item.downloadProgress = 0
-                res = filetools.rename(torrent_file.replace('.torrent', '.RESET').replace('.TORRENT', '.RESET'), \
-                                        filetools.basename(torrent_file), strict=True, silent=True)
+                res = filetools.remove(torrent_file.replace('.torrent', '.reset').replace('.TORRENT', '.reset'), silent=True)
+                #res = filetools.rename(torrent_file.replace('.torrent', '.reset').replace('.TORRENT', '.reset'), \
+                #                        filetools.basename(torrent_file), strict=True, silent=True)
                 log("##### Progreso: %s, .torrent reseteado: %s" % (str(porcent), video_file))
             else:
                 torrent_deleted = True
@@ -444,11 +448,11 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
                 log("##### Progreso: %s, .torrent borrado: %s" % (str(porcent), video_file))
 
             if not res:
-                log('ERROR Renombrando desde -%s- el .torrent %s' % (action, filetools.listdir(filetools.dirname(torrent_file))))
+                log('ERROR borrando por -%s- el .torrent %s' % (action, filetools.listdir(filetools.dirname(torrent_file))))
             
-            if item.downloadProgress == 0:
+            if item.downloadProgress == 0 or torrent_stop:
+                remove_files( 1, torrent_file, video_file, ses, h, ren_video_file, item )
                 bkg_user = False
-                remove_files( 1, '', video_file, ses, h, ren_video_file, item )
             dp.close()
             return
 
@@ -1004,6 +1008,9 @@ def remove_files( download, torrent_file, video_file, ses, h, ren_video_file="",
             except:
                 pass
         log("### End session #########")
+        
+    filetools.remove(filetools.join( DOWNLOAD_PATH , "MCT-torrent-videos",  '.' + \
+                os.path.splitext(filetools.basename(torrent_file))[0].lower() + '.parts'), silent=True)
 
     return                        
 

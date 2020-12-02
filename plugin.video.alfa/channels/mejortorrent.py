@@ -41,7 +41,8 @@ domain_alt = host_list[1][-6:]
 
 __modo_grafico__ = config.get_setting('modo_grafico', channel)                  # búsqueda TMDB ?
 IDIOMAS_TMDB = {0: 'es', 1: 'en', 2: 'es,en'}
-idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', channel)]        # Idioma de búsqueda TMDB
+idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', channel)]    # Idioma base para TMDB
+idioma_busqueda_VO = IDIOMAS_TMDB[2]                                                # Idioma para VO
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)     # Actualización sólo últ. Temporada?
 timeout = config.get_setting('timeout_downloadpage', channel)
 season_colapse = config.get_setting('season_colapse', channel)                  # Season colapse?
@@ -718,7 +719,7 @@ def findvideos(item):
 
     # Ahora tratamos los enlaces .torrent con las diferentes calidades
     for _scrapedurl in matches:
-        scrapedurl = urlparse.urljoin(host, convert_url_base64(_scrapedurl))
+        scrapedurl = urlparse.urljoin(host, generictools.convert_url_base64(_scrapedurl))
 
         scrapedtitle = ''
         scrapedpassword = ''
@@ -749,7 +750,7 @@ def findvideos(item):
                         return itemlist                                 # si no hay más datos, algo no funciona, pintamos lo que tenemos
             
             # Obtenemos el enlace final
-            scrapedurl = urlparse.urljoin(host, convert_url_base64(scrapertools.find_single_match(data_torrent, patron_torrent)))
+            scrapedurl = urlparse.urljoin(host, generictools.convert_url_base64(scrapertools.find_single_match(data_torrent, patron_torrent)))
 
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
@@ -925,8 +926,11 @@ def episodios(item):
         season_display = item.from_num_season_colapse
 
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
+    idioma = idioma_busqueda
+    if 'VO' in str(item.language):
+        idioma = idioma_busqueda_VO
     try:
-        tmdb.set_infoLabels(item, True, idioma_busqueda=idioma_busqueda)
+        tmdb.set_infoLabels(item, True, idioma_busqueda=idioma)
     except:
         pass
         
@@ -1103,7 +1107,7 @@ def episodios(item):
 
     if not item.season_colapse:                                                 # Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
-        tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma_busqueda)
+        tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma)
 
         # Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
         item, itemlist = generictools.post_tmdb_episodios(item, itemlist)
@@ -1121,27 +1125,6 @@ def actualizar_titulos(item):
     
     # Volvemos a la siguiente acción en el canal
     return item
-
-
-def convert_url_base64(url):
-    logger.info()
-    import base64
-    
-    url_base64 = url
-    if not 'magnet:' in url_base64 and not '.torrent' in url_base64:
-        #url_base64 = scrapertools.find_single_match(url_base64, 'php#(.*?$)')
-        try:
-            # Da hasta 20 pasadas o hasta que de error
-            for x in range(20):
-                url_base64 = base64.b64decode(url_base64).decode('utf-8')
-            logger.info('Url base64 después de 20 pasadas (incompleta): %s' % url_base64)
-        except:
-            logger.info('Url base64 convertida: %s' % url_base64)
-            #logger.error(traceback.format_exc())
-            if not url_base64:
-                url_base64 = url
-    
-    return url_base64
 
 
 def choose_alternate_domain(item, url='', code='', patron='', itemlist=[], headers=None, referer=None, post=None):

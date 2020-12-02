@@ -17,7 +17,7 @@ from core.item import Item
 from platformcode import logger
 from bs4 import BeautifulSoup
 
-host = 'http://pornhub.com'
+host = 'https://pornhub.com'
 
 
 def mainlist(item):

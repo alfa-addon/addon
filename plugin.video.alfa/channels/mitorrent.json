@@ -4,7 +4,7 @@
   "active": true,
   "adult": false,
   "language": ["lat"],
-  "thumbnail": "https://mitorrent.net/wp-content/uploads/2018/12/123Sin-t%C3%ADtulo-2.png",
+  "thumbnail": "https://mitorrent.net/wp-content/uploads/2018/12/logo.png",
   "categories": [
     "torrent",
     "movie",
@@ -26,6 +26,19 @@
       "label": "Buscar información extra (TMDB)", 
       "type": "bool", 
       "visible": true
+    }, 
+    {
+      "id": "modo_grafico_lang",
+      "type": "list",
+      "label": "Idioma para buscar información extra (TMDB)",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Español",
+        "Inglés",
+        "Español+Inglés"
+      ]
     },
     {
       "id": "pseudo_titulos",

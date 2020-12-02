@@ -19,6 +19,7 @@ from core import httptools
 
 host = 'https://porndoe.com'
 
+
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -58,7 +59,10 @@ def categorias(item):
     for match in matches:
         scrapedurl = scrapertools.find_single_match(match,'href="([^"]+)"')
         thumbnail = scrapertools.find_single_match(match,'data-src="([^"]+)"')
-        scrapedtitle = scrapertools.find_single_match(match,'data-src="[^"]+"\s+alt="([^"]+)"')
+        scrapedtitle = ""
+        scrapedtitle = scrapertools.find_single_match(match,'title="([^"]+)"')
+        if not scrapedtitle:
+            scrapedtitle = scrapertools.find_single_match(match,'class="item-title">([^<]+)<').strip()
         quality = ""
         if "/category" in scrapedurl:
             quality = scrapertools.find_single_match(match,'<span class="count">([^<]+)<')

@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.joysporn.com/'
+host = 'https://www.joysporn.com/'    #   'https://www.tubxxporn.com' 'https://www.pornky.com/'  https://www.pornktube.porn
 
 
 def mainlist(item):
@@ -140,7 +140,7 @@ def play(item):
             quality = elem[0]
             s1= elem[-2]
             s2 = elem[-1]
-            url = "https://s%s.fapmedia.com/cqpvid/%s/%s/%s/%s/%s_%s.mp4" %(server,s1,s2,id1,id,id,quality)
+            url = "https://s%s.fapmedia.com/wqpvid/%s/%s/%s/%s/%s_%s.mp4" %(server,s1,s2,id1,id,id,quality)
             url = url.replace("_720p", "")
             itemlist.append(['.mp4 %s' %quality, url])
     return itemlist

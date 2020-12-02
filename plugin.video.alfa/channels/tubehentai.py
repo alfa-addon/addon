@@ -12,6 +12,7 @@ import re
 
 from core import httptools
 from core import scrapertools
+from core import servertools
 from core.item import Item
 from platformcode import logger
 
@@ -66,9 +67,12 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
+    url = ""
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, '<source src="([^"]+\.mp4)"')
-    server = "Directo"
-    itemlist.append(item.clone(url=url, server=server, contentTitle=item.title))
+    if not url:
+        url = scrapertools.find_single_match(data, '<div class="videohere".*?src="([^"]+)"')
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

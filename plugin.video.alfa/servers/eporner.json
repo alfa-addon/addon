@@ -10,6 +10,10 @@
       {
         "pattern": "(https://www.eporner.com/video-[A-z0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(https://www.eporner.com/embed/[A-z0-9-]+/)",
+        "url": "\\1"
       }
     ]
   },

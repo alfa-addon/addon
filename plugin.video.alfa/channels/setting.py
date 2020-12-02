@@ -18,6 +18,10 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 
+from core import httptools
+import xbmcgui
+import re
+
 CHANNELNAME = "setting"
 
 
@@ -1271,3 +1275,22 @@ def call_browser(item, lookup=False):
         browser, resultado = generictools.call_browser(item.url)
     
     return browser, resultado
+
+
+def icon_set_selector(item=None):
+    platformtools.dialog_notification("Alfa", "Obteniendo iconos, por favor espere...")
+    options = list()
+    data = httptools.downloadpage("https://github.com/alfa-addon/media/tree/master/themes").data
+    patron = '<a class="js-navigation-open link-gray-dark" title="([^"]+)"'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for set_id in matches:
+        path_demo = "https://github.com/alfa-addon/media/raw/master/themes/%s/thumb_channels_movie.png" % set_id
+        path_info = "https://github.com/alfa-addon/media/raw/master/themes/%s/README.md" % set_id
+        opt = xbmcgui.ListItem(set_id.title(), httptools.downloadpage(path_info).data)
+        opt.setArt({"thumb": path_demo})
+        options.append(opt)
+
+    ret = platformtools.dialog_select("Selecciona un Set de iconos", options, useDetails=True)
+    if ret != -1:
+        config.set_setting("icon_set", matches[ret])
