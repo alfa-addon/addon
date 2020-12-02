@@ -23,7 +23,7 @@ from channels import filtertools, autoplay
 IDIOMAS = {"audio castellano": "CAST", "audio latino": "LAT", "subtitulado": "VOSE"}
 list_language = list(IDIOMAS.values())
 list_quality = []
-list_servers = ["aparat", "streamtape", "fembed", "mixdrop", "doodstream", "clipwatching"]
+list_servers = ["aparatcam", "streamtape", "fembed", "mixdrop", "doodstream", "clipwatching"]
 
 host = "https://veranime.top/"
 
@@ -260,7 +260,7 @@ def findvideos(item):
     itemlist2 = list()
     servers = {'fcom': 'fembed', 'dood': 'doodstream', 
                 'hqq': '', 'youtube': '', 'saruch': '',
-                'supervideo': ''}
+                'supervideo': '', 'aparat': 'aparatcam'}
     headers = {"Referer": item.url}
 
     soup = create_soup(item.url)
@@ -404,7 +404,7 @@ def play(item):
     itemlist = servertools.get_servers_itemlist(itemlist)
     
     return itemlist
-    
+
 def get_tags(page, sname):
     tags = ""
     title = page.find("title").text
