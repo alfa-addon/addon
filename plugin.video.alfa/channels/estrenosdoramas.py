@@ -309,7 +309,8 @@ def findvideos(item):
     video_matches = re.compile(video_regex, re.DOTALL).findall(data)
 
     # for option, scrapedurl in matches:
-    for option, scrapedurl in map(None, option_matches, video_matches):
+    # for option, scrapedurl in map(None, option_matches, video_matches):
+    for option, scrapedurl in zip(option_matches, video_matches):
         if scrapedurl is None:
             continue
         
