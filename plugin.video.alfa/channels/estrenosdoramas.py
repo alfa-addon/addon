@@ -344,9 +344,9 @@ def findvideos(item):
                 source_url = base_url + source_page
                 # logger.info(source_key)
                 token_get = str(int(round(time.time())))
-                token = base64.b64encode(token_get)
+                token = base64.b64encode(token_get.encode("utf-8"))
                 source_result = httptools.downloadpage(source_url, post='key=' + source_key 
-                                                    + '&token=' + token, headers=source_headers)
+                                                    + '&token=' + str(token), headers=source_headers)
                 source_json = source_result.json
                 if source_json["link"]:
                     video_url = base64.b64decode(source_json["link"])
@@ -372,9 +372,9 @@ def findvideos(item):
                     source_url = base_url + source_page
                     # logger.info(source_key)
                     token_get = str(int(round(time.time())))
-                    token = base64.b64encode(token_get)
+                    token = base64.b64encode(token_get.encode("utf-8"))
                     source_result = httptools.downloadpage(source_url, post='key=' + source_key 
-                                                        + '&token=' + token, headers=source_headers)
+                                                        + '&token=' + str(token), headers=source_headers)
                     source_json = source_result.json
                     if source_json["link"]:
                         video_url = base64.b64decode(source_json["link"])
