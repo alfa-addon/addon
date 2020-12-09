@@ -19,14 +19,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     match = scrapertools.find_single_match(data, "<script type='text/javascript'>(.*?)</script>")
     data = jsunpack.unpack(match)
     data = data.replace("\\'", "'")
-    media_url = scrapertools.find_single_match(data, '{type:"video/mp4",src:"([^"]+)"}')
+    media_url = scrapertools.find_single_match(data, '"(https.*?.mp4)"')
     if not media_url:
         media_url = scrapertools.find_single_match(data, '"file":"([^"]+)')
     if not media_url:
         media_url = scrapertools.find_single_match(data, 'src:"([^"]+)')
+    ext = media_url[-4:]
     media_url +=  "|verifypeer=false&referer=%s" %page_url
     video_urls = list()
-    video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [mp4upload]", media_url])
-    for video_url in video_urls:
-        logger.info("%s - %s" % (video_url[0], video_url[1]))
+    video_urls.append([ext + " [mp4upload]", media_url])
     return video_urls

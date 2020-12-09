@@ -1,5 +1,5 @@
 {
-"id": "cinematteflix",
+  "id": "cinematteflix",
   "name": "CinematteFlix",
   "force_unify": true,
   "active": true,
@@ -8,7 +8,7 @@
   "thumbnail": "https://4.bp.blogspot.com/-D_9ZHSed-QQ/Xzv6JORi2OI/AAAAAAADubk/6lvIk0PgEFcASsSrLc5jd6qbBAMBLWeiwCK4BGAYYCw/s1600/black-wallpapers-34%2B%25282%2529.png",
   "banner": "",
   "categories": [
-    "movies",
+    "movie",
     "vos"
   ],
   "settings": [

@@ -129,7 +129,7 @@ def extract_flashvars(data):
     assets = 0
     flashvars = {}
     found = False
-
+    #logger.error(data)
     for line in data.split("\n"):
         if line.strip().find(";ytplayer.config = ") > 0:
             found = True
@@ -140,13 +140,15 @@ def extract_flashvars(data):
             data = line[p1 + 1:p2]
             break
     data = remove_additional_ending_delimiter(data)
-
+    #logger.error(data)
     if found:
         data = json.load(data)
         if assets:
             flashvars = data["assets"]
         else:
             flashvars = data["args"]
+    else:
+        data = dict(info)
 
     for k in ["html", "css", "js"]:
         if k in flashvars:
@@ -178,7 +180,7 @@ def get_signature(youtube_page_data):
 
 def extract_videos(video_id):
 
-
+    youtube_page_data = ''
     url = 'https://www.youtube.com/get_video_info?video_id=%s&eurl=https://youtube.googleapis.com/v/%s&ssl_stream=1' % \
           (video_id, video_id)
     data = httptools.downloadpage(url).data
@@ -188,7 +190,6 @@ def extract_videos(video_id):
 
     video_urls = []
     params = dict(urlparse.parse_qsl(data))
-
     if params.get('hlsvp'):
         video_urls.append(["(LIVE .m3u8) [youtube]", params['hlsvp']])
         return video_urls
@@ -200,10 +201,11 @@ def extract_videos(video_id):
                 and params.get('dashmpd'):
             if params.get('use_cipher_signature', '') != 'True':
                 video_urls.append(['mpd  HD [youtube]', params['dashmpd'], 0, '', True])
-
-    youtube_page_data = httptools.downloadpage("https://www.youtube.com/watch?v=%s" % video_id).data
-
-    params = extract_flashvars(youtube_page_data)
+    #logger.error(params)
+    if not params.get('player_response', ''):
+        youtube_page_data = httptools.downloadpage("https://www.youtube.com/watch?v=%s" % video_id).data
+        params = extract_flashvars(youtube_page_data)
+    
 
     if params.get('player_response'):
         params = json.load(params.get('player_response'))
@@ -212,18 +214,21 @@ def extract_videos(video_id):
         for s_data in data_flashvars:
             if s_data in ["adaptiveFormats", "formats"]:
                 for opt in data_flashvars[s_data]:
-
+                    #logger.error(opt)
                     opt = dict(opt)
                     if "audioQuality" not in opt:
                         continue
                     if "audio" in opt['mimeType']:
                         continue
                     if "signatureCipher" in opt:
+                        if not youtube_page_data:
+                            youtube_page_data = httptools.downloadpage("https://www.youtube.com/watch?v=%s" % video_id).data
                         signature = get_signature(youtube_page_data)
                         cipher = dict(urlparse.parse_qsl(urllib.unquote(opt["signatureCipher"])))
                         url = re.search('url=(.*)', opt["signatureCipher"]).group(1)
                         s = cipher.get('s')
                         url = "%s&sig=%s" % (urllib.unquote(url), signature([s]))
+                        #logger.error(url)
                         video_urls.append(["%s" % itag_list.get(opt["itag"], "video"), url])
                     elif opt["itag"] in itag_list:
                         video_urls.append(["%s" % itag_list.get(opt["itag"], "video"), opt["url"]])
