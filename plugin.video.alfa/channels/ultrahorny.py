@@ -124,6 +124,8 @@ def findvideos(item):
     metadata_url = "https://htstreaming.com%s?s=%s&d=" %(metadata_url, metadata_server)
     metadata = requests.get(metadata_url, headers={"Referer": url}).content
     # metadata = httptools.downloadpage(metadata_url, headers={"referer": url}).data
+    if PY3 and isinstance(metadata, bytes):
+        metadata = "".join(chr(x) for x in bytes(metadata))
     patron = "RESOLUTION=(.*?)http([^#]+)"
     video_matches = re.compile(patron, re.DOTALL).findall(metadata)
     for video_resolution, video_url in video_matches:
@@ -133,18 +135,4 @@ def findvideos(item):
         itemlist.append(Item(channel=item.channel, title='%s (' + video_resolution.strip() + ')', url=url_video, action='play'))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
     return itemlist
-
-
-# def play(item):
-    # logger.info()
-    # itemlist = []
-    # soup = create_soup(item.url)
-    # matches = soup.find_all('div', class_='cnt_post video_cnt')
-    # for elem in matches:
-        # url = elem.iframe['src']
-        # if "pornoflix" in url:
-            # url = create_soup(url).find('source')['src']
-        # itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    # itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    # return itemlist
 

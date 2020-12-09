@@ -90,8 +90,8 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a href="([^"]+)" data-video-id=.*?'
     patron += 'data-src="([^"]+)".*?'
-    patron += '</svg>([^<]+)<.*?'
-    patron += 'grid__item__title--videos">([^<]+)<'
+    patron += '<span class="duration-video">([^<]+)<.*?'
+    patron += '<h3 [^>]+>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtime,scrapedtitle  in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
