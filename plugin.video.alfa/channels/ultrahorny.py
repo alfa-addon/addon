@@ -136,17 +136,3 @@ def findvideos(item):
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
     return itemlist
 
-
-# def play(item):
-    # logger.info()
-    # itemlist = []
-    # soup = create_soup(item.url)
-    # matches = soup.find_all('div', class_='cnt_post video_cnt')
-    # for elem in matches:
-        # url = elem.iframe['src']
-        # if "pornoflix" in url:
-            # url = create_soup(url).find('source')['src']
-        # itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    # itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    # return itemlist
-
