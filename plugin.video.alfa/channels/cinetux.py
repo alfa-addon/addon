@@ -331,7 +331,7 @@ def findvideos(item):
 
         itemlist.append(Item(channel=item.channel, title=iserver, url="", action='play',
                              infoLabels=item.infoLabels, language=lang, text_color = "", server=server,
-                                 spost=post, quality=quality))
+                                 spost=post, quality=quality, referer = item.url))
    
     #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     itemlist.sort(key=lambda it: (it.language, it.title, it.quality))
@@ -379,8 +379,8 @@ def play(item):
         item.url = get_url(url)
     else:
         post = item.spost
-        new_data = httptools.downloadpage(CHANNEL_HOST+'wp-admin/admin-ajax.php',
-                                           post=post, headers={'Referer':item.url}).data
+        new_data = httptools.downloadpage(CHANNEL_HOST+'wp-admin/admin-ajax.php', forced_proxy='ProxyCF', 
+                                           post=post, headers={'Referer':item.referer}).data
 
         url = scrapertools.find_single_match(new_data, "src='([^']+)'")
         item.url = get_url(url)

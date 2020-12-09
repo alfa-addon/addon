@@ -195,7 +195,7 @@ def findvideos(item):
             title = ""
 
             enc_url = scrapertools.find_single_match(elem["data-data"], '([^\+]+)\+(.+)?')
-            s = base64.b64decode(enc_url[0])
+            s = base64.b64decode(enc_url[0]).decode('utf-8')
             i = enc_url[1]
             hidden_url = "https://encriptando.com" + s + i
             hidden_data = httptools.downloadpage(hidden_url, follow_redirects=False, headers={'Referer':host}).data
@@ -262,6 +262,8 @@ def decrypt(var, val):
 
     if var == 'k':
         a = base64.b64decode(val[1:])
+        if PY3 and isinstance(a, bytes):
+            a = "".join(chr(x) for x in bytes(a))
 
         c = 1
         while c < len(a):
@@ -270,6 +272,8 @@ def decrypt(var, val):
 
     elif var == 's':
         a = base64.b64decode(val[2:])
+        if PY3 and isinstance(a, bytes):
+            a = "".join(chr(x) for x in bytes(a))
         for c in a:
             if c not in string.ascii_letters:
                 d += c

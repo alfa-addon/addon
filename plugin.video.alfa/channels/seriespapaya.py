@@ -26,7 +26,9 @@ from channels import autoplay
 from core.item import Item
 from platformcode import config, logger
 
-HOST = "https://www2.seriespapaya.nu/"
+HOST = "https://www.seriespapaya.se/"
+#HOST = "https://seriespapaya.unblockit.app/"
+CF = False
 
 IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOSE', 'Español Latino':'Latino',
            'Español Castellano':'Español', 'Sub Español':'VOSE'}
@@ -440,7 +442,7 @@ def play(item):
 
         return itemlist
 
-    data = httptools.downloadpage(item.url, headers={'Referer': item.url}).data
+    data = httptools.downloadpage(item.url, headers={'Referer': item.url}, CF=CF).data
     
     item.server = ''
     item.url = scrapertools.find_single_match(data, "location.href='([^']+)'")

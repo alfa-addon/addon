@@ -111,7 +111,7 @@ def generos_years(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url, encoding=encoding).data
-    patron = '(?s)%s(.*?)</ul></div>' %item.extra
+    patron = '(?s)%s(.*?)<\/ul>\s*<\/div>' %item.extra
     bloque = scrapertools.find_single_match(data, patron)
     patron  = 'href="([^"]+)'
     patron += '">([^<]+)'
@@ -224,6 +224,8 @@ def findvideos(item):
     return itemlist
 
 def clear_url(url):
+    if PY3 and isinstance(url, bytes):
+        url = "".join(chr(x) for x in bytes(url))
     url = url.replace("fembed.com/v","fembed.com/f").replace("mega.nz/embed/","mega.nz/file/").replace("streamtape.com/e/","streamtape.com/v/")
     if "streamtape" in url:
         url = scrapertools.find_single_match(url, '(https://streamtape.com/v/\w+)')

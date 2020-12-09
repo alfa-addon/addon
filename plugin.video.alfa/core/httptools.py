@@ -403,6 +403,8 @@ def proxy_post_processing(url, proxy_data, response, opt):
                 url = opt['url_save']
                 opt['post'] = opt['post_save']
                 response['sucess'] = False
+        elif response["code"] == 302:
+            response['sucess'] = True
 
         if proxy_data.get('stat', '') and response['sucess'] == False and \
                 opt.get('proxy_retries_counter', 0) <= opt.get('proxy_retries', 1) and \
@@ -422,7 +424,12 @@ def proxy_post_processing(url, proxy_data, response, opt):
                     opt['forced_proxy'] = 'ProxyCF'
                     url =opt['url_save']
                     opt['post'] = opt['post_save']
-                    opt['CF'] = True
+                    if opt.get('CF', True):
+                        opt['CF'] = True
+                    if opt.get('proxy_retries_counter', 0):
+                        opt['proxy_retries_counter'] -= 1
+                    else:
+                        opt['proxy_retries_counter'] = -1
                 else:
                     proxytools.get_proxy_list_method(proxy_init='ProxyWeb',
                                                      error_skip=proxy_data['web_name'])
@@ -503,7 +510,10 @@ def downloadpage(url, **opt):
 
     if opt.get('random_headers', False) or HTTPTOOLS_DEFAULT_RANDOM_HEADERS:
         req_headers['User-Agent'] = random_useragent()
-    url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
+    if not PY3:
+        url = urllib.quote(url.encode('utf-8'), safe="%/:=&?~#+!$,;'@()*[]")
+    else:
+        url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
 
     opt['proxy_retries_counter'] = 0
     opt['url_save'] = url
