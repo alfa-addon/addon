@@ -170,7 +170,9 @@ def convert_url_base64(url):
 
     url_base64 = url
     if not 'magnet:' in url_base64 and not '.torrent' in url_base64:
-        if 'php#' in url: url_base64 = scrapertools.find_single_match(url_base64, 'php#(.*?$)')
+        patron_php = 'php(?:#|\?u=)(.*?$)'
+        if scrapertools.find_single_match(url_base64, patron_php):
+            url_base64 = scrapertools.find_single_match(url_base64, patron_php)
         try:
             # Da hasta 20 pasadas o hasta que de error
             for x in range(20):
@@ -2123,10 +2125,17 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     torrent_f = ''
     torrent_file = ''
     files = {}
-    if PY3:
-        magnet = b'magnet:'
-    else:
-        magnet = 'magnet:'
+    if PY3 and isinstance(url, bytes):
+        url = "".join(chr(x) for x in bytes(url))
+    if PY3 and isinstance(torrents_path, bytes):
+        torrents_path = "".join(chr(x) for x in bytes(torrents_path))
+    if PY3 and isinstance(referer, bytes):
+        referer = "".join(chr(x) for x in bytes(referer))
+    if PY3 and isinstance(post, bytes):
+        post = "".join(chr(x) for x in bytes(post))
+    if PY3 and isinstance(headers, bytes):
+        headers = "".join(chr(x) for x in bytes(headers))
+
     try:
         #torrents_path = config.get_videolibrary_path() + '/torrents'            #path para dejar el .torrent
 
@@ -2148,7 +2157,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                     return 'autoplay'
         
         if not lookup: timeout = timeout * 3
-        if ((url and not local_torr) or url.startswith(magnet)):
+        if (url and not local_torr) or url.startswith("magnet"):
             torrents_path, torrent_file, subtitles_list = torrent.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
                         timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
@@ -2156,7 +2165,8 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
             torrent_file = filetools.read(local_torr, mode='rb')
             torrents_path = local_torr
         
-        if not torrents_path or torrents_path == 'CF_BLOCKED' or torrent_file.startswith(magnet):
+        if not torrents_path or torrents_path == 'CF_BLOCKED' or (PY3 and isinstance(torrent_file, bytes) \
+                    and torrent_file.startswith(b"magnet")) or (not PY3 and torrent_file.startswith("magnet")):
             size = 'ERROR'
             
             # si el archivo .torrent está bloqueado con CF, se intentará descargarlo a través de un browser externo
