@@ -34,10 +34,10 @@ try:
     #__version__ = __settings__.getAddonInfo('version')                         ### Alfa
     #__plugin__ = __settings__.getAddonInfo('name') + " v." + __version__       ### Alfa
     __settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                      ### Alfa
-    __version__ = '1.1.17'                                                      ### Alfa
-    __plugin__ = "python-libtorrent v.1.1.7"                                    ### Alfa
+    __version__ = '2.0.1'                                                       ### Alfa
+    __plugin__ = "python-libtorrent v.2.0.1"                                    ### Alfa
 except:
-    __plugin__ = "python-libtorrent v.1.1.7"                                    ### Alfa
+    __plugin__ = "python-libtorrent v.2.0.1"                                    ### Alfa
     pass
 
 def log(msg):

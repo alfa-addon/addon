@@ -3,7 +3,7 @@
   "name": "Simpsons-Latino",
   "thumbnail":"https://simpsons-latino.com/wp-content/themes/vizer/assets/img/logo.png",
   "banner":"",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "categories": [

@@ -261,10 +261,7 @@ def findvideos(item):
 
     itemlist = []
     urls = []
-    players = {'Play': 'https://zplayer.live', 
-               'STP': 'https://streamtape.com',
-               'Fembed': 'https://fembad.net',
-               'Vipstream': 'https://upstream.to'}
+    from lib import players_parse
 
     data = get_source(item.url)
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
@@ -273,10 +270,7 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for url, server in matches:
-        if not url.startswith('http'):
-            if server not in str(players):
-                server = 'Fembed'
-            url = urlparse.urljoin(players[server], url)
+        url = players_parse.player_parse(url, server, 'https://www.fembed.com')
         if url not in urls:
             itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', infoLabels=item.infoLabels))
             urls.append(url)

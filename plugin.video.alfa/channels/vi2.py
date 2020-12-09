@@ -321,27 +321,3 @@ def search(item, texto):
         return list_all(item)
     else:
         return []
-
-def newest(categoria):
-    logger.info()
-    item = Item()
-    try:
-        if categoria in ['peliculas']:
-            item.url = host + 'ver/'
-        elif categoria == 'infantiles':
-            item.url = host + 'genero/animacion/'
-        elif categoria == 'terror':
-            item.url = host + 'genero/terror/'
-        elif categoria == 'documentales':
-            item.url = host + 'genero/terror/'
-        item.type=item.type
-        itemlist = list_all(item)
-        if itemlist[-1].title == 'Siguiente >>':
-            itemlist.pop()
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("{0}".format(line))
-        return []
-
-    return itemlist
