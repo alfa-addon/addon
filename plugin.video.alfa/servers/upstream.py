@@ -16,8 +16,10 @@ def test_video_exists(page_url):
     global page
     page = httptools.downloadpage(page_url)
 
-    if page.code == 404 or 'File is no longer available' in page.data:
+    if page.code == 404 or '"title">File Not Found</div>' in page.data:
         return False, "[upstream] El archivo no existe o  ha sido borrado"
+    elif '_msg">File was locked by administrator</div>' in page.data:
+        return False, "[upstream] Archivo bloqueado"
 
     return True, ""
 

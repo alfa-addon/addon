@@ -35,7 +35,7 @@ list_servers = [
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'goovie')
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'goovie')
 
-host = 'https://goovie.co/'
+host = 'https://api.seriez.co/'
 
 def mainlist(item):
     logger.info()
@@ -81,6 +81,11 @@ def sub_menu(item):
 
 def get_source(url, referer=None):
     logger.info()
+    #Parche temporal por fallo en dominio principal
+    old_dom = scrapertools.get_domain_from_url(url)
+    new_dom = scrapertools.get_domain_from_url(host)
+    url = re.sub(old_dom, new_dom, url)
+    
     if referer is None:
         data = httptools.downloadpage(url).data
     else:
@@ -292,26 +297,3 @@ def search(item, texto):
         return list_all(item)
     else:
         return []
-
-def newest(categoria):
-    logger.info()
-    itemlist = []
-    item = Item()
-    try:
-        if categoria in ['peliculas']:
-            item.url = host + 'peliculas'
-        elif categoria == 'infantiles':
-            item.url = host + 'peliculas/filtro/Animación,/,'
-        elif categoria == 'terror':
-            item.url = host + 'peliculas/filtro/Terror,/,'
-        item.type='peliculas'
-        itemlist = list_all(item)
-        if itemlist[-1].title == 'Siguiente >>':
-            itemlist.pop()
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("{0}".format(line))
-        return []
-
-    return itemlist

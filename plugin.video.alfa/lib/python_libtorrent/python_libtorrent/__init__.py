@@ -36,8 +36,8 @@ import traceback                                                                
 #__version__ = __settings__.getAddonInfo('version')                             ### Alfa
 #__plugin__ = __settings__.getAddonInfo('name') + " v." + __version__           ### Alfa
 #__settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                         ### Alfa
-__version__ = '1.1.17'                                                          ### Alfa
-__plugin__ = "python-libtorrent v.1.1.7"                                        ### Alfa
+__version__ = '2.0.1'                                                           ### Alfa
+__plugin__ = "python-libtorrent v.2.0.1"                                        ### Alfa
 #__language__ = __settings__.getLocalizedString                                 ### Alfa
 __root__ = filetools.dirname(filetools.dirname(__file__))
 
@@ -117,12 +117,12 @@ while VERSIONS:
         xbmc.sleep(2000)
 
 
-    #if __settings__.getSetting('plugin_name')!=__plugin__:                         ### Alfa
-    #    __settings__.setSetting('plugin_name', __plugin__)                         ### Alfa
-    #    lm.update(dest_path, platform)                                                                ### Alfa
+    #if __settings__.getSetting('plugin_name')!=__plugin__:                     ### Alfa
+    #    __settings__.setSetting('plugin_name', __plugin__)                     ### Alfa
+    #    lm.update(dest_path, platform)                                         ### Alfa
 
     log('platform: ' + str(platform))
-    if platform['system'] not in ['windows', 'windows_x64']:                        ### Alfa
+    if platform['system'] not in ['windows', 'windows_x64']:                    ### Alfa
         log('os: '+str(os.uname()))
         log_text = 'ucs4' if sys.maxunicode > 65536 else 'ucs2'
         log_text += ' x64' if sys.maxsize > 2147483647 else ' x86'
@@ -136,7 +136,7 @@ while VERSIONS:
 
         if platform['system'] in ['linux_x86', 'windows', 'windows_x64', 'linux_armv6', 'linux_armv7',
                                   'linux_x86_64', 'linux_mipsel_ucs2', 'linux_mipsel_ucs4',
-                                  'linux_aarch64_ucs2', 'linux_aarch64_ucs4']:      ### Alfa
+                                  'linux_aarch64_ucs2', 'linux_aarch64_ucs4']:  ### Alfa
             import libtorrent
 
         elif platform['system'] in ['darwin', 'ios_arm']:
@@ -245,6 +245,8 @@ while VERSIONS:
             break
         elif platform['system'] in ['android_armv7', 'android_x86']:
             break
+        elif platform['version'].startswith('2'):
+            del VERSIONS[-1]
         elif not LIBTORRENT_SAFE:
             LIBTORRENT_SAFE = True
             del VERSIONS[-1]
@@ -254,13 +256,16 @@ while VERSIONS:
     except Exception as e:
         if not PY3:
             e = unicode(str(e), "utf8", errors="replace").encode("utf8")
-        config.set_setting("libtorrent_path", "", server="torrent")                 ### Alfa
-        config.set_setting("libtorrent_error", str(e), server="torrent")            ### Alfa
+        config.set_setting("libtorrent_path", "", server="torrent")             ### Alfa
+        config.set_setting("libtorrent_error", str(e), server="torrent")        ### Alfa
         log('Error importing libtorrent from "' + str(dest_path) + '". Exception: ' + str(e))
         if fp: fp.close()
-        if not LIBTORRENT_SAFE and platform['system'] not in ['android_armv7', 'android_x86']:
+        if platform['version'].startswith('2'):
+            del VERSIONS[-1]
+        elif not LIBTORRENT_SAFE and platform['system'] not in ['android_armv7', 'android_x86']:
             LIBTORRENT_SAFE = True
             del VERSIONS[-1]
+            log('PASO platform["version"] ' + str(platform['version']))
         else:
             break
             
