@@ -92,8 +92,8 @@ def submenu(item):
     
     itemlist = []
     
-    patron = '<li\s*class="sp-menu-item[^>]+>\s*<a\s*href="([^"]+)"\s*>'
-    patron += '(?:\s*<i\s*class="fa fa[^"]+">\s*<\/i>)?\s*([^<]+)<\/a>'
+    patron = '<li\s*class="*sp-menu-item[^>]*>\s*<a\s*href="*([^>]+)"*\s*>'
+    patron += '(?:\s*<i\s*class="*fa\s*fa[^>]+>\s*<\/i>)?\s*([^<]+)<\/a>'
 
     data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout,  s2=False, 
                                           patron=patron, item=item, itemlist=[])    # Descargamos la página
@@ -141,7 +141,7 @@ def listado(item):                                                              
     last_page = 99999                                                           # Última página inicial
     last_page_print = 1                                                         # Última página inicial, para píe de página
     page_factor = 1.0                                                           # Factor de conversión de pag. web a pag. Alfa
-    search_lines = 60                                                           # Número de líneas por página web en search
+    search_lines = 30                                                           # Número de líneas por página web en search
     if item.curr_page:
         curr_page = int(item.curr_page)                                         # Si viene de una pasada anterior, lo usamos
         del item.curr_page                                                      # ... y lo borramos
@@ -215,18 +215,14 @@ def listado(item):                                                              
         
         if item.extra == 'search':
             #Patrón para búsquedas
-            patron = '<div\s*id="fgsdhkrhskhs"\s*>\s*()<a\s*href="([^"]+)"\s*>'
-            patron += '\s*([^<]+)<\/a>.*?<div\s*class="fjewiqo">\s*(\d+)\s*<\/div>'
-            patron += '.*?<img\s*src="([^"]+)"\s*alt=.*?class="ansias">\s*<div\s*'
-            patron += 'id=[^>]+>\s*([^<]*)(?:<\S*>)?\s*<\/div>.*?<i\s*class="fa[^>]+>'
-            patron += '<\/i>\s*([^<]+)<\/div>'
+            patron = '<div\s*id="*fgsdhkrhskhs"*\s*>\s*()<a\s*href="*([^>]+)"*\s*>\s*([^<]+)<\/a>(?:.*?<div\s*class="*fjewiqo"*>\s*([^<]+)<)?.*?<img.*?src="*((?:http|\/)[^"]+(?:\.jpg|\.png))"*(?:.*?<div\s*id=[^>]+>\s*([^<]*)<)?(?:.*?<i\s*class="*fa[^>]+><\/i>\s*([^<]+)<)?'
         else:
             #Patrón para pelis, series y documentales
-            patron = 'data-index="(\d*)">\s*<div\s*id="[^"]+">\s*<a\s*href="([^"]+)"\s*>\s*([^<]+)<\/a>'
-            patron += '\s*<\/div>.*?<div\s*(?:id="mjikfdoia|class="fjewiqo)">\s*([^<]+)'
-            patron += '(?:<div\s*id="mjikfdoia">\s*)?<\/div>.*?<div\s*class="ansias">([^<]*)'
-            patron += '(?:<\S*>)?\s*<\/div>(?:.*?<noscript>)?\s*<img\s*src="([^"]+)".*?'
-            patron += '<div\s*id="vfdsyydystyretg">\s*([^<]+)<\/div>'
+            patron = 'data-index="*(\d*)"*>\s*<div\s*id="*[^>]+"*>\s*<a\s*href='
+            patron += '"*([^>]+)"*\s*>\s*([^<]+)<\/a>\s*<\/div>(?:.*?<div\s*'
+            patron += '(?:id="*mjikfdoia|class="*fjewiqo)"*>\s*([^<]+)<)?(?:.*?<div\s*class='
+            patron += '"*ansias"*>\s*([^<]*)<)?.*?<img.*?src="*((?:http|\/)[^"]+(?:\.jpg|\.png))"*'
+            patron += '.*?<div\s*id="*vfdsyydystyretg"*>\s*([^<]+)<\/div>'
 
         if not item.matches:                                                    # De pasada anterior?
             matches = re.compile(patron, re.DOTALL).findall(data)
@@ -255,8 +251,8 @@ def listado(item):                                                              
         #Buscamos la última página
         if last_page == 99999:                                                  #Si es el valor inicial, buscamos
             if item.extra == 'search':
-                patron_post = '(?i)"\/component\/sjk2filter\/\?theme=[^>]+start=(\d+)[^>]*">\s*final\s*<\/a>'
-                patron_page = '(?i)<div\s*class="k2PaginationCounter"[^>]*>\s*\S+gina\s*\d+\s*de\s*(\d+)\s*<\/div>'
+                patron_post = '(?i)"*\/component\/sjk2filter\/\?theme=[^>]+start=(\d+)[^>]*"*>\s*final\s*<\/a>'
+                patron_page = '(?i)<div\s*class="*k2PaginationCounter"*[^>]*>\s*\S+gina\s*\d+\s*de\s*(\d+)\s*<\/div>'
                 last_page = 1
                 search_lines = len(matches)
                 if scrapertools.find_single_match(data, patron_post):
@@ -270,7 +266,7 @@ def listado(item):                                                              
                         last_page = 1
                         search_lines = len(matches)
                         last_page_print = int((float(len(matches)) / float(cnt_tot)) + 0.999999)
-                last_page = int((float(search_lines) / float(cnt_tot)) + 0.999999) * int(last_page)
+                last_page_print = int((float(search_lines) / float(cnt_tot)) + 0.999999)
             else:
                 # Localizamos en número de widget para pedir más páginas, y lo ponemos como post
                 patron_post = "option=com_minitekwall&task=masonry.getContent&widget_id=(\d+)"
@@ -279,7 +275,7 @@ def listado(item):                                                              
                 next_page_url = host + 'index.php'
                 
                 # Localizamos el número total de enlaces disponibles y lo dividimos por num máx de entradas para calcular el num total de páginas
-                patron_last = '<h1\s*class="itemTitle">\s*Categoria:[^\(]+\((\d+)\)\s*<\/h1>'
+                patron_last = '<h1\s*class="*itemTitle"*>\s*Categoria:[^\(]+\((\d+)\)\s*<\/h1>'
                 try:
                     last_page = int((float(scrapertools.find_single_match(data, patron_last)) / float(cnt_tot)) + 0.999999)
                     #page_factor = float(len(matches)) / float(cnt_tot)
@@ -290,9 +286,7 @@ def listado(item):                                                              
             #logger.debug('curr_page: ' + str(curr_page) + ' / last_page: ' + str(last_page) + ' / search_lines: ' + str(search_lines))
             
         #Buscamos la próxima página
-        if item.extra == 'search':
-            next_page_url = re.sub(r'start=\d+', 'start=%s' % str(search_lines * (curr_page-1)), next_page_url)
-        else:
+        if item.extra != 'search':
             post = re.sub(r'page=\d+', 'page=%s' % str(curr_page), post)
         #logger.debug('curr_page: ' + str(curr_page) + ' / last_page: ' + str(last_page) + \
         #            ' / last_page_print: ' + str(last_page_print) + ' / search_lines: ' + str(search_lines))
@@ -452,6 +446,11 @@ def listado(item):                                                              
     
         matches = matches[cnt_match:]                                           # Salvamos la entradas no procesadas
         cnt_tot_match += cnt_match                                              # Calcular el num. total de items mostrados
+        
+        #Buscamos la próxima página
+        if item.extra == 'search':
+            logger.error(cnt_tot_match)
+            next_page_url = re.sub(r'start=\d+', 'start=%s' % str(int(cnt_tot_match)), next_page_url)
     
     #Pasamos a TMDB la lista completa Itemlist
     tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda=idioma_busqueda)
@@ -494,7 +493,7 @@ def findvideos(item):
     #logger.debug(item)
 
     #Bajamos los datos de la página y seleccionamos el bloque
-    patron = '<li>\s*<a\s*title="[^"]+"\s*href="([^"]+)"\s*>\s*([^<]+)<\/a>\s*<\/li>'
+    patron = '<li>\s*<a\s*title="*[^"]+"*\s*href="*([^>]+)"*\s*>\s*([^<]+)<\/a>\s*<\/li>'
     
     if not item.matches:
         data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
@@ -784,7 +783,7 @@ def episodios(item):
 
     # Descarga las páginas
     for url in list_temp:                                                       # Recorre todas las temporadas encontradas
-        patron = '<li>\s*<a\s*title="[^"]+"\s*href="([^"]+)"\s*>\s*([^<]+)<\/a>\s*<\/li>'
+        patron = '<li>\s*<a\s*title="*[^"]+"*\s*href="*([^>]+)"*\s*>\s*([^<]+)<\/a>\s*<\/li>'
         
         data, success, code, item, itemlist = generictools.downloadpage(url, timeout=timeout*2, s2=False, 
                                           patron=patron, item=item, itemlist=itemlist)  # Descargamos la página

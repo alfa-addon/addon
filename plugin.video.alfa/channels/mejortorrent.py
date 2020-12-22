@@ -31,13 +31,16 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host_list = ['http://www.mejortorrentt.net/', 'https://mejortorrent1.net/']
+host_list = ['https://www.mejortorrents.net/', 'https://mejortorrent.one/']
 channel = 'mejortorrent'
 categoria = channel.capitalize()
 host_index = config.get_setting('choose_domain', channel)
 host = host_list[host_index]
 host_emergency = False
 domain_alt = host_list[1][-6:]
+host_torrent = host[:-1]
+movies_sufix = ''
+series_sufix = ''
 
 __modo_grafico__ = config.get_setting('modo_grafico', channel)                  # búsqueda TMDB ?
 IDIOMAS_TMDB = {0: 'es', 1: 'en', 2: 'es,en'}
@@ -665,6 +668,8 @@ def findvideos(item):
         if item.emergency_urls and not item.videolibray_emergency_urls:         # Hay urls de emergencia?
             if len(item.emergency_urls) > 1 and item.emergency_urls[1]:
                 matches = item.emergency_urls[1]                                # Restauramos matches de vídeos
+            elif len(item.emergency_urls) == 1 and item.emergency_urls[0]:
+                matches = item.emergency_urls[0]                                # Restauramos matches de vídeos - OLD FORMAT
             item.armagedon = True                                               # Marcamos la situación como catastrófica 
         else:
             if item.videolibray_emergency_urls:                                 # Si es llamado desde creación de Videoteca...
@@ -719,7 +724,11 @@ def findvideos(item):
 
     # Ahora tratamos los enlaces .torrent con las diferentes calidades
     for _scrapedurl in matches:
-        scrapedurl = urlparse.urljoin(host, generictools.convert_url_base64(_scrapedurl))
+
+        scrapedurl = generictools.convert_url_base64(_scrapedurl, host_torrent)
+        # Si ha habido un cambio en la url, actualizados matches para emergency_urls
+        if item.videolibray_emergency_urls and scrapedurl != _scrapedurl:
+            item.emergency_urls[1][x] = scrapedurl
 
         scrapedtitle = ''
         scrapedpassword = ''
@@ -742,6 +751,8 @@ def findvideos(item):
                 if item.emergency_urls and not item.videolibray_emergency_urls: # Hay urls de emergencia?
                     if len(item.emergency_urls) > 1 and item.emergency_urls[1]:
                         matches = item.emergency_urls[1]                        # Restauramos matches de vídeos
+                    elif len(item.emergency_urls) == 1 and item.emergency_urls[0]:
+                        matches = item.emergency_urls[0]                        # Restauramos matches de vídeos - OLD FORMAT
                     item.armagedon = True                                       # Marcamos la situación como catastrófica 
                 else:
                     if item.videolibray_emergency_urls:                         # Si es llamado desde creación de Videoteca...
@@ -750,7 +761,7 @@ def findvideos(item):
                         return itemlist                                 # si no hay más datos, algo no funciona, pintamos lo que tenemos
             
             # Obtenemos el enlace final
-            scrapedurl = urlparse.urljoin(host, generictools.convert_url_base64(scrapertools.find_single_match(data_torrent, patron_torrent)))
+            scrapedurl = generictools.convert_url_base64(scrapertools.find_single_match(data_torrent, patron_torrent), host_torrent)
 
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
@@ -766,14 +777,14 @@ def findvideos(item):
         # Restauramos urls de emergencia si es necesario
         local_torr = ''
         if item.emergency_urls and not item.videolibray_emergency_urls:
-            item_local.torrent_alt = item.emergency_urls[0][0]                  # Guardamos la url del .Torrent ALTERNATIVA
+            item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0])     # Guardamos la url ALTERNATIVA
             from core import filetools
             if item.contentType == 'movie':
                 FOLDER = config.get_setting("folder_movies")
             else:
                 FOLDER = config.get_setting("folder_tvshows")
             if item.armagedon:
-                item_local.url = item.emergency_urls[0][0]                      # Restauramos la url
+                item_local.url = item_local.torrent_alt                         # Restauramos la url
                 local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
             if len(item.emergency_urls[0]) > 1:
                 del item.emergency_urls[0][0]
@@ -789,7 +800,7 @@ def findvideos(item):
                 size = generictools.get_torrent_size(item_local.url, local_torr=local_torr, post=post, headers=headers, referer=referer)     
                 if 'ERROR' in size and item.emergency_urls and not item.videolibray_emergency_urls:
                     item_local.armagedon = True
-                    item_local.url = item.emergency_urls[0][0]                  # Restauramos la url
+                    item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0])     # Restauramos la url
                     local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
                     size = generictools.get_torrent_size(item_local.url, local_torr=local_torr, post=post, headers=headers, referer=referer)
         if size:
@@ -1016,7 +1027,7 @@ def episodios(item):
             return itemlist                                             # si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         #logger.debug("PATRON: " + patron)
-        #logger.debug(matches)
+        logger.debug(matches)
         #logger.debug(data)
 
         # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
@@ -1051,7 +1062,7 @@ def episodios(item):
                 elif name and value:
                     item_local.post = urllib.urlencode({name: value})
             else:
-                if name and value and total_capis and titulo_post:
+                if name and value and total_capis and titulo_post and value not in scrapedurl:
                     item_local.post = urllib.urlencode({name: value, "total_capis": total_capis, "tabla": tabla, "titulo": titulo_post})
             
             if item_local.post:
