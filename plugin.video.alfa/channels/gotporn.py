@@ -58,6 +58,7 @@ def categorias(item):
         title = elem.find('span', class_='text').text.strip()
         cantidad = elem.find('span', class_='num').text.strip()
         title = "%s %s" % (title,cantidad)
+        url += "?page=1&amp;src=mn:mr"
         thumbnail = ""
         itemlist.append(item.clone(action="lista", title=title, url=url, thumbnail=thumbnail) )
     return itemlist
@@ -84,10 +85,12 @@ def catalogo(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False):
+def create_soup(url, post=None, unescape=False):
     logger.info()
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    if post:
+        data = httptools.downloadpage(url, post=post).data
+        data = scrapertools.find_single_match(data, '"tpl":"([^&@@]+)')
+        data = data.replace("\\n", "").replace("\\", "")
     else:
         data = httptools.downloadpage(url).data
         data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
@@ -100,12 +103,18 @@ def create_soup(url, referer=None, unescape=False):
 def lista(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
+    if item.post:
+        soup = create_soup(item.url, item.post)
+        offset = item.offset
+    else:
+        soup = create_soup(item.url)
     matches = soup.find_all('li', itemprop='itemListElement')
     for elem in matches:
         url = elem.a['href']
         title = elem.img['alt']
         thumbnail = elem.img['src']
+        if ".gif" in thumbnail:
+            thumbnail = elem.img['data-src']
         time = elem.find('span', class_='duration').text.strip()
         quality = elem.find('h3', class_='video-thumb-title  hd')
         if quality:
@@ -118,10 +127,23 @@ def lista(item):
         itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot,))
     next_page = soup.find('link', rel='next')
+    next = soup.find('button', id='show-more-videos-btn')
+    if next:
+        total = next.find('span', id='remaining-video-num').text
+        offset= 41
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(host,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    if "/channels/" in item.url:
+        if next:
+            next_page = "https://www.gotporn.com/channels/%s/get-more-videos " % next['data-id']
+        else:
+            id = scrapertools.find_single_match(item.url, 'https://www.gotporn.com/channels/(\d+)')
+            next_page = "https://www.gotporn.com/channels/%s/get-more-videos " % id
+        post = {"offset": "%s"  % offset}
+        offset += 15
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page, post=post, offset=offset) )
     return itemlist
 
 
