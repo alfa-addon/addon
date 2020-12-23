@@ -1075,7 +1075,7 @@ def report_send(item, description='', fatal=False):
     var = proxytools.logger_disp(debugging=True)
     environment = envtal.list_env()
     if not environment['log_path']:
-        if iletools.join("special://logpath/", 'kodi.log'):
+        if filetools.exists(filetools.join("special://logpath/", 'kodi.log')):
             environment['log_path'] = str(filetools.join("special://logpath/", 'kodi.log'))
         else:
             environment['log_path'] = str(filetools.join("special://logpath/", 'xbmc.log'))

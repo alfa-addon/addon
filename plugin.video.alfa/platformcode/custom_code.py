@@ -480,6 +480,9 @@ def update_libtorrent():
             current_system = ''
             current_version = ''
 
+        if current_version.startswith('2') and xbmc.getCondVisibility("system.platform.linux"):
+            current_version = ''
+
         version_base = filetools.join(version_base, current_system)
         if current_version:
             old_version = current_version

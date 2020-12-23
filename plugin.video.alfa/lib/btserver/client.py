@@ -115,7 +115,13 @@ class Client(object):
         self.state_file = "state"
         self.bkg_user = bkg_user
         try:
-            self.torrent_paramss = {'save_path': self.temp_path, 'storage_mode': lt.storage_mode_t.storage_mode_allocate}
+            self.lt_version = str(lt.version)
+            if int(self.lt_version.split('.')[0]) >= 2:
+                self.torrent_paramss = {'save_path': self.temp_path, 'storage_mode': lt.storage_mode_t.storage_mode_sparse}
+                logger.info("***** Alfa BT Torrent Client: %s, storage_mode_sparse" % self.lt_version, force=True)
+            else:
+                self.torrent_paramss = {'save_path': self.temp_path, 'storage_mode': lt.storage_mode_t.storage_mode_allocate}
+                logger.info("***** Alfa BT Torrent Client: %s, storage_mode_allocate" % self.lt_version, force=True)
         except Exception as e:
             try:
                 do = xbmcgui.Dialog()
@@ -142,7 +148,6 @@ class Client(object):
         # Sesion
         self._cache = Cache(self.temp_path)
         self._ses = lt.session()
-        logger.info("***** Alfa BT Cliente Torrent: %s" % str(lt.version), force=True)
         #self._ses.listen_on(0, 0)                                              ### ALFA: it blocks repro of some .torrents
         # Cargamos el archivo de estado (si existe)
         """                                                                     ### ALFA: it blocks repro of some .torrents
@@ -295,8 +300,8 @@ class Client(object):
         x = 0
         for i, _set in enumerate(self._th.piece_priorities()):
             if _set > 0: x += 1
-            #logger.info("***** Nº Pieza: %s: %s" % (i, str(_set)), force=True)
-        logger.info("***** Piezas %s : Activas: %s" % (str(i+1), str(x)), force=True)
+            #logger.info("***** Piece Nº: %s: %s" % (i, str(_set)), force=True)
+        logger.info("***** Pieces %s : Actives: %s" % (str(i+1), str(x)), force=True)
         logger.info("***** first_piece %s : last_piece: %s" % (str(self.file.first_piece), str(self.file.last_piece)), force=True)
 
     def download_torrent(self, url):
@@ -436,7 +441,7 @@ class Client(object):
                 progress = float(sum(pieces)) / len(pieces)
                 s.pieces_len = len(pieces)                                      ### ALFA
                 s.pieces_sum = sum(pieces)                                      ### ALFA
-                #logger.info('***** Estado piezas: %s' % pieces, force=True)
+                #logger.info('***** Pieces status: %s' % pieces, force=True)
             else:
                 progress = 0
                 s.pieces_len = 0                                                ### ALFA

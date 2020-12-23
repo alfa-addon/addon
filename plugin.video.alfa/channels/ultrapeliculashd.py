@@ -212,7 +212,10 @@ def findvideos(item):
             url = unhideload(url)
 
         lang_data = langs.find("a", href=re.compile(r"^#%s" % opt))
-        lang = languages_from_flags(lang_data.span, "png")
+        if lang_data:
+            lang = languages_from_flags(lang_data.span, "png")
+        else:
+            lang = ''
         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                              language=lang, infoLabels=item.infoLabels))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())

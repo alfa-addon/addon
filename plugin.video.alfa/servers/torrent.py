@@ -1327,18 +1327,17 @@ def restart_unfinished_downloads():
                             continue
                         if item.downloadProgress == -1:
                             logger.info('Descarga PAUSADA: %s: %s' % (torr_client, title))
+                            continue
                         if torr_client in ['QUASAR', 'ELEMENTUM'] and item.downloadProgress > 0 \
                                         and item.downloadProgress < 100 and init and not 'RAR-' in item.torrent_info:
                             if not relaunch_torrent_monitoring(item, torr_client, torrent_paths):
                                 logger.info('BORRANDO descarga INACTIVA de %s: %s' % (torr_client, title))
                                 filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, fichero))
                             continue
-                        elif torr_client in ['BT', 'MCT', 'TORRENTER', 'QUASAR', 'ELEMENTUM'] and item.downloadProgress not in [-1, 0]:
-                            continue
                         if (item.downloadProgress in [-1, 0] or not item.downloadProgress) \
                                         and (item.downloadQueued == 0 or not item.downloadQueued):
                             continue
-                        if item.downloadProgress < 4 or (item.downloadQueued > 0 \
+                        if (item.downloadProgress < 4 and init) or (item.downloadQueued > 0 \
                                             and item.downloadProgress < 4) or item.downloadCompleted == 1:
 
                             if item.downloadServer and 'url' in str(item.downloadServer):
