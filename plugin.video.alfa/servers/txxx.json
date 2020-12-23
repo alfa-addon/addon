@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:www.|)txxx.com/embed/[0-9]+)",
+        "pattern": "(https://(?:www.|)(?:txxx|voyeurhit).com/embed/[0-9]+)",
         "url": "\\1"
       },
       {
@@ -20,7 +20,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://tubepornclassic.com/videos/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(https://(?:tubepornclassic|voyeurhit).com/videos/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       }
     ]

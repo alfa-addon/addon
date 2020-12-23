@@ -20,7 +20,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://hotmovs.com'   # https://hotmovs.com   https://upornia.com
+host = 'https://upornia.com'   # https://hotmovs.com   https://upornia.com
 
 def mainlist(item):
     logger.info()
