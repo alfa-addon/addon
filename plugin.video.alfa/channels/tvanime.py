@@ -25,7 +25,7 @@ from channels import autoplay
 from channels import filtertools
 from channels import renumbertools
 
-host = "https://monoschinos.com/"
+host = "https://monoschinos2.com/"
 
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'tvanime')
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'tvanime')
@@ -346,7 +346,7 @@ def findvideos(item):
     logger.info()
 
     itemlist = []
-    g_host = 'https://192-99-219-204.sysdop.com/'
+    #g_host = 'https://192-99-219-204.sysdop.com/'
 
     data = get_source(item.url)
     patron = r'%sreproductor\?url=([^&]+)' % host
@@ -358,7 +358,7 @@ def findvideos(item):
         
         if "cl?url=" in scrapedurl:
             scrapedurl = scrapertools.find_single_match(scrapedurl, '\?url=(.*)')
-            url = g_host + scrapedurl.replace('+', '%20')
+            url = host + scrapedurl.replace('+', '%20')
             check = httptools.downloadpage(url, only_headers=True, ignore_response_code=True).code
 
             if check != 200: 
@@ -369,11 +369,10 @@ def findvideos(item):
             url = scrapertools.find_single_match(scrapedurl, '.*?url=([^&]+)?')
         else:
             url = scrapedurl
-            
 
         if url:
             itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play',
-                                 language = item.language, infoLabels=item.infoLabels, server=server))
+                                 language=item.language, infoLabels=item.infoLabels, server=server))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
@@ -395,6 +394,7 @@ def findvideos(item):
 
     return itemlist
 
+
 def newest(categoria):
     itemlist = []
     item = Item()
@@ -402,6 +402,7 @@ def newest(categoria):
         item.url=host
         itemlist = new_episodes(item)
     return itemlist
+
 
 def clear_title(title):
     if 'latino' in title.lower():
