@@ -195,6 +195,16 @@ def run(item=None):
 
             logger.info("Running channel %s | %s" % (channel.__name__, channel.__file__))
 
+            # Calls redirection if Alfavorites findvideos, episodios, seasons
+            if item.context and 'alfavorites' in str(item.context) \
+                            and item.action in ['findvideos', 'episodios', 'seasons', 'play']:
+                try:
+                    from lib import generictools
+                    item, it, overwrite = generictools.redirect_clone_newpct1(item)
+                except:
+                    import traceback
+                    logger.error(traceback.format_exc())
+            
             # Special play action
             if item.action == "play":
                 #define la info para trakt

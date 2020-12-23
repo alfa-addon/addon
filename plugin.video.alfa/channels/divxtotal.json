@@ -12,6 +12,25 @@
   ],
   "settings": [
     {
+      "id": "choose_domain",
+      "type": "list",
+      "label": "Seleccione el dominino primario para el Canal",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "www.divxtotal.one"
+      ]
+    },{
+      "id": "alternate_domain",
+      "type": "list",
+      "label": "Seleccione el dominino primario para el Canal",
+      "default": -1,
+      "enabled": true,
+      "visible": false,
+      "lvalues": []
+    },
+    {
       "default": false, 
       "enabled": true, 
       "id": "include_in_global_search", 
@@ -26,6 +45,19 @@
       "label": "Buscar información extra (TMDB)", 
       "type": "bool", 
       "visible": true
+    }, 
+    {
+      "id": "modo_grafico_lang",
+      "type": "list",
+      "label": "Idioma para buscar información extra (TMDB)",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Español",
+        "Inglés",
+        "Español+Inglés"
+      ]
     },
     {
       "id": "pseudo_titulos",
@@ -107,8 +139,21 @@
         "7",
         "8",
         "9",
-        "10"
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15"
       ]
+    },
+    {
+      "id": "season_colapse",
+      "type": "bool",
+      "label": "Seleccionar si quiere colapsar las Temporadas de Series",
+      "default": true,
+      "enabled": true,
+      "visible": true
     },
     {
       "id": "seleccionar_ult_temporadda_activa",
@@ -122,6 +167,14 @@
       "id": "include_in_newest_peliculas",
       "type": "bool",
       "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_series",
+      "type": "bool",
+      "label": "Incluir en Novedades - Series",
       "default": true,
       "enabled": true,
       "visible": false
