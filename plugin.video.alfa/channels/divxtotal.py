@@ -640,6 +640,12 @@ def findvideos(item):
     for scrapedurl_la in matches:                                               #leemos los torrents con la diferentes calidades
         if '/' not in scrapedurl_la:
             scrapedurl = urlparse.urljoin(host, 'download_tt.php?u=' + scrapedurl_la)
+        elif '.php?' in scrapedurl_la:
+            scrapedurl = generictools.convert_url_base64(scrapedurl_la)
+            scrapedurl = urlparse.urljoin(host, scrapedurl)
+        elif not 'download' in scrapedurl_la:
+            scrapedurl = generictools.convert_url_base64(scrapedurl_la.split('/')[-1])
+            scrapedurl = urlparse.urljoin(host, scrapedurl)
         else:
             scrapedurl = urlparse.urljoin(host, scrapedurl_la).replace("download/torrent.php', {u: ", "download_tt.php?u=")
         #Generamos una copia de Item para trabajar sobre ella

@@ -37,7 +37,7 @@ list_servers = ['gounlimited',
                 'torrent'
                 ]
 
-host = 'https://www.cinecalidad.is'
+host = 'https://www.cinecalidad.im'
 
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
@@ -45,7 +45,7 @@ thumbbr = 'http://flags.fmcdn.net/data/flags/normal/br.png'
 
 current_lang = ''
 
-site_list = ['', 'cinecalidad.is/', 'cinecalidad.is/espana/', 'cinemaqualidade.is/']
+site_list = ['', 'cinecalidad.im/', 'cinecalidad.im/espana/', 'cinemaqualidade.im/']
 site = config.get_setting('filter_site', channel='cinecalidad')
 site_lang = 'https://www.%s' % site_list[site]
 
@@ -66,19 +66,19 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Latino",
                          action="submenu",
-                         host="https://www.cinecalidad.is/",
+                         host="https://www.cinecalidad.im/",
                          thumbnail=thumbmx))
 
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Castellano",
                          action="submenu",
-                         host="https://www.cinecalidad.is/espana/",
+                         host="https://www.cinecalidad.im/espana/",
                          thumbnail=thumbes))
 
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Portugues",
                          action="submenu",
-                         host="https://www.cinemaqualidade.is/",
+                         host="https://www.cinemaqualidade.li/",
                          thumbnail=thumbbr))
 
     itemlist.append(Item(channel=item.channel,
@@ -315,11 +315,15 @@ def findvideos(item):
             itemlist.append(new_item)
     
     if torrent_link != '':
+        headers = {'Referer': item.url}
+        """
         base_url = '%s/protect/v.php' % host
         post = {'i': torrent_link, 'title': item.title}
         post = urllib.urlencode(post)
-        headers = {'Referer': item.url}
         protect = httptools.downloadpage(base_url + '?' + post, headers=headers).data
+        """
+        base_url = '%s/protect/v.php?i=%s' % (host, torrent_link)
+        protect = httptools.downloadpage(base_url, headers=headers).data
         url = scrapertools.find_single_match(protect, 'value="(magnet.*?)"')
         server = 'torrent'
 
@@ -391,7 +395,7 @@ def findvideos(item):
 
 def get_urls(item, link):
     logger.info()
-    url = 'http://www.cinecalidad.is/ccstream/ccstream.php'
+    url = 'http://www.cinecalidad.im/ccstream/ccstream.php'
     headers = dict()
     headers["Referer"] = item.url
     post = 'link=%s' % link
@@ -424,13 +428,13 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas', 'latino']:
-            item.url = 'http://www.cinecalidad.is'
+            item.url = 'http://www.cinecalidad.im'
         elif categoria == 'infantiles':
-            item.url = 'http://www.cinecalidad.is/genero-peliculas/infantil/'
+            item.url = 'http://www.cinecalidad.im/genero-peliculas/infantil/'
         elif categoria == 'terror':
-            item.url = 'http://www.cinecalidad.is/genero-peliculas/terror/'
+            item.url = 'http://www.cinecalidad.im/genero-peliculas/terror/'
         elif categoria == 'castellano':
-            item.url = 'http://www.cinecalidad.is/espana/'
+            item.url = 'http://www.cinecalidad.im/espana/'
         itemlist = list_all(item)
         if itemlist[-1].title == 'Página siguiente >>':
             itemlist.pop()
@@ -456,7 +460,7 @@ def search(item, texto):
         host_list = [site_lang]
     else:
         item.gb_search = True
-        host_list = ['http://www.cinecalidad.is/espana/', 'http://www.cinecalidad.is/']
+        host_list = ['http://www.cinecalidad.im/espana/', 'http://www.cinecalidad.im/']
 
     for host_name in host_list:
         item.url = host_name + '?s=' + texto

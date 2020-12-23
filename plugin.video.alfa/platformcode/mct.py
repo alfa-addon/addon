@@ -339,7 +339,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
             dp.create(msg_header)
             dp_BG = True
 
-    if (_video_file_ext == ".avi" or _video_file_ext == ".mp4" or _video_file_ext == ".mkv") and allocate:
+    if (_video_file_ext == ".avi" or _video_file_ext == ".mp4" or _video_file_ext == ".mkv") and allocate and int(lt.version.split('.')[0]) < 2:
         log("##### storage_mode_t.storage_mode_allocate ("+_video_file_ext+") #####")
         h = ses.add_torrent( { 'ti':info, 'save_path': save_path_videos, 'trackers':trackers, 'storage_mode':lt.storage_mode_t.storage_mode_allocate } )
     else:

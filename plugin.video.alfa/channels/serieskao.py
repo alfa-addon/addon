@@ -271,7 +271,7 @@ def findvideos(item):
         lang = soup.find("li", class_="SLD_A")["data-lang"]
 
         for elem in matches:
-            url = base64.b64decode(elem["data-r"])
+            url = base64.b64decode(elem["data-r"]).decode('utf-8')
 
             if "animekao.club/player.php" in url:
                 url = url.replace("animekao.club/player.php?x", "player.premiumstream.live/player.php?id")
@@ -296,7 +296,7 @@ def findvideos(item):
                 data = httptools.downloadpage("https://ping.iamcdn.net/", post=post).json
                 url = data.get("url", '')
                 if url:
-                    url = "https://www.%s" % base64.b64decode(url[-1:]+url[:-1])
+                    url = "https://www.%s" % base64.b64decode(url[-1:]+url[:-1]).decode('utf-8')
                     url += '|Referer=https://playhydrax.com/?v=%s&verifypeer=false' % slug
             elif "kplayer" in url:
                 data = httptools.downloadpage(url).data

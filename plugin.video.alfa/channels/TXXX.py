@@ -18,7 +18,7 @@ from platformcode import config, logger
 from core import httptools
 from core import jsontools as json
 
-host = 'https://txxx.com'
+host = 'https://txxx.com'   # 'https://hdzog.com'
 url_api = host + "/api/json/videos/%s/str/%s/60/%s.%s.1.all..%s.json"
 
 
@@ -26,8 +26,10 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(title="Ultimas" , action="lista", url=url_api % ("14400", "latest-updates", "", "", "")))
-    itemlist.append(item.clone(title="Mejor valoradas" , action="lista", url=url_api % ("14400", "top-rated", "", "", "")))
-    itemlist.append(item.clone(title="Mas popular" , action="lista", url=url_api % ("14400", "most-popular", "", "", "")))
+    itemlist.append(item.clone(title="Mejor valoradas" , action="lista", url=url_api % ("14400", "top-rated", "", "", "month")))
+    itemlist.append(item.clone(title="Mas popular" , action="lista", url=url_api % ("14400", "most-popular", "", "", "month")))
+    # itemlist.append(item.clone(title="Mas vistos" , action="lista",  url=url_api % ("14400", "most-viewed", "", "", "month") ))
+    itemlist.append(item.clone(title="Mas comentado" , action="lista",  url=url_api % ("14400", "most-commented", "", "", "month") ))
     itemlist.append(item.clone(title="Pornstar" , action="pornstar", url=host + "/api/json/models/86400/str/filt........../most-popular/48/1.json"))
     itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "/api/json/channels/86400/str/latest-updates/80/..1.json"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/api/json/categories/14400/str.all.json"))
@@ -162,6 +164,8 @@ def lista(item):
 
 def play(item):
     logger.info()
-    itemlist = servertools.find_video_items(item.clone(url = item.url, contentTitle = item.title))
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
