@@ -18,7 +18,7 @@ from platformcode import config, logger
 from core import httptools
 from core import jsontools as json
 
-host = 'https://hdzog.com'    # https://voyeurhit.com  https://hdzog.com  https://txxx.com 
+host = 'https://voyeurhit.com'    # https://voyeurhit.com  https://hdzog.com  https://txxx.com 
 url_api = host + "/api/json/videos/%s/str/%s/60/%s.%s.1.all..%s.json"
 
 
@@ -30,8 +30,6 @@ def mainlist(item):
     itemlist.append(item.clone(title="Mas popular" , action="lista", url=url_api % ("14400", "most-popular", "", "", "month")))
     # itemlist.append(item.clone(title="Mas vistos" , action="lista",  url=url_api % ("14400", "most-viewed", "", "", "month") ))
     itemlist.append(item.clone(title="Mas comentado" , action="lista",  url=url_api % ("14400", "most-commented", "", "", "month") ))
-    itemlist.append(item.clone(title="Pornstar" , action="pornstar", url=host + "/api/json/models/86400/str/filt........../most-popular/48/1.json"))
-    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "/api/json/channels/86400/str/latest-updates/80/..1.json"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/api/json/categories/14400/str.all.json"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
@@ -41,6 +39,7 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "%20")
     item.url = "%s/api/videos.php?params=259200/str/relevance/60/search..1.all..&s=%s&sort=latest-updates&date=all&type=all&duration=all" % (host,texto)
+    
     try:
         return lista(item)
     except:
@@ -48,65 +47,6 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
-
-
-def pornstar(item):
-    logger.info()
-    itemlist = []
-    headers = {'Referer': "%s" % host}
-    data = httptools.downloadpage(item.url, headers=headers).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    JSONData = json.load(data)
-    for cat in  JSONData["models"]:
-        scrapedtitle = cat["title"]
-        dir = cat["dir"]
-        scrapedthumbnail =  cat["img"]
-        num = cat["statistics"]
-        n = 'videos'
-        num = num.get(n,n)
-        thumbnail = scrapedthumbnail.replace("\/", "/")
-        scrapedplot = ""
-        url = url_api % ("14400", "latest-updates", "model", dir, "")
-        title = "%s (%s)" %(scrapedtitle,num)
-        itemlist.append(item.clone(action="lista", title=title, url=url, thumbnail=thumbnail , plot=scrapedplot) )
-    total= int(JSONData["total_count"])
-    page = int(scrapertools.find_single_match(item.url,'.*?(\d+).json'))
-    url_page = scrapertools.find_single_match(item.url,'(.*?)\d+.json')
-    next_page = (page+ 1)
-    if (page*60) < total:
-        next_page = "%s%s.json" %(url_page,next_page)
-        itemlist.append(item.clone(action="pornstar", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
-    return itemlist
-
-
-def catalogo(item):
-    logger.info()
-    itemlist = []
-    headers = {'Referer': "%s" % host}
-    data = httptools.downloadpage(item.url, headers=headers).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    JSONData = json.load(data)
-    for cat in  JSONData["channels"]:
-        scrapedtitle = cat["title"]
-        dir = cat["dir"]
-        scrapedthumbnail =  cat["img"]
-        num = cat["statistics"]
-        n = 'videos'
-        num = num.get(n,n)
-        thumbnail = scrapedthumbnail.replace("\/", "/")
-        scrapedplot = ""
-        url = url_api % ("7200", "latest-updates", "channel", dir, "")
-        title = "%s (%s)" %(scrapedtitle,num)
-        itemlist.append(item.clone(action="lista", title=title , url=url , 
-                        thumbnail=thumbnail , plot=scrapedplot) )
-    total= int(JSONData["total_count"])
-    page = int(scrapertools.find_single_match(item.url,'.*?.(\d+).json'))
-    url_page = scrapertools.find_single_match(item.url,'(.*?).\d+.json')
-    next_page = (page+ 1)
-    if (page*60) < total:
-        next_page = "%s.%s.json" %(url_page,next_page)
-        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
-    return itemlist
 
 
 def categorias(item):
