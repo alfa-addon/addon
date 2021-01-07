@@ -2,6 +2,7 @@
 import sys
 import re
 import datetime
+import xbmcgui
 
 from core import httptools, scrapertools, servertools, tmdb, jsontools
 from core.item import Item
@@ -502,6 +503,15 @@ def episodios(item):
                 )
             )
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = False)
+    itemlist.append(
+        Item(
+            action = "comments",
+            channel = item.channel,
+            fanart = item.fanart,
+            title = "Ver comentarios",
+            url = item.url
+        )
+    )
     return itemlist
 
 def episodesxseason(item):
@@ -532,7 +542,95 @@ def findvideos(item):
         video.title = video.title.replace((config.get_localized_string(70206) % ''), '')
         video.title = '[' + video.title + '] Ver ' + item.contentTitle
         video.thumbnail = item.thumbnail
+    itemlist.append(
+        Item(
+            action = "comments",
+            channel = item.channel,
+            fanart = item.fanart,
+            title = "Ver comentarios",
+            url = item.url
+        )
+    )
     return itemlist
+
+def comments(item):
+    #############################
+    ## TODO: Add image support ##
+    #############################
+    logger.info()
+    itemlist = []
+    apipage = httptools.downloadpage('https://hentaila-1.disqus.com/embed.js').data
+    apikey = scrapertools.find_single_match(apipage, 'getLoaderVersionFromUrl\(".+?lounge.load\.([^\.]+)')
+
+    base_url = 'https://disqus.com/embed/comments/?base=default&f=hentaila-1&t_u='
+    source_url = urllib.quote(item.url, safe = '')
+    param_url = '&s_o=default#version='
+    url = base_url + source_url + param_url + apikey
+    raw_data = httptools.downloadpage(url).data
+    raw_jsonptn = 'id="disqus-threadData">([^<]+)</script>'
+    raw_comments = (jsontools.load(scrapertools.find_single_match(raw_data, raw_jsonptn)))['response']['posts']
+
+    for comment in raw_comments:
+        author = comment['author']['name']
+        image = ''
+        url = ''
+        # Buscamos si hay enlaces a imágenes de disqus para mostrarlas
+        if scrapertools.find_single_match(comment['raw_message'], '(?s)(?:http|https)://.+?\.disquscdn\.com/images/') != '':
+            image = 'https://uploads.disquscdn.com' + scrapertools.find_single_match(comment['raw_message'], '(?s)disquscdn\.com(/.+?)(?:$|\s|\\n)')
+        # Buscamos si hay enlaces a HLA para mostrar redirecciones
+        if scrapertools.find_single_match(comment['raw_message'], '(?s)hentaila\.com(/.+?)(?:$|\s|\\n)') != '':
+            url = 'https://hentaila.com' + scrapertools.find_single_match(comment['raw_message'], '(?s)hentaila\.com(/.+?)(?:$|\s|\\n)')
+        listitem = Item(
+            action = 'show_actions',
+            author = author,
+            channel = item.channel,
+            comment = comment['raw_message'],
+            contentPlot = comment['raw_message'],
+            id = str(comment['id']),
+            nesting = 0,
+            parent = str(comment['parent']),
+            thumbnail = image,
+            title = author,
+            url = url
+        )
+        parentindicator = ''
+        if len(itemlist) > 0:
+            # Verificamos si el comentario es respuesta a otro comentario
+            if itemlist[-1].parent != 'null':
+                # Verificamos si el comentario anterior es el padre
+                # Si no es el padre, verificamos si es del mismo padre que el anterior
+                # Agregamos nesting para mantener respuestas por nivel
+                if listitem.parent == itemlist[-1].id:
+                    listitem.nesting = itemlist[-1].nesting + 1
+                elif itemlist[-1].nesting > 0:
+                    # Si no, buscamos si hay padres arriba
+                    for i in range(len(itemlist) -1, -1, -1):
+                        if itemlist[i].nesting > 0:
+                            if listitem.parent == itemlist[i].parent:
+                                listitem.nesting = itemlist[i].nesting
+                        else:
+                            break
+                nestlevelmark = ''
+                for i in range(listitem.nesting):
+                    nestlevelmark += ' ^ '
+                listitem.title = nestlevelmark + listitem.title
+        itemlist.append(listitem)
+    return itemlist
+
+def show_actions(item):
+    logger.info()
+    actions = ['Ver comentario', 'Ir a enlace de HLA']
+    selection = -1
+    if item.url != '':
+        selection = xbmcgui.Dialog().contextmenu(actions)
+    if selection == 0 or item.url == '':
+        platformtools.dialog_textviewer(item.author, item.comment)
+        return True
+    elif selection == 1:
+        if scrapertools.find_single_match(item.url, '/ver/') != '':
+            return findvideos(item)
+        else:
+            return episodios(item)
 
 def search(item, text):
     logger.info()
