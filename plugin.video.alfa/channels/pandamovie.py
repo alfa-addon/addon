@@ -25,7 +25,7 @@ list_quality = ['default']
 list_servers = ['mangovideo']
 
 
-host = 'https://pandamovies.pw'     #'https://watchpornfree.info'   'https://xxxparodyhd.net'  'http://www.veporns.com'  'http://streamporno.eu'  playpornx
+host = 'https://pandamovies.pw'     #  'https://watchpornfree.info'   'https://xxxparodyhd.net'  'http://www.veporns.com'  'http://streamporno.eu'  playpornx
 
 def mainlist(item):
     logger.info()
@@ -110,8 +110,8 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(links_data)
     for url in matches:
         url = url.replace("/waaws.tk/", "/netu.tv/") 
-        if "streamz" in url:
-            url = url.replace("streamz.cc", "stream2.vg").replace("streamz.vg", "stream2.vg")
+        # if "streamz" in url:
+            # url = url.replace("streamz.cc", "stream2.vg").replace("streamz.vg", "stream2.vg")
             # url= httptools.downloadpage(url).url
             # url= url.replace("/x", "/getlink-")
             # url += ".dll"

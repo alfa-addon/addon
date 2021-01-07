@@ -28,6 +28,7 @@ import time
 import traceback
 import inspect
 import json
+import base64
 
 from channelselector import get_thumb
 from core import httptools
@@ -46,6 +47,10 @@ intervenido_policia = 'Judicial_Policia_Nacional'
 intervenido_guardia = 'Judicial_Guardia_Civil'
 intervenido_sucuri = 'Access Denied - Sucuri Website Firewall'
 idioma_busqueda = 'es'
+idioma_busqueda_VO = 'es,en'
+movies_videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
+series_videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
+list_nfos = []
 
 
 def downloadpage(url, post=None, headers=None, random_headers=False, replace_headers=False, 
@@ -109,7 +114,8 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                 return (data, success, code, item, itemlist)
 
         if data:
-            data = js2py_conversion(data, url, domain_name=domain_name, timeout=timeout, headers=headers, referer=referer, 
+            data = js2py_conversion(data, url, domain_name=domain_name, timeout=timeout, 
+                                channel=item.channel, headers=headers, referer=referer, 
                                 post=post, follow_redirects=follow_redirects)   # En caso de que sea necesario la conversión js2py
             
             data = re.sub(r"\n|\r|\t", "", data).replace("'", '"')              # Reemplaza caracteres innecesarios
@@ -159,36 +165,63 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
     return (data, success, code, item, itemlist)
 
 
-def convert_url_base64(url):
-    logger.info()
-    import base64
-    
+def convert_url_base64(url, host=''):
+    logger.info('URL: ' + url + ', HOST: ' + host)
+
     url_base64 = url
-    if not 'magnet:' in url_base64 and not '.torrent' in url_base64:
-        #url_base64 = scrapertools.find_single_match(url_base64, 'php#(.*?$)')
+    if len(url_base64) > 1 and not 'magnet:' in url_base64 and not '.torrent' in url_base64:
+        patron_php = 'php(?:#|\?u=)(.*?$)'
+        if scrapertools.find_single_match(url_base64, patron_php):
+            url_base64 = scrapertools.find_single_match(url_base64, patron_php)
         try:
             # Da hasta 20 pasadas o hasta que de error
             for x in range(20):
                 url_base64 = base64.b64decode(url_base64).decode('utf-8')
             logger.info('Url base64 después de 20 pasadas (incompleta): %s' % url_base64)
         except:
-            logger.info('Url base64 convertida: %s' % url_base64)
+            if url_base64 and url_base64 != url: logger.info('Url base64 convertida: %s' % url_base64)
             #logger.error(traceback.format_exc())
             if not url_base64:
                 url_base64 = url
+                
+    if host and host not in url_base64 and not url_base64.startswith('magnet:'):
+        url_base64 = urlparse.urljoin(host, url_base64)
+        if url_base64 != url:
+            host_name = scrapertools.find_single_match(url_base64, '(http.*\:\/\/(?:.*ww[^\.]*)?\.?[^\.]+\.\w+(?:\.\w+)?)(?:\/|\?|$)')
+            url_base64 = re.sub(host_name, host, url_base64)
+            logger.info('Url base64 urlparsed: %s' % url_base64)
+        
     
     return url_base64
 
 
-def js2py_conversion(data, url, domain_name='', post=None, referer=None, headers=None, timeout=10, follow_redirects=True):
+def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=None, headers=None, 
+                     timeout=10, follow_redirects=True, proxy_retries=1):
 
-    if not 'Javascript is required' in data:
+    if PY3 and isinstance(data, bytes):
+        if not b'Javascript is required' in data:
+            return data
+    elif not 'Javascript is required' in data:
         return data
     
-    if not domain_name:
-        domain_name = scrapertools.find_single_match(url, 'http.*\:\/\/((?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
-    logger.info(domain_name)
+    from lib import js2py
     
+    # Obtiene nombre del dominio para la cookie
+    if not domain_name:
+        domain_name = scrapertools.find_single_match(url, 'http.*\:\/\/(?:.*ww[^\.]*)?(\.?[^\.]+\.\w+(?:\.\w+)?)(?:\/|\?|$)')
+    logger.info(domain_name)
+
+    # Obtiene nombre del canal que hace la llamada para marcarlo en su settings.xml
+    if not channel and channel is not None:
+        channel = inspect.getmodule(inspect.currentframe().f_back.f_back)
+        try:
+            channel = channel.__name__.split('.')[1]
+        except:
+            channel = ""
+    
+    # Obtiene el código JS
+    if PY3 and isinstance(data, bytes):
+        data = "".join(chr(x) for x in bytes(data))
     patron = ',\s*S="([^"]+)"'
     data_new = scrapertools.find_single_match(data, patron)
     if not data_new:
@@ -198,8 +231,10 @@ def js2py_conversion(data, url, domain_name='', post=None, referer=None, headers
         logger.error('js2py_conversion: NO data_new')
         return data
         
+    # Descompone el código Base64
     try:
-        for x in range(10):                                          # Da hasta 10 pasadas o hasta que de error
+        # Da hasta 10 pasadas o hasta que de error
+        for x in range(10):
             data_end = base64.b64decode(data_new).decode('utf-8')
             data_new = data_end
     except:
@@ -210,39 +245,45 @@ def js2py_conversion(data, url, domain_name='', post=None, referer=None, headers
     if not js2py_code:
         logger.error('js2py_conversion: NO js2py_code BASE64')
         return data
-        
+
+    def atob(s):
+        import base64
+        return base64.b64decode('{}'.format(s)).decode('utf-8')
+     
+    # Hace las llamadas a js2py para obtener la cookie
     js2py_code = js2py_code.replace('document', 'window').replace(" location.reload();", "")
     js2py.disable_pyimport()
     context = js2py.EvalJs({'atob': atob})
     new_cookie = context.eval(js2py_code)
-    new_cookie = context.eval(js2py_code)
     
     logger.info('new_cookie: ' + new_cookie)
 
-    dict_cookie = {'domain': domain_name,
-                }
+    # Construye y salva la la cookie
+    dict_cookie = {'domain': domain_name,}
 
     if ';' in new_cookie:
         new_cookie = new_cookie.split(';')[0].strip()
         namec, valuec = new_cookie.split('=')
         dict_cookie['name'] = namec.strip()
         dict_cookie['value'] = valuec.strip()
-    zanga = httptools.set_cookies(dict_cookie)
-    config.set_setting("cookie_ren", True, channel=channel)
+    res = httptools.set_cookies(dict_cookie)
+    
+    # Si existe channel se marca en settings como cookie regenerada
+    if channel:
+        try:
+            config.set_setting("cookie_ren", True, channel=channel)
+        except:
+            pass
 
+    # Se ejecuta de nuevo la descarga de la página, ya con la nueva cookie
     data_new = ''
     data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(url, 
                 timeout=timeout, headers=headers, referer=referer, post=post, 
-                follow_redirects=follow_redirects).data)
+                follow_redirects=follow_redirects, proxy_retries=proxy_retries).data)
     if data_new:
         data = data_new
     
     return data
-    
-    
-def atob(s):
-    import base64
-    return base64.b64decode(s.to_string().value)
 
 
 def update_title(item):
@@ -503,6 +544,9 @@ def post_tmdb_listado(item, itemlist):
         title = item_local.title
         season = 0
         episode = 0
+        idioma = idioma_busqueda
+        if 'VO' in str(item_local.language):
+            idioma = idioma_busqueda_VO
         #logger.debug(item_local)
         
         item_local.last_page = 0
@@ -573,7 +617,7 @@ def post_tmdb_listado(item, itemlist):
             logger.info("*** TMDB-ID erroneo, reseteamos y reintentamos: %s" % item_local.infoLabels['tmdb_id'])
             del item_local.infoLabels['tmdb_id']                        #puede traer un TMDB-ID erroneo
             try:
-                tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda=idioma_busqueda) #pasamos otra vez por TMDB
+                tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda=idioma) #pasamos otra vez por TMDB
             except:
                 logger.error(traceback.format_exc())
             logger.info("*** TMDB-ID erroneo reseteado: %s" % item_local.infoLabels['tmdb_id'])
@@ -584,7 +628,7 @@ def post_tmdb_listado(item, itemlist):
                 year = item_local.infoLabels['year']            #salvamos el año por si no tiene éxito la nueva búsqueda
                 item_local.infoLabels['year'] = "-"             #reseteo el año
                 try:
-                    tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda=idioma_busqueda) #pasamos otra vez por TMDB
+                    tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda=idioma) #pasamos otra vez por TMDB
                 except:
                     logger.error(traceback.format_exc())
                 if not item_local.infoLabels['tmdb_id']:        #ha tenido éxito?
@@ -630,7 +674,7 @@ def post_tmdb_listado(item, itemlist):
             
             try:
                 if item_local.infoLabels['tmdb_id']:
-                    tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma_busqueda)  #TMDB de la serie
+                    tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma)  #TMDB de la serie
             except:
                 logger.error(traceback.format_exc())
                 
@@ -713,7 +757,7 @@ def post_tmdb_listado(item, itemlist):
                         and ((item_local.infoLabels['imdb_id'] \
                         and item_local.infoLabels['imdb_id'] in str(video_list)) \
                         or 'tmdb_'+item_local.infoLabels['tmdb_id'] in str(video_list) \
-                        or item_local.contentTitle.lower()+' [' in str(video_list)):
+                    or item_local.contentTitle.lower()+' [' in str(video_list)):
             id_tmdb = item_local.infoLabels['imdb_id']
             if not id_tmdb:
                 id_tmdb = "tmdb_%s" % item_local.infoLabels['tmdb_id']
@@ -858,8 +902,11 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
     
     # Primero creamos un título para TODAS las Temporadas
     # Pasada por TMDB a Serie, para datos adicionales
+    idioma = idioma_busqueda
+    if 'VO' in str(item.language):
+        idioma = idioma_busqueda_VO
     try:
-        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=idioma_busqueda)  #TMDB de la serie
+        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=idioma)  #TMDB de la serie
     except:
         logger.error(traceback.format_exc())
     
@@ -932,7 +979,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
             
             # Pasada por TMDB a las Temporada
             try:
-                tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma_busqueda)    #TMDB de cada Temp
+                tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma)    #TMDB de cada Temp
             except:
                 logger.error(traceback.format_exc())
         
@@ -1521,8 +1568,11 @@ def post_tmdb_findvideos(item, itemlist):
     #    tmdb.set_infoLabels_item(item, True)
     #elif (not item.infoLabels['tvdb_id'] and item.contentType == 'episode') or item.contentChannel == "videolibrary":
     #    tmdb.set_infoLabels_item(item, True)
+    idioma = idioma_busqueda
+    if 'VO' in str(item.language):
+        idioma = idioma_busqueda_VO
     try:
-        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=idioma_busqueda)  #TMDB de cada Temp
+        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=idioma)   #TMDB de cada Temp
     except:
         logger.error(traceback.format_exc())
     #Restauramos la información de max num. de episodios por temporada despues de TMDB
@@ -1791,11 +1841,11 @@ def check_title_in_videolibray(item, video_list_init=False):
         return True, ''
     
     if item.contentType == 'movie' or video_list_init:
-        videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
+        videolibrary_path = movies_videolibrary_path
         if video_list_init:
             video_list = filetools.listdir(videolibrary_path)
     if item.contentType != 'movie' or video_list_init:
-        videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
+        videolibrary_path = series_videolibrary_path
         if video_list_init:
             video_list += filetools.listdir(videolibrary_path)
             return True, video_list
@@ -1809,6 +1859,39 @@ def check_title_in_videolibray(item, video_list_init=False):
             break
 
     return res, video_list
+
+
+def check_nfo_quality(item):
+    logger.info("%s [%s], %s" % (item.contentSerieName.lower(), item.infoLabels['imdb_id'] \
+                    or 'tmdb_'+item.infoLabels['tmdb_id'], item.infoLabels['quality']))
+    global list_nfos
+    
+    """
+    Comprueba si la calidad del item listado coincide con la del .nfo de la serie en la videoteca.  Devuelve True si coincide
+    """
+    
+    if not item.infoLabels['imdb_id'] and not item.infoLabels['tmdb_id']:
+        return False
+    
+    id_tmdb = item.infoLabels['imdb_id']
+    if not id_tmdb:
+        id_tmdb = "tmdb_%s" % item.infoLabels['tmdb_id']
+    serie_name = "%s [%s]" % (item.contentSerieName.lower(), id_tmdb)
+    serie_name_tmdb = "%s [tmdb_%s]" % (item.contentSerieName.lower(), item.infoLabels['tmdb_id'])
+        
+    if serie_name not in str(list_nfos):
+        from core import videolibrarytools
+        head_nfo, nfo = videolibrarytools.read_nfo(filetools.join(series_videolibrary_path, serie_name, 'tvshow.nfo'))
+
+        if nfo and nfo.infoLabels['quality'] and serie_name not in str(list_nfos):
+            list_nfos.append((serie_name, nfo.infoLabels['quality']))
+            list_nfos.append((serie_name_tmdb, nfo.infoLabels['quality']))
+
+    for serie, quality in list_nfos:
+        if (serie == serie_name or serie == serie_name_tmdb) and quality == item.infoLabels['quality']:
+            return True
+
+    return False
 
 
 def check_marks_in_videolibray(item, strm='', video_list_init=False):
@@ -2050,6 +2133,17 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     torrent_f = ''
     torrent_file = ''
     files = {}
+    if PY3 and isinstance(url, bytes):
+        url = "".join(chr(x) for x in bytes(url))
+    if PY3 and isinstance(torrents_path, bytes):
+        torrents_path = "".join(chr(x) for x in bytes(torrents_path))
+    if PY3 and isinstance(referer, bytes):
+        referer = "".join(chr(x) for x in bytes(referer))
+    if PY3 and isinstance(post, bytes):
+        post = "".join(chr(x) for x in bytes(post))
+    if PY3 and isinstance(headers, bytes):
+        headers = "".join(chr(x) for x in bytes(headers))
+
     try:
         #torrents_path = config.get_videolibrary_path() + '/torrents'            #path para dejar el .torrent
 
@@ -2071,7 +2165,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                     return 'autoplay'
         
         if not lookup: timeout = timeout * 3
-        if ((url and not local_torr) or url.startswith('magnet')):
+        if (url and not local_torr) or url.startswith("magnet"):
             torrents_path, torrent_file, subtitles_list = torrent.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
                         timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
@@ -2079,7 +2173,8 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
             torrent_file = filetools.read(local_torr, mode='rb')
             torrents_path = local_torr
         
-        if not torrents_path or torrents_path == 'CF_BLOCKED':
+        if not torrents_path or torrents_path == 'CF_BLOCKED' or (PY3 and isinstance(torrent_file, bytes) \
+                    and torrent_file.startswith(b"magnet")) or (not PY3 and torrent_file.startswith("magnet")):
             size = 'ERROR'
             
             # si el archivo .torrent está bloqueado con CF, se intentará descargarlo a través de un browser externo
@@ -2507,13 +2602,15 @@ def verify_channel(channel):
     #Lista con los datos de los canales alternativos
     #Cargamos en .json del canal para ver las listas de valores en settings
     clones = channeltools.get_channel_json(channel_py)
-    for settings in clones['settings']:                                 #Se recorren todos los settings
-        if settings['id'] == "clonenewpct1_channels_list":              #Encontramos en setting
-            clones = settings['default']                                #Carga lista de clones
+    for settings in clones['settings']:                                         #Se recorren todos los settings
+        if settings['id'] == "clonenewpct1_channels_list":                      #Encontramos en setting
+            clones = settings['default']                                        #Carga lista de clones
             channel_alt = "'%s'" % channel
-            if channel_alt in str(clones):                              #Si es un clon se pone como canal newpct1, si no se deja
+            if channel_alt in str(clones):                                      #Si es un clon se pone como canal newpct1, si no se deja
                 channel = channel_py
-            return channel
+            break
+
+    return channel
     
 
 def verify_channel_regex(item, clone_list):
@@ -2987,7 +3084,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 
                 if url_org == '*':                                              #Si se quiere cambiar desde cualquier url ...
                     url_host = scrapertools.find_single_match(url_total, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
-                    url_total = url_total.replace(url_host, url_des)            #reemplazamos una parte de url
+                    if url_host: url_total = url_total.replace(url_host, url_des)   #reemplazamos una parte de url
                 elif url_des.startswith('http'):
                     if item.channel != channel_py or (item.channel == channel_py \
                             and item.category.lower() == canal_org):
@@ -2995,7 +3092,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                             'http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+(.*?$)')     #quitamos el http*:// inicial
                         url_total = urlparse.urljoin(url_des, url_total)        #reemplazamos una parte de url
                 else:
-                    url_total = url_total.replace(url_org, url_des)             #reemplazamos una parte de url
+                    if url_host: url_total = url_total.replace(url_org, url_des)    #reemplazamos una parte de url
                 url = ''
                 if patron1:                                                     #Hay expresión regex?
                     url += scrapertools.find_single_match(url_total, patron1)   #La aplicamos a url
@@ -3308,11 +3405,9 @@ def verify_cached_torrents():
         json_error_path = filetools.join(config.get_runtime_path(), 'error_cached_torrents.json')
         json_error_path_BK = filetools.join(config.get_runtime_path(), 'error_cached_torrents_BK.json')
             
-        videolibrary_path = config.get_videolibrary_path()          #Calculamos el path absoluto a partir de la Videoteca
-        movies = config.get_setting("folder_movies")
-        series = config.get_setting("folder_tvshows")
-        torrents_movies = filetools.join(videolibrary_path, config.get_setting("folder_movies"))    #path de CINE
-        torrents_series = filetools.join(videolibrary_path, config.get_setting("folder_tvshows"))   #path de SERIES
+        #Calculamos el path absoluto a partir de la Videoteca
+        torrents_movies = movies_videolibrary_path                              #path de CINE
+        torrents_series = series_videolibrary_path                              #path de SERIES
         
         #Inicializa variables
         torren_list = []
@@ -3404,11 +3499,9 @@ def regenerate_clones():
         json_error_path = filetools.join(config.get_runtime_path(), 'error_cached_torrents.json')
         json_error_path_BK = filetools.join(config.get_runtime_path(), 'error_cached_torrents_BK.json')
             
-        videolibrary_path = config.get_videolibrary_path()          #Calculamos el path absoluto a partir de la Videoteca
-        movies = config.get_setting("folder_movies")
-        series = config.get_setting("folder_tvshows")
-        torrents_movies = filetools.join(videolibrary_path, config.get_setting("folder_movies"))    #path de CINE
-        torrents_series = filetools.join(videolibrary_path, config.get_setting("folder_tvshows"))   #path de SERIES
+        #Calculamos el path absoluto a partir de la Videoteca
+        torrents_movies = movies_videolibrary_path                              #path de CINE
+        torrents_series = series_videolibrary_path                              #path de SERIES
         
         #Cargamos en .json de Newpct1 para ver las listas de valores en settings
         fail_over_list = channeltools.get_channel_json(channel_py)
@@ -3958,9 +4051,6 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
 def dejuice(data):
     logger.info()
     # Metodo para desobfuscar datos de JuicyCodes
-    
-    import base64
-    from lib import jsunpack
 
     juiced = scrapertools.find_single_match(data, 'JuicyCodes.Run\((.*?)\);')
     b64_data = juiced.replace('+', '').replace('"', '')

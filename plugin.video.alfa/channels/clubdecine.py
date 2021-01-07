@@ -111,7 +111,7 @@ def section(item):
     if item.title == "Generos":
         matches = soup.find_all("a", href=re.compile(r"%ssearch.*?" % host), rel="tag")
     for elem in matches:
-        url = elem["href"] + query
+        url = elem["href"]
         title = elem.text
         if url not in listed:
             itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url))

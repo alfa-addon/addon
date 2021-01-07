@@ -166,10 +166,10 @@ def list_all(item):
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
 
     #if item.type ==  'peliculas':
-    patron = '<img class="cover".*?src="([^"]+)" data-id="\d+" '
-    patron +='alt="Ver ([^\(]+)(.*?)">'
-    patron += '<div class="mdl-card__menu"><a class="clean-link" href="([^"]+)">'
-    patron += '.*?<span class="link-size">(.*?)<'
+    patron = '<img\s*class="cover"[^>]+src="([^"]+)"\s*data-id="\d+"\s*'
+    patron +='alt="Ver\s*([^\(]+)(.*?)">\s*'
+    patron += '<div\s*class="mdl-card__menu">\s*<a\s*class="clean-link"\s*href="([^"]+)">'
+    patron += '.*?<span\s*class="link-size">([^<]*)<'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -321,27 +321,3 @@ def search(item, texto):
         return list_all(item)
     else:
         return []
-
-def newest(categoria):
-    logger.info()
-    item = Item()
-    try:
-        if categoria in ['peliculas']:
-            item.url = host + 'ver/'
-        elif categoria == 'infantiles':
-            item.url = host + 'genero/animacion/'
-        elif categoria == 'terror':
-            item.url = host + 'genero/terror/'
-        elif categoria == 'documentales':
-            item.url = host + 'genero/terror/'
-        item.type=item.type
-        itemlist = list_all(item)
-        if itemlist[-1].title == 'Siguiente >>':
-            itemlist.pop()
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("{0}".format(line))
-        return []
-
-    return itemlist

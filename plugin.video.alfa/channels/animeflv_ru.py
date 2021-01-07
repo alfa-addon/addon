@@ -25,7 +25,7 @@ list_servers = ['directo']
 list_quality = ['default']
 
 
-HOST = "https://www.animeflv.ru/"
+HOST = "https://animeflv.ac/"
 
 
 def mainlist(item):

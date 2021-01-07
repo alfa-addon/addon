@@ -42,10 +42,12 @@ channel_py = 'pctfenix'
 categoria = channel_py.capitalize()
 decode_code = ''
 page_url = ''
-idioma_busqueda = 'es'
 
 #Carga de opciones del canal        
 __modo_grafico__ = config.get_setting('modo_grafico', channel_py)               #TMDB?
+IDIOMAS_TMDB = {0: 'es', 1: 'en', 2: 'es,en'}
+idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', channel_py)] # Idioma base para TMDB
+idioma_busqueda_VO = IDIOMAS_TMDB[2]                                                # Idioma para VO
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel_py)  #Actualización sólo últ. Temporada?
 timeout = config.get_setting('timeout_downloadpage', channel_py)                #Timeout downloadpage
 #timeout = timeout * 2                                                           # Incremento temporal
@@ -1085,8 +1087,11 @@ def episodios(item):
         season_display = item.from_num_season_colapse
 
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
+    idioma = idioma_busqueda
+    if 'VO' in str(item.language):
+        idioma = idioma_busqueda_VO
     try:
-        tmdb.set_infoLabels(item, True, idioma_busqueda=idioma_busqueda)
+        tmdb.set_infoLabels(item, True, idioma_busqueda=idioma)
     except:
         pass
         
@@ -1268,7 +1273,7 @@ def episodios(item):
 
     if not item.season_colapse:                                                 #Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
-        tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma_busqueda)
+        tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma)
 
         #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
         item, itemlist = generictools.post_tmdb_episodios(item, itemlist)

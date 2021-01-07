@@ -84,12 +84,12 @@ def init():
         #Borrar contenido de carpeta de Torrents y de Subtitles
         filetools.rmdirtree(filetools.join(config.get_videolibrary_path(), 'temp_torrents_Alfa'), silent=True)
         subtitle_path = config.get_kodi_setting("subtitles.custompath")
-        if subtitle_path:
-            ret = filetools.rmdirtree(subtitle_path, silent=True)
-            if not ret: logger.error('RMDIR: ' + subtitle_path)
-            time.sleep(1)
-            ret = filetools.mkdir(subtitle_path, silent=True)
-            if not ret: logger.error('MKDIR: ' + subtitle_path)
+        if subtitle_path and filetools.exists(subtitle_path):
+            for file in filetools.listdir(subtitle_path):
+                if not file.endswith('.srt'): continue
+                file_path = filetools.join(subtitle_path, file)
+                ret = filetools.remove(file_path, silent=True)
+                if not ret: logger.error('ERROR on REMOVING subtitle: ' + file_path)
 
         #Verifica si Kodi tiene algún achivo de Base de Datos de Vídeo de versiones anteriores, entonces los borra
         verify_Kodi_video_DB()
@@ -478,6 +478,9 @@ def update_libtorrent():
             current_system, current_version = config.get_setting("libtorrent_version", server="torrent", default="").split('/')
         else:
             current_system = ''
+            current_version = ''
+
+        if current_version.startswith('2') and xbmc.getCondVisibility("system.platform.linux"):
             current_version = ''
 
         version_base = filetools.join(version_base, current_system)

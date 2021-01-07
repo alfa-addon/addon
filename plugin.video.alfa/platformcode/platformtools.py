@@ -90,8 +90,8 @@ def dialog_yesno(heading, line1, line2="", line3="", nolabel="No", yeslabel="Si"
                             yeslabel=yeslabel)
 
 
-def dialog_select(heading, _list):
-    return xbmcgui.Dialog().select(heading, _list)
+def dialog_select(heading, _list, useDetails=False):
+    return xbmcgui.Dialog().select(heading, _list, useDetails=useDetails)
 
 
 def dialog_multiselect(heading, _list, autoclose=0, preselect=[], useDetails=False):
@@ -1258,7 +1258,7 @@ def play_torrent(item, xlistitem, mediaurl):
 
     # Opciones disponibles para Reproducir torrents
     torrent_options = list()
-    torrent_options.append(["Cliente interno (necesario libtorrent)"])
+    torrent_options.append(["Cliente interno (necesario libtorrent) BT"])
     torrent_options.append(["Cliente interno MCT (necesario libtorrent)"])
 
     torrent_options.extend(torrent_client_installed(show_tuple=True))
@@ -1266,21 +1266,41 @@ def play_torrent(item, xlistitem, mediaurl):
     torrent_client = config.get_setting("torrent_client", server="torrent")
 
     if torrent_client and torrent_client - 1 <= len(torrent_options):
-        if torrent_client == 0:
+        if torrent_client == 0 and not scrapertoolsV2.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
             seleccion = dialog_select(config.get_localized_string(70193), [opcion[0] for opcion in torrent_options])
+        elif torrent_client == 0 and scrapertoolsV2.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
+            t_client_dnl = scrapertoolsV2.find_single_match(item.downloadFilename, '^\:(\w+)\:').upper()
+            for x, t_client in enumerate(torrent_options):
+                if t_client_dnl in t_client[0].upper():
+                    seleccion = x
+                    break
+            else:
+                seleccion = 0
         else:
             seleccion = torrent_client - 1
     else:
-        if len(torrent_options) > 1:
+        if len(torrent_options) > 1 and not scrapertoolsV2.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
             seleccion = dialog_select(config.get_localized_string(70193), [opcion[0] for opcion in torrent_options])
+        elif scrapertoolsV2.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
+            t_client_dnl = scrapertoolsV2.find_single_match(item.downloadFilename, '^\:(\w+)\:').upper()
+            for x, t_client in enumerate(torrent_options):
+                if t_client_dnl in t_client[0].upper():
+                    seleccion = x
+                    break
+            else:
+                seleccion = 0
         else:
             seleccion = 0
 
     # Si Libtorrent ha dado error de inicialización, no se pueden usar los clientes internos
-    torrent_paths = torrent.torrent_dirs()
     UNRAR = config.get_setting("unrar_path", server="torrent", default="")
     LIBTORRENT = config.get_setting("libtorrent_path", server="torrent", default='')
     LIBTORRENT_in_use_local = False
+    LIBTORRENT_version = config.get_setting("libtorrent_version", server="torrent", default=1)
+    try:
+        LIBTORRENT_version = int(scrapertoolsV2.find_single_match(LIBTORRENT_version, '\/(\d+)\.\d+\.\d+'))
+    except:
+        LIBTORRENT_version = 1
     RAR_UNPACK = config.get_setting("mct_rar_unpack", server="torrent", default='')
     BACKGROUND_DOWNLOAD = config.get_setting("mct_background_download", server="torrent", default='')
     subtitle_path = config.get_kodi_setting("subtitles.custompath")
@@ -1291,7 +1311,6 @@ def play_torrent(item, xlistitem, mediaurl):
     rar_path = ''
     if item.password:
         size_rar = 3
-    torr_client = scrapertoolsV2.find_single_match(torrent_options[seleccion][0], ':\s*(\w+)').lower()
     if item.contentType == 'movie':
         folder = config.get_setting("folder_movies")                            # películas
     else:
@@ -1300,6 +1319,8 @@ def play_torrent(item, xlistitem, mediaurl):
     PATH_videos = filetools.join(videolibrary_path, folder)
     DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath")
     
+    torrent_paths = torrent.torrent_dirs()
+    torr_client = scrapertoolsV2.find_single_match(torrent_options[seleccion][0], ':\s*(\w+)').lower()
     # Descarga de torrents a local
     if 'interno (necesario' in torrent_options[seleccion][0]:
         torr_client = 'BT'
@@ -1554,7 +1575,7 @@ def play_torrent(item, xlistitem, mediaurl):
                         if torr_client in ['quasar', 'elementum']:
                             torr_data, deamon_url, index = torrent.get_tclient_data(video_path, \
                                         torr_client, torrent_paths['ELEMENTUM_port'], action='delete')
-                        elif torr_client in ['BT', 'MCT'] and 'url' in item.downloadServer:
+                        elif torr_client in ['BT', 'MCT'] and 'url' in str(item.downloadServer):
                             file_t = scrapertoolsV2.find_single_match(item.downloadServer['url'], '\w+\.torrent$').upper()
                             if file_t:
                                 filetools.remove(filetools.join(torrent_paths[torr_client.upper()+'_torrents'], file_t))
@@ -1568,8 +1589,8 @@ def play_torrent(item, xlistitem, mediaurl):
                         item.downloadProgress = 0
                     if item.downloadStatus == 5:
                         dialog_notification("LIBTORRENT en USO", "Descarga encolada.  Puedes seguir haciendo otras cosas...", time=10000)
-                else:
-                    config.set_setting("LIBTORRENT_in_use", True, server="torrent")     # Marcamos Libtorrent como en uso
+                elif LIBTORRENT_version < 99:
+                    config.set_setting("LIBTORRENT_in_use", True, server="torrent")     # Marcamos Libtorrent como en uso, si es antiguo
                     
             item.torr_folder = video_path
             torrent.update_control(item, function='play_torrent_crear_control')
@@ -1594,6 +1615,8 @@ def play_torrent(item, xlistitem, mediaurl):
                     itemlist_refresh()
                     torrent.bt_client(mediaurl, xlistitem, rar_files, subtitle=item.subtitle, password=password, item=item)
                     config.set_setting("LIBTORRENT_in_use", False, server="torrent")   # Marcamos Libtorrent como disponible
+                    config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
+                    itemlist_refresh()
 
             # Reproductor propio MCT (libtorrent)
             elif seleccion == 1:
@@ -1605,6 +1628,8 @@ def play_torrent(item, xlistitem, mediaurl):
                     from platformcode import mct
                     mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=password, item=item)
                     config.set_setting("LIBTORRENT_in_use", False, server="torrent")    # Marcamos Libtorrent como disponible
+                    config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
+                    itemlist_refresh()
 
             # Plugins externos
             else:
@@ -1747,6 +1772,8 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
             item.downloadProgress = 100                                         # ... si no, se da por terminada la monitorización
     item.downloadQueued = 0
     torrent.update_control(item, function='rar_control_mng')
+    config.set_setting("RESTART_DOWNLOADS", True, "downloads")                  # Forzamos restart downloads
+    itemlist_refresh()
 
     # Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan
     if not item.downloadFilename or item.downloadStatus == 5:

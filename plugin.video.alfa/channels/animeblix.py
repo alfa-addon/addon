@@ -93,7 +93,7 @@ def new_episodes(item):
     matches = soup.find("div", class_="row mx-n1 mx-xl-n2").find_all("article", class_="xC")
     for elem in matches:
         title = elem.img["alt"]
-        thumb = host + elem.img["data-src"]
+        thumb = host.replace("api/", "") + elem.img["data-src"]
         url = elem.a["href"]
         itemlist.append(Item(channel=item.channel, title=title, thumbnail=thumb, url=url, action="findvideos"))
 
@@ -151,7 +151,7 @@ def list_all(item):
         elif "castellano" in title.lower():
             title = title.replace(" Castellano", "")
             lang = "CAST"
-        thumb = host + elem["imgPoster"]
+        thumb = host.replace("api/", "") + elem["imgPoster"]
         plot = elem["synopsis"]
 
         new_item = Item(channel=item.channel, title=title, url=url, action='episodios', plot=plot,
@@ -191,7 +191,7 @@ def findvideos(item):
         item.language = "VOSE"
     for url in urls:
         url = url["url"]
-        if "/stream/" in url:
+        if "/stream/" in url or 'neko/' in url:
             data = httptools.downloadpage(url, headers={'Referer': item.url}).data
             url = scrapertools.find_single_match(data, 'file: "([^"]+)"')
 

@@ -44,8 +44,8 @@ __libbaseurl__ = ["https://github.com/DiMartinoXBMC/script.module.libtorrent/raw
 #__icon__= filetools.join(filetools.translatePath('special://home'), 'addons',
 #                                   'script.module.libtorrent', 'icon.png')
 #__settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                         ### Alfa
-__version__ = '1.1.17'                                                          ### Alfa
-__plugin__ = "python-libtorrent v.1.1.7"                                        ### Alfa
+__version__ = '2.0.1'                                                           ### Alfa
+__plugin__ = "python-libtorrent v.2.0.1"                                        ### Alfa
 __icon__= filetools.join(filetools.translatePath('special://home'), 'addons',
                                    'plugin.video.alfa', 'icon.png')             ### Alfa
 #__language__ = __settings__.getLocalizedString                                 ### Alfa
@@ -83,8 +83,9 @@ class LibraryManager(object):
             ver1 = int(ver1)
             ver2 = int(ver2)
         except:
-            pass
-        if ver1 >= 1 and ver2 >= 2:
+            ver1 = 2
+            ver2 = 0
+        if ver1 > 1 or (ver1 == 1 and ver2 >= 2):
             global __libbaseurl__
             __libbaseurl__ = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/libtorrent', \
                               'https://bitbucket.org/alfa_addon/alfa-repo/raw/master/downloads/libtorrent']
@@ -128,8 +129,9 @@ class LibraryManager(object):
             ver1 = int(ver1)
             ver2 = int(ver2)
         except:
-            pass
-        if ver1 >= 1 and ver2 >= 2:
+            ver1 = 2
+            ver2 = 0
+        if ver1 > 1 or (ver1 == 1 and ver2 >= 2):
             global __libbaseurl__
             __libbaseurl__ = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/libtorrent', \
                               'https://bitbucket.org/alfa_addon/alfa-repo/raw/master/downloads/libtorrent']

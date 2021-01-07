@@ -100,6 +100,8 @@ def lista(item):
         if "Siterip" in title or "manyvids" in title:
             title = "[COLOR red]%s[/COLOR]" %title
         thumbnail = elem.img['src']
+        if "data:image" in thumbnail:
+            thumbnail = elem.img['data-lazy-src']
         plot = ""
         itemlist.append(item.clone(action="findvideos", title=title, url=url, 
                                   thumbnail=thumbnail, fanart=thumbnail, plot=plot) )
@@ -112,14 +114,14 @@ def lista(item):
 
 
 def findvideos(item):
+    logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
-    patron = '<a href="([^"]+)" rel="nofollow[^<]+>(?:Streaming|Download)'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for url in matches:
-        if not "ubiqfile" in url:
-            itemlist.append(item.clone(action='play',title="%s", contentTitle=item.title, url=url))
+    soup = create_soup(item.url).find('div', class_='entry-content')
+    matches = soup.find_all('a')
+    for elem in matches:
+        url = elem['href']
+        if not "ubiqfile" in url and not "imgcloud" in url:
+            itemlist.append(item.clone(action='play',title="%s " + url, contentTitle=item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)

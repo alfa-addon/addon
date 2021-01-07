@@ -114,7 +114,7 @@ def findvideos(item):
     for url in matches:
         if "streamz" in url:
             url = url.replace("streamz.cc", "stream2.vg").replace("streamz.vg", "stream2.vg")
-        if not ".xyz/" in url: #netu
+        if not "vidup" in url and not "vev.io" in url:
             itemlist.append(item.clone(title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
     # Requerido para FilterTools

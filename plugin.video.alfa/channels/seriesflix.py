@@ -30,7 +30,6 @@ def create_soup(url, post=None, headers=None):
     logger.info()
 
     data = httptools.downloadpage(url, post=post, headers=headers).data
-    logger.debug(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
     return soup

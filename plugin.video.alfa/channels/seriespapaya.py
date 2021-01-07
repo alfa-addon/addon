@@ -26,7 +26,9 @@ from channels import autoplay
 from core.item import Item
 from platformcode import config, logger
 
-HOST = "https://www2.seriespapaya.nu/"
+HOST = "https://www.seriespapaya.se/"
+#HOST = "https://seriespapaya.unblockit.app/"
+CF = False
 
 IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOSE', 'Español Latino':'Latino',
            'Español Castellano':'Español', 'Sub Español':'VOSE'}
@@ -246,6 +248,7 @@ def seasons(item):
 
     if len(matches) == 1:
         item.contentSeasonNumber = '1'
+        item.season1 = True
         return episodesxseasons(item)
     elif len(matches) < 1:
         title = '[COLOR=grey]Aún no hay episodios disponibles para esta serie[/COLOR]'
@@ -313,7 +316,7 @@ def episodesxseasons(item):
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     
     # Opción "Añadir esta serie a la videoteca de KODI"
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentSeasonNumber == '1':
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.season1:
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
@@ -439,7 +442,7 @@ def play(item):
 
         return itemlist
 
-    data = httptools.downloadpage(item.url, headers={'Referer': item.url}).data
+    data = httptools.downloadpage(item.url, headers={'Referer': item.url}, CF=CF).data
     
     item.server = ''
     item.url = scrapertools.find_single_match(data, "location.href='([^']+)'")

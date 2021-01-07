@@ -40,12 +40,15 @@ host_index = config.get_setting('choose_domain', channel)
 host = host_list[host_index]
 host_emergency = False
 #domain_alt = host_list[1][-6:]
+host_torrent = 'https://files.grantorrent.nl'
+movies_sufix = ''
 series_sufix = 'series/'
 
 __modo_grafico__ = config.get_setting('modo_grafico', channel)                  # búsqueda TMDB ?
 IDIOMAS_TMDB = {0: 'es', 1: 'en', 2: 'es,en'}
-idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', channel)]        # Idioma de búsqueda TMDB
-modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)     # Actualización sólo últ. Temporada?
+idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', channel)]    # Idioma base para TMDB
+idioma_busqueda_VO = IDIOMAS_TMDB[2]                                                # Idioma para VO
+modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel) # Actualización sólo últ. Temporada?
 timeout = config.get_setting('timeout_downloadpage', channel)
 season_colapse = config.get_setting('season_colapse', channel)                  # Season colapse?
 filter_languages = config.get_setting('filter_languages', channel)              # Filtrado de idiomas?
@@ -56,7 +59,9 @@ def mainlist(item):
     itemlist = []
     adjust_alternate_domain('', reset=True)                                     # Resetear dominio alternativo
     
+    #thumb_cartelera = get_thumb("now_playing.png")
     thumb_pelis = get_thumb("channels_movie.png")
+    #thumb_pelis_hd = get_thumb("channels_movie_hd.png")
     thumb_series = get_thumb("channels_tvshow.png")
     
     thumb_buscar = get_thumb("search.png")
@@ -66,10 +71,10 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, title="Películas", action="submenu", 
-                url=host, thumbnail=thumb_pelis, extra="peliculas", category=categoria))
+                url=host + movies_sufix, thumbnail=thumb_pelis, extra="peliculas", category=categoria))
     # Buscar películas
     itemlist.append(Item(channel=item.channel, title="Buscar en Películas >>", action="search", 
-                url=host, thumbnail=thumb_buscar, extra="search", extra2="peliculas", 
+                url=host + movies_sufix, thumbnail=thumb_buscar, extra="search", extra2="peliculas", 
                 category=categoria))
     
     itemlist.append(Item(channel=item.channel, title="Series", action="submenu", 
@@ -560,7 +565,7 @@ def findvideos(item):
     if item.referer or item.referer is None:
         referer = item.referer
         del item.referer
-
+    
     # Bajamos los datos de las páginas
     if not item.matches:
         data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_find, post=post, headers=headers, 
@@ -572,6 +577,8 @@ def findvideos(item):
         if item.emergency_urls and not item.videolibray_emergency_urls:         # Hay urls de emergencia?
             if len(item.emergency_urls) > 1 and item.emergency_urls[1]:
                 matches = item.emergency_urls[1]                                # Restauramos matches de vídeos
+            elif len(item.emergency_urls) == 1 and item.emergency_urls[0]:
+                matches = item.emergency_urls[0]                                # Restauramos matches de vídeos - OLD FORMAT
             item.armagedon = True                                               # Marcamos la situación como catastrófica 
         else:
             if item.videolibray_emergency_urls:                                 # Si es llamado desde creación de Videoteca...
@@ -631,7 +638,11 @@ def findvideos(item):
             scrapedsize = ''
             scrapedtitle = _scrapedsize
         
-        scrapedurl = urlparse.urljoin(host, generictools.convert_url_base64(_scrapedurl))
+        scrapedurl = generictools.convert_url_base64(_scrapedurl, host_torrent)
+        # Si ha habido un cambio en la url, actualizados matches para emergency_urls
+        if item.videolibray_emergency_urls and scrapedurl != _scrapedurl:
+            item.emergency_urls[1][x] = scrapedurl
+        
         referer = None
         post= None
         headers = None
@@ -651,6 +662,8 @@ def findvideos(item):
                 if item.emergency_urls and not item.videolibray_emergency_urls: # Hay urls de emergencia?
                     if len(item.emergency_urls) > 1 and item.emergency_urls[1]:
                         matches = item.emergency_urls[1]                        # Restauramos matches de vídeos
+                    elif len(item.emergency_urls) == 1 and item.emergency_urls[0]:
+                        matches = item.emergency_urls[0]                        # Restauramos matches de vídeos - OLD FORMAT
                     item.armagedon = True                                       # Marcamos la situación como catastrófica 
                 else:
                     if item.videolibray_emergency_urls:                         # Si es llamado desde creación de Videoteca...
@@ -659,7 +672,7 @@ def findvideos(item):
                         return itemlist                                 # si no hay más datos, algo no funciona, pintamos lo que tenemos
             
             # Obtenemos el enlace final
-            scrapedurl = urlparse.urljoin(host, generictools.convert_url_base64(scrapertools.find_single_match(data_torrent, patron_torrent)))
+            scrapedurl = generictools.convert_url_base64(scrapertools.find_single_match(data_torrent, patron_torrent), host_torrent)
 
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
@@ -704,14 +717,14 @@ def findvideos(item):
         # Restauramos urls de emergencia si es necesario
         local_torr = ''
         if item.emergency_urls and not item.videolibray_emergency_urls:
-            item_local.torrent_alt = item.emergency_urls[0][0]                  # Guardamos la url del .Torrent ALTERNATIVA
+            item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0])     # Guardamos la url ALTERNATIVA
             from core import filetools
             if item.contentType == 'movie':
                 FOLDER = config.get_setting("folder_movies")
             else:
                 FOLDER = config.get_setting("folder_tvshows")
             if item.armagedon:
-                item_local.url = item.emergency_urls[0][0]                      # Restauramos la url
+                item_local.url = item_local.torrent_alt                         # Restauramos la url
                 local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
             if len(item.emergency_urls[0]) > 1:
                 del item.emergency_urls[0][0]
@@ -731,7 +744,7 @@ def findvideos(item):
                 size = generictools.get_torrent_size(item_local.url, local_torr=local_torr, post=post, headers=headers, referer=referer)     
                 if 'ERROR' in size and item.emergency_urls and not item.videolibray_emergency_urls:
                     item_local.armagedon = True
-                    item_local.url = item.emergency_urls[0][0]                  # Restauramos la url
+                    item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0])     # Restauramos la url
                     local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
                     size = generictools.get_torrent_size(item_local.url, local_torr=local_torr, post=post, headers=headers, referer=referer)
         if size:
@@ -866,8 +879,11 @@ def episodios(item):
         season_display = item.from_num_season_colapse
 
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
+    idioma = idioma_busqueda
+    if 'VO' in str(item.language):
+        idioma = idioma_busqueda_VO
     try:
-        tmdb.set_infoLabels(item, True, idioma_busqueda=idioma_busqueda)
+        tmdb.set_infoLabels(item, True, idioma_busqueda=idioma)
     except:
         pass
         
@@ -899,6 +915,8 @@ def episodios(item):
     if search_seasons and season_display == 0 and item.infoLabels['tmdb_id'] and max_temp > 1:
         # Si hay varias temporadas, buscamos todas las ocurrencias y las filtraos por TMDB y calidad
         list_temp = generictools.find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo)
+    elif item.url not in str(list_temps):
+        list_temps.append(item.url)
 
     if not list_temp:
         list_temp = list_temps[:]                                               # Lista final de Temporadas a procesar
@@ -946,7 +964,8 @@ def episodios(item):
         #logger.debug(data)
 
         # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
-        for scrapedlang, temp_epi, scrapedpassword, scrapedquality, scrapedurl in matches:
+        for scrapedlang, temp_epi, scrapedpassword, scrapedquality, scrapedurl_la in matches:
+            scrapedurl = generictools.convert_url_base64(scrapedurl_la, host_torrent)
 
             item_local = item.clone()
             item_local.action = "findvideos"
@@ -1053,7 +1072,7 @@ def episodios(item):
 
     if not item.season_colapse:                                                 # Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
-        tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma_busqueda)
+        tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma)
 
         # Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
         item, itemlist = generictools.post_tmdb_episodios(item, itemlist)

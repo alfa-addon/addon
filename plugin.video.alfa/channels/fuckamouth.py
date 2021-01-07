@@ -47,7 +47,7 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<div class="item large-3.*?'
+    patron = '<div class="item large-2.*?'
     patron += '<a href="([^"]+)".*?'
     patron += '<img src="([^"]+)" alt="([^"]+)".*?'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -64,12 +64,13 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<div class="post-thumb">.*?'
+    patron = '<div class="item large-3.*?'
     patron += '<a href="([^"]+)".*?'
     patron += '<img src="([^"]+)" alt="([^"]+)".*?'
     patron += '<div class="thumb-stats pull-left">(.*?)<div class="thumb-stats pull-right">.*?'
     patron += '<span>([^>]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
+    logger.debug(matches)
     for scrapedurl,scrapedthumbnail,scrapedtitle,quality,time in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
         thumbnail = urlparse.urljoin(item.url,scrapedthumbnail)

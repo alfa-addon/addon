@@ -4,7 +4,7 @@
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "http://www.mejortorrentt.net/imagenes_web/bicho6.jpg",
+  "thumbnail": "https://www.mejortorrentt.net/imagenes_web/bicho6.jpg",
   "categories": [
     "torrent",
     "movie",
@@ -21,8 +21,8 @@
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "mejortorrentt.net",
-        "mejortorrent1.net"
+        "mejortorrents.net",
+        "mejortorrent.one"
       ]
     },{
       "id": "alternate_domain",

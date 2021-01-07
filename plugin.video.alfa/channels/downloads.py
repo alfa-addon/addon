@@ -16,6 +16,7 @@ import time
 import unicodedata
 import traceback
 import inspect
+import threading
 
 
 from core import filetools
@@ -261,7 +262,7 @@ def clean_ready(item):
             download_item = Item().fromjson(filetools.read(filetools.join(DOWNLOAD_LIST_PATH, fichero)))
             if not item.contentType == "tvshow" or (
                             item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
-                if download_item.downloadStatus == STATUS_CODES.completed and download_item.downloadProgress not in [1, 2, 3]:
+                if download_item.downloadStatus == STATUS_CODES.completed and download_item.downloadProgress not in [-1, 1, 2, 3]:
                     filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, fichero))
 
     platformtools.itemlist_refresh()
@@ -276,6 +277,11 @@ def restart_error(item):
             if not item.contentType == "tvshow" or (
                             item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
                 if download_item.downloadStatus == STATUS_CODES.error:
+                    
+                    logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
+                                    download_item.contentAction, download_item.contentChannel, download_item.downloadProgress, 
+                                    download_item.downloadQueued, download_item.server, download_item.url))
+                    
                     if download_item.server == 'torrent':
                         delete_torrent_session(download_item, delete_RAR=False, action='reset')
                         download_item.downloadServer = {}
@@ -310,8 +316,13 @@ def restart_all(item):
             if not item.contentType == "tvshow" or (
                             item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
 
+                logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
+                                    download_item.contentAction, download_item.contentChannel, download_item.downloadProgress, 
+                                    download_item.downloadQueued, download_item.server, download_item.url))
+                
                 if download_item.server == 'torrent':
-                    delete_torrent_session(download_item, delete_RAR=False, action='reset')
+                    if download_item.downloadProgress != 0:
+                        delete_torrent_session(download_item, delete_RAR=False, action='reset')
                     download_item.downloadServer = {}
                 
                 else:
@@ -329,7 +340,7 @@ def restart_all(item):
                     contentAction = 'findvideos'
                 update_control(fichero,
                             {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, \
-                                        "downloadProgress": 0, "downloadQueued": download_item.downloadQueued, \
+                                        "downloadProgress": 0, "downloadQueued": 0, \
                                         "contentAction": contentAction}, function='restart_all')
 
     platformtools.itemlist_refresh()
@@ -344,17 +355,15 @@ def pause_all(item):
             if not item.contentType == "tvshow" or (
                             item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
 
-                if download_item.server == 'torrent' and download_item.downloadProgress > -1:
+                if download_item.server == 'torrent' and download_item.downloadProgress > 0 and download_item.downloadProgress < 100:
                     delete_torrent_session(download_item, delete_RAR=False, action='pause')
-                else:
-                    return
 
-                contentAction = download_item.contentAction
-                if download_item.contentAction == 'play' and not download_item.downloadServer and not download_item.torr_folder:
-                    contentAction = 'findvideos'
-                update_control(fichero,
-                            {"downloadCompleted": 0, "downloadProgress": -1, "downloadQueued": 0, \
-                                        "contentAction": contentAction}, function='pause_all')
+                    contentAction = download_item.contentAction
+                    if download_item.contentAction == 'play' and not download_item.downloadServer and not download_item.torr_folder:
+                        contentAction = 'findvideos'
+                    update_control(fichero,
+                                {"downloadCompleted": 0, "downloadProgress": -1, "downloadQueued": 0, \
+                                            "contentAction": contentAction}, function='pause_all')
 
     platformtools.itemlist_refresh()
 
@@ -376,13 +385,25 @@ def download_all(item):
                             STATUS_CODES.control] and (download_item.downloadProgress <= 0 \
                             or download_item.downloadQueued > 0)):
                     
-                    if download_item.downloadQueued == 0 and download_item.downloadProgress != 100:
+                    logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
+                                    download_item.contentAction, download_item.contentChannel, download_item.downloadProgress, 
+                                    download_item.downloadQueued, download_item.server, download_item.url))
+                    
+                    if download_item.downloadQueued == 0 and download_item.downloadProgress <= 0:
                         download_item.downloadQueued = 1
                         res = filetools.write(filetools.join(DOWNLOAD_LIST_PATH, fichero), download_item.tojson())
                         if res: second_pass = True
                     
-                    elif not second_pass:
-                        res = start_download(download_item)
+                    elif not second_pass and download_item.downloadQueued > 0 and download_item.downloadProgress <= 0:
+                        download_item.downloadQueued = 0
+                        if download_item.downloadStatus == 0: item.downloadStatus = STATUS_CODES.completed
+                        res = filetools.write(filetools.join(DOWNLOAD_LIST_PATH, fichero), download_item.tojson())
+                        res = STATUS_CODES.stoped
+                        try:
+                            threading.Thread(target=start_download, args=(download_item, )).start()     # Creamos un Thread independiente
+                            time.sleep(3)                                       # Dejamos terminar la inicialización...
+                        except:
+                            logger.error(traceback.format_exc())
                         platformtools.itemlist_refresh()
                         # Si se ha cancelado paramos y desencolamos
                         if res == STATUS_CODES.canceled:
@@ -417,7 +438,7 @@ def download_auto(item, start_up=False):
                 PATH = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
 
             if download_item.downloadStatus in [STATUS_CODES.auto]:
-                if download_item.downloadQueued == 0 and download_item.downloadProgress != 100:
+                if download_item.downloadQueued == 0 and download_item.downloadProgress <= 0:
                     download_item.downloadQueued = 1
                     res = filetools.write(filetools.join(DOWNLOAD_LIST_PATH, fichero), download_item.tojson())
                     if res: second_pass = True
@@ -436,8 +457,15 @@ def download_auto(item, start_up=False):
                                     if res: second_pass = False
                                     break
 
-                elif not second_pass and not start_up and download_item.downloadProgress != 100:
-                    res = start_download(download_item)
+                elif not second_pass and not start_up and download_item.downloadQueued > 0 and download_item.downloadProgress <= 0:
+                    download_item.downloadQueued = 0
+                    res = filetools.write(filetools.join(DOWNLOAD_LIST_PATH, fichero), download_item.tojson())
+                    res = STATUS_CODES.stoped
+                    try:
+                        threading.Thread(target=start_download, args=(download_item, )).start()     # Creamos un Thread independiente
+                        time.sleep(3)                                           # Dejamos terminar la inicialización...
+                    except:
+                        logger.error(traceback.format_exc())
                     if res == STATUS_CODES.canceled: break
     
     if second_pass and not start_up:
@@ -540,7 +568,11 @@ def menu(item):
 
             update_control(item.path, {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, "downloadProgress": 0,
                                 "downloadQueued": 0, "downloadServer": {}}, function='menu_op[2,3,5]')
-        item.downloadProgress = 0
+        
+        if opciones[seleccion] == op[3]:
+            item.downloadProgress = -1
+        else:
+            item.downloadProgress = 0
         item.downloadQueued = 0
     
     # Eliminar TODO
@@ -611,13 +643,14 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
         elif item.url_control and not item.url_control.startswith('http'):
             filebase = filetools.basename(item.url_control).upper()
         if filebase:
+            filebase = filebase.replace('.TORRENT', '.torrent')
             file = filetools.join(torrent_paths[torr_client+'_torrents'], filebase)
             if filetools.exists(file):
                 if action == 'reset':
-                    res = filetools.rename(file, filetools.basename(file).replace('.TORRENT', '.RESET')\
+                    res = filetools.rename(file, filetools.basename(file).replace('.TORRENT', '.reset')\
                                         .replace('.torrent', '.reset'), strict=True, silent=True)
                 elif action == 'pause':
-                    res = filetools.rename(file, filetools.basename(file).replace('.TORRENT', '.PAUSE')\
+                    res = filetools.rename(file, filetools.basename(file).replace('.TORRENT', '.pause')\
                                         .replace('.torrent', '.pause'), strict=True, silent=True)
                 else:
                     res = filetools.remove(file, silent=True)
@@ -626,15 +659,20 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
                     logger.error('ERROR Renombrando a -%s- el .torrent %s' % (action, filetools.listdir(filetools.dirname(file))))
                 else:
                     #Espera a que el gestor termine de borrar la sesion (timing...)            
-                    time.sleep(8)
-                    
-                    # Restaura el torrent para seguir la descarga (debería haberlo hecho el gestor de torrent...)
-                    if action == 'reset':
-                        res = filetools.rename(file.replace('.TORRENT', '.RESET').replace('.torrent', '.reset'), \
-                                            filetools.basename(file), strict=True, silent=True)
-                    elif action == 'pause':
-                        res = filetools.rename(file.replace('.TORRENT', '.PAUSE').replace('.torrent', '.pause'), \
-                                            filetools.basename(file), strict=True, silent=True)
+                    time.sleep(5)
+                    file_torrent = filetools.basename(file).split('.')[0]
+                    for x in range(30):
+                        for file_act in filetools.listdir(torrent_paths[torr_client+'_torrents']):
+                            if file_torrent in file_act:
+                                time.sleep(1)
+                                break
+                        else:
+                            break
+
+                    # Borra el torrent (debería haberlo hecho el gestor de torrent...)
+                    if action in ['reset', 'pause']:
+                        res = filetools.remove(file.replace('.TORRENT', '.RESET').replace('.torrent', '.reset'), silent=True)
+                        res = filetools.remove(file.replace('.TORRENT', '.PAUSE').replace('.torrent', '.pause'), silent=True)
 
         downloadFilename = scrapertools.find_single_match(item.downloadFilename, '\:\w+\:\s*(.*?)$')
         if downloadFilename and delete_RAR and action != 'pause':
@@ -661,6 +699,8 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
         item.url = item.url_control
     update_control(item.path, {"downloadStatus": item.downloadStatus, "downloadProgress": downloadProgress, "downloadQueued": 0,
                                 "downloadServer": {}, "url": item.url}, function='delete_torrent_session_aft')
+    
+    config.set_setting("RESTART_DOWNLOADS", True, "downloads")                  # Forzamos restart downloads
     
     return torr_data, deamon_url, index
 
@@ -1028,7 +1068,7 @@ def download_from_server(item, silent=False):
         item.downloadServer = {"url": item.url, "server": item.server}
         if item.downloadProgress != -1:
             item.downloadProgress = 1
-        item.downloadQueued = 1
+        item.downloadQueued = 0
         if item.downloadStatus == 0:
             item.downloadStatus = STATUS_CODES.completed
         item.downloadCompleted = 0
@@ -1079,8 +1119,8 @@ def download_from_server(item, silent=False):
 
 
 def download_from_best_server(item, silent=False):
-    logger.info(
-        "contentAction: %s | contentChannel: %s | url: %s" % (item.contentAction, item.contentChannel, item.url))
+    logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
+        item.contentAction, item.contentChannel, item.downloadProgress, item.downloadQueued, item.server, item.url))
 
     if item.sub_action in ["auto"]: silent=True
     result = {"downloadStatus": STATUS_CODES.error}
@@ -1140,8 +1180,8 @@ def download_from_best_server(item, silent=False):
 
 
 def select_server(item):
-    logger.info(
-        "contentAction: %s | contentChannel: %s | url: %s" % (item.contentAction, item.contentChannel, item.url))
+    logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
+        item.contentAction, item.contentChannel, item.downloadProgress, item.downloadQueued, item.server, item.url))
 
     progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70179))
     channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
@@ -1173,8 +1213,8 @@ def select_server(item):
 
 
 def start_download(item):
-    logger.info(
-        "contentAction: %s | contentChannel: %s | url: %s" % (item.contentAction, item.contentChannel, item.url))
+    logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
+        item.contentAction, item.contentChannel, item.downloadProgress, item.downloadQueued, item.server, item.url))
 
     # Ya tenemnos server, solo falta descargar
     if item.contentAction == "play":
@@ -1453,7 +1493,10 @@ def get_episodes(item):
         if len(itemlist) > 1:
             itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
         if item.infoLabels["tmdb_id"] and item.infoLabels["tmdb_id"] != null:
-            tmdb.set_infoLabels(itemlist, True, idioma_busqueda='es,en')
+            idioma = 'es'
+            if 'VO' in str(item.language):
+                idioma = 'es,en'
+            tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma)
     except:
         logger.error(traceback.format_exc(1))
 
