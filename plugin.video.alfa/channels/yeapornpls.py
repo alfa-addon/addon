@@ -19,7 +19,6 @@ from core import httptools
 
 host = 'https://pornwild.to' # 'https://0dayporn.com'
 
-        # KTP no resuelve
 
 def mainlist(item):
     logger.info()
@@ -36,7 +35,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/search/%s/" % (host, texto)
+    item.url = "%s/search/%s/?sort_by=post_date" % (host, texto)
     try:
         return lista(item)
     except:
@@ -53,18 +52,22 @@ def categorias(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a class="item".*?'
     patron += 'href="([^"]+)" title="([^"]+)".*?'
-    patron += 'src="([^"]+)".*?'
+    patron += '<div class="img">(.*?)</div>.*?'
     patron += '<div class="videos">([^<]+) videos<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
-        thumbnail = scrapedthumbnail
+        if "src=" in scrapedthumbnail:
+            thumbnail = scrapertools.find_single_match(scrapedthumbnail, 'src="([^"]+)"')
+        else:
+            thumbnail = ""
         title = "%s (%s)" %(scrapedtitle,cantidad)
         url = urlparse.urljoin(host,scrapedurl)
-        itemlist.append(item.clone(action="lista", title=title, url=url,
-                              fanart=thumbnail, thumbnail=thumbnail, plot="") )
+        itemlist.append(item.clone(action="lista", title=title, url=url, fanart=thumbnail, thumbnail=thumbnail, plot="") )
+    if "categories" in item.url:
+        itemlist.sort(key=lambda x: x.title)
     next_page = scrapertools.find_single_match(data, '<div class="load-more".*?<a href="([^"]+)"')
     if "#" in next_page:
-        next_page = scrapertools.find_single_match(data, 'data-parameters="([^"]+)">Next')
+        next_page = scrapertools.find_single_match(data, 'data-parameters="([^"]+)"')
         next_page = next_page.replace(":", "=").replace(";", "&").replace("+from_albums", "")
         next_page = "?%s" % next_page
     if next_page:
@@ -93,10 +96,9 @@ def lista(item):
         plot = ""
         itemlist.append(item.clone(action="play", title=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=plot, contentTitle = title))
-                              
     next_page = scrapertools.find_single_match(data, '<div class="load-more".*?<a href="([^"]+)"')
     if "#" in next_page:
-        next_page = scrapertools.find_single_match(data, 'data-parameters="([^"]+)">Next')
+        next_page = scrapertools.find_single_match(data, '<div class="load-more".*?data-parameters="([^"]+)"')
         next_page = next_page.replace(":", "=").replace(";", "&").replace("+from_albums", "")
         next_page = "?%s" % next_page
     if next_page:
