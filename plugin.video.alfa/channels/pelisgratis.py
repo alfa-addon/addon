@@ -59,8 +59,8 @@ list_quality = ['BRRip', 'HDRip', 'DVD-R', 'HDTv-rip', 'BR-Screener',
 
 list_servers = ['upstream', 'vidfast', 'okru', 'zplayer']
 
-#host = 'http://pelisgratis.live/'
-host = 'http://pelisap.com/'
+host = 'http://pelisgratis.nu/'
+#host = 'http://pelisap.com/'
 
 
 def mainlist(item):
