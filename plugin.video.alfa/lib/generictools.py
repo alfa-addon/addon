@@ -165,11 +165,11 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
     return (data, success, code, item, itemlist)
 
 
-def convert_url_base64(url):
-    logger.info()
+def convert_url_base64(url, host=''):
+    logger.info('URL: ' + url + ', HOST: ' + host)
 
     url_base64 = url
-    if not 'magnet:' in url_base64 and not '.torrent' in url_base64:
+    if len(url_base64) > 1 and not 'magnet:' in url_base64 and not '.torrent' in url_base64:
         patron_php = 'php(?:#|\?u=)(.*?$)'
         if scrapertools.find_single_match(url_base64, patron_php):
             url_base64 = scrapertools.find_single_match(url_base64, patron_php)
@@ -179,10 +179,18 @@ def convert_url_base64(url):
                 url_base64 = base64.b64decode(url_base64).decode('utf-8')
             logger.info('Url base64 después de 20 pasadas (incompleta): %s' % url_base64)
         except:
-            logger.info('Url base64 convertida: %s' % url_base64)
+            if url_base64 and url_base64 != url: logger.info('Url base64 convertida: %s' % url_base64)
             #logger.error(traceback.format_exc())
             if not url_base64:
                 url_base64 = url
+                
+    if host and host not in url_base64 and not url_base64.startswith('magnet:'):
+        url_base64 = urlparse.urljoin(host, url_base64)
+        if url_base64 != url:
+            host_name = scrapertools.find_single_match(url_base64, '(http.*\:\/\/(?:.*ww[^\.]*)?\.?[^\.]+\.\w+(?:\.\w+)?)(?:\/|\?|$)')
+            url_base64 = re.sub(host_name, host, url_base64)
+            logger.info('Url base64 urlparsed: %s' % url_base64)
+        
     
     return url_base64
 
@@ -3076,7 +3084,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 
                 if url_org == '*':                                              #Si se quiere cambiar desde cualquier url ...
                     url_host = scrapertools.find_single_match(url_total, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
-                    url_total = url_total.replace(url_host, url_des)            #reemplazamos una parte de url
+                    if url_host: url_total = url_total.replace(url_host, url_des)   #reemplazamos una parte de url
                 elif url_des.startswith('http'):
                     if item.channel != channel_py or (item.channel == channel_py \
                             and item.category.lower() == canal_org):
@@ -3084,7 +3092,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                             'http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+(.*?$)')     #quitamos el http*:// inicial
                         url_total = urlparse.urljoin(url_des, url_total)        #reemplazamos una parte de url
                 else:
-                    url_total = url_total.replace(url_org, url_des)             #reemplazamos una parte de url
+                    if url_host: url_total = url_total.replace(url_org, url_des)    #reemplazamos una parte de url
                 url = ''
                 if patron1:                                                     #Hay expresión regex?
                     url += scrapertools.find_single_match(url_total, patron1)   #La aplicamos a url

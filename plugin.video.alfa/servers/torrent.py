@@ -476,7 +476,10 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     
     if not dp_cerrado:
         if rar or bkg_user:
-            progreso.update(100, config.get_localized_string(70200), " ")
+            if torrent_paused:
+                progreso.update(100, "Pausando Torrent... ", " ")
+            else:
+                progreso.update(100, config.get_localized_string(70200), " ")
         else:
             progreso.update(100, config.get_localized_string(70200) + '\n' + " " + '\n' + " " )
 
@@ -1313,6 +1316,8 @@ def restart_unfinished_downloads():
                         item = Item(path=filetools.join(DOWNLOAD_LIST_PATH, fichero)).fromjson(
                             filetools.read(filetools.join(DOWNLOAD_LIST_PATH, fichero)))
                         torr_client = torrent_paths['TORR_client'].upper()
+                        if not torr_client and item.downloadFilename:
+                            torr_client = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:')
                         
                         if item.contentType == 'movie':
                             title = item.infoLabels['title']
@@ -1340,7 +1345,7 @@ def restart_unfinished_downloads():
                         if (item.downloadProgress < 4 and init) or (item.downloadQueued > 0 \
                                             and item.downloadProgress < 4) or item.downloadCompleted == 1:
 
-                            if item.downloadServer and 'url' in str(item.downloadServer):
+                            if 'url' in str(item.downloadServer) and torr_client:
                                 new_torrent_url = filetools.join(torrent_paths[torr_client+'_torrents'], \
                                             filetools.basename(item.downloadServer['url']).upper())
                                 if filetools.exists(new_torrent_url):

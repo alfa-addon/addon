@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------
-# Conector hclips By Alfa development Group
+# Conector txx2 By Alfa development Group
 # --------------------------------------------------------
 import sys
 PY3 = False
@@ -15,7 +15,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
     if "<h2>WE ARE SORRY</h2>" in data or '<title>404 Not Found</title>' in data:
-        return False, config.get_localized_string(70449) % "hdzog"
+        return False, config.get_localized_string(70449) % "TXX2"
     global server, vid
     server = scrapertools.find_single_match(page_url, '([A-z0-9-]+).com')
     vid = scrapertools.find_single_match(page_url, r'(?:embed|videos)/([0-9]+)')

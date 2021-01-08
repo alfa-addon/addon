@@ -162,15 +162,21 @@ def categorias(item):
         title = "%s (%s)" % (title, vids)
         thumbnail = item.thumbnail
         url = urlparse.urljoin(item.url, scrapedurl)
-        itemlist.append(item.clone(action="videos", title=title, url=url, fanart=thumbnail, thumbnail=thumbnail,
-                             viewmode="movie_with_plot", folder=True))
+        itemlist.append(item.clone(action="videos", title=title, url=url, contentTile = title, 
+                                  fanart=thumbnail, thumbnail=thumbnail, viewmode="movie_with_plot"))
     return itemlist
 
 
 def play(item):
     itemlist = []
+    itemlist = []
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '"quality":"[^"]+","videoUrl":"([^"]+)"').replace('\\', '')
-    itemlist.append(item.clone(url=url, title=item.contentTile))
+    logger.debug(data)
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    patron = '"mp4","videoUrl":"([^"]+)","quality":"([^"]+)"'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    for url,quality in matches:
+        url = url.replace("\/", "/")
+        itemlist.append(['.mp4 %s' %quality, url])
     return itemlist
 

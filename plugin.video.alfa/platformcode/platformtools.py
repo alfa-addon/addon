@@ -1258,7 +1258,7 @@ def play_torrent(item, xlistitem, mediaurl):
 
     # Opciones disponibles para Reproducir torrents
     torrent_options = list()
-    torrent_options.append(["Cliente interno (necesario libtorrent)"])
+    torrent_options.append(["Cliente interno (necesario libtorrent) BT"])
     torrent_options.append(["Cliente interno MCT (necesario libtorrent)"])
 
     torrent_options.extend(torrent_client_installed(show_tuple=True))
@@ -1266,18 +1266,33 @@ def play_torrent(item, xlistitem, mediaurl):
     torrent_client = config.get_setting("torrent_client", server="torrent")
 
     if torrent_client and torrent_client - 1 <= len(torrent_options):
-        if torrent_client == 0:
+        if torrent_client == 0 and not scrapertoolsV2.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
             seleccion = dialog_select(config.get_localized_string(70193), [opcion[0] for opcion in torrent_options])
+        elif torrent_client == 0 and scrapertoolsV2.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
+            t_client_dnl = scrapertoolsV2.find_single_match(item.downloadFilename, '^\:(\w+)\:').upper()
+            for x, t_client in enumerate(torrent_options):
+                if t_client_dnl in t_client[0].upper():
+                    seleccion = x
+                    break
+            else:
+                seleccion = 0
         else:
             seleccion = torrent_client - 1
     else:
-        if len(torrent_options) > 1:
+        if len(torrent_options) > 1 and not scrapertoolsV2.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
             seleccion = dialog_select(config.get_localized_string(70193), [opcion[0] for opcion in torrent_options])
+        elif scrapertoolsV2.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
+            t_client_dnl = scrapertoolsV2.find_single_match(item.downloadFilename, '^\:(\w+)\:').upper()
+            for x, t_client in enumerate(torrent_options):
+                if t_client_dnl in t_client[0].upper():
+                    seleccion = x
+                    break
+            else:
+                seleccion = 0
         else:
             seleccion = 0
 
     # Si Libtorrent ha dado error de inicialización, no se pueden usar los clientes internos
-    torrent_paths = torrent.torrent_dirs()
     UNRAR = config.get_setting("unrar_path", server="torrent", default="")
     LIBTORRENT = config.get_setting("libtorrent_path", server="torrent", default='')
     LIBTORRENT_in_use_local = False
@@ -1296,7 +1311,6 @@ def play_torrent(item, xlistitem, mediaurl):
     rar_path = ''
     if item.password:
         size_rar = 3
-    torr_client = scrapertoolsV2.find_single_match(torrent_options[seleccion][0], ':\s*(\w+)').lower()
     if item.contentType == 'movie':
         folder = config.get_setting("folder_movies")                            # películas
     else:
@@ -1305,6 +1319,8 @@ def play_torrent(item, xlistitem, mediaurl):
     PATH_videos = filetools.join(videolibrary_path, folder)
     DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath")
     
+    torrent_paths = torrent.torrent_dirs()
+    torr_client = scrapertoolsV2.find_single_match(torrent_options[seleccion][0], ':\s*(\w+)').lower()
     # Descarga de torrents a local
     if 'interno (necesario' in torrent_options[seleccion][0]:
         torr_client = 'BT'
@@ -1559,7 +1575,7 @@ def play_torrent(item, xlistitem, mediaurl):
                         if torr_client in ['quasar', 'elementum']:
                             torr_data, deamon_url, index = torrent.get_tclient_data(video_path, \
                                         torr_client, torrent_paths['ELEMENTUM_port'], action='delete')
-                        elif torr_client in ['BT', 'MCT'] and 'url' in item.downloadServer:
+                        elif torr_client in ['BT', 'MCT'] and 'url' in str(item.downloadServer):
                             file_t = scrapertoolsV2.find_single_match(item.downloadServer['url'], '\w+\.torrent$').upper()
                             if file_t:
                                 filetools.remove(filetools.join(torrent_paths[torr_client.upper()+'_torrents'], file_t))
