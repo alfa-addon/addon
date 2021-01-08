@@ -1341,6 +1341,7 @@ def play_torrent(item, xlistitem, mediaurl):
             seleccion = dialog_select(config.get_localized_string(70193), [opcion[0] for opcion in torrent_options])
             if seleccion < 2:
                 return
+            torr_client = scrapertoolsV2.find_single_match(torrent_options[seleccion][0], ':\s*(\w+)').lower()
         else:
             item.downloadProgress = 100
             torrent.update_control(item, function='play_torrent_no_libtorrent')
@@ -1352,9 +1353,10 @@ def play_torrent(item, xlistitem, mediaurl):
                                                                                     % torr_client).getSetting(
                                                                                     'download_storage') == '1')):
         if dialog_yesno(torr_client, 'Este plugin externo no soporta extraer on-line archivos RAR', \
-                        '[COLOR yellow]¿Quiere que usemos esta vez el Cliente interno MCT?[/COLOR]', \
+                        '[COLOR yellow]¿Quiere que usemos esta vez el Cliente interno BT?[/COLOR]', \
                         'Esta operación ocupará en disco [COLOR yellow][B]%s+[/B][/COLOR] veces el tamaño del vídeo' % size_rar):
-            seleccion = 1
+            seleccion = 0
+            torr_client = 'BT'
         else:
             item.downloadProgress = 100
             torrent.update_control(item, function='play_torrent_no_rar')
@@ -1463,8 +1465,8 @@ def play_torrent(item, xlistitem, mediaurl):
                 if "torrentin" in torr_client:
                     item.url = 'file://' + item.url
 
-        if not url and not url_local and item.torrent_alt:              # Si hay error, se busca un .torrent alternativo
-            item.url = item.torrent_alt                                 # El .torrent alternativo puede estar en una url o en local
+        if not url and not url_local and item.torrent_alt:                      # Si hay error, se busca un .torrent alternativo
+            item.url = item.torrent_alt                                         # El .torrent alternativo puede estar en una url o en local
         
         if not url_local and videolibrary_path and not videolibrary_path in item.url and \
                             not torrent_paths[torr_client.upper()+'_torrents'] in item.url and \
@@ -1473,8 +1475,8 @@ def play_torrent(item, xlistitem, mediaurl):
             url_local = filetools.exists(item.url)
 
         # Si es un archivo .torrent local, actualizamos el path relativo a path absoluto
-        if url_local and not url_stat and videolibrary_path:            # .torrent alternativo local
-            if filetools.copy(item.url, torrents_path, silent=True):    # se copia a la carpeta generíca para evitar problemas de encode
+        if url_local and not url_stat and videolibrary_path:                    # .torrent alternativo local
+            if filetools.copy(item.url, torrents_path, silent=True):            # se copia a la carpeta generíca para evitar problemas de encode
                 item.url = torrents_path
 
             if not item.subtitle:
@@ -1493,7 +1495,7 @@ def play_torrent(item, xlistitem, mediaurl):
             if url and url != item.url:
                 filetools.remove(torrents_path, silent=True)
                 item.url = url
-            if "torrentin" in torrent_options[seleccion][0]:            # Si es Torrentin, hay que añadir un prefijo
+            if "torrentin" in torrent_options[seleccion][0]:                    # Si es Torrentin, hay que añadir un prefijo
                 item.url = 'file://' + item.url
 
         if not item.torrent_info: item.torrent_info = size
