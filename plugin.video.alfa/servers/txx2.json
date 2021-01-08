@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://hdzog.com/embed/[0-9]+)",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://(?:upornia|hdzog).com/videos/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(https://(?:hotmovs|upornia|vjav).com/videos/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "hdzog",
-  "name": "hdzog",
+  "id": "txx2",
+  "name": "txx2",
   "settings": [
     {
       "default": false,

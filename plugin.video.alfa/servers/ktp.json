@@ -4,15 +4,15 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:www.|)(?:0dayporn|submityourflicks|3movs|xtits|sleazyneasy|babestube|wankoz|vikiporn|katestube|pornhat).com/video(?:s|)/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:0dayporn|submityourflicks|3movs|xtits|sleazyneasy|babestube|wankoz|vikiporn|katestube|pornhat|pornomovies|lesbian8|pornsexer|pornmega|xxxymovies).com/video(?:s|)/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:javbangers|fapnado|xozilla|camwhoresbay|pornrewind|dato.porn|megatube|zbporn)(?:.com|.xxx|)/(?:video|videos)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:javbangers|fapnado|xozilla|camwhoresbay|pornrewind|dato.porn|megatube|zbporn|momvids|wankoz|4kporn|freeporn8|porndictator|fapster|rat|pornwhite|pornicom)(?:.com|.xxx|)/(?:video|videos)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.vipporns.com/videos/[A-z0-9-]+/)",
+        "pattern": "(https://www.(?:vipporns|porngem).com/videos/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
@@ -52,7 +52,19 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://pornwild.to/videos/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(https://www.crockotube.com/watch/[A-z0-9-]+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(?:http|https)://www.sexvid.xxx/([A-z0-9-]+.html)",
+        "url": "https://www.sexvid.xxx/\\1"
+      },
+      {
+        "pattern": "(https://www.teenpornvideo.sex/videos/[0-9]+/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://pornwild.to(?:/es|)/videos/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       }
       ]
