@@ -30,8 +30,12 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     unpacked = jsunpack.unpack(packed)
     video_urls = []
 
-    video_info = scrapertools.find_multiple_matches(unpacked, r'{(file:.*?)}')
-    subtitulo = scrapertools.find_single_match(unpacked, r'tracks:\s*\[{file:"([^"]+)"')
+    video_srcs = scrapertools.find_single_match(unpacked, "sources:\[[^\]]+\]")
+    video_info = scrapertools.find_multiple_matches(video_srcs, r'{(file:.*?)}')
+    try:
+        subtitulo = scrapertools.find_single_match(unpacked, r'{file:"([^"]+)",label:"[^"]+",kind:"captions"')
+    except:
+        subtitulo = ""
 
     for info in video_info:
         
@@ -47,6 +51,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         if extension == ".mpd":
             video_urls.append(["%s %s [StreamSB]" % (extension, label), video_url, 0, '', "mpd"])
         else:
-            video_urls.append(["%s %s [StreamSB]" % (extension, label), video_url])
+            video_urls.append(["%s %s [StreamSB]" % (extension, label), video_url, 0, subtitulo])
 
     return video_urls
