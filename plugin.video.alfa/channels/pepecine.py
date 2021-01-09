@@ -25,9 +25,9 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['rapidvideo', 'verystream', 'streamplay']
 
-host = 'https://verencasa.com/'
+host = 'https://pepecine.com/'
 referer = 'https://pepecine.to/'
-sec_host = 'https://pepechino.hopto.org/'
+sec_host = host #'https://pepechino.hopto.org/'
 
 
 def mainlist(item):

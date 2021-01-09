@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:ilovefembed|fembed|fembad|feurl|youtvgratis|myurlshort|videobb|femax20|cloudyport).\\w{2,4}/(?:f|v)/([A-z0-9_-]+)",
-        "url": "https://www.fembed.com/api/source/\\1"
-      },
-      {
-        "pattern": "(?:animekao|sypl|xstreamcdn).\\w{2,4}/(?:f|v)/([A-z0-9_-]+)",
-        "url": "https://www.fembed.com/api/source/\\1"
+        "pattern": "(https://videos.sh/embed-\\w+.html)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "fembed",
-  "name": "Fembed",
+  "id": "videossh",
+  "name": "videossh",
   "settings": [
     {
       "default": false,
@@ -42,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/j2NYkByx/fembed.png",
-  "version": 1
+  "thumbnail": "https://videos.sh/xfst_images/logo.png"
 }

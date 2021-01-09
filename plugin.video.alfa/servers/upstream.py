@@ -36,7 +36,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     matches = re.compile(patron, re.DOTALL).findall(data)
     for url in matches:
         ext = url[-4:]
-        if ext == '.srt':
+        if ext == '.srt' or ext == '.jpg':
             continue
         url += '|Referer=%s' % page_url
         video_urls.append(["%s [Upstream]" % ext, url])
