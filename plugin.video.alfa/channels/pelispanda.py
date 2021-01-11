@@ -298,7 +298,7 @@ def listado(item):                                                              
         
         #Patrón para búsquedas, pelis y series
         patron = '<div\s*class="[^"]+">\s*<div\s*class="card">\s*<a\s*href="([^"]+)"\s*'
-        patron += 'class="card__cover">\s*<img\s*src="([^"]+)"\s*alt="[^"]*">\s*'
+        patron += 'class="card__cover">\s*<img[^>]+src="([^"]+)"\s*alt="[^"]*">\s*'
         patron += '<div\s*class="card__play">.*?<\/div>\s*<ul\s*class="card__list">\s*'
         patron += '<li>([^<]+)<\/li>\s*<\/ul>\s*<\/a>\s*<div\s*class="card__content">\s*'
         patron += '<h3\s*class="card__title"><a\s*href="[^"]+">([^<]+)<\/a><\/h3>'

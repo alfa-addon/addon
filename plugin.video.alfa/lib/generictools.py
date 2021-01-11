@@ -1448,14 +1448,15 @@ def post_tmdb_episodios(item, itemlist):
     return (item, itemlist)
 
 
-def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[]):
+def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[], patron_season='', patron_quality=''):
     logger.info()
     
     # Si hay varias temporadas, buscamos todas las ocurrencias y las filtrados por TMDB, calidad e idioma
     list_temp = []
     itemlist = []
 
-    patron_quality = '(?i)(?:Temporada|Miniserie)(?:-(.*?)(?:\.|-$|$))'
+    if not patron_quality:
+        patron_quality = '(?i)(?:Temporada|Miniserie)(?:-(.*?)(?:\.|\/|-$|$))'
     try:
         item_search = item.clone()
         item_search.extra = 'search'
@@ -1495,6 +1496,11 @@ def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[]):
         if len(list_temps) > 1:
             list_temps = sorted(list_temps)                                     # Clasificamos las urls
             item.url = list_temps[-1]                                           # Guardamos la url de la última Temporada en .NFO
+
+        if not patron_season:
+            patron_season = '(?i)-(\d+)-(?:Temporada|Miniserie)'                # Probamos este patron de temporadas
+            if not scrapertools.find_single_match(list_temps[-1], patron_season):   # Está la Temporada en la url en este formato?
+                patron_season = '(?i)(?:Temporada|Miniserie)-(\d+)'             # ... usamos otro
 
         if max_temp >= max_nfo and item.library_playcounts and modo_ultima_temp_alt:    # Si viene de videoteca, solo tratamos lo nuevo
             for url in list_temps:

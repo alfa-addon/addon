@@ -114,7 +114,8 @@ def list_all(item):
     for elem in matches[first:last]:
         url = elem.a["href"]
         title = elem.find(["div", "ul"], class_="Title").text
-        thumb = elem.img["data-src"]
+        #thumb = elem.img["data-src"]
+        thumb = elem.img["src"]
 
         itemlist.append(Item(channel=item.channel, url=url, title=title, thumbnail=thumb, action="seasons",
                         contentSerieName=title))
@@ -175,7 +176,8 @@ def alpha_list(item):
         return itemlist
     for elem in matches.find_all("tr"):
         info = elem.find("td", class_="MvTbTtl")
-        thumb = elem.img["data-src"]
+        #thumb = elem.img["data-src"]
+        thumb = elem.img["src"]
         url = info.a["href"]
         title = info.a.text.strip()
 

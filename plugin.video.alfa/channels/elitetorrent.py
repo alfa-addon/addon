@@ -32,7 +32,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://www.elitetorrent.nl'
+host = 'https://www.elitetorrent.com'
 channel = "elitetorrent"
 
 categoria = channel.capitalize()

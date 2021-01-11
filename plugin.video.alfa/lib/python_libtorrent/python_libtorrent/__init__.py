@@ -60,9 +60,9 @@ else:
 
 log('dirname: ' +str(dirname))
 
-VERSIONS = ['0.16.19', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.0.11', '1.1.0', '1.1.1', '1.1.6', '1.1.7', '1.2.11', '2.0.1']  ### Alfa
+VERSIONS = ['0.16.19', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.0.11', '1.1.0', '1.1.1', '1.1.6', '1.1.7', '1.2.12', '2.0.2']  ### Alfa
 if platform['system'] in ['linux_armv7', 'linux_aarch64_ucs4']:                 ### Alfa: Removing ARM from v2 list
-    VERSIONS.remove('2.0.1')
+    VERSIONS.remove('2.0.2')
 
 while VERSIONS:
     log('VERSIONS: %s' % str(VERSIONS))

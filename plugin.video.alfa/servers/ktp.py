@@ -22,20 +22,19 @@ def test_video_exists(page_url):
 
     global data, license_code
     data = response.data
-    license_code = scrapertools.find_single_match(response.data, "license_code: '([^']+)'")
+    license_code = scrapertools.find_single_match(response.data, 'license_code:\s*(?:\'|")([^\,]+)(?:\'|")')
     return True, ""
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info()
     itemlist = []
-    # data = httptools.downloadpage(page_url).data
     if "video_url_text" in data:
-        patron = '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
-        patron += '(?:video_url_text|video_alt_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
+        patron = '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?'
+        patron += '(?:video_url_text|video_alt_url_text|video_alt_url[0-9]*_text):\s*(?:\'|")([^\,]+)(?:\'|")'
     else:
-        patron = 'video_url:\s*\'([^\']+)\'.*?'
-        patron += 'postfix:\s*\'([^\']+)\''
+        patron = 'video_url:\s*(?:\'|")([^\,]+)(?:\'|").*?'
+        patron += 'postfix:\s*(?:\'|")([^\,]+)(?:\'|")'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url,quality in matches:
         if not "?login" in url and not "signup" in url:
