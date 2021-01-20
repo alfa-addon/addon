@@ -20,6 +20,10 @@ from core.item import Item
 from core import scrapertools
 from platformcode import logger
 
+# Lista de elementos posibles en el titulo
+color_list = ['movie', 'tvshow', 'year', 'rating_1', 'rating_2', 'rating_3', 'quality', 'cast', 'lat', 'vose',
+              'vos', 'vo', 'server', 'library', 'update', 'no_update']
+
 thumb_dict = {"movies": "https://s10.postimg.cc/fxtqzdog9/peliculas.png",
     "tvshows": "https://s10.postimg.cc/kxvslawe1/series.png",
     "on air":"https://i.postimg.cc/HLLJWMcr/en-emision.png",
@@ -101,7 +105,9 @@ thumb_dict = {"movies": "https://s10.postimg.cc/fxtqzdog9/peliculas.png",
     "western": "https://s10.postimg.cc/5wc1nokjt/western.png"
     }
 
-
+def init_colors():
+    for color in color_list:
+        config.set_setting("%s_color" % (color ), 'white')
 
 def set_genre(string):
     #logger.info()
@@ -233,10 +239,7 @@ def set_color(title, category):
 
     #logger.debug('category antes de remove: %s' % category)
     category = remove_format(category).lower()
-    #logger.debug('category despues de remove: %s' % category)
-    # Lista de elementos posibles en el titulo
-    color_list = ['movie', 'tvshow', 'year', 'rating_1', 'rating_2', 'rating_3', 'quality', 'cast', 'lat', 'vose',
-                  'vos', 'vo', 'server', 'library', 'update', 'no_update']
+    
 
     # Se verifica el estado de la opcion de colores personalizados
     custom_colors = config.get_setting('title_color')
