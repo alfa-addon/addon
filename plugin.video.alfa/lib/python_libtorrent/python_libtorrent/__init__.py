@@ -162,9 +162,11 @@ while VERSIONS:
                 from ctypes import CDLL
                 
                 dest_path = ''
-                if os.environ['KODI_ANDROID_APK']:
-                    log(os.environ['KODI_ANDROID_APK'])
-                    dest_path = filetools.join(filetools.dirname(os.environ['KODI_ANDROID_APK']), 'lib')
+                envirom = os.environ.get('KODI_ANDROID_APK', '')
+                if not envirom: envirom = os.environ.get('XBMC_ANDROID_APK', '')
+                if envirom:
+                    log(envirom)
+                    dest_path = filetools.join(filetools.dirname(envirom), 'lib')
                     dest_path_dir = filetools.listdir(dest_path)
                     log(filetools.listdir(dest_path, file_inf=True))
                     if dest_path_dir:
