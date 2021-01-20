@@ -8,6 +8,7 @@ from core import tmdb
 from core import httptools
 from core.item import Item
 from core import scrapertools
+from core import servertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from platformcode import config, logger
@@ -289,12 +290,19 @@ def findvideos(item):
             lang = ""
         data = httptools.downloadpage(doo_url, post=post, headers=headers).data
         new_url = scrapertools.find_single_match(data, "src='([^']+)'")
-        new_soup = create_soup(new_url, referer=item.url).find_all("a", class_="button-xlarge btn bt")
-        for srv in new_soup[:-1]:
-            url = srv["data-embed"]
-            server = srv_list.get(srv.find("span", class_="serverx").text.lower(), "directo")
-            itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, server=server,
-                                 language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels))
+        players = create_soup(new_url, referer=item.url).find_all("div", class_=re.compile(r"Player\d+"))
+
+        for player in players:
+            sources = player.find_all("li", id="servers")
+            lang = scrapertools.find_single_match(player.find("a", id="report")["onclick"], "audio=([^']+)'")
+            for src in sources:
+
+                url = scrapertools.find_single_match(src["onclick"], "go_to_player\('([^']+)'")
+                if "download" in url:
+                    continue
+                server = srv_list.get(src.find("span", class_="serverx").text.lower(), "directo")
+                itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, server=server,
+                                 language=IDIOMAS.get(lang.lower(), "VOSE"), infoLabels=item.infoLabels))
 
     # Requerido para FilterTools
 
@@ -315,19 +323,17 @@ def findvideos(item):
 def play(item):
     logger.info()
 
-    player = host.replace("https://", "https://players.")
+    if item.url.startswith("/playerdir/"):
+        url = "%s%s" % (host.replace("https://", "https://play."), item.url.replace("/playerdir", "playdir"))
+        url = httptools.downloadpage(url, add_referer=True).url
+    else:
+        api_url = "%sr.php" % "https://go.megaplay.cc/"
+        v_id = scrapertools.find_single_match(item.url, r"\?h=([A-z0-9]+)")
+        post = {"h": v_id}
+        url = httptools.downloadpage(api_url, post=post).url
 
-    url = "%sedge-data" % player
-    post = {"streaming": item.url}
-    url = httptools.downloadpage(url, post=post).data
-    if "/pembed" in url:
-        v_id = scrapertools.find_single_match(url, "=CXx8MB([^$]+)")
-        url = "https://feurl.com/v/%s" % v_id
-    elif "/direct" in url:
-        url = httptools.downloadpage("%s%s" % (player, url), add_referer=True).url
-
-    item = item.clone(url=url)
-    return [item]
+    itemlist = servertools.get_servers_itemlist([item.clone(url=url, server="")])
+    return itemlist
 
 
 def search(item, texto):

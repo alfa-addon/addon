@@ -485,7 +485,7 @@ def play(item):
         item.url = item.url.replace(' ', '%20')
     return [item]
 
-def js2py_conversion(data):
+def js2py_conversion(data, domain=".cliver.to"):
     logger.info()
     from lib import js2py
     import base64
@@ -515,7 +515,7 @@ def js2py_conversion(data):
     
     logger.info('new_cookie: ' + new_cookie)
 
-    dict_cookie = {'domain': ".cliver.to",
+    dict_cookie = {'domain': domain,
                 }
 
     if ';' in new_cookie:

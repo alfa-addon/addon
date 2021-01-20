@@ -11,7 +11,6 @@ from platformcode import logger
 from platformcode import xbmc_videolibrary
 from core.item import Item
 
-
 addon = xbmcaddon.Addon("plugin.video.alfa")
 icon = addon.getAddonInfo("icon")
 
@@ -35,6 +34,7 @@ def show_window():
 class Main(xbmcgui.WindowXMLDialog):
 
     def onInit(self):
+
 
         self.action_exitkeys_id = [xbmcgui.ACTION_STOP, xbmcgui.ACTION_BACKSPACE, xbmcgui.ACTION_PREVIOUS_MENU,
                                    xbmcgui.ACTION_NAV_BACK]
@@ -257,6 +257,8 @@ class Main(xbmcgui.WindowXMLDialog):
             setting.setting_torrent(Item())
         elif control == "titulos inteligentes":
             from platformcode import colors
+            from platformcode import unify
+            unify.init_colors()
             colors.show_window()
         elif control == "set de iconos":
             from channels import setting

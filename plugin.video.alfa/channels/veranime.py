@@ -84,7 +84,11 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     data = httptools.downloadpage(url, headers={"Referer": referer}).data
-    
+
+    if 'Javascript is required' in data:
+        from channels import cliver
+        cliver.js2py_conversion(data, ".veranime.top")
+        data = httptools.downloadpage(url).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -99,7 +103,7 @@ def list_all(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find("div", class_="content")
+    matches = soup.find("div", id="archive-content")
     for elem in matches.find_all("article", id=re.compile(r"^post-\d+")):
 
         info_1 = elem.find("div", class_="poster")

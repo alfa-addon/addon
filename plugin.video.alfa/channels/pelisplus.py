@@ -228,7 +228,8 @@ def findvideos(item):
     matches = re.compile(pattern, re.DOTALL).findall(data)
 
     for url in matches:
-
+        if "https://pelisplushd.me" in url:
+            url = url.replace("pelisplushd.me", "feurl.com")
         itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language="LAT",
         infoLabels=item.infoLabels))
 
