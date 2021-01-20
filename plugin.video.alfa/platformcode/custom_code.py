@@ -474,7 +474,8 @@ def update_libtorrent():
     # Ahora descargamos la última versión disponible de Libtorrent para esta plataforma
     try:
         version_base = filetools.join(config.get_runtime_path(), 'lib', 'python_libtorrent')
-        if config.get_setting("libtorrent_version", server="torrent", default=""):
+        if config.get_setting("libtorrent_version", server="torrent", default="") \
+                    and config.get_setting("libtorrent_path", server="torrent", default=""):
             current_system, current_version = config.get_setting("libtorrent_version", server="torrent", default="").split('/')
         else:
             current_system = ''

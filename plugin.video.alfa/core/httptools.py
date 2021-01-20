@@ -395,9 +395,8 @@ def proxy_post_processing(url, proxy_data, response, opt):
             
             response["data"] = proxytools.restore_after_proxy_web(response["data"],
                                                                   proxy_data['web_name'], opt['url_save'])
-            if response["data"] == 'ERROR':
-                response['sucess'] = False
-            if response["code"] == 302:
+            if response["data"] == 'ERROR' or response["code"] == 302:
+                if response["code"] == 200: response["code"] = 666
                 proxy_data['stat'] = ', Proxy Direct'
                 opt['forced_proxy'] = 'ProxyDirect'
                 url = opt['url_save']
@@ -443,7 +442,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
         logger.error(traceback.format_exc())
         opt['out_break'] = True
 
-    return response["data"], response['sucess'], url, opt
+    return response, url, opt
 
 
 def downloadpage(url, **opt):
@@ -678,10 +677,10 @@ def downloadpage(url, **opt):
             import traceback
             logger.error(traceback.format_exc(1))
         try:
-            if PY3 and isinstance(response['data'], bytes) and 'Content-Type' in req.headers \
-                        and not ('application' in req.headers['Content-Type'] \
-                        or 'javascript' in req.headers['Content-Type'] \
-                        or 'image' in req.headers['Content-Type']):
+            if PY3 and isinstance(response['data'], bytes) \
+                        and not ('application' in req.headers.get('Content-Type', '') \
+                        or 'javascript' in req.headers.get('Content-Type', '') \
+                        or 'image' in req.headers.get('Content-Type', '')):
                 response['data'] = "".join(chr(x) for x in bytes(response['data']))
         except:
             import traceback
@@ -715,8 +714,10 @@ def downloadpage(url, **opt):
         response['code'] = response_code
         response['headers'] = req.headers
         response['cookies'] = req.cookies
-        
-        info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
+        if response['code'] == 200:
+            response['sucess'] = True
+        else:
+            response['sucess'] = False
 
         if opt.get('cookies', True):
             save_cookies(alfa_s=opt.get('alfa_s', False))
@@ -726,14 +727,18 @@ def downloadpage(url, **opt):
         if is_channel and isinstance(response_code, int):
             if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', ''):
                 if response_code > 399:
+                    info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
                     show_infobox(info_dict)
                     raise WebErrorException(urlparse.urlparse(url)[1])
 
+        # Si hay error del proxy, refresca la lista y reintenta el numero indicada en proxy_retries
+        response, url, opt = proxy_post_processing(url, proxy_data, response, opt)
+        
+        info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
         if not 'api.themoviedb' in url and not opt.get('alfa_s', False):
             show_infobox(info_dict)
-
-        # Si hay error del proxy, refresca la lista y reintenta el numero indicada en proxy_retries
-        response['data'], response['sucess'], url, opt = proxy_post_processing(url, proxy_data, response, opt)
+        
+        # Si proxy ordena salir del loop, se sale
         if opt.get('out_break', False):
             break
 

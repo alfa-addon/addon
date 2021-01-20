@@ -179,6 +179,7 @@ def findvideos(item):
         urls = scrapertools.find_multiple_matches(datos, '(?:src|href)="([^"]+)')
         titulo = "Ver en %s " + titulo_opcion
         for url in urls:
+            if "soon" in url:  continue
             itemlist.append(item.clone(action = "play",
                                  title = titulo,
                                  url = url

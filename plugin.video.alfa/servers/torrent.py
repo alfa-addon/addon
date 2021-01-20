@@ -1212,6 +1212,8 @@ def update_control(item, function=''):
             item_control.downloadCompleted = item.downloadCompleted
             item_control.downloadProgress = item.downloadProgress
             item_control.downloadFilename = item.downloadFilename
+            if not item.torr_folder and item.downloadFilename:
+                item.torr_folder = scrapertools.find_single_match(item.downloadFilename, '(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$')
             item_control.torr_folder = item.torr_folder
             item_control.torrent_info = item.torrent_info
             if not item.url.startswith('magnet:') and item.contentAction == 'play' and item.server and item.downloadProgress:
@@ -1396,6 +1398,8 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
             torr_client = torrent_paths['TORR_client'].upper()
 
         try:                                                                    # Preguntamos por el estado de la descarga
+            if not item.torr_folder and item.downloadFilename:
+                item.torr_folder = scrapertools.find_single_match(item.downloadFilename, '(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$')
             torr_data, deamon_url, index = get_tclient_data(item.torr_folder, \
                                 torr_client.lower(), torrent_paths['ELEMENTUM_port'])
         except:
@@ -1571,10 +1575,10 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
                 filebase = filetools.basename(item.url_control)
             else:
                 filebase = filetools.basename(item.downloadServer['url'])
-            if item.downloadServer['url'].startswith(':BT:') or item.downloadServer['url'].startswith(':MCT:'):
-                filebase = filebase.upper()
+            if torr_client in ['BT', 'MCT']:
+                filebase = filebase.upper().replace('.TORRENT', '.torrent')
             file = filetools.join(torrent_paths[torr_client+'_torrents'], filebase)
-        
+
         if item.downloadQueued > 0:
             return
         if item.downloadProgress in [1, 2, 3, 100] and (not torr_client or not downloadFilename):
@@ -1583,9 +1587,10 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
             return
         if item.downloadProgress in [0]:
             return
-        if item.downloadProgress in [-1, 1, 2, 3] and file and filetools.exists(file):
+        if item.downloadProgress in [-1, 1, 2, 3] and file and (filetools.exists(file) \
+                                or filetools.exists(file.replace('.torrent', '.pause'))):
             return
-        
+
         if not filetools.exists(filetools.join(torrent_paths[torr_client], downloadFilename)):
             
             downloadFilenameList = filetools.dirname(filetools.join(torrent_paths[torr_client], downloadFilename))
@@ -1705,7 +1710,7 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                     folder = path
 
     if not folder:                                                              # Si no se detecta el folder...
-        return ('', '', '', rar_control)                                                 # ... no podemos hacer nada
+        return ('', '', '', rar_control)                                        # ... no podemos hacer nada
     if rar_names: rar_names = sorted(rar_names)
     if rar_names:
         rar_file = '%s/%s' % (folder, rar_names[0])
