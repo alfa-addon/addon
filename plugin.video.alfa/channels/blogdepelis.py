@@ -180,6 +180,7 @@ def findvideos(item):
 def play(item):
     logger.info()
 
+    item.url = item.url.replace('&f=frame', '')             # Necesario para ProxyWeb
     data = httptools.downloadpage(item.url, headers={"referer": host}).data
     url = scrapertools.find_single_match(data, '"file":"([^"]+)","label":".*?"')
     item = item.clone(url=url + "|referer=%s" % item.url)

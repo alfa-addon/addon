@@ -165,7 +165,12 @@ def findvideos(item):
             if 'goto_ddh.php' in url:
                 base_url = "https://api.cuevana3.io/ir/redirect_ddh.php"
 
-            url = httptools.downloadpage(base_url, post={param: id},
+            url = httptools.downloadpage(base_url, post={param: id}, timeout=5, 
+                                       follow_redirects=False, ignore_response_code=True)
+            if url.sucess:
+                url = url.headers.get('location', '')
+            else:
+                url = httptools.downloadpage(base_url, post={param: id}, forced_proxy='ProxyCF', 
                                        follow_redirects=False).headers.get('location', '')
 
         if url:
