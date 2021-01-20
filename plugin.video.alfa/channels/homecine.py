@@ -37,7 +37,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Ultimas",
                          action="list_all",
                          thumbnail=get_thumb('last', auto=True),
-                         url='%s%s%s' % (host, '/release-year/', c_year),
+                         url='%s%s%s' % (host, '/cartelera/', ""),
                          first=0
                          ))
 
@@ -317,7 +317,7 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<div id="tab(\d+)".*?<iframe.*?src="([^"]+)"'
+    patron = '(?is)<div id="tab(\d+)".*?<iframe.*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for option, url in matches:
@@ -341,7 +341,7 @@ def findvideos(item):
                     pass
             if quality != '':
                 title += ' [%s]' % quality
-        url = "%s|%s" % (url, host)
+        #url = "%s|%s" % (url, host)
         new_item = Item(channel=item.channel,
                         url=url,
                         title= '%s'+ title,

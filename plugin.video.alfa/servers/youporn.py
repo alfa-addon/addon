@@ -9,8 +9,7 @@ def test_video_exists(page_url):
     global data
     logger.info("(page_url='%s')" % page_url)
     response = httptools.downloadpage(page_url)
-
-    if response.code == 404 or "This page is not available" in response.data:
+    if response.code == 404 or "Not Found" in response.data:
         return False, "[Youporn] El archivo no existe o ha sido borrado"
     else:
         data = response.data

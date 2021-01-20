@@ -1027,7 +1027,7 @@ def episodios(item):
             return itemlist                                             # si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         #logger.debug("PATRON: " + patron)
-        logger.debug(matches)
+        #logger.debug(matches)
         #logger.debug(data)
 
         # Recorremos todos los episodios generando un Item local por cada uno en Itemlist

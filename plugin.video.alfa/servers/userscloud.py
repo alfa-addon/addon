@@ -9,7 +9,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data
 
-    data = requests.get(page_url)
+    data = httptools.downloadpage(page_url) #requests.get(page_url)
     if not data.sucess or "Not Found" in data.data or "File was deleted" in data.data or "is no longer available" in data.data:
         return False, "[Userscloud] El fichero no existe o ha sido borrado"
     return True, ""

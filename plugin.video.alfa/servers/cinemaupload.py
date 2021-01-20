@@ -35,7 +35,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     for url in matches:
         url += "|Referer=%s" %page_url
         if ".mp4" in url:
-            video_urls.append(['.mpd [CinemaUpload]', url])
+            video_urls.append(['.mp4 [CinemaUpload]', url])
         else:
             video_urls.append(['.mpd [CinemaUpload]', url,0,"", "mpd"])
     return video_urls

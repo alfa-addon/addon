@@ -4,7 +4,7 @@
   	"ignore_urls": [],
     "patterns": [
       {
-        "pattern": "((?:nitroflare|filerio|mexa|rockfile|katfile|k2s).(\\w{2,3})/[^\\s]+)",
+        "pattern": "((?:nitroflare|filerio|mexa|rockfile|katfile|k2s|vidup|vev).(\\w{2,3})/[^\\s]+)",
         "url": "https://\\1"
       },
       {

@@ -35,8 +35,9 @@ list_servers = ['torrent']
 
 channel = 'zooqle'
 host = 'https://zooqle.com/'
-host_alt = ['https://zooqle.com/', 'https://zooqle.unblockit.top/', 'https://zooqle.unblockninja.com/']
+host_alt = ['https://zooqle.unblockit.dev']
 """
+host_alt = ['https://zooqle.unblockit.dev', 'https://zooqle.unblockninja.com', 'https://zooqle.nocensor.cyou']
 https://torrents.io/proxy/zooqle
 host_alt = ['https://zooqle.com/', 'https://zooqle1.unblocked.is/', 'https://zooqle.unblocked.win/', 
             'https://zooqle.nocensor.xyz/',  'https://zooqle.unblockproject.xyz/',  
@@ -976,14 +977,16 @@ def episodios(item):
         return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     for season_num, temporada in temp_serie:
-        patron = '<li class="list-group-item"><div class="[^"]+"><a (?:class=".*?"\s*)?'
-        patron += 'href="([^"]+)"><span class=[^<]+<\/span>\s*<i[^>]+><\/i><\/a><\/div>'
-        patron += '<span class="smaller text-muted epnum">(\d+)<\/span>\s*<a class='
-        patron += '"pad-r2"[^>]+>(.*?)<\/a>'
+        
+        patron =  '<li\s*class="list-group-item">\s*<div\s*class="[^"]+">\s*<a\s*'
+        patron += '(?:class="([^"]*)"\s*)?href="([^"]+)">\s*(?:<span\s*class=[^<]+<\/span>\s*)?'
+        patron += '<i[^>]+>\s*<\/i>\s*<\/a>\s*<\/div>\s*<span\s*class="smaller\s*text-muted\s*epnum">'
+        patron += '\s*(\d+)\s*<\/span>(?:\s*<span[^<]+)?\s*<(?:a|span)\s*class="[^"]*pad-r2"[^>]*>\s*([^<]*)<'
         matches = re.compile(patron, re.DOTALL).findall(temporada)
 
         #logger.debug("PATRON: " + patron)
         #logger.debug(matches)
+        #logger.debug(temporada)
         
         season = max_temp
         #Comprobamos si realmente sabemos el num. máximo de temporadas
@@ -997,8 +1000,8 @@ def episodios(item):
                 break                                           #Sale del bucle actual del FOR
         
         # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
-        for epi_url, episode_num, scrapedtitle in matches:
-            if 'TBA' in scrapedtitle:
+        for muted, epi_url, episode_num, scrapedtitle in matches:
+            if 'TBA' in scrapedtitle or 'text-muted' in muted:
                 continue
             item_local = item.clone()
             item_local.action = "findvideos"
@@ -1065,6 +1068,9 @@ def episodios(item):
             itemlist.append(item_local.clone())
 
             #logger.debug(item_local)
+        
+        if len(itemlist) == 0 and max_temp > 1:
+            max_temp -= 1
             
     if len(itemlist) > 1:
         itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))       #clasificamos
