@@ -27,6 +27,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     video_srcs = scrapertools.find_multiple_matches(data, r"src: '([^']+)'")
+    if not video_srcs:
+        bloque = scrapertools.find_single_match(data, "sources.*?\}")
+        video_srcs = scrapertools.find_multiple_matches(bloque, ': "([^"]+)')
     for url in video_srcs:
         video_urls.append([" [Voe]", url])
 
