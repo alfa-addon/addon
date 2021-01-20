@@ -35,6 +35,11 @@
       "id": "plugin.video.torrentin",
       "name": "torrentin",
       "url": "plugin://plugin.video.torrentin/?uri=%s&image="
+    },
+    {
+      "id": "plugin.video.torrest",
+      "name": "torrest",
+      "url": "plugin://plugin.video.torrest/play_%s?%s=%s"
     }
   ],
   "find_videos": {

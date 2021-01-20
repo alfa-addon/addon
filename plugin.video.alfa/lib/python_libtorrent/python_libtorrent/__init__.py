@@ -63,6 +63,7 @@ log('dirname: ' +str(dirname))
 VERSIONS = ['0.16.19', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.0.11', '1.1.0', '1.1.1', '1.1.6', '1.1.7', '1.2.12', '2.0.2']  ### Alfa
 if platform['system'] in ['linux_armv7', 'linux_aarch64_ucs4']:                 ### Alfa: Removing ARM from v2 list
     VERSIONS.remove('2.0.2')
+    VERSIONS.remove('1.2.12')
 
 while VERSIONS:
     log('VERSIONS: %s' % str(VERSIONS))
@@ -161,9 +162,11 @@ while VERSIONS:
                 from ctypes import CDLL
                 
                 dest_path = ''
-                if os.environ['KODI_ANDROID_APK']:
-                    log(os.environ['KODI_ANDROID_APK'])
-                    dest_path = filetools.join(filetools.dirname(os.environ['KODI_ANDROID_APK']), 'lib')
+                envirom = os.environ.get('KODI_ANDROID_APK', '')
+                if not envirom: envirom = os.environ.get('XBMC_ANDROID_APK', '')
+                if envirom:
+                    log(envirom)
+                    dest_path = filetools.join(filetools.dirname(envirom), 'lib')
                     dest_path_dir = filetools.listdir(dest_path)
                     log(filetools.listdir(dest_path, file_inf=True))
                     if dest_path_dir:

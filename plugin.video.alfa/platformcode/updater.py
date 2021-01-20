@@ -179,7 +179,7 @@ def check_addon_updates(verbose=False):
         return False
 
 
-def check_update_to_others(verbose=False):
+def check_update_to_others(verbose=False, app=True):
     logger.info()
     
     try:
@@ -201,12 +201,13 @@ def check_update_to_others(verbose=False):
         logger.error('Error al actualizar OTROS paquetes')
         logger.error(traceback.format_exc())
         
-    try:
-        from lib import alfa_assistant
-        res, addonid = alfa_assistant.update_alfa_assistant(verbose=verbose)
-    except:
-        logger.error("Alfa Assistant.  Error en actualización")
-        logger.error(traceback.format_exc())
+    if app:
+        try:
+            from lib import alfa_assistant
+            res, addonid = alfa_assistant.update_alfa_assistant(verbose=verbose)
+        except:
+            logger.error("Alfa Assistant.  Error en actualización")
+            logger.error(traceback.format_exc())
 
 
 def copytree(src, dst, symlinks=False, ignore=None):

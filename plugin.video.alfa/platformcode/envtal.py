@@ -318,6 +318,11 @@ def get_environment():
                     cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
                     if not cliente['D_load_Path_perm']: del cliente['D_load_Path_perm']
                     cliente['Buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
+                elif cliente['Plug_in'] == 'Torrest':
+                    cliente['D_load_Path'] = str(filetools.translatePath(__settings__.getSetting('s:download_path')))
+                    cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
+                    if not cliente['D_load_Path_perm']: del cliente['D_load_Path_perm']
+                    cliente['Buffer'] = str(int(int(__settings__.getSetting('s:buffer_size')) / (1024*1024)))
                 else:
                     cliente['D_load_Path'] = str(filetools.translatePath(__settings__.getSetting('download_path')))
                     cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
