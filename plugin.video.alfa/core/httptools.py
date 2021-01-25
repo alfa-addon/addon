@@ -94,19 +94,20 @@ def get_cookie(url, name, follow_redirects=False):
             return cookie.value
     return False
 
-def get_url_headers(url, forced=False):
+def get_url_headers(url, forced=False, dom=False):
     from . import scrapertools
     
     domain = urlparse.urlparse(url)[1]
     sub_dom = scrapertools.find_single_match(domain, '\.(.*?\.\w+)')
     if sub_dom and not 'google' in url:
         domain = sub_dom
+    if dom:
+        domain = dom
     domain_cookies = cj._cookies.get("." + domain, {}).get("/", {})
     domain_cookies.update(cj._cookies.get("www." + domain, {}).get("/", {}))
 
-    if "|" in url or not "cf_clearance" in domain_cookies:
-        if not forced:
-            return url
+    if ("|" in url or not "cf_clearance" in domain_cookies) and not forced:
+        return url
 
     headers = dict()
     cf_ua = config.get_setting('cf_assistant_ua', None)
@@ -395,14 +396,15 @@ def proxy_post_processing(url, proxy_data, response, opt):
             
             response["data"] = proxytools.restore_after_proxy_web(response["data"],
                                                                   proxy_data['web_name'], opt['url_save'])
-            if response["data"] == 'ERROR':
-                response['sucess'] = False
-            if response["code"] == 302:
+            if response["data"] == 'ERROR' or response["code"] == 302:
+                if response["code"] == 200: response["code"] = 666
                 proxy_data['stat'] = ', Proxy Direct'
                 opt['forced_proxy'] = 'ProxyDirect'
                 url = opt['url_save']
                 opt['post'] = opt['post_save']
                 response['sucess'] = False
+        elif response["code"] == 302:
+            response['sucess'] = True
 
         if proxy_data.get('stat', '') and response['sucess'] == False and \
                 opt.get('proxy_retries_counter', 0) <= opt.get('proxy_retries', 1) and \
@@ -422,7 +424,12 @@ def proxy_post_processing(url, proxy_data, response, opt):
                     opt['forced_proxy'] = 'ProxyCF'
                     url =opt['url_save']
                     opt['post'] = opt['post_save']
-                    opt['CF'] = True
+                    if opt.get('CF', True):
+                        opt['CF'] = True
+                    if opt.get('proxy_retries_counter', 0):
+                        opt['proxy_retries_counter'] -= 1
+                    else:
+                        opt['proxy_retries_counter'] = -1
                 else:
                     proxytools.get_proxy_list_method(proxy_init='ProxyWeb',
                                                      error_skip=proxy_data['web_name'])
@@ -436,7 +443,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
         logger.error(traceback.format_exc())
         opt['out_break'] = True
 
-    return response["data"], response['sucess'], url, opt
+    return response, url, opt
 
 
 def downloadpage(url, **opt):
@@ -503,7 +510,10 @@ def downloadpage(url, **opt):
 
     if opt.get('random_headers', False) or HTTPTOOLS_DEFAULT_RANDOM_HEADERS:
         req_headers['User-Agent'] = random_useragent()
-    url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
+    if not PY3:
+        url = urllib.quote(url.encode('utf-8'), safe="%/:=&?~#+!$,;'@()*[]")
+    else:
+        url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
 
     opt['proxy_retries_counter'] = 0
     opt['url_save'] = url
@@ -556,7 +566,7 @@ def downloadpage(url, **opt):
 
         if len(url) > 0:
             try:
-                if opt.get('post', None) is not None or opt.get('file', None) is not None:
+                if opt.get('post', None) is not None or opt.get('file', None) is not None or opt.get('files', {}):
                     if opt.get('post', None) is not None:
                         ### Convert string post in dict
                         try:
@@ -576,7 +586,10 @@ def downloadpage(url, **opt):
                                 payload = opt['post']
 
                     ### Verifies 'file' and 'file_name' options to upload a buffer or a file
-                    if opt.get('file', None) is not None:
+                    if opt.get('files', {}):
+                        files = opt['files']
+                        file_name = opt.get('file_name', 'File Object')
+                    elif opt.get('file', None) is not None:
                         if len(opt['file']) < 256 and os.path.isfile(opt['file']):
                             if opt.get('file_name', None) is None:
                                 path_file, opt['file_name'] = os.path.split(opt['file'])
@@ -585,27 +598,27 @@ def downloadpage(url, **opt):
                         else:
                             files = {'file': (opt.get('file_name', 'Default'), opt['file'])}
                             file_name = opt.get('file_name', 'Default') + ', Buffer de memoria'
-                    
+
                     info_dict = fill_fields_pre(url, opt, proxy_data, file_name)
                     if opt.get('only_headers', False):
                         ### Makes the request with HEAD method
                         req = session.head(url, allow_redirects=opt.get('follow_redirects', True),
-                                          timeout=opt.get('timeout', None))
+                                          timeout=opt.get('timeout', None), params=opt.get('params', {}))
                     else:
                         ### Makes the request with POST method
                         req = session.post(url, data=payload, allow_redirects=opt.get('follow_redirects', True),
-                                          files=files, timeout=opt.get('timeout', None))
+                                          files=files, timeout=opt.get('timeout', None), params=opt.get('params', {}))
                 
                 elif opt.get('only_headers', False):
                     info_dict = fill_fields_pre(url, opt, proxy_data, file_name)
                     ### Makes the request with HEAD method
                     req = session.head(url, allow_redirects=opt.get('follow_redirects', True),
-                                      timeout=opt.get('timeout', None))
+                                      timeout=opt.get('timeout', None), params=opt.get('params', {}))
                 else:
                     info_dict = fill_fields_pre(url, opt, proxy_data, file_name)
                     ### Makes the request with GET method
                     req = session.get(url, allow_redirects=opt.get('follow_redirects', True),
-                                      timeout=opt.get('timeout', None))
+                                      timeout=opt.get('timeout', None), params=opt.get('params', {}))
 
             except Exception as e:
                 if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', ''):
@@ -668,10 +681,10 @@ def downloadpage(url, **opt):
             import traceback
             logger.error(traceback.format_exc(1))
         try:
-            if PY3 and isinstance(response['data'], bytes) and 'Content-Type' in req.headers \
-                        and not ('application' in req.headers['Content-Type'] \
-                        or 'javascript' in req.headers['Content-Type'] \
-                        or 'image' in req.headers['Content-Type']):
+            if PY3 and isinstance(response['data'], bytes) \
+                        and not ('application' in req.headers.get('Content-Type', '') \
+                        or 'javascript' in req.headers.get('Content-Type', '') \
+                        or 'image' in req.headers.get('Content-Type', '')):
                 response['data'] = "".join(chr(x) for x in bytes(response['data']))
         except:
             import traceback
@@ -705,8 +718,10 @@ def downloadpage(url, **opt):
         response['code'] = response_code
         response['headers'] = req.headers
         response['cookies'] = req.cookies
-        
-        info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
+        if response['code'] == 200:
+            response['sucess'] = True
+        else:
+            response['sucess'] = False
 
         if opt.get('cookies', True):
             save_cookies(alfa_s=opt.get('alfa_s', False))
@@ -716,14 +731,18 @@ def downloadpage(url, **opt):
         if is_channel and isinstance(response_code, int):
             if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', ''):
                 if response_code > 399:
+                    info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
                     show_infobox(info_dict)
                     raise WebErrorException(urlparse.urlparse(url)[1])
 
+        # Si hay error del proxy, refresca la lista y reintenta el numero indicada en proxy_retries
+        response, url, opt = proxy_post_processing(url, proxy_data, response, opt)
+        
+        info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
         if not 'api.themoviedb' in url and not opt.get('alfa_s', False):
             show_infobox(info_dict)
-
-        # Si hay error del proxy, refresca la lista y reintenta el numero indicada en proxy_retries
-        response['data'], response['sucess'], url, opt = proxy_post_processing(url, proxy_data, response, opt)
+        
+        # Si proxy ordena salir del loop, se sale
         if opt.get('out_break', False):
             break
 
@@ -751,7 +770,11 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
         else:
             info_dict.append(('Peticion', 'GET' + proxy_data.get('stat', '')))
         info_dict.append(('Descargar Pagina', not opt.get('only_headers', False)))
-        if file_name: info_dict.append(('Fichero para Upload', file_name))
+        if opt.get('files', {}): 
+            info_dict.append(('Fichero Objeto', opt.get('files', {})))
+        elif file_name: 
+            info_dict.append(('Fichero para Upload', file_name))
+        if opt.get('params', {}): info_dict.append(('Params', opt.get('params', {})))
         info_dict.append(('Usar cookies', opt.get('cookies', True)))
         info_dict.append(('Fichero de cookies', ficherocookies))
     except:
