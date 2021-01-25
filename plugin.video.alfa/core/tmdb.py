@@ -168,7 +168,7 @@ def cache_response(fn):
 
 
 
-def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang, forced=False):
+def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang, forced=False, include_adult=False):
     """
     Dependiendo del tipo de dato de source obtiene y fija (item.infoLabels) los datos extras de una o varias series,
     capitulos o peliculas.
@@ -189,15 +189,15 @@ def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang, forced=Fals
 
     start_time = time.time()
     if isinstance(source, list):
-        ret = set_infoLabels_itemlist(source, seekTmdb, idioma_busqueda)
+        ret = set_infoLabels_itemlist(source, seekTmdb, idioma_busqueda, include_adult=include_adult)
         logger.debug("Se han obtenido los datos de %i enlaces en %f segundos" % (len(source), time.time() - start_time))
     else:
-        ret = set_infoLabels_item(source, seekTmdb, idioma_busqueda)
+        ret = set_infoLabels_item(source, seekTmdb, idioma_busqueda, include_adult=include_adult)
         logger.debug("Se han obtenido los datos del enlace en %f segundos" % (time.time() - start_time))
     return ret
 
 
-def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang, forced=False):
+def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang, forced=False, include_adult=False):
     """
     De manera concurrente, obtiene los datos de los items incluidos en la lista item_list.
 
@@ -231,7 +231,7 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang
 
     def sub_thread(_item, _i, _seekTmdb):
         semaforo.acquire()
-        ret = set_infoLabels_item(_item, _seekTmdb, idioma_busqueda, lock)
+        ret = set_infoLabels_item(_item, _seekTmdb, idioma_busqueda, lock, include_adult=include_adult)
         # logger.debug(str(ret) + "item: " + _item.tostring())
         semaforo.release()
         r_list.append((_i, _item, ret))
@@ -253,7 +253,7 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang
     return [ii[2] for ii in r_list]
 
 
-def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=None):
+def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=None, include_adult=False):
     """
     Obtiene y fija (item.infoLabels) los datos extras de una serie, capitulo o pelicula.
 
@@ -301,10 +301,11 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
                     or (otmdb_global.texto_buscado and otmdb_global.texto_buscado != item.infoLabels['tvshowtitle']):
                 if item.infoLabels['tmdb_id']:
                     otmdb_global = Tmdb(id_Tmdb=item.infoLabels['tmdb_id'], tipo=tipo_busqueda,
-                                        idioma_busqueda=idioma_busqueda)
+                                        idioma_busqueda=idioma_busqueda, include_adult=include_adult)
                 else:
                     otmdb_global = Tmdb(texto_buscado=item.infoLabels['tvshowtitle'], tipo=tipo_busqueda,
-                                        idioma_busqueda=idioma_busqueda, year=item.infoLabels['year'])
+                                        idioma_busqueda=idioma_busqueda, year=item.infoLabels['year'],
+                                        include_adult=include_adult)
 
                 __leer_datos(otmdb_global)
 
@@ -369,31 +370,32 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
             if item.infoLabels['tmdb_id']:
                 # ...Busqueda por tmdb_id
                 otmdb = Tmdb(id_Tmdb=item.infoLabels['tmdb_id'], tipo=tipo_busqueda,
-                             idioma_busqueda=idioma_busqueda)
+                             idioma_busqueda=idioma_busqueda, include_adult=include_adult)
 
             elif item.infoLabels['imdb_id']:
                 # ...Busqueda por imdb code
                 otmdb = Tmdb(external_id=item.infoLabels['imdb_id'], external_source="imdb_id",
                              tipo=tipo_busqueda,
-                             idioma_busqueda=idioma_busqueda)
+                             idioma_busqueda=idioma_busqueda,
+                             include_adult=include_adult)
 
             elif tipo_busqueda == 'tv':  # buscar con otros codigos
                 if item.infoLabels['tvdb_id']:
                     # ...Busqueda por tvdb_id
                     otmdb = Tmdb(external_id=item.infoLabels['tvdb_id'], external_source="tvdb_id", tipo=tipo_busqueda,
-                                 idioma_busqueda=idioma_busqueda)
+                                 idioma_busqueda=idioma_busqueda, include_adult=include_adult)
                 elif item.infoLabels['freebase_mid']:
                     # ...Busqueda por freebase_mid
                     otmdb = Tmdb(external_id=item.infoLabels['freebase_mid'], external_source="freebase_mid",
-                                 tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda)
+                                 tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda, include_adult=include_adult)
                 elif item.infoLabels['freebase_id']:
                     # ...Busqueda por freebase_id
                     otmdb = Tmdb(external_id=item.infoLabels['freebase_id'], external_source="freebase_id",
-                                 tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda)
+                                 tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda, include_adult=include_adult)
                 elif item.infoLabels['tvrage_id']:
                     # ...Busqueda por tvrage_id
                     otmdb = Tmdb(external_id=item.infoLabels['tvrage_id'], external_source="tvrage_id",
-                                 tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda)
+                                 tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda, include_adult=include_adult)
 
             #if otmdb is None:
             if not item.infoLabels['tmdb_id'] and not item.infoLabels['imdb_id'] and not item.infoLabels['tvdb_id'] and not item.infoLabels['freebase_mid'] and not item.infoLabels['freebase_id'] and not item.infoLabels['tvrage_id']:
@@ -403,7 +405,7 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
                     # Busqueda de serie por titulo y filtrando sus resultados si es necesario
                     otmdb = Tmdb(texto_buscado=item.infoLabels['tvshowtitle'], tipo=tipo_busqueda,
                                  idioma_busqueda=idioma_busqueda, filtro=item.infoLabels.get('filtro', {}),
-                                 year=item.infoLabels['year'])
+                                 year=item.infoLabels['year'], include_adult=include_adult)
                 else:
                     # Busqueda de pelicula por titulo...
                     if item.infoLabels['year'] or item.infoLabels['filtro']:
@@ -411,12 +413,14 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
                         if item.contentTitle:
                             titulo_buscado = item.contentTitle
                         otmdb = Tmdb(texto_buscado=titulo_buscado, tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda,
-                                     filtro=item.infoLabels.get('filtro', {}), year=item.infoLabels['year'])
+                                     filtro=item.infoLabels.get('filtro', {}), year=item.infoLabels['year'],
+                                     include_adult=include_adult)
                 if otmdb is not None:
                     if otmdb.get_id() and config.get_setting("tmdb_plus_info", default=False):
                         # Si la busqueda ha dado resultado y no se esta buscando una lista de items,
                         # realizar otra busqueda para ampliar la informacion
-                        otmdb = Tmdb(id_Tmdb=otmdb.result.get("id"), tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda)
+                        otmdb = Tmdb(id_Tmdb=otmdb.result.get("id"), tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda,
+                                     include_adult=include_adult)
 
             if lock and lock.locked():
                 lock.release()
