@@ -104,6 +104,16 @@ def init():
         except:                                                         # Si hay problemas de threading, nos vamos
             logger.error(traceback.format_exc())
         
+        #TORREST: Hacemos unas modificaciones a Torrest, si está instalado
+        if xbmc.getCondVisibility('System.HasAddon("plugin.video.torrest")'):
+            try:
+                __settings__ = xbmcaddon.Addon(id="plugin.video.torrest")
+                __settings__.setSetting("show_bg_progress", "false")    # Usamos nuestro sistema
+                from platformcode import updater
+                updater.check_update_to_others(app=False)
+            except:
+                logger.error(traceback.format_exc())
+        
         #QUASAR: Preguntamos si se hacen modificaciones a Quasar
         if not filetools.exists(filetools.join(config.get_data_path(), "quasar.json")) \
                     and not config.get_setting('addon_quasar_update', default=False):
@@ -199,7 +209,7 @@ def verify_script_alfa_update_helper():
     from core import httptools
     
     addonid = 'script.alfa-update-helper'
-    package = addonid + '-0.0.1.zip'
+    package = addonid + '-0.0.4.zip'
     filetools.remove(filetools.join('special://home', 'addons', 'packages', package), True)
     
     # Comprobamos si hay acceso a Github
@@ -474,10 +484,16 @@ def update_libtorrent():
     # Ahora descargamos la última versión disponible de Libtorrent para esta plataforma
     try:
         version_base = filetools.join(config.get_runtime_path(), 'lib', 'python_libtorrent')
-        if config.get_setting("libtorrent_version", server="torrent", default=""):
+        if config.get_setting("libtorrent_version", server="torrent", default="") \
+                    and config.get_setting("libtorrent_path", server="torrent", default=""):
             current_system, current_version = config.get_setting("libtorrent_version", server="torrent", default="").split('/')
         else:
             current_system = ''
+            current_version = ''
+            
+        if '1.1.1' in current_version or 'arm' in current_system or 'aarch64' in current_system: current_version = ''
+
+        if current_version.startswith('2') and xbmc.getCondVisibility("system.platform.linux"):
             current_version = ''
 
         version_base = filetools.join(version_base, current_system)

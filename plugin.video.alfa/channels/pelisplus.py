@@ -7,6 +7,11 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+if PY3:
+    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
+
 import re
 
 from channels import autoplay
@@ -206,7 +211,8 @@ def section(item):
     matches = soup.find_all("ul", class_="dropdown-menu")[3]
     for elem in matches.find_all("li"):
         title = elem.a.text
-        url = '%s/%s' % (host, elem.a["href"])
+        #url = '%s/%s' % (host, elem.a["href"])
+        url = urlparse.urljoin(host, elem.a["href"])
         itemlist.append(Item(channel=item.channel, url=url, title=title, action='list_all', type=item.type))
 
     return itemlist
@@ -217,12 +223,13 @@ def findvideos(item):
 
     itemlist = list()
 
-    data = httptools.downloadpage(item.url).data
-    pattern = "video\[\d+] = '([^']+)'"
+    data = httptools.downloadpage(item.url, forced_proxy='ProxyCF').data
+    pattern = "video\[\d+\]\s*=\s*'([^']+)'"
     matches = re.compile(pattern, re.DOTALL).findall(data)
 
     for url in matches:
-
+        if "https://pelisplushd.me" in url:
+            url = url.replace("pelisplushd.me", "feurl.com")
         itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language="LAT",
         infoLabels=item.infoLabels))
 

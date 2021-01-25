@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+import re
+
 from platformcode import config, logger, platformtools
 from core import scrapertools
 from core.item import Item

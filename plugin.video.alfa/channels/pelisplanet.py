@@ -241,6 +241,7 @@ def generos(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    from lib import players_parse
     
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
@@ -253,6 +254,7 @@ def findvideos(item):
 
     for scrapedurl, lang, servidores in matches:
         servidores = servidores.lower().strip()
+        scrapedurl = players_parse.player_parse(scrapedurl, servidores, host)
         url_list = []
         lang = lang.replace('Español ', '')
         #No funcionan:

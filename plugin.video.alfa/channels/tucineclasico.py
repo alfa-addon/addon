@@ -24,7 +24,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['supervideo']
 
-host = "http://www.online.tucineclasico.es/"
+host = "https://online.tucineclasico.es/"
 
 
 def mainlist(item):

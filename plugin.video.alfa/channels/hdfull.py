@@ -111,9 +111,12 @@ def logout(item):
     #y mandamos a configuracion del canal
     return settingCanal(item)
 
-def agrupa_datos(url, post=None, referer=True, json=False):
+def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_proxy=None, proxy_retries=1):
+    global host
     
     headers = {'Referer': host}
+    if 'episodes' in url or 'buscar' in url:
+        headers['Referer'] += 'episodios'
     
     if not referer:
         headers.pop('Referer')
@@ -129,7 +132,19 @@ def agrupa_datos(url, post=None, referer=True, json=False):
         config.set_setting("current_host", parse_url, channel="hdfull")
     
     url = re.sub(r'http(?:s|)://[^/]+/', host, url)
-    page = httptools.downloadpage(url, post=post, headers=headers, ignore_response_code=True)
+    page = httptools.downloadpage(url, post=post, headers=headers, ignore_response_code=True, 
+                        proxy=proxy, forced_proxy=forced_proxy, proxy_retries=proxy_retries)
+    
+    if not page.sucess:
+        from core import channeltools
+        list_controls, dict_settings = channeltools.get_channel_controls_settings("hdfull")
+        if dict_settings['current_host'] != config.get_setting("current_host", channel="hdfull", default=""):
+            config.set_setting("current_host", dict_settings['current_host'], channel="hdfull")
+            host = dict_settings['current_host']
+            return agrupa_datos(url, post=post, referer=referer, json=json, proxy=True, forced_proxy='ProxyWeb', proxy_retries=0)
+    if not page.sucess and not proxy:
+        return agrupa_datos(url, post=post, referer=referer, json=json, proxy=True, forced_proxy='ProxyWeb', proxy_retries=0)
+    
     new_host = scrapertools.find_single_match(page.data,
                     r'location.replace\("(http(?:s|)://\w+.hdfull.\w{2,4})')
 
@@ -143,8 +158,7 @@ def agrupa_datos(url, post=None, referer=True, json=False):
             new_host += '/'
         config.set_setting("current_host", new_host, channel="hdfull")
         url = re.sub(host, new_host, url)
-        
-        global host
+
         host = config.get_setting("current_host", channel="hdfull")
         
         return agrupa_datos(url, post=post, referer=referer, json=json)
@@ -155,6 +169,8 @@ def agrupa_datos(url, post=None, referer=True, json=False):
     #     return page.data
     
     data = page.data
+    if PY3 and isinstance(data, bytes):
+        data = "".join(chr(x) for x in bytes(data))
     ## Agrupa los datos
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|<!--.*?-->', '', data)
     data = re.sub(r'\s+', ' ', data)

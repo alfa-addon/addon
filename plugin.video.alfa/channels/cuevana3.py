@@ -144,28 +144,38 @@ def findvideos(item):
 
     matches = soup.find_all("div", class_="TPlayerTb")
 
-    for elem in matches:
+    for elem in matches[:-1]:
         lang = IDIOMAS.get(elem["id"][:-1].lower(), "VOSE")
         elem = elem.find("iframe")
         url = elem["data-src"]
 
         id = scrapertools.find_single_match(url, '\?h=(.*)')
-        logger.error(url)
 
         if 'cuevana3.io' in url:
+
+
             base_url = "https://api.cuevana3.io/ir/rd.php"
             param = 'url'
-            
+
+
             if '/sc/' in url:
                 base_url = "https://api.cuevana3.io/sc/r.php"
                 param = 'h'
-            
 
-            url = httptools.downloadpage(base_url, post={param: id},
-                                        follow_redirects=False).headers.get('location', '')
+            if 'goto_ddh.php' in url:
+                base_url = "https://api.cuevana3.io/ir/redirect_ddh.php"
+
+            url = httptools.downloadpage(base_url, post={param: id}, timeout=5, 
+                                       follow_redirects=False, ignore_response_code=True)
+            if url.sucess:
+                url = url.headers.get('location', '')
+            else:
+                url = httptools.downloadpage(base_url, post={param: id}, forced_proxy='ProxyCF', 
+                                       follow_redirects=False).headers.get('location', '')
 
         if url:
-            itemlist.append(Item(channel=item.channel, title="%s", url=url, action="play", language=lang))
+            itemlist.append(Item(channel=item.channel, title="%s", url=url, action="play", language=lang,
+                                 infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % '%s [%s]' % (i.server.capitalize(),
                                                                                            i.language))
@@ -233,8 +243,8 @@ def newest(categoria):
 def play(item):
 
     if "damedamehoy" in item.url:
-        v_data = httptools.downloadpage(item.url).data
-        new_url = scrapertools.find_single_match(v_data, "checkUrl = '([^']+)'")
+        item.url, id = item.url.split("#")
+        new_url = "https://damedamehoy.xyz/details.php?v=%s" % id
         v_data = httptools.downloadpage(new_url).json
         item.url = v_data["file"]
 

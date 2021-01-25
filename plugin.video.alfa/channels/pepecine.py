@@ -27,8 +27,7 @@ list_servers = ['rapidvideo', 'verystream', 'streamplay']
 
 host = 'https://verencasa.com/'
 referer = 'https://pepecine.to/'
-sec_host = 'https://pepechino.hopto.org/'
-
+sec_host = host #'https://pepechino.hopto.org/'
 
 def mainlist(item):
     logger.info()

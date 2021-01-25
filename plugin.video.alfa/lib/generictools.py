@@ -165,22 +165,32 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
     return (data, success, code, item, itemlist)
 
 
-def convert_url_base64(url):
-    logger.info()
+def convert_url_base64(url, host=''):
+    logger.info('URL: ' + url + ', HOST: ' + host)
 
     url_base64 = url
-    if not 'magnet:' in url_base64 and not '.torrent' in url_base64:
-        if 'php#' in url: url_base64 = scrapertools.find_single_match(url_base64, 'php#(.*?$)')
+    if len(url_base64) > 1 and not 'magnet:' in url_base64 and not '.torrent' in url_base64:
+        patron_php = 'php(?:#|\?u=)(.*?$)'
+        if scrapertools.find_single_match(url_base64, patron_php):
+            url_base64 = scrapertools.find_single_match(url_base64, patron_php)
         try:
             # Da hasta 20 pasadas o hasta que de error
             for x in range(20):
                 url_base64 = base64.b64decode(url_base64).decode('utf-8')
             logger.info('Url base64 después de 20 pasadas (incompleta): %s' % url_base64)
         except:
-            logger.info('Url base64 convertida: %s' % url_base64)
+            if url_base64 and url_base64 != url: logger.info('Url base64 convertida: %s' % url_base64)
             #logger.error(traceback.format_exc())
             if not url_base64:
                 url_base64 = url
+                
+    if host and host not in url_base64 and not url_base64.startswith('magnet:'):
+        url_base64 = urlparse.urljoin(host, url_base64)
+        if url_base64 != url:
+            host_name = scrapertools.find_single_match(url_base64, '(http.*\:\/\/(?:.*ww[^\.]*)?\.?[^\.]+\.\w+(?:\.\w+)?)(?:\/|\?|$)')
+            url_base64 = re.sub(host_name, host, url_base64)
+            logger.info('Url base64 urlparsed: %s' % url_base64)
+        
     
     return url_base64
 
@@ -1438,14 +1448,15 @@ def post_tmdb_episodios(item, itemlist):
     return (item, itemlist)
 
 
-def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[]):
+def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[], patron_season='', patron_quality=''):
     logger.info()
     
     # Si hay varias temporadas, buscamos todas las ocurrencias y las filtrados por TMDB, calidad e idioma
     list_temp = []
     itemlist = []
 
-    patron_quality = '(?i)(?:Temporada|Miniserie)(?:-(.*?)(?:\.|-$|$))'
+    if not patron_quality:
+        patron_quality = '(?i)(?:Temporada|Miniserie)(?:-(.*?)(?:\.|\/|-$|$))'
     try:
         item_search = item.clone()
         item_search.extra = 'search'
@@ -1485,6 +1496,11 @@ def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[]):
         if len(list_temps) > 1:
             list_temps = sorted(list_temps)                                     # Clasificamos las urls
             item.url = list_temps[-1]                                           # Guardamos la url de la última Temporada en .NFO
+
+        if not patron_season:
+            patron_season = '(?i)-(\d+)-(?:Temporada|Miniserie)'                # Probamos este patron de temporadas
+            if not scrapertools.find_single_match(list_temps[-1], patron_season):   # Está la Temporada en la url en este formato?
+                patron_season = '(?i)(?:Temporada|Miniserie)-(\d+)'             # ... usamos otro
 
         if max_temp >= max_nfo and item.library_playcounts and modo_ultima_temp_alt:    # Si viene de videoteca, solo tratamos lo nuevo
             for url in list_temps:
@@ -2123,10 +2139,17 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     torrent_f = ''
     torrent_file = ''
     files = {}
-    if PY3:
-        magnet = b'magnet:'
-    else:
-        magnet = 'magnet:'
+    if PY3 and isinstance(url, bytes):
+        url = "".join(chr(x) for x in bytes(url))
+    if PY3 and isinstance(torrents_path, bytes):
+        torrents_path = "".join(chr(x) for x in bytes(torrents_path))
+    if PY3 and isinstance(referer, bytes):
+        referer = "".join(chr(x) for x in bytes(referer))
+    if PY3 and isinstance(post, bytes):
+        post = "".join(chr(x) for x in bytes(post))
+    if PY3 and isinstance(headers, bytes):
+        headers = "".join(chr(x) for x in bytes(headers))
+
     try:
         #torrents_path = config.get_videolibrary_path() + '/torrents'            #path para dejar el .torrent
 
@@ -2148,7 +2171,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                     return 'autoplay'
         
         if not lookup: timeout = timeout * 3
-        if ((url and not local_torr) or url.startswith(magnet)):
+        if (url and not local_torr) or url.startswith("magnet"):
             torrents_path, torrent_file, subtitles_list = torrent.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
                         timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
@@ -2156,7 +2179,8 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
             torrent_file = filetools.read(local_torr, mode='rb')
             torrents_path = local_torr
         
-        if not torrents_path or torrents_path == 'CF_BLOCKED' or torrent_file.startswith(magnet):
+        if not torrents_path or torrents_path == 'CF_BLOCKED' or (PY3 and isinstance(torrent_file, bytes) \
+                    and torrent_file.startswith(b"magnet")) or (not PY3 and torrent_file.startswith("magnet")):
             size = 'ERROR'
             
             # si el archivo .torrent está bloqueado con CF, se intentará descargarlo a través de un browser externo
@@ -3066,7 +3090,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 
                 if url_org == '*':                                              #Si se quiere cambiar desde cualquier url ...
                     url_host = scrapertools.find_single_match(url_total, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
-                    url_total = url_total.replace(url_host, url_des)            #reemplazamos una parte de url
+                    if url_host: url_total = url_total.replace(url_host, url_des)   #reemplazamos una parte de url
                 elif url_des.startswith('http'):
                     if item.channel != channel_py or (item.channel == channel_py \
                             and item.category.lower() == canal_org):
@@ -3074,7 +3098,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                             'http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+(.*?$)')     #quitamos el http*:// inicial
                         url_total = urlparse.urljoin(url_des, url_total)        #reemplazamos una parte de url
                 else:
-                    url_total = url_total.replace(url_org, url_des)             #reemplazamos una parte de url
+                    if url_host: url_total = url_total.replace(url_org, url_des)    #reemplazamos una parte de url
                 url = ''
                 if patron1:                                                     #Hay expresión regex?
                     url += scrapertools.find_single_match(url_total, patron1)   #La aplicamos a url

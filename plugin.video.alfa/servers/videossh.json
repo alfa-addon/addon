@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://hdzog.com/embed/[0-9]+)",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://(?:upornia|hdzog).com/videos/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(https://videos.sh/embed-\\w+.html)",
         "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "hdzog",
-  "name": "hdzog",
+  "id": "videossh",
+  "name": "videossh",
   "settings": [
     {
       "default": false,
@@ -42,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": ""
+  "thumbnail": "https://videos.sh/xfst_images/logo.png"
 }

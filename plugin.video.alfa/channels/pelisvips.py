@@ -244,37 +244,17 @@ def list_all(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    players = {'pelisvips': 'https://pelisvips.com', 
-               'stape': 'https://streamtape.com',
-               'stream': 'https://streamtape.com',
-               'streamtape': 'https://streamtape.com',
-               'netu': 'https://hqq.tv',
-               'up': 'https://upstream.to', 
-               'upstream': 'https://upstream.to', 
-               'easy': 'https://easyload.io', 
-               'easyload': 'https://easyload.io', 
-               'fembed': 'https://fembad.net',
-               'youtube': '',
-               'pelisup': 'https://www.pelisup.com',
-               'goo': 'https://gounlimited.to',
-               'gounlimited': 'https://gounlimited.to'}
+    from lib import players_parse
                
     # Descarga la pagina
     soup = create_soup(item.url).find('div', id='movie-player')
-    logger.error(str(type(soup)))
+
     matches = soup.find_all('li')
     
     for elem in matches:
         title = "%s"
         url = elem.a['rel'][0]
-        if not url.startswith('http'):
-            server = elem.a['title'].lower()
-            if server not in str(players):
-                logger.error('Añadir a lista: %s' % server)
-                server = 'pelisvips'
-            if server == 'netu' and '.mp4' in url:
-                server = 'stape'
-            url = urlparse.urljoin(players[server], url)
+        url = players_parse.player_parse(url, elem.a['title'], host)
         
         info = elem.find('span', class_='optxt').text.partition('\n')
         

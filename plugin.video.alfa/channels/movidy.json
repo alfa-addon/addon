@@ -1,7 +1,7 @@
 {
   "id": "movidy",
   "name": "movidy",
-  "active": true,
+  "active": false,
   "adult": false,
   "force_unify": true,
   "language": ["cast", "lat"],

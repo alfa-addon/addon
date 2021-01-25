@@ -200,7 +200,7 @@ def get_environment():
         except:
             environment['userdata_free'] = '?'
         
-        if environment['userdata_path_perm']:
+        if environment.get('userdata_path_perm', ''):
             environment['userdata_path'] = environment['userdata_path_perm']
             del environment['userdata_path_perm']
         environment['torrent_lang'] = '%s/%s' % (config.get_setting("channel_language", default="").upper(), \
@@ -318,6 +318,11 @@ def get_environment():
                     cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
                     if not cliente['D_load_Path_perm']: del cliente['D_load_Path_perm']
                     cliente['Buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
+                elif cliente['Plug_in'] == 'Torrest':
+                    cliente['D_load_Path'] = str(filetools.translatePath(__settings__.getSetting('s:download_path')))
+                    cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
+                    if not cliente['D_load_Path_perm']: del cliente['D_load_Path_perm']
+                    cliente['Buffer'] = str(int(int(__settings__.getSetting('s:buffer_size')) / (1024*1024)))
                 else:
                     cliente['D_load_Path'] = str(filetools.translatePath(__settings__.getSetting('download_path')))
                     cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
@@ -326,7 +331,7 @@ def get_environment():
                     if __settings__.getSetting('download_storage') == '1' and __settings__.getSetting('memory_size'):
                         cliente['Memoria'] = str(__settings__.getSetting('memory_size'))
 
-            if cliente['D_load_Path']:
+            if cliente.get('D_load_Path', ''):
                 try:
                     if environment['os_name'].lower() == 'windows':
                         free_bytes = ctypes.c_ulonglong(0)
@@ -341,7 +346,7 @@ def get_environment():
                                     (1024**3)) * float(disk_space.f_frsize), 3)).replace('.', ',')
                 except:
                     pass
-                if cliente['D_load_Path_perm']:
+                if cliente.get('D_load_Path_perm', ''):
                     cliente['D_load_Path'] = cliente['D_load_Path_perm']
                     del cliente['D_load_Path_perm']
             environment['torrent_list'].append(cliente)
@@ -371,7 +376,7 @@ def get_environment():
                 environment['log_path'] = ''
             break
         
-        if environment['log_path']:
+        if environment.get('log_path', ''):
             environment['log_size_bytes'] = str(filetools.getsize(environment['log_path']))
             environment['log_size'] = str(round(float(environment['log_size_bytes']) / \
                                 (1024*1024), 3))

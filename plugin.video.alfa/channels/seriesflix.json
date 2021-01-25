@@ -33,14 +33,6 @@
         "CAST",
         "VOSE"
       ]
-    },
-    {
-      "id": "include_in_newest_peliculas",
-      "type": "bool",
-      "label": "Incluir en Novedades - Peliculas",
-      "default": true,
-      "enabled": true,
-      "visible": true
     }
   ]
 }

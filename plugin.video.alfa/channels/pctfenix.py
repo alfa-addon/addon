@@ -557,7 +557,7 @@ def listado(item):                                                              
             title = re.sub(r'(?i)castellano|español|ingl.s\s*|english\s*|calidad|de\s*la\s*serie|spanish|Descarga\w*\s*\w+\-\w+', '', title)
             title = re.sub(r'(?i)ver\s*online\s*(?:serie\s*)|descarga.*\s*Serie\s*(?:hd\s*)?|ver\s*en\s*linea\s*|v.o.\s*|cvcd\s*', '', title)
             title = re.sub(r'(?i)en\s*(?:Full\s*)?HD\s*|microhd\s*|hdtv\s*|\(proper\)\s*|ratdvd\s*|dvdrip\s*|dvd.*\s*|dvbrip\s*', '', title)
-            title = re.sub(r'(?i)dvb\s*|descarga\w*\s*|torrent\s*|gratis\s*|estreno\w*\s*', '', title)
+            title = re.sub(r'(?i)ESDLA\s*|dvb\s*|descarga\w*\s*|torrent\s*|gratis\s*|estreno\w*\s*', '', title)
             title = re.sub(r'(?i)(?:la\s*)?pelicula\w*\s*en\s*latino\s*|(?:la\s*)?pelicula\w*\s*|descarga\w*\s*todas\s*', '', title)
             title = re.sub(r'(?i)bajar\s*|hdrip\s*|rip\s*|xvid\s*|ac3\s*5\.1\s*|ac3\s*|1080p\s*|720p\s*|dvd-screener\s*', '', title)
             title = re.sub(r'(?i)ts-screener\s*|screener\s*|bdremux\s*|4k\s*uhdrip\s*|full\s*uhd4k\s*|4kultra\s*|2cd\s*', '', title)

@@ -26,7 +26,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['pornhub']
 
-host = 'http://www.eroticage.net'
+host = 'https://www.erogarga.com'       # http://www.eroticage.net
 
 
 def mainlist(item):
@@ -81,24 +81,18 @@ def create_soup(url, referer=None, unescape=False):
 def lista(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    if "/?s=" in item.url:
-        matches = soup.find('section', class_='content-area with-sidebar-right').find_all('article', class_='thumb-block')
-    else:
-        matches = soup.find('div', class_='content-area with-sidebar-right').find_all('article', class_='thumb-block')
+    soup = create_soup(item.url).find('main', id='main')
+    matches = soup.find_all('article', class_='thumb-block')
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
-        thumbnail = scrapertools.find_single_match(str(elem), '.*?src="(.*?.(?:jpg|webp|png))"')
-        time = elem.find('span', class_='duration')
-        if time:
-            title = "[COLOR yellow]%s[/COLOR] %s" % (time.text,title)
+        thumbnail = elem.img['data-src']
         plot = ""
         itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('a', class_='current').parent.find_next_siblings("li")
+    next_page = soup.find('a', class_='current')
     if next_page:
-        next_page = next_page[0].a['href']
+        next_page = next_page.parent.find_next_sibling("li").a['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -110,28 +104,41 @@ def play(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='responsive-player')
     for elem in matches:
-        scrapedurl = elem.iframe['src']
-        if "cine-matik.com" in scrapedurl:
+        url = elem.iframe['src']
+        if "spankbang" in url:
+            data = httptools.downloadpage(url).data
+            skey = scrapertools.find_single_match(data,'data-streamkey="([^"]+)"')
+            session="523034c1c1fc14aabde7335e4f9d9006b0b1e4984bf919d1381316adef299d1e"
+            post = {"id": skey, "data": 0}
+            headers = {'Referer':item.url}
+            url ="https://es.spankbang.com/api/videos/stream"
+            data = httptools.downloadpage(url, post=post, headers=headers).data
+            patron = '"(\d+(?:p|k))":\["([^"]+)"'
+            matches = re.compile(patron,re.DOTALL).findall(data)
+            for quality,url in matches:
+                itemlist.append(['.mp4 %s' %quality, url])
+            return itemlist
+        if "cine-matik.com" in url:
             n = "yandex"
-            m = scrapedurl.replace("https://cine-matik.com/player/play.php?", "")
+            m = url.replace("https://cine-matik.com/player/play.php?", "")
             post = "%s&alternative=%s" %(m,n)
             headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
             data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
             if data1=="":
                 n = "blogger"
-                m = scrapedurl.replace("https://cine-matik.com/player/play.php?", "")
+                m = url.replace("https://cine-matik.com/player/play.php?", "")
                 post = "%s&alternative=%s" %(m,n)
                 headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
                 data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
-            scrapedurl = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
-            if not scrapedurl:
+            url = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
+            if not url:
                 n = scrapertools.find_single_match(data1,'"alternative":"([^"]+)"')
                 post = "%s&alternative=%s" %(m,n)
                 headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
                 data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
-                scrapedurl = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
-            scrapedurl = scrapedurl.replace("\/", "/")
-        if not "meta" in scrapedurl:
-            itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
+                url = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
+            url = url.replace("\/", "/")
+        if not "meta" in url:
+            itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

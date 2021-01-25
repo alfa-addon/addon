@@ -1,7 +1,7 @@
 {
   "id": "dascer",
   "name": "Dascer",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "https://dascer.com/wp-content/uploads/2019/11/1LOGO-PLANO-2020.png",
