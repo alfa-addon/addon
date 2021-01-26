@@ -122,5 +122,5 @@ def play(item):
     for elem in matches:
         url = elem['src']
         quality = elem['title']
-        itemlist.append(['.mp4 %s' %quality, url])
-    return itemlist
+        itemlist.append(['%s' %quality, url])
+    return itemlist[::-1]

@@ -95,7 +95,8 @@ def play(item):
     patron = '<source title="([^"]+)" src=([^\s]+)'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for quality, url in matches:
-        itemlist.append(['.mp4 %s' %quality, url])
+        itemlist.append(['%sp' %quality, url])
+        itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     if not url:
         url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
         itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))

@@ -141,8 +141,8 @@ def play(item):
                 url = JSONData[videourl]
                 url = url.replace("{DATA_MARKERS}", "data=pc.ES")
                 if not url.startswith("https:"): url = "https:" + url
-                title = videourl
-                itemlist.append(["%s %s [directo]" % (title, url[-4:]), url])
-    itemlist.sort(key=lambda item: item[0])
+                quality = videourl
+                itemlist.append(["%s [%s]" % (quality, url[-4:]), url])
+    itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return itemlist
 

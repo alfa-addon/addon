@@ -25,8 +25,6 @@ def mainlist(item):
     itemlist = []
 
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/videos/1/"))
-    # itemlist.append(item.clone(title="Mas popular" , action="lista", url=host + "/videos/popular/week/"))
-    # itemlist.append(item.clone(title="Mejor valorada" , action="lista", url=host + "/videos/rated/week/"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
@@ -98,6 +96,6 @@ def play(item):
         url = httptools.downloadpage(url, headers=headers , follow_redirects=False, only_headers=True).headers.get("location", "")
         url += "|Referer=%s" % item.url
         itemlist.append([quality, url])
-    return itemlist
+    return itemlist[::-1]
 
 
