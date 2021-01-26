@@ -4,102 +4,116 @@ import re
 import datetime
 import xbmcgui
 
+PY3 = False
+if sys.version_info[0] >= 3:
+    import urllib.parse as urllib       # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib                       # Usamos el nativo de PY2 que es más rápido
+
+from bs4 import BeautifulSoup
 from core import httptools, scrapertools, servertools, tmdb, jsontools
 from core.item import Item
 from platformcode import config, logger, platformtools
 from channelselector import get_thumb
 
 host = 'https://hentaila.com'
-IDIOMAS = {"Versión original subtitulada español": "VOSE"}
+IDIOMAS = {'VOSE': 'VOSE'}
+SEEK_TMDB = config.get_setting('seek_tmdb', channel='hentaila')
+SEEK_TMDB_LIST_ALL = not config.get_setting('seek_tmdb_only_in_episodes', channel='hentaila')
+PREFER_HLA_REVIEW = config.get_setting('prefer_hla_review', channel='hentaila')
 list_language = list(IDIOMAS.values())
+month = {'January':'01',  'February':'02', 'March':'03',
+         'April':'04',    'May':'05',      'June':'06',
+         'July':'07',     'August':'08',   'September':'09',
+         'October':'10',  'November':'11', 'December':'12'}
 
 def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(
         Item(
-            channel = item.channel,
-            title = "Novedades",
             action = "newest",
+            channel = item.channel,
             fanart = item.fanart,
+            title = "Novedades",
             thumbnail = get_thumb("newest", auto=True)
         )
     )
     itemlist.append(
         Item(
-            channel = item.channel,
-            title = "Más votados",
             action = "list_all",
-            param = "",
-            url = host + "/directorio?filter=popular",
+            channel = item.channel,
             fanart = item.fanart,
-            thumbnail = get_thumb("more voted", auto=True)
+            param = "",
+            title = "Mejor valorados",
+            thumbnail = get_thumb("more voted", auto=True),
+            url = host + "/directorio?filter=popular"
         )
     )
     itemlist.append(
         Item(
-            channel = item.channel,
-            title = "Destacados",
             action = "list_all",
+            channel = item.channel,
+            fanart = item.fanart,
             param = "hot",
-            url = host,
-            fanart = item.fanart,
-            thumbnail = get_thumb("hot", auto=True)
+            title = "Destacados de la semana",
+            thumbnail = get_thumb("hot", auto=True),
+            url = host
         )
     )
     itemlist.append(
         Item(
-            channel = item.channel,
-            title = "Nuevos episodios",
             action = "list_all",
+            channel = item.channel,
+            fanart = item.fanart,
             param = "newepisodes",
-            url = host,
-            fanart = item.fanart,
-            thumbnail = get_thumb("new episodes", auto=True)
+            title = "Nuevos episodios",
+            thumbnail = get_thumb("new episodes", auto=True),
+            url = host
         )
     )
     itemlist.append(
         Item(
-            channel =  item.channel,
-            title = "Próximos estrenos",
             action = "premieres",
-            param = "",
-            url = host + '/estrenos-hentai',
+            channel =  item.channel,
             fanart = item.fanart,
-            thumbnail = get_thumb("premieres", auto=True)
+            param = "",
+            title = "Estrenos próximos",
+            thumbnail = get_thumb("premieres", auto=True),
+            url = host + '/estrenos-hentai'
         )
     )
     itemlist.append(
         Item(
-            channel = item.channel,
-            title = "Categorías",
             action = "categories",
-            param = "",
-            url = host,
+            channel = item.channel,
             fanart = item.fanart,
-            thumbnail = get_thumb("categories", auto=True)
+            param = "",
+            title = "Categorías",
+            thumbnail = get_thumb("categories", auto=True),
+            url = host
         )
     )
     itemlist.append(
         Item(
-            channel = item.channel,
-            title = "Todos",
             action = "list_all",
-            param = "",
-            url = host + "/directorio",
+            channel = item.channel,
             fanart = item.fanart,
-            thumbnail = get_thumb("all", auto=True)
+            param = "",
+            title = "Todos",
+            thumbnail = get_thumb("all", auto=True),
+            url = host + "/directorio"
         )
     )
     itemlist.append(
         Item(
-            channel = item.channel,
-            title = "Buscar...",
             action = "search",
-            param = "",
-            url = host + "/api/search",
+            channel = item.channel,
             fanart = item.fanart,
-            thumbnail = get_thumb("search", auto=True)
+            param = "",
+            title = "Buscar...",
+            thumbnail = get_thumb("search", auto=True),
+            url = host + "/api/search"
         )
     )
     return itemlist
@@ -161,7 +175,56 @@ def categories(item):
     )
     return itemlist
 
-def filter_by_selection(item, clearUrl = False):
+def create_soup(url, post=None, headers=None):
+    logger.info()
+
+    data = httptools.downloadpage(url, post=post, headers=headers).data
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+
+    return soup
+
+def labeler_async(itemlist, seekTmdb=False):
+    import threading
+
+    threads_num = config.get_setting("tmdb_threads", default=20)
+    semaforo = threading.Semaphore(threads_num)
+    lock = threading.Lock()
+    r_list = list()
+    i = 0
+    l_hilo = list()
+
+    def sub_thread(_item, _i, _seekTmdb):
+        semaforo.acquire()
+        ret = labeler(_item, _seekTmdb)
+        semaforo.release()
+        r_list.append((_i, _item, ret))
+
+    for item in itemlist:
+        t = threading.Thread(target = sub_thread, args = (item, i, seekTmdb))
+        t.start()
+        i += 1
+        l_hilo.append(t)
+
+    # esperar q todos los hilos terminen
+    for x in l_hilo:
+        x.join()
+
+    # Ordenar lista de resultados por orden de llamada para mantener el mismo orden q itemlist
+    r_list.sort(key=lambda i: i[0])
+
+    # Reconstruir y devolver la lista solo con los resultados de las llamadas individuales
+    return [ii[2] for ii in r_list]
+
+def labeler(item, seekTmdb=False):
+    logger.info()
+    tmdb.set_infoLabels(item, seekTmdb, include_adult=True)
+    if item.infoLabels['tmdb_id'] == '':
+        item.infoLabels['first_air_date'] = ''
+        item.infoLabels['year'] = ''
+        tmdb.set_infoLabels(item, seekTmdb, include_adult)
+    return item
+
+def filter_by_selection(item, clearUrl=False):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(host + "/directorio").data
@@ -328,55 +391,69 @@ def newest(item):
 def list_all(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    infoLabels = item.infoLabels
+    soup = create_soup(item.url)
+
     if item.param == 'hot':
-        pattern = '(?s)class="item".+?a href="([^"]+).+?'
-        pattern += '>([^<]+).+?'
-        pattern += 'class="status.*?>.*?>.*?>([^<]+).+?'
-        pattern += '<p>([^<]+).+?'
-        pattern += 'class="genres"(.+?/article>).+?'
-        pattern += 'img src=".+?(\d+?)\.'
-        matches = scrapertools.find_multiple_matches(data, pattern)
-        for scpurl, scptitle, scpstatus, scpplot, scpgenres, scpthumbid in matches:
-            infoLabels['plot'] = scpplot
+        section = soup.find('section', class_='latest-hentais section top').div.find_all('div', class_='item')
+
+        for article in section:
+            infoLabels = {}
+            infoLabels['plot'] = str(article.find('div', class_='h-content').p.string)
+            scpthumbid = scrapertools.find_single_match(article.find('figure', class_='bg').img['src'], '.+?(\d+)\.')
+            logger.info(scpthumbid)
+            title = str(article.find('h2', class_='h-title').a.string)
             itemlist.append(
                 Item(
                     action = "episodios",
                     channel = item.channel,
-                    contentSerieName = scptitle.strip(),
+                    contentSerieName = title,
                     fanart = host + '/uploads/fondos/' + scpthumbid + '.jpg',
                     infoLabels = infoLabels,
-                    title = scptitle.strip(),
+                    title = title,
                     thumbnail = host + '/uploads/portadas/' + scpthumbid + '.jpg',
-                    url = host + scpurl
+                    url = host + article.find('h2', class_='h-title').a['href']
                 )
             )
+
+        labeler_async(itemlist, seekTmdb = SEEK_TMDB_LIST_ALL)
+
     elif item.param == 'newepisodes':
-        pattern = '(?s)class="hentai episode".+?img src="([^"]+).+?'
-        pattern +='num-episode.+?>(?:.+?(\d+?))<.+?'
-        pattern += 'h-title.+?>([^<]+).+?'
-        pattern += 'time>([^<]+).+?'
-        pattern += 'href="/ver/(.*?)-\d+?'
-        matches = scrapertools.find_multiple_matches(data, pattern)
-        for scpthumbnail, scpepnum, scptitle, scptime, scpurl in matches:
-            infoLabels['plot'] = 'Publicado ' + scptime.lower()
+        section = soup.find('section', class_='section episodes').find('div', class_='grid episodes').find_all('article', class_='hentai episode')
+
+        for article in section:
+            infoLabels = {}
+            scptime = str(article.find('header', class_='h-header').time.string)
+            scpthumbnail = article.find('img')['src']
+            scpurl = scrapertools.find_single_match(article.find('a')['href'], '/ver/(.*?)-\d+')
+            infoLabels['episode'] = int(scrapertools.find_single_match(str(article.find('span', class_='num-episode').string), '.+?(\d+)'))
+            infoLabels['season'] = 1
+            infoLabels['title'] = str(article.find('h2', class_='h-title').string)
+            infoLabels['plot'] = 'Publicado ' + scptime
             itemlist.append(
                 Item(
                     action = "episodios",
                     channel = item.channel,
-                    contentSerieName = scptitle.strip(),
+                    contentSerieName = infoLabels['title'],
                     fanart = host + scpthumbnail,
                     infoLabels = infoLabels,
-                    title = scptitle.strip(),
+                    title = 'E' + str(infoLabels['episode']) + ': ' + infoLabels['title'],
                     thumbnail = host + scpthumbnail,
+                    thumbnail_backup = host + scpthumbnail,
                     url = host + '/hentai-' + scpurl
                 )
             )
+
+        labeler_async(itemlist, seekTmdb = SEEK_TMDB_LIST_ALL)
+
+        for i in itemlist:
+            i.thumbnail = i.thumbnail_backup
+
     else:
-        pattern = '(?s)class="hentai".+?img src=".+?(\d+?)\..+?".+?h-title.+?>([^<]+).+?href="([^"]+)'
-        matches = scrapertools.find_multiple_matches(data, pattern)
+        pattern = '(?s)class="hentai".+?img.+?src=".+?(\d+?)\..+?".+?h-title.+?>([^<]+).+?href="([^"]+)'
+        matches = scrapertools.find_multiple_matches(str(soup), pattern)
+
         for scpthumbid, scptitle, scpurl in matches:
+            infoLabels = {}
             itemlist.append(
                 Item(
                     action = "episodios",
@@ -389,8 +466,11 @@ def list_all(item):
                     url = host + scpurl
                 )
             )
-    # Si se encuentra otra página, se agrega un paginador
-    nextpage = list_all_next(data)
+
+        labeler_async(itemlist, seekTmdb = SEEK_TMDB_LIST_ALL)
+
+    nextpage = soup.find('a', class_='btn rnd npd fa-arrow-right')
+
     if nextpage:
         itemlist.append(
             Item(
@@ -399,110 +479,95 @@ def list_all(item):
                 fanart = item.fanart,
                 param = item.param,
                 title =  '[COLOR orange]Siguiente página > [/COLOR]',
-                url = host + nextpage
+                url = host + nextpage['href']
             )
         )
-    tmdb.set_infoLabels(itemlist, seekTmdb = False)
+
     return itemlist
 
-def list_all_next(data):
+def episodesxseason(item):
     logger.info()
-    nexturlptn = '(?s)a href="([^"]+?)" class="btn rnd npd fa-arrow-right"'
-    nexturl = scrapertools.find_single_match(data, nexturlptn)
-    if nexturl:
-        return nexturl
-    else:
-        return False
+    itemlist = []
+    item.param = "videolibrary"
+    itemlist.extend(episodios(item))
+    return itemlist
 
 def episodios(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    month = {'January':'01', 'February':'02', 'March':'03',
-            'April':'04', 'May':'05', 'June':'06', 'July':'07',
-            'August':'08', 'September':'09', 'October':'10',
-            'November':'11', 'December':'12'}
-    
-    epsectptn = '(?s)class="episodes-list".*?/section>'
-    epsectmatch = scrapertools.find_single_match(data, epsectptn)
-    gensectptn = '(?s)class="genres".*?/section>'
-    gensectmatch = scrapertools.find_single_match(data, gensectptn)
-    eppatn = '(?s)img src="([^"]+).*?h-title.+?>(.*?)\s(?:Episodio)\s(\d*?)<.*?time>([^<]+).*?a href="([^"]+)'
-    epmatch = scrapertools.find_multiple_matches(epsectmatch, eppatn)
-    genpatn = '(?s)a href="(?:[^"]+)+.+?>([^<]+)'
-    genmatch = scrapertools.find_multiple_matches(gensectmatch, genpatn)
-    plotptn = '(?s)class="content-title".+?p>([^<]+)'
-    plot = scrapertools.find_single_match(data, plotptn)
-    premiereptn = '(?s)class="content-title".+?>(\d+?-\d+?-\d+?)<'
-    premiere = scrapertools.find_single_match(data, premiereptn)
-    ratingptn = '(?s)class="h-rating".*?class="fa-star total".*?>([^<]+)\s.+?>.+?>([^<]+)'
-    rating = (scrapertools.find_multiple_matches(data, ratingptn))[0]
-
+    soup = create_soup(item.url)
+    labeler_async([item], seekTmdb = SEEK_TMDB)
     infoLabels = item.infoLabels
-    scpstatusptn = '(?s)class="status-.*?>.*?>.*?>([^<]+)'
-    scpstatus = scrapertools.find_single_match(data, scpstatusptn)
-    infoLabels['genre'] += scpstatus.strip()
-    infoLabels['plot'] = plot
-    infoLabels['rating'] = float(rating[0])
-    infoLabels['status'] = scpstatus.strip()
+
+    infoLabels['plot'] = str(soup.find('div', class_='h-content').p.string)
+    infoLabels['rating'] = float(soup.find('div', class_='h-rating').p.contents[0])
+    infoLabels['status'] = scrapertools.find_single_match(str(soup), '(?s)class="status-.*?>.*?>.*?>([^<]+)').strip()
+    infoLabels['season'] = 1
+    infoLabels['genre'] += infoLabels['status']
     infoLabels['tvshowtitle'] = item.title
-    infoLabels['votes'] = int(rating[1])
+    infoLabels['votes'] = int(soup.find('div', class_='h-rating').p.span.span.string)
+    epmatch = soup.find('div', class_='episodes-list').find_all('article')
+    genmatch = soup.find('nav', class_='genres').find_all('a', class_='btn sm')
+
     if genmatch:
-        infoLabels['genre'] = genmatch[0]
-        for i in range(len(genmatch) - 1):
-            infoLabels['genre'] += ', ' + genmatch[i + 1]
-    for scpthumbnail, scptitle, scpepnum, scptime, scpurl in epmatch:
-        # date = datetime.datetime.strptime(scptime, '%B %d, %Y')
-        # infoLabels['last_air_date'] = date.strftime('%Y-%m-%d')
+        if not infoLabels['genre']:
+            infoLabels['genre'] = str(genmatch[0].string)
+            genmatch = genmatch[1:]
+        for i in range(len(genmatch)):
+            infoLabels['genre'] += ', ' + str(genmatch[i].string)
+    for article in epmatch:
+        scpepnum = int(scrapertools.find_single_match(str(article.find('h2', class_='h-title').string), '.+?(\d+)'))
+        scptime = str(article.find('header', class_='h-header').find('time').string)
         date = (scrapertools.find_multiple_matches(scptime, '(.+?).(\d\d).+?(\d+)'))[0]
-        infoLabels['last_air_date'] = date[2] + '-' + month[date[0]] + '-' + date[1]
-        infoLabels['aired'] = infoLabels['last_air_date']
-        infoLabels['premiered'] = infoLabels['last_air_date']
+        title = scrapertools.get_season_and_episode(str(item.infoLabels['season']) + 'x' + str(item.infoLabels['episode'])) + ': ' + item.contentSerieName
+        infoLabels['first_air_date'] = date[2] + '-' + month[date[0]] + '-' + date[1]
+        infoLabels['year'] = date[2]
         infoLabels['episode'] = scpepnum
         itemlist.append(
-            Item(
+            item.clone(
                 action = "findvideos",
                 channel = item.channel,
                 contentTitle = item.title,
                 fanart = item.fanart,
                 infoLabels = infoLabels,
-                title = 'Episodio ' + scpepnum,
-                thumbnail = host + scpthumbnail,
-                url = host + scpurl
+                title = title,
+                thumbnail = host + article.find('div', class_='h-thumb').find('img')['src'],
+                url = host + article.find('a')['href']
             )
         )
     itemlist.reverse()
-    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra:
-        if premiere:
-            itemlist.append(
-                Item(
-                    channel = item.channel,
-                    fanart = item.fanart,
-                    title = 'Estreno próximo episodio: ' + premiere,
-                    thumbnail = item.thumbnail,
-                )
-            )
+    labeler_async(itemlist, seekTmdb = SEEK_TMDB)
+
+    for i in itemlist:
+        i.title = scrapertools.get_season_and_episode(str(i.infoLabels['season']) + 'x' + str(i.infoLabels['episode'])) + ': ' + i.infoLabels['title']
+        if PREFER_HLA_REVIEW:
+            i.infoLabels['plot'] = infoLabels['plot']
+
+    premiereptn = '(?s)class="content-title".+?>(\d+?-\d+?-\d+?)<'
+    premiere = scrapertools.find_single_match(str(soup), premiereptn)
+    if premiere:
         itemlist.append(
             Item(
                 channel = item.channel,
-                title = '[COLOR yellow]Añadir este item a la videoteca[/COLOR]',
-                url = item.url,
-                action = "add_serie_to_library",
-                extra = "episodesxseason",
-                contentSerieName = item.contentSerieName
+                fanart = item.fanart,
+                title = 'Estreno próximo episodio: ' + premiere,
+                thumbnail = item.thumbnail,
             )
         )
-    else:
-        if premiere:
+
+    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.param:
+        if itemlist[0].infoLabels['tmdb_id']:
             itemlist.append(
                 Item(
                     channel = item.channel,
-                    fanart = item.fanart,
-                    title = 'Estreno próximo episodio: ' + premiere,
-                    thumbnail = item.thumbnail,
+                    title = '[COLOR yellow]Añadir este elemento a la videoteca[/COLOR]',
+                    url = item.url,
+                    action = "add_serie_to_library",
+                    extra = "episodesxseason",
+                    contentSerieName = item.contentSerieName
                 )
             )
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = False)
+
     itemlist.append(
         Item(
             action = "comments",
@@ -512,12 +577,6 @@ def episodios(item):
             url = item.url
         )
     )
-    return itemlist
-
-def episodesxseason(item):
-    logger.info()
-    itemlist = []
-    itemlist.extend(episodios(item))
     return itemlist
 
 def findvideos(item):
@@ -540,23 +599,20 @@ def findvideos(item):
         video.fanart = item.thumbnail
         video.infoLabels = item.infoLabels
         video.title = video.title.replace((config.get_localized_string(70206) % ''), '')
-        video.title = '[' + video.title + '] Ver ' + item.contentTitle
+        video.title = video.title.title() + ' [' + item.contentSerieName + ']'
         video.thumbnail = item.thumbnail
     itemlist.append(
         Item(
             action = "comments",
             channel = item.channel,
             fanart = item.fanart,
-            title = "Ver comentarios",
+            title = "Ver comentarios del episodio",
             url = item.url
         )
     )
     return itemlist
 
 def comments(item):
-    #############################
-    ## TODO: Add image support ##
-    #############################
     logger.info()
     itemlist = []
     apipage = httptools.downloadpage('https://hentaila-1.disqus.com/embed.js').data

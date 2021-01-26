@@ -168,7 +168,7 @@ def cache_response(fn):
 
 
 
-def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang, forced=False, include_adult=False):
+def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang, forced=False, **kwargs):
     """
     Dependiendo del tipo de dato de source obtiene y fija (item.infoLabels) los datos extras de una o varias series,
     capitulos o peliculas.
@@ -183,6 +183,7 @@ def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang, forced=Fals
     @return: un numero o lista de numeros con el resultado de las llamadas a set_infoLabels_item
     @rtype: int, list
     """
+    include_adult = kwargs.get('include_adult', False)
 
     if not config.get_setting('tmdb_active') and not forced:
         return
@@ -197,7 +198,7 @@ def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang, forced=Fals
     return ret
 
 
-def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang, forced=False, include_adult=False):
+def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang, forced=False, **kwargs):
     """
     De manera concurrente, obtiene los datos de los items incluidos en la lista item_list.
 
@@ -218,6 +219,7 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang
         negativo en caso contrario.
     @rtype: list
     """
+    include_adult = kwargs.get('include_adult', False)
     if not config.get_setting('tmdb_active') and not forced:
         return
     import threading
@@ -253,7 +255,7 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang
     return [ii[2] for ii in r_list]
 
 
-def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=None, include_adult=False):
+def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=None, **kwargs):
     """
     Obtiene y fija (item.infoLabels) los datos extras de una serie, capitulo o pelicula.
 
@@ -270,6 +272,7 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
         Este numero sera positivo si los datos se han obtenido de www.themoviedb.org y negativo en caso contrario.
     @rtype: int
     """
+    include_adult = kwargs.get('include_adult', False)
     global otmdb_global
 
     def __leer_datos(otmdb_aux):
@@ -776,7 +779,9 @@ class Tmdb(object):
         self.busqueda_texto = re.sub('\[\\\?(B|I|COLOR)\s?[^\]]*\]', '', self.texto_buscado).strip()
         self.busqueda_tipo = kwargs.get('tipo', '')
         self.busqueda_idioma = kwargs.get('idioma_busqueda', tmdb_lang)
-        self.busqueda_include_adult = kwargs.get('include_adult', False)
+        self.busqueda_include_adult = 'false'
+        if kwargs.get('include_adult', False) == True:
+            self.busqueda_include_adult = 'true'
         self.busqueda_year = kwargs.get('year', '')
         self.busqueda_filtro = kwargs.get('filtro', {})
         self.discover = kwargs.get('discover', {})
