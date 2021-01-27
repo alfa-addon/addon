@@ -790,6 +790,10 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
         thumb = item.contentThumbnail
 
     xlistitem = xbmcgui.ListItem(path=item.url)
+    
+    xlistitem.setContentLookup(False)
+    xlistitem.setMimeType('mime/x-type')
+    
     if config.get_platform(True)['num_version'] >= 16.0:
         xlistitem.setArt({"thumb": thumb})
     else:
@@ -885,22 +889,16 @@ def get_seleccion(default_action, opciones, seleccion, video_urls):
 
 def calcResolution(option):
     match = scrapertoolsV2.find_single_match(option, '([0-9]{2,4})x([0-9]{2,4})')
+    match2 = scrapertoolsV2.find_single_match(option, '([0-9]{2,4})(?:p|i)')
     resolution = False
     if match:
         resolution = int(match[0]) * int(match[1])
-    else:
-        if '240p' in option:
-            resolution = 320 * 240
-        elif '360p' in option:
-            resolution = 480 * 360
-        elif ('480p' in option) or ('480i' in option):
-            resolution = 720 * 480
-        elif ('576p' in option) or ('576p' in option):
-            resolution = 720 * 576
-        elif ('720p' in option) or ('HD' in option):
-            resolution = 1280 * 720
-        elif ('1080p' in option) or ('1080i' in option) or ('Full HD' in option):
-            resolution = 1920 * 1080
+    elif match2:
+        resolution = int(match2)
+    elif 'HD' in option:
+        resolution = 720
+    elif 'full hd' in option.lower():
+        resolution = 1080
 
     return resolution
 
@@ -1663,8 +1661,10 @@ def play_torrent(item, xlistitem, mediaurl):
                     ret = filetools.copy(item.url, filetools.join(save_path_videos, 'torrents', \
                                 filetools.basename(item.url)), silent=True)
                 
-                if (torr_client in ['quasar', 'elementum', 'torrest'] and item.downloadFilename and item.downloadStatus != 5) \
-                        or (torr_client in ['quasar', 'elementum', 'torrest'] and 'RAR-' in size and BACKGROUND_DOWNLOAD):
+                if (torr_client in ['quasar', 'elementum', 'torrest'] and item.downloadFilename \
+                        and (item.downloadStatus != 5 or item.downloadProgress == -1)) \
+                        or (torr_client in ['quasar', 'elementum', 'torrest'] \
+                        and 'RAR-' in size and BACKGROUND_DOWNLOAD):
                     
                     if item.downloadProgress == -1:                             # Si estaba pausado se resume
                         torr_folder = scrapertoolsV2.find_single_match(item.downloadFilename, '(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$')
@@ -1681,18 +1681,11 @@ def play_torrent(item, xlistitem, mediaurl):
                         downloadProgress = 1
                 if not result:                                                  # Si falla todo, se usa el antiguo sistema
                     if torr_client == 'torrest':
-
                         play_type = 'path'
-                        if mediaurl.startswith('magnet:'): play_type = 'magnet'
-                        if mediaurl.startswith('http:'): play_type = 'url'
+                        if mediaurl.startswith('magnet'): play_type = 'magnet'
+                        if mediaurl.startswith('http'): play_type = 'url'
                         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % \
                                         (play_type, play_type, urllib.unquote_plus(mediaurl)) + ")")
-                        """
-                        play_type = 'url'
-                        if add_url.startswith('magnet:'): play_type = 'magnet'
-                        xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % \
-                                        (play_type, play_type, add_url) + ")")
-                        """
                     else:
                         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
                 torrent.update_control(item, function='play_torrent_externos_start')

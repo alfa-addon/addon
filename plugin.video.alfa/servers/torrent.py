@@ -111,6 +111,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
 
     played = False
     debug = False
+    torrent_paths = torrent_dirs()
 
     try:
         save_path_videos = ''
@@ -307,7 +308,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
             else:
                 progreso.update(s.buffer, txt + '\n' + txt2 + '\n' + txt3 + '\n' + " ")
             time.sleep(1)
-            if ((s.progress_file > 1 and (str(x).endswith('0') or str(x).endswith('5'))) \
+            if ((s.progress_file > 0 and (str(x).endswith('0') or str(x).endswith('5'))) \
                         or (s.progress_file == 0 and x > 30)) and not filetools.exists(torrent_path):
                 logger.info('LISTADO de .torrent %s' % (filetools.listdir(filetools.dirname(torrent_path))), force=True)
                 if filetools.exists(torrent_path.replace('.torrent', '.pause')) or filetools.exists(torrent_path.replace('.TORRENT', '.pause')):
@@ -928,10 +929,9 @@ def call_torrent_via_web(mediaurl, torr_client, torrent_action='add',oper=2, alf
     files = {}
     torrent_type = 'torrent'
     if torr_client == "torrest":
-        mediaurl = urllib.unquote_plus(mediaurl)
-        if mediaurl.startswith('magnet:'): torrent_type = 'magnet'
+        if mediaurl.startswith('magnet'): torrent_type = 'magnet'
         torrent_action = "add/%s?ignore_duplicate=true&download=true" % torrent_type
-        if mediaurl.startswith('magnet:'): torrent_action += '&uri=%s' % mediaurl
+        if mediaurl.startswith('magnet') or mediaurl.startswith('http'): torrent_action += '&uri=%s' % mediaurl
     torrent_paths = torrent_dirs()
     local_host = {"quasar": ["http://localhost:65251/torrents/", "%s?uri" % torrent_action], \
                   "elementum": ["%storrents/" % torrent_paths['ELEMENTUM_web'], torrent_action], \
@@ -944,7 +944,8 @@ def call_torrent_via_web(mediaurl, torr_client, torrent_action='add',oper=2, alf
         post = 'uri=%s&file=null&all=1' % mediaurl
     elif torr_client == "torrest":
         uri = '%s%s' % (local_host[torr_client][0], local_host[torr_client][1])  
-        if torrent_type == 'torrent':
+        if torrent_type == 'torrent' and not mediaurl.startswith('http'):
+            mediaurl = urllib.unquote_plus(mediaurl)
             files = {"torrent": open(mediaurl, 'rb')}
 
     logger.info('url: %s%s, mediaurl: %s, post: %s' % (local_host[torr_client][0], local_host[torr_client][1], urllib.unquote_plus(mediaurl), post))
@@ -970,9 +971,7 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
     torr_id = ''
     x = 0
     y = ''
-    if action == 'reset': action = 'delete'
-    if action == 'stop' : action = 'pause'
-    
+
     if torr_client not in str(local_host):
         log('##### Servicio para %s no disponible' % (torr_client))
         return '', '', 0
@@ -1007,11 +1006,14 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
             data = data['items']
         
         if "torrest" in torr_client:
-            total_wanted = 0.00
-            total_wanted_done = 0.00
+            total_wanted = 0.01
+            total_wanted_done = 0.01
             download_rate = 0
             for x, torr in enumerate(data):
                 status = torr.get('status', {})
+                if torrent_states[status.get('state', 0)] in ['Paused', 'Queued']:
+                    x -= 1
+                    continue
                 total_wanted += float(status.get('total_wanted', 0.00))
                 total_wanted_done += float(status.get('total_wanted_done', 0.00))
                 download_rate += status.get('download_rate', 0)
@@ -1051,12 +1053,16 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
                 y = x
             
             if action:
+                action_f = action
+                if action_f == 'reset': action_f = 'delete'
                 if "torrest" in torr_client:
-                    action_f = action
-                    if 'delete' in action: action_f = 'remove?delete=true'
+                    if action_f == 'delete': action_f = 'remove?delete=true'
+                    if action_f == 'stop': action_f = 'remove?delete=false'
                     uri = '%s%s/%s' % (local_host[torr_client], y, action_f)
                 else:
-                    uri = '%s%s/%s' % (local_host[torr_client], action, y)
+                    if action_f == 'stop': action_f = 'pause'
+                    uri = '%s%s/%s' % (local_host[torr_client], action_f, y)
+                
                 for z in range(10): 
                     res = httptools.downloadpage(uri, timeout=10, alfa_s=alfa_s, ignore_response_code=True)
                     if not res.sucess:
@@ -1065,15 +1071,17 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
                     else:
                         break
                 if res.sucess:
+                    if action == 'stop' : action += 'pe'
+                    if action == 'reset' : action += 'e'
                     log('##### Descarga %sD de %s: %s' % (action.upper(), str(torr_client).upper(), str(y)))
                 else:
-                    log('##### ERROR en %s%s/%s - ERROR Code: %s' % (local_host[torr_client], action, y, str(res.code)))
+                    log('##### ERROR en %s%s/%s - ERROR Code: %s' % (local_host[torr_client], action_f, y, str(res.code)))
                 time.sleep(1)
-                if action == 'delete' and folder_new:
+                if action in ['delete', 'reset'] and folder_new:
                     delete_torrent_folder(folder_new)
             break
         else:
-            if action == 'delete' and folder_new:
+            if action in ['delete', 'reset'] and folder_new:
                 delete_torrent_folder(folder_new)
             return '', local_host[torr_client], -1
     except:
@@ -1153,6 +1161,7 @@ def torrent_dirs():
     torrent_paths['TORR_background_download'] = config.get_setting("mct_background_download", server="torrent", default=True)
     torrent_paths['TORR_rar_unpack'] = config.get_setting("mct_rar_unpack", server="torrent", default=True)
     torr_client = ''
+    downloadpath = config.get_setting("downloadpath", default='')
     
     for torr_client_g in torrent_options:
         # Localizamos el path de descarga del .torrent y la carpeta de almacenamiento de los archivos .torrent
@@ -1169,21 +1178,21 @@ def torrent_dirs():
                 __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)  # Apunta settings del cliente torrent externo
             except:
                 continue
-        if torr_client == 'BT'and str(config.get_setting("bt_download_path", \
-                            server="torrent", default='')):
-            if torrent_paths['TORR_libtorrent_path']:
-                torrent_paths['BT'] = filetools.join(str(config.get_setting("bt_download_path", \
-                            server="torrent", default='')), 'BT-torrents')
-                torrent_paths['BT_torrents'] = filetools.join(torrent_paths['BT'], '.cache')
-                torrent_paths['BT_buffer'] = config.get_setting("bt_buffer", server="torrent", default=50)
-        elif torr_client == 'MCT' and str(config.get_setting("mct_download_path", \
-                            server="torrent", default='')):
-            if torrent_paths['TORR_libtorrent_path']:
-                torrent_paths['MCT'] = filetools.join(str(config.get_setting("mct_download_path", \
-                            server="torrent", default='')), 'MCT-torrent-videos')
-                torrent_paths['MCT_torrents'] = filetools.join(str(config.get_setting("mct_download_path", \
-                            server="torrent", default='')), 'MCT-torrents')
-                torrent_paths['MCT_buffer'] = config.get_setting("mct_buffer", server="torrent", default=50)
+        if torr_client == 'BT' and torrent_paths['TORR_libtorrent_path']:
+            if not config.get_setting("bt_download_path", server="torrent", default='') and downloadpath:
+                config.set_setting("bt_download_path", downloadpath, server="torrent")
+            torrent_paths['BT'] = filetools.join(str(config.get_setting("bt_download_path", \
+                        server="torrent", default='')), 'BT-torrents')
+            torrent_paths['BT_torrents'] = filetools.join(torrent_paths['BT'], '.cache')
+            torrent_paths['BT_buffer'] = config.get_setting("bt_buffer", server="torrent", default=50)
+        if torr_client == 'MCT' and torrent_paths['TORR_libtorrent_path']:
+            if not config.get_setting("mct_download_path", server="torrent", default='') and downloadpath:
+                config.set_setting("mct_download_path", downloadpath, server="torrent")
+            torrent_paths['MCT'] = filetools.join(str(config.get_setting("mct_download_path", \
+                        server="torrent", default='')), 'MCT-torrent-videos')
+            torrent_paths['MCT_torrents'] = filetools.join(str(config.get_setting("mct_download_path", \
+                        server="torrent", default='')), 'MCT-torrents')
+            torrent_paths['MCT_buffer'] = config.get_setting("mct_buffer", server="torrent", default=50)
         elif 'torrenter' in torr_client.lower():
             torrent_paths[torr_client.upper()] = str(filetools.join(filetools.translatePath(__settings__.getSetting('storage')),  "Torrenter"))
             if not torrent_paths[torr_client.upper()]:
@@ -1195,6 +1204,13 @@ def torrent_dirs():
             try:
                 if not __settings__: continue
                 torrent_paths[torr_client.upper()] = str(filetools.translatePath(__settings__.getSetting('download_path')))
+                if not torrent_paths[torr_client.upper()] and downloadpath:
+                    torrent_paths[torr_client.upper()] = filetools.join(downloadpath, torr_client.capitalize())
+                    __settings__.setSetting('download_path', torrent_paths[torr_client.upper()])
+                    if 'elementum' in torr_client.lower():
+                        __settings__.setSetting('torrents_path', filetools.join(torrent_paths[torr_client.upper()], 'torrents'))
+                    filetools.mkdir(filetools.join(torrent_paths[torr_client.upper()], 'torrents'), silent=True)
+                
                 torrent_paths[torr_client.upper() + '_torrents'] = filetools.join(torrent_paths[torr_client.upper()], 'torrents')
                 torrent_paths[torr_client.upper() + '_buffer'] = __settings__.getSetting('buffer_size')
                 if 'elementum' in torr_client.lower():
@@ -1212,8 +1228,15 @@ def torrent_dirs():
             try:
                 if not __settings__: continue
                 torrent_paths[torr_client.upper()] = str(filetools.translatePath(__settings__.getSetting('s:download_path')))
-                if not torrent_paths[torr_client.upper()]:
-                    torrent_paths[torr_client.upper()] = config.get_setting("downloadpath", default='')
+                if not torrent_paths[torr_client.upper()] and downloadpath:
+                    torrent_paths[torr_client.upper()] = filetools.join(downloadpath, torr_client.capitalize())
+                    __settings__.setSetting('s:download_path', torrent_paths[torr_client.upper()])
+                    __settings__.setSetting('s:torrents_path', filetools.join(torrent_paths[torr_client.upper()], 'torrents'))
+                    filetools.mkdir(filetools.join(torrent_paths[torr_client.upper()], 'torrents'), silent=True)
+                if __settings__.getSetting("show_bg_progress"):
+                    __settings__.setSetting("show_bg_progress", "false")        # Usamos nuestro sistema de display
+                    __settings__.setSetting("s:tuned_storage", "true")          # Tunned storage ON
+                
                 torrent_paths[torr_client.upper() + '_torrents'] = filetools.join(torrent_paths[torr_client.upper()], 'torrents')
                 torrent_paths[torr_client.upper() + '_buffer'] = __settings__.getSetting('s:buffer_size')
                 torrent_paths[torr_client.upper() + '_port'] = __settings__.getSetting('port')
@@ -1708,13 +1731,13 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
             if not item.downloadFilename:
                 return
             
+            if item.torr_folder:
+                folder = item.torr_folder
             folder_new = scrapertools.find_single_match(item.downloadFilename, '^\:\w+\:\s*(.*?)$')
             if filetools.dirname(folder_new):
                 folder_new = filetools.dirname(folder_new)
             if folder_new.startswith('\\') or folder_new.startswith('/'):
                 folder_new = folder_new[1:]
-            folder = folder_new
-            #folder = folder_new.replace('\\', '').replace('/', '')
             if folder_new:
                 if folder_new.startswith('\\') or folder_new.startswith('/'):
                     folder_new = folder_new[1:]
@@ -1722,8 +1745,12 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
                     folder_new = folder_new.split('\\')[0]
                 elif '/' in folder_new:
                     folder_new = folder_new.split('/')[0]
+                if not folder: folder = folder_new
                 if folder_new:
                     folder_new = filetools.join(torrent_paths[torr_client.upper()], folder_new)
+                    if not filetools.exists(folder_new) and filetools.join(torrent_paths[torr_client.upper()], folder) != folder_new \
+                                    and filetools.exists(filetools.join(torrent_paths[torr_client.upper()], folder)):
+                            folder_new = filetools.join(torrent_paths[torr_client.upper()], folder)
 
             torr_client = torr_client.lower()
             if torr_client in ['quasar', 'elementum', 'torrest'] and folder:
@@ -1787,7 +1814,6 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
     rar_file = ''
     folder = ''
     ret = ''
-    size = 'ERROR'
     
     if not rar_files and item.url.startswith('magnet:') and item.downloadServer \
                         and 'url' in str(item.downloadServer):
@@ -1920,12 +1946,12 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
             if torr_data and torr_client.upper() in ['TORREST']:
                 status = torr_data.get('status', {})
                 if torrent_states[status.get('state', 0)] != 'Buffering':
-                    if not xbmc.getCondVisibility('Player.Playing') and torrent_states[status.get('state', 0)] != 'Paused':
+                    if not xbmc.getCondVisibility('Player.Playing') and torrent_states[status.get('state', 0)] not in ['Paused', 'Queued']:
                         if not progreso:
                             progreso = platformtools.dialog_progress_bg('Alfa %s Cliente Torrent' % torr_client.upper())
                             time.sleep(1)
                         overlay_info(progreso, status, torr_client, folder=folder, bkg_user=True)
-                    elif (xbmc.getCondVisibility('Player.Playing') or torrent_states[status.get('state', 0)] == 'Paused') and progreso:
+                    elif (xbmc.getCondVisibility('Player.Playing') or torrent_states[status.get('state', 0)] in ['Paused', 'Queued']) and progreso:
                         progreso.close()
                         progreso = ''
             
