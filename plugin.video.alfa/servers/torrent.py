@@ -1173,7 +1173,7 @@ def torrent_dirs():
             torr_client = scrapertools.find_single_match(torr_client_g, ':\s*(\w+)').lower()
         __settings__ = ''
         
-        if torr_client != 'BT' and torr_client != 'MCT':
+        if torr_client not in ['BT', 'MCT']:
             try:
                 __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)  # Apunta settings del cliente torrent externo
             except:
@@ -1237,7 +1237,10 @@ def torrent_dirs():
                     __settings__.setSetting("show_bg_progress", "false")        # Usamos nuestro sistema de display
                     __settings__.setSetting("s:tuned_storage", "true")          # Tunned storage ON
                 
-                torrent_paths[torr_client.upper() + '_torrents'] = filetools.join(torrent_paths[torr_client.upper()], 'torrents')
+                if __settings__.getSetting('s:torrents_path'):
+                    torrent_paths[torr_client.upper() + '_torrents'] = str(__settings__.getSetting('s:torrents_path'))
+                else:
+                    torrent_paths[torr_client.upper() + '_torrents'] = filetools.join(torrent_paths[torr_client.upper()], 'Torrents')
                 torrent_paths[torr_client.upper() + '_buffer'] = __settings__.getSetting('s:buffer_size')
                 torrent_paths[torr_client.upper() + '_port'] = __settings__.getSetting('port')
                 torrent_paths[torr_client.upper() + '_web'] = '%s%s/' % (torrent_paths[torr_client.upper() + '_web'] \
