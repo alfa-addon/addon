@@ -17,7 +17,7 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://www.pornktube.porn'     #  https://www.tubxxporn.com   'https://www.pornky.com/'  'https://www.joysporn.com/'
+host = 'https://www.pornktu.be'     # https://www.pornktu.be/videos/ https://www.tubxxporn.com   'https://www.pornky.com/'  'https://www.joysporn.com/'
 
 def mainlist(item):
     logger.info()
@@ -25,7 +25,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/"))
     itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/most-popular/"))
     itemlist.append(item.clone(title="Mejor valorada" , action="lista", url=host + "/top-rated/"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -48,15 +48,17 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<li><a href="([^"]+)">([^<]+)<'
+    patron = '<div class="cat">.*?'
+    patron += '<a href="([^"]+)".*?'
+    patron += 'src="([^"]+)".*?'
+    patron += '>([^<]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle in matches:
+    for scrapedurl,thumbnail,scrapedtitle in matches:
         title = scrapedtitle
         url = scrapedurl
-        thumbnail = ""
+        thumbnail += "|Referer=%s" % host
         plot = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
-                              thumbnail=thumbnail , plot=plot) )
+        itemlist.append(item.clone(action="lista", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail, plot=plot) )
     return sorted(itemlist, key=lambda i: i.title)
 
 
@@ -75,8 +77,7 @@ def lista(item):
         thumbnail = scrapedthumbnail
         url = urlparse.urljoin(item.url,scrapedurl)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url,
-                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
+        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="mpages">Next')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
@@ -96,7 +97,7 @@ def play(item):
         n = str(nt*1000)
         url = "http://s%s.fapmedia.com/wqpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
         url= url.replace("_720p", "")
-        itemlist.append(['.mp4 %s' %quality, url])
+        itemlist.append(['%s' %quality, url])
     return itemlist
 
 

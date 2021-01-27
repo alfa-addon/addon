@@ -20,6 +20,7 @@ from bs4 import BeautifulSoup
 
 host = 'https://www.theyarehuge.com'
 
+                ####   Solo HD con login  
 
 def mainlist(item):
     logger.info()
@@ -79,7 +80,11 @@ def lista(item):
         title = elem['title']
         thumbnail = elem.img['data-original']
         time = elem.find('div', class_='duration').text.strip()
-        if time:
+        quality = ""
+        # quality = elem.find('span', class_='is-720')
+        if quality:
+            title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time,title)
+        else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         plot = ""
         itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,

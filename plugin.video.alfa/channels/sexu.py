@@ -36,7 +36,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search?q=%s" % (host, texto)
+    item.url = "%s/search?q=%s&st=upload" % (host, texto)
     try:
         return lista(item)
     except:
@@ -106,6 +106,6 @@ def play(item):
         quality = cat["quality"]
         if not url.startswith("https"):
             url = "https:%s" % url
-        itemlist.append(['.mp4 %s' %quality, url])
-    return itemlist
+        itemlist.append(['%s' %quality, url])
+    return itemlist[::-1]
 

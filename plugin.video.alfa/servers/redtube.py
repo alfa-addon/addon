@@ -29,4 +29,4 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     for quality,scrapedurl  in matches:
         url =  scrapedurl.replace("\/", "/")
         video_urls.append(["[redtube] %sp" %quality, url])
-    return video_urls
+    return video_urls[::-1]
