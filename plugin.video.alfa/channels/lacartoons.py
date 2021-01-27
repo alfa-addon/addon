@@ -72,8 +72,7 @@ def lista(item):
     patron += 'nombre-serie">([^<"]+).*?'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, thumbnail, title in matches:
-        itemlist.append(Item(channel = item.channel,
-                             action = "episodios",
+        itemlist.append(item.clone(action = "seasons",
                              contentSerieName = title,
                              thumbnail = host + thumbnail,
                              title = title,
@@ -99,19 +98,59 @@ def lista(item):
     return itemlist
 
 
+def seasons(item):
+    logger.info()
+    itemlist = []
+    infoLabels = item.infoLabels
+    data = httptools.downloadpage(item.url).data
+    patron = 'fa fa-chevron-right"></span> (.*?)<'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for title in matches:
+        season = scrapertools.find_single_match(title, " (\w+)")
+        infoLabels["season"] = season
+        itemlist.append(item.clone(action = "episodios",
+                                   infoLabels = infoLabels,
+                                   title = title
+                                   ))
+    tmdb.set_infoLabels(itemlist)
+    itemlist.append(Item())
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
+        itemlist.append(
+                Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
+                     action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
+    return itemlist
+
+
 def episodios(item):
     logger.info()
     itemlist = []
+    templist = seasons(item)
+    for tempitem in templist:
+        itemlist += episodesxseasons(tempitem)
+    return itemlist
+
+
+def episodesxseasons(item):
+    logger.info()
+    itemlist = []
+    infoLabels = item.infoLabels
     data = httptools.downloadpage(item.url).data
-    patron  = 'listas-de-episodion.*?href="([^"]+).*?'
+    patron  = '%s.*?</ul>' %item.title
+    bloque = scrapertools.find_single_match(data, patron)
+    patron  = 'href="([^"]+).*?'
     patron += 'span>(.*?)</a>.*?'
-    matches = scrapertools.find_multiple_matches(data, patron)
+    matches = scrapertools.find_multiple_matches(bloque, patron)
     for url, title in matches:
         title = title.replace("</span>","")
+        title = title.replace("Capitulo ", str(item.infoLabels["season"])+"x")
+        episode = scrapertools.find_single_match(title, " (\w+)")
+        infoLabels["episode"] = episode
         itemlist.append(item.clone(action = "findvideos",
+                                   infoLabels = infoLabels,
                                    title = title,
                                    url = host + url
                                    ))
+    tmdb.set_infoLabels(itemlist)
     next_page = scrapertools.find_single_match(data, '(?is)next" href="([^"]+)"')
     if next_page:
         itemlist.append(item.clone(action = "episodios",
@@ -136,11 +175,13 @@ def search(item, texto):
 def findvideos(item):
     logger.info()
     itemlist = []
+    infoLabels = item.infoLabels
     data = httptools.downloadpage(item.url).data
     patron  = '<iframe src="([^"]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:
         itemlist.append(item.clone(action = "play",
+                                   infoLabels = infoLabels,
                                    title = "Ver en %s",
                                    url = url
                                    ))

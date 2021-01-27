@@ -602,16 +602,18 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
     if item.downloadProgress < 0 and action == 'pause':
         return torr_data, deamon_url, index
 
+    if item.torrent_info: del item.torrent_info
+    
     # Obtenemos los datos del gestor de torrents
     torrent_paths = torrent.torrent_dirs()
     torr_client = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:')
     folder_new = scrapertools.find_single_match(item.downloadFilename, '^\:\w+\:\s*(.*?)$')
+    if folder_new.startswith('\\') or folder_new.startswith('/'):
+        folder_new = folder_new[1:]
     if filetools.dirname(folder_new):
         folder_new = filetools.dirname(folder_new)
-    if item.torr_folder:
-        folder = item.torr_folder
-    else:
-        folder = folder_new.replace('\\', '').replace('/', '')
+    folder = folder_new
+    #folder = folder_new.replace('\\', '').replace('/', '')
     if folder_new:
         if folder_new.startswith('\\') or folder_new.startswith('/'):
             folder_new = folder_new[1:]
@@ -626,13 +628,14 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
     if item.downloadStatus in [5]:
         item.downloadStatus = 2                                                 # Pasa de foreground a background
     update_control(item.path, {"downloadStatus": item.downloadStatus, "downloadProgress": downloadProgress, "downloadQueued": 0,
-                                "downloadServer": {}}, function='delete_torrent_session_bef')
+                                "downloadServer": {}, "torrent_info": item.torrent_info}, function='delete_torrent_session_bef')
 
     # Detiene y borra la sesion de los clientes externos Quasar y Elementum
-    if torr_client in ['QUASAR', 'ELEMENTUM']:
+    if torr_client in ['QUASAR', 'ELEMENTUM', 'TORREST']:
         if not delete_RAR or action == 'pause': folder_new = ''
         torr_data, deamon_url, index = torrent.get_tclient_data(folder, torr_client.lower(), \
-                                torrent_paths['ELEMENTUM_port'], action=action, folder_new=folder_new)
+                                port=torrent_paths.get(torr_client.upper()+'_port', 0), action=action, \
+                                web=torrent_paths.get(torr_client.upper()+'_web', ''), folder_new=folder_new)
         
     # Detiene y borra la sesion de los clientes Internos
     if torr_client in ['BT', 'MCT']:

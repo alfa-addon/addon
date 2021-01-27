@@ -338,8 +338,8 @@ def submenu_novedades(item):
     thumb_buscar = get_thumb("search.png")
     thumb_settings = get_thumb("setting_0.png")
     
-    #category = 'pctreload'                                                      # Clone preferido para Novedades
-    category = ''                                                               # Clone preferido para Novedades
+    category = 'pctmix'                                                         # Clone preferido para Novedades
+    #category = ''                                                               # Clone preferido para Novedades
     global host
     item, host = verify_host(item, host, category=category)                     # Actualizamos la url del host
     

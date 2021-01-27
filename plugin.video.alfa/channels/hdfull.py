@@ -111,10 +111,12 @@ def logout(item):
     #y mandamos a configuracion del canal
     return settingCanal(item)
 
-def agrupa_datos(url, post=None, referer=True, json=False, proxy=False, forced_proxy=None, proxy_retries=1):
+def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_proxy=None, proxy_retries=1):
     global host
     
     headers = {'Referer': host}
+    if 'episodes' in url or 'buscar' in url:
+        headers['Referer'] += 'episodios'
     
     if not referer:
         headers.pop('Referer')
