@@ -41,6 +41,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             if "function/" in url:
                 url = decode(url, license_code)
             url += "|verifypeer=false"
-            itemlist.append(['%s' %quality, url])
+            itemlist.append(['%s [ktplayer]' %quality, url])
     return itemlist
 
