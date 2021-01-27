@@ -1662,8 +1662,10 @@ def play_torrent(item, xlistitem, mediaurl):
                     ret = filetools.copy(item.url, filetools.join(save_path_videos, 'torrents', \
                                 filetools.basename(item.url)), silent=True)
                 
-                if (torr_client in ['quasar', 'elementum', 'torrest'] and item.downloadFilename and item.downloadStatus != 5) \
-                        or (torr_client in ['quasar', 'elementum', 'torrest'] and 'RAR-' in size and BACKGROUND_DOWNLOAD):
+                if (torr_client in ['quasar', 'elementum', 'torrest'] and item.downloadFilename \
+                        and (item.downloadStatus != 5 or item.downloadProgress == -1)) \
+                        or (torr_client in ['quasar', 'elementum', 'torrest'] \
+                        and 'RAR-' in size and BACKGROUND_DOWNLOAD):
                     
                     if item.downloadProgress == -1:                             # Si estaba pausado se resume
                         torr_folder = scrapertoolsV2.find_single_match(item.downloadFilename, '(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$')
@@ -1680,18 +1682,11 @@ def play_torrent(item, xlistitem, mediaurl):
                         downloadProgress = 1
                 if not result:                                                  # Si falla todo, se usa el antiguo sistema
                     if torr_client == 'torrest':
-
                         play_type = 'path'
-                        if mediaurl.startswith('magnet:'): play_type = 'magnet'
-                        if mediaurl.startswith('http:'): play_type = 'url'
+                        if mediaurl.startswith('magnet'): play_type = 'magnet'
+                        if mediaurl.startswith('http'): play_type = 'url'
                         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % \
                                         (play_type, play_type, urllib.unquote_plus(mediaurl)) + ")")
-                        """
-                        play_type = 'url'
-                        if add_url.startswith('magnet:'): play_type = 'magnet'
-                        xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % \
-                                        (play_type, play_type, add_url) + ")")
-                        """
                     else:
                         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
                 torrent.update_control(item, function='play_torrent_externos_start')

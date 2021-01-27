@@ -892,8 +892,8 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             channel_bis = generictools.verify_channel(item.channel)
             if config.get_setting("emergency_urls_torrents", channel_bis) and item_res.emergency_urls and path != None:
                 videolibrary_path = config.get_videolibrary_path()              #detectamos el path absoluto del título
-                movies = config.get_setting("folder_movies")
-                series = config.get_setting("folder_tvshows")
+                movies = FOLDER_MOVIES
+                series = FOLDER_TVSHOWS
                 if movies in path: 
                     folder = movies
                 else:
@@ -945,10 +945,10 @@ def emergency_urls(item, channel=None, path=None, headers={}):
 def videolibrary_backup_exec(item, videolibrary_backup):
     try: 
         if item.strm_path:
-            contentType = config.get_setting("folder_movies")
+            contentType = FOLDER_MOVIES
             video_path = filetools.join(config.get_videolibrary_path(), contentType, filetools.dirname(item.strm_path))
         else:
-            contentType = config.get_setting("folder_tvshows")
+            contentType = FOLDER_TVSHOWS
             video_path = filetools.join(config.get_videolibrary_path(), contentType, item.path)
         logger.info(filetools.basename(video_path))
 
