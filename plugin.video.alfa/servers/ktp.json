@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.(?:vipporns|porngem).com/videos/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:vipporns|porngem|frprn).com/videos/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
