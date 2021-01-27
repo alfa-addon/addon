@@ -22,7 +22,6 @@ DATA = ''
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     
-
     data = alfaresolver.get_data(page_url, False)
     if not "|mp4|" in data:
         dict_cookie = {'domain': '.gamovideo.com', 'expires': 0}
@@ -75,13 +74,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     if not mediaurl.startswith(host):
         mediaurl = host + mediaurl
 
-    rtmp_url = scrapertools.find_single_match(data, 'file:"(rtmp[^"]+)"')
-    playpath = scrapertools.find_single_match(rtmp_url, 'mp4:.*$')
-    rtmp_url = rtmp_url.split(playpath)[
-                   0] + " playpath=" + playpath + " swfUrl=http://gamovideo.com/player61/jwplayer.flash.swf"
-
     video_urls = []
-    video_urls.append(["RTMP [gamovideo]", rtmp_url])
+    video_urls.append(["RTMP [gamovideo]", mediaurl])
     video_urls.append([scrapertools.get_filename_from_url(mediaurl)[-4:] + " [gamovideo]", mediaurl])
 
     for video_url in video_urls:
