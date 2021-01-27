@@ -25,9 +25,11 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
-    host= "https://%s.com" % server
     headers = {'Referer': page_url}
-    post_url = '%s/sn4diyux.php' %host
+    if "upornia" in server:
+        post_url = 'https://%s.com/sn4diyua.php' %server
+    else:
+        post_url = 'https://%s.com/sn4diyux.php' %server
     data = httptools.downloadpage(page_url).data
     patron = 'pC3:\'([^\']+)\',.*?'
     patron += '(?:"|)video_id(?:"|): (\d+),'
