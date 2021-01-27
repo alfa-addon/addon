@@ -1,7 +1,7 @@
 {
   "id": "seriespapaya",
   "name": "SeriesPapaya",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/P1D92cf.png",
