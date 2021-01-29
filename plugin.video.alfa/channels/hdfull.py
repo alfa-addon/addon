@@ -41,7 +41,7 @@ __modo_grafico__ = config.get_setting('modo_grafico', channel='hdfull')
 account = config.get_setting("logged", channel="hdfull")
 
 IDIOMAS = {'lat': 'LAT', 'spa': 'CAST', 'esp': 'CAST', 'sub': 'VOSE', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
-list_language = list(IDIOMAS.values())
+list_language = list(set(IDIOMAS.values()))
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP', 'RHDTV', 'DVDSCR']
 list_servers = ['clipwatching', 'gamovideo', 'vidoza', 'vidtodo', 'openload', 'uptobox']
 
@@ -194,7 +194,9 @@ def mainlist(item):
                          thumbnail=get_thumb('tvshows', auto=True), text_bold=True))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
                          thumbnail=get_thumb('search', auto=True), text_bold=True))
-    
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
+
     autoplay.show_option(item.channel, itemlist)
     
     if not account:
@@ -557,7 +559,8 @@ def fichas(item):
             itemlist.append(
                 Item(channel=item.channel, action=action, title=title, url=url,
                      contentSerieName=show, text_bold=True, contentType=contentType,
-                     language=language, infoLabels=infoLabels, thumbnail=thumbnail))
+                     language=language, infoLabels=infoLabels, thumbnail=thumbnail,
+                     context=filtertools.context(item, list_language, list_quality)))
         else:
             itemlist.append(
                 Item(channel=item.channel, action=action, title=title, url=url,
@@ -715,6 +718,8 @@ def episodesxseason(item):
         itemlist.append(item.clone(action="findvideos", title=title, url=url,
                              contentType="episode", language=langs, text_bold=True,
                              infoLabels=infoLabels, thumbnail=thumbnail))
+
+    itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 

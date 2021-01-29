@@ -600,6 +600,7 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
     index = -1
     filebase = ''
     folder_new = ''
+    folder = ''
     downloadProgress = 0
     if action == 'pause':
         downloadProgress = -1
@@ -608,18 +609,16 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
     if item.downloadProgress < 0 and action == 'pause':
         return torr_data, deamon_url, index
 
-    if item.torrent_info: del item.torrent_info
-    
     # Obtenemos los datos del gestor de torrents
     torrent_paths = torrent.torrent_dirs()
     torr_client = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:')
+    if item.torr_folder:
+        folder = item.torr_folder
     folder_new = scrapertools.find_single_match(item.downloadFilename, '^\:\w+\:\s*(.*?)$')
     if folder_new.startswith('\\') or folder_new.startswith('/'):
         folder_new = folder_new[1:]
     if filetools.dirname(folder_new):
         folder_new = filetools.dirname(folder_new)
-    folder = folder_new
-    #folder = folder_new.replace('\\', '').replace('/', '')
     if folder_new:
         if folder_new.startswith('\\') or folder_new.startswith('/'):
             folder_new = folder_new[1:]
@@ -627,8 +626,20 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
             folder_new = folder_new.split('\\')[0]
         elif '/' in folder_new:
             folder_new = folder_new.split('/')[0]
+        if not folder: folder = folder_new
         if folder_new:
             folder_new = filetools.join(torrent_paths[torr_client.upper()], folder_new)
+            if action in ['reset'] and 'RAR-' in item.torrent_info and \
+                            filetools.join(torrent_paths[torr_client.upper()], folder) != folder_new:
+                res = filetools.rename(folder_new, folder)
+                if res:
+                    folder_new = filetools.join(torrent_paths[torr_client.upper()], folder)
+            if action in ['delete'] and not filetools.exists(folder_new) \
+                            and filetools.join(torrent_paths[torr_client.upper()], folder) != folder_new \
+                            and filetools.exists(filetools.join(torrent_paths[torr_client.upper()], folder)):
+                    folder_new = filetools.join(torrent_paths[torr_client.upper()], folder)
+    
+    if item.torrent_info: del item.torrent_info
     
     # Actualiza el .json de control
     if item.downloadStatus in [5]:

@@ -50,6 +50,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
                          thumbnail=get_thumb("search", auto=True)))
 
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
+
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
@@ -153,6 +155,7 @@ def list_all(item):
         if "series/" in url:
             new_item.contentSerieName = title
             new_item.action = "seasons"
+            new_item.context = filtertools.context(item, list_language, list_quality)
         else:
             new_item.contentTitle = title
             new_item.action = "findvideos"
@@ -272,7 +275,6 @@ def findvideos(item):
 
         for elem in matches:
             url = base64.b64decode(elem["data-r"]).decode('utf-8')
-
             if "animekao.club/player.php" in url:
                 url = url.replace("animekao.club/player.php?x", "player.premiumstream.live/player.php?id")
             elif "animekao.club/play.php" in url:
@@ -287,7 +289,7 @@ def findvideos(item):
                 v_id = scrapertools.find_single_match(url, "v=([A-z0-9_-]+)")
                 url = "https://drive.google.com/file/d/%s/preview" % v_id
             elif "kaodrive" in url:
-                new_data = httptools.downloadpage(url).data
+                new_data = httptools.downloadpage(url, add_referer=True).data
                 v_id = scrapertools.find_single_match(new_data, 'var shareId = "([^"]+)"')
                 url = "https://www.amazon.com/drive/v1/shares/%s" % v_id
             elif "playhydrax.com" in url:
