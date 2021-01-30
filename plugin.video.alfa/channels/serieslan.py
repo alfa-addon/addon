@@ -211,7 +211,7 @@ def list_all(item):
 
     return itemlist
 
-def seasons(item):
+def seasons(item, add_to_videolibrary = False):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
@@ -228,7 +228,7 @@ def seasons(item):
         itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.tile,
                 url=item.url, plot=item.plot, thumbnail=item.thumbnail, dt = dt,
                 action="episodesxseason", context=item.context, infoLabels=infoLabels))
-    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and add_to_videolibrary == False:
         itemlist.append(Item(channel=item.channel, url=item.url, action="add_serie_to_library",
                         extra="episodios", contentSerieName=item.contentSerieName,
                         title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]'))
@@ -279,7 +279,7 @@ def episodesxseason(item):
 def episodios(item):
     logger.info()
     itemlist = list()
-    templist = seasons(item)
+    templist = seasons(item, add_to_videolibrary = True)
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
 
