@@ -25,7 +25,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ["aparatcam", "streamtape", "fembed", "mixdrop", "doodstream", "clipwatching"]
 
-host = "https://veranime.top/"
+host = "https://animeonline.ninja/"
 
 
 def mainlist(item):
@@ -87,7 +87,7 @@ def create_soup(url, referer=None, unescape=False):
 
     if 'Javascript is required' in data:
         from channels import cliver
-        cliver.js2py_conversion(data, ".veranime.top")
+        cliver.js2py_conversion(data, ".animeonline.ninja")
         data = httptools.downloadpage(url).data
 
     if unescape:
