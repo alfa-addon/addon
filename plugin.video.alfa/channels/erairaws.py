@@ -16,79 +16,104 @@ else:
 
 import re
 
-from core import httptools
-from core import scrapertools
-from core import servertools
+from bs4 import BeautifulSoup
+from channels import autoplay
 from channelselector import get_thumb
-from core import tmdb
+from core import httptools, scrapertools, tmdb
 from core.item import Item
 from platformcode import logger, config
-from channels import autoplay
-from channels import filtertools
-from channels import renumbertools
 
 host = "https://www.erai-raws.info"
 
+IDIOMAS = {'French': 'VOS', 'German': 'VOS', 'Italian': 'VOS', 'English': 'VOS', 'Portuguese(Brazil)': 'VOS', 'Spanish': 'VOSE'}
+language_list = ('French', 'German', 'Italian', 'English', 'Portuguese(Brazil)', 'Spanish')
+list_servers = ['torrent']
+quality_list = ['1080p', '720p', '540p', '480p']
+hide_unselected_subs = config.get_setting('filter_by', channel='erairaws')
+show_vo = config.get_setting('filter_vo', channel='erairaws')
+selected_sub = language_list[config.get_setting('filter_subs_lang', channel='erairaws')]
+if config.get_setting('play_direct', channel='erairaws'):
+    play_direct_action = 'findvideos'
+else:
+    play_direct_action = 'episodios'
 
-IDIOMAS = {'fr':'Francés', 'de':'Alemán',  'it': 'Italiano',
-           'us': 'Inglés', 'br': 'Portugués', 'es': 'Español'
-           }
-
-
-list_language = list(IDIOMAS.values())
-
-list_quality = ['1080p', '720p', '480p']
-list_servers = ['directo', 'torrent']
-
-p_main = ' según Idioma de Subs seleccionado'
+if hide_unselected_subs:
+    p_main = ' según el idioma de subtítulos seleccionado'
+else:
+    p_main = ''
 
 
 def mainlist(item):
     logger.info()
-
-    autoplay.init(item.channel, list_servers, list_quality)
-
     itemlist = []
+    autoplay.init(item.channel, list_servers, quality_list)
 
-    itemlist.append(Item(channel=item.channel, title="Nuevos Episodios",
-                         plot= 'Nuevos episodios' + p_main,
-                         action="new_episodes",
-                         thumbnail='https://i.imgur.com/IexJg5R.png',
-                         url=host + '/posts/'))
-
-    itemlist.append(Item(channel=item.channel, title="Batch",
-                        plot='Ultimas Temporadas o Packs de Episodios' + p_main,
-                        action="new_episodes", not_post=True,
-                        thumbnail='https://i.imgur.com/CzAGve1.png',
-                        url=host + '/batch/'))
-
-    itemlist.append(Item(channel=item.channel, title="Películas",
-                         plot='Ultimas Películas, Especiales, Ovas..etc' + p_main,
-                         action="new_episodes",
-                         thumbnail='https://i.imgur.com/aYBo36W.png',
-                         url=host + '/movies/',
-                         ar_post='buscar=&from=&pinput=0&tipo%5B%5D=2&orden=0'))
-
-    itemlist.append(Item(channel=item.channel, title="A-Z",
-                         action="alpha",
-                         thumbnail='https://i.imgur.com/vIRCKQq.png',
-                         url=host + '/anime-list/',
-                         ar_post='buscar=&from=&pinput=0&tipo%5B%5D=2&orden=0'))
-
-    itemlist.append(Item(channel=item.channel, title="Buscar...",
-                         action="search",
-                         url=host + '/anime-list/',
-                         thumbnail='https://i.imgur.com/ZVMl3NP.png'))
-
-    
-    itemlist.append(Item(channel=item.channel, title="Configurar Canal...", 
-                         action="setting_channel", url="",
-                         thumbnail=get_thumb("setting_0.png"),
-                         text_color='aquamarine'))
-    
-    
+    itemlist.append(
+        Item(
+            action = "list_all",
+            channel = item.channel,
+            list_what = 'episodes',
+            plot = 'Nuevos episodios' + p_main,
+            title = 'Nuevos episodios',
+            thumbnail = 'https://i.imgur.com/IexJg5R.png',
+            url = host + '/posts/'
+        )
+    )
+    itemlist.append(
+        Item(
+            action = "list_all", not_post=True,
+            channel = item.channel,
+            list_what = 'batch',
+            plot = 'Ultimas temporadas o paquetes de episodios' + p_main,
+            title = "Batch",
+            thumbnail = 'https://i.imgur.com/CzAGve1.png',
+            url = host + '/batch/'
+        )
+    )
+    itemlist.append(
+        Item(
+            action = "list_all",
+            channel = item.channel,
+            list_what = 'movies',
+            plot = 'Ultimas películas, especiales, OVAs, etc.' + p_main,
+            title = "Películas",
+            thumbnail = 'https://i.imgur.com/aYBo36W.png',
+            url = host + '/movies/'
+        )
+    )
+    itemlist.append(
+        Item(
+            action = "alpha",
+            channel = item.channel,
+            plot = 'Listado por orden alfabético',
+            title = "A-Z",
+            thumbnail = 'https://i.imgur.com/vIRCKQq.png',
+            url = host + '/anime-list/'
+        )
+    )
+    itemlist.append(
+        Item(
+            action = "search",
+            channel = item.channel,
+            title = "Buscar...",
+            plot = 'Buscar películas, animes, OVAs, especiales etc. en la página',
+            url = host + '/anime-list/',
+            thumbnail = 'https://i.imgur.com/ZVMl3NP.png'
+        )
+    )
+    itemlist.append(
+        Item(
+            action = "setting_channel",
+            channel = item.channel,
+            plot = 'Cambiar idioma de subtítulos, incluir en buscador global...',
+            text_color = 'aquamarine',
+            title = "Configurar canal...", 
+            thumbnail = get_thumb("setting_0.png"),
+            url = ""
+        )
+    )
     autoplay.show_option(item.channel, itemlist)
-    
+
     return itemlist
 
 def setting_channel(item):
@@ -97,157 +122,585 @@ def setting_channel(item):
     platformtools.itemlist_refresh()
     return ret
 
-def get_source(url, post=None, host=host, get_url=False):
+def create_soup(url, post=None, headers=None):
     logger.info()
-    if not host in url:
-        i = url.split('/')
-        host = '%s/%s/%s' % (i[0], i[1], i[2])
-    page = httptools.downloadpage(url, post=post, ignore_response_code=True)
-    if page.code > 399:
-        import base64
-        headers = {'Referer': url}
-        u = url.split(host)[1]
-        u = base64.b64encode(u.encode('utf-8')).decode('utf8')
-        h = base64.b64encode(host.encode('utf-8')).decode('utf8')
-        url = 'https://ddgu.ddos-guard.net/ddgu/'
-        post = urllib.urlencode({'u': u, 'h': h, 'p': ''})
-        page = httptools.downloadpage(url, post=post, ignore_response_code=True, headers=headers)
 
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", page.data)
-    if get_url:
-        url = page.url
-        return data, url
-    return data
+    data = httptools.downloadpage(url, post=post, headers=headers).data
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
-def get_info(data, quality=False):
+    return soup
+
+def set_infoLabels_async(itemlist, seekTmdb = False):
     logger.info()
-    txt_info = "[COLOR gold]"
-    patron = 'flag-icon-(\w+)"'
-    
-    if quality:
-        txt_info = "[COLOR grey]"
-        patron = '>(\d+p)(?:x|)</a>'
-    #list_data = []
+    import threading
 
-    list_info = re.compile(patron, re.DOTALL).findall(data)
+    threads_num = config.get_setting("tmdb_threads", default=20)
+    semaforo = threading.Semaphore(threads_num)
+    lock = threading.Lock()
+    r_list = list()
+    i = 0
+    l_hilo = list()
 
-    for txt in list_info:
-        if quality:
-            txt_info += '[%s]' % txt
+    def sub_thread(_item, _i, _seekTmdb):
+        semaforo.acquire()
+        ret = labeler(_item, _seekTmdb)
+        semaforo.release()
+        r_list.append((_i, _item, ret))
+
+    for item in itemlist:
+        t = threading.Thread(target = sub_thread, args = (item, i, seekTmdb))
+        t.start()
+        i += 1
+        l_hilo.append(t)
+
+    # esperar q todos los hilos terminen
+    for x in l_hilo:
+        x.join()
+
+    # Ordenar lista de resultados por orden de llamada para mantener el mismo orden q itemlist
+    r_list.sort(key=lambda i: i[0])
+
+    # Reconstruir y devolver la lista solo con los resultados de las llamadas individuales
+    return [ii[2] for ii in r_list]
+
+def labeler(item, seekTmdb = True):
+    logger.info()
+    # Excepción(es) por algunas cosas que TMDB suele retornar erróneamente.
+    # Estas en particular, las retorna mal en muchos de los canales que se busca cuando no hay año correcto
+    year_exceptions = {'(?i)Yuru Camp': '2018', '(?i)One Piece': '1999'}
+    title_exceptions = {'(?i)Bem': 'Bem: Become Human'}
+
+    title = item.infoLabels['title']
+    for title_exc, title_replace in title_exceptions.items():
+        if scrapertools.find_single_match(title, title_exc):
+            if item.contentTitle:
+                item.contentTitle = title_replace
+            if item.contentSerieName:
+                item.contentSerieName = title_replace
+    for title_exc, year_replace in year_exceptions.items():
+        if scrapertools.find_single_match(title, title_exc):
+            item.infoLabels['year'] = year_replace
+
+    temp_item = item
+    if temp_item.contentType == 'movie':
+        result = tmdb.set_infoLabels(temp_item, seekTmdb = True, force_no_year = True)
+    else:
+        if temp_item.contentSeason or temp_item.infoLabels['episode']:
+            if temp_item.infoLabels['episode'] and not temp_item.contentSeason:
+                temp_item.infoLabels['season'] = 1
+            if temp_item.contentSeason or (temp_item.contentSeason and temp_item.infoLabels['episode']):
+                season = temp_item.contentSeason
+                temp_item.infoLabels['season'] = ''
+                temp_item.contentSeason = ''
+                if temp_item.infoLabels['episode']:
+                    episode = temp_item.infoLabels['episode']
+                    temp_item.infoLabels['episode'] = ''
+                result = tmdb.set_infoLabels_item(temp_item, seekTmdb = True)
+                temp_item.infoLabels['season'] = season
+                if item.infoLabels['episode']:
+                    temp_item.infoLabels['episode'] = episode
+                result = tmdb.set_infoLabels_item(temp_item, seekTmdb = True)
         else:
-            txt_info += '[%s]' % IDIOMAS.get(txt, txt)
-        #list_data.append(IDIOMAS.get(txt, txt))
-    txt_info += '[/COLOR]'
-    return list_info, txt_info
+            result = tmdb.set_infoLabels_item(temp_item, seekTmdb = True)
+    if not temp_item.infoLabels.get('tmdb_id'):
+        if temp_item.contentType == 'movie':
+            oldcontentType = temp_item.contentType
+            temp_item.contentType = 'tvshow'
+            result = tmdb.set_infoLabels(temp_item, seekTmdb = True, force_no_year = True)
+        else:
+            temp_item.contentType = 'movie'
+            temp_item.contentSerieName = ''
+            temp_item.infoLabels['tvshowtitle'] = ''
+            result = tmdb.set_infoLabels_item(temp_item, seekTmdb = True, force_no_year = True)
+    return temp_item
 
-def folder_list(item):
+def process_title(title, infoLabels = None, **kwargs):
+    """
+    @param title: String a la cual hay que extraer y/o limpiar información
+    @type title: str
+    @param infoLabels: Un dict con infoLabels para anexar datos y devolverlas
+    @type infoLabels: dict
+    @param get_infoLabels: Si se obtienen las infoLabels o solo el título
+    @type get_infoLabels: bool
+    @param get_year_only: Obtener solo el año como str en title
+    @type get_year_only: bool
+    @param get_season_only: Obtener solo la temporada como str en title
+    @type get_season_only: bool
+
+    @return: Título limpio, infoLabels asignadas / Solo título / Solo infoLabels
+    @rtype: str, dict / str / dict
+    """
+    logger.info()
+    return_year_only = False
+    return_infoLabels = False
+    return_season_only = False
+    if infoLabels is not None or kwargs.get('get_infoLabels') or kwargs.get('get_year_only'):
+        if not infoLabels:
+            infoLabels = {}
+        else:
+            infoLabels = infoLabels
+        return_infoLabels = True
+        if kwargs.get('get_year_only'):
+            return_year_only = True
+    else:
+        infoLabels = {}
+    if kwargs.get('get_season_only'):
+        season = ''
+        return_season_only = True
+
+    # Las temporadas suelen estar al final, checamos solo ahí (significado del "$") (buscar en cualquier otra parte trae problemas)
+    season_indicators = {2: '(?i)( II$|Second Season|2nd Season)', 3: '(?i)( III$|Third Season|3rd Season)', 4:  '(?i)(Fourth Season|4th Season)',
+                         5: '(?i)(Fifth Season|5th Season)',       6: '(?i)(Sixth Season|6th Season)',       7:  '(?i)(Seventh Season|7th Season)',
+                         8: '(?i)(Eight Season|8th Season)',       9: '(?i)(Ninth Season|9th Season)',       10: '(?i)(Tenth Season|10th Season)'}
+
+    # Hay casos especiales donde la temporada solo es un número al final (ej. Hataraku Saibou 2),
+    # buscamos esto SOLO cuando haya pasado los que dicen con letra, ya que puede dejar el texto "Season"
+    numeric_season_indicators = '(?i)(Season \d+| S\d+$| (?:\d{1}|\d{2})$)'
+
+    if kwargs.get('movie', False) == False:
+        replaced = False
+        temp_title = title
+
+        # Hacemos loop de temporadas de regex y reemplazamos con la clave (que es la temporada correspondiente)
+        for key, pattern in season_indicators.items():
+            temp_title = re.sub(pattern, '', title).strip()
+            if temp_title != title:
+                replaced = True
+                title = temp_title
+                if infoLabels.get('tmdb_id'):
+                    infoLabels['season'] = int(key)
+                elif return_season_only:
+                    season = int(key)
+                # Salimos al encontrar el primer match, seguir puede causar problemas con el título
+                break
+
+        # Si es una temporada de un solo número, lo extraemos, lo validamos y lo colocamos
+        temp_title = re.sub(numeric_season_indicators, '', title).strip()
+        if title not in temp_title and not replaced:
+            replaced = True
+            match = scrapertools.find_single_match(title, numeric_season_indicators)
+            nummatch = scrapertools.find_single_match(match, '\d+')
+            if nummatch:
+                if str(nummatch).isdigit():
+                    title = re.sub(numeric_season_indicators, '', title)
+                    if infoLabels.get('tmdb_id'):
+                        infoLabels['season'] = int(nummatch)
+                    elif return_season_only:
+                        season = int(nummatch)
+        if replaced and ':' in title:
+            title = title.replace(':', '').strip()
+
+    if not return_season_only:
+        # Los años son 4 número exactamente, para no confundirlo con temporada u otra cosa
+        # Buscamos al final, para no confundir con el nombre del elemento
+        year = scrapertools.find_single_match(title, '[\(]?\d{4}[\)]?$')
+
+        if year:
+            title = re.sub('[\(]?\d{4}[\)]?', '', title)
+            infoLabels['year'] = year
+
+    if return_infoLabels:
+        return title, infoLabels
+    elif return_season_only:
+        return season
+    else:
+        return title
+
+def alpha(item):
+    logger.info()
     itemlist = []
-    infoLabels = ''
+    alphabet = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-    data, item.url = get_source(item.url, get_url=True)
-    patron = '<li data-name="([^"]+)".*?href="([^"]+)".*?' #title, url
-    patron += 'text-right">(.*?)</span>' #size
+    for letter in alphabet:
+        itemlist.append(
+            item.clone(
+                action = 'list_selected',
+                letra = letter,
+                title = letter
+            )
+        )
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedtitle, scrapedurl, info_s in matches:
-        if len(scrapedtitle) < 10:
-            continue
-        title = re.sub('^\[.*?\]|\.\w{3}$', '', scrapedtitle)
-        zanga = scrapertools.find_single_match(title, ' - (\d+.*)$')
-        
-        if zanga:
-            title = 'Ep %s' % zanga
-        
-        
-
-        if scrapedurl.startswith('?dir='):
-            action = 'folder_list'
-            folder = True
-
-        
-        else:
-            action = 'play'
-            folder = False
-            title += '[%s]' % info_s
-            if not item.d_host:
-                item.d_host = re.sub('\?dir=.*', '', item.url)
-            d_host = item.d_host.replace('?dir=', '')
-
-            infoLabels = item.infoLabels
-            if item.inforaws:
-                infoLabels = item.inforaws
-            infoLabels['season'] = 1
-            infoLabels['episode'] = scrapertools.find_single_match(zanga, '(\d+)')
-        if not item.d_host:
-            d_host = item.url+'/'
-        url = d_host+scrapedurl
-        itemlist.append(Item(channel=item.channel, title=title,
-                            url=url, action=action, folder=folder,
-                            language = item.language,d_host=d_host,
-                            contentSerieName=item.nom_serie,
-                            inforaws=item.infoLabels,
-                            infoLabels=infoLabels, server='directo'))
-
-
-
-
-    tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
-def anime_list(item):
+def newest(item):
+    item.url = host + '/posts/'
+    return list_all(item)
+
+def list_selected(item):
     logger.info()
-
     itemlist = []
+    soup = create_soup(item.url)
+    data = str(soup.find('div', class_='shows-wrapper'))
 
-    data = get_source(item.url)
     if item.letra:
-        pat = 'id="%s"(.*?)</div><h4' % item.letra
         if item.letra == 'Z':
-            pat = 'id="Z"(.*?)</div></div>'
-            
+            pat = '(?is)id="Z".*?</h4>(.*?)</div>\s+</div>'
+        else:
+            pat = '(?is)id="%s".*?</h4>(.*?</h4>)' % item.letra
         data = scrapertools.find_single_match(data, pat)
 
-    patron = 'button button5.*?href="([^"]+)".*?>([^<]+)<'#url, title
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = BeautifulSoup(data, "html5lib", from_encoding="utf-8").find_all('div', class_='button5')
 
-    for scrapedurl, scrapedtitle in matches:
-        if not item.busq in scrapedtitle:
+    for anime in matches:
+        scrapedtitle = str(anime.find('span').string)
+        title, infoLabels = process_title(scrapedtitle, get_infoLabels = True)
+
+        if not item.busq.lower() in scrapedtitle.lower():
             continue
-        url = item.url+scrapedurl
-        itemlist.append(item.clone(title=scrapedtitle,
-                        contentSerieName=scrapedtitle,
-                        url=url,
-                        action='episodios'))
-    tmdb.set_infoLabels(itemlist, seekTmdb=True)
+
+        itemlist.append(
+            Item(
+                action = 'episodios',
+                channel = item.channel,
+                contentSerieName = title,
+                contentTitle = title,
+                infoLabels = infoLabels,
+                title = scrapedtitle,
+                url = item.url + anime.find('a')['href'],
+            )
+        )
+    set_infoLabels_async(itemlist, seekTmdb = True)
     return itemlist
 
-def generos(item):
+def list_all(item):
     logger.info()
     itemlist = []
-    data = get_source(item.url)
-    patron = '(?s)<a class="block.*?href="([^"]+)">.*?'
-    patron += '>(\d+).*?<img .*? src="([^"]+)".*?<p .*?>(.*?)</p>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for url, num, thumb, title in matches:
-        titles = '%s [COLOR darkgrey](%s animes)[/COLOR]' % (title.strip(), num)
-        thumb = urlparse.urljoin(host, thumb)
+    soup = create_soup(item.url)
+    articles = soup.find('div', id='main').find_all('article')
+
+    if item.list_what == 'episodes':
+        itemlist.extend(item_extractor(item, articles, action = play_direct_action))
+    elif item.list_what == 'batch':
+        itemlist.extend(item_extractor(item, articles, action = 'episodios', batch = True))
+    elif item.list_what == 'movies':
+        itemlist.extend(item_extractor(item, articles, action = 'episodios', special = True, contentType = 'movie'))
+    else:
+        itemlist.extend(item_extractor(item, articles))
+    set_infoLabels_async(itemlist, seekTmdb = True)
+    nextpage = soup.find('nav', class_='pagination')
+    if nextpage:
         itemlist.append(
-            Item(channel=item.channel, action="list_all", title=titles,
-                 url=url, thumbnail=thumb, plot=title))
+            item.clone(
+                text_color = 'yellow',
+                title = 'Siguiente página >',
+                url = nextpage.find('a', class_='next')['href']
+            )
+        )
+
+    return itemlist
+
+def episodesxseason(item):
+    logger.info()
+    itemlist = []
+    itemlist.extend(episodios(item, get_episodes = True))
+    return False
+
+def episodios(item, get_episodes = False, get_movie = False):
+    logger.info()
+    itemlist = []
+    sections = []
+    soup = create_soup(item.url)
+    if soup.find('div', class_='h-episodes') and not get_movie:
+        sections.append(soup.find('div', class_='h-episodes').find_all('article'))
+    if soup.find('div', class_='h-movies') and not get_episodes:
+        sections.append(soup.find('div', class_='h-movies').find_all('article'))
+    if soup.find('div', class_='h-batch') and not get_episodes:
+        sections.append(soup.find('div', class_='h-batch').find_all('article'))
+    if len(sections) == 0:
+        return itemlist
+
+    # En caso de que la lista contenga algo más que solo episodios o batches (películas o especiales)
+    posts_itemlist = []
+    batch_itemlist = []
+    movies_itemlist = []
+    for section in sections:
+        sectiontype = section[0].find('a', class_='tooltip2')['href']
+        if 'posts' in sectiontype:
+            collected_items = item_extractor(item, section, episodes = True, action = 'findvideos')
+            collected_items.reverse()
+            if len(sections) == 1 and len(collected_items) == 1:
+                return findvideos(collected_items[0])
+            elif len(collected_items) > 1:
+                posts_itemlist.append(
+                    Item(
+                        channel = item.channel,
+                        folder = False,
+                        text_color = 'aquamarine',
+                        title = 'Episodios:'
+                    )
+                )
+                posts_itemlist.extend(collected_items)
+        elif 'batch' in sectiontype:
+            collected_items = item_extractor(item, section, batch = True, action = 'findvideos')
+            if len(sections) == 1 and len(collected_items) == 1:
+                return findvideos(collected_items[0])
+            elif len(collected_items) > 1:
+                batch_itemlist.append(
+                    Item(
+                        channel = item.channel,
+                        folder = False,
+                        text_color = 'aquamarine',
+                        title = 'Batch:'
+                    )
+                )
+                batch_itemlist.extend(collected_items)
+        elif 'movies' in sectiontype:
+            collected_items = item_extractor(item, section, special = True, action = 'findvideos')
+            if len(sections) == 1 and len(collected_items) == 1:
+                return findvideos(collected_items[0])
+            elif len(collected_items) > 1:
+                movies_itemlist.append(
+                    Item(
+                        channel = item.channel,
+                        folder = False,
+                        text_color = 'aquamarine',
+                        title = 'Películas y especiales'
+                    )
+                )
+                movies_itemlist.extend(collected_items)
+
+    if len(posts_itemlist) > 0 and config.get_videolibrary_support() and not get_episodes:
+        posts_itemlist.append(
+            Item(
+                action = "add_serie_to_library",
+                channel = item.channel,
+                contentSerieName = item.contentSerieName,
+                text_color = 'yellow',
+                title = config.get_localized_string(70092),
+                url = item.url
+            )
+        )
+
+    if get_episodes:
+        tmdb.set_infoLabels(posts_itemlist, seekTmdb=True)
+        return posts_itemlist
+    else:
+        itemlist.extend(posts_itemlist)
+        itemlist.extend(batch_itemlist)
+        itemlist.extend(movies_itemlist)
+        tmdb.set_infoLabels(itemlist, seekTmdb=True)
+        return itemlist
+
+def item_extractor(item, soup, contentType = 'tvshow', **kwargs):
+    """
+    @param item: Item que hizo la solicitud
+    @type item: item
+    @param soup: Una lista con tags bs4 a convertir en items
+    @type soup: list
+    @param contentType: Tipo de contenido 'movie' o 'tvshow' (por defecto 'tvshow')
+    @type contentType: str
+    @param episodes: Tratar los items como episodios
+    @type episodes: bool
+    @param batch: Tratar los items como batch de episodios
+    @type batch: bool
+    @param special: Tratar los items como películas/especiales
+    @type special: bool
+
+    @return: Itemlist con items preparados
+    @rtype: list
+    """
+    # Como toda la página utiliza contenedores de elementos idénticos, reutilizamos el código para convertir esos
+    # "contenedores" en items, y hacemos lo apropiado con los items que obtengamos (ej. peliculas, especiales, etc)
+    logger.info()
+    itemlist = []
+
+    for div in soup:
+        action = kwargs.get('action', 'episodios')
+        if item.infoLabels['tmdb_id']:
+            infoLabels = item.infoLabels
+        else:
+            infoLabels = {}
+        contentType = contentType
+        contentTitle = ''
+        contentSerieName = ''
+        language = []
+        quality_list = []
+        magnet_urls = []
+        section = div.find_all('div', class_='quali_po_dark')
+        sectiontype = section[0].find('a', class_='tooltip2')['href']
+        torrent_urls = []
+        url = ''
+
+        # ==== Sección 0 tiene datos del elemento (enlaces a episodios, títulos, estado) ==== #
+
+        if section[0].find('font', class_='aa_ss_blue'):
+            epdata = section[0].find('font', class_='aa_ss_blue').find_all('a')
+            epname = str(epdata[1].font.string)
+            title = str(epdata[0].font.string).strip()
+            contentTitle, infoLabels = process_title(title, infoLabels, get_year_only=True)
+            contentSerieName = contentTitle
+            url = epdata[0]['href']
+
+            if epname:
+                if contentType is 'movie' or 'movie' in epname.lower() or ('movies' in sectiontype and not 'special' in epname.lower()):
+                    contentType = 'movie'
+                if contentType is 'tvshow' or 'special' in epname.lower() or ('posts' or 'finale' or 'batch') in sectiontype:
+                    contentType = 'tvshow'
+                    if kwargs.get('episodes') == True:
+                        season = process_title(title, get_season_only = True)
+                        if season:
+                            infoLabels['season'] = int(season)
+                        else:
+                            infoLabels['season'] = 1
+                        if scrapertools.find_single_match(epname, '(?is)\d+'):
+                            infoLabels['episode'] = int(scrapertools.find_single_match(epname, '(?is)\d+'))
+                        if infoLabels.get('episode') and infoLabels.get('season'):
+                            ep_ss = scrapertools.get_season_and_episode(str(infoLabels['season']) + 'x' + str(infoLabels['episode']))
+                            title = '{}: {}'.format(ep_ss, title)
+                        else:
+                            title = '{}: {}'.format(epname.strip(), title)
+                    elif kwargs.get('special') == True:
+                        if 'special' in epname.strip().lower():
+                            specialname = re.sub('(?i)Special', 'Especial', epname.strip()).strip()
+                            title = '{}: {}'.format(title, specialname)
+                        else:
+                            title = '{}: {}'.format(title, epname.strip())
+                    elif kwargs.get('batch') == True:
+                        title = '{}: E{}'.format(title, epname.strip())
+                    else:
+                        title = '{}: {}'.format(title, epname.strip())
+                else:
+                    title = '{}: {}'.format(title, epname.strip())
+        else:
+            continue
+        if section[0].find('a', href='/posts/') and 'posts' in sectiontype:
+            infoLabels['status'] = str(section[0].find('a', href='/posts/')['data-title'])
+
+        # ============ Sección 1 contienes enlace e idiomas de los subtítulos ============ #
+        # Aquí filtramos los items que no contengan subtítulos en el idioma seleccionado
+
+        subtitles = section[1].find('span', class_='tooltip3')
+        if not subtitles and not hide_unselected_subs:
+            language.append('VO')
+        elif (not subtitles and hide_unselected_subs) or (subtitles and show_vo):
+            continue
+        elif subtitles:
+            available_subs = section[1].find_all('span', class_='tooltip3')
+            for subtitle in available_subs:
+                subtitle_name = subtitle['data-title'].strip()
+                if not hide_unselected_subs:
+                    for sub_name, alfa_equivalent in IDIOMAS.items():
+                        match = scrapertools.find_single_match(subtitle_name, '(?i){}'.format(sub_name))
+                        if match and not alfa_equivalent in language:
+                            language.append(alfa_equivalent)
+                elif hide_unselected_subs:
+                    match = scrapertools.find_single_match(subtitle_name, '(?i){}'.format(selected_sub))
+                    if match:
+                        language.append(IDIOMAS[selected_sub])
+                        break
+            if len(language) == 0 and not hide_unselected_subs:
+                language.append('VOS')
+            elif len(language) == 0 and hide_unselected_subs:
+                continue
+
+        # ================== Sección 2 contiene los enlaces y las calidades ================= #
+
+        if section[2]:
+            q_divs = section[2].find_all('div', class_='quali_po')
+            for q_div in q_divs:
+                quality = scrapertools.find_single_match(str(q_div.find('i').string), '(?is)\d+p')
+                a_links_list = q_div.find_all('a')
+                if quality:
+                    quality_list.append(quality)
+                    title = title + ' [COLOR gray][' + quality + '][/COLOR]'
+
+                for a_link in a_links_list:
+                    if 'Torrent' in str(a_link.string):       # Enviamos a la lista de magnets o torrents correspondiente
+                        torrent_urls.append([quality, a_link['href']])
+                    else:
+                        magnet_urls.append([quality, a_link['href']])
+
+        itemlist.append(
+            Item(
+                action = action,
+                channel = item.channel,
+                contentSerieName = contentSerieName,
+                contentTitle = contentTitle,
+                contentType = contentType,
+                fanart = item.fanart,
+                infoLabels = infoLabels,
+                language = language,
+                magnet_urls = magnet_urls,
+                quality = quality_list,
+                title = title,
+                torrent_urls = torrent_urls,
+                url = url
+            )
+        )
+    return itemlist
+
+def findvideos(item, add_to_videolibrary = False):
+    logger.info()
+    itemlist = []
+    if not (item.magnet_urls or item.torrent_urls):
+        if item.contentType is 'movie':
+            temp_itemlist = episodios(item)
+            for i in temp_itemlist:
+                if i.magnet_urls:
+                    item.magnet_urls = i.magnet_urls
+                if i.torrent_urls:
+                    item.torrent_urls = i.torrent_urls
+            if not (item.magnet_urls or item.torrent_urls):
+                return itemlist
+        else:
+            temp_itemlist = episodios(item, get_episodes = True)
+            for i in temp_itemlist:
+                if i.infoLabels['episode'] == item.infoLabels['episode']:
+                    item.magnet_urls = i.magnet_urls
+                    item.torrent_urls = i.torrent_urls
+            if not (item.magnet_urls or item.torrent_urls):
+                return itemlist
+
+    if item.magnet_urls:
+        for quality, url in item.magnet_urls:
+            itemlist.append(
+                Item(
+                    action = 'play',
+                    channel = item.channel,
+                    infoLabels = item.infoLabels,
+                    quality = quality,
+                    server = 'torrent',
+                    title = 'Torrent [' + quality + '] [Magnet]',
+                    url = url
+                )
+            )
+    if item.torrent_urls:
+        for quality, url in item.torrent_urls:
+            itemlist.append(
+                Item(
+                    action = 'play',
+                    channel = item.channel,
+                    infoLabels = item.infoLabels,
+                    quality = quality,
+                    server = 'torrent',
+                    title = 'Torrent [' + quality + ']',
+                    url = url
+                )
+            )
+    sorted(itemlist, key=lambda x:x.server)
+
+    if len(itemlist) > 0 and config.get_videolibrary_support() \
+        and item.contentTitle and item.contentType == 'movie' and not item.videolibrary:
+            itemlist.append(
+                item.clone(
+                    action = "add_pelicula_to_library",
+                    extra = 'episodesxseason',
+                    text_color = 'yellow',
+                    title = config.get_localized_string(70092),
+                    url = item.url,
+                    videolibrary = True
+                )
+            )
+
     return itemlist
 
 def search(item, texto):
     logger.info()
-    matches = scrapertools.find_multiple_matches(texto, '([a-zA-Z]+)')
-
-    for a in matches:
-        texto = texto.replace(a, a.capitalize())
-
     item.busq = texto
+
     try:
         if texto != '':
-            return anime_list(item)
+            return list_selected(item)
         else:
             return []
     except:
@@ -255,228 +708,3 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
-
-def new_episodes(item):
-    logger.info()
-    itemlist = []
-    language = 'VOS'
-    sub_filter = config.get_setting('filter_subs', channel='erairaws')
-    sub_choosen = list_language[sub_filter]
-
-    data = get_source(item.url)
-    
-    patron = r'<article.*?href=".*?>(.*?) - (\d+|.*?)</a>.*?' #title, ep_n
-    patron += '_blank" href="(https://srv[^"]+)".*?Subtitles(.*?)<' #ddl, subs,
-    patron += '/td>(.*?)</tbody>(.*?)</article>' #quality,torrents
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedtitle, epi, ddl, scrapedsub, scrapedquality, storrent in matches:
-        urls = []
-        urls_q = []
-        urls.append(ddl)
-
-        title = scrapedtitle
-        scrapedtitle = re.sub(r'\((.*?)\)$', '', scrapedtitle)
-
-        list_quality, quality = get_info(scrapedquality, quality=True)
-        list_langs, langs = get_info(scrapedsub)
-
-        for q in list_quality:
-            patron = r'<i>\[%s\]</i>.*?<a href="([^"]+)"' % q
-            torrent = scrapertools.find_single_match(storrent, patron)
-            
-            t_dom = urlparse.urlparse(torrent)[1]
-            d_dom = urlparse.urlparse(ddl)[1]
-            
-            ddl_direct = torrent.replace(t_dom, d_dom)
-            ddl_direct = re.sub(r'/Torrent|\.torrent$', '', ddl_direct)
-
-            if not ddl_direct.endswith('.mkv'):
-                ddl_direct = ddl_direct.replace('/%5BErai', '/?dir=%5BErai')
-
-            urls.append(torrent)
-            urls_q.append(ddl_direct)
-            urls_q.append(torrent)
-
-        if not sub_choosen in langs:
-            continue
-        if sub_filter == 5:
-            language = 'VOSE'
-        
-        #TODO compatibilidad con unify..etc
-        if 'Episodios' in item.title:
-            title += ': 1x%s' % epi
-        else:
-            title += ': %s' % epi
-        
-        if not config.get_setting('unify'):
-            title += ' %s[COLOR burlywood][Sub-%s][/COLOR]' % (quality, sub_choosen[:3])
-        
-
-        itemlist.append(Item(channel=item.channel, title=title, url=urls, quality=list_quality,
-                             action='findvideos', contentSerieName=scrapedtitle, language=language,
-                             urls_q=urls_q))
-    
-    tmdb.set_infoLabels(itemlist, seekTmdb=True)
-    #itemlist = filtertools.get_links(itemlist, item, list_language)
-    
-    return itemlist
-
-def episodios(item):
-    logger.info()
-    itemlist = []
-    language = 'VOS'
-    sub_filter = config.get_setting('filter_subs', channel='erairaws')
-    sub_choosen = list_language[sub_filter]
-    infoLabels = item.infoLabels
-
-    data = get_source(item.url)
-    
-    #TODO fix para primer item, y diferenciar tipo contenido
-    patron = '<i class="fa fa-circle.*?href=".*?>(.*?) - (\d+|.*?)</a>.*?' #title, ep_n
-    patron += '_blank" href="(https://srv[^"]+)".*?Subtitles(.*?)<' #ddl, subs,
-    patron += '/td>(.*?)</tbody>(.*?)</article>' #quality,torrents
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedtitle, epi, ddl, scrapedsub, scrapedquality, storrent in matches:
-        urls = []
-        urls_q = []
-        urls.append(ddl)
-
-        title = scrapedtitle
-        scrapedtitle = re.sub('\((.*?)\)$', '', scrapedtitle)
-
-        list_quality, quality = get_info(scrapedquality, quality=True)
-        list_langs, langs = get_info(scrapedsub)
-
-        for q in list_quality:
-            patron = '<i>\[%s\]</i>.*?<a href="([^"]+)"' % q
-            torrent = scrapertools.find_single_match(storrent, patron)
-            
-            t_dom = urlparse.urlparse(torrent)[1]
-            d_dom = urlparse.urlparse(ddl)[1]
-            
-            ddl_direct = torrent.replace(t_dom, d_dom)
-            ddl_direct = re.sub('/Torrent|\.torrent$', '', ddl_direct)
-            if not ddl_direct.endswith('.mkv'):
-                ddl_direct = ddl_direct.replace('/%5BErai', '/?dir=%5BErai')
-
-            urls.append(torrent)
-            urls_q.append(ddl_direct)
-            urls_q.append(torrent)
-            
-
-        if not sub_choosen in langs:
-            continue
-        
-        if sub_filter == 5:
-            language = 'VOSE'
-        #TODO compatibilidad con "auto-click", unify..etc
-        if len(matches) == 1:
-            title += ': %s %s(Sub-%s)' % (epi, quality, sub_choosen)
-            item = item.clone(title=title, url=urls, quality=list_quality, urls_q=urls_q,
-                        action='findvideos', contentSerieName=scrapedtitle, language=language)
-            return findvideos(item)
-
-        else:
-            title = '1x%s %s[COLOR burlywood][Sub-%s][/COLOR]' % (epi, quality, sub_choosen[:3])
-            infoLabels['season'] = 1
-            infoLabels['episode'] = scrapertools.find_single_match(epi, '(\d+)')
-        
-
-        itemlist.append(Item(channel=item.channel, title=title, url=urls, quality=list_quality,
-                             action='findvideos', contentSerieName=scrapedtitle, language=language,
-                             urls_q=urls_q, infoLabels=infoLabels))
-    
-    tmdb.set_infoLabels(itemlist, seekTmdb=True)
-    #itemlist = filtertools.get_links(itemlist, item, list_language)
-    itemlist.reverse()
-    if matches and not itemlist:
-        zanga = 'No hay enlaces con subtitulos en %s' % sub_choosen
-        if not 'espa' in sub_choosen.lower():
-            zanga = 'There\'s  no links with %s subtitles' % sub_choosen
-        from platformcode import platformtools
-        return platformtools.dialog_notification('Information', zanga, time=7000)
-
-        #itemlist.append(item.clone(title=zanga, url='', action=''))
-    return itemlist
-
-
-def findvideos(item):
-    logger.info()
-    itemlist = []
-    url_list = item.urls_q
-
-    try:
-        test = httptools.downloadpage(url_list[0], only_headers=True).url
-    except:
-        try:
-            domain = urlparse.urlparse(url_list[0])[1]
-            url_t = 'https://'+domain
-            get_source(url_t)
-            test = httptools.downloadpage(url_list[0], only_headers=True).url
-        except:
-            test = 'error'
-
-    if 'error.' in test:
-        url_list = item.url
-    
-
-
-    for url in url_list:
-        if not url:
-            continue
-        server = 'torrent'
-        action = 'play'
-
-        title = server.capitalize()
-        quality = scrapertools.find_single_match(url, '(\d+)p%')
-        
-        new_item = Item(channel=item.channel, title=title,
-                                url=url, action=action,
-                                language = item.language, plot=item.plot,
-                                server=server, thumbnail=item.thumbnail)
-        
-        if not url.endswith('.torrent') and not url.startswith('mag'):
-            
-            if not url.endswith('.mkv'):
-                new_item.server = ''
-                new_item.action = 'folder_list'
-                new_item.title = 'Directo [Folder]'
-                new_item.nom_serie = item.contentSerieName
-
-                #return folder_list(item)
-            else:
-                new_item.server = 'directo'
-                new_item.title = new_item.server.capitalize()
-                new_item.infoLabels=item.infoLabels
-
-        else:
-            new_item.infoLabels=item.infoLabels
-
-        if quality:
-            quality += 'p'
-            new_item.quality = quality
-            new_item.title += ' [%s]' % quality
-        
-        itemlist.append(new_item)
-
-    itemlist.sort(key=lambda x:x.server)
-    return itemlist
-
-def play(item):
-    if item.server == 'directo':
-        item.url = httptools.get_url_headers(item.url, forced=True)
-
-    return [item]
-
-def alpha(item):
-    itemlist = []
-    w = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-    for i in w:
-        itemlist.append(item.clone(title=i,
-                        letra=i,
-                        action='anime_list'))
-
-    return itemlist
