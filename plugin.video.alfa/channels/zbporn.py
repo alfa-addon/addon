@@ -112,6 +112,7 @@ def findvideos(item):
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
+
 def play(item):
     logger.info()
     itemlist = []

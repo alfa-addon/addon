@@ -90,13 +90,7 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = 'html5player.setVideo(?:Url|H)(\w+)\(\'([^,\']+)\''
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for quality,url in matches:
-        if "LS" in quality: quality = item.quality
-        if "High" in quality: quality = "360p"
-        if "Low" in quality: quality = "250p"
-        itemlist.append(['.mp4 %s' %quality, url])
-    return itemlist[::-1]
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
 

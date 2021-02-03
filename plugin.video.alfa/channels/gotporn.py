@@ -18,8 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.gotporn.com'   # http://www.veporno.net    https://www.fxporn.net
-
+host = 'https://www.gotporn.com'   
 
 def mainlist(item):
     logger.info()
