@@ -184,16 +184,17 @@ def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang, forced=Fals
     @rtype: int, list
     """
     include_adult = kwargs.get('include_adult', False)
+    force_no_year = kwargs.get('force_no_year', False)
 
     if not config.get_setting('tmdb_active') and not forced:
         return
 
     start_time = time.time()
     if isinstance(source, list):
-        ret = set_infoLabels_itemlist(source, seekTmdb, idioma_busqueda, include_adult=include_adult)
+        ret = set_infoLabels_itemlist(source, seekTmdb, idioma_busqueda, include_adult=include_adult, force_no_year=force_no_year)
         logger.debug("Se han obtenido los datos de %i enlaces en %f segundos" % (len(source), time.time() - start_time))
     else:
-        ret = set_infoLabels_item(source, seekTmdb, idioma_busqueda, include_adult=include_adult)
+        ret = set_infoLabels_item(source, seekTmdb, idioma_busqueda, include_adult=include_adult, force_no_year=force_no_year)
         logger.debug("Se han obtenido los datos del enlace en %f segundos" % (time.time() - start_time))
     return ret
 
@@ -220,6 +221,7 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang
     @rtype: list
     """
     include_adult = kwargs.get('include_adult', False)
+    force_no_year = kwargs.get('force_no_year', False)
     if not config.get_setting('tmdb_active') and not forced:
         return
     import threading
@@ -233,7 +235,7 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang
 
     def sub_thread(_item, _i, _seekTmdb):
         semaforo.acquire()
-        ret = set_infoLabels_item(_item, _seekTmdb, idioma_busqueda, lock, include_adult=include_adult)
+        ret = set_infoLabels_item(_item, _seekTmdb, idioma_busqueda, lock, include_adult=include_adult, force_no_year=force_no_year)
         # logger.debug(str(ret) + "item: " + _item.tostring())
         semaforo.release()
         r_list.append((_i, _item, ret))
@@ -411,12 +413,12 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
                                  year=item.infoLabels['year'], include_adult=include_adult)
                 else:
                     # Busqueda de pelicula por titulo...
-                    if item.infoLabels['year'] or item.infoLabels['filtro']:
-                        # ...y año o filtro
+                    if item.infoLabels['year'] or item.infoLabels['filtro'] or kwargs.get('force_no_year', False):
+                        # # ...y año o filtro
                         if item.contentTitle:
                             titulo_buscado = item.contentTitle
                         otmdb = Tmdb(texto_buscado=titulo_buscado, tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda,
-                                     filtro=item.infoLabels.get('filtro', {}), year=item.infoLabels['year'],
+                                     filtro=item.infoLabels.get('filtro', {}), year=item.infoLabels.get('year', ''),
                                      include_adult=include_adult)
                 if otmdb is not None:
                     if otmdb.get_id() and config.get_setting("tmdb_plus_info", default=False):
