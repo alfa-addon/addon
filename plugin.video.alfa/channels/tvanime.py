@@ -387,7 +387,7 @@ def findvideos(item):
 
     autoplay.start(itemlist, item)
 
-    if config.get_videolibrary_support() and itemlist > 0 and item.extra != 'findvideos' and not item.contentSerieName:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos' and not item.contentSerieName:
         itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
                              url=item.url, action="add_pelicula_to_library", extra="findvideos",
                              contentTitle=item.contentTitle))

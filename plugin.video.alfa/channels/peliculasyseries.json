@@ -1,7 +1,7 @@
 {
 "id": "peliculasyseries",
   "name": "PeliculasySeries",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://s22.postimg.cc/xy1burkep/peliculasyseries.png",
