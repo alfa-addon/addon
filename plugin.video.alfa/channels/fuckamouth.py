@@ -31,8 +31,8 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "%20")
-    item.url = "%s/results/%s" % (host, texto)
+    texto = texto.replace(" ", "+")
+    item.url = "%s/porn/search?search=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -57,6 +57,10 @@ def categorias(item):
         url = scrapedurl
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
+    next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)" rel="next"')
+    if next_page:
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 def lista(item):
@@ -66,14 +70,17 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="item large-3.*?'
     patron += '<a href="([^"]+)".*?'
-    patron += '<img src="([^"]+)" alt="([^"]+)".*?'
+    patron += 'src="([^"]+)" alt="([^"]+)".*?'
     patron += '<div class="thumb-stats pull-left">(.*?)<div class="thumb-stats pull-right">.*?'
     patron += '<span>([^>]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    logger.debug(matches)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,quality,time in matches:
-        title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
-        thumbnail = urlparse.urljoin(item.url,scrapedthumbnail)
+    for scrapedurl,thumbnail,scrapedtitle,quality,time in matches:
+        if "HD" in quality:
+            title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time, scrapedtitle)
+        else:
+            title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
+        if not thumbnail.startswith("https"):
+            thumbnail = "%s/%s" %(host,thumbnail)
         url = urlparse.urljoin(item.url,scrapedurl)
         plot = ""
         itemlist.append(item.clone(action="play", title=title, url=url,

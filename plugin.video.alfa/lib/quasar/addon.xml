@@ -3,7 +3,6 @@
     <requires>
         <import addon="xbmc.addon" version="16.0.0" />
         <import addon="repository.quasar" optional="true" />
-        <import addon="script.quasar.burst" optional="true" />
     </requires>
     <extension point="xbmc.python.pluginsource" library="navigation.py">
         <provides>video</provides>

@@ -98,10 +98,10 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '<source id="video_source_1" src="([^"]+)"'
+    patron = '<source id="video_source_\d+" src="([^"]+)".*?'
+    patron += 'title="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl  in matches:
-        url =  scrapedurl
-    itemlist.append(item.clone(action="play", title= item.title, contentTitle = item.title, url=url))
-    return itemlist
+    for url, quality  in matches:
+        itemlist.append(['%s' %quality, url])
+    return itemlist[::-1]
 

@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://pornmz.com'
+host = 'https://pornmz.com'  
 
 
 def mainlist(item):
@@ -78,12 +78,13 @@ def categorias(item):
         plot = ""
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
-    next_page = soup.find('a', class_='current').parent.find_next_siblings("li")
+    next_page = soup.find('a', class_='current')
     if next_page:
-        next_page = next_page[0].a['href']
+        next_page = next_page.parent.find_next_sibling("li").a['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
+
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
@@ -128,9 +129,9 @@ def lista(item):
         plot = ""
         itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('a', class_='current').parent.find_next_siblings("li")
+    next_page = soup.find('a', class_='current')
     if next_page:
-        next_page = next_page[0].a['href']
+        next_page = next_page.parent.find_next_sibling("li").a['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -139,21 +140,27 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
-    data = httptools.downloadpage(url).data
-    url = scrapertools.find_single_match(data, '<source src="([^"]+)"').replace("amp;", "")
-    itemlist.append(item.clone(action="play", contentTitle = item.title, url=url))
-    return itemlist
+    soup = create_soup(item.url).find('div', class_='responsive-player')
+    url = soup.find('iframe')['src']
+    soup = create_soup(url).find('video', id='video')
+    matches = soup.find_all('source')
+    for elem in matches:
+        url = elem['src']
+        quality = elem['title']
+        itemlist.append(['.mp4 %s' %quality, url])
+    return itemlist[::-1]
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
-    data = httptools.downloadpage(url).data
-    url = scrapertools.find_single_match(data, '<source src="([^"]+)"').replace("amp;", "")
-    itemlist.append(item.clone(action="play", contentTitle = item.title, url=url))
-    return itemlist
+    soup = create_soup(item.url).find('div', class_='responsive-player')
+    url = soup.find('iframe')['src']
+    soup = create_soup(url).find('video', id='video')
+    matches = soup.find_all('source')
+    for elem in matches:
+        url = elem['src']
+        quality = elem['title']
+        itemlist.append(['%s' %quality, url])
+    return itemlist[::-1]
 

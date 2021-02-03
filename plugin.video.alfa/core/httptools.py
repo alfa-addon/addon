@@ -94,19 +94,20 @@ def get_cookie(url, name, follow_redirects=False):
             return cookie.value
     return False
 
-def get_url_headers(url, forced=False):
+def get_url_headers(url, forced=False, dom=False):
     from . import scrapertools
     
     domain = urlparse.urlparse(url)[1]
     sub_dom = scrapertools.find_single_match(domain, '\.(.*?\.\w+)')
     if sub_dom and not 'google' in url:
         domain = sub_dom
+    if dom:
+        domain = dom
     domain_cookies = cj._cookies.get("." + domain, {}).get("/", {})
     domain_cookies.update(cj._cookies.get("www." + domain, {}).get("/", {}))
 
-    if "|" in url or not "cf_clearance" in domain_cookies:
-        if not forced:
-            return url
+    if ("|" in url or not "cf_clearance" in domain_cookies) and not forced:
+        return url
 
     headers = dict()
     cf_ua = config.get_setting('cf_assistant_ua', None)

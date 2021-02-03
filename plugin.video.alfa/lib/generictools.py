@@ -165,7 +165,7 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
     return (data, success, code, item, itemlist)
 
 
-def convert_url_base64(url, host=''):
+def convert_url_base64(url, host='', rep_blanks=True):
     logger.info('URL: ' + url + ', HOST: ' + host)
 
     url_base64 = url
@@ -179,7 +179,9 @@ def convert_url_base64(url, host=''):
                 url_base64 = base64.b64decode(url_base64).decode('utf-8')
             logger.info('Url base64 después de 20 pasadas (incompleta): %s' % url_base64)
         except:
-            if url_base64 and url_base64 != url: logger.info('Url base64 convertida: %s' % url_base64)
+            if url_base64 and url_base64 != url:
+                logger.info('Url base64 convertida: %s' % url_base64)
+                if rep_blanks: url_base64 = url_base64.replace(' ', '%20')
             #logger.error(traceback.format_exc())
             if not url_base64:
                 url_base64 = url
