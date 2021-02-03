@@ -28,7 +28,8 @@ from channels import filtertools, autoplay
 
 
 IDIOMAS = {'lat': 'LAT', 'spa': 'CAST', 'esp': 'CAST', 'sub': 'VOSE', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
-list_language = list(IDIOMAS.values())
+#IDIOMAS = {'lat': 'LAT', 'spa': 'CAST', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
+list_language = list(set(IDIOMAS.values()))
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP', 'RHDTV', 'DVDSCR']
 list_servers = ['flix555', 'clipwatching', 'gamovideo', 'powvideo', 'streamplay', 'vidoza', 'vidtodo', 'uptobox']
 
@@ -47,6 +48,8 @@ def mainlist(item):
                          thumbnail=get_thumb('tvshows', auto=True), text_bold=True))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
                          thumbnail=get_thumb('search', auto=True), text_bold=True))
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -161,6 +164,7 @@ def list_all(item):
         if '/show/' in url:
             new_item.contentSerieName = title
             new_item.action = 'seasons'
+            new_item.context = filtertools.context(item, list_language, list_quality)
         else:
             lang_data = elem.find("div", class_="left").find_all("img")
             for l in lang_data:

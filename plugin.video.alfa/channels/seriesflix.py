@@ -61,6 +61,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + "?s=",
                          thumbnail=get_thumb("search", auto=True)))
 
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
+
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
@@ -118,7 +120,8 @@ def list_all(item):
         thumb = elem.img["src"]
 
         itemlist.append(Item(channel=item.channel, url=url, title=title, thumbnail=thumb, action="seasons",
-                        contentSerieName=title))
+                             contentSerieName=title,
+                             context=filtertools.context(item, list_language, list_quality)))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 

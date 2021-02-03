@@ -93,11 +93,11 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '<source src="([^"]+)" res="\d+" label="([^"]+)" type="video/mp4" default/>'
+    patron  = '<source src="([^"]+)" res="\d+" label="([^"]+)" type="video/mp4"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url,quality in matches:
         if not url.startswith("https"):
             url = "http:%s" % url
-        itemlist.append(['.mp4 %s' %quality, url])
+        itemlist.append(['%s' %quality, url])
     return itemlist
 

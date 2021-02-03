@@ -24,5 +24,5 @@ def get_video_url(page_url, video_password):
     for quality, scrapedurl in matches:
         url =  scrapedurl.replace("\/", "/").replace("\u0026", "&")
         video_urls.append(["[youporn] %sp" %quality, url])
-    return video_urls
+    return video_urls[::-1]
 

@@ -105,14 +105,10 @@ def init():
             logger.error(traceback.format_exc())
         
         #TORREST: Hacemos unas modificaciones a Torrest, si está instalado
-        if xbmc.getCondVisibility('System.HasAddon("plugin.video.torrest")'):
-            try:
-                __settings__ = xbmcaddon.Addon(id="plugin.video.torrest")
-                __settings__.setSetting("show_bg_progress", "false")    # Usamos nuestro sistema
-                from platformcode import updater
-                updater.check_update_to_others(app=False)
-            except:
-                logger.error(traceback.format_exc())
+        if xbmc.getCondVisibility('System.HasAddon("plugin.video.torrest")') \
+                    and not config.get_setting('addon_update_timer', default=0):
+            from platformcode import updater
+            updater.check_update_to_others(app=False)
         
         #QUASAR: Preguntamos si se hacen modificaciones a Quasar
         if not filetools.exists(filetools.join(config.get_data_path(), "quasar.json")) \

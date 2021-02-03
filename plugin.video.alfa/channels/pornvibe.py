@@ -61,6 +61,19 @@ def categorias(item):
     return sorted(itemlist, key=lambda i: i.title)
 
 
+def stitle(title, url):
+    logger.info()
+    t = title.split()
+    long = len(t)-1
+    url = scrapertools.find_single_match(url, '.org/([^/]+)')
+    url2 = url.split('-')[long:]
+    t2=""
+    for elem in url2:
+        t2 += "%s " % elem.capitalize()
+    stitle = "%s %s" %(title, t2) 
+    return stitle
+
+
 def lista(item):
     logger.info()
     itemlist = []
@@ -73,6 +86,9 @@ def lista(item):
     patron += '<a href="([^"]+)">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedthumbnail,quality,time,scrapedurl,scrapedtitle in matches:
+        if "..." in scrapedtitle:
+            scrapedtitle = scrapertools.find_single_match(scrapedtitle, '(.*?&#8211;)')
+            scrapedtitle = stitle(scrapedtitle,scrapedurl)
         quality = scrapertools.find_single_match(quality, '<h6>([^<]+)</h6>')
         quality = ""  # Solo ofrece videolinks SD
         time = scrapertools.find_single_match(time, '<span>([^<]+)</span>')

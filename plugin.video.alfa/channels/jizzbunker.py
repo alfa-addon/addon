@@ -17,16 +17,16 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'http://jizzbunker.com/es'
+host = 'http://jizzbunker.com'
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "/newest"))
-    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/popular1"))
-    itemlist.append(item.clone(title="Tendencia" , action="lista", url=host + "/trending"))
-    itemlist.append(item.clone(title="Longitud" , action="lista", url=host + "/longest"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/channels/"))
+    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "/en/newest"))
+    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/en/popular1"))
+    itemlist.append(item.clone(title="Tendencia" , action="lista", url=host + "/en/trending"))
+    itemlist.append(item.clone(title="Longitud" , action="lista", url=host + "/en/longest"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/en/channels/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -34,7 +34,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search?query=%s/" % (host, texto)
+    item.url = "%s/en/search?query=%s/" % (host, texto)
     try:
         return lista(item)
     except:
@@ -68,12 +68,11 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<li><figure>.*?<a href="([^"]+)/([^"]+).html".*?'
-    patron += '<img class="lazy" data-original="([^"]+)".*?'
+    patron  = '<li><figure>.*?<a href="([^"]+)".*?'
+    patron += '<img class="lazy" data-original="([^"]+)" alt="([^"]+)".*?'
     patron += '<time datetime=".*?">([^"]+)</time>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail,duracion in matches:
-        url = scrapedurl + "/" + scrapedtitle + ".html"
+    for url,scrapedthumbnail,scrapedtitle,duracion in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" %(duracion,scrapedtitle)
         contentTitle = title
         thumbnail = scrapedthumbnail

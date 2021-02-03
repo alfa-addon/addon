@@ -24,7 +24,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['gounlimited']
 
-host = 'http://streamporno.eu'    #'https://watchpornfree.info'   'https://xxxparodyhd.net'  'http://www.veporns.com' 
+host = 'http://streamporno.eu'    #'https://watchpornfree.info'   'https://xxxparodyhd.net'  'http://www.veporns.com' 'http://www.veporno.net'    https://www.fxporn.net
 
 # Links caidos en canal y categorias
 
