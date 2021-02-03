@@ -18,6 +18,7 @@ from core import tmdb
 from channels import autoplay
 from platformcode import config, logger
 from channelselector import get_thumb
+from lib import generictools
 
 host = 'https://seriesflix.to/'
 IDIOMAS = {"Latino": "LAT", "Castellano": "CAST", "Subtitulado": "VOSE"}
@@ -30,6 +31,9 @@ def create_soup(url, post=None, headers=None):
     logger.info()
 
     data = httptools.downloadpage(url, post=post, headers=headers).data
+    if 'Javascript is required' in data:
+        generictools.js2py_conversion(data, url, domain_name=".seriesflix.to")
+        data = httptools.downloadpage(url, post=post).data
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
     return soup
@@ -270,7 +274,6 @@ def findvideos(item):
         if server.lower() == "embed":
             server = "Mystream"
         lang = elem.find("p", class_="AAIco-language").text.split(' ')[1]
-        logger.debug(lang)
         qlty = elem.find("p", class_="AAIco-equalizer").text
         title = "%s [%s]" % (server, lang)
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
