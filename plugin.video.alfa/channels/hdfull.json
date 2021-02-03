@@ -38,7 +38,7 @@
       "id": "current_host",
       "type": "text",
       "label": "Host actual",
-      "default": "https://hdfull.cx/",
+      "default": "https://www2.hdfull.cx/",
       "enabled": true,
       "visible": false
     },
