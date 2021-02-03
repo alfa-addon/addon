@@ -292,11 +292,12 @@ def get_environment():
             cliente['D_load_Path'] = ''
             cliente['Libre'] = '?'
             cliente['Plug_in'] = scrapertools.find_single_match(torrent_option, ':\s*(\w+)')
-            if cliente['Plug_in'] not in ['BT', 'MCT']:cliente['Plug_in'] = cliente['Plug_in'].capitalize()
+            if cliente['Plug_in'] not in ['BT', 'MCT']: cliente['Plug_in'] = cliente['Plug_in'].capitalize()
             
             cliente['D_load_Path'] = torrent_paths[cliente['Plug_in'].upper()]
             cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
             cliente['Buffer'] = str(torrent_paths[cliente['Plug_in'].upper()+'_buffer'])
+            cliente['Version'] = str(torrent_paths[cliente['Plug_in'].upper()+'_version'])
             if cliente['Plug_in'].upper() == 'TORREST':
                 cliente['Buffer'] = str(int(int(torrent_paths[cliente['Plug_in'].upper()+'_buffer']) /(1024*1024)))
             if torrent_paths.get(cliente['Plug_in'].upper()+'_memory_size', ''):
@@ -468,9 +469,10 @@ def list_env(environment={}):
             else:
                 cliente_alt = cliente.copy()
                 del cliente_alt['Plug_in']
+                del cliente_alt['Version']
                 cliente_alt['Libre'] = cliente_alt['Libre'].replace('.', ',') + ' GB'
-                logger.info('- %s: %s' % (str(cliente['Plug_in']), str(cliente_alt)\
-                            .replace('{', '').replace('}', '').replace("'", '')\
+                logger.info('- %s v.%s: %s' % (str(cliente['Plug_in']), str(cliente['Version']), \
+                            str(cliente_alt).replace('{', '').replace('}', '').replace("'", '')\
                             .replace('\\\\', '\\')))
     
     logger.info('Proxy: ' + environment['proxy_active'])
@@ -643,10 +645,11 @@ def paint_env(item, environment={}):
             else:
                 cliente_alt = cliente.copy()
                 del cliente_alt['Plug_in']
+                del cliente_alt['Version']
                 cliente_alt['Libre'] = cliente_alt['Libre'].replace('.', ',') + ' GB'
-                itemlist.append(Item(channel=item.channel, title='[COLOR yellow]- %s: [/COLOR]%s' % 
-                            (str(cliente['Plug_in']), str(cliente_alt).replace('{', '').replace('}', '')\
-                            .replace("'", '').replace('\\\\', '\\')), action="", plot=torrent_cliente, 
+                itemlist.append(Item(channel=item.channel, title='[COLOR yellow]- %s v%s: [/COLOR]%s' % 
+                            (str(cliente['Plug_in']), str(cliente['Version']), str(cliente_alt).replace('{', '')\
+                            .replace('}', '').replace("'", '').replace('\\\\', '\\')), action="", plot=torrent_cliente, 
                             thumbnail=thumb, folder=False))
     
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Proxy: [/COLOR]' + 
