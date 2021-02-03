@@ -5221,3 +5221,23 @@ msgstr "Per Gèneres"
 msgctxt "#70561"
 msgid "Search Similar"
 msgstr "Cerca similars"
+
+msgctxt "#70758"
+msgid "Relevant tutorials"
+msgstr "Tutorials rellevants"
+
+msgctxt "#70759"
+msgid "Install an external browser"
+msgstr "Instal·leu un navegador extern"
+
+msgctxt "#70760"
+msgid "(click to use [I]%s[/I])"
+msgstr "(feu clic per utilitzar [I]%s[/I])"
+
+msgctxt "#70761"
+msgid "Report an error"
+msgstr "Notifiqueu un error"
+
+msgctxt "#70762"
+msgid "Alfa Mobile Assistant Manual (helper tool)"
+msgstr "Manual d'Alfa Mobile Assistant (eina de suport)"

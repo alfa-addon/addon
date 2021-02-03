@@ -484,7 +484,8 @@ def menu(item):
                 filetools.read(filetools.join(DOWNLOAD_LIST_PATH, item.path)))
     # Opciones disponibles para el menu
     op = [config.get_localized_string(70225), config.get_localized_string(70226), config.get_localized_string(70227),
-          "Pausar descarga", "Modificar servidor: %s" % (servidor.capitalize()), config.get_localized_string(70221)]
+          "Pausar descarga", "Modificar servidor: %s" % (servidor.capitalize()), config.get_localized_string(70221),
+          "Agregar a la videoteca"]
 
     opciones = []
 
@@ -509,6 +510,7 @@ def menu(item):
             opciones.append(op[3])  # Pausar descarga
         if item.downloadProgress != 0 or item.downloadCompleted != 0:
             opciones.append(op[2])  # Reiniciar descarga
+            opciones.append(op[6])  # Agregar a la videoteca
         opciones.append(op[1])  # Eliminar de la lista
         opciones.append(op[5])  # Eliminar todo
 
@@ -579,6 +581,10 @@ def menu(item):
     if opciones[seleccion] == op[5]:
         filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, item.path), silent=True)
         logger.info("Archivo de control ELIMINADO (%s): %s" % (opciones[seleccion], item.path))
+    
+    # Agregar a la videoteca
+    if opciones[seleccion] == op[6]:
+        move_to_library(item, forced=True)
     
     platformtools.itemlist_refresh()
 
@@ -719,27 +725,43 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
     return torr_data, deamon_url, index
 
 
-def move_to_libray(item):
-    download_path = filetools.join(config.get_setting("downloadpath"), item.downloadFilename)
-    library_path = filetools.join(config.get_videolibrary_path(), *filetools.split(item.downloadFilename))
-    final_path = download_path
+def move_to_library(item, forced=False):
+    # Verificamos si se activó el ajuste "Añadir completados a videoteca"
+    if config.get_setting("library_add", "downloads") == True or forced == True:
+        download_path = filetools.join(config.get_setting("downloadpath"), item.downloadFilename)
+        item_library_path = filetools.join(config.get_videolibrary_path(), *filetools.split(item.downloadFilename))
+        final_path = download_path
 
-    if config.get_setting("library_add", "downloads") == True and config.get_setting("library_move",
-                                                                                     "downloads") == True:
-        if not filetools.isdir(filetools.dirname(library_path)):
-            filetools.mkdir(filetools.dirname(library_path))
+        # Si se activó el ajuste "Mover archivo descargado a videoteca", movemos el archivo
+        if config.get_setting("library_move", "downloads") == True:
+            # Asignamos una ruta a la carpeta de pelis o series en videoteca según contentType
+            if item.contentType == "movie":
+                item_library_path = filetools.join(config.get_videolibrary_path(),
+                                                   config.get_setting("folder_movies"),
+                                                   *filetools.split(item.downloadFilename))
+            elif item.contentType == "episode":
+                item_library_path = filetools.join(config.get_videolibrary_path(),
+                                                   config.get_setting("folder_tvshows"),
+                                                   *filetools.split(item.downloadFilename))
 
-        if filetools.isfile(library_path) and filetools.isfile(download_path):
-            filetools.remove(library_path)
+            # Si la ruta a la carpeta en la videoteca es un archivo ya existente,
+            # lo borramos, y/o si no existe la carpeta la creamos
+            if filetools.isfile(item_library_path) and filetools.isfile(download_path):
+                filetools.remove(item_library_path)
+            if not filetools.isdir(filetools.dirname(item_library_path)):
+                filetools.mkdir(filetools.dirname(item_library_path))
 
-        if filetools.isfile(download_path):
-            if filetools.move(download_path, library_path):
-                final_path = library_path
+            # Verificamos que el archivo exista (y sea un archivo)
+            if filetools.isfile(download_path):
+                # Si se mueve correctamente, establecemos la nueva ruta como la definitiva
+                if filetools.move(download_path, item_library_path):
+                    final_path = item_library_path
 
-            if len(filetools.listdir(filetools.dirname(download_path))) == 0:
-                filetools.rmdir(filetools.dirname(download_path))
+                # Borramos directorios vacíos
+                if len(filetools.listdir(filetools.dirname(download_path))) == 0:
+                    filetools.rmdir(filetools.dirname(download_path))
 
-    if config.get_setting("library_add", "downloads") == True:
+        # Verificamos que el archivo exista (y sea un archivo)
         if filetools.isfile(final_path):
             if item.contentType == "movie" and item.infoLabels["tmdb_id"] and item.infoLabels["tmdb_id"] != null:
                 library_item = Item(title=config.get_localized_string(70228) % item.downloadFilename, channel="downloads",
@@ -747,7 +769,7 @@ def move_to_libray(item):
                 videolibrarytools.save_movie(library_item)
 
             elif item.contentType == "episode" and item.infoLabels["tmdb_id"] and item.infoLabels["tmdb_id"] != null:
-                library_item = Item(title=config.get_localized_string(70228) % item.downloadFilename, channel="downloads",
+                library_item = Item(title=config.get_localized_string(70228) % item.server.title(), channel="downloads",
                                     action="findvideos", infoLabels=item.infoLabels, url=final_path)
                 tvshow = Item(channel="downloads", contentType="tvshow",
                               infoLabels={"tmdb_id": item.infoLabels["tmdb_id"]})
@@ -962,7 +984,7 @@ def download_from_url(url, item):
     file = filetools.join(filetools.dirname(item.downloadFilename), d.filename)
 
     if status == STATUS_CODES.completed:
-        move_to_libray(item.clone(downloadFilename=file))
+        move_to_library(item.clone(downloadFilename=file))
 
     config.set_setting("DOWNLOADER_in_use", False, "downloads")                 # Marcamos Downloader como disponible
     return {"downloadUrl": d.download_url, "downloadStatus": status, "downloadSize": d.size[0], "downloadQueued": 0, 

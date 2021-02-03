@@ -59,7 +59,7 @@ def getmainlist(view="thumb_"):
                          category=config.get_localized_string(30100), viewmode="list"))
 
     if config.is_xbmc():
-        itemlist.append(Item(title="Reportar un fallo", channel="setting", action="report_menu",
+        itemlist.append(Item(title=config.get_localized_string(70761), channel="setting", action="report_menu",
                          thumbnail=get_thumb("error.png", view),
                          category=config.get_localized_string(30104), viewmode="list"))
 
@@ -72,18 +72,18 @@ def getmainlist(view="thumb_"):
     if not browser:
         action = ''
         itemlist.append(Item(channel="setting", action=action, url='https://alfa-addon.com/foros/tutoriales.11/', 
-                         title="Tutoriales relevantes [COLOR gold](Instala un browser externo: Chrome, Firefox, Opera)[/COLOR]:", 
+                         title=config.get_localized_string(70758) + " [COLOR gold](" + config.get_localized_string(70759) + ": Chrome, Firefox, Opera)[/COLOR]:", 
                          thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
                          category=config.get_localized_string(30104), viewmode="list"))
     else:
         action = 'call_browser'
         itemlist.append(Item(channel="setting", action=action, url='https://alfa-addon.com/foros/tutoriales.11/', 
-                         title="Tutoriales relevantes [COLOR limegreen](pincha para usar [I]%s[/I])[/COLOR]:" % browser, 
+                         title=config.get_localized_string(70758) + (" [COLOR limegreen]" + config.get_localized_string(70760) + "[/COLOR]") % browser, 
                          thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
                          category=config.get_localized_string(30104), viewmode="list"))
-                         
+
     itemlist.append(Item(channel="setting", action=action, url='https://alfa-addon.com/threads/manual-de-alfa-mobile-assistant-herramienta-de-apoyo.3797/', 
-                         title="-     [COLOR yellow]Manual de Alfa Mobile Assistant (herramienta de apoyo)[/COLOR]   " + 
+                         title="-     [COLOR yellow]" + config.get_localized_string(70762) + "[/COLOR]   " + 
                          "https://alfa-addon.com/threads/manual-de-alfa-mobile-assistant-herramienta-de-apoyo.3797/", 
                          thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
                          category=config.get_localized_string(30104), viewmode="list"))

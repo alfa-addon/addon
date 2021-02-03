@@ -5034,3 +5034,23 @@ msgstr "VER AHORA"
 msgctxt "#70757"
 msgid "CANCEL"
 msgstr "CANCELAR"
+
+msgctxt "#70758"
+msgid "Relevant tutorials"
+msgstr "Tutoriales relevantes"
+
+msgctxt "#70759"
+msgid "Install an external browser"
+msgstr "Instala un browser externo"
+
+msgctxt "#70760"
+msgid "(click to use [I]%s[/I])"
+msgstr "(pincha para usar [I]%s[/I])"
+
+msgctxt "#70761"
+msgid "Report an error"
+msgstr "Reportar un fallo"
+
+msgctxt "#70762"
+msgid "Alfa Mobile Assistant Manual (helper tool)"
+msgstr "Manual de Alfa Mobile Assistant (herramienta de apoyo)"

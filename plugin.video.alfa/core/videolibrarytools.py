@@ -449,6 +449,10 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         
         try:
             season_episode = scrapertools.get_season_and_episode(e.title)
+            if e.infoLabels['episode'] and e.infoLabels['season']:
+                season_episode = scrapertools.get_season_and_episode(str(e.infoLabels['season']) + 'x' + str(e.infoLabels['episode']))
+            if not season_episode:
+                season_episode = scrapertools.get_season_and_episode(e.title)
             if not season_episode or 'temp. a videoteca' in e.title.lower() \
                             or 'serie a videoteca' in e.title.lower() \
                             or 'vista previa videoteca' in e.title.lower():
@@ -643,7 +647,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 tvshow_item.active = 1
             if tvshow_item.infoLabels["tmdb_id"] == serie.infoLabels["tmdb_id"]:
                 tvshow_item.infoLabels = serie.infoLabels
-                tvshow_item.infoLabels["title"] = tvshow_item.infoLabels["tvshowtitle"] 
+                if tvshow_item.infoLabels["tvshowtitle"]: tvshow_item.infoLabels["title"] = tvshow_item.infoLabels["tvshowtitle"]
+                elif tvshow_item.infoLabels["title"]: tvshow_item.infoLabels["tvshowtitle"] = tvshow_item.infoLabels["title"]
                 tvshow_item.infoLabels["thumbnail"] = tvshow_item.infoLabels["thumbnail"].replace('http:', 'https:')
                 if tvshow_item.infoLabels["thumbnail"]: tvshow_item.thumbnail = tvshow_item.infoLabels["thumbnail"]
                 tvshow_item.infoLabels["fanart"] = tvshow_item.infoLabels["fanart"].replace('http:', 'https:')
