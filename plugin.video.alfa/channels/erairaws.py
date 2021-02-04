@@ -165,10 +165,12 @@ def set_infoLabels_async(itemlist, seekTmdb = False):
 
 def labeler(item, seekTmdb = True):
     logger.info()
+    # return item
+
     # Excepción(es) por algunas cosas que TMDB suele retornar erróneamente.
     # Estas en particular, las retorna mal en muchos de los canales que se busca cuando no hay año correcto
-    year_exceptions = {'(?i)Yuru Camp': '2018', '(?i)One Piece': '1999'}
-    title_exceptions = {'(?i)Bem': 'Bem: Become Human'}
+    year_exceptions = {'(?i)Yuru Camp': '2018', '(?i)One Piece': '1999', '(?i)Arte': '2020'}
+    title_exceptions = {'(?i)Bem': 'Bem: Become Human', '(?i)Given': 'Eiga Given'}
 
     title = item.infoLabels['title']
     for title_exc, title_replace in title_exceptions.items():
@@ -202,6 +204,8 @@ def labeler(item, seekTmdb = True):
                 result = tmdb.set_infoLabels_item(temp_item, seekTmdb = True)
         else:
             result = tmdb.set_infoLabels_item(temp_item, seekTmdb = True)
+    if result == 0:
+        return temp_item
     if not temp_item.infoLabels.get('tmdb_id'):
         if temp_item.contentType == 'movie':
             oldcontentType = temp_item.contentType
@@ -364,6 +368,7 @@ def list_selected(item):
 
 def list_all(item):
     logger.info()
+    logger.info(item.title)
     itemlist = []
     soup = create_soup(item.url)
     articles = soup.find('div', id='main').find_all('article')
@@ -373,7 +378,7 @@ def list_all(item):
     elif item.list_what == 'batch':
         itemlist.extend(item_extractor(item, articles, action = 'episodios', batch = True))
     elif item.list_what == 'movies':
-        itemlist.extend(item_extractor(item, articles, action = 'episodios', special = True, contentType = 'movie'))
+        itemlist.extend(item_extractor(item, articles, action = 'findvideos', special = True, contentType = 'movie'))
     else:
         itemlist.extend(item_extractor(item, articles))
     set_infoLabels_async(itemlist, seekTmdb = True)
@@ -420,7 +425,7 @@ def episodios(item, get_episodes = False, get_movie = False):
             collected_items.reverse()
             if len(sections) == 1 and len(collected_items) == 1:
                 return findvideos(collected_items[0])
-            elif len(collected_items) > 1:
+            elif len(collected_items) > 0:
                 posts_itemlist.append(
                     Item(
                         channel = item.channel,
@@ -434,7 +439,7 @@ def episodios(item, get_episodes = False, get_movie = False):
             collected_items = item_extractor(item, section, batch = True, action = 'findvideos')
             if len(sections) == 1 and len(collected_items) == 1:
                 return findvideos(collected_items[0])
-            elif len(collected_items) > 1:
+            elif len(collected_items) > 0:
                 batch_itemlist.append(
                     Item(
                         channel = item.channel,
@@ -448,7 +453,7 @@ def episodios(item, get_episodes = False, get_movie = False):
             collected_items = item_extractor(item, section, special = True, action = 'findvideos')
             if len(sections) == 1 and len(collected_items) == 1:
                 return findvideos(collected_items[0])
-            elif len(collected_items) > 1:
+            elif len(collected_items) > 0:
                 movies_itemlist.append(
                     Item(
                         channel = item.channel,
