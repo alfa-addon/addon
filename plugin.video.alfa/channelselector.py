@@ -95,7 +95,8 @@ def getchanneltypes(view="thumb_"):
     logger.info()
 
     # Lista de categorias
-    channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent", "sport"]
+    # channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent", "sport"]
+    channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent"]
 
     if config.get_setting("adult_mode") != 0:
         channel_types.append("adult")

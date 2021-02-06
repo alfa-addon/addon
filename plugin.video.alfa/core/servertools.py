@@ -96,7 +96,7 @@ def get_servers_itemlist(itemlist, fnc=None, sort=False):
 
         # Recorre los patrones
         for pattern in server_parameters.get("find_videos", {}).get("patterns", []):
-            logger.info(pattern["pattern"])
+            # logger.info(pattern["pattern"])
             # Recorre los resultados
             for match in re.compile(pattern["pattern"], re.DOTALL).finditer(
                     "\n".join([item.url.split('|')[0] for item in itemlist if not item.server])):
