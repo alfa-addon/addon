@@ -24,6 +24,11 @@ from core import filetools
 from core.item import Item
 
 json_data_file_name = 'custom_code.json'
+ADDON_PATH = config.get_runtime_path()
+ADDON_USERDATA_PATH = config.get_data_path()
+ADDON_USERDATA_BIN_PATH = filetools.join(ADDON_USERDATA_PATH, 'bin')
+ADDON_VERSION = config.get_addon_version(with_fix=False)
+ADDON_CUSTOMCODE_JSON = filetools.join(ADDON_PATH, json_data_file_name)
 
 
 def init():
@@ -66,7 +71,7 @@ def init():
 
     try:
         #Se realizan algunas funciones con cada nueva versión de Alfa
-        if not filetools.exists(filetools.join(config.get_runtime_path(), 'custom_code.json')):
+        if not filetools.exists(ADDON_CUSTOMCODE_JSON):
             config.set_setting('cf_assistant_ua', '')                   # Se limpia CF_UA. Mejora de rendimiento en httptools CF
         
         #Comprime la BD de cache de TMDB para evitar que crezca demasiado
@@ -78,7 +83,7 @@ def init():
         verify_script_alfa_update_helper()
         
         #Borra el .zip de instalación de Alfa de la carpeta Packages, por si está corrupto, y que así se pueda descargar de nuevo
-        version = 'plugin.video.alfa-%s.zip' % config.get_addon_version(with_fix=False)
+        version = 'plugin.video.alfa-%s.zip' % ADDON_VERSION
         filetools.remove(filetools.join('special://home', 'addons', 'packages', version), True)
         
         #Borrar contenido de carpeta de Torrents y de Subtitles
@@ -123,15 +128,15 @@ def init():
                 platformtools.dialog_notification("Actualización Quasar", "Ha fallado. Consulte el log")
         
         #Existe carpeta "custom_code" ? Si no existe se crea y se sale
-        custom_code_dir = filetools.join(config.get_data_path(), 'custom_code')
+        custom_code_dir = filetools.join(ADDON_USERDATA_PATH, 'custom_code')
         if not filetools.exists(custom_code_dir):
             create_folder_structure(custom_code_dir)
             return
         
         else:
             #Existe "custom_code.json" ? Si no existe se crea
-            custom_code_json_path = config.get_runtime_path()
-            custom_code_json = filetools.join(custom_code_json_path, 'custom_code.json')
+            custom_code_json_path = ADDON_PATH
+            custom_code_json = ADDON_CUSTOMCODE_JSON
             if not filetools.exists(custom_code_json):
                 create_json(custom_code_json_path)
             
@@ -171,7 +176,7 @@ def marshal_check():
     try:
         marshal_modules = ['lib/alfaresolver_py3', 'core/proxytools_py3']
         for module in marshal_modules:
-            path = filetools.join(config.get_runtime_path(), filetools.dirname(module))
+            path = filetools.join(ADDON_PATH, filetools.dirname(module))
             path_list = filetools.listdir(path)
             library = filetools.dirname(module).rstrip('/')
             module_name = filetools.basename(module)
@@ -279,14 +284,13 @@ def verify_copy_folders(custom_code_dir, custom_code_json_path):
     logger.info()
     
     #verificamos si es una nueva versión de Alfa instalada o era la existente.  Si es la existente, nos vamos sin hacer nada
-    json_data_file = filetools.join(custom_code_json_path, json_data_file_name)
+    json_data_file = ADDON_CUSTOMCODE_JSON
     json_data = jsontools.load(filetools.read(json_data_file))
-    current_version = config.get_addon_version(with_fix=False)
     if not json_data or not 'addon_version' in json_data: 
         create_json(custom_code_json_path)
         json_data = jsontools.load(filetools.read(json_data_file))
     try:
-        if current_version == json_data['addon_version']:
+        if ADDON_VERSION == json_data['addon_version']:
             return
     except:
         logger.error(traceback.format_exc(1))
@@ -300,7 +304,7 @@ def verify_copy_folders(custom_code_dir, custom_code_json_path):
                 return
     
     #Guardamaos el json con la versión actual de Alfa, para no volver a hacer la copia hasta la nueva versión
-    json_data['addon_version'] = current_version
+    json_data['addon_version'] = ADDON_VERSION
     filetools.write(json_data_file, jsontools.dump(json_data))
 
     return
@@ -335,7 +339,7 @@ def update_external_addon(addon_name):
         #Verificamos que el addon está instalado
         if xbmc.getCondVisibility('System.HasAddon("plugin.video.%s")' % addon_name):
             #Path de actualizaciones de Alfa
-            alfa_addon_updates_mig = filetools.join(config.get_runtime_path(), "lib")
+            alfa_addon_updates_mig = filetools.join(ADDON_PATH, "lib")
             alfa_addon_updates = filetools.join(alfa_addon_updates_mig, addon_name)
             
             #Está el addon activo?
@@ -419,11 +423,14 @@ def update_libtorrent():
     if not filetools.exists(filetools.join(config.get_setting("mct_download_path", server="torrent"), 'MCT-torrent-videos')):
         filetools.mkdir(filetools.join(config.get_setting("mct_download_path", server="torrent"), 'MCT-torrent-videos'))
         filetools.mkdir(filetools.join(config.get_setting("mct_download_path", server="torrent"), 'MCT-torrents'))
+    if not filetools.exists(ADDON_USERDATA_BIN_PATH):
+        filetools.mkdir(ADDON_USERDATA_BIN_PATH)
         
-    if not filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json")) or not \
-                    config.get_setting("unrar_path", server="torrent", default=""):
+    if not filetools.exists(ADDON_CUSTOMCODE_JSON) or not config.get_setting("unrar_path", server="torrent", default="") \
+                    or (not 'unrar' in str(filetools.listdir(ADDON_USERDATA_BIN_PATH)).lower() and \
+                    not xbmc.getCondVisibility("system.platform.android")):
     
-        path = filetools.join(config.get_runtime_path(), 'lib', 'rarfiles')
+        path = filetools.join(ADDON_PATH, 'lib', 'rarfiles')
         creationflags = ''
         sufix = ''
         unrar = ''
@@ -439,7 +446,9 @@ def update_libtorrent():
                 creationflags = ''
                 sufix = ''
             unrar = filetools.join(path, device, 'unrar%s') % sufix
+            unrar_dest = filetools.join(ADDON_USERDATA_BIN_PATH, 'unrar%s') % sufix
             if not filetools.exists(unrar): unrar = ''
+            
             if unrar:
                 if not xbmc.getCondVisibility("system.platform.windows"):
                     try:
@@ -456,6 +465,9 @@ def update_libtorrent():
                     except:
                         logger.info('######## UnRAR ERROR in path: %s' % str(unrar), force=True)
                         logger.error(traceback.format_exc())
+                if not xbmc.getCondVisibility("system.platform.android"):
+                    filetools.copy(unrar, unrar_dest, ch_mod='777', silent=True)
+                    unrar = unrar_dest
 
                 try:
                     if xbmc.getCondVisibility("system.platform.windows"):
@@ -475,12 +487,22 @@ def update_libtorrent():
                     logger.error(traceback.format_exc(1))
                     unrar = ''
         
-        if unrar: config.set_setting("unrar_path", unrar, server="torrent")
+        if unrar: 
+            config.set_setting("unrar_path", unrar, server="torrent")
+            config.set_setting("unrar_device", device, server="torrent")
 
     # Ahora descargamos la última versión disponible de Libtorrent para esta plataforma
     try:
-        version_base = filetools.join(config.get_runtime_path(), 'lib', 'python_libtorrent')
-        if config.get_setting("libtorrent_version", server="torrent", default="") \
+        version_base = filetools.join(ADDON_PATH, 'lib', 'python_libtorrent')
+        libt_dir = filetools.listdir(filetools.join(ADDON_USERDATA_PATH, 'custom_code', 'lib'))
+        if 'libtorrent' in str(libt_dir) or (not 'libtorrent' in str(filetools.listdir(ADDON_USERDATA_BIN_PATH)) and \
+                    not xbmc.getCondVisibility("system.platform.android")):
+            for libt_file in libt_dir:
+                if 'libtorrent' in libt_file:
+                    filetools.remove(filetools.join(ADDON_USERDATA_PATH, 'custom_code', 'lib', libt_file), silent=True)
+            current_system = ''
+            current_version = ''
+        elif config.get_setting("libtorrent_version", server="torrent", default="") \
                     and config.get_setting("libtorrent_path", server="torrent", default=""):
             current_system, current_version = config.get_setting("libtorrent_version", server="torrent", default="").split('/')
         else:
@@ -509,7 +531,7 @@ def update_libtorrent():
         current_version = ''
         logger.error(traceback.format_exc(1))
     
-    custom_code_json = filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json"))
+    custom_code_json = filetools.exists(ADDON_CUSTOMCODE_JSON)
     if custom_code_json and current_version:
         msg = 'Libtorrent_path: %s' % config.get_setting("libtorrent_path", server="torrent", default="")
         if current_version not in msg:
@@ -611,7 +633,9 @@ def reactivate_unrar(init=False, mute=True):
 
 
 def search_for_unrar_in_error(download_paths, init=False):
-    logger.info(download_paths)
+    logger.info(str(init) + ' / ' + str(download_paths))
+    
+    rar_processed = []
     
     for torrent_client, path in download_paths:
         list_dir = filetools.listdir(path)
@@ -624,6 +648,10 @@ def search_for_unrar_in_error(download_paths, init=False):
                 if not '_rar_control.json' in folder:
                     continue
 
+            if folder in rar_processed:
+                continue
+            rar_processed += [folder]
+            
             rar_control = jsontools.load(filetools.read(filetools.join(folder, '_rar_control.json')))
             rar_control['status'] += ': Recovery'
             if ('UnRARing' in rar_control['status'] or 'RECOVERY' in rar_control['status']) and not init:
@@ -657,9 +685,12 @@ def search_for_unrar_in_error(download_paths, init=False):
 
 
 def call_unrar(rar_control):
-    logger.info(rar_control['status'])
+    logger.info(str(rar_control['status']) + ' / ' + str(rar_control.get('path_control')))
     
-    item = Item().fromurl(rar_control['item'])
+    if rar_control['path_control']:
+        item = Item().fromjson(filetools.read(filetools.join(config.get_setting("downloadlistpath"), rar_control['path_control'])))
+    else:
+        item = Item().fromurl(rar_control['item'])
     mediaurl = rar_control['mediaurl']
     rar_files = rar_control['rar_files']
     torr_client = rar_control['torr_client']

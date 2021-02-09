@@ -1626,7 +1626,7 @@ def play_torrent(item, xlistitem, mediaurl):
                     torrent.bt_client(mediaurl, xlistitem, rar_files, subtitle=item.subtitle, password=password, item=item)
                     config.set_setting("LIBTORRENT_in_use", False, server="torrent")   # Marcamos Libtorrent como disponible
                     config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
-                    itemlist_refresh()
+                    if item.downloadStatus != 5: itemlist_refresh()
 
             # Reproductor propio MCT (libtorrent)
             elif seleccion == 1:
@@ -1640,7 +1640,7 @@ def play_torrent(item, xlistitem, mediaurl):
                     mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=password, item=item)
                     config.set_setting("LIBTORRENT_in_use", False, server="torrent")    # Marcamos Libtorrent como disponible
                     config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
-                    itemlist_refresh()
+                    if item.downloadStatus != 5: itemlist_refresh()
 
             # Plugins externos
             else:
@@ -1690,7 +1690,7 @@ def play_torrent(item, xlistitem, mediaurl):
                     else:
                         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
                 torrent.update_control(item, function='play_torrent_externos_start')
-                itemlist_refresh()
+                if item.downloadStatus != 5: itemlist_refresh()
 
                 # Si es un archivo RAR, monitorizamos el cliente Torrent hasta que haya descargado el archivo,
                 # y después lo extraemos, incluso con RAR's anidados y con contraseña
@@ -1766,7 +1766,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
             dp.close()
 
             # Reproducimos el vídeo extraido, si no hay nada en reproducción
-            while is_playing() and rar:
+            while is_playing() and rar and (not item.downloadFilename or item.downloadStatus == 5):
                 time.sleep(3)  # Repetimos cada intervalo
             if rar and (not item.downloadFilename or item.downloadStatus == 5):
                 time.sleep(1)
@@ -1804,7 +1804,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
         item.downloadQueued = 0
         torrent.update_control(item, function='rar_control_mng')
         config.set_setting("RESTART_DOWNLOADS", True, "downloads")                  # Forzamos restart downloads
-        itemlist_refresh()
+        if item.downloadStatus != 5: itemlist_refresh()
 
         # Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan
         if not item.downloadFilename or item.downloadStatus == 5:
