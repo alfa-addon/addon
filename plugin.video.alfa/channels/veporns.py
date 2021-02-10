@@ -24,7 +24,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['gounlimited']
 
-host = 'http://www.veporno.net'  #  https://www.gotporn.com   https://www.fxporn.net      http://www.veporns.com    'https://watchpornfree.info'   'https://xxxparodyhd.net'  'http://streamporno.eu' 'https://xmoviesforyou.video'
+host = 'http://www.veporno.net'  #  https://www.fxporn.net      http://www.veporns.com    
 
 
 def mainlist(item):
@@ -152,7 +152,11 @@ def findvideos(item):
         url = "http://www.veporns.com/ajax.php?page=video_play&thumb=%s&theme=%s&video=%s&id=%s&catid=%s&tip=%s&server=%s" %(url[0],url[1],url[2],url[3],url[4],url[5],str(url[6]))
         headers = {"X-Requested-With":"XMLHttpRequest"}
         data = httptools.downloadpage(url, headers=headers).data
+        logger.debug(data)
         url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
+        if not url:
+            url = scrapertools.find_single_match(data, "<iframe src='([^']+)'")
+      
         itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para FilterTools

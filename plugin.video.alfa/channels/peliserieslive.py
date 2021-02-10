@@ -32,9 +32,8 @@ SERVER = {'www.fembed.com': 'Fembed','www.myurlshort.live': 'Fembed', 'feurl.com
          
   #       - 'vev.io': 'Directo', 'nitroflare.com': 'Directo', 'flixplayer.xyz': 'Directo', 'netu.tv': 'Directo',
   #        'supervideo.tv': 'Directo', 'tune.pk': 'Directo'          https://supervideo.tv/e/8ve4fsn4x5t5    https://tune.pk/js/open/load.js?vid=8103645
- 
 
-          
+
 IDIOMAS = {"esp": "CAST", "lat": "LAT", "sub": "VOSE"}
 ORD = {"1080p": "1", "720p": "2", "480p": "3", "360p": "4"}
 
@@ -43,10 +42,6 @@ list_quality = []
 list_servers = list(SERVER.values())
 
 __channel__='peliserieslive'
-
-
-parameters = channeltools.get_channel_parameters(__channel__)
-unif = parameters['force_unify']
 
 
 def mainlist(item):
@@ -213,15 +208,15 @@ def episodesxseasons(item):
         itemlist.append(item.clone(title=title, url=url, action="findvideos",
                                  infoLabels=infoLabels))
     tmdb.set_infoLabels_itemlist(itemlist, True)
-    
-    a = len(itemlist)-1
-    for i in itemlist:
-        if a >= 0:
-            title= itemlist[a].title
-            titulo = itemlist[a].infoLabels['episodio_titulo']
-            title = "%s %s" %(title, titulo)
-            itemlist[a].title = title
-            a -= 1
+    if not config.get_setting('unify') and not channeltools.get_channel_parameters(__channel__)['force_unify']:
+        a = len(itemlist)-1
+        for i in itemlist:
+            if a >= 0:
+                title= itemlist[a].title
+                titulo = itemlist[a].infoLabels['episodio_titulo']
+                title = "%s %s" %(title, titulo)
+                itemlist[a].title = title
+                a -= 1
     return itemlist
 
 
@@ -357,7 +352,6 @@ def play(item):
         url = descarga(item.url, item.server)
     if "Ver" in  item.tipo and not "Fembed" in item.server:
         url = player(item.url, item.pid)
-    item.server=""
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.contentTitle, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist = servertools.get_servers_itemlist([item.clone(url=url, server="")])
+    itemlist = servertools.get_servers_itemlist(itemlist)
     return itemlist

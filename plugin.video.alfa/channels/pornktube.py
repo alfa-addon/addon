@@ -89,13 +89,14 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    id,data,server = scrapertools.find_single_match(data, '<div id="player" data-id="(\d+)".*?data-q="([^"]+)".*?data-n="(\d+)"')
+    id,s,data,t,server = scrapertools.find_single_match(data, '<div id="player" data-id="(\d+)" data-s="(\d+)" data-q="([^"]+)" data-t="(\d+)" data-n="(\d+)"')
+    # s= 113 t=224 whpvid anterior 
     patron = '&nbsp;([A-z0-9]+);\d+;(\d+);([^,"]+)'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for quality,number,key in matches:
         nt = int(int(id)/1000)
         n = str(nt*1000)
-        url = "http://s%s.fapmedia.com/wqpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
+        url = "http://s%s.fapmedia.com/whpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
         url= url.replace("_720p", "")
         itemlist.append(['%s' %quality, url])
     return itemlist
