@@ -122,11 +122,16 @@ def setting_channel(item):
     platformtools.itemlist_refresh()
     return ret
 
-def create_soup(url, post=None, headers=None):
+def create_soup(url, **kwargs):
     logger.info()
 
-    data = httptools.downloadpage(url, post=post, headers=headers).data
+    data = httptools.downloadpage(url, post=kwargs.get('post', None), headers=kwargs.get('headers', None)).data
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    if kwargs.get('wp_pager') and kwargs.get('search_key'):
+        search_key = kwargs.get('search_key')
+        post = {'action': 'load_more_0', 'query': '{"anime-list":"' + search_key + '","error":"","m":"","p":0,"post_parent":"","subpost":"","subpost_id":"","attachment":"","attachment_id":0,"name":"","pagename":"","page_id":0,"second":"","minute":"","hour":"","day":0,"monthnum":0,"year":0,"w":0,"category_name":"","tag":"","cat":"","tag_id":"","author":"","author_name":"","feed":"","tb":"","paged":0,"meta_key":"","meta_value":"","preview":"","s":"","sentence":"","title":"","fields":"","menu_order":"","embed":"","category__in":[],"category__not_in":[],"category__and":[],"post__in":[],"post__not_in":[],"post_name__in":[],"tag__in":[],"tag__not_in":[],"tag__and":[],"tag_slug__in":[],"tag_slug__and":[],"post_parent__in":[],"post_parent__not_in":[],"author__in":[],"author__not_in":[],"ignore_sticky_posts":false,"suppress_filters":false,"cache_results":true,"update_post_term_cache":true,"lazy_load_term_meta":true,"update_post_meta_cache":true,"post_type":"","posts_per_page":30,"nopaging":false,"comments_per_page":"0","no_found_rows":false,"taxonomy":"anime-list","term":"' + search_key + '","order":"DESC"}', 'page': '0'}
+        data = httptools.downloadpage('{}/wp-admin/admin-ajax.php'.format(host), post=post, headers={'Referer': url}).data
+        soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
     return soup
 
@@ -143,7 +148,7 @@ def set_infoLabels_async(itemlist, seekTmdb = False):
 
     def sub_thread(_item, _i, _seekTmdb):
         semaforo.acquire()
-        ret = labeler(_item, _seekTmdb)
+        ret = labeler(_item, _seekTmdb, lock)
         semaforo.release()
         r_list.append((_i, _item, ret))
 
@@ -163,9 +168,11 @@ def set_infoLabels_async(itemlist, seekTmdb = False):
     # Reconstruir y devolver la lista solo con los resultados de las llamadas individuales
     return [ii[2] for ii in r_list]
 
-def labeler(item, seekTmdb = True):
+def labeler(item, seekTmdb = True, lock = None):
     logger.info()
-    # return item
+    tmdb_langs = ['es', 'es-MX', 'en', 'it', 'pt', 'fr', 'de']
+    langs = config.get_setting('tmdb_lang', default=0)
+    tmdb_lang = tmdb_langs[langs]
 
     # Excepción(es) por algunas cosas que TMDB suele retornar erróneamente.
     # Estas en particular, las retorna mal en muchos de los canales que se busca cuando no hay año correcto
@@ -185,7 +192,7 @@ def labeler(item, seekTmdb = True):
 
     temp_item = item
     if temp_item.contentType == 'movie':
-        result = tmdb.set_infoLabels(temp_item, seekTmdb = True, force_no_year = True)
+        result = tmdb.set_infoLabels_item(temp_item, True, tmdb_lang, lock, force_no_year = True)
     else:
         if temp_item.contentSeason or temp_item.infoLabels['episode']:
             if temp_item.infoLabels['episode'] and not temp_item.contentSeason:
@@ -197,25 +204,25 @@ def labeler(item, seekTmdb = True):
                 if temp_item.infoLabels['episode']:
                     episode = temp_item.infoLabels['episode']
                     temp_item.infoLabels['episode'] = ''
-                result = tmdb.set_infoLabels_item(temp_item, seekTmdb = True)
+                result = tmdb.set_infoLabels_item(temp_item, True, tmdb_lang, lock)
                 temp_item.infoLabels['season'] = season
                 if item.infoLabels['episode']:
                     temp_item.infoLabels['episode'] = episode
-                result = tmdb.set_infoLabels_item(temp_item, seekTmdb = True)
+                result = tmdb.set_infoLabels_item(temp_item, True, tmdb_lang, lock)
         else:
-            result = tmdb.set_infoLabels_item(temp_item, seekTmdb = True)
+            result = tmdb.set_infoLabels_item(temp_item, True, tmdb_lang, lock)
     if result == 0:
         return temp_item
     if not temp_item.infoLabels.get('tmdb_id'):
         if temp_item.contentType == 'movie':
             oldcontentType = temp_item.contentType
             temp_item.contentType = 'tvshow'
-            result = tmdb.set_infoLabels(temp_item, seekTmdb = True, force_no_year = True)
+            result = tmdb.set_infoLabels_item(temp_item, True, tmdb_lang, lock, force_no_year = True)
         else:
             temp_item.contentType = 'movie'
             temp_item.contentSerieName = ''
             temp_item.infoLabels['tvshowtitle'] = ''
-            result = tmdb.set_infoLabels_item(temp_item, seekTmdb = True, force_no_year = True)
+            result = tmdb.set_infoLabels_item(temp_item, True, tmdb_lang, lock, force_no_year = True)
     return temp_item
 
 def process_title(title, infoLabels = None, **kwargs):
@@ -406,11 +413,18 @@ def episodios(item, get_episodes = False, get_movie = False):
     sections = []
     soup = create_soup(item.url)
     if soup.find('div', class_='h-episodes') and not get_movie:
-        sections.append(soup.find('div', class_='h-episodes').find_all('article'))
+        section = soup.find('div', class_='h-episodes')
+        if section.find('div', class_='load_more'):
+            animename = scrapertools.find_single_match(item.url, (host + '/.*?/(.*?)$')).replace('/', '')
+            section = create_soup(item.url, wp_pager=True, search_key=animename)
+        sections.append(section)
+        sectiontype = 'episodes'
     if soup.find('div', class_='h-movies') and not get_episodes:
-        sections.append(soup.find('div', class_='h-movies').find_all('article'))
+        sections.append(soup.find('div', class_='h-movies'))
+        sectiontype = 'movies'
     if soup.find('div', class_='h-batch') and not get_episodes:
-        sections.append(soup.find('div', class_='h-batch').find_all('article'))
+        sections.append(soup.find('div', class_='h-batch'))
+        sectiontype = 'batch'
     if len(sections) == 0:
         return itemlist
 
@@ -419,9 +433,8 @@ def episodios(item, get_episodes = False, get_movie = False):
     batch_itemlist = []
     movies_itemlist = []
     for section in sections:
-        sectiontype = section[0].find('a', class_='tooltip2')['href']
-        if 'posts' in sectiontype:
-            collected_items = item_extractor(item, section, episodes = True, action = 'findvideos')
+        if 'episodes' in sectiontype:
+            collected_items = item_extractor(item, section.find_all('article'), episodes = True, action = 'findvideos')
             collected_items.reverse()
             if len(sections) == 1 and len(collected_items) == 1:
                 return findvideos(collected_items[0])
@@ -436,7 +449,7 @@ def episodios(item, get_episodes = False, get_movie = False):
                 )
                 posts_itemlist.extend(collected_items)
         elif 'batch' in sectiontype:
-            collected_items = item_extractor(item, section, batch = True, action = 'findvideos')
+            collected_items = item_extractor(item, section.find_all('article'), batch = True, action = 'findvideos')
             if len(sections) == 1 and len(collected_items) == 1:
                 return findvideos(collected_items[0])
             elif len(collected_items) > 0:
@@ -450,7 +463,7 @@ def episodios(item, get_episodes = False, get_movie = False):
                 )
                 batch_itemlist.extend(collected_items)
         elif 'movies' in sectiontype:
-            collected_items = item_extractor(item, section, special = True, action = 'findvideos')
+            collected_items = item_extractor(item, section.find_all('article'), special = True, action = 'findvideos')
             if len(sections) == 1 and len(collected_items) == 1:
                 return findvideos(collected_items[0])
             elif len(collected_items) > 0:
@@ -459,7 +472,7 @@ def episodios(item, get_episodes = False, get_movie = False):
                         channel = item.channel,
                         folder = False,
                         text_color = 'aquamarine',
-                        title = 'Películas y especiales'
+                        title = 'Películas y especiales:'
                     )
                 )
                 movies_itemlist.extend(collected_items)
