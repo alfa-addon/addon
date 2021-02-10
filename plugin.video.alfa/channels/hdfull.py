@@ -25,6 +25,7 @@ from core import httptools
 from core import jsontools
 from core import scrapertools
 from core import servertools, tmdb
+from core import channeltools
 from core.item import Item
 from platformcode import config, logger
 from channels import autoplay
@@ -33,6 +34,8 @@ from platformcode import platformtools
 from channelselector import get_thumb
 
 host = config.get_setting("current_host", channel="hdfull")
+host_blacklist = ['https://www2.hdfull.cx/']
+
 
 _silence = config.get_setting('silence_mode', channel='hdfull')
 show_langs = config.get_setting('show_langs', channel='hdfull')
@@ -125,6 +128,11 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
     if isinstance(referer, str):
         headers.update({'Referer': referer})
     
+    if host in host_blacklist:
+        list_controls, dict_settings = channeltools.get_channel_controls_settings("hdfull")
+        config.set_setting("current_host", dict_settings['current_host'], channel="hdfull")
+        host = dict_settings['current_host']
+    
     parsed = urlparse.urlparse(host)
     
     if len(parsed.path) > 1:
@@ -136,7 +144,6 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
                         proxy=proxy, forced_proxy=forced_proxy, proxy_retries=proxy_retries)
     
     if not page.sucess:
-        from core import channeltools
         list_controls, dict_settings = channeltools.get_channel_controls_settings("hdfull")
         if dict_settings['current_host'] != config.get_setting("current_host", channel="hdfull", default=""):
             config.set_setting("current_host", dict_settings['current_host'], channel="hdfull")

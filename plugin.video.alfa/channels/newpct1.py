@@ -1926,21 +1926,14 @@ def episodios(item):
             if item_local.season_colapse:
                 del item_local.season_colapse
 
-            item_local.url = scrapedurl
-            if not item_local.url.startswith("http"):                           #Si le falta el http.: lo ponemos
-                item_local.url = scrapertools.find_single_match(item_local.channel_host, \
-                        '(\w+:)//') + item_local.url
-            item_local.thumbnail = scrapedthumb
-            if not item_local.thumbnail.startswith("http"):                     #Si le falta el http.: lo ponemos
-                item_local.thumbnail = scrapertools.find_single_match(item_local.channel_host, \
-                        '(\w+:)//') + item_local.thumbnail
-            item_local.contentThumbnail = item_local.thumbnail
+            item_local.url = urlparse.urljoin(host, scrapedurl)
+            if scrapedthumb:
+                item_local.thumbnail = urlparse.urljoin(host, scrapedthumb)
+                item_local.contentThumbnail = item_local.thumbnail
             estado = True                                                       #Buena calidad de datos por defecto
             item_local.category = json_category.capitalize()                    #Restauramos la Categoría del .NFO
             x += 1
             item_local.context = "['buscar_trailer']"
-            if scrapedthumb:
-                item_local.thumbnail = scrapedthumb
 
             
             """ Localizamos el patrón correcto, teniendo en cuenta formatos antiguos """
