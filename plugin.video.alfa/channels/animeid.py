@@ -11,11 +11,8 @@ else:
 
 import re
 
-from core import httptools
-from core import jsontools
-from core import scrapertools
-from core import servertools
-from core import tmdb
+from bs4 import BeautifulSoup
+from core import httptools, jsontools, scrapertools, servertools, tmdb
 from core.item import Item
 from platformcode import config, logger
 from channels import renumbertools, autoplay
@@ -261,28 +258,27 @@ def episodios(item, final=True):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = str(BeautifulSoup(httptools.downloadpage(item.url).data, "html5lib", from_encoding="utf-8"))
     url_anterior = scrapertools.find_single_match(data, '<li class="b"><a href="([^"]+)">« Capítulo anterior')
     url_siguiente = scrapertools.find_single_match(data, '<li class="b"><a href="([^"]+)">Siguiente capítulo »')
-    data = scrapertools.find_single_match(data, '<ul id="partes">(.*?)</ul>').replace('\\u0022', '')
-    if PY3:
-        data = data.encode().decode('unicode-escape')
-    else:
-        data = data.decode("unicode-escape")
-    data = data.replace("\\/", "/").replace("%3A", ":").replace("%2F", "/")
-    patron = '(https://www.animeid.tv/stream/[^/]+/\d+.[a-z0-9]+)'
+    data = scrapertools.find_single_match(data, '(?is)<ul id="partes">(.*?)</ul>')
+    data = str(BeautifulSoup(data, "html5lib", from_encoding="utf-8").find('div', class_='parte')['data'])
+    data = jsontools.load(data.replace("'", '"'))['v']
+    patron = '(?is)src="([^"]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
-    encontrados = set()
+    encontrados = ''
     for url in matches:
         if url not in encontrados:
-            itemlist.append(
-                Item(channel=item.channel, action="play", title="[directo]", server="directo", url=url, thumbnail="",
-                     plot="", show=item.show, folder=False))
-            encontrados.add(url)
-    itemlist.extend(servertools.find_video_items(data=data))
+            if scrapertools.find_single_match(url, '\w\d+.animeid.tv/netu.+?='):
+                temp_data = httptools.downloadpage(url).data
+                url = scrapertools.find_single_match(temp_data, patron)
+            encontrados = '{};{}'.format(url, encontrados)
+    temp_item = item
+    itemlist.extend(servertools.find_video_items(item=temp_item, data=encontrados))
+    # itemlist.extend(servertools.get_servers_itemlist(itemlist))
     for videoitem in itemlist:
-        videoitem.channel = item.channel
         videoitem.action = "play"
+        videoitem.channel = item.channel
         videoitem.folder = False
         videoitem.title = "[" + videoitem.server + "]"
     if url_anterior:

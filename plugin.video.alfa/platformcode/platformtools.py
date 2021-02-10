@@ -1006,12 +1006,15 @@ def get_dialogo_opciones(item, default_action, strm, autoplay):
     # Si puedes ver el vídeo, presenta las opciones
     if puedes:
         for video_url in video_urls:
-            opciones.append(config.get_localized_string(30151) + " " + video_url[0])
+            # "Ver el video <calidad> [<server>]"
+            opciones.append("{} {}".format(config.get_localized_string(30151), video_url[0]))
+        for video_url in video_urls:
+            # "Descargar <calidad> [<server>]"
+            opciones.append("{} {}".format(config.get_localized_string(30153), video_url[0]))
 
         if item.server == "local":
             opciones.append(config.get_localized_string(30164))
         else:
-            # "Descargar"
             opcion = config.get_localized_string(30153)
             opciones.append(opcion)
 
@@ -1076,11 +1079,12 @@ def set_opcion(item, seleccion, opciones, video_urls):
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, listitem)
 
     # "Descargar"
-    elif opciones[seleccion] == config.get_localized_string(30153):
+    elif config.get_localized_string(30153) in opciones[seleccion]:
         from channels import downloads
         if item.contentType == "list" or item.contentType == "tvshow":
             item.contentType = "video"
         item.play_menu = True
+        item.downloadQualitySelected = video_urls[seleccion - len(video_urls)][0]
         downloads.save_download(item)
         salir = True
 

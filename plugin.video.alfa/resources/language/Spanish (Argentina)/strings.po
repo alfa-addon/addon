@@ -1491,7 +1491,7 @@ msgstr "Buscar Trailer"
 
 msgctxt "#60360"
 msgid "[COLOR 0xffccff00]<Quick Menu>[/COLOR]"
-msgstr "[COLOR 0xffccff00]<Menú Rápido>[/COLOR]"
+msgstr "[COLOR 0xffccff00]«Menú Rápido»[/COLOR]"
 
 msgctxt "#60361"
 msgid "Super Favourites Menu"

@@ -63,7 +63,7 @@ def validate_path(path, trans_none=''):
     if not path or not isinstance(path, (unicode, basestring, bytes)):
         if path is None: path = trans_none
 
-    chars = ":*?<>|"
+    chars = ":*?<>|\\/"
     if scrapertools.find_single_match(path, '(^\w+:\/\/)'):
         protocolo = scrapertools.find_single_match(path, '(^\w+:\/\/)')
         import re
@@ -1030,7 +1030,7 @@ def walk(top, topdown=True, onerror=None, vfs=True):
 def walk_vfs(top, topdown=True, onerror=None):
     """
     Lista un directorio de manera recursiva
-    Como xmbcvfs no tiene esta función, se copia la lógica de libsmb(samba) para realizar la previa al Walk
+    Como xbmcvfs no tiene esta función, se copia la lógica de libsmb(samba) para realizar la previa al Walk
     """
     top = encode(top)
     dirs, nondirs = xbmcvfs.listdir(top)

@@ -291,7 +291,7 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
         else:
             tipo_busqueda = 'tv'
 
-        if item.infoLabels['season']:
+        if 'season' in item.infoLabels.keys():
             try:
                 numtemporada = int(item.infoLabels['season'])
             except ValueError:
