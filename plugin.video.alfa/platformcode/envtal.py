@@ -266,11 +266,7 @@ def get_environment():
             lib_path += '-%s' % config.get_setting("libtorrent_version", server="torrent", default="")
         environment['torrentcli_unrar'] = config.get_setting("unrar_path", server="torrent", default="")
         if environment['torrentcli_unrar']:
-            if xbmc.getCondVisibility("system.platform.Android"):
-                unrar = 'Android'
-            else:
-                unrar = filetools.dirname(environment['torrentcli_unrar'])
-                unrar = filetools.basename(unrar).capitalize()
+            unrar = config.get_setting("unrar_device", server="torrent", default="").capitalize()
         else:
             unrar = 'Inactivo'
         torrent_id = config.get_setting("torrent_client", server="torrent", default=0)
@@ -301,7 +297,7 @@ def get_environment():
             if cliente['Plug_in'].upper() == 'TORREST':
                 cliente['Buffer'] = str(int(int(torrent_paths[cliente['Plug_in'].upper()+'_buffer']) /(1024*1024)))
             if torrent_paths.get(cliente['Plug_in'].upper()+'_memory_size', ''):
-                cliente['Memoria'] = str(torrent_paths.get[cliente['Plug_in'].upper()+'_memory_size'])
+                cliente['Memoria'] = str(torrent_paths[cliente['Plug_in'].upper()+'_memory_size'])
             
             if cliente.get('D_load_Path', ''):
                 try:

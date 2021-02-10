@@ -29,7 +29,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://dontorrents.com/'
+host = 'https://dontorrents.org/'
 channel = 'dontorrent'
 categoria = channel.capitalize()
 
@@ -104,7 +104,7 @@ def submenu(item):
     thumb_genero = get_thumb("genres.png")
     thumb_anno = get_thumb("years.png")
 
-    patron = '<h1\s*class="list-group-item top"\s*style="[^"]+">.*?<\/h1>\s*(.*?)<\/span>(?:<\/a><div|<\/div>)'
+    patron = '<h1\s*class="list-group-item top"\s*style="[^"]+">.*?<\/h1>\s*(.*?)<\/span>\s*(?:<\/a>\s*<div|<\/div>)'
     data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
                                           patron=patron, item=item, itemlist=[])    # Descargamos la página
 
@@ -358,12 +358,12 @@ def listado(item):                                                              
             patron += '([^<]+)<\/p><[^>]+><p>.*?<\/p><\/div>"><img\s*style=[^>]+>\s*'
             patron += '<span\s*class=[^>]+>([^<]+)<\/span><\/a>'
         elif (item.extra == 'series' or item.extra == 'documentales') and item.extra2 == 'alfabeto':    # Series o documentales alfabeto
-            patron = '<p><a href="([^"]+)">([^<]+)<\/a>()<\/p>'
+            patron = '<p>\s*<a href="([^"]+)">([^<]+)<\/a>\s*()<\/p>'
         elif (item.extra == 'series' or item.extra == 'documentales') and item.extra2 == 'novedades':   # Series, Docs desde Novedades
             patron = '(?:Temporada.*|Miniserie.*): (\d+[x|X]\d+)'
         else:                                                                   # Películas o Series o Documentales menú
             #patron = 'a\s*href="([^"]+)">([^<]+)<\/a>(?:\s*<b>\(([^\)]+)\)\s*<\/b>)?'
-            patron = '<a\s*href="([^"]+)">\s*<img\s*src="([^"]+)"\s*border=[^>]+><\/a>()'
+            patron = '<a\s*href="([^"]+)">\s*<img[^>]*src="([^"]+)"\s*border=[^>]+>\s*<\/a>()'
 
         if not item.matches:                                                    # De pasada anterior o desde Novedades?
             matches = re.compile(patron, re.DOTALL).findall(data)
@@ -646,10 +646,11 @@ def findvideos(item):
         patron += '<a\s*class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"'
         patron += '\s*download>Descargar<\/a>()'
     else:
-        patron = '<tr><td style=[^>]+>([^<]+)<\/td><td><a\s*class="text-white[^"]+"'
-        patron += '\s*style="font-size[^"]+"\s*href="([^"]+)"\s*download>Descargar<\/a>'
-        patron += '(?:<\/td><td\s*style=[^<]+<\/td><td\s*style=[^>]+><a\s*data-toggle='
-        patron += '"popover"\s*title="Contraseña del Torrent.*?data-clave="([^"]+)">)?'
+        patron = '<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a\s*class='
+        patron += '"text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"'
+        patron += '\s*download>\s*Descargar\s*<\/a>\s*(?:<\/td>\s*<td\s*style=[^<]+'
+        patron += '<\/td>\s*<td\s*style=[^>]+>\s*<a\s*data-toggle="popover"\s*'
+        patron += 'title="Contraseña\s*del\s*Torrent.*?data-clave="([^"]+)">)?'
     
     if not item.matches:
         data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
@@ -918,10 +919,11 @@ def episodios(item):
 
     # Descarga las páginas
     for url in list_temp:                                                       # Recorre todas las temporadas encontradas
-        patron = '<tr><td style=[^>]+>([^<]+)<\/td><td><a\s*class="text-white[^"]+"'
-        patron += '\s*style="font-size[^"]+"\s*href="([^"]+)"\s*download>Descargar<\/a>'
-        patron += '(?:<\/td><td\s*style=[^<]+<\/td><td\s*style=[^>]+><a\s*data-toggle='
-        patron += '"popover"\s*title="Contraseña del Torrent.*?data-clave="([^"]+)">)?'
+        patron = '<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a\s*class='
+        patron += '"text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"'
+        patron += '\s*download>\s*Descargar\s*<\/a>\s*(?:<\/td>\s*<td\s*style=[^<]+'
+        patron += '<\/td>\s*<td\s*style=[^>]+>\s*<a\s*data-toggle="popover"\s*'
+        patron += 'title="Contraseña\s*del\s*Torrent.*?data-clave="([^"]+)">)?'
         
         data, success, code, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, 
                                           patron=patron, item=item, itemlist=itemlist)      # Descargamos la página

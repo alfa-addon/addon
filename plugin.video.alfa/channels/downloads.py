@@ -629,11 +629,28 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
         if not folder: folder = folder_new
         if folder_new:
             folder_new = filetools.join(torrent_paths[torr_client.upper()], folder_new)
-            if action in ['reset'] and 'RAR-' in item.torrent_info and \
-                            filetools.join(torrent_paths[torr_client.upper()], folder) != folder_new:
-                res = filetools.rename(folder_new, folder)
-                if res:
-                    folder_new = filetools.join(torrent_paths[torr_client.upper()], folder)
+            
+            if action in ['reset'] and 'RAR-' in item.torrent_info and item.downloadProgress == 99:
+                delete_RAR = True
+                file_rar = ''
+                files_rar = filetools.listdir(folder_new)
+                for file_rar in files_rar:
+                    if '.rar' in file_rar: break
+                if file_rar:
+                    delete_RAR = False
+                    res = False
+                    if filetools.join(torrent_paths[torr_client.upper()], folder) != folder_new:
+                        res = filetools.rename(folder_new, folder, silent=True, strict=True)
+                        if not res: delete_RAR = True
+                    if not delete_RAR:
+                        if res: folder_new = filetools.join(torrent_paths[torr_client.upper()], folder)
+                        item.downloadFilename = ':%s: %s' % (torr_client.upper(), filetools.join(folder, file_rar))
+                        filetools.remove(filetools.join(folder_new, '_rar_control.json'), silent=True)
+                        filetools.rmdirtree(filetools.join(folder_new, 'Extracted'), silent=True)
+                        
+            elif action in ['reset', 'delete'] and 'RAR-' in item.torrent_info and item.downloadProgress != 99:
+                delete_RAR = True
+
             if action in ['delete'] and not filetools.exists(folder_new) \
                             and filetools.join(torrent_paths[torr_client.upper()], folder) != folder_new \
                             and filetools.exists(filetools.join(torrent_paths[torr_client.upper()], folder)):
@@ -645,7 +662,8 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
     if item.downloadStatus in [5]:
         item.downloadStatus = 2                                                 # Pasa de foreground a background
     update_control(item.path, {"downloadStatus": item.downloadStatus, "downloadProgress": downloadProgress, "downloadQueued": 0,
-                                "downloadServer": {}, "torrent_info": item.torrent_info}, function='delete_torrent_session_bef')
+                                "downloadServer": {}, "downloadFilename": item.downloadFilename, "torrent_info": item.torrent_info}, 
+                                function='delete_torrent_session_bef')
 
     # Detiene y borra la sesion de los clientes externos Quasar y Elementum
     if torr_client in ['QUASAR', 'ELEMENTUM', 'TORREST']:

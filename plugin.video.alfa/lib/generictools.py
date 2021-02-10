@@ -127,9 +127,10 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                 data = re.sub(r"(<!--.*?-->)", "", data)                        # Reemplaza comentarios
             if decode_code is None:                                             # Si se especifica, se decodifica con el código dado
                 decode_code = 'utf8'
-            if not PY3 and isinstance(data, str):
+            if not PY3 and isinstance(data, str) and decode_code:
                 data = unicode(data, decode_code, errors="replace").encode("utf8")
             elif PY3 and isinstance(data, bytes):
+                if not decode_code: decode_code = 'utf8'
                 data = data.decode(decode_code)
             if patron and not scrapertools.find_single_match(data, patron):     # Se comprueba que el patrón funciona
                 code = 999                                                      # Si no funciona, se pasa error
