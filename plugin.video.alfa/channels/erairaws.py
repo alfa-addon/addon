@@ -631,7 +631,7 @@ def item_extractor(item, soup, contentType = 'tvshow', **kwargs):
 
         # TODO: Implementar menús contextuales personalizables
         # # Agregamos un menú para acceder a los capítulos/al episodio directamente
-        if kwargs.get('newest_ep_context'):
+        if kwargs.get('newest_ep_context') and False == True:
             if play_direct_action == 'findvideos':
                 context_action = 'episodios'
                 context_title = 'Ver todos los capítulos'
@@ -645,6 +645,7 @@ def item_extractor(item, soup, contentType = 'tvshow', **kwargs):
                     "contentSerieName": contentSerieName,
                     "contentTitle": contentTitle,
                     "contentType": contentType,
+                    "goto": True,
                     "infoLabels": infoLabels,
                     "language": language,
                     "magnet_urls": magnet_urls,
