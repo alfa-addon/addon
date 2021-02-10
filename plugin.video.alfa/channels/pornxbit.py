@@ -21,15 +21,17 @@ from bs4 import BeautifulSoup
 host = 'https://www.pornxbit.com'
 
 
+# evoload, gounlimited, woolf, openload
+
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Peliculas" , action="lista", url=host + "/porn-videos/full-movie/?asgtbndr=1"))
+    # itemlist.append(item.clone(title="Peliculas" , action="lista", url=host + "/porn-videos/full-movie/?asgtbndr=1"))
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/porn-videos/?filter=latest&asgtbndr=1"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/porn-videos/?filter=most-viewed&asgtbndr=1"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/porn-videos/?filter=popular&asgtbndr=1"))
-    itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/porn-videos/?filter=longest&asgtbndr=1"))
-    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/actors/"))
+    # itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/porn-videos/?filter=most-viewed&asgtbndr=1"))
+    # itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/porn-videos/?filter=popular&asgtbndr=1"))
+    # itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/porn-videos/?filter=longest&asgtbndr=1"))
+    # itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/actors/"))
     # itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/sites/?sort_by=avg_videos_popularity&from=01"))
 
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
@@ -84,8 +86,8 @@ def create_soup(url, referer=None, unescape=False):
 def lista(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    matches = soup.find_all('article', id=re.compile(r"^post-\d+"))
+    soup = create_soup(item.url).find('main')
+    matches = soup.find_all('article', class_=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title'].replace("&#8211;", "-")
@@ -121,5 +123,6 @@ def play(item):
         url = elem['src']
         itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    # logger.debug(url)
     return itemlist
 
