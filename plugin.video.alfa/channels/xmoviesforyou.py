@@ -24,7 +24,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['gounlimited']
 
-host = 'https://xmoviesforyou.com' # 'http://www.veporns.com'  'https://watchpornfree.info'   'https://xxxparodyhd.net'  'http://streamporno.eu'
+host = 'https://xmoviesforyou.com' 
 
 #####       Buscar da error 500 hay que insistir
 

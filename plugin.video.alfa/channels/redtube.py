@@ -26,7 +26,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Mas Vistas" , action="lista", url=host + "/mostviewed"))
     itemlist.append(item.clone(title="Mejor valorada" , action="lista", url=host + "/top"))
     itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "/channel/top-rated"))
-    itemlist.append(item.clone(title="Pornstars" , action="categorias", url=host + "/pornstar/trending"))
+    itemlist.append(item.clone(title="Pornstars" , action="categorias", url=host + "/pornstar"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/popular"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
@@ -80,7 +80,7 @@ def categorias(item):
         patron  = '<li id="recommended_pornstars_block_ps_.*?'
     patron += 'href="([^"]+)".*?'
     patron += 'data-src\s*=\s*"([^"]+)".*?'
-    patron += 'alt="([^"]+)".*?'
+    patron += 'title="([^"]+)".*?'
     patron += 'count">\s*([^<]+)\s*Videos'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
