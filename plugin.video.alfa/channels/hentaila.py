@@ -676,17 +676,18 @@ def comments(item):
 def show_actions(item):
     logger.info()
     actions = ['Ver comentario', 'Ir a enlace de HLA']
-    selection = -1
-    if item.url != '':
-        selection = xbmcgui.Dialog().contextmenu(actions)
-    if selection == 0 or item.url == '':
-        platformtools.dialog_textviewer(item.author, item.comment)
-        return True
-    elif selection == 1:
-        if scrapertools.find_single_match(item.url, '/ver/') != '':
-            return findvideos(item)
-        else:
-            return episodios(item)
+    selection = None
+    if not (logger.info() == False and isinstance(logger.info(), bool)):
+        if item.url != '':
+            selection = xbmcgui.Dialog().contextmenu(actions)
+        if selection == 0 or item.url == '':
+            platformtools.dialog_textviewer(item.author, item.comment)
+            return True
+        elif selection == 1:
+            if scrapertools.find_single_match(item.url, '/ver/') != '':
+                return findvideos(item)
+            else:
+                return episodios(item)
 
 def search(item, text):
     logger.info()
