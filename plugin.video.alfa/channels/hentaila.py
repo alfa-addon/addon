@@ -20,7 +20,7 @@ host = 'https://hentaila.com'
 IDIOMAS = {'VOSE': 'VOSE'}
 SEEK_TMDB = config.get_setting('seek_tmdb', channel='hentaila')
 SEEK_TMDB_LIST_ALL = not config.get_setting('seek_tmdb_only_in_episodes', channel='hentaila')
-PREFER_HLA_REVIEW = config.get_setting('prefer_hla_review', channel='hentaila')
+PREFER_TMDB_REVIEW = config.get_setting('prefer_tmdb_review', channel='hentaila')
 list_language = list(IDIOMAS.values())
 month = {'January':'01',  'February':'02', 'March':'03',
          'April':'04',    'May':'05',      'June':'06',
@@ -404,7 +404,7 @@ def list_all(item):
             title = str(article.find('h2', class_='h-title').a.string)
             itemlist.append(
                 Item(
-                    action = "episodios",
+                    action = "episodesxseason",
                     channel = item.channel,
                     contentSerieName = title,
                     fanart = host + '/uploads/fondos/' + scpthumbid + '.jpg',
@@ -431,7 +431,7 @@ def list_all(item):
             infoLabels['plot'] = 'Publicado ' + scptime
             itemlist.append(
                 Item(
-                    action = "episodios",
+                    action = "episodesxseason",
                     channel = item.channel,
                     contentSerieName = infoLabels['title'],
                     fanart = host + scpthumbnail,
@@ -456,7 +456,7 @@ def list_all(item):
             infoLabels = {}
             itemlist.append(
                 Item(
-                    action = "episodios",
+                    action = "episodesxseason",
                     channel = item.channel,
                     contentSerieName = scptitle.strip(),
                     fanart = host + '/uploads/fondos/' + scpthumbid + '.jpg',
@@ -485,14 +485,13 @@ def list_all(item):
 
     return itemlist
 
-def episodesxseason(item):
+def episodios(item):
     logger.info()
     itemlist = []
-    item.param = "videolibrary"
-    itemlist.extend(episodios(item))
+    itemlist.extend(episodesxseason(item, True))
     return itemlist
 
-def episodios(item):
+def episodesxseason(item, get_episodes = False):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
@@ -540,43 +539,43 @@ def episodios(item):
 
     for i in itemlist:
         i.title = scrapertools.get_season_and_episode(str(i.infoLabels['season']) + 'x' + str(i.infoLabels['episode'])) + ': ' + i.infoLabels['title']
-        if PREFER_HLA_REVIEW:
+        if not PREFER_TMDB_REVIEW:
             i.infoLabels['plot'] = infoLabels['plot']
 
-    premiereptn = '(?s)class="content-title".+?>(\d+?-\d+?-\d+?)<'
-    premiere = scrapertools.find_single_match(str(soup), premiereptn)
-    if premiere:
-        itemlist.append(
-            Item(
-                channel = item.channel,
-                fanart = item.fanart,
-                title = 'Estreno próximo episodio: ' + premiere,
-                thumbnail = item.thumbnail,
-            )
-        )
-
-    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.param:
-        if itemlist[0].infoLabels['tmdb_id']:
+    if not get_episodes:
+        premiereptn = '(?s)class="content-title".+?>(\d+?-\d+?-\d+?)<'
+        premiere = scrapertools.find_single_match(str(soup), premiereptn)
+        if premiere:
             itemlist.append(
                 Item(
                     channel = item.channel,
-                    title = '[COLOR yellow]Añadir este elemento a la videoteca[/COLOR]',
-                    url = item.url,
-                    action = "add_serie_to_library",
-                    extra = "episodesxseason",
-                    contentSerieName = item.contentSerieName
+                    fanart = item.fanart,
+                    title = 'Estreno próximo episodio: ' + premiere,
+                    thumbnail = item.thumbnail,
                 )
             )
+        if config.get_videolibrary_support() and len(itemlist) > 0:
+            if itemlist[0].infoLabels['tmdb_id']:
+                itemlist.append(
+                    Item(
+                        channel = item.channel,
+                        title = '[COLOR yellow]Añadir este elemento a la videoteca[/COLOR]',
+                        url = item.url,
+                        action = "add_serie_to_library",
+                        extra = "episodios",
+                        contentSerieName = item.contentSerieName
+                    )
+                )
 
-    itemlist.append(
-        Item(
-            action = "comments",
-            channel = item.channel,
-            fanart = item.fanart,
-            title = "Ver comentarios",
-            url = item.url
+        itemlist.append(
+            Item(
+                action = "comments",
+                channel = item.channel,
+                fanart = item.fanart,
+                title = "Ver comentarios",
+                url = item.url
+            )
         )
-    )
     return itemlist
 
 def findvideos(item):
@@ -687,7 +686,7 @@ def show_actions(item):
             if scrapertools.find_single_match(item.url, '/ver/') != '':
                 return findvideos(item)
             else:
-                return episodios(item)
+                return episodesxseason(item)
 
 def search(item, text):
     logger.info()
@@ -698,7 +697,7 @@ def search(item, text):
             for result in results:
                 itemlist.append(
                     Item(
-                        action = "episodios",
+                        action = "episodesxseason",
                         channel = item.channel,
                         contentSerieName = result['title'],
                         fanart = host + '/uploads/fondos/' + result['id'] + '.jpg',
