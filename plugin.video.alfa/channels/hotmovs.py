@@ -98,6 +98,7 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time,title)
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
+        url = urlparse.urljoin(item.url,url)
         itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
                                    fanart=thumbnail, contentTitle = title))
     next_page = soup.find('li', class_='next')

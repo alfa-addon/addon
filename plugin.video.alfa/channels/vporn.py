@@ -18,7 +18,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import httptools
 
-host = 'https://www.vporn.com' #https://pornone.com/
+host = 'https://pornone.com' #           https://www.vporn.com
 
 
 def mainlist(item):
@@ -39,7 +39,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search?q=%s" % (host, texto)
+    item.url = "%s/search?q=%s&sort=newest" % (host, texto)
     try:
         return lista(item)
     except:
@@ -85,7 +85,7 @@ def categorias(item):
         title = "%s (%s)" %(scrapedtitle,cantidad)
         plot = ""
         thumbnail = "https://th-eu3.vporn.com/images/categories/%s.jpg" % scrapedtitle.lower()
-        url = "%s%s" %(host,scrapedurl)
+        url = "%s%s/newest/" %(host,scrapedurl)
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
     return itemlist
@@ -125,5 +125,6 @@ def play(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for url,quality in matches:
         itemlist.append(['%s' %quality, url])
-    return itemlist
+    return itemlist[::-1]
+
 

@@ -23,7 +23,7 @@ from bs4 import BeautifulSoup
 host = 'https://www.entrepeliculasyseries.com/'
 
 IDIOMAS = {"lat": "LAT", "cas": "CAST", "sub": "VOSE", "esp": "CAST"}
-list_language = list(IDIOMAS.values())
+list_language = list(set(IDIOMAS.values()))
 list_quality = []
 list_servers = ['mega', 'fembed', 'vidtodo', 'gvideo']
 
@@ -43,6 +43,8 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + '?s=',
                          thumbnail=get_thumb('search', auto=True)))
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -108,6 +110,7 @@ def list_all(item):
         if "/serie" in url:
             new_item.contentSerieName = title
             new_item.action = "seasons"
+            new_item.context = filtertools.context(item, list_language, list_quality)
         else:
             new_item.contentTitle = title
             new_item.action = "findvideos"

@@ -132,7 +132,7 @@ def lista(item):
 
 def play(item):
     logger.info()
-    itemlist = []
+    video_urls = []
     data = httptools.downloadpage(item.url).data
     skey = scrapertools.find_single_match(data,'data-streamkey="([^"]+)"')
     session="523034c1c1fc14aabde7335e4f9d9006b0b1e4984bf919d1381316adef299d1e"
@@ -143,6 +143,9 @@ def play(item):
     patron = '"(\d+(?:p|k))":\["([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for quality,url in matches:
-        itemlist.append(['.mp4 %s' %quality, url])
-    return itemlist
+        if "4k" in quality:
+            quality = "2160p"
+        video_urls.append(['%s [.mp4]' %quality, url])
+    video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
+    return video_urls
 

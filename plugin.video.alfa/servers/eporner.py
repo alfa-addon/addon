@@ -19,7 +19,6 @@ def get_video_url(page_url, video_password):
     video_urls = []
     data = httptools.downloadpage(page_url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    logger.debug(data)
     patron = "EP.video.player.vid = '([^']+)';EP.video.player.hash = '([^']+)'"
     vid, hash = re.compile(patron, re.DOTALL).findall(data)[0]
     hash = int_to_base36(int(hash[0:8], 16)) + int_to_base36(int(hash[8:16], 16)) + int_to_base36(
@@ -28,8 +27,9 @@ def get_video_url(page_url, video_password):
     jsondata = httptools.downloadpage(url).json
     for source in jsondata["sources"]["mp4"]:
         url = jsondata["sources"]["mp4"][source]["src"]
-        title = source.split(" ")[0]
-        video_urls.append(["[eporner] %s"% title, url])
+        quality = source.split(" ")[0].replace("@60fps", "")
+        video_urls.append(["%s" % quality, url])
+    video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls
     # return sorted(video_urls, key=lambda i: int(i[0].split("p")[1]))
 

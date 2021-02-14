@@ -8,12 +8,12 @@
         "url": "https://www.xvideos.com/video\\1/"
       },
       {
-        "pattern": "https://www.xvideos.com/video([0-9]+)/",
+        "pattern": "www.xvideos.com/video([0-9]+)/",
         "url": "https://www.xvideos.com/video\\1/"
       },
       {
-        "pattern": "http://www.xvideos.com/video([0-9]+)/",
-        "url": "https://www.xvideos.com/video\\1/"
+        "pattern": "(https://www.xnxx.com/video-\\w+/)",
+        "url": "\\1"
       }
     ]
   },

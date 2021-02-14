@@ -13,6 +13,8 @@ logger.info("init...")
 
 librerias = os.path.join(config.get_runtime_path(), 'lib')
 sys.path.append(librerias)
+binarios = os.path.join(config.get_data_path(), 'bin')
+sys.path.insert(0, binarios)
 
 from platformcode import launcher
 

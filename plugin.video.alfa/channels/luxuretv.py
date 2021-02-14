@@ -35,7 +35,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/search/videos/%s/" % (host, texto)
+    item.url = "%s/searchgate/videos/%s/" % (host, texto)
     try:
         return lista(item)
     except:

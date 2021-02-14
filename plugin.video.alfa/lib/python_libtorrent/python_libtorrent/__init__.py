@@ -36,8 +36,8 @@ import traceback                                                                
 #__version__ = __settings__.getAddonInfo('version')                             ### Alfa
 #__plugin__ = __settings__.getAddonInfo('name') + " v." + __version__           ### Alfa
 #__settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                         ### Alfa
-__version__ = '2.0.1'                                                           ### Alfa
-__plugin__ = "python-libtorrent v.2.0.1"                                        ### Alfa
+__version__ = '2.0.2'                                                           ### Alfa
+__plugin__ = "python-libtorrent v.2.0.2"                                        ### Alfa
 #__language__ = __settings__.getLocalizedString                                 ### Alfa
 __root__ = filetools.dirname(filetools.dirname(__file__))
 
@@ -63,6 +63,7 @@ log('dirname: ' +str(dirname))
 VERSIONS = ['0.16.19', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.0.11', '1.1.0', '1.1.1', '1.1.6', '1.1.7', '1.2.12', '2.0.2']  ### Alfa
 if platform['system'] in ['linux_armv7', 'linux_aarch64_ucs4']:                 ### Alfa: Removing ARM from v2 list
     VERSIONS.remove('2.0.2')
+    VERSIONS.remove('1.2.12')
 
 while VERSIONS:
     log('VERSIONS: %s' % str(VERSIONS))
@@ -111,10 +112,12 @@ while VERSIONS:
                 raise Exception(e)
     
     dest_path = filetools.join(dirname, platform['system'], platform['version'])
-    sys.path.insert(0, dest_path)
+    dest_path_bin = filetools.join(config.get_data_path(), 'bin')
+    sys.path.insert(0, dest_path_bin)
 
     lm=LibraryManager(dest_path, platform)
-    if not lm.check_exist(dest_path, platform):
+    if not lm.check_exist(dest_path, platform) or (not 'libtorrent' in str(filetools.listdir(dest_path_bin)) \
+                and not xbmc.getCondVisibility("system.platform.android")):     ### Alfa
         ok=lm.download(dest_path, platform)
         xbmc.sleep(2000)
 
@@ -144,7 +147,7 @@ while VERSIONS:
         elif platform['system'] in ['darwin', 'ios_arm']:
             import imp
             
-            path_list = [dest_path]
+            path_list = [dest_path_bin]
             log('path_list = ' + str(path_list))
             fp, pathname, description = imp.find_module('libtorrent', path_list)
             log('fp = ' + str(fp))
@@ -161,9 +164,11 @@ while VERSIONS:
                 from ctypes import CDLL
                 
                 dest_path = ''
-                if os.environ['KODI_ANDROID_APK']:
-                    log(os.environ['KODI_ANDROID_APK'])
-                    dest_path = filetools.join(filetools.dirname(os.environ['KODI_ANDROID_APK']), 'lib')
+                envirom = os.environ.get('KODI_ANDROID_APK', '')
+                if not envirom: envirom = os.environ.get('XBMC_ANDROID_APK', '')
+                if envirom:
+                    log(envirom)
+                    dest_path = filetools.join(filetools.dirname(envirom), 'lib')
                     dest_path_dir = filetools.listdir(dest_path)
                     log(filetools.listdir(dest_path, file_inf=True))
                     if dest_path_dir:
@@ -241,9 +246,10 @@ while VERSIONS:
                 if fp: fp.close()
 
         if libtorrent:
-            config.set_setting("libtorrent_path", str(dest_path), server="torrent") ### Alfa
+            if xbmc.getCondVisibility("system.platform.android"): dest_path_bin = dest_path
+            config.set_setting("libtorrent_path", str(dest_path_bin), server="torrent") ### Alfa
             config.set_setting("libtorrent_error", "", server="torrent")            ### Alfa
-            log('Imported libtorrent v' + libtorrent.version + ' from "' + str(dest_path) + '"')
+            log('Imported libtorrent v' + libtorrent.version + ' from "' + str(dest_path_bin) + '"')
             break
         elif platform['system'] in ['android_armv7', 'android_x86']:
             break
@@ -260,7 +266,7 @@ while VERSIONS:
             e = unicode(str(e), "utf8", errors="replace").encode("utf8")
         config.set_setting("libtorrent_path", "", server="torrent")             ### Alfa
         config.set_setting("libtorrent_error", str(e), server="torrent")        ### Alfa
-        log('Error importing libtorrent from "' + str(dest_path) + '". Exception: ' + str(e))
+        log('Error importing libtorrent from "' + str(dest_path_bin) + '". Exception: ' + str(e))
         if fp: fp.close()
         if platform['version'].startswith('2'):
             del VERSIONS[-1]

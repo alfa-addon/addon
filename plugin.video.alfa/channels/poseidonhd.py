@@ -22,7 +22,7 @@ from channels import filtertools, autoplay
 IDIOMAS = {'mx': 'Latino', 'dk': 'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb': 'VOSE', 'de': 'Alemán',
            "Latino": "Latino", "Español": "Castellano", "Subtitulado": "VOSE", "usa": "VOSE", "mexico": "Latino",
            "espana": "Castellano"}
-list_language = list(IDIOMAS.values())
+list_language = list(set(IDIOMAS.values()))
 
 list_quality = []
 
@@ -49,6 +49,8 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
                          thumbnail=get_thumb("search", auto=True),  extra='movie'))
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -166,6 +168,7 @@ def list_all(item):
         if "series" in url:
             new_item.contentSerieName = title
             new_item.action = "seasons"
+            new_item.context = filtertools.context(item, list_language, list_quality)
         else:
             new_item.contentTitle = title
             new_item.action = "findvideos"

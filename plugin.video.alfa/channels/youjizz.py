@@ -68,21 +68,17 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="video-item">.*?'
     patron += 'href="([^"]+)".*?'
-    patron += 'data-original="([^"]+)".*?'
+    patron += 'data-original="([^"]+)"(.*?)'
     patron += '<div class="video-title">.*?'
     patron += '>([^<]+)</a>.*?'
     patron += '<span class="time">([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedthumbnail, scrapedtitle, duracion in matches:
+    for scrapedurl, scrapedthumbnail, quality, scrapedtitle, duracion in matches:
         url = urlparse.urljoin(item.url, scrapedurl)
-        title = "[COLOR yellow]%s[/COLOR] %s" % (duracion, scrapedtitle)
-        quality = ""
-        if '-720-' in scrapedthumbnail:
-            quality = "720"
-        if '-1080-' in scrapedthumbnail:
-            quality = "1080"
-        if quality:
-            title = "[COLOR yellow]%s[/COLOR] [COLOR red]%sp[/COLOR] %s" % (duracion, quality, scrapedtitle)
+        if 'HD' in quality:
+            title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (duracion, scrapedtitle)
+        else:
+            title = "[COLOR yellow]%s[/COLOR] %s" % (duracion, scrapedtitle)
         contentTitle = title
         if not scrapedthumbnail.startswith("https"):
             scrapedthumbnail = "http:%s" % scrapedthumbnail
@@ -105,7 +101,9 @@ def play(item):
     patron = '"quality":"(\d+)","filename":"([^"]+)",'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for quality,url in matches:
+        if ".mp4?" in url: serv= "mp4"
+        else: serv="m3u8"
         if not url.startswith("https"):
             url = "https:%s" % url.replace("\\", "")
-        itemlist.append(['%sp' %quality, url])
+        itemlist.append(['%sp [%s]' %(quality,serv), url])
     return itemlist

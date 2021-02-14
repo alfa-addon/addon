@@ -8,11 +8,11 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:javbangers|fapnado|xozilla|camwhoresbay|pornrewind|dato.porn|megatube|zbporn|momvids|wankoz|4kporn|freeporn8|porndictator|fapster|rat|pornwhite|pornicom)(?:.com|.xxx|)/(?:video|videos)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:fetishshrine|javbangers|fapnado|xozilla|camwhoresbay|pornrewind|dato.porn|megatube|zbporn|momvids|wankoz|4kporn|freeporn8|porndictator|fapster|rat|pornwhite|pornicom)(?:.com|.xxx|)/(?:video|videos)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.(?:vipporns|porngem).com/videos/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:vipporns|porngem|frprn).com/videos/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {

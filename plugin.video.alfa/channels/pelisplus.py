@@ -223,12 +223,20 @@ def findvideos(item):
 
     itemlist = list()
 
-    data = httptools.downloadpage(item.url, forced_proxy='ProxyCF').data
+
+    data = httptools.downloadpage(item.url)
+
+    if data.sucess or data.code == 302:
+        data = data.data
+    else:
+        data = httptools.downloadpage(item.url, forced_proxy="ProxyCF").data
+
     pattern = "video\[\d+\]\s*=\s*'([^']+)'"
     matches = re.compile(pattern, re.DOTALL).findall(data)
 
     for url in matches:
-
+        if "https://pelisplushd.me" in url:
+            url = url.replace("pelisplushd.me", "feurl.com")
         itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language="LAT",
         infoLabels=item.infoLabels))
 

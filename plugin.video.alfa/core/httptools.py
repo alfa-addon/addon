@@ -54,7 +54,7 @@ default_headers = dict()
 # default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) Chrome/79.0.3945.117"
 
 ver = config.get_setting("chrome_ua_version")
-ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Safari/537.36" % ver
+ua = "Mozilla/5.0 (Windows NT; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Safari/537.36" % ver
 
 default_headers["User-Agent"] = ua
 #default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
@@ -94,19 +94,20 @@ def get_cookie(url, name, follow_redirects=False):
             return cookie.value
     return False
 
-def get_url_headers(url, forced=False):
+def get_url_headers(url, forced=False, dom=False):
     from . import scrapertools
     
     domain = urlparse.urlparse(url)[1]
     sub_dom = scrapertools.find_single_match(domain, '\.(.*?\.\w+)')
     if sub_dom and not 'google' in url:
         domain = sub_dom
+    if dom:
+        domain = dom
     domain_cookies = cj._cookies.get("." + domain, {}).get("/", {})
     domain_cookies.update(cj._cookies.get("www." + domain, {}).get("/", {}))
 
-    if "|" in url or not "cf_clearance" in domain_cookies:
-        if not forced:
-            return url
+    if ("|" in url or not "cf_clearance" in domain_cookies) and not forced:
+        return url
 
     headers = dict()
     cf_ua = config.get_setting('cf_assistant_ua', None)
@@ -565,7 +566,7 @@ def downloadpage(url, **opt):
 
         if len(url) > 0:
             try:
-                if opt.get('post', None) is not None or opt.get('file', None) is not None:
+                if opt.get('post', None) is not None or opt.get('file', None) is not None or opt.get('files', {}):
                     if opt.get('post', None) is not None:
                         ### Convert string post in dict
                         try:
@@ -585,7 +586,10 @@ def downloadpage(url, **opt):
                                 payload = opt['post']
 
                     ### Verifies 'file' and 'file_name' options to upload a buffer or a file
-                    if opt.get('file', None) is not None:
+                    if opt.get('files', {}):
+                        files = opt['files']
+                        file_name = opt.get('file_name', 'File Object')
+                    elif opt.get('file', None) is not None:
                         if len(opt['file']) < 256 and os.path.isfile(opt['file']):
                             if opt.get('file_name', None) is None:
                                 path_file, opt['file_name'] = os.path.split(opt['file'])
@@ -594,27 +598,27 @@ def downloadpage(url, **opt):
                         else:
                             files = {'file': (opt.get('file_name', 'Default'), opt['file'])}
                             file_name = opt.get('file_name', 'Default') + ', Buffer de memoria'
-                    
+
                     info_dict = fill_fields_pre(url, opt, proxy_data, file_name)
                     if opt.get('only_headers', False):
                         ### Makes the request with HEAD method
                         req = session.head(url, allow_redirects=opt.get('follow_redirects', True),
-                                          timeout=opt.get('timeout', None))
+                                          timeout=opt.get('timeout', None), params=opt.get('params', {}))
                     else:
                         ### Makes the request with POST method
                         req = session.post(url, data=payload, allow_redirects=opt.get('follow_redirects', True),
-                                          files=files, timeout=opt.get('timeout', None))
+                                          files=files, timeout=opt.get('timeout', None), params=opt.get('params', {}))
                 
                 elif opt.get('only_headers', False):
                     info_dict = fill_fields_pre(url, opt, proxy_data, file_name)
                     ### Makes the request with HEAD method
                     req = session.head(url, allow_redirects=opt.get('follow_redirects', True),
-                                      timeout=opt.get('timeout', None))
+                                      timeout=opt.get('timeout', None), params=opt.get('params', {}))
                 else:
                     info_dict = fill_fields_pre(url, opt, proxy_data, file_name)
                     ### Makes the request with GET method
                     req = session.get(url, allow_redirects=opt.get('follow_redirects', True),
-                                      timeout=opt.get('timeout', None))
+                                      timeout=opt.get('timeout', None), params=opt.get('params', {}))
 
             except Exception as e:
                 if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', ''):
@@ -766,7 +770,11 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
         else:
             info_dict.append(('Peticion', 'GET' + proxy_data.get('stat', '')))
         info_dict.append(('Descargar Pagina', not opt.get('only_headers', False)))
-        if file_name: info_dict.append(('Fichero para Upload', file_name))
+        if opt.get('files', {}): 
+            info_dict.append(('Fichero Objeto', opt.get('files', {})))
+        elif file_name: 
+            info_dict.append(('Fichero para Upload', file_name))
+        if opt.get('params', {}): info_dict.append(('Params', opt.get('params', {})))
         info_dict.append(('Usar cookies', opt.get('cookies', True)))
         info_dict.append(('Fichero de cookies', ficherocookies))
     except:

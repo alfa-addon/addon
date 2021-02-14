@@ -132,4 +132,4 @@ def play(item):
         v = int(vid)/1000 *1000
         url = "http://s%s.fapmedia.com/wqlvid/%s/%s/%s/%s/%s_%s.mp4/%s_%s.mp4"   % (server, num, pal,v, vid,vid, quality,vid, quality)
         itemlist.append([quality, url])
-    return itemlist
+    return itemlist[::-1]

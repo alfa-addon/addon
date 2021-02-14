@@ -120,7 +120,8 @@ def play(item):
     headers = {'Referer': item.url}
     data = httptools.downloadpage(url, headers=headers).data
     server = scrapertools.find_single_match(data, 'thumb: "([^"]+)"')
-    server = base64.b64decode(server).decode('utf-8').replace("/thumb.jpg", "")
+    server = base64.b64decode(server).decode('utf-8')
+    server = scrapertools.find_single_match(server, '(.*?)/thumb.jpg')
     server = "https:%s" % server
     patron = '"mp4_\d+":"(\d+).([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)

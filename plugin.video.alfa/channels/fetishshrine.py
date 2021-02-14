@@ -90,10 +90,7 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = 'video_url: \'([^\']+)\''
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl  in matches:
-        itemlist.append(item.clone(action="play", contentTitle=item.title, url=scrapedurl))
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

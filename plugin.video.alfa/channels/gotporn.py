@@ -18,8 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.gotporn.com'
-
+host = 'https://www.gotporn.com'   
 
 def mainlist(item):
     logger.info()
@@ -108,7 +107,7 @@ def lista(item):
         offset = item.offset
     else:
         soup = create_soup(item.url)
-    matches = soup.find_all('li', itemprop='itemListElement')
+    matches = soup.find_all('li', class_='poptrigger')
     for elem in matches:
         url = elem.a['href']
         title = elem.img['alt']

@@ -308,6 +308,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
 
     if url.startswith('magnet:') or _index > 0:
         item.downloadFilename = ':%s: %s' % ('MCT', video_file)
+        if item.torr_folder: item.torr_folder = filetools.dirname(video_path)
     item.downloadQueued = 0
     time.sleep(1)
     torr.update_control(item, function='mct_start')

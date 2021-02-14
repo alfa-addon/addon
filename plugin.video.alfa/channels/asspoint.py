@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.asspoint.com'        # https://www.asianpornmovies.com https://www.asspoint.com https://www.cartoonpornvideos.com https://www.ghettotube.com 
+host = 'https://www.asspoint.com'               # https://www.asianpornmovies.com https://www.asspoint.com https://www.cartoonpornvideos.com https://www.ghettotube.com 
                                                 # https://www.lesbianpornvideos.com https://www.porntitan.com https://www.porntv.com https://www.teenieporn.com 
                                                 # https://www.sexoasis.com https://www.youngpornvideos.com
 
@@ -131,7 +131,14 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, 'file: "([^"]+)"')
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    m3u = scrapertools.find_single_match(data, 'file: "([^"]+)"')
+    data = httptools.downloadpage(m3u).data
+    patron = 'RESOLUTION=\d+x(\d+),.*?'
+    patron += '(index-.*?).m3u8'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for quality,url in matches:
+        url = m3u.replace("master", url)
+        itemlist.append(['%sp' %quality, url])
+    itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return itemlist
+

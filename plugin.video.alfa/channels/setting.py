@@ -123,6 +123,7 @@ def setting_torrent(item):
 
     torrent_options = [config.get_localized_string(30006), config.get_localized_string(70254), config.get_localized_string(70255)]
     torrent_options.extend(platformtools.torrent_client_installed())
+    if len(torrent_options) < default+1: default = 0
     
 
     list_controls = [

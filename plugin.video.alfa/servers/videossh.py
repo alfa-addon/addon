@@ -20,7 +20,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    patron = 'src: "([^"]+)"'
+    patron = 'file:"([^"]+)"'
     match = scrapertools.find_multiple_matches(data, patron)
     for media_url in match:
         media_url += "|Referer=%s" %page_url

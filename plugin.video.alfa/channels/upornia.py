@@ -20,8 +20,8 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://upornia.com'   # https://hotmovs.com   https://upornia.com
-
+host = 'https://upornia.com'   # https://hotmovs.com   https://upornia.com  vjav  SERVER TXX2
+ 
 def mainlist(item):
     logger.info()
     itemlist = []

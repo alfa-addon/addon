@@ -19,6 +19,9 @@ from platformcode import config, logger
 
 host= "http://dato.porn"
 
+
+###################   KTP page mot found       #################
+
 def mainlist(item):
     logger.info()
     itemlist = []

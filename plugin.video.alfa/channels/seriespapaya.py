@@ -26,7 +26,7 @@ from channels import autoplay
 from core.item import Item
 from platformcode import config, logger
 
-HOST = "https://www.seriespapaya.se/"
+HOST = "https://www.seriespapaya.io/"
 #HOST = "https://seriespapaya.unblockit.app/"
 CF = False
 

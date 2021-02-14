@@ -184,5 +184,5 @@ def play(item):
         quality = url[-5:].replace("_", "")
         url = httptools.downloadpage(url, headers={"referer": item.url}, follow_redirects=False).headers["location"]
         itemlist.append([quality, url])
-    return itemlist[::-1]
+    return itemlist
 

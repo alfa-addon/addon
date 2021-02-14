@@ -25,7 +25,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/all-videos/"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -61,6 +61,19 @@ def categorias(item):
     return sorted(itemlist, key=lambda i: i.title)
 
 
+def stitle(title, url):
+    logger.info()
+    t = title.split()
+    long = len(t)-1
+    url = scrapertools.find_single_match(url, '.org/([^/]+)')
+    url2 = url.split('-')[long:]
+    t2=""
+    for elem in url2:
+        t2 += "%s " % elem.capitalize()
+    stitle = "%s %s" %(title, t2) 
+    return stitle
+
+
 def lista(item):
     logger.info()
     itemlist = []
@@ -73,8 +86,11 @@ def lista(item):
     patron += '<a href="([^"]+)">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedthumbnail,quality,time,scrapedurl,scrapedtitle in matches:
+        if "..." in scrapedtitle:
+            scrapedtitle = scrapertools.find_single_match(scrapedtitle, '(.*?&#8211;)')
+            scrapedtitle = stitle(scrapedtitle,scrapedurl)
         quality = scrapertools.find_single_match(quality, '<h6>([^<]+)</h6>')
-        quality = ""  # Solo links SD
+        quality = ""  # Solo ofrece videolinks SD
         time = scrapertools.find_single_match(time, '<span>([^<]+)</span>')
         title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality, scrapedtitle)
         thumbnail = scrapedthumbnail
@@ -82,7 +98,7 @@ def lista(item):
         plot = ""
         itemlist.append(item.clone(action="play", title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle=title))
-    next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)"')
+    next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )

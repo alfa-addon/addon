@@ -81,11 +81,11 @@ def lista(item):
         title = "[COLOR yellow]%s[/COLOR] [%s] %s" % (time, server, scrapedtitle)
         thumbnail = scrapedthumbnail
         url = ""
-        url = scrapertools.find_single_match(scrapedurl,'<a href=".*?/(aHR0[^"]+)/\d+/\d+"') 
+        url = scrapertools.find_single_match(scrapedurl,'<a href=".*?5odHRwczov([^/]+)/\d+/\d+"')
         url = url.replace("%3D", "=").replace("%2F", "/")
-        if url=="":
-            url = scrapertools.find_single_match(scrapedurl,'(//www.paidperview.com/video/embed/\d+)')
-            url = "https:%s" %url
+        import base64
+        url = base64.b64decode(url)
+        url = "https:/" + url
         plot = ""
         itemlist.append(item.clone(action="play", title=title, contentTitle = title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot))
@@ -95,18 +95,10 @@ def lista(item):
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
-
 def play(item):
     logger.info()
     itemlist = []
-    if not "paidperview" in item.url:
-        import base64
-        url = item.url.replace("_", "/")
-        url = base64.b64decode(url)
-        itemlist = servertools.find_video_items(item.clone(url = url, contentTitle = item.title))
-    else:
-        data = httptools.downloadpage(item.url).data
-        url = scrapertools.find_single_match(data, 'url:"([^"]+)"')
-        itemlist.append(['.mp4', url])
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

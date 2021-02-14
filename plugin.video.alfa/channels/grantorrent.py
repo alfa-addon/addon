@@ -589,10 +589,10 @@ def findvideos(item):
     # Seleccionamos el bloque deseado
     data = scrapertools.find_single_match(data, 'div\s*id="Tokyo"[^>]+>(.*?)</div>')        #Seleccionamos la zona de links
     
-    patron = '<td>\s*<img\s*src="[^"]+icono_[^\.]+.png"\s*(?:title|alt)='
-    patron += '"(?P<lang>[^"]+)"[^>]+>\s*<\/td>\s*<td>(?P<quality>[^>]*)'
-    patron += '(?:\s*\(Contraseña:[^>]*>(.*?)(?:<[^>]+>)?\))?\s*<\/td>\s*'
-    patron += '(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link"\s*'
+    patron = '<td>\s*.*?<img\s*src="[^"]+icono_[^\.]+.png"\s*(?:title|alt)='
+    patron += '"(?P<lang>[^"]+)"[^>]+>\s*(?:<\/noscript>)?[^<]*(?:<\/noscript>)?<\/td>'
+    patron += '\s*<td>(?P<quality>[^>]*)(?:\s*\(Contraseña:[^>]*>(.*?)(?:<[^>]+>)?\))?\s*<\/td>'
+    patron += '\s*(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link"\s*'
     patron += '(?:onclick="post\("[^"]+"\s*\,\s*\{u:\s*"|href=")(?P<url>[^"]+)'
 
     if not item.armagedon:
@@ -647,8 +647,8 @@ def findvideos(item):
         post= None
         headers = None
         
-        # Puede ser necesario baja otro nivel para encontrar la página
-        if not 'magnet:' in scrapedurl and not '.torrent' in scrapedurl:
+        # Puede ser necesario baja otro nivel para encontrar la página          ############  DESACTIVADO TEMPORALMENTE
+        if not 'magnet:' in scrapedurl and not '.torrent' in scrapedurl and item.contentType == 'XXX':
             patron_torrent = '(?i)>\s*Pincha[^<]*<a\s*href="([^"]+)"'
             data_torrent, success, code, item, itemlist = generictools.downloadpage(scrapedurl, timeout=timeout, 
                                               referer=referer, post=post, headers=headers, 
@@ -730,7 +730,9 @@ def findvideos(item):
                 del item.emergency_urls[0][0]
         
         # Buscamos tamaño en el archivo .torrent
-        if scrapedsize:
+        if item.contentType != 'movie':
+            size = ''
+        elif scrapedsize:
             size = scrapedsize
         elif item_local.torrent_info:
             size = item_local.torrent_info
@@ -938,10 +940,10 @@ def episodios(item):
                             + 'Reportar el error con el log'))
             return itemlist                                                     # Si no hay nada más, salimos directamente
 
-        patron = '<td>\s*<img\s*(?:src="[^"]+icono_[^\.]+.png"\s*)?(?:title|alt)='
-        patron += '"(?P<lang>[^"]+)"[^>]+>\s*<\/td>\s*<td>(?P<quality>[^>]*)'
-        patron += '(?:\s*\(Contraseña:[^>]*>(.*?)(?:<[^>]+>)?\))?\s*<\/td>\s*'
-        patron += '(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link"\s*'
+        patron = '<td>\s*.*?<img\s*src="[^"]+icono_[^\.]+.png"\s*(?:title|alt)='
+        patron += '"(?P<lang>[^"]+)"[^>]+>\s*(?:<\/noscript>)?[^<]*(?:<\/noscript>)?<\/td>'
+        patron += '\s*<td>(?P<quality>[^>]*)(?:\s*\(Contraseña:[^>]*>(.*?)(?:<[^>]+>)?\))?\s*<\/td>'
+        patron += '\s*(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link"\s*'
         patron += '(?:onclick="post\("[^"]+"\s*\,\s*\{u:\s*"|href=")(?P<url>[^"]+)'
         
         patron_epi = '(?i)(\d{1,2})(?:x|&#215;)(\d{1,2})(?:[-|\s*](?:al|-)?[-|\s*]?'
@@ -959,8 +961,8 @@ def episodios(item):
                             + 'Reportar el error con el log'))
             return itemlist                                             # si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-        #logger.debug("PATRON: " + patron)
-        #logger.debug(matches)
+        logger.debug("PATRON: " + patron)
+        logger.debug(matches)
         #logger.debug(data)
 
         # Recorremos todos los episodios generando un Item local por cada uno en Itemlist

@@ -36,7 +36,7 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
+    texto = texto.replace(" ", "-")
     item.url = host + "/search/%s/" % texto
     try:
         return lista(item)

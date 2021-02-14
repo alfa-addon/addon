@@ -150,7 +150,7 @@ def play(item):
     for title, url in matches:
         url= url.replace("![CDATA[", "http:").replace("]]", "")
         itemlist.append([".mp4 %s" % (title), url])
-    itemlist.reverse()
+    # itemlist.reverse()
     return itemlist
 
 

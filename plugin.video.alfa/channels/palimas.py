@@ -51,7 +51,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/?query=%s" % texto
+    item.url = host + "/?q=%s" % texto
     try:
         return lista(item)
     except:
@@ -87,7 +87,7 @@ def categorias(item):
     if pages:
         pages = pages.find_all('a')[-1]
         next_page = pages['href']
-    if next_page!="":
+    if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -126,6 +126,7 @@ def lista(item):
     pages = soup.find('div', class_='pagination')
     if pages:
         pages = pages.find_all('a')[-1]
+        logger.debug(pages)
         next_page = pages['href']
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)

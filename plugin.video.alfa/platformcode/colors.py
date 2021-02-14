@@ -255,7 +255,7 @@ class Main(xbmcgui.WindowXMLDialog):
     def change(self, label, pos, id, mode="set"):
 
         self.color_setting = self.color_schemes[self.preset]
-
+        logger.debug(id)
         if mode == "get":
             if self.preset_mode:
                 self.color = re.sub(r"\[COLOR \w+]|\[/COLOR]", "", self.color_setting[id.replace("_color", "")])
@@ -280,6 +280,7 @@ class Main(xbmcgui.WindowXMLDialog):
     def onClick(self, control):
 
         if control == 3070 or self.getControl(control).getLabel() == "Aceptar":
+            config.set_setting("unify", True)
             return self.close()
 
         dict_set = {u"Valoración Alta": ["rating_1", 2],

@@ -19,7 +19,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     response = httptools.downloadpage(page_url)
 
-    if response.code == 404:
+    if response.code == 404 or "not found" in response.data:
         return False, "[Doodstream] El archivo no existe o ha sido borrado"
     else:
         data = response.data

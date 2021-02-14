@@ -650,9 +650,9 @@ def search_library_path():
     series_win = '\\%s\\' % series
     series_res = '/%s/' % series
     
-    sql = 'SELECT strPath FROM path WHERE (idParentPath ISNULL AND (strPath LIKE "%library%"' + \
-                ' or strPath LIKE "%' + cine_win + '" or strPath LIKE "%' + cine_res + \
-                '" or strPath LIKE "%' + series_win + '" or strPath LIKE "%' + series_res + '"))'
+    sql = 'SELECT strPath FROM path WHERE (idParentPath IS NULL AND strContent IS NOT NULL AND (' + \
+                'strPath LIKE "%library' + cine_win + '" or strPath LIKE "%library' + cine_res + \
+                '" or strPath LIKE "%library' + series_win + '" or strPath LIKE "%library' + series_res + '"))'
     nun_records, records = execute_sql_kodi(sql)
     
     if nun_records >= 1:

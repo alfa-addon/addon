@@ -35,7 +35,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/index.php?do=search&subaction=search&story=%s&search_start=1" % (host,texto)
+    item.url = "%s/?do=search&subaction=search&story=%s&search_start=1" % (host,texto)
     try:
         return lista(item)
     except:
@@ -86,16 +86,16 @@ def lista(item):
         plot = ""
         itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('div', class_='navigation').span.find_next_siblings("a")
-    if next_page:
-        next_page = next_page[0]
-        if "/index.php?do=search" in item.url:
+    pagination = soup.find('div', class_='navigation')
+    next_page = ""
+    if pagination:
+        if pagination.span.find_next_sibling("a"):
+            next_page = pagination.span.find_next_sibling("a")['href']
+        if "#" in next_page:
             prev_page = scrapertools.find_single_match(item.url, "(.*?&search_start=)")
-            next_page = next_page.text
-            next_page = prev_page + next_page
-        else:
-            next_page = next_page['href']
-        next_page = urlparse.urljoin(item.url,next_page)
+            page = pagination.span.find_next_sibling("a").text
+            next_page = "%s%s" % (prev_page, page)
+    if next_page:
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
@@ -125,7 +125,7 @@ def findvideos(item):
 
 def play(item):
     logger.info()
-    itemlist = []
+    video_urls = []
     soup = create_soup(item.url)
     matches = soup.find_all('div', id='player')
     for elem in matches:
@@ -142,6 +142,7 @@ def play(item):
             s2 = elem[-1]
             url = "https://s%s.fapmedia.com/wqpvid/%s/%s/%s/%s/%s_%s.mp4" %(server,s1,s2,id1,id,id,quality)
             url = url.replace("_720p", "")
-            itemlist.append(['.mp4 %s' %quality, url])
-    return itemlist
+            video_urls.append(['%s' %quality, url])
+    video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
+    return video_urls
 

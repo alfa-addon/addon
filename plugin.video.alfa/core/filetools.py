@@ -63,7 +63,7 @@ def validate_path(path, trans_none=''):
     if not path or not isinstance(path, (unicode, basestring, bytes)):
         if path is None: path = trans_none
 
-    chars = ":*?<>|"
+    chars = ":*?<>|\\/"
     if scrapertools.find_single_match(path, '(^\w+:\/\/)'):
         protocolo = scrapertools.find_single_match(path, '(^\w+:\/\/)')
         import re
@@ -266,13 +266,17 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, mode='r', silent=Fal
                 mode_open = mode.replace('a', 'w').replace('+', '')
                 logger.debug('Open MODE cambiado a: %s' % mode)
                 
-            if not exists(path): return False
+            if not exists(path): 
+                if not silent: logger.info('Path missing: ' + str(path), force=True)
+                return False
             f = xbmcvfs.File(path, "rb")
             if linea_inicio > 0:
                 if not isinstance(whence, int):
                     try:
                         whence = int(whence)
                     except:
+                        if not silent: logger.info('Whence error: ' + str(whence) + ' in: ' + str(path), force=True)
+                        f.close()
                         return False
                 f.seek(linea_inicio, whence)
                 logger.debug('POSICIÓN de comienzo de lectura, tell(): %s' % f.seek(0, 1))
@@ -1026,7 +1030,7 @@ def walk(top, topdown=True, onerror=None, vfs=True):
 def walk_vfs(top, topdown=True, onerror=None):
     """
     Lista un directorio de manera recursiva
-    Como xmbcvfs no tiene esta función, se copia la lógica de libsmb(samba) para realizar la previa al Walk
+    Como xbmcvfs no tiene esta función, se copia la lógica de libsmb(samba) para realizar la previa al Walk
     """
     top = encode(top)
     dirs, nondirs = xbmcvfs.listdir(top)
@@ -1104,7 +1108,7 @@ def join(*paths):
                 path = encode(path)
             list_path += path.replace("\\", "/").strip("/").split("/")
 
-    if scrapertools.find_single_match(paths[0], '(^\w+:\/\/)'):
+    if scrapertools.find_single_match(encode(paths[0]), '(^\w+:\/\/)'):
         return str("/".join(list_path))
     else:
         return str(os.sep.join(list_path))

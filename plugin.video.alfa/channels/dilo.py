@@ -64,6 +64,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host+'search?s=',
                          thumbnail=get_thumb('search', auto=True)))
 
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
+
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
@@ -86,8 +88,9 @@ def list_all(item):
         new_item = Item(channel=item.channel, title=scrapedtitle, url=url,
                         thumbnail=thumbnail)
 
-        new_item.contentSerieName=scrapedtitle
+        new_item.contentSerieName = scrapedtitle
         new_item.action = 'seasons'
+        new_item.context = filtertools.context(item, list_language, list_quality)
         itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)

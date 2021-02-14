@@ -24,7 +24,9 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['gounlimited']
 
-host = 'https://xmoviesforyou.com' # 'http://www.veporns.com'  'https://watchpornfree.info'   'https://xxxparodyhd.net'  'http://streamporno.eu'
+host = 'https://xmoviesforyou.com' 
+
+#####       Buscar da error 500 hay que insistir
 
 def mainlist(item):
     logger.info()
@@ -62,6 +64,7 @@ def lista(item):
     patron += '<a href="([^"]+)" rel="bookmark" title="([^"]+)".*?'
     patron += 'src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
+    logger.debug(matches)
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
         title = scrapedtitle
         thumbnail = scrapedthumbnail
@@ -69,7 +72,7 @@ def lista(item):
         plot = ""
         itemlist.append(item.clone(action="findvideos", title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
-    next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)"')
+    next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" "href=([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )

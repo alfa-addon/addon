@@ -25,6 +25,7 @@ from core import httptools
 from core import jsontools
 from core import scrapertools
 from core import servertools, tmdb
+from core import channeltools
 from core.item import Item
 from platformcode import config, logger
 from channels import autoplay
@@ -33,6 +34,8 @@ from platformcode import platformtools
 from channelselector import get_thumb
 
 host = config.get_setting("current_host", channel="hdfull")
+host_blacklist = ['https://www2.hdfull.cx/']
+
 
 _silence = config.get_setting('silence_mode', channel='hdfull')
 show_langs = config.get_setting('show_langs', channel='hdfull')
@@ -41,7 +44,7 @@ __modo_grafico__ = config.get_setting('modo_grafico', channel='hdfull')
 account = config.get_setting("logged", channel="hdfull")
 
 IDIOMAS = {'lat': 'LAT', 'spa': 'CAST', 'esp': 'CAST', 'sub': 'VOSE', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
-list_language = list(IDIOMAS.values())
+list_language = list(set(IDIOMAS.values()))
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP', 'RHDTV', 'DVDSCR']
 list_servers = ['clipwatching', 'gamovideo', 'vidoza', 'vidtodo', 'openload', 'uptobox']
 
@@ -111,10 +114,12 @@ def logout(item):
     #y mandamos a configuracion del canal
     return settingCanal(item)
 
-def agrupa_datos(url, post=None, referer=True, json=False, proxy=False, forced_proxy=None, proxy_retries=1):
+def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_proxy=None, proxy_retries=1):
     global host
     
     headers = {'Referer': host}
+    if 'episodes' in url or 'buscar' in url:
+        headers['Referer'] += 'episodios'
     
     if not referer:
         headers.pop('Referer')
@@ -122,6 +127,11 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=False, forced_p
     #     headers.update('Cookie:' 'language=es')
     if isinstance(referer, str):
         headers.update({'Referer': referer})
+    
+    if host in host_blacklist:
+        list_controls, dict_settings = channeltools.get_channel_controls_settings("hdfull")
+        config.set_setting("current_host", dict_settings['current_host'], channel="hdfull")
+        host = dict_settings['current_host']
     
     parsed = urlparse.urlparse(host)
     
@@ -134,7 +144,6 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=False, forced_p
                         proxy=proxy, forced_proxy=forced_proxy, proxy_retries=proxy_retries)
     
     if not page.sucess:
-        from core import channeltools
         list_controls, dict_settings = channeltools.get_channel_controls_settings("hdfull")
         if dict_settings['current_host'] != config.get_setting("current_host", channel="hdfull", default=""):
             config.set_setting("current_host", dict_settings['current_host'], channel="hdfull")
@@ -192,7 +201,9 @@ def mainlist(item):
                          thumbnail=get_thumb('tvshows', auto=True), text_bold=True))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
                          thumbnail=get_thumb('search', auto=True), text_bold=True))
-    
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
+
     autoplay.show_option(item.channel, itemlist)
     
     if not account:
@@ -555,7 +566,8 @@ def fichas(item):
             itemlist.append(
                 Item(channel=item.channel, action=action, title=title, url=url,
                      contentSerieName=show, text_bold=True, contentType=contentType,
-                     language=language, infoLabels=infoLabels, thumbnail=thumbnail))
+                     language=language, infoLabels=infoLabels, thumbnail=thumbnail,
+                     context=filtertools.context(item, list_language, list_quality)))
         else:
             itemlist.append(
                 Item(channel=item.channel, action=action, title=title, url=url,
@@ -713,6 +725,8 @@ def episodesxseason(item):
         itemlist.append(item.clone(action="findvideos", title=title, url=url,
                              contentType="episode", language=langs, text_bold=True,
                              infoLabels=infoLabels, thumbnail=thumbnail))
+
+    itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
