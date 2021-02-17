@@ -20,7 +20,6 @@ def test_video_exists(page_url):
     referer = {"Referer": page_url}
 
     data = httptools.downloadpage(page_url, headers=referer).data
-
     if "Video not found" in data:
         return False, "[streamtape] El archivo no existe o ha sido borrado"
 
@@ -32,5 +31,5 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     video_urls = []
     url = "https:" + eval(scrapertools.find_single_match(data, "innerHTML = ([^;]+)"))
-    video_urls.append(['MP4 [streamtape]', url])
+    video_urls.append(['MP4 [streamtape]', url + "|User-Agent=%s" % httptools.get_user_agent()])
     return video_urls
