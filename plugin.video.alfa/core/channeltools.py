@@ -6,15 +6,93 @@
 from __future__ import absolute_import
 
 from . import jsontools
+from core.item import Item
 from platformcode import config, logger
 
 DEFAULT_UPDATE_URL = "/channels/"
 dict_channels_parameters = dict()
 
 
+def has_attr(channel_name, attr):
+    """
+    Booleano para determinar si un canal tiene una def en particular
+
+    @param channel_name: nombre del canal a verificar
+    @type channel_name: str
+    @param attr: nombre de la función a verificar
+    @type attr: str
+
+    @return: True si hay función o False si no la hay, None si no hay canal
+    @rtype: bool
+    """
+    existe = False
+    from core import filetools
+    channel_file = filetools.join(config.get_runtime_path(), 'channels', channel_name + ".py")
+    channel = None
+    itemlist = []
+
+    if filetools.exists(channel_file):
+        try:
+            channel = __import__('channels.%s' % channel_name, None, None, ["channels.%s" % channel_name])
+            if hasattr(channel, attr):
+                existe = True
+        except:
+            pass
+    else:
+        return None
+
+    return existe
+
+
+def get_channel_attr(channel_name, attr, item):
+    """
+    Ejecuta una función específica de un canal y devuelve su salida.
+    Además devuelve None si ocurre un error como canal o función inexistentes, errores de import, etc
+
+    @param channel_name: nombre del canal
+    @type channel_name: str
+    @param attr: función a ejecutar
+    @type attr: str
+    @param item: item con el que invocar a la función [requerido]
+    @type item: item
+
+    @return: según la función, generalmente list, o None si ocurre un error
+    @rtype: list, any, None
+    """
+    from core import filetools
+    from channels import autoplay
+    channel_file = filetools.join(config.get_runtime_path(), 'channels', channel_name + ".py")
+    channel = None
+    itemlist = None
+
+    def disabled_autoplay_init(channel, list_servers, list_quality, reset=False):
+        return False
+    def disabled_autoplay_show_option(channel, itemlist, text_color='yellow', thumbnail=None, fanart=None):
+        return False
+    def disabled_autoplay_start(itemlist, item):
+        return False
+
+    autoplay.init = disabled_autoplay_init
+    autoplay.show_option = disabled_autoplay_show_option
+    autoplay.start = disabled_autoplay_start
+
+    if filetools.exists(channel_file):
+        channel = __import__('channels.%s' % channel_name, globals(), locals(), ["channels.%s" % channel_name])
+        if hasattr(channel, attr):
+            logger.info("Ejecutando método '{}' del canal '{}'".format(attr, channel_name))
+            itemlist = getattr(channel, attr)(item)
+        else:
+            logger.error("ERROR: El canal '{}' no tiene el atributo '{}'".format(channel_name, attr))
+            return itemlist
+    else:
+        logger.error("ERROR: El canal '{}' no existe".format(channel_name))
+        return itemlist
+    return itemlist
+
+
 def is_adult(channel_name):
-    logger.info("channel_name=" + channel_name)
     channel_parameters = get_channel_parameters(channel_name)
+    logger.info("channel {}.is adult={}".format(channel_name, channel_parameters["adult"]))
     return channel_parameters["adult"]
 
 
