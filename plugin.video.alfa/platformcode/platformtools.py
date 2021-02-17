@@ -1006,12 +1006,15 @@ def get_dialogo_opciones(item, default_action, strm, autoplay):
     # Si puedes ver el vídeo, presenta las opciones
     if puedes:
         for video_url in video_urls:
-            opciones.append(config.get_localized_string(30151) + " " + video_url[0])
+            # "Ver el video <calidad> [<server>]"
+            opciones.append("{} {}".format(config.get_localized_string(30151), video_url[0]))
+        for video_url in video_urls:
+            # "Descargar <calidad> [<server>]"
+            opciones.append("{} {}".format(config.get_localized_string(30153), video_url[0]))
 
         if item.server == "local":
             opciones.append(config.get_localized_string(30164))
         else:
-            # "Descargar"
             opcion = config.get_localized_string(30153)
             opciones.append(opcion)
 
@@ -1076,11 +1079,12 @@ def set_opcion(item, seleccion, opciones, video_urls):
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, listitem)
 
     # "Descargar"
-    elif opciones[seleccion] == config.get_localized_string(30153):
+    elif config.get_localized_string(30153) in opciones[seleccion]:
         from channels import downloads
         if item.contentType == "list" or item.contentType == "tvshow":
             item.contentType = "video"
         item.play_menu = True
+        item.downloadQualitySelected = video_urls[seleccion - len(video_urls)][0]
         downloads.save_download(item)
         salir = True
 
@@ -1626,7 +1630,7 @@ def play_torrent(item, xlistitem, mediaurl):
                     torrent.bt_client(mediaurl, xlistitem, rar_files, subtitle=item.subtitle, password=password, item=item)
                     config.set_setting("LIBTORRENT_in_use", False, server="torrent")   # Marcamos Libtorrent como disponible
                     config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
-                    itemlist_refresh()
+                    if item.downloadStatus != 5: itemlist_refresh()
 
             # Reproductor propio MCT (libtorrent)
             elif seleccion == 1:
@@ -1640,7 +1644,7 @@ def play_torrent(item, xlistitem, mediaurl):
                     mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=password, item=item)
                     config.set_setting("LIBTORRENT_in_use", False, server="torrent")    # Marcamos Libtorrent como disponible
                     config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
-                    itemlist_refresh()
+                    if item.downloadStatus != 5: itemlist_refresh()
 
             # Plugins externos
             else:
@@ -1690,7 +1694,7 @@ def play_torrent(item, xlistitem, mediaurl):
                     else:
                         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
                 torrent.update_control(item, function='play_torrent_externos_start')
-                itemlist_refresh()
+                if item.downloadStatus != 5: itemlist_refresh()
 
                 # Si es un archivo RAR, monitorizamos el cliente Torrent hasta que haya descargado el archivo,
                 # y después lo extraemos, incluso con RAR's anidados y con contraseña
@@ -1766,7 +1770,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
             dp.close()
 
             # Reproducimos el vídeo extraido, si no hay nada en reproducción
-            while is_playing() and rar:
+            while is_playing() and rar and (not item.downloadFilename or item.downloadStatus == 5):
                 time.sleep(3)  # Repetimos cada intervalo
             if rar and (not item.downloadFilename or item.downloadStatus == 5):
                 time.sleep(1)
@@ -1804,7 +1808,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
         item.downloadQueued = 0
         torrent.update_control(item, function='rar_control_mng')
         config.set_setting("RESTART_DOWNLOADS", True, "downloads")                  # Forzamos restart downloads
-        itemlist_refresh()
+        if item.downloadStatus != 5: itemlist_refresh()
 
         # Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan
         if not item.downloadFilename or item.downloadStatus == 5:

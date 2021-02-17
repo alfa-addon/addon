@@ -27,7 +27,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://estrenosflux.com/'
+host = 'https://estrenosflex.com/'
 host_alt = 'https://estrenosflix.org' # 'http://estrenosgo.site/', 'http://estrenosli.org/'
 channel = "estrenosgo"
 

@@ -150,5 +150,5 @@ def play(item):
         url = elem['src']
         quality = elem['label']
         itemlist.append(['.mp4 %s' %quality, url])
-    return itemlist
+    return itemlist[::-1]
 

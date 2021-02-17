@@ -20,9 +20,13 @@ def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    patron = 'html5player.setVideo(?:Url|H)(\w+)\(\'([^\']+)\'\)'
+    m3u = scrapertools.find_single_match(data, 'html5player.setVideoHLS\(\'([^\']+)\'')
+    data = httptools.downloadpage(m3u).data
+    patron = 'RESOLUTION=\d+x(\d+),.*?'
+    patron += '(hls-.*?.m3u8)'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for quality,url in matches:
-        if "LS" in quality: quality = "HLS"
-        video_urls.append(["[xvideos] %s" %quality, url])
+        url = m3u.replace("hls.m3u8", url)
+        video_urls.append(['%sp' %quality, url])
+    video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls

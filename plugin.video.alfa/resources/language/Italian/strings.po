@@ -4978,3 +4978,71 @@ msgstr "%s canali restanti"
 msgctxt "#70745"
 msgid "Enter another year..."
 msgstr "Inserisci un altro anno..."
+
+msgctxt "#70746"
+msgid "When playback ends"
+msgstr "Alla fine della riproduzione"
+
+msgctxt "#70747"
+msgid "Hide server selection"
+msgstr "Nascondi la selezione del server"
+
+msgctxt "#70748"
+msgid "Go to the next episode"
+msgstr "Riproduci il prossimo episodio"
+
+msgctxt "#70749"
+msgid "Seconds before notification"
+msgstr "Secondi prima di mostrare la notifica"
+
+msgctxt "#70750"
+msgid "Next Episode in"
+msgstr "Prossimo episodio in"
+
+msgctxt "#70751"
+msgid "seconds"
+msgstr "secondi"
+
+msgctxt "#70752"
+msgid "Do nothing"
+msgstr "Fare niente"
+
+msgctxt "#70753"
+msgid "Playback"
+msgstr "Riproduci"
+
+msgctxt "#70754"
+msgid "Compact Mode"
+msgstr "Modalità compatta"
+
+msgctxt "#70755"
+msgid "Coming up..."
+msgstr "Poi..."
+
+msgctxt "#70756"
+msgid "WATCH NOW"
+msgstr "GUARDA ORA"
+
+msgctxt "#70757"
+msgid "CANCEL"
+msgstr "ANNULLA"
+
+msgctxt "#70758"
+msgid "Relevant tutorials"
+msgstr "Tutorial pertinenti"
+
+msgctxt "#70759"
+msgid "Install an external browser"
+msgstr "Installa un browser esterno"
+
+msgctxt "#70760"
+msgid "(click to use [I]%s[/I])"
+msgstr "(clicca per usare [I]%s[/I])"
+
+msgctxt "#70761"
+msgid "Report an error"
+msgstr "Segnala un errore"
+
+msgctxt "#70762"
+msgid "Alfa Mobile Assistant Manual (helper tool)"
+msgstr "Manuale Alfa Mobile Assistant (strumento di supporto)"

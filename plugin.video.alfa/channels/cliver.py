@@ -20,6 +20,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger, platformtools
 from channelselector import get_thumb
+from lib import generictools
 
 direct_play = config.get_setting('direct_play', channel='cliver')
 IDIOMAS = {'es': 'CAST', 'lat': 'LAT', 'es_la': 'LAT', 'vose': 'VOSE', 'ingles': 'VOS'}
@@ -146,7 +147,7 @@ def get_source(url, post=None, ctype=None):
     data = httptools.downloadpage(url, post=post).data
 
     if 'Javascript is required' in data:
-        js2py_conversion(data)
+        generictools.js2py_conversion(data, url, domain_name=".cliver.to")
         data = httptools.downloadpage(url, post=post).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data

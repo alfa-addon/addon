@@ -167,7 +167,7 @@ def findvideos(item):
 
             url = httptools.downloadpage(base_url, post={param: id}, timeout=5, 
                                        follow_redirects=False, ignore_response_code=True)
-            if url.sucess:
+            if url.sucess or url.code == 302:
                 url = url.headers.get('location', '')
             else:
                 url = httptools.downloadpage(base_url, post={param: id}, forced_proxy='ProxyCF', 
