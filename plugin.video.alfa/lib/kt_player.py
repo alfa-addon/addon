@@ -56,6 +56,7 @@ def e(license_code, _size):
             s += str(d[i])
         else:
             s += str(1)
+    s = s.replace('0', '1')
 
     p = int(old_div(len(s),2))
     n = int(s[:p + 1])
