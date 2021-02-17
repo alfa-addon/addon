@@ -5056,3 +5056,7 @@ msgstr "Reportar un fallo"
 msgctxt "#70762"
 msgid "Alfa Mobile Assistant Manual (helper tool)"
 msgstr "Manual de Alfa Mobile Assistant (herramienta de apoyo)"
+
+msgctxt "#70763"
+msgid "Download from channel"
+msgstr "Descargar desde el canal"

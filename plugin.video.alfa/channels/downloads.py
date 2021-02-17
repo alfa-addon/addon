@@ -1031,14 +1031,13 @@ def download_from_server(item, silent=False):
 
     if not silent: progreso = platformtools.dialog_progress(config.get_localized_string(30101), \
                         config.get_localized_string(70178) % item.server)
-    channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
-    if hasattr(channel, "play") and not item.play_menu and not item.url.startswith('magnet:'):
+    if channeltools.has_attr(item.contentChannel, "play") and not item.play_menu and not item.url.startswith('magnet:'):
 
         if not silent: progreso.update(50, config.get_localized_string(70178) % \
                         item.server + '\n' + config.get_localized_string(60003) % item.contentChannel)
         if item.server == 'torrent': item.url_control = item.url
         try:
-            itemlist = getattr(channel, "play")(item.clone(channel=item.contentChannel, action=item.contentAction))
+            itemlist = channeltools.get_channel_attr(item.contentChannel, "play", item.clone(channel=item.contentChannel, action=item.contentAction))
         except:
             logger.error("Error en el canal %s" % item.contentChannel)
         else:
@@ -1196,13 +1195,12 @@ def download_from_best_server(item, silent=False):
     result = {"downloadStatus": STATUS_CODES.error}
 
     if not silent: progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70179))
-    channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
 
     if not silent: progreso.update(50, config.get_localized_string(70184) + '\n' + config.get_localized_string(70180) % item.contentChannel)
 
-    if hasattr(channel, item.contentAction):
-        play_items = getattr(channel, item.contentAction)(
-            item.clone(action=item.contentAction, channel=item.contentChannel))
+    if channeltools.has_attr(item.contentChannel, item.contentAction):
+        play_items = channeltools.get_channel_attr(item.contentChannel, item.contentAction, \
+                                                   item.clone(action=item.contentAction, channel=item.contentChannel))
     else:
         play_items = servertools.find_video_items(item.clone(action=item.contentAction, channel=item.contentChannel))
     
@@ -1254,12 +1252,11 @@ def select_server(item):
         item.contentAction, item.contentChannel, item.downloadProgress, item.downloadQueued, item.server, item.url))
 
     progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70179))
-    channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
     progreso.update(50, config.get_localized_string(70184) + '\n' + config.get_localized_string(70180) % item.contentChannel)
 
-    if hasattr(channel, item.contentAction):
-        play_items = getattr(channel, item.contentAction)(
-            item.clone(action=item.contentAction, channel=item.contentChannel))
+    if channeltools.has_attr(item.contentChannel, item.contentAction):
+        play_items = channeltools.get_channel_attr(item.contentChannel, item.contentAction, \
+                                  item.clone(action=item.contentAction, channel=item.contentChannel))
     else:
         play_items = servertools.find_video_items(item.clone(action=item.contentAction, channel=item.contentChannel))
 
@@ -1273,7 +1270,7 @@ def select_server(item):
             play_items[x] = getattr(channel, "play")(i)
 
     seleccion = platformtools.dialog_select(config.get_localized_string(70192), ["Auto"] + [s.title for s in play_items])
-    if seleccion > 1:
+    if seleccion > 0:
         update_control(item.path, {
             "downloadServer": {"url": play_items[seleccion - 1].url, "server": play_items[seleccion - 1].server}}, function='select_server_1')
     elif seleccion == 0:
@@ -1443,28 +1440,28 @@ def get_episodes(item):
                                 != str(item.infoLabels['season']):
                     continue
                 episode = Item().fromjson(filetools.read(filetools.join(serie_path, file)))
-                if remote:                                                      # Quitamos las referencias locales
-                    if episode.emergency_urls: del episode.emergency_urls
-                    if episode.torrent_info: del episode.torrent_info
-                    if episode.server: del episode.server
-                if episode.emergency_urls and isinstance(episode.emergency_urls[0][0], str) \
-                                    and not episode.emergency_urls[0][0].startswith('http') \
-                                    and episode.emergency_urls[0][0].endswith('.torrent'):
-                    episode.server = 'torrent'
-                    episode.action = 'play'
-                episode.strm_path = filetools.join(serie_path, '%sx%s.strm' % (str(episode.infoLabels['season']), \
-                                    str(episode.infoLabels['episode']).zfill(2))).replace(SERIES, '')
-                episode.sub_action = item.sub_action
-                episode.channel = item.contentChannel
-                episode.downloadServer = {}
-                
-                #logger.debug(episode)
-                episodes.append(episode.clone())
+                if item.channel == episode.channel:
+                    if remote:                                                      # Quitamos las referencias locales
+                        if episode.emergency_urls: del episode.emergency_urls
+                        if episode.torrent_info: del episode.torrent_info
+                        if episode.server: del episode.server
+                    if episode.emergency_urls and isinstance(episode.emergency_urls[0][0], str) \
+                                        and not episode.emergency_urls[0][0].startswith('http') \
+                                        and episode.emergency_urls[0][0].endswith('.torrent'):
+                        episode.server = 'torrent'
+                        episode.action = 'play'
+                    episode.strm_path = filetools.join(serie_path, '%sx%s.strm' % (str(episode.infoLabels['season']), \
+                                        str(episode.infoLabels['episode']).zfill(2))).replace(SERIES, '')
+                    episode.sub_action = item.sub_action
+                    episode.channel = item.contentChannel
+                    episode.downloadServer = {}
+                    
+                    episodes.append(episode.clone())
         
         else:
             if item.sub_action in ["unseen", "auto"] and not nfo_json:
                 return []
-            episodes = getattr(channel, item.contentAction)(item)               # Si no viene de Videoteca, descargamos desde la web
+            episodes = channeltools.get_channel_attr(item.channel, item.contentAction, item)    # Si no viene de Videoteca, descargamos desde la web
 
     itemlist = []
 
@@ -1512,15 +1509,17 @@ def get_episodes(item):
             episode.contentChannel = episode.channel
         episode.contentChannel = generictools.verify_channel(episode.contentChannel)
 
+        # logger.info(episode)
         # Si es una temporada, descartameos lo que sea de esa temporada
         if item.contentType in ["season"] or item.sub_action in ["season"]:
-            if season and episode.infoLabels['season']:
+            if season and isinstance(episode.infoLabels['season'], int):
                 if season != episode.infoLabels['season']:
                     continue
                 sesxepi_now = '%sx%s' % (str(episode.infoLabels['season']), str(episode.infoLabels['episode']).zfill(2))
                 if sesxepi_now in str(sesxepi):
                     continue
-                sesxepi += [sesxepi_now]
+                sesxepi.append(sesxepi_now)
+        # logger.info(episode)
 
         # Si el resultado es una temporada, no nos vale, tenemos que descargar los episodios de cada temporada
         if episode.contentType == "season":
@@ -1550,7 +1549,7 @@ def get_episodes(item):
 
             if not isinstance(episode.contentSeason, int): episode.contentSeason = 1
             if not episode.contentEpisodeNumber: episode.contentEpisodeNumber = 1
-            episode.downloadFilename = filetools.validate_path(filetools.join(item.downloadFilename, "%dx%0.2d - %s" % (
+            episode.downloadFilename = filetools.join(item.downloadFilename, filetools.validate_path("%dx%0.2d - %s" % (
                 episode.contentSeason, episode.contentEpisodeNumber, episode.contentTitle.strip())))
 
             itemlist.append(episode)
@@ -1615,14 +1614,157 @@ def write_json(item):
 def save_download(item, silent=False):
     logger.info()
 
-    # Menu contextual
+    # Descarga desde menú contextual
     if item.from_action and item.from_channel:
         item.channel = item.from_channel
         item.action = item.from_action
         del item.from_action
         del item.from_channel
 
-    item.contentChannel = item.channel
+    # En videolibrary no se obtienen los canales en contentChannel, los buscamos manualmente
+    if item.channel == 'videolibrary':
+        channels_list = videolibrarytools.get_content_channels(item)
+
+        # Si hay 2 o más canales se muestra diálogo de selección
+        if len(channels_list) > 1:
+            channels = []
+            # Ver notas de videolibrarytools.get_content_channels para + info del «if isinstance(channels_list[0], list)»
+            if isinstance(channels_list[0], list):
+                # Les ponemos los nombres "arreglados" a los canales (hay que pasar a strings para localización)
+                for c, url in channels_list:
+                    channel_title = channeltools.get_channel_parameters(c)['title']
+                    channels.append('Descargar desde {}'.format(channel_title))
+                seleccion = platformtools.dialog_select('Descargar desde el canal...', channels)
+                if seleccion != -1:
+                    item.channel = channels_list[seleccion][0]
+                    item.contentChannel = item.channel
+                    item.category = item.channel
+                    item.url = channels_list[seleccion][1]
+                    item.server = item.server.capitalize()
+                else:
+                    # Canceló la selección, cancelamos la descarga
+                    return False
+            else:
+                for c in channels_list:
+                    channel_params = channeltools.get_channel_parameters(c)
+                    channels.append('{} {}'.format(config.get_localized_string(70763), channel_params.get('title', c)))
+                seleccion = platformtools.dialog_select('{}...'.format(config.get_localized_string(70763)), channels)
+                if seleccion != -1:
+                    item.channel = channels_list[seleccion]
+                    item.contentChannel = item.channel
+                else:
+                    # Canceló la selección, cancelamos la descarga
+                    return False
+
+        # Si hay 1 solo canal se descarga de este automáticamente
+        elif len(channels_list) > 0:
+            # Ver notas de videolibrarytools.get_content_channels para + info del «if isinstance(channels_list[0], list)»
+            if isinstance(channels_list[0], list):
+                item.channel = channels_list[0][0]
+                item.contentChannel = item.channel
+                item.url = channels_list[0][1]
+            else:
+                item.channel = channels_list[0]
+                item.contentChannel = item.channel
+        else:
+            raise Exception('No se encontraron canales válidos')
+
+    # Mostramos diálogo cuando sea un elemento para descarga inmediata (episodio o película)
+    # y no sea de servidor torrent o descarga automática (preguntarle a Kingbox para + info sobre lo último)
+    if item.action in ['play', 'findvideos'] and item.sub_action != 'auto' and not item.server == 'torrent' and not item.channel == 'list':
+        # Hacemos el diálogo de error típico con título diferente
+        from platformcode import envtal
+        error_generico = '{}[CR]{}{}'.format(config.get_localized_string(60014), config.get_localized_string(50004), envtal.get_environment()['log_path'])
+
+        # Si estamos en el listado de episodios obtenemos los enlaces y damos a elegir entre servidores
+        # TODO: Implementar funcionamiento de autoplay en esta área
+        if item.action == 'findvideos':
+            item.extra = 'findvideos'
+            result = channeltools.get_channel_attr(item.channel, 'findvideos', item)
+            if isinstance(result, list):
+                if len(result) > 1 :
+                    opciones = []
+                    for r in  result:
+                        from platformcode import unify
+                        title = unify.title_format(r).title
+                        opciones.append(title)
+                    seleccion = platformtools.dialog_select(config.get_localized_string(30163), opciones)
+                    if not seleccion == -1:
+                        # item = result[seleccion].clone(downloadServer = {"url": result[seleccion].url, "server": result[seleccion].server})
+                        item = result[seleccion]
+                    else:
+                        return False
+                elif len(result) > 0 and isinstance(result[0], Item):
+                    item = result[0]
+                else:
+                    logger.error('ERROR: result no devolvió enlaces válidos')
+                    logger.error(result)
+                    from platformcode import envtal
+                    platformtools.dialog_ok(config.get_localized_string(60208), error_generico)
+                    return False
+                item.action = 'play'
+            else:
+                raise Exception()
+
+        # Si estamos en enlaces damos a elegir calidad del servidor (si hubiera más de 1)
+        if item.action == 'play' or item.downloadServer:
+            if not item.server: item.server = 'directo'
+            # Si ya se tienen urls se aprovechan (pantalla de play, opción Descargar), sino se obtienen
+            if item.video_urls:
+                video_urls, puedes, motivo = item.video_urls, True, ""
+                # logger.info(video_urls)
+            else:
+                # Pasamos por el play del canal si existe
+                if channeltools.has_attr(item.channel, 'play'):
+                    # Verificamos que tenemos resultado válido de play y lo pasamos a item
+                    result = channeltools.get_channel_attr(item.channel, 'play', item)
+                    if isinstance(result, list):
+                        if len(result) > 0 :
+                            if isinstance(result[0], Item):
+                                item = result[0]
+                # Dependerá de cada canal si se obtienen o no los enlaces correctos
+                # No busquen problemas aquí, primero en el canal ;)
+                video_urls, puedes, motivo = servertools.resolve_video_urls_for_playing(item.server, item.url, item.password, True)
+
+            # Si se resolvieron las url para reproducción...
+            if puedes:
+                opciones = []
+                # Damos a elegir calidad de haber más de 1
+                if len(video_urls) > 1:
+                    if not isinstance(video_urls[0], list):
+                        video_urls = list([video_urls[0], video_urls[1]])
+                    
+                    for it in video_urls:
+                        opciones.append('{} {}'.format(config.get_localized_string(30153), it[0]))
+                    seleccion = platformtools.dialog_select(config.get_localized_string(30163), opciones)
+                else:
+                    seleccion = 0
+                if not seleccion == -1:
+                    item.downloadQualitySelected = video_urls[seleccion][0]
+                    item.play_menu = True
+                else:
+                    # Canceló la selección, cancelamos la descarga
+                    return False
+            else:
+                logger.error('ERROR: No se han podido obtener los enlaces')
+                if not 'motivo' in locals(): motivo = error_generico
+                platformtools.dialog_ok(config.get_localized_string(60208), motivo)
+                return False
+
+    # TODO: Hay que deshacerse del valor por defecto 'list' en item.contentChannel, da problemas difíciles de detectar
+    elif item.channel == 'list':
+        from platformcode import envtal
+        error_generico = '{}[CR]{}{}'.format(config.get_localized_string(60014), config.get_localized_string(50004), envtal.get_environment()['log_path'])
+        logger.error('ERROR: Canal de item no válido')
+        logger.error(item)
+        platformtools.dialog_ok(config.get_localized_string(60208), error_generico)
+        return False
+
+    if 'list' in item.contentChannel:
+        item.contentChannel = item.channel
+    elif not 'list' in item.contentChannel:
+        item.channel = item.contentChannel
+
     item.contentAction = item.action
     if item.contentAction in ['get_seasons', 'update_tvshow']:
         item.contentAction = 'episodios'

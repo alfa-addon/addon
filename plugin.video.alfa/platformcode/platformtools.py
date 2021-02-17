@@ -137,6 +137,7 @@ def dialog_browse(_type, heading, default=""):
     d = dialog.browse(_type, heading, 'files')
     return d
 
+
 def itemlist_refresh():
     xbmc.executebuiltin("Container.Refresh")
 
@@ -342,9 +343,7 @@ def render_items(itemlist, parent_item):
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
     # Fijamos el "breadcrumb"
-    if parent_item.list_type == '':
-        breadcrumb = parent_item.category.capitalize()
-    else:
+    if parent_item.list_type != '':
         if 'similar' in parent_item.list_type:
             if parent_item.contentTitle != '':
                 breadcrumb = 'Similares (%s)' % parent_item.contentTitle
@@ -352,6 +351,11 @@ def render_items(itemlist, parent_item):
                 breadcrumb = 'Similares (%s)' % parent_item.contentSerieName
         else:
             breadcrumb = 'Busqueda'
+    else:
+        if parent_item.category != '':
+            breadcrumb = parent_item.category.capitalize()
+        else:
+            breadcrumb = channeltools.get_channel_parameters(item.channel).get('title', '')
 
     xbmcplugin.setPluginCategory(handle=int(sys.argv[1]), category=breadcrumb)
 
@@ -554,10 +558,12 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
             else:
                 context_commands.append(
                     (command["title"], "RunPlugin(%s?%s)" % (sys.argv[0], item.clone(**command).tourl())))
+
     # No añadir más opciones predefinidas si se está dentro de Alfavoritos
     if parent_item.channel == 'alfavorites':
         return context_commands
         # Opciones segun criterios, solo si el item no es un tag (etiqueta), ni es "Añadir a la videoteca", etc...
+
     if item.action and item.action not in ["add_pelicula_to_library", "add_serie_to_library", "buscartrailer", "actualizar_titulos"]:
         # Mostrar informacion: si el item tiene plot suponemos q es una serie, temporada, capitulo o pelicula
         if item.infoLabels['plot'] and (kwargs.get('num_version_xbmc') < 17.0 or item.contentType == 'season'):
@@ -596,6 +602,7 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
 
                 context_commands.append(("ExtendedInfo",
                                          "RunScript(script.extendedinfo,info=extendedinfo,%s)" % param))
+
         # InfoPlus
         if config.get_setting("infoplus"):
             #if item.infoLabels['tmdb_id'] or item.infoLabels['imdb_id'] or item.infoLabels['tvdb_id'] or \
@@ -627,6 +634,7 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
                  (sys.argv[0], item_url, urllib.urlencode({'channel': "alfavorites", 'action': "addFavourite",
                                           'from_channel': item.channel,
                                           'from_action': item.action}))))
+
         # Buscar en otros canales
         if item.contentType in ['movie', 'tvshow'] and item.channel != 'search' and item.action not in ['play']:
 
@@ -652,7 +660,8 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
             context_commands.append(
                 ("[COLOR yellow]%s[/COLOR]" % config.get_localized_string(70561), "Container.Update (%s?%s&%s)" % (
                     sys.argv[0], item_url, 'channel=search&action=from_context&search_type=list&page=1&list_type=%s/%s/similar' % (mediatype, item.infoLabels['tmdb_id']))))
-                # Definir como Pagina de inicio
+
+        # Definir como Pagina de inicio
         if config.get_setting('start_page'):
             if item.action not in ['episodios', 'seasons', 'findvideos', 'play']:
                 context_commands.insert(0, (config.get_localized_string(60351),
@@ -661,6 +670,7 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
                                                                   action="set_custom_start",
                                                                   parent=item.tourl()).tourl())))
 
+        # Añadir a videoteca
         if item.channel != "videolibrary":
             # Añadir Serie a la videoteca
             if item.action in ["episodios", "get_episodios", "seasons"] and item.contentSerieName:
@@ -675,11 +685,17 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
                 context_commands.append((config.get_localized_string(60353), "RunPlugin(%s?%s&%s)" %
                                          (sys.argv[0], item_url, 'action=add_pelicula_to_library&from_action=' + item.action)))
 
+        # Descargar
         if item.channel != "downloads":
-            if item.channel == 'videolibrary' and item.contentChannel:
-                channel_p = item.contentChannel
+            # TODO: Deshacerse del 'list' en core.item por favor
+            if item.contentChannel and not 'list' in item.contentChannel:
+                if item.channel == 'videolibrary':
+                    channel_p = item.contentChannel
+                else:
+                    channel_p = item.channel
             else:
                 channel_p = item.channel
+
             # Descargar pelicula
             if item.contentType == "movie" and item.contentTitle:
                 context_commands.append((config.get_localized_string(60354), "RunPlugin(%s?%s&%s)" %
@@ -721,6 +737,7 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
             context_commands.append(
                 (config.get_localized_string(60359), "RunPlugin(%s?%s)" % (sys.argv[0], item.clone(
                     channel="trailertools", action="buscartrailer", contextual=True).tourl())))
+
 
         if kwargs.get('superfavourites'):
             context_commands.append((config.get_localized_string(60361),
@@ -903,7 +920,6 @@ def calcResolution(option):
     return resolution
 
 
-
 def show_channel_settings(**kwargs):
     """
     Muestra un cuadro de configuracion personalizado para cada canal y guarda los datos al cerrarlo.
@@ -1008,16 +1024,11 @@ def get_dialogo_opciones(item, default_action, strm, autoplay):
         for video_url in video_urls:
             # "Ver el video <calidad> [<server>]"
             opciones.append("{} {}".format(config.get_localized_string(30151), video_url[0]))
-        for video_url in video_urls:
-            # "Descargar <calidad> [<server>]"
-            opciones.append("{} {}".format(config.get_localized_string(30153), video_url[0]))
 
         if item.server == "local":
             opciones.append(config.get_localized_string(30164))
         else:
-            opcion = config.get_localized_string(30153)
-            opciones.append(opcion)
-
+            opciones.append("{}".format(config.get_localized_string(30153)))
             if item.isFavourite:
                 # "Quitar de favoritos"
                 opciones.append(config.get_localized_string(30154))
@@ -1084,7 +1095,9 @@ def set_opcion(item, seleccion, opciones, video_urls):
         if item.contentType == "list" or item.contentType == "tvshow":
             item.contentType = "video"
         item.play_menu = True
-        item.downloadQualitySelected = video_urls[seleccion - len(video_urls)][0]
+        item.from_action = 'play'
+        item.from_channel = item.channel
+        item.video_urls = video_urls
         downloads.save_download(item)
         salir = True
 
@@ -1226,6 +1239,7 @@ def freq_count(item):
             if not PY3: from lib import alfaresolver
             else: from lib import alfaresolver_py3 as alfaresolver
             alfaresolver.frequency_count(item)
+
 
 def torrent_client_installed(show_tuple=False):
     # Plugins externos se encuentra en servers/torrent.json nodo clients

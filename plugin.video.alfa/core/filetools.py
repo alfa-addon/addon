@@ -768,10 +768,12 @@ def isfile(path, silent=False, vfs=True):
     @rtype: bool
     @return: Retorna True si la ruta existe y es un archivo
     """
+    from platformcode import config
+    platform = config.get_system_platform()
     path = encode(path)
     try:
         if xbmc_vfs and vfs:
-            if not scrapertools.find_single_match(path, '(^\w+:\/\/)'):
+            if not scrapertools.find_single_match(path, '(^\w+:\/\/)') and not ('windows' in platform and len(path) > 260):
                 return os.path.isfile(path)
             if path.endswith('/') or path.endswith('\\'):
                 path = path[:-1]
