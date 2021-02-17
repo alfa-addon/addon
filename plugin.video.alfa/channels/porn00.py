@@ -25,7 +25,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/browse/"))
     itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/"))
     itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/"))
     itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/models/"))
