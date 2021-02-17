@@ -1550,7 +1550,7 @@ def get_episodes(item):
 
             if not isinstance(episode.contentSeason, int): episode.contentSeason = 1
             if not episode.contentEpisodeNumber: episode.contentEpisodeNumber = 1
-            episode.downloadFilename = filetools.validate_path(filetools.join(item.downloadFilename, "%dx%0.2d - %s" % (
+            episode.downloadFilename = filetools.join(item.downloadFilename, filetools.validate_path("%dx%0.2d - %s" % (
                 episode.contentSeason, episode.contentEpisodeNumber, episode.contentTitle.strip())))
 
             itemlist.append(episode)

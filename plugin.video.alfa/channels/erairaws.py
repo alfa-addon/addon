@@ -35,7 +35,7 @@ selected_sub = language_list[config.get_setting('filter_subs_lang', channel='era
 if config.get_setting('play_direct', channel='erairaws'):
     play_direct_action = 'findvideos'
 else:
-    play_direct_action = 'episodios'
+    play_direct_action = 'episodesxseason'
 
 if hide_unselected_subs:
     p_main = ' según el idioma de subtítulos seleccionado'
@@ -361,7 +361,7 @@ def list_selected(item):
 
         itemlist.append(
             Item(
-                action = 'episodios',
+                action = 'episodesxseason',
                 channel = item.channel,
                 contentSerieName = title,
                 contentTitle = title,
@@ -382,7 +382,7 @@ def list_all(item):
     if item.list_what == 'episodes':
         itemlist.extend(item_extractor(item, articles, action = play_direct_action, newest_ep_context = True))
     elif item.list_what == 'batch':
-        itemlist.extend(item_extractor(item, articles, action = 'episodios', batch = True))
+        itemlist.extend(item_extractor(item, articles, action = 'episodesxseason', batch = True))
     elif item.list_what == 'movies':
         itemlist.extend(item_extractor(item, articles, action = 'findvideos', treat_as = 'special', contentType = 'movie'))
     else:
@@ -400,13 +400,13 @@ def list_all(item):
 
     return itemlist
 
-def episodesxseason(item):
+def episodios(item):
     logger.info()
     itemlist = []
-    itemlist.extend(episodios(item, get_episodes = True))
+    itemlist.extend(episodesxseason(item, get_episodes = True))
     return itemlist
 
-def episodios(item, get_episodes = False, get_movie = False):
+def episodesxseason(item, get_episodes = False, get_movie = False):
     logger.info()
     itemlist = []
     sections = []
@@ -481,7 +481,7 @@ def episodios(item, get_episodes = False, get_movie = False):
                 action = "add_serie_to_library",
                 channel = item.channel,
                 contentSerieName = item.contentSerieName,
-                extra = 'episodesxseason',
+                extra = 'episodios',
                 text_color = 'yellow',
                 title = config.get_localized_string(70092),
                 url = item.url
@@ -522,7 +522,7 @@ def item_extractor(item, soup, contentType = 'tvshow', **kwargs):
     itemlist = []
 
     for div in soup:
-        action = kwargs.get('action', 'episodios')
+        action = kwargs.get('action', 'episodesxseason')
         infoLabels = {}
         if item.infoLabels['tmdb_id']:
             infoLabels['tmdb_id'] = item.infoLabels['tmdb_id']
@@ -631,9 +631,10 @@ def item_extractor(item, soup, contentType = 'tvshow', **kwargs):
 
         # TODO: Implementar menús contextuales personalizables
         # # Agregamos un menú para acceder a los capítulos/al episodio directamente
-        if kwargs.get('newest_ep_context') and False == True:
+        # if kwargs.get('newest_ep_context') and False == True:
+        if kwargs.get('newest_ep_context'):
             if play_direct_action == 'findvideos':
-                context_action = 'episodios'
+                context_action = 'episodesxseason'
                 context_title = 'Ver todos los capítulos'
             else:
                 context_action = 'findvideos'
@@ -645,7 +646,7 @@ def item_extractor(item, soup, contentType = 'tvshow', **kwargs):
                     "contentSerieName": contentSerieName,
                     "contentTitle": contentTitle,
                     "contentType": contentType,
-                    "goto": True,
+                    "goto": item,
                     "infoLabels": infoLabels,
                     "language": language,
                     "magnet_urls": magnet_urls,
@@ -680,7 +681,7 @@ def findvideos(item, add_to_videolibrary = False):
     itemlist = []
     if not (item.magnet_urls or item.torrent_urls):
         if item.contentType is 'movie':
-            temp_itemlist = episodios(item)
+            temp_itemlist = episodesxseason(item)
             for i in temp_itemlist:
                 if i.magnet_urls:
                     item.magnet_urls = i.magnet_urls
@@ -689,7 +690,7 @@ def findvideos(item, add_to_videolibrary = False):
             if not (item.magnet_urls or item.torrent_urls):
                 return itemlist
         else:
-            temp_itemlist = episodios(item, get_episodes = True)
+            temp_itemlist = episodesxseason(item, get_episodes = True)
             for i in temp_itemlist:
                 if i.infoLabels['episode'] == item.infoLabels['episode']:
                     item.magnet_urls = i.magnet_urls
@@ -730,7 +731,7 @@ def findvideos(item, add_to_videolibrary = False):
             itemlist.append(
                 item.clone(
                     action = "add_pelicula_to_library",
-                    extra = 'episodesxseason',
+                    extra = 'episodios',
                     text_color = 'yellow',
                     title = config.get_localized_string(70092),
                     url = item.url,

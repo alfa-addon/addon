@@ -5058,3 +5058,7 @@ msgstr ""
 msgctxt "#70762"
 msgid "Alfa Mobile Assistant Manual (helper tool)"
 msgstr ""
+
+msgctxt "#70763"
+msgid "Download from channel"
+msgstr ""

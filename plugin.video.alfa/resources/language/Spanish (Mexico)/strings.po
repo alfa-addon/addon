@@ -880,7 +880,7 @@ msgstr "Tiempo restante: %s"
 
 msgctxt "#60203"
 msgid "Downloader %s/%s"
-msgstr "Gestor de descarga %s/%s"
+msgstr "Gestor de descargas %s/%s"
 
 msgctxt "#60204"
 msgid "Speed Meter"
@@ -5055,3 +5055,7 @@ msgstr "Reportar un fallo"
 msgctxt "#70762"
 msgid "Alfa Mobile Assistant Manual (helper tool)"
 msgstr "Manual de Alfa Mobile Assistant (herramienta de apoyo)"
+
+msgctxt "#70763"
+msgid "Download from channel"
+msgstr "Descargar desde el canal"
