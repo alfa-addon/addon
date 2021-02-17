@@ -28,7 +28,7 @@
         "url": "http://hqq.tv/player/hash.php?hash=\\1"
       },
       {
-        "pattern": "https://megaplay.cc/player/embed_player.php?vid=([A-z0-9]+)",
+        "pattern": "(?:hqq|megaplay).(?:tv|cc)/player/embed_player.php\\?vid=([A-z0-9]+)",
         "url": "http://hqq.tv/player/hash.php?hash=\\1"
       }
 

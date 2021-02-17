@@ -24,9 +24,9 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['mangovideo']
 
-# https://playpornfree.org/    https://mangoporn.net/   https://watchfreexxx.net/   https://losporn.org/  https://xxxstreams.me/  https://speedporn.net/
+# https://playpornfree.org/   https://streamporn.pw/  https://mangoporn.net/   https://watchfreexxx.net/   https://losporn.org/  https://xxxstreams.me/  https://speedporn.net/
 
-host = 'https://watchpornfree.info'   #'https://xxxparodyhd.net'  'http://www.veporns.com'  'http://streamporno.eu'  playpornx
+host = 'https://watchpornfree.info'   #'https://xxxparodyhd.net'      playpornx
 
                                 # KTP no resuelve
 

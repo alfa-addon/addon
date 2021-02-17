@@ -24,9 +24,10 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['gounlimited']
 
-host = 'http://streamporno.eu'    #'https://watchpornfree.info'   'https://xxxparodyhd.net'  'http://www.veporns.com' 'http://www.veporno.net'    https://www.fxporn.net
-
+host = 'https://pornstreams.eu'     #
+                                
 # Links caidos en canal y categorias
+
 
 def mainlist(item):
     logger.info()
@@ -76,6 +77,12 @@ def categorias(item):
         itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
+
+# <article id="post-200925" class="post-200925 post type-post status-publish format-standard has-post-thumbnail hentry category-pornstreams tag-nubiles"><div class="featured-image"> 
+# <a href="https://pornstreams.eu/nubiles-madison-love-thinking-of-you/" title="Nubiles &#8211; Madison Love &#8211; Thinking Of You">
+# <img width="622" height="350" src="https://pornstreams.eu/wp-content/uploads/2021/02/Nubiles-Madison-Love-Thinking-Of-You.jpg" class="attachment-colormag-featured-image size-colormag-featured-image wp-post-image" alt="Nubiles   Madison Love   Thinking Of You" srcset="https://pornstreams.eu/wp-content/uploads/2021/02/Nubiles-Madison-Love-Thinking-Of-You.jpg 622w, https://pornstreams.eu/wp-content/uploads/2021/02/Nubiles-Madison-Love-Thinking-Of-You-300x169.jpg 300w" sizes="(max-width: 622px) 100vw, 622px" title="Nubiles Madison Love Thinking Of You" /></a></div><div class="article-content clearfix"><div class="above-entry-meta"><span class="cat-links"><a href="https://pornstreams.eu/category/pornstreams/"  rel="category tag">Pornstreams</a>&nbsp;</span></div><header class="entry-header"><h2 class="entry-title"> <a href="https://pornstreams.eu/nubiles-madison-love-thinking-of-you/" title="Nubiles &#8211; Madison Love &#8211; Thinking Of You">Nubiles &#8211; Madison Love &#8211; Thinking Of You</a></h2></header><div class="below-entry-meta"> <span class="posted-on"><a href="https://pornstreams.eu/nubiles-madison-love-thinking-of-you/" title="1:08 pm" rel="bookmark"><i class="fa fa-calendar-o"></i> <time class="entry-date published" datetime="2021-02-06T13:08:45+00:00">February 6, 2021</time></a></span> <span class="byline"><span class="author vcard"><i class="fa fa-user"></i><a class="url fn n"
+ # href="https://pornstreams.eu/author/admin/"
+ # title="admin">admin</a></span></span> <span class="tag-links"><i class="fa fa-tags"></i><a href="https://pornstreams.eu/tag/nubiles/" rel="tag">Nubiles</a></span></div><div class="entry-content clearfix"> <a class="more-link" title="Nubiles &#8211; Madison Love &#8211; Thinking Of You" href="https://pornstreams.eu/nubiles-madison-love-thinking-of-you/"><span>Read more</span></a></div></div></article>
 
 
 def lista(item):

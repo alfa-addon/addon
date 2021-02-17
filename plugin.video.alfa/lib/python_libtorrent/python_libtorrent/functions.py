@@ -44,8 +44,8 @@ __libbaseurl__ = ["https://github.com/DiMartinoXBMC/script.module.libtorrent/raw
 #__icon__= filetools.join(filetools.translatePath('special://home'), 'addons',
 #                                   'script.module.libtorrent', 'icon.png')
 #__settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                         ### Alfa
-__version__ = '2.0.1'                                                           ### Alfa
-__plugin__ = "python-libtorrent v.2.0.1"                                        ### Alfa
+__version__ = '2.0.2'                                                           ### Alfa
+__plugin__ = "python-libtorrent v.2.0.2"                                        ### Alfa
 __icon__= filetools.join(filetools.translatePath('special://home'), 'addons',
                                    'plugin.video.alfa', 'icon.png')             ### Alfa
 #__language__ = __settings__.getLocalizedString                                 ### Alfa
@@ -96,7 +96,7 @@ class LibraryManager(object):
         if dest_path: self.dest_path = dest_path
         if platform: self.platform = platform
         for libname in get_libname(self.platform):
-            if not filetools.exists(filetools.join(self.dest_path,libname)):
+            if not filetools.exists(filetools.join(self.dest_path, libname)):
                 return False
         return True
 
@@ -177,11 +177,12 @@ class LibraryManager(object):
                 else:
                     filetools.copy(filetools.join(self.dest_path, 'libtorrent.so'), dest, silent=True)    ### Alfa
                 
-                dest_alfa = filetools.join(filetools.translatePath(__settings__.getAddonInfo('Path')), \
-                                'lib', libname)                                 ### Alfa
+                #dest_alfa = filetools.join(filetools.translatePath(__settings__.getAddonInfo('Path')), \
+                #                'lib', libname)                                 ### Alfa
                 #filetools.copy(dest, dest_alfa, silent=True)                    ### Alfa
                 dest_alfa = filetools.join(filetools.translatePath(__settings__.getAddonInfo('Profile')), \
-                                'custom_code', 'lib', libname)                  ### Alfa
+                                'bin', libname)                                 ### Alfa
+                filetools.remove(dest_alfa, silent=True)
                 filetools.copy(dest, dest_alfa, silent=True)                    ### Alfa
                 break
             else:

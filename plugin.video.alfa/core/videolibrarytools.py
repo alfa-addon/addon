@@ -448,8 +448,15 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             continue
         
         try:
-            season_episode = scrapertools.get_season_and_episode(e.title)
-            if not season_episode or 'temp. a videoteca' in e.title.lower() \
+            if isinstance(e.contentSeason, int):
+                season_episode = e.contentSeason
+            else:
+                season_episode = scrapertools.get_season_and_episode(e.title)
+            if e.infoLabels['episode'] and e.infoLabels['season']:
+                season_episode = scrapertools.get_season_and_episode(str(e.infoLabels['season']) + 'x' + str(e.infoLabels['episode']))
+            if not isinstance(e.contentSeason, int):
+                season_episode = scrapertools.get_season_and_episode(e.title)
+            if not isinstance(e.contentSeason, int) or 'temp. a videoteca' in e.title.lower() \
                             or 'serie a videoteca' in e.title.lower() \
                             or 'vista previa videoteca' in e.title.lower():
                 continue
@@ -483,7 +490,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             
             if not e.infoLabels["tmdb_id"] or (serie.infoLabels["tmdb_id"] and e.infoLabels["tmdb_id"] != serie.infoLabels["tmdb_id"]):                                                    #en series multicanal, prevalece el infolabels...
                 e.infoLabels = serie.infoLabels                             #... del canal actual y no el del original
-            e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
+            if not (isinstance(e.contentSeason, int) and isinstance(e.contentSeason, int)):
+                e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
             if e.videolibray_emergency_urls:
                 del e.videolibray_emergency_urls
             if e.video_path:
@@ -643,7 +651,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 tvshow_item.active = 1
             if tvshow_item.infoLabels["tmdb_id"] == serie.infoLabels["tmdb_id"]:
                 tvshow_item.infoLabels = serie.infoLabels
-                tvshow_item.infoLabels["title"] = tvshow_item.infoLabels["tvshowtitle"] 
+                if tvshow_item.infoLabels["tvshowtitle"]: tvshow_item.infoLabels["title"] = tvshow_item.infoLabels["tvshowtitle"]
+                elif tvshow_item.infoLabels["title"]: tvshow_item.infoLabels["tvshowtitle"] = tvshow_item.infoLabels["title"]
                 tvshow_item.infoLabels["thumbnail"] = tvshow_item.infoLabels["thumbnail"].replace('http:', 'https:')
                 if tvshow_item.infoLabels["thumbnail"]: tvshow_item.thumbnail = tvshow_item.infoLabels["thumbnail"]
                 tvshow_item.infoLabels["fanart"] = tvshow_item.infoLabels["fanart"].replace('http:', 'https:')
