@@ -142,19 +142,18 @@ def generos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = 'navigation","name":"([^"]+).*?'
-    patron += 'url":"([^"]+)'
+    patron  = 'menu-item-object-category.*?href="([^"]+).*?'
+    patron += '>([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for titulo, url in matches:
-        titulo = codecs.decode(titulo,"unicode-escape")
-        url = url.replace("\\","")
-        genero = scrapertools.find_single_match(url, "tv/([^/]+)")
+    for url, titulo in matches:
+        genero = scrapertools.find_single_match(url, "/([^/]+)")
         if "neros" in titulo or "Twitch" in titulo: continue
         itemlist.append(Item(channel = item.channel,
                              action = "peliculas",
                              query = '"category_name":"%s"' %genero,
                              pagina = 0,
                              title = titulo,
+                             url = host + url
                              ))
     itemlist = sorted(itemlist, key=lambda i: i.title)
     return itemlist
@@ -185,7 +184,7 @@ def peliculas(item):
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     item.pagina += 1
     pagina = "Pagina: %s" %(item.pagina + 1)
-    itemlist.append(Item(channel = item.channel, action = "peliculas", genero=item.genero, title = pagina, pagina = item.pagina))
+    itemlist.append(Item(channel = item.channel, action = "peliculas", query=item.query, title = pagina, pagina = item.pagina))
     return itemlist
 
 
@@ -254,6 +253,9 @@ def get_url(url):
             itemlist=cuevana3.play(item)
             url = itemlist[0].url
             return item.url
+        id = scrapertools.find_single_match(url, 'cc/(\w+)')
+        url = "https://sc.streamcrypt.net/hoster.streamz.cc.embed.php?p=2&id=" + id
+        url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
     return url
 
 

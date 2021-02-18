@@ -33,7 +33,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     patron = 'file: "([^"]+)",'
     matches = scrapertools.find_multiple_matches(data.data, patron)
     for url in matches:
-        url += "|Referer=%s" %page_url
+        url += "|verifypeer=false&Referer=%s" %page_url
         if ".mp4" in url:
             video_urls.append(['.mp4 [CinemaUpload]', url])
         else:
