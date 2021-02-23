@@ -52,9 +52,9 @@ def destacadas(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     bloque = scrapertools.find_single_match(data, 'destacadas.*?Agregadas')
-    patron  = '(?is)poster-media-card"> <a href="([^"]+)'
-    patron += '.*?title="([^"]+)'
-    patron += '.*?data-lazy-src="([^"]+)'
+    patron  = '(?is)poster-media-card"><a href="([^"]+).*?'
+    patron += 'title="([^"]+).*?'
+    patron += 'src="([^"]+)'
     matches = scrapertools.find_multiple_matches(bloque, patron)
     for url, titulo, thumbnail  in matches:
         year = scrapertools.find_single_match(titulo, ' \(.*?\)')
@@ -209,8 +209,10 @@ def findvideos(item):
                         action="play",
                         url=url
                        ))
-    patron = '(?is)<a href=".*?go.([^"]+)" class="btn btn-xs btn-info.*?<span>([^<]+)</span>.*?<td>([^<]+)'
-    matches = scrapertools.find_multiple_matches(data, patron)
+    patron = 'Enlaces de descarga.*?Comentarios sobre'
+    bloque = scrapertools.find_single_match(data, patron)
+    patron = '(?is)href="([^"]+).*?Descargar.*?<span>([^<]+)<.*?<td>([^<]+)'
+    matches = scrapertools.find_multiple_matches(bloque, patron)
     for url, srv, language in matches:
         if url in encontrado or ".srt" in url:
             continue
