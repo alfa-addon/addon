@@ -33,9 +33,9 @@
 			"visible": true
 		},
 		{
-			"id": "prefer_hla_review",
+			"id": "prefer_tmdb_review",
 			"type": "bool",
-			"label": "Preferir reseñas del tío YT sobre las de TMDB (no se utilizarán las de TMDB si existen)",
+			"label": "Preferir reseñas de TMDB sobre las de HLA (si existen)",
 			"default": true,
 			"enabled": true,
 			"visible": true

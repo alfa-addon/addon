@@ -13,12 +13,9 @@ import math
 import traceback
 import re
 
-from core import filetools
-from core import scraper
-from core import scrapertools
+from core import filetools, scraper, scrapertools
 from core.item import Item
-from platformcode import config, logger
-from platformcode import platformtools
+from platformcode import config, logger, platformtools
 from lib import generictools
 
 FOLDER_MOVIES = config.get_setting("folder_movies")
@@ -32,6 +29,53 @@ if not FOLDER_MOVIES or not FOLDER_TVSHOWS or not VIDEOLIBRARY_PATH \
     config.verify_directories_created()
 
 addon_name = "plugin://plugin.video.%s/" % config.PLUGIN_NAME
+
+def get_content_channels(item):
+    """
+    Obtiene los canales de videolibrary asociados a un item y sus urls
+    Las funciones findvideos devuelven una lista con ['nombre_canal', 'http://url.de/contenido/en-canal']
+    Las demás funciones solo devuelven una lista con ['nombre_canal']
+    @param item: item de videoteca (item.channel == 'videolibrary')
+    @type item: item
+
+    @return: lista con canales disponibles para el item en videoteca
+    @rtype: list
+    """
+    if item.library_urls:
+        library_urls = []
+        for channel, url in item.library_urls.items():
+            if not 'downloads' in channel:
+                library_urls.append([channel, url])
+        return library_urls
+    else:
+        canales = []
+        list_canales = []
+        content_title = "".join(c for c in item.contentTitle.strip().lower() if c not in ":*?<>|\\/")
+
+        if item.contentType == 'movie':
+            item.strm_path = filetools.join(MOVIES_PATH, item.strm_path)
+            path_dir = filetools.dirname(item.strm_path)
+            item.nfo = filetools.join(path_dir, filetools.basename(path_dir) + ".nfo")
+        else:
+            item.strm_path = filetools.join(TVSHOWS_PATH, item.strm_path)
+            path_dir = filetools.dirname(item.strm_path)
+            item.nfo = filetools.join(path_dir, 'tvshow.nfo')
+
+        from core import jsontools
+        for fd in filetools.listdir(path_dir):
+            if fd.endswith('.json'):
+                contenido, channel_name = fd[:-6].split('[')
+                if (contenido.startswith(content_title) or item.contentType == 'movie') and \
+                        channel_name not in canales and channel_name != 'downloads':
+                    jsonpath = filetools.join(path_dir, fd)
+                    jsonitem = Item().fromjson(filetools.read(jsonpath))
+                    canales.append(channel_name)
+                    list_canales.append([channel_name, '{}'.format(jsonitem.url)])
+                    logger.info(jsonpath)
+                    logger.info(channel_name)
+                    logger.info(jsonitem)
+        
+        return list_canales
 
 
 def read_nfo(path_nfo, item=None):
@@ -448,15 +492,21 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             continue
         
         try:
-            if isinstance(e.contentSeason, int):
-                season_episode = e.contentSeason
-            else:
-                season_episode = scrapertools.get_season_and_episode(e.title)
-            if e.infoLabels['episode'] and e.infoLabels['season']:
-                season_episode = scrapertools.get_season_and_episode(str(e.infoLabels['season']) + 'x' + str(e.infoLabels['episode']))
-            if not isinstance(e.contentSeason, int):
-                season_episode = scrapertools.get_season_and_episode(e.title)
-            if not isinstance(e.contentSeason, int) or 'temp. a videoteca' in e.title.lower() \
+            # Valor por defecto por si no se provee temporada = 1
+            # No podemos darle valor de episodio por defecto
+            if e.contentEpisodeNumber and isinstance(e.contentSeason, int):
+                season_episode = scrapertools.get_season_and_episode('{}x{}'.format(e.contentSeason, e.contentEpisodeNumber))
+            elif scrapertools.find_single_match(e.title.lower(), '(?i)\d+x(\d+)'):
+                season_episode = scrapertools.get_season_and_episode(e.title.lower())
+            elif e.contentEpisodeNumber:
+                season_episode = scrapertools.get_season_and_episode('{}x{}'.format(1, e.contentEpisodeNumber))
+            elif scrapertools.find_single_match(e.title.lower(), '(?i)x(\d+)'):
+                episode_number = scrapertools.find_single_match(e.title.lower(), '(?i)x(\d+)')
+                season_episode = scrapertools.get_season_and_episode('{}x{}'.format(1, episode_number))
+            if not season_episode:
+                season_episode = scrapertools.get_season_and_episode(e.title.lower())
+
+            if not season_episode or 'temp. a videoteca' in e.title.lower() \
                             or 'serie a videoteca' in e.title.lower() \
                             or 'vista previa videoteca' in e.title.lower():
                 continue

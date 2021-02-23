@@ -98,10 +98,10 @@ def check_item_for_exception(data):
     return data
 
 def newest(item):
+    item.url = host + base_url_start + '/-/ESTRENO' + base_url_end,
     return list_all(item)
 
 def list_all(item):
-    # Puede que el código sea útil después
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -135,7 +135,7 @@ def list_all(item):
     if nextpage != False:
         itemlist.append(
             Item(
-                action = 'newest',
+                action = 'list_all',
                 channel =  item.channel,
                 title =  '[COLOR orange]Siguiente página > [/COLOR]',
                 url = nextpage
@@ -174,7 +174,7 @@ def get_nextrow_url(current_url, total_results):
     tmdb.set_infoLabels(itemlist, seekTmdb = True, idioma_busqueda = 'es')
     return itemlist
 
-def seasons(item):
+def seasons(item, get_episodes = False):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -187,38 +187,38 @@ def seasons(item):
         infoLabels['season'] = scpseasonnum
         itemlist.append(
             Item(
-                action = "episodios",
+                action = "episodesxseason",
                 channel = item.channel,
                 infoLabels = infoLabels,
                 title = "Temporada %s" % infoLabels['season'],
                 url = scpurl,
             )
         )
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True, idioma_busqueda = 'es')
-    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra:
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True)
+    if config.get_videolibrary_support() and len(itemlist) > 0 and not get_episodes:
         itemlist.append(
             Item(
                 channel = item.channel,
                 title = '[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
                 url = item.url,
                 action = "add_serie_to_library",
-                extra = "episodesxseason",
+                extra = "episodios",
                 contentSerieName = item.contentSerieName
             )
         )
     return itemlist
 
-def episodesxseason(item):
+def episodios(item):
     logger.info()
     itemlist = []
-    eplist = seasons(item)
+    eplist = seasons(item, True)
 
     for episode in eplist:
-        itemlist.extend(episodios(episode))
+        itemlist.extend(episodesxseason(episode))
 
     return itemlist
 
-def episodios(item):
+def episodesxseason(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -244,7 +244,7 @@ def episodios(item):
                 url = scpurl
             )
         )
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True, idioma_busqueda = 'es')
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True)
     return itemlist
 
 def findvideos(item):
@@ -287,7 +287,7 @@ def search(item, texto):
                         url = scpurl
                     )
                 )
-            tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True, idioma_busqueda = 'es')
+            tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True)
             return itemlist
         except:
             for line in sys.exc_info():

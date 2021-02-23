@@ -1051,8 +1051,8 @@ def report_send(item, description='', fatal=False):
                 'headers', '', '', 'location', '0.99', '15', False, '', '', ''),
     'file.io': ('1', 'https://file.io/', '', 'random', '', 'expires=1w', 
                 'requests', 'json', 'key', '', '99.0', '30', False, '', '.log', ''), 
-    'uploadfiles': ('1', 'https://up.uploadfiles.io/upload', '', 'random', '', '', 
-                'requests', 'json', 'url', '', '99.0', '30', False, None, '', '') 
+    'uploadfiles': ('1', 'https://up.ufile.io/v1/upload', '', 'random', '', '', 
+                'curl', 'json', 'url', '', '99.0', '30', False, None, '', '') 
                  }
     pastebin_list_last = ['hastebin', 'ghostbin', 'file.io']            # Estos servicios los dejamos los últimos
     pastebin_one_use = ['file.io']                                      # Servidores de un solo uso y se borra
@@ -1108,7 +1108,7 @@ def report_send(item, description='', fatal=False):
     random.shuffle(pastebin_dir)
     pastebin_dir.extend(pastebin_list_last)                             # Estos servicios los dejamos los últimos
     
-    #pastebin_dir = ['uploadfiles']                                      # Para pruebas de un servicio
+    pastebin_dir = ['uploadfiles']                                      # Para pruebas de un servicio
     #log_data = 'TEST PARA PRUEBAS DEL SERVICIO'
         
     # Se recorre la lista de servidores "pastebin" hasta localizar uno activo, con capacidad y disponibilidad
@@ -1151,7 +1151,7 @@ def report_send(item, description='', fatal=False):
         try:
             # Se crea el POST con las opciones del servidor "pastebin"
             # Se trata el formato de "requests"
-            if paste_type == 'requests':
+            if paste_type in  ['requests', 'curl']:
                 paste_file = {'file': (paste_title+'.log', log_data)}
                 if paste_post1:
                     paste_file.update(paste_post1)
@@ -1193,6 +1193,29 @@ def report_send(item, description='', fatal=False):
                 data = httptools.downloadpage(paste_host, params=paste_params, file=log_data, 
                             file_name=paste_title+'.log', timeout=paste_timeout, 
                             random_headers=paste_random_headers, headers=paste_headers)
+            
+            elif paste_type == 'curl':
+                paste_sufix = '/create_session'
+                data_post = {'file_size': len(log_data)}
+                data = requests.post(paste_host+paste_sufix, data=data_post, timeout=paste_timeout).content
+                data = jsontools.load(data)
+                if not data.get("fuid", ""): raise
+                fuid = data["fuid"]
+                
+                paste_sufix = '/chunk'
+                data_post = {'fuid': fuid, 'chunk_index': 1}
+                files = {'file': log_data}
+                data = requests.post(paste_host+paste_sufix, files=files, data=data_post, timeout=paste_timeout).content
+                if not 'successful' in data: raise
+                
+                data = {}
+                paste_sufix = '/finalise'
+                data_post = {'fuid': fuid, 'total_chunks': 1, 'file_name': paste_title+'.log', 'file_type': 'doc'}
+                resp = requests.post(paste_host+paste_sufix, data=data_post, timeout=paste_timeout)
+                if not resp.content: raise
+                data['data'] = resp.content
+                data = type('HTTPResponse', (), data)
+        
         except:
             msg = 'Inténtelo más tarde'
             logger.error('Fallo al guardar el informe. ' + msg)
@@ -1207,7 +1230,7 @@ def report_send(item, description='', fatal=False):
                 paste_host_return = ''
             
             # Respuestas a peticiones REQUESTS
-            if paste_type == 'requests':                                # Respuesta de petición tipo "requests"?
+            if paste_type in ['requests', 'curl']:                                      # Respuesta de petición tipo "requests"?
                 if paste_resp == 'json':                                                # Respuesta en formato JSON?
                     if paste_resp_key in data.data:
                         if not paste_url:
