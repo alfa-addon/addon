@@ -22,7 +22,7 @@ from past.utils import old_div
 import datetime
 import re
 import time
-
+import codecs
 from core import filetools
 from core import httptools
 from core import jsontools
@@ -217,6 +217,7 @@ def get_server_from_url(url):
     return devuelve
 
 def parse_hls(video_urls, server):
+    logger.info()
     from core import scrapertools
 
     hs = ''
@@ -243,7 +244,7 @@ def parse_hls(video_urls, server):
         
         data = httptools.downloadpage(url, headers=headers).data
         patron = r'#EXT-X-STREAM-INF.*?RESOLUTION=(\d+x\d+).*?\s(http.*?)\s'
-        matches = scrapertools.find_multiple_matches(data, patron)
+        matches = scrapertools.find_multiple_matches(codecs.decode(data, "utf-8"), patron)
 
         if len(matches) > 1:
             for res, video_url in matches:
