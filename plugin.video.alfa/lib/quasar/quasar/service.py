@@ -25,4 +25,9 @@ def run():
     while not monitor.abortRequested():
         xbmc.sleep(1000)
 
+    try:
+        monitor.onAbortRequested()
+    except:
+        pass
+    
     log.info("quasar: exiting quasard")
