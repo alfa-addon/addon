@@ -50,15 +50,15 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url) 
-    matches = soup.find('div', class_='margin-fix').find_all('a', class_='th')
+    soup = create_soup(item.url).find('div', class_='main')
+    matches = soup.find_all('a', class_='th')
     for elem in matches:
         url = elem['href']
         title = elem['title']
         thumbnail = elem.img['data-src']
-        cantidad = elem.find_all('span', class_='text')
+        cantidad = elem.find_all('div', class_='item')
         if cantidad:
-            title = "%s (%s)" % (title,cantidad[1].text.strip())
+            title = "%s (%s)" % (title,cantidad[0].text.strip())
         plot = ""
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
@@ -84,14 +84,14 @@ def create_soup(url, referer=None, unescape=False):
 def lista(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    matches = soup.find_all('div', class_='th')
+    soup = create_soup(item.url).find('div', class_='main')
+    matches = soup.find_all('a', class_='th')
     for elem in matches:
-        url = elem.a['href']
-        stitle = elem.a['title']
+        url = elem['href']
+        stitle = elem['title']
         thumbnail = elem.img['data-src']
         thumbnail = re.sub("/\d+x\d+/", "/240x180/", thumbnail)
-        stime = elem.find('span', class_='th-time').text.strip()
+        stime = elem.find('span', class_='th-duration').text.strip()
         if stime:
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
         plot = ""

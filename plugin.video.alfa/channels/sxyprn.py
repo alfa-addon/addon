@@ -42,8 +42,8 @@ def mainlist(item):
     itemlist.append(item.clone(title="Sitios" , action="catalogo", url=host + "?op", check=check))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "?op", check=check))
     itemlist.append(item.clone(title="Buscar...", action="search", op=True, check=check))
-
     itemlist.append(item.clone(title="", folder=0))
+
     itemlist.append(item.clone(title="[COLOR %s]Con Assistant[/COLOR]" %check , action="submenu", check=check))
     
     autoplay.show_option(item.channel, itemlist)
@@ -172,11 +172,12 @@ def lista(item):
         url = urlparse.urljoin(item.url,url)
         itemlist.append(item.clone(action="findvideos", title=title, url=url, contentTitle = title,
                           thumbnail=thumbnail, fanart=thumbnail, ext=ext))
-    next_page = soup.find('div', class_='next_page')
-    if next_page:
-        next_page = next_page.parent['href']
+    next_page = soup.find('div', class_='ctrl_sel').parent
+    if next_page.find_next_sibling("a"):
+        next_page = next_page.find_next_sibling("a")['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        
     return itemlist
 
 
