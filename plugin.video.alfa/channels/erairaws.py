@@ -397,7 +397,6 @@ def list_all(item):
                 url = nextpage.find('a', class_='next')['href']
             )
         )
-
     return itemlist
 
 def episodios(item):
@@ -631,8 +630,8 @@ def item_extractor(item, soup, contentType = 'tvshow', **kwargs):
 
         # TODO: Implementar menús contextuales personalizables
         # # Agregamos un menú para acceder a los capítulos/al episodio directamente
-        # if kwargs.get('newest_ep_context') and False == True:
-        if kwargs.get('newest_ep_context'):
+        if kwargs.get('newest_ep_context') and False == True:
+        # if kwargs.get('newest_ep_context'):
             if play_direct_action == 'findvideos':
                 context_action = 'episodesxseason'
                 context_title = 'Ver todos los capítulos'
@@ -646,7 +645,7 @@ def item_extractor(item, soup, contentType = 'tvshow', **kwargs):
                     "contentSerieName": contentSerieName,
                     "contentTitle": contentTitle,
                     "contentType": contentType,
-                    "goto": item,
+                    "goto": context_action,
                     "infoLabels": infoLabels,
                     "language": language,
                     "magnet_urls": magnet_urls,
@@ -667,6 +666,7 @@ def item_extractor(item, soup, contentType = 'tvshow', **kwargs):
                 context = context,
                 infoLabels = infoLabels,
                 language = language,
+                language_list = IDIOMAS.values(),
                 magnet_urls = magnet_urls,
                 quality = quality_list,
                 title = title,
@@ -731,7 +731,7 @@ def findvideos(item, add_to_videolibrary = False):
             itemlist.append(
                 item.clone(
                     action = "add_pelicula_to_library",
-                    extra = 'episodios',
+                    extra = 'episodesxseason',
                     text_color = 'yellow',
                     title = config.get_localized_string(70092),
                     url = item.url,

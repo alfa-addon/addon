@@ -408,8 +408,9 @@ def findvideos(item):
     itemlist = []
 
     if not item.contentSerieName:
+        headers = {"Cookie": "tipo_contenido=%s" % item.tmod}
         post = {"pelicula": item.content_id}
-        data = httptools.downloadpage(xhr_film, post=post).json
+        data = httptools.downloadpage(xhr_film, post=post, headers=headers).json
 
         for langs in data:
             language = IDIOMAS.get(langs, langs)
