@@ -101,20 +101,10 @@ def init():
         
         #Verifica si la Base de Datos de Vídeo tiene la fuente de CINE con useFolderNames=1
         set_Kodi_video_DB_useFolderNames()
-
+        
         #LIBTORRENT: se descarga el binario de Libtorrent cada vez que se actualiza Alfa
-        try:
-            threading.Thread(target=update_libtorrent).start()          # Creamos un Thread independiente, hasta el fin de Kodi
-            time.sleep(2)                                               # Dejamos terminar la inicialización...
-        except:                                                         # Si hay problemas de threading, nos vamos
-            logger.error(traceback.format_exc())
-        
-        #TORREST: Hacemos unas modificaciones a Torrest, si está instalado
-        if xbmc.getCondVisibility('System.HasAddon("plugin.video.torrest")') \
-                    and not config.get_setting('addon_update_timer', default=0):
-            from platformcode import updater
-            updater.check_update_to_others(app=False)
-        
+        update_libtorrent()
+
         #QUASAR: Preguntamos si se hacen modificaciones a Quasar
         if not filetools.exists(filetools.join(config.get_data_path(), "quasar.json")) \
                     and not config.get_setting('addon_quasar_update', default=False):
@@ -123,36 +113,33 @@ def init():
         #QUASAR: Hacemos las modificaciones a Quasar, si está permitido, y si está instalado
         if config.get_setting('addon_quasar_update', default=False) or \
                     (filetools.exists(filetools.join(config.get_data_path(), \
-                    "quasar.json")) and not xbmc.getCondVisibility('System.HasAddon("plugin.video.quasar")')):
+                    "quasar.json")) and xbmc.getCondVisibility('System.HasAddon("plugin.video.quasar")')):
             if not update_external_addon("quasar"):
                 platformtools.dialog_notification("Actualización Quasar", "Ha fallado. Consulte el log")
         
         #Existe carpeta "custom_code" ? Si no existe se crea y se sale
         custom_code_dir = filetools.join(ADDON_USERDATA_PATH, 'custom_code')
+        custom_code_json_path = ADDON_PATH
+        custom_code_json = ADDON_CUSTOMCODE_JSON
         if not filetools.exists(custom_code_dir):
             create_folder_structure(custom_code_dir)
-            return
-        
-        else:
-            #Existe "custom_code.json" ? Si no existe se crea
-            custom_code_json_path = ADDON_PATH
-            custom_code_json = ADDON_CUSTOMCODE_JSON
-            if not filetools.exists(custom_code_json):
-                create_json(custom_code_json_path)
-            
-            #Se verifica si la versión del .json y del add-on son iguales.  Si es así se sale.  Si no se copia "custom_code" al add-on
-            verify_copy_folders(custom_code_dir, custom_code_json_path)
+        #Existe "custom_code.json" ? Si no existe se crea
+        if not filetools.exists(custom_code_json):
+            create_json(custom_code_json_path)
+        #Se verifica si la versión del .json y del add-on son iguales.  Si es así se sale.  Si no se copia "custom_code" al add-on
+        verify_copy_folders(custom_code_dir, custom_code_json_path)
         
         #Si se han quedado "colgadas" descargas con archivos .RAR, se intenta identificarlos y reactivar el UnRar
         reactivate_unrar(init=True, mute=True)
         
         #Inicia un rastreo de vídeos decargados desde .torrent: marca los VISTOS y elimina los controles de los BORRADOS
-        from servers import torrent
+        from servers.torrent import mark_torrent_as_watched
         try:
-            threading.Thread(target=torrent.mark_torrent_as_watched).start()    # Creamos un Thread independiente, hasta el fin de Kodi
+            threading.Thread(target=mark_torrent_as_watched).start()            # Creamos un Thread independiente, hasta el fin de Kodi
             time.sleep(2)                                                       # Dejamos terminar la inicialización...
         except:                                                                 # Si hay problemas de threading, nos vamos
             logger.error(traceback.format_exc())
+
     except:
         logger.error(traceback.format_exc())
 
@@ -509,10 +496,7 @@ def update_libtorrent():
             current_system = ''
             current_version = ''
             
-        if '1.1.1' in current_version or 'arm' in current_system or 'aarch64' in current_system: current_version = ''
-
-        if current_version.startswith('2') and xbmc.getCondVisibility("system.platform.linux"):
-            current_version = ''
+        if '1.1.1' not in current_version and ('arm' in current_system or 'aarch64' in current_system): current_version = ''
 
         version_base = filetools.join(version_base, current_system)
         if current_version:
@@ -594,7 +578,7 @@ def verify_Kodi_video_DB():
 def set_Kodi_video_DB_useFolderNames():
     logger.info()
     
-    from platformcode import xbmc_videolibrary
+    from platformcode.xbmc_videolibrary import execute_sql_kodi
 
     strPath = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"), ' ').strip()
     scanRecursive = 2147483647
@@ -602,7 +586,7 @@ def set_Kodi_video_DB_useFolderNames():
     sql = 'UPDATE path SET useFolderNames=1 WHERE (strPath="%s" and scanRecursive=%s and strContent="movies" ' \
                         'and useFolderNames=0)' % (strPath, scanRecursive)
                       
-    nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql)
+    nun_records, records = execute_sql_kodi(sql)
     
     if nun_records > 0:
         logger.debug('MyVideos DB updated to Videolibrary %s useFolderNames=1' % config.get_setting("folder_movies"))
@@ -610,9 +594,9 @@ def set_Kodi_video_DB_useFolderNames():
 
 def reactivate_unrar(init=False, mute=True):
     logger.info()
-    from servers import torrent
+    from servers.torrent import torrent_dirs
     
-    torrent_paths = torrent.torrent_dirs()
+    torrent_paths = torrent_dirs()
     download_paths = []
     
     for torr_client, save_path_videos in list(torrent_paths.items()):

@@ -3117,7 +3117,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     url_total = url                                     #Guardamos la suma de los resultados intermedios
                 if item.channel == channel_py or channel in fail_over_list:     #Si es Newpct1...
                     #if item.contentType == "tvshow" and ow_force != 'no':       #parece que con el título encuentra.., ### VIGILAR
-                    if item.contentType in ["tvshow", "season"] and canal_org != canal_des: #parece que con el título solo encuentra..,
+                    if item.contentType in ["tvshow", "season"] and canal_org not in canal_des: #parece que con el título solo encuentra..,
                         url_total = re.sub(r'\/\d{4,20}\/*$', '', url_total)    #mejor la serie, a menos que sea una redir del mismo canal
                         item.channel_redir = item.category
                 update_stat += 1                                                #Ya hemos actualizado algo
@@ -4039,10 +4039,10 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
                     s = subprocess.Popen(params, shell=False, creationflags=creationFlags, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 else:
                     s = subprocess.Popen(params, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                res = s
                 
                 # Si se ha pedido esperar hasta que termine el browser...
                 if wait:
-                    s.communicate()
                     output_cmd, error_cmd = s.communicate()
                     if error_cmd: res = False
                     logger.error('Error "%s" en Browser %s, Comando %s' % (str(error_cmd), browser, str(params)))
