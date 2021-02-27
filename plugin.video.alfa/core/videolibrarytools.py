@@ -815,6 +815,8 @@ def add_tvshow(item, channel=None):
             Por defecto se importara item.from_channel o item.channel
 
     """
+    import xbmc
+    
     logger.info("show=#" + item.show + "#")
     logger.debug("item en videolibrary add tvshow: %s" % item)
     item.title = re.sub('^(V)-', '', item.title)
@@ -879,7 +881,6 @@ def add_tvshow(item, channel=None):
                     (insertados, item.show))
         if config.is_xbmc():
             if config.get_setting("sync_trakt_new_tvshow", "videolibrary"):
-                import xbmc
                 from platformcode import xbmc_videolibrary
                 if config.get_setting("sync_trakt_new_tvshow_wait", "videolibrary"):
                     # Comprobar que no se esta buscando contenido en la videoteca de Kodi
@@ -889,11 +890,23 @@ def add_tvshow(item, channel=None):
                 xbmc_videolibrary.sync_trakt_kodi()
                 # Se lanza la sincronización para la videoteca del addon
                 xbmc_videolibrary.sync_trakt_addon(path)
+        
+        #Si el canal lo permite, se comienza el proceso de descarga de los nuevos episodios descargados
+        serie = item.clone()
+        serie.channel = generictools.verify_channel(serie.channel)
+        if config.get_setting('auto_download_new', serie.channel, default=False):
+            serie.sub_action = 'auto'
+            serie.category = itemlist[0].category
+            from channels import downloads
+            downloads.save_download(serie, silent=True)
+            if serie.sub_action: del serie.sub_action
+            while xbmc.getCondVisibility('Library.IsScanningVideo()'):
+                xbmc.sleep(1000)
+            downloads.download_auto(serie)
 
 
 def emergency_urls(item, channel=None, path=None, headers={}):
     logger.info()
-    import re
     from servers import torrent
     try:
         magnet_caching_e = magnet_caching

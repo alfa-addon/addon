@@ -338,8 +338,9 @@ def check_for_update(overwrite=True):
     videolibrary.list_movies(item_dummy, silent=True)
     
     # Descarga los últimos episodios disponibles, si el canal lo permite
-    from channels import downloads
-    downloads.download_auto(item_dummy)
+    if config.get_setting("update", "videolibrary") != 0 or overwrite:
+        from channels import downloads
+        downloads.download_auto(item_dummy)
 
 
 def start(thread=True):
@@ -400,7 +401,6 @@ if __name__ == "__main__":
     import xbmc
     import time
 
-
     # modo adulto:
     # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
     # si es == 2 lo desactivamos.
@@ -423,7 +423,6 @@ if __name__ == "__main__":
     if wait > 0:
         xbmc.sleep(wait)
 
-
     # Verificar quick-fixes al abrirse Kodi, y dejarlo corriendo como Thread
     from platformcode import updater
     updater.check_addon_init()
@@ -434,11 +433,11 @@ if __name__ == "__main__":
 
     # Identifica la dirección Proxy y la lista de alternativas
     #if PY3: from core import proxytool_py3 as proxytool else from core import proxytool_py2 as proxytool
-    if not PY3: from core import proxytools
-    else: from core import proxytools_py3 as proxytools
-    proxytools.get_proxy_list()
-    
-    if config.get_setting("update", "videolibrary") != 2 and config.get_setting("update", "videolibrary") != 4:
+    if not PY3: from core.proxytools import get_proxy_list
+    else: from core.proxytools_py3 import get_proxy_list
+    get_proxy_list()
+
+    if config.get_setting("update", "videolibrary") not in [2, 4]:
         check_for_update(overwrite=False)
     
     # Añade al LOG las variables de entorno necesarias para diagnóstico
