@@ -132,7 +132,7 @@ def new(key, mode, IV=None):
         if IV is None:
             raise ValueError("CBC mode needs an IV value!")
         if PY3:
-            IV = bytes(list(ord(x) for x in IV))
+            IV = bytes(list(ord(chr(x)) for x in IV))
 
         return CBCMode(AES(key), IV)
     else:
@@ -151,7 +151,7 @@ class AES(object):
         """Sets the key and performs key expansion."""
 
         if PY3:
-            self.key = bytes(list(ord(x) for x in key))
+            self.key = bytes(list(ord(chr(x)) for x in key))
         else:
             self.key = key
         self.key_size = len(key)
@@ -475,6 +475,9 @@ class CBCMode(object):
             # data[offset : offset+block_size] = block
 
         self.IV = IV
+        # from platformcode import logger
+        # logger.info(type(data))
+        # logger.info(bytes(data))
         return data.tostring()
 
 

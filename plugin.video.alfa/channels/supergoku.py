@@ -672,12 +672,12 @@ def episodios(item):
     logger.info()
     itemlist = []
 
-    if item.contentTitle:
-        itemlist.extend(findvideos(item, True))
-    else:
+    if not item.contentType == 'movie':
         seasons_list = seasons(item, True)
         for season in seasons_list:
             itemlist.extend(episodesxseason(season, True))
+    else:
+        itemlist.extend(findvideos(item, True))
     return itemlist
 
 def episodesxseason(item, add_to_videolibrary = False):
@@ -758,7 +758,7 @@ def findvideos(item, add_to_videolibrary = False):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    base_url = 'https://supergoku.com/wp-json/dooplayer/v1/post/'
+    base_url = '{}/wp-json/dooplayer/v1/post/'.format(host)
     postnum = scrapertools.find_single_match(data, '(?is)data-post=.(\d+).*?')
     srcsection = scrapertools.find_single_match(data, '(?is)playeroptionsul.+?</ul>')
     srccount = scrapertools.find_multiple_matches(srcsection, '(?is)<li .+?data-nume=["|\'](.+?)["|\']')
