@@ -398,12 +398,11 @@ def download_all(item):
                                     download_item.downloadQueued, download_item.server, download_item.url))
                     
                     if download_item.downloadQueued == 0 and download_item.downloadProgress <= 0:
-                        download_item.downloadQueued = 1
+                        download_item.downloadQueued = -1
                         res = filetools.write(filetools.join(DOWNLOAD_LIST_PATH, fichero), download_item.tojson())
                         if res: second_pass = True
                     
-                    elif not second_pass and download_item.downloadQueued > 0 and download_item.downloadProgress <= 0:
-                        download_item.downloadQueued = 0
+                    elif not second_pass and download_item.downloadQueued != 0 and download_item.downloadProgress <= 0:
                         if download_item.downloadStatus == 0: item.downloadStatus = STATUS_CODES.completed
                         res = filetools.write(filetools.join(DOWNLOAD_LIST_PATH, fichero), download_item.tojson())
                         res = STATUS_CODES.stoped
@@ -447,7 +446,7 @@ def download_auto(item, start_up=False):
 
             if download_item.downloadStatus in [STATUS_CODES.auto]:
                 if download_item.downloadQueued == 0 and download_item.downloadProgress <= 0:
-                    download_item.downloadQueued = 1
+                    download_item.downloadQueued = -1
                     res = filetools.write(filetools.join(DOWNLOAD_LIST_PATH, fichero), download_item.tojson())
                     if res: second_pass = True
                     
@@ -455,6 +454,7 @@ def download_auto(item, start_up=False):
                     if res and move_to_remote:
                         for serie, address in move_to_remote:
                             if serie.lower() in download_item.contentSerieName.lower():     # Si está en la lista es que es remoto
+                                download_item.downloadQueued = 1
                                 if download_item.nfo:
                                     download_item.nfo = download_item.nfo.replace(PATH, '')
                                 if download_item.strm_path:
@@ -465,8 +465,7 @@ def download_auto(item, start_up=False):
                                     if res: second_pass = False
                                     break
 
-                elif not second_pass and not start_up and download_item.downloadQueued > 0 and download_item.downloadProgress <= 0:
-                    download_item.downloadQueued = 0
+                elif not second_pass and not start_up and download_item.downloadQueued != 0 and download_item.downloadProgress <= 0:
                     res = filetools.write(filetools.join(DOWNLOAD_LIST_PATH, fichero), download_item.tojson())
                     res = STATUS_CODES.stoped
                     try:
@@ -543,7 +542,7 @@ def menu(item):
         if item.server == 'torrent':
             if item.downloadProgress != -1:
                 item.downloadProgress = 0
-            item.downloadQueued = 1
+            item.downloadQueued = -1
             update_control(item.path, {"downloadProgress": item.downloadProgress, "downloadQueued": item.downloadQueued}, function='menu_op[0]')
         res = start_download(item)
 
@@ -553,6 +552,7 @@ def menu(item):
 
     # Reiniciar descarga y Eliminar TODO
     if opciones[seleccion] == op[2] or opciones[seleccion] == op[3] or opciones[seleccion] == op[5]:
+        item.downloadStatus = STATUS_CODES.stoped
 
         if item.server == 'torrent':
             delete_RAR = True
@@ -1020,6 +1020,9 @@ def download_from_url(url, item):
 def download_from_server(item, silent=False):
     logger.info()
     
+    import xbmc
+    if xbmc.Player().isPlaying(): silent = True
+    
     unsupported_servers = ["torrent"]
     result = {}
     CF_BLOCKED = '[B]Pincha para usar con [I]'
@@ -1054,6 +1057,7 @@ def download_from_server(item, silent=False):
                 logger.info("No hay nada que reproducir")
                 return {"downloadStatus": STATUS_CODES.error}
     if not silent: progreso.close()
+    
     logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
         item.contentAction, item.contentChannel, item.downloadProgress, item.downloadQueued, item.server, item.url))
 
@@ -1092,7 +1096,6 @@ def download_from_server(item, silent=False):
             result["contentAction"] = item.contentAction
             result["downloadServer"] = {"url": item.url, "server": item.server}
             result["server"] = item.server
-            result["downloadQueued"] = 0
             result["downloadProgress"] = 0
             result["downloadStatus"] = STATUS_CODES.error
             item.downloadStatus = result["downloadStatus"]
@@ -1130,7 +1133,6 @@ def download_from_server(item, silent=False):
         item.downloadServer = {"url": item.url, "server": item.server}
         if item.downloadProgress != -1:
             item.downloadProgress = 1
-        item.downloadQueued = 0
         if item.downloadStatus == 0:
             item.downloadStatus = STATUS_CODES.completed
         item.downloadCompleted = 0
@@ -1145,7 +1147,7 @@ def download_from_server(item, silent=False):
 
         result["downloadStatus"] = item.downloadStatus
         return result
-    
+
     if not item.server or not item.url or not item.contentAction == "play" or item.server in unsupported_servers:
         logger.error("El Item no contiene los parametros necesarios.")
         return {"downloadStatus": STATUS_CODES.error}
@@ -1192,7 +1194,10 @@ def download_from_best_server(item, silent=False):
     logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
         item.contentAction, item.contentChannel, item.downloadProgress, item.downloadQueued, item.server, item.url))
 
-    if item.sub_action in ["auto"]: silent=True
+    import xbmc
+    if xbmc.Player().isPlaying(): silent = True
+    
+    if item.sub_action in ["auto"]: silent = True
     result = {"downloadStatus": STATUS_CODES.error}
 
     if not silent: progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70179))
@@ -1328,6 +1333,9 @@ def get_episodes(item):
         item.nfo = filetools.join(SERIES, item.path, 'tvshow.nfo')
     if not item.nfo and item.video_path and not event:
         item.nfo = filetools.join(SERIES, item.video_path, 'tvshow.nfo')
+    if not item.nfo and item.infoLabels['imdb_id']:
+        if filetools.exists(filetools.join(SERIES, '%s [%s]' % (item.contentSerieName, item.infoLabels['imdb_id']), 'tvshow.nfo')):
+            item.nfo = filetools.join(SERIES, '%s [%s]' % (item.contentSerieName, item.infoLabels['imdb_id']), 'tvshow.nfo')
     if item.nfo:
         if filetools.exists(item.nfo):
             head, nfo_json = videolibrarytools.read_nfo(item.nfo)               #... tratamos de recuperar la info de la Serie
@@ -1550,7 +1558,7 @@ def get_episodes(item):
 
             if not isinstance(episode.contentSeason, int): episode.contentSeason = 1
             if not episode.contentEpisodeNumber: episode.contentEpisodeNumber = 1
-            episode.downloadFilename = filetools.validate_path(filetools.join(item.downloadFilename, "%dx%0.2d - %s" % (
+            episode.downloadFilename = filetools.join(item.downloadFilename, filetools.validate_path("%dx%0.2d - %s" % (
                 episode.contentSeason, episode.contentEpisodeNumber, episode.contentTitle.strip())))
 
             itemlist.append(episode)
@@ -1661,7 +1669,7 @@ def save_download_video(item):
         item.downloadCompleted = 0
         if item.server == 'torrent':
             item.downloadCompleted = 1
-        item.downloadQueued = 1
+        item.downloadQueued = -1
         update_control(item.path, {"downloadCompleted": item.downloadCompleted, "downloadQueued": item.downloadQueued}, function='save_download_video')
         start_download(item)
 
@@ -1670,6 +1678,10 @@ def save_download_movie(item, silent=False):
     logger.info("contentAction: %s | contentChannel: %s | contentTitle: %s" % (
         item.contentAction, item.contentChannel, item.contentTitle))
 
+    silent_org = silent
+    import xbmc
+    if xbmc.Player().isPlaying(): silent = True
+    
     if not silent: progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70191))
 
     set_movie_title(item)
@@ -1703,11 +1715,11 @@ def save_download_movie(item, silent=False):
     if not silent and not platformtools.dialog_yesno(config.get_localized_string(30101), config.get_localized_string(70189)):
         platformtools.dialog_ok(config.get_localized_string(30101), item.contentTitle,
                                 config.get_localized_string(30109))
-    elif not silent:
+    elif not silent_org:
         item.downloadCompleted = 0
         if item.server == 'torrent':
             item.downloadCompleted = 1
-        item.downloadQueued = 1
+        item.downloadQueued = -1
         update_control(item.path, {"downloadCompleted": item.downloadCompleted, "downloadQueued": item.downloadQueued}, function='save_download_movie')
         start_download(item)
 
@@ -1718,6 +1730,10 @@ def save_download_tvshow(item, silent=False):
     logger.info("contentAction: %s | contentChannel: %s | contentType: %s | contentSerieName: %s | sub_action: %s" % (
         item.contentAction, item.contentChannel, item.contentType, item.contentSerieName, item.sub_action))
 
+    silent_org = silent
+    import xbmc
+    if xbmc.Player().isPlaying(): silent = True
+    
     if not silent: progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70188))
 
     result = ''
@@ -1745,12 +1761,12 @@ def save_download_tvshow(item, silent=False):
         platformtools.dialog_ok(config.get_localized_string(30101),
                                 str(len(episodes)) + " capitulos de: " + item.contentSerieName,
                                 config.get_localized_string(30109))
-    elif not silent:
+    elif not silent_org:
         for i in episodes:
             i.downloadCompleted = 0
             if i.server == 'torrent':
                 i.downloadCompleted = 1
-            i.downloadQueued = 1
+            i.downloadQueued = -1
             update_control(i.path, {"downloadCompleted": i.downloadCompleted, "downloadQueued": i.downloadQueued}, function='save_download_tvshow')
         for i in episodes:
             time.sleep(0.5)

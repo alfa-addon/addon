@@ -8,7 +8,7 @@
         "url": "https://v2.zplayer.live/embed/\\12"
       },
       {
-        "pattern": "https://v2.zplayer.live/(?:embed|video)/([A-z0-9]+)",
+        "pattern": "https://v2.zplayer.live/(?:embed|video|download)/([A-z0-9]+)",
         "url": "https://v2.zplayer.live/embed/\\1"
       }
     ]

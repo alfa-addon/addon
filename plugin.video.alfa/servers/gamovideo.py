@@ -18,15 +18,17 @@ ver = random.randint(66, 67)
 headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:%s.0) Gecko/20100101 Firefox/%s.0" % (ver, ver)}
 
 DATA = ''
+ranw = False
+ranv = True
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     
-    data = alfaresolver.get_data(page_url, False)
+    data = alfaresolver.get_data(page_url, False, ranw=ranw, ranv=ranv)
     if not "|mp4|" in data:
         dict_cookie = {'domain': '.gamovideo.com', 'expires': 0}
         httptools.set_cookies(dict_cookie)
-        data = alfaresolver.get_data(page_url, False)
+        data = alfaresolver.get_data(page_url, False, ranw=ranw, ranv=ranv)
     
     global DATA
     DATA = data
@@ -62,7 +64,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         data = ""
         while n < 3 and not data:
             
-            data1 = alfaresolver.get_data(page_url, False)
+            data1 = alfaresolver.get_data(page_url, False, ranw=ranw, ranv=ranv)
             check_c, data = get_gcookie(data1, True)
             if check_c == False:
                 logger.error("Error get gcookie")

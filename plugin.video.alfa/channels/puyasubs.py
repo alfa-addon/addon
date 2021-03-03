@@ -274,7 +274,7 @@ def findvideos(item):
             headers = {'Content-Type': 'application/json'}
             hash = safe.rsplit("/", 1)[1]
             post = jsontools.dump({"hash": hash})
-            data_sf = httptools.downloadpage("http://safelinking.net/v1/protected", post=post, headers=headers).json
+            data_sf = httptools.downloadpage("https://safelinking.net/v1/protected", post=post, headers=headers).json
             try:
                 for link in data_sf.get("links"):
                     enlace = link["url"]

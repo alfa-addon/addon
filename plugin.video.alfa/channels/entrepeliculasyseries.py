@@ -97,7 +97,7 @@ def list_all(item):
 
     for elem in matches.find_all("div", class_="publications-content"):
         url = elem.a["href"]
-        fulltitle = elem.h3.text
+        fulltitle = elem.find('div', class_='item-detail').text
         year = '-'
         if re.search(r"\(\d+\)", fulltitle):
             title = scrapertools.find_single_match(fulltitle, r"(.*?) \(\d+").strip()
