@@ -1692,11 +1692,19 @@ def check_seen_torrents():
                             item.nfo = ''
                             item.strm_path = ''
 
+                if item.strm_path and not item.nfo:
+                    if item.infoLabels['mediatype'] == 'movie':
+                        item.nfo = filetools.join(MOVIES, filetools.dirname(item.strm_path.lower()), \
+                                    "%s [%s].nfo" % (item.infoLabels['title'], item.infoLabels['IMDBNumber'])).strip()
+                    else:
+                        item.nfo = filetools.join(SERIES, filetools.dirname(item.strm_path.lower()), "tvshow.nfo").strip()
                 if item.strm_path and filename:
-                    item.strm_path = filetools.join(PATH, item.strm_path)
+                    item.strm_path = filetools.join(PATH, item.strm_path.lower())
 
                     sql = 'select * from files where (strFilename like "%s" and playCount not like "")' % filename
                     if config.is_xbmc():
+                        while xbmc.getCondVisibility('Library.IsScanningVideo()'):                      # Se espera a que acabe el scanning
+                            time.sleep(1)
                         nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql, silent=True)     # ejecución de la SQL
                         if nun_records > 0:                                                             # si el vídeo está visto...
                             xbmc_videolibrary.mark_content_as_watched_on_kodi(item, 1)                  # ... marcamos en Kodi como visto
@@ -2297,7 +2305,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
             error_msg1 = "Comprueba el log para más detalles"
             platformtools.dialog_notification(error_msg, error_msg1)
             rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
-            return rar_file, False, '', ''
+            return custom_code.reactivate_unrar(init=False, mute=False)
 
         # Analizamos si es necesaria una contraseña, que debería estar en item.password
         if archive.needs_password():

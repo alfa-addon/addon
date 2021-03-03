@@ -28,7 +28,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/?filter=date"))
     itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/?filter=popular"))
     itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/?orderby=likes"))
-    # itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/pornstars"))
+    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/pornstars"))
 
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/porn-categories"))
     itemlist.append(item.clone(title="Buscar", action="search"))
@@ -52,11 +52,13 @@ def categorias(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('div', id=re.compile(r"^post-\d+"))
+    matches = soup.find_all('article', id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
         thumbnail = elem.img['src']
+        if "svg" in thumbnail:
+            thumbnail = elem.img['data-lazy-src']
         # url = url.replace("?actors=","/star/")
         plot = ""
         itemlist.append(item.clone(action="lista", title=title, url=url,
@@ -85,14 +87,14 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('main', id='main')
-    matches = soup.find_all('div', id=re.compile(r"^post-\d+"))
+    matches = soup.find_all('article')
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
-        thumbnail = elem.img['src']
+        thumbnail = elem.img['data-src']
         if "svg" in thumbnail:
             thumbnail = elem.img['data-lazy-src']
-        time = elem.find('span', class_='length')
+        time = elem.find('span', class_='duration')
         actors = elem['class']
         actriz = ""
         for x in actors:
