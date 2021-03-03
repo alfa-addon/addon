@@ -490,6 +490,7 @@ def list_all(item):
                     contentSerieName = contentTitle,
                     contentTitle = contentTitle,
                     contentType = conType,
+                    folder = False,
                     infoLabels = infoLabels,
                     language = langs,
                     title = title,
@@ -509,6 +510,7 @@ def list_all(item):
                     contentSerieName = contentTitle,
                     contentTitle = contentTitle,
                     contentType = 'tvshow',
+                    folder = False,
                     language = langs,
                     title = title,
                     thumbnail = scpthumb,
@@ -553,6 +555,7 @@ def list_all(item):
                     contentSerieName = conSerieName,
                     contentTitle = conTitle,
                     contentType = conType,
+                    folder = False,
                     infoLabels = infoLabels,
                     language = langs,
                     param = item.param,
@@ -599,18 +602,6 @@ def list_all(item):
             )
     return itemlist
 
-def episodesxseason(item):
-    logger.info()
-    itemlist = []
-
-    if item.contentTitle:
-        itemlist.extend(findvideos(item, add_to_videolibrary = True))
-    else:
-        seasons_list = seasons(item, add_to_videolibrary = True)
-        for season in seasons_list:
-            itemlist.extend(episodios(season, add_to_videolibrary = True))
-    return itemlist
-
 def seasons(item, add_to_videolibrary = False):
     logger.info()
     itemlist = []
@@ -651,7 +642,7 @@ def seasons(item, add_to_videolibrary = False):
                     contentType = 'movie'
             itemlist.append(
                 item.clone(
-                    action = 'episodios',
+                    action = 'episodesxseason',
                     contentType = contentType,
                     episode_data = str(article),
                     infoLabels = infoLabels,
@@ -663,21 +654,33 @@ def seasons(item, add_to_videolibrary = False):
     itemlist.reverse()      # Empieza por el último capítulo, así que se revierte la lista
 
     if len(itemlist) == 1 and not add_to_videolibrary:
-        itemlist = episodios(itemlist[0], add_to_videolibrary)
+        itemlist = episodesxseason(itemlist[0], add_to_videolibrary)
     if len(itemlist) > 0 and config.get_videolibrary_support() and not itemlist[0].contentType == 'movie' and not add_to_videolibrary:
         itemlist.append(
             Item(
                 action = "add_serie_to_library",
                 channel = item.channel,
                 contentSerieName = item.contentSerieName,
-                extra = "episodesxseason",
+                extra = "episodios",
                 title = '[COLOR yellow]{}[/COLOR]'.format(config.get_localized_string(70092)),
                 url = item.url
             )
         )
     return itemlist
 
-def episodios(item, add_to_videolibrary = False):
+def episodios(item):
+    logger.info()
+    itemlist = []
+
+    if item.contentTitle:
+        itemlist.extend(findvideos(item, True))
+    else:
+        seasons_list = seasons(item, True)
+        for season in seasons_list:
+            itemlist.extend(episodesxseason(season, True))
+    return itemlist
+
+def episodesxseason(item, add_to_videolibrary = False):
     logger.info()
     itemlist = []
     if item.episode_data or item.param == 'pager':
@@ -739,7 +742,7 @@ def episodios(item, add_to_videolibrary = False):
     if remainingitems:
         itemlist.append(
             item.clone(
-                action = 'episodios',
+                action = 'episodesxseason',
                 episode_data = str(remainingitems),
                 param = 'pager',
                 title = '[COLOR=yellow]Siguiente página >[/COLOR]'
@@ -779,7 +782,7 @@ def findvideos(item, add_to_videolibrary = False):
                 action = "add_pelicula_to_library",
                 channel = item.channel,
                 contentTitle = item.contentTitle,
-                extra = "episodesxseason",
+                extra = "episodios",
                 title = '[COLOR yellow]{}[/COLOR]'.format(config.get_localized_string(70092)),
                 url = item.url
             )

@@ -28,7 +28,7 @@
         "url": "https://dato.porn/\\1"
       },
       {
-        "pattern": "(https://www.porn00.org/[A-z0-9-]+/)",
+        "pattern": "(https://www.porn00.org/video/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {

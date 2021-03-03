@@ -45,6 +45,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         matches = scrapertools.find_multiple_matches(unpacked, patron)
         for video_url in matches:
             ext = video_url[-4:]
-
+            video_url += "|Referer=https://v2.zplayer.live/"
             video_urls.append(["[zplayer] %s" % ext, video_url, 0, sub])
     return video_urls
