@@ -72,7 +72,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Castellano",
                          action="submenu",
-                         host=host,
+                         host=host+'/espana/',
                          thumbnail=thumbes))
 
     itemlist.append(Item(channel=item.channel,
@@ -286,6 +286,12 @@ def findvideos(item):
     
     dec_value = scrapertools.find_single_match(data, 'String\.fromCharCode\(parseInt\(str\[i\]\)-(\d+)\)')
     torrent_link = scrapertools.find_single_match(data, '<a href=".*?/protect/v\.php\?i=([^"]+)"')
+    if not torrent_link: torrent_link = scrapertools.find_single_match(data, '<a\s*href="[^"]*?s=([^"]+)"\s*target=[^>]*service=BitTorrent>')
+    if not torrent_link: 
+        torrent_link = scrapertools.find_single_match(data, '<a\s*href="[^"]*\/go\.php\?u=([^"]+)"\s*target=[^>]*service=BitTorrent>')
+        if torrent_link:
+            from lib.generictools import convert_url_base64
+            torrent_link = convert_url_base64(torrent_link)
     subs = scrapertools.find_single_match(data, '<a id=subsforlink href=(.*?) ')
 
     for scrapedurl in matchesk:
@@ -322,7 +328,8 @@ def findvideos(item):
         post = urllib.urlencode(post)
         protect = httptools.downloadpage(base_url + '?' + post, headers=headers).data
         """
-        base_url = '%s/protect/v.php?i=%s' % (host, torrent_link)
+        base_url = torrent_link
+        if '/protect/v' not in torrent_link: base_url = '%s/protect/v.php?i=%s' % (host, torrent_link)
         protect = httptools.downloadpage(base_url, headers=headers).data
         url = scrapertools.find_single_match(protect, 'value="(magnet.*?)"')
         server = 'torrent'

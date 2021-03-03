@@ -82,9 +82,9 @@ def getmainlist(view="thumb_"):
                          thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
                          category=config.get_localized_string(30104), viewmode="list"))
 
-    itemlist.append(Item(channel="setting", action=action, url='https://alfa-addon.com/threads/manual-de-alfa-mobile-assistant-herramienta-de-apoyo.3797/', 
-                         title="-     [COLOR yellow]" + config.get_localized_string(70762) + "[/COLOR]   " + 
-                         "https://alfa-addon.com/threads/manual-de-alfa-mobile-assistant-herramienta-de-apoyo.3797/", 
+    itemlist.append(Item(channel="setting", action=action, url='https://alfa-addon.com/threads/torrest-el-gestor-de-torrents-definitivo.4085/', 
+                         title="-     [COLOR yellow]Torrest: el gestor de torrents definitivo[/COLOR]   " + 
+                         "https://alfa-addon.com/threads/torrest-el-gestor-de-torrents-definitivo.4085/", 
                          thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
                          category=config.get_localized_string(30104), viewmode="list"))
 
@@ -246,7 +246,7 @@ def filterchannels(category, view="thumb_"):
                 return frequent_list
 
         max_freq = config.get_setting("max_frequents")
-        if frequent_list:
+        if frequent_list and category != 'all_channels':
             if len(frequent_list) >= max_freq:
                 max_freq = max_freq
             else:
