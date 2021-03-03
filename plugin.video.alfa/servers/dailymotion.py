@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 from core import httptools
 from core import scrapertools
@@ -28,6 +31,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     #logger.error(stream_url)
     data_m3u8 = httptools.downloadpage(stream_url).data
+    if PY3 and isinstance(data_m3u8, bytes): data_m3u8 = data_m3u8.decode()
 
     patron = r'NAME="([^"]+)",PROGRESSIVE-URI="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data_m3u8, patron)

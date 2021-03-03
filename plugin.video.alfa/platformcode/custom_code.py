@@ -22,6 +22,7 @@ from platformcode import config, logger, platformtools
 from core import jsontools
 from core import filetools
 from core.item import Item
+from lib.alfa_assistant import execute_binary_from_alfa_assistant
 
 json_data_file_name = 'custom_code.json'
 ADDON_PATH = config.get_runtime_path()
@@ -100,7 +101,11 @@ def init():
         verify_Kodi_video_DB()
         
         #Verifica si la Base de Datos de Vídeo tiene la fuente de CINE con useFolderNames=1
-        set_Kodi_video_DB_useFolderNames()
+        try:
+            threading.Thread(target=set_Kodi_video_DB_useFolderNames).start()   # Creamos un Thread independiente por si la DB está Scanning
+            time.sleep(1)                                                       # Dejamos terminar la inicialización...
+        except:                                                                 # Si hay problemas de threading, nos vamos
+            logger.error(traceback.format_exc())
         
         #LIBTORRENT: se descarga el binario de Libtorrent cada vez que se actualiza Alfa
         update_libtorrent()
@@ -418,7 +423,6 @@ def update_libtorrent():
                     not xbmc.getCondVisibility("system.platform.android")):
     
         path = filetools.join(ADDON_PATH, 'lib', 'rarfiles')
-        creationflags = ''
         sufix = ''
         unrar = ''
         for device in filetools.listdir(path):
@@ -427,10 +431,8 @@ def update_libtorrent():
             if not xbmc.getCondVisibility("system.platform.windows") and not  xbmc.getCondVisibility("system.platform.android") \
                         and ('android' in device or 'windows' in device): continue
             if 'windows' in device:
-                creationflags = 0x08000000
                 sufix = '.exe'
             else:
-                creationflags = ''
                 sufix = ''
             unrar = filetools.join(path, device, 'unrar%s') % sufix
             unrar_dest = filetools.join(ADDON_USERDATA_BIN_PATH, 'unrar%s') % sufix
@@ -446,25 +448,30 @@ def update_libtorrent():
                             if not filetools.exists(unrar):
                                 filetools.mkdir(unrar)
                             unrar = filetools.join(unrar, 'unrar')
-                            filetools.copy(unrar_org, unrar, silent=True)
+                            res = filetools.copy(unrar_org, unrar, silent=True)
+                            if not res: raise
                         
                         filetools.chmod(unrar, '777')
                     except:
                         logger.info('######## UnRAR ERROR in path: %s' % str(unrar), force=True)
                         logger.error(traceback.format_exc())
                 if not xbmc.getCondVisibility("system.platform.android"):
-                    filetools.copy(unrar, unrar_dest, ch_mod='777', silent=True)
+                    res = filetools.copy(unrar, unrar_dest, ch_mod='777', silent=True)
+                    if not res:
+                        logger.info('######## UnRAR ERROR in path: %s' % str(unrar_dest), force=True)
+                        continue
                     unrar = unrar_dest
 
                 try:
-                    if xbmc.getCondVisibility("system.platform.windows"):
-                        p = subprocess.Popen(unrar, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=creationflags)
+                    p, output_cmd, error_cmd = execute_binary_from_alfa_assistant('LaunchBinary', unrar, wait=True)
+                    returncode = 0
+                    if isinstance(p, bool):
+                        if not p: returncode = 9
                     else:
-                        p = subprocess.Popen(unrar, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    output_cmd, error_cmd = p.communicate()
-                    if p.returncode != 0 or error_cmd:
+                        returncode = p.returncode
+                    if returncode != 0 or error_cmd:
                         logger.info('######## UnRAR returncode in module %s: %s, %s in %s' % \
-                                (device, str(p.returncode), str(error_cmd), unrar), force=True)
+                                (device, str(returncode), str(error_cmd), unrar), force=True)
                         unrar = ''
                     else:
                         logger.info('######## UnRAR OK in %s: %s' % (device, unrar), force=True)
@@ -480,6 +487,12 @@ def update_libtorrent():
 
     # Ahora descargamos la última versión disponible de Libtorrent para esta plataforma
     try:
+        # Saltamos plataformas no soportadas
+        if PY3 and (xbmc.getCondVisibility("system.platform.Windows") or xbmc.getCondVisibility("system.platform.android")):
+            config.set_setting("libtorrent_path", "", server="torrent")
+            config.set_setting("libtorrent_version", "ERROR/UNSUPPORTED", server="torrent")
+            return
+        
         version_base = filetools.join(ADDON_PATH, 'lib', 'python_libtorrent')
         libt_dir = filetools.listdir(filetools.join(ADDON_USERDATA_PATH, 'custom_code', 'lib'))
         if 'libtorrent' in str(libt_dir) or (not 'libtorrent' in str(filetools.listdir(ADDON_USERDATA_BIN_PATH)) and \
@@ -582,6 +595,9 @@ def set_Kodi_video_DB_useFolderNames():
 
     strPath = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"), ' ').strip()
     scanRecursive = 2147483647
+    
+    while xbmc.getCondVisibility('Library.IsScanningVideo()'):
+        time.sleep(1)
         
     sql = 'UPDATE path SET useFolderNames=1 WHERE (strPath="%s" and scanRecursive=%s and strContent="movies" ' \
                         'and useFolderNames=0)' % (strPath, scanRecursive)

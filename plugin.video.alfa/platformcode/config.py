@@ -57,7 +57,13 @@ def get_addon_version_fix():
     try:
         last_fix_json = os.path.join(get_runtime_path(), 'last_fix.json')   # información de la versión fixeada del usuario
         if os.path.exists(last_fix_json):
-            with open(last_fix_json, 'r') as f: data=f.read(); f.close()
+            with open(last_fix_json, 'rb') as f: 
+                data = f.read()
+                if not PY3:
+                    data = data.encode("utf-8", "ignore")
+                elif PY3 and isinstance(data, (bytes, bytearray)):
+                    data = "".join(chr(x) for x in data)
+                f.close()
             fix = re.findall('"fix_version"\s*:\s*(\d+)', data)
             if fix:
                 return '.fix%s' % fix[0]
@@ -198,8 +204,12 @@ def get_all_settings_addon():
     # Lee el archivo settings.xml y retorna un diccionario con {id: value}
     from core import scrapertools
 
-    infile = open(os.path.join(get_data_path(), "settings.xml"), "r")
+    infile = open(os.path.join(get_data_path(), "settings.xml"), "rb")
     data = infile.read()
+    if not PY3:
+        data = data.encode("utf-8", "ignore")
+    elif PY3 and isinstance(data, (bytes, bytearray)):
+        data = "".join(chr(x) for x in data)
     infile.close()
 
     ret = {}
@@ -408,8 +418,12 @@ def get_kodi_setting(name, total=False):
     # Global Kodi setting
     from core import scrapertools
 
-    infile = open(os.path.join(translatePath('special://masterprofile/'), "guisettings.xml"), "r")
+    infile = open(os.path.join(translatePath('special://masterprofile/'), "guisettings.xml"), "rb")
     data = infile.read()
+    if not PY3:
+        data = data.encode("utf-8", "ignore")
+    elif PY3 and isinstance(data, (bytes, bytearray)):
+        data = "".join(chr(x) for x in data)
     infile.close()
 
     ret = {}
