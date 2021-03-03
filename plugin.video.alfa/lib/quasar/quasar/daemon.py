@@ -273,7 +273,101 @@ def start_quasard(**kwargs):
         time.sleep(1)
         wait_counter += 1
 
-    return subprocess.Popen(args, **kwargs)
+    #return subprocess.Popen(args, **kwargs)
+    p = call_binary('LaunchBinary', args, **kwargs)
+    return p
+
+def call_binary(function, args, **kwargs):
+    import xbmcaddon
+    APP_PARAMS = {
+                  'Alfa': {
+                           'USER_ADDON': 'plugin.video.alfa', 
+                           'USER_ADDON_STATUS': xbmc.getCondVisibility('System.HasAddon("plugin.video.alfa")'), 
+                           'USER_ADDON_USERDATA': os.path.join(translatePath('special://masterprofile/'), 
+                                        'addon_data', 'plugin.video.alfa'), 
+                           'USER_APP': 'com.alfa.alfamobileassistant', 
+                           'USER_APP_CONTROL': 'alfa-mobile-assistant.version'
+                           }
+                  }
+    USER_ADDON = ''
+    USER_ADDON_STATUS = False
+    USER_APP = ''
+    USER_APP_STATUS = False
+    USER_DEVICE_ROOTED = False
+    ANDROIND_VERSION = get_android_version()
+
+    if xbmc.getCondVisibility("system.platform.Android") and PY3 and ANDROIND_VERSION >= 20:
+        for user_addon, user_params in list(APP_PARAMS.items()):
+            if not user_params['USER_ADDON_STATUS']: continue
+            if user_addon == 'Alfa':
+                try:
+                    __settings__ = xbmcaddon.Addon(id="%s" % user_params['USER_ADDON'])
+                    USER_ADDON = user_params['USER_ADDON']
+                    USER_ADDON_STATUS = True
+                    if __settings__.getSetting('assistant_mode') == 'este' and \
+                            os.path.exists(os.path.join(user_params['USER_ADDON_USERDATA'], \
+                            user_params['USER_APP_CONTROL'])):
+                        USER_APP = user_params['USER_APP']
+                        USER_APP_STATUS = True
+                    if __settings__.getSetting('is_rooted_device') == 'rooted':
+                        USER_DEVICE_ROOTED = True
+                    if USER_APP_STATUS: break
+                except:
+                    import traceback
+                    log.error(traceback.format_exc())
+
+    if USER_APP_STATUS and not USER_DEVICE_ROOTED:
+        try:
+            command = args.copy()
+            for key, value in list(**kwargs.items()):
+                if key in ['stdout', 'stderr']: continue
+                command.append('%s=%s' % (key, value))
+            cmd = 'StartAndroidActivity("%s", "", "%s", "%s")' % (USER_APP, function, command)
+            log.info('##Assistant executing CMD: %s' % cmd)
+            xbmc.executebuiltin(cmd)
+            return command
+        except:
+            return []
+    else:
+        p = subprocess.Popen(args, **kwargs)
+        return p
+        
+def get_android_version():
+    import re
+    version = 8
+    if PY3: FF = b'\n'
+    else: FF = '\n'
+    
+    if xbmc.getCondVisibility("system.platform.Android"):
+        try:
+            for label_a in subprocess.check_output('getprop').split(FF):
+                if PY3 and isinstance(label_a, bytes):
+                    label_a = label_a.decode()
+                if 'build.version.release' in label_a:
+                    version = int(re.findall(':\s*\[(.*?)\]$', label_a, flags=re.DOTALL)[0])
+                    break
+        except:
+            import traceback
+            log.error(traceback.format_exc())
+            try:
+                if PY3: fp = open(os.environ['ANDROID_ROOT'] + '/build.prop', 'r', encoding='utf-8')
+                else: fp = open(os.environ['ANDROID_ROOT'] + '/build.prop', 'r')
+                for label_a in fp.read().split():
+                    if PY3 and isinstance(label_a, bytes):
+                        label_a = label_a.decode()
+                    if 'build.version.release' in label_a:
+                        version = int(re.findall('=(.*?)$', label_a, flags=re.DOTALL)[0])
+                        break
+                f.close()
+            except:
+                import traceback
+                log.error(traceback.format_exc())
+                try:
+                    f.close()
+                except:
+                    pass
+    
+    return version
 
 def shutdown():
     try:
@@ -286,8 +380,10 @@ def wait_for_abortRequested(proc, monitor):
     log.info("quasard: exiting quasard daemon")
     try:
         proc.terminate()
-    except OSError:
-        pass  # Process already exited, nothing to terminate
+    #except OSError:
+    except:
+        if isinstance(proc, list):
+            p = call_binary('KillBinary', proc, {})
     log.info("quasard: quasard daemon exited")
 
 def quasard_thread(monitor):
@@ -325,7 +421,8 @@ def quasard_thread(monitor):
                         time.sleep(1)  # nothing to read, sleep
 
             log.info("quasard: proc.return code: %s" % str(proc.returncode))
-            if proc.returncode == 0 or proc.returncode == -9 or monitor_abort.abortRequested():
+            #if proc.returncode == 0 or proc.returncode == -9 or monitor_abort.abortRequested():
+            if isinstance(proc, list) or proc.returncode == 0 or proc.returncode == -9 or monitor_abort.abortRequested():
                 break
 
             crash_count += 1

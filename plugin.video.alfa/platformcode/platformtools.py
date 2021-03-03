@@ -1313,6 +1313,7 @@ def play_torrent(item, xlistitem, mediaurl):
             seleccion = 0
 
     # Si Libtorrent ha dado error de inicialización, no se pueden usar los clientes internos
+    TORREST_advise = config.get_setting("torrest_advise", server="torrent", default=False)
     UNRAR = config.get_setting("unrar_path", server="torrent", default="")
     LIBTORRENT = config.get_setting("libtorrent_path", server="torrent", default='')
     LIBTORRENT_in_use_local = False
@@ -1354,13 +1355,26 @@ def play_torrent(item, xlistitem, mediaurl):
     torrent_web = torrent_paths.get(torr_client.upper() + '_web', '')
     if not item.url_control:
         item.url_control = item.url.replace(PATH_videos, '')
+    torr_client_alt = []
+    for i, alt_client in enumerate(torrent_options):
+        if scrapertoolsV2.find_single_match(str(alt_client), ':\s*(\w+)').lower() in ['torrest', 'quasar']:
+            torr_client_alt += [(scrapertoolsV2.find_single_match(str(alt_client), ':\s*(\w+)').lower(), i)]
+    if LIBTORRENT: torr_client_alt += [('BT', 0)]
+    torr_client_alt = sorted(torr_client_alt, reverse=True)
 
+    if not TORREST_advise and not 'torrest' in str(torr_client_alt) and torrent_paths.get('ELEMENTUM', '') != 'Memory':
+        msg1 =  'Con la evolución a [B]Kodi 19[/B] los [B]clientes de torrent Internos[/B] han dejado de funcionar casi totalmente.  '
+        msg2 = 'Los gestores externos [B]Quasar y Elementum[/B] están sin o casi sin mantenimiento.  [B]Alfa recomienda el uso de [COLOR gold]TORREST[/B][/COLOR].  '
+        msg3 = 'Lee este artículo (también desde el [B]Menú de Alfa[/B]) e infórmate de sus ventajas e instalación: [COLOR yellow]https://alfa-addon.com/threads/ torrest-el-gestor-de-torrents-definitivo.4085/[/COLOR]'
+        config.set_setting("torrest_advise", True, server="torrent")
+        dialog_ok('Alfa te recomienda [COLOR gold]TORREST[/COLOR]', msg1, msg2, msg3)
+    
     # Si es Libtorrent y no está soportado, se ofrecen alternativas, si las hay...
     if seleccion < 2 and not LIBTORRENT:
-        dialog_ok('Cliente Interno (LibTorrent):', 'Este cliente no está soportado en su dispositivo.', \
+        dialog_ok('Cliente Interno (LibTorrent):', 'Este gestor no está soportado en su dispositivo.', \
                   'Error: [COLOR yellow]%s[/COLOR]' % config.get_setting("libtorrent_error", server="torrent",
                                                                          default=''), \
-                  'Use otro cliente Torrent soportado')
+                  '[COLOR hotpink]Alfa le recomienda el uso de [B]TORREST[/B][/COLOR]')
         if len(torrent_options) > 2:
             seleccion = dialog_select(config.get_localized_string(70193), [opcion[0] for opcion in torrent_options])
             if seleccion < 2:
@@ -1370,41 +1384,37 @@ def play_torrent(item, xlistitem, mediaurl):
             item.downloadProgress = 100
             torrent.update_control(item, function='play_torrent_no_libtorrent')
             return
-    # Si es Torrenter o Elementum con opción de Memoria, se ofrece la posibilidad ee usar Libtorrent temporalemente
-    elif seleccion > 1 and LIBTORRENT and UNRAR and 'RAR-' in item.torrent_info and (
-            torr_client not in ['BT', 'MCT', 'quasar', 'elementum', 'torrest'] \
-            or ("elementum" in torr_client and xbmcaddon.Addon(id="plugin.video.%s" \
-                                                                                    % torr_client).getSetting(
-                                                                                    'download_storage') == '1')):
+    # Si hay RAR y es Torrenter o Elementum con opción de Memoria, se ofrece la posibilidad ee otro Gestor temporalemente
+    elif seleccion > 1 and torr_client_alt and UNRAR and 'RAR-' in item.torrent_info and (
+                        torr_client not in ['BT', 'MCT', 'quasar', 'elementum', 'torrest'] \
+                        or torrent_paths.get('ELEMENTUM', '') == 'Memory'):
+
         if dialog_yesno(torr_client, 'Este plugin externo no soporta extraer on-line archivos RAR', \
-                        '[COLOR yellow]¿Quiere que usemos esta vez el Cliente interno BT?[/COLOR]', \
+                        '[COLOR yellow]¿Quiere que usemos esta vez el gestor [B]%s[/B]?[/COLOR]' % torr_client_alt[0][0].upper(), \
                         'Esta operación ocupará en disco [COLOR yellow][B]%s+[/B][/COLOR] veces el tamaño del vídeo' % size_rar):
-            seleccion = 0
-            torr_client = 'BT'
+            seleccion = torr_client_alt[0][1]
+            torr_client = torr_client_alt[0][0]
         else:
             item.downloadProgress = 100
             torrent.update_control(item, function='play_torrent_no_rar')
             return
-    # Si es Elementum pero con opción de Memoria, se muestras los Ajustes de Elementum y se pide al usuario que cambie a "Usar Archivos"
-    elif seleccion > 1 and not LIBTORRENT and UNRAR and 'RAR-' in item.torrent_info and "elementum" in \
-            torr_client and xbmcaddon.Addon(id="plugin.video.%s" % torr_client).getSetting('download_storage') == '1':
+    # Si hay RAR y es Elementum, pero con opción de Memoria, se muestras los Ajustes de Elementum y se pide al usuario que cambie a "Usar Archivos"
+    elif seleccion > 1 and not torr_client_alt and UNRAR and 'RAR-' in item.torrent_info and "elementum" in \
+                        torr_client and torrent_paths.get('ELEMENTUM', '') == 'Memory':
         if dialog_yesno(torr_client,
                         'Elementum con descarga en [COLOR yellow]Memoria[/COLOR] no soporta ' + \
                         'extraer on-line archivos RAR (ocupación en disco [COLOR yellow][B]%s+[/B][/COLOR] veces)' % size_rar, \
                         '[COLOR yellow]¿Quiere llamar a los Ajustes de Elementum para cambiar [B]temporalmente[/B] ' + \
                         'a [COLOR hotpink]"Usar Archivos"[/COLOR] y [B]reintentarlo[/B]?[/COLOR]'):
-            __settings__ = xbmcaddon.Addon(
-                id="plugin.video.%s" % torr_client)
-            __settings__.openSettings()  # Se visulizan los Ajustes de Elementum
-            elementum_dl = xbmcaddon.Addon(
-                id="plugin.video.%s" % torr_client) \
-                .getSetting('download_storage')
+            __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)
+            __settings__.openSettings()                                         # Se visulizan los Ajustes de Elementum
+            elementum_dl = xbmcaddon.Addon(id="plugin.video.%s" % torr_client).getSetting('download_storage')
             if elementum_dl != '1':
-                config.set_setting("elementum_dl", "1", server="torrent")   # Salvamos el cambio para restaurarlo luego
+                config.set_setting("elementum_dl", "1", server="torrent")       # Salvamos el cambio para restaurarlo luego
         else:
             item.downloadProgress = 100
             torrent.update_control(item, function='play_torrent_elementum_mem')
-        return  # Se sale, porque habrá refresco y cancelaría Kodi si no
+        return                                                                  # Se sale, porque habrá refresco y cancelaría Kodi si no
 
 
     if seleccion >= 0:

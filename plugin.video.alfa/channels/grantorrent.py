@@ -283,7 +283,7 @@ def listado(item):                                                              
         patron = '<div\s*class="imagen-post"[^>]*>\s*<a\s*href="(?P<url>[^"]+)"[^>]*>\s*'
         patron += '(?:<img\s*src="data:[^>]+>\s*)?(?:<noscript>\s*)?<img\s*src="'
         patron += '(?P<thumb>[^"]+)"[^>]*>\s*(?:<\/noscript>\s*)?<\/a>\s*(?:<div\s*'
-        patron += 'class="bloque-superior"[^>]*>\s*(?P<quality>[^<]+)<div\s*class='
+        patron += 'class="bloque-superior"[^>]*>\s*(?P<quality>[^<]*)<div\s*class='
         patron += '"imagen-idioma"[^>]*>\s*<img\s*src="[^"]+icono_(?P<lang>[^\.]+)[^>]*>'
         patron += '\s*<\/div>\s*<\/div>\s*)?<div\s*class="bloque-inferior"[^>]*>\s*'
         patron += '(?P<title>[^<]+)\s*<\/div>\s*<div\s*class="bloque-date"[^>]*>\s*'
@@ -593,7 +593,7 @@ def findvideos(item):
     patron += '"(?P<lang>[^"]+)"[^>]+>\s*(?:<\/noscript>)?[^<]*(?:<\/noscript>)?<\/td>'
     patron += '\s*<td>(?P<quality>[^>]*)(?:\s*\(Contraseña:[^>]*>(.*?)(?:<[^>]+>)?\))?\s*<\/td>'
     patron += '\s*(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link"\s*'
-    patron += '(?:onclick="post\("[^"]+"\s*\,\s*\{u:\s*"|href=")(?P<url>[^"]+)'
+    patron += '(?:onclick="[^"]*post\("[^"]+"\s*\,\s*\{u:\s*"|href=")(?P<url>[^"]+)'
 
     if not item.armagedon:
         if not item.matches:
@@ -944,7 +944,7 @@ def episodios(item):
         patron += '"(?P<lang>[^"]+)"[^>]+>\s*(?:<\/noscript>)?[^<]*(?:<\/noscript>)?<\/td>'
         patron += '\s*<td>(?P<quality>[^>]*)(?:\s*\(Contraseña:[^>]*>(.*?)(?:<[^>]+>)?\))?\s*<\/td>'
         patron += '\s*(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link"\s*'
-        patron += '(?:onclick="post\("[^"]+"\s*\,\s*\{u:\s*"|href=")(?P<url>[^"]+)'
+        patron += '(?:onclick="[^"]*post\("[^"]+"\s*\,\s*\{u:\s*"|href=")(?P<url>[^"]+)'
         
         patron_epi = '(?i)(\d{1,2})(?:x|&#215;)(\d{1,2})(?:[-|\s*](?:al|-)?[-|\s*]?'
         patron_epi += '(?:\d{1,2}(?:x|&#215;))?(\d{1,2}))?'
@@ -961,8 +961,8 @@ def episodios(item):
                             + 'Reportar el error con el log'))
             return itemlist                                             # si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-        logger.debug("PATRON: " + patron)
-        logger.debug(matches)
+        #logger.debug("PATRON: " + patron)
+        #logger.debug(matches)
         #logger.debug(data)
 
         # Recorremos todos los episodios generando un Item local por cada uno en Itemlist

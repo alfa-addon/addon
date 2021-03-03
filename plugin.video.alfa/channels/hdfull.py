@@ -404,7 +404,7 @@ def items_usuario(item):
         except:
             title = ficha['title']['en'].strip()
         try:
-            title = title.encode('utf-8')
+            if not PY3: title = title.encode('utf-8')
         except:
             pass
         show = title
