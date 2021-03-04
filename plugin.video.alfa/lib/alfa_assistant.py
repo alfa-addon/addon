@@ -479,21 +479,87 @@ def check_permissions_alfa_assistant():
 #
 ## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
 #
-def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank'):
+def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank', wait=False):
     if xbmc.getCondVisibility("system.platform.Android"):
         try:
             app = 'com.alfa.alfamobileassistant'
             intent = ''  # com.alfa.alfamobilehelper.MainActivity'
             dataType = cmd # 'openForDebug'
             cmd = 'StartAndroidActivity("%s", "%s", "%s", "%s")' % (app, intent, dataType, dataURI)
-            logger.info('##Assistant executing CMD: ' + cmd)
-            xbmc.executebuiltin(cmd)
+            logger.info('##Assistant executing CMD: %s' % cmd)
+            xbmc.executebuiltin(cmd, wait)
             return True
         except:
             logger.error(traceback.format_exc(1))
             return False
     
     return False
+
+#
+## Android >= 10 ejecuta los binarios en Kodi desde Alfa Assistant, si no, de la forma tradicional ##################################################################################################################################
+#
+def execute_binary_from_alfa_assistant(function, cmd, wait=False):
+    p = False
+    output_cmd = ''
+    error_cmd = ''
+        
+    if xbmc.getCondVisibility("system.platform.Android") and PY3 and get_android_version() >= 20 \
+                                and config.get_setting('is_rooted_device', default='') != 'rooted':
+
+        if install_alfa_assistant():
+            p = execute_in_alfa_assistant_with_cmd(function, cmd, wait)
+            if not p: error_cmd = 'ERROR 9'
+
+    else:
+        logger.info('## %s: %s, wait=%s' %(function, cmd, wait))
+        creationflags = 0
+        if xbmc.getCondVisibility("system.platform.Windows"): creationflags = 0x08000000
+        try:
+            p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+                                stdin=subprocess.PIPE, creationflags=creationflags)
+            if wait:
+                output_cmd, error_cmd = p.communicate()
+        except OSError as ex:
+            logger.error('%s: %s, wait=%s - error: %s' %(function, cmd, wait, ex.errno))
+            error_cmd = ex.errno
+    
+    return p, output_cmd, error_cmd
+
+def get_android_version():
+    import re
+    version = 8
+    if PY3: FF = b'\n'
+    else: FF = '\n'
+    
+    if xbmc.getCondVisibility("system.platform.Android"):
+        try:
+            for label_a in subprocess.check_output('getprop').split(FF):
+                if PY3 and isinstance(label_a, bytes):
+                    label_a = label_a.decode()
+                if 'build.version.release' in label_a:
+                    version = int(re.findall(':\s*\[(.*?)\]$', label_a, flags=re.DOTALL)[0])
+                    break
+        except:
+            logger.error(traceback.format_exc())
+            try:
+                if PY3: fp = open(os.environ['ANDROID_ROOT'] + '/build.prop', 'r', encoding='utf-8')
+                else: fp = open(os.environ['ANDROID_ROOT'] + '/build.prop', 'r')
+                for label_a in fp.read().split():
+                    if PY3 and isinstance(label_a, bytes):
+                        label_a = label_a.decode()
+                    if 'build.version.release' in label_a:
+                        version = int(re.findall('=(.*?)$', label_a, flags=re.DOTALL)[0])
+                        break
+                f.close()
+            except:
+                logger.error(traceback.format_exc())
+                try:
+                    f.close()
+                except:
+                    pass
+    
+    return version
+
 
 #
 ## Instala o actualiza la app de Assitant ##################################################################################################################################

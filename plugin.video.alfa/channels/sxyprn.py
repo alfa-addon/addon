@@ -138,7 +138,7 @@ def lista(item):
         ext = ""
         time = ""
         quality = ""
-        serv = ['jetload','evoload', 'waaw', 'aparat.cam/reg']
+        serv = ['jetload', 'waaw', 'aparat.cam/reg']
         url = elem.find('a', class_='post_time')['href']
         titulo = elem.find('a', class_='post_time')['title']
         thumbnail = elem.img
