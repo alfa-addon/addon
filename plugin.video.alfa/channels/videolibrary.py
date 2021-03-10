@@ -86,13 +86,17 @@ def list_movies(item, silent=False):
                                          nfo=nfo_path,
                                          library_urls=new_item.library_urls,
                                          infoLabels={'title': new_item.contentTitle})
-                        if canal not in dead_list and canal not in zombie_list:
+                        if canal not in dead_list and canal not in zombie_list and not new_item.zombie:
                             confirm = platformtools.dialog_yesno('Videoteca',
-                                                                 'Parece que el canal [COLOR red]%s[/COLOR] ya no existe.' % canal.upper(),
-                                                                 'Deseas eliminar los enlaces de este canal?')
+                                                                 'Parece que el canal [COLOR red]{}[/COLOR] ya no existe.'.format(canal.upper()),
+                                                                 '¿Deseas eliminar los enlaces de este canal?')
 
-                        elif canal in zombie_list:
+                        elif canal in zombie_list or new_item.zombie:
                             confirm = False
+                            if not new_item.zombie:
+                                nfo_path = filetools.join(raiz, f)
+                                zombie_item = new_item.clone(zombie=True)
+                                filetools.write(nfo_path, head_nfo + zombie_item.tojson())
                         else:
                             confirm = True
 
@@ -104,6 +108,9 @@ def list_movies(item, silent=False):
                         else:
                             if canal not in zombie_list:
                                 zombie_list.append(canal)
+                                nfo_path = filetools.join(raiz, f)
+                                zombie_item = new_item.clone(zombie=True)
+                                filetools.write(nfo_path, head_nfo + zombie_item.tojson())
 
                 if len(dead_list) > 0:
                     for canal in dead_list:
@@ -231,13 +238,17 @@ def list_tvshows(item):
                                          nfo=tvshow_path,
                                          library_urls=item_tvshow.library_urls,
                                          infoLabels={'title': item_tvshow.contentTitle})
-                        if canal not in dead_list and canal not in zombie_list:
+                        if canal not in dead_list and canal not in zombie_list and not item_tvshow.zombie:
                             confirm = platformtools.dialog_yesno('Videoteca',
-                                                                 'Parece que el canal [COLOR red]%s[/COLOR] ya no existe.' % canal.upper(),
-                                                                 'Deseas eliminar los enlaces de este canal?')
+                                                                 'Parece que el canal [COLOR red]{}[/COLOR] ya no existe.'.format(canal.upper()),
+                                                                 '¿Deseas eliminar los enlaces de este canal?')
 
-                        elif canal in zombie_list:
+                        elif canal in zombie_list or item_tvshow.zombie:
                             confirm = False
+                            if not item_tvshow.zombie:
+                                tvshow_path = filetools.join(raiz, f)
+                                zombie_item = item_tvshow.clone(zombie=True)
+                                filetools.write(tvshow_path, head_nfo + zombie_item.tojson())
                         else:
                             confirm = True
 
@@ -249,6 +260,9 @@ def list_tvshows(item):
                         else:
                             if canal not in zombie_list:
                                 zombie_list.append(canal)
+                                tvshow_path = filetools.join(raiz, f)
+                                zombie_item = item_tvshow.clone(zombie=True)
+                                filetools.write(tvshow_path, head_nfo + zombie_item.tojson())
 
                 if len(dead_list) > 0:
                     for canal in dead_list:

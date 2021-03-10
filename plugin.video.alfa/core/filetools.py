@@ -1073,7 +1073,11 @@ def listdir(path, silent=False, vfs=True, file_inf=False):
                 path = join(path, ' ').rstrip()
                 ls_la = []
                 for file in res:
-                    file_ext = file_info(join(path, file)).replace(path, '')
+                    file_ext = file_info(join(path, file))
+                    if not isinstance(file_ext, bool):
+                        file_ext = file_ext.replace(path, '')
+                    else:
+                        return file_ext
                     if file_ext:
                         ls_la += [file_ext]
                     else:

@@ -412,54 +412,63 @@ def list_all(item):
     # ===== Patrones de novedades (nuevos episodios) =====
     if item.param == 'newepisodes':
         section = soup.find('div', class_='animation-2 items')
-        pattern += '(?s)img src="([^"]+).+?'            # thumb & season
-        pattern += 'href="([^"]+).+?'                   # url
-        pattern += '/span>(?:.*?(\d+?|))<.+?'           # epnum
-        pattern += 'class="data".+?h3>(.*?)<.+?'        # title
-
     elif genericvalues[item.param] == True:
-        pattern += '(?s)img src="(.+?)".+?'             # thumb
-        pattern += 'data-src="([^"]+).+?'               # fanart
 
         if item.param == 'recomended' or item.param == 'more_watched':
-            pattern += 'href="([^"]+).+?<.+?'           # url
-
             if item.param == 'recomended':              # == Patrones de recomendados ==
-                pattern += 'class="title.+?>(.*?)<.+?'  # title (recomended)
                 section = soup.find('div', id='slider-tvshows')
 
             elif item.param == 'more_watched':          # == Patrones de mas vistos ==
-                pattern += 'a href.+?>([^<]+)'          # title (more_watched)
                 section = soup.find('div', class_='items featured')
 
         elif item.param == 'popular':                   # == Patrones de populares ==
             section = soup.find('div', class_='items featured')
-            pattern += 'h3><a href="([^"]+).+?'         # url (popular)
-            pattern += '>(.+?)<.*?'                     # title (popular)
 
         elif item.param == 'search':                    # == Patrones de resultados de búsqueda ==
             section = soup.find('div', class_='search-page')
-            pattern += 'href="([^"]+).+?'               # url (search)
-            pattern += '>(.+?)<.+?'                     # title (search)
     elif item.param == 'allanimes':
         section = soup.find('div', id='archive-content')
     else:
         section = soup.find('div', class_='items')
-    if pattern == '':                                                                    # == Patrón genérico para páginas comunes ==
-        pattern += '(?s)img src="([^"]+).+?'                                             # thumb
-        pattern += 'class="Categoria\w+[^"]+.+?(?:div class=(?:"|\')(\w+?[^"]+)|\w+).+?' # contentType
-        pattern += '(?:div class=(?:"|\')estado\w+.+?div class=(?:"|\')([^"]+)).+?'      # status (opcional para películas)
-        pattern += 'class="data".+?href="([^"]+)[^>]+?'                                  # url
-        pattern += '>([^<]+).+?'                                                         # title
-        pattern += '(?:span>([^<]+?)<.+?'                                                # airdate
-        pattern += 'class="metadata".+?<span>(\d+?)</span>|</span>).+?'                  # year (útil con películas)
-        pattern += 'class="text[^>]+?(?:>([^<]+?)<|><).+?'                               # plot
-        pattern += '(?:class="mta.+?>(.*?)</div>|(?:</div>))'                            # genres (unscraped)
-    section = str(section)
 
-    matchrows = scrapertools.find_multiple_matches(section, '(?is)<article.+?</article>')
-    for i in matchrows:
-        matches.append(scrapertools.find_multiple_matches(i, pattern)[0])
+    articles = section.find_all('article')
+    for article in articles:
+        match = []
+
+        if item.param == 'newepisodes':
+            thumb = article.find('img', class_='lazyload')['data-src']
+            url = article.find('a')['href']
+            epnum = scrapertools.find_single_match(article.find('div', class_='epiposter').text, '\d+$')
+            title = article.find('div', class_='data').text
+            match = [thumb, url, epnum, title]
+
+        elif genericvalues[item.param] == True:
+            thumb = article.find('img', class_='lazyload')['data-src']
+            fanart = article.find('noscript').find('img')['src']
+
+            if item.param == 'recomended' or item.param == 'more_watched' or item.param == 'popular':
+                url = article.find('a')['href']
+                title = article.find('div', class_='data').find('h3').text
+
+            elif item.param == 'search':                    # == Patrones de resultados de búsqueda ==
+                url = article.find('div', class_='title').find('a')['href']
+                title = article.find('div', class_='title').text
+            match = [thumb, fanart, url, title]
+
+        else:                                                                                # == Patrón genérico para páginas comunes ==
+            thumb = article.find('noscript').find('img')['src']
+            contentType = article.find('div', class_='CategoriaEnPoster').text
+            status = article.find('div', class_='estadoposter').text
+            url = article.find('div', class_='data').find('a')['href']
+            title = article.find('div', class_='data').find('h3').text
+            airdate = ''
+            year = ''
+            plot = article.find('div', class_='texto').text
+            genres = article.find('div', class_='genres')
+
+            match = [thumb, contentType, status, url, title, airdate, year, plot, genres]
+
+        matches.append(match)
 
     #==============Fase 2: Asignación de valores==============#
     # Como cada sección da distintos niveles de información,  #
@@ -536,11 +545,13 @@ def list_all(item):
                 infoLabels['last_air_date'] = date[2] + '-' + month[date[0]] + '-' + date[1]
                 infoLabels['premiered'] = infoLabels['last_air_date']
             if scpgenres:
-                genpatn = '(?s)a href="(?:[^"]+)+.+?>([^<]+)'
-                genmatch = scrapertools.find_multiple_matches(scpgenres, genpatn)
-                infoLabels['genre'] = unescape(genmatch[0]).strip()
-                for i in range(len(genmatch) - 1):
-                    infoLabels['genre'] += ', ' + unescape(genmatch[i + 1]).strip()
+                genmatch = scpgenres.find_all('a')
+                if len(genmatch) > 0:
+                    genre = genmatch[0].text
+                    infoLabels['genre'] = genre.strip()
+                    if len(genmatch) > 1:
+                        for genre in genmatch[1:]:
+                            infoLabels['genre'] = '{}, {}'.format(infoLabels['genre'], genre.text.strip())
             if scpcontentType == 'pelicula':
                 conType = 'movie'
                 conTitle = contentTitle
@@ -672,12 +683,12 @@ def episodios(item):
     logger.info()
     itemlist = []
 
-    if item.contentTitle:
-        itemlist.extend(findvideos(item, True))
-    else:
+    if not item.contentType == 'movie':
         seasons_list = seasons(item, True)
         for season in seasons_list:
             itemlist.extend(episodesxseason(season, True))
+    else:
+        itemlist.extend(findvideos(item, True))
     return itemlist
 
 def episodesxseason(item, add_to_videolibrary = False):
@@ -758,7 +769,7 @@ def findvideos(item, add_to_videolibrary = False):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    base_url = 'https://supergoku.com/wp-json/dooplayer/v1/post/'
+    base_url = '{}/wp-json/dooplayer/v1/post/'.format(host)
     postnum = scrapertools.find_single_match(data, '(?is)data-post=.(\d+).*?')
     srcsection = scrapertools.find_single_match(data, '(?is)playeroptionsul.+?</ul>')
     srccount = scrapertools.find_multiple_matches(srcsection, '(?is)<li .+?data-nume=["|\'](.+?)["|\']')
