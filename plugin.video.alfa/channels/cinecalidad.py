@@ -282,7 +282,8 @@ def findvideos(item):
                   'gounlimited': 'https://gounlimited.to/embed-%s.html',
                   'clipwatching': 'https://clipwatching.com/embed-%s.html',
                   'vidcloud': 'https://vidcloud.co/embed/%s',
-                  'jetload': 'https://jetload.net/e/%s'}
+                  'jetload': 'https://jetload.net/e/%s',
+                  'evoload': 'https://evoload.io/e/%s'}
     
     dec_value = scrapertools.find_single_match(data, 'String\.fromCharCode\(parseInt\(str\[i\]\)-(\d+)\)')
     torrent_link = scrapertools.find_single_match(data, '<a href=".*?/protect/v\.php\?i=([^"]+)"')
