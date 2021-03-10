@@ -87,11 +87,13 @@ def lista(item):
         data = httptools.downloadpage(item.url).data
     logger.info("Intel22 %s" %page)
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<a href="([^"]+)" data-webm=.*?'
-    patron += '<img src="([^"]+)" alt="([^"]+)".*?'
-    patron += '<span class="video-time">([^<]+)<'
+    patron = '<div class="video-item">.*?'
+    patron += '<a href="([^"]+)".*?'
+    patron += 'url\(\'([^\']+)\'.*?'
+    patron += '<span class="video-time">([^<]+)<.*?'
+    patron += '<div class="video-title" [^>]+>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,time in matches:
+    for scrapedurl,scrapedthumbnail,time,scrapedtitle in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
         thumbnail = scrapedthumbnail
         url = urlparse.urljoin(item.url,scrapedurl)

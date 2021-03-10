@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
 from core import httptools
 from core import scrapertools
@@ -22,6 +26,7 @@ def get_video_url(page_url, video_password):
     data = httptools.downloadpage(page_url).data
     m3u = scrapertools.find_single_match(data, 'html5player.setVideoHLS\(\'([^\']+)\'')
     data = httptools.downloadpage(m3u).data
+    if PY3 and isinstance(data, bytes): data = data.decode()
     patron = 'RESOLUTION=\d+x(\d+),.*?'
     patron += '(hls-.*?.m3u8)'
     matches = re.compile(patron,re.DOTALL).findall(data)

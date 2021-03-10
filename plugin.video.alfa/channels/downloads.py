@@ -428,7 +428,7 @@ def download_all(item):
                         
                         
 def download_auto(item, start_up=False):
-    logger.info()
+    logger.info('start_up: %s' % str(start_up))
     
     second_pass = False
     move_to_remote = config.get_setting("move_to_remote", "downloads", default=[])
@@ -462,7 +462,6 @@ def download_auto(item, start_up=False):
                                 res = filetools.write(filetools.join(address, fichero), download_item.tojson(), silent=True)
                                 if res:
                                     res = filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, fichero), silent=True)
-                                    if res: second_pass = False
                                     break
 
                 elif not second_pass and not start_up and download_item.downloadQueued != 0 and download_item.downloadProgress <= 0:
@@ -752,10 +751,17 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
 
 
 def move_to_library(item, forced=False):
+    logger.info()
     # Verificamos si se activó el ajuste "Añadir completados a videoteca"
     if config.get_setting("library_add", "downloads") == True or forced == True:
-        download_path = filetools.join(config.get_setting("downloadpath"), item.downloadFilename)
+        download_path = item.downloadFilename
         item_library_path = filetools.join(config.get_videolibrary_path(), *filetools.split(item.downloadFilename))
+        if item.server == 'torrent':
+            torrent_client = scrapertools.find_single_match(download_path, ':(.+?):').upper()
+            torrent_dir = torrent.torrent_dirs()[torrent_client]
+            download_path = filetools.join(re.escape(torrent_dir), (re.sub('(?is):(.+?):\s?', '', download_path)))
+        else:
+            download_path = filetools.join(config.get_setting("downloadpath"), download_path)
         final_path = download_path
 
         # Si se activó el ajuste "Mover archivo descargado a videoteca", movemos el archivo
@@ -1034,14 +1040,13 @@ def download_from_server(item, silent=False):
 
     if not silent: progreso = platformtools.dialog_progress(config.get_localized_string(30101), \
                         config.get_localized_string(70178) % item.server)
-    channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
-    if hasattr(channel, "play") and not item.play_menu and not item.url.startswith('magnet:'):
+    if channeltools.has_attr(item.contentChannel, "play") and not item.play_menu and not item.url.startswith('magnet:'):
 
         if not silent: progreso.update(50, config.get_localized_string(70178) % \
                         item.server + '\n' + config.get_localized_string(60003) % item.contentChannel)
         if item.server == 'torrent': item.url_control = item.url
         try:
-            itemlist = getattr(channel, "play")(item.clone(channel=item.contentChannel, action=item.contentAction))
+            itemlist = channeltools.get_channel_attr(item.contentChannel, "play", item.clone(channel=item.contentChannel, action=item.contentAction))
         except:
             logger.error("Error en el canal %s" % item.contentChannel)
         else:
@@ -1201,13 +1206,12 @@ def download_from_best_server(item, silent=False):
     result = {"downloadStatus": STATUS_CODES.error}
 
     if not silent: progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70179))
-    channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
 
     if not silent: progreso.update(50, config.get_localized_string(70184) + '\n' + config.get_localized_string(70180) % item.contentChannel)
 
-    if hasattr(channel, item.contentAction):
-        play_items = getattr(channel, item.contentAction)(
-            item.clone(action=item.contentAction, channel=item.contentChannel))
+    if channeltools.has_attr(item.contentChannel, item.contentAction):
+        play_items = channeltools.get_channel_attr(item.contentChannel, item.contentAction, \
+                                                   item.clone(action=item.contentAction, channel=item.contentChannel))
     else:
         play_items = servertools.find_video_items(item.clone(action=item.contentAction, channel=item.contentChannel))
     
@@ -1259,12 +1263,11 @@ def select_server(item):
         item.contentAction, item.contentChannel, item.downloadProgress, item.downloadQueued, item.server, item.url))
 
     progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70179))
-    channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
     progreso.update(50, config.get_localized_string(70184) + '\n' + config.get_localized_string(70180) % item.contentChannel)
 
-    if hasattr(channel, item.contentAction):
-        play_items = getattr(channel, item.contentAction)(
-            item.clone(action=item.contentAction, channel=item.contentChannel))
+    if channeltools.has_attr(item.contentChannel, item.contentAction):
+        play_items = channeltools.get_channel_attr(item.contentChannel, item.contentAction, \
+                                  item.clone(action=item.contentAction, channel=item.contentChannel))
     else:
         play_items = servertools.find_video_items(item.clone(action=item.contentAction, channel=item.contentChannel))
 
@@ -1278,7 +1281,7 @@ def select_server(item):
             play_items[x] = getattr(channel, "play")(i)
 
     seleccion = platformtools.dialog_select(config.get_localized_string(70192), ["Auto"] + [s.title for s in play_items])
-    if seleccion > 1:
+    if seleccion > 0:
         update_control(item.path, {
             "downloadServer": {"url": play_items[seleccion - 1].url, "server": play_items[seleccion - 1].server}}, function='select_server_1')
     elif seleccion == 0:
@@ -1330,12 +1333,12 @@ def get_episodes(item):
         event = True                                                            # Si viene de un canal de deportes o similar
     
     if not item.nfo and item.path and not item.path.endswith('.json') and not event:
-        item.nfo = filetools.join(SERIES, item.path, 'tvshow.nfo')
+        item.nfo = filetools.join(SERIES, item.path.lower(), 'tvshow.nfo')
     if not item.nfo and item.video_path and not event:
-        item.nfo = filetools.join(SERIES, item.video_path, 'tvshow.nfo')
+        item.nfo = filetools.join(SERIES, item.video_path.lower(), 'tvshow.nfo')
     if not item.nfo and item.infoLabels['imdb_id']:
-        if filetools.exists(filetools.join(SERIES, '%s [%s]' % (item.contentSerieName, item.infoLabels['imdb_id']), 'tvshow.nfo')):
-            item.nfo = filetools.join(SERIES, '%s [%s]' % (item.contentSerieName, item.infoLabels['imdb_id']), 'tvshow.nfo')
+        if filetools.exists(filetools.join(SERIES, '%s [%s]' % (item.contentSerieName.lower(), item.infoLabels['imdb_id']), 'tvshow.nfo')):
+            item.nfo = filetools.join(SERIES, '%s [%s]' % (item.contentSerieName.lower(), item.infoLabels['imdb_id']), 'tvshow.nfo')
     if item.nfo:
         if filetools.exists(item.nfo):
             head, nfo_json = videolibrarytools.read_nfo(item.nfo)               #... tratamos de recuperar la info de la Serie
@@ -1366,7 +1369,7 @@ def get_episodes(item):
                 from platformcode import xbmc_videolibrary
                 import xbmc
                 xbmc_videolibrary.update(folder='_scan_series')                 # Se escanea el directorio de series para catalogar en Kodi
-                while xbmc.getCondVisibility('Library.IsScanningVideo()'):      # Se espera a que acabe
+                while xbmc.getCondVisibility('Library.IsScanningVideo()'):      # Se espera a que acabe el scanning
                     time.sleep(1)
                 xbmc_videolibrary.mark_content_as_watched_on_alfa(item.nfo)     # Sincronizamos los Vistos de Kodi con Alfa ...
                 head, nfo_json = videolibrarytools.read_nfo(item.nfo)           #... refrescamos la info de la Serie
@@ -1623,7 +1626,7 @@ def write_json(item):
 def save_download(item, silent=False):
     logger.info()
 
-    # Menu contextual
+    # Descarga desde menú contextual
     if item.from_action and item.from_channel:
         item.channel = item.from_channel
         item.action = item.from_action

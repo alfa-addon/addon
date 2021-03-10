@@ -82,6 +82,7 @@ from hashlib import sha1, sha256
 from hmac import HMAC
 from datetime import datetime, timedelta, tzinfo
 from platformcode import logger, config
+from lib.alfa_assistant import execute_binary_from_alfa_assistant
 
 # fixed offset timezone, for UTC
 try:
@@ -850,8 +851,8 @@ class RarFile(object):
         cmd.append('--')
         with XTempFile(self._rarfile) as rarfile:
             cmd.append(rarfile)
-            p = custom_popen(cmd)
-            output = p.communicate()[0]
+            p, output = custom_popen(cmd)
+            #output = p.communicate()[0]
             check_returncode(p, output)
 
     def strerror(self):
@@ -908,8 +909,8 @@ class RarFile(object):
                 cmd.append(path)
 
             # call
-            p = custom_popen(cmd)
-            output = p.communicate()[0]
+            p, output = custom_popen(cmd)
+            #output = p.communicate()[0]
             check_returncode(p, output)
 
 #
@@ -2210,7 +2211,8 @@ class PipeReader(RarExtFile):
 
         # launch new process
         self._returncode = 0
-        self._proc = custom_popen(self._cmd)
+        logger.error('self._cmd: %s' % self._cmd)
+        self._proc = custom_popen(self._cmd, classic=True)
         self._fd = self._proc.stdout
 
         # avoid situation where unrar waits on stdin
@@ -2845,8 +2847,10 @@ def rar3_decompress(vers, meth, data, declen=0, flags=0, crc=0, psw=None, salt=N
         add_password_arg(cmd, psw, (flags & RAR_FILE_PASSWORD))
         cmd.append(tmpname)
 
-        p = custom_popen(cmd)
-        return p.communicate()[0]
+        p, output = custom_popen(cmd)
+        #output = p.communicate()[0]
+        #return p.communicate()[0]
+        return output
     finally:
         tmpf.close()
         os.unlink(tmpname)
@@ -2900,32 +2904,50 @@ def parse_dos_time(stamp):
     yr = (stamp & 0x7F) + 1980
     return (yr, mon, day, hr, mn, sec * 2)
 
-def custom_popen(cmd):
+def custom_popen(cmd, classic=False):
     """Disconnect cmd from parent fds, read only from stdout.
     """
-    # needed for py2exe
-    creationflags = 0
-    if sys.platform == 'win32':
-        creationflags = 0x08000000   # CREATE_NO_WINDOW
+    if classic:
+        # needed for py2exe
+        creationflags = 0
+        if sys.platform == 'win32':
+            creationflags = 0x08000000   # CREATE_NO_WINDOW
+        
+        # run command
+        try:
+            p = Popen(cmd, bufsize=0, stdout=PIPE, stdin=PIPE, stderr=STDOUT,
+                      creationflags=creationflags)
+        except OSError as ex:
+            if ex.errno == errno.ENOENT:
+                raise RarCannotExec("Unrar not installed? (rarfile.UNRAR_TOOL=%r)" % UNRAR_TOOL)
+            if ex.errno == errno.EACCES or ex.errno == errno.EPERM:
+                raise RarCannotExec("Cannot execute unrar (rarfile.UNRAR_TOOL=%r)" % UNRAR_TOOL)
+            raise
+        return p
 
-    # run command
+    # run command from APP
     try:
-        p = Popen(cmd, bufsize=0, stdout=PIPE, stdin=PIPE, stderr=STDOUT,
-                  creationflags=creationflags)
+        p, output_cmd, error_cmd = execute_binary_from_alfa_assistant('LaunchBinary', cmd, wait=True)
+        if error_cmd: output_cmd = error_cmd
     except OSError as ex:
         if ex.errno == errno.ENOENT:
             raise RarCannotExec("Unrar not installed? (rarfile.UNRAR_TOOL=%r)" % UNRAR_TOOL)
         if ex.errno == errno.EACCES or ex.errno == errno.EPERM:
             raise RarCannotExec("Cannot execute unrar (rarfile.UNRAR_TOOL=%r)" % UNRAR_TOOL)
         raise
-    return p
+    return p, output_cmd
 
 def custom_check(cmd, ignore_retcode=False):
     """Run command, collect output, raise error if needed.
     """
-    p = custom_popen(cmd)
-    out, _ = p.communicate()
-    if p.returncode and not ignore_retcode:
+    p, out  = custom_popen(cmd)
+    returncode = 0
+    if isinstance(p, bool):
+        if not p: returncode = 99
+    else:
+        returncode = p.returncode
+    #out, _ = p.communicate()
+    if returncode and not ignore_retcode:
         raise RarExecError("Check-run failed")
     return out
 
@@ -2942,7 +2964,13 @@ def add_password_arg(cmd, psw, ___required=False):
 def check_returncode(p, out):
     """Raise exception according to unrar exit code.
     """
-    code = p.returncode
+    if isinstance(p, bool):
+        if p:
+            code = 0
+        else:
+            code = 9
+    else:
+        code = p.returncode
     if code == 0:
         return
 
@@ -2964,9 +2992,9 @@ def check_returncode(p, out):
 
     # format message
     if out:
-        msg = "%s [%d]: %s" % (exc.__doc__, p.returncode, out)
+        msg = "%s [%d]: %s" % (exc.__doc__, code, out)
     else:
-        msg = "%s [%d]" % (exc.__doc__, p.returncode)
+        msg = "%s [%d]" % (exc.__doc__, code)
 
     raise exc(msg)
 
