@@ -333,9 +333,17 @@ def alpha(item):
 
     return itemlist
 
-def newest(item):
-    item.url = host + '/posts/'
-    return list_all(item)
+def newest(category):
+    if category == 'anime':
+        item = Item(
+            action = 'list_all',
+            channel = 'erairaws',
+            list_what = 'episodes',
+            url = '{}/posts/'.format(host)
+        )
+        return list_all(item)
+    else:
+        return []
 
 def list_selected(item):
     logger.info()
