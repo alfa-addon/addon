@@ -347,6 +347,13 @@
       "label": "Direccion(es) local o remota para hacer Backup de la Videoteca  ",
       "enabled": true,
       "visible": true
+    },
+    {
+      "id": "videolibrary_backup_scan",
+      "type": "bool",
+      "label": "Desea solo Scan de videoteca Kodi (backup)?",
+      "default": false,
+      "visible": true
     }
   ]
 }

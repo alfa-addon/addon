@@ -42,6 +42,8 @@ def search(item, texto):
     data = httptools.downloadpage(host).data
     cxv = scrapertools.find_single_match(data, 'cx" value="([^"]+)"')
     data = httptools.downloadpage("https://cse.google.es/cse.js?hpg=1&cx=%s" %cxv).data
+    if PY3 and isinstance(data, bytes):
+        data = "".join(chr(x) for x in bytes(data))
     cse_token = scrapertools.find_single_match(data, 'cse_token": "([^"]+)"')
     if cse_token:                                       #Evita un loop si error
         item.url = host_search %(texto, cse_token)
@@ -61,6 +63,8 @@ def sub_search(item):
     while True:
         response = httptools.downloadpage(item.url)
         data = response.data
+        if PY3 and isinstance(data, bytes):
+            data = "".join(chr(x) for x in bytes(data))
         if len(data) < 500 or not response.sucess:      #Evita un loop si error
             break
 

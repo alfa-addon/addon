@@ -498,32 +498,267 @@ def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank', wait=False):
 #
 ## Android >= 10 ejecuta los binarios en Kodi desde Alfa Assistant, si no, de la forma tradicional ##################################################################################################################################
 #
-def execute_binary_from_alfa_assistant(function, cmd, wait=False):
-    p = False
+def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, retry=False, **kwargs):
+    global isAlfaAssistantOpen
+    p = None
     output_cmd = ''
     error_cmd = ''
-        
-    if xbmc.getCondVisibility("system.platform.Android") and PY3 and get_android_version() >= 20 \
-                                and config.get_setting('is_rooted_device', default='') != 'rooted':
+    
+    """
+    Syntax StartAndroidActivity("USER_APP", "", "function", "[['cmd', 'arg',...'arg'], [dict{env} in format 'key=value', ...]]"):
+          - cmd: binary name in format 'lib'binary_name'.so'
+          - 'open':                                                         START the Assitant
+          - "OpenBinary", "[['libtorrest.so', '-port', '61235', '-settings', '/storage/emulated/.../settings.json'], 
+                            [(kwargs[env]):'key=value', 'etc=etc']]":       CALL Torrest binary
+    
+    Syntax Http requests: http://127.0.0.1:48884/command?option=value
+          - /openBinary?cmd=base64OfFullCommand([['libtorrest.so', '-port', '61235', '-settings', '/storage/emulated/.../settings.json'], 
+                            [(kwargs[env]):'key=value', 'etc=etc']]"):      CALL Torrest binary
+                  - returns: {
+                              "pid": 999,
+                              "output": "Base64encoded",
+                              "error": "Base64encoded",
+                              "startDate": "2021-12-13 14:00:12",
+                              "endDate": "[2021-12-13 14:00:12]",          If ended
+                              "retCode": "0|1|number|None"                 None if not ended
+          - /getBinaryStatus?pid=999:                                      Request binary STATUS by PID
+                  - returns: {
+                              "pid": 999,
+                              "output": "Base64encoded",
+                              "error": "Base64encoded",
+                              "startDate": "2021-12-13 14:00:12",
+                              "endDate": "[2021-12-13 14:00:12]",          If ended
+                              "retCode": "0|1|number|None"                 None if not ended
+                             }
+          - /killBinary?pid=999:                                           Request KILL binary PID
+                  - returns: {
+                              "pid": 999,
+                              "output": "Base64encoded",
+                              "error": "Base64encoded",
+                              "startDate": "2021-12-13 14:00:12",
+                              "endDate": "2021-12-13 14:00:12", 
+                              "retCode": "0|1|number"
+                             }
 
-        if install_alfa_assistant():
-            p = execute_in_alfa_assistant_with_cmd(function, cmd, wait)
-            if not p: error_cmd = 'ERROR 9'
+          - /getBinaryList:
+                   - returns: {[
+                                {
+                                "cmd"= "[[libtorrest.so], etc...", 
+                                "pid"=999, 
+                                "retCode": "None", 
+                                "startDate": "2021-12-13 14:00:12", 
+                                "endDate": ""
+                                }, 
+                                {       
+                                "cmd" = "[[libtorrest.so], [etc]]", 
+                                "pid"=666, 
+                                "retCode": "0|1|number", 
+                                "startDate": "2021-12-13 14:00:12",
+                                "endDate": "2021-12-13 14:00:12"
+                                }, 
+                              ]}
+    """
+        
+    if xbmc.getCondVisibility("system.platform.Android") and PY3 and get_android_version() >= 10 \
+                                and config.get_setting('is_rooted_device', default='') != 'rooted':
+        
+        # Simulate the response from subprocess.Popen
+        url = '%s:%s/%s%s' % (ASSISTANT_SERVER, '48884', function, '?cmd=')
+        url_stat = '%s:%s/%s%s' % (ASSISTANT_SERVER, '48884', 'getBinaryStatus', '?pid=')
+        
+        class p(object):
+            {'pid': 0, 
+             'returncode': None, 
+             'stdout': '', 
+             'stdin': '', 
+             'stderr': '',
+             'startDate': '', 
+             'endDate': '', 
+             'poll': '', 
+             'terminate': '', 
+             'communicate': '', 
+             'app': '', 
+             'url': ''}
+        
+        setattr(p, 'pid', 999999)
+        pipeout, pipein = os.pipe()
+        setattr(p, 'stdout', os.fdopen(pipeout, 'rb'))
+        setattr(p, 'stdin', os.fdopen(pipein, 'wb'))
+        setattr(p, 'stderr', p.stdout)
+        setattr(p, 'returncode', None)
+        setattr(p, 'startDate', '')
+        setattr(p, 'endDate', '')
+        setattr(p, 'terminate', '')
+        setattr(p, 'communicate', '')
+        setattr(p, 'poll', '')
+        setattr(p, 'app', 'com.alfa.alfamobileassistant')
+        setattr(p, 'url', url)
+        
+        def redirect_terminate(p=p, action='killBinary'):
+            return binary_stat(p, action)
+        def redirect_poll(p=p, action='poll'):
+            return binary_stat(p, action)
+        def redirect_communicate(p=p, action='communicate'):
+            return binary_stat(p, action)
+        p.terminate = redirect_terminate
+        p.poll = redirect_poll
+        p.communicate = redirect_communicate
+        
+        if not init and ASSISTANT_MODE == 'este' and install_alfa_assistant():
+            try:
+                # Lets start the Assistant app
+                command = []
+                status_code = 0
+                res = open_alfa_assistant()
+                if not res:
+                    platformtools.dialog_notification("Active Alfa Assistant", 
+                                "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]")
+                    raise
+                time.sleep(1)
+                
+                # Build the command & params
+                cmd_app = cmd.copy()
+                cmd_app[0] = 'lib%s.so' % filetools.basename(cmd_app[0])
+                command.append(cmd_app)
+                command.append([])
+                for key, value in list(kwargs.get('env', {}).items()):
+                    if key == 'LD_LIBRARY_PATH':
+                        # The app will replace **CWD** by the binary/lib path
+                        value = '**CWD**'
+                    command[1].append('%s=%s' % (key, value))
+                command_base64 = base64.b64encode(str(command).encode('utf8')).decode('utf8')
+                
+                # Launch the Binary
+                resp = httptools.downloadpage(url+command_base64, timeout=5, ignore_response_code=True, alfa_s=True)
+                status_code = resp.code
+                if status_code != 200 and not retry:
+                    time.sleep(3)
+                    isAlfaAssistantOpen = False
+                    return execute_binary_from_alfa_assistant(function, cmd, wait=wait, init=init, retry=True, **kwargs)
+                elif status_code != 200 and retry:
+                    raise ValueError("No app response:  error code: %s" % status_code)
+                
+                try:
+                    app_response = resp.data
+                    if PY3 and isinstance(app_response, bytes):
+                        app_response = app_response.decode()
+                    app_response = re.sub('\n|\r|\t', '', app_response)
+                    app_response = json.loads(app_response)
+                except:
+                    status_code = resp.data
+                    raise ValueError("Invalid app response: %s" % resp.data)
+                try:
+                    p.pid = int(app_response['pid'])
+                except:
+                    status_code = resp.data
+                    raise ValueError("No valid PID returned:  PID code: %s" % status_code)
+
+                logger.info('## Assistant executing CMD: %s - PID: %s - Wait: %s' % (command[0], p.pid, wait), force=True)
+                logger.debug('## Assistant executing CMD **kwargs: %s' % command[1])
+                return p
+            except:
+                logger.error('## Assistant ERROR %s in CMD: %s%s - Wait: %s' % (status_code, url, command, wait))
+                logger.error(traceback.format_exc())
+        
+        elif not init and ASSISTANT_MODE != 'este':
+            platformtools.dialog_notification("Active Alfa Assistant", 
+                            "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]")
+        elif init:
+            p.returncode = 0
 
     else:
-        logger.info('## %s: %s, wait=%s' %(function, cmd, wait))
+        logger.info('## %s: %s, wait=%s' % (function, cmd, wait), force=True)
         creationflags = 0
         if xbmc.getCondVisibility("system.platform.Windows"): creationflags = 0x08000000
         try:
             p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
                                 stdin=subprocess.PIPE, creationflags=creationflags)
-            if wait:
-                output_cmd, error_cmd = p.communicate()
-        except OSError as ex:
-            logger.error('%s: %s, wait=%s - error: %s' %(function, cmd, wait, ex.errno))
-            error_cmd = ex.errno
+        except Exception as e:
+            if not PY3:
+                e = unicode(str(e), "utf8", errors="replace").encode("utf8")
+            elif PY3 and isinstance(e, bytes):
+                e = e.decode("utf8")
+            logger.error('%s: %s, wait=%s - error: %s' % (function, cmd, wait, e))
+
+    return p
+
+def binary_stat(p, action, retry=False):
+    logger.debug('binary_stat: action: %s - PID: %s - retry: %s' % (action, p.pid, retry))
+    import traceback
+    import base64
+    import json
+    import time
     
-    return p, output_cmd, error_cmd
+    try:
+        if action in ['poll', 'communicate']:
+            url = p.url + '/getBinaryStatus?pid=' + str(p.pid)
+
+        if action == 'killBinary':
+            url = p.url + '/killBinary?pid=' + str(p.pid)
+
+        finished = False
+        stdout_acum = ''
+        stderr_acum = ''
+        while not finished:
+            resp = httptools.downloadpage(url+str(p.pid), timeout=5, ignore_response_code=True, alfa_s=True)
+            if resp.code != 200 and not retry:
+                res = open_alfa_assistant()
+                time.sleep(3)
+                continue
+            if resp.code != 200 and retry:
+                raise ValueError("No app response:  error code: %s" % resp.code)
+
+            if resp.code == 200:
+                try:
+                    app_response = resp.data
+                    if PY3 and isinstance(app_response, bytes):
+                        app_response = app_response.decode()
+                    app_response = re.sub('\n|\r|\t', '', app_response)
+                    app_response = json.loads(app_response)
+                except:
+                    status_code = resp.data
+                    logger.error("Invalid app response: %s" % resp.data)
+                    time.sleep(5)
+                    continue
+                
+                if app_response.get("pid", 0):
+                    msg = ''
+                    if app_response.get('output'):
+                        stdout_acum += base64.b64decode(app_response['output']).decode('utf-8') + '\n'
+                        msg += base64.b64decode(app_response['output']).decode('utf-8')
+                    if app_response.get('error'): 
+                        stderr_acum += base64.b64decode(app_response['error']).decode('utf-8') + '\n'
+                        msg += base64.b64decode(app_response['error']).decode('utf-8')
+
+                    if msg:
+                        msg += '\n'
+                        if PY3 and not isinstance(msg, (bytes, bytearray)):
+                            msg = msg.encode()
+                        try:
+                            p.stdin.write(msg)
+                            p.stdin.flush()
+                        except:
+                            logger.error(traceback.format_exc())
+                
+                p.returncode = None
+                if app_response.get('retCode', ''):
+                    try:
+                        p.returncode = int(app_response['retCode'])
+                    except:
+                        p.returncode = app_response['retCode']
+                    
+                if action == 'communicate' and p.returncode is not None:
+                    return stdout_acum, stderr_acum
+                elif action == 'poll':
+                    return p.returncode
+                elif action == 'killBinary':
+                    return p
+            
+            time.sleep(5)
+
+    except:
+        logger.error(traceback.format_exc())
+    return None
 
 def get_android_version():
     import re
