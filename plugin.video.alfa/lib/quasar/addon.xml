@@ -2,6 +2,7 @@
 <addon id="plugin.video.quasar" name="Quasar" version="0.9.78_Alfa" provider-name="scakemyer">
     <requires>
         <import addon="xbmc.addon" version="16.0.0" />
+        <import addon="script.module.requests"/>
         <import addon="repository.quasar" optional="true" />
     </requires>
     <extension point="xbmc.python.pluginsource" library="navigation.py">
