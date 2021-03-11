@@ -53,13 +53,12 @@ def login():
     logger.info()
 
     data = agrupa_datos(host)
-    _logged = '<a href="%s"' % urlparse.urljoin(host, "logout")
+    _logged = 'id="header-signout" href="/logout"'
     if _logged in data:
         config.set_setting("logged", True, channel="hdfull")
         return True
     else:
         patron = "<input type='hidden' name='__csrf_magic' value=\"([^\"]+)\" />"
-    
         sid = urllib.quote(scrapertools.find_single_match(data, patron))
         user_ = urllib.quote(config.get_setting('hdfulluser', channel='hdfull'))
         pass_ = urllib.quote(config.get_setting('hdfullpassword', channel='hdfull'))
@@ -71,6 +70,7 @@ def login():
             config.set_setting("logged", False, channel="hdfull")
             return False
         post = '__csrf_magic=%s&username=%s&password=%s&action=login' % (sid, user_, pass_)
+
         new_data = agrupa_datos(host, post=post)
 
         if _logged in new_data:
