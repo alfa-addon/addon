@@ -29,7 +29,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://dontorrents.org/'
+host = 'https://dontorrents.net/'
 channel = 'dontorrent'
 categoria = channel.capitalize()
 
@@ -363,7 +363,7 @@ def listado(item):                                                              
             patron = '(?:Temporada.*|Miniserie.*): (\d+[x|X]\d+)'
         else:                                                                   # Películas o Series o Documentales menú
             #patron = 'a\s*href="([^"]+)">([^<]+)<\/a>(?:\s*<b>\(([^\)]+)\)\s*<\/b>)?'
-            patron = '<a\s*href="([^"]+)">\s*<img[^>]*src="([^"]+)"\s*border=[^>]+>\s*<\/a>()'
+            patron = '<a\s*href="([^"]+)">\s*<img[^>]*src="([^"]+)"(?:\s*border=[^>]+)?>\s*<\/a>()'
 
         if not item.matches:                                                    # De pasada anterior o desde Novedades?
             matches = re.compile(patron, re.DOTALL).findall(data)
@@ -418,7 +418,7 @@ def listado(item):                                                              
                 last_page = 0
             else:                                                               # Resto, se descarga la página 9999 para ver la última real
                 patron_last = '<li\s*class="page-item\s*active"\s*aria-current="page">\s*'
-                patron_last += '<a\s*class="page-link"\s*href="#">\s*(\d+)\s*<\/a>\s*<\/li>'
+                patron_last += '<a\s*class="page-link"\s*href="[^"]*">\s*(\d+)\s*<\/a>\s*<\/li>'
                 last_page_url = re.sub(r'page\/(\d+)', 'page/9999', item.url)
                 data, success, code, item, itemlist = generictools.downloadpage(last_page_url, 
                                           timeout=timeout_search, post=post, patron=patron_last, 
