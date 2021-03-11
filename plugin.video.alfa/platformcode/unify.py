@@ -577,14 +577,21 @@ def title_format(item):
         try:
             check = u'\u221a'
 
-            title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, item.title.decode('utf-8'))
+            if PY3:
+                title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, unicode(item.title))
+            else:
+                title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, item.title.decode('utf-8'))
             item.title = title.encode('utf-8')
-            if PY3: item.title = item.title.decode('utf-8')
+            if PY3 and isinstance(item.title, bytes): item.title = item.title.decode('utf-8')
         except:
             check = 'v'
+            if PY3:
+                title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, unicode(item.title))
+            else:
+                title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, item.title.decode('utf-8'))
             title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, item.title.decode('utf-8'))
             item.title = title.encode('utf-8')
-            if PY3: item.title = item.title.decode('utf-8')
+            if PY3 and isinstance(item.title, bytes): item.title = item.title.decode('utf-8')
 
     return item
 

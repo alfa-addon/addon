@@ -583,11 +583,11 @@ msgstr "Marcar serie como vista"
 
 msgctxt "#60022"
 msgid "Automatically find new episodes: Disable"
-msgstr "Buscar automáticamente nuevos episodios: Desactivar"
+msgstr "Desactivar búsqueda de nuevos episodios automática"
 
 msgctxt "#60023"
 msgid "Automatically find new episodes: Enable"
-msgstr "Buscar automáticamente nuevos episodios: Activar"
+msgstr "Activar búsqueda de nuevos episodios automática"
 
 msgctxt "#60024"
 msgid "Delete tv series/channel"

@@ -1,7 +1,7 @@
 {
   "id": "yape",
   "name": "Yape",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat","cast"],
   "thumbnail": "https://s8.postimg.cc/71ed4op5d/yape1.png",

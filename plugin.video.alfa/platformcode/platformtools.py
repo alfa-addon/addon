@@ -336,7 +336,7 @@ def render_items(itemlist, parent_item):
     if config.get_setting("forceview"):                                         # ...forzamos segun el viewcontent
         xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewcontent)
 
-    elif parent_item.channel not in ["channelselector", "", "alfavorites"]:     # ... o segun el canal
+    elif parent_item.channel not in ["channelselector", "", "alfavorites", "news", "search"]:     # ... o segun el canal
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
     elif parent_item.channel == "alfavorites" and parent_item.action == 'mostrar_perfil':

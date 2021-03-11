@@ -1336,7 +1336,7 @@ def icon_set_selector(item=None):
     platformtools.dialog_notification("Alfa", "Obteniendo iconos, por favor espere...")
     options = list()
     data = httptools.downloadpage("https://github.com/alfa-addon/media/tree/master/themes").data
-    patron = '<a class="js-navigation-open link-gray-dark" title="([^"]+)"'
+    patron = '<a class="js-navigation-open Link--primary" title="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for set_id in matches:
