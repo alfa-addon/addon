@@ -273,7 +273,7 @@ def play(item):
 
 def devuelve_enlace(url1):
     logger.info()
-    if 'danimados' in url1:
+    if 'danimados' in str(url1):
         url2 = "https:%s" % url1
         new_data = httptools.downloadpage(url2, follow_redirects=False)
         url1 = new_data.headers.get("location", "")

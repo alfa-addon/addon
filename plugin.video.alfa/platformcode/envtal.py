@@ -86,6 +86,8 @@ def get_environment():
             except:
                 try:
                     for label_a in filetools.read(os.environ['ANDROID_ROOT'] + '/build.prop').split():
+                        if PY3 and isinstance(label_a, bytes):
+                            label_a = label_a.decode()
                         if 'build.version.release' in label_a:
                             environment['os_release'] = str(scrapertools.find_single_match(label_a, '=(.*?)$'))
                         if 'product.model' in label_a:
@@ -234,6 +236,8 @@ def get_environment():
         try:
             video_updates = ['No', 'Inicio', 'Una vez', 'Inicio+Una vez', 'Dos veces al día']
             environment['videolab_update'] = str(video_updates[config.get_setting("update", "videolibrary")])
+            if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
+                environment['videolab_update'] += ' (Solo SCAN)'
         except:
             environment['videolab_update'] = '?'
         try:
