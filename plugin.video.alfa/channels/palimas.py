@@ -25,7 +25,8 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['mixdrop']
 
-host = 'https://palimas.tv'
+host = 'https://palimas.org'
+
 
 def mainlist(item):
     logger.info()
@@ -105,7 +106,6 @@ def create_soup(url, referer=None, unescape=False):
     return soup
 
 
-
 def lista(item):
     logger.info()
     itemlist = []
@@ -124,9 +124,8 @@ def lista(item):
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))
     next_page =""
     pages = soup.find('div', class_='pagination')
-    if pages:
+    if pages.a:
         pages = pages.find_all('a')[-1]
-        logger.debug(pages)
         next_page = pages['href']
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
