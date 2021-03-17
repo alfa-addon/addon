@@ -1278,6 +1278,7 @@ def torrent_dirs():
                     __settings__.setSetting("show_bg_progress", "false")        # Usamos nuestro sistema de display
                     __settings__.setSetting("s:tuned_storage", "true")          # Tunned storage ON
                     __settings__.setSetting("metadata_timeout", '120')          # Max timeout for Magnets
+                    __settings__.setSetting("s:check_available_space", "false") # No comprobar espacio disponible hasta que lo arreglen
                 
                 torrent_paths[torr_client.upper()] = str(filetools.translatePath(__settings__.getSetting('s:download_path')))
                 torrent_paths[torr_client.upper() + '_torrents'] = str(filetools.translatePath(__settings__.getSetting('s:torrents_path')))

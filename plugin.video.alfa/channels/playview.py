@@ -77,9 +77,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, forced_proxy_opt='ProxyWeb').data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, forced_proxy_opt='ProxyWeb').data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -225,12 +225,7 @@ def episodesxseason(item):
     info = info_soup.find("div", id="ficha")
     post = {"set": set_option, 'action': "EpisodesInfo", "id": info["data-id"], "type": info["data-type"]}
 
-    episodesinfo = httptools.downloadpage(host + 'playview', post=post)
-
-    if episodesinfo.sucess or episodesinfo.code == 302:
-        episodesinfo = episodesinfo.data
-    else:
-        episodesinfo = httptools.downloadpage(host + 'playview', post=post, forced_proxy="ProxyDirect").data
+    episodesinfo = httptools.downloadpage(host + 'playview', post=post).data
 
     matches = BeautifulSoup(episodesinfo, "html5lib").find_all("div", class_="episodeBlock")
     infoLabels = item.infoLabels
@@ -268,13 +263,7 @@ def findvideos(item):
         dtype = info["data-type"]
         post = {"set": set_option, 'action': "Step1", "id": id, "type": dtype}
 
-    step1 = httptools.downloadpage(host + 'playview', post=post)
-
-    if step1.sucess or step1.code == 302:
-        step1 = step1.data
-    else:
-        step1 = httptools.downloadpage(host + 'playview', post=post, forced_proxy="ProxyDirect").data
-
+    step1 = httptools.downloadpage(host + 'playview', post=post).data
 
     matches = BeautifulSoup(step1, "html5lib").find_all("button", class_="select-quality")
 
@@ -282,11 +271,7 @@ def findvideos(item):
         post = {"set": set_option, "action": "Step2", "id": id, "type": dtype,
                 "quality": step2["data-quality"], "episode": episode}
 
-        options = httptools.downloadpage(host + 'playview', post=post)
-        if options.sucess or options.code == 302:
-            options = options.data
-        else:
-            options = httptools.downloadpage(host + 'playview', post=post, forced_proxy="ProxyDirect").data
+        options = httptools.downloadpage(host + 'playview', post=post).data
 
         soup = BeautifulSoup(options, "html5lib").find_all("li", class_="tb-data-single")
         for elem in soup:
@@ -322,12 +307,7 @@ def findvideos(item):
 def play(item):
     logger.info()
 
-    data = httptools.downloadpage(host + 'playview', post=item.post)
-
-    if data.sucess or data.code == 302:
-        data = data.data
-    else:
-        data = httptools.downloadpage(host + 'playview', post=item.post, forced_proxy="ProxyDirect").data
+    data = httptools.downloadpage(host + 'playview', post=item.post).data
 
     url_data = BeautifulSoup(data, "html5lib")
     try:

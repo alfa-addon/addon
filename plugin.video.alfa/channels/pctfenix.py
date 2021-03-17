@@ -250,6 +250,9 @@ def listado(item):                                                              
         item.extra2 = ''
         
     post = None
+    forced_proxy_opt = None
+    if item.post:
+        forced_proxy_opt = 'ProxyDirect'
     if item.post or item.post is None:                                          # Rescatamos el Post, si lo hay
         post = item.post
         del item.post
@@ -270,6 +273,7 @@ def listado(item):                                                              
             data, success, code, item, itemlist = generictools.downloadpage(next_page_url, 
                                           timeout=timeout_search, post=post, s2=True, 
                                           decode_code=decode_code, quote_rep=True, 
+                                          forced_proxy_opt=forced_proxy_opt, 
                                           no_comments=False, item=item, itemlist=itemlist)
             fichas = data
             curr_page += 1                                                      #Apunto ya a la página siguiente
@@ -662,6 +666,9 @@ def findvideos(item):
     data_servidores_stat = False
     size = ''
     post = None
+    forced_proxy_opt = None
+    if item.post:
+        forced_proxy_opt = 'ProxyDirect'
     if item.post:
         post = item.post
         del item.post
@@ -669,6 +676,7 @@ def findvideos(item):
     if not item.matches:
         data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
                                           decode_code=decode_code, quote_rep=True, post=post, 
+                                          forced_proxy_opt=forced_proxy_opt, 
                                           item=item, itemlist=[])               # Descargamos la página)
         data = data.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
 
@@ -676,7 +684,7 @@ def findvideos(item):
 
     # Salvamos el enlace .torrent
     #Patron para .torrent
-    patron = '<div\s*class=\s*"ctn[^"]+"[^>]*>\s*<a\s*href=\s*"javascript:[^"]+"'
+    patron = '<div\s*class=\s*"ctn[^"]+"[^>]*>\s*<a\s*href=\s*"(?:javascript:)?[^"]*"'
     patron += '\s*id=\s*"btn-[^"]+"\s*data-ut=\s*"([^"]+)"'
     if not scrapertools.find_single_match(data, patron):
         patron = '<div\s*class=\s*"ctn[^"]+"[^>]*>\s*<a\s*href=\s*"(?:javascript:)?([^"]+)"'
@@ -707,7 +715,7 @@ def findvideos(item):
             return itemlist                                                     #No hay enlaces
         
         logger.error("ERROR 02: FINDVIDEOS: Ha cambiado la estructura de la Web " 
-                        + " / PATRON: " + patron + " / DATA: ")                 # + str(data)
+                        + " / PATRON: " + patron + " / DATA: " + str(data))     # + str(data)
         if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
             url_torr = item.emergency_urls[0][0]                                #Restauramos la url
             if len(item.emergency_urls) > 1 and item.emergency_urls[1]:
