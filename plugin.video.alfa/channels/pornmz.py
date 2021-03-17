@@ -137,30 +137,25 @@ def lista(item):
     return itemlist
 
 
-def findvideos(item):
-    logger.info()
-    itemlist = []
-    soup = create_soup(item.url).find('div', class_='responsive-player')
-    url = soup.find('iframe')['src']
-    soup = create_soup(url).find('video', id='video')
-    matches = soup.find_all('source')
-    for elem in matches:
-        url = elem['src']
-        quality = elem['title']
-        itemlist.append(['.mp4 %s' %quality, url])
-    return itemlist[::-1]
-
-
 def play(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('div', class_='responsive-player')
     url = soup.find('iframe')['src']
-    soup = create_soup(url).find('video', id='video')
+    url = urlparse.urljoin(item.url,url)
+    soup = create_soup(url)#.find('video', id='video')
     matches = soup.find_all('source')
     for elem in matches:
         url = elem['src']
-        quality = elem['title']
+        if elem.has_attr('title'):
+            quality = elem['title']
+        else:
+            quality =  "-"
         itemlist.append(['%s' %quality, url])
+    if not matches:
+        url = soup.find('iframe')['src']
+        url = create_soup(url).find('iframe')['src']
+        itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist[::-1]
 

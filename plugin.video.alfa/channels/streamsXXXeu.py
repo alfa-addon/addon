@@ -19,7 +19,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://xxxstreams.eu'
+host = 'https://xxxstreams.watch'
 
 list_language = []
 list_servers = ['Gounlimited', 'Mixdrop']
