@@ -116,6 +116,14 @@
       "enabled": true,
       "visible": true
     },
+	{
+      "id": "enable_expermental_downloads",
+      "type": "bool",
+      "label": "@70764",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
     {
       "type": "label",
       "label": "@70237",
