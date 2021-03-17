@@ -109,6 +109,15 @@ def init():
         
         #LIBTORRENT: se descarga el binario de Libtorrent cada vez que se actualiza Alfa
         update_libtorrent()
+        
+        #TORREST: Modificaciones temporales
+        if xbmc.getCondVisibility('System.HasAddon("plugin.video.torrest")'):
+            try:
+                __settings__ = xbmcaddon.Addon(id="plugin.video.torrest")
+                if __settings__.getSetting("s:check_available_space") == 'true':
+                    __settings__.setSetting("s:check_available_space", "false") # No comprobar espacio disponible hasta que lo arreglen
+            except:
+                pass
 
         #QUASAR: Preguntamos si se hacen modificaciones a Quasar
         if not filetools.exists(filetools.join(config.get_data_path(), "quasar.json")) \
@@ -420,7 +429,8 @@ def update_libtorrent():
         
     if not filetools.exists(ADDON_CUSTOMCODE_JSON) or not config.get_setting("unrar_path", server="torrent", default="") \
                     or (not 'unrar' in str(filetools.listdir(ADDON_USERDATA_BIN_PATH)).lower() and \
-                    not xbmc.getCondVisibility("system.platform.android")):
+                    not xbmc.getCondVisibility("system.platform.android")) \
+                    or xbmc.getCondVisibility("system.platform.android"):
     
         path = filetools.join(ADDON_PATH, 'lib', 'rarfiles')
         sufix = ''
@@ -464,14 +474,19 @@ def update_libtorrent():
 
                 try:
                     p = execute_binary_from_alfa_assistant('openBinary', [unrar], wait=True, init=True)
-                    output_cmd, error_cmd = p.communicate()
-                    if p.returncode != 0 or error_cmd:
-                        logger.info('######## UnRAR returncode in module %s: %s, %s in %s' % \
-                                (device, str(p.returncode), str(error_cmd), unrar), force=True)
-                        unrar = ''
-                    else:
-                        logger.info('######## UnRAR OK in %s: %s' % (device, unrar), force=True)
-                        break
+                    try:
+                        output_cmd, error_cmd = p.communicate()
+                        if p.returncode != 0 or error_cmd:
+                            logger.info('######## UnRAR returncode in module %s: %s, %s in %s' % \
+                                    (device, str(p.returncode), str(error_cmd), unrar), force=True)
+                            unrar = ''
+                        else:
+                            logger.info('######## UnRAR OK in %s: %s' % (device, unrar), force=True)
+                            break
+                    except:
+                        if p.returncode == 0:
+                            logger.info('######## UnRAR OK in %s: %s' % (device, unrar), force=True)
+                            break
                 except:
                     logger.info('######## UnRAR ERROR in module %s: %s' % (device, unrar), force=True)
                     logger.error(traceback.format_exc(1))
@@ -480,6 +495,9 @@ def update_libtorrent():
         if unrar: 
             config.set_setting("unrar_path", unrar, server="torrent")
             config.set_setting("unrar_device", device, server="torrent")
+        else:
+            config.set_setting("unrar_path", "", server="torrent")
+            config.set_setting("unrar_device", "", server="torrent")
 
     # Ahora descargamos la última versión disponible de Libtorrent para esta plataforma
     try:

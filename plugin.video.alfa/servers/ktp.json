@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:vipporns|porngem|frprn).com/videos/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:vipporns|porngem|frprn).com/(?:videos|clips)/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
@@ -29,10 +29,6 @@
       },
       {
         "pattern": "(https://www.porn00.org/video/[A-z0-9-]+/)",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://mangovideo.club/embed/\\d+)",
         "url": "\\1"
       },
       {

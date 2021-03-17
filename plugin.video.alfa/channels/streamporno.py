@@ -24,7 +24,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['gounlimited']
 
-host = 'https://pornstreams.eu'     #
+host = 'https://pornstreams.tv'     #
                                 
 # Links caidos en canal y categorias
 

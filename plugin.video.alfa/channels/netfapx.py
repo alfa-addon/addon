@@ -110,7 +110,7 @@ def lista(item):
         stitle = elem.img['alt']
         thumbnail = elem.img['src']
         stime = elem.find_all("div")[-2].text.split("\n")[3]
-        title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
+        title = "[COLOR yellow]%s[/COLOR] %s" % (stime.strip(),stitle)
         plot = ""
         itemlist.append(item.clone(action="play", title=title, contentTitle=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))

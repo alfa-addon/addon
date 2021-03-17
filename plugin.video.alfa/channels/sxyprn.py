@@ -33,18 +33,16 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
     check = ""
-    if not alfa_assistant.open_alfa_assistant():
-        check = "orange"
 
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/0.html?page=0&op", check=check))
-    itemlist.append(item.clone(title="Mas vistos" , action="findvideos", url=host + "/0.html?sm=views&page=0&op", check=check))
-    itemlist.append(item.clone(title="Mejor valorada" , action="lista", url=host + "/0.html?sm=trending&page=0&op", check=check))
-    itemlist.append(item.clone(title="Sitios" , action="catalogo", url=host + "?op", check=check))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "?op", check=check))
-    itemlist.append(item.clone(title="Buscar...", action="search", op=True, check=check))
+    itemlist.append(item.clone(title="Nuevos", action="lista", url=host + "/0.html?page=0"))
+    itemlist.append(item.clone(title="Mas vistos", action="findvideos", url=host + "/0.html?page=0&sm=views"))
+    itemlist.append(item.clone(title="Mejor valorada", action="lista", url=host + "/0.html?page=0&sm=trending"))
+    itemlist.append(item.clone(title="Sitios", action="catalogo", url=host))
+    itemlist.append(item.clone(title="Categorias", action="categorias", url=host))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     itemlist.append(item.clone(title="", folder=0))
 
-    itemlist.append(item.clone(title="[COLOR %s]Con Assistant[/COLOR]" %check , action="submenu", check=check))
+    itemlist.append(item.clone(title="[COLOR blue]EXTERNAL LINKS[/COLOR]" , action="submenu"))
     
     autoplay.show_option(item.channel, itemlist)
     return itemlist
@@ -53,12 +51,13 @@ def mainlist(item):
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="[COLOR %s]Nuevos[/COLOR]" %item.check, action="lista", url=host + "/0.html?page=0"))
-    itemlist.append(item.clone(title="[COLOR %s]Mas vistos[/COLOR]" %item.check, action="findvideos", url=host + "/0.html?page=0&sm=views"))
-    itemlist.append(item.clone(title="[COLOR %s]Mejor valorada[/COLOR]" %item.check, action="lista", url=host + "/0.html?page=0&sm=trending"))
-    itemlist.append(item.clone(title="[COLOR %s]Sitios[/COLOR]" %item.check, action="catalogo", url=host))
-    itemlist.append(item.clone(title="[COLOR %s]Categorias[/COLOR]" %item.check, action="categorias", url=host))
-    itemlist.append(item.clone(title="[COLOR %s]Buscar[/COLOR]" %item.check, action="search"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/0.html?page=0&op"))
+    itemlist.append(item.clone(title="Mas vistos" , action="findvideos", url=host + "/0.html?sm=views&page=0&op"))
+    itemlist.append(item.clone(title="Mejor valorada" , action="lista", url=host + "/0.html?sm=trending&page=0&op"))
+    itemlist.append(item.clone(title="Sitios" , action="catalogo", url=host + "?op"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "?op"))
+    itemlist.append(item.clone(title="Buscar...", action="search", op=True))
+
     return itemlist
 
 
@@ -138,7 +137,7 @@ def lista(item):
         ext = ""
         time = ""
         quality = ""
-        serv = ['jetload', 'waaw', 'aparat.cam/reg']
+        serv = ['jetload', 'waaw', 'aparat.cam/reg', 'ninjastream']
         url = elem.find('a', class_='post_time')['href']
         titulo = elem.find('a', class_='post_time')['title']
         thumbnail = elem.img
@@ -154,8 +153,8 @@ def lista(item):
             quality = elem.find('span', class_='shd_small')
             if not thumbnail.startswith("https"):
                 thumbnail = "https:%s" % thumbnail
-        if not "EXTERNAL LINK" in time and item.check:
-            title = "[COLOR %s]%s[/COLOR]" % (item.check, title)
+        # if not "EXTERNAL LINK" in time and item.check:
+            # title = "[COLOR %s]%s[/COLOR]" % (item.check, title)
         if "EXTERNAL LINK" in time:
             time = ""
             ext = True
@@ -181,22 +180,6 @@ def lista(item):
     return itemlist
 
 
-def asist(url):
-    logger.info()
-    # itemlist = []
-    alfa_assistant.open_alfa_assistant()
-    data = alfa_assistant.get_source_by_page_finished(url, 4, closeAfter=True)
-    for visited in  data["urlsVisited"]:
-        if "/cdn8/" in visited["url"]:
-            url = visited["url"]
-            url = httptools.downloadpage(url, follow_redirects=False).headers["location"]
-            if not url.startswith("https"):
-                url = "https:%s" % url
-            # itemlist.append(item.clone(action="play",title="%s", url=url))
-    # itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    return url
-
-
 def findvideos(item):
     logger.info()
     itemlist = []
@@ -210,12 +193,8 @@ def findvideos(item):
             itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     else:
-        url = soup.find(class_='vidsnfo')['data-vnfo'].split(':')[1]
-        url= url.replace("\\", "").replace("/cdn/", "https://www.sxyprn.com/cdn8/").replace("}", "")
-        if alfa_assistant.open_alfa_assistant():
-            itemlist.append(item.clone(action="play", title="Directo", server="Directo", contentTitle = item.title, url= asist(item.url) ))
-        else:
-            itemlist.append(item.clone(action="play", title="[COLOR red]Directo[/COLOR]", contentTitle = item.title, url=url ))
+        itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
     return itemlist

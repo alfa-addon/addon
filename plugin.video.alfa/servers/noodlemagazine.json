@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://mangovideo.(?:pw|club)/embed/(\\d+)",
-        "url": "https://mangovideo.pw/embed/\\1"
+        "pattern": "https://noodlemagazine.com/player/(.*?)&a=1",
+        "url": "https://noodlemagazine.com/playlist/\\1"
       }
     ]
   },
   "free": true,
-  "id": "mangovideo",
-  "name": "mangovideo",
+  "id": "noodlemagazine",
+  "name": "noodlemagazine",
   "settings": [
     {
       "default": false,
