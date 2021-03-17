@@ -14,6 +14,7 @@ else:
     import urllib2
 
 import os
+import re
 import stat
 import time
 import xbmc
@@ -74,34 +75,30 @@ def get_quasar_binary():
         binary_dir_legacy = binary_dir.replace("/storage/emulated/0", "/storage/emulated/legacy")
         if os.path.exists(binary_dir_legacy):
             binary_dir = binary_dir_legacy
-        log.info("Using binary folder: %s" % binary_dir)
         app_id = android_get_current_appid()
-        xbmc_data_path = os.path.join("/data", "data", app_id)
+        xbmc_data_path = os.path.join("/data", "data", app_id, 'files', 'quasar')
+        log.info("Trying binary Kodi folder: %s" % xbmc_data_path)
         
         try:                    #Test if there is any permisions problem
-            f = open(os.path.join(xbmc_data_path, "test.txt"), "wb")
-            f.write("test")
-            f.close()
-            os.remove(os.path.join(xbmc_data_path, "test.txt"))
-        except:
+            if not os.path.exists(xbmc_data_path):
+                os.makedirs(xbmc_data_path)
+        except Exception as e:
+            log.info("ERROR %s in binary Kodi folder: %s" % (str(e), xbmc_data_path))
             xbmc_data_path = ''
         
         if not os.path.exists(xbmc_data_path):
-            log.info("%s path does not exist, so using %s as xbmc_data_path" % (xbmc_data_path, translatePath("special://xbmcbin/")))
-            xbmc_data_path = translatePath("special://xbmcbin/")
+            log.info("Trying alternative binary Kodi folder: %s" % \
+                        (xbmc_data_path, translatePath("special://xbmcbin/").replace('cache/apk/assets', 'files/quasar')))
+            xbmc_data_path = translatePath("special://xbmcbin/").replace('cache/apk/assets', 'files/quasar')
 
             try:                    #Test if there is any permisions problem
-                f = open(os.path.join(xbmc_data_path, "test.txt"), "wb")
-                f.write("test")
-                f.close()
-                os.remove(os.path.join(xbmc_data_path, "test.txt"))
-            except:
+                if not os.path.exists(xbmc_data_path):
+                    os.makedirs(xbmc_data_path)
+            except Exception as e:
+                log.info("ERROR %s in alternative binary Kodi folder: %s" % (str(e), xbmc_data_path))
                 xbmc_data_path = ''
-        
-        if not os.path.exists(xbmc_data_path):
-            log.info("%s path does not exist, so using %s as xbmc_data_path" % (xbmc_data_path, translatePath("special://masterprofile/")))
-            xbmc_data_path = translatePath("special://masterprofile/")
-        dest_binary_dir = os.path.join(xbmc_data_path, "files", ADDON_ID, "bin", "%(os)s_%(arch)s" % PLATFORM)
+
+        dest_binary_dir = xbmc_data_path
     else:
         if not PY3:
             dest_binary_dir = os.path.join(translatePath(ADDON.getAddonInfo("profile")).decode('utf-8'), "bin", "%(os)s_%(arch)s" % PLATFORM)
@@ -273,8 +270,7 @@ def start_quasard(**kwargs):
         time.sleep(1)
         wait_counter += 1
 
-    #return subprocess.Popen(args, **kwargs)
-    return call_binary('OpenBinary', args, **kwargs)
+    return call_binary('openBinary', args, **kwargs)
 
 def shutdown():
     try:
@@ -301,10 +297,35 @@ def quasard_thread(monitor):
             if not proc:
                 break
             threading.Thread(target=wait_for_abortRequested, args=[proc, monitor]).start()
+            
+            try:
+                if proc.app:
+                    assistant = True
+                else:
+                    assistant = False
+            except:
+                assistant = False
+            
+            def polling_assistant(proc, monitor):
+                while not monitor_abort.abortRequested():
+                    while proc.poll() is None:
+                        time.sleep(1)
+                    break
+            if assistant:
+                threading.Thread(target=polling_assistant, args=[proc, monitor]).start()
 
             if PLATFORM["os"] == "windows":
                 while proc.poll() is None:
                     log.info(proc.stdout.readline())
+            
+            elif assistant:
+                while proc.poll() is None:
+                    for line in iter(proc.stdout.readline, proc.stdout.read(0)):
+                        if PY3 and isinstance(line, bytes):
+                            line = line.decode()
+                        log.info(line)
+                    time.sleep(1)
+           
             else:
                 # Kodi hangs on some Android (sigh...) systems when doing a blocking
                 # read. We count on the fact that Quasar daemon flushes its log
@@ -321,7 +342,6 @@ def quasard_thread(monitor):
                             line = ro.readline()
                             if line == "":  # write end is closed
                                 break
-                            log.info(line)
                     except IOError:
                         time.sleep(1)  # nothing to read, sleep
 
@@ -347,23 +367,57 @@ def quasard_thread(monitor):
             notify("%s: %s" % (getLocalizedString(30226), repr(e)))
         raise
 
+
 # Launching Quasar through an external APP for Android >= 10 and Kodi >= 19
-def call_binary(function, cmd, wait=False, retry=False, **kwargs):
+def call_binary(function, cmd, retry=False, p=None, **kwargs):
+    import xbmc
     import xbmcaddon
     import traceback
     import base64
     import requests
+    import time
     import json
+    
+    # Lets try first the traditional way
+    if not p:
+        try:
+            p = subprocess.Popen(cmd, **kwargs)
+            log.info('## Executing Popen.CMD: %s - PID: %s' % (cmd, p.pid))
+            return p
+        except Exception as e:
+            if not PY3:
+                e = unicode(str(e), "utf8", errors="replace").encode("utf8")
+            elif PY3 and isinstance(e, bytes):
+                e = e.decode("utf8")
+            log.error('Exception Popen ERROR: %s, %s' % (str(cmd), str(e)))
+            
+            if PLATFORM["os"] != "android" or 'Errno 13' not in str(e):
+                return p
 
+    # The traditional way did not work, so most probably we hit the SDK 29 problem
     APP_PARAMS = {
+                  'Quasar':  {
+                               'ACTIVE': 0, 
+                               'USER_ADDON': 'plugin.video.quasar', 
+                               'USER_ADDON_STATUS': xbmc.getCondVisibility('System.HasAddon("plugin.video.quasar")'), 
+                               'USER_ADDON_USERDATA': os.path.join(xbmc.translatePath('special://masterprofile/'), 
+                                            'addon_data', 'plugin.video.quasar'), 
+                               'USER_APK': [os.path.join(xbmc.translatePath('special://xbmcbinaddons/'), 
+                                            'plugin.video.quasar', 'resources', 'apk', 
+                                            'quasar-mobile-assistant.apk')], 
+                               'USER_APP': 'com.quasar.quasarmobileassistant', 
+                               'USER_APP_CONTROL': 'quasar-mobile-assistant.version',
+                               'USER_APP_URL': 'http://127.0.0.1', 
+                               'USER_APP_PORT': '66666'
+                              }, 
                   'Alfa':     {
                                'ACTIVE': 1, 
                                'USER_ADDON': 'plugin.video.alfa', 
                                'USER_ADDON_STATUS': xbmc.getCondVisibility('System.HasAddon("plugin.video.alfa")'), 
-                               'USER_ADDON_USERDATA': os.path.join(translatePath('special://masterprofile/'), 
+                               'USER_ADDON_USERDATA': os.path.join(xbmc.translatePath('special://masterprofile/'), 
                                             'addon_data', 'plugin.video.alfa'), 
-                               'USER_APK': ['https://github.com/alfa-addon/alfa-repo/tree/master/downloads/assistant/alfa-mobile-assistant.apk',
-                                            'https://github.com/alfa-addon/alfa-repo/tree/master/downloads/assistant/alfa-mobile-assistant.version'], 
+                               'USER_APK': ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/alfa-mobile-assistant.apk',
+                                            'https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/alfa-mobile-assistant.version'], 
                                'USER_APP': 'com.alfa.alfamobileassistant', 
                                'USER_APP_CONTROL': 'alfa-mobile-assistant.version',
                                'USER_APP_URL': 'http://127.0.0.1', 
@@ -375,96 +429,164 @@ def call_binary(function, cmd, wait=False, retry=False, **kwargs):
     USER_APP_URL = ''
     USER_ADDON = ''
     USER_ADDON_STATUS = False
+    ANDROID_STORAGE = os.getenv('ANDROID_STORAGE')
+    if not ANDROID_STORAGE: ANDROID_STORAGE = '/storage'
     USER_APP = ''
+    USER_APP_PATH = os.path.join(ANDROID_STORAGE, 'emulated', '0', 'Android', 'data')
     USER_APP_STATUS = False
-    USER_DEVICE_ROOTED = False
-    ANDROID_VERSION = get_android_version()
 
-    if xbmc.getCondVisibility("system.platform.Android") and PY3 and ANDROID_VERSION >= 10:
-        for user_addon, user_params in list(APP_PARAMS.items()):
-            if not user_params['ACTIVE'] or not user_params['USER_ADDON_STATUS']: continue
-
-            if user_addon == 'Alfa':
+    for user_addon, user_params in list(APP_PARAMS.items()):
+        if not user_params['ACTIVE'] or not user_params['USER_ADDON_STATUS']: continue
+        
+        if user_addon == 'Quasar':
+            try:
+                # Quasar add-on and Quasar Assistant installed
+                USER_ADDON = user_params['USER_ADDON']
+                USER_ADDON_STATUS = True
+                if os.path.exists(os.path.join(USER_APP_PATH, user_params['USER_APP'])):
+                    USER_APP = user_params['USER_APP']
+                    USER_APP_STATUS = True
+                    USER_APP_URL = "%s:%s" % (user_params['USER_APP_URL'], user_params['USER_APP_PORT'])
+                if USER_APP_STATUS: break
+            except:
+                log.error(traceback.format_exc())
+        
+        if user_addon == 'Alfa':
+            try:
                 try:
-                    try:
-                        # Alfa add-on and Alfa Assistant installed
-                        USER_ADDON_SETTING = xbmcaddon.Addon(id="%s" % user_params['USER_ADDON'])
-                        USER_ADDON = user_params['USER_ADDON']
-                        USER_ADDON_STATUS = True
-                        if USER_ADDON_SETTING.getSetting('assistant_mode') == 'este' and \
-                                os.path.exists(os.path.join(user_params['USER_ADDON_USERDATA'], \
-                                user_params['USER_APP_CONTROL'])):
-                            USER_APP = user_params['USER_APP']
-                            USER_APP_STATUS = True
-                            if USER_ADDON_SETTING.getSetting('assistant_custom_address'):
-                                USER_APP_URL = "http://%s" % USER_ADDON_SETTING.getSetting('assistant_custom_address')
-                            else:
-                                USER_APP_URL = user_params['USER_APP_URL']
-                            USER_APP_URL = "%s:%s" % (USER_APP_URL, user_params['USER_APP_PORT'])
-                        if USER_ADDON_SETTING.getSetting('is_rooted_device') == 'rooted':
-                            QUASAR_ADDON_SETTING.setSetting('is_rooted_device', 'rooted')
-                            USER_DEVICE_ROOTED = True
-                        elif USER_APP_STATUS and is_rooted(QUASAR_ADDON_SETTING) == 'rooted':
-                            USER_DEVICE_ROOTED = True
-                    except:
-                        # Only Alfa Assistant installed
-                        if os.path.exists(os.path.join(os.path.dirname(translatePath(
-                                'special://xbmcbinaddons/'), user_params['USER_APP']))):
-                            USER_APP_STATUS = True
-                        if USER_APP_STATUS and is_rooted(QUASAR_ADDON_SETTING) == 'rooted':
-                            USER_DEVICE_ROOTED = True
-                    if USER_APP_STATUS: break
+                    # Alfa add-on and Alfa Assistant installed
+                    USER_ADDON_SETTING = xbmcaddon.Addon(id="%s" % user_params['USER_ADDON'])
+                    USER_ADDON = user_params['USER_ADDON']
+                    USER_ADDON_STATUS = True
+                    if USER_ADDON_SETTING.getSetting('assistant_mode') == 'este' and \
+                            os.path.exists(os.path.join(USER_APP_PATH, user_params['USER_APP'])):
+                        USER_APP = user_params['USER_APP']
+                        USER_APP_STATUS = True
+                        if USER_ADDON_SETTING.getSetting('assistant_custom_address'):
+                            USER_APP_URL = "http://%s" % USER_ADDON_SETTING.getSetting('assistant_custom_address')
+                        else:
+                            USER_APP_URL = user_params['USER_APP_URL']
+                        USER_APP_URL = "%s:%s" % (USER_APP_URL, user_params['USER_APP_PORT'])
                 except:
-                    log.error(traceback.format_exc())
+                    # Only Alfa Assistant installed
+                    if os.path.exists(os.path.join(os.path.dirname(xbmc.translatePath(
+                            'special://xbmcbinaddons/'), user_params['USER_APP']))):
+                        USER_APP_STATUS = True
+                if USER_APP_STATUS: break
+            except:
+                log.error(traceback.format_exc())
 
-        if not USER_APP_STATUS:
-            res = install_app(APP_PARAMS)
-            if not res:
-                raise ValueError("No app:  Must be installed")
-            else:
-                if not retry:
-                    return call_binary(function, cmd, retry=True, **kwargs)
-                else:
-                    log.error(traceback.format_exc())
-                    raise ValueError("No app:  Problem with installation")
+    if not USER_APP_STATUS:
+        res = install_app(APP_PARAMS)
+        if not res:
+            raise ValueError("No app:  Must be installed")
+        else:
+            USER_APP = user_params['USER_APP']
+            USER_APP_STATUS = True
+            USER_APP_URL = "%s:%s" % (user_params['USER_APP_URL'], user_params['USER_APP_PORT'])
 
-    p = None
-    if USER_APP_STATUS and not USER_DEVICE_ROOTED:
-        log.info('Calling Quasar from Assistant App. Retry = %s' % retry)
+    if USER_APP_STATUS:
         try:
+            """
+            Assistant APP acts as a CONSOLE for binaries management in Android 10+ and Kodi 19+
+            
+            Syntax StartAndroidActivity("USER_APP", "", "function", "cmd|arg| ... |arg|||dict{env} in format |key=value|... "):
+                  
+                  - cmd: binary name in format '$PWD/lib'binary_name'.so'
+                  - 'open':                                                     START the Assitant
+                  - "OpenBinary", "$PWD/libBINARY.so|-port|61235|-settings|/storage/emulated/.../settings.json|||
+                                    (kwargs[env]): |key=value|etc=etc":         CALL binary
+            
+            Syntax Http requests: http://127.0.0.1:48884/command?option=value
+                  
+                  - /openBinary?cmd=base64OfFullCommand($PWD/libBINARY.so|-port|61235| 
+                                    -settings|/storage/emulated/.../settings.json|||
+                                    (kwargs[env]): |key=value|etc=etc):         CALL binary
+                          - returns: {
+                                      "pid": 999,
+                                      "output": "Base64encoded",
+                                      "error": "Base64encoded",
+                                      "startDate": "Base64encoded(2021-12-13 14:00:12)",
+                                      "endDate": "Base64encoded([2021-12-13 14:00:12])",    If ended
+                                      "retCode": "0|1|number|None"                          None if not ended
+                                      "cmd": "Base64encoded(command *args **kwargs)"        Full command as sent to the app
+                                      "finalCmd": "Base64encoded($PWD/command *args)"       Actual command executed vy the app
+                                      
+                  - /openBinary?cmd=base64OfFullCommand([[ANY Android/Linux command: killall libquasar.so (kills all Quasar binaries)]])
+                          - returns: {As in /openBinary?cmd}
+                  
+                  - /getBinaryStatus?pid=999:                                   Request binary STATUS by PID
+                          - returns: {As in /openBinary?cmd}
+                  
+                  - /killBinary?pid=999:                                        Request KILL binary PID
+                          - returns: {As in /openBinary?cmd}
+
+                  - /getBinaryList:                                             Return a /getBinaryStatus per binary launched during app session
+                          - returns: {As in /openBinary?cmd}
+            """
+            
             # Lets start the Assistant app
+            separator = '|'
+            separator_escaped = '\|'
+            separator_kwargs = '|||'
             url = USER_APP_URL + '/openBinary?cmd='
+            url_killall = url + base64.b64encode(str('killall%slibquasar.so' % separator).encode('utf8')).decode('utf8')
+            if isinstance(p, int):
+                url_killall = USER_APP_URL + '/killBinary?pid=%s' % p
             command = []
             status_code = 0
             cmd_android = 'StartAndroidActivity("%s", "", "%s", "%s")' % (USER_APP, 'open', 'about:blank')
             xbmc.executebuiltin(cmd_android)
-            time.sleep(1)
-            
+            time.sleep(3)
+
             # Build the command & params
+            cmd_app = ''
             if isinstance(cmd, list):
-                cmd_app = cmd.copy()
-                cmd_app[0] = 'libquasart.so'
-                command.append(cmd_app)
-                command.append([])
+                command.append(cmd)
+                command.append(kwargs)
+                # Convert Args to APP format
+                cmd_bis = cmd[:]
+                cmd_bis[0] = '$PWD/libquasar.so'
+                for args in cmd_bis:
+                    cmd_app += args.replace(separator, separator_escaped) + separator
+                cmd_app = cmd_app.rstrip(separator)
+                # Convert Kwargs to APP format
+                if kwargs.get('env', {}):
+                    cmd_app += separator_kwargs
                 for key, value in list(kwargs.get('env', {}).items()):
                     if key == 'LD_LIBRARY_PATH':
-                        # The app will replace **CWD** by the binary/lib path
-                        value = '**CWD**'
-                    command[1].append('%s=%s' % (key, value))
-                command_base64 = base64.b64encode(str(command).encode('utf8')).decode('utf8')
+                        # The app will replace $PWD by the binary/lib path
+                        value = '$PWD'
+                    cmd_app += '%s=%s%s' % (key.replace(separator, separator_escaped), value.replace(separator, separator_escaped), separator)
+                cmd_app = cmd_app.rstrip(separator)
+                command_base64 = base64.b64encode(cmd_app.encode('utf8')).decode('utf8')
             else:
                 command_base64 = cmd
-            
+                cmd = p.args_
+                kwargs = p.kwargs_
+                command.append(cmd)
+                command.append(kwargs)
+
             # Launch the Binary
             try:
-                resp = requests.get(url+command_base64, timeout=5)
-            except:
+                session = requests.Session()
+                # First, cancel existing Binary sessions
+                log.info('## Killing Quasar from Assistant App')
+                resp = session.get(url_killall, timeout=5)
+                time.sleep(1)
+                # Now lets launch the Binary
+                log.info('## Calling Quasar from Assistant App: %s - Retry = %s' % (cmd, retry))
+                resp = session.get(url+command_base64, timeout=5)
+            except Exception as e:
                 resp = requests.Response()
+                resp.status_code = str(e)
             status_code = resp.status_code
             if status_code != 200 and not retry:
+                log.error("## Calling Quasar: Invalid app requests response: %s" % status_code)
                 time.sleep(3)
                 return call_binary(function, cmd, retry=True, **kwargs)
             elif status_code != 200 and retry:
+                log.error("## Calling Quasar: Invalid app requests response: %s" % status_code)
                 raise ValueError("No app response:  error code: %s" % status_code)
             try:
                 app_response = resp.content
@@ -477,38 +599,27 @@ def call_binary(function, cmd, wait=False, retry=False, **kwargs):
                 raise ValueError("Invalid app response: %s" % resp.content)
 
             # Simulate the response from subprocess.Popen
-            class p(object):
-                {'pid': 0, 
-                 'returncode': None, 
-                 'stdout': '', 
-                 'stdin': '', 
-                 'stderr': '',
-                 'startDate': '', 
-                 'endDate': '', 
-                 'poll': '', 
-                 'terminate': '', 
-                 'communicate': '', 
-                 'app': '', 
-                 'url': '',
-                 'cmd': ''}
-            
-            try:
-                setattr(p, 'pid', int(app_response['pid']))
-            except:
-                raise ValueError("No valid PID returned:  PID code: %s" % resp.content)
             pipeout, pipein = os.pipe()
-            setattr(p, 'stdout', os.fdopen(pipeout, 'rb'))
-            setattr(p, 'stdin', os.fdopen(pipein, 'wb'))
-            setattr(p, 'stderr', p.stdout)
-            setattr(p, 'returncode', None)
-            setattr(p, 'startDate', '')
-            setattr(p, 'endDate', '')
-            setattr(p, 'terminate', '')
-            setattr(p, 'communicate', '')
-            setattr(p, 'poll', '')
-            setattr(p, 'app', USER_APP)
-            setattr(p, 'url', USER_APP_URL)
-            setattr(p, 'cmd', command_base64)
+            class Proc:
+                pid = 0
+                stdout = os.fdopen(pipeout, 'rb')
+                stdin = os.fdopen(pipein, 'wb')
+                stderr = stdout
+                returncode = None
+                startDate = ''
+                endDate = ''
+                poll = ''
+                terminate = ''
+                communicate = ''
+                app = USER_APP
+                url_app = USER_APP_URL
+                cmd_app = command_base64
+                finalCmd = ''
+                sess = session
+                args_ = cmd
+                kwargs_ = kwargs
+            
+            p = Proc()
             
             def redirect_terminate(p=p, action='killBinary'):
                 return binary_stat(p, action)
@@ -516,229 +627,259 @@ def call_binary(function, cmd, wait=False, retry=False, **kwargs):
                 return binary_stat(p, action)
             def redirect_communicate(p=p, action='communicate'):
                 return binary_stat(p, action)
-            p.terminate = redirect_terminate
             p.poll = redirect_poll
+            p.terminate = redirect_terminate
             p.communicate = redirect_communicate
+            try:
+                p.pid = int(app_response['pid'])
+            except:
+                raise ValueError("No valid PID returned:  PID code: %s" % resp.content)
+            
+            # Handle initial messages
+            time.sleep(2)
+            if app_response.get('output') or app_response.get('error'):
+                res = binary_stat(p, 'poll', app_response=app_response)
+            else:
+                for x in range(20):
+                    res = binary_stat(p, 'poll', init=True)
+                    if res: break
+                    time.sleep(1)
+                else:
+                    # Is the binary hung?  Lets restart it
+                    return call_binary(function, command_base64, retry=True, kwargs={})
 
             log.info('## Assistant executing CMD: %s - PID: %s' % (command[0], p.pid))
-            log.warning('## Assistant executing CMD **kwargs: %s' % command[1])
-            return p
+            #log.warning('## Assistant executing CMD **kwargs: %s' % command[1])
         except:
-            log.error('## Assistant ERROR %s in CMD: %s%s' % (status_code, url, command))
+            log.info('## Assistant ERROR %s in CMD: %s%s' % (status_code, url, command))
             log.error(traceback.format_exc())
             p = None
-    
-    if not p:
-        try:
-            p = subprocess.Popen(cmd, **kwargs)
-        except Exception as e:
-            if not PY3:
-                e = unicode(str(e), "utf8", errors="replace").encode("utf8")
-            elif PY3 and isinstance(e, bytes):
-                e = e.decode("utf8")
-            log.error('Exception Popen ERROR: %s, %s' % (str(cmd), str(e)))
-        return p
-        
-def binary_stat(p, action, retry=False):
-    #log.info('binary_stat: action: %s - PID: %s - retry: %s' % (action, p.pid, retry))
+            
+    return p
+
+def binary_stat(p, action, retry=False, init=False, app_response={}):
+    if init: log.info('## Binary_stat: action: %s; PID: %s; retry: %s; init: %s; app_r: %s' % (action, p.pid, retry, init, app_response))
     import traceback
     import base64
     import requests
     import json
     import time
+    import xbmc
     
     try:
         if action in ['poll', 'communicate']:
-            url = p.url + '/getBinaryStatus?pid=' + str(p.pid)
+            url = p.url_app + '/getBinaryStatus?pid=%s&flushAfterRead=true' % str(p.pid)
 
         if action == 'killBinary':
-            url = p.url + '/killBinary?pid=' + str(p.pid)
+            url = p.url_app + '/killBinary?pid=%s' % str(p.pid)
+
+        cmd_android = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'open', 'about:blank')
+        cmd_android_permissions = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'checkPermissions', 'about:blank')
 
         finished = False
+        retry = False
         stdout_acum = ''
         stderr_acum = ''
+        msg = ''
         while not finished:
-            try:
-                resp = requests.get(url, timeout=5)
-            except:
-                resp = requests.Response()
-            if resp.status_code != 200 and not retry:
-                import xbmc
-                cmd_android = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'open', 'about:blank')
-                xbmc.executebuiltin(cmd_android)
-                time.sleep(3)
-                continue
-            if resp.status_code != 200 and retry:
-                return call_binary('openBinary', p.cmd, retry=True)
-
-            if resp.status_code == 200:
+            if not app_response:
                 try:
-                    app_response = resp.content
-                    if PY3 and isinstance(app_response, bytes):
-                        app_response = app_response.decode()
-                    app_response = re.sub('\n|\r|\t', '', app_response)
-                    app_response = json.loads(app_response)
-                except:
-                    status_code = resp.content
-                    log.info("Invalid app response: %s" % resp.content)
-                    time.sleep(5)
+                    resp = p.sess.get(url, timeout=5)
+                except Exception as e:
+                    resp = requests.Response()
+                    resp.status_code = str(e)
+                
+                if resp.status_code != 200 and not retry:
+                    retry = True
+                    log.error("## Binary_stat: Invalid app requests response: %s - retry: %s" % (resp.status_code, retry))
+                    msg += resp.status_code
+                    stdout_acum += resp.status_code
+                    xbmc.executebuiltin(cmd_android)
+                    time.sleep(3)
                     continue
-                
-                if app_response.get("pid", 0):
-                    msg = ''
-                    if app_response.get('output'):
-                        stdout_acum += base64.b64decode(app_response['output']).decode('utf-8') + '\n'
-                        msg += base64.b64decode(app_response['output']).decode('utf-8')
-                    if app_response.get('error'): 
-                        stderr_acum += base64.b64decode(app_response['error']).decode('utf-8') + '\n'
-                        msg += base64.b64decode(app_response['error']).decode('utf-8')
+                if resp.status_code != 200 and retry:
+                    log.error("## Binary_stat: Invalid app requests response: %s - retry: %s" % (resp.status_code, retry))
+                    msg += resp.status_code
+                    stdout_acum += resp.status_code
+                    app_response = {'pid': p.pid, 'retCode': 999}
 
-                    if msg:
-                        msg += '\n'
-                        if PY3 and not isinstance(msg, (bytes, bytearray)):
-                            msg = msg.encode()
-                        try:
-                            p.stdin.write(msg)
-                            p.stdin.flush()
-                        except:
-                            log.info(traceback.format_exc())
-                
-                p.returncode = None
-                if app_response.get('retCode', ''):
+                if resp.status_code == 200:
                     try:
-                        p.returncode = int(app_response['retCode'])
+                        app_response = resp.content
+                        if PY3 and isinstance(app_response, bytes):
+                            app_response = app_response.decode()
+                        app_response_save = app_response
+                        app_response = re.sub('\n|\r|\t', '', app_response)
+                        app_response = json.loads(app_response)
+                        test_json = app_response["pid"]
                     except:
-                        p.returncode = app_response['retCode']
-                    
-                if action == 'communicate' and p.returncode is not None:
-                    return stdout_acum, stderr_acum
-                elif action == 'poll':
-                    return p.returncode
-                elif action == 'killBinary':
-                    return p
+                        status_code = resp.content
+                        log.error("## Binary_stat: Invalid app response: %s - retry: %s" % (resp.content, retry))
+                        if retry:
+                            app_response = {'pid': p.pid}
+                            app_response['retCode'] = 999
+                            msg += app_response_save
+                            stdout_acum += app_response_save
+                        else:
+                            retry = True
+                            app_response = {}
+                            time.sleep(1)
+                            continue
+                        
+            if app_response.get("pid", 0):
+                if app_response.get('output'):
+                    stdout_acum += base64.b64decode(app_response['output']).decode('utf-8')
+                    msg += base64.b64decode(app_response['output']).decode('utf-8')
+                if app_response.get('error'): 
+                    stderr_acum += base64.b64decode(app_response['error']).decode('utf-8')
+                    msg += base64.b64decode(app_response['error']).decode('utf-8')
+                if app_response.get('startDate'): 
+                    p.startDate = base64.b64decode(app_response['startDate']).decode('utf-8')
+                if app_response.get('endDate'): 
+                    p.endDate = base64.b64decode(app_response['endDate']).decode('utf-8')
+                if app_response.get('cmd'): 
+                    p.cmd_app = base64.b64decode(app_response['cmd']).decode('utf-8')
+                if app_response.get('finalCmd'): 
+                    p.finalCmd = base64.b64decode(app_response['finalCmd']).decode('utf-8')
+
+                # If still app permissions not allowed, give it a retry
+                if 'permission denied' in msg:
+                    from lib import kodi
+                    kodi.notification('Accept Assitant permissions', time=15000)
+                    time.sleep(5)
+                    xbmc.executebuiltin(cmd_android_permissions)
+                    time.sleep(15)
+                    app_response['retCode'] = 999
+                    msg = ''
+                
+                if msg:
+                    try:
+                        for line in msg.split('\n'):
+                            line += '\n'
+                            if PY3 and not isinstance(line, (bytes, bytearray)):
+                                line = line.encode()
+                            p.stdin.write(line)
+                            p.stdin.flush()
+                    except:
+                        pass
             
-            time.sleep(5)
-
-    except:
-        logging.info(traceback.format_exc())
-    return None
-
-def get_android_version():
-    import re
-    import traceback
-    
-    version = 8
-    if PY3: FF = b'\n'
-    else: FF = '\n'
-    
-    if xbmc.getCondVisibility("system.platform.Android"):
-        try:
-            for label_a in subprocess.check_output('getprop').split(FF):
-                if PY3 and isinstance(label_a, bytes):
-                    label_a = label_a.decode()
-                if 'build.version.release' in label_a:
-                    version = int(re.findall(':\s*\[(.*?)\]$', label_a, flags=re.DOTALL)[0])
-                    break
-        except:
-            log.info(traceback.format_exc())
-            try:
-                if PY3: fp = open(os.environ['ANDROID_ROOT'] + '/build.prop', 'r', encoding='utf-8')
-                else: fp = open(os.environ['ANDROID_ROOT'] + '/build.prop', 'r')
-                for label_a in fp.read().split():
-                    if PY3 and isinstance(label_a, bytes):
-                        label_a = label_a.decode()
-                    if 'build.version.release' in label_a:
-                        version = int(re.findall('=(.*?)$', label_a, flags=re.DOTALL)[0])
-                        break
-                f.close()
-            except:
-                log.info(traceback.format_exc())
+            p.returncode = None
+            if app_response.get('retCode', '') != '' or action == 'killBinary' or \
+                            (action == 'communicate' and p.returncode is not None):
                 try:
-                    f.close()
+                    p.stdin.flush()
+                    p.stdin.close()
                 except:
                     pass
-    
-    return version
+                try:
+                    p.returncode = int(app_response['retCode'])
+                except:
+                    p.returncode = app_response['retCode'] or p.returncode
+                
+            if action == 'communicate' and p.returncode is not None:
+                log.info("## Binary_stat: communicate Quasar: %s - Returncode: %s" % (p.pid, p.returncode))
+                return stdout_acum, stderr_acum
+            
+            elif action == 'poll':
+                if init and msg:
+                    #log.warning('## Binary_stat: Quasar initial response: %s' % msg)
+                    return True
+                return p.returncode
+            
+            elif action == 'killBinary':
+                log.info("## Binary_stat: killBinary Quasar: %s - Returncode: %s" % (p.pid, p.returncode))
+                return p
+            
+            time.sleep(5)
+            msg = ''
+            app_response = {}
 
-def is_rooted(USER_ADDON_SETTING):
-    
-    res = USER_ADDON_SETTING.getSetting('is_rooted_device')
-    if res in ['rooted', 'no_rooted']:
-        return res
-    
-    res = 'no_rooted'
-    notify('QUASAR: Verifying Super-user privileges', \
-                'If requested, you MUST accept Super-user privileges for Kodi', time=10000)
-    
-    try:
-        for subcmd in ['-c', '-0']:
-            command = ['su', subcmd, 'ls']
-            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output_cmd, error_cmd = p.communicate()
-            if not error_cmd:
-                res = 'rooted'
-                USER_ADDON_SETTING.setSetting('is_rooted_device', 'rooted')
-                break
-        else:
-            USER_ADDON_SETTING.setSetting('is_rooted_device', 'no_rooted')
     except:
-        USER_ADDON_SETTING.setSetting('is_rooted_device', 'no_rooted')
-    
-    return res
+        log.error(traceback.format_exc())
+    return None
 
 def install_app(APP_PARAMS):
     import traceback
     import requests
+    import xbmc
+    import time
+    from lib import kodi
     
-    ANDROID_STORAGE = os.getenv('ANDROID_STORAGE')
-    if not ANDROID_STORAGE: ANDROID_STORAGE = '/storage'
-    LOCAL_DOWNLOAD_PATH = os.path.join(ANDROID_STORAGE, 'emulated', '0', 'Download')
-    apk_OK = False
-    res = False
-    
-    for user_addon, user_params in list(APP_PARAMS.items()):
-        if not user_params['ACTIVE']: continue
-            
-        for apk_path in user_params['USER_APK']:
-            if apk_path.endswith('.apk'):
-                download_path = LOCAL_DOWNLOAD_PATH
-            elif user_params['USER_ADDON_STATUS']:
-                download_path = user_params['USER_ADDON_USERDATA']
-            else:
-                continue
-            
-            if apk_path.startswith('http'):
-                try:
-                    apk_body = requests.get(apk_path, timeout=10)
-                except:
-                    apk_body = requests.Response()
-                if apk_body.status_code != 200:
-                    apk_OK = False
-                    continue
-                with open(os.path.join(download_path, \
-                        os.path.basename(apk_path)), "wb") as f:
-                    f.write(apk_body.content)
-                apk_OK = True
-            
-            else:
-                if os.path.exists(apk_path):
-                    shutil.copy(apk_path, download_path)
-                    apk_OK = True
+    try:
+        apk_OK = False
+        res = False
+        ANDROID_STORAGE = os.getenv('ANDROID_STORAGE')
+        if not ANDROID_STORAGE: ANDROID_STORAGE = '/storage'
+        LOCAL_DOWNLOAD_PATH = os.path.join(ANDROID_STORAGE, 'emulated', '0', 'Download')
+        USER_APP_PATH = os.path.join(ANDROID_STORAGE, 'emulated', '0', 'Android', 'data')
+
+        for user_addon, user_params in list(APP_PARAMS.items()):
+            if not user_params['ACTIVE']: continue
+                
+            for apk_path in user_params['USER_APK']:
+                if apk_path.endswith('.apk'):
+                    download_path = LOCAL_DOWNLOAD_PATH
+                elif user_params['USER_ADDON_STATUS']:
+                    download_path = user_params['USER_ADDON_USERDATA']
                 else:
                     continue
-            if not apk_OK:
-                break
-        
-        if apk_OK:
-            notify('QUASAR: Installing your Assistant', \
-                        'Install %s from folder %s' % (os.path.basename(user_params['USER_APK']), \
-                        LOCAL_DOWNLOAD_PATH), time=10000)
-            # Lets give the user 5 minutes to install the app an retry automatically
-            for x in range(300):
-                if os.path.exists(os.path.join(os.path.dirname(translatePath(
-                        'special://xbmcbinaddons/'), user_params['USER_APP']))):
-                    return True
+                
+                if apk_path.startswith('http'):
+                    try:
+                        apk_body = requests.get(apk_path, timeout=10)
+                    except Exception as e:
+                        apk_body = requests.Response()
+                        apk_body.status_code = str(e)
+                    if apk_body.status_code != 200:
+                        log.error("## Install_app: Invalid app requests response: %s" % (apk_body.status_code))
+                        apk_OK = False
+                        continue
+                    with open(os.path.join(download_path, \
+                            os.path.basename(apk_path)), "wb") as f:
+                        f.write(apk_body.content)
+                    apk_OK = True
+                
+                else:
+                    if os.path.exists(apk_path):
+                        shutil.copy(apk_path, download_path)
+                        apk_OK = True
+                    else:
+                        continue
+                if not apk_OK:
+                    break
+            
+            if apk_OK:
+                log.info("## Install_app: Installing the APK from: %s" % LOCAL_DOWNLOAD_PATH)
+                kodi.notification('Install your Assistant %s from folder %s' % \
+                            (os.path.basename(user_params['USER_APK'][0]), \
+                            LOCAL_DOWNLOAD_PATH))
+                cmd_android = 'StartAndroidActivity("%s", "", "%s", "%s")' % (user_params['USER_APP'], 'open', 'about:blank')
+                cmd_android_permissions = 'StartAndroidActivity("%s", "", "%s", "%s")' % (user_params['USER_APP'], 'checkPermissions', 'about:blank')
+                url_close = "%s:%s?quit" % (user_params['USER_APP_URL'], user_params['USER_APP_PORT'])
+                
+                # Lets give the user 5 minutes to install the app an retry automatically
+                for x in range(300):
+                    if os.path.exists(os.path.join(USER_APP_PATH, user_params['USER_APP'])):
+                        log.info("## Install_app: APP installed: %s" % user_params['USER_APP'])
+                        kodi.notification('Accept Assistant permissions')
+                        time.sleep(5)
+                        log.info("## Install_app: Requesting permissions: %s" % user_params['USER_APP'])
+                        xbmc.executebuiltin(cmd_android_permissions)
+                        time.sleep(15)
+                        log.info("## Install_app: closing APP: %s" % user_params['USER_APP'])
+                        kodi.notification('Accept Assistant permissions')
+                        try:
+                            permissions = requests.get(url_close, timeout=5)
+                            log.info("## Install_app: APP closed: %s" % user_params['USER_APP'])
+                        except Exception as e:
+                            log.error("## Install_app: APP inaccessible.  Re-init Kodi. ERROR: %s" % str(e))
+                        time.sleep(3)
+                        return True
+                    
+                    xbmc.executebuiltin(cmd_android)
                     time.sleep(1)
-            break
+                break
     
+    except:
+        log.info(traceback.format_exc())
     return res
