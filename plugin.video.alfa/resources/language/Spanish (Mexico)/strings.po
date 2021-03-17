@@ -140,7 +140,7 @@ msgstr "Favoritos"
 
 msgctxt "#30103"
 msgid "Global search"
-msgstr "Buscador global"
+msgstr "Buscar"
 
 msgctxt "#30104"
 msgid "Help"
@@ -2676,7 +2676,7 @@ msgstr "Buscador global"
 
 msgctxt "#60673"
 msgid "MultiThread Search"
-msgstr "Buscador multiproceso"
+msgstr "Subprocesos de búsqueda"
 
 msgctxt "#60674"
 msgid "Show Results:"
@@ -5059,3 +5059,7 @@ msgstr "Manual de Alfa Mobile Assistant (herramienta de apoyo)"
 msgctxt "#70763"
 msgid "Download from channel"
 msgstr "Descargar desde el canal"
+
+msgctxt "#70764"
+msgid "  - Enable experimental download system"
+msgstr "  - Activar sistema de descarga experimental"

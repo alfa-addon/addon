@@ -756,12 +756,14 @@ def move_to_library(item, forced=False):
     if config.get_setting("library_add", "downloads") == True or forced == True:
         download_path = item.downloadFilename
         item_library_path = filetools.join(config.get_videolibrary_path(), *filetools.split(item.downloadFilename))
+        absolute_path = download_path
         if item.server == 'torrent':
             torrent_client = scrapertools.find_single_match(download_path, ':(.+?):').upper()
             torrent_dir = torrent.torrent_dirs()[torrent_client]
-            download_path = filetools.join(re.escape(torrent_dir), (re.sub('(?is):(.+?):\s?', '', download_path)))
+            absolute_path = filetools.join(torrent_dir, (re.sub('(?is):(.+?):\s?', '', download_path)))
         else:
-            download_path = filetools.join(config.get_setting("downloadpath"), download_path)
+            download_path = ':downloads: {}'.format(item.downloadFilename)
+            absolute_path = filetools.join(config.get_setting("downloadpath"), item.downloadFilename)
         final_path = download_path
 
         # Si se activó el ajuste "Mover archivo descargado a videoteca", movemos el archivo
@@ -778,23 +780,24 @@ def move_to_library(item, forced=False):
 
             # Si la ruta a la carpeta en la videoteca es un archivo ya existente,
             # lo borramos, y/o si no existe la carpeta la creamos
-            if filetools.isfile(item_library_path) and filetools.isfile(download_path):
+            if filetools.isfile(item_library_path) and filetools.isfile(absolute_path):
                 filetools.remove(item_library_path)
             if not filetools.isdir(filetools.dirname(item_library_path)):
                 filetools.mkdir(filetools.dirname(item_library_path))
 
             # Verificamos que el archivo exista (y sea un archivo)
-            if filetools.isfile(download_path):
+            if filetools.isfile(absolute_path):
                 # Si se mueve correctamente, establecemos la nueva ruta como la definitiva
-                if filetools.move(download_path, item_library_path):
-                    final_path = item_library_path
+                if filetools.move(absolute_path, item_library_path):
+                    absolute_path = item_library_path
+                    final_path = ':videolibrary: {}'.format(item.downloadFilename)
 
                 # Borramos directorios vacíos
-                if len(filetools.listdir(filetools.dirname(download_path))) == 0:
-                    filetools.rmdir(filetools.dirname(download_path))
+                if len(filetools.listdir(filetools.dirname(absolute_path))) == 0:
+                    filetools.rmdir(filetools.dirname(absolute_path))
 
         # Verificamos que el archivo exista (y sea un archivo)
-        if filetools.isfile(final_path):
+        if filetools.isfile(absolute_path):
             if item.contentType == "movie" and item.infoLabels["tmdb_id"] and item.infoLabels["tmdb_id"] != null:
                 library_item = Item(title=config.get_localized_string(70228) % item.downloadFilename, channel="downloads",
                                     action="findvideos", infoLabels=item.infoLabels, url=final_path)
@@ -1632,8 +1635,153 @@ def save_download(item, silent=False):
         item.action = item.from_action
         del item.from_action
         del item.from_channel
+        logger.debug('Activar descargas experimentales: ' + str(config.get_setting('enable_expermental_downloads', channel='downloads')))
+        if config.get_setting('enable_expermental_downloads', channel='downloads') == True:
+            # En videolibrary no se obtienen los canales en contentChannel, los buscamos manualmente
+            if item.server != 'torrent' and item.sub_action != 'auto':
+                if item.channel == 'videolibrary':
+                    channels_list = videolibrarytools.get_content_channels(item)
 
-    item.contentChannel = item.channel
+                    # Si hay 2 o más canales se muestra diálogo de selección
+                    if len(channels_list) > 1:
+                        channels = []
+                        # Ver notas de videolibrarytools.get_content_channels para + info del «if isinstance(channels_list[0], list)»
+                        if isinstance(channels_list[0], list):
+                            # Les ponemos los nombres "arreglados" a los canales (hay que pasar a strings para localización)
+                            for c, url in channels_list:
+                                channel_title = channeltools.get_channel_parameters(c)['title']
+                                channels.append('Descargar desde {}'.format(channel_title))
+                            seleccion = platformtools.dialog_select('Descargar desde el canal...', channels)
+                            if seleccion != -1:
+                                item.channel = channels_list[seleccion][0]
+                                item.contentChannel = item.channel
+                                item.category = item.channel
+                                item.url = channels_list[seleccion][1]
+                                item.server = item.server.capitalize()
+                            else:
+                                # Canceló la selección, cancelamos la descarga
+                                return False
+                        else:
+                            for c in channels_list:
+                                channel_params = channeltools.get_channel_parameters(c)
+                                channels.append('{} {}'.format(config.get_localized_string(70763), channel_params.get('title', c)))
+                            seleccion = platformtools.dialog_select('{}...'.format(config.get_localized_string(70763)), channels)
+                            if seleccion != -1:
+                                item.channel = channels_list[seleccion]
+                                item.contentChannel = item.channel
+                            else:
+                                # Canceló la selección, cancelamos la descarga
+                                return False
+
+                    # Si hay 1 solo canal se descarga de este automáticamente
+                    elif len(channels_list) > 0:
+                        # Ver notas de videolibrarytools.get_content_channels para + info del «if isinstance(channels_list[0], list)»
+                        if isinstance(channels_list[0], list):
+                            item.channel = channels_list[0][0]
+                            item.contentChannel = item.channel
+                            item.url = channels_list[0][1]
+                        else:
+                            item.channel = channels_list[0]
+                            item.contentChannel = item.channel
+                    else:
+                        raise Exception('No se encontraron canales válidos')
+
+                # Mostramos diálogo cuando sea un elemento para descarga inmediata (episodio o película)
+                # y no sea de servidor torrent o descarga automática (preguntarle a Kingbox para + info sobre lo último)
+                if item.action in ['play', 'findvideos'] and not item.channel == 'list':
+                    # Hacemos el diálogo de error típico con título diferente
+                    from platformcode import envtal
+                    error_generico = '{}[CR]{}{}'.format(config.get_localized_string(60014), config.get_localized_string(50004), envtal.get_environment()['log_path'])
+
+                    # Si estamos en el listado de episodios obtenemos los enlaces y damos a elegir entre servidores
+                    # TODO: Implementar funcionamiento de autoplay en esta área
+                    if item.action == 'findvideos':
+                        item.extra = 'findvideos'
+                        result = channeltools.get_channel_attr(item.channel, 'findvideos', item)
+                        if isinstance(result, list):
+                            if len(result) > 1 :
+                                opciones = []
+                                for r in  result:
+                                    from platformcode import unify
+                                    title = unify.title_format(r).title
+                                    opciones.append(title)
+                                seleccion = platformtools.dialog_select(config.get_localized_string(30163), opciones)
+                                if not seleccion == -1:
+                                    # item = result[seleccion].clone(downloadServer = {"url": result[seleccion].url, "server": result[seleccion].server})
+                                    item = result[seleccion]
+                                else:
+                                    return False
+                            elif len(result) > 0 and isinstance(result[0], Item):
+                                item = result[0]
+                            else:
+                                logger.error('ERROR: result no devolvió enlaces válidos')
+                                logger.error(result)
+                                from platformcode import envtal
+                                platformtools.dialog_ok(config.get_localized_string(60208), error_generico)
+                                return False
+                            item.action = 'play'
+                        else:
+                            raise Exception()
+
+                    # Si estamos en enlaces damos a elegir calidad del servidor (si hubiera más de 1)
+                    if item.action == 'play' or item.downloadServer:
+                        if not item.server: item.server = 'directo'
+                        # Si ya se tienen urls se aprovechan (pantalla de play, opción Descargar), sino se obtienen
+                        if item.video_urls:
+                            video_urls, puedes, motivo = item.video_urls, True, ""
+                            # logger.info(video_urls)
+                        else:
+                            # Pasamos por el play del canal si existe
+                            if channeltools.has_attr(item.channel, 'play'):
+                                # Verificamos que tenemos resultado válido de play y lo pasamos a item
+                                result = channeltools.get_channel_attr(item.channel, 'play', item)
+                                if isinstance(result, list):
+                                    if len(result) > 0 :
+                                        if isinstance(result[0], Item):
+                                            item = result[0]
+                            # Dependerá de cada canal si se obtienen o no los enlaces correctos
+                            # No busquen problemas aquí, primero en el canal ;)
+                            video_urls, puedes, motivo = servertools.resolve_video_urls_for_playing(item.server, item.url, item.password, True)
+
+                        # Si se resolvieron las url para reproducción...
+                        if puedes:
+                            opciones = []
+                            # Damos a elegir calidad de haber más de 1
+                            if len(video_urls) > 1:
+                                if not isinstance(video_urls[0], list):
+                                    video_urls = list([video_urls[0], video_urls[1]])
+                                
+                                for it in video_urls:
+                                    opciones.append('{} {}'.format(config.get_localized_string(30153), it[0]))
+                                seleccion = platformtools.dialog_select(config.get_localized_string(30163), opciones)
+                            else:
+                                seleccion = 0
+                            if not seleccion == -1:
+                                item.downloadQualitySelected = video_urls[seleccion][0]
+                                item.play_menu = True
+                            else:
+                                # Canceló la selección, cancelamos la descarga
+                                return False
+                        else:
+                            logger.error('ERROR: No se han podido obtener los enlaces')
+                            if not 'motivo' in locals(): motivo = error_generico
+                            platformtools.dialog_ok(config.get_localized_string(60208), motivo)
+                            return False
+
+                # TODO: Hay que deshacerse del valor por defecto 'list' en item.contentChannel, da problemas difíciles de detectar
+                elif item.channel == 'list':
+                    from platformcode import envtal
+                    error_generico = '{}[CR]{}{}'.format(config.get_localized_string(60014), config.get_localized_string(50004), envtal.get_environment()['log_path'])
+                    logger.error('ERROR: Canal de item no válido')
+                    logger.error(item)
+                    platformtools.dialog_ok(config.get_localized_string(60208), error_generico)
+                    return False
+
+    if 'list' in item.contentChannel:
+        item.contentChannel = item.channel
+    elif item.contentChannel:
+        item.channel = item.contentChannel
+
     item.contentAction = item.action
     if item.contentAction in ['get_seasons', 'update_tvshow']:
         item.contentAction = 'episodios'

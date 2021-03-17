@@ -5062,3 +5062,7 @@ msgstr ""
 msgctxt "#70763"
 msgid "Download from channel"
 msgstr ""
+
+msgctxt "#70764"
+msgid "  - Enable experimental download system"
+msgstr ""
