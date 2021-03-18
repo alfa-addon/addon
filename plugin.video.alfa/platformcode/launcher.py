@@ -62,7 +62,7 @@ def run(item=None):
                     category = config.get_setting("category").lower()
                     item = Item(channel="news", action="novedades", extra=category, mode = 'silent')
                 else:
-                    from channels import side_menu
+                    from modules import side_menu
                     item= Item()
                     item = side_menu.check_user_home(item)
                     item.start = True;
@@ -273,7 +273,7 @@ def run(item=None):
 
             # Special action for downloading all episodes from a serie
             elif item.action == "download_all_episodes":
-                from channels import downloads
+                from modules import downloads
                 item.action = item.extra
                 del item.extra
                 downloads.save_download(item)
@@ -464,7 +464,7 @@ def play_from_library(item):
     import xbmcplugin
     import xbmc
     from time import sleep, time
-    from channels import nextep
+    from modules import nextep
     # Intentamos reproducir una imagen (esto no hace nada y ademas no da error)
     xbmcplugin.setResolvedUrl(int(sys.argv[1]), True,
                               xbmcgui.ListItem(
@@ -490,7 +490,7 @@ def play_from_library(item):
 
         # Ventana emergente
 
-        from channels import videolibrary, autoplay
+        from modules import videolibrary, autoplay
         p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(20000), config.get_localized_string(70004))
         p_dialog.update(0, '')
 
@@ -565,7 +565,7 @@ def play_from_library(item):
                                                      channel=item.contentChannel))
                             return
 
-                    from channels import autoplay
+                    from modules import autoplay
                     if (platformtools.is_playing() and item.action) or item.server == 'torrent' or autoplay.is_active(item.contentChannel):
                         break
 

@@ -64,7 +64,7 @@ def mark_auto_as_watched(item):
                 logger.debug("marcado")
                 item.playcount = 1
                 sync_with_trakt = True
-                from channels import videolibrary
+                from modules import videolibrary
                 videolibrary.mark_content_as_watched2(item)
                 break
 
@@ -444,7 +444,7 @@ def get_videos_watched_on_kodi(item, value=1, list_videos=False):
 
 
 def mark_content_as_watched_on_alfa(path):
-    from channels import videolibrary
+    from modules import videolibrary
     from core import videolibrarytools
     
     """
