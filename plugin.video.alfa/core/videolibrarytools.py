@@ -897,7 +897,7 @@ def add_tvshow(item, channel=None):
         if config.get_setting('auto_download_new', serie.channel, default=False):
             serie.sub_action = 'auto'
             serie.category = itemlist[0].category
-            from channels import downloads
+            from modules import downloads
             downloads.save_download(serie, silent=True)
             if serie.sub_action: del serie.sub_action
             while xbmc.getCondVisibility('Library.IsScanningVideo()'):
