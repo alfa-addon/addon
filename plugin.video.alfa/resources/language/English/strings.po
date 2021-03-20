@@ -1414,7 +1414,7 @@ msgid "The script does not support URL reduction adf.ly."
 msgstr ""
 
 msgctxt "#60339"
-msgid "Nothing to Play"
+msgid "No supported servers found"
 msgstr ""
 
 msgctxt "#60342"
