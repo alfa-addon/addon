@@ -1725,22 +1725,31 @@ def save_download(item, silent=False):
 
                     # Si estamos en enlaces damos a elegir calidad del servidor (si hubiera más de 1)
                     if item.action == 'play' or item.downloadServer:
-                        if not item.server: item.server = 'directo'
                         # Si ya se tienen urls se aprovechan (pantalla de play, opción Descargar), sino se obtienen
+                        # Pasamos por el play del canal si existe
+                        if channeltools.has_attr(item.channel, 'play'):
+                            # Verificamos que tenemos resultado válido de play y lo pasamos a item
+                            result = channeltools.get_channel_attr(item.channel, 'play', item)
+                            if len(result) > 0 and isinstance(result[0], Item):
+                                item = result[0]
+
+                            # Permitir varias calidades desde play en el canal
+                            elif len(result) > 0 and isinstance(result[0], list):
+                                item.video_urls = result
+
+                            # If not, shows user an error message
+                            else:
+                                platformtools.dialog_ok(config.get_localized_string(20000), config.get_localized_string(60339))
+                                return False
+
+                        if not item.server:
+                            item.server = servertools.get_server_from_url(item.url)
+
                         if item.video_urls:
                             video_urls, puedes, motivo = item.video_urls, True, ""
                             # logger.info(video_urls)
                         else:
-                            # Pasamos por el play del canal si existe
-                            if channeltools.has_attr(item.channel, 'play'):
-                                # Verificamos que tenemos resultado válido de play y lo pasamos a item
-                                result = channeltools.get_channel_attr(item.channel, 'play', item)
-                                if isinstance(result, list):
-                                    if len(result) > 0 :
-                                        if isinstance(result[0], Item):
-                                            item = result[0]
                             # Dependerá de cada canal si se obtienen o no los enlaces correctos
-                            # No busquen problemas aquí, primero en el canal ;)
                             video_urls, puedes, motivo = servertools.resolve_video_urls_for_playing(item.server, item.url, item.password, True)
 
                         # Si se resolvieron las url para reproducción...
