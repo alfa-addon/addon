@@ -53,9 +53,11 @@ def show_option(channel, itemlist, text_color='yellow', thumbnail=None, fanart=N
         return itemlist
 
     if thumbnail == None:
-        thumbnail = 'https://s7.postimg.cc/65ooga04b/Auto_Play.png'
+        # thumbnail = 'https://s7.postimg.cc/65ooga04b/Auto_Play.png'
+        thumbnail = os.path.join(config.get_runtime_path(), "resources", "media", "themes", "default", "thumb_autoplay.png")
     if fanart == None:
-        fanart = 'https://s7.postimg.cc/65ooga04b/Auto_Play.png'
+        # fanart = 'https://s7.postimg.cc/65ooga04b/Auto_Play.png'
+        fanart = os.path.join(config.get_runtime_path(), "resources", "media", "themes", "default", "fanart_autoplay.png")
 
     plot_autoplay = config.get_localized_string(60399)
     itemlist.append(
