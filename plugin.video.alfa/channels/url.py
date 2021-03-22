@@ -11,9 +11,9 @@ def mainlist(item):
     logger.info()
 
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="search", title=config.get_localized_string(60089)))
-    itemlist.append(Item(channel=item.channel, action="search", title=config.get_localized_string(60090)))
-    itemlist.append(Item(channel=item.channel, action="search", title=config.get_localized_string(60091)))
+    itemlist.append(Item(channel=item.channel, action="search", title=config.get_localized_string(60089), list_type='server'))
+    itemlist.append(Item(channel=item.channel, action="search", title=config.get_localized_string(60090), list_type='direct'))
+    itemlist.append(Item(channel=item.channel, action="search", title=config.get_localized_string(60091), list_type='findvideos'))
 
     return itemlist
 
@@ -27,12 +27,12 @@ def search(item, texto):
 
     itemlist = []
 
-    if "servidor" in item.title:
+    if "server" in item.list_type:
         itemlist = servertools.find_video_items(data=texto)
         for item in itemlist:
             item.channel = "url"
             item.action = "play"
-    elif "directo" in item.title:
+    elif "direct" in item.list_type:
         itemlist.append(Item(channel=item.channel, action="play", url=texto, server="directo", title=config.get_localized_string(60092)))
     else:
         data = httptools.downloadpage(texto).data
