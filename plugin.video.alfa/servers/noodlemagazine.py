@@ -14,6 +14,7 @@ def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).json
+    
     for elem in  data["sources"]:
         url = elem["file"]
         quality = elem["label"]
