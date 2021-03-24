@@ -443,10 +443,11 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
 
     def add_control_bool(self, c):
         # Versiones antiguas no admite algunas texturas
-        if xbmcgui.__version__ in ["3.0", "3.0.0"]:
-            control = xbmcgui.ControlRadioButton(0 - 10, -100, self.controls_width + 10, self.height_control,
-                                                 label=c["label"], font=self.font, textColor=c["color"])
-        elif xbmcgui.__version__ in ["1.2", "2.0"]:
+        # if xbmcgui.__version__ in ["3.0", "3.0.0"]:
+            # control = xbmcgui.ControlRadioButton(0 - 10, -100, self.controls_width + 10, self.height_control,
+                                                 # label=c["label"], font=self.font, textColor=c["color"])
+        # elif xbmcgui.__version__ in ["1.2", "2.0"]:
+        if xbmcgui.__version__ in ["1.2", "2.0"]:
             control = xbmcgui.ControlRadioButton(0 - 10, -100, self.controls_width + 10, self.height_control,
                                                  label=c["label"], font=self.font, textColor=c["color"],
                                                  focusTexture=os.path.join(self.mediapath, 'Controls',

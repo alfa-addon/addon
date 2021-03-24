@@ -20,6 +20,7 @@ from channels import autoplay
 from channels import filtertools
 from bs4 import BeautifulSoup
 import base64
+import datetime
 
 host = 'https://playview.io/'
 
@@ -27,7 +28,7 @@ IDIOMAS = {"Latino": "LAT", "Español": "CAST", "Subtitulado": "VOSE"}
 list_language = list(IDIOMAS.values())
 list_quality = list()
 list_servers = ['upstream', 'cloudvideo', 'mixdrop', 'mystream', 'doodstream']
-
+date = datetime.datetime.now()
 
 def mainlist(item):
     logger.info()
@@ -59,7 +60,7 @@ def sub_menu(item):
     itemlist = list()
 
     itemlist.append(
-        Item(channel=item.channel, title='Ultimas', action='list_all', url=host + 'estrenos-2020', first=0,
+        Item(channel=item.channel, title='Ultimas', action='list_all', url=host + 'estrenos-%s' % date.year, first=0,
              thumbnail=get_thumb('last', auto=True)))
 
     itemlist.append(
@@ -74,8 +75,6 @@ def sub_menu(item):
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
-
-    url = re.sub('/(\w+.\w{2,3}/)', '/www.\\1', url)
 
     if referer:
         data = httptools.downloadpage(url, headers={'Referer': referer}).data

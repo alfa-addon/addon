@@ -37,6 +37,7 @@ from core.item import Item
 from platformcode import logger
 from platformcode import config
 from platformcode import unify
+import time
 
 
 class XBMCPlayer(xbmc.Player):
@@ -161,7 +162,7 @@ def render_items(itemlist, parent_item):
     #logger.debug(parent_item.tostring('\n'))
     logger.info('INICIO render_items')
     from core import httptools
-    
+    start = time.time()
     # Si el itemlist no es un list salimos
     if not isinstance(itemlist, list):
         return
@@ -287,8 +288,10 @@ def render_items(itemlist, parent_item):
             poster = item.infoLabels['temporada_poster']
 
         # Creamos el listitem
-        listitem = xbmcgui.ListItem(item.title)
-
+        if config.get_platform(True)['num_version'] >= 18.0:
+            listitem = xbmcgui.ListItem(item.title, offscreen=True)
+        else:
+            listitem = xbmcgui.ListItem(item.title)
         # values icon, thumb or poster are skin dependent.. so we set all to avoid problems
         # if not exists thumb it's used icon value
         if config.get_platform(True)['num_version'] >= 16.0:
@@ -336,7 +339,7 @@ def render_items(itemlist, parent_item):
     if config.get_setting("forceview"):                                         # ...forzamos segun el viewcontent
         xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewcontent)
 
-    elif parent_item.channel not in ["channelselector", "", "alfavorites"]:     # ... o segun el canal
+    elif parent_item.channel not in ["channelselector", "", "alfavorites", "news", "search"]:     # ... o segun el canal
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
     elif parent_item.channel == "alfavorites" and parent_item.action == 'mostrar_perfil':
@@ -372,7 +375,7 @@ def render_items(itemlist, parent_item):
     if parent_item.mode in ['silent', 'get_cached', 'set_cache', 'finish']:
         xbmc.executebuiltin("Container.SetViewMode(500)")
 
-    logger.info('FINAL render_items')
+    logger.info('FINAL render_items: %s' % (time.time() - start))
 
 
 def get_viewmode_id(parent_item):
