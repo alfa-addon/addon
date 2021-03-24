@@ -1826,7 +1826,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
         
         if item_down.downloadProgress == -1:
             item.downloadProgress = -1
-        elif save_path_videos:
+        elif save_path_videos and item_down.downloadProgress > 0:
             item.downloadProgress = 100
         else:
             if torrent_paths[torr_client.upper()+'_web']:                           # Es un cliente monitorizable?

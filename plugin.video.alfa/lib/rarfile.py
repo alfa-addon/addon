@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # rarfile.py
 #
 # Copyright (c) 2005-2019  Marko Kreen <markokr@gmail.com>
@@ -68,6 +70,9 @@ from __future__ import division, print_function
 ##
 
 import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; VFS = False
+
 import os
 import errno
 import struct
@@ -2925,6 +2930,30 @@ def custom_popen(cmd, classic=False):
         if ex.errno == errno.EACCES or ex.errno == errno.EPERM:
             raise RarCannotExec("Cannot execute unrar (rarfile.UNRAR_TOOL=%r)" % UNRAR_TOOL)
         raise
+    
+    try:
+        #Saving p.pid in rar_control file
+        if isinstance(cmd, list) and len(cmd) > 2:
+            rar_path = os.path.join(os.path.dirname(cmd[-2]), '_rar_control.json')
+            if os.path.exists(rar_path):
+                logger.info('Updating PID: %s in %s' % (p.pid, rar_path), force=True)
+                import json
+                if PY3:
+                    with open(rar_path, "r", encoding='utf-8') as f:
+                        rar_control = json.load(f)
+                    with open(rar_path, "w", encoding='utf-8') as f:
+                        rar_control['pid'] = p.pid
+                        json.dump(rar_control, f, indent=4)
+                else:
+                    with open(rar_path, "r") as f:
+                        rar_control = json.load(f)
+                    with open(rar_path, "w") as f:
+                        rar_control['pid'] = p.pid
+                        json.dump(rar_control, f, indent=4)
+    except:
+        import traceback
+        logger.error(traceback.format_exc())
+    
     return p
 
 def custom_check(cmd, ignore_retcode=False):
@@ -2957,12 +2986,12 @@ def check_returncode(p, out):
     errmap = [None,
               RarWarning, RarFatalError, RarCRCError, RarLockedArchiveError,    # 1..4
               RarWriteError, RarOpenError, RarUserError, RarMemoryError,        # 5..8
-              RarCreateError, RarNoFilesError, RarWrongPassword]                # 9..11
+              RarCreateError, RarNoFilesError, RarWrongPassword]                # 9..12
     if UNRAR_TOOL == ALT_TOOL:
         errmap = [None]
     if code > 0 and code < len(errmap):
         exc = errmap[code]
-    elif code == 255:
+    elif code in [-9, 9, 137, 255]:
         exc = RarUserBreak
     elif code < 0:
         exc = RarSignalExit

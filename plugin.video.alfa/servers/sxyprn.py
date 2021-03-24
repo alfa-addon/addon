@@ -6,17 +6,16 @@ from platformcode import logger
 
 def test_video_exists(page_url):
     logger.info()
-    data = httptools.downloadpage(page_url).data
-    if "not found" in data:
-        return False, "[sxyprn] El video ha sido borrado o no existe"
     global data
+    data = httptools.downloadpage(page_url).data
+    if "Not Found" in data:
+        return False, "[sxyprn] El video ha sido borrado o no existe"
     return True, ""
 
 
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    data = httptools.downloadpage(page_url).data
     url = scrapertools.find_single_match(data, 'data-vnfo=\'{"\w+":"([^"]+)"')
     url= url.replace("\/", "/")
     vid = url.split('/')

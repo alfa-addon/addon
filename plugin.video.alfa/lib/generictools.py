@@ -1970,13 +1970,13 @@ def find_rar_password(item):
     
     # Si no hay, buscamos en páginas alternativas
     rar_search = [
-                 ['1', 'https://pctreload.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                 ['1', 'https://pctreload1.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
                  ['1', 'https://pctfenix.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['descargar\/', ''], ['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
-                 ['1', 'https://pctmix.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                 ['1', 'https://pctmix1.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
                  ['2', 'https://grantorrent.net/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
@@ -2011,7 +2011,7 @@ def find_rar_password(item):
             if 'descargas2020' not in dom_sufix_clone and 'descargas2020' not in \
                         dom_sufix_clone and 'pctreload' not in dom_sufix_clone and \
                         'pctmix' not in dom_sufix_clone: dom_sufix_clone = ''
-            dom_sufix_clone = dom_sufix_clone.replace('pctmix-com', 'pctreload-com')
+            dom_sufix_clone = dom_sufix_clone.replace('pctmix1-com', 'pctreload1-com')
             if dom_sufix_org and url_password.endswith(dom_sufix_org):
                 url_password = url_password.replace(dom_sufix_org, dom_sufix_clone)
             else:
@@ -2267,6 +2267,18 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     if '.rar' in str(files):
         size = '[COLOR magenta][B]RAR-[/B][/COLOR]%s' % size
         
+    # Puede haber errores de decode en los paths.  Se intentan arreglar
+    try:
+        for entry in files:
+            for file, path in list(entry.items()):
+                if file == 'path':
+                    for x, file_r in enumerate(path):
+                        entry[file][x] = scrapertools.decode_utf8_error(file_r)
+                elif file == '__name':
+                    entry[file] = scrapertools.decode_utf8_error(path)
+    except:
+        logger.error(traceback.format_exc())
+        
     #logger.debug(str(url))
     logger.info(str(size))
     
@@ -2482,8 +2494,8 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         if item.url.endswith('-org'):
             item.url = item.url.replace(channel_failed, channel)
             item.url = re.sub('\/\w+(-\w+)$', r'/%s\1' % channel, item.url)
-        if channel == 'pctreload' or channel == 'pctmix':
-            item.url = re.sub('\/\w+-\w+$', '/pctreload-com', item.url)
+        if channel == 'pctreload1' or channel == 'pctmix1':
+            item.url = re.sub('\/\w+-\w+$', '/pctreload1-com', item.url)
             #item.url = re.sub('\/\w+-\w+$', '/pctnew-org', item.url)
         
         item = verify_channel_regex(item, fail_over_list)                       # Procesamos los regex de url que tenga el clone

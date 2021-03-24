@@ -43,5 +43,6 @@ def dec_url(txt):
     txt = txt.replace('А', 'A').replace('В', 'B').replace('С', 'C').replace('Е', 'E').replace('М', 'M').replace('~', '=').replace(',','/')
     import base64
     url = base64.b64decode(txt)
+    url = url.decode("utf8")
     return url
 

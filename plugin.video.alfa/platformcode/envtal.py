@@ -302,6 +302,12 @@ def get_environment():
                 cliente['Buffer'] = str(int(int(torrent_paths[cliente['Plug_in'].upper()+'_buffer']) /(1024*1024)))
                 cliente['Platform'] = str(filetools.listdir(filetools.join('special://home', \
                                     'addons', 'plugin.video.torrest', 'resources', 'bin'))[0])
+                try:
+                    __settings__ = xbmcaddon.Addon(id="plugin.video.torrest")
+                    cliente['Platform'] += ': %s: %s:%s' % (str(__settings__.getSetting("service_enabled")), \
+                                    str(__settings__.getSetting("service_ip")), str(__settings__.getSetting("port")))
+                except:
+                    pass
                 #cliente['Options'] = str(filetools.read(filetools.join('special://masterprofile', \
                 #                    'addon_data', 'plugin.video.torrest', 'settings.xml')))
             if torrent_paths.get(cliente['Plug_in'].upper()+'_memory_size', ''):
