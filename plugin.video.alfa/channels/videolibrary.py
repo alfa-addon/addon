@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 
 #from builtins import str
-import sys
+import sys, re
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
 
 import os, traceback
 
@@ -555,7 +560,19 @@ def findvideos(item):
         item_json.contentChannel = "local"
         # Soporte para rutas relativas en descargas
         if filetools.is_relative(item_json.url):
-            item_json.url = filetools.join(videolibrarytools.VIDEOLIBRARY_PATH, item_json.url)
+            if scrapertools.find_single_match(item_json.url, ':(.+?):'):
+                from servers import torrent
+                special = scrapertools.find_single_match(item_json.url, ':(.+?):').upper()
+                if 'downloads' in special.lower():
+                    from channels import downloads
+                    item_json.url = filetools.join(downloads.DOWNLOAD_PATH, (re.sub('(?is):(.+?):\s?', '', item_json.url)))
+                elif 'videolibrary' in special.lower():
+                    item_json.url = filetools.join(config.get_videolibrary_path(), (re.sub('(?is):(.+?):\s?', '', item_json.url)))
+                elif torrent.torrent_dirs().get(special):
+                    torrent_dir = torrent.torrent_dirs()[special]
+                    item_json.url = filetools.join(torrent_dir, (re.sub('(?is):(.+?):\s?', '', item_json.url)))
+            else:
+                item_json.url = filetools.join(videolibrarytools.VIDEOLIBRARY_PATH, item_json.url)
 
         del list_canales['downloads']
 

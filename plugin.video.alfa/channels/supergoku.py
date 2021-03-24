@@ -345,9 +345,9 @@ def set_infoLabels_async(itemlist):
 def process_title(old_title, getWithTags = False, get_contentTitle = False, get_lang = False):
     logger.info()
     stupid_little_things = {'(?is)[\–]+':'', '(?is)[\/]+':'', '(?is)([\(]).+?([\)])':'', '(?is)\s+\s':' ', '\(':'', '\)':''}
-    trash =  {'(?is)ova[s]?':'[OVA]', '(?is)(?:\(|\))':'', '(?is)pelicula':'[Película]',
-               '(?is)(audio latino|latino)':'LAT', '(?is)sub español':'VOSE',
-               '(?is)fandub':'[Fandub]', '(?is)mini anime':'', '(?is)(especiales|especial)':'[Especiales]',
+    trash =  {'(?is)ova[s]?':'[OVA]', '(?is)(?:\(|\))':'', '(?is)Pelicula':'[Película]',
+               '(?is)(Audio latino|latino)':'LAT', '(?is)Sub Español':'VOSE',
+               '(?is)Fandub':'[Fandub]', '(?is)Mini anime':'', '(?is)(Especiales|Especial)':'[Especiales]',
                '(?i)\d\w\w Season':''}
     # title_rubbish = ['(?is)(\s?(?:19|20)\d\d)', '(?is)\s[0-9].+?\s.*?(?:Season)?']
 
@@ -359,14 +359,14 @@ def process_title(old_title, getWithTags = False, get_contentTitle = False, get_
     title = old_title
     langs = []
 
-    for pattern, key in trash.items():
+    for pattern, key in list(trash.items()):
         if scrapertools.find_single_match(contentTitle, pattern):
             if key in IDIOMAS:
                 langs.append(key)
                 title = re.sub(pattern, '[{}]'.format(IDIOMAS[key]), contentTitle)
             else:
                 title = re.sub(pattern, '[{}]'.format(key), contentTitle)
-            contentTitle = re.sub(pattern, '', contentTitle)
+        contentTitle = contentTitle.replace(pattern.split(')')[1], '')
     
     contentTitle = contentTitle.strip()
     title = title.strip()
@@ -444,7 +444,7 @@ def list_all(item):
 
         elif genericvalues[item.param] == True:
             thumb = article.find('img', class_='lazyload')['data-src']
-            fanart = article.find('noscript').find('img')['src']
+            fanart = scrapertools.find_single_match(article.find('noscript'), 'src="([^"]+)')
 
             if item.param == 'recomended' or item.param == 'more_watched' or item.param == 'popular':
                 url = article.find('a')['href']
@@ -499,7 +499,6 @@ def list_all(item):
                     contentSerieName = contentTitle,
                     contentTitle = contentTitle,
                     contentType = conType,
-                    folder = False,
                     infoLabels = infoLabels,
                     language = langs,
                     title = title,
@@ -519,7 +518,6 @@ def list_all(item):
                     contentSerieName = contentTitle,
                     contentTitle = contentTitle,
                     contentType = 'tvshow',
-                    folder = False,
                     language = langs,
                     title = title,
                     thumbnail = scpthumb,
@@ -566,7 +564,6 @@ def list_all(item):
                     contentSerieName = conSerieName,
                     contentTitle = conTitle,
                     contentType = conType,
-                    folder = False,
                     infoLabels = infoLabels,
                     language = langs,
                     param = item.param,

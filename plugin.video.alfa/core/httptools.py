@@ -394,7 +394,10 @@ def proxy_post_processing(url, proxy_data, response, opt):
             if not PY3: from . import proxytools
             else: from . import proxytools_py3 as proxytools
             
-            response["data"] = proxytools.restore_after_proxy_web(response["data"],
+            if not ('application' in response['headers'].get('Content-Type', '') \
+                        or 'javascript' in response['headers'].get('Content-Type', '') \
+                        or 'image' in response['headers'].get('Content-Type', '')):
+                response["data"] = proxytools.restore_after_proxy_web(response["data"],
                                                                   proxy_data['web_name'], opt['url_save'])
             if response["data"] == 'ERROR' or response["code"] == 302:
                 if response["code"] == 200: response["code"] = 666
@@ -414,7 +417,8 @@ def proxy_post_processing(url, proxy_data, response, opt):
             
             if ', Proxy Direct' in proxy_data.get('stat', ''):
                 proxytools.get_proxy_list_method(proxy_init='ProxyDirect',
-                                                 error_skip=proxy_data['addr'], url_test=url)
+                                                 error_skip=proxy_data['addr'], url_test=url, 
+                                                 post_test=opt['post_save'])
             elif ', Proxy CF' in proxy_data.get('stat', ''):
                 proxytools.get_proxy_list_method(proxy_init='ProxyCF',
                                                  error_skip=proxy_data['CF_addr'])
@@ -447,7 +451,8 @@ def proxy_post_processing(url, proxy_data, response, opt):
 
 
 def downloadpage(url, **opt):
-    logger.info()
+    if not opt.get('alfa_s', False):
+        logger.info()
     from . import scrapertools
 
     """
@@ -490,7 +495,7 @@ def downloadpage(url, **opt):
                 HTTPResponse.time:      float  Tiempo empleado para realizar la petición
 
         """
-    load_cookies()
+    load_cookies(opt.get('alfa_s', False))
     import requests
 
     cf_ua = config.get_setting('cf_assistant_ua', None)
@@ -518,6 +523,8 @@ def downloadpage(url, **opt):
     opt['proxy_retries_counter'] = 0
     opt['url_save'] = url
     opt['post_save'] = opt.get('post', None)
+    if opt.get('forced_proxy_opt', None) and channel_proxy_list(url):
+        opt['forced_proxy'] = opt['forced_proxy_opt']
 
     while opt['proxy_retries_counter'] <= opt.get('proxy_retries', 1):
         response = {}

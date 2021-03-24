@@ -146,7 +146,7 @@ class CustomPlayer(xbmc.Player):
 # Download in background
 class DownloadThread(threading.Thread):
     def __init__(self, url, file_name, download_path):
-        logger.info(repr(file))
+        logger.info(repr(file_name))
         self.url = url
         self.download_path = download_path
         self.file_name = os.path.join(download_path, file_name)
