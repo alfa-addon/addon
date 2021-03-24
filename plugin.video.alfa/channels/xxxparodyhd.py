@@ -24,7 +24,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['mangovideo']
 
-host = 'https://xxxparodyhd.net'   #'https://watchpornfree.info'
+host = 'https://xxxparodyhd.net'   #'https://watchpornfree.info'  playpornx
 
 def mainlist(item):
     logger.info()
