@@ -201,7 +201,9 @@ def decode(path, trans_none=''):
         if path is None: path = trans_none
         return path
         
-    if isinstance(path, (unicode, basestring, bytes)) and "special://" in path:
+    if PY3 and isinstance(path, bytes) and b"special://" in path:
+        path = translatePath(path)
+    elif not PY3 and isinstance(path, (unicode, basestring, bytes)) and "special://" in path:
         path = translatePath(path)
     
     if isinstance(path, list):
