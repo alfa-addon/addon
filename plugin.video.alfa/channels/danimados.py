@@ -233,7 +233,7 @@ def findvideos(item):
     logger.info()
     srv_list = {'opru': 'okru', 'neopen-o-gd': 'netutv', 'mp4': 'mp4upload','streamnormal': 'netutv',
                 'cloudvid': 'gounlimited', 'streamonly': 'uqload', 'uploadyour': 'yourupload',
-                'embedfe': 'fembed', 'loadjet': 'jetload', 'loaduq': 'uqload', 'unlimitedgo': 'gounlimited'}
+                'embedfe': 'fembed', 'loadjet': 'uqload', 'loaduq': 'uqload', 'unlimitedgo': 'gounlimited'}
     itemlist = list()
     soup = create_soup(item.url).find("ul", class_="new-servers").find_all("li")    
     infoLabels = item.infoLabels
