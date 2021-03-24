@@ -5058,3 +5058,7 @@ msgstr "Manual de Alfa Mobile Assistant (herramienta de apoyo)"
 msgctxt "#70763"
 msgid "Download from channel"
 msgstr "Descargar desde el canal"
+
+msgctxt "#70764"
+msgid "  - Enable experimental download system"
+msgstr "  - Activar sistema de descarga experimental"

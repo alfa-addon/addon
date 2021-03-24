@@ -58,7 +58,7 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                  proxy=True, proxy_web=False, proxy_addr_forced={}, forced_proxy=None, domain_name='', 
                  proxy_retries=1, CF=False, CF_test=True, file=None, filename=None, ignore_response_code=True, 
                  alfa_s=False, decode_code='', json=False, s2=None, patron='', quote_rep=False, 
-                 no_comments=True, item={}, itemlist=[]):
+                 forced_proxy_opt=None, no_comments=True, item={}, itemlist=[]):
     
     # Función "wraper" que puede ser llamada desde los canales para descargar páginas de forma unificada y evitar
     # tener que hacer todas las comprobaciones dentro del canal, lo que dificulta su mantenimiento y mejora.
@@ -86,12 +86,13 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
     if not isinstance(url, (str, unicode, bytes)):
         logger.error('Formato de url incompatible: %s (%s)' % (str(url), str(type(url))))
         return ('', success, code, item, itemlist)
-    
+
+
     try:
         response = httptools.downloadpage(url, post=post, headers=headers, random_headers=random_headers, 
                                           replace_headers=replace_headers, only_headers=only_headers, 
                                           follow_redirects=follow_redirects, encoding=decode_code, 
-                                          timeout=timeout, proxy=proxy, proxy_web=proxy_web, 
+                                          timeout=timeout, proxy=proxy, proxy_web=proxy_web, forced_proxy_opt=forced_proxy_opt,  
                                           proxy_addr_forced=proxy_addr_forced, forced_proxy=forced_proxy, 
                                           proxy_retries=proxy_retries, CF=CF, CF_test=CF_test, file=file, filename=filename, 
                                           ignore_response_code=ignore_response_code, alfa_s=alfa_s)

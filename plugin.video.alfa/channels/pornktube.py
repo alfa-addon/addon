@@ -96,7 +96,8 @@ def play(item):
     for quality,number,key in matches:
         nt = int(int(id)/1000)
         n = str(nt*1000)
-        url = "http://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
+        url = "http://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, number, key,n, id, id, quality)
+        # url = "http://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
         url= url.replace("_720p", "")
         itemlist.append(['%s' %quality, url])
     return itemlist

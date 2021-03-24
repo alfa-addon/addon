@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://mangovideo.(?:pw|club)/embed/(\\d+)",
-        "url": "https://mangovideo.pw/embed/\\1"
+        "pattern": "(https://www.sxyprn.com/post/[A-z0-9]+.html)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "mangovideo",
-  "name": "mangovideo",
+  "id": "sxyprn",
+  "name": "sxyprn",
   "settings": [
     {
       "default": false,

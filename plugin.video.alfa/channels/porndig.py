@@ -42,11 +42,11 @@ def mainlist(item):
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
-
+# FALLA 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/%s/" % (host,texto)
+    item.url = "%s/videos?q=%s" % (host,texto)
     item.texto = texto
     try:
         return lista(item)

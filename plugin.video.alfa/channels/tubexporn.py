@@ -17,7 +17,7 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://www.tubxxporn.com'  #   'https://www.pornky.com/'  https://www.pornktube.porn  'https://www.joysporn.com/'
+host = 'https://www.tubxporn.xxx'  #   'https://www.pornky.com/'  https://www.pornktube.porn  'https://www.joysporn.com/'
 
 
 def mainlist(item):
@@ -93,7 +93,8 @@ def play(item):
     for quality,number,key in matches:
         nt = int(int(id)/1000)
         n = str(nt*1000)
-        url = "http://s%s.fapmedia.com/wqpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
+        url = "http://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
+        # url = "http://s%s.fapmedia.com/wqpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
         url= url.replace("_720p", "")
         itemlist.append(['.mp4 %s' %quality, url])
     return itemlist

@@ -300,6 +300,10 @@ def get_environment():
             cliente['Version'] = str(torrent_paths[cliente['Plug_in'].upper()+'_version'])
             if cliente['Plug_in'].upper() == 'TORREST':
                 cliente['Buffer'] = str(int(int(torrent_paths[cliente['Plug_in'].upper()+'_buffer']) /(1024*1024)))
+                cliente['Platform'] = str(filetools.listdir(filetools.join('special://home', \
+                                    'addons', 'plugin.video.torrest', 'resources', 'bin'))[0])
+                #cliente['Options'] = str(filetools.read(filetools.join('special://masterprofile', \
+                #                    'addon_data', 'plugin.video.torrest', 'settings.xml')))
             if torrent_paths.get(cliente['Plug_in'].upper()+'_memory_size', ''):
                 cliente['Memoria'] = str(torrent_paths[cliente['Plug_in'].upper()+'_memory_size'])
             
@@ -363,7 +367,8 @@ def get_environment():
         environment['assistant_version'] = str(None)
         if filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
             environment['assistant_version'] = filetools.read(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version'))
-        environment['assistant_cf_ua'] = str(config.get_setting('cf_assistant_ua', None))
+        environment['assistant_version'] += '; Req: %s' % str(config.get_setting('assistant_binary', default=False))
+        environment['assistant_cf_ua'] = str(config.get_setting('cf_assistant_ua', default=None))
     
     except:
         logger.error(traceback.format_exc())
