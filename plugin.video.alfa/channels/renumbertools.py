@@ -490,7 +490,7 @@ if xbmcgui:
                     # else:
 
                     # control bugeado se tiene que usar metodos sets para que se cree correctamente.
-                    edit_season = xbmcgui.ControlEdit(0, 0, 0, 0, "", self.font, "", '', 4, isPassword=False,
+                    edit_season = xbmcgui.ControlEdit(0, 0, 0, 0, "", self.font, "", '', 4,
                                                       focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                                 'MenuItemFO.png'),
                                                       noFocusTexture=os.path.join(self.mediapath, 'Controls',
@@ -512,7 +512,7 @@ if xbmcgui:
 
                     pos_x += label_episode_w + 5
                     # control bugeado se tiene que usar metodos sets para que se cree correctamente.
-                    edit_episode = xbmcgui.ControlEdit(0, 0, 0, 0, "", self.font, "", '', 4, isPassword=False,
+                    edit_episode = xbmcgui.ControlEdit(0, 0, 0, 0, "", self.font, "", '', 4,
                                                        focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                                  'MenuItemFO.png'),
                                                        noFocusTexture=os.path.join(self.mediapath, 'Controls',

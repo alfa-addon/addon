@@ -52,7 +52,7 @@ list_servers = ['clipwatching', 'gamovideo', 'vidoza', 'vidtodo', 'openload', 'u
 def login():
     logger.info()
 
-    data = agrupa_datos(host)
+    data = agrupa_datos(host, referer=False)
     _logged = 'id="header-signout" href="/logout"'
     if _logged in data:
         config.set_setting("logged", True, channel="hdfull")
@@ -71,7 +71,7 @@ def login():
             return False
         post = '__csrf_magic=%s&username=%s&password=%s&action=login' % (sid, user_, pass_)
 
-        new_data = agrupa_datos(host, post=post)
+        new_data = agrupa_datos(host, post=post, referer=False)
 
         if _logged in new_data:
             config.set_setting("logged", True, channel="hdfull")
@@ -354,7 +354,7 @@ def search(item, texto):
     logger.info()
     
     try:
-        data = agrupa_datos(host)
+        data = agrupa_datos(host, referer=False)
         sid = scrapertools.find_single_match(data, '.__csrf_magic. value="(sid:[^"]+)"')
         item.extra = urllib.urlencode({'__csrf_magic': sid}) + '&menu=search&query=' + texto
         item.title = "Buscar..."
