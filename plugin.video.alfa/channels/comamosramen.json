@@ -1,0 +1,40 @@
+{
+	"id": "comamosramen",
+	"name": "Comamos Ramen",
+	"active": true,
+	"adult": false,
+	"language": ["vos", "lat"],
+	"thumbnail": "https://m.comamosramen.com/logo-amor-hq.webp",
+	"banner": "",
+	"categories": [
+		"movie",
+		"tvshow",
+		"vos"
+	],
+	"settings": [
+		{
+			"id": "include_in_global_search",
+			"type": "bool",
+			"label": "Incluir en búsqueda global",
+			"default": false,
+			"enabled": true,
+			"visible": true
+		},
+		{
+			"id": "include_in_newest_series",
+			"type": "bool",
+			"label": "Incluir en Novedades - Series",
+			"default": false,
+			"enabled": true,
+			"visible": true
+		},
+		{
+			"id": "include_in_newest_peliculas",
+			"type": "bool",
+			"label": "Incluir en Novedades - Películas",
+			"default": true,
+			"enabled": true,
+			"visible": true
+		}
+	]
+}

@@ -463,15 +463,11 @@ def update_libtorrent():
                     unrar = unrar_dest
 
                 try:
-                    p, output_cmd, error_cmd = execute_binary_from_alfa_assistant('LaunchBinary', unrar, wait=True)
-                    returncode = 0
-                    if isinstance(p, bool):
-                        if not p: returncode = 9
-                    else:
-                        returncode = p.returncode
-                    if returncode != 0 or error_cmd:
+                    p = execute_binary_from_alfa_assistant('openBinary', [unrar], wait=True, init=True)
+                    output_cmd, error_cmd = p.communicate()
+                    if p.returncode != 0 or error_cmd:
                         logger.info('######## UnRAR returncode in module %s: %s, %s in %s' % \
-                                (device, str(returncode), str(error_cmd), unrar), force=True)
+                                (device, str(p.returncode), str(error_cmd), unrar), force=True)
                         unrar = ''
                     else:
                         logger.info('######## UnRAR OK in %s: %s' % (device, unrar), force=True)
