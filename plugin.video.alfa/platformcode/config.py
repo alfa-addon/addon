@@ -53,6 +53,7 @@ def get_addon_version(with_fix=True):
     else:
         return __settings__.getAddonInfo('version')
 
+
 def get_addon_version_fix():
     try:
         last_fix_json = os.path.join(get_runtime_path(), 'last_fix.json')   # información de la versión fixeada del usuario
@@ -70,6 +71,7 @@ def get_addon_version_fix():
     except:
         pass
     return ''
+
 
 def get_platform(full_version=False):
     """
@@ -473,6 +475,7 @@ def get_localized_string(code):
 
     return dev
 
+
 def get_localized_category(categ):
     categories = {'movie': get_localized_string(30122), 'tvshow': get_localized_string(30123),
                   'anime': get_localized_string(30124), 'documentary': get_localized_string(30125),
@@ -480,7 +483,6 @@ def get_localized_category(categ):
                   'direct': get_localized_string(30137), 'torrent': get_localized_string(70015),
                   'sport': 'Deportes'}
     return categories[categ] if categ in categories else categ
-
 
 
 def get_videolibrary_config_path():
@@ -532,8 +534,10 @@ def get_cookie_data():
     return cookiedata
 
 
-# Test if all the required directories are created
 def verify_directories_created():
+    """
+    Test if all the required directories are created
+    """
     from platformcode import logger
     from core import filetools
     from platformcode import xbmc_videolibrary
