@@ -33,14 +33,21 @@ logging.basicConfig(level=logging.DEBUG,
                     filemode='w')
 logger_object = logging.getLogger("mediaserver")
 
+loggeractive = (config.get_setting("debug") == True)
+
+
+def log_enable(active):
+    global loggeractive
+    loggeractive = active
+
 
 def info(texto=""):
-    if config.get_setting("debug"):
+    if loggeractive:
         logger_object.info(unicode(str(texto), "utf-8", "ignore").replace("\n", "\n" + " " * 67))
 
 
 def debug(texto=""):
-    if config.get_setting("debug"):
+    if loggeractive:
         logger_object.debug(unicode(str(texto), "utf-8", "ignore").replace("\n", "\n" + " " * 67))
 
 
