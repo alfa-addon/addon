@@ -41,13 +41,13 @@ def log_enable(active):
     loggeractive = active
 
 
-def info(texto=""):
-    if loggeractive:
+def info(texto="", force=False):
+    if loggeractive or force:
         logger_object.info(unicode(str(texto), "utf-8", "ignore").replace("\n", "\n" + " " * 67))
 
 
-def debug(texto=""):
-    if loggeractive:
+def debug(texto="", force=False):
+    if loggeractive or force:
         logger_object.debug(unicode(str(texto), "utf-8", "ignore").replace("\n", "\n" + " " * 67))
 
 

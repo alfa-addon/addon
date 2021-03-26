@@ -503,6 +503,10 @@ def play_menu(item):
     return
 
 
+def play_from_library(item):
+    pass
+
+
 # play_video, Llama a la función especifica de la plataforma para reproducir
 def play_video(item):
     platformtools.play_video(item)

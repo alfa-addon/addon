@@ -19,7 +19,6 @@ from platformcode import config, logger
 from platformcode import platformtools
 
 from core import httptools
-import xbmcgui
 import re
 
 CHANNELNAME = "setting"
@@ -694,7 +693,7 @@ def conf_tools(item):
 
 
 def channels_onoff(item):
-    import channelselector, xbmcgui
+    import channelselector
     from core import channeltools
 
     # Cargar lista de opciones
@@ -707,8 +706,12 @@ def channels_onoff(item):
         # ~ lbl += ' %s' % [config.get_localized_category(categ) for categ in channel_parameters['categories']]
         lbl += ' %s' % ', '.join(config.get_localized_category(categ) for categ in channel_parameters['categories'])
 
-        it = xbmcgui.ListItem(channel.title, lbl)
-        it.setArt({ 'thumb': channel.thumbnail, 'fanart': channel.fanart })
+        it = Item(
+                fanart = channel.fanart,
+                plot = lbl,
+                thumbnail = channel.thumbnail,
+                title = channel.title
+                 )
         lista.append(it)
         ids.append(channel.channel)
 
@@ -729,7 +732,7 @@ def channels_onoff(item):
 
     # Diálogo para seleccionar
     # ------------------------
-    ret = xbmcgui.Dialog().multiselect(config.get_localized_string(60545), lista, preselect=preselect, useDetails=True)
+    ret = platformtools.dialog_multiselect(config.get_localized_string(60545), lista, preselect=preselect, useDetails=True)
     if ret == None: return False # pedido cancel
     seleccionados = [ids[i] for i in ret]
 
@@ -981,8 +984,6 @@ def activate_debug(item):
 
 
 def report_send(item, description='', fatal=False):
-    import xbmc
-    import xbmcaddon
     import random
     import traceback
     import re
@@ -1340,16 +1341,22 @@ def icon_set_selector(item=None):
     patron = '<a class="js-navigation-open Link--primary" title="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    default = xbmcgui.ListItem('Por defecto', 'El tema por defecto de Alfa')
-    default.setArt({"thumb": filetools.join(config.get_runtime_path(), "resources", "media", "themes", "default", "thumb_channels_movie.png")})
+    opt = Item(
+            plot = 'El tema por defecto de Alfa',
+            title = 'Por defecto',
+            thumbnail = filetools.join(config.get_runtime_path(), "resources", "media", "themes", "default", "thumb_channels_movie.png")
+              )
     options.append(default)
 
     for set_id in matches:
         logger.info(set_id)
         path_demo = "https://github.com/alfa-addon/media/raw/master/themes/%s/thumb_channels_movie.png" % set_id
         path_info = "https://github.com/alfa-addon/media/raw/master/themes/%s/README.md" % set_id
-        opt = xbmcgui.ListItem(set_id.title(), httptools.downloadpage(path_info).data)
-        opt.setArt({"thumb": path_demo})
+        opt = Item(
+                plot = httptools.downloadpage(path_info).data,
+                title = set_id.title(),
+                thumbnail = path_demo
+                  )
         options.append(opt)
 
     ret = platformtools.dialog_select("Selecciona un Set de iconos", options, useDetails=True)
