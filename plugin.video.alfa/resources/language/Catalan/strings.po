@@ -5249,3 +5249,111 @@ msgstr "Descarregar des del canal"
 msgctxt "#70764"
 msgid "  - Enable experimental download system"
 msgstr "  - Activa sistema de descàrrega experimental"
+
+msgctxt "#80001"
+msgid "Secondary language for AutoPlay"
+msgstr "Idioma secundario para Autoplay"
+
+msgctxt "#80002"
+msgid "Force this quality in AutoPlay"
+msgstr "Forzar esta calidad en Autoplay"
+
+msgctxt "#80510"
+msgid "Frequent channels"
+msgstr "Canales frecuentes"
+
+msgctxt "#80511"
+msgid "Enable frequent channels"
+msgstr "Habilitar canales frecuentes"
+
+msgctxt "#80512"
+msgid "Number of channels to list"
+msgstr "Número de canales a listar"
+
+msgctxt "#80513"
+msgid "Enable frequents category"
+msgstr "Habilitar la categoria frecuentes"
+
+msgctxt "#80514"
+msgid "Number of channels in category"
+msgstr "Número de canales en categoría"
+
+msgctxt "#80515"
+msgid "Choose an icon theme"
+msgstr "Elegir un tema de iconos"
+
+msgctxt "#80516"
+msgid "Configure"
+msgstr "Configurar"
+
+msgctxt "#80610"
+msgid "Alfa Assistant Options"
+msgstr "Opciones de Alfa Assistant"
+
+msgctxt "#80611"
+msgid "Device to use"
+msgstr "Dispositivo a utilizar"
+
+msgctxt "#80612"
+msgid "Manual IP"
+msgstr "IP manual"
+
+msgctxt "#80613"
+msgid "Would you like to automatically install the app if necesary?"
+msgstr "¿Desea que se instale la app automáticamente si es necesario?"
+
+msgctxt "#80614"
+msgid "[COLOR limegreen][B]Select here[/B][/COLOR] to install/update Alfa Assistant now"
+msgstr "[COLOR limegreen][B]Pinche[/B][/COLOR] para que Alfa instale/actualice Alfa Assistant ahora"
+
+msgctxt "#80615"
+msgid "URL for manual installation: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Select here[/COLOR] if you have a browser"
+msgstr "URL para instalación manual: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Pinche[/COLOR] si tiene browser"
+
+msgctxt "#80616"
+msgid "Device root status:"
+msgstr "¿Dispositivo con privilegios de Super-usuario?"
+
+msgctxt "#80740"
+msgid "To avoid long wait times when a webpage does not respond:"
+msgstr "Para evitar esperar demasiado cuando un servidor no responde:"
+
+msgctxt "#80741"
+msgid "Conection timeout"
+msgstr "Tiempo de espera de conexión"
+
+msgctxt "#80750"
+msgid "Alfa Quick Fixes Management"
+msgstr "Gestión de actualizaciones urgentes de Alfa (Quick Fixes):"
+
+msgctxt "#80751"
+msgid "Time between checks for Quick Fixes (in hours)"
+msgstr "Intervalo entre búsqueda de Quick Fixes (en horas)"
+
+msgctxt "#80752"
+msgid "Show update notifications"
+msgstr "Ver notificaciones de las actualizaciones"
+
+msgctxt "#80760"
+msgid "My Links"
+msgstr "Mis enlaces"
+
+msgctxt "#80761"
+msgid "Active List"
+msgstr "Lista Activa"
+
+msgctxt "#80770"
+msgid "Updates for Alfa related addons"
+msgstr "Gestión de actualizaciones de otros addon relacionados con Alfa:"
+
+msgctxt "#80771"
+msgid "Update Quasar to avoid errors"
+msgstr "¿Quiere actualizar Quasar para evitar errores?"
+
+msgctxt "#80780"
+msgid "Alternative method for accessing webs"
+msgstr "Método alternativo de acceso a webs:"
+
+msgctxt "#80781"
+msgid "Enable for Forced mode, disable for On-Demand mode"
+msgstr "¿Modo -Forzado-: SÍ? ¿Modo -bajo Demanda-: NO?"
