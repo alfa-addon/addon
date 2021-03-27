@@ -18,7 +18,7 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'https://seriesmetro.com/'
+host = 'https://seriesmetro.net/'
 unify = config.get_setting('unify')
 
 list_quality = []
@@ -41,7 +41,6 @@ def setting_channel(item):
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
     return ret
-
 
 def mainlist(item):
     logger.info()
@@ -126,7 +125,6 @@ def list_all(item):
 
     return itemlist
 
-
 def new_episodes(item):
     logger.info()
 
@@ -163,12 +161,9 @@ def new_episodes(item):
 
     return itemlist
 
-
-
 def section(item):
 
     itemlist = []
-
 
     if item.title == 'Generos':
         #TODO crear lista géneros
@@ -183,7 +178,6 @@ def section(item):
 
 
     return itemlist
-
 
 def seasons(item):
     logger.info()
@@ -202,7 +196,7 @@ def seasons(item):
 
         title = 'Temporada %s' % elem.text
         infoLabels['season'] = elem.text
-        url = '%swp-admin/admin-ajax.php' % host
+        url = '{}wp-admin/admin-ajax.php'.format(host)
 
         itemlist.append(Item(channel=item.channel, title=title, url=url,
                              action='episodesxseason', infoLabels=infoLabels,
@@ -214,8 +208,6 @@ def seasons(item):
         itemlist.append(
                 Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                      action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
-
-    return itemlist
 
     return itemlist
 
@@ -239,9 +231,8 @@ def episodesxseason(item):
     Stop = False
 
     while not Stop:
-        post = 'action=action_pagination_ep&page=%s&object=%s&season=%s'
-        post = post % (str(n), obj, season)
-        new_data = httptools.downloadpage(item.url, post=post).data
+        post = 'action=action_pagination_ep&page={}&object={}&season={}'.format(str(n), obj, season)
+        new_data = httptools.downloadpage(item.url, post=post, add_referer=True).data
 
         if not '<li><a href=' in new_data:
             Stop = True
