@@ -342,11 +342,16 @@ def render_items(itemlist, parent_item):
     elif parent_item.channel == "alfavorites" and parent_item.action == 'mostrar_perfil':
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
-    elif parent_item.channel == "videolibrary" and parent_item.action == 'list_movies':
-        xbmcplugin.setContent(int(sys.argv[1]), "movies")
-
-    elif parent_item.channel == "videolibrary" and parent_item.action == 'list_tvshows':
-        xbmcplugin.setContent(int(sys.argv[1]), "tvshows")
+    elif parent_item.channel == "videolibrary":
+        if parent_item.action == 'list_tvshows':
+            xbmcplugin.setContent(int(sys.argv[1]), "tvshows")
+        elif parent_item.action == 'list_movies':
+            xbmcplugin.setContent(int(sys.argv[1]), "movies")
+        elif parent_item.action != 'mainlist':
+            if parent_item.contentType == 'movie':
+                xbmcplugin.setContent(int(sys.argv[1]), "movies")
+            else:
+                xbmcplugin.setContent(int(sys.argv[1]), "episodes")
 
     elif parent_item.viewType:
         xbmcplugin.setContent(int(sys.argv[1]), viewType)
