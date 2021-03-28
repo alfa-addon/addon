@@ -1,16 +1,16 @@
 {
-	"id": "comamosramen",
-	"name": "Comamos Ramen",
 	"active": true,
 	"adult": false,
-	"language": ["vos", "lat"],
-	"thumbnail": "https://m.comamosramen.com/logo-amor-hq.webp",
-	"banner": "",
+	"banner": "https://comamosramen.com/banner-navidad.jpeg",
 	"categories": [
 		"movie",
 		"tvshow",
 		"vos"
 	],
+	"fanart": "https://comamosramen.com/login-bg.png",
+	"id": "comamosramen",
+	"language": ["vos", "lat"],
+	"name": "Comamos Ramen",
 	"settings": [
 		{
 			"id": "include_in_global_search",
@@ -36,5 +36,6 @@
 			"enabled": true,
 			"visible": true
 		}
-	]
+	],
+	"thumbnail": "https://comamosramen.com/manifest/icon-512x512.png"
 }
