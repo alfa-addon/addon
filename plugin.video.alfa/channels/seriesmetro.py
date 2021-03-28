@@ -293,6 +293,8 @@ def findvideos(item):
         url = soup.find('iframe')['src']
         url = url.replace('&#038;', '&')
         url = "%s|%s" % (url, host)
+        if "fastream" in url:
+            server = "fastream"
         title = '%s [COLOR silver][%s][/COLOR]' % (server, language)
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
