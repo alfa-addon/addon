@@ -106,7 +106,7 @@
 					<control type="spinner" format="string"/>
 				</setting>
 				<setting id="resolve_stop" type="boolean" label="70111" help="">
-					<level>0</level>
+					<level>1</level>
 					<default>true</default>
 					<control type="toggle"/>
 				</setting>
@@ -463,6 +463,7 @@
 					</dependencies>
 				</setting>
 			</group>
+
 			<group id="visuals_misc" label="60216">
 				<setting id="thumbnail_type" type="integer" label="30010" help="">
 					<level>1</level>
@@ -488,7 +489,7 @@
 					</constraints>
 					<control type="spinner" format="string"/>
 				</setting>
-				<setting id="icon_set" type="action" label="80515" help="">
+				<setting id="icon_set" type="string" label="80515" help="">
 					<level>0</level>
 					<default>default</default>
 					<constraints>
@@ -662,7 +663,7 @@
 					<level>2</level>
 					<data>RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAic2NyaXB0Ig0KfQ==)</data>
 					<control type="button" format="action">
-						<close>true</close>
+						<close>false</close>
 					</control>
 				</setting>
 			</group>

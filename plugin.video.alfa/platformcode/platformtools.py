@@ -339,10 +339,20 @@ def render_items(itemlist, parent_item):
     if config.get_setting("forceview"):                                         # ...forzamos segun el viewcontent
         xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewcontent)
 
-    elif parent_item.channel not in ["channelselector", "", "alfavorites", "news", "search"]:     # ... o segun el canal
+    elif parent_item.channel == "alfavorites" and parent_item.action == 'mostrar_perfil':
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
-    elif parent_item.channel == "alfavorites" and parent_item.action == 'mostrar_perfil':
+    elif parent_item.channel == "videolibrary" and parent_item.action == 'list_movies':
+        xbmcplugin.setContent(int(sys.argv[1]), "movies")
+
+    elif parent_item.channel == "videolibrary" and parent_item.action == 'list_tvshows':
+        xbmcplugin.setContent(int(sys.argv[1]), "tvshows")
+
+    elif parent_item.viewType:
+        xbmcplugin.setContent(int(sys.argv[1]), viewType)
+
+    elif parent_item.channel not in ["channelselector", "", "alfavorites", "news", "search", "videolibrary", "setting", "help"] \
+     and parent_item.action != "mainlist":     # ... o segun el canal
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
     # Fijamos el "breadcrumb"
