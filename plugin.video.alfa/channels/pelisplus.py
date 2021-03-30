@@ -237,6 +237,8 @@ def findvideos(item):
     for url in matches:
         if "https://pelisplushd.me" in url:
             url = url.replace("pelisplushd.me", "feurl.com")
+        if "https://moovies.in/fembed.php" in url:
+            url= url.replace("https://moovies.in/fembed.php?url=", "https://feurl.com/v/")
         itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language="LAT",
         infoLabels=item.infoLabels))
 

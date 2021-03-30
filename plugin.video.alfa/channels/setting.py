@@ -256,6 +256,7 @@ def save_setting_torrent(item, dict_data_saved):
     if dict_data_saved and "capture_thru_browser_path" in dict_data_saved:
         config.set_setting("capture_thru_browser_path", dict_data_saved["capture_thru_browser_path"], server="torrent")
 
+
 def menu_servers(item):
     logger.info()
     itemlist = list()
@@ -877,7 +878,7 @@ def overwrite_tools(item):
 
         p_dialog2.close()
 
-        
+
 def report_menu(item):
     logger.info('URL: ' + item.url)
     
@@ -977,8 +978,8 @@ def activate_debug(item):
     else:
         config.set_setting('debug', False)
         platformtools.dialog_notification('Modo DEBUG', 'Desactivado')
-        
-        
+
+
 def report_send(item, description='', fatal=False):
     import xbmc
     import xbmcaddon
@@ -1339,7 +1340,12 @@ def icon_set_selector(item=None):
     patron = '<a class="js-navigation-open Link--primary" title="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
+    default = xbmcgui.ListItem('Por defecto', 'El tema por defecto de Alfa')
+    default.setArt({"thumb": filetools.join(config.get_runtime_path(), "resources", "media", "themes", "default", "thumb_channels_movie.png")})
+    options.append(default)
+
     for set_id in matches:
+        logger.info(set_id)
         path_demo = "https://github.com/alfa-addon/media/raw/master/themes/%s/thumb_channels_movie.png" % set_id
         path_info = "https://github.com/alfa-addon/media/raw/master/themes/%s/README.md" % set_id
         opt = xbmcgui.ListItem(set_id.title(), httptools.downloadpage(path_info).data)
@@ -1348,4 +1354,7 @@ def icon_set_selector(item=None):
 
     ret = platformtools.dialog_select("Selecciona un Set de iconos", options, useDetails=True)
     if ret != -1:
-        config.set_setting("icon_set", matches[ret])
+        if ret == 0:
+            config.set_setting("icon_set", "default")
+        else:
+            config.set_setting("icon_set", matches[ret-1])

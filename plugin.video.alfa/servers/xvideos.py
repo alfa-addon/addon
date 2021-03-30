@@ -12,7 +12,6 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data
-    
     data = httptools.downloadpage(page_url).data
     if "Lo sentimos" in data or "File not found" in data or 'og:video">' in data:
         return False, "[Xvideos] El archivo no existe o ha sido borrado"
@@ -23,7 +22,6 @@ def test_video_exists(page_url):
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    data = httptools.downloadpage(page_url).data
     m3u = scrapertools.find_single_match(data, 'html5player.setVideoHLS\(\'([^\']+)\'')
     data = httptools.downloadpage(m3u).data
     if PY3 and isinstance(data, bytes): data = data.decode()

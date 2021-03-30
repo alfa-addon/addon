@@ -1476,8 +1476,8 @@ msgid "The script does not support URL reduction adf.ly."
 msgstr "L'script no soporta l'acortador d' urls adf.ly."
 
 msgctxt "#60339"
-msgid "Nothing to Play"
-msgstr "No es pot visualitzar"
+msgid "No supported servers found"
+msgstr "No s'han trobat servidors compatibles"
 
 msgctxt "#60342"
 msgid "Download completed: "

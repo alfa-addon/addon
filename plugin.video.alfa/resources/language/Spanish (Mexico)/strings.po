@@ -1415,8 +1415,8 @@ msgid "The script does not support URL reduction adf.ly."
 msgstr "El script no tiene soporte para el acortador de urls adf.ly."
 
 msgctxt "#60339"
-msgid "Nothing to Play"
-msgstr "Nada para reproducir"
+msgid "No supported servers found"
+msgstr "No se encontraron servidores soportados"
 
 msgctxt "#60342"
 msgid "Download completed: "
