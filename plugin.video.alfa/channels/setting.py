@@ -1341,7 +1341,7 @@ def icon_set_selector(item=None):
     patron = '<a class="js-navigation-open Link--primary" title="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    opt = Item(
+    default = Item(
             plot = 'El tema por defecto de Alfa',
             title = 'Por defecto',
             thumbnail = filetools.join(config.get_runtime_path(), "resources", "media", "themes", "default", "thumb_channels_movie.png")
@@ -1358,6 +1358,15 @@ def icon_set_selector(item=None):
                 thumbnail = path_demo
                   )
         options.append(opt)
+
+    if config.is_xbmc():
+        import xbmcgui
+        new_list = list()
+        for fake_it in options:
+            it = xbmcgui.ListItem(fake_it.title, fake_it.plot)
+            it.setArt({ 'thumb': fake_it.thumbnail, 'fanart': fake_it.fanart })
+            new_list.append(it)
+        options = new_list
 
     ret = platformtools.dialog_select("Selecciona un Set de iconos", options, useDetails=True)
     if ret != -1:
