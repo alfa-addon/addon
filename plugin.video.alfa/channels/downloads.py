@@ -12,6 +12,7 @@ from builtins import filter
 from past.utils import old_div
 
 import re
+import os
 import time
 import unicodedata
 import traceback
@@ -67,7 +68,7 @@ def mainlist(item):
         del i.unify
         i.folder = True
         del i.folder
-        if i.server == 'torrent' and i.downloadProgress > 0 and i.downloadProgress < 100:
+        if i.server == 'torrent' and i.downloadProgress > 0 and i.downloadProgress < 99:
             pausar = True
         if i.downloadProgress != 0 or i.downloadCompleted != 0:
             resetear = True
@@ -362,7 +363,7 @@ def pause_all(item):
                             (item.infoLabels.get('tmdb_id') is not None and item.infoLabels.get('tmdb_id') == download_item.infoLabels.get('tmdb_id'))
                              or item.contentSerieName.lower() == download_item.contentSerieName.lower()):
 
-                if download_item.server == 'torrent' and download_item.downloadProgress > 0 and download_item.downloadProgress < 100:
+                if download_item.server == 'torrent' and download_item.downloadProgress > 0 and download_item.downloadProgress < 99:
                     delete_torrent_session(download_item, delete_RAR=False, action='pause')
 
                     contentAction = download_item.contentAction
@@ -512,10 +513,11 @@ def menu(item):
     if item.downloadStatus in [2 ,4, 5]:  # descarga completada o archivo de control o auto
         if item.downloadProgress <= 0:
             opciones.append(op[0])  # Descargar
-        if item.downloadProgress > 0 and item.downloadProgress < 100:
+        if item.downloadProgress > 0 and item.downloadProgress < 99:
             opciones.append(op[3])  # Pausar descarga
         if item.downloadProgress != 0 or item.downloadCompleted != 0:
             opciones.append(op[2])  # Reiniciar descarga
+        if item.downloadProgress == 100:
             opciones.append(op[6])  # Agregar a la videoteca
         opciones.append(op[1])  # Eliminar de la lista
         opciones.append(op[5])  # Eliminar todo
@@ -599,7 +601,7 @@ def menu(item):
 def delete_torrent_session(item, delete_RAR=True, action='delete'):
     if not delete_RAR and 'RAR-' not in item.torrent_info:
         delete_RAR = True
-    logger.info('action: %s - delete_RAR: %s' % (action, str(delete_RAR)))
+    logger.info('action: %s - progress: %s - delete_RAR: %s' % (action, item.downloadProgress, str(delete_RAR)))
 
     # Detiene y borra la descarga de forma específica al gestor de torrent en uso
     torr_data = ''
@@ -636,6 +638,30 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
         if not folder: folder = folder_new
         if folder_new:
             folder_new = filetools.join(torrent_paths[torr_client.upper()], folder_new)
+            
+            # Si está realizando un unRAR, lo termina
+            if item.downloadProgress == 99:
+                rar_control = filetools.join(folder_new, '_rar_control.json')
+                if filetools.exists(rar_control):
+                    try:
+                        rar_control_json = jsontools.load(filetools.read(rar_control))
+                        if rar_control_json.get('pid', 0):
+                            try:
+                                logger.info('os.kill: UnRAR pid %s terminando' % rar_control_json['pid'], force=True)
+                                os.kill(rar_control_json['pid'], 9)
+                            except Exception as e:
+                                logger.debug('os.kill: UnRAR pid %s NO terminado, error %s' % (rar_control_json['pid'], str(e)))
+                                if config.get_setting('assistant_binary', default=False):
+                                    from lib.alfa_assistant import execute_binary_from_alfa_assistant
+                                    retCode = execute_binary_from_alfa_assistant('killBinary', 'unrar', p=rar_control_json['pid'], kwargs={})
+                                    if retCode in [0, 9, -9, 137, 255]:
+                                        logger.info('Assistant killBinary: UnRAR pid %s terminado' % \
+                                                rar_control_json['pid'], force=True)
+                                    else:
+                                        logger.error('Assistant killBinary: UnRAR pid %s NO terminado, retCode %s' % \
+                                                (rar_control_json['pid'], retCode))
+                    except:
+                        logger.error(traceback.format_exc())
             
             if action in ['reset'] and 'RAR-' in item.torrent_info and item.downloadProgress == 99:
                 delete_RAR = True
@@ -1725,22 +1751,31 @@ def save_download(item, silent=False):
 
                     # Si estamos en enlaces damos a elegir calidad del servidor (si hubiera más de 1)
                     if item.action == 'play' or item.downloadServer:
-                        if not item.server: item.server = 'directo'
                         # Si ya se tienen urls se aprovechan (pantalla de play, opción Descargar), sino se obtienen
+                        # Pasamos por el play del canal si existe
+                        if channeltools.has_attr(item.channel, 'play'):
+                            # Verificamos que tenemos resultado válido de play y lo pasamos a item
+                            result = channeltools.get_channel_attr(item.channel, 'play', item)
+                            if len(result) > 0 and isinstance(result[0], Item):
+                                item = result[0]
+
+                            # Permitir varias calidades desde play en el canal
+                            elif len(result) > 0 and isinstance(result[0], list):
+                                item.video_urls = result
+
+                            # If not, shows user an error message
+                            else:
+                                platformtools.dialog_ok(config.get_localized_string(20000), config.get_localized_string(60339))
+                                return False
+
+                        if not item.server:
+                            item.server = servertools.get_server_from_url(item.url)
+
                         if item.video_urls:
                             video_urls, puedes, motivo = item.video_urls, True, ""
                             # logger.info(video_urls)
                         else:
-                            # Pasamos por el play del canal si existe
-                            if channeltools.has_attr(item.channel, 'play'):
-                                # Verificamos que tenemos resultado válido de play y lo pasamos a item
-                                result = channeltools.get_channel_attr(item.channel, 'play', item)
-                                if isinstance(result, list):
-                                    if len(result) > 0 :
-                                        if isinstance(result[0], Item):
-                                            item = result[0]
                             # Dependerá de cada canal si se obtienen o no los enlaces correctos
-                            # No busquen problemas aquí, primero en el canal ;)
                             video_urls, puedes, motivo = servertools.resolve_video_urls_for_playing(item.server, item.url, item.password, True)
 
                         # Si se resolvieron las url para reproducción...

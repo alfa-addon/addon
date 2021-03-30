@@ -1,7 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <window>
+	<animation type="WindowOpen">
+		<effect type="zoom" start="80" end="100" time="300" tween="back" center="auto"/>
+		<effect type="fade" start="0" end="100" time="300" tween="cubic"/>
+	</animation>
     <allowoverlays>false</allowoverlays>
     <controls>
+        <control type="image">
+            <width>100%</width>
+            <height>100%</height>
+            <texture>Windows/BG.png</texture>
+            <animation type="WindowOpen">
+                <effect type="fade" start="0" end="100" time="300" tween="cubic"/>
+            </animation>
+            <animation type="WindowClose">
+                <effect type="fade" start="100" end="0" time="200" tween="cubic" ease="out"/>
+            </animation>
+        </control>
         <control type="group" id="10001">
             <posx>240</posx>
             <posy>110</posy>
@@ -100,7 +115,6 @@
                     <aligny>center</aligny>
                     <label>$ADDON[plugin.video.alfa 70004]</label>
                 </control>
-
             </control>
             <control type="image" id="10008">
                 <posy>45</posy>
@@ -116,7 +130,10 @@
                 <height>387</height>
                 <texture>Controls/MenuItemFO.png</texture>
             </control>
-
         </control>
     </controls>
+    <animation type="WindowClose">
+        <effect type="fade" start="100" end="0" time="200" tween="linear" ease="in"/>
+        <effect type="zoom" start="100" end="90" time="200" tween="back" ease="in" center="auto"/>
+    </animation>
 </window>

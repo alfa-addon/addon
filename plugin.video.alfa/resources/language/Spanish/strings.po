@@ -1401,23 +1401,23 @@ msgstr "Contraseña para canales de adultos"
 
 msgctxt "#60335"
 msgid "Watch in"
-msgstr "Vedere in"
+msgstr "Ver en"
 
 msgctxt "#60336"
 msgid "Download in"
-msgstr "Scaricare in"
+msgstr "Descargar en"
 
 msgctxt "#60337"
 msgid "alfa-MCT: No support adf.ly"
-msgstr "alfa-MCT: Sin soporte adf.ly"
+msgstr "alfa-MCT: adf.ly no soportado"
 
 msgctxt "#60338"
 msgid "The script does not support URL reduction adf.ly."
 msgstr "El script no tiene soporte para el acortador de urls adf.ly."
 
 msgctxt "#60339"
-msgid "Nothing to Play"
-msgstr "No se puede reproducir"
+msgid "No supported servers found"
+msgstr "No se encontraron servidores soportados"
 
 msgctxt "#60342"
 msgid "Download completed: "
