@@ -121,14 +121,20 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('div', class_='thumb item ')
+    matches = soup.find_all('div', class_='thumb item')
     for elem in matches:
         url = elem.a['href']
         thumbnail = elem.img['src']
         stime = elem.find('span', class_='thumb__duration').text.strip()
         stitle = elem.find('div', class_='thumb__title').text.strip()
         quality = elem.find('span', class_='thumb__bage').text.strip()
-        if quality:
+        pornstars = elem.find('div', class_='thumb-models').find_all('a')
+        for x , value in enumerate(pornstars):
+            pornstars[x] = value.text.strip()
+        pornstar = ' & '.join(pornstars)
+        if not "Suggest" in pornstar:
+            title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] [COLOR cyan]%s[/COLOR] %s" % (stime,quality,pornstar,stitle)
+        else:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (stime,quality,stitle)
         plot = ""
         itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,

@@ -53,7 +53,6 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|amp;", "", data)
-    data = scrapertools.find_single_match(data, '<head>(.*?)<footer>')
     patron  = 'class="item">(.*?)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for match in matches:
@@ -74,7 +73,7 @@ def categorias(item):
         url = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
-    next_page = scrapertools.find_single_match(data, '<li class="page page-mobile current">.*?href="([^"]+)"')
+    next_page = scrapertools.find_single_match(data, '<li class="page next page-hide-mobile">.*?href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
@@ -86,18 +85,19 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = 'data-title="([^"]+)".*?'
+    patron = 'video-item class="item".*?'
     patron += 'data-src="([^"]+)".*?'
-    patron += 'ng-preview="([^"]+)-preview.mp4".*?'
-    patron += '<span class="txt">([^<]+)<(.*?)<\/span>'
+    patron += '<span class="txt">([^<]+)<(.*?)<\/span>.*?'
+    patron += 'href="([^"]+)".*?>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedtitle,scrapedthumbnail,scrapedurl,time,quality in matches:
+    for scrapedthumbnail,time,quality,scrapedurl,scrapedtitle in matches:
         time = time.strip()
-        title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
+        title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle.strip())
         if "icon-hd" in quality or "icon-vr" in quality:
-            title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time, scrapedtitle)
+            title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time, scrapedtitle.strip())
         thumbnail = scrapedthumbnail
-        url = scrapedurl
+        # url = scrapedurl
+        url = urlparse.urljoin(host,scrapedurl)
         plot = ""
         itemlist.append(item.clone(action="play", title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
@@ -111,15 +111,14 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    for i in ["240p-400.mp4","360p-750.mp4","480p-1000.mp4","720p-hd-2500.mp4"]:
-        url = "%s-%s" %(item.url, i)
-        if "240p" in url: quality="240p"
-        if "360p" in url: quality="360p"
-        if "480p" in url: quality="480p"
-        if "720p" in url: quality="720p"
-        if "HD" in item.title and not "360p" in url:
-            itemlist.append(['.mp4 %s' %quality, url])
-        if not "HD" in item.title and not "480p" in url and not "720p" in url:
-            itemlist.append(['.mp4 %s' %quality, url])
+    data = httptools.downloadpage(item.url).data
+    id = scrapertools.find_single_match(data, '"id": "(\d+)"')
+    post = "https://porndoe.com/service/index?device=desktop&page=video&id=%s" %id
+    headers = {"Referer": item.url}
+    data = httptools.downloadpage(post, headers=headers).data
+    patron = '"(\d+)":\{"type":"video","url":"([^"]+)",'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for quality,url in matches:
+        url = url.replace("\/", "/")
+        itemlist.append(['%sp' %quality, url])
     return itemlist
-
