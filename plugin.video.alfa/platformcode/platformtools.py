@@ -1663,11 +1663,14 @@ def play_torrent(item, xlistitem, mediaurl):
         
         # Si tiene .torrent válido o magnet, lo registramos
         if size or item.url.startswith('magnet:'):
+            item_freq = item.clone()
+            if not item_freq.downloadFilename:
+                item_freq.downloadFilename = ':%s: ' % torr_client.upper()
             try:
                 import threading
                 if not PY3: from lib import alfaresolver
                 else: from lib import alfaresolver_py3 as alfaresolver
-                threading.Thread(target=alfaresolver.frequency_count, args=(item, )).start()
+                threading.Thread(target=alfaresolver.frequency_count, args=(item_freq, )).start()
             except:
                 logger.error(traceback.format_exc(1))
         
