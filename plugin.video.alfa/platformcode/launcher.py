@@ -36,6 +36,12 @@ def start():
     funciones que deseamos que se ejecuten nada mas abrir el plugin.
     """
     logger.info()
+    if config.get_platform(True)['num_version'] >= 19:
+        from core import filetools
+        origin = filetools.join(config.get_runtime_path(), "resources", "settings_matrix.xml")
+        destination = filetools.join(config.get_runtime_path(), "resources", "settings.xml")
+        if filetools.exists(origin):
+            filetools.move(origin, destination, silent=True)
     #config.set_setting('show_once', True)
     # Test if all the required directories are created
     config.verify_directories_created()

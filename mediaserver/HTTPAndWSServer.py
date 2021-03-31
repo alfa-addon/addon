@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 import os
 import random
@@ -130,9 +130,23 @@ class Handler(HTTPWebSocketsHandler):
         # Disable reverse name lookups
         return self.client_address[:2][0]
 
-
 PORT = config.get_setting("server.port")
-server = MyHTTPServer(('', int(PORT)), Handler)
+server = None
+waking_server = True
+attempts = 0
+while waking_server:
+    try:
+        server = MyHTTPServer(('', int(PORT)), Handler)
+        config.set_setting("server.port", PORT)
+        waking_server = False
+    except:
+        if attempts < 3:
+            PORT = input("El puerto {} está ocupado.\nIngresa otro número de puerto (ej. 8888): ".format(PORT))
+            attempts += 1
+        else:
+            waking_server = False
+if server == None:
+    raise Exception("No fue posible iniciar el servidor\n(¿Tienes permisos suficientes o hay algún cortafuegos bloqueando a Python?)")
 
 def run(controller, path):
     try:

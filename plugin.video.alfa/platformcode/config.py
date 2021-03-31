@@ -193,12 +193,16 @@ def get_videolibrary_support():
 def get_system_platform():
     """ fonction: pour recuperer la platform que xbmc tourne """
     platform = "unknown"
-    if xbmc.getCondVisibility("system.platform.linux"):
-        platform = "linux"
-    elif xbmc.getCondVisibility("system.platform.windows"):
+    if xbmc.getCondVisibility("system.platform.Android"):
+        platform = "android"
+    elif xbmc.getCondVisibility("system.platform.Windows"):
         platform = "windows"
-    elif xbmc.getCondVisibility("system.platform.osx"):
+    elif xbmc.getCondVisibility("system.platform.OSX"):
         platform = "osx"
+    elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
+        platform = "raspberry"
+    elif xbmc.getCondVisibility("system.platform.Linux"):
+        platform = "linux"
     return platform
 
 
