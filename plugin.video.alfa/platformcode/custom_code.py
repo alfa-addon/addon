@@ -214,16 +214,23 @@ def verify_script_alfa_update_helper():
     from core import httptools
     
     addonid = 'script.alfa-update-helper'
-    package = addonid + '-0.0.4.zip'
+    new_version = '0.0.5'
+    package = addonid + '-%s.zip' % new_version
     filetools.remove(filetools.join('special://home', 'addons', 'packages', package), True)
+    updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
+    if updated:
+        installed_version = xbmc.getInfoLabel('System.AddonVersion(%s)' % addonid)
+        if installed_version == new_version:
+            return
+        updated = False
     
     # Comprobamos si hay acceso a Github
     url = 'https://github.com/alfa-addon/alfa-repo/raw/master/plugin.video.alfa/addon.xml'
     response = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=True)
-    if response.code != 200 and not bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid)):
+    if response.code != 200 and not updated:
         
-        # Si no lo hay, descargamos el Script desde Bitbucket y lo salvamos a disco
-        url = 'https://bitbucket.org/alfa_addon/alfa-repo/raw/master/script.alfa-update-helper/%s' % package
+        # Si no lo hay, descargamos el Script desde GitLab y lo salvamos a disco
+        url = 'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/script.alfa-update-helper/%s' % package
         response = httptools.downloadpage(url, ignore_response_code=True, alfa_s=True, json_to_utf8=False)
         if response.code == 200:
             zip_data = response.data

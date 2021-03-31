@@ -2989,10 +2989,10 @@ def check_returncode(p, out):
               RarCreateError, RarNoFilesError, RarWrongPassword]                # 9..12
     if UNRAR_TOOL == ALT_TOOL:
         errmap = [None]
-    if code > 0 and code < len(errmap):
-        exc = errmap[code]
-    elif code in [-9, 9, 137, 255]:
+    if code in [-9, 9, 137, 255]:
         exc = RarUserBreak
+    elif code > 0 and code < len(errmap):
+        exc = errmap[code]
     elif code < 0:
         exc = RarSignalExit
     else:
