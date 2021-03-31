@@ -123,11 +123,10 @@ def listado(item):                                                              
         data = ''
         cnt_match = 0                                                           # Contador de líneas procesadas de matches
         
-        patron = '<div\s*class="elementor-column\s*elementor-col-33\s*elementor-top-column[^"]+"\s*data-id="([^"]+)".*?'
-        patron += '<h4\s*class="elementor-heading-title[^>]+>\s*<a\s*href="([^"]+)">'
-        patron += '\s*(?:[^>]+>)?\s*<\/span1>\s*(.*?)\s*<\/a>\s*<\/h4>.*?<h5\s*'
-        patron += 'class="elementor-image-box-title">\s*<[^>]+>\s*(.*?)\s*<\/a>\s*<\/h5>'
-        patron += '\s*(?:<[^>]+>\s*(.*?)\s*<)?'
+        patron = 'data-column-clickable="([^"]+")[^>]*data-id="([^"]+)".*?<h4\s*'
+        patron += 'class="elementor-heading-title[^>]+>\s*<span1[^>]*>\s*([^<]*)'
+        patron += '<\/span1>([^<]*)<\/h4>.*?<h5\s*class="elementor-image-box-title">\s*'
+        patron += '([^<]+)<\/h5>\s*(?:<p\s*class="elementor-image-box-description">\s*([^<]+)<\/p>)?'
         
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
             data, success, code, item, itemlist = generictools.downloadpage(next_page_url, 
@@ -165,13 +164,13 @@ def listado(item):                                                              
         item.infoLabels['tmdb_id'] = null
 
         #Empezamos el procesado de matches
-        for scrapedthumb, scrapedurl, scrapedtitle, date1, date2 in matches:
+        for scrapedurl, scrapedthumb, scrapedtitle1, scrapedtitle2, date1, date2 in matches:
             #Generamos una copia de Item para trabajar sobre ella
             item_local = item.clone()
             
             cnt_match += 1
 
-            title = '%s: %s %s' % (scrapedtitle, date1, date2)
+            title = '%s%s: %s %s' % (scrapedtitle1, scrapedtitle2, date1, date2)
             title = scrapertools.remove_htmltags(title).rstrip('.')             # Removemos Tags del título
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
                     .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
@@ -362,7 +361,7 @@ def episodios(item):
     # Procesamos los eventos
     patron_eventos = '<li\s*class[^>]*>\s*<span\s*class="eael-tab-title"\s*>\s*([^<]*)<\/span>\s*<\/li>'
     eventos = re.compile(patron_eventos, re.DOTALL).findall(data)
-    patron_descargas = '<iframe src="([^"]+)"[^>]*><\/iframe>(?:<\/p>)?(?:<p>)?(?:<a class="boton" href="([^"]*)")?'
+    patron_descargas = '<iframe\s*src="([^"]+)"[^>]*>\s*<\/iframe>(?:\s*<\/p>)?(?:<p>)?(?:\s*<a\s*class="boton"\s*href="([^"]*)")?'
     descargas = re.compile(patron_descargas, re.DOTALL).findall(data)
 
     #logger.debug("PATRON Eventos: " + patron_eventos)
