@@ -548,6 +548,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
             status_code = 0
             cmd_android = 'StartAndroidActivity("%s", "", "%s", "%s")' % (USER_APP, 'open', 'about:blank')
             cmd_android_quit = 'StartAndroidActivity("%s", "", "%s", "%s")' % (USER_APP, 'quit', 'about:blank')
+            cmd_android_terminate = 'StartAndroidActivity("%s", "", "%s", "%s")' % (USER_APP, 'terminate', 'about:blank')
             if TORREST_ADDON:
                 time.sleep(15)          # let Torrest starts first
             xbmc.executebuiltin(cmd_android)
@@ -594,7 +595,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                 resp = session.get(url, timeout=5)
                 status_code = resp.status_code
                 if status_code != 200:
-                    logging.info('## ERROR Killing Quasar from Assistant App: %s', resp.content)
+                    log.info('## ERROR Killing Quasar from Assistant App: %s' % resp.content)
                 time.sleep(1)
                 # Now lets launch the Binary
                 log.info('## Calling Quasar from Assistant App: %s - Retry = %s' % (cmd, retry))
@@ -605,13 +606,13 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                 resp.status_code = str(e)
             status_code = resp.status_code
             if status_code != 200 and not retry:
-                log.error("## Calling Quasar: Invalid app requests response: %s" % status_code)
+                log.error("## Calling/Killing Quasar: Invalid app requests response: %s" % status_code)
                 time.sleep(3)
                 return call_binary(function, cmd, retry=True, **kwargs)
             elif status_code != 200 and retry:
-                log.error("## Calling Quasar: Invalid app requests response: %s.  Quiting Assistant" % status_code)
+                log.error("## Calling/Killing Quasar: Invalid app requests response: %s.  Terminating Assistant" % status_code)
                 launch_status = False
-                xbmc.executebuiltin(cmd_android_quit)
+                xbmc.executebuiltin(cmd_android_terminate)
                 time.sleep(10)
             try:
                 app_response = resp.content
@@ -642,9 +643,10 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                 url_app = USER_APP_URL
                 cmd_app = command_base64
                 finalCmd = ''
-                sess = session
                 args_ = cmd
                 kwargs_ = kwargs
+                sess = session
+                monitor = xbmc.Monitor()
                 torrest = TORREST_ADDON
             
             p = Proc()
@@ -682,6 +684,9 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                     # Is the binary hung?  Lets restart it
                     return call_binary(function, command_base64, retry=True, kwargs={})
 
+            # Let the Assistant UI close to save resources, living the http server a binary active
+            xbmc.executebuiltin(cmd_android_quit)
+            
             log.info('## Assistant executing CMD: %s - PID: %s' % (command[0], p.pid))
             #log.warning('## Assistant executing CMD **kwargs: %s' % command[1])
         except:
@@ -708,6 +713,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
 
         cmd_android = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'open', 'about:blank')
         cmd_android_quit = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'quit', 'about:blank')
+        cmd_android_terminate = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'terminate', 'about:blank')
         cmd_android_permissions = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'checkPermissions', 'about:blank')
 
         finished = False
@@ -724,23 +730,29 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     resp.status_code = str(e)
                 
                 if resp.status_code != 200 and not retry:
-                    retry = True
-                    log.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s" % (p.pid, resp.status_code, retry))
-                    msg += str(resp.status_code)
-                    stdout_acum += str(resp.status_code)
-                    if p.torrest:
-                        time.sleep(15)      # let Torrest recover first
-                    xbmc.executebuiltin(cmd_android)
-                    time.sleep(3)
-                    continue
+                    if action == 'killBinary':
+                        app_response = {'pid': p.pid, 'retCode': 998}
+                    else:
+                        log.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s" % (p.pid, resp.status_code, retry))
+                        retry = True
+                        msg += str(resp.status_code)
+                        stdout_acum += str(resp.status_code)
+                        if p.torrest:
+                            time.sleep(15)      # let Torrest recover first
+                        #xbmc.executebuiltin(cmd_android)
+                        time.sleep(3)
+                        continue
                 if resp.status_code != 200 and retry:
-                    log.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s. Quiting Assistant" % \
+                    log.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s. Terminating Assistant" % \
                                     (p.pid, resp.status_code, retry))
                     msg += str(resp.status_code)
                     stdout_acum += str(resp.status_code)
                     app_response = {'pid': p.pid, 'retCode': 999}
-                    xbmc.executebuiltin(cmd_android_quit)
+                    xbmc.executebuiltin(cmd_android_terminate)
                     time.sleep(10)
+                    xbmc.executebuiltin(cmd_android)
+                    time.sleep(3)
+                    xbmc.executebuiltin(cmd_android_quit)
 
                 if resp.status_code == 200:
                     try:
@@ -800,6 +812,8 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         pass
             
             p.returncode = None
+            if action == 'killBinary' and not app_response.get('retCode', ''):
+                app_response['retCode'] = 137
             if app_response.get('retCode', '') != '' or action == 'killBinary' or \
                             (action == 'communicate' and p.returncode is not None):
                 try:
@@ -824,6 +838,16 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
             
             elif action == 'killBinary':
                 log.info("## Binary_stat: killBinary Quasar: %s - Returncode: %s" % (p.pid, p.returncode))
+                try:
+                    if not p.torrest and (p.monitor.abortRequested() or p.returncode == 998):
+                        time.sleep(1)
+                        xbmc.executebuiltin(cmd_android_terminate)
+                    if not p.monitor.abortRequested() and p.returncode == 998:
+                        time.sleep(10)
+                except:
+                    time.sleep(1)
+                    xbmc.executebuiltin(cmd_android_terminate)
+                    time.sleep(2)
                 return p
             
             time.sleep(5)

@@ -594,15 +594,18 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
         if not is_alfa_installed() or config.get_setting("assistant_mode") != 'este':
             platformtools.dialog_notification("Estos addons necesitan Alfa Assistant: %s " % app_needed.rstrip(', '), 
                             "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]", time=10000)
-            time.sleep(10)
-            respuesta, app_name = install_alfa_assistant(update='auto')
+            
+            if config.get_setting('assistant_flag_install', default=True):
+                time.sleep(10)
+                respuesta, app_name = install_alfa_assistant(update='auto')
         return p
     
     if not init and not isinstance(p, int) and config.get_setting("assistant_mode") != 'este':
         platformtools.dialog_notification("Este módulo necesita Alfa Assistant: %s" % cmd[0], 
                         "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]", time=10000)
-        time.sleep(10)
-        respuesta, app_name = install_alfa_assistant(update='auto')
+        if config.get_setting('assistant_flag_install', default=True):
+            time.sleep(10)
+            respuesta, app_name = install_alfa_assistant(update='auto')
         if not respuesta or config.get_setting("assistant_mode") != 'este':
             platformtools.dialog_notification("Estos módulo no se van a ejecutar: %s " % cmd[0], 
                         "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]", time=10000)
@@ -625,6 +628,7 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
             command = []
             status_code = 0
             cmd_android_quit = 'StartAndroidActivity("%s", "", "%s", "%s")' % (ASSISTANT_APP, 'quit', 'about:blank')
+            cmd_android_terminate = 'StartAndroidActivity("%s", "", "%s", "%s")' % (ASSISTANT_APP, 'terminate', 'about:blank')
 
             # Build the command & params
             separator = '|'
@@ -701,7 +705,7 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
                 isAlfaAssistantOpen = False
                 return execute_binary_from_alfa_assistant(function, cmd, wait=wait, init=init, retry=True, **kwargs)
             elif status_code != 200 and retry:
-                logger.error("## Calling %s: Invalid app requests response: %s.  Quiting Assistant" % (cmd[0], status_code))
+                logger.error("## Calling %s: Invalid app requests response: %s.  Terminating Assistant" % (cmd[0], status_code))
                 launch_status = False
                 time.sleep(10)          # let Torrest/Quasar starts first
             try:
@@ -733,9 +737,10 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
                 url_app = USER_APP_URL
                 cmd_app = command_base64
                 finalCmd = ''
-                sess = ''
                 args_ = cmd
                 kwargs_ = kwargs
+                sess = ''
+                monitor = xbmc.Monitor()
             
             p = Proc()
             
@@ -759,6 +764,9 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
             except:
                 raise ValueError("No valid PID returned:  PID code: %s" % resp.content)
 
+            # Let the Assistant UI close to save resources, living the http server a binary active
+            xbmc.executebuiltin(cmd_android_quit)
+            
             logger.info('## Assistant executing CMD: %s - PID: %s - Wait: %s' % (command[0], p.pid, wait), force=True)
             logger.debug('## Assistant executing CMD **kwargs: %s' % command[1])
             return p
@@ -789,6 +797,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
 
         cmd_android = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'open', 'about:blank')
         cmd_android_quit = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'quit', 'about:blank')
+        cmd_android_terminate = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'terminate', 'about:blank')
         cmd_android_permissions = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'checkPermissions', 'about:blank')
 
         finished = False
@@ -800,19 +809,22 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
             if not app_response:
                 resp = httptools.downloadpage(url+str(p.pid), timeout=5, ignore_response_code=True, alfa_s=True)
                 if resp.code != 200 and not retry:
-                    retry = True
-                    logger.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s" % (p.pid, resp.code, retry))
-                    msg += str(resp.code)
-                    stdout_acum += str(resp.code)
-                    res = open_alfa_assistant()
-                    time.sleep(3)
-                    continue
+                    if action == 'killBinary':
+                        app_response = {'pid': p.pid, 'retCode': 998}
+                    else:
+                        logger.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s" % (p.pid, resp.code, retry))
+                        retry = True
+                        msg += str(resp.code)
+                        stdout_acum += str(resp.code)
+                        #res = open_alfa_assistant()
+                        time.sleep(3)
+                        continue
                 if resp.code != 200 and retry:
-                    logger.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s. Quiting Assistant" % \
+                    logger.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s. Terminating Assistant" % \
                                     (p.pid, resp.code, retry))
                     msg += str(resp.code)
                     stdout_acum += str(resp.code)
-                    app_response = {'pid': p.pid, 'retCode': 9}
+                    app_response = {'pid': p.pid, 'retCode': 998}
                     time.sleep(10)          # let Torrest/Quasar starts first
 
                 if resp.code == 200:
@@ -830,7 +842,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         logger.error("## Binary_stat: Invalid app response for PID: %s: %s - retry: %s" % (p.pid, resp.data, retry))
                         if retry:
                             app_response = {'pid': p.pid}
-                            app_response['retCode'] = 9
+                            app_response['retCode'] = 999
                             msg += app_response_save
                             stdout_acum += app_response_save
                         else:
@@ -874,6 +886,8 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         pass
             
             p.returncode = None
+            if action == 'killBinary' and not app_response.get('retCode', ''):
+                app_response['retCode'] = 137
             if app_response.get('retCode', '') != '' or action == 'killBinary' or \
                             (action == 'communicate' and p.returncode is not None):
                 try:
@@ -896,7 +910,13 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                 return p.returncode
             elif action == 'killBinary':
                 logger.info("## Binary_stat: killBinary Binary: %s - Returncode: %s" % (p.pid, p.returncode), force=True)
+                try:
+                    if not p.monitor.abortRequested() and p.returncode == 998:
+                        time.sleep(10)
+                except:
+                    pass
                 return p
+                
             
             time.sleep(5)
             msg = ''
@@ -955,6 +975,8 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         time.sleep(1)
         if filetools.exists(apk_files):
             return version_act, app_name
+        else:
+            filetools.remove(version_path, silent=True)
     # Mirarmos si la app está activa y obtenemos el nº de versión
     version_dict = get_generic_call('getWebViewInfo', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
     if isinstance(version_dict, dict):
@@ -1005,14 +1027,16 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             config.set_setting('assistant_flag_install', True)
             if not update:
                 return version_app, app_name
-    elif not update and not assistant_flag_install and not filetools.exists(apk_files):
-        logger.info('NO está instalada. El usuario no quiere instalación automática: %s' % app_name)
+    elif not update and not filetools.exists(apk_files):
+        logger.info('NO está instalada. No es Update: %s' % app_name)
         return False, app_name
     elif update and isinstance(update, bool) and not filetools.exists(apk_files):
         logger.info('NO está instalada. No se va a actualizar: %s' % app_name)
+        filetools.remove(version_path, silent=True)
         return False, app_name
     elif update and not isinstance(update, bool) and not filetools.exists(apk_files):
         logger.info('NO está instalada. Viene del Menú y se va a instalar: %s' % app_name)
+        filetools.remove(version_path, silent=True)
         update = False
         forced_menu = True
     elif not remote and not xbmc.getCondVisibility("system.platform.android"):

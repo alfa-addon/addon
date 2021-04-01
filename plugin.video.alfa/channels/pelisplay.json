@@ -1,7 +1,7 @@
 {
   "id": "pelisplay",
   "name": "PelisPlay",
-  "active": false,
+  "active": true,
   "adult": false,
   "language": ["cast", "lat", "vose"],
   "fanart": "https://i.postimg.cc/qvFCZNKT/Alpha-652355392-large.jpg",

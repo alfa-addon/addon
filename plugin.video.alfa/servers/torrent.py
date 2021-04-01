@@ -1164,10 +1164,6 @@ def torrent_dirs():
                      'MCT_torrents': '',
                      'MCT_buffer': 0,
                      'MCT_version': config.get_setting("libtorrent_version", server="torrent", default='/').split('/')[1],
-                     'TORRENTER': '',
-                     'TORRENTER_torrents': '',
-                     'TORRENTER_buffer': 0,
-                     'TORRENTER_version': '',
                      'QUASAR': '',
                      'QUASAR_torrents': '',
                      'QUASAR_buffer': 0,
@@ -2372,6 +2368,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                     archive.extract(files[selection], save_path_videos)
                 log("##### RAR Extract END #####")
             except rarfile.RarUserBreak:
+                log("##### %s" % error_msg)
                 error_msg = "Cancelado por el Usuario"
                 error_msg1 = "Archivo rar no descomprimido"
                 platformtools.dialog_notification(error_msg, error_msg1)

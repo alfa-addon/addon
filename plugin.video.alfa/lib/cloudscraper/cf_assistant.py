@@ -13,6 +13,9 @@ from core import httptools, scrapertools
 from platformcode import logger, config
 
 def get_cl(resp, timeout=20, debug=False, extraPostDelay=15, retry=True):
+    if 'hideproxy' in resp.url or 'webproxy' in resp.url:
+        return False
+    
     check_assistant = alfa_assistant.open_alfa_assistant(getWebViewInfo=True)
     if check_assistant and isinstance(check_assistant, dict):
         
