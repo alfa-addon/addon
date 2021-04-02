@@ -13,7 +13,7 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
-    if "Object not found" in data or "no longer exists" in data or '"sources": [false]' in data:
+    if "not found" in data or "no longer exists" in data or '"sources": [false]' in data:
         return False, "[bitp] El archivo no existe o ha sido borrado"
 
     return True, ""

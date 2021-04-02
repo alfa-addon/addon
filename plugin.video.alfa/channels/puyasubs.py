@@ -253,7 +253,11 @@ def findvideos(item):
             encryp = base64.b64decode(encryp)
 
             crypto = jscrypto.new(jk, jscrypto.MODE_CBC, iv)
-            decryp = crypto.decrypt(encryp).rstrip('\0')
+            decryp = crypto.decrypt(encryp)
+            if PY3:
+                decryp = decryp.decode('utf-8', errors='replace').replace('\x00', '')
+            else:
+                decryp = decryp.replace('\0', '')
             link = decryp.split('#')
             link = decryp.replace(link[0], "https://mega.nz/")
             
@@ -274,7 +278,7 @@ def findvideos(item):
             headers = {'Content-Type': 'application/json'}
             hash = safe.rsplit("/", 1)[1]
             post = jsontools.dump({"hash": hash})
-            data_sf = httptools.downloadpage("http://safelinking.net/v1/protected", post=post, headers=headers).json
+            data_sf = httptools.downloadpage("https://safelinking.net/v1/protected", post=post, headers=headers).json
             try:
                 for link in data_sf.get("links"):
                     enlace = link["url"]

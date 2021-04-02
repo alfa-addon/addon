@@ -1414,7 +1414,7 @@ msgid "The script does not support URL reduction adf.ly."
 msgstr ""
 
 msgctxt "#60339"
-msgid "Nothing to Play"
+msgid "No supported servers found"
 msgstr ""
 
 msgctxt "#60342"
@@ -5061,4 +5061,116 @@ msgstr ""
 
 msgctxt "#70763"
 msgid "Download from channel"
+msgstr ""
+
+msgctxt "#70764"
+msgid "  - Enable experimental download system"
+msgstr ""
+
+msgctxt "#80001"
+msgid "Secondary language for AutoPlay"
+msgstr ""
+
+msgctxt "#80002"
+msgid "Force this quality in AutoPlay"
+msgstr ""
+
+msgctxt "#80510"
+msgid "Frequent channels"
+msgstr ""
+
+msgctxt "#80511"
+msgid "Enable frequent channels"
+msgstr ""
+
+msgctxt "#80512"
+msgid "Number of channels to list"
+msgstr ""
+
+msgctxt "#80513"
+msgid "Enable frequents category"
+msgstr ""
+
+msgctxt "#80514"
+msgid "Number of channels in category"
+msgstr ""
+
+msgctxt "#80515"
+msgid "Choose an icon theme"
+msgstr ""
+
+msgctxt "#80516"
+msgid "Configure"
+msgstr ""
+
+msgctxt "#80610"
+msgid "Alfa Assistant Options"
+msgstr ""
+
+msgctxt "#80611"
+msgid "Device to use"
+msgstr ""
+
+msgctxt "#80612"
+msgid "Manual IP"
+msgstr ""
+
+msgctxt "#80613"
+msgid "Would you like to automatically install the app if necesary?"
+msgstr ""
+
+msgctxt "#80614"
+msgid "[COLOR limegreen][B]Select here[/B][/COLOR] to install/update Alfa Assistant now"
+msgstr ""
+
+msgctxt "#80615"
+msgid "URL for manual installation: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Select here[/COLOR] if you have a browser"
+msgstr ""
+
+msgctxt "#80616"
+msgid "Device root status:"
+msgstr ""
+
+msgctxt "#80740"
+msgid "To avoid long wait times when a webpage does not respond:"
+msgstr ""
+
+msgctxt "#80741"
+msgid "Conection timeout"
+msgstr ""
+
+msgctxt "#80750"
+msgid "Alfa Quick Fixes Management"
+msgstr ""
+
+msgctxt "#80751"
+msgid "Time between checks for Quick Fixes (in hours)"
+msgstr ""
+
+msgctxt "#80752"
+msgid "Show update notifications"
+msgstr ""
+
+msgctxt "#80760"
+msgid "My Links"
+msgstr ""
+
+msgctxt "#80761"
+msgid "Active List"
+msgstr ""
+
+msgctxt "#80770"
+msgid "Updates for Alfa related addons"
+msgstr ""
+
+msgctxt "#80771"
+msgid "Update Quasar to avoid errors"
+msgstr ""
+
+msgctxt "#80780"
+msgid "Alternative method for accessing webs"
+msgstr ""
+
+msgctxt "#80781"
+msgid "Enable for Forced mode, disable for On-Demand mode"
 msgstr ""

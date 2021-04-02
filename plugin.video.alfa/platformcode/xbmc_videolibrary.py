@@ -344,6 +344,9 @@ def mark_season_as_watched_on_kodi(item, value=1):
     if item_path1[:-1] != "\\":
         item_path1 += "\\"
     item_path2 = item_path1.replace("\\", "/")
+    
+    while xbmc.getCondVisibility('Library.IsScanningVideo()'):                  # Por si la DB está Scanning
+        time.sleep(1)
 
     sql = 'update files set playCount= %s where idFile  in ' \
           '(select idfile from %s_view where (strPath like "%s" or strPath like "%s")%s%s)' % \

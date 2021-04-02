@@ -58,7 +58,7 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                  proxy=True, proxy_web=False, proxy_addr_forced={}, forced_proxy=None, domain_name='', 
                  proxy_retries=1, CF=False, CF_test=True, file=None, filename=None, ignore_response_code=True, 
                  alfa_s=False, decode_code='', json=False, s2=None, patron='', quote_rep=False, 
-                 no_comments=True, item={}, itemlist=[]):
+                 forced_proxy_opt=None, no_comments=True, item={}, itemlist=[]):
     
     # Función "wraper" que puede ser llamada desde los canales para descargar páginas de forma unificada y evitar
     # tener que hacer todas las comprobaciones dentro del canal, lo que dificulta su mantenimiento y mejora.
@@ -86,12 +86,13 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
     if not isinstance(url, (str, unicode, bytes)):
         logger.error('Formato de url incompatible: %s (%s)' % (str(url), str(type(url))))
         return ('', success, code, item, itemlist)
-    
+
+
     try:
         response = httptools.downloadpage(url, post=post, headers=headers, random_headers=random_headers, 
                                           replace_headers=replace_headers, only_headers=only_headers, 
                                           follow_redirects=follow_redirects, encoding=decode_code, 
-                                          timeout=timeout, proxy=proxy, proxy_web=proxy_web, 
+                                          timeout=timeout, proxy=proxy, proxy_web=proxy_web, forced_proxy_opt=forced_proxy_opt,  
                                           proxy_addr_forced=proxy_addr_forced, forced_proxy=forced_proxy, 
                                           proxy_retries=proxy_retries, CF=CF, CF_test=CF_test, file=file, filename=filename, 
                                           ignore_response_code=ignore_response_code, alfa_s=alfa_s)
@@ -416,7 +417,7 @@ def update_title(item):
                 item.channel = new_item.channel     #Restuaramos el nombre del canal, por si lo habíamos cambiado
             if item.tmdb_stat == True:
                 if new_item.contentSerieName:       #Si es serie...
-                    if config.get_setting("filter_languages", item.channel) >= 0:
+                    if config.get_setting("filter_languages", item.channel, default=-1) >= 0:
                         item.title_from_channel = new_item.contentSerieName         #Guardo el título incial para Filtertools
                         item.contentSerieName = new_item.contentSerieName           #Guardo el título incial para Filtertools
                     else:
@@ -1969,13 +1970,13 @@ def find_rar_password(item):
     
     # Si no hay, buscamos en páginas alternativas
     rar_search = [
-                 ['1', 'https://pctreload.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                 ['1', 'https://pctreload1.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
                  ['1', 'https://pctfenix.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['descargar\/', ''], ['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
-                 ['1', 'https://pctmix.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                 ['1', 'https://pctmix1.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
                  ['2', 'https://grantorrent.net/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
@@ -2010,7 +2011,7 @@ def find_rar_password(item):
             if 'descargas2020' not in dom_sufix_clone and 'descargas2020' not in \
                         dom_sufix_clone and 'pctreload' not in dom_sufix_clone and \
                         'pctmix' not in dom_sufix_clone: dom_sufix_clone = ''
-            dom_sufix_clone = dom_sufix_clone.replace('pctmix-com', 'pctreload-com')
+            dom_sufix_clone = dom_sufix_clone.replace('pctmix1-com', 'pctreload1-com')
             if dom_sufix_org and url_password.endswith(dom_sufix_org):
                 url_password = url_password.replace(dom_sufix_org, dom_sufix_clone)
             else:
@@ -2266,6 +2267,18 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     if '.rar' in str(files):
         size = '[COLOR magenta][B]RAR-[/B][/COLOR]%s' % size
         
+    # Puede haber errores de decode en los paths.  Se intentan arreglar
+    try:
+        for entry in files:
+            for file, path in list(entry.items()):
+                if file == 'path':
+                    for x, file_r in enumerate(path):
+                        entry[file][x] = scrapertools.decode_utf8_error(file_r)
+                elif file == '__name':
+                    entry[file] = scrapertools.decode_utf8_error(path)
+    except:
+        logger.error(traceback.format_exc())
+        
     #logger.debug(str(url))
     logger.info(str(size))
     
@@ -2481,8 +2494,8 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         if item.url.endswith('-org'):
             item.url = item.url.replace(channel_failed, channel)
             item.url = re.sub('\/\w+(-\w+)$', r'/%s\1' % channel, item.url)
-        if channel == 'pctreload' or channel == 'pctmix':
-            item.url = re.sub('\/\w+-\w+$', '/pctreload-com', item.url)
+        if channel == 'pctreload1' or channel == 'pctmix1':
+            item.url = re.sub('\/\w+-\w+$', '/pctreload1-com', item.url)
             #item.url = re.sub('\/\w+-\w+$', '/pctnew-org', item.url)
         
         item = verify_channel_regex(item, fail_over_list)                       # Procesamos los regex de url que tenga el clone
@@ -3117,7 +3130,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     url_total = url                                     #Guardamos la suma de los resultados intermedios
                 if item.channel == channel_py or channel in fail_over_list:     #Si es Newpct1...
                     #if item.contentType == "tvshow" and ow_force != 'no':       #parece que con el título encuentra.., ### VIGILAR
-                    if item.contentType in ["tvshow", "season"] and canal_org != canal_des: #parece que con el título solo encuentra..,
+                    if item.contentType in ["tvshow", "season"] and canal_org not in canal_des: #parece que con el título solo encuentra..,
                         url_total = re.sub(r'\/\d{4,20}\/*$', '', url_total)    #mejor la serie, a menos que sea una redir del mismo canal
                         item.channel_redir = item.category
                 update_stat += 1                                                #Ya hemos actualizado algo
@@ -4039,10 +4052,10 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
                     s = subprocess.Popen(params, shell=False, creationflags=creationFlags, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 else:
                     s = subprocess.Popen(params, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                res = s
                 
                 # Si se ha pedido esperar hasta que termine el browser...
                 if wait:
-                    s.communicate()
                     output_cmd, error_cmd = s.communicate()
                     if error_cmd: res = False
                     logger.error('Error "%s" en Browser %s, Comando %s' % (str(error_cmd), browser, str(params)))
@@ -4086,3 +4099,39 @@ def privatedecrypt(url, headers=None):
     else:
         url = ''
     return url
+
+
+def rec(site_key, co, sa, loc):
+    api_url = "https://www.google.com/recaptcha/api.js"
+    headers = {
+               "User-Agent": httptools.get_user_agent(),
+               "Referer": loc,
+               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+               "Accept-Language": "ro-RO,ro;q=0.8,en-US;q=0.6,en-GB;q=0.4,en;q=0.2"
+               }
+
+    r_data = httptools.downloadpage(api_url, headers=headers, follow_redirects=False).data
+    v = scrapertools.find_single_match(r_data, "releases/([^/]+)")
+    cb = "123456789"
+    base_url = "https://www.google.com/recaptcha/api2/anchor?ar=1&k=%s&co=%s&hl=ro&v=%s&size=invisible&cb%s" % (site_key, co, v, cb)
+
+    r_data = httptools.downloadpage(base_url, headers=headers, follow_redirects=False).data
+    c = scrapertools.find_single_match(r_data, 'id="recaptcha-token" value="([^"]+)"')
+
+    t_url = "https://www.google.com/recaptcha/api2/reload?k=%s" % site_key
+
+    post = {"v": v, "reason": "q", "k": site_key, "c": c, "sa": sa, "co": co}
+    p = "v=%s&reason=q&k=%s&c=%s&sa=%s&co=%s" % (v, site_key, c, sa, co)
+    head = {
+            "Accept": "*/*'",
+            "Accept-Language": "ro-RO,ro;q=0.8,en-US;q=0.6,en-GB;q=0.4,en;q=0.2",
+            "Accept-Encoding": "deflate",
+            "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+            "Content-Length": "%s" % len(p),
+            "Connection": "keep-alive",
+            "referer": base_url
+            }
+
+    r_data = httptools.downloadpage(t_url, headers=head, follow_redirects=False, post=post).data
+    response = scrapertools.find_single_match(r_data, '"rresp","([^"]+)"')
+    return response

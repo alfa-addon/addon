@@ -30,8 +30,8 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://dascer.com/'
-domain = 'dascer.com'
+host = 'https://motorendirecto.com/'
+domain = 'motorendirecto.com'
 channel = 'dascer'
 categoria = channel.capitalize()
 
@@ -39,7 +39,7 @@ event = 'tvshow'
 session = 'episode'
 null = None
 thumb_sports = 'https://dascer.com/wp-content/uploads/2019/11/vettel_victory.jpg'
-enlace_void = ['Indycar', 'Nascar', 'Dakar', 'WEC']
+enlace_void = []
 
 timeout = config.get_setting('timeout_downloadpage', channel)
 filter_languages = config.get_setting('filter_languages', channel)              # Filtrado de idiomas?
@@ -50,7 +50,6 @@ def mainlist(item):
     
     itemlist = []
 
-    
     thumb_novedades = get_thumb("on_the_air.png")
     thumb_separador = get_thumb("next.png")
     thumb_settings = get_thumb("setting_0.png")
@@ -58,18 +57,15 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     # obtenemos el bloque con las cabeceras de deportes
-    patron = '<nav role="navigation"\s*class="[^"]+">\s*<ul\s*id="[^"]+"\s*class="elementor-nav-menu">(.*?)<\/ul>\s*<\/nav>'
+    patron = 'Men[^<]+<\/span>\s*<\/div>\s*<nav\s*class="elementor-nav-menu--dropdown\s*'
+    patron += 'elementor-nav-menu__container"\s*(?:[^>]+>)?\s*(?:[^>]+>)?\s*(.*?)\s*<\/ul\s*><\/nav>'
     data, success, code, item, itemlist = generictools.downloadpage(host, timeout=timeout,  s2=False, 
                                           patron=patron, item=item, itemlist=[])    # Descargamos la página
     data = scrapertools.find_single_match(data, patron)
     
     if success and data:
-        # Ponemos el enlace para Novedades
-        itemlist.append(Item(channel=item.channel, title="Novedades", action="listado", 
-                        url=host, thumbnail=thumb_novedades, extra="deportes", extra2="novedades"))
-        
         # Obtenemos el enlace para cada Deporte
-        patron = '<li\s*class="[^"]+">\s*<a\s*href="([^"]+)".*?>(.*?)<\s*\/a><\/li>'
+        patron = '<li\s*class="menu-item menu[^>]+>\s*<a\s*href="([^"]+)"[^>]+>\s*(.*?)\s*<\/a\s*><\/li>'
         matches = re.compile(patron, re.DOTALL).findall(data)
         
         #logger.debug(patron)
@@ -105,7 +101,6 @@ def listado(item):                                                              
     
     itemlist = []
     matches = []
-    logos = {'Fórmula 1': '/f1-logo', 'Fórmula 2': '/f2-', 'Fórmula E': '/fe-', 'MotoGP': '/moto-gp', 'Moto2': '/moto2', 'Moto3': '/moto3'}
     item.category = categoria
 
     #logger.debug(item)
@@ -128,22 +123,14 @@ def listado(item):                                                              
         data = ''
         cnt_match = 0                                                           # Contador de líneas procesadas de matches
         
-        if item.extra2 == 'novedades':
-            patron = '<div\s*class="elementor-widget-container">\s*<div\s*class='
-            patron += '"elementor-image">\s*<a\s*href="([^"]+)">\s*<img\s*(?:width="[^"]+"\s*'
-            patron += 'height="[^"]+"\s*)?src="([^"]+)"\s*class="attachment-medium_large\s*'
-            patron += 'size-medium_large"\s*alt="[^"]*"\s*(?:loading="[^"]*"\s*)?srcset=.*?<h4\s*class='
-            patron += '"elementor-heading[^>]+>\s*<a\s*href="[^"]+">\s*(.*?)\s*<\/a>\s*<\/h4>'
-        else:
-            patron = '<article\s*class="[^>]+>\s*<div\s*class="elementor-post__card">\s*'
-            patron += '<a\s*class="[^"]+"\s*href="([^"]+)"\s*>\s*<div\s*class='
-            patron += '"elementor-post__thumbnail"\s*>\s*<\s*img.*?src="([^"]+)".*?'
-            patron += '<h3\s*class="elementor-post__title"\s*>\s*<a href="[^"]+"\s*>'
-            patron += '\s*(.*?)\s*<\/a>\s*<\/h3>\s*<\/div>\s*<\/div>\s*<\/article>'
+        patron = 'data-column-clickable="([^"]+")[^>]*data-id="([^"]+)".*?<h4\s*'
+        patron += 'class="elementor-heading-title[^>]+>\s*<span1[^>]*>\s*([^<]*)'
+        patron += '<\/span1>([^<]*)<\/h4>.*?<h5\s*class="elementor-image-box-title">\s*'
+        patron += '([^<]+)<\/h5>\s*(?:<p\s*class="elementor-image-box-description">\s*([^<]+)<\/p>)?'
         
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
             data, success, code, item, itemlist = generictools.downloadpage(next_page_url, 
-                                          timeout=timeout_search, s2=False, patron=patron, 
+                                          timeout=timeout_search, s2=False, 
                                           item=item, itemlist=itemlist)         # Descargamos la página)
             
             # Verificamos si se ha cargado una página correcta
@@ -153,14 +140,14 @@ def listado(item):                                                              
                     last_page = 0
                     break
                 return itemlist                                                 # Si no hay nada más, salimos directamente
-        
+
         # Comprobar si hay más páginas
         patron_page = '<a\s*class="page-numbers[^"]+"\s*href="([^"]+)">Siguiente'
         if scrapertools.find_single_match(data, patron_page):
             next_page_url = scrapertools.find_single_match(data, patron_page)
         else:
             next_page_url = ''
-
+        
         if not item.matches:                                                    # De pasada anterior?
             matches = re.compile(patron, re.DOTALL).findall(data)
         else:
@@ -177,13 +164,13 @@ def listado(item):                                                              
         item.infoLabels['tmdb_id'] = null
 
         #Empezamos el procesado de matches
-        for scrapedurl, scrapedthumb, scrapedtitle in matches:
+        for scrapedurl, scrapedthumb, scrapedtitle1, scrapedtitle2, date1, date2 in matches:
             #Generamos una copia de Item para trabajar sobre ella
             item_local = item.clone()
             
             cnt_match += 1
-            
-            title = scrapedtitle
+
+            title = '%s%s: %s %s' % (scrapedtitle1, scrapedtitle2, date1, date2)
             title = scrapertools.remove_htmltags(title).rstrip('.')             # Removemos Tags del título
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
                     .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
@@ -200,20 +187,13 @@ def listado(item):                                                              
             # Procesamos Calidad
             if not item_local.quality:
                 item_local.quality = 'HDTV'
-                
-            item_local.thumbnail = scrapedthumb                                 #iniciamos thumbnail
-            item_local.contentThumbnail = scrapedthumb                          #iniciamos thumbnail
-            item_local.infoLabels['fanart'] = scrapedthumb                      #iniciamos Fanart
             
-            # Para Novedades buscamos el Deporte en los thumbs
-            if item_local.extra2 == 'novedades':
-                for sport, logo in list(logos.items()):
-                    if logo in item_local.thumbnail.lower():
-                        item_local.contentPlot = '[COLOR gold][B]%s[/B][/COLOR]%s\n\n' % (sport, item.channel_sufix)
-                        item_local.from_title = '%s - ' % sport
-                        break
+            patron_thumb = '\.elementor-element\.elementor-element-%s\s*>.*?url\(([^\)]+)\)' % scrapedthumb
+            item_local.thumbnail = scrapertools.find_single_match(data, patron_thumb)   #iniciamos thumbnail
+            item_local.contentThumbnail = item_local.thumbnail                          #iniciamos thumbnail
+            item_local.infoLabels['fanart'] = item_local.thumbnail                      #iniciamos Fanart
             
-            item_local.url = scrapedurl                                         #iniciamos la url
+            item_local.url = urlparse.urljoin(host, scrapedurl)                 #iniciamos la url
             item_local.url_tvshow = item_local.url
 
             # Guardamos los formatos para películas
@@ -221,6 +201,9 @@ def listado(item):                                                              
             item_local.action = "episodios"
 
             year = scrapertools.find_single_match(title, '\d{4}')
+            if not year:
+                import datetime
+                year = datetime.datetime.now().year
             if year:
                 item_local.infoLabels['year'] = int(year)
                 item_local.infoLabels['aired'] = str(year)
@@ -244,57 +227,24 @@ def listado(item):                                                              
     
         matches = matches[cnt_match:]                                           # Salvamos la entradas no procesadas
 
-    # Enlace a Temporadas anteriores
-    if item.extra2 != 'novedades':
-        patron = '<h2\s*class=".*?<a\s*href="([^"]+)"\s*class="'
-        url_temp_anteriores = scrapertools.find_single_match(data, patron)
-        itemlist.insert(0,item.clone(title="Temporadas anteriores", url=url_temp_anteriores, 
-                        action="temporadas_anteriores", thumbnail=thumb_sports, url_tvshow = url_temp_anteriores, 
-                        language=['CAST'], quality = 'HDTV'))
-
     return itemlist
 
-    
-def temporadas_anteriores(item):
-    patron = '<h2\s*style="[^>]+>\s*<a\s*href="([^"]+)".*?>\s*<span\s*style="[^>]+>\s*'
-    patron += '<strong>\s*(.*?)\s*<\/strong>\s*<\/span>\s*<\/a>\s*<\/h2>'
-    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout,  s2=False, 
-                                          patron=patron, item=item, itemlist=[])    # Descargamos la página
-    
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle in matches:
-        item_local = item.clone()
-        item_local.action = "findvideos"
-        item_local.contentType = session
-        item_local.contentPlot += '[B]%s[/B]\n\n' % scrapedtitle
-        item_local.url_enlaces = [(scrapedurl, 'Torrent')]
-        
-        year = scrapertools.find_single_match(scrapedtitle, '\d{4}')
-        if year:
-            item_local.infoLabels['year'] = int(year)
-            item_local.infoLabels['aired'] = str(year)
-        item_local.title = scrapedtitle
-        item_local.contentTitle = item_local.title
-        item_local.from_title = item_local.title
-        
-        itemlist.append(item_local.clone())
-    
-    return itemlist
-    
-    
+
 def findvideos(item):
     logger.info()
     
     itemlist = []
     itemlist_t = []                                                             #Itemlist total de enlaces
     itemlist_f = []                                                             #Itemlist de enlaces filtrados
-    matches = []
 
     #logger.debug(item)
+    
+    #Si no existe "clean_plot" se crea a partir de "plot"
+    if not item.clean_plot and item.infoLabels['plot']:
+        item.clean_plot = item.infoLabels['plot']
 
     #Ahora tratamos los enlaces .torrent con las diferentes calidades
-    for scrapedurl, scrapedserver in item.url_enlaces:
-
+    for scrapedurl, scrapedserver in item.matches:
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
 
@@ -371,13 +321,12 @@ def episodios(item):
     logger.info()
     
     itemlist = []
-    item.url_enlaces = []
     season = 1
     episode = 1
     download_connector = config.get_setting('download_connector', channel, default=0)
     download_connectors = [
                            "Torrent",
-                           "Ok",
+                           "Okru",
                            "Mega",
                            "UpStream"
                           ]
@@ -399,78 +348,58 @@ def episodios(item):
     item.contentPlot = '%s[B]%s %s[/B]\n\n' % (item.contentPlot, item.title, item.infoLabels['aired'])
     
     # Obtenemos el thumb del evento
-    patron = '<div class="elementor-image">\s*<img\s*width="[^"]*"\s*height="[^"]*"\s*src="([^"]+)"'
+    patron = 'data-widget_type="image.default">.*?data-src="([^"]+)"'
     if scrapertools.find_single_match(data, patron):
         item.thumbnail = scrapertools.find_single_match(data, patron)
         item.contentThumbnail = item.thumbnail
     
     # Localizamos los datos del Evento
-    patron = '(?i)<h2\s*class="elementor-heading-title[^>]+>\s*CIRCUITO\s*DE\s*(.*?)\s*<\/h2>'
+    patron = '<meta\s*property="og:description"\s*content="([^"]+)\s*DESCARGAS\s*SESIONES\s*VOD'
     if scrapertools.find_single_match(data, patron):                            # Circuito
         item.contentPlot += '[COLOR yellow][B]%s:[/B][/COLOR]\n' % scrapertools.find_single_match(data, patron).capitalize()
-    patron = '<tr><th\s*scope="row">(.*?)<\/th><td colspan[^<]+>(.*?)<\/td><\/tr>'  # Detalles del Circuito
-    datos_evento = re.compile(patron, re.DOTALL).findall(data)
-    for clave, valor in datos_evento:
-        if 'Vuelta' not in clave:
-            item.contentPlot += '- %s: %s\n' % (clave, valor)
-        else:
-            patron = '(.*?)(?:<br\s*\/>\s*)?<span.*?<\/span>(.*?)(?:<br\s*\/>\s*)?<span.*?<\/span>(.*?)(?:<br\s*\/>\s*)?$'
-            if scrapertools.find_single_match(valor, patron):
-                tiempo, deportista, equipo = scrapertools.find_single_match(valor, patron)
-                tiempo = scrapertools.remove_htmltags(tiempo)                   # Removemos Tags del título
-                item.contentPlot += '- %s: %s, %s, %s\n' % (clave, tiempo, deportista, equipo)
 
     # Procesamos los eventos
-    patron = '<div[^>]+>(?:\s*<p>)?\s*<iframe\s*[^>]+>\s*<\/iframe>(?:\s*<\/p>)?\s*'
-    patron += '<p\s*style[^>]+>\s*<a\s*href="([^"]+)"\s*(?:target[^>]+)?>\s*'
-    patron +='(?:Descargar \w+)?\s*(.*?)\s*<\/a><\/p><\/div>'                   # Una sola sesión
-    if scrapertools.find_single_match(data, patron):
-        item_local = item.clone()
-        item_local.url_enlaces = [(scrapertools.find_single_match(data, patron))]
-        item_local.action = "findvideos"
-        item_local.contentType = session
-        return findvideos(item_local)
+    patron_eventos = '<li\s*class[^>]*>\s*<span\s*class="eael-tab-title"\s*>\s*([^<]*)<\/span>\s*<\/li>'
+    eventos = re.compile(patron_eventos, re.DOTALL).findall(data)
+    patron_descargas = '<iframe\s*src="([^"]+)"[^>]*>\s*<\/iframe>(?:\s*<\/p>)?(?:<p>)?(?:\s*<a\s*class="boton"\s*href="([^"]*)")?'
+    descargas = re.compile(patron_descargas, re.DOTALL).findall(data)
 
-    patron = '<div\s*id="elementor-tab-title[^>]+>.*?<\/span>\s*<a\s*href="[^"]*"\s*(.*?)\s*<\/div>\s*<\/div>'      # Varias sesiones
-    eventos = re.compile(patron, re.DOTALL).findall(data)
-    
-    #logger.debug("PATRON: " + patron)
+    #logger.debug("PATRON Eventos: " + patron_eventos)
     #logger.debug(eventos)
+    #logger.debug("PATRON Descargas: " + patron_descargas)
+    #logger.debug(descargas)
     #logger.debug(data)
     
-    for actividad in eventos:
+    for x, actividad in enumerate(eventos):
         item_local = item.clone()
         item_local.action = "findvideos"
         item_local.contentType = session
-        item_local.url_enlaces = []
+        item_local.matches = []
 
-        patron = 'class="elementor-toggle-title">(.*?)<\/a>'
-        item_local.title = scrapertools.find_single_match(actividad, patron)
+        item_local.title = actividad
         item_local.contentTitle = item_local.title
         
-        if not item_local.title:
-            return itemlist
+        try:
+            enlaces = descargas[x]
+        except:
+            enlaces = []
 
-        # Enlace por defecto de Okru
-        patron = '(?:<p>)?<iframe.*?src="([^"]+)"[^<]+><\/iframe>'
-        enlace = scrapertools.find_single_match(actividad, patron)
-        if enlace and 'ok.ru' in enlace:
+        for enlace in enlaces:
+            server = 'Torrent'
+            if 'ok.ru' in enlace:
+                server = 'Okru'
+            elif 'mega' in enlace:
+                server = 'Mega'
+            elif 'upstream' in enlace:
+                server = 'UpStream'
+            elif 'torrent' in enlace:
+                enlace = urlparse.urljoin(host, enlace)
             if not enlace.startswith('http'):
                 enlace = 'https:' + enlace
-            item_local.url_enlaces.append((enlace, 'Okru'))
-        
-        # Otros enlaces
-        patron = '(?:<p>)?<a\s*href="([^"]+)"[^>]*>(?:\s*Descargar\s*\w+)?\s*(.*?)\s*<\/a>'
-        enlaces_descargas = re.compile(patron, re.DOTALL).findall(actividad)
-        
-        for enlace, server in enlaces_descargas:
-            if enlace and server:
-                if not enlace.startswith('http'):
-                    enlace = 'https:' + enlace
-                if server == download_preference:
-                    item_local.url_enlaces.insert(0, (enlace, server))
-                else:
-                    item_local.url_enlaces.append((enlace, server))
+            if server == download_preference:
+                item_local.matches.insert(0, (enlace, server))
+            else:
+                item_local.matches.append((enlace, server))
         
         item_local.contentSeason = season
         item_local.contentEpisodeNumber = episode
@@ -513,15 +442,16 @@ def newest(categoria):
     
     try:
         if categoria in ['deportes']:
-            item.url = host
+            item.url = host + 'formula1/'
             item.extra = "deportes"
             item.extra2 = "novedades"
             item.action = "listado"
             item.channel_sufix = "  [Dascer]"
             itemlist.extend(listado(item))
                 
-        if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
-            itemlist.pop()
+        if itemlist:
+            if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
+                itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
     except:

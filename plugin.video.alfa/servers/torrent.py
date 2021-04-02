@@ -824,6 +824,15 @@ def capture_thru_browser(url, capture_path, response, VFS):
                     break
         time.sleep(2)
         i += 1
+        
+        # Kill del browser sub-task
+        if i > 30 or salida:
+            try:
+                res.kill()
+            except:
+                logger.error(res)
+                logger.error(traceback.format_exc(1))
+        
         if i > 30 and not salida:
             salida = True
             logger.error('No se ha encontrado .torrent descargado')
@@ -1014,12 +1023,12 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
             for num_tot_torrents, torr in enumerate(data):
                 status = torr.get('status', {})
                 torrent_exists = True
-                if torrent_states[status.get('state', 0)] not in ['Downloading', 'Checking_resume_data', 'Buffering', 'Checking']:
-                    continue
-
                 total_wanted += float(status.get('total_wanted', 0.00)) / (1024*1024*1024)
                 total_wanted_done += float(status.get('total_wanted_done', 0.00)) / (1024*1024*1024)
                 download_rate += int(status.get('download_rate', 0)) / 1024
+                
+                if torrent_states[status.get('state', 0)] not in ['Downloading', 'Checking_resume_data', 'Buffering', 'Checking']:
+                    continue
                 num_torrents += 1
             if torrent_exists: 
                 num_tot_torrents += 1
@@ -1027,9 +1036,10 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
         else:
             for num_tot_torrents, status in enumerate(data):
                 torrent_exists = True
+                download_rate += status.get('download_rate', 0)
+                
                 if status.get('status', '') in ['Paused', 'Queued', 'Finished', 'Seeding']:
                     continue
-                download_rate += status.get('download_rate', 0)
                 num_torrents += 1
             if torrent_exists: num_tot_torrents += 1
 
@@ -1154,10 +1164,6 @@ def torrent_dirs():
                      'MCT_torrents': '',
                      'MCT_buffer': 0,
                      'MCT_version': config.get_setting("libtorrent_version", server="torrent", default='/').split('/')[1],
-                     'TORRENTER': '',
-                     'TORRENTER_torrents': '',
-                     'TORRENTER_buffer': 0,
-                     'TORRENTER_version': '',
                      'QUASAR': '',
                      'QUASAR_torrents': '',
                      'QUASAR_buffer': 0,
@@ -1268,6 +1274,7 @@ def torrent_dirs():
                     __settings__.setSetting("show_bg_progress", "false")        # Usamos nuestro sistema de display
                     __settings__.setSetting("s:tuned_storage", "true")          # Tunned storage ON
                     __settings__.setSetting("metadata_timeout", '120')          # Max timeout for Magnets
+                    __settings__.setSetting("s:check_available_space", "false") # No comprobar espacio disponible hasta que lo arreglen
                 
                 torrent_paths[torr_client.upper()] = str(filetools.translatePath(__settings__.getSetting('s:download_path')))
                 torrent_paths[torr_client.upper() + '_torrents'] = str(filetools.translatePath(__settings__.getSetting('s:torrents_path')))
@@ -1307,9 +1314,9 @@ def update_control(item, function=''):
     # Crea un punto de control para gestionar las descargas Torrents de forma centralizada
     if not item.downloadProgress and not item.path.endswith('.json'):
         if not item.downloadQueued:
-            item.downloadQueued = 1
+            item.downloadQueued = -1
             item.downloadProgress = 1
-        if not item.downloadProgress and item.downloadQueued > 0:
+        if not item.downloadProgress and item.downloadQueued != 0:
             item.downloadProgress = 0
         elif not item.downloadProgress:
             item.downloadProgress = 1
@@ -1502,6 +1509,8 @@ def restart_unfinished_downloads():
                         if (item.downloadProgress in [-1, 0] or not item.downloadProgress) \
                                         and (item.downloadQueued == 0 or not item.downloadQueued):
                             continue
+                        if item.downloadQueued < 0 and init:
+                            item.downloadQueued = 1
                         if (item.downloadProgress < 4 and init) or (item.downloadQueued > 0 \
                                             and item.downloadProgress < 4) or item.downloadCompleted == 1:
 
@@ -1564,9 +1573,13 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
         except:
             logger.error(traceback.format_exc(1))
             return False
-        if torr_data or isinstance(item.downloadProgress, (int, float)):                    # Existe la descarga ?
-            if torr_data['label'].startswith('100.00%') or item.downloadProgress == 100:    # Ha terminado la descarga?
-                item.downloadProgress = 100                                                 # Lo marcamos como terminado
+        if not torr_data or not isinstance(torr_data, dict):
+            torr_data = {'label': str(torr_data)}
+        if not isinstance(item.downloadProgress, (int, float)):
+            item.downloadProgress = 0
+        if torr_data or isinstance(item.downloadProgress, (int, float)):                            # Existe la descarga ?
+            if torr_data.get('label', '').startswith('100.00%') or item.downloadProgress == 100:    # Ha terminado la descarga?
+                item.downloadProgress = 100                                                         # Lo marcamos como terminado
                 update_control(item, function='relaunch_torrent_monitoring')
                 return True
         else:
@@ -1680,11 +1693,19 @@ def check_seen_torrents():
                             item.nfo = ''
                             item.strm_path = ''
 
+                if item.strm_path and not item.nfo:
+                    if item.infoLabels['mediatype'] == 'movie':
+                        item.nfo = filetools.join(MOVIES, filetools.dirname(item.strm_path.lower()), \
+                                    "%s [%s].nfo" % (item.infoLabels['title'], item.infoLabels['IMDBNumber'])).strip()
+                    else:
+                        item.nfo = filetools.join(SERIES, filetools.dirname(item.strm_path.lower()), "tvshow.nfo").strip()
                 if item.strm_path and filename:
-                    item.strm_path = filetools.join(PATH, item.strm_path)
+                    item.strm_path = filetools.join(PATH, item.strm_path.lower())
 
                     sql = 'select * from files where (strFilename like "%s" and playCount not like "")' % filename
                     if config.is_xbmc():
+                        while xbmc.getCondVisibility('Library.IsScanningVideo()'):                      # Se espera a que acabe el scanning
+                            time.sleep(1)
                         nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql, silent=True)     # ejecución de la SQL
                         if nun_records > 0:                                                             # si el vídeo está visto...
                             xbmc_videolibrary.mark_content_as_watched_on_kodi(item, 1)                  # ... marcamos en Kodi como visto
@@ -1738,7 +1759,7 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
                 filebase = filebase.upper().replace('.TORRENT', '.torrent')
             file = filetools.join(torrent_paths[torr_client+'_torrents'], filebase)
 
-        if item.downloadQueued > 0:
+        if item.downloadQueued != 0:
             return
         if item.downloadProgress in [1, 2, 3, 99, 100] and (not torr_client or not downloadFilename):
             filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, fichero), silent=True)
@@ -2043,10 +2064,11 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                 if not ret and rar_file:
                     ret = filetools.write(filetools.join(rar_control['download_path'], \
                                     '_rar_control.json'), jsontools.dump(rar_control))
-                log("##### Descargado: %s, ID: %s, Status: %s, Rate: %s / %s, Torrents: %s" % \
-                                    (scrapertools.find_single_match(torr_data['label'], \
+                log("##### %s Descargado: %s, ID: %s, Status: %s, Rate: %s / %s, Torrents: %s, Tot.Prog: %s, Desc.total: %s" % \
+                                    (str(torr_client).upper(), scrapertools.find_single_match(torr_data['label'], \
                                     '(^.*?\%)'), index, torr_data_status, torr_down_rate, \
-                                    totals.get('download_rate', ''), totals.get('num_torrents', '')))
+                                    totals.get('download_rate', ''), totals.get('num_torrents', ''), 
+                                    totals.get('progress', ''), totals.get('total_wanted', '')))
                 time.sleep(wait_time)
                 continue
 
@@ -2284,7 +2306,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
             error_msg1 = "Comprueba el log para más detalles"
             platformtools.dialog_notification(error_msg, error_msg1)
             rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
-            return rar_file, False, '', ''
+            return custom_code.reactivate_unrar(init=False, mute=False)
 
         # Analizamos si es necesaria una contraseña, que debería estar en item.password
         if archive.needs_password():
@@ -2345,6 +2367,13 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                     dp.update(99, "Espera unos minutos....", "Extrayendo archivo... %s" % info[selection])
                     archive.extract(files[selection], save_path_videos)
                 log("##### RAR Extract END #####")
+            except rarfile.RarUserBreak:
+                log("##### %s" % error_msg)
+                error_msg = "Cancelado por el Usuario"
+                error_msg1 = "Archivo rar no descomprimido"
+                platformtools.dialog_notification(error_msg, error_msg1)
+                dp.close()
+                return rar_file, False, '', erase_file_path
             except (rarfile.RarWrongPassword, rarfile.RarCRCError):
                 logger.error(traceback.format_exc(1))
                 error_msg = "Error al extraer"

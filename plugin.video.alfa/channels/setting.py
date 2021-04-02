@@ -19,7 +19,6 @@ from platformcode import config, logger
 from platformcode import platformtools
 
 from core import httptools
-import xbmcgui
 import re
 
 CHANNELNAME = "setting"
@@ -255,6 +254,7 @@ def save_setting_torrent(item, dict_data_saved):
         config.set_setting("magnet2torrent", dict_data_saved["magnet2torrent"], server="torrent")
     if dict_data_saved and "capture_thru_browser_path" in dict_data_saved:
         config.set_setting("capture_thru_browser_path", dict_data_saved["capture_thru_browser_path"], server="torrent")
+
 
 def menu_servers(item):
     logger.info()
@@ -693,7 +693,7 @@ def conf_tools(item):
 
 
 def channels_onoff(item):
-    import channelselector, xbmcgui
+    import channelselector
     from core import channeltools
 
     # Cargar lista de opciones
@@ -706,8 +706,12 @@ def channels_onoff(item):
         # ~ lbl += ' %s' % [config.get_localized_category(categ) for categ in channel_parameters['categories']]
         lbl += ' %s' % ', '.join(config.get_localized_category(categ) for categ in channel_parameters['categories'])
 
-        it = xbmcgui.ListItem(channel.title, lbl)
-        it.setArt({ 'thumb': channel.thumbnail, 'fanart': channel.fanart })
+        it = Item(
+                fanart = channel.fanart,
+                plot = lbl,
+                thumbnail = channel.thumbnail,
+                title = channel.title
+                 )
         lista.append(it)
         ids.append(channel.channel)
 
@@ -728,7 +732,7 @@ def channels_onoff(item):
 
     # Diálogo para seleccionar
     # ------------------------
-    ret = xbmcgui.Dialog().multiselect(config.get_localized_string(60545), lista, preselect=preselect, useDetails=True)
+    ret = platformtools.dialog_multiselect(config.get_localized_string(60545), lista, preselect=preselect, useDetails=True)
     if ret == None: return False # pedido cancel
     seleccionados = [ids[i] for i in ret]
 
@@ -877,7 +881,7 @@ def overwrite_tools(item):
 
         p_dialog2.close()
 
-        
+
 def report_menu(item):
     logger.info('URL: ' + item.url)
     
@@ -977,11 +981,9 @@ def activate_debug(item):
     else:
         config.set_setting('debug', False)
         platformtools.dialog_notification('Modo DEBUG', 'Desactivado')
-        
-        
+
+
 def report_send(item, description='', fatal=False):
-    import xbmc
-    import xbmcaddon
     import random
     import traceback
     import re
@@ -1050,9 +1052,11 @@ def report_send(item, description='', fatal=False):
     'dumpz': ('0', 'http://dumpz.org/', 'api/dump', 'random', 'code=', '&lexer=text&comment=%s&password=', 
                 'headers', '', '', 'location', '0.99', '15', False, '', '', ''),
     'file.io': ('1', 'https://file.io/', '', 'random', '', 'expires=1w', 
-                'requests', 'json', 'key', '', '99.0', '30', False, '', '.log', ''), 
-    'uploadfiles': ('1', 'https://up.ufile.io/v1/upload', '', 'random', '', '', 
-                'curl', 'json', 'url', '', '99.0', '30', False, None, '', '') 
+                'requests', 'json', 'key', '', '99.0', '30', False, '', '', ''), 
+    'uploadfiles': ('0', 'https://up.ufile.io/v1/upload', '', 'random', '', '', 
+                'curl', 'json', 'url', '', '99.0', '30', False, None, '', {'Referer': 'https://ufile.io/'}), 
+    'anonfiles': ('1', 'https://api.anonfiles.com/upload', 'upload', 'random', '', '', 
+                'requests', 'json', 'data', 'file,url,short', '99.0', '30', False, None, '', '') 
                  }
     pastebin_list_last = ['hastebin', 'ghostbin', 'file.io']            # Estos servicios los dejamos los últimos
     pastebin_one_use = ['file.io']                                      # Servidores de un solo uso y se borra
@@ -1108,7 +1112,7 @@ def report_send(item, description='', fatal=False):
     random.shuffle(pastebin_dir)
     pastebin_dir.extend(pastebin_list_last)                             # Estos servicios los dejamos los últimos
     
-    pastebin_dir = ['uploadfiles']                                      # Para pruebas de un servicio
+    #pastebin_dir = ['anonfiles']                                        # Para pruebas de un servicio
     #log_data = 'TEST PARA PRUEBAS DEL SERVICIO'
         
     # Se recorre la lista de servidores "pastebin" hasta localizar uno activo, con capacidad y disponibilidad
@@ -1125,9 +1129,9 @@ def report_send(item, description='', fatal=False):
             paste_title = "LOG" + str(random.randrange(1, 999999999))   # Título del LOG
         paste_post1 = pastebin_list[paste_name][4]                      # Parte inicial del POST
         paste_post2 = pastebin_list[paste_name][5]                      # Parte secundaria del POST
-        paste_type = pastebin_list[paste_name][6]                       # Tipo de downloadpage: DATA o HEADERS
+        paste_type = pastebin_list[paste_name][6]                       # Tipo de downloadpage: REQUESTS, DATA o HEADERS
         paste_resp = pastebin_list[paste_name][7]                       # Tipo de respuesta: JSON o datos con REGEX
-        paste_resp_key = pastebin_list[paste_name][8]                   # Si es JSON, etiqueta `primaria con la CLAVE
+        paste_resp_key = pastebin_list[paste_name][8]                   # Si es JSON, etiqueta primaria con la CLAVE
         paste_url = pastebin_list[paste_name][9]                        # Etiqueta primaria para HEADER y sec. para JSON
         paste_file_size = float(pastebin_list[paste_name][10])          # Capacidad en MB del servidor
         if paste_file_size > 0:                                         # Si es 0, la capacidad es ilimitada
@@ -1140,7 +1144,7 @@ def report_send(item, description='', fatal=False):
         paste_host_return_tail = pastebin_list[paste_name][14]          # Sufijo de url para componer la clave para usuario
         paste_headers = {}
         if pastebin_list[paste_name][15]:                               # Headers requeridas por el servidor
-            paste_headers.update(jsontools.load((pastebin_list[paste_name][15])))
+            paste_headers.update(pastebin_list[paste_name][15])
 
         if paste_name in pastebin_one_use:
             pastebin_one_use_msg = '[COLOR red]NO ACCEDA al INFORME: se BORRARÁ[/COLOR]'
@@ -1197,23 +1201,42 @@ def report_send(item, description='', fatal=False):
             elif paste_type == 'curl':
                 paste_sufix = '/create_session'
                 data_post = {'file_size': len(log_data)}
-                data = requests.post(paste_host+paste_sufix, data=data_post, timeout=paste_timeout).content
+                logger.error(data_post)
+                data = httptools.downloadpage(paste_host+paste_sufix, params=paste_params, 
+                            ignore_response_code=True, post=data_post, timeout=paste_timeout, alfa_s=True, 
+                            random_headers=paste_random_headers, headers=paste_headers).data
                 data = jsontools.load(data)
-                if not data.get("fuid", ""): raise
+                if not data.get("fuid", ""): 
+                    logger.error("fuid: %s" % str(data))
+                    raise
                 fuid = data["fuid"]
                 
                 paste_sufix = '/chunk'
-                data_post = {'fuid': fuid, 'chunk_index': 1}
-                files = {'file': log_data}
-                data = requests.post(paste_host+paste_sufix, files=files, data=data_post, timeout=paste_timeout).content
-                if not 'successful' in data: raise
+                log_data_chunks = log_data
+                i = 0
+                chunk_len = 1024
+                while len(log_data_chunks) > 0:
+                    i += 1
+                    chunk = log_data_chunks[:chunk_len]
+                    log_data_chunks = log_data_chunks[chunk_len:]
+                    data_post = {'fuid': fuid, 'chunk_index': i}
+                    data = httptools.downloadpage(paste_host+paste_sufix, params=paste_params, file=chunk, alfa_s=True, 
+                                ignore_response_code=True, post=data_post, timeout=paste_timeout, CF_test=False, 
+                                random_headers=paste_random_headers, headers=paste_headers).data
+                    if not 'successful' in data:
+                        logger.error("successful: %s" % str(data))
+                        raise
                 
                 data = {}
                 paste_sufix = '/finalise'
-                data_post = {'fuid': fuid, 'total_chunks': 1, 'file_name': paste_title+'.log', 'file_type': 'doc'}
-                resp = requests.post(paste_host+paste_sufix, data=data_post, timeout=paste_timeout)
-                if not resp.content: raise
-                data['data'] = resp.content
+                data_post = {'fuid': fuid, 'total_chunks': i, 'file_name': paste_title+'.log', 'file_type': 'doc'}
+                resp = httptools.downloadpage(paste_host+paste_sufix, params=paste_params, 
+                            ignore_response_code=True, post=data_post, timeout=paste_timeout, 
+                            random_headers=paste_random_headers, headers=paste_headers)
+                if not resp.data:
+                    logger.error("resp.content: %s" % str(resp.data))
+                    raise
+                data['data'] = resp.data
                 data = type('HTTPResponse', (), data)
         
         except:
@@ -1230,16 +1253,21 @@ def report_send(item, description='', fatal=False):
                 paste_host_return = ''
             
             # Respuestas a peticiones REQUESTS
-            if paste_type in ['requests', 'curl']:                                      # Respuesta de petición tipo "requests"?
-                if paste_resp == 'json':                                                # Respuesta en formato JSON?
+            key = ''
+            if paste_type in ['requests', 'curl']:                              # Respuesta de petición tipo "requests"?
+                if paste_resp == 'json':                                        # Respuesta en formato JSON?
                     if paste_resp_key in data.data:
-                        if not paste_url:
-                            key = jsontools.load(data.data)[paste_resp_key]             # con una etiqueta
-                        else:
-                            key = jsontools.load(data.data)[paste_resp_key][paste_url]  # con dos etiquetas anidadas
-                        item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, 
-                                    paste_host_return_tail)
-                    else:
+                        key = jsontools.load(data.data)[paste_resp_key]
+                        if paste_url and key:                                   # hay etiquetas adicionales?
+                            try:
+                                for key_part in paste_url.split(','):
+                                    key = key[key_part]                         # por cada etiqueta adicional
+                            except:
+                                key = ''
+                        if key:
+                            item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, 
+                                        paste_host_return_tail)
+                    if not key:
                         logger.error('ERROR en formato de retorno de datos. data.data=' + 
                                     str(data.data))
                         continue
@@ -1310,16 +1338,39 @@ def icon_set_selector(item=None):
     platformtools.dialog_notification("Alfa", "Obteniendo iconos, por favor espere...")
     options = list()
     data = httptools.downloadpage("https://github.com/alfa-addon/media/tree/master/themes").data
-    patron = '<a class="js-navigation-open link-gray-dark" title="([^"]+)"'
+    patron = '<a class="js-navigation-open Link--primary" title="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
+    default = Item(
+            plot = 'El tema por defecto de Alfa',
+            title = 'Por defecto',
+            thumbnail = filetools.join(config.get_runtime_path(), "resources", "media", "themes", "default", "thumb_channels_movie.png")
+              )
+    options.append(default)
+
     for set_id in matches:
+        logger.info(set_id)
         path_demo = "https://github.com/alfa-addon/media/raw/master/themes/%s/thumb_channels_movie.png" % set_id
         path_info = "https://github.com/alfa-addon/media/raw/master/themes/%s/README.md" % set_id
-        opt = xbmcgui.ListItem(set_id.title(), httptools.downloadpage(path_info).data)
-        opt.setArt({"thumb": path_demo})
+        opt = Item(
+                plot = httptools.downloadpage(path_info).data,
+                title = set_id.title(),
+                thumbnail = path_demo
+                  )
         options.append(opt)
+
+    if config.is_xbmc():
+        import xbmcgui
+        new_list = list()
+        for fake_it in options:
+            it = xbmcgui.ListItem(fake_it.title, fake_it.plot)
+            it.setArt({ 'thumb': fake_it.thumbnail, 'fanart': fake_it.fanart })
+            new_list.append(it)
+        options = new_list
 
     ret = platformtools.dialog_select("Selecciona un Set de iconos", options, useDetails=True)
     if ret != -1:
-        config.set_setting("icon_set", matches[ret])
+        if ret == 0:
+            config.set_setting("icon_set", "default")
+        else:
+            config.set_setting("icon_set", matches[ret-1])

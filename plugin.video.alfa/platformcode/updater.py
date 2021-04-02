@@ -2,14 +2,18 @@
 # --------------------------------------------------------------------------------
 # Updater (kodi)
 # --------------------------------------------------------------------------------
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import os
 import time
 import threading
 import traceback
 
-from platformcode import config, logger, platformtools
-
+from platformcode import config
+from platformcode import logger
+from platformcode.platformtools import dialog_notification
 from core import httptools
 from core import jsontools
 from core import downloadtools
@@ -96,7 +100,7 @@ def check_addon_updates(verbose=False):
         if data == '': 
             logger.info('No se encuentran actualizaciones del addon')
             if verbose:
-                platformtools.dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
+                dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
             check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
             return False
 
@@ -104,7 +108,7 @@ def check_addon_updates(verbose=False):
         if 'addon_version' not in data or 'fix_version' not in data: 
             logger.info('No hay actualizaciones del addon')
             if verbose:
-                platformtools.dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
+                dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
             check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
             return False
 
@@ -114,7 +118,7 @@ def check_addon_updates(verbose=False):
         if current_version != data['addon_version']:
             logger.info('No hay actualizaciones para la versión %s del addon' % current_version)
             if verbose:
-                platformtools.dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
+                dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
             check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
             return False
 
@@ -125,7 +129,7 @@ def check_addon_updates(verbose=False):
                 if lastfix['addon_version'] == data['addon_version'] and lastfix['fix_version'] == data['fix_version']:
                     logger.info('Ya está actualizado con los últimos cambios. Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
                     if verbose:
-                        platformtools.dialog_notification('Alfa ya está actualizado', 'Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
+                        dialog_notification('Alfa ya está actualizado', 'Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
                     check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
                     return False
             except:
@@ -157,6 +161,11 @@ def check_addon_updates(verbose=False):
         except:
             pass
         
+        # Si es PY3 se actualizan los módulos marshal
+        if PY3:
+            from platformcode.custom_code import marshal_check
+            marshal_check()
+        
         # Guardar información de la versión fixeada
         # -----------------------------------------
         if 'files' in data: data.pop('files', None)
@@ -165,7 +174,7 @@ def check_addon_updates(verbose=False):
         
         logger.info('Addon actualizado correctamente a %s.fix%d' % (data['addon_version'], data['fix_version']))
         if verbose:
-            platformtools.dialog_notification('Alfa actualizado a', 'Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
+            dialog_notification('Alfa actualizado a', 'Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
         
         check_update_to_others(verbose=verbose)                                 # Comprueba las actualuzaciones de otros productos
         return True
@@ -174,7 +183,7 @@ def check_addon_updates(verbose=False):
         logger.error('Error al comprobar actualizaciones del addon!')
         logger.error(traceback.format_exc())
         if verbose:
-            platformtools.dialog_notification('Alfa actualizaciones', 'Error al comprobar actualizaciones')
+            dialog_notification('Alfa actualizaciones', 'Error al comprobar actualizaciones')
         check_update_to_others(verbose=verbose)                                 # Comprueba las actualuzaciones de otros productos
         return False
 

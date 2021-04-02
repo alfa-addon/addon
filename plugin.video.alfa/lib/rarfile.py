@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # rarfile.py
 #
 # Copyright (c) 2005-2019  Marko Kreen <markokr@gmail.com>
@@ -68,6 +70,9 @@ from __future__ import division, print_function
 ##
 
 import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; VFS = False
+
 import os
 import errno
 import struct
@@ -82,6 +87,7 @@ from hashlib import sha1, sha256
 from hmac import HMAC
 from datetime import datetime, timedelta, tzinfo
 from platformcode import logger, config
+from lib.alfa_assistant import execute_binary_from_alfa_assistant
 
 # fixed offset timezone, for UTC
 try:
@@ -2210,6 +2216,7 @@ class PipeReader(RarExtFile):
 
         # launch new process
         self._returncode = 0
+        logger.error('self._cmd: %s' % self._cmd)
         self._proc = custom_popen(self._cmd)
         self._fd = self._proc.stdout
 
@@ -2900,7 +2907,7 @@ def parse_dos_time(stamp):
     yr = (stamp & 0x7F) + 1980
     return (yr, mon, day, hr, mn, sec * 2)
 
-def custom_popen(cmd):
+def custom_popen(cmd, classic=False):
     """Disconnect cmd from parent fds, read only from stdout.
     """
     # needed for py2exe
@@ -2910,14 +2917,43 @@ def custom_popen(cmd):
 
     # run command
     try:
-        p = Popen(cmd, bufsize=0, stdout=PIPE, stdin=PIPE, stderr=STDOUT,
-                  creationflags=creationflags)
+        if classic:
+            # run command from system
+            p = Popen(cmd, bufsize=0, stdout=PIPE, stdin=PIPE, stderr=STDOUT,
+                      creationflags=creationflags)
+        else:
+            # run command from APP
+            p = execute_binary_from_alfa_assistant('openBinary', cmd, wait=True)
     except OSError as ex:
         if ex.errno == errno.ENOENT:
             raise RarCannotExec("Unrar not installed? (rarfile.UNRAR_TOOL=%r)" % UNRAR_TOOL)
         if ex.errno == errno.EACCES or ex.errno == errno.EPERM:
             raise RarCannotExec("Cannot execute unrar (rarfile.UNRAR_TOOL=%r)" % UNRAR_TOOL)
         raise
+    
+    try:
+        #Saving p.pid in rar_control file
+        if isinstance(cmd, list) and len(cmd) > 2:
+            rar_path = os.path.join(os.path.dirname(cmd[-2]), '_rar_control.json')
+            if os.path.exists(rar_path):
+                logger.info('Updating PID: %s in %s' % (p.pid, rar_path), force=True)
+                import json
+                if PY3:
+                    with open(rar_path, "r", encoding='utf-8') as f:
+                        rar_control = json.load(f)
+                    with open(rar_path, "w", encoding='utf-8') as f:
+                        rar_control['pid'] = p.pid
+                        json.dump(rar_control, f, indent=4)
+                else:
+                    with open(rar_path, "r") as f:
+                        rar_control = json.load(f)
+                    with open(rar_path, "w") as f:
+                        rar_control['pid'] = p.pid
+                        json.dump(rar_control, f, indent=4)
+    except:
+        import traceback
+        logger.error(traceback.format_exc())
+    
     return p
 
 def custom_check(cmd, ignore_retcode=False):
@@ -2950,13 +2986,13 @@ def check_returncode(p, out):
     errmap = [None,
               RarWarning, RarFatalError, RarCRCError, RarLockedArchiveError,    # 1..4
               RarWriteError, RarOpenError, RarUserError, RarMemoryError,        # 5..8
-              RarCreateError, RarNoFilesError, RarWrongPassword]                # 9..11
+              RarCreateError, RarNoFilesError, RarWrongPassword]                # 9..12
     if UNRAR_TOOL == ALT_TOOL:
         errmap = [None]
-    if code > 0 and code < len(errmap):
-        exc = errmap[code]
-    elif code == 255:
+    if code in [-9, 9, 137, 255]:
         exc = RarUserBreak
+    elif code > 0 and code < len(errmap):
+        exc = errmap[code]
     elif code < 0:
         exc = RarSignalExit
     else:

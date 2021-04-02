@@ -27,7 +27,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = httptools.downloadpage(url, headers=headers).data
     texto = scrapertools.find_single_match(data, 'video_url":"([^"]+)"')
     url = dec_url(texto)
-    url = "https://%s.com%s" % (server, url)
+    if not url.startswith("http"):
+        url = "https://%s.com%s" % (server, url)
     media_url = httptools.downloadpage(url, only_headers=True).url
     video_urls.append(["[%s]" %server, media_url])
     return video_urls
@@ -42,5 +43,6 @@ def dec_url(txt):
     txt = txt.replace('А', 'A').replace('В', 'B').replace('С', 'C').replace('Е', 'E').replace('М', 'M').replace('~', '=').replace(',','/')
     import base64
     url = base64.b64decode(txt)
+    url = url.decode("utf8")
     return url
 

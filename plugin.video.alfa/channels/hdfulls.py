@@ -381,7 +381,7 @@ def search(item, texto):
         item.title = "Buscar..."
         item.url = host + "/search"
         item.texto = texto
-        item.first = 1
+        item.first = 0
         return list_all(item)
 
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla

@@ -7,6 +7,11 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+if PY3:
+    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+
 import base64
 import json
 import re
@@ -27,6 +32,7 @@ from platformcode import platformtools
 
 EXTRA_TIMEOUT = 10
 
+ASSISTANT_APP = 'com.alfa.alfamobileassistant'
 ASSISTANT_SERVER = "http://127.0.0.1"
 ASSISTANT_MODE = config.get_setting("assistant_mode")
 
@@ -479,15 +485,15 @@ def check_permissions_alfa_assistant():
 #
 ## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
 #
-def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank'):
+def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank', wait=False):
     if xbmc.getCondVisibility("system.platform.Android"):
         try:
-            app = 'com.alfa.alfamobileassistant'
+            app = ASSISTANT_APP
             intent = ''  # com.alfa.alfamobilehelper.MainActivity'
             dataType = cmd # 'openForDebug'
             cmd = 'StartAndroidActivity("%s", "%s", "%s", "%s")' % (app, intent, dataType, dataURI)
-            logger.info('##Assistant executing CMD: ' + cmd)
-            xbmc.executebuiltin(cmd)
+            logger.info('##Assistant executing CMD: %s' % cmd)
+            xbmc.executebuiltin(cmd, wait)
             return True
         except:
             logger.error(traceback.format_exc(1))
@@ -496,13 +502,439 @@ def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank'):
     return False
 
 #
+## Android >= 10 ejecuta los binarios en Kodi desde Alfa Assistant, si no, de la forma tradicional ##################################################################################################################################
+#
+def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, retry=False, p=None, **kwargs):
+    global isAlfaAssistantOpen
+    output_cmd = ''
+    error_cmd = ''
+    
+    """
+    Assistant APP acts as a CONSOLE for binaries management in Android 10+ and Kodi 19+
+    
+    Syntax StartAndroidActivity("USER_APP", "", "function", "cmd|arg| ... |arg|||dict{env} in format |key=value|... "):
+          
+          - cmd: binary name in format '$PWD/lib'binary_name'.so'
+          - 'open':                                                     START the Assitant
+          - "OpenBinary", "$PWD/libBINARY.so|-port|61235|-settings|/storage/emulated/.../settings.json|||
+                            (kwargs[env]): |key=value|etc=etc":         CALL binary
+    
+    Syntax Http requests: http://127.0.0.1:48884/command?option=value
+          
+          - /openBinary?cmd=base64OfFullCommand($PWD/libBINARY.so|-port|61235| 
+                            -settings|/storage/emulated/.../settings.json|||
+                            (kwargs[env]): |key=value|etc=etc):         CALL binary
+                  - returns: {
+                              "pid": 999,
+                              "output": "Base64encoded",
+                              "error": "Base64encoded",
+                              "startDate": "Base64encoded(2021-12-13 14:00:12)",
+                              "endDate": "Base64encoded([2021-12-13 14:00:12])",    If ended
+                              "retCode": "0|1|number|None"                          None if not ended
+                              "cmd": "Base64encoded(command *args **kwargs)"        Full command as sent to the app
+                              "finalCmd": "Base64encoded($PWD/command *args)"       Actual command executed vy the app
+                              
+          - /openBinary?cmd=base64OfFullCommand([[ANY Android/Linux command: killall libtorrest.so (kills all Torrest binaries)]])
+                  - returns: {As in /openBinary?cmd}
+          
+          - /getBinaryStatus?pid=999:                                   Request binary STATUS by PID
+                  - returns: {As in /openBinary?cmd}
+          
+          - /killBinary?pid=999:                                        Request KILL binary PID
+                  - returns: {As in /openBinary?cmd}
+
+          - /getBinaryList:                                             Return a /getBinaryStatus per binary launched during app session
+                  - returns: {As in /openBinary?cmd}
+    """
+        
+    if not p:
+        logger.info('## Popen CMD: %s, wait=%s' % (cmd, wait), force=True)
+        config.set_setting('assistant_binary', False)
+        creationflags = 0
+        if xbmc.getCondVisibility("system.platform.Windows"): creationflags = 0x08000000
+        try:
+            p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+                                stdin=subprocess.PIPE, creationflags=creationflags)
+            return p
+        except Exception as e:
+            if not PY3:
+                e = unicode(str(e), "utf8", errors="replace").encode("utf8")
+            elif PY3 and isinstance(e, bytes):
+                e = e.decode("utf8")
+            logger.error('## ERROR Popen CMD: %s, wait=%s - error: %s' % (cmd, wait, e))
+
+            if xbmc.getCondVisibility("system.platform.android") and ('Errno 13' in str(e) or 'Errno 2' in str(e)):
+                p = None
+            else:
+                return p
+        
+    # The traditional way did not work, so most probably we hit the SDK 29 problem
+    
+    # Simulate the response from subprocess.Popen
+    if init:
+        class ProcInit:
+            returncode = 0
+        p = ProcInit()
+        
+        # Check if other add-ons may need the Assistant app
+        import xbmcaddon
+        app_needed = ''
+        for addon_binary in ['torrest', 'quasar']:
+            if xbmc.getCondVisibility('System.HasAddon("plugin.video.%s")' % addon_binary):
+                try:
+                    __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % addon_binary)
+                    app_needed += addon_binary.capitalize() + ', '
+                except:
+                    pass
+        if not app_needed:
+            config.set_setting('assistant_binary', False)
+            return p
+        config.set_setting('assistant_binary', True)
+        
+        if not is_alfa_installed() or config.get_setting("assistant_mode") != 'este':
+            platformtools.dialog_notification("Estos addons necesitan Alfa Assistant: %s " % app_needed.rstrip(', '), 
+                            "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]", time=10000)
+            
+            if config.get_setting('assistant_flag_install', default=True):
+                time.sleep(10)
+                respuesta, app_name = install_alfa_assistant(update='auto')
+        return p
+    
+    if not init and not isinstance(p, int) and config.get_setting("assistant_mode") != 'este':
+        platformtools.dialog_notification("Este módulo necesita Alfa Assistant: %s" % cmd[0], 
+                        "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]", time=10000)
+        if config.get_setting('assistant_flag_install', default=True):
+            time.sleep(10)
+            respuesta, app_name = install_alfa_assistant(update='auto')
+        if not respuesta or config.get_setting("assistant_mode") != 'este':
+            platformtools.dialog_notification("Estos módulo no se van a ejecutar: %s " % cmd[0], 
+                        "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]", time=10000)
+            time.sleep(10)
+            p.returncode = 9
+        return p
+
+    if (not init and isinstance(p, int)) or (not init and is_alfa_installed() and config.get_setting("assistant_mode") == 'este'):
+        try:
+            # Lets start the Assistant app
+            USER_APP_URL = '%s:%s' % (ASSISTANT_SERVER, '48884')
+            url = ''
+            url_open = '%s/%s%s' % (USER_APP_URL, function, '?cmd=')
+            url_killall = url_open + base64.b64encode(('killall lib%s.so' % cmd[0]).encode('utf8')).decode('utf8')
+            if isinstance(p, int):
+                url_killall = USER_APP_URL + '/killBinary?pid=%s' % p
+            else:
+                res = open_alfa_assistant()
+                time.sleep(3)
+            command = []
+            status_code = 0
+            cmd_android_quit = 'StartAndroidActivity("%s", "", "%s", "%s")' % (ASSISTANT_APP, 'quit', 'about:blank')
+            cmd_android_terminate = 'StartAndroidActivity("%s", "", "%s", "%s")' % (ASSISTANT_APP, 'terminate', 'about:blank')
+
+            # Build the command & params
+            separator = '|'
+            separator_escaped = '\|'
+            separator_kwargs = '|||'
+            cmd_app = ''
+            if isinstance(cmd, list):
+                command.append(cmd)
+                command.append(kwargs)
+                # Convert Args to APP format
+                cmd_bis = cmd[:]
+                cmd_bis[0] = '$PWD/lib%s.so' % filetools.basename(cmd_bis[0])
+                for args in cmd_bis:
+                    cmd_app += args.replace(separator, separator_escaped) + separator
+                cmd_app = cmd_app.rstrip(separator)
+                # Convert Kwargs to APP format
+                if kwargs.get('env', {}):
+                    cmd_app += separator_kwargs
+                for key, value in list(kwargs.get('env', {}).items()):
+                    if key == 'LD_LIBRARY_PATH':
+                        # The app will replace $PWD by the binary/lib path
+                        value = '$PWD'
+                    if key == 'PATH':
+                        # The app will replace $PWD by the binary/lib path
+                        value = '$PWD:%s' % value
+                    cmd_app += '%s=%s%s' % (key.replace(separator, separator_escaped), value.replace(separator, separator_escaped), separator)
+                cmd_app = cmd_app.rstrip(separator)
+                command_base64 = base64.b64encode(cmd_app.encode('utf8')).decode('utf8')
+            else:
+                command_base64 = cmd
+                if p and not isinstance(p, int):
+                    cmd = p.args_
+                    kwargs = p.kwargs_
+                command.append(cmd)
+                command.append(kwargs)
+
+            # Launch the Binary
+            launch_status = True
+            if not wait or isinstance(p, int):
+                # We assume that no wait implies only one version of the binary can be active, so cancel all existing Binary sessions
+                url = url_killall
+                logger.info('## Killing from Assistant App: %s' % url)
+                resp = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=True)
+                time.sleep(1)
+                if function == 'killBinary':
+                    try:
+                        status_code = resp.code
+                        if status_code != 200:
+                            return 999
+                        time.sleep(1)
+                        url_stat = USER_APP_URL + '/getBinaryStatus?pid=%s&flushAfterRead=true' % p
+                        resp = httptools.downloadpage(url_stat, timeout=5, ignore_response_code=True, alfa_s=True)
+                        status_code = resp.code
+                        if status_code != 200:
+                            return 999
+                        app_response = resp.data
+                        if PY3 and isinstance(app_response, bytes):
+                            app_response = app_response.decode()
+                        app_response = re.sub('\n|\r|\t', '', app_response)
+                        app_response = json.loads(app_response)
+                        test_json = app_response["pid"]
+                        return int(app_response.get('retCode', 9))
+                    except:
+                        return 999
+            
+            # Lets launch the Binary
+            logger.info('## Calling binary from Assistant App: %s - Retry = %s' % (cmd, retry), force=True)
+            url = url_open + command_base64
+            resp = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=True)
+            status_code = resp.code
+            if status_code != 200 and not retry:
+                logger.error("## Calling %s: Invalid app requests response: %s" % (cmd[0], status_code))
+                time.sleep(3)
+                isAlfaAssistantOpen = False
+                return execute_binary_from_alfa_assistant(function, cmd, wait=wait, init=init, retry=True, **kwargs)
+            elif status_code != 200 and retry:
+                logger.error("## Calling %s: Invalid app requests response: %s.  Terminating Assistant" % (cmd[0], status_code))
+                launch_status = False
+                time.sleep(10)          # let Torrest/Quasar starts first
+            try:
+                app_response = resp.data
+                if launch_status:
+                    if PY3 and isinstance(app_response, bytes):
+                        app_response = app_response.decode()
+                    app_response = re.sub('\n|\r|\t', '', app_response)
+                    app_response = json.loads(app_response)
+            except:
+                status_code = resp.data
+                launch_status = False
+                logger.error("## Calling %s: Invalid app  response: %s" % (cmd[0], status_code))
+
+            # Simulate the response from subprocess.Popen
+            pipeout, pipein = os.pipe()
+            class Proc:
+                pid = 999999
+                stdout = os.fdopen(pipeout, 'rb')
+                stdin = os.fdopen(pipein, 'wb')
+                stderr = stdout
+                returncode = None
+                startDate = ''
+                endDate = ''
+                poll = ''
+                terminate = ''
+                communicate = ''
+                app = ASSISTANT_APP
+                url_app = USER_APP_URL
+                cmd_app = command_base64
+                finalCmd = ''
+                args_ = cmd
+                kwargs_ = kwargs
+                sess = ''
+                monitor = xbmc.Monitor()
+            
+            p = Proc()
+            
+            def redirect_terminate(p=p, action='killBinary'):
+                return binary_stat(p, action)
+            def redirect_poll(p=p, action='poll'):
+                return binary_stat(p, action)
+            def redirect_communicate(p=p, action='communicate'):
+                return binary_stat(p, action)
+            p.poll = redirect_poll
+            p.terminate = redirect_terminate
+            p.communicate = redirect_communicate
+            
+            # If something went wrong on the binary launch, lets return the error so it is recovered from the standard code
+            if not launch_status:
+                p.returncode = 999
+                raise ValueError("No app response:  error code: %s" % status_code)
+            
+            try:
+                p.pid = int(app_response['pid'])
+            except:
+                raise ValueError("No valid PID returned:  PID code: %s" % resp.content)
+
+            # Let the Assistant UI close to save resources, living the http server a binary active
+            xbmc.executebuiltin(cmd_android_quit)
+            
+            logger.info('## Assistant executing CMD: %s - PID: %s - Wait: %s' % (command[0], p.pid, wait), force=True)
+            logger.debug('## Assistant executing CMD **kwargs: %s' % command[1])
+            return p
+        except:
+            if function == 'killBinary':
+                logger.error('## Assistant ERROR %s in CMD: %s%s - Wait: %s' % (status_code, url_killall, p, wait))
+            else:
+                logger.error('## Assistant ERROR %s in CMD: %s%s - Wait: %s' % (status_code, url, command, wait))
+            logger.error(traceback.format_exc())
+    
+    return p
+
+def binary_stat(p, action, retry=False, init=False, app_response={}):
+    if init: logger.info('## Binary_stat: action: %s; PID: %s; retry: %s; init: %s; app_r: %s' \
+                        % (action, p.pid, retry, init, app_response), force=True)
+    import traceback
+    import base64
+    import json
+    import time
+    import xbmc
+    
+    try:
+        if action in ['poll', 'communicate']:
+            url = p.url_app + '/getBinaryStatus?pid=%s&flushAfterRead=true' % str(p.pid)
+
+        if action == 'killBinary':
+            url = p.url_app + '/killBinary?pid=%s' % str(p.pid)
+
+        cmd_android = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'open', 'about:blank')
+        cmd_android_quit = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'quit', 'about:blank')
+        cmd_android_terminate = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'terminate', 'about:blank')
+        cmd_android_permissions = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'checkPermissions', 'about:blank')
+
+        finished = False
+        retry = False
+        stdout_acum = ''
+        stderr_acum = ''
+        msg = ''
+        while not finished:
+            if not app_response:
+                resp = httptools.downloadpage(url+str(p.pid), timeout=5, ignore_response_code=True, alfa_s=True)
+                if resp.code != 200 and not retry:
+                    if action == 'killBinary':
+                        app_response = {'pid': p.pid, 'retCode': 998}
+                    else:
+                        logger.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s" % (p.pid, resp.code, retry))
+                        retry = True
+                        msg += str(resp.code)
+                        stdout_acum += str(resp.code)
+                        #res = open_alfa_assistant()
+                        time.sleep(3)
+                        continue
+                if resp.code != 200 and retry:
+                    logger.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s. Terminating Assistant" % \
+                                    (p.pid, resp.code, retry))
+                    msg += str(resp.code)
+                    stdout_acum += str(resp.code)
+                    app_response = {'pid': p.pid, 'retCode': 998}
+                    time.sleep(10)          # let Torrest/Quasar starts first
+
+                if resp.code == 200:
+                    try:
+                        app_response = resp.data
+                        if init: logger.debug(app_response)
+                        if PY3 and isinstance(app_response, bytes):
+                            app_response = app_response.decode()
+                        app_response_save = app_response
+                        app_response = re.sub('\n|\r|\t', '', app_response)
+                        app_response = json.loads(app_response)
+                        test_json = app_response["pid"]
+                    except:
+                        status_code = resp.data
+                        logger.error("## Binary_stat: Invalid app response for PID: %s: %s - retry: %s" % (p.pid, resp.data, retry))
+                        if retry:
+                            app_response = {'pid': p.pid}
+                            app_response['retCode'] = 999
+                            msg += app_response_save
+                            stdout_acum += app_response_save
+                        else:
+                            retry = True
+                            app_response = {}
+                            time.sleep(1)
+                            continue
+                        
+            if app_response.get("pid", 0):
+                if app_response.get('output'):
+                    stdout_acum += base64.b64decode(app_response['output']).decode('utf-8')
+                    msg += base64.b64decode(app_response['output']).decode('utf-8')
+                if app_response.get('error'): 
+                    stderr_acum += base64.b64decode(app_response['error']).decode('utf-8')
+                    msg += base64.b64decode(app_response['error']).decode('utf-8')
+                if app_response.get('startDate'): 
+                    p.startDate = base64.b64decode(app_response['startDate']).decode('utf-8')
+                if app_response.get('endDate'): 
+                    p.endDate = base64.b64decode(app_response['endDate']).decode('utf-8')
+                if app_response.get('cmd'): 
+                    p.cmd_app = base64.b64decode(app_response['cmd']).decode('utf-8')
+                if app_response.get('finalCmd'): 
+                    p.finalCmd = base64.b64decode(app_response['finalCmd']).decode('utf-8')
+
+                # If still app permissions not allowed, give it a retry
+                if 'permission denied' in msg:
+                    platformtools.dialog_notification('Accept Assitant permissions', time=15000)
+                    time.sleep(5)
+                    check_permissions_alfa_assistant()
+                    time.sleep(15)
+                
+                if msg:
+                    try:
+                        for line in msg.split('\n'):
+                            line += '\n'
+                            if PY3 and not isinstance(line, (bytes, bytearray)):
+                                line = line.encode()
+                            p.stdin.write(line)
+                            p.stdin.flush()
+                    except:
+                        pass
+            
+            p.returncode = None
+            if action == 'killBinary' and not app_response.get('retCode', ''):
+                app_response['retCode'] = 137
+            if app_response.get('retCode', '') != '' or action == 'killBinary' or \
+                            (action == 'communicate' and p.returncode is not None):
+                try:
+                    p.stdin.flush()
+                    p.stdin.close()
+                except:
+                    pass
+                try:
+                    p.returncode = int(app_response['retCode'])
+                except:
+                    p.returncode = app_response['retCode'] or p.returncode
+                
+            if action == 'communicate' and p.returncode is not None:
+                logger.info("## Binary_stat: communicate Binary: %s - Returncode: %s" % (p.pid, p.returncode), force=True)
+                return stdout_acum, stderr_acum
+            elif action == 'poll':
+                if init and msg:
+                    logger.error('## Binary_stat: Binary initial response: %s' % msg)
+                    return True
+                return p.returncode
+            elif action == 'killBinary':
+                logger.info("## Binary_stat: killBinary Binary: %s - Returncode: %s" % (p.pid, p.returncode), force=True)
+                try:
+                    if not p.monitor.abortRequested() and p.returncode == 998:
+                        time.sleep(10)
+                except:
+                    pass
+                return p
+                
+            
+            time.sleep(5)
+            msg = ''
+            app_response = {}
+
+    except:
+        logger.info(traceback.format_exc())
+    return None
+
+
+#
 ## Instala o actualiza la app de Assitant ##################################################################################################################################
 #
 def install_alfa_assistant(update=False, remote='', verbose=False):
     if update:
         logger.info('update=%s' % str(update))
     # Si ya está instalada, devolvemos el control
-    app_name = 'com.alfa.alfamobileassistant'
+    app_name = ASSISTANT_APP
     if not verbose: verbose = config.get_setting('addon_update_message')        # Verbose en la actualización/instalación
     assistant_flag_install = config.get_setting('assistant_flag_install', default=True)
     addonid = 'alfa-mobile-assistant'
@@ -543,6 +975,8 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         time.sleep(1)
         if filetools.exists(apk_files):
             return version_act, app_name
+        else:
+            filetools.remove(version_path, silent=True)
     # Mirarmos si la app está activa y obtenemos el nº de versión
     version_dict = get_generic_call('getWebViewInfo', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
     if isinstance(version_dict, dict):
@@ -593,14 +1027,16 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             config.set_setting('assistant_flag_install', True)
             if not update:
                 return version_app, app_name
-    elif not update and not assistant_flag_install and not filetools.exists(apk_files):
-        logger.info('NO está instalada. El usuario no quiere instalaciñon automática: %s' % app_name)
+    elif not update and not filetools.exists(apk_files):
+        logger.info('NO está instalada. No es Update: %s' % app_name)
         return False, app_name
     elif update and isinstance(update, bool) and not filetools.exists(apk_files):
         logger.info('NO está instalada. No se va a actualizar: %s' % app_name)
+        filetools.remove(version_path, silent=True)
         return False, app_name
     elif update and not isinstance(update, bool) and not filetools.exists(apk_files):
         logger.info('NO está instalada. Viene del Menú y se va a instalar: %s' % app_name)
+        filetools.remove(version_path, silent=True)
         update = False
         forced_menu = True
     elif not remote and not xbmc.getCondVisibility("system.platform.android"):
@@ -634,7 +1070,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             command = ['pm', 'list', 'packages']
             p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             PM_LIST, error_cmd = p.communicate()
-            if PY3 and isinstance(label_a, bytes):
+            if PY3 and isinstance(PM_LIST, bytes):
                 PM_LIST = PM_LIST.decode()
             if app_name in PM_LIST:
                 logger.info('Ya instalada. Volvemos: %s' % app_name)

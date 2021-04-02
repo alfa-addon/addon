@@ -37,7 +37,7 @@ list_servers = ['gounlimited',
                 'torrent'
                 ]
 
-host = 'https://www.cinecalidad.eu'
+host = 'https://www.cinecalidad.im'
 
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
@@ -45,7 +45,7 @@ thumbbr = 'http://flags.fmcdn.net/data/flags/normal/br.png'
 
 current_lang = ''
 
-site_list = ['', '%s' % host, '%s/espana/' % host, 'https://www.cinemaqualidade.eu/']
+site_list = ['', '%s' % host, '%s/espana/' % host, 'https://www.cinemaqualidade.im']
 site = config.get_setting('filter_site', channel='cinecalidad')
 site_lang = '%s' % site_list[site]
 
@@ -72,13 +72,13 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Castellano",
                          action="submenu",
-                         host=host,
+                         host=host+'/espana/',
                          thumbnail=thumbes))
 
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Portugues",
                          action="submenu",
-                         host="https://www.cinemaqualidade.eu/",
+                         host="https://www.cinemaqualidade.im",
                          thumbnail=thumbbr))
 
     itemlist.append(Item(channel=item.channel,
@@ -99,7 +99,7 @@ def submenu(item):
     idioma = 'peliculas'
     idioma2 = "destacada"
     host = item.host
-    if item.host == "https://www.cinemaqualidade.is/":
+    if item.host == "https://www.cinemaqualidade.im":
         idioma = "filmes"
         idioma2 = "destacado"
     logger.info()
@@ -219,7 +219,7 @@ def genres(item):
 
     itemlist = list()
     pl = 'peliculas'
-    if item.url == "https://www.cinemaqualidade.is/":
+    if item.url == "https://www.cinemaqualidade.im":
         pl = "filmes"
 
     itemlist.append(Item(title='4K UHD', url='%s%s/4k-ultra-hd/' % (item.url, pl),
@@ -282,10 +282,17 @@ def findvideos(item):
                   'gounlimited': 'https://gounlimited.to/embed-%s.html',
                   'clipwatching': 'https://clipwatching.com/embed-%s.html',
                   'vidcloud': 'https://vidcloud.co/embed/%s',
-                  'jetload': 'https://jetload.net/e/%s'}
+                  'jetload': 'https://jetload.net/e/%s',
+                  'evoload': 'https://evoload.io/e/%s'}
     
     dec_value = scrapertools.find_single_match(data, 'String\.fromCharCode\(parseInt\(str\[i\]\)-(\d+)\)')
     torrent_link = scrapertools.find_single_match(data, '<a href=".*?/protect/v\.php\?i=([^"]+)"')
+    if not torrent_link: torrent_link = scrapertools.find_single_match(data, '<a\s*href="[^"]*?s=([^"]+)"\s*target=[^>]*service=BitTorrent>')
+    if not torrent_link: 
+        torrent_link = scrapertools.find_single_match(data, '<a\s*href="[^"]*\/go\.php\?u=([^"]+)"\s*target=[^>]*service=BitTorrent>')
+        if torrent_link:
+            from lib.generictools import convert_url_base64
+            torrent_link = convert_url_base64(torrent_link)
     subs = scrapertools.find_single_match(data, '<a id=subsforlink href=(.*?) ')
 
     for scrapedurl in matchesk:
@@ -322,7 +329,8 @@ def findvideos(item):
         post = urllib.urlencode(post)
         protect = httptools.downloadpage(base_url + '?' + post, headers=headers).data
         """
-        base_url = '%s/protect/v.php?i=%s' % (host, torrent_link)
+        base_url = torrent_link
+        if '/protect/v' not in torrent_link: base_url = '%s/protect/v.php?i=%s' % (host, torrent_link)
         protect = httptools.downloadpage(base_url, headers=headers).data
         url = scrapertools.find_single_match(protect, 'value="(magnet.*?)"')
         server = 'torrent'

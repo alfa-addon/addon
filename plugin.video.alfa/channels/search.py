@@ -414,7 +414,11 @@ def setting_channel_new(item):
         lbl = '%s' % channel_parameters['language']
         lbl += ' %s' % ', '.join(config.get_localized_category(categ) for categ in channel_parameters['categories'])
 
-        it = xbmcgui.ListItem(channel.title, lbl)
+        if config.get_platform(True)['num_version'] >= 18.0:
+            it = xbmcgui.ListItem(channel.title, lbl, offscreen=True)
+        else:
+            it = xbmcgui.ListItem(channel.title, lbl)
+
         it.setArt({'thumb': channel.thumbnail, 'fanart': channel.fanart})
         lista.append(it)
         ids.append(channel.channel)

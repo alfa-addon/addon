@@ -24,6 +24,8 @@ def get_video_url(page_url, video_password):
 
     url = re.sub(r'(\.\w{2,3})/\w', '\\1/getlink-', data.url) + '.dll'
     url += "|User-Agent=%s" % httptools.get_user_agent()
+    url += '|follow_redirects=False).headers["location"]'
+    # url += "|verifypeer=false"
     video_urls.append([".mp4 [Streamz]", url])
 
     return video_urls

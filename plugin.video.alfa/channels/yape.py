@@ -65,9 +65,12 @@ def search(item, texto):
     item.extra = "busca"
     item.page = 1
     if texto != '':
-        return peliculas(item)
-    else:
-        return []
+        try:
+            return peliculas(item)
+        except:
+            for line in sys.exc_info():
+                logger.error("%s" % line)
+            return []
 
 
 def peliculas(item):

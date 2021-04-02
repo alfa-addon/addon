@@ -33,7 +33,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host_list = ['https://www.divxtotal.one/']
+host_list = ['https://www.divxtotal.se/']
 channel = 'divxtotal'
 categoria = channel.capitalize()
 host_index = config.get_setting('choose_domain', channel)
@@ -150,7 +150,7 @@ def submenu(item):
     for scrapedurl, scrapedtitle in matches:
         thumb = item.thumbnail
         url = urlparse.urljoin(host, scrapedurl)
-        if scrapedtitle.strip() == item.extra2:
+        if scrapedtitle.strip() == item.extra2 or scrapedtitle.strip() == item.extra2.replace('Ã­', 'í'):
             title = scrapedtitle.replace("&nbsp;", " ")
             title = scrapertools.slugify(title).title() + ' @todas'
             item.url = url
@@ -216,7 +216,7 @@ def novedades(item):
     matches_def = []
     
     patron = '<div\s*class="row"\s*>\s*<div\s*class=[^>]*>([^<]*)<\/div>'
-    patron += '(?:\s*<div[^>]*>)?\s*<a\s*onmouseover="javascript:cambia_'
+    patron += '(?:\s*<div[^>]*>)?\s*<a\s*onmouseover="[^"]*javascript:cambia_'
     patron += '(?:movies|series)\S*\("([^"]+)"\);"\s*href="([^"]+)"[^>]+>([^"]+)<\/a>'
     data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
                                           patron=patron, item=item, itemlist=[])    # Descargamos la página

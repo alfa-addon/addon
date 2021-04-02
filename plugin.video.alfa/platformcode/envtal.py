@@ -86,6 +86,8 @@ def get_environment():
             except:
                 try:
                     for label_a in filetools.read(os.environ['ANDROID_ROOT'] + '/build.prop').split():
+                        if PY3 and isinstance(label_a, bytes):
+                            label_a = label_a.decode()
                         if 'build.version.release' in label_a:
                             environment['os_release'] = str(scrapertools.find_single_match(label_a, '=(.*?)$'))
                         if 'product.model' in label_a:
@@ -234,6 +236,8 @@ def get_environment():
         try:
             video_updates = ['No', 'Inicio', 'Una vez', 'Inicio+Una vez', 'Dos veces al día']
             environment['videolab_update'] = str(video_updates[config.get_setting("update", "videolibrary")])
+            if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
+                environment['videolab_update'] += ' (Solo SCAN)'
         except:
             environment['videolab_update'] = '?'
         try:
@@ -296,6 +300,16 @@ def get_environment():
             cliente['Version'] = str(torrent_paths[cliente['Plug_in'].upper()+'_version'])
             if cliente['Plug_in'].upper() == 'TORREST':
                 cliente['Buffer'] = str(int(int(torrent_paths[cliente['Plug_in'].upper()+'_buffer']) /(1024*1024)))
+                cliente['Platform'] = str(filetools.listdir(filetools.join('special://home', \
+                                    'addons', 'plugin.video.torrest', 'resources', 'bin'))[0])
+                try:
+                    __settings__ = xbmcaddon.Addon(id="plugin.video.torrest")
+                    cliente['Platform'] += ': %s: %s:%s' % (str(__settings__.getSetting("service_enabled")), \
+                                    str(__settings__.getSetting("service_ip")), str(__settings__.getSetting("port")))
+                except:
+                    pass
+                #cliente['Options'] = str(filetools.read(filetools.join('special://masterprofile', \
+                #                    'addon_data', 'plugin.video.torrest', 'settings.xml')))
             if torrent_paths.get(cliente['Plug_in'].upper()+'_memory_size', ''):
                 cliente['Memoria'] = str(torrent_paths[cliente['Plug_in'].upper()+'_memory_size'])
             
@@ -359,7 +373,8 @@ def get_environment():
         environment['assistant_version'] = str(None)
         if filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
             environment['assistant_version'] = filetools.read(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version'))
-        environment['assistant_cf_ua'] = str(config.get_setting('cf_assistant_ua', None))
+        environment['assistant_version'] += '; Req: %s' % str(config.get_setting('assistant_binary', default=False))
+        environment['assistant_cf_ua'] = str(config.get_setting('cf_assistant_ua', default=None))
     
     except:
         logger.error(traceback.format_exc())

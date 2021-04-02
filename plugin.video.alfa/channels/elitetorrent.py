@@ -89,7 +89,7 @@ def submenu(item):
     
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
+        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
     except:
         pass
         
@@ -271,6 +271,13 @@ def listado(item):
                 item_local.contentSeason = scrapertools.find_single_match(item_local.url, r'-(\d+)[x|X]\d+')
             if not item_local.contentEpisodeNumber:
                 item_local.contentEpisodeNumber = scrapertools.find_single_match(item_local.url, r'-\d+[x|X](\d+)')
+            try:
+                if not item_local.contentSeason: item_local.contentSeason = 0
+                if not item_local.contentEpisodeNumber: item_local.contentEpisodeNumber = 1
+                item_local.contentSeason = int(item_local.contentSeason)
+                item_local.contentEpisodeNumber = int(item_local.contentEpisodeNumber)
+            except:
+                pass
             if not item_local.contentSeason or item_local.contentSeason < 1:
                 item_local.contentSeason = 0
             if item_local.contentEpisodeNumber < 1:

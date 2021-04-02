@@ -338,8 +338,9 @@ def check_for_update(overwrite=True):
     videolibrary.list_movies(item_dummy, silent=True)
     
     # Descarga los últimos episodios disponibles, si el canal lo permite
-    from channels import downloads
-    downloads.download_auto(item_dummy)
+    if config.get_setting("update", "videolibrary") != 0 or overwrite:
+        from channels import downloads
+        downloads.download_auto(item_dummy)
 
 
 def start(thread=True):
@@ -350,13 +351,19 @@ def start(thread=True):
     else:
         import time
 
-        update_wait = [0, 10000, 20000, 30000, 60000]
+        update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000]
         wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]
         if wait > 0:
             time.sleep(wait)
 
-        if not config.get_setting("update", "videolibrary") == 2:
-            check_for_update(overwrite=False)
+        if config.get_setting("update", "videolibrary") not in [2, 4]:
+            if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
+                try:
+                    threading.Thread(target=scan_after_remote_update, args=('start',)).start()
+                except:
+                    scan_after_remote_update('start')
+            else:
+                check_for_update(overwrite=False)
 
         # Se ejecuta ciclicamente
         while True:
@@ -364,12 +371,28 @@ def start(thread=True):
             time.sleep(3600)  # cada hora
 
 
+def scan_after_remote_update(mode):
+    if config.is_xbmc():
+        
+        minute = datetime.datetime.now().minute
+        sleep = (60 - minute) * 60                                  # Esperamos hasta la siguiente hora + 15'
+        delay = 60 * 15                                             # Esperamos 15'
+
+        if mode == 'start':
+            time.sleep(delay)
+        else:
+            time.sleep(sleep + delay)
+        
+        from platformcode import xbmc_videolibrary
+        xbmc_videolibrary.update()
+
+
 def monitor_update():
     update_setting = config.get_setting("update", "videolibrary")
 
     # "Actualizar "Una sola vez al dia" o "al inicar Kodi y al menos una vez al dia" o "Dos veces al día"
 
-    if update_setting == 2 or update_setting == 3 or update_setting == 4:
+    if update_setting in [2, 3, 4]:
         hoy = datetime.date.today()
         last_check = config.get_setting("updatelibrary_last_check", "videolibrary")
         if last_check:
@@ -392,14 +415,16 @@ def monitor_update():
                 logger.info("Inicio actualizacion programada para las %s h.: %s" % (update_start, datetime.datetime.now()))
             except:
                 pass
-            check_for_update(overwrite=False)
+            if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
+                scan_after_remote_update('clock')
+            else:
+                check_for_update(overwrite=False)
 
 
 if __name__ == "__main__":
     # Se ejecuta en cada inicio
     import xbmc
     import time
-
 
     # modo adulto:
     # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
@@ -423,7 +448,6 @@ if __name__ == "__main__":
     if wait > 0:
         xbmc.sleep(wait)
 
-
     # Verificar quick-fixes al abrirse Kodi, y dejarlo corriendo como Thread
     from platformcode import updater
     updater.check_addon_init()
@@ -434,12 +458,18 @@ if __name__ == "__main__":
 
     # Identifica la dirección Proxy y la lista de alternativas
     #if PY3: from core import proxytool_py3 as proxytool else from core import proxytool_py2 as proxytool
-    if not PY3: from core import proxytools
-    else: from core import proxytools_py3 as proxytools
-    proxytools.get_proxy_list()
-    
-    if config.get_setting("update", "videolibrary") != 2 and config.get_setting("update", "videolibrary") != 4:
-        check_for_update(overwrite=False)
+    if not PY3: from core.proxytools import get_proxy_list
+    else: from core.proxytools_py3 import get_proxy_list
+    get_proxy_list()
+
+    if config.get_setting("update", "videolibrary") not in [2, 4]:
+        if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
+            try:
+                threading.Thread(target=scan_after_remote_update, args=('start',)).start()
+            except:
+                scan_after_remote_update('start')
+        else:
+            check_for_update(overwrite=False)
     
     # Añade al LOG las variables de entorno necesarias para diagnóstico
     from platformcode import envtal

@@ -52,14 +52,13 @@ list_servers = ['clipwatching', 'gamovideo', 'vidoza', 'vidtodo', 'openload', 'u
 def login():
     logger.info()
 
-    data = agrupa_datos(host)
-    _logged = '<a href="%s"' % urlparse.urljoin(host, "logout")
+    data = agrupa_datos(host, referer=False)
+    _logged = 'id="header-signout" href="/logout"'
     if _logged in data:
         config.set_setting("logged", True, channel="hdfull")
         return True
     else:
         patron = "<input type='hidden' name='__csrf_magic' value=\"([^\"]+)\" />"
-    
         sid = urllib.quote(scrapertools.find_single_match(data, patron))
         user_ = urllib.quote(config.get_setting('hdfulluser', channel='hdfull'))
         pass_ = urllib.quote(config.get_setting('hdfullpassword', channel='hdfull'))
@@ -71,7 +70,8 @@ def login():
             config.set_setting("logged", False, channel="hdfull")
             return False
         post = '__csrf_magic=%s&username=%s&password=%s&action=login' % (sid, user_, pass_)
-        new_data = agrupa_datos(host, post=post)
+
+        new_data = agrupa_datos(host, post=post, referer=False)
 
         if _logged in new_data:
             config.set_setting("logged", True, channel="hdfull")
@@ -354,7 +354,7 @@ def search(item, texto):
     logger.info()
     
     try:
-        data = agrupa_datos(host)
+        data = agrupa_datos(host, referer=False)
         sid = scrapertools.find_single_match(data, '.__csrf_magic. value="(sid:[^"]+)"')
         item.extra = urllib.urlencode({'__csrf_magic': sid}) + '&menu=search&query=' + texto
         item.title = "Buscar..."
@@ -404,7 +404,7 @@ def items_usuario(item):
         except:
             title = ficha['title']['en'].strip()
         try:
-            title = title.encode('utf-8')
+            if not PY3: title = title.encode('utf-8')
         except:
             pass
         show = title

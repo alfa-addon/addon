@@ -8,9 +8,11 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
-    import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urllib
 else:
-    import urllib                                                               # Usamos el nativo de PY2 que es más rápido
+    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
+    import urllib
 
 import re
 
@@ -33,7 +35,7 @@ list_servers = ['openload', 'streamango', 'powvideo', 'clipwatching', 'streampla
 
 def get_source(url):
     logger.info()
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, forced_proxy_opt='ProxyWeb').data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
@@ -82,7 +84,7 @@ def list_all(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
-        url = scrapedurl
+        url = urlparse.urljoin(host, scrapedurl)
         scrapedtitle = scrapedtitle
         thumbnail = scrapedthumbnail
         new_item = Item(channel=item.channel, title=scrapedtitle, url=url,
@@ -146,7 +148,7 @@ def latest_episodes(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedcontent, scrapedep in matches[item.page:item.page + 30]:
         title = '%s' % (scrapedtitle.replace(' Online sub español', ''))
         contentSerieName = scrapedcontent
-        itemlist.append(Item(channel=item.channel, action='findvideos', url=scrapedurl, thumbnail=scrapedthumbnail,
+        itemlist.append(Item(channel=item.channel, action='findvideos', url=urlparse.urljoin(host, scrapedurl), thumbnail=scrapedthumbnail,
                              title=title, contentSerieName=contentSerieName, type='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -172,7 +174,7 @@ def latest_shows(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         title = scrapedtitle
         contentSerieName = scrapedtitle
-        itemlist.append(Item(channel=item.channel, action='seasons', url=scrapedurl, thumbnail=scrapedthumbnail,
+        itemlist.append(Item(channel=item.channel, action='seasons', url=urlparse.urljoin(host, scrapedurl), thumbnail=scrapedthumbnail,
                              title=title, contentSerieName=contentSerieName))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -260,7 +262,7 @@ def findvideos(item):
         else:
             title = ''
 
-        itemlist.append(Item(channel=item.channel, title='%s'+title, url=enc_url, action='play',
+        itemlist.append(Item(channel=item.channel, title='%s'+title, url=urlparse.urljoin(host, enc_url), action='play',
                               language=IDIOMAS[language], server=server, infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
@@ -281,7 +283,8 @@ def decode_link(enc_url):
     logger.info()
     url = ""
     try:
-        new_data = get_source(enc_url)
+        #new_data = get_source(enc_url)
+        new_data = httptools.downloadpage(enc_url).data
         if "gamovideo" in enc_url:
             url = scrapertools.find_single_match(new_data, '<a href="([^"]+)"')
         else:

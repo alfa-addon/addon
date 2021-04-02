@@ -53,17 +53,25 @@ def get_addon_version(with_fix=True):
     else:
         return __settings__.getAddonInfo('version')
 
+
 def get_addon_version_fix():
     try:
         last_fix_json = os.path.join(get_runtime_path(), 'last_fix.json')   # información de la versión fixeada del usuario
         if os.path.exists(last_fix_json):
-            with open(last_fix_json, 'r') as f: data=f.read(); f.close()
+            with open(last_fix_json, 'rb') as f: 
+                data = f.read()
+                if not PY3:
+                    data = data.encode("utf-8", "ignore")
+                elif PY3 and isinstance(data, (bytes, bytearray)):
+                    data = "".join(chr(x) for x in data)
+                f.close()
             fix = re.findall('"fix_version"\s*:\s*(\d+)', data)
             if fix:
                 return '.fix%s' % fix[0]
     except:
         pass
     return ''
+
 
 def get_platform(full_version=False):
     """
@@ -185,12 +193,16 @@ def get_videolibrary_support():
 def get_system_platform():
     """ fonction: pour recuperer la platform que xbmc tourne """
     platform = "unknown"
-    if xbmc.getCondVisibility("system.platform.linux"):
-        platform = "linux"
-    elif xbmc.getCondVisibility("system.platform.windows"):
+    if xbmc.getCondVisibility("system.platform.Android"):
+        platform = "android"
+    elif xbmc.getCondVisibility("system.platform.Windows"):
         platform = "windows"
-    elif xbmc.getCondVisibility("system.platform.osx"):
+    elif xbmc.getCondVisibility("system.platform.OSX"):
         platform = "osx"
+    elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
+        platform = "raspberry"
+    elif xbmc.getCondVisibility("system.platform.Linux"):
+        platform = "linux"
     return platform
 
 
@@ -198,8 +210,12 @@ def get_all_settings_addon():
     # Lee el archivo settings.xml y retorna un diccionario con {id: value}
     from core import scrapertools
 
-    infile = open(os.path.join(get_data_path(), "settings.xml"), "r")
+    infile = open(os.path.join(get_data_path(), "settings.xml"), "rb")
     data = infile.read()
+    if not PY3:
+        data = data.encode("utf-8", "ignore")
+    elif PY3 and isinstance(data, (bytes, bytearray)):
+        data = "".join(chr(x) for x in data)
     infile.close()
 
     ret = {}
@@ -408,8 +424,12 @@ def get_kodi_setting(name, total=False):
     # Global Kodi setting
     from core import scrapertools
 
-    infile = open(os.path.join(translatePath('special://masterprofile/'), "guisettings.xml"), "r")
+    infile = open(os.path.join(translatePath('special://masterprofile/'), "guisettings.xml"), "rb")
     data = infile.read()
+    if not PY3:
+        data = data.encode("utf-8", "ignore")
+    elif PY3 and isinstance(data, (bytes, bytearray)):
+        data = "".join(chr(x) for x in data)
     infile.close()
 
     ret = {}
@@ -459,6 +479,7 @@ def get_localized_string(code):
 
     return dev
 
+
 def get_localized_category(categ):
     categories = {'movie': get_localized_string(30122), 'tvshow': get_localized_string(30123),
                   'anime': get_localized_string(30124), 'documentary': get_localized_string(30125),
@@ -466,7 +487,6 @@ def get_localized_category(categ):
                   'direct': get_localized_string(30137), 'torrent': get_localized_string(70015),
                   'sport': 'Deportes'}
     return categories[categ] if categ in categories else categ
-
 
 
 def get_videolibrary_config_path():
@@ -518,8 +538,10 @@ def get_cookie_data():
     return cookiedata
 
 
-# Test if all the required directories are created
 def verify_directories_created():
+    """
+    Test if all the required directories are created
+    """
     from platformcode import logger
     from core import filetools
     from platformcode import xbmc_videolibrary

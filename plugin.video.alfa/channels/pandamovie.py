@@ -109,13 +109,6 @@ def findvideos(item):
     patron = 'href="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(links_data)
     for url in matches:
-        url = url.replace("/waaws.tk/", "/netu.tv/") 
-        # if "streamz" in url:
-            # url = url.replace("streamz.cc", "stream2.vg").replace("streamz.vg", "stream2.vg")
-            # url= httptools.downloadpage(url).url
-            # url= url.replace("/x", "/getlink-")
-            # url += ".dll"
-            # url = httptools.downloadpage(url, headers={"referer": url}, follow_redirects=False).headers["location"]
         itemlist.append(item.clone(title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
     # Requerido para FilterTools

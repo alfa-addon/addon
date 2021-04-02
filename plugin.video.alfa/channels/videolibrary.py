@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 
 #from builtins import str
-import sys
+import sys, re
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
 
 import os, traceback
 
@@ -86,13 +91,17 @@ def list_movies(item, silent=False):
                                          nfo=nfo_path,
                                          library_urls=new_item.library_urls,
                                          infoLabels={'title': new_item.contentTitle})
-                        if canal not in dead_list and canal not in zombie_list:
+                        if canal not in dead_list and canal not in zombie_list and not new_item.zombie:
                             confirm = platformtools.dialog_yesno('Videoteca',
-                                                                 'Parece que el canal [COLOR red]%s[/COLOR] ya no existe.' % canal.upper(),
-                                                                 'Deseas eliminar los enlaces de este canal?')
+                                                                 'Parece que el canal [COLOR red]{}[/COLOR] ya no existe.'.format(canal.upper()),
+                                                                 '¿Deseas eliminar los enlaces de este canal?')
 
-                        elif canal in zombie_list:
+                        elif canal in zombie_list or new_item.zombie:
                             confirm = False
+                            if not new_item.zombie:
+                                nfo_path = filetools.join(raiz, f)
+                                zombie_item = new_item.clone(zombie=True)
+                                filetools.write(nfo_path, head_nfo + zombie_item.tojson())
                         else:
                             confirm = True
 
@@ -104,6 +113,9 @@ def list_movies(item, silent=False):
                         else:
                             if canal not in zombie_list:
                                 zombie_list.append(canal)
+                                nfo_path = filetools.join(raiz, f)
+                                zombie_item = new_item.clone(zombie=True)
+                                filetools.write(nfo_path, head_nfo + zombie_item.tojson())
 
                 if len(dead_list) > 0:
                     for canal in dead_list:
@@ -231,13 +243,17 @@ def list_tvshows(item):
                                          nfo=tvshow_path,
                                          library_urls=item_tvshow.library_urls,
                                          infoLabels={'title': item_tvshow.contentTitle})
-                        if canal not in dead_list and canal not in zombie_list:
+                        if canal not in dead_list and canal not in zombie_list and not item_tvshow.zombie:
                             confirm = platformtools.dialog_yesno('Videoteca',
-                                                                 'Parece que el canal [COLOR red]%s[/COLOR] ya no existe.' % canal.upper(),
-                                                                 'Deseas eliminar los enlaces de este canal?')
+                                                                 'Parece que el canal [COLOR red]{}[/COLOR] ya no existe.'.format(canal.upper()),
+                                                                 '¿Deseas eliminar los enlaces de este canal?')
 
-                        elif canal in zombie_list:
+                        elif canal in zombie_list or item_tvshow.zombie:
                             confirm = False
+                            if not item_tvshow.zombie:
+                                tvshow_path = filetools.join(raiz, f)
+                                zombie_item = item_tvshow.clone(zombie=True)
+                                filetools.write(tvshow_path, head_nfo + zombie_item.tojson())
                         else:
                             confirm = True
 
@@ -249,6 +265,9 @@ def list_tvshows(item):
                         else:
                             if canal not in zombie_list:
                                 zombie_list.append(canal)
+                                tvshow_path = filetools.join(raiz, f)
+                                zombie_item = item_tvshow.clone(zombie=True)
+                                filetools.write(tvshow_path, head_nfo + zombie_item.tojson())
 
                 if len(dead_list) > 0:
                     for canal in dead_list:
@@ -541,7 +560,19 @@ def findvideos(item):
         item_json.contentChannel = "local"
         # Soporte para rutas relativas en descargas
         if filetools.is_relative(item_json.url):
-            item_json.url = filetools.join(videolibrarytools.VIDEOLIBRARY_PATH, item_json.url)
+            if scrapertools.find_single_match(item_json.url, ':(.+?):'):
+                from servers import torrent
+                special = scrapertools.find_single_match(item_json.url, ':(.+?):').upper()
+                if 'downloads' in special.lower():
+                    from channels import downloads
+                    item_json.url = filetools.join(downloads.DOWNLOAD_PATH, (re.sub('(?is):(.+?):\s?', '', item_json.url)))
+                elif 'videolibrary' in special.lower():
+                    item_json.url = filetools.join(config.get_videolibrary_path(), (re.sub('(?is):(.+?):\s?', '', item_json.url)))
+                elif torrent.torrent_dirs().get(special):
+                    torrent_dir = torrent.torrent_dirs()[special]
+                    item_json.url = filetools.join(torrent_dir, (re.sub('(?is):(.+?):\s?', '', item_json.url)))
+            else:
+                item_json.url = filetools.join(videolibrarytools.VIDEOLIBRARY_PATH, item_json.url)
 
         del list_canales['downloads']
 

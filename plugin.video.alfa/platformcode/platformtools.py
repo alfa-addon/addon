@@ -37,6 +37,7 @@ from core.item import Item
 from platformcode import logger
 from platformcode import config
 from platformcode import unify
+import time
 
 
 class XBMCPlayer(xbmc.Player):
@@ -161,7 +162,7 @@ def render_items(itemlist, parent_item):
     #logger.debug(parent_item.tostring('\n'))
     logger.info('INICIO render_items')
     from core import httptools
-    
+    start = time.time()
     # Si el itemlist no es un list salimos
     if not isinstance(itemlist, list):
         return
@@ -184,18 +185,21 @@ def render_items(itemlist, parent_item):
     genre = False
     if 'nero' in parent_item.title:
         genre = True
-        anime = False
-        if 'anime' in channel_param.get('categories', ''):
-            anime = True
-    
-    force_unify = channel_param.get('force_unify', False)
 
-    unify_enabled = config.get_setting('unify')
-    
+
+
+
+    use_unify = channel_param.get('force_unify', False) or config.get_setting('unify', default=False)
+
+
+
+
     if channel_param.get('adult', ''):
-        unify_enabled = False
+
+        use_unify = False
     
-    # logger.debug('unify_enabled: %s' % unify_enabled)
+
+    # logger.debug('use_unify: %s' % use_unify)
 
     # for adding extendedinfo to contextual menu, if it's used
     has_extendedinfo = xbmc.getCondVisibility('System.HasAddon(script.extendedinfo)')
@@ -206,6 +210,7 @@ def render_items(itemlist, parent_item):
     num_version_xbmc = config.get_platform(True)['num_version']
 
     # Recorremos el itemlist
+    temp_list = list()
     for item in itemlist:
         item_url = item.tourl()
         # logger.debug(item)
@@ -226,14 +231,14 @@ def render_items(itemlist, parent_item):
             item.fanart = parent_item.fanart
 
         if genre:
-            valid_genre = True
+
             thumb = get_thumb(item.title, auto=True)
             if thumb != '':
                 item.thumbnail = thumb
-                valid_genre = True
-            elif anime:
-                valid_genre = True
-        elif (('siguiente' in item.title.lower() and '>' in item.title) or ('pagina:' in item.title.lower())):
+
+
+
+        elif ('siguiente' in item.title.lower() and '>' in item.title) or ('pagina:' in item.title.lower()):
             item.thumbnail = get_thumb("next.png")
         elif 'add' in item.action:
             if 'pelicula' in item.action:
@@ -241,7 +246,7 @@ def render_items(itemlist, parent_item):
             elif 'serie' in item.action:
                 item.thumbnail = get_thumb("videolibrary_tvshow.png")
 
-        if (unify_enabled or force_unify) and parent_item.channel not in ['alfavorites']:
+        if use_unify and parent_item.channel not in ['alfavorites']:
             # Formatear titulo con unify
             item = unify.title_format(item)
         else:
@@ -270,34 +275,38 @@ def render_items(itemlist, parent_item):
             item.fanart = httptools.get_url_headers(item.fanart)
 
         # IconImage para folder y video
-        if item.folder:
-            icon_image = "DefaultFolder.png"
-        else:
-            icon_image = "DefaultVideo.png"
+        icon_image = "DefaultFolder.png" if item.folder else "DefaultVideo.png"
+
+
+
+
 
         # Ponemos el fanart
-        if item.fanart:
-            fanart = item.fanart
-        else:
-            fanart = config.get_fanart()
-            
+        fanart = item.fanart if item.fanart else config.get_fanart()
+
+
+
+
+
         # Ponemos el poster
         poster = item.thumbnail
         if item.action == 'play' and item.infoLabels['temporada_poster']:
             poster = item.infoLabels['temporada_poster']
 
         # Creamos el listitem
-        listitem = xbmcgui.ListItem(item.title)
-
+        if config.get_platform(True)['num_version'] >= 18.0:
+            listitem = xbmcgui.ListItem(item.title, offscreen=True)
+        else:
+            listitem = xbmcgui.ListItem(item.title)
         # values icon, thumb or poster are skin dependent.. so we set all to avoid problems
         # if not exists thumb it's used icon value
-        if config.get_platform(True)['num_version'] >= 16.0:
-            listitem.setArt({'icon': icon_image, 'thumb': item.thumbnail, 'poster': poster,
-                             'fanart': fanart})
-        else:
-            listitem.setIconImage(icon_image)
-            listitem.setThumbnailImage(item.thumbnail)
-            listitem.setProperty('fanart_image', fanart)
+
+        listitem.setArt({'icon': icon_image, 'thumb': item.thumbnail, 'poster': poster, 'fanart': fanart})
+
+
+
+
+
 
         # No need it, use fanart instead
         # xbmcplugin.setPluginFanart(int(sys.argv[1]), os.path.join(config.get_runtime_path(), "fanart.jpg"))
@@ -321,25 +330,45 @@ def render_items(itemlist, parent_item):
         else:
             context_commands = []
         # Añadimos el menu contextual
-        if config.get_platform(True)['num_version'] >= 17.0 and parent_item.list_type == '':
-            listitem.addContextMenuItems(context_commands)
-        elif parent_item.list_type == '':
-            listitem.addContextMenuItems(context_commands, replaceItems=True)
 
-        if not item.totalItems:
-            item.totalItems = 0
-        xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url='%s?%s' % (sys.argv[0], item_url),
-                                    listitem=listitem, isFolder=item.folder,
-                                    totalItems=item.totalItems)
+        if parent_item.list_type == '':
+            listitem.addContextMenuItems(context_commands)
+
+
+
+
+
+
+        temp_list.append(['%s?%s' % (sys.argv[0], item_url), listitem, item.folder])
+
+
+
+
+    xbmcplugin.addDirectoryItems(handle=int(sys.argv[1]), items=temp_list)
 
     # Fijar los tipos de vistas...
     if config.get_setting("forceview"):                                         # ...forzamos segun el viewcontent
         xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewcontent)
 
-    elif parent_item.channel not in ["channelselector", "", "alfavorites"]:     # ... o segun el canal
+    elif parent_item.channel == "alfavorites" and parent_item.action == 'mostrar_perfil':
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
-    elif parent_item.channel == "alfavorites" and parent_item.action == 'mostrar_perfil':
+    elif parent_item.channel == "videolibrary":
+        if parent_item.action == 'list_tvshows':
+            xbmcplugin.setContent(int(sys.argv[1]), "tvshows")
+        elif parent_item.action == 'list_movies':
+            xbmcplugin.setContent(int(sys.argv[1]), "movies")
+        elif parent_item.action != 'mainlist':
+            if parent_item.contentType == 'movie':
+                xbmcplugin.setContent(int(sys.argv[1]), "movies")
+            else:
+                xbmcplugin.setContent(int(sys.argv[1]), "episodes")
+
+    elif parent_item.viewType:
+        xbmcplugin.setContent(int(sys.argv[1]), viewType)
+
+    elif parent_item.channel not in ["channelselector", "", "alfavorites", "news", "search", "videolibrary", "setting", "help"] \
+     and parent_item.action != "mainlist":     # ... o segun el canal
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
     # Fijamos el "breadcrumb"
@@ -372,7 +401,7 @@ def render_items(itemlist, parent_item):
     if parent_item.mode in ['silent', 'get_cached', 'set_cache', 'finish']:
         xbmc.executebuiltin("Container.SetViewMode(500)")
 
-    logger.info('FINAL render_items')
+    logger.info('FINAL render_items %s elementos: %s' % (len(itemlist), (time.time() - start)))
 
 
 def get_viewmode_id(parent_item):
@@ -522,7 +551,7 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
     @type parent_item: item
     """
     context_commands = []
-
+    #return context_commands
     # Creamos un list con las diferentes opciones incluidas en item.context
     if isinstance(item.context, str):
         context = item.context.split("|")
@@ -1313,6 +1342,7 @@ def play_torrent(item, xlistitem, mediaurl):
             seleccion = 0
 
     # Si Libtorrent ha dado error de inicialización, no se pueden usar los clientes internos
+    TORREST_advise = config.get_setting("torrest_advise", server="torrent", default=False)
     UNRAR = config.get_setting("unrar_path", server="torrent", default="")
     LIBTORRENT = config.get_setting("libtorrent_path", server="torrent", default='')
     LIBTORRENT_in_use_local = False
@@ -1354,13 +1384,26 @@ def play_torrent(item, xlistitem, mediaurl):
     torrent_web = torrent_paths.get(torr_client.upper() + '_web', '')
     if not item.url_control:
         item.url_control = item.url.replace(PATH_videos, '')
+    torr_client_alt = []
+    for i, alt_client in enumerate(torrent_options):
+        if scrapertoolsV2.find_single_match(str(alt_client), ':\s*(\w+)').lower() in ['torrest', 'quasar']:
+            torr_client_alt += [(scrapertoolsV2.find_single_match(str(alt_client), ':\s*(\w+)').lower(), i)]
+    if LIBTORRENT: torr_client_alt += [('BT', 0)]
+    torr_client_alt = sorted(torr_client_alt, reverse=True)
 
+    if not TORREST_advise and not 'torrest' in str(torr_client_alt) and torrent_paths.get('ELEMENTUM', '') != 'Memory':
+        msg1 =  'Con la evolución a [B]Kodi 19[/B] los [B]clientes de torrent Internos[/B] han dejado de funcionar casi totalmente.  '
+        msg2 = 'Los gestores externos [B]Quasar y Elementum[/B] están sin o casi sin mantenimiento.  [B]Alfa recomienda el uso de [COLOR gold]TORREST[/B][/COLOR].  '
+        msg3 = 'Lee este artículo (también desde el [B]Menú de Alfa[/B]) e infórmate de sus ventajas e instalación: [COLOR yellow]https://alfa-addon.com/threads/ torrest-el-gestor-de-torrents-definitivo.4085/[/COLOR]'
+        config.set_setting("torrest_advise", True, server="torrent")
+        dialog_ok('Alfa te recomienda [COLOR gold]TORREST[/COLOR]', msg1, msg2, msg3)
+    
     # Si es Libtorrent y no está soportado, se ofrecen alternativas, si las hay...
     if seleccion < 2 and not LIBTORRENT:
-        dialog_ok('Cliente Interno (LibTorrent):', 'Este cliente no está soportado en su dispositivo.', \
+        dialog_ok('Cliente Interno (LibTorrent):', 'Este gestor no está soportado en su dispositivo.', \
                   'Error: [COLOR yellow]%s[/COLOR]' % config.get_setting("libtorrent_error", server="torrent",
                                                                          default=''), \
-                  'Use otro cliente Torrent soportado')
+                  '[COLOR hotpink]Alfa le recomienda el uso de [B]TORREST[/B][/COLOR]')
         if len(torrent_options) > 2:
             seleccion = dialog_select(config.get_localized_string(70193), [opcion[0] for opcion in torrent_options])
             if seleccion < 2:
@@ -1370,41 +1413,37 @@ def play_torrent(item, xlistitem, mediaurl):
             item.downloadProgress = 100
             torrent.update_control(item, function='play_torrent_no_libtorrent')
             return
-    # Si es Torrenter o Elementum con opción de Memoria, se ofrece la posibilidad ee usar Libtorrent temporalemente
-    elif seleccion > 1 and LIBTORRENT and UNRAR and 'RAR-' in item.torrent_info and (
-            torr_client not in ['BT', 'MCT', 'quasar', 'elementum', 'torrest'] \
-            or ("elementum" in torr_client and xbmcaddon.Addon(id="plugin.video.%s" \
-                                                                                    % torr_client).getSetting(
-                                                                                    'download_storage') == '1')):
+    # Si hay RAR y es Torrenter o Elementum con opción de Memoria, se ofrece la posibilidad ee otro Gestor temporalemente
+    elif seleccion > 1 and torr_client_alt and UNRAR and 'RAR-' in item.torrent_info and (
+                        torr_client not in ['BT', 'MCT', 'quasar', 'elementum', 'torrest'] \
+                        or torrent_paths.get('ELEMENTUM', '') == 'Memory'):
+
         if dialog_yesno(torr_client, 'Este plugin externo no soporta extraer on-line archivos RAR', \
-                        '[COLOR yellow]¿Quiere que usemos esta vez el Cliente interno BT?[/COLOR]', \
+                        '[COLOR yellow]¿Quiere que usemos esta vez el gestor [B]%s[/B]?[/COLOR]' % torr_client_alt[0][0].upper(), \
                         'Esta operación ocupará en disco [COLOR yellow][B]%s+[/B][/COLOR] veces el tamaño del vídeo' % size_rar):
-            seleccion = 0
-            torr_client = 'BT'
+            seleccion = torr_client_alt[0][1]
+            torr_client = torr_client_alt[0][0]
         else:
             item.downloadProgress = 100
             torrent.update_control(item, function='play_torrent_no_rar')
             return
-    # Si es Elementum pero con opción de Memoria, se muestras los Ajustes de Elementum y se pide al usuario que cambie a "Usar Archivos"
-    elif seleccion > 1 and not LIBTORRENT and UNRAR and 'RAR-' in item.torrent_info and "elementum" in \
-            torr_client and xbmcaddon.Addon(id="plugin.video.%s" % torr_client).getSetting('download_storage') == '1':
+    # Si hay RAR y es Elementum, pero con opción de Memoria, se muestras los Ajustes de Elementum y se pide al usuario que cambie a "Usar Archivos"
+    elif seleccion > 1 and not torr_client_alt and UNRAR and 'RAR-' in item.torrent_info and "elementum" in \
+                        torr_client and torrent_paths.get('ELEMENTUM', '') == 'Memory':
         if dialog_yesno(torr_client,
                         'Elementum con descarga en [COLOR yellow]Memoria[/COLOR] no soporta ' + \
                         'extraer on-line archivos RAR (ocupación en disco [COLOR yellow][B]%s+[/B][/COLOR] veces)' % size_rar, \
                         '[COLOR yellow]¿Quiere llamar a los Ajustes de Elementum para cambiar [B]temporalmente[/B] ' + \
                         'a [COLOR hotpink]"Usar Archivos"[/COLOR] y [B]reintentarlo[/B]?[/COLOR]'):
-            __settings__ = xbmcaddon.Addon(
-                id="plugin.video.%s" % torr_client)
-            __settings__.openSettings()  # Se visulizan los Ajustes de Elementum
-            elementum_dl = xbmcaddon.Addon(
-                id="plugin.video.%s" % torr_client) \
-                .getSetting('download_storage')
+            __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)
+            __settings__.openSettings()                                         # Se visulizan los Ajustes de Elementum
+            elementum_dl = xbmcaddon.Addon(id="plugin.video.%s" % torr_client).getSetting('download_storage')
             if elementum_dl != '1':
-                config.set_setting("elementum_dl", "1", server="torrent")   # Salvamos el cambio para restaurarlo luego
+                config.set_setting("elementum_dl", "1", server="torrent")       # Salvamos el cambio para restaurarlo luego
         else:
             item.downloadProgress = 100
             torrent.update_control(item, function='play_torrent_elementum_mem')
-        return  # Se sale, porque habrá refresco y cancelaría Kodi si no
+        return                                                                  # Se sale, porque habrá refresco y cancelaría Kodi si no
 
 
     if seleccion >= 0:
@@ -1624,11 +1663,14 @@ def play_torrent(item, xlistitem, mediaurl):
         
         # Si tiene .torrent válido o magnet, lo registramos
         if size or item.url.startswith('magnet:'):
+            item_freq = item.clone()
+            if not item_freq.downloadFilename:
+                item_freq.downloadFilename = ':%s: ' % torr_client.upper()
             try:
                 import threading
                 if not PY3: from lib import alfaresolver
                 else: from lib import alfaresolver_py3 as alfaresolver
-                threading.Thread(target=alfaresolver.frequency_count, args=(item, )).start()
+                threading.Thread(target=alfaresolver.frequency_count, args=(item_freq, )).start()
             except:
                 logger.error(traceback.format_exc(1))
         
@@ -1662,6 +1704,11 @@ def play_torrent(item, xlistitem, mediaurl):
 
             # Plugins externos
             else:
+                from lib.alfa_assistant import is_alfa_installed
+                if xbmc.getCondVisibility("system.platform.android") and torr_client in ['quasar', 'torrest'] and config.get_setting('assistant_binary', default=False) and not is_alfa_installed():
+                    dialog_notification('Alfa Assistant es requerido', '%s lo requiere en esta versión de Android' \
+                                % torr_client.capitalize(), time=10000)
+                    logger.error('Alfa Assistant es requerido. %s lo requiere en esta versión de Android' % torr_client.capitalize())
                 mediaurl = urllib.quote_plus(item.url)
                 # Llamada con más parámetros para completar el título
                 if torr_client in ['quasar', 'elementum'] and item.infoLabels['tmdb_id']:
@@ -1704,7 +1751,7 @@ def play_torrent(item, xlistitem, mediaurl):
                         if mediaurl.startswith('magnet'): play_type = 'magnet'
                         if mediaurl.startswith('http'): play_type = 'url'
                         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % \
-                                        (play_type, play_type, urllib.unquote_plus(mediaurl)) + ")")
+                                        (play_type, play_type, mediaurl) + ")")
                     else:
                         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
                 torrent.update_control(item, function='play_torrent_externos_start')
@@ -1808,7 +1855,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
         
         if item_down.downloadProgress == -1:
             item.downloadProgress = -1
-        elif save_path_videos:
+        elif save_path_videos and item_down.downloadProgress > 0:
             item.downloadProgress = 100
         else:
             if torrent_paths[torr_client.upper()+'_web']:                           # Es un cliente monitorizable?

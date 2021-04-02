@@ -22,7 +22,6 @@ host = 'https://daftsex.com'
 
 # Categoria bigtits las url que no recoge funcionan despues de refrescar la pagina
 
-
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -58,10 +57,14 @@ def categorias(item):
     else:
         patron = '<div class="video-item">.*?'
     patron += '<a href="([^"]+)".*?'
-    patron += '<img src="([^"]+)" alt="([^"]+)"'
+    patron += 'data-thumb="([^"]+)"(.*?)</a>'
+    
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
-        title=scrapedtitle
+        if not "/stars/" in scrapedthumbnail:
+            title = scrapertools.find_single_match(scrapedtitle, '<div class="video-title">([^<]+)<')
+        else:
+            title = scrapertools.find_single_match(scrapedtitle, '<span>([^<]+)<')
         thumbnail = urlparse.urljoin(host,scrapedthumbnail)
         url = urlparse.urljoin(host,scrapedurl)
         itemlist.append(item.clone(action="lista", title=title, url=url,
@@ -87,14 +90,15 @@ def lista(item):
         data = httptools.downloadpage(item.url).data
     logger.info("Intel22 %s" %page)
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<a href="([^"]+)" data-webm=.*?'
-    patron += '<img src="([^"]+)" alt="([^"]+)".*?'
-    patron += '<span class="video-time">([^<]+)<'
+    patron = '<div class="video-item video(-[^"]+)".*?'
+    patron += 'data-thumb="([^"]+)".*?'
+    patron += '<span class="video-time">([^<]+)<.*?'
+    patron += '<div class="video-title" [^>]+>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,time in matches:
+    for scrapedurl,scrapedthumbnail,time,scrapedtitle in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
-        thumbnail = scrapedthumbnail
-        url = urlparse.urljoin(item.url,scrapedurl)
+        thumbnail = scrapedthumbnail.replace("amp;", "")
+        url = "%s/watch/%s" %(host, scrapedurl)
         plot = ""
         itemlist.append(item.clone(action="play", title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))

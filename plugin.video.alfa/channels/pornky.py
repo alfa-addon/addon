@@ -117,6 +117,7 @@ def findvideos(item):
         itemlist.append(item.clone(action="play", title= quality, contentTitle = item.title, url=url))
     return itemlist
 
+
 def play(item):
     logger.info()
     itemlist = []
@@ -130,6 +131,7 @@ def play(item):
         num = elem[-3]
         vid = elem[-4]
         v = int(vid)/1000 *1000
-        url = "http://s%s.fapmedia.com/wqlvid/%s/%s/%s/%s/%s_%s.mp4/%s_%s.mp4"   % (server, num, pal,v, vid,vid, quality,vid, quality)
+        url = "http://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, num, pal,v, vid,vid, quality)
+        # url = "http://s%s.fapmedia.com/wqlvid/%s/%s/%s/%s/%s_%s.mp4/%s_%s.mp4"   % (server, num, pal,v, vid,vid, quality,vid, quality)
         itemlist.append([quality, url])
     return itemlist[::-1]
