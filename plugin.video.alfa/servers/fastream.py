@@ -57,7 +57,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     pattern = "(?is)src: [\"'](.+?)[\"']"
     matches = scrapertools.find_multiple_matches(data, pattern)
     for url in matches:
-        url += "|Referer={}".format(referer)
+        if 'referer' in locals():
+            url += "|Referer={}".format(referer)
         logger.info(url)
         video_urls.append(['.m3u8 [fastream]', url])
     return video_urls

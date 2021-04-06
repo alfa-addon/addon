@@ -133,9 +133,11 @@ def dialog_textviewer(heading, text):  # disponible a partir de kodi 16
     return xbmcgui.Dialog().textviewer(heading, text)
 
 
-def dialog_browse(_type, heading, default=""):
+def dialog_browse(_type, heading, shares='files', default=""):
+    if config.get_platform(True)['num_version'] < 18.0 and (shares == 'local' or not shares):
+        shares = 'files'
     dialog = xbmcgui.Dialog()
-    d = dialog.browse(_type, heading, 'files')
+    d = dialog.browse(_type, heading, shares)
     return d
 
 
@@ -210,9 +212,12 @@ def render_items(itemlist, parent_item):
     num_version_xbmc = config.get_platform(True)['num_version']
 
     # Recorremos el itemlist
+    categories_channel = []
+    if itemlist and itemlist[0].channel: 
+        categories_channel = channeltools.get_channel_parameters(itemlist[0].channel.lower()).get('categories', [])
     temp_list = list()
     for item in itemlist:
-        item_url = item.tourl()
+        item_url = uri_manager(item)
         # logger.debug(item)
         # Si el item no contiene categoria, le ponemos la del item padre
         if item.category == "":
@@ -326,7 +331,8 @@ def render_items(itemlist, parent_item):
         # Montamos el menu contextual
         if parent_item.channel != 'special':
             context_commands = set_context_commands(item, item_url, parent_item, has_extendedinfo=has_extendedinfo,
-                                                    superfavourites=superfavourites, num_version_xbmc=num_version_xbmc)
+                                                    superfavourites=superfavourites, num_version_xbmc=num_version_xbmc,
+                                                    categories_channel=categories_channel)
         else:
             context_commands = []
         # Añadimos el menu contextual
@@ -365,7 +371,7 @@ def render_items(itemlist, parent_item):
                 xbmcplugin.setContent(int(sys.argv[1]), "episodes")
 
     elif parent_item.viewType:
-        xbmcplugin.setContent(int(sys.argv[1]), viewType)
+        xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewType)
 
     elif parent_item.channel not in ["channelselector", "", "alfavorites", "news", "search", "videolibrary", "setting", "help"] \
      and parent_item.action != "mainlist":     # ... o segun el canal
@@ -402,6 +408,11 @@ def render_items(itemlist, parent_item):
         xbmc.executebuiltin("Container.SetViewMode(500)")
 
     logger.info('FINAL render_items %s elementos: %s' % (len(itemlist), (time.time() - start)))
+
+
+def uri_manager(item)
+    url = item.tourl()
+    return url
 
 
 def get_viewmode_id(parent_item):
@@ -520,7 +531,7 @@ def set_infolabels(listitem, item, player=False):
         listitem.setInfo("video", {"Title": item.title})
 
 
-def set_context_commands(item, item_url, parent_item, **kwargs):
+def set_context_commands(item, item_url, parent_item, categories_channel=[], **kwargs):
     """
     Función para generar los menus contextuales.
         1. Partiendo de los datos de item.context
@@ -716,6 +727,17 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
 
         # Descargar
         if item.channel != "downloads":
+            # Seleccionar qué canales aceptan Descargar en ...
+            if 'torrent' in str(categories_channel) and item.server and item.server != 'torrent':
+                tc = '_en'
+                en = ' [COLOR gold][B]en...[/B][/COLOR]'
+            elif 'torrent' in str(categories_channel):
+                tc = ''
+                en = ''
+            else:
+                tc = '_en'
+                en = ' [COLOR gold][B]en...[/B][/COLOR]'
+            
             # TODO: Deshacerse del 'list' en core.item por favor
             if item.contentChannel and not 'list' in item.contentChannel:
                 if item.channel == 'videolibrary':
@@ -729,6 +751,9 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
             if item.contentType == "movie" and item.contentTitle:
                 context_commands.append((config.get_localized_string(60354), "RunPlugin(%s?%s&%s)" %
                                          (sys.argv[0], item_url, 'channel=downloads&action=save_download&from_channel=' + item.channel + '&from_action=' + item.action)))
+                if tc:
+                    context_commands.append((config.get_localized_string(60354)+en, "RunPlugin(%s?%s&%s)" %
+                                         (sys.argv[0], item_url, 'channel=downloads&action=save_download%s&from_channel=' % tc + item.channel + '&from_action=' + item.action)))
 
             elif item.contentSerieName or (item.contentType in ["tvshow", "episode"] and item.infoLabels['tmdb_id'] == 'None'):
                 # Descargar serie
@@ -736,6 +761,10 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
                                              item.server == 'torrent' and item.infoLabels['tmdb_id'] != 'None'):
                     context_commands.append((config.get_localized_string(60355), "RunPlugin(%s?%s&%s)" %
                                              (sys.argv[0], item_url, 'channel=downloads&action=save_download&from_channel=' + channel_p + '&sub_action=tvshow' +
+                                                  '&from_action=' + item.action)))
+                    if tc:
+                        context_commands.append((config.get_localized_string(60355)+en, "RunPlugin(%s?%s&%s)" %
+                                             (sys.argv[0], item_url, 'channel=downloads&action=save_download%s&from_channel=' % tc + channel_p + '&sub_action=tvshow' +
                                                   '&from_action=' + item.action)))
                 # Descargar serie NO vistos
                 if (item.contentType == "episode" and item.server == 'torrent' and item.channel == 'videolibrary') or item.video_path:
@@ -748,11 +777,19 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
                     context_commands.append((config.get_localized_string(60356), "RunPlugin(%s?%s&%s)" %
                                              (sys.argv[0], item_url, 'channel=downloads&action=save_download&from_channel=' + channel_p +
                                                   '&from_action=' + item.action)))
+                    if tc:
+                        context_commands.append((config.get_localized_string(60356)+en, "RunPlugin(%s?%s&%s)" %
+                                             (sys.argv[0], item_url, 'channel=downloads&action=save_download%s&from_channel=' % tc + channel_p +
+                                                  '&from_action=' + item.action)))
                 # Descargar temporada
                 if item.contentType == "season" or (item.contentType == "episode" \
                                               and item.server == 'torrent' and item.infoLabels['tmdb_id'] != 'None'):
                     context_commands.append((config.get_localized_string(60357), "RunPlugin(%s?%s&%s)" %
                                              (sys.argv[0], item_url, 'channel=downloads&action=save_download&from_channel=' + channel_p + '&sub_action=season' +
+                                                  '&from_action=' + item.action)))
+                    if tc:
+                        context_commands.append((config.get_localized_string(60357)+en, "RunPlugin(%s?%s&%s)" %
+                                             (sys.argv[0], item_url, 'channel=downloads&action=save_download%s&from_channel=' % tc + channel_p + '&sub_action=season' +
                                                   '&from_action=' + item.action)))
 
         # Abrir configuración
