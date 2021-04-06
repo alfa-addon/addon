@@ -129,13 +129,11 @@ def alpha_list(item):
                 title = "%s %s" %(title, titulo)
                 itemlist[a].title = title
                 a -= 1
-
-    next_page = soup.find('div', class_='nav-links').find('a', class_='current').find_next_sibling("a")
-    if next_page:
-        next_page = next_page['href']
+    next_page = soup.find('a', class_='current')
+    if next_page and next_page.find_next_sibling("a"):
+        next_page = next_page.find_next_sibling("a")['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="alpha_list", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
-
     return itemlist
 
 
@@ -157,6 +155,7 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url, referer=host)
+    logger.debug(soup)
     matches = soup.find_all("li", id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
@@ -202,7 +201,6 @@ def lista(item):
                 title = "%s %s" %(title, titulo)
                 itemlist[a].title = title
                 a -= 1
-
     next_page = soup.find('div', class_='nav-links').find('a', class_='current').find_next_sibling("a")
     if next_page:
         next_page = next_page['href']
