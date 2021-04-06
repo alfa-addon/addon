@@ -125,7 +125,6 @@ def alpha_list(item):
                 title= itemlist[a].contentTitle
                 titulo = itemlist[a].title
                 titulo = scrapertools.find_single_match(titulo, '(\\[COLOR[^"]+)')
-                logger.debug(titulo)
                 title = "%s %s" %(title, titulo)
                 itemlist[a].title = title
                 a -= 1
@@ -155,7 +154,6 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url, referer=host)
-    logger.debug(soup)
     matches = soup.find_all("li", id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
@@ -197,7 +195,6 @@ def lista(item):
                 title= itemlist[a].contentTitle
                 titulo = itemlist[a].title
                 titulo = scrapertools.find_single_match(titulo, '(\\[COLOR[^"]+)')
-                logger.debug(titulo)
                 title = "%s %s" %(title, titulo)
                 itemlist[a].title = title
                 a -= 1
