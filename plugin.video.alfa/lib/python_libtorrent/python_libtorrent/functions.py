@@ -44,8 +44,8 @@ __libbaseurl__ = ["https://github.com/DiMartinoXBMC/script.module.libtorrent/raw
 #__icon__= filetools.join(filetools.translatePath('special://home'), 'addons',
 #                                   'script.module.libtorrent', 'icon.png')
 #__settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                         ### Alfa
-__version__ = '2.0.3'                                                           ### Alfa
-__plugin__ = "python-libtorrent v.2.0.3"                                        ### Alfa
+__version__ = '2.0.2'                                                           ### Alfa
+__plugin__ = "python-libtorrent v.2.0.2"                                        ### Alfa
 __icon__= filetools.join(filetools.translatePath('special://home'), 'addons',
                                    'plugin.video.alfa', 'icon.png')             ### Alfa
 #__language__ = __settings__.getLocalizedString                                 ### Alfa

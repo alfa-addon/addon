@@ -36,8 +36,8 @@ import traceback                                                                
 #__version__ = __settings__.getAddonInfo('version')                             ### Alfa
 #__plugin__ = __settings__.getAddonInfo('name') + " v." + __version__           ### Alfa
 #__settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                         ### Alfa
-__version__ = '2.0.3'                                                           ### Alfa
-__plugin__ = "python-libtorrent v.2.0.3"                                        ### Alfa
+__version__ = '2.0.2'                                                           ### Alfa
+__plugin__ = "python-libtorrent v.2.0.2"                                        ### Alfa
 #__language__ = __settings__.getLocalizedString                                 ### Alfa
 __root__ = filetools.dirname(filetools.dirname(__file__))
 
@@ -60,10 +60,10 @@ else:
 
 log('dirname: ' +str(dirname))
 
-VERSIONS = ['0.16.19', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.0.11', '1.1.0', '1.1.1', '1.1.6', '1.1.7', '1.2.13', '2.0.3']  ### Alfa
+VERSIONS = ['0.16.19', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.0.11', '1.1.0', '1.1.1', '1.1.6', '1.1.7', '1.2.12', '2.0.2']  ### Alfa
 if platform['system'] in ['linux_armv7', 'linux_aarch64_ucs4']:                 ### Alfa: Removing ARM from v2 list
-    VERSIONS.remove('2.0.3')
-    VERSIONS.remove('1.2.13')
+    VERSIONS.remove('2.0.2')
+    VERSIONS.remove('1.2.12')
 
 while VERSIONS:
     log('VERSIONS: %s' % str(VERSIONS))
