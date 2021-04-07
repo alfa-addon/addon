@@ -16,6 +16,7 @@ from core.item import Item
 from core import servertools
 from core import scrapertools
 from core import jsontools
+from lib import jsunpack
 from channelselector import get_thumb
 from platformcode import config, logger
 from channels import filtertools, autoplay
@@ -275,6 +276,7 @@ def findvideos(item):
 
         for elem in matches:
             url = base64.b64decode(elem["data-r"]).decode('utf-8')
+
             if "animekao.club/player.php" in url:
                 url = url.replace("animekao.club/player.php?x", "player.premiumstream.live/player.php?id")
             elif "animekao.club/play.php" in url:
@@ -288,6 +290,9 @@ def findvideos(item):
             elif "animekao.club/reproductores" in url:
                 v_id = scrapertools.find_single_match(url, "v=([A-z0-9_-]+)")
                 url = "https://drive.google.com/file/d/%s/preview" % v_id
+            elif "animekao.club/mf/" in url:
+                unpacked = get_unpacked(url)
+                url = scrapertools.find_single_match(unpacked, '"file":"([^"]+)"')
             elif "kaodrive" in url:
                 new_data = httptools.downloadpage(url, add_referer=True).data
                 v_id = scrapertools.find_single_match(new_data, 'var shareId = "([^"]+)"')
@@ -295,17 +300,23 @@ def findvideos(item):
             elif "playhydrax.com" in url:
                 slug = scrapertools.find_single_match(url, 'v=(\w+)')
                 post = "slug=%s&dataType=mp4" % slug
-                data = httptools.downloadpage("https://ping.iamcdn.net/", post=post).json
-                url = data.get("url", '')
-                if url:
+                try:
+                    data = httptools.downloadpage("https://ping.iamcdn.net/", post=post).json
+                    url = data.get("url", '')
+                except:
+                    url = None
+                if not url:
+                    continue
                     url = "https://www.%s" % base64.b64decode(url[-1:]+url[:-1]).decode('utf-8')
                     url += '|Referer=https://playhydrax.com/?v=%s&verifypeer=false' % slug
             elif "kplayer" in url:
-                data = httptools.downloadpage(url).data
-                src = scrapertools.find_single_match(data, "source: '([^']+)'")
-                sgn = scrapertools.find_single_match(data, "signature: '([^']+)'")
-                sub = scrapertools.find_single_match(data, 'file: "([^"]+)"')
-                url = "%s%s" % (src, sgn)
+                unpacked = get_unpacked(url)
+                if not unpacked:
+                    continue
+                url = "https://kplayer.animekao.club/%s" % scrapertools.find_single_match(unpacked, '"file":"([^"]+)"')
+                url = httptools.downloadpage(url, add_referer=True, follow_redirects=False).url
+
+
 
             itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                                  language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels, subtitle=sub))
@@ -326,6 +337,18 @@ def findvideos(item):
 
     return itemlist
 
+
+def get_unpacked(url):
+    logger.info()
+    try:
+        data = httptools.downloadpage(url, headers={"referer": host}, follow_redirects=False).data
+    except:
+        return None
+
+    packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
+    unpacked = jsunpack.unpack(packed)
+
+    return unpacked
 
 def search(item, texto):
     logger.info()

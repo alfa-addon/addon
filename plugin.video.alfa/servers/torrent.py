@@ -1164,10 +1164,6 @@ def torrent_dirs():
                      'MCT_torrents': '',
                      'MCT_buffer': 0,
                      'MCT_version': config.get_setting("libtorrent_version", server="torrent", default='/').split('/')[1],
-                     'TORRENTER': '',
-                     'TORRENTER_torrents': '',
-                     'TORRENTER_buffer': 0,
-                     'TORRENTER_version': '',
                      'QUASAR': '',
                      'QUASAR_torrents': '',
                      'QUASAR_buffer': 0,
@@ -1577,9 +1573,13 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
         except:
             logger.error(traceback.format_exc(1))
             return False
-        if torr_data or isinstance(item.downloadProgress, (int, float)):                    # Existe la descarga ?
-            if torr_data['label'].startswith('100.00%') or item.downloadProgress == 100:    # Ha terminado la descarga?
-                item.downloadProgress = 100                                                 # Lo marcamos como terminado
+        if not torr_data or not isinstance(torr_data, dict):
+            torr_data = {'label': str(torr_data)}
+        if not isinstance(item.downloadProgress, (int, float)):
+            item.downloadProgress = 0
+        if torr_data or isinstance(item.downloadProgress, (int, float)):                            # Existe la descarga ?
+            if torr_data.get('label', '').startswith('100.00%') or item.downloadProgress == 100:    # Ha terminado la descarga?
+                item.downloadProgress = 100                                                         # Lo marcamos como terminado
                 update_control(item, function='relaunch_torrent_monitoring')
                 return True
         else:
@@ -2064,8 +2064,8 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                 if not ret and rar_file:
                     ret = filetools.write(filetools.join(rar_control['download_path'], \
                                     '_rar_control.json'), jsontools.dump(rar_control))
-                log("##### Descargado: %s, ID: %s, Status: %s, Rate: %s / %s, Torrents: %s, Tot.Prog: %s, Desc.total: %s" % \
-                                    (scrapertools.find_single_match(torr_data['label'], \
+                log("##### %s Descargado: %s, ID: %s, Status: %s, Rate: %s / %s, Torrents: %s, Tot.Prog: %s, Desc.total: %s" % \
+                                    (str(torr_client).upper(), scrapertools.find_single_match(torr_data['label'], \
                                     '(^.*?\%)'), index, torr_data_status, torr_down_rate, \
                                     totals.get('download_rate', ''), totals.get('num_torrents', ''), 
                                     totals.get('progress', ''), totals.get('total_wanted', '')))
@@ -2367,6 +2367,13 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                     dp.update(99, "Espera unos minutos....", "Extrayendo archivo... %s" % info[selection])
                     archive.extract(files[selection], save_path_videos)
                 log("##### RAR Extract END #####")
+            except rarfile.RarUserBreak:
+                log("##### %s" % error_msg)
+                error_msg = "Cancelado por el Usuario"
+                error_msg1 = "Archivo rar no descomprimido"
+                platformtools.dialog_notification(error_msg, error_msg1)
+                dp.close()
+                return rar_file, False, '', erase_file_path
             except (rarfile.RarWrongPassword, rarfile.RarCRCError):
                 logger.error(traceback.format_exc(1))
                 error_msg = "Error al extraer"

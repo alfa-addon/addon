@@ -21,7 +21,7 @@ from platformcode import config, logger
 from channelselector import get_thumb
 
 
-host = 'https://seriesretro.com/'
+host = ''
 
 list_idiomas = ['LAT']
 list_servers = ['okru', 'yourupload', 'mega']
@@ -49,25 +49,46 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + "lista-series/",
-                         thumbnail=get_thumb("All", auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title="Series", action="list_all", url=host + "lista-series/",
+    itemlist.append(Item(channel=item.channel, title="Series", action="sub_menu",
                          thumbnail=get_thumb("tvshows", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Animación", action="list_all", url=host + "category/animacion/",
-                         thumbnail=get_thumb("animacion", auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu",
+                         thumbnail=get_thumb("movies", auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
+                         thumbnail=get_thumb("search", auto=True)))
+
+    autoplay.show_option(item.channel, itemlist)
+
+    return itemlist
+
+
+def sub_menu(item):
+    logger.info()
+    global host
+
+    if item.title == "Peliculas":
+        host = "https://pelisretro.com/"
+    else:
+        host = "https://seriesretro.com/"
+
+
+    itemlist = list()
+
+    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all",
+                         url= host + ("lista-series/" if item.title == "Series" else "peliculas/"),
+                         thumbnail=get_thumb("All", auto=True)))
+
+    if item.title == "Series":
+        itemlist.append(
+            Item(channel=item.channel, title="Animación", action="list_all", url=host + "category/animacion/",
+                 thumbnail=get_thumb("animacion", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=host,
                          thumbnail=get_thumb("genres", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Alfabetico", action="section", url=host,
                          thumbnail=get_thumb("alphabet", auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + "?s=",
-                         thumbnail=get_thumb("search", auto=True)))
-
-    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -86,10 +107,20 @@ def list_all(item):
 
         url = elem.a["href"]
         title = elem.a.h3.text
-        thumb = elem.find("img")["src"]
+        thumb = elem.find("img")
+        thumb = thumb["data-src"] if thumb.has_attr("data-src") else thumb["src"]
+        year = elem.find("span", class_="Year").text
 
-        itemlist.append(Item(channel=item.channel, url=url, title=title, contentSerieName=title, action="seasons",
-                        thumbnail=thumb))
+        new_item = Item(channel=item.channel, url=url, title=title, thumbnail=thumb, infoLabels={"year": year})
+
+        if "pelisretro" in url:
+            new_item.contentTitle = title
+            new_item.action = "findvideos"
+        else:
+            new_item.contentSerieName = title
+            new_item.action = "seasons"
+
+        itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -236,6 +267,11 @@ def findvideos(item):
     # Requerido para AutoPlay
 
     autoplay.start(itemlist, item)
+    if item.contentType != "episode":
+        if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
+            itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                                 url=item.url, action="add_pelicula_to_library", extra="findvideos",
+                                 contentTitle=item.contentTitle))
 
     return itemlist
 
@@ -256,11 +292,21 @@ def play(item):
 
 def search(item, texto):
     logger.info()
+    search_result = list()
     try:
         texto = texto.replace(" ", "+")
         if texto != '':
+
+            item.url = 'https://seriesretro.com/' + "?s="
             item.url += texto
-            return list_all(item)
+            search_result = list_all(item)
+
+            item.url = 'https://pelisretro.com/' + "?s="
+            item.url += texto
+            search_result.extend(list_all(item))
+
+            return search_result
+        else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except:

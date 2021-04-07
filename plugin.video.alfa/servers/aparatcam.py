@@ -19,7 +19,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
     logger.info()
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    url = scrapertools.find_single_match(data, 'src: "([^"]+)"')
+    url = scrapertools.find_single_match(data, 'sources: \[\{file:"([^"]+)"')
     video_urls.append(["aparatcam", url])
     return video_urls
 

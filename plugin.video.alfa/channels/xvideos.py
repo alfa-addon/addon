@@ -27,7 +27,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Lo mejor" , action="lista", url=host + "/best/"))
     itemlist.append(item.clone(title="Pornstar" , action="catalogo", url=host + "/pornstars-index"))
     itemlist.append(item.clone(title="WebCAM" , action="catalogo", url=host + "/webcam-models-index"))
-    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "/channels-index/top"))
+    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "/channels-index/from/worldwide/"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/tags"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
@@ -68,11 +68,12 @@ def catalogo(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>|amp;", "", data)
-    patron = '<img src="([^"]+)".*?'
-    patron += '<p class="profile-name">.*?<a href="([^"]+)">([^<]+)</a>.*?'
+    patron = '<div class="thumb"><a href="([^"]+)".*?'
+    patron += 'src="([^"]+)".*?'
+    patron += '<span class="profile-name">([^<]+)</span>.*?'
     patron += '<span class="with-sub">([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedthumbnail,scrapedurl,scrapedtitle,cantidad in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         scrapedurl = urlparse.urljoin(host,scrapedurl) + "/videos/new/0"
         title = "%s (%s)" % (scrapedtitle, cantidad)
@@ -109,7 +110,7 @@ def lista(item):
         plot = ""
         itemlist.append(item.clone(action="play", title=title, url=scrapedurl,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
-    next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)" class="no-page next-page">Siguiente')
+    next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)" class="no-page next-page">')
     if next_page=="":
         next_page = scrapertools.find_single_match(data, '<li><a class="active".*?<a href="([^"]+)"')
     next_page = next_page.replace("#", "")

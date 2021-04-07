@@ -97,8 +97,9 @@ def check_item_for_exception(data):
             data.infoLabels['year'] = year_replace[x]
     return data
 
-def newest(item):
-    item.url = host + base_url_start + '/-/ESTRENO' + base_url_end,
+def newest(categoria):
+    item = Item(channel = 'seriesantiguas')
+    item.url = '{}{}/-/ESTRENO{}'.format(host, base_url_start, base_url_end)
     return list_all(item)
 
 def list_all(item):
@@ -178,6 +179,9 @@ def seasons(item, get_episodes = False):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    if item.url.startswith(host):
+        item.url = scrapertools.find_single_match(data, '\w+://[^(?:www)]\w+.seriesantiguas.com')
+        data = httptools.downloadpage(item.url).data
     listpattern = "(?s)class='topmenu1 megamenu' id='megamenuid'.*?class='megalist'.*?<a.*?(<ul.*?</ul>)"
     listmatch = scrapertools.find_single_match(data, listpattern)
     pattern = "(?s)<li><a href='([^']+)..T.*?[^ ]+.(.).*?</a>"

@@ -18,11 +18,16 @@ import re
 from platformcode import config
 from core.item import Item
 from core import scrapertools
+from core import jsontools
 from platformcode import logger
+import time
 
 # Lista de elementos posibles en el titulo
 color_list = ['movie', 'tvshow', 'year', 'rating_1', 'rating_2', 'rating_3', 'quality', 'cast', 'lat', 'vose',
               'vos', 'vo', 'server', 'library', 'update', 'no_update']
+
+styles_path = os.path.join(config.get_runtime_path(), 'resources', 'color_styles.json')
+colors_file = jsontools.load((open(styles_path, "r").read()))
 
 thumb_dict = {"movies": "https://s10.postimg.cc/fxtqzdog9/peliculas.png",
     "tvshows": "https://s10.postimg.cc/kxvslawe1/series.png",
@@ -229,11 +234,9 @@ def add_info_plot(plot, languages, quality):
 
 def set_color(title, category):
     #logger.info()
-    from core import jsontools
 
-    styles_path = os.path.join(config.get_runtime_path(), 'resources', 'color_styles.json')
     preset = config.get_setting("preset_style", default="Estilo 1")
-    color_setting = jsontools.load((open(styles_path, "r").read()))[preset]
+    color_setting = colors_file[preset]
 
     color_scheme = {'otro': 'white', 'dual': 'white'}
 
@@ -311,7 +314,7 @@ def set_lang(language):
 
 def title_format(item):
     #logger.info()
-
+    #start = time.time()
     lang = False
     valid = True
     language_color = 'otro'
@@ -507,7 +510,7 @@ def title_format(item):
         if item.from_channel != '' and item.from_channel != 'news':
             from core import channeltools
             channel_parameters = channeltools.get_channel_parameters(item.from_channel)
-            logger.debug(channel_parameters)
+            #logger.debug(channel_parameters)
             item.title = '%s [%s]' % (item.title, channel_parameters['title'])
 
 
@@ -592,7 +595,7 @@ def title_format(item):
             title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, item.title.decode('utf-8'))
             item.title = title.encode('utf-8')
             if PY3 and isinstance(item.title, bytes): item.title = item.title.decode('utf-8')
-
+    #logger.debug("Final Unify: %s" % (time.time() - start))
     return item
 
 def thumbnail_type(item):

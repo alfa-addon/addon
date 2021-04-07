@@ -37,7 +37,7 @@ list_servers = ['gounlimited',
                 'torrent'
                 ]
 
-host = 'https://www.cinecalidad.eu'
+host = 'https://www.cinecalidad.im'
 
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
@@ -45,7 +45,7 @@ thumbbr = 'http://flags.fmcdn.net/data/flags/normal/br.png'
 
 current_lang = ''
 
-site_list = ['', '%s' % host, '%s/espana/' % host, 'https://www.cinemaqualidade.eu/']
+site_list = ['', '%s' % host, '%s/espana/' % host, 'https://www.cinemaqualidade.im']
 site = config.get_setting('filter_site', channel='cinecalidad')
 site_lang = '%s' % site_list[site]
 
@@ -78,7 +78,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Portugues",
                          action="submenu",
-                         host="https://www.cinemaqualidade.eu/",
+                         host="https://www.cinemaqualidade.im",
                          thumbnail=thumbbr))
 
     itemlist.append(Item(channel=item.channel,
@@ -99,7 +99,7 @@ def submenu(item):
     idioma = 'peliculas'
     idioma2 = "destacada"
     host = item.host
-    if item.host == "https://www.cinemaqualidade.is/":
+    if item.host == "https://www.cinemaqualidade.im":
         idioma = "filmes"
         idioma2 = "destacado"
     logger.info()
@@ -219,7 +219,7 @@ def genres(item):
 
     itemlist = list()
     pl = 'peliculas'
-    if item.url == "https://www.cinemaqualidade.is/":
+    if item.url == "https://www.cinemaqualidade.im":
         pl = "filmes"
 
     itemlist.append(Item(title='4K UHD', url='%s%s/4k-ultra-hd/' % (item.url, pl),

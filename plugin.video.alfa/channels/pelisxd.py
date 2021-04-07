@@ -60,7 +60,7 @@ def sub_menu(item):
 
     itemlist = list()
 
-    if item.type != "Peliculas":
+    if item.title != "Peliculas":
         type = "series-y-novelas"
     else:
         type = item.title.lower()
@@ -100,7 +100,6 @@ def get_language(lang_data):
 
     lang_list = lang_data.find_all("img")
     for lang in lang_list:
-        logger.debug(lang)
         lang = scrapertools.find_single_match(lang["src"], '/\d{02}/([^.]+).png')
         if lang not in language:
             language.append(IDIOMAS[lang])
@@ -143,8 +142,6 @@ def list_all(item):
     if not matches:
         matches = soup.find("div", id="aa-movies")
     for elem in matches.find_all("article", class_=re.compile(r"post (?:dfx|fcl|movies)")):
-
-        logger.debug(elem)
 
         type = item.type
         url = elem.a["href"]
