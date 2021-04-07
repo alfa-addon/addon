@@ -96,10 +96,10 @@ def lista(item):
         if "icon-hd" in quality or "icon-vr" in quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time, scrapedtitle.strip())
         thumbnail = scrapedthumbnail
-        # url = scrapedurl
         url = urlparse.urljoin(host,scrapedurl)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url,
+        if not "/watch/" in url:
+            itemlist.append(item.clone(action="play", title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<li class="page page-mobile current">.*?href="([^"]+)"').replace("amp;", "")
     if next_page:
