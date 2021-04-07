@@ -456,7 +456,7 @@ def list_all(item):
             match = [thumb, fanart, url, title]
 
         else:                                                                                # == Patrón genérico para páginas comunes ==
-            thumb = scrapertools.find_single_match(article.find('noscript').text, 'src=["\'](.+?)[\'"]')
+            thumb = article.find('noscript').find('img')['src']
             contentType = article.find('div', class_='CategoriaEnPoster').text
             status = article.find('div', class_='estadoposter').text
             url = article.find('div', class_='data').find('a')['href']

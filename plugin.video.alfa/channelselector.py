@@ -216,9 +216,6 @@ def filterchannels(category, view="thumb_"):
             if channel_parameters["has_settings"]:
                 context.append({"title": config.get_localized_string(70525), "channel": "setting", "action": "channel_config",
                                 "config": channel_parameters["channel"]})
-            if os.path.exists(os.path.join(config.get_runtime_path(), 'channels', 'test.py')):
-                context.append({"title": config.get_localized_string(70215), "channel": "test", "action": "test_channel",
-                                "parameters": channel_parameters["channel"]})
 
             channel_info = set_channel_info(channel_parameters)
             # Si ha llegado hasta aquí, lo añade
