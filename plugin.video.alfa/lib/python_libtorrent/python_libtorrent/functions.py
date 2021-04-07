@@ -44,8 +44,8 @@ __libbaseurl__ = ["https://github.com/DiMartinoXBMC/script.module.libtorrent/raw
 #__icon__= filetools.join(filetools.translatePath('special://home'), 'addons',
 #                                   'script.module.libtorrent', 'icon.png')
 #__settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                         ### Alfa
-__version__ = '2.0.2'                                                           ### Alfa
-__plugin__ = "python-libtorrent v.2.0.2"                                        ### Alfa
+__version__ = '2.0.3'                                                           ### Alfa
+__plugin__ = "python-libtorrent v.2.0.3"                                        ### Alfa
 __icon__= filetools.join(filetools.translatePath('special://home'), 'addons',
                                    'plugin.video.alfa', 'icon.png')             ### Alfa
 #__language__ = __settings__.getLocalizedString                                 ### Alfa
@@ -88,7 +88,7 @@ class LibraryManager(object):
         if ver1 > 1 or (ver1 == 1 and ver2 >= 2):
             global __libbaseurl__
             __libbaseurl__ = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/libtorrent', \
-                              'https://bitbucket.org/alfa_addon/alfa-repo/raw/master/downloads/libtorrent']
+                              'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/libtorrent']
         else:
             __libbaseurl__ = ["https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/master/python_libtorrent"]
 
@@ -134,7 +134,7 @@ class LibraryManager(object):
         if ver1 > 1 or (ver1 == 1 and ver2 >= 2):
             global __libbaseurl__
             __libbaseurl__ = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/libtorrent', \
-                              'https://bitbucket.org/alfa_addon/alfa-repo/raw/master/downloads/libtorrent']
+                              'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/libtorrent']
         else:
             __libbaseurl__ = ["https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/master/python_libtorrent"]
             
