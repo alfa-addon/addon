@@ -74,6 +74,7 @@ def get_user_agent():
     # Devuelve el user agent global para ser utilizado cuando es necesario para la url.
     return default_headers["User-Agent"]
 
+
 def get_cookie(url, name, follow_redirects=False):
     if follow_redirects:
         try:
@@ -93,6 +94,7 @@ def get_cookie(url, name, follow_redirects=False):
         if cookie.name == name and domain in cookie.domain:
             return cookie.value
     return False
+
 
 def get_url_headers(url, forced=False, dom=False):
     from . import scrapertools
@@ -117,6 +119,7 @@ def get_url_headers(url, forced=False, dom=False):
     headers["Cookie"] = "; ".join(["%s=%s" % (c.name, c.value) for c in list(domain_cookies.values())])
 
     return url + "|" + "&".join(["%s=%s" % (h, urllib.quote(headers[h])) for h in headers])
+
 
 def set_cookies(dict_cookie, clear=True, alfa_s=False):
     """
@@ -160,7 +163,8 @@ def set_cookies(dict_cookie, clear=True, alfa_s=False):
     
     cj.set_cookie(ck)
     save_cookies()
-    
+
+
 def load_cookies(alfa_s=False):
     cookies_lock.acquire()
     if os.path.isfile(ficherocookies):
@@ -182,6 +186,7 @@ def save_cookies(alfa_s=False):
 
 load_cookies()
 
+
 def random_useragent():
     """
     Based on code from https://github.com/theriley106/RandomHeaders
@@ -200,7 +205,8 @@ def random_useragent():
             return UserAgentIem
     
     return default_headers["User-Agent"]
-    
+
+
 def channel_proxy_list(url, forced_proxy=None):
     import base64
     import ast
@@ -236,6 +242,7 @@ def channel_proxy_list(url, forced_proxy=None):
             return True
 
     return False
+
 
 def show_infobox(info_dict):
     logger.info()
@@ -295,6 +302,7 @@ def show_infobox(info_dict):
         else:
             logger.info('%s%s%s' % (box['r_dn_corner'], box['fill'] * width, box['l_dn_corner']))
     return
+
 
 def check_proxy(url, **opt):
     from . import scrapertools
@@ -461,7 +469,7 @@ def downloadpage(url, **opt):
         @param url: url que abrir.
         @type url: str
         @param post: Si contiene algun valor este es enviado mediante POST.
-        @type post: str
+        @type post: str (datos json), dict
         @param headers: Headers para la petición, si no contiene nada se usara los headers por defecto.
         @type headers: dict, list
         @param timeout: Timeout para la petición.
@@ -475,6 +483,8 @@ def downloadpage(url, **opt):
         @type replace_headers: bool
         @param add_referer: Indica si se ha de añadir el header "Referer" usando el dominio de la url como valor.
         @type add_referer: bool
+        @param referer: Si se establece, agrega el header "Referer" usando el parámetro proporcionado como valor.
+        @type referer: str
         @param only_headers: Si True, solo se descargarán los headers, omitiendo el contenido de la url.
         @type only_headers: bool
         @param random_headers: Si True, utiliza el método de seleccionar headers aleatorios.
@@ -505,6 +515,9 @@ def downloadpage(url, **opt):
     req_headers = default_headers.copy()
     if opt.get('add_referer', False):
         req_headers['Referer'] = "/".join(url.split("/")[:3])
+
+    if isinstance(opt.get('referer'), str) and '://' in opt.get('referer'):
+        req_headers['Referer'] = opt.get('referer')
 
     # Headers pasados como parametros
     if opt.get('headers', None) is not None:
@@ -754,6 +767,7 @@ def downloadpage(url, **opt):
             break
 
     return type('HTTPResponse', (), response)
+
 
 def fill_fields_pre(url, opt, proxy_data, file_name):
     info_dict = []
