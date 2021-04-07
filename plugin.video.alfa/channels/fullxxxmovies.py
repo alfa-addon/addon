@@ -28,7 +28,7 @@ list_servers = ['gounlimited']
 
 host = 'http://fullxxxmovies.net'          #es   http://freepornstreams.org    http://xxxstreams.org
 
-# Cloudscraper casi todo ubiqfile
+# k2s
 
 def mainlist(item):
     logger.info()

@@ -5,7 +5,9 @@
   "adult": false,
   "thumbnail": "",
   "banner": "",
-  "categories": [],
+  "categories": [
+    "movie"
+  ],
   "settings": [
     {
       "id": "last_search",

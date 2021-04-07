@@ -14,7 +14,11 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 def test_video_exists(page_url):
     global data
     logger.info("(page_url='%s')" % page_url)
-    data = httptools.downloadpage(page_url, add_referer=True).data
+    referer = page_url
+    if "|" in page_url:
+        referer = page_url.split("|")[1]
+        page_url = page_url.split("|")[0]
+    data = httptools.downloadpage(page_url, headers={"Referer":referer}).data
     if "File is no longer available" in data:
         return False, "[ZPlayer] El fichero no existe o ha sido borrado"
     return True, ""
@@ -40,8 +44,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             video_urls.append(["[zplayer] %s" % ext, url, 0, sub])
     else:
         packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
-        unpacked = jsunpack.unpack(packed)
-        patron = r'sources:\[\{\s*file:"([^"]+)"'
+        if packed:
+            unpacked = jsunpack.unpack(packed)
+        else:
+            unpacked = data
+        patron = r'sources:\s*\[\{\s*file:"([^"]+)"'
         matches = scrapertools.find_multiple_matches(unpacked, patron)
         for video_url in matches:
             ext = video_url[-4:]
