@@ -163,7 +163,8 @@ def mainlist(item):
                                 contentSerieName=item.contentSerieName, text_color="red"))
 
     if not item.contentType == "tvshow" and config.get_setting("browser", "downloads") == True:
-        itemlist.insert(0, Item(channel=item.channel, action="browser", title=config.get_localized_string(70222),
+        itemlist.insert(0, Item(channel=item.channel, action="browser", title='[COLOR gold][B]%s[/B][/COLOR]' 
+                                % config.get_localized_string(70222),
                                 url=DOWNLOAD_PATH, text_color="yellow"))
 
     if not item.contentType == "tvshow":
@@ -184,25 +185,39 @@ def browser(item):
     itemlist = []
     extensions_list = ['.aaf', '.3gp', '.asf', '.avi', '.flv', '.mpeg',
                        '.m1v', '.m2v', '.m4v', '.mkv', '.mov', '.mpg',
-                       '.mpe', '.mp4', '.ogg', '.wmv']
+                       '.mpe', '.mp4', '.ogg', '.wmv', '.rar']
                        
     context = [{"title": config.get_localized_string(70221),
                  "action": "delete_video",
+                 "channel": item.channel},
+               {"title": "Copiar a...",
+                 "action": "copy_video",
                  "channel": item.channel}]
     
     torrent_paths = torrent.torrent_dirs()
+    if config.get_setting("torrent_paths", "downloads", default=True):
+        torrent_paths_list = config.get_setting("torrent_paths_list", "downloads", default=[])
+    else:
+        torrent_paths_list = []
+    torrent_paths_list_seen = []
+    plot = '[COLOR gold][B]Ruta de descarga:[/COLOR][/B]\n\n %s'
 
-    for file in filetools.listdir(item.url):
-        if file == "list": continue
-        if filetools.isdir(filetools.join(item.url, file)):
-            if not file.endswith(']'): continue
-            itemlist.append(
-                Item(channel=item.channel, title=file, action=item.action, url=filetools.join(item.url, file), context=context))
-        else:
-            if scrapertools.find_single_match(file, '(\.\w+)$') in extensions_list:
-                itemlist.append(Item(channel=item.channel, title=file, action="play", url=filetools.join(item.url, file), context=context))
+    if item.url not in str(torrent_paths_list):
+        for file in filetools.listdir(item.url):
+            if file == "list": continue
+            url = filetools.join(item.url, file)
+            torrent_paths_list_seen += [url]
+            if filetools.isdir(url):
+                if file.startswith('.') or file == 'MCT-torrents': continue
+                itemlist.append(
+                    Item(channel=item.channel, title=file, action=item.action, url=url, context=context,
+                                 plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
+            else:
+                if scrapertools.find_single_match(file, '(\.\w+)$') in extensions_list:
+                    itemlist.append(Item(channel=item.channel, title=file, action="play", url=url, context=context, 
+                                                 plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
             
-    if item.title == 'Ver archivos descargados':
+    if config.get_localized_string(70222) in item.title:
         for file in sorted(filetools.listdir(DOWNLOAD_LIST_PATH)):
             if file.endswith(".json"):
                 download_item = Item().fromjson(filetools.read(filetools.join(DOWNLOAD_LIST_PATH, file)))
@@ -214,16 +229,61 @@ def browser(item):
                     if download_item.infoLabels['mediatype'] == 'movie' or item.infoLabels["tmdb_id"] == null:
                         title = download_item.infoLabels['title']
                     else:
-                         title = download_item.infoLabels['tvshowtitle']
-                    title = title + ' [%s]' % download_item.category.lower()
-                    if filetools.isdir(filetools.join(torrent_paths[torr_client], filetools.dirname(path))):
+                        title = '%s [%sx%s]' % (download_item.infoLabels['tvshowtitle'], \
+                                download_item.infoLabels['season'], str(download_item.infoLabels['episode']).zfill(2))
+                    if not title: title = scrapertools.find_single_match(download_item.downloadFilename, '^\:\w+\:\s*([^$]+$)')
+                    title =  '%s [COLOR gold][B][%s][/B][/COLOR]' % (title, download_item.category.lower())
+                    if filetools.dirname(path) and filetools.isdir(filetools.join(torrent_paths[torr_client], filetools.dirname(path))):
+                        url = filetools.join(torrent_paths[torr_client], filetools.dirname(path))
+                    else:
+                        url = filetools.join(torrent_paths[torr_client], path)
+                
+                elif download_item.downloadAt:
+                    url = filetools.join(download_item.downloadAt, download_item.downloadFilename)
+                    if download_item.infoLabels['mediatype'] == 'movie' or item.infoLabels["tmdb_id"] == null:
+                        title = download_item.infoLabels['title']
+                    else:
+                        title = '%s [%sx%s]' % (download_item.infoLabels['tvshowtitle'], \
+                                download_item.infoLabels['season'], str(download_item.infoLabels['episode']).zfill(2))
+                    if not title: title = download_item.downloadFilename
+                    title =  '%s [COLOR gold][B][%s][/B][/COLOR]' % (title, download_item.contentChannel.lower())
+                    
+                else:
+                    url = filetools.join(DOWNLOAD_PATH, download_item.downloadFilename)
+                    if download_item.infoLabels['mediatype'] == 'movie' or item.infoLabels["tmdb_id"] == null:
+                        title = download_item.infoLabels['title']
+                    else:
+                        title = '%s [%sx%s]' % (download_item.infoLabels['tvshowtitle'], \
+                                download_item.infoLabels['season'], str(download_item.infoLabels['episode']).zfill(2))
+                    if not title: title = download_item.downloadFilename
+                    title =  '%s [COLOR gold][B][%s][/B][/COLOR]' % (title, download_item.contentChannel.lower())
+                    
+                if filetools.exists(url):
+                    torrent_paths_list_seen += [url]
+                    if filetools.isdir(url):
                         itemlist.append(
                             Item(channel=item.channel, title=title, action=item.action, context=context, 
-                                        url=filetools.join(torrent_paths[torr_client], filetools.dirname(path))))
+                                        url=url, plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
+                    elif filetools.exists(url):
+                        if scrapertools.find_single_match(filetools.basename(download_item.downloadFilename), '(\.\w+)$') in extensions_list:
+                            itemlist.append(Item(channel=item.channel, title=title, action="play", context=context, 
+                                        url=url, plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
+
+        if torrent_paths_list:
+            for torr_client, path in torrent_paths_list:
+                for file in sorted(filetools.listdir(path)):
+                    if file.startswith('.') or file.lower().startswith('torrent'): continue
+                    url = filetools.join(path, file)
+                    if url in str(torrent_paths_list_seen): continue
+                    torrent_paths_list_seen += [url]
+                    if filetools.isdir(url):
+                        itemlist.append(
+                            Item(channel=item.channel, title=file, action=item.action, url=url, context=context,
+                                         plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
                     else:
-                        if scrapertools.find_single_match(file, '(\.\w+)$') in extensions_list:
-                            itemlist.append(Item(channel=item.channel, title=file, action="play", context=context, 
-                                        url=filetools.join(torrent_paths[torr_client], path)))
+                        if scrapertools.find_single_match(url, '(\.\w+)$') in extensions_list:
+                            itemlist.append(Item(channel=item.channel, title=file, action="play", url=url, context=context, 
+                                         plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
 
     return itemlist
 
@@ -242,6 +302,53 @@ def delete_video(item):
         platformtools.itemlist_refresh()
 
 
+def copy_video(item):
+    logger.info(item.url)
+    
+    if not filetools.exists(item.url):
+        msg = 'Carpeta/Archivo de ORIGEN no disponible: '
+        msg1 = item.url
+        platformtools.dialog_notification(msg , msg1)
+        return
+    
+    if filetools.isdir(item.url):
+        browse_type = 3
+    else:
+        browse_type = 0
+    msg = 'Seleccione carpeta de destino:'
+    path_out = platformtools.dialog_browse(browse_type, msg, shares='')
+    if path_out and filetools.exists(path_out):
+        
+        def copy_background(infile, outfile):
+            if filetools.isdir(infile):
+                filetools.copy(infile, outfile, silent=True)
+            else:
+                filetools.copy(infile, filetools.join(outfile, filetools.basename(infile)), silent=True)
+            msg = 'Copia terminada: '
+            msg1 = filetools.basename(item.url)
+            platformtools.dialog_notification(msg , msg1)
+
+        if filetools.basename(item.url) == 'Extracted':
+            path_out = filetools.join(path_out, filetools.basename(filetools.dirname(item.url)))
+        elif filetools.isdir(item.url):
+            path_out = filetools.join(path_out, filetools.basename(item.url))
+
+        msg = 'Copiando archivo: '
+        if filetools.isdir(item.url):
+            msg = 'Copiando carpeta: '
+        if filetools.basename(item.url) == 'Extracted':
+            msg1 = filetools.basename(path_out)
+        else:
+            msg1 = filetools.basename(item.url)
+        platformtools.dialog_notification(msg , msg1)
+        threading.Thread(target=copy_background, args=(item.url, path_out)).start()
+        time.sleep(1)
+    else:
+        msg = 'Carpeta de DESTINO no disponible: '
+        msg1 = filetools.basename(item.url)
+        platformtools.dialog_notification(msg , msg1)
+
+
 def clean_all(item):
     logger.info()
 
@@ -254,6 +361,8 @@ def clean_all(item):
                              or item.contentSerieName.lower() == download_item.contentSerieName.lower()):
                 if download_item.server == 'torrent':
                     delete_torrent_session(download_item)
+                elif filetools.exists(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename)):
+                    filetools.remove(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename))
                 filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, fichero))
 
     platformtools.itemlist_refresh()
@@ -293,13 +402,14 @@ def restart_error(item):
                         download_item.downloadServer = {}
                     
                     else:
-                        if filetools.isfile(filetools.join(config.get_setting("downloadpath"), download_item.downloadFilename)):
-                            filetools.remove(filetools.join(config.get_setting("downloadpath"), download_item.downloadFilename), silent=True)
-                            if filetools.isdir(filetools.join(config.get_setting("downloadpath"), \
+                        if filetools.isfile(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename)):
+                            filetools.remove(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename), silent=True)
+                            if filetools.dirname(download_item.downloadFilename) and \
+                                        filetools.isdir(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, \
                                         filetools.dirname(download_item.downloadFilename))) and len(filetools.listdir\
-                                        (filetools.join(config.get_setting("downloadpath"), \
+                                        (filetools.join(download_item.downloadAt or DOWNLOAD_PATH, \
                                         filetools.dirname(download_item.downloadFilename)))) == 0:
-                                filetools.rmdirtree(filetools.join(config.get_setting("downloadpath"), \
+                                filetools.rmdirtree(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, \
                                         filetools.dirname(download_item.downloadFilename)), silent=True)
 
                     contentAction = download_item.contentAction
@@ -333,13 +443,14 @@ def restart_all(item):
                     download_item.downloadServer = {}
                 
                 else:
-                    if filetools.isfile(filetools.join(config.get_setting("downloadpath"), download_item.downloadFilename)):
-                        filetools.remove(filetools.join(config.get_setting("downloadpath"), download_item.downloadFilename), silent=True)
-                        if filetools.isdir(filetools.join(config.get_setting("downloadpath"), \
+                    if filetools.isfile(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename)):
+                        filetools.remove(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename), silent=True)
+                        if filetools.dirname(download_item.downloadFilename) and \
+                                    filetools.isdir(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, \
                                     filetools.dirname(download_item.downloadFilename))) and len(filetools.listdir\
-                                    (filetools.join(config.get_setting("downloadpath"), \
+                                    (filetools.join(download_item.downloadAt or DOWNLOAD_PATH, \
                                     filetools.dirname(download_item.downloadFilename)))) == 0:
-                            filetools.rmdirtree(filetools.join(config.get_setting("downloadpath"), \
+                            filetools.rmdirtree(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, \
                                     filetools.dirname(download_item.downloadFilename)), silent=True)
 
                 contentAction = download_item.contentAction
@@ -568,13 +679,14 @@ def menu(item):
             delete_torrent_session(item, delete_RAR, action=action)
         
         else:
-            if filetools.isfile(filetools.join(config.get_setting("downloadpath"), item.downloadFilename)):
-                filetools.remove(filetools.join(config.get_setting("downloadpath"), item.downloadFilename), silent=True)
-                if filetools.isdir(filetools.join(config.get_setting("downloadpath"), \
+            if filetools.isfile(filetools.join(item.downloadAt or DOWNLOAD_PATH, item.downloadFilename)):
+                filetools.remove(filetools.join(item.downloadAt or DOWNLOAD_PATH, item.downloadFilename), silent=True)
+                if filetools.dirname(item.downloadFilename) and \
+                            filetools.isdir(filetools.join(item.downloadAt or DOWNLOAD_PATH, \
                             filetools.dirname(item.downloadFilename))) and len(filetools.listdir\
-                            (filetools.join(config.get_setting("downloadpath"), \
+                            (filetools.join(item.downloadAt or DOWNLOAD_PATH, \
                             filetools.dirname(item.downloadFilename)))) == 0:
-                    filetools.rmdirtree(filetools.join(config.get_setting("downloadpath"), \
+                    filetools.rmdirtree(filetools.join(item.downloadAt or DOWNLOAD_PATH, \
                             filetools.dirname(item.downloadFilename)), silent=True)
 
             update_control(item.path, {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, "downloadProgress": 0,
@@ -789,7 +901,7 @@ def move_to_library(item, forced=False):
             absolute_path = filetools.join(torrent_dir, (re.sub('(?is):(.+?):\s?', '', download_path)))
         else:
             download_path = ':downloads: {}'.format(item.downloadFilename)
-            absolute_path = filetools.join(config.get_setting("downloadpath"), item.downloadFilename)
+            absolute_path = filetools.join(item.downloadAt or DOWNLOAD_PATH, item.downloadFilename)
         final_path = download_path
 
         # Si se activó el ajuste "Mover archivo descargado a videoteca", movemos el archivo
@@ -1320,8 +1432,13 @@ def select_server(item):
 
 
 def start_download(item):
+    global DOWNLOAD_PATH
     logger.info("contentAction: %s | contentChannel: %s | downloadProgress: %s | downloadQueued: %s | server: %s | url: %s" % (
         item.contentAction, item.contentChannel, item.downloadProgress, item.downloadQueued, item.server, item.url))
+
+    # Descargar en ...
+    if item.downloadAt:
+        DOWNLOAD_PATH = item.downloadAt
 
     # Ya tenemnos server, solo falta descargar
     if item.contentAction == "play":
@@ -1411,7 +1528,12 @@ def get_episodes(item):
                     category = item.category.lower()
                     if item.category_alt:
                         category = item.category_alt.lower()
-                    item.url = nfo_json.library_urls[category]
+                    if nfo_json.library_urls.get(category):
+                        item.url = nfo_json.library_urls.get(category)
+                    else:
+                        for key, value in list(nfo_json.library_urls.items()):
+                            item.url = value
+                            break
                 if not item.url_tvshow:
                     item.url_tvshow = item.url
             
@@ -1513,6 +1635,9 @@ def get_episodes(item):
         
         if episode.action in ["add_serie_to_library", "actualizar_titulos"] or not episode.action:
             continue
+        
+        # Descargar en ...
+        if item.downloadAt: episode.downloadAt = item.downloadAt
 
         # Si se ha llamado con la opción de NO Vistos, se comprueba contra el .NFO de la serie
         if item.sub_action in ["unseen", "auto"] and nfo_json and nfo_json.library_playcounts \
@@ -1651,6 +1776,22 @@ def write_json(item):
     filetools.write(filetools.join(config.get_setting("downloadlistpath"), item.path), item_control.tojson())
     time.sleep(0.1)
 
+
+def save_download_en(item, silent=False):
+    global DOWNLOAD_PATH
+    logger.info()
+    
+    if item.server:
+        browse_type = 0
+    else:
+        browse_type = 3
+    msg = 'Seleccione carpeta de destino:'
+    path_out = platformtools.dialog_browse(browse_type, msg, shares='')
+    if path_out:
+        item.downloadAt = path_out
+        DOWNLOAD_PATH = path_out
+    save_download(item, silent=silent)
+    
 
 def save_download(item, silent=False):
     logger.info()

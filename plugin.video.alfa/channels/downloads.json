@@ -39,6 +39,14 @@
       "visible": true
     },
     {
+      "id": "torrent_paths",
+      "type": "bool",
+      "label": "  - Visualizar rutas de descargas de Gestores Torrent?",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "type": "label",
       "label": "@70243",
       "enabled": true,
