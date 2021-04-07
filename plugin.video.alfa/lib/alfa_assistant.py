@@ -1138,6 +1138,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
     #Si es una actualización programada, comprobamos las versiones de Github y de lo instalado
     if update and isinstance(update, bool):
         try:
+            newer = False
             installed_version_list = version_actual.split('.')
             web_version_list = response.data.split('.')
             for i, ver in enumerate(web_version_list):
@@ -1148,7 +1149,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
                     newer = False
                     break
         except:
-            newer = False
+            pass
 
         if not newer:
             if verbose: platformtools.dialog_notification("Instalación Alfa Assistant", "Ya está actualizado a version %s" % version_actual)
