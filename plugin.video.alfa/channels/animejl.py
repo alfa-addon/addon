@@ -90,11 +90,10 @@ def list_all(item):
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedthumbnail, scrapedtitle, type, plot in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle, _type, plot in matches:
         url = scrapedurl
         thumbnail = host+scrapedthumbnail
         title = scrapedtitle
-        type = type
         season = ''
         if 'season' in scrapedtitle.lower():
             season = scrapertools.find_single_match(scrapedtitle, 'season (\d+)')
@@ -105,10 +104,10 @@ def list_all(item):
                         url=url,
                         thumbnail=thumbnail,
                         plot=plot,
-                        type=item.type,
+                        type=_type,
                         infoLabels={}
                         )
-        if type.lower() == 'anime':
+        if _type.lower() == 'anime':
             new_item.contentSerieName = scrapedtitle
             new_item.contentSeasonNumber = season
         else:
@@ -135,7 +134,8 @@ def episodios(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '\[(\d+),"([^"]+)","([^"]+)",[^]]+\]'
+
+    patron = '\[(\d+),"([^"]+)","([^"]+)",[^\]]+\]'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for epi_num, epi_url, epi_thumb in matches:
@@ -143,10 +143,10 @@ def episodios(item):
         url = item.url +'/'+ epi_url
         itemlist.append(Item(channel=item.channel, title=title, thumbnail=item.thumbnail, url=url,
                              action='findvideos'))
-        if item.type.lower != 'anime' and len(itemlist) == 1:
-            return findvideos(itemlist[0])
-        else:
-            return itemlist[::-1]
+    if item.type.lower != 'anime' and len(itemlist) == 1:
+        return findvideos(itemlist[0])
+
+    return itemlist[::-1]
 
 
 def search(item, texto):
@@ -171,7 +171,7 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = 'video\[\d+\] = \'<iframe.*?src="([^"]+)"'
+    patron = 'video\[\d+\]=\'<iframe.*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl in matches:

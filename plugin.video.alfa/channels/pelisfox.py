@@ -227,7 +227,7 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    links = scrapertools.find_single_match(data, '<script>var.*?_SOURCE.?=.?(.*?);')
+    links = scrapertools.find_single_match(data, '<script>var.*?_SOURCE.?=\s?(.*?);')
     links = links.replace('null', '"null"')
     links = links.replace('false', '"false"').replace('true', '"true"')
     links = eval(links)

@@ -1,7 +1,7 @@
 {
   "id": "pepecine",
   "name": "Pepecine",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "fanart": "https://d12.usercdn.com/i/02278/u875vjx9c0xs.png",
