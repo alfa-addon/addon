@@ -666,8 +666,8 @@ def move(path, dest, silent=False, strict=False, vfs=True, ch_mod=''):
 
 def copy(path, dest, silent=False, vfs=True, ch_mod='', su=False):
     """
-    Copia un archivo
-    @param path: ruta del fichero a copiar
+    Copia un archivo o carpeta o arbol de carpetas
+    @param path: ruta del fichero/carpeta a copiar
     @type path: str
     @param dest: ruta donde copiar
     @type dest: str
@@ -677,12 +677,29 @@ def copy(path, dest, silent=False, vfs=True, ch_mod='', su=False):
     @return: devuelve False en caso de error
     """
     try:
+        result = False
         if xbmc_vfs and vfs:
             path = encode(path)
             dest = encode(dest)
-            if not silent:
-                logger.info("Copiando archivo %s a %s" % (path, dest), force=True)
-            result = bool(xbmcvfs.copy(path, dest))
+            if isdir(path):
+                if not silent:
+                    logger.info("Copiando carpetas %s a %s" % (path, dest), force=True)
+                try:
+                    import shutil
+                    shutil.copytree(path, dest)
+                    result = True
+                except:
+                    logger.error(traceback.format_exc())
+                    logger.info("Copiando carpeta por archivo %s a %s" % (path, dest), force=True)
+                    for file in listdir(path):
+                        if not bool(xbmcvfs.copy(join(path, file), join(dest, file))):
+                            break
+                    else:
+                        result = True
+            if not result:
+                if not silent:
+                    logger.info("Copiando archivo %s a %s" % (path, dest), force=True)
+                result = bool(xbmcvfs.copy(path, dest))
             
             # Si la copia no ha funcionado y se ha especificado su=True, se intenta el comando CP vía SU del sistema
             from platformcode import config
