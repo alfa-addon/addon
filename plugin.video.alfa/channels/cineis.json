@@ -2,7 +2,7 @@
 "id": "cineis",
   "name": "Cine.is",
   "force_unify": true,
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://cine.is/img/logoss.png",

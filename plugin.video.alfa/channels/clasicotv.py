@@ -40,8 +40,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Todas', url=host + 'tvshows/', action='list_all',
                          thumbnail=get_thumb('all', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='A-Z', action='section',
-                         thumbnail=get_thumb('alphabet', auto=True)))
+    # itemlist.append(Item(channel=item.channel, title='A-Z', action='section',
+    #                      thumbnail=get_thumb('alphabet', auto=True)))
 
     itemlist.append(
         item.clone(title="Buscar...", action="search", url=host + '?s=', thumbnail=get_thumb("search", auto=True),
@@ -112,7 +112,7 @@ def list_all(item):
 
         info_1 = elem.find("div", class_="poster")
 
-        thumb = info_1.img["src"]
+        thumb = info_1.img["data-src"]
         title = info_1.img["alt"]
         title = re.sub(r" \([^)]+\)", "", title)
         url = elem.a["href"]
