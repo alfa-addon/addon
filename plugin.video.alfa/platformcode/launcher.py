@@ -201,9 +201,6 @@ def run(item=None):
 
             logger.info("Running channel %s | %s" % (channel.__name__, channel.__file__))
 
-            if item.channel == "test":
-                getattr(channel, item.action)(item.parameters)
-
             # Calls redirection if Alfavorites findvideos, episodios, seasons
             if item.context and 'alfavorites' in str(item.context) \
                             and item.action in ['findvideos', 'episodios', 'seasons', 'play']:
