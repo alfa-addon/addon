@@ -185,18 +185,21 @@ def render_items(itemlist, parent_item):
     genre = False
     if 'nero' in parent_item.title:
         genre = True
-        anime = False
-        if 'anime' in channel_param.get('categories', ''):
-            anime = True
-    
-    force_unify = channel_param.get('force_unify', False)
 
-    unify_enabled = config.get_setting('unify')
-    
+
+
+
+    use_unify = channel_param.get('force_unify', False) or config.get_setting('unify', default=False)
+
+
+
+
     if channel_param.get('adult', ''):
-        unify_enabled = False
+
+        use_unify = False
     
-    # logger.debug('unify_enabled: %s' % unify_enabled)
+
+    # logger.debug('use_unify: %s' % use_unify)
 
     # for adding extendedinfo to contextual menu, if it's used
     has_extendedinfo = xbmc.getCondVisibility('System.HasAddon(script.extendedinfo)')
@@ -207,6 +210,7 @@ def render_items(itemlist, parent_item):
     num_version_xbmc = config.get_platform(True)['num_version']
 
     # Recorremos el itemlist
+    temp_list = list()
     for item in itemlist:
         item_url = item.tourl()
         # logger.debug(item)
@@ -227,14 +231,14 @@ def render_items(itemlist, parent_item):
             item.fanart = parent_item.fanart
 
         if genre:
-            valid_genre = True
+
             thumb = get_thumb(item.title, auto=True)
             if thumb != '':
                 item.thumbnail = thumb
-                valid_genre = True
-            elif anime:
-                valid_genre = True
-        elif (('siguiente' in item.title.lower() and '>' in item.title) or ('pagina:' in item.title.lower())):
+
+
+
+        elif ('siguiente' in item.title.lower() and '>' in item.title) or ('pagina:' in item.title.lower()):
             item.thumbnail = get_thumb("next.png")
         elif 'add' in item.action:
             if 'pelicula' in item.action:
@@ -242,7 +246,7 @@ def render_items(itemlist, parent_item):
             elif 'serie' in item.action:
                 item.thumbnail = get_thumb("videolibrary_tvshow.png")
 
-        if (unify_enabled or force_unify) and parent_item.channel not in ['alfavorites']:
+        if use_unify and parent_item.channel not in ['alfavorites']:
             # Formatear titulo con unify
             item = unify.title_format(item)
         else:
@@ -271,17 +275,19 @@ def render_items(itemlist, parent_item):
             item.fanart = httptools.get_url_headers(item.fanart)
 
         # IconImage para folder y video
-        if item.folder:
-            icon_image = "DefaultFolder.png"
-        else:
-            icon_image = "DefaultVideo.png"
+        icon_image = "DefaultFolder.png" if item.folder else "DefaultVideo.png"
+
+
+
+
 
         # Ponemos el fanart
-        if item.fanart:
-            fanart = item.fanart
-        else:
-            fanart = config.get_fanart()
-            
+        fanart = item.fanart if item.fanart else config.get_fanart()
+
+
+
+
+
         # Ponemos el poster
         poster = item.thumbnail
         if item.action == 'play' and item.infoLabels['temporada_poster']:
@@ -294,13 +300,13 @@ def render_items(itemlist, parent_item):
             listitem = xbmcgui.ListItem(item.title)
         # values icon, thumb or poster are skin dependent.. so we set all to avoid problems
         # if not exists thumb it's used icon value
-        if config.get_platform(True)['num_version'] >= 16.0:
-            listitem.setArt({'icon': icon_image, 'thumb': item.thumbnail, 'poster': poster,
-                             'fanart': fanart})
-        else:
-            listitem.setIconImage(icon_image)
-            listitem.setThumbnailImage(item.thumbnail)
-            listitem.setProperty('fanart_image', fanart)
+
+        listitem.setArt({'icon': icon_image, 'thumb': item.thumbnail, 'poster': poster, 'fanart': fanart})
+
+
+
+
+
 
         # No need it, use fanart instead
         # xbmcplugin.setPluginFanart(int(sys.argv[1]), os.path.join(config.get_runtime_path(), "fanart.jpg"))
@@ -324,25 +330,45 @@ def render_items(itemlist, parent_item):
         else:
             context_commands = []
         # Añadimos el menu contextual
-        if config.get_platform(True)['num_version'] >= 17.0 and parent_item.list_type == '':
-            listitem.addContextMenuItems(context_commands)
-        elif parent_item.list_type == '':
-            listitem.addContextMenuItems(context_commands, replaceItems=True)
 
-        if not item.totalItems:
-            item.totalItems = 0
-        xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url='%s?%s' % (sys.argv[0], item_url),
-                                    listitem=listitem, isFolder=item.folder,
-                                    totalItems=item.totalItems)
+        if parent_item.list_type == '':
+            listitem.addContextMenuItems(context_commands)
+
+
+
+
+
+
+        temp_list.append(['%s?%s' % (sys.argv[0], item_url), listitem, item.folder])
+
+
+
+
+    xbmcplugin.addDirectoryItems(handle=int(sys.argv[1]), items=temp_list)
 
     # Fijar los tipos de vistas...
     if config.get_setting("forceview"):                                         # ...forzamos segun el viewcontent
         xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewcontent)
 
-    elif parent_item.channel not in ["channelselector", "", "alfavorites", "news", "search"]:     # ... o segun el canal
+    elif parent_item.channel == "alfavorites" and parent_item.action == 'mostrar_perfil':
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
-    elif parent_item.channel == "alfavorites" and parent_item.action == 'mostrar_perfil':
+    elif parent_item.channel == "videolibrary":
+        if parent_item.action == 'list_tvshows':
+            xbmcplugin.setContent(int(sys.argv[1]), "tvshows")
+        elif parent_item.action == 'list_movies':
+            xbmcplugin.setContent(int(sys.argv[1]), "movies")
+        elif parent_item.action != 'mainlist':
+            if parent_item.contentType == 'movie':
+                xbmcplugin.setContent(int(sys.argv[1]), "movies")
+            else:
+                xbmcplugin.setContent(int(sys.argv[1]), "episodes")
+
+    elif parent_item.viewType:
+        xbmcplugin.setContent(int(sys.argv[1]), viewType)
+
+    elif parent_item.channel not in ["channelselector", "", "alfavorites", "news", "search", "videolibrary", "setting", "help"] \
+     and parent_item.action != "mainlist":     # ... o segun el canal
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
     # Fijamos el "breadcrumb"
@@ -375,7 +401,7 @@ def render_items(itemlist, parent_item):
     if parent_item.mode in ['silent', 'get_cached', 'set_cache', 'finish']:
         xbmc.executebuiltin("Container.SetViewMode(500)")
 
-    logger.info('FINAL render_items: %s' % (time.time() - start))
+    logger.info('FINAL render_items %s elementos: %s' % (len(itemlist), (time.time() - start)))
 
 
 def get_viewmode_id(parent_item):
@@ -525,7 +551,7 @@ def set_context_commands(item, item_url, parent_item, **kwargs):
     @type parent_item: item
     """
     context_commands = []
-
+    #return context_commands
     # Creamos un list con las diferentes opciones incluidas en item.context
     if isinstance(item.context, str):
         context = item.context.split("|")
@@ -1637,11 +1663,14 @@ def play_torrent(item, xlistitem, mediaurl):
         
         # Si tiene .torrent válido o magnet, lo registramos
         if size or item.url.startswith('magnet:'):
+            item_freq = item.clone()
+            if not item_freq.downloadFilename:
+                item_freq.downloadFilename = ':%s: ' % torr_client.upper()
             try:
                 import threading
                 if not PY3: from lib import alfaresolver
                 else: from lib import alfaresolver_py3 as alfaresolver
-                threading.Thread(target=alfaresolver.frequency_count, args=(item, )).start()
+                threading.Thread(target=alfaresolver.frequency_count, args=(item_freq, )).start()
             except:
                 logger.error(traceback.format_exc(1))
         
@@ -1826,7 +1855,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
         
         if item_down.downloadProgress == -1:
             item.downloadProgress = -1
-        elif save_path_videos:
+        elif save_path_videos and item_down.downloadProgress > 0:
             item.downloadProgress = 100
         else:
             if torrent_paths[torr_client.upper()+'_web']:                           # Es un cliente monitorizable?

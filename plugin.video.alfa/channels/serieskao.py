@@ -276,7 +276,7 @@ def findvideos(item):
 
         for elem in matches:
             url = base64.b64decode(elem["data-r"]).decode('utf-8')
-            logger.debug(url)
+
             if "animekao.club/player.php" in url:
                 url = url.replace("animekao.club/player.php?x", "player.premiumstream.live/player.php?id")
             elif "animekao.club/play.php" in url:
@@ -300,22 +300,24 @@ def findvideos(item):
             elif "playhydrax.com" in url:
                 slug = scrapertools.find_single_match(url, 'v=(\w+)')
                 post = "slug=%s&dataType=mp4" % slug
-                data = httptools.downloadpage("https://ping.iamcdn.net/", post=post).json
-                url = data.get("url", '')
-                if url:
+                try:
+                    data = httptools.downloadpage("https://ping.iamcdn.net/", post=post).json
+                    url = data.get("url", '')
+                except:
+                    url = None
+                if not url:
+                    continue
                     url = "https://www.%s" % base64.b64decode(url[-1:]+url[:-1]).decode('utf-8')
                     url += '|Referer=https://playhydrax.com/?v=%s&verifypeer=false' % slug
             elif "kplayer" in url:
-                logger.debug("aqui")
                 unpacked = get_unpacked(url)
+                if not unpacked:
+                    continue
                 url = "https://kplayer.animekao.club/%s" % scrapertools.find_single_match(unpacked, '"file":"([^"]+)"')
                 url = httptools.downloadpage(url, add_referer=True, follow_redirects=False).url
-                # src = scrapertools.find_single_match(data, "source: '([^']+)'")
-                # sgn = scrapertools.find_single_match(data, "signature: '([^']+)'")
-                # sub = scrapertools.find_single_match(data, 'file: "([^"]+)"')
-                # url = "%s%s" % (src, sgn)
 
-            
+
+
             itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                                  language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels, subtitle=sub))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
@@ -338,7 +340,11 @@ def findvideos(item):
 
 def get_unpacked(url):
     logger.info()
-    data = httptools.downloadpage(url, headers={"referer": host}, follow_redirects=False).data
+    try:
+        data = httptools.downloadpage(url, headers={"referer": host}, follow_redirects=False).data
+    except:
+        return None
+
     packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
     unpacked = jsunpack.unpack(packed)
 

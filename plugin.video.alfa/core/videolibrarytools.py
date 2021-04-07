@@ -203,6 +203,13 @@ def save_movie(item):
     strm_exists = filetools.exists(strm_path)
     json_exists = filetools.exists(json_path)
 
+    if nfo_exists:
+        # Si existe .nfo, pero estamos añadiendo un nuevo canal lo abrimos
+        head_nfo, item_nfo = read_nfo(nfo_path)
+        if not item_nfo.channel:
+            if not filetools.remove(nfo_path):              # .nfo corrupto.  Lo borramos para regenerarlo
+                return 0, 0, -1, path                       # Problema con el filesystem?
+
     if not nfo_exists:
         # Creamos .nfo si no existe
         logger.info("Creando .nfo: " + nfo_path)
@@ -211,10 +218,6 @@ def save_movie(item):
         item_nfo = Item(title=item.contentTitle, channel="videolibrary", action='findvideos',
                         library_playcounts={"%s [%s]" % (base_name, _id): 0}, infoLabels=item.infoLabels,
                         library_urls={})
-
-    else:
-        # Si existe .nfo, pero estamos añadiendo un nuevo canal lo abrimos
-        head_nfo, item_nfo = read_nfo(nfo_path)
 
     if not strm_exists:
         # Crear base_name.strm si no existe
@@ -363,6 +366,18 @@ def save_tvshow(item, episodelist):
                 raise
 
     tvshow_path = filetools.join(path, "tvshow.nfo")
+    if filetools.exists(tvshow_path):
+        # Si existe tvshow.nfo, pero estamos añadiendo un nuevo canal actualizamos el listado de urls
+        head_nfo, item_tvshow = read_nfo(tvshow_path)
+        if item_tvshow.channel:
+            item_tvshow.channel = "videolibrary"
+            item_tvshow.action = "get_seasons"
+            item_tvshow.library_urls[item.channel] = item.url
+        else:
+            logger.error('.nfo corrupto. Regenerando %s' % item_tvshow)
+            if not filetools.remove(tvshow_path):           # .nfo corrupto.  Lo borramos para regenerarlo
+                return 0, 0, -1, path                       # Problema con el filesystem?
+
     if not filetools.exists(tvshow_path):
         # Creamos tvshow.nfo, si no existe, con la head_nfo, info de la serie y marcas de episodios vistos
         logger.info("Creando tvshow.nfo: " + tvshow_path)
@@ -375,13 +390,6 @@ def save_tvshow(item, episodelist):
         item_tvshow.library_playcounts = {}
         item_tvshow.library_urls = {item.channel: item.url}
         if item.serie_info: item_tvshow.serie_info = item.serie_info
-
-    else:
-        # Si existe tvshow.nfo, pero estamos añadiendo un nuevo canal actualizamos el listado de urls
-        head_nfo, item_tvshow = read_nfo(tvshow_path)
-        item_tvshow.channel = "videolibrary"
-        item_tvshow.action = "get_seasons"
-        item_tvshow.library_urls[item.channel] = item.url
 
     # FILTERTOOLS
     # si el canal tiene filtro de idiomas, añadimos el canal y el show
@@ -639,6 +647,10 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 # Obtenemos infoLabel del episodio
                 if not item_nfo:
                     head_nfo, item_nfo = read_nfo(nfo_path)
+                    if not item_nfo.channel:
+                        logger.info("Fallido .nfo: %s" % nfo_path)
+                        fallidos += 1
+                        continue
 
                 # En series multicanal, prevalece el infolabels del canal actual y no el del original
                 if not e.infoLabels["tmdb_id"] or (item_nfo.infoLabels["tmdb_id"] \
@@ -892,17 +904,18 @@ def add_tvshow(item, channel=None):
                 xbmc_videolibrary.sync_trakt_addon(path)
         
         #Si el canal lo permite, se comienza el proceso de descarga de los nuevos episodios descargados
-        serie = item.clone()
-        serie.channel = generictools.verify_channel(serie.channel)
-        if config.get_setting('auto_download_new', serie.channel, default=False):
-            serie.sub_action = 'auto'
-            serie.category = itemlist[0].category
-            from channels import downloads
-            downloads.save_download(serie, silent=True)
-            if serie.sub_action: del serie.sub_action
-            while xbmc.getCondVisibility('Library.IsScanningVideo()'):
-                xbmc.sleep(1000)
-            downloads.download_auto(serie)
+        if insertados:
+            serie = item.clone()
+            serie.channel = generictools.verify_channel(serie.channel)
+            if config.get_setting('auto_download_new', serie.channel, default=False):
+                serie.sub_action = 'auto'
+                serie.category = itemlist[0].category
+                from channels import downloads
+                downloads.save_download(serie, silent=True)
+                if serie.sub_action: del serie.sub_action
+                while xbmc.getCondVisibility('Library.IsScanningVideo()'):
+                    xbmc.sleep(1000)
+                downloads.download_auto(serie)
 
 
 def emergency_urls(item, channel=None, path=None, headers={}):

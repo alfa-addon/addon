@@ -35,7 +35,7 @@ def mainlist(item):
             channel = item.channel,
             fanart = item.fanart,
             title = "Novedades",
-            thumbnail = get_thumb("newest", auto=True)
+            thumbnail = 'https://i.postimg.cc/fbq5wxxq/ahmya.png',
         )
     )
     itemlist.append(
@@ -45,7 +45,7 @@ def mainlist(item):
             fanart = item.fanart,
             list_type = 'pelicula',
             title = "Películas",
-            thumbnail = get_thumb("movies", auto=True),
+            thumbnail = 'https://i.postimg.cc/Xqdgcmtt/ramon9.png',
             url = '{}/peliculas'.format(host)
         )
     )
@@ -56,7 +56,7 @@ def mainlist(item):
             fanart = item.fanart,
             list_type = 'categorias',
             title = "Equipo Ramen",
-            thumbnail = get_thumb("doramas", auto=True),
+            thumbnail = 'https://i.postimg.cc/8k6wSfsw-/ramon12.png',
             url = '{}/categorias/Equipo%20Ramen'.format(host)
         )
     )
@@ -66,8 +66,8 @@ def mainlist(item):
             channel = item.channel,
             fanart = item.fanart,
             list_type = 'categorias',
-            title = "BL",
-            thumbnail = get_thumb("doramas", auto=True),
+            title = "Boy's Love",
+            thumbnail = 'https://i.postimg.cc/X76L7NCW/ramon10.png',
             url = '{}/categorias/BL'.format(host)
         )
     )
@@ -77,7 +77,7 @@ def mainlist(item):
             channel = item.channel,
             fanart = item.fanart,
             title = "Por país",
-            thumbnail = get_thumb("country", auto=True)
+            thumbnail = 'https://i.postimg.cc/gkyDw9VZ/ramon4.png'
         )
     )
     itemlist.append(
@@ -86,7 +86,7 @@ def mainlist(item):
             channel = item.channel,
             fanart = item.fanart,
             title = "Por letra",
-            thumbnail = get_thumb("alphabet", auto=True),
+            thumbnail = 'https://i.postimg.cc/j5GXft3z/ramon2.png',
             url = host
         )
     )
@@ -96,7 +96,7 @@ def mainlist(item):
             channel = item.channel,
             fanart = item.fanart,
             title = "Buscar",
-            thumbnail = get_thumb("search", auto=True)
+            thumbnail = 'https://i.postimg.cc/kgnyKjsh/ramon13.png'
         )
     )
     # itemlist.append(
@@ -145,7 +145,7 @@ def country(item):
             fanart = item.fanart,
             list_type = 'pais',
             title = "China (CDramas)",
-            thumbnail = '{}/iconos/3-01.svg'.format(host),
+            thumbnail = 'https://i.postimg.cc/tgf67D7f/3-01.png',
             url = '{}/pais/China'.format(host)
         )
     )
@@ -156,7 +156,7 @@ def country(item):
             fanart = item.fanart,
             list_type = 'pais',
             title = "Corea del Sur (KDrama)",
-            thumbnail = '{}/iconos/02-01.svg'.format(host),
+            thumbnail = 'https://i.postimg.cc/43ntJj4V/02-01.png',
             url = '{}/pais/Corea%20del%20Sur'.format(host)
         )
     )
@@ -167,7 +167,7 @@ def country(item):
             fanart = item.fanart,
             list_type = 'pais',
             title = "Japón (Dorama)",
-            thumbnail = '{}/iconos/4-01.svg'.format(host),
+            thumbnail = 'https://i.postimg.cc/9M779T7f/4-01.png',
             url = '{}/pais/Jap%C3%B3n'.format(host)
         )
     )
@@ -178,7 +178,7 @@ def country(item):
             fanart = item.fanart,
             list_type = 'pais',
             title = "Tailandia (Lakorn)",
-            thumbnail = '{}/iconos/8-01.svg'.format(host),
+            thumbnail = 'https://i.postimg.cc/FzbkW4G5/8-01.png',
             url = '{}/pais/Tailandia'.format(host)
         )
     )
@@ -189,7 +189,7 @@ def country(item):
             fanart = item.fanart,
             list_type = 'pais',
             title = "Filipinas",
-            thumbnail = '',
+            thumbnail = 'https://i.postimg.cc/nrfQGz4G/6-01.png',
             url = '{}/pais/Filipinas'.format(host)
         )
     )
