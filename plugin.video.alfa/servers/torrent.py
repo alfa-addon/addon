@@ -1455,6 +1455,11 @@ def mark_torrent_as_watched():
             except:
                 logger.error(traceback.format_exc())
             xbmc.sleep(900)                                                     # ... cada 15'
+            
+    # Terminar Assistant si no ha sido llamado por binarios
+    if config.get_setting("assistant_binary", default='') != 'AstOK':
+        url_terminate = "http://127.0.0.1:48886/terminate"
+        data = httptools.downloadpage(url_terminate, timeout=1, alfa_s=True, ignore_response_code=True).data
 
 
 def restart_unfinished_downloads():
