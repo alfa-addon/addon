@@ -1378,6 +1378,7 @@ def update_control(item, function=''):
             item_control.downloadCompleted = item.downloadCompleted
             item_control.downloadProgress = item.downloadProgress
             item_control.downloadFilename = item.downloadFilename
+            if item.downloadAt: item_control.downloadAt = item.downloadAt
             if not item.torr_folder and item.downloadFilename:
                 item.torr_folder = scrapertools.find_single_match(item.downloadFilename, '(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$')
             item_control.torr_folder = item.torr_folder
@@ -1642,7 +1643,7 @@ def check_seen_torrents():
         from platformcode import xbmc_videolibrary
         
         torrent_paths = torrent_dirs()
-        DOWNLOAD_PATH = config.get_setting("downloadpath")
+        DOWNLOAD_PATH_ALFA = config.get_setting("downloadpath")
         DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath")
         MOVIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
         SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
@@ -1656,7 +1657,11 @@ def check_seen_torrents():
      
                 if not item.downloadStatus in [2, 4, 5] or not item.downloadFilename:
                     continue
-                    
+                
+                if item.downloadAt:
+                    DOWNLOAD_PATH = item.downloadAt
+                else:
+                    DOWNLOAD_PATH = DOWNLOAD_PATH_ALFA
                 filename = filetools.basename(scrapertools.find_single_match(item.downloadFilename, '(?:\:\w+\:\s*)?(.*?)$'))
                 if item.contentType == 'movie':
                     PATH = MOVIES
@@ -2368,9 +2373,9 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                     archive.extract(files[selection], save_path_videos)
                 log("##### RAR Extract END #####")
             except rarfile.RarUserBreak:
-                log("##### %s" % error_msg)
                 error_msg = "Cancelado por el Usuario"
                 error_msg1 = "Archivo rar no descomprimido"
+                log("##### %s" % error_msg)
                 platformtools.dialog_notification(error_msg, error_msg1)
                 dp.close()
                 return rar_file, False, '', erase_file_path

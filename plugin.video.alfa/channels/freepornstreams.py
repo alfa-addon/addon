@@ -25,6 +25,7 @@ list_quality = ['default']
 list_servers = ['gounlimited']
 host = 'http://freepornstreams.org'    #es http://xxxstreams.org http://fullxxxmovies.net
 
+                                # k2s
 
 def mainlist(item):
     logger.info()
@@ -84,8 +85,9 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<article id="post-\d+".*?'
     patron += '<a href="([^"]+)" rel="bookmark">(.*?)</a>.*?'
-    patron += '<img src="([^"]+)"'
+    patron += '<img src="([^"]+.jpg)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
+    logger.debug(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
         if '/HD' in scrapedtitle : title= "[COLOR red]HD[/COLOR] %s" % scrapedtitle
         elif 'SD' in scrapedtitle : title= "[COLOR red]SD[/COLOR] %s" % scrapedtitle

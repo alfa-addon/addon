@@ -26,6 +26,9 @@ list_servers = ['gounlimited']
 
 host = 'http://streamingporn.xyz'   #'http://sexgalaxy.net'
 
+##########  k2s
+
+
 def mainlist(item):
     logger.info()
     itemlist = []

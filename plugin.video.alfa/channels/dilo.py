@@ -48,8 +48,11 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Nuevos capitulos", action="latest_episodes", url=host,
                          page=0, thumbnail=get_thumb('new episodes', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Ultimas", action="latest_shows", url=host,
+    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all",  url=host + 'catalogue?sort=latest',
                          thumbnail=get_thumb('last', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Mas vistas", action="list_all", url=host + 'catalogue?sort=most-week',
+                         thumbnail=get_thumb('more watched', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + 'catalogue',
                          thumbnail=get_thumb('all', auto=True)))

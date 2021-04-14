@@ -233,6 +233,8 @@ def findvideos(item):
         if "pelis123" in url:
             itemlist.extend(get_premium(item, url, lang))
         elif not "onlystream" in url:
+            if "zplayer" in url:
+                url += "|referer=%s" % host
             itemlist.append(Item(channel=item.channel, title="%s", action="play", url=url,
                                  language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())

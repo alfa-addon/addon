@@ -445,6 +445,11 @@ def submenu_tools(item):
                          title="Comprobar actualizaciones urgentes (Actual: Alfa %s)" %config.get_addon_version(), plot="Versión actual: %s" % config.get_addon_version() ))
     itemlist.append(Item(channel=CHANNELNAME, action="update_quasar", folder=False,
                          title="Actualizar addon externo Quasar"))
+    itemlist.append(Item(channel=CHANNELNAME, action="reset_trakt", folder=False,
+                         title="Reiniciar vinculación con Trakt",
+                         thumbnail="https://trakt.tv/assets/logos/white-bg@2x-626e9680c03d0542b3e26c3305f58050d2178e5d4222fac7831d83cf37fef42b.png",
+                         plot="Reinicia la vinculacion, no se pierden los datos de seguimiento"))
+
     itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
 
@@ -714,6 +719,15 @@ def channels_onoff(item):
                  )
         lista.append(it)
         ids.append(channel.channel)
+
+    if config.is_xbmc():
+        import xbmcgui
+        new_list = list()
+        for fake_it in lista:
+            it = xbmcgui.ListItem(fake_it.title, fake_it.plot)
+            it.setArt({ 'thumb': fake_it.thumbnail, 'fanart': fake_it.fanart })
+            new_list.append(it)
+        lista = new_list
 
     # Diálogo para pre-seleccionar
     # ----------------------------
@@ -1374,3 +1388,14 @@ def icon_set_selector(item=None):
             config.set_setting("icon_set", "default")
         else:
             config.set_setting("icon_set", matches[ret-1])
+
+
+def reset_trakt(item):
+    from core import trakt_tools
+
+    data_path = filetools.join(config.get_data_path(), 'settings_channels', 'trakt_data.json')
+    if filetools.exists(data_path):
+        filetools.remove(data_path)
+        trakt_tools.auth_trakt()
+    else:
+        platformtools.dialog_ok("Alfa", "Aun no existen datos de vinculación con Trakt")

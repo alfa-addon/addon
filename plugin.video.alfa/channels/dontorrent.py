@@ -325,6 +325,9 @@ def listado(item):                                                              
         item.extra2 = ''
         
     post = None
+    forced_proxy_opt = None
+    if item.post:
+        forced_proxy_opt = 'ProxyDirect'
     if item.post:                                                               # Rescatamos el Post, si lo hay
         post = item.post
     
@@ -338,6 +341,7 @@ def listado(item):                                                              
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
             data, success, code, item, itemlist = generictools.downloadpage(next_page_url, 
                                           timeout=timeout_search, post=post, s2=False, 
+                                          forced_proxy_opt=forced_proxy_opt, 
                                           item=item, itemlist=itemlist)         # Descargamos la página)
             
             curr_page += 1                                                      #Apunto ya a la página siguiente

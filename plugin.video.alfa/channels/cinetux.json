@@ -8,8 +8,8 @@
   "banner": "cinetux.png",
   "fanart": "https://i.postimg.cc/1R8fZDgz/cinetux.jpg",
   "categories": [
-    "direct",
-    "movie"
+    "movie",
+    "direct"
   ],
   "settings": [
     {

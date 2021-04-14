@@ -138,6 +138,8 @@ def list_all(item):
         next_page = soup.find("a", class_="page-link", rel="next")["href"]
 
         if next_page:
+            if not next_page.startswith(host):
+                next_page = host + next_page
             itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
     except:
         pass
