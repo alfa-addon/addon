@@ -36,12 +36,12 @@ def start():
     funciones que deseamos que se ejecuten nada mas abrir el plugin.
     """
     logger.info()
-    if config.get_platform(True)['num_version'] >= 19:
-        from core import filetools
-        origin = filetools.join(config.get_runtime_path(), "resources", "settings_matrix.xml")
-        destination = filetools.join(config.get_runtime_path(), "resources", "settings.xml")
-        if filetools.exists(origin):
-            filetools.move(origin, destination, silent=True)
+    # if config.get_platform(True)['num_version'] >= 19:
+    #     from core import filetools
+    #     origin = filetools.join(config.get_runtime_path(), "resources", "settings_matrix.xml")
+    #     destination = filetools.join(config.get_runtime_path(), "resources", "settings.xml")
+    #     if filetools.exists(origin):
+    #         filetools.move(origin, destination, silent=True)
     #config.set_setting('show_once', True)
     # Test if all the required directories are created
     config.verify_directories_created()
@@ -65,7 +65,7 @@ def run(item=None):
             if config.get_setting("start_page"):
 
                 if not config.get_setting("custom_start"):
-                    category = config.get_setting("category").lower()
+                    category = config.get_localized_string(config.get_setting("category")).lower()
                     item = Item(channel="news", action="novedades", extra=category, mode = 'silent')
                 else:
                     from channels import side_menu
@@ -201,8 +201,9 @@ def run(item=None):
 
             logger.info("Running channel %s | %s" % (channel.__name__, channel.__file__))
 
-            if item.channel == "test":
-                getattr(channel, item.action)(item.parameters)
+            if item.channel == "test" and item.contentChannel:
+                if item.parameters == "test_channel":
+                    getattr(channel, item.action)(item.contentChannel)
 
             # Calls redirection if Alfavorites findvideos, episodios, seasons
             if item.context and 'alfavorites' in str(item.context) \
