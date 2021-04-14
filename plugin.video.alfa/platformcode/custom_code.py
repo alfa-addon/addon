@@ -295,32 +295,88 @@ def verify_copy_folders(custom_code_dir, custom_code_json_path):
     logger.info()
     
     #verificamos si es una nueva versión de Alfa instalada o era la existente.  Si es la existente, nos vamos sin hacer nada
+    update = None
     json_data_file = ADDON_CUSTOMCODE_JSON
     json_data = jsontools.load(filetools.read(json_data_file))
-    if not json_data or not 'addon_version' in json_data: 
-        create_json(custom_code_json_path)
-        json_data = jsontools.load(filetools.read(json_data_file))
     try:
-        if ADDON_VERSION == json_data['addon_version']:
-            return
-    except:
-        logger.error(traceback.format_exc(1))
-    
-    #Ahora copiamos los archivos desde el área de Userdata, Custom_code, sobre las carpetas del add-on
-    for root, folders, files in filetools.walk(custom_code_dir):
-        for file in files:
-            input_file = filetools.join(root, file)
-            output_file = input_file.replace(custom_code_dir, custom_code_json_path)
-            if not filetools.copy(input_file, output_file, silent=True):
+        if not json_data or not 'addon_version' in json_data: 
+            create_json(custom_code_json_path)
+            json_data = jsontools.load(filetools.read(json_data_file))
+            if not json_data:
                 return
     
+        if ADDON_VERSION != json_data.get('addon_version', ''):
+            update = 'version'
+    except:
+        logger.error(traceback.format_exc())
+        json_data['addon_version'] = ADDON_VERSION
+        if not filetools.write(json_data_file, jsontools.dump(json_data)):
+            return
+    
+    #Ahora copiamos los archivos desde el área de Userdata, Custom_code, sobre las carpetas del add-on
+    if update == 'version':
+        for root, folders, files in filetools.walk(custom_code_dir):
+            for file in files:
+                input_file = filetools.join(root, file)
+                output_file = input_file.replace(custom_code_dir, custom_code_json_path)
+                filetools.copy(input_file, output_file, silent=True)
+    
+    if init_version(json_data):
+        json_data['init_version'] = 'true'
+        update = 'init'
+    
     #Guardamaos el json con la versión actual de Alfa, para no volver a hacer la copia hasta la nueva versión
-    json_data['addon_version'] = ADDON_VERSION
-    filetools.write(json_data_file, jsontools.dump(json_data))
+    if update:
+        json_data['addon_version'] = ADDON_VERSION
+        filetools.write(json_data_file, jsontools.dump(json_data))
 
     return
 
+
+def init_version(json_data):
     
+    try:
+        ret = False
+        if json_data.get('init_version'): return ret
+        
+        try:
+            if xbmc.getCondVisibility("System.Platform.Windows"): categoria = 'windows'
+            elif xbmc.getCondVisibility("System.Platform.UWP"): categoria = 'windows'
+            elif xbmc.getCondVisibility("System.Platform.Android"): categoria = 'android'
+            elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"): categoria = 'rpi'
+            elif xbmc.getCondVisibility("System.Platform.Linux"): categoria = 'linux'
+            elif xbmc.getCondVisibility("System.Platform.OSX"): categoria = 'osx'
+            elif xbmc.getCondVisibility("System.Platform.IOS"): categoria = 'ios'
+            elif xbmc.getCondVisibility("System.Platform.Darwin"): categoria = 'darwin'
+            elif xbmc.getCondVisibility("System.Platform.Xbox"): categoria = 'xbox'
+            elif xbmc.getCondVisibility("System.Platform.Tvos"): categoria = 'tvos'
+            elif xbmc.getCondVisibility("System.Platform.Atv2"): categoria = 'atv2'
+            else: categoria = 'unkn'
+        except:
+            categoria = 'unkn'
+        
+        kodi = config.get_platform(full_version=True)
+        kodi = ',k%s' % str(kodi.get('num_version')).split('.')[0]
+        
+        assistant = ''
+        if config.get_setting('assistant_binary', default=False):
+            assistant = ',%s' % config.get_setting('assistant_binary')
+
+        try:
+            if not PY3: from lib import alfaresolver
+            else: from lib import alfaresolver_py3 as alfaresolver
+            threading.Thread(target=alfaresolver.frequency_count, args=(Item(), \
+                        [ADDON_VERSION, categoria + kodi + assistant])).start()
+            ret = True
+        except:
+            logger.error(traceback.format_exc())
+    
+    except:
+        logger.error(traceback.format_exc())
+    
+    return ret
+
+
 def question_update_external_addon(addon_name):
     logger.info(addon_name)
     
@@ -653,6 +709,7 @@ def reactivate_unrar(init=False, mute=True):
             if rar_control and len(rar_control['rar_files']) == 1:
                 ret = filetools.remove(filetools.join(save_path_videos, '_rar_control.json'), silent=True)
 
+    config.set_setting("torrent_paths_list", download_paths, channel="downloads")
     search_for_unrar_in_error(download_paths, init=init)    
 
 

@@ -125,17 +125,14 @@ def alpha_list(item):
                 title= itemlist[a].contentTitle
                 titulo = itemlist[a].title
                 titulo = scrapertools.find_single_match(titulo, '(\\[COLOR[^"]+)')
-                logger.debug(titulo)
                 title = "%s %s" %(title, titulo)
                 itemlist[a].title = title
                 a -= 1
-
-    next_page = soup.find('div', class_='nav-links').find('a', class_='current').find_next_sibling("a")
-    if next_page:
-        next_page = next_page['href']
+    next_page = soup.find('a', class_='current')
+    if next_page and next_page.find_next_sibling("a"):
+        next_page = next_page.find_next_sibling("a")['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="alpha_list", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
-
     return itemlist
 
 
@@ -198,11 +195,9 @@ def lista(item):
                 title= itemlist[a].contentTitle
                 titulo = itemlist[a].title
                 titulo = scrapertools.find_single_match(titulo, '(\\[COLOR[^"]+)')
-                logger.debug(titulo)
                 title = "%s %s" %(title, titulo)
                 itemlist[a].title = title
                 a -= 1
-
     next_page = soup.find('div', class_='nav-links').find('a', class_='current').find_next_sibling("a")
     if next_page:
         next_page = next_page['href']

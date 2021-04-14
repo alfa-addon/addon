@@ -26,8 +26,9 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['gounlimited']
 
-######    Muchas DESCARGAS
-host = 'http://xxxstreams.org' #es http://freepornstreams.org
+######    k2s
+host = 'http://xxxstreams.org' #es http://freepornstreams.org  http://fullxxxmovies.net
+
 
 def mainlist(item):
     logger.info()
@@ -97,6 +98,7 @@ def lista(item):
     itemlist = []
     soup = create_soup(item.url)
     matches = soup.find_all("article", id=re.compile(r"^post-\d+"))
+    logger.debug(matches)
     for elem in matches:
         parte = elem.find('h1', class_='entry-title')
         url = parte.a['href']
@@ -104,6 +106,8 @@ def lista(item):
         if "Siterip" in title or "manyvids" in title:
             title = "[COLOR red]%s[/COLOR]" %title
         thumbnail = elem.img['src']
+        if "svg" in thumbnail:
+            thumbnail = elem.img['data-lazy-src']
         itemlist.append(item.clone(action="findvideos", title=title, contentTitle=title, url=url,
                                fanart=thumbnail, thumbnail=thumbnail) )
     next_page = soup.find('a', class_='next page-numbers')

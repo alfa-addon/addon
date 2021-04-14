@@ -1,376 +1,365 @@
-#from future import standard_library
-#standard_library.install_aliases()
-from future.builtins import map
-#from future.builtins import str
-from future.builtins import range
-
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.request as urllib2
-else:
-    import urllib2
-
+import logging
 import os
+import pipes
 import re
-import stat
-import time
-import xbmc
+import select
 import shutil
-import socket
-import xbmcgui
-import threading
+import stat
 import subprocess
-import xbmcvfs
-from quasar.logger import log
-from quasar.osarch import PLATFORM
-from quasar.config import QUASARD_HOST
-from quasar.addon import ADDON, ADDON_ID, ADDON_PATH
-from quasar.util import notify, system_information, getLocalizedString, getWindowsShortPath
+import sys
+import threading
+from io import FileIO
 
-def translatePath(path):
-    """
-    Kodi 19: xbmc.translatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.translatePath instead.
-    @param path: cadena con path special://
-    @type path: str
-    @rtype: str
-    @return: devuelve la cadena con el path real
-    """
-    if PY3:
-        if isinstance(path, bytes):
-            path = path.decode('utf-8')
-        path = xbmcvfs.translatePath(path)
-        if isinstance(path, bytes):
-            path = path.decode('utf-8')
-    else:
-        path = xbmc.translatePath(path)
-    return path
+from lib.os_platform import PLATFORM, System
+from lib.utils import bytes_to_str, PY3
 
-def ensure_exec_perms(file_):
-    try:
-        st = os.stat(file_)
-        os.chmod(file_, st.st_mode | stat.S_IEXEC)
-    except:
-        pass
-    return file_
 
-def android_get_current_appid():
-    with open("/proc/%d/cmdline" % os.getpid()) as fp:
+def get_current_app_id():
+    with open("/proc/{:d}/cmdline".format(os.getpid())) as fp:
         return fp.read().rstrip("\0")
 
-def get_quasard_checksum(path):
-    try:
-        with open(path) as fp:
-            fp.seek(-40, os.SEEK_END)  # we put a sha1 there
-            return fp.read()
-    except Exception:
-        return ""
 
-def get_quasar_binary():
-    binary = "quasar" + (PLATFORM["os"] == "windows" and ".exe" or "")
+def join_cmd(cmd):
+    return " ".join(pipes.quote(arg) for arg in cmd)
 
-    log.info("PLATFORM: %s" % str(PLATFORM))
-    binary_dir = os.path.join(ADDON_PATH, "resources", "bin", "%(os)s_%(arch)s" % PLATFORM)
-    if PLATFORM["os"] == "android":
-        log.info("Detected binary folder: %s" % binary_dir)
-        binary_dir_legacy = binary_dir.replace("/storage/emulated/0", "/storage/emulated/legacy")
-        if os.path.exists(binary_dir_legacy):
-            binary_dir = binary_dir_legacy
-        app_id = android_get_current_appid()
-        xbmc_data_path = translatePath("special://xbmcbin/").replace('user/0', 'data').replace('cache/apk/assets', 'files/quasar')
-        log.info("Trying binary Kodi folder: %s" % xbmc_data_path)
-        
-        try:                        #Test if there is any permisions problem
-            if not os.path.exists(xbmc_data_path):
-                os.makedirs(xbmc_data_path)
-        except Exception as e:
-            log.info("ERROR %s in binary Kodi folder: %s" % (str(e), xbmc_data_path))
-        
-        if not os.path.exists(xbmc_data_path):
-            xbmc_data_path = translatePath("special://xbmcbin/").replace('cache/apk/assets', 'files/quasar')
-            log.info("Trying alternative binary Kodi folder: %s" % xbmc_data_path)
 
-            try:                    #Test if there is any permisions problem
-                if not os.path.exists(xbmc_data_path):
-                    os.makedirs(xbmc_data_path)
-            except Exception as e:
-                log.info("ERROR %s in alternative binary Kodi folder: %s" % (str(e), xbmc_data_path))
+def read_select(fd, timeout):
+    r, _, _ = select.select([fd], [], [], timeout)
+    if fd not in r:
+        raise SelectTimeoutError("Timed out waiting for pipe read")
 
-        dest_binary_dir = xbmc_data_path
-    else:
-        if not PY3:
-            dest_binary_dir = os.path.join(translatePath(ADDON.getAddonInfo("profile")).decode('utf-8'), "bin", "%(os)s_%(arch)s" % PLATFORM)
-        else:
-            dest_binary_dir = os.path.join(translatePath(ADDON.getAddonInfo("profile")), "bin", "%(os)s_%(arch)s" % PLATFORM)
-    
-    if PY3 and isinstance(dest_binary_dir, bytes):
-        dest_binary_dir = dest_binary_dir.decode("utf8")
-    log.info("Using destination binary folder: %s" % dest_binary_dir)
-    binary_path = os.path.join(binary_dir, binary)
-    dest_binary_path = os.path.join(dest_binary_dir, binary)
 
-    if not os.path.exists(binary_path):
-        notify((getLocalizedString(30103) + " %(os)s_%(arch)s" % PLATFORM), time=7000)
-        system_information()
-        try:
-            log.info("Source directory (%s):\n%s" % (binary_dir, os.listdir(os.path.join(binary_dir, ".."))))
-            log.info("Destination directory (%s):\n%s" % (dest_binary_dir, os.listdir(os.path.join(dest_binary_dir, ".."))))
-        except Exception:
-            pass
-            #return False, False
+# https://docs.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-sethandleinformation
+HANDLE_FLAG_INHERIT = 0x00000001
+# https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfiletype
+FILE_TYPE_DISK = 0x0001
 
-    if os.path.isdir(dest_binary_path):
-        log.warning("Destination path is a directory, expected previous binary file, removing...")
-        try:
-            shutil.rmtree(dest_binary_path)
-        except Exception as e:
-            log.error("Unable to remove destination path for update: %s" % e)
-            system_information()
-            #return False, False
 
-    if not os.path.exists(dest_binary_path) or get_quasard_checksum(dest_binary_path) != get_quasard_checksum(binary_path):
-        log.info("Updating quasar daemon...")
-        try:
-            os.makedirs(dest_binary_dir)
-        except OSError:
-            pass
-        try:
-            shutil.rmtree(dest_binary_dir)
-        except Exception as e:
-            log.error("Unable to remove destination path for update: %s" % e)
-            system_information()
-            #return False, False
-        try:
-            shutil.copytree(binary_dir, dest_binary_dir)
-        except Exception as e:
-            log.error("Unable to copy to destination path for update: %s" % e)
-            system_information()
-            #return False, False
+def windows_suppress_file_handles_inheritance(r=0xFFFF):
+    from ctypes import windll, wintypes, byref
 
-    # Clean stale files in the directory, as this can cause headaches on
-    # Android when they are unreachable
-    if os.path.exists(dest_binary_dir):
-        try:
-            dest_files = set(os.listdir(dest_binary_dir))
-            orig_files = set(os.listdir(binary_dir))
-            log.info("Deleting stale files %s" % (dest_files - orig_files))
-            for file_ in (dest_files - orig_files):
-                path = os.path.join(dest_binary_dir, file_)
-                if os.path.isdir(path):
-                    shutil.rmtree(path)
+    handles = []
+    for handle in range(r):
+        if windll.kernel32.GetFileType(handle) == FILE_TYPE_DISK:
+            flags = wintypes.DWORD()
+            if windll.kernel32.GetHandleInformation(handle, byref(flags)) and flags.value & HANDLE_FLAG_INHERIT:
+                if windll.kernel32.SetHandleInformation(handle, HANDLE_FLAG_INHERIT, 0):
+                    handles.append(handle)
                 else:
-                    os.remove(path)
-        except:
-            pass
+                    logging.error("Error clearing inherit flag, disk file handle %x", handle)
 
-    return dest_binary_dir, ensure_exec_perms(dest_binary_path)
-
-def clear_fd_inherit_flags():
-    # Ensure the spawned quasar binary doesn't inherit open files from Kodi
-    # which can break things like addon updates. [WINDOWS ONLY]
-    
-    try:
-        from ctypes import windll
-    except:
-        log.error("Error clearing inherit flag, disk file handle. NO CTYPES")
-        return
-
-    HANDLE_RANGE = list(range(0, 65536))
-    HANDLE_FLAG_INHERIT = 1
-    FILE_TYPE_DISK = 1
-
-    for hd in HANDLE_RANGE:
-        if windll.kernel32.GetFileType(hd) == FILE_TYPE_DISK:
-            if not windll.kernel32.SetHandleInformation(hd, HANDLE_FLAG_INHERIT, 0):
-                log.error("Error clearing inherit flag, disk file handle %x" % hd)
+    return handles
 
 
-def jsonrpc_enabled(notify=False):
-    try:
-        s = socket.socket()
-        s.connect(('127.0.0.1', 9090))
-        s.close()
-        log.info("Kodi's JSON-RPC service is available, starting up...")
-        del s
-        return True
-    except Exception as e:
-        log.error(repr(e))
-        if notify:
-            xbmc.executebuiltin("ActivateWindow(ServiceSettings)")
-            dialog = xbmcgui.Dialog()
-            dialog.ok("Quasar", getLocalizedString(30199))
-    return False
+def windows_restore_file_handles_inheritance(handles):
+    from ctypes import windll
 
-def start_quasard(**kwargs):
-    jsonrpc_failures = 0
-    while jsonrpc_enabled() is False:
-        jsonrpc_failures += 1
-        log.warning("Unable to connect to Kodi's JSON-RPC service, retrying...")
-        if jsonrpc_failures > 1:
-            time.sleep(5)
-            if not jsonrpc_enabled(notify=True):
-                log.error("Unable to reach Kodi's JSON-RPC service, aborting...")
-                return False
-            else:
-                break
-        time.sleep(3)
+    for handle in handles:
+        if not windll.kernel32.SetHandleInformation(handle, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT):
+            logging.debug("Failed restoring handle %x inherit flag", handle)
 
-    quasar_dir, quasar_binary = get_quasar_binary()
 
-    if quasar_dir is False or quasar_binary is False:
+class SelectTimeoutError(Exception):
+    pass
+
+
+class Pipe(object):
+    def __init__(self):
+        self._r, self._w = os.pipe()
+
+    @property
+    def r(self):
+        return self._r
+
+    @property
+    def w(self):
+        return self._w
+
+    def read(self, buf, timeout=0):
+        if self._r < 0:
+            raise ValueError("read file descriptor is closed")
+        if timeout > 0:
+            read_select(self._r, timeout)
+        return os.read(self._r, buf)
+
+    def write(self, data):
+        if self._w < 0:
+            raise ValueError("write file descriptor is closed")
+        return os.write(self._w, data)
+
+    def close(self, read=False, write=False):
+        both = not (read or write)
+        if (both or read) and self._r >= 0:
+            os.close(self._r)
+            self._r = -1
+        if (both or write) and self._w >= 0:
+            os.close(self._w)
+            self._w = -1
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
         return False
 
-    lockfile = os.path.join(ADDON_PATH, ".lockfile")
-    if os.path.exists(lockfile):
-        log.warning("Existing process found from lockfile, killing...")
-        try:
-            with open(lockfile) as lf:
-                pid = int(lf.read().rstrip(" \t\r\n\0"))
-            os.kill(pid, 9)
-        except Exception as e:
-            log.error(repr(e))
 
-        if PLATFORM["os"] == "windows":
-            log.warning("Removing library.db.lock file...")
-            try:
-                if not PY3:
-                    library_lockfile = os.path.join(translatePath(ADDON.getAddonInfo("profile")).decode('utf-8'), "library.db.lock")
-                else:
-                    library_lockfile = os.path.join(translatePath(ADDON.getAddonInfo("profile")), "library.db.lock")
-                    if isinstance(library_lockfile, bytes):
-                        library_lockfile = library_lockfile.decode("utf8")
-                os.remove(library_lockfile)
-            except Exception as e:
-                log.error(repr(e))
+class DefaultDaemonLogger(threading.Thread):
+    def __init__(self, fd, default_level=logging.INFO, path=None):
+        super(DefaultDaemonLogger, self).__init__()
+        self.daemon = True
+        self._fd = fd
+        self._default_level = default_level
+        self._file = open(path, "wb") if path else None
+        self._stopped = False
 
-    SW_HIDE = 0
-    STARTF_USESHOWWINDOW = 1
+    def _get_level_and_message(self, line):
+        return self._default_level, line.rstrip("\r\n")
 
-    args = [quasar_binary]
-    kwargs["cwd"] = quasar_dir
-
-    if PLATFORM["os"] == "windows":
-        args[0] = getWindowsShortPath(quasar_binary)
-        kwargs["cwd"] = getWindowsShortPath(quasar_dir)
-        si = subprocess.STARTUPINFO()
-        si.dwFlags = STARTF_USESHOWWINDOW
-        si.wShowWindow = SW_HIDE
-        clear_fd_inherit_flags()
-        kwargs["startupinfo"] = si
-    else:
-        env = os.environ.copy()
-        env["LD_LIBRARY_PATH"] = "%s:%s" % (quasar_dir, env.get("LD_LIBRARY_PATH", ""))
-        kwargs["env"] = env
-        kwargs["close_fds"] = True
-
-    wait_counter = 1
-    while xbmc.getCondVisibility('Window.IsVisible(10140)') or xbmc.getCondVisibility('Window.IsActive(10140)'):
-        if wait_counter == 1:
-            log.info('Add-on settings currently opened, waiting before starting...')
-        if wait_counter > 300:
-            break
-        time.sleep(1)
-        wait_counter += 1
-
-    return call_binary('openBinary', args, **kwargs)
-
-def shutdown():
-    try:
-        urllib2.urlopen(QUASARD_HOST + "/shutdown")
-    except:
-        pass
-
-def wait_for_abortRequested(proc, monitor):
-    monitor.closing.wait()
-    log.info("quasard: exiting quasard daemon")
-    try:
-        proc.terminate()
-    except OSError:
-        pass  # Process already exited, nothing to terminate
-    log.info("quasard: quasard daemon exited")
-
-def quasard_thread(monitor):
-    crash_count = 0
-    try:
-        monitor_abort = xbmc.Monitor()  # For Kodi >= 14
-        while not monitor_abort.abortRequested():
-            log.info("quasard: starting quasard")
-            proc = start_quasard(stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            if not proc:
-                break
-            threading.Thread(target=wait_for_abortRequested, args=[proc, monitor]).start()
-            
-            try:
-                if proc.app:
-                    assistant = True
-                else:
-                    assistant = False
-            except:
-                assistant = False
-            
-            def polling_assistant(proc, monitor):
-                while proc.poll() is None and not monitor_abort.abortRequested():
-                    time.sleep(1)
-            if assistant:
-                threading.Thread(target=polling_assistant, args=[proc, monitor]).start()
-
-            if PLATFORM["os"] == "windows":
-                while proc.poll() is None:
-                    log.info(proc.stdout.readline())
-            
-            elif assistant:
-                while proc.poll() is None and not monitor_abort.abortRequested():
-                    for line in iter(proc.stdout.readline, proc.stdout.read(0)):
-                        if PY3 and isinstance(line, bytes):
-                            line = line.decode()
-                        log.info(line)
-                    time.sleep(1)
-           
-            else:
-                # Kodi hangs on some Android (sigh...) systems when doing a blocking
-                # read. We count on the fact that Quasar daemon flushes its log
-                # output on \n, creating a pretty clean output
-                import fcntl
-                import select
-                fd = proc.stdout.fileno()
-                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
-                while proc.poll() is None:
-                    try:
-                        to_read, _, _ = select.select([proc.stdout], [], [])
-                        for ro in to_read:
-                            line = ro.readline()
-                            if line == "":  # write end is closed
-                                break
-                    except IOError:
-                        time.sleep(1)  # nothing to read, sleep
-
-            log.info("quasard: proc.return code: %s" % str(proc.returncode))
-            if proc.returncode == 0 or proc.returncode == -9 or monitor_abort.abortRequested():
+    def run(self):
+        for line in iter(self._fd.readline, self._fd.read(0)):
+            logging.log(*self._get_level_and_message(bytes_to_str(line)))
+            if self._file:
+                self._file.write(line)
+                self._file.flush()
+            if self._stopped:
                 break
 
-            crash_count += 1
-            notify(getLocalizedString(30100), time=3000)
-            xbmc.executebuiltin("Dialog.Close(all, true)")
-            system_information()
-            time.sleep(5)
-            if crash_count >= 3:
-                notify(getLocalizedString(30110), time=3000)
-                break
+    def stop(self, timeout=None):
+        self._stopped = True
+        self.join(timeout)
+        if self._file:
+            self._file.close()
 
-    except Exception as e:
-        import traceback
-        list(map(log.error, traceback.format_exc().split("\n")))
-        if not PY3:
-            notify("%s: %s" % (getLocalizedString(30226), repr(e).encode('utf-8')))
+
+class DaemonLogger(DefaultDaemonLogger):
+    levels_mapping = {
+        "CRITICAL": logging.CRITICAL,
+        "ERROR": logging.ERROR,
+        "WARNING": logging.WARNING,
+        "NOTICE": logging.INFO,
+        "INFO": logging.INFO,
+        "DEBUG": logging.DEBUG,
+    }
+
+    tag_regex = re.compile("\x1b\\[[\\d;]+m")
+    level_regex = re.compile(r"^(?:{})*\d+-\d+-\d+ \d+:\d+:\d+\.\d+ ({})".format(
+        tag_regex.pattern, "|".join(levels_mapping)))
+
+    def _get_level_and_message(self, line):
+        m = self.level_regex.search(line)
+        if m:
+            line = line[len(m.group(0)):].lstrip(" ")
+            level = self.levels_mapping[m.group(1)]
         else:
-            notify("%s: %s" % (getLocalizedString(30226), repr(e)))
-        raise
+            level = self._default_level
+
+        return level, self.tag_regex.sub("", line).rstrip("\r\n")
 
 
-# Launching Quasar through an external APP for Android >= 10 and Kodi >= 19
+class DaemonNotFoundError(Exception):
+    pass
+
+
+class Daemon(object):
+    def __init__(self, name, daemon_dir, work_dir=None, android_find_dest_dir=True,
+                 android_extra_dirs=(), dest_dir=None, pid_file=None, root=False):
+        self._name = name
+        self._work_dir = work_dir
+        self._pid_file = pid_file
+        self._root = root
+        self._root_pid = -1
+        if PLATFORM.system == System.windows:
+            self._name += ".exe"
+
+        src_path = os.path.join(daemon_dir, self._name)
+        if not os.path.exists(src_path):
+            raise DaemonNotFoundError("Daemon source path does not exist: " + src_path)
+
+        if PLATFORM.system == System.android and android_find_dest_dir:
+            app_dir = os.path.join(os.sep, "data", "data", get_current_app_id())
+            if not os.path.exists(app_dir):
+                logging.debug("Default android app dir '%s' does not exist", app_dir)
+                for directory in android_extra_dirs:
+                    if os.path.exists(directory):
+                        app_dir = directory
+                        break
+
+            logging.debug("Using android app dir '%s'", app_dir)
+            self._dir = os.path.join(app_dir, "files", name)
+        else:
+            self._dir = dest_dir or daemon_dir
+        self._path = os.path.join(self._dir, self._name)
+
+        if self._dir is not daemon_dir:
+            if not os.path.exists(self._path) or self._get_sha1(src_path) != self._get_sha1(self._path):
+                logging.info("Updating %s daemon '%s'", PLATFORM.system, self._path)
+                try:
+                    if os.path.exists(self._dir):
+                        logging.debug("Removing old daemon dir %s", self._dir)
+                        shutil.rmtree(self._dir)
+                    shutil.copytree(daemon_dir, self._dir)
+                except:
+                    logging.info("Error udating %s daemon '%s'", PLATFORM.system, self._path)
+
+        self._p = None  # type: subprocess.Popen or None
+        self._logger = None  # type: DaemonLogger or None
+
+    @staticmethod
+    def _get_sha1(path):
+        # Using FileIO instead of open as fseeko with OFF_T=64 is broken in android NDK
+        # See https://trac.kodi.tv/ticket/17827
+        with FileIO(path) as f:
+            f.seek(-40, os.SEEK_END)
+            return f.read()
+
+    def kill_leftover_process(self):
+        if self._pid_file and os.path.exists(self._pid_file):
+            try:
+                with open(self._pid_file) as f:
+                    pid = int(f.read().rstrip("\r\n\0"))
+                logging.warning("Killing process with pid %d", pid)
+                self._kill(pid, 9)
+            except Exception as e:
+                logging.error("Failed killing process: %s", e)
+            finally:
+                os.remove(self._pid_file)
+
+    def _kill(self, pid, signal):
+        if self._root:
+            if PLATFORM.system == System.android:
+                subprocess.check_call(["su", "-c", "kill -{} {}".format(signal, pid)])
+            else:
+                logging.debug("Not possible to use root on this platform. Falling back to os.kill.")
+                os.kill(pid, signal)
+        else:
+            os.kill(pid, signal)
+
+    def ensure_exec_permissions(self):
+        try:
+            st = os.stat(self._path)
+            if st.st_mode & stat.S_IEXEC != stat.S_IEXEC:
+                logging.info("Setting exec permissions")
+                os.chmod(self._path, st.st_mode | stat.S_IEXEC)
+        except:
+            logging.info("Error on setting exec permissions")
+
+    def start_daemon(self, *args):
+        if self._p is not None:
+            raise ValueError("daemon already running")
+        logging.info("Starting daemon with args: %s", args)
+        cmd = [self._path] + list(args)
+        work_dir = self._work_dir or self._dir
+        kwargs = {}
+
+        if PLATFORM.system == System.windows:
+            if not PY3:
+                # Attempt to solve https://bugs.python.org/issue1759845
+                encoding = sys.getfilesystemencoding()
+                for i, arg in enumerate(cmd):
+                    cmd[i] = arg.encode(encoding)
+                work_dir = work_dir.encode(encoding)
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            si.wShowWindow = subprocess.SW_HIDE
+            kwargs["startupinfo"] = si
+            # Attempt to solve https://bugs.python.org/issue19575
+            handles = windows_suppress_file_handles_inheritance()
+        else:
+            kwargs["close_fds"] = True
+            # Make sure we update LD_LIBRARY_PATH, so libs are loaded
+            env = os.environ.copy()
+            ld_path = env.get("LD_LIBRARY_PATH", "")
+            if ld_path:
+                ld_path += os.pathsep
+            ld_path += self._dir
+            env["LD_LIBRARY_PATH"] = ld_path
+            kwargs["env"] = env
+            handles = []
+
+        kwargs["stdout"] = subprocess.PIPE
+        kwargs["stderr"] = subprocess.STDOUT
+        kwargs["cwd"] = work_dir
+
+        if self._root:
+            if PLATFORM.system == System.android:
+                cmd = ["su", "-c", "echo $$ && exec " + join_cmd(cmd)]
+            else:
+                logging.warning("Not possible to use root on this platform")
+
+        logging.debug("Creating process with command %s and params %s", cmd, kwargs)
+        try:
+            self._p = call_binary('openBinary', cmd, p=self._p, **kwargs)
+
+            if self._root and PLATFORM.system == System.android:
+                read_select(self._p.stdout.fileno(), 10)
+                self._root_pid = int(self._p.stdout.readline().rstrip())
+
+            if self._pid_file:
+                logging.debug("Saving pid file %s", self._pid_file)
+                with open(self._pid_file, "w") as f:
+                    f.write(str(self._root_pid if self._root_pid >= 0 else self._p.pid))
+        finally:
+            if PLATFORM.system == System.windows:
+                windows_restore_file_handles_inheritance(handles)
+
+    def stop_daemon(self):
+        if self._p is not None:
+            logging.info("Terminating daemon")
+            try:
+                self._terminate()
+            except (OSError, subprocess.CalledProcessError):
+                logging.info("Daemon already terminated")
+            if self._pid_file and os.path.exists(self._pid_file):
+                os.remove(self._pid_file)
+            self._root_pid = -1
+            self._p = None
+
+    def _terminate(self):
+        if self._root and self._root_pid >= 0:
+            if PLATFORM.system == System.android:
+                subprocess.check_call(["su", "-c", "kill {}".format(self._root_pid)])
+            else:
+                logging.debug("Not possible to use root on this platform. Falling back to terminate.")
+                self._p.terminate()
+        else:
+            self._p.terminate()
+
+    def daemon_poll(self):
+        return self._p and self._p.poll()
+
+    @property
+    def daemon_running(self):
+        return self._p is not None and self._p.poll() is None
+
+    def start_logger(self, level=logging.INFO, path=None):
+        if self._logger is not None:
+            raise ValueError("logger was already started")
+        if self._p is None:
+            raise ValueError("no process to log")
+        logging.info("Starting daemon logger")
+        self._logger = DaemonLogger(self._p.stdout, default_level=level, path=path)
+        self._logger.start()
+
+    def stop_logger(self):
+        if self._logger is not None:
+            logging.info("Stopping daemon logger")
+            self._logger.stop()
+            self._logger = None
+
+    @property
+    def logger_running(self):
+        return self._logger is not None and self._logger.is_alive()
+
+    def start(self, *args, **kwargs):
+        self.start_daemon(*args)
+        self.start_logger(**kwargs)
+
+    def stop(self):
+        self.stop_daemon()
+        self.stop_logger()
+
+# Launching Torrest through an external APP for Android >= 10 and Kodi >= 19
 def call_binary(function, cmd, retry=False, p=None, **kwargs):
     import xbmc
     import xbmcaddon
@@ -384,33 +373,33 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
     if not p:
         try:
             p = subprocess.Popen(cmd, **kwargs)
-            log.info('## Executing Popen.CMD: %s - PID: %s' % (cmd, p.pid))
+            logging.info('## Executing Popen.CMD: %s - PID: %s', cmd, p.pid)
             return p
         except Exception as e:
             if not PY3:
                 e = unicode(str(e), "utf8", errors="replace").encode("utf8")
             elif PY3 and isinstance(e, bytes):
                 e = e.decode("utf8")
-            log.error('Exception Popen ERROR: %s, %s' % (str(cmd), str(e)))
+            logging.info('Exception Popen ERROR: %s, %s', str(cmd), str(e))
             
-            if PLATFORM["os"] == "android" and ('Errno 13' in str(e) or 'Errno 2' in str(e)):
+            if PLATFORM.system == System.android and ('Errno 13' in str(e) or 'Errno 2' in str(e)):
                 p = None
             else:
                 return p
 
     # The traditional way did not work, so most probably we hit the SDK 29 problem
     APP_PARAMS = {
-                  'Quasar':  {
+                  'Torrest':  {
                                'ACTIVE': 0, 
-                               'USER_ADDON': 'plugin.video.quasar', 
-                               'USER_ADDON_STATUS': xbmc.getCondVisibility('System.HasAddon("plugin.video.quasar")'), 
+                               'USER_ADDON': 'plugin.video.torrest', 
+                               'USER_ADDON_STATUS': xbmc.getCondVisibility('System.HasAddon("plugin.video.torrest")'), 
                                'USER_ADDON_USERDATA': os.path.join(xbmc.translatePath('special://masterprofile/'), 
-                                            'addon_data', 'plugin.video.quasar'), 
+                                            'addon_data', 'plugin.video.torrest'), 
                                'USER_APK': [os.path.join(xbmc.translatePath('special://xbmcbinaddons/'), 
-                                            'plugin.video.quasar', 'resources', 'apk', 
-                                            'quasar-mobile-assistant.apk')], 
-                               'USER_APP': 'com.quasar.quasarmobileassistant', 
-                               'USER_APP_CONTROL': 'quasar-mobile-assistant.version',
+                                            'plugin.video.torrest', 'resources', 'apk', 
+                                            'torrest-mobile-assistant.apk')], 
+                               'USER_APP': 'com.torrest.torrestmobileassistant', 
+                               'USER_APP_CONTROL': 'torrest-mobile-assistant.version',
                                'USER_APP_URL': 'http://127.0.0.1', 
                                'USER_APP_PORT': '66666',
                                'USER_APP_PORT_ALT': '66667'
@@ -431,12 +420,8 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                               }
                   }
     
-    QUASAR_ADDON_SETTING = ADDON
-    QUASAR_ADDON_USERDATA = translatePath(QUASAR_ADDON_SETTING.getAddonInfo("profile"))
-    if xbmc.getCondVisibility('System.HasAddon("plugin.video.torrest")'):
-        TORREST_ADDON = True
-    else:
-        TORREST_ADDON = False
+    TORREST_ADDON_SETTING = xbmcaddon.Addon()
+    TORREST_ADDON_USERDATA = xbmc.translatePath(TORREST_ADDON_SETTING.getAddonInfo("profile"))
     USER_APP_URL = ''
     USER_APP_URL_ALT = ''
     USER_ADDON = ''
@@ -450,9 +435,9 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
     for user_addon, user_params in list(APP_PARAMS.items()):
         if not user_params['ACTIVE'] or not user_params['USER_ADDON_STATUS']: continue
         
-        if user_addon == 'Quasar':
+        if user_addon == 'Torrest':
             try:
-                # Quasar add-on and Quasar Assistant installed
+                # Torrest add-on and Torrest Assistant installed
                 USER_ADDON = user_params['USER_ADDON']
                 USER_ADDON_STATUS = True
                 if os.path.exists(os.path.join(USER_APP_PATH, user_params['USER_APP'])):
@@ -462,7 +447,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                     USER_APP_URL_ALT = "%s:%s" % (user_params['USER_APP_URL'], user_params['USER_APP_PORT_ALT'])
                 if USER_APP_STATUS: break
             except:
-                log.error(traceback.format_exc())
+                logging.info(traceback.format_exc())
         
         if user_addon == 'Alfa':
             try:
@@ -487,7 +472,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                         USER_APP_STATUS = True
                 if USER_APP_STATUS: break
             except:
-                log.error(traceback.format_exc())
+                logging.info(traceback.format_exc())
 
     if not USER_APP_STATUS:
         user_params = install_app(APP_PARAMS)
@@ -502,6 +487,22 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
 
     if USER_APP_STATUS:
         try:
+            for arg in cmd:
+                # If settings.json does not exists, it creates an initial one to avoid Torrest mkdir "downloads" in bin read-only folder
+                if 'settings.json' in arg and not os.path.exists(arg):
+                    import json
+                    from lib import kodi
+                    from lib.utils import assure_unicode
+                    _settings_prefix = "s"
+                    _settings_separator = ":"
+                    _settings_spec = [s for s in kodi.get_all_settings_spec() if s["id"].startswith(
+                                    _settings_prefix + _settings_separator)]
+                    s = kodi.generate_dict_settings(_settings_spec, separator=_settings_separator)[_settings_prefix]
+                    s["download_path"] = assure_unicode(xbmc.translatePath(s["download_path"]))
+                    s["torrents_path"] = assure_unicode(xbmc.translatePath(s["torrents_path"]))
+                    with open(arg, "w") as f:
+                        json.dump(s, f, indent=3)
+
             """
             Assistant APP acts as a CONSOLE for binaries management in Android 10+ and Kodi 19+
             
@@ -528,7 +529,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                                       "cmd": "Base64encoded(command *args **kwargs)"        Full command as sent to the app
                                       "finalCmd": "Base64encoded($PWD/command *args)"       Actual command executed vy the app
                                       
-                  - /openBinary?cmd=base64OfFullCommand([[ANY Android/Linux command: killall libquasar.so (kills all Quasar binaries)]])
+                  - /openBinary?cmd=base64OfFullCommand([[ANY Android/Linux command: killall libtorrest.so (kills all Torrest binaries)]])
                           - returns: {As in /openBinary?cmd}
                   
                   - /getBinaryStatus?pid=999:                                   Request binary STATUS by PID
@@ -552,13 +553,11 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
             
             url = ''
             url_open = USER_APP_URL + '/openBinary?cmd='
-            url_killall = url_open + base64.b64encode(str('killall%slibquasar.so' % separator).encode('utf8')).decode('utf8')
+            url_killall = url_open + base64.b64encode(str('killall%slibtorrest.so' % separator).encode('utf8')).decode('utf8')
             if isinstance(p, int):
                 url_killall = USER_APP_URL + '/killBinary?pid=%s' % p
             cmd_android = 'StartAndroidActivity("%s", "", "%s", "%s")' % (USER_APP, 'open', 'about:blank')
             cmd_android_close = 'StartAndroidActivity("%s", "", "%s", "%s")' % (USER_APP, 'terminate', 'about:blank')
-            if TORREST_ADDON:
-                time.sleep(10)          # let Torrest starts first
             xbmc.executebuiltin(cmd_android)
             time.sleep(3)
 
@@ -568,7 +567,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                 command.append(kwargs)
                 # Convert Args to APP format
                 cmd_bis = cmd[:]
-                cmd_bis[0] = '$PWD/libquasar.so'
+                cmd_bis[0] = '$PWD/libtorrest.so'
                 for args in cmd_bis:
                     cmd_app += args.replace(separator, separator_escaped) + separator
                 cmd_app = cmd_app.rstrip(separator)
@@ -599,14 +598,14 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                 session = requests.Session()
                 # First, cancel existing Binary sessions
                 url = url_killall
-                log.info('## Killing Quasar from Assistant App: %s' % url)
+                logging.info('## Killing Torrest from Assistant App: %s', url)
                 resp = session.get(url, timeout=5)
                 status_code = resp.status_code
                 if status_code != 200:
-                    log.info('## ERROR Killing Quasar from Assistant App: %s' % resp.content)
+                    logging.info('## ERROR Killing Torrest from Assistant App: %s', resp.content)
                 time.sleep(1)
                 # Now lets launch the Binary
-                log.info('## Calling Quasar from Assistant App: %s - Retry = %s' % (cmd, retry))
+                logging.info('## Calling Torrest from Assistant App: %s - Retry = %s', cmd, retry)
                 url = url_open + command_base64
                 resp = session.get(url, timeout=5)
             except Exception as e:
@@ -614,15 +613,12 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                 resp.status_code = str(e)
             status_code = resp.status_code
             if status_code != 200 and not retry:
-                log.error("## Calling/Killing Quasar: Invalid app requests response: %s.  Closing Assistant (1)" % status_code)
-                if TORREST_ADDON:
-                    time.sleep(15)          # let Torrest starts first
-                else:
-                    xbmc.executebuiltin(cmd_android_close)
-                    time.sleep(10)
+                logging.info("## Calling/Killing Torrest: Invalid app requests response: %s.  Closing Assistant (1)", status_code)
+                xbmc.executebuiltin(cmd_android_close)
+                time.sleep(10)
                 return call_binary(function, cmd, retry=True, **kwargs)
             elif status_code != 200 and retry:
-                log.error("## Calling/Killing Quasar: Invalid app requests response: %s.  Closing Assistant (1)" % status_code)
+                logging.info("## Calling/Killing Torrest: Invalid app requests response: %s.  Closing Assistant (2)", status_code)
                 launch_status = False
                 xbmc.executebuiltin(cmd_android_close)
                 time.sleep(10)
@@ -636,7 +632,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
             except:
                 status_code = resp.content
                 launch_status = False
-                log.info("## Calling Quasar: Invalid app response: %s" % resp.content)
+                logging.info("## Calling Torrest: Invalid app response: %s", resp.content)
 
             # Simulate the response from subprocess.Popen
             pipeout, pipein = os.pipe()
@@ -660,8 +656,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                 kwargs_ = kwargs
                 sess = session
                 monitor = xbmc.Monitor()
-                torrest = TORREST_ADDON
-            
+
             p = Proc()
             
             def redirect_terminate(p=p, action='killBinary'):
@@ -697,16 +692,16 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                     # Is the binary hung?  Lets restart it
                     return call_binary(function, command_base64, retry=True, kwargs={})
 
-            log.info('## Assistant executing CMD: %s - PID: %s' % (command[0], p.pid))
-            #log.warning('## Assistant executing CMD **kwargs: %s' % command[1])
+            logging.info('## Assistant executing CMD: %s - PID: %s', command[0], p.pid)
+            logging.debug('## Assistant executing CMD **kwargs: %s', command[1])
         except:
-            log.info('## Assistant ERROR %s in CMD: %s%s' % (status_code, url, command))
-            log.error(traceback.format_exc())
+            logging.info('## Assistant ERROR %s in CMD: %s%s', status_code, url, command)
+            logging.info(traceback.format_exc())
             
     return p
 
 def binary_stat(p, action, retry=False, init=False, app_response={}):
-    if init: log.info('## Binary_stat: action: %s; PID: %s; retry: %s; init: %s; app_r: %s' % (action, p.pid, retry, init, app_response))
+    if init: logging.info('## Binary_stat: action: %s; PID: %s; retry: %s; init: %s; app_r: %s', action, p.pid, retry, init, app_response)
     import traceback
     import base64
     import requests
@@ -745,7 +740,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     if action == 'killBinary' or p.monitor.abortRequested():
                         app_response = {'pid': p.pid, 'retCode': 998}
                     else:
-                        log.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s" % (p.pid, resp.status_code, retry))
+                        logging.info("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s", p.pid, resp.status_code, retry)
                         retry = True
                         url = url_alt
                         msg += str(resp.status_code)
@@ -754,20 +749,18 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         time.sleep(5)
                         continue
                 if resp.status_code != 200 and retry:
-                    log.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s.  Closing Assistant" % \
-                                    (p.pid, resp.status_code, retry))
+                    logging.info("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s.  Closing Assistant", \
+                                    p.pid, resp.status_code, retry)
                     msg += str(resp.status_code)
                     stdout_acum += str(resp.status_code)
                     app_response = {'pid': p.pid, 'retCode': 999}
-                    if p.torrest:
-                        time.sleep(15)      # let Torrest recover first
-                    else:
-                        xbmc.executebuiltin(cmd_android_close)
-                        time.sleep(10)
+                    xbmc.executebuiltin(cmd_android_close)
+                    time.sleep(10)
 
                 if resp.status_code == 200:
                     try:
                         app_response = resp.content
+                        if init: logging.debug(app_response)
                         if PY3 and isinstance(app_response, bytes):
                             app_response = app_response.decode()
                         app_response_save = app_response
@@ -776,7 +769,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         test_json = app_response["pid"]
                     except:
                         status_code = resp.content
-                        log.error("## Binary_stat: Invalid app response for PID: %s: %s - retry: %s" % (p.pid, resp.content, retry))
+                        logging.info("## Binary_stat: Invalid app response for PID: %s: %s - retry: %s", p.pid, resp.content, retry)
                         if retry:
                             app_response = {'pid': p.pid}
                             app_response['retCode'] = 999
@@ -806,7 +799,8 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
 
                 # If still app permissions not allowed, give it a retry
                 if 'permission denied' in msg:
-                    notify('Accept Assitant permissions', time=15000)
+                    from lib import kodi
+                    kodi.notification('Accept Assitant permissions', time=15000)
                     time.sleep(5)
                     xbmc.executebuiltin(cmd_android_permissions)
                     time.sleep(15)
@@ -840,33 +834,30 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     p.returncode = app_response['retCode']
                 
             if action == 'communicate' and p.returncode is not None:
-                log.info("## Binary_stat: communicate Quasar: %s - Returncode: %s" % (p.pid, p.returncode))
+                logging.info("## Binary_stat: communicate Torrest: %s - Returncode: %s", p.pid, p.returncode)
                 return stdout_acum, stderr_acum
             
             elif action == 'poll':
                 if init and msg:
-                    #log.warning('## Binary_stat: Quasar initial response: %s' % msg)
+                    logging.debug('## Binary_stat: Torrest initial response: %s', msg)
                     return True
                 return p.returncode
             
             elif action == 'killBinary':
-                log.info("## Binary_stat: killBinary Quasar: %s - Returncode: %s" % (p.pid, p.returncode))
+                logging.info("## Binary_stat: killBinary Torrest: %s - Returncode: %s", p.pid, p.returncode)
                 try:
                     if p.monitor.abortRequested():
-                        if not p.torrest:
-                            try:
-                                resp_t = p.sess.get(url_close, timeout=1)
-                            except:
-                                pass
+                        try:
+                            resp_t = p.sess.get(url_close, timeout=1)
+                        except:
+                            pass
                     elif p.returncode == 998:
-                        if not p.torrest:
-                            xbmc.executebuiltin(cmd_android_close)
+                        xbmc.executebuiltin(cmd_android_close)
                         time.sleep(10)
                 except:
                     logging.info(traceback.format_exc())
                     time.sleep(1)
-                    if not p.torrest:
-                        xbmc.executebuiltin(cmd_android_close)
+                    xbmc.executebuiltin(cmd_android_close)
                     time.sleep(2)
                 return p
             
@@ -875,7 +866,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
             app_response = {}
 
     except:
-        log.error(traceback.format_exc())
+        logging.info(traceback.format_exc())
     return None
 
 def install_app(APP_PARAMS):
@@ -883,6 +874,7 @@ def install_app(APP_PARAMS):
     import requests
     import xbmc
     import time
+    from lib import kodi
     
     try:
         user_params = {}
@@ -910,7 +902,7 @@ def install_app(APP_PARAMS):
                         apk_body = requests.Response()
                         apk_body.status_code = str(e)
                     if apk_body.status_code != 200:
-                        log.error("## Install_app: Invalid app requests response: %s" % (apk_body.status_code))
+                        logging.info("## Install_app: Invalid app requests response: %s", apk_body.status_code)
                         apk_OK = False
                         continue
                     with open(os.path.join(download_path, \
@@ -928,8 +920,8 @@ def install_app(APP_PARAMS):
                     break
             
             if apk_OK:
-                log.info("## Install_app: Installing the APK from: %s" % LOCAL_DOWNLOAD_PATH)
-                notify('Install your Assistant %s from folder %s' % \
+                logging.info("## Install_app: Installing the APK from: %s", LOCAL_DOWNLOAD_PATH)
+                kodi.notification('Install your Assistant %s from folder %s' % \
                             (os.path.basename(user_params['USER_APK'][0]), \
                             LOCAL_DOWNLOAD_PATH))
                 cmd_android = 'StartAndroidActivity("%s", "", "%s", "%s")' % (user_params['USER_APP'], 'open', 'about:blank')
@@ -941,16 +933,16 @@ def install_app(APP_PARAMS):
                 # Lets give the user 5 minutes to install the app an retry automatically
                 for x in range(300):
                     if os.path.exists(os.path.join(USER_APP_PATH, user_params['USER_APP'])):
-                        log.info("## Install_app: APP installed: %s" % user_params['USER_APP'])
-                        notify('Accept Assistant permissions')
-                        log.info("## Install_app: Requesting permissions: %s" % user_params['USER_APP'])
+                        logging.info("## Install_app: APP installed: %s", user_params['USER_APP'])
+                        kodi.notification('Accept Assistant permissions')
+                        logging.info("## Install_app: Requesting permissions: %s", user_params['USER_APP'])
                         time.sleep(5)
                         xbmc.executebuiltin(cmd_android_permissions)
                         time.sleep(15)
-                        log.info("## Install_app: closing APP: %s" % user_params['USER_APP'])
-                        notify('Accept Assistant permissions')
+                        logging.info("## Install_app: closing APP: %s", user_params['USER_APP'])
+                        kodi.notification('Accept Assistant permissions')
                         xbmc.executebuiltin(cmd_android_close)
-                        log.info("## Install_app: APP closed: %s" % user_params['USER_APP'])
+                        logging.info("## Install_app: APP closed: %s", user_params['USER_APP'])
                         time.sleep(10)
                         return user_params
                     
@@ -959,6 +951,6 @@ def install_app(APP_PARAMS):
                 break
     
     except:
-        log.info(traceback.format_exc())
+        logging.info(traceback.format_exc())
         user_params = {}
     return user_params

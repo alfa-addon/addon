@@ -10,6 +10,7 @@ import os
 import time
 import threading
 import traceback
+import base64
 
 from platformcode import config
 from platformcode import logger
@@ -31,9 +32,14 @@ def check_addon_init():
         try:
             timer = int(config.get_setting('addon_update_timer'))       # Intervalo entre actualizaciones, en Ajustes de Alfa
             if timer <= 0:
-                return                                                  # 0.  No se quieren actualizaciones
+                if base64.b64decode(config.get_setting('proxy_dev')).decode('utf-8') == 'user':
+                    config.set_setting('addon_update_timer', 12)        # Si es usuario se fuerza a 12 horas
+                    timer = 12
+                else:
+                    return                                              # 0.  No se quieren actualizaciones
             verbose = config.get_setting('addon_update_message')
         except:
+            logger.error(traceback.format_exc())
             timer = 12                                                  # Por defecto cada 12 horas
             verbose = False                                             # Por defecto, sin mensajes
         timer = timer * 3600                                            # Lo pasamos a segundos

@@ -37,7 +37,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/s/%s/?o=new" % (host, texto)
+    item.url = "%s/s/%s/" % (host, texto)
     try:
         return lista(item)
     except:
@@ -108,7 +108,7 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('main', id='container')
-    matches = soup.find_all('div', class_='video-item')
+    matches = soup.find_all('div', id=re.compile(r"^v_id_\d+"))
     for elem in matches:
         url = elem.a['href']
         title = elem.img['alt']

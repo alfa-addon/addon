@@ -29,8 +29,8 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://www.madeintorrent.com/'
-domain = 'madeintorrent.com'
+host = 'https://www.reinventorrent.com/'
+domain = 'www.reinventorrent.com'
 channel = 'madeintorrent'
 categoria = channel.capitalize()
 

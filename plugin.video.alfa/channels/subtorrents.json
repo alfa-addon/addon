@@ -6,9 +6,9 @@
   "language": ["cast", "lat"],
   "thumbnail": "https://www.subtorrents.tv/wp-content/themes/SubTorrent/css/images/logo2.png",
   "categories": [
+    "torrent",
     "movie",
     "tvshow",
-	"torrent",
     "vos"
   ],
   "settings": [

@@ -8,9 +8,9 @@
   "banner": "",
   "fanart": "",
   "categories": [
-    "direct",
     "movie",
     "tvshow",
+    "direct",
     "vos"
   ],
   "settings": [
