@@ -1455,6 +1455,11 @@ def mark_torrent_as_watched():
             except:
                 logger.error(traceback.format_exc())
             xbmc.sleep(900)                                                     # ... cada 15'
+            
+    # Terminar Assistant si no ha sido llamado por binarios
+    if config.get_setting("assistant_binary", default='') != 'AstOK':
+        url_terminate = "http://127.0.0.1:48886/terminate"
+        data = httptools.downloadpage(url_terminate, timeout=1, alfa_s=True, ignore_response_code=True).data
 
 
 def restart_unfinished_downloads():
@@ -1828,11 +1833,18 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
 def mark_auto_as_watched(item):
     
     time_limit = time.time() + 150                                              #Marcamos el timepo máx. de buffering
-    while not platformtools.is_playing() and time.time() < time_limit:          #Esperamos mientra buffera    
-        time.sleep(5)                                                           #Repetimos cada intervalo
-        #logger.debug(str(time_limit))
+    
+    if config.get_platform(True)['num_version'] >= 14:
+        monitor = xbmc.Monitor()                                                # For Kodi >= 14
+
+        while not monitor.abortRequested() and not platformtools.is_playing() \
+                    and time.time() < time_limit:                               #Esperamos mientra buffera    
+            if monitor.waitForAbort(5):                                         #Repetimos cada intervalo
+                break
+            #logger.debug(str(time_limit))
+    
     if item.subtitle:
-        time.sleep(5)
+        time.sleep(2)
         xbmc_player.setSubtitles(item.subtitle)
         #subt = xbmcgui.ListItem(path=item.url, thumbnailImage=item.thumbnail)
         #subt.setSubtitles([item.subtitle])
