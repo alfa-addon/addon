@@ -442,7 +442,7 @@ def submenu_tools(item):
 
 
     itemlist.append(Item(channel=CHANNELNAME, action="check_quickfixes", folder=False,
-                         title="Comprobar actualizaciones urgentes (Actual: Alfa %s)" %config.get_addon_version(), plot="Versión actual: %s" % config.get_addon_version() ))
+                         title="Comprobar actualizaciones urgentes (Actual: Alfa %s)" % config.get_addon_version(from_xml=True), plot="Versión actual: %s" % config.get_addon_version(from_xml=True) ))
     itemlist.append(Item(channel=CHANNELNAME, action="update_quasar", folder=False,
                          title="Actualizar addon externo Quasar"))
     itemlist.append(Item(channel=CHANNELNAME, action="reset_trakt", folder=False,

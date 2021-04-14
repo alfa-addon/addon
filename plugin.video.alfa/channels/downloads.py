@@ -214,8 +214,12 @@ def browser(item):
                                  plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
             else:
                 if scrapertools.find_single_match(file, '(\.\w+)$') in extensions_list:
-                    itemlist.append(Item(channel=item.channel, title=file, action="play", url=url, context=context, 
-                                                 plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
+                    if scrapertools.find_single_match(file, '(\.\w+)$') == '.rar': 
+                        action = ''
+                    else:
+                        action = 'play'
+                    itemlist.append(Item(channel=item.channel, title=file, action=action, url=url, context=context, 
+                                 plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
             
     if config.get_localized_string(70222) in item.title:
         for file in sorted(filetools.listdir(DOWNLOAD_LIST_PATH)):
@@ -272,6 +276,7 @@ def browser(item):
         if torrent_paths_list:
             for torr_client, path in torrent_paths_list:
                 for file in sorted(filetools.listdir(path)):
+                    if file == "list": continue
                     if file.startswith('.') or file.lower().startswith('torrent'): continue
                     url = filetools.join(path, file)
                     if url in str(torrent_paths_list_seen): continue
@@ -281,8 +286,12 @@ def browser(item):
                             Item(channel=item.channel, title=file, action=item.action, url=url, context=context,
                                          plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
                     else:
-                        if scrapertools.find_single_match(url, '(\.\w+)$') in extensions_list:
-                            itemlist.append(Item(channel=item.channel, title=file, action="play", url=url, context=context, 
+                        if scrapertools.find_single_match(file, '(\.\w+)$') in extensions_list:
+                            if scrapertools.find_single_match(file, '(\.\w+)$') == '.rar': 
+                                action = ''
+                            else:
+                                action = 'play'
+                            itemlist.append(Item(channel=item.channel, title=file, action=action, url=url, context=context, 
                                          plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
 
     return itemlist

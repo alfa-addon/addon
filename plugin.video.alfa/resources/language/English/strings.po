@@ -5174,3 +5174,7 @@ msgstr ""
 msgctxt "#80781"
 msgid "Enable for Forced mode, disable for On-Demand mode"
 msgstr ""
+
+msgctxt "#80782"
+msgid "Ageing period for non-resolved domains"
+msgstr ""
