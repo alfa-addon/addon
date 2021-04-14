@@ -111,7 +111,6 @@ class main(xbmcgui.WindowDialog):
             if not self.item.infoLabels["year"]:
                 self.dialog.close()
                 platformtools.dialog_notification(config.get_localized_string(60471), config.get_localized_string(60472) % tipo)
-                global mainWindow
                 self.close()
                 del mainWindow
                 return
@@ -123,7 +122,6 @@ class main(xbmcgui.WindowDialog):
             if not self.infoLabels["tmdb_id"]:
                 self.dialog.close()
                 platformtools.dialog_notification(config.get_localized_string(60473), config.get_localized_string(60474) % tipo)
-                global mainWindow
                 self.close()
                 del mainWindow
                 return
@@ -542,7 +540,6 @@ class main(xbmcgui.WindowDialog):
 
     def onAction(self, action):
         if action == ACTION_PREVIOUS_MENU or action == ACTION_GESTURE_SWIPE_LEFT or action == 110 or action == 92:
-            global mainWindow
             xbmc.executebuiltin('PlayMedia(Stop)')
             self.close()
             mainWindow.pop()

@@ -215,7 +215,7 @@ def findvideos(item):
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
                                    text_color="magenta"))
 
-        # Opción "Añadir esta película a la biblioteca de KODI"
+        # Opción "Añadir esta película a la videoteca de KODI"
         if config.get_videolibrary_support():
             itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
                                  action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
@@ -226,7 +226,7 @@ def findvideos(item):
 def clear_url(url):
     if PY3 and isinstance(url, bytes):
         url = "".join(chr(x) for x in bytes(url))
-    url = url.replace("fembed.com/v","fembed.com/f").replace("mega.nz/embed/","mega.nz/file/").replace("streamtape.com/e/","streamtape.com/v/")
+    url = url.replace("fembed.com/v","fembed.com/f").replace("mega.nz/embed/","mega.nz/file/").replace("streamtape.com/e/","streamtape.com/v/").replace("v2.zplayer.live/download","v2.zplayer.live/embed")
     if "streamtape" in url:
         url = scrapertools.find_single_match(url, '(https://streamtape.com/v/\w+)')
     return url
