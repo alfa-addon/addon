@@ -21,8 +21,8 @@ def mainlist(item):
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="ultimas_series", title="Últimas Series", url=host))
     itemlist.append(Item(channel=item.channel, action="ultimos_episodios", title="Últimos Episodios", url=host))
-    itemlist.append(Item(channel=item.channel, action="p_tipo", title="Listado Alfabetico", url=host, extra="Animes por letra"))
-    itemlist.append(Item(channel=item.channel, action="p_tipo", title="Listado por Genero", url=host, extra="Animes por Genero"))
+    itemlist.append(Item(channel=item.channel, action="p_tipo", title="Listado Alfabetico", url=host, list_type="letras"))
+    itemlist.append(Item(channel=item.channel, action="p_tipo", title="Listado por Genero", url=host, list_type="generos"))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar"))
     return itemlist
 
@@ -31,12 +31,12 @@ def ultimas_series(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, 'Últimos Animes agregados</h3></div>.*?</div><!-- .content-box -->')
-    patron  = '<a title="([^"]+).*?'
-    patron += 'href="([^"]+)".*?'
-    patron += 'src="([^"]+)'
+    data = scrapertools.find_single_match(data, '(?is)Últimos Animes agregados</h4>.*?<div class="col-lg-4 col-md-6 col-sm-8 trending_div">')
+    patron  = '(?is)data-setbg="(.+?)".*?'
+    patron += '<a  href="([^"]+)".*?'
+    patron += '>(.+?)<'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedtitle, scrapedurl, scrapedthumbnail in matches:
+    for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
         itemlist.append(
             Item(channel=item.channel, action="episodios", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
                  show=scrapedtitle))
@@ -65,13 +65,17 @@ def ultimos_episodios(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     #data = scrapertools.find_single_match(data, '<ul class="latestul">(.*?)</ul>')
-    patron = '<a class="odd" title="([^"]+).*?'
-    patron += 'href="([^"]+)".*?'
-    patron += 'img src="([^"]+)".*?'
-    patron += 'Episodio.*?(\d+)'
+    #patron = '<a class="odd" title="([^"]+).*?'
+    #patron += 'href="([^"]+)".*?'
+    #patron += 'img src="([^"]+)".*?'
+    #patron += 'Episodio.*?(\d+)'
+    patron = '<a href="(.+?)" class="bloqq">.+?'            # url
+    patron += '\n.+?\n.+?<img src="(.+?)".+?'               # thumb
+    patron += 'title="(.+?)".+?'                            # title
+    patron += '\n.+?\n.+?\n.+?\n.+?h6>.+?\n.+?(\d+).+?</'   # epnum
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedtitle, scrapedurl, scrapedthumbnail, scrapedepisode in matches:
-        title = scrapedtitle + " - Episodio " + scrapedepisode
+    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedepisode in matches:
+        title = "{} - Episodio {}".format(scrapedtitle, scrapedepisode)
         itemlist.append(
             Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
                  show=scrapedtitle))
@@ -83,15 +87,19 @@ def p_tipo(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, '<h3>%s(.*?)</ul>' %item.extra)
-    patron  = 'href="([^"]+)".*?'
-    patron += 'title.*?>([^<]+)</a>'
+    if item.list_type == "letras":
+        data = scrapertools.find_single_match(data, '<div class="letras-box addmenu">(.*?)</ul>')
+        patron  = 'class="letra-link" href="([^"]+)".*?'
+        patron += '>([^<]+)</a>'
+    elif item.list_type == "generos":
+        data = scrapertools.find_single_match(data, 'Animes por Genero(.*?)</ul>')
+        patron  = 'href="([^"]+)".*?'
+        patron += '>([^<]+)</a>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle in matches:
-        if "Por Genero" not in scrapedtitle:
-            itemlist.append(
-                Item(channel=item.channel, action="series", title=scrapedtitle, url=host + scrapedurl,
-                     viewmode="movie_with_plot"))
+        itemlist.append(
+            Item(channel=item.channel, action="series", title=scrapedtitle, url="{}{}".format(host, scrapedurl),
+                 viewmode="movie_with_plot"))
     return itemlist
 
 
@@ -100,15 +108,20 @@ def series(item):
     # Descarga la pagina
     data = httptools.downloadpage(item.url).data
     # Extrae las entradas
-    patron  = '<a title="([^"]+)" href="([^"]+)" rel="nofollow">.*?'
-    patron += 'src="([^"]+)".*?'
-    patron += 'eps-num">([^<]+)</span>.*?'
-    patron += '<p>([^\<]+)</p>'
+    # patron  = '<a title="([^"]+)" href="([^"]+)" rel="nofollow">.*?'
+    # patron += 'src="([^"]+)".*?'
+    # patron += 'eps-num">([^<]+)</span>.*?'
+    # patron += '<p>([^\<]+)</p>'
+    patron = 'class="anime__item">\s+?<a  href="(.+?)".+?'  # url
+    patron += 'data-setbg="(.+?)".+?'                       # thumb
+    patron += 'class="ep".*?>(\d+).+?'                      # epnum
+    patron += 'class="title".*?>(.+?)</.+?'                 # title
+    patron += 'p>(.+?)</'                                   # plot
     matches = scrapertools.find_multiple_matches(data, patron)
     itemlist = []
-    for scrapedtitle, scrapedurl, scrapedthumbnail, scrapedepisode, scrapedplot in matches:
-        title = scrapedtitle + " (" + scrapedepisode + ")"
-        scrapedthumbnail = scrapedthumbnail.replace("thumbnail", "image")
+    for scrapedurl, scrapedthumbnail, scrapedepisode, scrapedtitle, scrapedplot in matches:
+        title = "{} ({})".format(scrapedtitle, scrapedepisode)
+        # scrapedthumbnail = scrapedthumbnail.replace("thumbnail", "image")
         plot = scrapertools.htmlclean(scrapedplot)
         itemlist.append(Item(channel=item.channel, action="episodios", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, fanart=scrapedthumbnail,
                  plot=scrapedplot, show=scrapedtitle))
@@ -122,7 +135,7 @@ def series(item):
         if len(itemlist)>0:
             itemlist.append(
                 Item(channel=item.channel, action="series", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
-                     plot=scrapedplot, folder=True, viewmode="movie_with_plot"))
+                     plot=scrapedplot, viewmode="movie_with_plot"))
     except:
         pass
     return itemlist
