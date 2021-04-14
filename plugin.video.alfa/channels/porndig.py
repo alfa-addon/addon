@@ -39,14 +39,14 @@ def mainlist(item):
     itemlist.append(item.clone(title="Canal" , action="pornstar", url="/studios/load_more_studios",
                                value="video_views", offset=""))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/video/"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    # itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 # FALLA 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/videos?q=%s" % (host,texto)
+    item.url = "%s/search?q=%s" % (host,texto)
     item.texto = texto
     try:
         return lista(item)
@@ -136,10 +136,10 @@ def lista(item):
     if "search" in item.url:
         post = "main_category_id=1&type=post&name=search_posts&search=%s&offset=%s" % (item.texto, offset)
     soup = create_soup(posturl, post)
-    matches = soup.find_all('a', class_='video_item_thumbnail')
+    matches = soup.find_all('section', class_='video_item_medium')
     for elem in matches:
-        url = elem['href']
-        stitle = elem['alt']
+        url = elem.a['href']
+        stitle = elem.img['alt']
         thumbnail = elem.img['data-src']
         stime = elem.find('div', class_='bubble').text.strip()
         quality = elem.find('i', class_='pull-right')['class'][1].replace("icon-ic_19_qlt_", "")
