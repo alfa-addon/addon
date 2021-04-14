@@ -120,12 +120,12 @@ def mainlist(item):
     set_category_context(new_item)
     itemlist.append(new_item)
     
-    #if list_canales['deportes']:
-    thumbnail = get_thumb("channels_sport.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="deportes", title="Deportes", 
-                    thumbnail=thumbnail)
-    set_category_context(new_item)
-    itemlist.append(new_item)
+    if list_canales['deportes']:
+        thumbnail = get_thumb("channels_sport.png")
+        new_item = Item(channel=item.channel, action="novedades", extra="deportes", title="Deportes", 
+                        thumbnail=thumbnail)
+        set_category_context(new_item)
+        itemlist.append(new_item)
 
     return itemlist
 
