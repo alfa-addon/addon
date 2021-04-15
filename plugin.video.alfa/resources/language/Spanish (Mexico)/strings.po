@@ -5171,3 +5171,7 @@ msgstr "Método alternativo de acceso a webs:"
 msgctxt "#80781"
 msgid "Enable for Forced mode, disable for On-Demand mode"
 msgstr "¿Modo -Forzado-: SÍ? ¿Modo -bajo Demanda-: NO?"
+
+msgctxt "#80782"
+msgid "Ageing period for non-resolved domains"
+msgstr "Periodo de envejecimiento para dominios no resueltos"

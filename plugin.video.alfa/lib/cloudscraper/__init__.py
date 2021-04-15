@@ -58,7 +58,7 @@ from .user_agent import User_Agent
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '1.2.58PY2-3'
+__version__ = '1.2.59PY2-3'
 
 # ------------------------------------------------------------------------------- #
 
@@ -197,7 +197,7 @@ class CloudScraper(Session):
     @staticmethod
     def debugRequest(req):
         try:
-            print(dump.dump_all(req).decode('utf-8'))
+            print(dump.dump_all(req).decode('utf-8', errors='backslashreplace'))
         except ValueError as e:
             print("Debug Error: {}".format(getattr(e, 'message', e)))
 
@@ -275,10 +275,13 @@ class CloudScraper(Session):
         # ------------------------------------------------------------------------------- #
 
         if self.requestPostHook:
-            response = self.requestPostHook(self, response)
+            newResponse = self.requestPostHook(self, response)
 
-            if self.debug:
-                self.debugRequest(response)
+            if response != newResponse:  # Give me walrus in 3.7!!!
+                response = newResponse
+                if self.debug:
+                    print('==== requestPostHook Debug ====')
+                    self.debugRequest(response)
 
         # Check if Cloudflare anti-bot is on
         if self.is_Challenge_Request(response, **kwargs):
@@ -442,7 +445,7 @@ class CloudScraper(Session):
             )
 
         if self.is_New_Captcha_Challenge(resp):
-            return cf_assistant.get_cl(resp)
+            return cf_assistant.get_cl(resp, **kwargs)
             """
             self.simpleException(
                 CloudflareChallengeError,
@@ -451,7 +454,7 @@ class CloudScraper(Session):
             """
 
         if self.is_New_IUAM_Challenge(resp):
-            return cf_assistant.get_cl(resp)
+            return cf_assistant.get_cl(resp, **kwargs)
             """
             self.simpleException(
                 CloudflareChallengeError,

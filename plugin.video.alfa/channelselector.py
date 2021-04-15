@@ -63,7 +63,7 @@ def getmainlist(view="thumb_"):
                          thumbnail=get_thumb("error.png", view),
                          category=config.get_localized_string(30104), viewmode="list"))
 
-    itemlist.append(Item(title=config.get_localized_string(30104) + " (" + config.get_localized_string(20000) +" " + config.get_addon_version(with_fix=False) + ")", channel="help", action="mainlist",
+    itemlist.append(Item(title=config.get_localized_string(30104) + " (" + config.get_localized_string(20000) +" " + config.get_addon_version(with_fix=False, from_xml=True) + ")", channel="help", action="mainlist",
                          thumbnail=os.path.join(config.get_runtime_path(), "resources", 'Screenshot.jpg'),
                          category=config.get_localized_string(30104), viewmode="list"))
 
@@ -82,6 +82,12 @@ def getmainlist(view="thumb_"):
                          thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
                          category=config.get_localized_string(30104), viewmode="list"))
 
+    itemlist.append(Item(channel="setting", action=action, url='https://alfa-addon.com/threads/si-tienes-android-10-y-kodi-19-vas-a-tener-problemas-con-los-torrents.4211/', 
+                         title="-     [COLOR yellow]Si tienes Android 10+ y Kodi 19+ vas a tener problemas con los torrents[/COLOR]   " + 
+                         "https://alfa-addon.com/threads/si-tienes-android-10-y-kodi-19-vas-a-tener-problemas-con-los-torrents.4211/", 
+                         thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
+                         category=config.get_localized_string(30104), viewmode="list"))
+
     itemlist.append(Item(channel="setting", action=action, url='https://alfa-addon.com/threads/torrest-el-gestor-de-torrents-definitivo.4085/', 
                          title="-     [COLOR yellow]Torrest: el gestor de torrents definitivo[/COLOR]   " + 
                          "https://alfa-addon.com/threads/torrest-el-gestor-de-torrents-definitivo.4085/", 
@@ -95,7 +101,8 @@ def getchanneltypes(view="thumb_"):
     logger.info()
 
     # Lista de categorias
-    channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent", "sport"]
+    #channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent", "sport"]
+    channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent"]
 
     if config.get_setting("adult_mode") != 0:
         channel_types.append("adult")
@@ -218,7 +225,7 @@ def filterchannels(category, view="thumb_"):
                                 "config": channel_parameters["channel"]})
             if os.path.exists(os.path.join(config.get_runtime_path(), 'channels', 'test.py')):
                 context.append({"title": config.get_localized_string(70215), "channel": "test", "action": "test_channel",
-                                "parameters": channel_parameters["channel"]})
+                                "contentChannel": channel_parameters["channel"], "parameters": "test_channel"})
 
             channel_info = set_channel_info(channel_parameters)
             # Si ha llegado hasta aquí, lo añade

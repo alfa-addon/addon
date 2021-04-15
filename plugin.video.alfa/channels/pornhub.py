@@ -126,7 +126,8 @@ def lista(item):
     for elem in matches:
         url = elem.a['href']
         stitle = elem.a['title']
-        thumbnail = elem.img['data-thumb_url']
+        if not elem.find('div', class_='thumbTextPlaceholder'):
+            thumbnail = elem.img['data-thumb_url']
         stime = elem.find('var', class_='duration').text
         quality = elem.find('span', class_='hd-thumbnail')
         premium = elem.find('i', class_='premiumIcon')
@@ -135,7 +136,7 @@ def lista(item):
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
         url = urlparse.urljoin(item.url, url)
-        if not premium:
+        if not premium and not elem.find('div', class_='thumbTextPlaceholder'):
             itemlist.append(item.clone(action="play", title=title, contentTitle = title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail))
     next_page = soup.find('li', class_='page_next')

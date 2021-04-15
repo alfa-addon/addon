@@ -226,12 +226,10 @@ def findvideos(item):
     itemlist = list()
 
 
-    data = httptools.downloadpage(item.url)
+    data = httptools.downloadpage(item.url, forced_proxy_opt="ProxyCF")
 
     if data.sucess or data.code == 302:
         data = data.data
-    else:
-        data = httptools.downloadpage(item.url, forced_proxy="ProxyCF").data
 
     pattern = "video\[\d+\]\s*=\s*'([^']+)'"
     matches = re.compile(pattern, re.DOTALL).findall(data)

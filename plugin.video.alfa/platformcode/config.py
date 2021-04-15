@@ -44,14 +44,38 @@ def translatePath(path):
     return path
 
 
-def get_addon_version(with_fix=True):
+def get_addon_version(with_fix=True, from_xml=False):
     '''
     Devuelve el número de versión del addon, y opcionalmente número de fix si lo hay
+    Con la opción from_xml se captura la versión desde addon.xml para obviar información erronea de la BD de addons de Kodi
     '''
-    if with_fix:
-        return __settings__.getAddonInfo('version') + get_addon_version_fix()
-    else:
-        return __settings__.getAddonInfo('version')
+    version = ''
+    if from_xml:
+        try:
+            import xmltodict
+            xml_file = os.path.join(get_runtime_path(), 'addon.xml')
+            if os.path.exists(xml_file):
+                with open(xml_file, 'rb') as f: 
+                    data = f.read()
+                    if not PY3:
+                        data = data.encode("utf-8", "ignore")
+                    elif PY3 and isinstance(data, (bytes, bytearray)):
+                        data = "".join(chr(x) for x in data)
+                xml = xmltodict.parse(data)
+                version = xml["addon"]["@version"]
+                if version:
+                    if with_fix:
+                        return version + get_addon_version_fix()
+                    else:
+                        return version
+        except:
+            version = ''
+    
+    if not version:
+        if with_fix:
+            return __settings__.getAddonInfo('version') + get_addon_version_fix()
+        else:
+            return __settings__.getAddonInfo('version')
 
 
 def get_addon_version_fix():
@@ -192,17 +216,20 @@ def get_videolibrary_support():
 
 def get_system_platform():
     """ fonction: pour recuperer la platform que xbmc tourne """
-    platform = "unknown"
-    if xbmc.getCondVisibility("system.platform.Android"):
-        platform = "android"
-    elif xbmc.getCondVisibility("system.platform.Windows"):
-        platform = "windows"
-    elif xbmc.getCondVisibility("system.platform.OSX"):
-        platform = "osx"
-    elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
-        platform = "raspberry"
-    elif xbmc.getCondVisibility("system.platform.Linux"):
-        platform = "linux"
+    
+    if xbmc.getCondVisibility("System.Platform.Android"): platform = 'android'
+    elif xbmc.getCondVisibility("System.Platform.Windows"): platform = 'windows'
+    elif xbmc.getCondVisibility("System.Platform.UWP"): platform = 'windows'
+    elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"): platform = 'raspberry'
+    elif xbmc.getCondVisibility("System.Platform.Linux"): platform = 'linux'
+    elif xbmc.getCondVisibility("System.Platform.OSX"): platform = 'osx'
+    elif xbmc.getCondVisibility("System.Platform.IOS"): platform = 'ios'
+    elif xbmc.getCondVisibility("System.Platform.Darwin"): platform = 'darwin'
+    elif xbmc.getCondVisibility("System.Platform.Xbox"): platform = 'xbox'
+    elif xbmc.getCondVisibility("System.Platform.Tvos"): platform = 'tvos'
+    elif xbmc.getCondVisibility("System.Platform.Atv2"): platform = 'atv2'
+    else: platform = 'unknown'
+        
     return platform
 
 

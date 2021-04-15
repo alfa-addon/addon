@@ -34,6 +34,8 @@ EXTRA_TIMEOUT = 10
 
 ASSISTANT_APP = 'com.alfa.alfamobileassistant'
 ASSISTANT_SERVER = "http://127.0.0.1"
+ASSISTANT_SERVER_PORT = 48884
+ASSISTANT_SERVER_PORT_PING = 48886
 ASSISTANT_MODE = config.get_setting("assistant_mode")
 
 isAlfaAssistantOpen = False
@@ -41,6 +43,8 @@ isAlfaAssistantOpen = False
 if ASSISTANT_MODE == "otro":
     if config.get_setting("assistant_custom_address"):
         ASSISTANT_SERVER = "http://%s" % config.get_setting("assistant_custom_address")
+URL_CALL = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT)
+URL_PING = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT_PING)
 
 
 JS_CODE_CLICK_ON_VJS_BIG_PLAY_BUTTON = """
@@ -192,10 +196,14 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
         logger.info('##Assistant delay-after-html-load: %s' % str(timeout*1000))
     elif not timeout:
         timeout = 0
-    if endpoint == 'getWebViewInfo':
-        serverCall = '%s:48884/%s' % (ASSISTANT_SERVER, 'ping')
+    if endpoint in ['ping', 'getWebViewInfo', 'quit']:
+        serverCall = URL_PING
     else:
-        serverCall = '%s:48884/%s' % (ASSISTANT_SERVER, endpoint)
+        serverCall = URL_CALL
+    if endpoint == 'getWebViewInfo':
+        serverCall = '%s/%s' % (serverCall, 'ping')
+    else:
+        serverCall = '%s/%s' % (serverCall, endpoint)
     if endpoint == 'update':
         serverCall += '?version=%s' % version
     if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit']:
@@ -259,12 +267,10 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
     if not (response.sucess or response.data) and endpoint not in ['ping', 'getWebViewInfo', 'quit']:
         close_alfa_assistant()
         time.sleep(2)
-        res = open_alfa_assistant(closeAfter, retry=True)
         if not res:
-            time.sleep(10)
-            res = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT+10, alfa_s=True)
+            res = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
         if res:
-            serverCall = serverCall.replace('&cache=False', '&cache=True')
+            serverCall = serverCall.replace('&cache=True', '&cache=False').replace('&clearWebCache=True', '&clearWebCache=False')
             logger.info('##Assistant retrying URL: ' + serverCall)
             response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT, alfa_s=alfa_s, ignore_response_code=True, keep_alive=keep_alive)
         else:
@@ -420,15 +426,10 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False):
 def close_alfa_assistant():
     global isAlfaAssistantOpen
     isAlfaAssistantOpen = False
-    try:
-        if (ASSISTANT_SERVER == "http://127.0.0.1" or ASSISTANT_SERVER == "http://localhost") and is_alfa_installed():
-            logger.info('##Assistant Close at ' + ASSISTANT_SERVER)
-            return get_generic_call('quit', timeout=1-EXTRA_TIMEOUT, alfa_s=True)
-        else:
-            logger.info('##Assistant don\'t need to be closed if not local. IP: ' + ASSISTANT_SERVER)
-    except:
-        logger.error('##Assistant Error closing')
-        logger.error(traceback.format_exc(1))
+
+    if is_alfa_installed():
+        logger.info('##Assistant Close at ' + URL_PING)
+        return get_generic_call('quit', timeout=1-EXTRA_TIMEOUT, alfa_s=True)
 
 #
 ## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
@@ -590,20 +591,23 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
                     app_needed += addon_binary.capitalize() + ', '
                 except:
                     pass
-        
-        config.set_setting('assistant_binary', False)
-        if not app_needed:
-            return p
-        
+        config.set_setting('assistant_binary', True)
+
         if filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
             try:
                 version = filetools.read(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')).split('.')
                 if int(version[0]) > 1 or (int(version[0]) == 1 and int(version[1]) >= 3):
-                    config.set_setting('assistant_binary', 'AstOK')
-                else:
+                    if not app_needed:
+                        config.set_setting('assistant_binary', 'Ast%s' % version[1])
+                    else:
+                        config.set_setting('assistant_binary', 'AstOK')
+                elif app_needed:
                     config.set_setting('assistant_binary', 'AstNO')
             except:
-                config.set_setting('assistant_binary', 'AstNO')
+                pass
+        
+        if not app_needed:
+            return p
         
         if not is_alfa_installed() or config.get_setting("assistant_mode") != 'este':
             platformtools.dialog_notification("Estos addons necesitan Alfa Assistant: %s " % app_needed.rstrip(', '), 
