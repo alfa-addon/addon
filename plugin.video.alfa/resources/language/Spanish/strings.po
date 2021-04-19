@@ -2264,20 +2264,20 @@ msgid "Channel Options"
 msgstr "Herramientas de canales"
 
 msgctxt "#60565"
-msgid "   Check the files * _data.json"
-msgstr "   Comprobar archivos *_data.json"
+msgid "Check the files * _data.json"
+msgstr "Comprobar archivos *_data.json"
 
 msgctxt "#60566"
 msgid "Videolibrary options"
 msgstr "Herramientas de videoteca"
 
 msgctxt "#60567"
-msgid "   Overwrite the entire video library (strm, nfo and json)"
-msgstr "   Sobrescribir toda la videoteca (strm, nfo y json)"
+msgid "Overwrite the entire video library (strm, nfo and json)"
+msgstr "Sobrescribir toda la videoteca (strm, nfo y json)"
 
 msgctxt "#60568"
-msgid "   Search for new episodes and update the video library"
-msgstr "   Buscar nuevos episodios y actualizar videoteca"
+msgid "Search for new episodes and update the video library"
+msgstr "Buscar nuevos episodios y actualizar videoteca"
 
 msgctxt "#60569"
 msgid " - There are no default settings"

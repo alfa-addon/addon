@@ -2250,15 +2250,15 @@ msgid "Channel Options"
 msgstr "Opzioni dei canali"
 
 msgctxt "#60565"
-msgid "   Check the files * _data.json"
-msgstr "  Controlla i file * _data.json"
+msgid "Check the files * _data.json"
+msgstr "Controlla i file * _data.json"
 
 msgctxt "#60566"
 msgid "Videolibrary options"
 msgstr "Opzioni della videoteca"
 
 msgctxt "#60567"
-msgid "   Overwrite the entire video library (strm, nfo and json)"
+msgid "Overwrite the entire video library (strm, nfo and json)"
 msgstr "Sovrascrivi l'intera videoteca (strm, nfo e json)"
 
 msgctxt "#60568"
@@ -5057,111 +5057,111 @@ msgstr "  - Attiva il sistema di download sperimentale"
 
 msgctxt "#80001"
 msgid "Secondary language for AutoPlay"
-msgstr "Idioma secundario para Autoplay"
+msgstr "Lingua secondaria per la riproduzione automatica"
 
 msgctxt "#80002"
 msgid "Force this quality in AutoPlay"
-msgstr "Forzar esta calidad en Autoplay"
+msgstr "Forza questa qualità in Autoplay"
 
 msgctxt "#80510"
 msgid "Frequent channels"
-msgstr "Canales frecuentes"
+msgstr "Canali frequenti"
 
 msgctxt "#80511"
 msgid "Enable frequent channels"
-msgstr "Habilitar canales frecuentes"
+msgstr "Abilita canali frequenti"
 
 msgctxt "#80512"
 msgid "Number of channels to list"
-msgstr "Número de canales a listar"
+msgstr "Numero di canali da elencare"
 
 msgctxt "#80513"
 msgid "Enable frequents category"
-msgstr "Habilitar la categoria frecuentes"
+msgstr "Abilita categoria frequente"
 
 msgctxt "#80514"
 msgid "Number of channels in category"
-msgstr "Número de canales en categoría"
+msgstr "Numero di canali nella categoria"
 
 msgctxt "#80515"
 msgid "Choose an icon theme"
-msgstr "Elegir un tema de iconos"
+msgstr "Scegli un tema per le icone"
 
 msgctxt "#80516"
 msgid "Configure"
-msgstr "Configurar"
+msgstr "Configurazione"
 
 msgctxt "#80610"
 msgid "Alfa Assistant Options"
-msgstr "Opciones de Alfa Assistant"
+msgstr "Opzioni di Alfa Assistant"
 
 msgctxt "#80611"
 msgid "Device to use"
-msgstr "Dispositivo a utilizar"
+msgstr "Dispositivo da utilizzare"
 
 msgctxt "#80612"
 msgid "Manual IP"
-msgstr "IP manual"
+msgstr "IP manuale"
 
 msgctxt "#80613"
 msgid "Would you like to automatically install the app if necesary?"
-msgstr "¿Desea que se instale la app automáticamente si es necesario?"
+msgstr "Vuoi che l'app venga installata automaticamente se necessario?"
 
 msgctxt "#80614"
 msgid "[COLOR limegreen][B]Select here[/B][/COLOR] to install/update Alfa Assistant now"
-msgstr "[COLOR limegreen][B]Pinche[/B][/COLOR] para que Alfa instale/actualice Alfa Assistant ahora"
+msgstr "[COLOR limegreen][B]Fai clic su[/B][/COLOR] per Alfa per installare/aggiornare Alfa Assistant ora"
 
 msgctxt "#80615"
 msgid "URL for manual installation: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Select here[/COLOR] if you have a browser"
-msgstr "URL para instalación manual: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Pinche[/COLOR] si tiene browser"
+msgstr "URL per l'installazione manuale: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Fare clic su[/COLOR] se si dispone di un browser"
 
 msgctxt "#80616"
 msgid "Device root status:"
-msgstr "¿Dispositivo con privilegios de Super-usuario?"
+msgstr "Dispositivo con privilegi di superutente?"
 
 msgctxt "#80740"
 msgid "To avoid long wait times when a webpage does not respond:"
-msgstr "Para evitar esperar demasiado cuando un servidor no responde:"
+msgstr "Per evitare di aspettare troppo a lungo quando un server non risponde:"
 
 msgctxt "#80741"
 msgid "Conection timeout"
-msgstr "Tiempo de espera de conexión"
+msgstr "Connesione finita"
 
 msgctxt "#80750"
 msgid "Alfa Quick Fixes Management"
-msgstr "Gestión de actualizaciones urgentes de Alfa (Quick Fixes):"
+msgstr "Gestione aggiornamenti urgenti Alfa (Quick Fixes):"
 
 msgctxt "#80751"
 msgid "Time between checks for Quick Fixes (in hours)"
-msgstr "Intervalo entre búsqueda de Quick Fixes (en horas)"
+msgstr "Intervallo di ricerca per Quick Fixes (in ore)"
 
 msgctxt "#80752"
 msgid "Show update notifications"
-msgstr "Ver notificaciones de las actualizaciones"
+msgstr "Visualizza le notifiche di aggiornamento"
 
 msgctxt "#80760"
 msgid "My Links"
-msgstr "Mis enlaces"
+msgstr "I Miei Link"
 
 msgctxt "#80761"
 msgid "Active List"
-msgstr "Lista Activa"
+msgstr "Elenco attivo"
 
 msgctxt "#80770"
 msgid "Updates for Alfa related addons"
-msgstr "Gestión de actualizaciones de otros addon relacionados con Alfa:"
+msgstr "Gestione degli aggiornamenti per altri componenti aggiuntivi relativi ad Alfa:"
 
 msgctxt "#80771"
 msgid "Update Quasar to avoid errors"
-msgstr "¿Quiere actualizar Quasar para evitar errores?"
+msgstr "Vuoi aggiornare Quasar per evitare errori?"
 
 msgctxt "#80780"
 msgid "Alternative method for accessing webs"
-msgstr "Método alternativo de acceso a webs:"
+msgstr "Metodo alternativo per accedere ai siti web:"
 
 msgctxt "#80781"
 msgid "Enable for Forced mode, disable for On-Demand mode"
-msgstr "¿Modo -Forzado-: SÍ? ¿Modo -bajo Demanda-: NO?"
+msgstr "Modalità -forzata-: SI, modalità -su richiesta-: NO"
 
 msgctxt "#80782"
 msgid "Ageing period for non-resolved domains"
