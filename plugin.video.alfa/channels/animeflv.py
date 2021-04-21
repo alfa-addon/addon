@@ -22,26 +22,20 @@ from platformcode import config, logger
 from channels import autoplay
 from channels import filtertools
 
-# Puede que se pueda utilizar esta parte después (¿?)
-# def check_for_assistant():
-    # from lib import alfa_assistant
-    # return alfa_assistant.is_alfa_installed()
-
-# is_assistant_installed = check_for_assistant() != False
-
 IDIOMAS = {'LAT': 'LAT','SUB': 'VOSE'}
 list_language = list(IDIOMAS.values())
 list_servers = ['directo', 'rapidvideo', 'streamango', 'yourupload', 'mailru', 'netutv', 'okru']
 list_quality = ['default']
 
-# if is_assistant_installed:
-    # HOST = "https://www3.animeflv.net/"
-# else:
-    # HOST = "https://www10.animeflv.cc/"
-clone = config.get_setting("use_clone", channel="animeflv")
+clone = False
+# clone = config.get_setting("use_clone", channel="animeflv")
+# from lib import alfa_assistant
+# if alfa_assistant.is_alfa_installed():
+    # clone = True
 OGHOST = "https://www3.animeflv.net/"
+CLONEHOST = "https://www10.animeflv.cc/"
 if clone:
-    HOST = "https://www10.animeflv.cc/"
+    HOST = CLONEHOST
 else:
     HOST = OGHOST
 
@@ -416,6 +410,9 @@ def findvideos(item):
     if clone and OGHOST in item.url:
         item.url = item.url.replace(OGHOST, "")
         item.url = "{}{}".format(HOST, scrapertools.find_single_match(item.url, 'ver/\d+/(.+)'))
+    elif not clone and CLONEHOST in item.url:
+        item.url = item.url.replace(CLONEHOST, "")
+        item.url = "{}ver/{}".format(HOST, item.url)
     data = get_source(item.url)
 
     if clone:

@@ -5178,3 +5178,7 @@ msgstr ""
 msgctxt "#80782"
 msgid "Ageing period for non-resolved domains"
 msgstr ""
+
+msgctxt "#80783"
+msgid "Deleted all %s links"
+msgstr ""

@@ -34,9 +34,7 @@ def mainlist(item):
     itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60537), action="menu_channels", folder=True,
                          thumbnail=get_thumb("channels.png")))
     itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60538), action="menu_servers", folder=True,
-                         thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel="news", title=config.get_localized_string(60539), action="menu_opciones",
-                         folder=True, thumbnail=get_thumb("news.png")))
+                         thumbnail=get_thumb("on_the_air.png")))
     itemlist.append(Item(channel="search", title=config.get_localized_string(60540), action="opciones", folder=True,
                          thumbnail=get_thumb("search.png")))
     itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60541), action="channel_config",

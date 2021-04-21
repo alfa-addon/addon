@@ -1081,6 +1081,7 @@ def delete(item):
         heading = config.get_localized_string(70085)
     if item.multicanal:
         # Obtener listado de canales
+        msg_txt = ""
         if item.dead == '':
             opciones = [config.get_localized_string(70086) % k.capitalize() for k in list(item.library_urls.keys()) if
                         k != "downloads"]
@@ -1091,6 +1092,7 @@ def delete(item):
             if index == 0:
                 # Seleccionado Eliminar pelicula/serie
                 delete_all(item)
+                msg_txt = config.get_localized_string(80783) % item.contentTitle
 
             elif index > 0:
                 # Seleccionado Eliminar canal X
@@ -1114,7 +1116,8 @@ def delete(item):
                 del item_nfo.emergency_urls[canal]
             filetools.write(item.nfo, head_nfo + item_nfo.tojson())
 
-        msg_txt = config.get_localized_string(70087) % (num_enlaces, canal)
+        if not msg_txt:
+            msg_txt = config.get_localized_string(70087) % (num_enlaces, canal)
         logger.info(msg_txt)
         platformtools.dialog_notification(heading, msg_txt)
         platformtools.itemlist_refresh()

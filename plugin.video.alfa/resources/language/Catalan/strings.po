@@ -5361,3 +5361,7 @@ msgstr "¿Mode -Forzado-: SÍ? ¿Mode -sota demanda-: NO?"
 msgctxt "#80782"
 msgid "Ageing period for non-resolved domains"
 msgstr "Període d'envelliment per a dominis no resolts"
+
+msgctxt "#80783"
+msgid "Deleted all %s links"
+msgstr "S'han eliminat tots els enllaços de %s"

@@ -5176,3 +5176,7 @@ msgstr "¿Modo -Forzado-: SÍ? ¿Modo -bajo Demanda-: NO?"
 msgctxt "#80782"
 msgid "Ageing period for non-resolved domains"
 msgstr "Periodo de envejecimiento para dominios no resueltos"
+
+msgctxt "#80783"
+msgid "Deleted all %s links"
+msgstr "Se han eliminado todos los enlaces de %s"

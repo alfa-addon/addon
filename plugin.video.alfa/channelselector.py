@@ -18,9 +18,7 @@ def getmainlist(view="thumb_"):
     # Añade los canales que forman el menú principal
     itemlist.append(Item(title=config.get_localized_string(30130), channel="news", action="mainlist",
                          thumbnail=get_thumb("news.png", view),
-                         category=config.get_localized_string(30119), viewmode="thumbnails",
-                         context=[{"title": config.get_localized_string(70285), "channel": "news", "action": "menu_opciones",
-                                   "goto": True}]))
+                         category=config.get_localized_string(30119), viewmode="thumbnails"))
 
     itemlist.append(Item(title=config.get_localized_string(30118), channel="channelselector", action="getchanneltypes",
                          thumbnail=get_thumb("channels.png", view), view=view,
