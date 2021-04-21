@@ -100,7 +100,7 @@
         <setting id="assistant_manual_install" type="action" label="80615"
                  action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAiZnVuY3Rpb24iLA0KICAgICJmb2xkZXIiOiAibGliIiwNCiAgICAiZnVuY3Rpb24iOiAiZ2VuZXJpY3Rvb2xzIiwNCiAgICAibWV0aG9kIjogImNhbGxfYnJvd3NlciIsDQogICAgIm9wdGlvbnMiOiAiaHR0cHM6Ly9iaXQubHkvMlp3cGZ6cSINCn0=)"/>
         <setting id="is_rooted_device" label="80616" type="labelenum" values="check|rooted|no_rooted" default="check"/>
-        <setting id="cf_assistant_bl_expiration" type="number" label="80782" default="0"/>
+        <setting id="cf_assistant_bl_expiration" type="number" label="80782" default="30"/>
     </category>
 
     <category label="70149">

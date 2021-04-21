@@ -27,7 +27,7 @@ from platformcode import logger, config
 PATH_BL = filetools.join(config.get_runtime_path(), 'resources', 'cf_assistant_bl.json')
 
 
-def get_cl(resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blacklist=True, **kwargs):
+def get_cl(resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blacklist=True, retryIfTimeout=True, **kwargs):
     blacklist_clear = True
     if 'hideproxy' in resp.url or 'webproxy' in resp.url or kwargs.get('proxies'):
         blacklist_clear = False
@@ -76,15 +76,17 @@ def get_cl(resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blackl
                 ua = httptools.get_user_agent()
 
             logger.debug("UserAgent: %s || Android Vrs: %s" % (ua, vers))
-            
+
             jscode = get_jscode(1, 'KEYCODE_ENTER', 1)
 
-            data_assistant = alfa_assistant.get_source_by_page_finished(resp.url, timeout=timeout, getCookies=True, userAgent=ua,
+            url_cf = scrapertools.find_single_match(resp.url, '(http.*\:\/\/(?:www\S*.)?\w+\.\w+(?:\.\w+)?)(?:\/)?') + '|cf_clearance'
+
+            data_assistant = alfa_assistant.get_urls_by_page_finished(resp.url, timeout=timeout, getCookies=True, userAgent=ua,
                                                                         disableCache=True, debug=debug, jsCode=jscode,
                                                                         extraPostDelay=extraPostDelay, clearWebCache=True, 
-                                                                        removeAllCookies=True
+                                                                        removeAllCookies=True, returnWhenCookieNameFound=url_cf,
+                                                                        retryIfTimeout=retryIfTimeout
                                                                         )
-            
             logger.debug("data assistant: %s" % data_assistant)
 
             domain_ = domain
@@ -138,7 +140,8 @@ def get_cl(resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blackl
             if not retry:
                 config.set_setting('cf_assistant_ua', '')
                 logger.debug("No se obtuvieron resultados, reintentando...")
-                return get_cl(resp, timeout=timeout-5, extraPostDelay=extraPostDelay, retry=True, **kwargs)
+                return get_cl(resp, timeout=timeout-5, extraPostDelay=extraPostDelay, \
+                            retry=True, blacklist=True, retryIfTimeout=False, **kwargs)
 
         freequency(freequent_data)
         
@@ -238,6 +241,9 @@ def check_blacklist(domain):
         bl_data = jsontools.load(filetools.read(PATH_BL))
         bl_data_clean = bl_data.copy()
         expiration = config.get_setting('cf_assistant_bl_expiration', default=30) * 60
+        if not expiration:
+            config.set_setting('cf_assistant_bl_expiration', 30)
+            expiration = 30 * 60
         time_today = time.time()
         
         if bl_data:
