@@ -300,8 +300,11 @@ def get_environment():
             cliente['Version'] = str(torrent_paths[cliente['Plug_in'].upper()+'_version'])
             if cliente['Plug_in'].upper() == 'TORREST':
                 cliente['Buffer'] = str(int(int(torrent_paths[cliente['Plug_in'].upper()+'_buffer']) /(1024*1024)))
-                cliente['Platform'] = str(filetools.listdir(filetools.join('special://home', \
-                                    'addons', 'plugin.video.torrest', 'resources', 'bin'))[0])
+                bin_path = filetools.join('special://home', 'addons', 'plugin.video.torrest', 'resources', 'bin')
+                if filetools.exists(bin_path):
+                    cliente['Platform'] = str(filetools.listdir(bin_path)[0])
+                else:
+                    cliente['Platform'] = 'None'
                 try:
                     __settings__ = xbmcaddon.Addon(id="plugin.video.torrest")
                     cliente['Platform'] += ': %s: %s:%s' % (str(__settings__.getSetting("service_enabled")), \
@@ -367,7 +370,7 @@ def get_environment():
             environment['log_size'] = ''
         
         environment['debug'] = str(config.get_setting('debug'))
-        environment['addon_version'] = '%s (Upd: %s h.)' % (str(config.get_addon_version()), \
+        environment['addon_version'] = '%s (Upd: %s h.)' % (str(config.get_addon_version(from_xml=True)), \
                                 str(config.get_setting("addon_update_timer", default=12)).replace('0', 'No'))
 
         environment['assistant_version'] = str(None)

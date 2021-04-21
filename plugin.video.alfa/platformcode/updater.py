@@ -58,6 +58,7 @@ def check_addon_init():
             if monitor.waitForAbort(timer):                             # Espera el tiempo programado o hasta que cancele Kodi
                 break                                                   # Cancelación de Kodi, salimos
                 
+        check_update_to_others(verbose=False, app=False)                # Actualizamos otros add-ons antes de irnos, para el siguiente inicio
         return
                 
     # Lanzamos en Servicio de actualización de FIXES
@@ -68,7 +69,11 @@ def check_addon_init():
         try:
             timer = int(config.get_setting('addon_update_timer'))       # Intervalo entre actualizaciones, en Ajustes de Alfa
             if timer <= 0:
-                return                                                  # 0.  No se quieren actualizaciones
+                if base64.b64decode(config.get_setting('proxy_dev')).decode('utf-8') == 'user':
+                    config.set_setting('addon_update_timer', 12)        # Si es usuario se fuerza a 12 horas
+                    timer = 12
+                else:
+                    return                                              # 0.  No se quieren actualizaciones
             verbose = config.get_setting('addon_update_message')
         except:
             verbose = False                                             # Por defecto, sin mensajes
@@ -120,7 +125,7 @@ def check_addon_updates(verbose=False):
 
         # Comprobar versión que tiene instalada el usuario con versión de la actualización
         # --------------------------------------------------------------------------------
-        current_version = config.get_addon_version(with_fix=False)
+        current_version = config.get_addon_version(with_fix=False, from_xml=True)
         if current_version != data['addon_version']:
             logger.info('No hay actualizaciones para la versión %s del addon' % current_version)
             if verbose:
@@ -136,7 +141,7 @@ def check_addon_updates(verbose=False):
                     logger.info('Ya está actualizado con los últimos cambios. Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
                     if verbose:
                         dialog_notification('Alfa ya está actualizado', 'Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
-                    check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
+                    check_update_to_others(verbose=verbose)                     # Comprueba las actualuzaciones de otros productos
                     return False
             except:
                 if lastfix:

@@ -28,7 +28,7 @@ json_data_file_name = 'custom_code.json'
 ADDON_PATH = config.get_runtime_path()
 ADDON_USERDATA_PATH = config.get_data_path()
 ADDON_USERDATA_BIN_PATH = filetools.join(ADDON_USERDATA_PATH, 'bin')
-ADDON_VERSION = config.get_addon_version(with_fix=False)
+ADDON_VERSION = config.get_addon_version(with_fix=False, from_xml=True)
 ADDON_CUSTOMCODE_JSON = filetools.join(ADDON_PATH, json_data_file_name)
 
 
@@ -339,28 +339,36 @@ def init_version(json_data):
         ret = False
         if json_data.get('init_version'): return ret
         
-        try:
-            if xbmc.getCondVisibility("System.Platform.Windows"): categoria = 'windows'
-            elif xbmc.getCondVisibility("System.Platform.UWP"): categoria = 'windows'
-            elif xbmc.getCondVisibility("System.Platform.Android"): categoria = 'android'
-            elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"): categoria = 'rpi'
-            elif xbmc.getCondVisibility("System.Platform.Linux"): categoria = 'linux'
-            elif xbmc.getCondVisibility("System.Platform.OSX"): categoria = 'osx'
-            elif xbmc.getCondVisibility("System.Platform.IOS"): categoria = 'ios'
-            elif xbmc.getCondVisibility("System.Platform.Darwin"): categoria = 'darwin'
-            elif xbmc.getCondVisibility("System.Platform.Xbox"): categoria = 'xbox'
-            elif xbmc.getCondVisibility("System.Platform.Tvos"): categoria = 'tvos'
-            elif xbmc.getCondVisibility("System.Platform.Atv2"): categoria = 'atv2'
-            else: categoria = 'unkn'
-        except:
-            categoria = 'unkn'
-        
+        categoria = config.get_system_platform()
+
         kodi = config.get_platform(full_version=True)
         kodi = ',k%s' % str(kodi.get('num_version')).split('.')[0]
         
         assistant = ''
-        if config.get_setting('assistant_binary', default=False):
-            assistant = ',%s' % config.get_setting('assistant_binary')
+        if categoria == 'android':
+            assistant = config.get_setting('assistant_binary', default=False)
+            if assistant and assistant != True:
+                assistant = ',%s' % assistant
+            elif assistant == True:
+                assistant = ''
+                from core import servertools
+                torrent_json = servertools.get_server_json('torrent').get('clients', [])
+                for client_block in torrent_json:
+                    for client, value in list(client_block.items()):
+                        if client != 'id': continue
+                        if xbmc.getCondVisibility('System.HasAddon("%s")' % value):
+                            assistant = ',AstOT'
+                            if 'elementum' in value:
+                                assistant = ',AstEL'
+                                break
+                    if assistant:
+                        break
+            else:
+                assistant = ''
+                if filetools.exists(filetools.join(ADDON_USERDATA_PATH, 'alfa-mobile-assistant.version')):
+                    version = filetools.read(filetools.join(ADDON_USERDATA_PATH, 'alfa-mobile-assistant.version')).split('.')
+                    if len(version) == 3:
+                        assistant = ',Ast%s' % version[1]
 
         try:
             if not PY3: from lib import alfaresolver
