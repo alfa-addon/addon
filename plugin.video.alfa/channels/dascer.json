@@ -1,7 +1,7 @@
 {
   "id": "dascer",
   "name": "Dascer",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "https://motorendirecto.com/wp-content/uploads/2021/02/log.2021.png",

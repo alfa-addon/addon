@@ -15,21 +15,29 @@ from core import httptools, scrapertools, servertools, tmdb, jsontools
 from core.item import Item
 from platformcode import config, logger, platformtools
 from channelselector import get_thumb
+from channels import autoplay
 
-host = 'https://hentaila.com'
-IDIOMAS = {'VOSE': 'VOSE'}
-SEEK_TMDB = config.get_setting('seek_tmdb', channel='hentaila')
-SEEK_TMDB_LIST_ALL = not config.get_setting('seek_tmdb_only_in_episodes', channel='hentaila')
-PREFER_TMDB_REVIEW = config.get_setting('prefer_tmdb_review', channel='hentaila')
-list_language = list(IDIOMAS.values())
 month = {'January':'01',  'February':'02', 'March':'03',
          'April':'04',    'May':'05',      'June':'06',
          'July':'07',     'August':'08',   'September':'09',
          'October':'10',  'November':'11', 'December':'12'}
 
+host = 'https://hentaila.com'
+
+IDIOMAS = {'VOSE': 'VOSE'}
+SEEK_TMDB = config.get_setting('seek_tmdb', channel='hentaila')
+SEEK_TMDB_LIST_ALL = not config.get_setting('seek_tmdb_only_in_episodes', channel='hentaila')
+PREFER_TMDB_REVIEW = config.get_setting('prefer_tmdb_review', channel='hentaila')
+
+list_language = list(IDIOMAS.values())
+list_servers = ['mega', 'fembed', 'mp4upload', 'yourupload', 'sendvid']
+list_quality = []
+
 def mainlist(item):
     logger.info()
     itemlist = []
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist.append(
         Item(
             action = "newest",
@@ -116,7 +124,22 @@ def mainlist(item):
             url = host + "/api/search"
         )
     )
+    itemlist.append(
+        Item(
+            action = "setting_channel",
+            channel = item.channel,
+            plot = "Configurar canal",
+            title = "Configurar canal", 
+            thumbnail = get_thumb("setting_0.png")
+        )
+    )
+    autoplay.show_option(item.channel, itemlist)
     return itemlist
+
+def setting_channel(item):
+    ret = platformtools.show_channel_settings()
+    platformtools.itemlist_refresh()
+    return ret
 
 def categories(item):
     logger.info()
@@ -383,9 +406,14 @@ def premieres(item):
             )
     return itemlist
 
-def newest(item):
-    item.url = host + "/directorio?filter=recent"
+def newest(categoria):
+    item = Item()
+    item.action = "newest"
+    item.channel = "hentaila"
     item.param = ""
+    item.thumbnail = get_thumb("newest", auto=True)
+    item.title = "Novedades"
+    item.url = host + "/directorio?filter=recent"
     return list_all(item)
 
 def list_all(item):
@@ -559,7 +587,7 @@ def episodesxseason(item, get_episodes = False):
                 itemlist.append(
                     Item(
                         channel = item.channel,
-                        title = '[COLOR yellow]Añadir este elemento a la videoteca[/COLOR]',
+                        title = '[COLOR yellow]{}[/COLOR]'.format(config.get_localized_string(30161)),
                         url = item.url,
                         action = "add_serie_to_library",
                         extra = "episodios",
@@ -567,15 +595,16 @@ def episodesxseason(item, get_episodes = False):
                     )
                 )
 
-        itemlist.append(
-            Item(
-                action = "comments",
-                channel = item.channel,
-                fanart = item.fanart,
-                title = "Ver comentarios",
-                url = item.url
+        if logger.info() != False:
+            itemlist.append(
+                Item(
+                    action = "comments",
+                    channel = item.channel,
+                    fanart = item.fanart,
+                    title = "Ver comentarios",
+                    url = item.url
+                )
             )
-        )
     return itemlist
 
 def findvideos(item):
@@ -600,15 +629,19 @@ def findvideos(item):
         video.title = video.title.replace((config.get_localized_string(70206) % ''), '')
         video.title = video.title.title() + ' [' + item.contentSerieName + ']'
         video.thumbnail = item.thumbnail
-    itemlist.append(
-        Item(
-            action = "comments",
-            channel = item.channel,
-            fanart = item.fanart,
-            title = "Ver comentarios del episodio",
-            url = item.url
+    if logger.info() != False:
+        itemlist.append(
+            Item(
+                action = "comments",
+                channel = item.channel,
+                fanart = item.fanart,
+                title = "Ver comentarios del episodio",
+                url = item.url
+            )
         )
-    )
+
+    autoplay.start(itemlist, item)
+
     return itemlist
 
 def comments(item):

@@ -38,7 +38,7 @@
       "id": "current_host",
       "type": "text",
       "label": "Host actual",
-      "default": "https://hdfull.me/",
+      "default": "https://hdfull.sh/",
       "enabled": true,
       "visible": false
     },

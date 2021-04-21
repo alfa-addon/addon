@@ -35,10 +35,10 @@ list_servers = ['torrent']
 
 channel = 'zooqle'
 host = 'https://zooqle.com/'
-host_alt = ['https://zooqle.unblockit.dev']
+host_alt = ['https://zooqle.unblockninja.com/', 'https://zooqle.torrentbay.to/']
 """
-host_alt = ['https://zooqle.unblockit.dev', 'https://zooqle.unblockninja.com', 'https://zooqle.nocensor.cyou']
-https://torrents.io/proxy/zooqle
+host_alt = ['https://zooqle.unblockit.club', 'https://zooqle.unblockninja.com', 'https://zooqle.nocensor.space']
+
 host_alt = ['https://zooqle.com/', 'https://zooqle1.unblocked.is/', 'https://zooqle.unblocked.win/', 
             'https://zooqle.nocensor.xyz/',  'https://zooqle.unblockproject.xyz/',  
             'https://zooqle.123unblock.pro/',  'https://zooqle.p4y.space/',  
