@@ -17,7 +17,8 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://fuckamouth.com'
+host = 'http://hd-porn.co'   #  http://freehdporn.ru     https://fuckamouth.com
+
 
 def mainlist(item):
     logger.info()
@@ -31,8 +32,8 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = "%s/porn/search?search=%s" % (host, texto)
+    texto = texto.replace(" ", "%20")
+    item.url = "%s/results/%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -47,9 +48,10 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<div class="item large-2.*?'
+    patron = '<div class="post thumb-border".*?'
     patron += '<a href="([^"]+)".*?'
-    patron += '<img src="([^"]+)" alt="([^"]+)".*?'
+    patron += '<img src="([^"]+)".*?'
+    patron += 'alt="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         title = scrapedtitle
@@ -63,6 +65,7 @@ def categorias(item):
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
+
 def lista(item):
     logger.info()
     itemlist = []
@@ -70,7 +73,8 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="item large-3.*?'
     patron += '<a href="([^"]+)".*?'
-    patron += 'src="([^"]+)" alt="([^"]+)".*?'
+    patron += 'data-src="([^"]+)".*?'
+    patron +='alt="([^"]+)".*?'
     patron += '<div class="thumb-stats pull-left">(.*?)<div class="thumb-stats pull-right">.*?'
     patron += '<span>([^>]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -97,6 +101,7 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url= scrapertools.find_single_match(data, '<iframe sandbox="[^"]+" src="([^"]+)"')
+    # pornstars = scrapertools.find_multiple_matches(data, '<h3 class="hireq">([^<]+)<')
     patron = '<iframe sandbox="[^"]+" src="([^"]+)"'
     itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
