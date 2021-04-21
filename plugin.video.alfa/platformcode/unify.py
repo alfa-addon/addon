@@ -346,10 +346,13 @@ def title_format(item):
     # Verifica si hay marca de visto de trakt
 
     visto = False
+    group = False
     #logger.debug('titlo con visto? %s' % item.title)
 
     if '[[I]v[/I]]' in item.title or '[COLOR limegreen][v][/COLOR]' in item.title:
         visto = True
+    if item.title.startswith("[+]") or '[COLOR yellow][+][/COLOR]' in item.title:
+        group = True
 
     # Se elimina cualquier formato previo en el titulo
     if item.action != '' and item.action !='mainlist' and item.channel !='downloads' and item.unify:
@@ -576,23 +579,33 @@ def title_format(item):
     elif item.unify:
         item.title = '%s' % set_color(item.title, 'otro')
     #logger.debug('antes de salir %s' % item.title)
-    if visto:
+    if visto or group:
         try:
-            check = u'\u221a'
+            if visto:
+                check = u'\u221a'
+                color_check = "limegreen"
+            elif group:
+                check = "+"
+                color_check = "yellow"
 
             if PY3:
-                title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, unicode(item.title))
+                title = '[B][COLOR %s][%s][/COLOR][/B] %s' % (color_check, check, unicode(item.title))
             else:
-                title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, item.title.decode('utf-8'))
+                title = '[B][COLOR %s][%s][/COLOR][/B] %s' % (color_check, check, item.title.decode('utf-8'))
             item.title = title.encode('utf-8')
             if PY3 and isinstance(item.title, bytes): item.title = item.title.decode('utf-8')
         except:
-            check = 'v'
+            if visto:
+                check = 'v'
+                color_check = "limegreen"
+            elif group:
+                check = '+'
+                color_check = "limegreen"
             if PY3:
-                title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, unicode(item.title))
+                title = '[B][COLOR %s][%s][/COLOR][/B] %s' % (color_check, check, unicode(item.title))
             else:
-                title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, item.title.decode('utf-8'))
-            title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, item.title.decode('utf-8'))
+                title = '[B][COLOR %s][%s][/COLOR][/B] %s' % (color_check, check, item.title.decode('utf-8'))
+            title = '[B][COLOR %s][%s][/COLOR][/B] %s' % (color_check, check, item.title.decode('utf-8'))
             item.title = title.encode('utf-8')
             if PY3 and isinstance(item.title, bytes): item.title = item.title.decode('utf-8')
     #logger.debug("Final Unify: %s" % (time.time() - start))

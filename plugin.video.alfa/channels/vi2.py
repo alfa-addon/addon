@@ -317,7 +317,10 @@ def search(item, texto):
 
     item.url = url
 
-    if texto != '':
+    try:
         return list_all(item)
-    else:
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("%s" % line)
         return []

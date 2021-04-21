@@ -54,8 +54,14 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ","+")
     item.url = host + "?s=" + texto
-    if texto!='':
-       return sub_search(item)
+
+    try:
+        return sub_search(item)
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("%s" % line)
+        return []
 
 
 def sub_search(item):
