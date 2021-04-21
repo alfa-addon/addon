@@ -10,14 +10,13 @@ def test_video_exists(page_url):
     response = httptools.downloadpage(page_url)
     global data
     data = response.data
-    if not response.sucess or "Video not found" in data or "access restricted " in data or "ha sido deshabilitado" in data or "is unavailable" in data:
+    if "Video not found" in data or "This video was deleted" in data:
         return False, "[xhamster] El fichero no existe o ha sido borrado"
     return True, ""
 
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    # patron = '"fallback":"([^"]+)","quality":"(\d+p)",'
     patron = '"url":"([^"]+)","fallback":"[^"]+","quality":"(\d+p)",'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url,quality in matches:
