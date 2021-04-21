@@ -377,7 +377,13 @@ def search(item, texto):
     item.url = item.url + texto
     item.adicional = texto
     if texto != '':
-        return list_all(item)
+        try:
+            return list_all(item)
+        except:
+            import sys
+            for line in sys.exc_info():
+                logger.error("%s" % line)
+            return []
 
 
 def newest(categoria):

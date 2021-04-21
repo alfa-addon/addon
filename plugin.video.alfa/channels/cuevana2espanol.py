@@ -184,10 +184,16 @@ def searchMovies(item):
     return itemlist
 
 def search(item, text):
+
     text = text.lower().replace(' ', '+')
     item.url += text
-
-    return searchMovies(item)
+    try:
+        return searchMovies(item)
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("%s" % line)
+        return []
 
 def RedirectLink(hash):
     hashdata = urllib.urlencode({r'url':hash})

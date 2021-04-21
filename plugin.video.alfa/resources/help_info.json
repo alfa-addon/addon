@@ -1,0 +1,10 @@
+{
+  "news": {
+    "title": "Novedades",
+    "text": "Las novedades se obtienen de los canales (webs), el tiempo de respuesta dependerá de la cantidad de canales seleccionados.\n\n [B]CONSEJOS:[/B] \n\n - Utiliza el menú contextual para seleccionar los canales incluidos en cada categoría.\n - Intenta elegir los canales que realmente te interesan de este modo la espera será menor.\n - Puedes cambiar tu selección en cualquier momento desde el menú contextual.\n - Utiliza [COLOR yellow]Buscar en otros canales[/COLOR] del menú contextual para obtener mas resultados."
+  },
+  "search": {
+    "title": "Busqueda Global",
+    "text": "La búsqueda global se realiza sobre los canales (webs) seleccionados, el tiempo de respuesta dependerá de la cantidad de canales seleccionados.\n\n[B]CONSEJOS[/B]\n\n - Utiliza [COLOR yellow]'Elegir canales incluidos en la búsqueda'[/COLOR] y elige solo los que te interesan.\n - Siempre intenta utilizar el buscador adecuado para series/películas/actores.\n - Utiliza [COLOR yellow]Buscar en otros canales[/COLOR] del menú contextual para encontrar mas resultados.\n\nSi tienes problemas como ser que necesites repetir la busqueda luego de ver un resultado, probablemente sea a causa de un addon de limpieza, buscalo desinstalalo e instala uno confiable."
+  }
+}

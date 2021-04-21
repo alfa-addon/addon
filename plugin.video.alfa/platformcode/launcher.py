@@ -65,13 +65,18 @@ def run(item=None):
             if config.get_setting("start_page"):
 
                 if not config.get_setting("custom_start"):
-                    category = config.get_localized_string(config.get_setting("category")).lower()
-                    item = Item(channel="news", action="novedades", extra=category, mode = 'silent')
+
+                    category = config.get_setting("category")
+
+                    if isinstance(category, int):
+                        category = config.get_localized_string(config.get_setting("category")).lower()
+
+                    item = Item(channel="news", action="news", news=category.lower(), startpage=True)
                 else:
                     from channels import side_menu
-                    item= Item()
+                    item = Item()
                     item = side_menu.check_user_home(item)
-                    item.start = True;
+                    item.startpage = True
             else:
                 item = Item(channel="channelselector", action="getmainlist", viewmode="movie")
         if not config.get_setting('show_once'):
