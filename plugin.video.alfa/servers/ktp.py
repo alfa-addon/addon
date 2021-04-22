@@ -17,6 +17,7 @@ def test_video_exists(page_url):
     if response.code == 404 or \
     "Page not Found" in response.data \
     or "File was deleted" in response.data \
+    or "video is a private" in response.data \
     or "is no longer available" in response.data:
         return False, "[ktplayer] El fichero no existe o ha sido borrado"
 
@@ -40,7 +41,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         if not "?login" in url and not "signup" in url:
             if "function/" in url:
                 url = decode(url, license_code)
-            url += "|verifypeer=false"
+            # url += "?download=true"
+            # url += "|verifypeer=false"
             logger.debug(quality + "  --  " + url)
             itemlist.append(['%s [ktplayer]' %quality, url])
         invert = ""

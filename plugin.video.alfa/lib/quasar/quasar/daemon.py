@@ -616,16 +616,16 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
             if status_code != 200 and not retry:
                 log.error("## Calling/Killing Quasar: Invalid app requests response: %s.  Closing Assistant (1)" % status_code)
                 if TORREST_ADDON:
-                    time.sleep(15)          # let Torrest starts first
+                    time.sleep(10)          # let Torrest starts first
                 else:
                     xbmc.executebuiltin(cmd_android_close)
-                    time.sleep(10)
+                    time.sleep(5)
                 return call_binary(function, cmd, retry=True, **kwargs)
             elif status_code != 200 and retry:
                 log.error("## Calling/Killing Quasar: Invalid app requests response: %s.  Closing Assistant (1)" % status_code)
                 launch_status = False
                 xbmc.executebuiltin(cmd_android_close)
-                time.sleep(10)
+                time.sleep(5)
             try:
                 app_response = resp.content
                 if launch_status:
@@ -660,6 +660,8 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                 kwargs_ = kwargs
                 sess = session
                 monitor = xbmc.Monitor()
+                binary_time = time.time()
+                binary_awake = 0
                 torrest = TORREST_ADDON
             
             p = Proc()
@@ -706,7 +708,8 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
     return p
 
 def binary_stat(p, action, retry=False, init=False, app_response={}):
-    if init: log.info('## Binary_stat: action: %s; PID: %s; retry: %s; init: %s; app_r: %s' % (action, p.pid, retry, init, app_response))
+    if init: log.info('## Binary_stat: action: %s; PID: %s; retry: %s; init: %s; awake: %s; app_r: %s' % \
+                    (action, p.pid, retry, init, p.binary_awake, app_response))
     import traceback
     import base64
     import requests
@@ -734,7 +737,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
         stderr_acum = ''
         msg = ''
         while not finished:
-            if not app_response:
+            if not app_response.get('retCode', 0) >= 999:
                 try:
                     resp = p.sess.get(url, timeout=5)
                 except Exception as e:
@@ -745,25 +748,36 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     if action == 'killBinary' or p.monitor.abortRequested():
                         app_response = {'pid': p.pid, 'retCode': 998}
                     else:
-                        log.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s" % (p.pid, resp.status_code, retry))
+                        log.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s - awake: %s" % \
+                                    (p.pid, resp.status_code, retry, p.binary_awake))
                         retry = True
                         url = url_alt
                         msg += str(resp.status_code)
                         stdout_acum += str(resp.status_code)
                         xbmc.executebuiltin(cmd_android)
-                        time.sleep(5)
+                        p.binary_awake = (int(time.time()) - int(p.binary_time) - 120) * 1000
+                        if p.binary_awake < 2000: p.binary_awake = 2000
+                        if not p.torrest:
+                            if not 'awakingInterval' in url: url += '&awakingInterval=%s' % p.binary_awake
+                        time.sleep(3)
                         continue
-                if resp.status_code != 200 and retry:
-                    log.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s.  Closing Assistant" % \
-                                    (p.pid, resp.status_code, retry))
+                if resp.status_code != 200 and retry and app_response.get('retCode', 0) != 999:
+                    log.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s - awake: %s.  Closing Assistant" % \
+                                    (p.pid, resp.status_code, retry, p.binary_awake))
                     msg += str(resp.status_code)
                     stdout_acum += str(resp.status_code)
                     app_response = {'pid': p.pid, 'retCode': 999}
+                    if not p.binary_awake: p.binary_awake = (int(time.time()) - int(p.binary_time) - 120) * 1000
+                    if p.binary_awake < 2000: p.binary_awake = 2000
                     if p.torrest:
-                        time.sleep(15)      # let Torrest recover first
+                        time.sleep(10)      # let Torrest recover first
                     else:
                         xbmc.executebuiltin(cmd_android_close)
-                        time.sleep(10)
+                        time.sleep(5)
+                        xbmc.executebuiltin(cmd_android)
+                        if not 'awakingInterval' in url: url += '&awakingInterval=%s' % p.binary_awake
+                        time.sleep(3)
+                        continue
 
                 if resp.status_code == 200:
                     try:
@@ -776,7 +790,8 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         test_json = app_response["pid"]
                     except:
                         status_code = resp.content
-                        log.error("## Binary_stat: Invalid app response for PID: %s: %s - retry: %s" % (p.pid, resp.content, retry))
+                        log.error("## Binary_stat: Invalid app response for PID: %s: %s - retry: %s - awake: %s" % \
+                                    (p.pid, resp.content, retry, p.binary_awake))
                         if retry:
                             app_response = {'pid': p.pid}
                             app_response['retCode'] = 999
@@ -785,6 +800,8 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         else:
                             retry = True
                             app_response = {}
+                            if not p.torrest:
+                                if not 'awakingInterval' in url and p.binary_awake > 0: url += '&awakingInterval=%s' % p.binary_awake
                             time.sleep(1)
                             continue
                         

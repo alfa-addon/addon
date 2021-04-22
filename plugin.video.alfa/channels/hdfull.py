@@ -779,7 +779,10 @@ def novedades_episodios(item):
             try:
                 title = episode['title']['es'].strip()
             except:
-                title = episode['title']['en'].strip()
+                try:
+                    title = episode['title']['en'].strip()
+                except:
+                    title = ''
         if len(title) == 0: title = "Episodio " + episodio
         
         title = '%s %sx%s: [COLOR greenyellow]%s[/COLOR] %s' % (contentSerieName,

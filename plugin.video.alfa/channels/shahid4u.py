@@ -38,12 +38,13 @@ thumb_buscar = get_thumb("search.png")
 def mainlist(item):
     logger.info()
     itemlist = []
-    '''try:
-        data = httptools.downloadpage(host_alt).data
-        rurl, ryear = scrapertools.find_single_match(data, '<a href="'+host_alt+'/category/(.*?)">.*?(\d{4})</a>')
+    try:
+        data = httptools.downloadpage(host).data
+        rurl, ryear = scrapertools.find_single_match(data, '<a href="(https://[A-z0-9_.-]+/category/[A-D0-9_%-]+(\d{4}))">')
+        logger.error(rurl)
     except:
         logger.error("Cambio en estructura, pagina inicial")
-        pass'''
+        pass
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, url=host + "category/افلام-عربي/",
@@ -72,13 +73,13 @@ def mainlist(item):
                          plot="افلام اسيوية", extra="film"))
     
     itemlist.append(Item(channel=item.channel, title="", folder=False, thumbnail=thumb_separador))
-    '''try:
+    try:
         itemlist.append(Item(channel=item.channel, title="Ramadan Series %s" % ryear, text_color="gold",
-                             text_bold=True, action="listall", url=host + "category/%s" % rurl,
+                             text_bold=True, action="listall", url= rurl,
                              thumbnail="https://image.shutterstock.com/mosaic_250/0/0/1076175437.jpg",
                              extra="series", plot="مسلسلات رمضان %s" % ryear))
     except:
-        pass'''
+        pass
     itemlist.append(Item(channel=item.channel, text_color="yellow", text_bold=True,
                          title="Arab Series", action="listall", url= host + "category/مسلسلات-عربي/",
                          thumbnail="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr9N_K93EFF4AqSjSVUbn1xbn83W7w3cyzwdOEeCTTO7MEP-Jk",

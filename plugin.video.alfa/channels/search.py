@@ -18,7 +18,7 @@ from core.item import Item
 from core import tmdb, scrapertools, channeltools, filetools, jsontools
 from channelselector import get_thumb
 from platformcode import logger, config, platformtools, unify
-
+from platformcode import help_window
 import gc
 gc.disable()
 
@@ -46,6 +46,8 @@ def mainlist(item):
                 Item(channel=item.channel, title=config.get_localized_string(30100), action='settings', thumbnail=get_thumb('setting_0.png'))]
 
     itemlist = set_context(itemlist)
+
+    help_window.show_info("search")
 
     return itemlist
 

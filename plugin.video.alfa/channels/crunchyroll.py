@@ -302,9 +302,12 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = item.url % texto
 
-    if texto != '':
+    try:
         return search_results(item)
-    else:
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("%s" % line)
         return []
 
 def search_results(item):
