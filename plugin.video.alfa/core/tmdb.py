@@ -955,7 +955,7 @@ class Tmdb(object):
                 results = resultado["results"]
 
             if self.busqueda_filtro and total_results > 1:
-                # TODO documentar esta parte
+                # Si hay filtro y resultado(s), buscamos qué resultado contiene el filtro
                 for key, value in list(dict(self.busqueda_filtro).items()):
                     for r in results[:]:
                         param = r.get(key, '')

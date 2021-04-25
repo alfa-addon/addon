@@ -175,6 +175,8 @@ def list_all(item):
     soup = create_soup(item.url, unescape=True)
     for elem in soup.find_all("div", class_="home_post_cont"):
         url = elem.a["href"]
+        if not host in url:
+            url = "{}{}".format(host, url)
         try:
             title, year = elem.img["title"].split(' (')
             year = re.sub(r"\)","", year)
