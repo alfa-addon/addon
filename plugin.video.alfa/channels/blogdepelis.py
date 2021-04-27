@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 # -*- Channel Blog de Pelis -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
@@ -20,7 +20,7 @@ from channels import autoplay
 from channels import filtertools
 from bs4 import BeautifulSoup
 
-host = 'https://www.blogdepelis.tv/'
+host = 'https://www.blogdepelis.to/'
 
 list_language = list()
 list_quality = []
