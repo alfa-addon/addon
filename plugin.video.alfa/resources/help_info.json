@@ -5,6 +5,6 @@
   },
   "search": {
     "title": "Busqueda Global",
-    "text": "La búsqueda global se realiza sobre los canales (webs) seleccionados, el tiempo de respuesta dependerá de la cantidad de canales seleccionados.\n\n[B]CONSEJOS[/B]\n\n - Utiliza [COLOR yellow]'Elegir canales incluidos en la búsqueda'[/COLOR] y elige solo los que te interesan.\n - Siempre intenta utilizar el buscador adecuado para series/películas/actores.\n - Utiliza [COLOR yellow]Buscar en otros canales[/COLOR] del menú contextual para encontrar mas resultados."
+    "text": "La búsqueda global se realiza sobre los canales (webs) seleccionados, el tiempo de respuesta dependerá de la cantidad de canales seleccionados.\n\n[B]CONSEJOS[/B]\n\n - Utiliza [COLOR yellow]'Elegir canales incluidos en la búsqueda'[/COLOR] y elige solo los que te interesan.\n - Siempre intenta utilizar el buscador adecuado para series/películas/actores.\n - Utiliza [COLOR yellow]Buscar en otros canales[/COLOR] del menú contextual para encontrar mas resultados.\n\nSi tienes problemas como ser que necesites repetir la busqueda luego de ver un resultado, probablemente sea a causa de un addon de limpieza, buscalo desinstalalo e instala uno confiable."
   }
 }

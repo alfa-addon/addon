@@ -134,6 +134,7 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     m3u = scrapertools.find_single_match(data, 'file: "([^"]+)"')
     data = httptools.downloadpage(m3u).data
+    data = data.decode("utf8")
     patron = 'RESOLUTION=\d+x(\d+),.*?'
     patron += '(index-.*?).m3u8'
     matches = re.compile(patron,re.DOTALL).findall(data)
