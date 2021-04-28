@@ -59,11 +59,17 @@ def mainlist(item):
 
         autoplay.show_option(item.channel, itemlist)
     else:
+        from lib import generictools
+        browser, res = generictools.call_browser('', lookup=True)
+        if not browser:
+            action = ''
+        else:
+            action = 'call_browser'
         from channelselector import get_thumb
         from core import channeltools
         channel_name = channeltools.get_channel_parameters(item.channel)["title"]
-        itemlist.append(Item(channel=item.channel, action="", title="Para utilizar {} se requiere configurar Alfa Assistant".format(channel_name),
-                             thumbnail=get_thumb("update.png")))
+        itemlist.append(Item(channel=item.channel, action=action, title="Para utilizar {} se requiere Alfa Assistant. [COLOR=yellow]Haz clic para + info[/COLOR] [COLOR=green](https://alfa-addon.com/threads/manual-de-alfa-assistant-herramienta-de-apoyo.3797/)[/COLOR]".format(channel_name),
+                             thumbnail=get_thumb("update.png"), url="https://alfa-addon.com/threads/manual-de-alfa-assistant-herramienta-de-apoyo.3797/"))
 
     return itemlist
 
@@ -265,12 +271,7 @@ def episodios(item):
         
         tmdb.set_infoLabels(itemlist, seekTmdb=True)
     else:
-        from channelselector import get_thumb
-        from core import channeltools
-        channel_name = channeltools.get_channel_parameters(item.channel)["title"]
-        itemlist.append(Item(channel=item.channel, action="", title="Para utilizar {} se requiere configurar Alfa Assistant".format(channel_name),
-                             thumbnail=get_thumb("update.png")))
-
+        return []
     return itemlist
 
 
@@ -298,11 +299,17 @@ def findvideos(item):
         # Requerido para AutoPlay
         autoplay.start(itemlist, item)
     else:
+        from lib import generictools
+        browser, res = generictools.call_browser('', lookup=True)
+        if not browser:
+            action = ''
+        else:
+            action = 'call_browser'
         from channelselector import get_thumb
         from core import channeltools
         channel_name = channeltools.get_channel_parameters(item.channel)["title"]
-        itemlist.append(Item(channel=item.channel, action="", title="Para utilizar {} se requiere configurar Alfa Assistant".format(channel_name),
-                             thumbnail=get_thumb("update.png")))
+        itemlist.append(Item(channel=item.channel, action=action, title="Para utilizar {} se requiere Alfa Assistant. [COLOR=yellow]Haz clic para + info[/COLOR] [COLOR=green](https://alfa-addon.com/threads/manual-de-alfa-assistant-herramienta-de-apoyo.3797/)[/COLOR]".format(channel_name),
+                             thumbnail=get_thumb("update.png"), url="https://alfa-addon.com/threads/manual-de-alfa-assistant-herramienta-de-apoyo.3797/"))
 
     return itemlist
 
