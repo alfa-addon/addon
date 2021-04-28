@@ -354,8 +354,8 @@ def render_items(itemlist, parent_item):
     elif parent_item.viewType:
         xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewType)
 
-    elif parent_item.channel in ["alfavorites", "news", "search"]:
-        if parent_item.action != "mainlist":
+    elif parent_item.channel in ["alfavorites", "favorites", "news", "search"]:
+        if parent_item.action != "mainlist" or parent_item.channel == "favorites":
             xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
     elif parent_item.channel not in special_channels and parent_item.action != "mainlist":  # ... o segun el canal
