@@ -13,7 +13,7 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import os, json, time, inspect, channelselector
 
-from lib.concurrent import futures
+from concurrent import futures
 from core.item import Item
 from core import tmdb, scrapertools, channeltools, filetools, jsontools
 from channelselector import get_thumb

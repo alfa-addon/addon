@@ -64,15 +64,8 @@ def ultimos_episodios(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    #data = scrapertools.find_single_match(data, '<ul class="latestul">(.*?)</ul>')
-    #patron = '<a class="odd" title="([^"]+).*?'
-    #patron += 'href="([^"]+)".*?'
-    #patron += 'img src="([^"]+)".*?'
-    #patron += 'Episodio.*?(\d+)'
-    patron = '<a href="(.+?)" class="bloqq">.+?'            # url
-    patron += '\n.+?\n.+?<img src="(.+?)".+?'               # thumb
-    patron += 'title="(.+?)".+?'                            # title
-    patron += '\n.+?\n.+?\n.+?\n.+?h6>.+?\n.+?(\d+).+?</'   # epnum
+    patron = '<a href="([^"]+)" class="bloqq">.+?\n.+?\n.+?<img src="([^"]+)".+?title="([^"]+)"'
+    patron += '.+?\n.+?\n.+?\n.+?\n.+?h6>.+?\n.+?(\d+).+?</'            # url
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedepisode in matches:
         title = "{} - Episodio {}".format(scrapedtitle, scrapedepisode)
