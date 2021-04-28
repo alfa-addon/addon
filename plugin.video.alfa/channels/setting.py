@@ -31,30 +31,23 @@ def mainlist(item):
     itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60535), action="settings", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title="", action="", folder=False, thumbnail=get_thumb("setting_0.png")))
-
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60536) + ":", text_bold=True, action="", folder=False,
-                         thumbnail=get_thumb("setting_0.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="     " + config.get_localized_string(60537), action="menu_channels", folder=True,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60537), action="menu_channels", folder=True,
                          thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="     " + config.get_localized_string(60538), action="menu_servers", folder=True,
-                         thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel="news", title="     " + config.get_localized_string(60539), action="menu_opciones",
-                         folder=True, thumbnail=get_thumb("news.png")))
-    itemlist.append(Item(channel="search", title="     " + config.get_localized_string(60540), action="opciones", folder=True,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60538), action="menu_servers", folder=True,
+                         thumbnail=get_thumb("on_the_air.png")))
+    itemlist.append(Item(channel="search", title=config.get_localized_string(60540), action="opciones", folder=True,
                          thumbnail=get_thumb("search.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="     " + config.get_localized_string(60541), action="channel_config",
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60541), action="channel_config",
                          config="downloads", folder=True, thumbnail=get_thumb("downloads.png")))
 
     if config.get_videolibrary_support():
-        itemlist.append(Item(channel="videolibrary", title="     " + config.get_localized_string(60542), action="channel_config",
+        itemlist.append(Item(channel="videolibrary", title=config.get_localized_string(60542), action="channel_config",
                              folder=True, thumbnail=get_thumb("videolibrary.png")))
 
     if config.is_xbmc():
-        itemlist.append(Item(channel=CHANNELNAME, title="     " + config.get_localized_string(70253), action="setting_torrent",
+        itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(70253), action="setting_torrent",
                              folder=True, thumbnail=get_thumb("channels_torrent.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
     itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60544), action="submenu_tools", folder=True,
                          thumbnail=get_thumb("setting_0.png")))
 
@@ -438,34 +431,36 @@ def submenu_tools(item):
         if filetools.exists(user_custom):
             filetools.copy(user_custom, channel_custom, silent=True)
     if filetools.exists(channel_custom):
-        itemlist.append(Item(channel='custom', action='mainlist', title='Custom Channel'))
+        itemlist.append(Item(channel='custom', action='mainlist', title='Custom Channel', thumbnail=get_thumb('setting_0.png')))
 
 
-    itemlist.append(Item(channel=CHANNELNAME, action="check_quickfixes", folder=False,
-                         title="Comprobar actualizaciones urgentes (Actual: Alfa %s)" % config.get_addon_version(from_xml=True), plot="Versión actual: %s" % config.get_addon_version(from_xml=True) ))
-    itemlist.append(Item(channel=CHANNELNAME, action="update_quasar", folder=False,
-                         title="Actualizar addon externo Quasar"))
-    itemlist.append(Item(channel=CHANNELNAME, action="reset_trakt", folder=False,
-                         title="Reiniciar vinculación con Trakt",
-                         thumbnail="https://trakt.tv/assets/logos/white-bg@2x-626e9680c03d0542b3e26c3305f58050d2178e5d4222fac7831d83cf37fef42b.png",
-                         plot="Reinicia la vinculacion, no se pierden los datos de seguimiento"))
+    itemlist.append(Item(action = "check_quickfixes", channel= CHANNELNAME, folder = False,
+                         plot = "Versión actual: {}".format(config.get_addon_version(from_xml=True)),
+                         thumbnail = get_thumb("update.png"),
+                         title = "Comprobar actualizaciones urgentes (Actual: Alfa {})".format(config.get_addon_version(from_xml=True))))
 
-    itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
-                         thumbnail=get_thumb("setting_0.png")))
+    itemlist.append(Item(action = "update_quasar", channel = CHANNELNAME, folder = False,
+                         thumbnail = get_thumb("update.png"), title = "Actualizar addon externo Quasar"))
+
+    itemlist.append(Item(action = "reset_trakt", channel = CHANNELNAME, folder = False,
+                         plot = "Reinicia la vinculacion, no se pierden los datos de seguimiento",
+                         thumbnail = "https://trakt.tv/assets/logos/white-bg@2x-626e9680c03d0542b3e26c3305f58050d2178e5d4222fac7831d83cf37fef42b.png",
+                         title = "Reiniciar vinculación con Trakt"))
 
     itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60564) + ":", action="", folder=False,
                          text_bold=True, thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60565), action="conf_tools",
+
+    itemlist.append(Item(channel=CHANNELNAME, title="- {}".format(config.get_localized_string(60565)), action="conf_tools",
                          folder=True, extra="lib_check_datajson", thumbnail=get_thumb("channels.png")))
 
     if config.get_videolibrary_support():
-        itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
-                             thumbnail=get_thumb("setting_0.png")))
         itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60566) + ":", action="", folder=False,
                              text_bold=True, thumbnail=get_thumb("videolibrary.png")))
+
         itemlist.append(Item(channel=CHANNELNAME, action="overwrite_tools", folder=False,
                              thumbnail=get_thumb("videolibrary.png"),
                              title="- " + config.get_localized_string(60567)))
+
         itemlist.append(Item(channel="videolibrary", action="update_videolibrary", folder=False,
                              thumbnail=get_thumb("videolibrary.png"),
                              title="- " + config.get_localized_string(60568)))

@@ -7,15 +7,22 @@ from core import httptools
 from core import scrapertools
 from platformcode import logger, config
 
-
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
-    if "<h2>WE ARE SORRY</h2>" in data or '<title>404 Not Found</title>' in data:
-        return False, config.get_localized_string(70449) % "hclips"
     global server, vid
     server = scrapertools.find_single_match(page_url, '([A-z0-9-]+).com')
     vid = scrapertools.find_single_match(page_url, r'(?:embed|videos)/([0-9]+)')
+    vid2 = vid[:-3] +"000"
+    if len(vid) <= 6:
+        vid1= "0"
+    else:
+        vid1 = vid[:-6] + "000000"
+    url = "https://%s.com/api/json/video/86400/%s/%s/%s.json" %(server,vid1,vid2,vid)
+    headers = {'Referer': page_url}
+    data = httptools.downloadpage(url, headers=headers).json
+    if "video_not_found" in data['code']:
+        return False, config.get_localized_string(70449) % "TXXX"
     return True, ""
 
 

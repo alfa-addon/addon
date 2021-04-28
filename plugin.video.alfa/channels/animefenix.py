@@ -177,11 +177,15 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
-    if texto != '':
-        return list_all(item)
-    else:
-        return []
 
+    if texto != '':
+        try:
+            return list_all(item)
+        except:
+            import sys
+            for line in sys.exc_info():
+                logger.error("%s" % line)
+            return []
 
 def newest(categoria):
     itemlist = []

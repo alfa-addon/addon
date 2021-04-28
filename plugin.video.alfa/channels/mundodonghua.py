@@ -14,6 +14,7 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
+from platformcode import platformtools
 from channels import filtertools, autoplay
 from channels import renumbertools
 from core import tmdb
@@ -25,6 +26,7 @@ list_quality = []
 list_servers = ['directo', 'dailymotion']
 
 host = "https://www.mundodonghua.com/"
+sort_views = True
 
 def mainlist(item):
     logger.info()
@@ -101,19 +103,33 @@ def list_all(item):
         title = elem.h5.text.strip()
         thumb = host+elem.img["src"]
         typo = elem.a.find('div', class_="img fit-1").text.strip()
+        views = elem.label.text.strip()
         
         context = renumbertools.context(item)
         context2 = autoplay.context
         context.extend(context2)
         
+
+        filtro_tmdb = list({"original_language": 'zh'}.items())
+        
         if typo.lower() == 'película':
             url = url.replace('/donghua/', 'ver/') + '/1'
             itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
-                             thumbnail=thumb, contentTitle=title, plot=typo, typo=typo))
+                                thumbnail=thumb, contentTitle=title, plot=typo, typo=typo,
+                                views=views, infoLabels={'filtro':filtro_tmdb}))
         else:
-            itemlist.append(Item(channel=item.channel, title=title, url=url, action=action,
-                             thumbnail=thumb, contentSerieName=title, context=context, plot=typo))
+            
+            context3 = [{"title": "Config Saltar Intro en Serie",
+                        "action": "set_skip_time",
+                        "channel": item.channel}]
 
+            context.extend(context3)
+            
+            itemlist.append(Item(channel=item.channel, title=title, url=url, action=action,
+                                thumbnail=thumb, contentSerieName=title, context=context,
+                                plot=typo, views=views, infoLabels={'filtro':filtro_tmdb}))
+    if sort_views and not 'Capítulos'in item.title:
+        itemlist.sort(key=lambda it: int(it.views), reverse=True)
     tmdb.set_infoLabels_itemlist(itemlist, True)
     try:
         url_next_page = soup.find("ul", class_="pagination").find_all("a")[-1]
@@ -138,25 +154,27 @@ def episodios(item):
     first_url = ""
 
     infoLabels = item.infoLabels
-
+    item.contex = [{"title": "Config Saltar Intro en Serie",
+                        "action": "set_skip_time",
+                        "channel": item.channel}]
     soup = create_soup(item.url)
     ep_list = soup.find("ul", class_="donghua-list")
     try:
         plot = soup.find("p", class_="text-justify fc-dark").text
     except:
         plot = ""
-    # try:
-    #     state = soup.find("span", class_="badge bg-success")
-    # except:
-    #     state = ''
+    try:
+        state = soup.find("span", class_="badge bg-success")
+    except:
+        state = ''
 
 
     for elem in ep_list.find_all("a"):
         
         url = host+elem["href"]
 
-        # if not first_url and state:
-        #     first_url = url
+        if not first_url and state:
+            first_url = url
         epi_num = scrapertools.find_single_match(elem.text.strip(), "(\d+)$")
         season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, int(epi_num))
         infoLabels['season'] =  season
@@ -164,20 +182,29 @@ def episodios(item):
         title = '%sx%s - Episodio %s' % (season, episode, episode)
         itemlist.append(Item(channel=item.channel, title=title, url=url,
                             plot=plot, thumbnail=item.thumbnail,
-                            action='findvideos', infoLabels=infoLabels))
+                            action='findvideos', infoLabels=infoLabels, 
+                            context=item.contex))
 
     itemlist = itemlist[::-1]
     
-    # if first_url and state:
-    #     epi_num = int(scrapertools.find_single_match(first_url, "(\d+)$"))+1
-    #     url = re.sub("(\d+)$", str(epi_num), first_url)
-    #     season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, int(epi_num))
-    #     infoLabels['season'] =  season
-    #     infoLabels['episode'] = episode
-    #     title = '%sx%s - Episodio %s' % (season, episode, episode)
-    #     itemlist.append(Item(channel=item.channel, title=title, url=url, 
-    #                         action='findvideos', infoLabels=infoLabels))
-
+    if first_url and state:
+        epi_num = int(scrapertools.find_single_match(first_url, "(\d+)$"))+1
+        url = re.sub("(\d+)$", str(epi_num), first_url)
+        season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, int(epi_num))
+        infoLabels['season'] =  season
+        infoLabels['episode'] = episode
+        title = '%sx%s - Episodio %s' % (season, episode, episode)
+        try:
+            data = httptools.downloadpage(url).data
+            #logger.error(data)
+            matches = scrapertools.find_multiple_matches(data, "(eval.*?)\n")
+            if matches:
+                itemlist.append(Item(channel=item.channel, title=title, url=url, 
+                             plot=plot, thumbnail=item.thumbnail,
+                            action='findvideos', infoLabels=infoLabels,
+                            context=item.contex))
+        except:
+            pass
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -192,7 +219,7 @@ def episodios(item):
 def findvideos(item):
     logger.info()
     from lib import jsunpack
-    import base64
+    import base64, time
 
     itemlist = list()
 
@@ -217,10 +244,16 @@ def findvideos(item):
         if slugs:
             for slug in slugs:
                 url = '%sapi_donghua.php?slug=%s' %(host, slug)
-                data = httptools.downloadpage(url, headers={'Referer': item.url}).json[0]
+                try:
+                    data = httptools.downloadpage(url, headers={'Referer': item.url}).json[0]
+                except:
+                    
+                    time.sleep(1)
+                    data = httptools.downloadpage(url, headers={'Referer': item.url}).json[0]
+
                 #logger.error(data)
                 if data.get('url',''):
-                    url = 'https://www.dailymotion.com/video/'+base64.b64decode(data['url'])
+                    url = 'https://www.dailymotion.com/video/'+base64.b64decode(data['url']).decode('utf-8')
                 elif data.get('source', ''):
                     url = data['source'][0].get('file','')
                     if not url.startswith('http'):
@@ -232,7 +265,15 @@ def findvideos(item):
             url = scrapertools.find_single_match(unpack, 'file(?:"|):"([^"]+)')
             if not url.startswith('http'):
                 url = 'http:'+url
-
+            item.url = url
+            item.action = "play"
+            item.skip = get_skip_time(item.contentSerieName, item)
+            time.sleep(0.5)
+            platformtools.play_video(item)
+            time.sleep(2)
+            if not platformtools.is_playing():
+                platformtools.play_video(item)
+            return ""
             itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, language=IDIOMAS['vose'],
                                  infoLabels=item.infoLabels))
     
@@ -246,13 +287,19 @@ def findvideos(item):
 
     autoplay.start(itemlist, item)
 
-    if config.get_videolibrary_support() and itemlist > 0 and item.typo:
+
+    if config.get_videolibrary_support() and itemlist and item.typo:
         itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
                              url=item.url, action="add_pelicula_to_library", extra="findvideos",
                              contentTitle=item.contentTitle))
 
     return itemlist
 
+def play(item):
+    if item.contentSerieName:
+        item.skip = get_skip_time(item.contentSerieName, item)
+    logger.error(item.channel)
+    return [item]
 
 def search(item, texto):
     logger.info()
@@ -262,3 +309,64 @@ def search(item, texto):
         return list_all(item)
     else:
         return []
+
+def get_skip_time(title, item):
+    channel = item.channel
+    if channel == 'videolibrary':
+        channel = item.contentChannel
+    saved_skips_list = config.get_setting("saved_skips_list", channel)
+    if not saved_skips_list:
+        return None
+    
+    skips_list = list(saved_skips_list)
+    for s in skips_list:
+        time_skip = list(s.values())[0]
+        title_saved = list(s.keys())[0]
+        if title == title_saved:
+            return time_skip
+
+
+    return None
+
+def set_skip_time(item):
+
+    heading = "Introduzca en segundos la duración de la Intro"
+    seconds = int(platformtools.dialog_numeric(0, heading, default=""))
+    return save_skip_time(seconds, item)
+
+
+
+def save_skip_time(time, item):
+    saved_skips_list = []
+    
+    title =item.contentSerieName
+    channel = item.channel
+    
+    heading = "Config Saltar Intro para %s" % title
+    edit = "Guardado"
+    tm = ""
+    
+    saved_skips_list = config.get_setting("saved_skips_list", channel)
+    skips_list = list(saved_skips_list)
+
+    for n, sv in enumerate(skips_list):
+        if isinstance(sv, dict) and sv.get(title, ''):
+            edit = "Editado"
+            if not time:
+                edit = "Eliminado"
+            del skips_list[n]
+
+    if time:
+        skips_list.insert(0, {title: time})
+        tm = "[COLOR gold][%ss][/COLOR] " % str(time)
+    
+    config.set_setting("saved_skips_list", skips_list, channel)
+
+    
+    mes = "Registro %s con Exito" % edit
+    message = tm+mes
+
+    platformtools.dialog_notification(heading, message, sound=True)
+
+
+

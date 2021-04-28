@@ -206,9 +206,15 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
-    item.first=0
-    if texto != '':
+    item.first = 0
+
+    try:
         return list_all(item)
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("%s" % line)
+        return []
 
 
 

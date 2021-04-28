@@ -76,7 +76,7 @@ def get_start_page():
     custom_start= config.get_setting("custom_start")
     #if category != 'definido':
     if custom_start == False:
-        item = Item(channel="news", action="novedades", extra=category, mode='silent')
+        item = Item(channel="news", action="news", news=category)
     else:
         from channels import side_menu
         item = Item()
@@ -275,28 +275,28 @@ class Main(xbmcgui.WindowXMLDialog):
         elif control == 'Configuracion':
             new_item = Item(channel='setting', action="settings")
         elif control == 'Peliculas':
-            new_item = Item(channel='news', action="novedades", extra="peliculas", mode='silent')
+            new_item = Item(channel='news', action="news", news="peliculas", startpage=True)
         elif control == 'Series':
-            new_item = Item(channel='news', action="novedades", extra="series", mode='silent')
+            new_item = Item(channel='news', action="news", news="series", startpage=True)
         elif control == 'Anime':
-            new_item = Item(channel='news', action="novedades", extra="anime", mode='silent')
+            new_item = Item(channel='news', action="news", news="anime", startpage=True)
         elif control == 'Infantiles':
-            new_item = Item(channel='news', action="novedades", extra="infantiles", mode='silent')
+            new_item = Item(channel='news', action="news", news="infantiles", startpage=True)
         elif control == 'Documentales':
-            new_item = Item(channel='news', action="novedades", extra="documentales", mode='silent')
+            new_item = Item(channel='news', action="news", news="documentales", startpage=True)
         elif control == 'Terror':
-            new_item = Item(channel='news', action="novedades", extra="terror", mode='silent')
+            new_item = Item(channel='news', action="news", news="terror", startpage=True)
         elif control == 'Castellano':
-            new_item = Item(channel='news', action="novedades", extra="castellano", mode='silent')
+            new_item = Item(channel='news', action="news", news="castellano", startpage=True)
         elif control == 'Latino':
-            new_item = Item(channel='news', action="novedades", extra="latino", mode='silent')
+            new_item = Item(channel='news', action="news", news="latino", startpage=True)
         elif control == 'Torrents':
-            new_item = Item(channel='news', action="novedades", extra="torrent", mode='silent')
+            new_item = Item(channel='news', action="news", news="torrent", startpage=True)
         elif control == 'Canales Activos':
             menu_node = jsontools.get_node_from_file('menu_settings_data.json', 'menu')
             if 'categoria actual' in menu_node:
                 category = menu_node['categoria actual']
-            new_item = Item(channel='news', action="setting_channel", extra=category, menu=True)
+            new_item = Item(channel='news', action="setting_channel", news=category, menu=True)
         elif control == 'Buscar':
             new_item = Item(channel='search', action="search")
         elif control == 'Buscar Actor':

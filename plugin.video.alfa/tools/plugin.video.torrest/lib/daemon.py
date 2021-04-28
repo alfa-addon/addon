@@ -615,13 +615,13 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
             if status_code != 200 and not retry:
                 logging.info("## Calling/Killing Torrest: Invalid app requests response: %s.  Closing Assistant (1)", status_code)
                 xbmc.executebuiltin(cmd_android_close)
-                time.sleep(10)
+                time.sleep(5)
                 return call_binary(function, cmd, retry=True, **kwargs)
             elif status_code != 200 and retry:
                 logging.info("## Calling/Killing Torrest: Invalid app requests response: %s.  Closing Assistant (2)", status_code)
                 launch_status = False
                 xbmc.executebuiltin(cmd_android_close)
-                time.sleep(10)
+                time.sleep(5)
             try:
                 app_response = resp.content
                 if launch_status:
@@ -656,6 +656,8 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                 kwargs_ = kwargs
                 sess = session
                 monitor = xbmc.Monitor()
+                binary_time = time.time()
+                binary_awake = 0
 
             p = Proc()
             
@@ -701,7 +703,8 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
     return p
 
 def binary_stat(p, action, retry=False, init=False, app_response={}):
-    if init: logging.info('## Binary_stat: action: %s; PID: %s; retry: %s; init: %s; app_r: %s', action, p.pid, retry, init, app_response)
+    if init: logging.info('## Binary_stat: action: %s; PID: %s; retry: %s; init: %s; awake: %s; app_r: %s', \
+                        action, p.pid, retry, init, p.binary_awake, app_response)
     import traceback
     import base64
     import requests
@@ -729,7 +732,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
         stderr_acum = ''
         msg = ''
         while not finished:
-            if not app_response:
+            if not app_response.get('retCode', 0) >= 999:
                 try:
                     resp = p.sess.get(url, timeout=5)
                 except Exception as e:
@@ -740,22 +743,32 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     if action == 'killBinary' or p.monitor.abortRequested():
                         app_response = {'pid': p.pid, 'retCode': 998}
                     else:
-                        logging.info("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s", p.pid, resp.status_code, retry)
+                        logging.info("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s - awake: %s", \
+                                    p.pid, resp.status_code, retry, p.binary_awake)
                         retry = True
                         url = url_alt
                         msg += str(resp.status_code)
                         stdout_acum += str(resp.status_code)
                         xbmc.executebuiltin(cmd_android)
-                        time.sleep(5)
+                        p.binary_awake = (int(time.time()) - int(p.binary_time) - 120) * 1000
+                        if p.binary_awake < 2000: p.binary_awake = 2000
+                        if not 'awakingInterval' in url: url += '&awakingInterval=%s' % p.binary_awake
+                        time.sleep(3)
                         continue
-                if resp.status_code != 200 and retry:
-                    logging.info("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s.  Closing Assistant", \
-                                    p.pid, resp.status_code, retry)
+                if resp.status_code != 200 and retry and app_response.get('retCode', 0) != 999:
+                    logging.info("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s - awake: %s.  Closing Assistant", \
+                                    p.pid, resp.status_code, retry, p.binary_awake)
                     msg += str(resp.status_code)
                     stdout_acum += str(resp.status_code)
                     app_response = {'pid': p.pid, 'retCode': 999}
                     xbmc.executebuiltin(cmd_android_close)
-                    time.sleep(10)
+                    time.sleep(5)
+                    xbmc.executebuiltin(cmd_android)
+                    if not p.binary_awake: p.binary_awake = (int(time.time()) - int(p.binary_time) - 120) * 1000
+                    if p.binary_awake < 2000: p.binary_awake = 2000
+                    if not 'awakingInterval' in url: url += '&awakingInterval=%s' % p.binary_awake
+                    time.sleep(3)
+                    continue
 
                 if resp.status_code == 200:
                     try:
@@ -769,7 +782,8 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         test_json = app_response["pid"]
                     except:
                         status_code = resp.content
-                        logging.info("## Binary_stat: Invalid app response for PID: %s: %s - retry: %s", p.pid, resp.content, retry)
+                        logging.info("## Binary_stat: Invalid app response for PID: %s: %s - retry: %s - awake: %s", \
+                                    p.pid, resp.content, retry, p.binary_awake)
                         if retry:
                             app_response = {'pid': p.pid}
                             app_response['retCode'] = 999
@@ -778,6 +792,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         else:
                             retry = True
                             app_response = {}
+                            if not 'awakingInterval' in url and p.binary_awake > 0: url += '&awakingInterval=%s' % p.binary_awake
                             time.sleep(1)
                             continue
                         
@@ -805,7 +820,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     xbmc.executebuiltin(cmd_android_permissions)
                     time.sleep(15)
                     xbmc.executebuiltin(cmd_android)
-                    time.sleep(5)
+                    time.sleep(3)
                 
                 if msg:
                     try:
@@ -853,7 +868,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                             pass
                     elif p.returncode == 998:
                         xbmc.executebuiltin(cmd_android_close)
-                        time.sleep(10)
+                        time.sleep(5)
                 except:
                     logging.info(traceback.format_exc())
                     time.sleep(1)
