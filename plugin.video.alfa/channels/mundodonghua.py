@@ -269,10 +269,11 @@ def findvideos(item):
             item.action = "play"
             item.skip = get_skip_time(item.contentSerieName, item)
             time.sleep(0.5)
-            platformtools.play_video(item)
-            time.sleep(2)
-            if not platformtools.is_playing():
+            if not isinstance(logger.info(), bool):
                 platformtools.play_video(item)
+                time.sleep(2)
+                if not platformtools.is_playing():
+                    platformtools.play_video(item)
             return ""
             itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, language=IDIOMAS['vose'],
                                  infoLabels=item.infoLabels))

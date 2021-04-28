@@ -10,14 +10,11 @@ from core.scrapertools import unescape
 from core.item import Item, InfoLabels
 from platformcode import config, logger, platformtools
 from channelselector import get_thumb
+from lib import strptime_fix
 
 host = 'https://supergoku.com'
 IDIOMAS = {'VOSE': 'VOSE', 'LAT': 'Latino'}
 list_language = list(IDIOMAS.keys())
-month = {'Jan':'01', 'Feb':'02', 'Mar':'03',    #---Alternativa para obtener meses (hay bug con datetime.strptime en Kodi)---#
-         'Apr':'04', 'May':'05', 'Jun':'06',
-         'Jul':'07', 'Aug':'08', 'Sep':'09',
-         'Oct':'10', 'Nov':'11', 'Dec':'12'}
 
 def mainlist(item):
     logger.info()
@@ -465,6 +462,9 @@ def list_all(item):
             year = ''
             plot = article.find('div', class_='texto').text
             genres = article.find('div', class_='genres')
+            if article.find("div", class_="data"):
+                if article.find("div", class_="data").find("span"):
+                    airdate = article.find("div", class_="data").find("span").text.strip()
 
             match = [thumb, contentType, status, url, title, airdate, year, plot, genres]
 
@@ -475,6 +475,7 @@ def list_all(item):
     # se necesita un ciclo for diferente según el caso        #
     listitem = Item()
 
+    logger.info("item.param: "+str(item.param))
     # >>>> Ciclo para nuevos episodios (lleva directo a findvideos) <<<< #
     if item.param == "newepisodes":
         for scpthumb, scpurl, scpepnum, scptitle in matches:
@@ -486,6 +487,7 @@ def list_all(item):
                 conType = 'tvshow'
             else:
                 conType = 'movie'
+
             # -----Casi nunca devuelve temporada, pero en raro caso que sí----- #
             scpseason = scrapertools.find_single_match(scpurl, 'season.(\d+)')
             if str(scpseason) is not None:
@@ -528,56 +530,51 @@ def list_all(item):
     # >>>> Ciclo para secciones genéricas (casi cualquier página fuera de la principal) <<<< #
     else:
         for scpthumb, scpcontentType, scpstatus, scpurl, scptitle, scpairdate, scpyear, scpplot, scpgenres in matches:
-            title, contentTitle, langs = process_title(scptitle.strip(), getWithTags = True, get_contentTitle = True, get_lang = True)
-            conSerieName = ''
-            conType = ''
-            conTitle = ''
-            infoLabels = {}
-            infoLabels['plot'] = scpplot
-            infoLabels['status'] = scpstatus.strip().title()
-            infoLabels['year'] = scpyear
+            tagged_title, title, langs = process_title(scptitle.strip(), getWithTags = True, get_contentTitle = True, get_lang = True)
+            infoLabels = {"status": scpstatus.strip().title()}
 
-            date = scrapertools.find_multiple_matches(scpairdate, '(.+?). (\d|\d\d). (\d\d\d\d)')
-            if date:
-                date = date[0]
-                infoLabels['last_air_date'] = date[2] + '-' + month[date[0]] + '-' + date[1]
-                infoLabels['premiered'] = infoLabels['last_air_date']
+            if scpairdate:
+                date = datetime.datetime.strptime(scpairdate, "%b. %d, %Y")
+                infoLabels['year'] = date.strftime("%Y")
+
             if scpgenres:
                 genmatch = scpgenres.find_all('a')
                 if len(genmatch) > 0:
-                    genre = genmatch[0].text
+                    genre = ", ".join([x.text.strip() for x in genmatch])
                     infoLabels['genre'] = genre.strip()
-                    if len(genmatch) > 1:
-                        for genre in genmatch[1:]:
-                            infoLabels['genre'] = '{}, {}'.format(infoLabels['genre'], genre.text.strip())
-            if scpcontentType == 'pelicula':
-                conType = 'movie'
-                conTitle = contentTitle
-            else:
-                conType = 'tvshow'
-                conSerieName = contentTitle
 
-            itemlist.append(
-                Item(
+            new_item = Item(
                     action = "seasons",
                     channel = item.channel,
-                    contentSerieName = conSerieName,
-                    contentTitle = conTitle,
-                    contentType = conType,
                     infoLabels = infoLabels,
                     language = langs,
                     param = item.param,
-                    title = title,
+                    plot = scpplot,
+                    title = tagged_title,
                     thumbnail = scpthumb,
                     url = scpurl
                 )
-            )
+
+            if scpcontentType == 'pelicula' or 'pelicula' in item.url:
+                new_item.contentType = 'movie'
+                new_item.contentTitle = title
+                if "date" in locals():
+                    infoLabels['release_date'] = date.strftime("%Y/%m/%d")
+
+            else:
+                new_item.contentType = 'tv'
+                new_item.contentSerieName = title
+                if "date" in locals():
+                    infoLabels['first_air_date'] = date.strftime("%Y/%m/%d")
+                    infoLabels['premiered'] = infoLabels['first_air_date']
+            
+            itemlist.append(new_item)
 
     #================================Fase 3: Corrección de valores============================#
     #----------Corregir si es una película en vez de serie o casos raros en el título---------#
     #---Corregir el título según tmdb y limpiar según el contenido (si es serie o película)---#
 
-    set_infoLabels_async(itemlist)
+    # set_infoLabels_async(itemlist)
     for i in itemlist:
         #---Quitamos números de episodio y espacios inútiles---#
         if i.contentType == 'movie':
@@ -593,6 +590,7 @@ def list_all(item):
             pretext += 'E' + str(i.infoLabels['episode'])
             i.title = pretext + ': ' + i.title
 
+    # tmdb.set_infoLabels_itemlist(itemlist, force_no_year=True)
     #======================Fase 4: Asignación de paginador (si aplica)======================#
     #---Si se encuentra otra página, se agrega un paginador (solo los items con páginas)---#
 
@@ -618,18 +616,21 @@ def seasons(item, add_to_videolibrary = False):
 
     for article in section.children:
         if not article.find('li', class_="none"):
+            contentType = item.contentType
             infoLabels = item.infoLabels
+            title = item.title
             seasontitle = str(article.find('span', class_='title').contents[0])
+
             if not infoLabels['last_air_date'] and not infoLabels['premiered']:
-                date = scrapertools.find_multiple_matches(str(article.find('span', class_='title').i.string), '(.+?)\. (\d\d).+?(\d+)')[0]
-                infoLabels['last_air_date'] = date[2] + '-' + month[date[0]] + '-' + date[1]
+                date = article.find('span', class_='title').i.text
+                date = datetime.datetime.strptime(date, "%b. %d, %Y")
+                infoLabels['last_air_date'] = date.strftime("%Y/%m/%d")
                 infoLabels['premiered'] = infoLabels['last_air_date']
+
             if not infoLabels['plot']:
                 plot = str(soup.find('div', id='info').find('div', class_='wp-content').p.contents[0])
                 if plot:
                     infoLabels['plot'] = plot
-            contentType = item.contentType
-            title = item.title
 
             # --- Si buscamos nº de temporada y es película, devolverá la cadena 'PELI' en vez de número --- #
             if 'PELI' in seasontitle:

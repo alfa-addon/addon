@@ -16,11 +16,7 @@ from core.item import Item
 from platformcode import config, logger, platformtools
 from channelselector import get_thumb
 from channels import autoplay
-
-month = {'January':'01',  'February':'02', 'March':'03',
-         'April':'04',    'May':'05',      'June':'06',
-         'July':'07',     'August':'08',   'September':'09',
-         'October':'10',  'November':'11', 'December':'12'}
+from lib import strptime_fix
 
 host = 'https://hentaila.com'
 
@@ -544,11 +540,12 @@ def episodesxseason(item, get_episodes = False):
             infoLabels['genre'] += ', ' + str(genmatch[i].string)
     for article in epmatch:
         scpepnum = int(scrapertools.find_single_match(str(article.find('h2', class_='h-title').string), '.+?(\d+)'))
-        scptime = str(article.find('header', class_='h-header').find('time').string)
-        date = (scrapertools.find_multiple_matches(scptime, '(.+?).(\d\d).+?(\d+)'))[0]
+        scpdate = str(article.find('header', class_='h-header').find('time').string)
         title = scrapertools.get_season_and_episode(str(item.infoLabels['season']) + 'x' + str(item.infoLabels['episode'])) + ': ' + item.contentSerieName
-        infoLabels['first_air_date'] = date[2] + '-' + month[date[0]] + '-' + date[1]
-        infoLabels['year'] = date[2]
+        date = datetime.datetime.strptime(scpdate, "%B %d, %Y")
+        infoLabels['first_air_date'] = date.strftime("%Y/%m/%d")
+        infoLabels['premiered'] = infoLabels['first_air_date']
+        infoLabels['year'] = date.strftime("%Y")
         infoLabels['episode'] = scpepnum
         itemlist.append(
             item.clone(

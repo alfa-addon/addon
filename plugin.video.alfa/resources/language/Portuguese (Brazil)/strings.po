@@ -3845,7 +3845,7 @@ msgid "The data entered is not correct!"
 msgstr "Os dados inseridos não estão corretos!"
 
 msgctxt "#70266"
-msgid "The search for% s did not match."
+msgid "The search for %s did not match."
 msgstr "A pesquisa por %s não encontrou resultados."
 
 msgctxt "#70269"

@@ -491,6 +491,8 @@ def downloadpage(url, **opt):
         @type random_headers: bool
         @param ignore_response_code: Si es True, ignora el método para WebErrorException para error como el error 404 en veseriesonline, pero es un data funcional
         @type ignore_response_code: bool
+        @param hide_infobox: Si es True, no muestra la ventana de información en el log cuando hay una petición exitosa (no hay un response_code de error).
+        @type hide_infobox: bool
         @return: Resultado de la petición
         @rtype: HTTPResponse
 
@@ -759,7 +761,7 @@ def downloadpage(url, **opt):
         response, url, opt = proxy_post_processing(url, proxy_data, response, opt)
         
         info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
-        if not 'api.themoviedb' in url and not opt.get('alfa_s', False):
+        if not 'api.themoviedb' in url and not opt.get('alfa_s', False) and not opt.get("hide_infobox"):
             show_infobox(info_dict)
         
         # Si proxy ordena salir del loop, se sale

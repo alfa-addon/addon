@@ -98,6 +98,8 @@ def drop_bd():
         c.execute("DELETE FROM tmdb_cache WHERE added <= strftime('%s', datetime('now', ?))", (time_delete,))
     conn.commit()
     conn.close()
+    return True
+
 
 def create_bd():
     conn = sqlite3.connect(fname)
@@ -165,7 +167,6 @@ def cache_response(fn):
         return result
 
     return wrapper
-
 
 
 def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang, forced=False, **kwargs):
@@ -550,6 +551,7 @@ def discovery(item, dict_=False, cast=False):
 
 
     return listado
+
 
 def get_genres(type):
     lang = tmdb_lang
@@ -955,7 +957,7 @@ class Tmdb(object):
                 results = resultado["results"]
 
             if self.busqueda_filtro and total_results > 1:
-                # TODO documentar esta parte
+                # Si hay filtro y resultado(s), buscamos qué resultado contiene el filtro
                 for key, value in list(dict(self.busqueda_filtro).items()):
                     for r in results[:]:
                         param = r.get(key, '')

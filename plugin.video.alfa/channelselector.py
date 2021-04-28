@@ -225,6 +225,9 @@ def filterchannels(category, view="thumb_"):
                 context.append({"title": config.get_localized_string(70215), "channel": "test", "action": "test_channel",
                                 "contentChannel": channel_parameters["channel"], "parameters": "test_channel"})
 
+            if channel_parameters["req_assistant"]:
+                channel_parameters["title"] = "{} [COLOR=yellow](requiere Assistant)[/COLOR]".format(channel_parameters["title"])
+
             channel_info = set_channel_info(channel_parameters)
             # Si ha llegado hasta aquí, lo añade
             frequency = channeltools.get_channel_setting("frequency", channel_parameters["channel"], 0)

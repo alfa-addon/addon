@@ -3774,7 +3774,7 @@ msgid "The data entered is not correct!"
 msgstr ""
 
 msgctxt "#70266"
-msgid "The search for% s did not match."
+msgid "The search for %s did not match."
 msgstr ""
 
 msgctxt "#70269"
