@@ -647,3 +647,15 @@ def verify_directories_created():
         import traceback
         logger.error("Al comprobar o crear la carpeta de resolución")
         logger.error(traceback.format_exc())
+
+
+def importer(module):
+    try:
+        from core import scrapertools, filetools
+        path = os.path.join(xbmcaddon.Addon(module).getAddonInfo("path"))
+        ad = filetools.read(filetools.join(path, "addon.xml"), silent=True)
+        if ad:
+            lib_path = scrapertools.find_single_match(ad, 'library="([^"]+)"')
+            sys.path.append(os.path.join(path, lib_path))
+    except:
+        pass

@@ -13,6 +13,8 @@ logger.info("init...")
 
 librerias = os.path.join(config.get_runtime_path(), 'lib')
 sys.path.append(librerias)
+for module in ['script.module.futures']:
+    config.importer(module)
 
 from platformcode import launcher
 

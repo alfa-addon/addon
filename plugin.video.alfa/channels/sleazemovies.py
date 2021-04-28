@@ -94,7 +94,7 @@ def findvideos(item):
     logger.info() 
     itemlist = [] 
     data = httptools.downloadpage(item.url).data 
-    id = scrapertools.find_single_match(data, '<p><iframe src=".*?vid=([^"]+)"').replace("amp;", "")
+    id = scrapertools.find_single_match(data, 'src=".*?vid=([^"]+)"').replace("amp;", "")
     post = "vid=%s&alternative=sleazyvids&ord=0" % id
     url = "https://www.eroti.ga/player/ajax_sources.php"
     data = httptools.downloadpage(url, post=post).data

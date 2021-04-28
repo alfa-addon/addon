@@ -25,6 +25,7 @@ from core.item import Item
 from lib.alfa_assistant import execute_binary_from_alfa_assistant
 
 json_data_file_name = 'custom_code.json'
+ADDON_NAME = 'plugin.video.alfa'
 ADDON_PATH = config.get_runtime_path()
 ADDON_USERDATA_PATH = config.get_data_path()
 ADDON_USERDATA_BIN_PATH = filetools.join(ADDON_USERDATA_PATH, 'bin')
@@ -71,6 +72,11 @@ def init():
     """
 
     try:
+        #Limpiamos los mensajes de ayuda obsoletos y restauramos los que tienen "version": True.  Por cada nueva versión
+        if not filetools.exists(ADDON_CUSTOMCODE_JSON):
+            from platformcode import help_window
+            help_window.clean_watched_new_version()
+        
         #Se realizan algunas funciones con cada nueva versión de Alfa
         if not filetools.exists(ADDON_CUSTOMCODE_JSON):
             config.set_setting('cf_assistant_ua', '')                   # Se limpia CF_UA. Mejora de rendimiento en httptools CF
@@ -80,7 +86,7 @@ def init():
         if config.get_setting('tmdb_cache_expire', default=4) == 4:
             config.set_setting('tmdb_cache_expire', 2)
 
-        #Verifica si es necsario instalar script.alfa-update-helper
+        #Verifica si es necesario instalar script.alfa-update-helper
         verify_script_alfa_update_helper()
         
         #Borra el .zip de instalación de Alfa de la carpeta Packages, por si está corrupto, y que así se pueda descargar de nuevo
@@ -210,32 +216,59 @@ def verify_script_alfa_update_helper():
     logger.info()
     
     import json
+    import xmltodict
     from zipfile import ZipFile
     from core import httptools
+    from platformcode import xbmc_videolibrary
     
-    addonid = 'script.alfa-update-helper'
-    new_version = '0.0.5'
+    github = True
+    versiones = {}
+    addons_path = filetools.translatePath("special://home/addons")
+    url_base = ['https://github.com/alfa-addon/alfa-repo/raw/master/', 
+                'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/']
+    repos_dir = 'downloads/repos/'
+    alfa_repo = ['repository.alfa-addon', '1.0.6', '*']
+    alfa_helper = ['script.alfa-update-helper', '0.0.5', '*']
+    torrest_repo = ['repository.github', '0.0.6', '*']
+    torrest_addon = 'plugin.video.torrest'
+    futures_script = ['%sscript.module.futures' % repos_dir, '2.2.1', 'PY2']
+    
+    for url in url_base:
+        response = httptools.downloadpage(url+'addons.xml', timeout=5, ignore_response_code=True, alfa_s=True)
+        if response.code != 200:
+            github = False
+            continue
+        try:
+            xml = xmltodict.parse(response.data)
+            for addon in xml["addons"]["addon"]:
+                versiones[addon["@id"]] = addon["@version"]
+            break
+        except:
+            logger.error(traceback.format_exc())
+    if not versiones:
+        logger.error("Unable to download repo xml")
+        return
+        
+    addonid = alfa_helper[0]
+    new_version = versiones.get(addonid, alfa_helper[1])
     package = addonid + '-%s.zip' % new_version
     filetools.remove(filetools.join('special://home', 'addons', 'packages', package), True)
     updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
     if updated:
         installed_version = xbmc.getInfoLabel('System.AddonVersion(%s)' % addonid)
-        if installed_version == new_version:
-            return
-        updated = False
+        if installed_version != new_version:
+            updated = False
     
     # Comprobamos si hay acceso a Github
-    url = 'https://github.com/alfa-addon/alfa-repo/raw/master/plugin.video.alfa/addon.xml'
-    response = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=True)
-    if response.code != 200 and not updated:
+    if not github and not updated:
         
         # Si no lo hay, descargamos el Script desde GitLab y lo salvamos a disco
-        url = 'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/script.alfa-update-helper/%s' % package
+        url = '%s%s/%s' % (url_base[1], addonid, package)
         response = httptools.downloadpage(url, ignore_response_code=True, alfa_s=True, json_to_utf8=False)
         if response.code == 200:
             zip_data = response.data
-            addons_path = filetools.translatePath("special://home/addons")
             pkg_updated = filetools.join(addons_path, 'packages', package)
+            
             res = filetools.write(pkg_updated, zip_data, mode='wb')
             
             # Verificamos el .zip
@@ -262,6 +295,98 @@ def verify_script_alfa_update_helper():
                 logger.info("Reloading Profile...")
                 user = profile["result"]["label"]
                 xbmc.executebuiltin('LoadProfile(%s)' % user)
+
+
+    if github:
+        url = url_base[0]
+    else:
+        url = url_base[1]
+    repos = [futures_script, alfa_repo, torrest_repo]
+    for addon_name, version, py in repos:
+        if py != '*':
+            if py == 'PY2' and PY3:
+                continue
+            if py == 'PY3' and not PY3:
+                continue
+        
+        if repos_dir in addon_name:
+            addonid = addon_name.replace(repos_dir, '')
+            path_folder = repos_dir[:-1]
+        else:
+            addonid = addon_name
+            path_folder = addonid
+        
+        new_version = versiones.get(addonid, version)
+        package = addonid + '-%s.zip' % new_version
+        filetools.remove(filetools.join('special://home', 'addons', 'packages', package), True)
+        filetools.rmdirtree(filetools.join('special://home', 'addons', package.replace('.zip', '')), True)      ########### TEMPORAL
+        updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
+        if updated:
+            installed_version = xbmc.getInfoLabel('System.AddonVersion(%s)' % addonid)
+            if installed_version != new_version:
+                updated = False
+            
+        if not updated:
+            url_repo = '%s%s/%s' % (url, path_folder, package)
+            response = httptools.downloadpage(url_repo, ignore_response_code=True, alfa_s=True, json_to_utf8=False)
+            if response.code == 200:
+                zip_data = response.data
+                pkg_updated = filetools.join(addons_path, 'packages', package)
+                res = filetools.write(pkg_updated, zip_data, mode='wb')
+                
+                # Verificamos el .zip
+                ret = None
+                try:
+                    with ZipFile(pkg_updated, "r") as zf:
+                        ret = zf.testzip()
+                except Exception as e:
+                    ret = str(e)
+                if ret is not None:
+                    logger.error("Corrupted .zip, error: %s" % (str(ret)))
+                else:
+                    # Si el .zip es correcto los extraemos e instalamos
+                    with ZipFile(pkg_updated, "r") as zf:
+                        zf.extractall(addons_path)
+
+                    logger.info("Installing %s" % package)
+                    try:
+                        xbmc.executebuiltin('UpdateLocalAddons')
+                        time.sleep(2)
+                        method = "Addons.SetAddonEnabled"
+                        xbmc.executeJSONRPC(
+                            '{"jsonrpc": "2.0", "id":1, "method": "%s", "params": {"addonid": "%s", "enabled": true}}' % (method, addonid))
+                    except:
+                        logger.error(traceback.format_exc())
+    
+    file_db = ''
+    for f in sorted(filetools.listdir("special://userdata/Database"), reverse=True):
+        path_f = filetools.join("special://userdata/Database", f)
+
+        if filetools.isfile(path_f) and f.lower().startswith('addons') and f.lower().endswith('.db'):
+            file_db = path_f
+            break
+    if file_db:
+        
+        repos = [(alfa_repo[0], alfa_repo[0]), (alfa_repo[0], ADDON_NAME), (alfa_repo[0], alfa_helper), \
+                    (torrest_repo[0], torrest_repo[0]), (torrest_repo[0], torrest_addon), \
+                    ('repository.xbmc.org', futures_script[0].replace(repos_dir, ''))]
+        try:
+            for repo, addon in repos:
+                sql = 'update installed set origin = "%s" where addonID= "%s" and origin <> "%s"' % (repo, addon, repo)
+                nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql, silent=False, file_db=file_db)
+        except:
+            logger.error(traceback.format_exc())
+    
+
+    addonid = ADDON_NAME
+    new_version = versiones.get(addonid, ADDON_VERSION)
+    package = addonid + '-%s.zip' % new_version
+    filetools.remove(filetools.join('special://home', 'addons', 'packages', package), True)
+    updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
+    if updated:
+        if ADDON_VERSION != new_version:
+            platformtools.dialog_notification("Alfa: versión oficial: [COLOR hotpink][B]%s[/B][/COLOR]" % new_version, \
+                    "[COLOR yellow]Tienes una versión obsoleta: [B]%s[/B][/COLOR]" % ADDON_VERSION)
 
 
 def create_folder_structure(custom_code_dir):
