@@ -37,6 +37,8 @@ ASSISTANT_SERVER = "http://127.0.0.1"
 ASSISTANT_SERVER_PORT = 48884
 ASSISTANT_SERVER_PORT_PING = 48886
 ASSISTANT_MODE = config.get_setting("assistant_mode")
+assistant_urls = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/', \
+                  'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/']
 
 isAlfaAssistantOpen = False
 
@@ -292,6 +294,9 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
             if endpoint in ['ping', 'getWebViewInfo']:
                 if endpoint in ['ping']:
                     data_ret = data_ret.get('assistantVersion', '')
+                else:
+                    if isinstance(isAlfaAssistantOpen, dict) and isAlfaAssistantOpen.get('assistantLatestVersion'):
+                        data_ret['assistantLatestVersion'] = isAlfaAssistantOpen['assistantLatestVersion']
                 logger.info('##Assistant "%s" TRUE, timeout %s: %s' % (endpoint, timeout+EXTRA_TIMEOUT, str(data_ret)))
         except:
             data_ret = data
@@ -365,6 +370,7 @@ def getInlineRequestedHeaders(requestHeaders, namesExceptionList = None):
 #
 def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False):
     global isAlfaAssistantOpen
+    version = 'alfa-mobile-assistant.version'
     
     if not isAlfaAssistantOpen:
         res = False
@@ -398,10 +404,9 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False):
                             isAlfaAssistantOpen = res
                         else:
                             isAlfaAssistantOpen = res
-                        return res
-                
-                isAlfaAssistantOpen = False
-                return False
+                        break
+                else:
+                    return False
 
             else:
                 res = get_generic_call('getWebViewInfo', timeout=3-EXTRA_TIMEOUT, alfa_s=True)
@@ -410,12 +415,25 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False):
                         check_webview_version(res.get('wvbVersion', ''))
                         if not getWebViewInfo:
                             res = res.get('assistantVersion', '')
-                    return res
+                        isAlfaAssistantOpen = res
+                    else:
+                        isAlfaAssistantOpen = res
                 else:
                     if not retry:
                         platformtools.dialog_notification("ACTIVE Alfa Assistant en %s" % ASSISTANT_SERVER, 
                                     "o Instale manualmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]")
                     return False
+
+            if isinstance(res, dict) and getWebViewInfo:
+                for url in assistant_urls:
+                    response = httptools.downloadpage(url+version, timeout=2, alfa_s=True, ignore_response_code=True)
+                    if response.sucess:
+                        res['assistantLatestVersion'] = response.data
+                        isAlfaAssistantOpen = res
+                        break
+            
+            return isAlfaAssistantOpen
+        
         except:
             logger.error('##Assistant Error opening it')
             logger.error(traceback.format_exc(1))
@@ -1100,9 +1118,6 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
     
     # Si no está instalada, o se quiere actualizar, empezamos el proceso
     alfa_assistant_pwd = ''
-    assistant_urls = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/%s' % version, \
-            'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/%s' % version]
-
     apk_updated = filetools.join(addons_path, 'tools')
     apk_path = filetools.join(apk_updated, download)
     apk_apk = filetools.join(apk_updated, package)
@@ -1150,7 +1165,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
     
     # Comprobamos si hay acceso a Github o GitLab
     for assistant_rar in assistant_urls:
-        response = httptools.downloadpage(assistant_rar, timeout=5, ignore_response_code=True, alfa_s=alfa_s, json_to_utf8=False)
+        response = httptools.downloadpage(assistant_rar+version, timeout=5, ignore_response_code=True, alfa_s=alfa_s, json_to_utf8=False)
         if response.sucess:
             break
     

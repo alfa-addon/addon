@@ -49,7 +49,7 @@ page_url = ''
 
 #category = 'pctmix1'                                                          # Clone preferido para Novedades
 category = ''                                                                   # Clone preferido para Novedades
-clone_num = 3                                                                   # Número de Clones "buenos"
+clone_num = 2                                                                   # Número de Clones "buenos"
 
 #Código para permitir usar un único canal para todas las webs clones de NewPct1
 #Cargamos en .json del canal para ver las listas de valores en settings
