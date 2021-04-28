@@ -523,7 +523,7 @@ def post_tmdb_listado(item, itemlist):
         item, itemlist = generictools.post_tmdb_listado(item, itemlist)
     
     """
-    #logger.debug(item)
+    logger.debug(item)
     
     #Borramos valores si ha habido fail-over
     channel_alt = ''
@@ -541,6 +541,13 @@ def post_tmdb_listado(item, itemlist):
     #Cargo la lista de peliculas, series y documentales de la videoteca.  Se usa luego para Descargas
     res, video_list = check_title_in_videolibray(item, video_list_init=True)
     #logger.debug(video_list)
+    
+    # Pasada por TMDB a Serie, para datos adicionales, y mejorar la experiencia en Novedades
+    if len(itemlist) > 0 and (itemlist[-1].contentType != 'movie' or item.action == 'search'):
+        idioma = idioma_busqueda
+        if 'VO' in str(itemlist[-1].language):
+            idioma = idioma_busqueda_VO
+        tmdb.set_infoLabels(itemlist, seekTmdb=True, idioma_busqueda=idioma)
     
     for item_local in itemlist:                                 #Recorremos el Itemlist generado por el canal
         item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
@@ -675,14 +682,13 @@ def post_tmdb_listado(item, itemlist):
                 else:
                     item_local.contentType = "season"
                     episode_max = int(scrapertools.find_single_match(title_add, r'Episodio\s*\d+x\d+-al-(\d+)'))
-            
-            try:
-                if item_local.infoLabels['tmdb_id']:
-                    tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma)  #TMDB de la serie
-            except:
-                logger.error(traceback.format_exc())
+
+                try:
+                    if item_local.infoLabels['tmdb_id']:
+                        tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma)  #TMDB de la serie
+                except:
+                    logger.error(traceback.format_exc())
                 
-            if scrapertools.find_single_match(title_add, r'Episodio\s*(\d+)x(\d+)') and item_local.infoLabels['tmdb_id']:
                 # Restaura los datos de infoLabels a su estado original, menos plot y año
                 item_local.infoLabels['year'] = scrapertools.find_single_match(item_local.infoLabels['aired'], r'\d{4}')
                 if item_local.infoLabels.get('temporada_num_episodios', 0) >= episode_max:

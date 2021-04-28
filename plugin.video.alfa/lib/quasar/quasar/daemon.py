@@ -755,7 +755,11 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         msg += str(resp.status_code)
                         stdout_acum += str(resp.status_code)
                         xbmc.executebuiltin(cmd_android)
-                        p.binary_awake = (int(time.time()) - int(p.binary_time) - 120) * 1000
+                        binary_awake = (int(time.time()) - int(p.binary_time) - 300) * 1000
+                        if p.binary_awake:
+                            if binary_awake < p.binary_awake: p.binary_awake = binary_awake
+                        else:
+                            p.binary_awake = binary_awake
                         if p.binary_awake < 2000: p.binary_awake = 2000
                         if not p.torrest:
                             if not 'awakingInterval' in url: url += '&awakingInterval=%s' % p.binary_awake
@@ -767,7 +771,11 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     msg += str(resp.status_code)
                     stdout_acum += str(resp.status_code)
                     app_response = {'pid': p.pid, 'retCode': 999}
-                    if not p.binary_awake: p.binary_awake = (int(time.time()) - int(p.binary_time) - 120) * 1000
+                    binary_awake = (int(time.time()) - int(p.binary_time) - 300) * 1000
+                    if p.binary_awake:
+                        if binary_awake < p.binary_awake: p.binary_awake = binary_awake
+                    else:
+                        p.binary_awake = binary_awake
                     if p.binary_awake < 2000: p.binary_awake = 2000
                     if p.torrest:
                         time.sleep(10)      # let Torrest recover first
