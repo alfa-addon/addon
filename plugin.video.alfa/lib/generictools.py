@@ -523,7 +523,7 @@ def post_tmdb_listado(item, itemlist):
         item, itemlist = generictools.post_tmdb_listado(item, itemlist)
     
     """
-    logger.debug(item)
+    #logger.debug(item)
     
     #Borramos valores si ha habido fail-over
     channel_alt = ''
@@ -543,7 +543,7 @@ def post_tmdb_listado(item, itemlist):
     #logger.debug(video_list)
     
     # Pasada por TMDB a Serie, para datos adicionales, y mejorar la experiencia en Novedades
-    if len(itemlist) > 0 and (itemlist[-1].contentType != 'movie' or item.action == 'search'):
+    if len(itemlist) > 0 and (itemlist[-1].contentType != 'movie' or item.action == 'search' or item.extra == 'novedades'):
         idioma = idioma_busqueda
         if 'VO' in str(itemlist[-1].language):
             idioma = idioma_busqueda_VO
