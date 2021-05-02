@@ -77,6 +77,12 @@ class InfoWindow(xbmcgui.WindowXMLDialog):
 
             if "original_language" in infoLabels:
                 infoLabels["language"] = self.get_language(infoLabels["original_language"])
+            
+            if not infoLabels.get('mediatype', '') and infoLabels.get('premiered', ''):
+                infoLabels['mediatype'] = 'tvshow'
+            elif not infoLabels.get('mediatype', '') and infoLabels.get('premiered', ''):
+                infoLabels['mediatype'] = 'movie'
+            
             infoLabels["puntuacion"] = "%s/10 (%s)" % (infoLabels.get("rating", "?"), infoLabels.get("votes", "N/A"))
 
             self.result = infoLabels
@@ -162,7 +168,7 @@ class InfoWindow(xbmcgui.WindowXMLDialog):
         self.return_value = None
         self.scraper = scraper
 
-        logger.debug(data)
+        #logger.error(data)
         if type(data) == list:
             self.listData = data
             self.indexList = 0
@@ -189,7 +195,8 @@ class InfoWindow(xbmcgui.WindowXMLDialog):
                 self.setCoordinateResolution(1)
             else:
                 self.setCoordinateResolution(5)
-
+        #logger.error(self.result)
+        #logger.error(self.item.tostring())
         # Ponemos el título y las imagenes
         self.getControl(10002).setLabel(self.caption)
         self.getControl(10004).setImage(self.result.get("fanart", ""))
@@ -218,6 +225,8 @@ class InfoWindow(xbmcgui.WindowXMLDialog):
             self.getControl(10009).setLabel(self.result.get("language", "N/A"))
             self.getControl(100010).setLabel(config.get_localized_string(60380))
             self.getControl(100011).setLabel(self.result.get("puntuacion", "N/A"))
+            self.getControl(100014).setLabel(config.get_localized_string(60381))
+            self.getControl(100015).setLabel(self.result.get("premiered", "N/A"))
             self.getControl(100012).setLabel(config.get_localized_string(60382))
             self.getControl(100013).setLabel(self.result.get("genre", "N/A"))
 

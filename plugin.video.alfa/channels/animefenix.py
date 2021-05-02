@@ -3,6 +3,10 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from core import httptools
@@ -11,11 +15,12 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from channels import filtertools, autoplay
+from channels import renumbertools
 from core import tmdb
 
 
 IDIOMAS = {'vose': 'VOSE'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['directo', 'verystream', 'openload',  'streamango', 'uploadmp4', 'fembed']
 
@@ -44,6 +49,8 @@ def mainlist(item):
                          thumbnail=get_thumb('search', auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
+
+    itemlist = renumbertools.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -123,8 +130,11 @@ def list_all(item):
         url = elem.a["href"]
         title = elem.a["title"]
         thumb = elem.img["src"]
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='episodios',
-                             thumbnail=thumb, contentSerieName=title))
+                             thumbnail=thumb, contentSerieName=title, context=context))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
     return itemlist
@@ -167,11 +177,15 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
-    if texto != '':
-        return list_all(item)
-    else:
-        return []
 
+    if texto != '':
+        try:
+            return list_all(item)
+        except:
+            import sys
+            for line in sys.exc_info():
+                logger.error("%s" % line)
+            return []
 
 def newest(categoria):
     itemlist = []

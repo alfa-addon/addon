@@ -3,8 +3,11 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
-import urllib
 import base64
 
 from channelselector import get_thumb
@@ -21,7 +24,7 @@ from platformcode import config, logger
 
 
 IDIOMAS = {'Latino': 'LAT', 'Español':'CAST', 'Subtitulado': 'VOSE', 'VO': 'VO'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 
 list_quality = ['Full HD 1080p',
                 'HDRip',
@@ -163,10 +166,10 @@ def list_all(item):
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
 
     #if item.type ==  'peliculas':
-    patron = '<img class="cover".*?src="([^"]+)" data-id="\d+" '
-    patron +='alt="Ver ([^\(]+)(.*?)">'
-    patron += '<div class="mdl-card__menu"><a class="clean-link" href="([^"]+)">'
-    patron += '.*?<span class="link-size">(.*?)<'
+    patron = '<img\s*class="cover"[^>]+src="([^"]+)"\s*data-id="\d+"\s*'
+    patron +='alt="Ver\s*([^\(]+)(.*?)">\s*'
+    patron += '<div\s*class="mdl-card__menu">\s*<a\s*class="clean-link"\s*href="([^"]+)">'
+    patron += '.*?<span\s*class="link-size">([^<]*)<'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -264,7 +267,7 @@ def findvideos(item):
         title = ''
         link_type = ''
         server = ''
-        url = base64.b64decode(url)
+        url = base64.b64decode(url.encode('utf8')).decode('utf8')
 
         if 'torrent' in url:
             if item.link_type == 'torrent' or item.type == 'all':
@@ -304,33 +307,20 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = '%spelicula+%s+%s&o=2' % (item.url, texto, item.link_type)
+    url = '%spelicula+%s+%s&o=2' % (item.url, texto, item.link_type)
+    #Parche busqueda global (solo vale para peliculas en streaming)
+    if not item.url:
+        item.type = 'peliculas'
+        item.link_type = 'flash'
+        ajax = '%s/%s/es/ajax/1/' % (host, item.type)
+        url = '%s?q=%s+%s+%s&o=2' % (ajax, item.type, texto, item.link_type)
 
-    if texto != '':
-        return list_all(item)
-    else:
-        return []
+    item.url = url
 
-def newest(categoria):
-    logger.info()
-    item = Item()
     try:
-        if categoria in ['peliculas']:
-            item.url = host + 'ver/'
-        elif categoria == 'infantiles':
-            item.url = host + 'genero/animacion/'
-        elif categoria == 'terror':
-            item.url = host + 'genero/terror/'
-        elif categoria == 'documentales':
-            item.url = host + 'genero/terror/'
-        item.type=item.type
-        itemlist = list_all(item)
-        if itemlist[-1].title == 'Siguiente >>':
-            itemlist.pop()
+        return list_all(item)
     except:
         import sys
         for line in sys.exc_info():
-            logger.error("{0}".format(line))
+            logger.error("%s" % line)
         return []
-
-    return itemlist

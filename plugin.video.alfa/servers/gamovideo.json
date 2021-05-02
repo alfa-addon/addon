@@ -1,5 +1,5 @@
 {
-  "active": true,
+  "active": false,
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_gamovideo.png"
+  "thumbnail": "https://i.postimg.cc/YSBx75Lx/gamovideo.png"
 }

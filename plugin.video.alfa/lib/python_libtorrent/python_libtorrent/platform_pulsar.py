@@ -22,8 +22,11 @@
     OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
     WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
-
+from __future__ import print_function
 import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import os
 try:
     import xbmc, xbmcaddon
@@ -31,22 +34,33 @@ try:
     #__version__ = __settings__.getAddonInfo('version')                         ### Alfa
     #__plugin__ = __settings__.getAddonInfo('name') + " v." + __version__       ### Alfa
     __settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                      ### Alfa
-    __version__ = '1.1.17'                                                      ### Alfa
-    __plugin__ = "python-libtorrent v.1.1.7"                                    ### Alfa
+    __version__ = '2.0.1'                                                       ### Alfa
+    __plugin__ = "python-libtorrent v.2.0.1"                                    ### Alfa
 except:
-    __plugin__ = "python-libtorrent v.1.1.7"                                    ### Alfa
+    __plugin__ = "python-libtorrent v.2.0.1"                                    ### Alfa
     pass
 
 def log(msg):
-    try:
-        xbmc.log("### [%s]: %s" % (__plugin__,msg,), level=xbmc.LOGNOTICE )
-    except UnicodeEncodeError:
-        xbmc.log("### [%s]: %s" % (__plugin__,msg.encode("utf-8", "ignore"),), level=xbmc.LOGNOTICE )
-    except:
+    if PY3:
         try:
-            xbmc.log("### [%s]: %s" % (__plugin__,'ERROR LOG',), level=xbmc.LOGNOTICE )
+            xbmc.log("### [%s]: %s" % (__plugin__,msg,), level=xbmc.LOGINFO )
+        except UnicodeEncodeError:
+            xbmc.log("### [%s]: %s" % (__plugin__,msg.encode("utf-8", "ignore"),), level=xbmc.LOGINFO )
         except:
-            print msg
+            try:
+                xbmc.log("### [%s]: %s" % (__plugin__,'ERROR LOG',), level=xbmc.LOGINFO )
+            except:
+                print(msg)
+    else:
+        try:
+            xbmc.log("### [%s]: %s" % (__plugin__,msg,), level=xbmc.LOGNOTICE )
+        except UnicodeEncodeError:
+            xbmc.log("### [%s]: %s" % (__plugin__,msg.encode("utf-8", "ignore"),), level=xbmc.LOGNOTICE )
+        except:
+            try:
+                xbmc.log("### [%s]: %s" % (__plugin__,'ERROR LOG',), level=xbmc.LOGNOTICE )
+            except:
+                print(msg)
 
 def get_libname(platform):
     libname=[]
@@ -65,8 +79,8 @@ def get_platform():
     #__version__ = __settings__.getAddonInfo('version')                         ### Alfa
     #__plugin__ = __settings__.getAddonInfo('name') + " v." + __version__       ### Alfa
     __settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                      ### Alfa
-    __version__ = '1.1.17'                                                      ### Alfa
-    __plugin__ = "python-libtorrent v.1.1.7"                                    ### Alfa
+    __version__ = '2.0.1'                                                       ### Alfa
+    __plugin__ = "python-libtorrent v.2.0.1"                                    ### Alfa
     __language__ = __settings__.getLocalizedString
 
     if __settings__.getSetting('custom_system').lower() == "true":
@@ -140,7 +154,7 @@ def get_platform():
                 else:
                     ret["arch"] = 'mipsel_ucs2'
             elif "aarch64" in uname:
-                if sys.maxint > 2147483647: #is_64bit_system
+                if sys.maxsize > 2147483647: #is_64bit_system
                     if sys.maxunicode > 65536:
                         ret["arch"] = 'aarch64_ucs4'
                     else:
@@ -162,30 +176,30 @@ def get_system(ret):
     ret["system"] = ''
     ret["message"] = ['', '']
 
-    if ret["os"] == 'windows' and ret["arch"] != "x64":                         ### Alfa
+    if ret["os"] == 'windows' and ret["arch"] != "x64":                                         ### Alfa
         ret["system"] = 'windows'
         ret["message"] = ['Windows has static compiled python-libtorrent included.',
-                          'You should install "script.module.libtorrent" from "MyShows.me Kodi Repo"']
-    elif ret["os"] == 'windows' and ret["arch"] == "x64":                                                           ### Alfa
-        ret["system"] = 'windows_x64'                                                                               ### Alfa
-        ret["message"] = ['Windows x64 has static compiled python-libtorrent included.',                            ### Alfa
-                           'You should install "script.module.libtorrent" from "MyShows.me Kodi Repo"']             ### Alfa
+                          '"script.module.libtorrent" included']
+    elif ret["os"] == 'windows' and ret["arch"] == "x64":                                       ### Alfa
+        ret["system"] = 'windows_x64'                                                           ### Alfa
+        ret["message"] = ['Windows x64 has static compiled python-libtorrent included.',        ### Alfa
+                          '"script.module.libtorrent" included']                                ### Alfa
     elif ret["os"] == "linux" and ret["arch"] == "x64":
         ret["system"] = 'linux_x86_64'
         ret["message"] = ['Linux x64 has not static compiled python-libtorrent included.',
-                          'You should install it by "sudo apt-get install python-libtorrent"']
+                          '"script.module.libtorrent" included']
     elif ret["os"] == "linux" and ret["arch"] == "x86":
         ret["system"] = 'linux_x86'
         ret["message"] = ['Linux has static compiled python-libtorrent included but it didn\'t work.',
-                          'You should install it by "sudo apt-get install python-libtorrent"']
+                          '"script.module.libtorrent" included']
     elif ret["os"] == "linux" and "aarch64" in ret["arch"]:
         ret["system"] = 'linux_' + ret["arch"]
         ret["message"] = ['Linux has static compiled python-libtorrent included but it didn\'t work.',
-                          'You should install it by "sudo apt-get install python-libtorrent"']
+                          '"script.module.libtorrent" included']
     elif ret["os"] == "linux" and ("arm" or "mips" in ret["arch"]):
         ret["system"] = 'linux_'+ret["arch"]
         ret["message"] = ['As far as I know you can compile python-libtorrent for ARMv6-7.',
-                          'You should search for "OneEvil\'s OpenELEC libtorrent" or use Ace Stream.']
+                          '"script.module.libtorrent" included']
     elif ret["os"] == "android":
         if ret["arch"]=='arm':
             ret["system"] = 'android_armv7'

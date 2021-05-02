@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://uqload.com/embed-([a-z0-9]+).html",
+        "pattern": "https://uqload.com/(?:embed-|)([a-z0-9]+).html",
         "url": "https://uqload.com/embed-\\1.html"
       }
     ]
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://uqload.com/img/logo.png?v=0"
+  "thumbnail": "https://i.postimg.cc/2yPVm9Lq/uqload.png"
 }

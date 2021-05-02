@@ -4,12 +4,8 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "clipwatching.com/(e.*?.html)",
-        "url": "http://clipwatching.com/\\1"
-      },
-      {
-        "pattern": "clipwatching.com/(\\w+)",
-        "url": "http://clipwatching.com/embed-\\1.html"
+        "pattern": "(?:clipwatching|highstream).\\w{2,4}/(?:embed-|)([A-z0-9_]+)",
+        "url": "https://highstream.tv/embed-\\1.html"
       }
     ]
   },
@@ -42,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s17.postimg.cc/e6kcan0vj/clipwatching1.png"
+  "thumbnail": "https://i.postimg.cc/L6t6gMWr/clipwatching.png"
 }

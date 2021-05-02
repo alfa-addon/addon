@@ -9,7 +9,10 @@ from platformcode import logger
 server = {'1': 'http://www.mangovideo.pw/contents/videos/', '7' : 'http://server9.mangovideo.pw/contents/videos/',
           '8' : 'http://s10.mangovideo.pw/contents/videos/', '9' : 'http://server2.mangovideo.pw/contents/videos/',
           '10' : 'http://server217.mangovideo.pw/contents/videos/', '11' : 'http://234.mangovideo.pw/contents/videos/',
-          '12' : 'http://98.mangovideo.pw/contents/videos/', '13' : 'http://68.mangovideo.pw/contents/videos/'
+          '12' : 'http://98.mangovideo.pw/contents/videos/', '13' : 'http://68.mangovideo.pw/contents/videos/',
+          '14' : 'http://183.mangovideo.pw/contents/videos/', '15' : 'http://45.mangovideo.pw/contents/videos/',
+          '16' : 'https://46.mangovideo.pw/contents/videos/',
+          '18' : 'https://60.mangovideo.pw/contents/videos/', '19' : 'https://new.mangovideo.pw/contents/videos/'
          }
 
 

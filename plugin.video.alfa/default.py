@@ -7,13 +7,14 @@
 import os
 import sys
 
-import xbmc
 from platformcode import config, logger
 
 logger.info("init...")
 
-librerias = xbmc.translatePath(os.path.join(config.get_runtime_path(), 'lib'))
+librerias = os.path.join(config.get_runtime_path(), 'lib')
 sys.path.append(librerias)
+for module in ['script.module.futures']:
+    config.importer(module)
 
 from platformcode import launcher
 

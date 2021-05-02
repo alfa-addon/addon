@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
-import urllib
 import base64
 
 from core import httptools
@@ -43,20 +46,21 @@ thumbletras = {'#': 'https://s32.postimg.cc/drojt686d/image.png',
                }
 
 audio_color = {'LAT': '[COLOR limegreen][LAT][/COLOR]',
-               'CAST': '[COLOR golden][CAST][/COLOR]',
+               'CAST': '[COLOR gold][CAST][/COLOR]',
                'VOSE': '[COLOR grey][VOSE][/COLOR]'}
 
 IDIOMAS = {'latino': 'LAT', 'espanol': 'CAST', 'castellano': 'CAST',
            'subtitulado': 'VOSE', 'subtitulo': 'VOSE'}
 
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 
 list_quality = ['BRRip', 'HDRip', 'DVD-R', 'HDTv-rip', 'BR-Screener',
                 'WEB-S', 'TS-HQ', 'TS-Screener']
 
-list_servers = ['rapidvideo', 'verystream', 'streamplay']
+list_servers = ['upstream', 'vidfast', 'okru', 'zplayer']
 
-host = 'http://pelisgratis.live/'
+host = 'http://pelisgratis.nu/'
+#host = 'http://pelisap.com/'
 
 
 def mainlist(item):
@@ -67,13 +71,31 @@ def mainlist(item):
     itemlist.append(item.clone(title="Estrenos",
                                action="lista",
                                thumbnail=get_thumb('premieres', auto=True),
-                               url=host + 'estrenos'
+                               url=host + 'genero/estrenos/'
                                ))
 
     itemlist.append(item.clone(title="Últimas",
                                action="lista",
                                thumbnail=get_thumb('last', auto=True),
                                url=host
+                               ))
+    
+    itemlist.append(item.clone(title="Castellano",
+                               action="lista",
+                               thumbnail=get_thumb('cast', auto=True),
+                               url=host + 'idioma/espanol/'
+                               ))
+    
+    itemlist.append(item.clone(title="Latino",
+                               action="lista",
+                               thumbnail=get_thumb('lat', auto=True),
+                               url=host + 'idioma/latino/'
+                               ))
+    
+    itemlist.append(item.clone(title="VOSE",
+                               action="lista",
+                               thumbnail=get_thumb('vose', auto=True),
+                               url=host + 'idioma/subtitulada/'
                                ))
 
     itemlist.append(item.clone(title="Generos",
@@ -85,7 +107,7 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Alfabetico",
                                action="seccion",
-                               url=host + 'estrenos',
+                               url=host + 'genero/estrenos/',
                                thumbnail=get_thumb('alphabet', auto=True),
                                extra='a-z'
                                ))
@@ -124,11 +146,12 @@ def get_source(url, referer=None):
 def lista(item):
     logger.info()
     itemlist = []
+    infoLabels = {}
     data = get_source(item.url)
     patron = '<article class="item.*?href="([^"]+)" title="([^"]+)">(.*?)<img.*?src="([^"]+)"'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
-    
+ 
     for url, scrapedtitle, info_data, scrapedthumbnail in matches:
         
         quality = scrapertools.find_single_match(info_data, 'class="calidad">([^<]+)</div>')
@@ -138,9 +161,9 @@ def lista(item):
         zanga, list_langs = extrae_idiomas(list_langs)
 
         thumbnail = re.sub('p/w\d+', "p/original", scrapedthumbnail)
-        filter_thumb = re.sub('(.*?)/w\d+', "", scrapedthumbnail)
-        filter_list = {"poster_path": filter_thumb}
-        infoLabels = {'filtro': filter_list.items()}
+        #filter_thumb = re.sub('(.*?)/w\d+', "", scrapedthumbnail)
+        #filter_list = {"poster_path": filter_thumb}
+        #infoLabels = {'filtro': list(filter_list.items())}
 
         year = scrapertools.find_single_match(url, '-(\d{4})')
         if year:
@@ -164,11 +187,22 @@ def lista(item):
     
     # Paginacion
     if len(itemlist):
-        next_page = scrapertools.find_single_match(data, 'href="([^"]+)" aria-label="Siguiente"')
-        if next_page:
+        info = scrapertools.find_single_match(data, r'<a class="page-link">([^<]+)')
+        
+        actual, total = scrapertools.find_single_match(info, r'(\d+) de (\d+)') or [1, 1]
+        
+        if info and int(actual) < int(total):
+            next_ = int(actual) + 1
+            if next_ == 2:
+                next_page = item.url + 'page/%s/' % next_
+            else:
+              next_page = re.sub(r'page/\d+', 'page/%s' % next_, item.url)
+
+            plot = info
             itemlist.append(item.clone(action="lista",
                                        title='Siguiente >>>',
                                        url=next_page,
+                                       plot=plot,
                                        thumbnail='https://s32.postimg.cc/4zppxf5j9/siguiente.png'
                                        ))
     return itemlist
@@ -179,9 +213,10 @@ def seccion(item):
     itemlist = []
     data = get_source(item.url)
     if item.extra == 'generos':
-        patron = 'menu-item-object-category.*?<a href="([^"]+)">([^<]+)</a>'
+        data = scrapertools.find_single_match(data, '<ul class="list-genero">(.*?)</ul>')
+        patron = r'<li><a href="([^"]+)">([^<]+)'
     elif item.extra == 'a-z':
-        patron = '<li><a href="([^"]+)">(\w|#)<\/a><\/li>'
+        patron = r'<li><a href="([^"]+)">(\w|#)<\/a><\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
@@ -191,8 +226,7 @@ def seccion(item):
             title = scrapedtitle
         else:
             title = scrapedtitle
-            if title.lower() in thumbletras:
-                thumbnail = thumbletras[title.lower()]
+            thumbnail = thumbletras.get(title.lower(), '')
 
         itemlist.append(item.clone(action='lista', title=title, url=url, thumbnail=thumbnail))
 
@@ -203,8 +237,14 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
-    if texto != '':
+
+    try:
         return lista(item)
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("%s" % line)
+        return []
 
 
 def findvideos(item):
@@ -213,14 +253,18 @@ def findvideos(item):
     global new_data
     new_data = []
     data = get_source(item.url)
-    
+    if not item.infoLabels.get('year', ''):
+        year = scrapertools.find_single_match(data[:300], r' \((\d{4})\) ') or '-'
+        item.infoLabels['year'] =  year
+        tmdb.set_infoLabels_itemlist([item], seekTmdb=True)
+
     patron = 'aria-labelledby="([^"]+)">(.*?)</li>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedlang, data in matches:
 
         if 'trail' in scrapedlang.lower():
             continue
-        
+
         language = IDIOMAS.get(scrapedlang, scrapedlang)
         lang = audio_color.get(language, language)
 
@@ -228,64 +272,25 @@ def findvideos(item):
         matches = scrapertools.find_multiple_matches(data, patron)
 
         for scrapedurl, info in matches:
-            
+
             scrapedurl += "=="
-            urls_page = base64.b64decode(scrapedurl)
-            if "repro.live" in urls_page:
-                server_repro(urls_page, item.url)
-            elif "itatroniks.com" in urls_page:
-                server_itatroniks(urls_page)
-            else:
-                new_data = [urls_page]
+            urls_page = base64.urlsafe_b64decode(scrapedurl)
+
+            new_data = httptools.downloadpage(urls_page, headers={"referer": item.url}).data
+            patron = 'data-embed="([^"]+)"'
+            new_data = re.compile(patron, re.DOTALL).findall(new_data)
+
             for url in new_data:
-                itemlist.append(item.clone(title='[%s] %s',
+                url = base64.urlsafe_b64decode(url+"==")
+                title = ' %s [COLOR blue][%s][/COLOR]' % (lang, item.quality)
+                itemlist.append(item.clone(title='%s'+title,
                                 url=url,
                                 action='play',
                                 language=language,
                                 lang=lang
                                 ))
-            new_data = []
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.lang))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
     return itemlist
-
-
-def server_itatroniks(urls_page):
-    logger.info()
-    headers = {"Referer":urls_page}
-    id = scrapertools.find_single_match(urls_page, 'embed/(\w+)')
-    sub_data = httptools.downloadpage(urls_page, headers = headers).data
-    matches = scrapertools.find_multiple_matches(sub_data, 'button id="([^"]+)')
-    headers1 = ({"X-Requested-With":"XMLHttpRequest"})
-    for serv in matches:
-        data_json = httptools.downloadpage("https://itatroniks.com/get/%s/%s" %(id, serv), headers=headers1).json
-        urls_page = ""
-        try:
-            if "finished" == data_json["status"]: urls_page = "https://%s/embed/%s" %(data_json["server"], data_json["extid"])
-            if "propio" == data_json["status"]: urls_page = "https://%s/e/%s" %(data_json["server"], data_json["extid"])
-        except:
-            continue
-        new_data.append(urls_page)
-
-
-
-def server_repro(urls_page, ref):
-    logger.info()
-    headers = {"Referer":ref}
-    sub_data = httptools.downloadpage(urls_page, headers = headers).data
-    urls_page1 = scrapertools.find_multiple_matches(sub_data, 'data-embed="([^"]+)"')
-    
-    for urls_page in urls_page1:
-        urls_page += "=="
-        urls_page = base64.b64decode(urls_page)
-        
-        if "repro.live" in urls_page:
-            data1 = httptools.downloadpage(urls_page, headers = headers).data
-            urls_page1 = scrapertools.find_multiple_matches(data1, 'source src="([^"]+)')
-            for urls_page in urls_page1:
-                new_data.append(urls_page)
-        else:
-            new_data.append(urls_page)
-
 
 def newest(categoria):
     logger.info()
@@ -294,11 +299,11 @@ def newest(categoria):
     # categoria='peliculas'
     try:
         if categoria == 'peliculas':
-            item.url = host + 'estrenos'
+            item.url = host + 'genero/estrenos/'
         elif categoria == 'infantiles':
-            item.url = host + 'animacion'
+            item.url = host + 'genero/animacion/'
         elif categoria == 'terror':
-            item.url = host + 'terror'
+            item.url = host + 'genero/terror/'
         itemlist = lista(item)
         if itemlist[-1].title == 'Siguiente >>>':
             itemlist.pop()
@@ -336,4 +341,3 @@ def play(item):
             item.url = ''
 
     return [item]
-

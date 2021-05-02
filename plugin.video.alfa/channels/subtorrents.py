@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import re
 import sys
-import urllib
-import urlparse
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+import re
 import time
 
 from channelselector import get_thumb
@@ -20,20 +21,21 @@ from channels import autoplay
 
 #IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
 #host = 'https://www.subtorrents.tv/'
 #sufix = '.tv/'
-host = 'https://www.subtorrents.one/'
-sufix = '.one/'
+host = 'https://www.subtorrents.ch/'
+sufix = '.ch/'
 channel = 'subtorrents'
 categoria = channel.capitalize()
 color1, color2, color3 = ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)        #Actualización sólo últ. Temporada?
 timeout = config.get_setting('timeout_downloadpage', channel)
+idioma_busqueda = 'es,en'
 
 
 def mainlist(item):
@@ -98,8 +100,8 @@ def submenu(item):
     
     if item.extra == "series":
 
-        itemlist.append(item.clone(title="Series", action="listado", url=item.url + "series/", thumbnail=thumb_series, extra="series"))
-        itemlist.append(item.clone(title="    Alfabético A-Z", action="alfabeto", url=item.url + "series/?s=letra-%s", thumbnail=thumb_series_AZ, extra="series"))
+        itemlist.append(item.clone(title="Series", action="listado", url=item.url + "series-2/", thumbnail=thumb_series, extra="series"))
+        itemlist.append(item.clone(title="    Alfabético A-Z", action="alfabeto", url=item.url + "series-2/?s=letra-%s", thumbnail=thumb_series_AZ, extra="series"))
 
     return itemlist
     
@@ -111,7 +113,7 @@ def alfabeto(item):
     itemlist.append(item.clone(action="listado", title="0-9", url=item.url % "0"))
 
     for letra in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
-        itemlist.append(item.clone(action="listado", title=letra, url=item.url % letra.lower()))
+        itemlist.append(item.clone(action="listado", title=letra, url=item.url % letra))
 
     return itemlist
 
@@ -135,7 +137,7 @@ def listado(item):
     cnt_tot = 40                                                                # Poner el num. máximo de items por página
     cnt_title = 0                                                               # Contador de líneas insertadas en Itemlist
     inicio = time.time()                                    # Controlaremos que el proceso no exceda de un tiempo razonable
-    fin = inicio + 5                                                               # Después de este tiempo pintamos (segundos)
+    fin = inicio + 5                                                            # Después de este tiempo pintamos (segundos)
     timeout_search = timeout                                                    # Timeout para descargas
     if item.extra == 'search':
         timeout_search = timeout * 2                                            # Timeout un poco más largo para las búsquedas
@@ -170,7 +172,7 @@ def listado(item):
             break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         #Patrón para todo, menos para Series completas, incluido búsquedas en cualquier caso
-        patron = '<td class="vertThseccion"><img src="([^"]+)"[^>]+><a href="([^"]+)"\s*title="([^"]+)"\s*>[^<]+<\/a><\/td><td>.*?(\d+)?<\/td><td>([^<]+)?<\/td><td>([^<]+)?<\/td><\/tr>'
+        patron = '<td\s*class="vertThseccion"[^>]*>\s*<img\s*src="([^"]+)"[^>]*>\s*<a\s*href="([^"]+)"\s*title="([^"]+)"\s*>[^<]+<\/a>\s*<\/td>\s*(?:<td>[^<]*(\d+)?<\/td>)?\s*<td>([^<]+)?<\/td>\s*<td>([^<]+)?<\/td>\s*<\/tr>'
         
         #Si son series completas, ponemos un patrón especializado
         if item.extra == 'series':
@@ -192,7 +194,7 @@ def listado(item):
         #logger.debug(data)
         
         #Buscamos la próxima y la última página
-        patron_last = "<div class='pagination'>.*?<a href='([^']+\/page\/(\d+)[^']+)'\s*>(?:&raquo;)?(?:\d+)?<\/a><\/div>"
+        patron_last = "<div\s*class='pagination'[^>]*>.*?<a\s*href='([^']+\/page\/(\d+)[^']+)'\s*>(?:&raquo;)?(?:\d+)?<\/a>\s*<\/div>"
         
         if last_page == 99999:                                                          #Si es el valor inicial, buscamos last page
             try:
@@ -214,7 +216,10 @@ def listado(item):
         for scrapedlanguage, scrapedurl, scrapedtitle, year, scrapedcategory, scrapedquality in matches:
             title = scrapedtitle
             url = scrapedurl.replace('&#038;', '&')
-            title = title.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&atilde;", "a").replace("&etilde;", "e").replace("&itilde;", "i").replace("&otilde;", "o").replace("&utilde;", "u").replace("&ntilde;", "ñ").replace("&#8217;", "'").replace('&#038;', '&')
+            title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
+                    .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
+                    .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&#8217;", "'")\
+                    .replace("&amp;", "&")
             
             #cnt_title += 1
             item_local = item.clone()                                                   #Creamos copia de Item para trabajar
@@ -349,7 +354,7 @@ def listado(item):
             #logger.debug(item_local)
 
     #Pasamos a TMDB la lista completa Itemlist
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda=idioma_busqueda)
     
     #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
     item, itemlist = generictools.post_tmdb_listado(item, itemlist)
@@ -409,7 +414,7 @@ def findvideos(item):
                 item.thumbnail = scrapertools.find_single_match(data, patron)           #guardamos thumb si no existe
             
             #Extraemos quality, audio, year, country, size, scrapedlanguage
-            patron = '<\/script><\/div><ul>(?:<li><label>Fecha de estreno <\/label>[^<]+<\/li>)?(?:<li><label>Genero <\/label>[^<]+<\/li>)?(?:<li><label>Calidad <\/label>([^<]+)<\/li>)?(?:<li><label>Audio <\/label>([^<]+)<\/li>)?(?:<li><label>Fecha <\/label>.*?(\d+)<\/li>)?(?:<li><label>Pais de Origen <\/label>([^<]+)<\/li>)?(?:<li><label>Tama&ntilde;o <\/label>([^<]+)<\/li>)?(<li> Idioma[^<]+<img src=.*?<br \/><\/li>)?'
+            patron = '<\/script><\/div><ul>(?:<li><label>Fecha de estreno <\/label>[^<]+<\/li>)?(?:<li><label>Genero <\/label>[^<]+<\/li>)?(?:<li><label>Calidad <\/label>([^<]+)<\/li>)?(?:<li><label>Audio <\/label>([^<]+)<\/li>)?(?:<li><label>Fecha <\/label>.*?(\d+)<\/li>)?(?:<li><label>Pais de Origen <\/label>([^<]+)<\/li>)?(?:<li><label>Tamaño <\/label>([^<]+)<\/li>)?(<li> Idioma[^<]+<img src=.*?<br \/><\/li>)?'
             try:
                 quality = ''
                 audio = ''
@@ -532,7 +537,6 @@ def findvideos(item):
         if not size and not item.armagedon:
             size = generictools.get_torrent_size(scrapedurl)                    #Buscamos el tamaño en el .torrent
         if size:
-            logger.error(size)
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                         .replace('Mb', 'M·b').replace('.', ',').replace('G B', 'G·B').replace('M B', 'M·B')
             item_local.title = re.sub(r'\s*\[\d+,?\d*?\s\w\s*[b|B]\]', '', item_local.title)    #Quitamos size de título, si lo traía
@@ -597,15 +601,15 @@ def play(item):                                                                 
     
     if item.subtitle:                                                           #Si hay urls de sub-títulos, se descargan
         headers.append(["User-Agent", httptools.random_useragent()])            #Se busca un User-Agent aleatorio
-        if not os.path.exists(os.path.join(config.get_setting("videolibrarypath"), "subtitles")):   #Si no hay carpeta se Sub-títulos, se crea
-            os.mkdir(os.path.join(config.get_setting("videolibrarypath"), "subtitles"))
+        if not os.path.exists(os.path.join(config.get_videolibrary_path(), "subtitles")):   #Si no hay carpeta se Sub-títulos, se crea
+            os.mkdir(os.path.join(config.get_videolibrary_path(), "subtitles"))
         subtitles = []
         subtitles.extend(item.subtitle)
         item.subtitle = subtitles[0]                                            #ponemos por defecto el primeroç
-        #item.subtitle = os.path.join(config.get_setting("videolibrarypath"), os.path.join("subtitles", scrapertools.find_single_match(subtitles[0], '\/\d{2}\/(.*?\.\w+)$')))
+        #item.subtitle = os.path.join(config.get_videolibrary_path(), os.path.join("subtitles", scrapertools.find_single_match(subtitles[0], '\/\d{2}\/(.*?\.\w+)$')))
         for subtitle in subtitles:                                              #recorremos la lista
             subtitle_name = scrapertools.find_single_match(subtitle, '\/\d{2}\/(.*?\.\w+)$')                #se pone el nombre del Sub-título
-            subtitle_folder_path = os.path.join(config.get_setting("videolibrarypath"), "subtitles", subtitle_name)         #Path de descarga
+            subtitle_folder_path = os.path.join(config.get_videolibrary_path(), "subtitles", subtitle_name)         #Path de descarga
             ret = downloadtools.downloadfile(subtitle, subtitle_folder_path, headers=headers, continuar=True, silent=True)  #Descarga
 
     itemlist.append(item.clone())                                               #Reproducción normal
@@ -647,7 +651,7 @@ def episodios(item):
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
     #if not item.infoLabels['tmdb_id']:
     try:
-        tmdb.set_infoLabels(item, True)                                                     #TMDB de cada Temp
+        tmdb.set_infoLabels(item, True, idioma_busqueda=idioma_busqueda)                    #TMDB de cada Temp
     except:
         pass
         
@@ -679,7 +683,7 @@ def episodios(item):
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist
 
-    patron = '<td class="capitulonombre"><img src="([^"]+)[^>]+>(?:<a href="[^>]+>)(.*?)<\/a><\/td><td class="capitulodescarga"><a href="([^"]+)[^>]+>.*?(?:<td class="capitulofecha">.*?(\d{4})?.*?<\/td>)?(?:<td class="capitulosubtitulo"><a href="([^"]+)[^>]+>.*?<\/td>)?<td class="capitulodescarga"><\/tr>'
+    patron = '<td\s*class="capitulonombre">\s*<img\s*src="([^"]+)[^>]+>(?:<a\s*href="[^>]+>)(.*?)<\/a>\s*<\/td>\s*<td\s*class="capitulodescarga">\s*<a\s*href="([^"]+)[^>]+>.*?(?:<td\s*class="capitulofecha">.*?(\d{4})?.*?<\/td>)?(?:<td\s*class="capitulosubtitulo">\s*<a\s*href="([^"]+)[^>]+>.*?<\/td>)?'
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                                             #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
@@ -790,7 +794,7 @@ def episodios(item):
 
     if not item.season_colapse:                                                 #Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
-        tmdb.set_infoLabels(itemlist, True)
+        tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma_busqueda)
 
         #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
         item, itemlist = generictools.post_tmdb_episodios(item, itemlist)

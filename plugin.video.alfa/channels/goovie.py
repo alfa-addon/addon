@@ -3,8 +3,12 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
-import urllib
+
 from channelselector import get_thumb
 from core import httptools
 from core import jsontools
@@ -18,7 +22,7 @@ from platformcode import config, logger
 
 
 IDIOMAS = {'EspaL':'Cast', 'Español':'Cast', 'Latino':'Lat', 'Subtitulado':'VOSE', 'VSO':'VO'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 
 CALIDADES = {'1080p':'1080','720p':'720','480p':'480','360p':'360'}
 
@@ -31,7 +35,7 @@ list_servers = [
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'goovie')
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'goovie')
 
-host = 'https://goovie.co/'
+host = 'https://api.seriez.co/'
 
 def mainlist(item):
     logger.info()
@@ -77,6 +81,11 @@ def sub_menu(item):
 
 def get_source(url, referer=None):
     logger.info()
+    #Parche temporal por fallo en dominio principal
+    old_dom = scrapertools.get_domain_from_url(url)
+    new_dom = scrapertools.get_domain_from_url(host)
+    url = re.sub(old_dom, new_dom, url)
+    
     if referer is None:
         data = httptools.downloadpage(url).data
     else:
@@ -136,7 +145,7 @@ def list_all(item):
         url = scrapedurl
         filter_thumb = thumbnail.replace("https://image.tmdb.org/t/p/w154", "")
         filter_list = {"poster_path": filter_thumb}
-        filter_list = filter_list.items()
+        filter_list = list(filter_list.items())
         thumbnail = re.sub('p/w\d+', 'p/original', thumbnail)
         new_item = Item(channel=item.channel,
                         title=title,
@@ -253,16 +262,15 @@ def findvideos(item):
     for server, quality, language, url in matches:
 
         if url != '':
-            if not url.startswith(host):
-                url = host+url
             language = IDIOMAS[language]
             if quality.lower() == 'premium':
                 quality = '720p'
             quality = quality.replace(' HD', '')
             try:
-                server = server.split(".")[0]
+                server = server.split(".")[0].lower()
             except:
                 server= ""
+            server = server.replace('ul', 'uploadedto')
             quality = CALIDADES[quality]
             title = ' [%s] [%s]' % (language, quality)
             if 'visor/vdz' in url:
@@ -272,24 +280,14 @@ def findvideos(item):
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return sorted(itemlist, key=lambda i: i.language)
 
-
 def play(item):
-    logger.info()
-    itemlist = []
-    url = ''
-    item.server = ''
-    data = httptools.downloadpage(item.url, headers=item.headers).data
-    bloq = data.split('<div id="informacion">')[1]
-    url = scrapertools.find_single_match(bloq, 'href="([^"]+)">Acceder al')
-    itemlist.append(Item(channel=item.channel, url=url, action='play', server=item.server,
-                         infoLabels=item.infoLabels))
-
-    itemlist = servertools.get_servers_itemlist(itemlist)
+    itemlist = [item]
+    if not item.url.startswith('http'):
+        data = get_source(host+item.url)
+        item.server = ''
+        item.url = scrapertools.find_single_match(data, 'href="([^"]+)">Acceder al enlace</a>')
+        itemlist = servertools.get_servers_itemlist(itemlist)
     return itemlist
-
-
-
-
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
@@ -299,26 +297,3 @@ def search(item, texto):
         return list_all(item)
     else:
         return []
-
-def newest(categoria):
-    logger.info()
-    itemlist = []
-    item = Item()
-    try:
-        if categoria in ['peliculas']:
-            item.url = host + 'peliculas'
-        elif categoria == 'infantiles':
-            item.url = host + 'peliculas/filtro/Animación,/,'
-        elif categoria == 'terror':
-            item.url = host + 'peliculas/filtro/Terror,/,'
-        item.type='peliculas'
-        itemlist = list_all(item)
-        if itemlist[-1].title == 'Siguiente >>':
-            itemlist.pop()
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("{0}".format(line))
-        return []
-
-    return itemlist

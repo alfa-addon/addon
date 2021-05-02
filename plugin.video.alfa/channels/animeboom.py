@@ -3,8 +3,11 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
-import urllib
 
 from core import httptools
 from core import scrapertools
@@ -23,7 +26,7 @@ __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'animeboom')
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'animeboom')
 
 IDIOMAS = {'Latino':'LAT', 'VOSE': 'VOSE'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['directo', 'openload', 'streamango']
 
@@ -256,14 +259,17 @@ def findvideos(item):
 
     data = get_source(item.url)
     #return
-    patron = 'video\[\d+\] = \'<iframe.*?src="([^"]+)"'
+    patron = r'video\[\d+\] = \'<iframe.*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl in matches:
 
-        if 'animeboom' in scrapedurl:
+        if host in scrapedurl:
             new_data = get_source(scrapedurl)
             scrapedurl = scrapertools.find_single_match(new_data, "'file':'([^']+)")
+            if not scrapedurl:
+                scrapedurl = scrapertools.find_single_match(new_data, r'var shareId\s*=\s*"([^"]+)')
+                scrapedurl = 'https://www.amazon.com/drive/v1/shares/%s' % scrapedurl
 
         if scrapedurl != '':
             itemlist.append(Item(channel=item.channel, title='%s', url=scrapedurl, action='play', language = item.language,

@@ -1,9 +1,20 @@
 # -*- coding: utf-8 -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urllib
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+    import urlparse
+
 import re
 import string
-import urllib
-import urlparse
 
 from channels import filtertools
 from channelselector import get_thumb
@@ -15,11 +26,13 @@ from channels import autoplay
 from core.item import Item
 from platformcode import config, logger
 
-HOST = "https://www.seriespapaya.net/"
+HOST = "https://www.seriespapaya.io/"
+#HOST = "https://seriespapaya.unblockit.app/"
+CF = False
 
 IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOSE', 'Español Latino':'Latino',
            'Español Castellano':'Español', 'Sub Español':'VOSE'}
-list_idiomas = IDIOMAS.values()
+list_idiomas = list(IDIOMAS.values())
 list_quality = ['360p', '480p', '720p HD', '1080p HD', 'default']
 list_servers = ['powvideo', 'streamplay', 'clipwatching', 'vidoza', 'gamovideo', 'vidtodo']
 thumb_videolibrary = get_thumb("videolibrary_tvshow.png")
@@ -235,6 +248,7 @@ def seasons(item):
 
     if len(matches) == 1:
         item.contentSeasonNumber = '1'
+        item.season1 = True
         return episodesxseasons(item)
     elif len(matches) < 1:
         title = '[COLOR=grey]Aún no hay episodios disponibles para esta serie[/COLOR]'
@@ -287,6 +301,7 @@ def episodesxseasons(item):
         languages = " ".join(
             ["[%s]" % IDIOMAS.get(lang, lang) for lang in re.findall('images/s-([^\.]+)', langs)])
         filter_lang = languages.replace("[", "").replace("]", "").split(" ")
+        #logger.error(filter_lang)
         itemlist.append(item.clone(action="findvideos",
                                    infoLabels = infoLabels,
                                    language=filter_lang,
@@ -295,12 +310,13 @@ def episodesxseasons(item):
                                    ))
     itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
     
-    itemlist.sort(key=lambda it: int(it.infoLabels["episode"]))
+    if len(itemlist) > 1:
+        itemlist.sort(key=lambda it: int(it.infoLabels["episode"]))
     
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     
     # Opción "Añadir esta serie a la videoteca de KODI"
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentSeasonNumber == '1':
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.season1:
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
@@ -313,11 +329,9 @@ def search(item, texto):
     itemlist = []
     infoLabels = ()
     try:
-        int(texto)
         post = urllib.urlencode({'searchquery': texto})
-        data = httptools.downloadpage(urlparse.urljoin(HOST, "/busqueda/"), post=post).data
+        data = httptools.downloadpage(urlparse.urljoin(HOST, "/busqueda.php"), post=post).data
         data = re.sub(r'|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-        
         patron = r"location.href='(.*?)'.*?background-image: url\('(.*?)'\).*?"
         patron += '<div style="display.*?>([^<]+)'
         matches = re.compile(patron, re.DOTALL).findall(data)
@@ -330,7 +344,7 @@ def search(item, texto):
             syear = scrapertools.find_single_match(stitle, r'\s*\((\d{4})\)$')
             title = re.sub(r'\s*\((.*?)\)$', '', stitle)
             
-            filtro_tmdb = {"first_air_date": syear}.items()
+            filtro_tmdb = list({"first_air_date": syear}.items())
             
             itemlist.append(Item(channel=item.channel,
                                 action="seasons",
@@ -428,7 +442,7 @@ def play(item):
 
         return itemlist
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, headers={'Referer': item.url}, CF=CF).data
     
     item.server = ''
     item.url = scrapertools.find_single_match(data, "location.href='([^']+)'")

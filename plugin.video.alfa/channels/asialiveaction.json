@@ -1,10 +1,10 @@
 {
   "id": "asialiveaction",
   "name": "Asialiveaction",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "asialiveaction.png",
+  "thumbnail": "https://i.postimg.cc/bZHzFzyC/asialiveaction.png",
   "banner": "https://imgur.com/B1IOAu4.png",
   "categories": [
     "movie",

@@ -1,7 +1,7 @@
 {
   "id": "divxtotal",
   "name": "Divxtotal",
-  "active": false,
+  "active": true,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "http://imgur.com/Madj03A.jpg",
@@ -11,6 +11,25 @@
     "tvshow"
   ],
   "settings": [
+    {
+      "id": "choose_domain",
+      "type": "list",
+      "label": "Seleccione el dominino primario para el Canal",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "www.divxtotal.one"
+      ]
+    },{
+      "id": "alternate_domain",
+      "type": "list",
+      "label": "Seleccione el dominino primario para el Canal",
+      "default": -1,
+      "enabled": true,
+      "visible": false,
+      "lvalues": []
+    },
     {
       "default": false, 
       "enabled": true, 
@@ -25,6 +44,43 @@
       "id": "modo_grafico", 
       "label": "Buscar información extra (TMDB)", 
       "type": "bool", 
+      "visible": true
+    }, 
+    {
+      "id": "modo_grafico_lang",
+      "type": "list",
+      "label": "Idioma para buscar información extra (TMDB)",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Español",
+        "Inglés",
+        "Español+Inglés"
+      ]
+    },
+    {
+      "id": "pseudo_titulos",
+      "type": "bool",
+      "label": "Desea ver Pseudo títulos de ayuda?",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "auto_download_new",
+      "type": "bool",
+      "label": "Desea que se descarguen automáticamente los nuevos episodios de la Videoteca?",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "auto_download_new_all",
+      "type": "bool",
+      "label": "Incluso si es una Temporada NUEVA?",
+      "default": false,
+      "enabled": true,
       "visible": true
     },
     {
@@ -83,8 +139,21 @@
         "7",
         "8",
         "9",
-        "10"
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15"
       ]
+    },
+    {
+      "id": "season_colapse",
+      "type": "bool",
+      "label": "Seleccionar si quiere colapsar las Temporadas de Series",
+      "default": true,
+      "enabled": true,
+      "visible": true
     },
     {
       "id": "seleccionar_ult_temporadda_activa",
@@ -98,6 +167,14 @@
       "id": "include_in_newest_peliculas",
       "type": "bool",
       "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_series",
+      "type": "bool",
+      "label": "Incluir en Novedades - Series",
       "default": true,
       "enabled": true,
       "visible": false

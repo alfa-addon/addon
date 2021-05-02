@@ -3,10 +3,25 @@
 # Search trailers from youtube, filmaffinity, abandomoviez, vimeo, etc...
 # --------------------------------------------------------------------------------
 
-import re
-import urllib
-import urlparse
+from __future__ import division
+#from builtins import str
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+from past.utils import old_div
 
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urllib                             # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urlparse
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+    import urlparse
+
+import re
+
+from core.filetools import encode, decode
 from core import httptools
 from core import jsontools
 from core import scrapertools
@@ -35,9 +50,9 @@ def buscartrailer(item, trailers=[]):
         itemlist = globals()[item.action](item)
     else:
         # Se elimina la opción de Buscar Trailer del menú contextual para evitar redundancias
-        if type(item.context) is str and "buscar_trailer" in item.context:
+        if isinstance(item.context, str) and "buscar_trailer" in item.context:
             item.context = item.context.replace("buscar_trailer", "")
-        elif type(item.context) is list and "buscar_trailer" in item.context:
+        elif isinstance(item.context, list) and "buscar_trailer" in item.context:
             item.context.remove("buscar_trailer")
 
         item.text_color = ""
@@ -160,7 +175,8 @@ def youtube_search(item):
     patron += 'url":"([^"]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedthumbnail, scrapedtitle, scrapedduration, scrapedurl in matches:
-        scrapedtitle = scrapedtitle.decode('utf8').encode('utf8')
+        #scrapedtitle = scrapedtitle.decode('utf8').encode('utf8')
+        scrapedtitle = decode(scrapedtitle)
         scrapedtitle = scrapedtitle + " (" + scrapedduration + ")"
         if item.contextual:
             scrapedtitle = "[COLOR white]%s[/COLOR]" % scrapedtitle
@@ -193,7 +209,8 @@ def abandomoviez_search(item):
     if item.page != "":
         data = httptools.downloadpage(item.page).data
     else:
-        titulo = item.contentTitle.decode('utf-8').encode('iso-8859-1')
+        #titulo = item.contentTitle.decode('utf-8').encode('iso-8859-1')
+        titulo = decode(item.contentTitle)
         post = urllib.urlencode({'query': titulo, 'searchby': '1', 'posicion': '1', 'orden': '1',
                                  'anioin': item.year, 'anioout': item.year, 'orderby': '1'})
         url = "http://www.abandomoviez.net/db/busca_titulo.php?busco2=%s" %item.contentTitle
@@ -202,7 +219,8 @@ def abandomoviez_search(item):
         if "No hemos encontrado ninguna" in data:
             url = "http://www.abandomoviez.net/indie/busca_titulo.php?busco2=%s" %item.contentTitle
             item.prefix = "indie/"
-            data = httptools.downloadpage(url, post=post).data.decode("iso-8859-1").encode('utf-8')
+            data = httptools.downloadpage(url, post=post).data
+            if not PY3: data = data.decode("iso-8859-1").encode('utf-8')
 
     itemlist = []
     patron = '(?:<td width="85"|<div class="col-md-2 col-sm-2 col-xs-3">).*?<img src="([^"]+)"' \
@@ -275,7 +293,7 @@ def search_links_abando(item):
                 if item.contextual:
                     i += 1
                     message += ".."
-                    progreso.update(10 + (90 * i / len(matches)), message)
+                    progreso.update(10 + (old_div(90 * i, len(matches))), message)
                     scrapedtitle = "[COLOR white]%s[/COLOR]" % scrapedtitle
                 data_trailer = httptools.downloadpage(scrapedurl).data
                 trailer_url = scrapertools.find_single_match(data_trailer, 'iframe.*?src="([^"]+)"')
@@ -311,10 +329,13 @@ def filmaffinity_search(item):
                                    ('genre', ''), ('fromyear', item.year), ('toyear', item.year)])
         url = "http://www.filmaffinity.com/es/advsearch.php?%s" % params
         data = httptools.downloadpage(url).data
+    data = re.sub(r"\n|\r|\t", "", data)
 
     itemlist = []
-    patron = '<div class="mc-poster">.*?<img.*?src="([^"]+)".*?' \
-             '<div class="mc-title"><a  href="/es/film(\d+).html"[^>]+>(.*?)<img'
+    patron = '<div.class="mc-poster">[^>]*><img[^>]*src="([^"]+)".*?' \
+             '<div.class="mc-title">\s*<a[^>]*href="[^"]*\/es\/film(\d+).html"[^>]+>(.*?)<img'
+    logger.error(patron)
+    logger.error(data)
     matches = scrapertools.find_multiple_matches(data, patron)
     # Si solo hay un resultado, busca directamente los trailers, sino lista todos los resultados
     if len(matches) == 1:
@@ -328,7 +349,8 @@ def filmaffinity_search(item):
             if not scrapedthumbnail.startswith("http"):
                 scrapedthumbnail = "http://www.filmaffinity.com" + scrapedthumbnail
             scrapedurl = "http://www.filmaffinity.com/es/evideos.php?movie_id=%s" % id
-            scrapedtitle = unicode(scrapedtitle, encoding="utf-8", errors="ignore")
+            if not PY3:
+                scrapedtitle = unicode(scrapedtitle, encoding="utf-8", errors="ignore")
             scrapedtitle = scrapertools.htmlclean(scrapedtitle)
             itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, text_color="white",
                                        action="search_links_filmaff", thumbnail=scrapedthumbnail))
@@ -375,7 +397,8 @@ def search_links_filmaff(item):
             else:
                 server = ""
                 thumbnail = item.thumbnail
-            scrapedtitle = unicode(scrapedtitle, encoding="utf-8", errors="ignore")
+            if not PY3:
+                scrapedtitle = unicode(scrapedtitle, encoding="utf-8", errors="ignore")
             scrapedtitle = scrapertools.htmlclean(scrapedtitle)
             scrapedtitle += "  [" + server + "]"
             if item.contextual:

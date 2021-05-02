@@ -4,8 +4,8 @@
   "active": true,
   "adult": true,
   "language": ["*"],
-  "banner": "submityouflicks.png",
-  "thumbnail": "submityouflicks.png",
+  "banner": "",
+  "thumbnail": "https://i.postimg.cc/jw3CTFx7/submityouflicks.png",
   "categories": [
     "adult"
   ],

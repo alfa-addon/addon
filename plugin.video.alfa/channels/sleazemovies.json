@@ -1,6 +1,7 @@
 {
   "id": "sleazemovies",
   "name": "SleazeMovies",
+  "force_unify": true,
   "active": true,
   "adult": true,
   "language": ["*"],
@@ -18,8 +19,6 @@
       "default": false,
       "enabled": true,
       "visible": true
-    }
-      ]
     }
   ]
 }

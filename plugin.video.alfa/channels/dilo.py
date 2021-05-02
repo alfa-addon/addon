@@ -3,6 +3,17 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urllib
+else:
+    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
+    import urllib
+
 import re
 
 from channels import autoplay
@@ -18,13 +29,13 @@ from channelselector import get_thumb
 host = 'https://www.dilo.nu/'
 
 IDIOMAS = {'Español': 'CAST', 'Latino': 'LAT', 'Subtitulado': 'VOSE'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['openload', 'streamango', 'powvideo', 'clipwatching', 'streamplay', 'streamcherry', 'gamovideo']
 
 def get_source(url):
     logger.info()
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, forced_proxy_opt='ProxyWeb').data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
@@ -37,8 +48,11 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Nuevos capitulos", action="latest_episodes", url=host,
                          page=0, thumbnail=get_thumb('new episodes', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Ultimas", action="latest_shows", url=host,
+    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all",  url=host + 'catalogue?sort=latest',
                          thumbnail=get_thumb('last', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Mas vistas", action="list_all", url=host + 'catalogue?sort=most-week',
+                         thumbnail=get_thumb('more watched', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + 'catalogue',
                          thumbnail=get_thumb('all', auto=True)))
@@ -49,8 +63,13 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Por Años", action="section", url=host + 'catalogue',
                          thumbnail=get_thumb('year', auto=True)))
 
+    itemlist.append(Item(channel=item.channel, title="Por País", action="section", url=host + 'catalogue',
+                         thumbnail=get_thumb('country', auto=True)))
+
     itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host+'search?s=',
                          thumbnail=get_thumb('search', auto=True)))
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -68,14 +87,15 @@ def list_all(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
-        url = scrapedurl
+        url = urlparse.urljoin(host, scrapedurl)
         scrapedtitle = scrapedtitle
         thumbnail = scrapedthumbnail
         new_item = Item(channel=item.channel, title=scrapedtitle, url=url,
                         thumbnail=thumbnail)
 
-        new_item.contentSerieName=scrapedtitle
+        new_item.contentSerieName = scrapedtitle
         new_item.action = 'seasons'
+        new_item.context = filtertools.context(item, list_language, list_quality)
         itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -99,17 +119,20 @@ def section(item):
     itemlist = []
     data=get_source(item.url)
 
+    patron = 'input" id="([^"]+)".*?name="([^"]+)".*?'
+    patron += '<label.*?>([^<]+)</label>'
+
     if item.title == 'Generos':
         data = scrapertools.find_single_match(data, '>Todos los generos</button>.*?<button class')
     elif 'Años' in item.title:
         data = scrapertools.find_single_match(data, '>Todos los años</button>.*?<button class')
 
-    patron = 'input" id="([^"]+)".*?name="([^"]+)"'
+    elif 'País' in item.title:
+        data = scrapertools.find_single_match(data, '>Todos los países</button>.*?<button class')
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for id, name in matches:
-        title = id.capitalize()
+    for id, name, title in matches:
         id = id.replace('-','+')
         url = '%s?%s=%s' % (item.url, name, id)
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='list_all'))
@@ -128,7 +151,7 @@ def latest_episodes(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedcontent, scrapedep in matches[item.page:item.page + 30]:
         title = '%s' % (scrapedtitle.replace(' Online sub español', ''))
         contentSerieName = scrapedcontent
-        itemlist.append(Item(channel=item.channel, action='findvideos', url=scrapedurl, thumbnail=scrapedthumbnail,
+        itemlist.append(Item(channel=item.channel, action='findvideos', url=urlparse.urljoin(host, scrapedurl), thumbnail=scrapedthumbnail,
                              title=title, contentSerieName=contentSerieName, type='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -154,7 +177,7 @@ def latest_shows(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         title = scrapedtitle
         contentSerieName = scrapedtitle
-        itemlist.append(Item(channel=item.channel, action='seasons', url=scrapedurl, thumbnail=scrapedthumbnail,
+        itemlist.append(Item(channel=item.channel, action='seasons', url=urlparse.urljoin(host, scrapedurl), thumbnail=scrapedthumbnail,
                              title=title, contentSerieName=contentSerieName))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -163,7 +186,6 @@ def latest_shows(item):
 
 
 def seasons(item):
-    import urllib
     logger.info()
 
     itemlist=[]
@@ -197,7 +219,6 @@ def seasons(item):
 
 def episodesxseason(item):
     logger.info()
-    import urllib
     logger.info()
 
     itemlist = []
@@ -244,7 +265,7 @@ def findvideos(item):
         else:
             title = ''
 
-        itemlist.append(Item(channel=item.channel, title='%s'+title, url=enc_url, action='play',
+        itemlist.append(Item(channel=item.channel, title='%s'+title, url=urlparse.urljoin(host, enc_url), action='play',
                               language=IDIOMAS[language], server=server, infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
@@ -263,19 +284,22 @@ def findvideos(item):
 
 def decode_link(enc_url):
     logger.info()
-
+    url = ""
     try:
-        new_data = get_source(enc_url)
-        new_enc_url = scrapertools.find_single_match(new_data, 'src="([^"]+)"')
-        if "gamovideo" in new_enc_url: return new_enc_url
-        try:
-            url = httptools.downloadpage(new_enc_url, follow_redirects=False).headers['location']
-        except:
-            if not 'jquery' in new_enc_url:
-                url = new_enc_url
+        #new_data = get_source(enc_url)
+        new_data = httptools.downloadpage(enc_url).data
+        if "gamovideo" in enc_url:
+            url = scrapertools.find_single_match(new_data, '<a href="([^"]+)"')
+        else:
+            new_enc_url = scrapertools.find_single_match(new_data, 'src="([^"]+)"')
+
+            try:
+                url = httptools.downloadpage(new_enc_url, follow_redirects=False).headers['location']
+            except:
+                if not 'jquery' in new_enc_url:
+                    url = new_enc_url
     except:
         pass
-
     return url
 
 
@@ -285,6 +309,8 @@ def play(item):
     if item.server not in ['openload', 'streamcherry', 'streamango']:
         item.server = ''
     item.url = decode_link(item.url)
+    if not item.url:
+        return []
     itemlist.append(item.clone())
     itemlist = servertools.get_servers_itemlist(itemlist)
 
@@ -292,7 +318,6 @@ def play(item):
 
 def search(item, texto):
     logger.info()
-    import urllib
     itemlist = []
     texto = texto.replace(" ", "+")
     item.url = item.url + texto

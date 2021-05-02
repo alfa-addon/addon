@@ -4,7 +4,7 @@
   "active": true,
   "adult": false,
   "language": [],
-  "thumbnail": "https://dyncdn.me/static/20/img/logo_dark_nodomain2_optimized.png",
+  "thumbnail": "https://i.postimg.cc/QH6LWhP1/rarbg.png",
   "categories": [
     "torrent",
     "movie",
@@ -26,6 +26,14 @@
       "id": "modo_grafico", 
       "label": "Buscar información extra (TMDB)", 
       "type": "bool", 
+      "visible": true
+    },
+    {
+      "id": "pseudo_titulos",
+      "type": "bool",
+      "label": "Desea ver Pseudo títulos de ayuda?",
+      "default": true,
+      "enabled": true,
       "visible": true
     },
     {

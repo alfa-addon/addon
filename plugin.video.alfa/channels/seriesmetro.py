@@ -3,7 +3,12 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
+
 from bs4 import BeautifulSoup
 from channels import autoplay, filtertools
 from core import httptools, scrapertools
@@ -13,7 +18,7 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'https://seriesmetro.com/'
+host = 'https://seriesmetro.net/'
 unify = config.get_setting('unify')
 
 list_quality = []
@@ -36,7 +41,6 @@ def setting_channel(item):
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
     return ret
-
 
 def mainlist(item):
     logger.info()
@@ -101,12 +105,13 @@ def list_all(item):
             if year:
                 title += ' [COLOR silver](%s)[/COLOR]' % year
 
-            if full_title:
+            if full_title and not ' 0Eps' in info:
                 title += ' [COLOR aquamarine](%s)[/COLOR]' % info.replace('Eps', ' Eps')
 
         itemlist.append(Item(channel=item.channel, title=title, url=url,
                              action='seasons', info_p=info, plot=plot,
-                             thumbnail=thumb, contentSerieName=stitle))
+                             thumbnail=thumb, contentSerieName=stitle,
+                             infoLabels={'year': year}))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
         
@@ -119,7 +124,6 @@ def list_all(item):
         pass
 
     return itemlist
-
 
 def new_episodes(item):
     logger.info()
@@ -157,12 +161,9 @@ def new_episodes(item):
 
     return itemlist
 
-
-
 def section(item):
 
     itemlist = []
-
 
     if item.title == 'Generos':
         #TODO crear lista géneros
@@ -178,7 +179,6 @@ def section(item):
 
     return itemlist
 
-
 def seasons(item):
     logger.info()
     itemlist = []
@@ -186,14 +186,17 @@ def seasons(item):
 
     soup = create_soup(item.url)
 
-    obj = soup.find('div', class_="aa-cn")['data-object']
+    try:
+        obj = soup.find('div', class_="aa-cn")['data-object']
+    except:
+        return itemlist
 
 
     for elem in soup.find_all("li", class_="sel-temp"):
 
         title = 'Temporada %s' % elem.text
         infoLabels['season'] = elem.text
-        url = '%swp-admin/admin-ajax.php' % host
+        url = '{}wp-admin/admin-ajax.php'.format(host)
 
         itemlist.append(Item(channel=item.channel, title=title, url=url,
                              action='episodesxseason', infoLabels=infoLabels,
@@ -205,8 +208,6 @@ def seasons(item):
         itemlist.append(
                 Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                      action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
-
-    return itemlist
 
     return itemlist
 
@@ -230,9 +231,8 @@ def episodesxseason(item):
     Stop = False
 
     while not Stop:
-        post = 'action=action_pagination_ep&page=%s&object=%s&season=%s'
-        post = post % (str(n), obj, season)
-        new_data = httptools.downloadpage(item.url, post=post).data
+        post = 'action=action_pagination_ep&page={}&object={}&season={}'.format(str(n), obj, season)
+        new_data = httptools.downloadpage(item.url, post=post, add_referer=True).data
 
         if not '<li><a href=' in new_data:
             Stop = True
@@ -272,7 +272,7 @@ def findvideos(item):
     servers = {'Cload': 'cinemaupload'}
     IDIOMAS = {'Español Latino': 'LAT', 'Español Castellano': 'CAST',
                'Sub Español': 'VOSE', 'Ingles': 'VOS'}
-    list_language = IDIOMAS.values()
+    list_language = list(IDIOMAS.values())
     
     soup = create_soup(item.url)
 
@@ -291,9 +291,11 @@ def findvideos(item):
         link = '%s?trembed=%s&trid=%s&trtype=2' % (host, ide, term_id)
         soup = create_soup(link)
         url = soup.find('iframe')['src']
-
-        title = '%s [COLOR silver][%s][/COLOR]' % (srv, language)
-
+        url = url.replace('&#038;', '&')
+        url = "%s|%s" % (url, host)
+        if "fastream" in url:
+            server = "fastream"
+        title = '%s [COLOR silver][%s][/COLOR]' % (server, language)
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
                              language=language, infoLabels=item.infoLabels, 

@@ -3,16 +3,19 @@
 # Common Library Tools
 # ------------------------------------------------------------
 
+#from builtins import str
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import errno
 import math
 import traceback
+import re
 
-from core import filetools
-from core import scraper
-from core import scrapertools
+from core import filetools, scraper, scrapertools
 from core.item import Item
-from platformcode import config, logger
-from platformcode import platformtools
+from platformcode import config, logger, platformtools
 from lib import generictools
 
 FOLDER_MOVIES = config.get_setting("folder_movies")
@@ -26,6 +29,53 @@ if not FOLDER_MOVIES or not FOLDER_TVSHOWS or not VIDEOLIBRARY_PATH \
     config.verify_directories_created()
 
 addon_name = "plugin://plugin.video.%s/" % config.PLUGIN_NAME
+
+def get_content_channels(item):
+    """
+    Obtiene los canales de videolibrary asociados a un item y sus urls
+    Las funciones findvideos devuelven una lista con ['nombre_canal', 'http://url.de/contenido/en-canal']
+    Las demás funciones solo devuelven una lista con ['nombre_canal']
+    @param item: item de videoteca (item.channel == 'videolibrary')
+    @type item: item
+
+    @return: lista con canales disponibles para el item en videoteca
+    @rtype: list
+    """
+    if item.library_urls:
+        library_urls = []
+        for channel, url in item.library_urls.items():
+            if not 'downloads' in channel:
+                library_urls.append([channel, url])
+        return library_urls
+    else:
+        canales = []
+        list_canales = []
+        content_title = "".join(c for c in item.contentTitle.strip().lower() if c not in ":*?<>|\\/")
+
+        if item.contentType == 'movie':
+            item.strm_path = filetools.join(MOVIES_PATH, item.strm_path)
+            path_dir = filetools.dirname(item.strm_path)
+            item.nfo = filetools.join(path_dir, filetools.basename(path_dir) + ".nfo")
+        else:
+            item.strm_path = filetools.join(TVSHOWS_PATH, item.strm_path)
+            path_dir = filetools.dirname(item.strm_path)
+            item.nfo = filetools.join(path_dir, 'tvshow.nfo')
+
+        from core import jsontools
+        for fd in filetools.listdir(path_dir):
+            if fd.endswith('.json'):
+                contenido, channel_name = fd[:-6].split('[')
+                if (contenido.startswith(content_title) or item.contentType == 'movie') and \
+                        channel_name not in canales and channel_name != 'downloads':
+                    jsonpath = filetools.join(path_dir, fd)
+                    jsonitem = Item().fromjson(filetools.read(jsonpath))
+                    canales.append(channel_name)
+                    list_canales.append([channel_name, '{}'.format(jsonitem.url)])
+                    logger.info(jsonpath)
+                    logger.info(channel_name)
+                    logger.info(jsonitem)
+        
+        return list_canales
 
 
 def read_nfo(path_nfo, item=None):
@@ -121,7 +171,10 @@ def save_movie(item):
     else:
         base_name = item.contentTitle
 
-    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
+    if not PY3:
+        base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
+    else:
+        base_name = filetools.validate_path(base_name.replace('/', '-'))
 
     if config.get_setting("lowerize_title", "videolibrary") == 0:
         base_name = base_name.lower()
@@ -150,6 +203,13 @@ def save_movie(item):
     strm_exists = filetools.exists(strm_path)
     json_exists = filetools.exists(json_path)
 
+    if nfo_exists:
+        # Si existe .nfo, pero estamos añadiendo un nuevo canal lo abrimos
+        head_nfo, item_nfo = read_nfo(nfo_path)
+        if not item_nfo.channel:
+            if not filetools.remove(nfo_path):              # .nfo corrupto.  Lo borramos para regenerarlo
+                return 0, 0, -1, path                       # Problema con el filesystem?
+
     if not nfo_exists:
         # Creamos .nfo si no existe
         logger.info("Creando .nfo: " + nfo_path)
@@ -158,10 +218,6 @@ def save_movie(item):
         item_nfo = Item(title=item.contentTitle, channel="videolibrary", action='findvideos',
                         library_playcounts={"%s [%s]" % (base_name, _id): 0}, infoLabels=item.infoLabels,
                         library_urls={})
-
-    else:
-        # Si existe .nfo, pero estamos añadiendo un nuevo canal lo abrimos
-        head_nfo, item_nfo = read_nfo(nfo_path)
 
     if not strm_exists:
         # Crear base_name.strm si no existe
@@ -197,22 +253,33 @@ def save_movie(item):
             logger.error("No se ha podido guardar las urls de emergencia de %s en la videoteca" % item.contentTitle)
             logger.error(traceback.format_exc())
         
+        if item.from_channel_alt: del item.from_channel_alt
+        if item_nfo.from_channel_alt: del item_nfo.from_channel_alt
         if filetools.write(json_path, item.tojson()):
-            p_dialog.update(100, 'Añadiendo película...', item.contentTitle)
+            p_dialog.update(100, 'Añadiendo película...' + '\n' + item.contentTitle + '\n' + ' ')
             item_nfo.library_urls[item.channel] = item.url
 
             if filetools.write(nfo_path, head_nfo + item_nfo.tojson()):
                 # actualizamos la videoteca de Kodi con la pelicula
                 if config.is_xbmc():
                     from platformcode import xbmc_videolibrary
-                    xbmc_videolibrary.update(FOLDER_MOVIES, filetools.basename(path) + "/")
+                    xbmc_videolibrary.update(FOLDER_MOVIES, '_scan_series')
+                # Si el usuario quiere un backup de la película (local o remoto), se toma la dirección/direcciones de destino y se copia
+                videolibrary_backup =  config.get_setting('videolibrary_backup', channel='videolibrary')
+                if videolibrary_backup:
+                    try:
+                        import threading
+                        threading.Thread(target=videolibrary_backup_exec, args=(item_nfo, videolibrary_backup)).start()
+                    except:
+                        logger.error('Error en el backup de la película %s' % item_nfo.strm_path)
+                        logger.error(traceback.format_exc(1))
 
                 p_dialog.close()
                 return insertados, sobreescritos, fallidos
 
     # Si llegamos a este punto es por q algo ha fallado
     logger.error("No se ha podido guardar %s en la videoteca" % item.contentTitle)
-    p_dialog.update(100, config.get_localized_string(60063), item.contentTitle)
+    p_dialog.update(100, config.get_localized_string(60063) + '\n' + item.contentTitle + '\n' + ' ')
     p_dialog.close()
     return 0, 0, -1
 
@@ -273,7 +340,10 @@ def save_tvshow(item, episodelist):
     else:
         base_name = item.contentSerieName
 
-    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
+    if not PY3:
+        base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
+    else:
+        base_name = filetools.validate_path(base_name.replace('/', '-'))
 
     if config.get_setting("lowerize_title", "videolibrary") == 0:
         base_name = base_name.lower()
@@ -291,11 +361,23 @@ def save_tvshow(item, episodelist):
         logger.info("Creando directorio serie: " + path)
         try:
             filetools.mkdir(path)
-        except OSError, exception:
+        except OSError as exception:
             if exception.errno != errno.EEXIST:
                 raise
 
     tvshow_path = filetools.join(path, "tvshow.nfo")
+    if filetools.exists(tvshow_path):
+        # Si existe tvshow.nfo, pero estamos añadiendo un nuevo canal actualizamos el listado de urls
+        head_nfo, item_tvshow = read_nfo(tvshow_path)
+        if item_tvshow.channel:
+            item_tvshow.channel = "videolibrary"
+            item_tvshow.action = "get_seasons"
+            item_tvshow.library_urls[item.channel] = item.url
+        else:
+            logger.error('.nfo corrupto. Regenerando %s' % item_tvshow)
+            if not filetools.remove(tvshow_path):           # .nfo corrupto.  Lo borramos para regenerarlo
+                return 0, 0, -1, path                       # Problema con el filesystem?
+
     if not filetools.exists(tvshow_path):
         # Creamos tvshow.nfo, si no existe, con la head_nfo, info de la serie y marcas de episodios vistos
         logger.info("Creando tvshow.nfo: " + tvshow_path)
@@ -307,13 +389,7 @@ def save_tvshow(item, episodelist):
                            infoLabels=item.infoLabels, path=path.replace(TVSHOWS_PATH, ""))
         item_tvshow.library_playcounts = {}
         item_tvshow.library_urls = {item.channel: item.url}
-
-    else:
-        # Si existe tvshow.nfo, pero estamos añadiendo un nuevo canal actualizamos el listado de urls
-        head_nfo, item_tvshow = read_nfo(tvshow_path)
-        item_tvshow.channel = "videolibrary"
-        item_tvshow.action = "get_seasons"
-        item_tvshow.library_urls[item.channel] = item.url
+        if item.serie_info: item_tvshow.serie_info = item.serie_info
 
     # FILTERTOOLS
     # si el canal tiene filtro de idiomas, añadimos el canal y el show
@@ -384,7 +460,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     news_in_playcounts = {}
 
     # Listamos todos los ficheros de la serie, asi evitamos tener que comprobar si existe uno por uno
-    raiz, carpetas_series, ficheros = filetools.walk(path).next()
+    raiz, carpetas_series, ficheros = next(filetools.walk(path))
     ficheros = [filetools.join(path, f) for f in ficheros]
 
     nostrm_episodelist = []
@@ -402,11 +478,11 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         p_dialog = platformtools.dialog_progress(config.get_localized_string(20000), config.get_localized_string(60064))
         p_dialog.update(0, config.get_localized_string(60065))
 
-    channel_alt = generictools.verify_channel(serie.channel)            #Preparamos para añadir las urls de emergencia
-    emergency_urls_stat = config.get_setting("emergency_urls", channel_alt)         #El canal quiere urls de emergencia?
+    channel_alt = generictools.verify_channel(serie.channel)                    #Preparamos para añadir las urls de emergencia
+    emergency_urls_stat = config.get_setting("emergency_urls", channel_alt)     #El canal quiere urls de emergencia?
     emergency_urls_succ = False
     channel = __import__('channels.%s' % channel_alt, fromlist=["channels.%s" % channel_alt])
-    if serie.torrent_caching_fail:                              #Si el proceso de conversión ha fallado, no se cachean
+    if serie.torrent_caching_fail:                                              #Si el proceso de conversión ha fallado, no se cachean
         emergency_urls_stat = 0
         del serie.torrent_caching_fail
     
@@ -424,14 +500,31 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             continue
         
         try:
-            season_episode = scrapertools.get_season_and_episode(e.title)
+            # Valor por defecto por si no se provee temporada = 1
+            # No podemos darle valor de episodio por defecto
+            if e.contentEpisodeNumber and isinstance(e.contentSeason, int):
+                season_episode = scrapertools.get_season_and_episode('{}x{}'.format(e.contentSeason, e.contentEpisodeNumber))
+            elif scrapertools.find_single_match(e.title.lower(), '(?i)\d+x(\d+)'):
+                season_episode = scrapertools.get_season_and_episode(e.title.lower())
+            elif e.contentEpisodeNumber:
+                season_episode = scrapertools.get_season_and_episode('{}x{}'.format(1, e.contentEpisodeNumber))
+            elif scrapertools.find_single_match(e.title.lower(), '(?i)x(\d+)'):
+                episode_number = scrapertools.find_single_match(e.title.lower(), '(?i)x(\d+)')
+                season_episode = scrapertools.get_season_and_episode('{}x{}'.format(1, episode_number))
+            if not season_episode:
+                season_episode = scrapertools.get_season_and_episode(e.title.lower())
+
+            if not season_episode or 'temp. a videoteca' in e.title.lower() \
+                            or 'serie a videoteca' in e.title.lower() \
+                            or 'vista previa videoteca' in e.title.lower():
+                continue
         
             # Si se ha marcado la opción de url de emergencia, se añade ésta a cada episodio después de haber ejecutado Findvideos del canal
             if e.emergency_urls and isinstance(e.emergency_urls, dict): del e.emergency_urls    #Borramos trazas anteriores
             json_path = filetools.join(path, ("%s [%s].json" % (season_episode, e.channel)).lower())    #Path del .json del episodio
             if emergency_urls_stat == 1 and not e.emergency_urls and e.contentType == 'episode':     #Guardamos urls de emergencia?
                 if not silent:
-                    p_dialog.update(0, 'Cacheando enlaces y archivos .torrent...', e.title)     #progress dialog
+                    p_dialog.update(0, 'Cacheando enlaces y archivos .torrent...' + '\n' + e.title + '\n' + ' ' + '\n' + ' ')     #progress dialog
                 if json_path in ficheros:                                   #Si existe el .json sacamos de ahí las urls
                     if overwrite:                                           #pero solo si se se sobrescriben los .json
                         json_epi = Item().fromjson(filetools.read(json_path))                   #Leemos el .json
@@ -448,16 +541,19 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 emergency_urls_succ = True                                  #... es un éxito y vamos a marcar el .nfo
             elif emergency_urls_stat == 3 and e.contentType == 'episode':   #Actualizamos urls de emergencia?
                 if not silent:
-                    p_dialog.update(0, 'Cacheando enlaces y archivos .torrent...', e.title)     #progress dialog
+                    p_dialog.update(0, 'Cacheando enlaces y archivos .torrent...' + '\n' + e.title + '\n' + ' ' + '\n' + ' ')     #progress dialog
                 e = emergency_urls(e, channel, json_path, headers=headers)  #generamos las urls
                 if e.emergency_urls:                                        #Si ya tenemos urls...
                     emergency_urls_succ = True                              #... es un éxito y vamos a marcar el .nfo
             
             if not e.infoLabels["tmdb_id"] or (serie.infoLabels["tmdb_id"] and e.infoLabels["tmdb_id"] != serie.infoLabels["tmdb_id"]):                                                    #en series multicanal, prevalece el infolabels...
                 e.infoLabels = serie.infoLabels                             #... del canal actual y no el del original
-            e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
+            if not (isinstance(e.contentSeason, int) and isinstance(e.contentSeason, int)):
+                e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
             if e.videolibray_emergency_urls:
                 del e.videolibray_emergency_urls
+            if e.video_path:
+                del e.video_path
             if e.channel_redir:
                 del e.channel_redir                                         #... y se borran las marcas de redirecciones
             new_episodelist.append(e)
@@ -466,6 +562,9 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 logger.error("No se ha podido guardar las urls de emergencia de %s en la videoteca" % e.contentTitle)
                 logger.error(traceback.format_exc())
             continue
+            
+        if e.from_channel_alt: del e.from_channel_alt
+    if serie.from_channel_alt: del serie.from_channel_alt
 
     # No hay lista de episodios, no hay nada que guardar
     if not len(new_episodelist):
@@ -481,7 +580,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     last_season_episode = ''
     for i, e in enumerate(scraper.sort_episode_list(new_episodelist)):
         if not silent:
-            p_dialog.update(int(math.ceil((i + 1) * t)), config.get_localized_string(60064), e.title)
+            p_dialog.update(int(math.ceil((i + 1) * t)), config.get_localized_string(60064) + '\n' + e.title + '\n' + ' ' + '\n' + ' ')
 
         high_sea = e.contentSeason
         high_epi = e.contentEpisodeNumber
@@ -548,6 +647,10 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 # Obtenemos infoLabel del episodio
                 if not item_nfo:
                     head_nfo, item_nfo = read_nfo(nfo_path)
+                    if not item_nfo.channel:
+                        logger.info("Fallido .nfo: %s" % nfo_path)
+                        fallidos += 1
+                        continue
 
                 # En series multicanal, prevalece el infolabels del canal actual y no el del original
                 if not e.infoLabels["tmdb_id"] or (item_nfo.infoLabels["tmdb_id"] \
@@ -610,7 +713,12 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 tvshow_item.active = 1
             if tvshow_item.infoLabels["tmdb_id"] == serie.infoLabels["tmdb_id"]:
                 tvshow_item.infoLabels = serie.infoLabels
-                tvshow_item.infoLabels["title"] = tvshow_item.infoLabels["tvshowtitle"] 
+                if tvshow_item.infoLabels["tvshowtitle"]: tvshow_item.infoLabels["title"] = tvshow_item.infoLabels["tvshowtitle"]
+                elif tvshow_item.infoLabels["title"]: tvshow_item.infoLabels["tvshowtitle"] = tvshow_item.infoLabels["title"]
+                tvshow_item.infoLabels["thumbnail"] = tvshow_item.infoLabels["thumbnail"].replace('http:', 'https:')
+                if tvshow_item.infoLabels["thumbnail"]: tvshow_item.thumbnail = tvshow_item.infoLabels["thumbnail"]
+                tvshow_item.infoLabels["fanart"] = tvshow_item.infoLabels["fanart"].replace('http:', 'https:')
+                if tvshow_item.infoLabels["fanart"]: tvshow_item.fanart = tvshow_item.infoLabels["fanart"]
 
             if max_sea == high_sea and max_epi == high_epi and (tvshow_item.infoLabels["status"] == "Ended" 
                             or tvshow_item.infoLabels["status"] == "Canceled") and insertados == 0 and fallidos == 0:
@@ -618,6 +726,9 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 logger.debug("%s [%s]: serie 'Terminada' o 'Cancelada'.  Se desactiva la actualización periódica" % \
                             (serie.contentSerieName, serie.channel))
             
+            
+            
+            # Actualiza la fecha de la próxima actualización
             update_last = datetime.date.today()
             tvshow_item.update_last = update_last.strftime('%Y-%m-%d')
             update_next = datetime.date.today() + datetime.timedelta(days=int(tvshow_item.active))
@@ -633,7 +744,16 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             # ... si ha sido correcto actualizamos la videoteca de Kodi
             if config.is_xbmc() and not silent:
                 from platformcode import xbmc_videolibrary
-                xbmc_videolibrary.update(FOLDER_TVSHOWS, filetools.basename(path))
+                xbmc_videolibrary.update(FOLDER_TVSHOWS, '_scan_series')
+            # Si el usuario quiere un backup de la serie (local o remoto), se toma la dirección/direcciones de destino y se copia lo nuevo
+            videolibrary_backup =  config.get_setting('videolibrary_backup', channel='videolibrary')
+            if videolibrary_backup:
+                try:
+                    import threading
+                    threading.Thread(target=videolibrary_backup_exec, args=(tvshow_item, videolibrary_backup)).start()
+                except:
+                    logger.error('Error en el backup de la serie %s' % tvshow_item.path)
+                    logger.error(traceback.format_exc(1))
 
     if fallidos == len(episodelist):
         fallidos = -1
@@ -673,6 +793,8 @@ def add_movie(item):
     #    del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
     
     new_item = item.clone(action="findvideos")
+    new_item.contentTitle = re.sub('^(V)-', '', new_item.title)
+    new_item.title = re.sub('^(V)-', '', new_item.title)
     insertados, sobreescritos, fallidos = save_movie(new_item)
 
     if fallidos == 0:
@@ -705,8 +827,11 @@ def add_tvshow(item, channel=None):
             Por defecto se importara item.from_channel o item.channel
 
     """
+    import xbmc
+    
     logger.info("show=#" + item.show + "#")
-
+    logger.debug("item en videolibrary add tvshow: %s" % item)
+    item.title = re.sub('^(V)-', '', item.title)
     if item.channel == "downloads":
         itemlist = [item.clone()]
 
@@ -719,6 +844,9 @@ def add_tvshow(item, channel=None):
 
         if item.from_action:
             item.__dict__["action"] = item.__dict__.pop("from_action")
+            item.__dict__["extra"] = item.__dict__["action"]
+
+
         if item.from_channel:
             item.__dict__["channel"] = item.__dict__.pop("from_channel")
 
@@ -726,7 +854,7 @@ def add_tvshow(item, channel=None):
             try:
                 channel = __import__('channels.%s' % item.channel, fromlist=["channels.%s" % item.channel])
             except ImportError:
-                exec "import channels." + item.channel + " as channel"
+                exec("import channels." + item.channel + " as channel")
 
         #Para desambiguar títulos, se provoca que TMDB pregunte por el título realmente deseado
         #El usuario puede seleccionar el título entre los ofrecidos en la primera pantalla
@@ -765,7 +893,6 @@ def add_tvshow(item, channel=None):
                     (insertados, item.show))
         if config.is_xbmc():
             if config.get_setting("sync_trakt_new_tvshow", "videolibrary"):
-                import xbmc
                 from platformcode import xbmc_videolibrary
                 if config.get_setting("sync_trakt_new_tvshow_wait", "videolibrary"):
                     # Comprobar que no se esta buscando contenido en la videoteca de Kodi
@@ -775,11 +902,24 @@ def add_tvshow(item, channel=None):
                 xbmc_videolibrary.sync_trakt_kodi()
                 # Se lanza la sincronización para la videoteca del addon
                 xbmc_videolibrary.sync_trakt_addon(path)
+        
+        #Si el canal lo permite, se comienza el proceso de descarga de los nuevos episodios descargados
+        if insertados:
+            serie = item.clone()
+            serie.channel = generictools.verify_channel(serie.channel)
+            if config.get_setting('auto_download_new', serie.channel, default=False):
+                serie.sub_action = 'auto'
+                serie.category = itemlist[0].category
+                from channels import downloads
+                downloads.save_download(serie, silent=True)
+                if serie.sub_action: del serie.sub_action
+                while xbmc.getCondVisibility('Library.IsScanningVideo()'):
+                    xbmc.sleep(1000)
+                downloads.download_auto(serie)
 
 
 def emergency_urls(item, channel=None, path=None, headers={}):
     logger.info()
-    import re
     from servers import torrent
     try:
         magnet_caching_e = magnet_caching
@@ -801,6 +941,9 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             item.videolibray_emergency_urls = True                          #... se marca como "lookup"
             channel_save = item.channel                 #... guarda el canal original por si hay fail-over en Newpct1
             category_save = item.category               #... guarda la categoría original por si hay fail-over o redirección en Newpct1
+            post_save = item.post                       #... guarda el post original
+            referer_save = item.referer                 #... guarda el referer original
+            headers_save = item.headers                 #... guarda el headers original
             if item.channel_redir:                      #... si hay un redir, se restaura temporamente el canal alternativo
                 item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
                 item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
@@ -821,17 +964,21 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             del item_res.videolibray_emergency_urls                         #... y se borra la marca de lookup
         if item.videolibray_emergency_urls:
             del item.videolibray_emergency_urls                             #... y se borra la marca de lookup original
+        item_res.referer = referer_save
+        item_res.headers = headers_save
+        item_res.post = post_save
     
     #Si el usuario ha activado la opción "emergency_urls_torrents", se descargarán los archivos .torrent de cada título
     else:                                                                   #Si se han cacheado con éxito los enlaces...
         try:
             referer = None
             post = None
+            subtitles_list =[]
             channel_bis = generictools.verify_channel(item.channel)
             if config.get_setting("emergency_urls_torrents", channel_bis) and item_res.emergency_urls and path != None:
-                videolibrary_path = config.get_videolibrary_path()          #detectamos el path absoluto del título
-                movies = config.get_setting("folder_movies")
-                series = config.get_setting("folder_tvshows")
+                videolibrary_path = config.get_videolibrary_path()              #detectamos el path absoluto del título
+                movies = FOLDER_MOVIES
+                series = FOLDER_TVSHOWS
                 if movies in path: 
                     folder = movies
                 else:
@@ -840,30 +987,124 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                 i = 1
                 if item_res.referer: referer = item_res.referer
                 if item_res.post: post = item_res.post
-                for url in item_res.emergency_urls[0]:                      #Recorremos las urls de emergencia...
+                for url in item_res.emergency_urls[0]:                          #Recorremos las urls de emergencia...
                     torrents_path = re.sub(r'(?:\.\w+$)', '_%s.torrent' % str(i).zfill(2), path)
                     path_real = ''
                     if magnet_caching_e or not url.startswith('magnet'):
-                        path_real = torrent.caching_torrents(url, referer, post, torrents_path=torrents_path, headers=headers)  #...  para descargar los .torrents
-                    if path_real:                                           #Si ha tenido éxito...
+                        path_real, subtitles_list = torrent.caching_torrents(url, referer, post, \
+                                torrents_path=torrents_path, headers=headers)   #...  para descargar los .torrents
+                    if path_real:                                               #Si ha tenido éxito...
                         item_res.emergency_urls[0][i-1] = path_real.replace(videolibrary_path, '')  #se guarda el "path" relativo
+                        if 'ERROR' in item.torrent_info: item.torrent_info = ''
+                    if subtitles_list and not item_res.subtitle:
+                        item_res.subtitle = subtitles_list[0].replace(videolibrary_path, '')  #se guarda el "path" relativo
                     i += 1
                     
                 #Restauramos variables originales
-                if item.referer:
-                    item_res.referer = item.referer
-                elif item_res.referer:
-                    del item_res.referer
-                if item.referer:
-                    item_res.referer = item.referer
-                elif item_res.referer:
-                    del item_res.referer
+                if referer_save and not item_res.referer:
+                    item_res.referer = referer_save
+                if headers_save and not item_res.headers:
+                    item_res.headers = headers_save
+                if post_save and not item_res.post:
+                    item_res.post = post_save
                 item_res.url = item.url
                 
         except:
             logger.error('ERROR al cachear el .torrent de: ' + item.channel + ' / ' + item.title)
             logger.error(traceback.format_exc())
-            item_res = item.clone()                             #Si ha habido un error, se devuelve el Item original
+            item_res = item.clone()                                             #Si ha habido un error, se devuelve el Item original
+            item_res.channel = channel_save                     #... restaura el canal original por si hay fail-over o redirección en Newpct1
+            item_res.category = category_save                   #... restaura la categoría original por si hay fail-over o redirección en Newpct1
+            if item_res.videolibray_emergency_urls:
+                del item_res.videolibray_emergency_urls                         #... y se borra la marca de lookup
+            if item.videolibray_emergency_urls:
+                del item.videolibray_emergency_urls                             #... y se borra la marca de lookup original
+            item_res.referer = referer_save
+            item_res.headers = headers_save
+            item_res.post = post_save
 
     #logger.debug(item_res.emergency_urls)
-    return item_res                                             #Devolvemos el Item actualizado con los enlaces de emergencia
+    return item_res                                                             #Devolvemos el Item actualizado con los enlaces de emergencia
+
+
+def videolibrary_backup_exec(item, videolibrary_backup):
+    try: 
+        if item.strm_path:
+            contentType = FOLDER_MOVIES
+            video_path = filetools.join(config.get_videolibrary_path(), contentType, filetools.dirname(item.strm_path))
+        else:
+            contentType = FOLDER_TVSHOWS
+            video_path = filetools.join(config.get_videolibrary_path(), contentType, item.path)
+        logger.info(filetools.basename(video_path))
+
+        if not item or not videolibrary_backup:
+            logger.error('Peli/Serie o Ruta incorrectos')
+            raise
+        if not filetools.exists(video_path):
+            logger.error('Ruta a Videolibrary incorrecta: %s' % video_path)
+            raise
+
+        backup_addr_list = videolibrary_backup.split(',')
+        backup_addr_list_alt = backup_addr_list[:]
+        # Verificamos que las direcciones están accesibles
+        for addr in backup_addr_list_alt:
+            addr_alt = addr
+            if scrapertools.find_single_match(addr_alt, '^\w+:\/\/') and '@' in addr_alt:
+                addr_alt = re.sub(':\/\/.*?\:.*?\@', '://USERNAME:PASSWORD@', addr_alt)
+            if not filetools.exists(addr):
+                logger.error('Dirección no accesible: %s' % addr_alt)
+                backup_addr_list.remove(addr)
+            else:
+                path = filetools.join(addr, contentType)
+                if not filetools.exists(path):
+                    filetools.mkdir(path)
+                if not filetools.exists(path) and path.startswith('ftp'):
+                    path = path.replace('ftp://', 'smb://')
+                    filetools.mkdir(path)
+                if filetools.exists(path):
+                    res = filetools.write(filetools.join(path, 'back_up_test'), contentType, silent=True)
+                    if res:
+                        res = filetools.remove(filetools.join(path, 'back_up_test'), silent=True)
+                        if not res and path.startswith('ftp'):
+                            path = path.replace('ftp://', 'smb://')
+                            res = filetools.remove(filetools.join(path, 'back_up_test'), silent=True)
+                        continue
+                logger.error('Dirección no accesible para escritura: %s' % filetools.join(addr_alt, contentType))
+                backup_addr_list.remove(addr)
+                    
+        if not backup_addr_list:
+            logger.error('No hay direcciones accesibles para el backup.  Operación terminada')
+            return False
+            
+        # Una vez validadas la(s) ruta(s) se procede a la copia de los archivos que no están en el destino, más el tvshow.nfo de Series
+        for addr in backup_addr_list:
+            backup_path = filetools.join(addr, contentType, filetools.basename(video_path))
+            if not filetools.exists(backup_path):
+                filetools.mkdir(backup_path)
+            if not filetools.exists(backup_path) and backup_path.startswith('ftp'):
+                backup_path_alt = backup_path.replace('ftp://', 'smb://')
+                filetools.mkdir(backup_path_alt)
+            if filetools.exists(backup_path):
+                list_video = filetools.listdir(video_path)
+                list_backup = filetools.listdir(backup_path)
+                addr_alt = backup_path
+                if scrapertools.find_single_match(addr_alt, '^\w+:\/\/') and '@' in addr_alt:
+                    addr_alt = re.sub(':\/\/.*?\:.*?\@', '://USERNAME:PASSWORD@', addr_alt)
+                    logger.info('Haciendo backup en %s' % addr_alt)
+                for file in list_video:
+                    if file not in str(list_backup) or file == 'tvshow.nfo':
+                        res = filetools.copy(filetools.join(video_path, file), filetools.join(backup_path, file), silent=True)
+                        if not res and backup_path.startswith('ftp'):
+                            backup_path = backup_path.replace('ftp://', 'smb://')
+                            addr_alt = addr_alt.replace('ftp://', 'smb://')
+                            logger.error('Dirección no accesible para escritura.  Cambiado a SMB: %s' % filetools.join(addr_alt, contentType))
+                            res = filetools.copy(filetools.join(video_path, file), filetools.join(backup_path, file), silent=True)
+                        logger.info('%s %s, Status: %s' % (backup_path[:4], file, str(res)))
+            else:
+                logger.error('Dirección no accesible para escritura: %s' % backup_path)
+                
+    except:
+        logger.error(traceback.format_exc())
+        return False
+    
+    return True

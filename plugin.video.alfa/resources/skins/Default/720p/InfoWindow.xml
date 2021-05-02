@@ -15,27 +15,26 @@
         <control type="image">
           <height>40</height>
           <width>800</width>
-          <texture>Windows/dialogheader.png</texture>
+          <texture>Windows/header.png</texture>
         </control>
         <control type="label" id="10002">
-          <posy>10</posy>
+          <posy>2</posy>
           <posx>10</posx>
           <height>34</height>
           <width>725</width>
-          <font>font12_title</font>
-          <textcolor>0xFFFFA500</textcolor>
-          <shadowcolor>black</shadowcolor>
+          <font>font25_title</font>
+          <shadowcolor>FF504416</shadowcolor>
           <align>center</align>
           <aligny>center</aligny>
           <label>$ADDON[plugin.video.alfa 70000]</label>
         </control>
         <control type="button" id="10003">
-          <posx>735</posx>
-          <posy>15</posy>
-          <width>50</width>
-          <height>30</height>
-          <texturefocus>Controls/DialogCloseButton-focus.png</texturefocus>
-          <texturenofocus>Controls/DialogCloseButton.png</texturenofocus>
+          <posx>750</posx>
+          <posy>2</posy>
+          <width>32</width>
+          <height>34</height>
+           <texturefocus>Controls/DialogCloseButton-focus.png</texturefocus>
+           <texturenofocus>Controls/logo.png</texturenofocus>
         </control>
         <control type="image" id="10004">
           <posx>11</posx>
@@ -56,7 +55,7 @@
           <posy>50</posy>
           <posx>20</posx>
           <height>40</height>
-          <width>100</width>
+          <width>auto</width>
           <font>font10</font>
           <textcolor>0xFFFFA500</textcolor>
           <shadowcolor>black</shadowcolor>
@@ -82,7 +81,7 @@
           <posy>70</posy>
           <posx>20</posx>
           <height>40</height>
-          <width>100</width>
+          <width>auto</width>
           <font>font10</font>
           <textcolor>0xFFFFA500</textcolor>
           <shadowcolor>black</shadowcolor>
@@ -108,7 +107,7 @@
           <posy>90</posy>
           <posx>20</posx>
           <height>40</height>
-          <width>100</width>
+          <width>auto</width>
           <font>font10</font>
           <textcolor>0xFFFFA500</textcolor>
           <shadowcolor>black</shadowcolor>
@@ -134,7 +133,7 @@
           <posy>110</posy>
           <posx>20</posx>
           <height>40</height>
-          <width>100</width>
+          <width>auto</width>
           <font>font10</font>
           <textcolor>0xFFFFA500</textcolor>
           <shadowcolor>black</shadowcolor>
@@ -160,7 +159,7 @@
           <posy>130</posy>
           <posx>20</posx>
           <height>40</height>
-          <width>100</width>
+          <width>auto</width>
           <font>font10</font>
           <textcolor>0xFFFFA500</textcolor>
           <shadowcolor>black</shadowcolor>
@@ -186,7 +185,7 @@
           <posy>150</posy>
           <posx>20</posx>
           <height>40</height>
-          <width>100</width>
+          <width>auto</width>
           <font>font10</font>
           <textcolor>0xFFFFA500</textcolor>
           <shadowcolor>black</shadowcolor>
@@ -212,7 +211,7 @@
           <posy>170</posy>
           <posx>20</posx>
           <height>40</height>
-          <width>100</width>
+          <width>auto</width>
           <font>font10</font>
           <textcolor>0xFFFFA500</textcolor>
           <shadowcolor>black</shadowcolor>
@@ -238,7 +237,7 @@
           <posy>190</posy>
           <posx>20</posx>
           <height>40</height>
-          <width>100</width>
+          <width>auto</width>
           <font>font10</font>
           <textcolor>0xFFFFA500</textcolor>
           <shadowcolor>black</shadowcolor>
@@ -299,8 +298,9 @@
             <width>110</width>
             <height>30</height>
             <textwidth>100</textwidth>
-            <texturefocus>Controls/KeyboardKey.png</texturefocus>
-            <texturenofocus>Controls/KeyboardKeyNF.png</texturenofocus>
+            <shadowcolor>FF504416</shadowcolor>
+            <texturefocus>Controls/MenuItemFO.png</texturefocus>
+            <texturenofocus>Controls/MenuItemNOFO.png.png</texturenofocus>
             <align>center</align>
             <aligny>center</aligny>
             <label>$ADDON[plugin.video.alfa 70005]</label>
@@ -311,8 +311,9 @@
             <width>110</width>
             <height>30</height>
             <textwidth>100</textwidth>
-            <texturefocus>Controls/KeyboardKey.png</texturefocus>
-            <texturenofocus>Controls/KeyboardKeyNF.png</texturenofocus>
+            <shadowcolor>FF504416</shadowcolor>
+            <texturefocus>Controls/MenuItemFO.png</texturefocus>
+            <texturenofocus>Controls/MenuItemNOFO.png.png</texturenofocus>
             <align>center</align>
             <aligny>center</aligny>
             <label>$ADDON[plugin.video.alfa 70006]</label>
@@ -323,8 +324,9 @@
             <width>110</width>
             <height>30</height>
             <textwidth>100</textwidth>
-            <texturefocus>Controls/KeyboardKey.png</texturefocus>
-            <texturenofocus>Controls/KeyboardKeyNF.png</texturenofocus>
+            <shadowcolor>FF504416</shadowcolor>
+            <texturefocus>Controls/MenuItemFO.png</texturefocus>
+            <texturenofocus>Controls/MenuItemNOFO.png.png</texturenofocus>
             <align>center</align>
             <aligny>center</aligny>
             <label>$ADDON[plugin.video.alfa 70002]</label>
@@ -335,8 +337,9 @@
             <width>110</width>
             <height>30</height>
             <textwidth>100</textwidth>
-            <texturefocus>Controls/KeyboardKey.png</texturefocus>
-            <texturenofocus>Controls/KeyboardKeyNF.png</texturenofocus>
+            <shadowcolor>FF504416</shadowcolor>
+            <texturefocus>Controls/MenuItemFO.png</texturefocus>
+            <texturenofocus>Controls/MenuItemNOFO.png.png</texturenofocus>
             <align>center</align>
             <aligny>center</aligny>
             <label>$ADDON[plugin.video.alfa 70007]</label>

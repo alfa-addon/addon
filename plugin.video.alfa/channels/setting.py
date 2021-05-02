@@ -3,12 +3,23 @@
 # Configuracion
 # ------------------------------------------------------------
 
+from __future__ import division
+#from builtins import str
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+from builtins import range
+from past.utils import old_div
+
 from channelselector import get_thumb
 from core import filetools
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+
+from core import httptools
+import re
 
 CHANNELNAME = "setting"
 
@@ -20,30 +31,23 @@ def mainlist(item):
     itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60535), action="settings", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title="", action="", folder=False, thumbnail=get_thumb("setting_0.png")))
-
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60536) + ":", text_bold=True, action="", folder=False,
-                         thumbnail=get_thumb("setting_0.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="     " + config.get_localized_string(60537), action="menu_channels", folder=True,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60537), action="menu_channels", folder=True,
                          thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="     " + config.get_localized_string(60538), action="menu_servers", folder=True,
-                         thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel="news", title="     " + config.get_localized_string(60539), action="menu_opciones",
-                         folder=True, thumbnail=get_thumb("news.png")))
-    itemlist.append(Item(channel="search", title="     " + config.get_localized_string(60540), action="opciones", folder=True,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60538), action="menu_servers", folder=True,
+                         thumbnail=get_thumb("on_the_air.png")))
+    itemlist.append(Item(channel="search", title=config.get_localized_string(60540), action="opciones", folder=True,
                          thumbnail=get_thumb("search.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="     " + config.get_localized_string(60541), action="channel_config",
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60541), action="channel_config",
                          config="downloads", folder=True, thumbnail=get_thumb("downloads.png")))
 
     if config.get_videolibrary_support():
-        itemlist.append(Item(channel="videolibrary", title="     " + config.get_localized_string(60542), action="channel_config",
+        itemlist.append(Item(channel="videolibrary", title=config.get_localized_string(60542), action="channel_config",
                              folder=True, thumbnail=get_thumb("videolibrary.png")))
 
     if config.is_xbmc():
-        itemlist.append(Item(channel=CHANNELNAME, title="     " + config.get_localized_string(70253), action="setting_torrent",
+        itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(70253), action="setting_torrent",
                              folder=True, thumbnail=get_thumb("channels_torrent.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
     itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60544), action="submenu_tools", folder=True,
                          thumbnail=get_thumb("setting_0.png")))
 
@@ -67,7 +71,12 @@ def menu_channels(item):
     for channel in channel_list:
         if not channel.channel:
             continue
+        
         channel_parameters = channeltools.get_channel_parameters(channel.channel)
+
+        if channel_parameters["adult"] and not config.get_setting("adult_mode"):
+            continue
+        
         if channel_parameters["has_settings"]:
             itemlist.append(Item(channel=CHANNELNAME, title=".    " + config.get_localized_string(60547) % channel.title,
                                  action="channel_config", config=channel.channel, folder=False,
@@ -94,15 +103,19 @@ def setting_torrent(item):
     default = config.get_setting("torrent_client", server="torrent", default=0)
     BUFFER = config.get_setting("mct_buffer", server="torrent", default="50")
     DOWNLOAD_PATH = config.get_setting("mct_download_path", server="torrent", default=config.get_setting("downloadpath"))
+    if not DOWNLOAD_PATH: DOWNLOAD_PATH = filetools.join(config.get_data_path(), 'downloads')
     BACKGROUND = config.get_setting("mct_background_download", server="torrent", default=True)
     RAR = config.get_setting("mct_rar_unpack", server="torrent", default=True)
     DOWNLOAD_LIMIT = config.get_setting("mct_download_limit", server="torrent", default="")
     BUFFER_BT = config.get_setting("bt_buffer", server="torrent", default="50")
     DOWNLOAD_PATH_BT = config.get_setting("bt_download_path", server="torrent", default=config.get_setting("downloadpath"))
+    if not DOWNLOAD_PATH_BT: DOWNLOAD_PATH_BT = filetools.join(config.get_data_path(), 'downloads')
     MAGNET2TORRENT = config.get_setting("magnet2torrent", server="torrent", default=False)
+    CAPTURE_THRU_ROWSER_PATH = config.get_setting("capture_thru_browser_path", server="torrent", default="")
 
     torrent_options = [config.get_localized_string(30006), config.get_localized_string(70254), config.get_localized_string(70255)]
     torrent_options.extend(platformtools.torrent_client_installed())
+    if len(torrent_options) < default+1: default = 0
     
 
     list_controls = [
@@ -194,11 +207,23 @@ def setting_torrent(item):
             "default": MAGNET2TORRENT,
             "enabled": True,
             "visible": True
+        },
+        {
+            "id": "capture_thru_browser_path",
+            "type": "text",
+            "label": "Path para descargar con un browser archivos .torrent bloqueados",
+            "default": CAPTURE_THRU_ROWSER_PATH,
+            "enabled": True,
+            "visible": True
         }
     ]
 
     platformtools.show_channel_settings(list_controls=list_controls, callback='save_setting_torrent', item=item,
                                         caption=config.get_localized_string(70257), custom_button={'visible': False})
+    if item.item_org:
+        item_org = Item().fromurl(item.item_org)
+        if item_org.torrent_info: del item_org.torrent_info
+        platformtools.itemlist_update(item_org)
 
 
 def save_setting_torrent(item, dict_data_saved):
@@ -220,6 +245,9 @@ def save_setting_torrent(item, dict_data_saved):
         config.set_setting("bt_download_path", dict_data_saved["bt_download_path"], server="torrent")
     if dict_data_saved and "magnet2torrent" in dict_data_saved:
         config.set_setting("magnet2torrent", dict_data_saved["magnet2torrent"], server="torrent")
+    if dict_data_saved and "capture_thru_browser_path" in dict_data_saved:
+        config.set_setting("capture_thru_browser_path", dict_data_saved["capture_thru_browser_path"], server="torrent")
+
 
 def menu_servers(item):
     logger.info()
@@ -236,7 +264,7 @@ def menu_servers(item):
 
     # Inicio - Servidores configurables
 
-    server_list = servertools.get_debriders_list().keys()
+    server_list = list(servertools.get_debriders_list().keys())
     for server in server_list:
         server_parameters = servertools.get_server_parameters(server)
         if server_parameters["has_settings"]:
@@ -247,13 +275,12 @@ def menu_servers(item):
     itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60554),
                          action="", folder=False, text_bold = True, thumbnail=get_thumb("setting_0.png")))
 
-    server_list = servertools.get_servers_list().keys()
+    server_list = list(servertools.get_servers_list().keys())
 
     for server in sorted(server_list):
         server_parameters = servertools.get_server_parameters(server)
         logger.info(server_parameters)
-        if server_parameters["has_settings"] and filter(lambda x: x["id"] not in ["black_list", "white_list"],
-                                                        server_parameters["settings"]):
+        if server_parameters["has_settings"] and [x for x in server_parameters["settings"] if x["id"] not in ["black_list", "white_list"]]:
             itemlist.append(
                 Item(channel=CHANNELNAME, title=".    " + config.get_localized_string(60553) % server_parameters["name"],
                      action="server_config", config=server, folder=False, thumbnail=""))
@@ -303,7 +330,7 @@ def cb_servers_blacklist(item, dict_values):
     progreso = platformtools.dialog_progress(config.get_localized_string(60557), config.get_localized_string(60558))
     n = len(dict_values)
     i = 1
-    for k, v in dict_values.items():
+    for k, v in list(dict_values.items()):
         if k == 'filter_servers':
             config.set_setting('filter_servers', v)
         else:
@@ -311,7 +338,7 @@ def cb_servers_blacklist(item, dict_values):
             if v:  # Si el servidor esta en la lista negra no puede estar en la de favoritos
                 config.set_setting("favorites_servers_list", 100, server=k)
                 f = True
-                progreso.update((i * 100) / n, config.get_localized_string(60559) % k)
+                progreso.update(old_div((i * 100), n), config.get_localized_string(60559) % k)
         i += 1
 
     if not f:  # Si no hay ningun servidor en la lista, desactivarla
@@ -365,21 +392,21 @@ def cb_servers_favorites(server_names, dict_values):
     dict_name = {}
     progreso = platformtools.dialog_progress(config.get_localized_string(60557), config.get_localized_string(60558))
 
-    for i, v in dict_values.items():
+    for i, v in list(dict_values.items()):
         if i == "favorites_servers":
             config.set_setting("favorites_servers", v)
         elif int(v) > 0:
             dict_name[server_names[v]] = int(i)
 
-    servers_list = servertools.get_servers_list().items()
+    servers_list = list(servertools.get_servers_list().items())
     n = len(servers_list)
     i = 1
     for server, server_parameters in servers_list:
-        if server_parameters['name'] in dict_name.keys():
+        if server_parameters['name'] in list(dict_name.keys()):
             config.set_setting("favorites_servers_list", dict_name[server_parameters['name']], server=server)
         else:
             config.set_setting("favorites_servers_list", 0, server=server)
-        progreso.update((i * 100) / n, config.get_localized_string(60559) % server_parameters['name'])
+        progreso.update(old_div((i * 100), n), config.get_localized_string(60559) % server_parameters['name'])
         i += 1
 
     if not dict_name:  # Si no hay ningun servidor en lalista desactivarla
@@ -404,29 +431,36 @@ def submenu_tools(item):
         if filetools.exists(user_custom):
             filetools.copy(user_custom, channel_custom, silent=True)
     if filetools.exists(channel_custom):
-        itemlist.append(Item(channel='custom', action='mainlist', title='Custom Channel'))
+        itemlist.append(Item(channel='custom', action='mainlist', title='Custom Channel', thumbnail=get_thumb('setting_0.png')))
 
 
-    itemlist.append(Item(channel=CHANNELNAME, action="check_quickfixes", folder=False,
-                         title="Comprobar actualizaciones urgentes (Actual: Alfa %s)" %config.get_addon_version(), plot="Versión actual: %s" % config.get_addon_version() ))
-    itemlist.append(Item(channel=CHANNELNAME, action="update_quasar", folder=False,
-                         title="Actualizar addon externo Quasar"))
-    itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
-                         thumbnail=get_thumb("setting_0.png")))
+    itemlist.append(Item(action = "check_quickfixes", channel= CHANNELNAME, folder = False,
+                         plot = "Versión actual: {}".format(config.get_addon_version(from_xml=True)),
+                         thumbnail = get_thumb("update.png"),
+                         title = "Comprobar actualizaciones urgentes (Actual: Alfa {})".format(config.get_addon_version(from_xml=True))))
+
+    itemlist.append(Item(action = "update_quasar", channel = CHANNELNAME, folder = False,
+                         thumbnail = get_thumb("update.png"), title = "Actualizar addon externo Quasar"))
+
+    itemlist.append(Item(action = "reset_trakt", channel = CHANNELNAME, folder = False,
+                         plot = "Reinicia la vinculacion, no se pierden los datos de seguimiento",
+                         thumbnail = "https://trakt.tv/assets/logos/white-bg@2x-626e9680c03d0542b3e26c3305f58050d2178e5d4222fac7831d83cf37fef42b.png",
+                         title = "Reiniciar vinculación con Trakt"))
 
     itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60564) + ":", action="", folder=False,
                          text_bold=True, thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60565), action="conf_tools",
+
+    itemlist.append(Item(channel=CHANNELNAME, title="- {}".format(config.get_localized_string(60565)), action="conf_tools",
                          folder=True, extra="lib_check_datajson", thumbnail=get_thumb("channels.png")))
 
     if config.get_videolibrary_support():
-        itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
-                             thumbnail=get_thumb("setting_0.png")))
         itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60566) + ":", action="", folder=False,
                              text_bold=True, thumbnail=get_thumb("videolibrary.png")))
+
         itemlist.append(Item(channel=CHANNELNAME, action="overwrite_tools", folder=False,
                              thumbnail=get_thumb("videolibrary.png"),
                              title="- " + config.get_localized_string(60567)))
+
         itemlist.append(Item(channel="videolibrary", action="update_videolibrary", folder=False,
                              thumbnail=get_thumb("videolibrary.png"),
                              title="- " + config.get_localized_string(60568)))
@@ -569,7 +603,7 @@ def conf_tools(item):
                         channeljson_exists = True
                         # Obtenemos configuracion guardada de ../settings/channel_data.json
                         try:
-                            dict_file = jsontools.load(open(file_settings, "rb").read())
+                            dict_file = jsontools.load(filetools.read(file_settings))
                             if isinstance(dict_file, dict) and 'settings' in dict_file:
                                 dict_settings = dict_file['settings']
                         except EnvironmentError:
@@ -609,14 +643,9 @@ def conf_tools(item):
                                 dict_settings = default_settings
                                 dict_file['settings'] = dict_settings
                                 # Creamos el archivo ../settings/channel_data.json
-                                json_data = jsontools.dump(dict_file)
-                                try:
-                                    open(file_settings, "wb").write(json_data)
-                                    # logger.info(channel.channel + " - Archivo _data.json GUARDADO!")
-                                    # El channel_data.json se ha creado/modificado
-                                    list_status = config.get_localized_string(60560)
-                                except EnvironmentError:
+                                if not filetools.write(file_settings, jsontools.dump(dict_file), silent=True):
                                     logger.error("ERROR al salvar el archivo: %s" % file_settings)
+                                list_status = config.get_localized_string(60560)
                             else:
                                 if default_settings is None:
                                     list_status = config.get_localized_string(60571)
@@ -664,7 +693,7 @@ def conf_tools(item):
 
 
 def channels_onoff(item):
-    import channelselector, xbmcgui
+    import channelselector
     from core import channeltools
 
     # Cargar lista de opciones
@@ -677,10 +706,23 @@ def channels_onoff(item):
         # ~ lbl += ' %s' % [config.get_localized_category(categ) for categ in channel_parameters['categories']]
         lbl += ' %s' % ', '.join(config.get_localized_category(categ) for categ in channel_parameters['categories'])
 
-        it = xbmcgui.ListItem(channel.title, lbl)
-        it.setArt({ 'thumb': channel.thumbnail, 'fanart': channel.fanart })
+        it = Item(
+                fanart = channel.fanart,
+                plot = lbl,
+                thumbnail = channel.thumbnail,
+                title = channel.title
+                 )
         lista.append(it)
         ids.append(channel.channel)
+
+    if config.is_xbmc():
+        import xbmcgui
+        new_list = list()
+        for fake_it in lista:
+            it = xbmcgui.ListItem(fake_it.title, fake_it.plot)
+            it.setArt({ 'thumb': fake_it.thumbnail, 'fanart': fake_it.fanart })
+            new_list.append(it)
+        lista = new_list
 
     # Diálogo para pre-seleccionar
     # ----------------------------
@@ -688,7 +730,7 @@ def channels_onoff(item):
     ret = platformtools.dialog_select(config.get_localized_string(60545), preselecciones)
     if ret == -1: return False # pedido cancel
     if ret == 2: preselect = []
-    elif ret == 1: preselect = range(len(ids))
+    elif ret == 1: preselect = list(range(len(ids)))
     else:
         preselect = []
         for i, canal in enumerate(ids):
@@ -699,7 +741,7 @@ def channels_onoff(item):
 
     # Diálogo para seleccionar
     # ------------------------
-    ret = xbmcgui.Dialog().multiselect(config.get_localized_string(60545), lista, preselect=preselect, useDetails=True)
+    ret = platformtools.dialog_multiselect(config.get_localized_string(60545), lista, preselect=preselect, useDetails=True)
     if ret == None: return False # pedido cancel
     seleccionados = [ids[i] for i in ret]
 
@@ -840,7 +882,7 @@ def overwrite_tools(item):
                                                                                    movie.channel.capitalize()))
                 # ... y la volvemos a añadir
                 videolibrarytools.save_movie(movie)
-            except Exception, ex:
+            except Exception as ex:
                 logger.error("Error al crear de nuevo la película")
                 template = "An exception of type %s occured. Arguments:\n%r"
                 message = template % (type(ex).__name__, ex.args)
@@ -848,7 +890,7 @@ def overwrite_tools(item):
 
         p_dialog2.close()
 
-        
+
 def report_menu(item):
     logger.info('URL: ' + item.url)
     
@@ -892,20 +934,32 @@ def report_menu(item):
         itemlist.append(Item(channel=item.channel, action="", 
                     title="[COLOR limegreen]Ha terminado de generar el informe de fallo,[/COLOR]", 
                     thumbnail=thumb_next, folder=False))
-        itemlist.append(Item(channel=item.channel, action="", 
-                    title="[COLOR limegreen]Repórtelo en el Foro de Alfa: [/COLOR][COLOR yellow](pinche si Chrome)[/COLOR]", 
+        browser, res = call_browser(item, lookup=True)
+        if browser:
+            itemlist.append(Item(channel=item.channel, action="", 
+                    title="[COLOR limegreen]Repórtelo en el Foro de Alfa: [/COLOR][COLOR yellow](pinche para usar [I]%s[/I])[/COLOR]" % browser, 
                     thumbnail=thumb_next, 
-                    folder=False))        
-        itemlist.append(Item(channel=item.channel, action="call_chrome", 
-                    url='https://alfa-addon.com/foros/ayuda.12/', 
-                    title="**- [COLOR yellow]https://alfa-addon.com/foros/ayuda.12/[/COLOR] -**", 
-                    thumbnail=thumb_next, unify=False, folder=False))
-    
-        if item.one_use:
+                    folder=False))
+        else:
+            itemlist.append(Item(channel=item.channel, action="", 
+                    title="[COLOR limegreen]Repórtelo en el Foro de Alfa: [/COLOR]", 
+                    thumbnail=thumb_next, 
+                    folder=False))
+        if not browser:
             action = ''
             url = ''
         else:
-            action = 'call_chrome'
+            action = 'call_browser'
+            url='https://alfa-addon.com/foros/ayuda.12/'
+        itemlist.append(Item(channel=item.channel, action=action, url=url, 
+                    title="**- [COLOR yellow]https://alfa-addon.com/foros/ayuda.12/[/COLOR] -**", 
+                    thumbnail=thumb_next, unify=False, folder=False))
+    
+        if item.one_use or not browser:
+            action = ''
+            url = ''
+        else:
+            action = 'call_browser'
             url = item.url
         itemlist.append(Item(channel=item.channel, action=action, 
                     title="**- LOG: [COLOR gold]%s[/COLOR] -**" % item.url, url=url, 
@@ -936,19 +990,21 @@ def activate_debug(item):
     else:
         config.set_setting('debug', False)
         platformtools.dialog_notification('Modo DEBUG', 'Desactivado')
-        
-        
+
+
 def report_send(item, description='', fatal=False):
-    import xbmc
-    import xbmcaddon
     import random
-    import urllib
-    import urlparse
     import traceback
-    import sys
-    import platform
-    import os
     import re
+    
+    if PY3:
+        #from future import standard_library
+        #standard_library.install_aliases()
+        import urllib.parse as urlparse                         # Es muy lento en PY2.  En PY3 es nativo
+        import urllib.parse as urllib
+    else:
+        import urllib                                           # Usamos el nativo de PY2 que es más rápido
+        import urlparse
 
     try:
         requests_status = True
@@ -957,8 +1013,11 @@ def report_send(item, description='', fatal=False):
         requests_status = False
         logger.error(traceback.format_exc())
     
-    from core import jsontools, httptools, proxytools, scrapertools
+    from core import jsontools, httptools, scrapertools
     from platformcode import envtal
+    
+    if not PY3: from core import proxytools
+    else: from core import proxytools_py3 as proxytools
     
     # Esta función realiza la operación de upload del LOG.  El tamaño del archivo es de gran importacia porque
     # los servicios de "pastebin" gratuitos tienen limitaciones, a veces muy bajas.
@@ -1002,9 +1061,11 @@ def report_send(item, description='', fatal=False):
     'dumpz': ('0', 'http://dumpz.org/', 'api/dump', 'random', 'code=', '&lexer=text&comment=%s&password=', 
                 'headers', '', '', 'location', '0.99', '15', False, '', '', ''),
     'file.io': ('1', 'https://file.io/', '', 'random', '', 'expires=1w', 
-                'requests', 'json', 'key', '', '99.0', '30', False, '', '.log', ''), 
-    'uploadfiles': ('1', 'https://up.uploadfiles.io/upload', '', 'random', '', '', 
-                'requests', 'json', 'url', '', '99.0', '30', False, None, '', '') 
+                'requests', 'json', 'key', '', '99.0', '30', False, '', '', ''), 
+    'uploadfiles': ('0', 'https://up.ufile.io/v1/upload', '', 'random', '', '', 
+                'curl', 'json', 'url', '', '99.0', '30', False, None, '', {'Referer': 'https://ufile.io/'}), 
+    'anonfiles': ('1', 'https://api.anonfiles.com/upload', 'upload', 'random', '', '', 
+                'requests', 'json', 'data', 'file,url,short', '99.0', '30', False, None, '', '') 
                  }
     pastebin_list_last = ['hastebin', 'ghostbin', 'file.io']            # Estos servicios los dejamos los últimos
     pastebin_one_use = ['file.io']                                      # Servidores de un solo uso y se borra
@@ -1028,7 +1089,10 @@ def report_send(item, description='', fatal=False):
     var = proxytools.logger_disp(debugging=True)
     environment = envtal.list_env()
     if not environment['log_path']:
-        environment['log_path'] = str(filetools.join(xbmc.translatePath("special://logpath/"), 'kodi.log'))
+        if filetools.exists(filetools.join("special://logpath/", 'kodi.log')):
+            environment['log_path'] = str(filetools.join("special://logpath/", 'kodi.log'))
+        else:
+            environment['log_path'] = str(filetools.join("special://logpath/", 'xbmc.log'))
         environment['log_size_bytes'] = str(filetools.getsize(environment['log_path']))
         environment['log_size'] = str(round(float(environment['log_size_bytes']) / (1024*1024), 3))
     
@@ -1051,13 +1115,14 @@ def report_send(item, description='', fatal=False):
         log_data = '%s\n%s\n\n%s' %(log_title, description, log_data)
     
     # Se aleatorizan los nombre de los servidores "patebin"
-    for label_a, value_a in pastebin_list.items():
+    for label_a, value_a in list(pastebin_list.items()):
         if label_a not in pastebin_list_last:
             pastebin_dir.append(label_a)
     random.shuffle(pastebin_dir)
     pastebin_dir.extend(pastebin_list_last)                             # Estos servicios los dejamos los últimos
     
-    #pastebin_dir = ['file.io']                                          # Para pruebas de un servicio
+    #pastebin_dir = ['anonfiles']                                        # Para pruebas de un servicio
+    #log_data = 'TEST PARA PRUEBAS DEL SERVICIO'
         
     # Se recorre la lista de servidores "pastebin" hasta localizar uno activo, con capacidad y disponibilidad
     for paste_name in pastebin_dir:
@@ -1073,9 +1138,9 @@ def report_send(item, description='', fatal=False):
             paste_title = "LOG" + str(random.randrange(1, 999999999))   # Título del LOG
         paste_post1 = pastebin_list[paste_name][4]                      # Parte inicial del POST
         paste_post2 = pastebin_list[paste_name][5]                      # Parte secundaria del POST
-        paste_type = pastebin_list[paste_name][6]                       # Tipo de downloadpage: DATA o HEADERS
+        paste_type = pastebin_list[paste_name][6]                       # Tipo de downloadpage: REQUESTS, DATA o HEADERS
         paste_resp = pastebin_list[paste_name][7]                       # Tipo de respuesta: JSON o datos con REGEX
-        paste_resp_key = pastebin_list[paste_name][8]                   # Si es JSON, etiqueta `primaria con la CLAVE
+        paste_resp_key = pastebin_list[paste_name][8]                   # Si es JSON, etiqueta primaria con la CLAVE
         paste_url = pastebin_list[paste_name][9]                        # Etiqueta primaria para HEADER y sec. para JSON
         paste_file_size = float(pastebin_list[paste_name][10])          # Capacidad en MB del servidor
         if paste_file_size > 0:                                         # Si es 0, la capacidad es ilimitada
@@ -1088,7 +1153,7 @@ def report_send(item, description='', fatal=False):
         paste_host_return_tail = pastebin_list[paste_name][14]          # Sufijo de url para componer la clave para usuario
         paste_headers = {}
         if pastebin_list[paste_name][15]:                               # Headers requeridas por el servidor
-            paste_headers.update(jsontools.load((pastebin_list[paste_name][15])))
+            paste_headers.update(pastebin_list[paste_name][15])
 
         if paste_name in pastebin_one_use:
             pastebin_one_use_msg = '[COLOR red]NO ACCEDA al INFORME: se BORRARÁ[/COLOR]'
@@ -1099,7 +1164,7 @@ def report_send(item, description='', fatal=False):
         try:
             # Se crea el POST con las opciones del servidor "pastebin"
             # Se trata el formato de "requests"
-            if paste_type == 'requests':
+            if paste_type in  ['requests', 'curl']:
                 paste_file = {'file': (paste_title+'.log', log_data)}
                 if paste_post1:
                     paste_file.update(paste_post1)
@@ -1141,6 +1206,48 @@ def report_send(item, description='', fatal=False):
                 data = httptools.downloadpage(paste_host, params=paste_params, file=log_data, 
                             file_name=paste_title+'.log', timeout=paste_timeout, 
                             random_headers=paste_random_headers, headers=paste_headers)
+            
+            elif paste_type == 'curl':
+                paste_sufix = '/create_session'
+                data_post = {'file_size': len(log_data)}
+                logger.error(data_post)
+                data = httptools.downloadpage(paste_host+paste_sufix, params=paste_params, 
+                            ignore_response_code=True, post=data_post, timeout=paste_timeout, alfa_s=True, 
+                            random_headers=paste_random_headers, headers=paste_headers).data
+                data = jsontools.load(data)
+                if not data.get("fuid", ""): 
+                    logger.error("fuid: %s" % str(data))
+                    raise
+                fuid = data["fuid"]
+                
+                paste_sufix = '/chunk'
+                log_data_chunks = log_data
+                i = 0
+                chunk_len = 1024
+                while len(log_data_chunks) > 0:
+                    i += 1
+                    chunk = log_data_chunks[:chunk_len]
+                    log_data_chunks = log_data_chunks[chunk_len:]
+                    data_post = {'fuid': fuid, 'chunk_index': i}
+                    data = httptools.downloadpage(paste_host+paste_sufix, params=paste_params, file=chunk, alfa_s=True, 
+                                ignore_response_code=True, post=data_post, timeout=paste_timeout, CF_test=False, 
+                                random_headers=paste_random_headers, headers=paste_headers).data
+                    if not 'successful' in data:
+                        logger.error("successful: %s" % str(data))
+                        raise
+                
+                data = {}
+                paste_sufix = '/finalise'
+                data_post = {'fuid': fuid, 'total_chunks': i, 'file_name': paste_title+'.log', 'file_type': 'doc'}
+                resp = httptools.downloadpage(paste_host+paste_sufix, params=paste_params, 
+                            ignore_response_code=True, post=data_post, timeout=paste_timeout, 
+                            random_headers=paste_random_headers, headers=paste_headers)
+                if not resp.data:
+                    logger.error("resp.content: %s" % str(resp.data))
+                    raise
+                data['data'] = resp.data
+                data = type('HTTPResponse', (), data)
+        
         except:
             msg = 'Inténtelo más tarde'
             logger.error('Fallo al guardar el informe. ' + msg)
@@ -1155,16 +1262,21 @@ def report_send(item, description='', fatal=False):
                 paste_host_return = ''
             
             # Respuestas a peticiones REQUESTS
-            if paste_type == 'requests':                                # Respuesta de petición tipo "requests"?
-                if paste_resp == 'json':                                                # Respuesta en formato JSON?
+            key = ''
+            if paste_type in ['requests', 'curl']:                              # Respuesta de petición tipo "requests"?
+                if paste_resp == 'json':                                        # Respuesta en formato JSON?
                     if paste_resp_key in data.data:
-                        if not paste_url:
-                            key = jsontools.load(data.data)[paste_resp_key]             # con una etiqueta
-                        else:
-                            key = jsontools.load(data.data)[paste_resp_key][paste_url]  # con dos etiquetas anidadas
-                        item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, 
-                                    paste_host_return_tail)
-                    else:
+                        key = jsontools.load(data.data)[paste_resp_key]
+                        if paste_url and key:                                   # hay etiquetas adicionales?
+                            try:
+                                for key_part in paste_url.split(','):
+                                    key = key[key_part]                         # por cada etiqueta adicional
+                            except:
+                                key = ''
+                        if key:
+                            item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, 
+                                        paste_host_return_tail)
+                    if not key:
                         logger.error('ERROR en formato de retorno de datos. data.data=' + 
                                     str(data.data))
                         continue
@@ -1220,9 +1332,65 @@ def report_send(item, description='', fatal=False):
     return report_menu(item)
     
     
-def call_chrome(item):
+def call_browser(item, lookup=False):
     from lib import generictools
 
-    resultado = generictools.call_chrome(item.url)
+    if lookup:
+        browser, resultado = generictools.call_browser(item.url, lookup=lookup)
+    else:
+        browser, resultado = generictools.call_browser(item.url)
     
-    return resultado
+    return browser, resultado
+
+
+def icon_set_selector(item=None):
+    platformtools.dialog_notification("Alfa", "Obteniendo iconos, por favor espere...")
+    options = list()
+    data = httptools.downloadpage("https://github.com/alfa-addon/media/tree/master/themes").data
+    patron = '<a class="js-navigation-open Link--primary" title="([^"]+)"'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    default = Item(
+            plot = 'El tema por defecto de Alfa',
+            title = 'Por defecto',
+            thumbnail = filetools.join(config.get_runtime_path(), "resources", "media", "themes", "default", "thumb_channels_movie.png")
+              )
+    options.append(default)
+
+    for set_id in matches:
+        logger.info(set_id)
+        path_demo = "https://github.com/alfa-addon/media/raw/master/themes/%s/thumb_channels_movie.png" % set_id
+        path_info = "https://github.com/alfa-addon/media/raw/master/themes/%s/README.md" % set_id
+        opt = Item(
+                plot = httptools.downloadpage(path_info).data,
+                title = set_id.title(),
+                thumbnail = path_demo
+                  )
+        options.append(opt)
+
+    if config.is_xbmc():
+        import xbmcgui
+        new_list = list()
+        for fake_it in options:
+            it = xbmcgui.ListItem(fake_it.title, fake_it.plot)
+            it.setArt({ 'thumb': fake_it.thumbnail, 'fanart': fake_it.fanart })
+            new_list.append(it)
+        options = new_list
+
+    ret = platformtools.dialog_select("Selecciona un Set de iconos", options, useDetails=True)
+    if ret != -1:
+        if ret == 0:
+            config.set_setting("icon_set", "default")
+        else:
+            config.set_setting("icon_set", matches[ret-1])
+
+
+def reset_trakt(item):
+    from core import trakt_tools
+
+    data_path = filetools.join(config.get_data_path(), 'settings_channels', 'trakt_data.json')
+    if filetools.exists(data_path):
+        filetools.remove(data_path)
+        trakt_tools.auth_trakt()
+    else:
+        platformtools.dialog_ok("Alfa", "Aun no existen datos de vinculación con Trakt")

@@ -3,6 +3,14 @@
 # infoplus ventana con información del Item
 # ------------------------------------------------------------
 
+from future import standard_library
+standard_library.install_aliases()
+#from builtins import str
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+from builtins import range
+
 import re
 from threading import Thread
 
@@ -103,7 +111,6 @@ class main(xbmcgui.WindowDialog):
             if not self.item.infoLabels["year"]:
                 self.dialog.close()
                 platformtools.dialog_notification(config.get_localized_string(60471), config.get_localized_string(60472) % tipo)
-                global mainWindow
                 self.close()
                 del mainWindow
                 return
@@ -115,7 +122,6 @@ class main(xbmcgui.WindowDialog):
             if not self.infoLabels["tmdb_id"]:
                 self.dialog.close()
                 platformtools.dialog_notification(config.get_localized_string(60473), config.get_localized_string(60474) % tipo)
-                global mainWindow
                 self.close()
                 del mainWindow
                 return
@@ -170,7 +176,7 @@ class main(xbmcgui.WindowDialog):
         if self.infoLabels["tmdb_id"]:
             otmdb = tmdb.Tmdb(id_Tmdb=self.infoLabels["tmdb_id"], tipo=tipo_busqueda)
             self.infoLabels["images"] = otmdb.result.get("images", {})
-            for key, value in self.infoLabels["images"].items():
+            for key, value in list(self.infoLabels["images"].items()):
                 if not value:
                     self.infoLabels["images"].pop(key)
 
@@ -431,6 +437,7 @@ class main(xbmcgui.WindowDialog):
             while thread1.isAlive():
                 xbmc.sleep(100)
         for idp, peli, thumb in self.recomendaciones:
+            if thumb is None: continue
             if self.item.contentType == "movie":
                 peli = "[COLOR yellow][B]" + peli + "[/B][/COLOR]"
             else:
@@ -533,8 +540,7 @@ class main(xbmcgui.WindowDialog):
 
     def onAction(self, action):
         if action == ACTION_PREVIOUS_MENU or action == ACTION_GESTURE_SWIPE_LEFT or action == 110 or action == 92:
-            global mainWindow
-            xbmc.executebuiltin('xbmc.PlayMedia(Stop)')
+            xbmc.executebuiltin('PlayMedia(Stop)')
             self.close()
             mainWindow.pop()
             if not mainWindow:
@@ -1212,8 +1218,6 @@ class related(xbmcgui.WindowDialog):
 def busqueda_global(item, infoLabels, org_title=False):
     logger.info()
 
-    logger.debug(item)
-
     if item.contentType != "movie":
         cat = ["serie"]
     else:
@@ -1277,7 +1281,8 @@ class Busqueda(xbmcgui.WindowXMLDialog):
             dialog = platformtools.dialog_progress_bg(config.get_localized_string(60496), config.get_localized_string(60497))
             selectitem = self.getControl(6).getSelectedItem()
             item = Item().fromurl(selectitem.getProperty("item_copy"))
-            exec "import channels." + item.channel + " as channel"
+            #exec("import channels." + item.channel + " as channel")
+            channel = __import__('channels.%s' % item.channel, fromlist=["channels.%s" % item.channel])
             itemlist = getattr(channel, item.action)(item)
             global SearchWindows
             window = GlobalSearch('DialogSelect.xml', config.get_runtime_path(), itemlist=itemlist, dialog=dialog)
@@ -1336,7 +1341,8 @@ class GlobalSearch(xbmcgui.WindowXMLDialog):
         if (action == ACTION_SELECT_ITEM or action == 100) and self.getFocusId() == 6:
             selectitem = self.getControl(6).getSelectedItem()
             item = Item().fromurl(selectitem.getProperty("item_copy"))
-            exec "import channels." + item.channel + " as channel"
+            #exec("import channels." + item.channel + " as channel")
+            channel = __import__('channels.%s' % item.channel, fromlist=["channels.%s" % item.channel])
             ventana_error = None
             if item.action == "play":
                 if hasattr(channel, 'play'):
@@ -1543,7 +1549,7 @@ class ActorInfo(xbmcgui.WindowDialog):
                         threads[i] = t
 
                     while threads:
-                        for key, t in threads.items():
+                        for key, t in list(threads.items()):
                             if not t.isAlive():
                                 threads.pop(key)
                         xbmc.sleep(100)
@@ -1960,10 +1966,10 @@ class images(xbmcgui.WindowDialog):
         self.mal = kwargs.get("mal", [])
 
         self.imagenes = []
-        for key, value in self.tmdb.iteritems():
+        for key, value in self.tmdb.items():
             for detail in value:
                 self.imagenes.append('http://image.tmdb.org/t/p/w342' + detail["file_path"])
-        for tipo, child in self.fanartv.iteritems():
+        for tipo, child in self.fanartv.items():
             for imagen in child:
                 self.imagenes.append(imagen["url"].replace("/fanart/", "/preview/"))
         for imagen, title in self.fa:
@@ -2245,7 +2251,7 @@ class Trailer(xbmcgui.WindowXMLDialog):
         elif action == ACTION_SELECT_ITEM:
             xbmc.executebuiltin('PlayerControl(Play)')
         elif action == 199 or action == ACTION_SHOW_FULLSCREEN or action == 9:
-            xbmc.log("tuprimalafachaaa")
+            logger.info("tuprimalafachaaa", force=True)
         if action == 13:
             self.close()
 
@@ -2330,7 +2336,7 @@ def fanartv(item, infoLabels, images={}):
             url = "http://webservice.fanart.tv/v3/tv/%s?api_key=cab16e262d72fea6a6843d679aa10300" % id_search
         data = jsontools.load(httptools.downloadpage(url, headers=headers).data)
         if data and not "error message" in data:
-            for key, value in data.items():
+            for key, value in list(data.items()):
                 if key not in ["name", "tmdb_id", "imdb_id", "thetvdb_id"]:
                     images[key] = value
     return images
@@ -2350,10 +2356,10 @@ def get_fonts(skin):
     if not fonts:
         from core import filetools
         try:
-            data_font = filetools.read(xbmc.translatePath(filetools.join('special://skin/1080i', 'Font.xml')), "r")
+            data_font = filetools.read(filetools.join('special://skin/1080i', 'Font.xml'), "r")
         except:
             try:
-                data_font = filetools.read(xbmc.translatePath(filetools.join('special://skin/720p', 'Font.xml')), "r")
+                data_font = filetools.read(filetools.join('special://skin/720p', 'Font.xml'), "r")
             except:
                 pass
 
@@ -2402,15 +2408,14 @@ def translate(to_translate, to_language="auto", language="auto", i=0, bio=[]):
         Example:
         print(translate("salut tu vas bien?", "en"))
         hello you alright?'''
-    import urllib2
-    import urllib
+    import urllib.request, urllib.error, urllib.parse
     agents = {
         'User-Agent': "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30)"}
     before_trans = 'class="t0">'
-    to_translate = urllib.quote(to_translate.replace(" ", "+")).replace("%2B", "+")
+    to_translate = urllib.parse.quote(to_translate.replace(" ", "+")).replace("%2B", "+")
     link = "http://translate.google.com/m?hl=%s&sl=%s&q=%s" % (to_language, language, to_translate)
-    request = urllib2.Request(link, headers=agents)
-    page = urllib2.urlopen(request).read()
+    request = urllib.request.Request(link, headers=agents)
+    page = urllib.request.urlopen(request).read()
     result = page[page.find(before_trans) + len(before_trans):]
     result = result.split("<")[0]
     result = re.sub(r"d>|nn", "", result)

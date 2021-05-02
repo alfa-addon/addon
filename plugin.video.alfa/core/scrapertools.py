@@ -3,6 +3,21 @@
 # Scraper tools for reading and processing web elements
 # --------------------------------------------------------------------------------
 
+#from future import standard_library
+#standard_library.install_aliases()
+#from builtins import str
+#from builtins import chr
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urllib
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+    import urlparse
+
 import re
 import time
 
@@ -60,9 +75,12 @@ def unescape(text):
             # character reference
             try:
                 if text[:3] == "&#x":
-                    return unichr(int(text[3:-1], 16)).encode("utf-8")
+                    text = unichr(int(text[3:-1], 16)).encode("utf-8")
                 else:
-                    return unichr(int(text[2:-1])).encode("utf-8")
+                    text = unichr(int(text[2:-1])).encode("utf-8")
+                if PY3 and isinstance(text, bytes):
+                    text = text.decode("utf-8")
+                return text
 
             except ValueError:
                 logger.error("error de valor")
@@ -70,8 +88,13 @@ def unescape(text):
         else:
             # named entity
             try:
-                import htmlentitydefs
+                if PY3:
+                    import html.entities as htmlentitydefs
+                else:
+                    import htmlentitydefs
                 text = unichr(htmlentitydefs.name2codepoint[text[1:-1]]).encode("utf-8")
+                if PY3 and isinstance(text, bytes):
+                    text = text.decode("utf-8")
             except KeyError:
                 logger.error("keyerror")
                 pass
@@ -79,7 +102,7 @@ def unescape(text):
                 pass
         return text  # leave as is
 
-    return re.sub("&#?\w+;", fixup, text)
+    return re.sub("&#?\w+;", fixup, str(text))
 
     # Convierte los codigos html "&ntilde;" y lo reemplaza por "ñ" caracter unicode utf-8
 
@@ -89,15 +112,24 @@ def decodeHtmlentities(string):
     entity_re = re.compile("&(#?)(\d{1,5}|\w{1,8});")
 
     def substitute_entity(match):
-        from htmlentitydefs import name2codepoint as n2cp
+        if PY3:
+            from html.entities import name2codepoint as n2cp
+        else:
+            from htmlentitydefs import name2codepoint as n2cp
         ent = match.group(2)
         if match.group(1) == "#":
-            return unichr(int(ent)).encode('utf-8')
+            ent = unichr(int(ent)).encode('utf-8')
+            if PY3 and isinstance(ent, bytes):
+                ent = ent.decode("utf-8")
+            return ent
         else:
             cp = n2cp.get(ent)
 
             if cp:
-                return unichr(cp).encode('utf-8')
+                cp = unichr(cp).encode('utf-8')
+                if PY3 and isinstance(cp, bytes):
+                    cp = cp.decode("utf-8")
+                return cp
             else:
                 return match.group()
 
@@ -297,8 +329,8 @@ def remove_show_from_title(title, show):
     if slugify(title).startswith(slugify(show)):
 
         # Convierte a unicode primero, o el encoding se pierde
-        title = unicode(title, "utf-8", "replace")
-        show = unicode(show, "utf-8", "replace")
+        if not PY3: title = unicode(title, "utf-8", "replace")
+        if not PY3: show = unicode(show, "utf-8", "replace")
         title = title[len(show):].strip()
 
         if title.startswith("-"):
@@ -309,22 +341,22 @@ def remove_show_from_title(title, show):
 
         # Vuelve a utf-8
         title = title.encode("utf-8", "ignore")
+        if PY3 and isinstance(title, bytes):
+            title = title.decode("utf-8")
         show = show.encode("utf-8", "ignore")
+        if PY3 and isinstance(show, bytes):
+            show = show.decode("utf-8")
 
     return title
 
 
 def get_filename_from_url(url):
-    import urlparse
+
     parsed_url = urlparse.urlparse(url)
     try:
-        filename = parsed_url.path
+        filename = parsed_url[2]
     except:
-        # Si falla es porque la implementación de parsed_url no reconoce los atributos como "path"
-        if len(parsed_url) >= 4:
-            filename = parsed_url[2]
-        else:
-            filename = ""
+        filename = ""
 
     if "/" in filename:
         filename = filename.split("/")[-1]
@@ -332,19 +364,77 @@ def get_filename_from_url(url):
     return filename
 
 
-# def get_domain_from_url(url):
-#     import urlparse
-#     parsed_url = urlparse.urlparse(url)
-#     try:
-#         filename = parsed_url.netloc
-#     except:
-#         # Si falla es porque la implementación de parsed_url no reconoce los atributos como "path"
-#         if len(parsed_url) >= 4:
-#             filename = parsed_url[1]
-#         else:
-#             filename = ""
-#
-#     return filename
+def get_domain_from_url(url):
+
+    parsed_url = urlparse.urlparse(url)
+    try:
+        domain = parsed_url[1]
+    except:
+        domain = ""
+
+    return domain
+
+def urlencode(params):
+    encoded_url = ''
+    if isinstance(params, dict):
+        encoded_url = urllib.urlencode(params)
+    return encoded_url
+
+def urldecode(url):
+    params = dict()
+    query_data = urlparse.urlparse(url).query
+    if query_data:
+        params = dict(urlparse.parse_qsl(query_data))
+
+    return params
+
+def unquote(url, plus=False):
+    if plus:
+        url = urllib.unquote_plus(url)
+    else:
+        url = urllib.unquote(url)
+    
+    return url
+
+def quote(url, plus=False):
+    if plus:
+        url = urllib.quote_plus(url)
+    else:
+        url = urllib.quote(url)
+    return url
+
+def remove_format(string):
+    #logger.info()
+    string = string.rstrip()
+    string = re.sub(r'(\[|\[\/)(?:color|COLOR|b|B|i|I).*?\]', '', string)
+    string = re.sub(r'\:|\.|\-|\_|\,|\¿|\?|\¡|\!|\"|\'|\&', ' ', string)
+    string = re.sub(r'\(.*?\).*|\[.*?\].*', ' ', string)
+    string = re.sub(r'\s+', ' ', string).strip()
+    #logger.debug('sale de remove: %s' % string)
+    return string
+
+def normalize(string):
+    import unicodedata
+    if not PY3 and isinstance(string, str):
+        string = string.decode('utf-8')
+    normal = ''.join((c for c in unicodedata.normalize('NFD', unicode(string)) if unicodedata.category(c) != 'Mn'))
+    return normal
+
+def simplify(title, year):
+    
+    if not year or year == '-':
+        year = find_single_match(title, r"^.+?\s*(?:(\(\d{4}\)$|\[\d{4}\]))")
+        if year:
+            title = title.replace(year, "").strip()
+            year = year[1:-1]
+        else:
+            year = '-'
+    
+    title = remove_format(title)
+    #title = normalize(title)
+
+    #logger.error(title.lower())
+    return title.lower(), year
 
 
 def get_season_and_episode(title):
@@ -366,7 +456,7 @@ def get_season_and_episode(title):
     """
     filename = ""
 
-    patrons = ["(\d+)\s*[x-]\s*(\d+)", "(\d+)\s*×\s*(\d+)", "(?:s|t)(\d+)e(\d+)",
+    patrons = ["(\d+)\s*[x-]\s*(\d+)", "(\d+)\s*×\s*(\d+)", "(?:s|t)(\d+) ?e(\d+)",
                "(?:season|temp\w*)\s*(\d+)\s*(?:capitulo|epi|episode\w*)\s*(\d+)"]
 
     for patron in patrons:
@@ -381,6 +471,151 @@ def get_season_and_episode(title):
         except:
             pass
 
-    logger.info("'" + title + "' -> '" + filename + "'")
+    # logger.info("'" + title + "' -> '" + filename + "'")
 
     return filename
+
+
+def decode_utf8_error(path):
+    """
+    Convierte una cadena de texto en utf8 que tiene errores de conversión
+    reemplazando los caracteres que no estén permitidos en utf-8 por los reales
+    @type: str
+    @param path: ruta
+    @rtype: str
+    @return: ruta codificado en UTF-8
+    """
+    
+    utf8_error_table = [
+                        ('€', '\xE2\x82\xAC'), 
+                        ('‚', '\xE2\x80\x9A'), 
+                        ('ƒ', '\xC6\x92'), 
+                        ('„', '\xE2\x80\x9E'), 
+                        ('…', '\xE2\x80\xA6'), 
+                        ('†', '\xE2\x80\xA0'), 
+                        ('‡', '\xE2\x80\xA1'), 
+                        ('ˆ', '\xCB\x86'), 
+                        ('‰', '\xE2\x80\xB0'), 
+                        ('Š', '\xC5\xA0'), 
+                        ('‹', '\xE2\x80\xB9'), 
+                        ('Œ', '\xC5\x92'), 
+                        ('Ž', '\xC5\xBD'), 
+                        ('‘', '\xE2\x80\x98'), 
+                        ('’', '\xE2\x80\x99'), 
+                        ('“', '\xE2\x80\x9C'), 
+                        ('”', '\xE2\x80\x9D'), 
+                        ('•', '\xE2\x80\xA2'), 
+                        ('–', '\xE2\x80\x93'), 
+                        ('—', '\xE2\x80\x94'), 
+                        ('˜', '\xCB\x9C'), 
+                        ('™', '\xE2\x84\xA2'), 
+                        ('š', '\xC5\xA1'), 
+                        ('›', '\xE2\x80\xBA'), 
+                        ('œ', '\xC5\x93'), 
+                        ('ž', '\xC5\xBE'), 
+                        ('Ÿ', '\xC5\xB8'), 
+                        ('¡', '\xC2\xA1'), 
+                        ('¢', '\xC2\xA2'), 
+                        ('£', '\xC2\xA3'), 
+                        ('¤', '\xC2\xA4'), 
+                        ('¥', '\xC2\xA5'), 
+                        ('¦', '\xC2\xA6'), 
+                        ('§', '\xC2\xA7'), 
+                        ('¨', '\xC2\xA8'), 
+                        ('©', '\xC2\xA9'), 
+                        ('ª', '\xC2\xAA'), 
+                        ('«', '\xC2\xAB'), 
+                        ('¬', '\xC2\xAC'), 
+                        ('­', '\xC2\xAD'), 
+                        ('®', '\xC2\xAE'), 
+                        ('¯', '\xC2\xAF'), 
+                        ('°', '\xC2\xB0'), 
+                        ('±', '\xC2\xB1'), 
+                        ('²', '\xC2\xB2'), 
+                        ('³', '\xC2\xB3'), 
+                        ('´', '\xC2\xB4'), 
+                        ('µ', '\xC2\xB5'), 
+                        ('¶', '\xC2\xB6'), 
+                        ('·', '\xC2\xB7'), 
+                        ('¸', '\xC2\xB8'), 
+                        ('¹', '\xC2\xB9'), 
+                        ('º', '\xC2\xBA'), 
+                        ('»', '\xC2\xBB'), 
+                        ('¼', '\xC2\xBC'), 
+                        ('½', '\xC2\xBD'), 
+                        ('¾', '\xC2\xBE'), 
+                        ('¿', '\xC2\xBF'), 
+                        ('À', '\xC3\x80'), 
+                        ('Á', '\xC3\x81'), 
+                        ('Â', '\xC3\x82'), 
+                        ('Ã', '\xC3\x83'), 
+                        ('Ä', '\xC3\x84'), 
+                        ('Å', '\xC3\x85'), 
+                        ('Æ', '\xC3\x86'), 
+                        ('Ç', '\xC3\x87'), 
+                        ('È', '\xC3\x88'), 
+                        ('É', '\xC3\x89'), 
+                        ('Ê', '\xC3\x8A'), 
+                        ('Ë', '\xC3\x8B'), 
+                        ('Ì', '\xC3\x8C'), 
+                        ('Í', '\xC3\x8D'), 
+                        ('Î', '\xC3\x8E'), 
+                        ('Ï', '\xC3\x8F'), 
+                        ('Ð', '\xC3\x90'), 
+                        ('Ñ', '\xC3\x91'), 
+                        ('Ò', '\xC3\x92'), 
+                        ('Ó', '\xC3\x93'), 
+                        ('Ô', '\xC3\x94'), 
+                        ('Õ', '\xC3\x95'), 
+                        ('Ö', '\xC3\x96'), 
+                        ('×', '\xC3\x97'), 
+                        ('Ø', '\xC3\x98'), 
+                        ('Ù', '\xC3\x99'), 
+                        ('Ú', '\xC3\x9A'), 
+                        ('Û', '\xC3\x9B'), 
+                        ('Ü', '\xC3\x9C'), 
+                        ('Ý', '\xC3\x9D'), 
+                        ('Þ', '\xC3\x9E'), 
+                        ('ß', '\xC3\x9F'), 
+                        ('à', '\xC3\xA0'), 
+                        ('á', '\xC3\xA1'), 
+                        ('â', '\xC3\xA2'), 
+                        ('ã', '\xC3\xA3'), 
+                        ('ä', '\xC3\xA4'), 
+                        ('å', '\xC3\xA5'), 
+                        ('æ', '\xC3\xA6'), 
+                        ('ç', '\xC3\xA7'), 
+                        ('è', '\xC3\xA8'), 
+                        ('é', '\xC3\xA9'), 
+                        ('ê', '\xC3\xAA'), 
+                        ('ë', '\xC3\xAB'), 
+                        ('ì', '\xC3\xAC'), 
+                        ('í', '\xC3\xAD'), 
+                        ('î', '\xC3\xAE'), 
+                        ('ï', '\xC3\xAF'), 
+                        ('ð', '\xC3\xB0'), 
+                        ('ñ', '\xC3\xB1'), 
+                        ('ò', '\xC3\xB2'), 
+                        ('ó', '\xC3\xB3'), 
+                        ('ô', '\xC3\xB4'), 
+                        ('õ', '\xC3\xB5'), 
+                        ('ö', '\xC3\xB6'), 
+                        ('÷', '\xC3\xB7'), 
+                        ('ø', '\xC3\xB8'), 
+                        ('ù', '\xC3\xB9'), 
+                        ('ú', '\xC3\xBA'), 
+                        ('û', '\xC3\xBB'), 
+                        ('ü', '\xC3\xBC'), 
+                        ('ý', '\xC3\xBD'), 
+                        ('þ', '\xC3\xBE'), 
+                        ('ÿ', '\xC3\xBF')
+                        ]
+
+    if path:
+        try:
+            for char_right, chars_wrong in utf8_error_table:
+                path = path.replace(chars_wrong, char_right)
+        except:
+            pass
+        
+    return path

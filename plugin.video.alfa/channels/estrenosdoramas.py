@@ -3,6 +3,11 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the BDamian (Based on channels from Alfa Develop Group) -*-
 
+from builtins import map
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
 
 from channels import autoplay
@@ -17,13 +22,130 @@ from platformcode import config, logger
 from channelselector import get_thumb
 import ast
 
+import time
+import base64
+
 host = 'https://www.estrenosdoramas.net/'
 
 IDIOMAS = {'Latino': 'LAT', 'Vo':'VO', 'Vose': 'VOSE'}
 IDIOMA = "no filtrar"
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['openload', 'streamango', 'netutv', 'okru', 'mp4upload']
+
+source_headers = dict()
+source_headers["Content-Type"] = "application/x-www-form-urlencoded; charset=UTF-8"
+source_headers["X-Requested-With"] = "XMLHttpRequest"
+source_headers["Origin"] = "https://repro3.estrenosdoramas.us"
+
+
+import requests
+import re
+import struct
+
+
+PATRON_REGEX = "\('([^']+)','([^\']?(?:\\.|[^\'])*)','([^\']?(?:\\.|[^\'])*)','([^\']?(?:\\.|[^\'])*)'"
+PLAYER_SRC = 'test'
+
+
+def set_player_src(player_src):
+    # logger.info(player_src)
+    global PLAYER_SRC
+    PLAYER_SRC = player_src
+
+
+def decrypt(data, index=0):
+    
+    index += 1
+
+    matches = re.compile(PATRON_REGEX, re.DOTALL) .findall(str(data))
+
+    log = 'Matches (%s): (%s)'%(index, len(matches))
+    logger.info(log)
+    # logger.info(data)
+    if len(matches) > 0:
+        for w,i,s,e in matches:
+            if not i and not s and not e:
+                secret = decodeone(w)
+            else:
+                # logger.info(str(data))
+                secret = decode(w,i,s,e)
+                if "jwplayer" in secret:
+                    logger.info('player found')
+                    secret = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", secret)
+                    set_player_src(secret)
+                    # logger.info(data1)
+            decrypt(secret, index)
+    # else:
+    #     logger.info(str(data))
+    
+    return
+
+
+def utf16_decimals(char):
+    # encode the character as big-endian utf-16
+    encoded_char = char.encode('utf-16-be')
+
+    # convert every 2 bytes to an integer
+    decimals = []
+    for i in range(0, len(encoded_char), 2):
+        chunk = encoded_char[i:i+2]
+        decimals.append(struct.unpack('>H', chunk)[0])
+
+    return decimals
+
+
+def decode(w, i, s, e):
+    lIll = 0
+    ll1I = 0
+    Il1l = 0
+    ll1l = []
+    l1lI = []
+
+    while len(w) + len(i) + len(s) + len(e) != len(ll1l) + len(l1lI) + len(e):
+        if lIll < 5: 
+            l1lI.append(w[lIll])
+        elif lIll < len(w):
+            ll1l.append(w[lIll])
+        lIll += 1
+
+        if ll1I < 5:
+            l1lI.append(i[ll1I])
+        elif ll1I < len(i):
+            ll1l.append(i[ll1I])
+        ll1I += 1
+
+        if Il1l < 5:
+            l1lI.append(s[Il1l])
+        elif Il1l < len(s):
+            ll1l.append(s[Il1l])
+        Il1l += 1
+
+    lI1l = ''.join(ll1l)
+    I1lI = ''.join(l1lI)
+    ll1I = 0
+    l1ll = []
+
+    for i in range(0,len(ll1l),2):
+        lIll = i
+        ll11 = -1
+        nchar = utf16_decimals(I1lI[ll1I])[0]
+        if nchar % 2:
+            ll11 = 1
+        l1ll.append( str(chr(int(lI1l[lIll:lIll+2], 36) - ll11)) )
+        ll1I += 1
+        if ll1I == len(l1lI): 
+            ll1I = 0
+        
+    return ''.join(l1ll)
+
+
+def decodeone(w):
+    i = ''
+    for s in range(0,len(w),2):
+        i +=  str(chr(int(w[s:s+2], 36))) 
+    return i
+
 
 def get_source(url, referer=None):
     logger.info()
@@ -33,6 +155,7 @@ def get_source(url, referer=None):
         data = httptools.downloadpage(url, headers={'Referer':referer}).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
+
 
 def mainlist(item):
     logger.info()
@@ -105,7 +228,10 @@ def list_all(item):
         if scrapedtitle.startswith("Pelicula") or item.type == "movie":
             new_item.action = 'findvideos'
             new_item.contentTitle = title
-        elif 'search' in item.url:
+        # elif 'search' in item.url:
+        #     new_item.contentSerieName=scrapedtitle
+        #     new_item.action = 'findvideos'
+        elif 'capitulo' in scrapedurl:
             new_item.contentSerieName=scrapedtitle
             new_item.action = 'findvideos'
         else:
@@ -183,7 +309,8 @@ def findvideos(item):
     video_matches = re.compile(video_regex, re.DOTALL).findall(data)
 
     # for option, scrapedurl in matches:
-    for option, scrapedurl in map(None, option_matches, video_matches):
+    # for option, scrapedurl in map(None, option_matches, video_matches):
+    for option, scrapedurl in zip(option_matches, video_matches):
         if scrapedurl is None:
             continue
         
@@ -201,6 +328,7 @@ def findvideos(item):
         source_headers = dict()
         source_headers["Content-Type"] = "application/x-www-form-urlencoded; charset=UTF-8"
         source_headers["X-Requested-With"] = "XMLHttpRequest"
+        # logger.info("{0}: {1}".format(option, scrapedurl))
         if scrapedurl.find("https://repro") != 0:
             logger.info("Caso 0: url externa")
             url = scrapedurl
@@ -208,27 +336,51 @@ def findvideos(item):
         elif scrapedurl.find("pi76823.php") > 0:
             logger.info("Caso 1")
             source_data = get_source(scrapedurl)
-            source_regex = 'post\( "(.*?)", { acc: "(.*?)", id: \'(.*?)\', tk: \'(.*?)\' }'
+            source_regex = 'post\( "(.*?)", { key: \'(.*?)\''
             source_matches = re.compile(source_regex, re.DOTALL).findall(source_data)
-            for source_page, source_acc, source_id, source_tk in source_matches:
-                source_url = scrapedurl[0:scrapedurl.find("pi76823.php")] + source_page
-                source_result = httptools.downloadpage(source_url, post='acc=' + source_acc + '&id=' + 
-                                                       source_id + '&tk=' + source_tk, headers=source_headers)
-                if source_result.code == 200:
-                    source_json = jsontools.load(source_result.data)
-                    itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))
+            for source_page, source_key in source_matches:
+                base_url = scrapedurl.rsplit('/', 1)[0] + '/'
+                source_headers["Origin"] = base_url
+                source_url = base_url + source_page
+                # logger.info(source_key)
+                token_get = str(int(round(time.time())))
+                token = base64.b64encode(token_get.encode("utf-8"))
+                source_result = httptools.downloadpage(source_url, post='key=' + source_key 
+                                                    + '&token=' + str(token), headers=source_headers)
+                source_json = source_result.json
+                if source_json["link"]:
+                    video_url = base64.b64decode(source_json["link"])
+                    # logger.info(video_url)
+                    itemlist.append(Item(channel=item.channel, title=option, url=video_url, 
+                                         action='play', language=IDIOMA))
         elif scrapedurl.find("pi7.php") > 0:
             logger.info("Caso 2")
             source_data = get_source(scrapedurl)
-            source_regex = 'post\( "(.*?)", { acc: "(.*?)", id: \'(.*?)\', tk: \'(.*?)\' }'
-            source_matches = re.compile(source_regex, re.DOTALL).findall(source_data)
-            for source_page, source_acc, source_id, source_tk in source_matches:
-                source_url = scrapedurl[0:scrapedurl.find("pi7.php")] + source_page
-                source_result = httptools.downloadpage(source_url, post='acc=' + source_acc + '&id=' + 
-                                                       source_id + '&tk=' + source_tk, headers=source_headers)
-                if source_result.code == 200:
-                    source_json = jsontools.load(source_result.data)
-                    itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))
+            logger.info(scrapedurl)
+
+            global PLAYER_SRC
+            PLAYER_SRC = ''
+            decrypt(source_data)
+            if PLAYER_SRC:
+                # logger.info(PLAYER_SRC)
+                source_regex = 'post\(\s?"(.*?)",\s?{\s?key: \'(.*?)\''
+                source_matches = re.compile(source_regex, re.DOTALL).findall(PLAYER_SRC)
+                # logger.info(source_data)
+                for source_page, source_key in source_matches:
+                    base_url = scrapedurl.rsplit('/', 1)[0] + '/'
+                    source_headers["Origin"] = base_url
+                    source_url = base_url + source_page
+                    # logger.info(source_key)
+                    token_get = str(int(round(time.time())))
+                    token = base64.b64encode(token_get.encode("utf-8"))
+                    source_result = httptools.downloadpage(source_url, post='key=' + source_key 
+                                                        + '&token=' + str(token), headers=source_headers)
+                    source_json = source_result.json
+                    if source_json["link"]:
+                        video_url = base64.b64decode(source_json["link"])
+                        # logger.info(video_url)
+                        itemlist.append(Item(channel=item.channel, title=option, url=video_url, 
+                                            action='play', language=IDIOMA))
         elif scrapedurl.find("reproducir120.php") > 0:
             logger.info("Caso 3")
             source_data = get_source(scrapedurl)
@@ -265,7 +417,8 @@ def findvideos(item):
                                                        videoidn + '&tk=' + tokensn, headers=source_headers)
                 if source_result.code == 200:
                     source_json = jsontools.load(source_result.data)
-                    itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))
+                    if source_json['urlremoto']: 
+                        itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))
         else:
             logger.info("Caso nuevo")      
 
@@ -287,7 +440,6 @@ def findvideos(item):
 
 def search(item, texto):
     logger.info()
-    import urllib
     itemlist = []
     texto = texto.replace(" ", "+")
     item.url = item.url + texto

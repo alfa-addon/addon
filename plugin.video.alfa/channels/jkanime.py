@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import division
+from builtins import range
+from past.utils import old_div
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 from core import httptools
 from core import scrapertools
 from core import servertools
@@ -14,8 +21,8 @@ def mainlist(item):
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="ultimas_series", title="Últimas Series", url=host))
     itemlist.append(Item(channel=item.channel, action="ultimos_episodios", title="Últimos Episodios", url=host))
-    itemlist.append(Item(channel=item.channel, action="p_tipo", title="Listado Alfabetico", url=host, extra="Animes por letra"))
-    itemlist.append(Item(channel=item.channel, action="p_tipo", title="Listado por Genero", url=host, extra="Animes por Genero"))
+    itemlist.append(Item(channel=item.channel, action="p_tipo", title="Listado Alfabetico", url=host, list_type="letras"))
+    itemlist.append(Item(channel=item.channel, action="p_tipo", title="Listado por Genero", url=host, list_type="generos"))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar"))
     return itemlist
 
@@ -24,12 +31,12 @@ def ultimas_series(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, 'Últimos Animes agregados</h3></div>.*?</div><!-- .content-box -->')
-    patron  = '<a title="([^"]+).*?'
-    patron += 'href="([^"]+)".*?'
-    patron += 'src="([^"]+)'
+    data = scrapertools.find_single_match(data, '(?is)Últimos Animes agregados</h4>.*?<div class="col-lg-4 col-md-6 col-sm-8 trending_div">')
+    patron  = '(?is)data-setbg="(.+?)".*?'
+    patron += '<a  href="([^"]+)".*?'
+    patron += '>(.+?)<'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedtitle, scrapedurl, scrapedthumbnail in matches:
+    for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
         itemlist.append(
             Item(channel=item.channel, action="episodios", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
                  show=scrapedtitle))
@@ -57,14 +64,11 @@ def ultimos_episodios(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    #data = scrapertools.find_single_match(data, '<ul class="latestul">(.*?)</ul>')
-    patron = '<a class="odd" title="([^"]+).*?'
-    patron += 'href="([^"]+)".*?'
-    patron += 'img src="([^"]+)".*?'
-    patron += 'Episodio.*?(\d+)'
+    patron = '<a href="([^"]+)" class="bloqq">.+?\n.+?\n.+?<img src="([^"]+)".+?title="([^"]+)"'
+    patron += '.+?\n.+?\n.+?\n.+?\n.+?h6>.+?\n.+?(\d+).+?</'            # url
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedtitle, scrapedurl, scrapedthumbnail, scrapedepisode in matches:
-        title = scrapedtitle + " - Episodio " + scrapedepisode
+    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedepisode in matches:
+        title = "{} - Episodio {}".format(scrapedtitle, scrapedepisode)
         itemlist.append(
             Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
                  show=scrapedtitle))
@@ -76,15 +80,19 @@ def p_tipo(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, '<h3>%s(.*?)</ul>' %item.extra)
-    patron  = 'href="([^"]+)".*?'
-    patron += 'title.*?>([^<]+)</a>'
+    if item.list_type == "letras":
+        data = scrapertools.find_single_match(data, '<div class="letras-box addmenu">(.*?)</ul>')
+        patron  = 'class="letra-link" href="([^"]+)".*?'
+        patron += '>([^<]+)</a>'
+    elif item.list_type == "generos":
+        data = scrapertools.find_single_match(data, 'Animes por Genero(.*?)</ul>')
+        patron  = 'href="([^"]+)".*?'
+        patron += '>([^<]+)</a>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle in matches:
-        if "Por Genero" not in scrapedtitle:
-            itemlist.append(
-                Item(channel=item.channel, action="series", title=scrapedtitle, url=host + scrapedurl,
-                     viewmode="movie_with_plot"))
+        itemlist.append(
+            Item(channel=item.channel, action="series", title=scrapedtitle, url="{}{}".format(host, scrapedurl),
+                 viewmode="movie_with_plot"))
     return itemlist
 
 
@@ -93,15 +101,20 @@ def series(item):
     # Descarga la pagina
     data = httptools.downloadpage(item.url).data
     # Extrae las entradas
-    patron  = '<a title="([^"]+)" href="([^"]+)" rel="nofollow">.*?'
-    patron += 'src="([^"]+)".*?'
-    patron += 'eps-num">([^<]+)</span>.*?'
-    patron += '<p>([^\<]+)</p>'
+    # patron  = '<a title="([^"]+)" href="([^"]+)" rel="nofollow">.*?'
+    # patron += 'src="([^"]+)".*?'
+    # patron += 'eps-num">([^<]+)</span>.*?'
+    # patron += '<p>([^\<]+)</p>'
+    patron = 'class="anime__item">\s+?<a  href="(.+?)".+?'  # url
+    patron += 'data-setbg="(.+?)".+?'                       # thumb
+    patron += 'class="ep".*?>(\d+).+?'                      # epnum
+    patron += 'class="title".*?>(.+?)</.+?'                 # title
+    patron += 'p>(.+?)</'                                   # plot
     matches = scrapertools.find_multiple_matches(data, patron)
     itemlist = []
-    for scrapedtitle, scrapedurl, scrapedthumbnail, scrapedepisode, scrapedplot in matches:
-        title = scrapedtitle + " (" + scrapedepisode + ")"
-        scrapedthumbnail = scrapedthumbnail.replace("thumbnail", "image")
+    for scrapedurl, scrapedthumbnail, scrapedepisode, scrapedtitle, scrapedplot in matches:
+        title = "{} ({})".format(scrapedtitle, scrapedepisode)
+        # scrapedthumbnail = scrapedthumbnail.replace("thumbnail", "image")
         plot = scrapertools.htmlclean(scrapedplot)
         itemlist.append(Item(channel=item.channel, action="episodios", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, fanart=scrapedthumbnail,
                  plot=scrapedplot, show=scrapedtitle))
@@ -115,7 +128,7 @@ def series(item):
         if len(itemlist)>0:
             itemlist.append(
                 Item(channel=item.channel, action="series", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
-                     plot=scrapedplot, folder=True, viewmode="movie_with_plot"))
+                     plot=scrapedplot, viewmode="movie_with_plot"))
     except:
         pass
     return itemlist
@@ -141,7 +154,7 @@ def episodios(item):
         caps_x = item.extra
         caps_x = caps_x.replace(" Eps", "")
         capitulos = int(caps_x)
-        paginas = capitulos / 10 + (capitulos % 10 > 0)
+        paginas = old_div(capitulos, 10) + (capitulos % 10 > 0)
     else:
         paginas, capitulos = get_pages_and_episodes(data)
     for num_pag in range(1, paginas + 1):
@@ -170,25 +183,29 @@ def findvideos(item):
     logger.info()
     itemlist = []
     aux_url = []
+    serv_dict = {'jkfembed': 'https://feurl.com/v/',
+                'jk': '%s/' % host,
+                'jkvmixdrop': 'https://mixdrop.co/e/',
+                'jkokru': 'https://ok.ru/videoembed/'
+                }
     data = httptools.downloadpage(item.url).data
-    list_videos = scrapertools.find_multiple_matches(data, '<iframe class="player_conte" src="([^"]+)"')
+    list_videos = scrapertools.find_multiple_matches(data, '\'<iframe.*? src="([^"]+)"')
     list_down = scrapertools.find_multiple_matches(data, "blank\" href='(.*?)'>Descargar")
     index = 1
     for e in list_videos:
         if e.startswith(host + "/jk") or "um.php" in e:
-            headers = {"Referer": item.url}
-            data = httptools.downloadpage(e, headers=headers).data
-            url = scrapertools.find_single_match(data, '<embed class="player_conte".*?&file=([^\"]+)\"')
-            if "um.php?" in e:
-                url = decode_url(data)
             
-            if not url:
-                url = scrapertools.find_single_match(data, 'source src="([^\"]+)\"')
+            if "um.php?" in e:
+                headers = {"Referer": item.url}
+                data = httptools.downloadpage(e, headers=headers).data
+                url = scrapertools.find_single_match(data, "url: '([^']+)',")
+            
+            else:
+                serv, hash_ = scrapertools.find_single_match(e, r'%s/(\w+).php\?u=(.*)' % host)
+                serv = serv_dict.get(serv, serv)
+                url = serv + hash_
 
-            if not url:
-                url = scrapertools.find_single_match(data, '<iframe class="player_conte" src="([^\"]+)\"')
-
-            if "jkanime" in url:
+            if host in url:
                 url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
 
             if url:
@@ -207,22 +224,21 @@ def findvideos(item):
         videoitem.thumbnail = item.thumbnail
     return itemlist
 
-def btoa(s):
-    import base64
-    return base64.b64encode(s.to_string().value)
+# def btoa(s):
+#     import base64
+#     return base64.b64encode(s.to_string().value)
     
-def decode_url(data):
-    import js2py
-    import re
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    js = scrapertools.find_single_match(data, '<script>(l.*?)</script>')
+# def decode_url(data):
+#     from lib import js2py
+#     import re
+#     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+#     js = scrapertools.find_single_match(data, '<script>(l.*?)</script>')
     
-    part = js.split("+ll")
-    part0 = part[1].split("String['fromCharCode'")[0]
-    part1 = part[1].replace(part0, "")
-    part1 = re.sub(r'(l.*?)\(\(\[', 'window.btoa(([', part1)
-    logger.info("zebiiiii-%s" % part1)
-    context = js2py.EvalJs({ "btoa": btoa });
-    url = "htt%s" % context.eval(part1)
-    logger.info(url)
-    return url
+#     part = js.split("+ll")
+#     part0 = part[1].split("String['fromCharCode'")[0]
+#     part1 = part[1].replace(part0, "")
+#     part1 = re.sub(r'(l.*?)\(\(\[', 'window.btoa(([', part1)
+#     context = js2py.EvalJs({ "btoa": btoa });
+#     url = "htt%s" % context.eval(part1)
+#     logger.info(url)
+#     return url

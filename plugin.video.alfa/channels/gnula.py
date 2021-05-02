@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 from core import httptools
 from core import scrapertools
 from core import servertools
@@ -8,7 +12,7 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = "http://gnula.nu/"
+host = "https://gnula.nu/"
 host_search = "https://cse.google.com/cse/element/v1?rsz=filtered_cse&num=20&hl=es&source=gcsc&gss=.es&sig=c891f6315aacc94dc79953d1f142739e&cx=014793692610101313036:vwtjajbclpq&q=%s&safe=off&cse_tok=%s&googlehost=www.google.com&callback=google.search.Search.csqr6098&nocache=1540313852177&start=0"
 item_per_page = 20
 
@@ -38,6 +42,8 @@ def search(item, texto):
     data = httptools.downloadpage(host).data
     cxv = scrapertools.find_single_match(data, 'cx" value="([^"]+)"')
     data = httptools.downloadpage("https://cse.google.es/cse.js?hpg=1&cx=%s" %cxv).data
+    if PY3 and isinstance(data, bytes):
+        data = "".join(chr(x) for x in bytes(data))
     cse_token = scrapertools.find_single_match(data, 'cse_token": "([^"]+)"')
     if cse_token:                                       #Evita un loop si error
         item.url = host_search %(texto, cse_token)
@@ -57,6 +63,8 @@ def sub_search(item):
     while True:
         response = httptools.downloadpage(item.url)
         data = response.data
+        if PY3 and isinstance(data, bytes):
+            data = "".join(chr(x) for x in bytes(data))
         if len(data) < 500 or not response.sucess:      #Evita un loop si error
             break
 
@@ -156,7 +164,7 @@ def peliculas(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, ignore_response_code=True).data
     #item.plot = scrapertools.find_single_match(data, '<div class="entry">(.*?)<div class="iframes">')
     #item.plot = scrapertools.htmlclean(item.plot).strip()
     #item.contentPlot = item.plot
@@ -175,6 +183,7 @@ def findvideos(item):
         urls = scrapertools.find_multiple_matches(datos, '(?:src|href)="([^"]+)')
         titulo = "Ver en %s " + titulo_opcion
         for url in urls:
+            if "soon" in url:  continue
             itemlist.append(item.clone(action = "play",
                                  title = titulo,
                                  url = url

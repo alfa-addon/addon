@@ -1,14 +1,31 @@
 # -*- coding: utf-8 -*-
 
+#from builtins import str
+from builtins import chr
+from builtins import range
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urlparse
+    from lib import alfaresolver_py3 as alfaresolver
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+    import urlparse
+    from lib import alfaresolver
+
 import base64
 import re
-import urllib
-import urlparse
 
 from core import httptools
 from core import jsontools
 from core import scrapertools
 from core import servertools, tmdb
+from core import channeltools
 from core.item import Item
 from platformcode import config, logger
 from channels import autoplay
@@ -16,7 +33,9 @@ from channels import filtertools
 from platformcode import platformtools
 from channelselector import get_thumb
 
-host = "https://hdfull.io"
+host = config.get_setting("current_host", channel="hdfull")
+host_blacklist = ['https://www2.hdfull.cx/']
+
 
 _silence = config.get_setting('silence_mode', channel='hdfull')
 show_langs = config.get_setting('show_langs', channel='hdfull')
@@ -25,21 +44,21 @@ __modo_grafico__ = config.get_setting('modo_grafico', channel='hdfull')
 account = config.get_setting("logged", channel="hdfull")
 
 IDIOMAS = {'lat': 'LAT', 'spa': 'CAST', 'esp': 'CAST', 'sub': 'VOSE', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
-list_language = IDIOMAS.values()
+list_language = list(set(IDIOMAS.values()))
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP', 'RHDTV', 'DVDSCR']
-list_servers = ['flix555', 'clipwatching', 'verystream', 'gamovideo', 'powvideo', 'streamplay', 'vidoza', 'vidtodo', 'openload', 'uptobox']
+list_servers = ['clipwatching', 'gamovideo', 'vidoza', 'vidtodo', 'openload', 'uptobox']
 
 
 def login():
     logger.info()
-    data = httptools.downloadpage(host).data
-    _logged = '<a href="%s/logout"' % host
+
+    data = agrupa_datos(host, referer=False)
+    _logged = 'id="header-signout" href="/logout"'
     if _logged in data:
         config.set_setting("logged", True, channel="hdfull")
         return True
     else:
         patron = "<input type='hidden' name='__csrf_magic' value=\"([^\"]+)\" />"
-    
         sid = urllib.quote(scrapertools.find_single_match(data, patron))
         user_ = urllib.quote(config.get_setting('hdfulluser', channel='hdfull'))
         pass_ = urllib.quote(config.get_setting('hdfullpassword', channel='hdfull'))
@@ -51,7 +70,9 @@ def login():
             config.set_setting("logged", False, channel="hdfull")
             return False
         post = '__csrf_magic=%s&username=%s&password=%s&action=login' % (sid, user_, pass_)
-        new_data = httptools.downloadpage(host, post=post).data
+
+        new_data = agrupa_datos(host, post=post, referer=False)
+
         if _logged in new_data:
             config.set_setting("logged", True, channel="hdfull")
             return True
@@ -70,13 +91,14 @@ def login():
 
 def settingCanal(item):
     platformtools.show_channel_settings()
-    #platformtools.itemlist_refresh()
-    return
+    platformtools.itemlist_refresh()
+    return 
     
 def logout(item):
     logger.info()
-    dict_cookie = {"domain": "hdfull.me", 'expires': 0}
-    #borramos cookies de hdfullme
+    domain = urlparse.urlparse(host).netloc
+    dict_cookie = {"domain": domain, 'expires': 0}
+    #borramos cookies de hdfull
     httptools.set_cookies(dict_cookie)
 
     #borramos el login
@@ -91,6 +113,76 @@ def logout(item):
                                           sound=False,)
     #y mandamos a configuracion del canal
     return settingCanal(item)
+
+def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_proxy=None, proxy_retries=1):
+    global host
+    
+    headers = {'Referer': host}
+    if 'episodes' in url or 'buscar' in url:
+        headers['Referer'] += 'episodios'
+    
+    if not referer:
+        headers.pop('Referer')
+    # if cookie:
+    #     headers.update('Cookie:' 'language=es')
+    if isinstance(referer, str):
+        headers.update({'Referer': referer})
+    
+    if host in host_blacklist:
+        list_controls, dict_settings = channeltools.get_channel_controls_settings("hdfull")
+        config.set_setting("current_host", dict_settings['current_host'], channel="hdfull")
+        host = dict_settings['current_host']
+    
+    parsed = urlparse.urlparse(host)
+    
+    if len(parsed.path) > 1:
+        parse_url = "https://%s/" % parsed.netloc
+        config.set_setting("current_host", parse_url, channel="hdfull")
+    
+    url = re.sub(r'http(?:s|)://[^/]+/', host, url)
+    page = httptools.downloadpage(url, post=post, headers=headers, ignore_response_code=True, 
+                        proxy=proxy, forced_proxy=forced_proxy, proxy_retries=proxy_retries)
+    
+    if not page.sucess:
+        list_controls, dict_settings = channeltools.get_channel_controls_settings("hdfull")
+        if dict_settings['current_host'] != config.get_setting("current_host", channel="hdfull", default=""):
+            config.set_setting("current_host", dict_settings['current_host'], channel="hdfull")
+            host = dict_settings['current_host']
+            return agrupa_datos(url, post=post, referer=referer, json=json, proxy=True, forced_proxy='ProxyWeb', proxy_retries=0)
+    if not page.sucess and not proxy:
+        return agrupa_datos(url, post=post, referer=referer, json=json, proxy=True, forced_proxy='ProxyWeb', proxy_retries=0)
+    
+    new_host = scrapertools.find_single_match(page.data,
+                    r'location.replace\("(http(?:s|)://\w+.hdfull.\w{2,4})')
+
+    backup =  scrapertools.find_single_match(page.data,
+                    r'onclick="redirect\(\)"><strong>(http[^<]+)')
+    if not new_host and backup and 'dominio temporalmente' in page.data:
+        new_host = backup
+    if new_host:
+        
+        if not new_host.endswith('/'):
+            new_host += '/'
+        config.set_setting("current_host", new_host, channel="hdfull")
+        url = re.sub(host, new_host, url)
+
+        host = config.get_setting("current_host", channel="hdfull")
+        
+        return agrupa_datos(url, post=post, referer=referer, json=json)
+    
+    if json:
+        return page.json
+    # if raw:
+    #     return page.data
+    
+    data = page.data
+    if PY3 and isinstance(data, bytes):
+        data = "".join(chr(x) for x in bytes(data))
+    ## Agrupa los datos
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|<!--.*?-->', '', data)
+    data = re.sub(r'\s+', ' ', data)
+    data = re.sub(r'>\s<', '><', data)
+    return data
 
 def mainlist(item):
     logger.info()
@@ -109,7 +201,9 @@ def mainlist(item):
                          thumbnail=get_thumb('tvshows', auto=True), text_bold=True))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
                          thumbnail=get_thumb('search', auto=True), text_bold=True))
-    
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
+
     autoplay.show_option(item.channel, itemlist)
     
     if not account:
@@ -134,51 +228,52 @@ def mainlist(item):
 def menupeliculas(item):
     logger.info()
     itemlist = []
-    
-    itemlist.append(
-        Item(channel=item.channel, action="fichas", title="Últimas Películas",
-             url=host + "/peliculas", text_bold=True,
-             thumbnail=get_thumb('last', auto=True)))
+
     
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Películas Estreno",
-             url=host + "/peliculas-estreno",
+             url=urlparse.urljoin(host, "/peliculas-estreno"),
              text_bold=True, thumbnail=get_thumb('premieres', auto=True)))
     
     itemlist.append(
+        Item(channel=item.channel, action="fichas", title="Últimas Películas",
+             url=urlparse.urljoin(host, "/peliculas"), text_bold=True,
+             thumbnail=get_thumb('last', auto=True)))
+    
+    itemlist.append(
         Item(channel=item.channel, action="fichas", title="Películas Actualizadas",
-             url=host + "/peliculas-actualizadas", text_bold=True,
+             url=urlparse.urljoin(host, "/peliculas-actualizadas"), text_bold=True,
              thumbnail=get_thumb('updated', auto=True)))
    
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Rating IMDB",
-             url=host + "/peliculas/imdb_rating",
+             url=urlparse.urljoin(host, "/peliculas/imdb_rating"),
              text_bold=True, thumbnail=get_thumb('recomended', auto=True)))
     
     itemlist.append(
         Item(channel=item.channel, action="generos", title="Películas por Género",
-             url=host, text_bold=True,
+             url=host, text_bold=True, type='peliculas',
              thumbnail=get_thumb('genres', auto=True)))
     
-    itemlist.append(
-        Item(channel=item.channel, action="fichas", title="ABC",
-             url=host + "/peliculas/abc", text_bold=True,
-             thumbnail=get_thumb('alphabet', auto=True)))
+    # itemlist.append(
+    #     Item(channel=item.channel, action="fichas", title="ABC",
+    #          url=urlparse.urljoin(host, "/peliculas/abc"), text_bold=True,
+    #          thumbnail=get_thumb('alphabet', auto=True)))
     
     if account:
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR dodgerblue][B]Vistas[/B][/COLOR]",
-                             url=host + "/a/my?target=movies&action=seen&start=-28&limit=28",
+                             url=urlparse.urljoin(host, "/a/my?target=movies&action=seen&start=-28&limit=28"),
                              thumbnail=item.thumbnail))
 
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR orange][B]Favoritos[/B][/COLOR]",
-                             url=host + "/a/my?target=movies&action=favorite&start=-28&limit=28",
+                             url=urlparse.urljoin(host, "/a/my?target=movies&action=favorite&start=-28&limit=28"),
                              thumbnail=item.thumbnail))
         
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR dodgerblue][B]Pendientes[/B][/COLOR]",
-                             url=host + "/a/my?target=movies&action=pending&start=-28&limit=28",
+                             url=urlparse.urljoin(host, "/a/my?target=movies&action=pending&start=-28&limit=28"),
                              thumbnail=item.thumbnail))
     return itemlist
 
@@ -190,32 +285,32 @@ def menuseries(item):
     
     itemlist.append(
         Item(channel=item.channel, action="novedades_episodios", title="Episodios Estreno",
-             url=host + "/a/episodes?action=premiere&start=-24&limit=24&elang=ALL", text_bold=True,
+             url=urlparse.urljoin(host, "/a/episodes?action=premiere&start=-24&limit=24&elang=ALL"), text_bold=True,
              thumbnail=get_thumb('newest', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="novedades_episodios", title="Últimos Emitidos",
-             url=host + "/a/episodes?action=latest&start=-24&limit=24&elang=ALLanim", text_bold=True,
+             url=urlparse.urljoin(host, "/a/episodes?action=latest&start=-24&limit=24&elang=ALL"), text_bold=True,
              thumbnail=get_thumb('new episodes', auto=True)))
 
     itemlist.append(
         Item(channel=item.channel, action="novedades_episodios", title="Episodios Anime",
-             url=host + "/a/episodes?action=anime&start=-24&limit=24&elang=ALL", text_bold=True,
+             url=urlparse.urljoin(host, "/a/episodes?action=anime&start=-24&limit=24&elang=ALL"), text_bold=True,
              thumbnail=get_thumb('anime', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="novedades_episodios", title="Episodios Actualizados",
-             url=host + "/a/episodes?action=updated&start=-24&limit=24&elang=ALL", text_bold=True,
+             url=urlparse.urljoin(host, "/a/episodes?action=updated&start=-24&limit=24&elang=ALL"), text_bold=True,
              thumbnail=get_thumb('updated', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Últimas series",
-             url=host + "/series", text_bold=True,
+             url=urlparse.urljoin(host, "/series"), text_bold=True,
              thumbnail=get_thumb('last', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Rating IMDB", 
-             url=host + "/series/imdb_rating", text_bold=True,
+             url=urlparse.urljoin(host, "/series/imdb_rating"), text_bold=True,
              thumbnail=get_thumb('recomended', auto=True)))
     itemlist.append(
-        Item(channel=item.channel, action="generos_series", title="Series por Género",
-             url=host, text_bold=True,
+        Item(channel=item.channel, action="generos", title="Series por Género",
+             url=host, text_bold=True, type='series',
              thumbnail=get_thumb('genres', auto=True)))
     
     itemlist.append(
@@ -229,27 +324,27 @@ def menuseries(item):
     if account:
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR dodgerblue]Siguiendo[/COLOR]",
-                             url=host + "/a/my?target=shows&action=following&start=-28&limit=28", text_bold=True,
+                             url=urlparse.urljoin(host, "/a/my?target=shows&action=following&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
 
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR dodgerblue]Para Ver[/COLOR]",
-                             url=host + "/a/my?target=shows&action=watch&start=-28&limit=28", text_bold=True,
+                             url=urlparse.urljoin(host, "/a/my?target=shows&action=watch&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
 
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR orange]Favoritas[/COLOR]",
-                             url=host + "/a/my?target=shows&action=favorite&start=-28&limit=28", text_bold=True,
+                             url=urlparse.urljoin(host, "/a/my?target=shows&action=favorite&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
 
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR dodgerblue]Pendientes[/COLOR]",
-                             url=host + "/a/my?target=shows&action=pending&start=-28&limit=28", text_bold=True,
+                             url=urlparse.urljoin(host, "/a/my?target=shows&action=pending&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
 
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR dodgerblue]Vistas[/COLOR]",
-                             url=host + "/a/my?target=shows&action=seen&start=-28&limit=28", text_bold=True,
+                             url=urlparse.urljoin(host, "/a/my?target=shows&action=seen&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
     
     return itemlist
@@ -259,11 +354,11 @@ def search(item, texto):
     logger.info()
     
     try:
-        data = agrupa_datos(host)
+        data = agrupa_datos(host, referer=False)
         sid = scrapertools.find_single_match(data, '.__csrf_magic. value="(sid:[^"]+)"')
         item.extra = urllib.urlencode({'__csrf_magic': sid}) + '&menu=search&query=' + texto
         item.title = "Buscar..."
-        item.url = host + "/buscar"
+        item.url = urlparse.urljoin(host,  "/buscar")
         item.texto = texto
         return fichas(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -283,7 +378,7 @@ def series_abc(item):
     for l in az:
         itemlist.append(
             Item(channel=item.channel, action='fichas', title=l, 
-                 url= "%s/series/abc/%s" % (host, l.replace('#', '9')),
+                 url= urlparse.urljoin(host, "/series/abc/%s" %  l.replace('#', '9')),
                  thumbnail=item.thumbnail, page=page, text_bold=True))
     return itemlist
 
@@ -302,21 +397,21 @@ def items_usuario(item):
     post = post.replace("start=" + old_start, "start=" + start)
     next_page = url + "?" + post
     ## Carga las fichas de usuario
-    fichas_usuario = httptools.downloadpage(url, post=post).json
+    fichas_usuario = agrupa_datos(url, post=post, json=True)
     for ficha in fichas_usuario:
         try:
             title = ficha['title']['es'].strip()
         except:
             title = ficha['title']['en'].strip()
         try:
-            title = title.encode('utf-8')
+            if not PY3: title = title.encode('utf-8')
         except:
             pass
         show = title
         try:
-            thumbnail = host + "/thumbs/" + ficha['thumbnail']
+            thumbnail = urlparse.urljoin(host, "/thumbs/" + ficha['thumbnail'])
         except:
-            thumbnail = host + "/thumbs/" + ficha['thumb']
+            thumbnail = urlparse.urljoin(host,  "/thumbs/" + ficha['thumb'])
         thumbnail += '|User-Agent=%s' % httptools.get_user_agent()
         try:
             url = urlparse.urljoin(host, '/serie/' + ficha['permalink']) + "###" + ficha['id'] + ";1"
@@ -395,6 +490,8 @@ def fichas(item):
                                                                                        ' ') + "[/COLOR] sin resultados")]
         else:
             data = s_p[0] + s_p[1]
+    elif 'series/abc' in item.url:
+        data = agrupa_datos(item.url, referer=item.url)
     else:
         data = agrupa_datos(item.url)
 
@@ -459,7 +556,7 @@ def fichas(item):
             #Cuestiones estéticas (TODO probar unify)
             c_t = "darkgrey" 
             
-            tag_type = scrapertools.find_single_match(url, '%s/([^/]+)/' %bus)
+            tag_type = scrapertools.find_single_match(url, '%s([^/]+)/' %bus)
             if tag_type == 'pelicula':
                 c_t = "steelblue"
             title += " [COLOR %s](%s)[/COLOR]" % (c_t, tag_type.capitalize())
@@ -469,7 +566,8 @@ def fichas(item):
             itemlist.append(
                 Item(channel=item.channel, action=action, title=title, url=url,
                      contentSerieName=show, text_bold=True, contentType=contentType,
-                     language=language, infoLabels=infoLabels, thumbnail=thumbnail))
+                     language=language, infoLabels=infoLabels, thumbnail=thumbnail,
+                     context=filtertools.context(item, list_language, list_quality)))
         else:
             itemlist.append(
                 Item(channel=item.channel, action=action, title=title, url=url,
@@ -480,6 +578,10 @@ def fichas(item):
     if next_page_url != "":
         itemlist.append(Item(channel=item.channel, action="fichas", title=">> Página siguiente",
                              url=urlparse.urljoin(item.url, next_page_url), text_bold=True))
+        
+        itemlist.append(Item(channel=item.channel, action="get_page", title=">> Ir a Página...",
+                             url=urlparse.urljoin(item.url, next_page_url), text_bold=True,
+                             thumbnail=get_thumb('add.png'), text_color='turquoise'))
 
     elif item.page != '':
         if item.page + 40 < len(or_matches):
@@ -565,7 +667,7 @@ def episodesxseason(item):
     logger.info()
     itemlist = []
     
-    url = host + "/a/episodes"
+    url = urlparse.urljoin(host, "/a/episodes")
     infoLabels = item.infoLabels
     sid = item.sid
     ssid = item.contentSeasonNumber
@@ -574,7 +676,8 @@ def episodesxseason(item):
     status = check_status()
     
     post = "action=season&start=0&limit=0&show=%s&season=%s" % (sid, ssid)
-    episodes = httptools.downloadpage(url, post=post).json
+    #episodes = httptools.downloadpage(url, post=post).json
+    episodes = agrupa_datos(url, post=post, json=True)
     
     for episode in episodes:
 
@@ -587,7 +690,7 @@ def episodesxseason(item):
         if not thumb:
             thumb = episode['show'].get('thumbnail', '')
         ua = httptools.get_user_agent()
-        thumbnail = "%s/thumbs/%s|User-Agent=%s" % (host, thumb, ua)
+        thumbnail = urlparse.urljoin(host, "/thumbs/%s|User-Agent=%s" % (thumb, ua))
         
         infoLabels['episode'] = episodio
         
@@ -623,6 +726,8 @@ def episodesxseason(item):
                              contentType="episode", language=langs, text_bold=True,
                              infoLabels=infoLabels, thumbnail=thumbnail))
 
+    itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
+
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
     return itemlist
@@ -641,14 +746,15 @@ def novedades_episodios(item):
     start = "%s" % (int(old_start) + 24)
     post = post.replace("start=" + old_start, "start=" + start)
     next_page = url + "?" + post
-    episodes = httptools.downloadpage(url, post=post).json
+    episodes = agrupa_datos(url, post=post, json=True)
+
     for episode in episodes:
         #Fix para thumbs
         thumb = episode['show'].get('thumbnail', '')
         if not thumb:
             thumb = episode.get('thumbnail', '')
         ua = httptools.get_user_agent()
-        thumbnail = "%s/thumbs/%s|User-Agent=%s" % (host, thumb, ua)
+        thumbnail = urlparse.urljoin(host, "/thumbs/%s|User-Agent=%s" % (thumb, ua))
         
         temporada = episode['season']
         episodio = episode['episode']
@@ -673,7 +779,10 @@ def novedades_episodios(item):
             try:
                 title = episode['title']['es'].strip()
             except:
-                title = episode['title']['en'].strip()
+                try:
+                    title = episode['title']['en'].strip()
+                except:
+                    title = ''
         if len(title) == 0: title = "Episodio " + episodio
         
         title = '%s %sx%s: [COLOR greenyellow]%s[/COLOR] %s' % (contentSerieName,
@@ -703,8 +812,15 @@ def novedades_episodios(item):
 def generos(item):
     logger.info()
     itemlist = []
+    
     data = agrupa_datos(item.url)
-    data = scrapertools.find_single_match(data, '<li class="dropdown"><a href="%s/peliculas"(.*?)</ul>' % host)
+    
+    tipo = '(?:series|tv-shows)'
+    if item.type == 'peliculas':
+        tipo = '(?:peliculas|movies)'
+
+    data = scrapertools.find_single_match(data, 
+        '<li class="dropdown"><a href="%s%s"(.*?)</ul>' % (host, tipo))
     patron = '<li><a href="([^"]+)">([^<]+)</a></li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle in matches:
@@ -715,24 +831,6 @@ def generos(item):
         itemlist.append(Item(channel=item.channel, action="fichas", title=title,
                              url=url, text_bold=True, thumbnail=thumbnail))
     return itemlist
-
-
-def generos_series(item):
-    logger.info()
-    itemlist = []
-    data = agrupa_datos(item.url)
-    data = scrapertools.find_single_match(data, '<li class="dropdown"><a href="%s/series"(.*?)</ul>' % host)
-    patron = '<li><a href="([^"]+)">([^<]+)</a></li>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle in matches:
-        title = scrapedtitle.strip()
-        url = urlparse.urljoin(item.url, scrapedurl)
-        thumbnail = item.thumbnail
-        plot = ""
-        itemlist.append(Item(channel=item.channel, action="fichas", title=title,
-                             url=url, text_bold=True, thumbnail=thumbnail))
-    return itemlist
-
 
 def findvideos(item):
     logger.info()
@@ -748,6 +846,7 @@ def findvideos(item):
     ## Vídeos
     id = ""
     type = ""
+    calidad = ""
     if "###" in item.url:
         id = item.url.split("###")[1].split(";")[0]
         type = item.url.split("###")[1].split(";")[1]
@@ -760,12 +859,14 @@ def findvideos(item):
 
         it1.append(Item(channel=item.channel, action="set_status", title=title, url=url_targets,
                         thumbnail=item.thumbnail, contentTitle=item.contentTitle, language=item.language, folder=True))
-
-    data_js = httptools.downloadpage("%s/templates/hdfull/js/jquery.hdfull.view.min.js" % host).data
-    key = scrapertools.find_single_match(data_js, 'JSON.parse\(atob.*?substrings\((.*?)\)')
-
-    data_js = httptools.downloadpage("%s/js/providers.js" % host).data
-    decoded = jhexdecode(data_js).replace("'", '"')
+    js_url =  urlparse.urljoin(host, "/templates/hdfull/js/jquery.hdfull.view.min.js")
+    js_data = agrupa_datos(js_url)
+    
+    data_js_url = urlparse.urljoin(host, "/js/providers.js")
+    data_js = agrupa_datos(data_js_url)
+    
+    decoded = alfaresolver.jhexdecode(data_js)
+    
     providers_pattern = 'p\[(\d+)\]= {"t":"([^"]+)","d":".*?","e":.function.*?,"l":.function.*?return "([^"]+)".*?};'
     providers = scrapertools.find_multiple_matches (decoded, providers_pattern)
     provs = {}
@@ -773,11 +874,9 @@ def findvideos(item):
         provs[provider]=[e,l]
 
     data = agrupa_datos(item.url)
-    data_obf = scrapertools.find_single_match(data, "var ad\s*=\s*'([^']+)'")
-
-    data_decrypt = jsontools.load(obfs(base64.b64decode(data_obf), 126 - int(key)))
+    data_decrypt = jsontools.load(alfaresolver.obfs(data, js_data))
     infolabels = item.infoLabels
-    year = scrapertools.find_single_match(data, '<span>A&ntilde;o:\s*</span>.*?(\d{4})')
+    year = scrapertools.find_single_match(data, '<span>Año:\s*</span>.*?(\d{4})')
     infolabels["year"] = year
     matches = []
     for match in data_decrypt:
@@ -798,7 +897,8 @@ def findvideos(item):
             option1 = 1
 
         idioma = IDIOMAS.get(idioma.lower(), idioma)
-        calidad = unicode(calidad, "utf8").upper().encode("utf8")
+        if not PY3:
+            calidad = unicode(calidad, "utf8").upper().encode("utf8")
         title = option + ": %s [COLOR greenyellow](" + calidad + ")[/COLOR] [COLOR darkgrey](" + idioma + ")[/COLOR]"
         plot = item.plot
         if not item.plot:
@@ -847,7 +947,7 @@ def play(item):
         type = item.url.split("###")[1].split(";")[1]
         item.url = item.url.split("###")[0]
         post = "target_id=%s&target_type=%s&target_status=1" % (id, type)
-        data = httptools.downloadpage(host + "/a/status", post=post).data
+        data = agrupa_datos(urlparse.urljoin(host, "/a/status"), post=post)
     devuelve = servertools.findvideosbyserver(item.url, item.server)
     if devuelve:
         item.url = devuelve[0][1]
@@ -861,14 +961,7 @@ def play(item):
     return [item]
 
 
-def agrupa_datos(url, post=None):
-    
-    data = httptools.downloadpage(url, post=post).data
-    ## Agrupa los datos
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|<!--.*?-->', '', data)
-    data = re.sub(r'\s+', ' ', data)
-    data = re.sub(r'>\s<', '><', data)
-    return data
+
 
 
 def extrae_idiomas(bloqueidiomas, list_language=False):
@@ -918,7 +1011,7 @@ def set_status(item):
         title = "[COLOR darkgrey][B]%s eliminada de Favoritos[/B][/COLOR]"
         path = "/a/favorite"
         post = "like_id=" + id + "&like_type=" + type + "&like_comment=&vote=-1"
-    data = httptools.downloadpage(host + path, post=post).data
+    data = agrupa_datos(urlparse.urljoin(host, path), post=post)
     title = title % item.contentTitle
     platformtools.dialog_ok(item.contentTitle, title)
     
@@ -928,7 +1021,7 @@ def check_status():
     status = ""
     if account:
         try:
-            status = httptools.downloadpage(host + '/a/status/all').json
+            status = agrupa_datos(urlparse.urljoin(host, '/a/status/all'), json=True)
         except:
             pass
             
@@ -959,38 +1052,10 @@ def get_status(status, type, id):
         str = ' '+ str1 + str2
     return str
 
-
-## --------------------------------------------------------------------------------
-## --------------------------------------------------------------------------------
-
-def jhexdecode(t):
-    r = re.sub(r'_\d+x\w+x(\d+)', 'var_' + r'\1', t)
-    r = re.sub(r'_\d+x\w+', 'var_0', r)
-    def to_hx(c):
-        h = int("%s" % c.groups(0), 16)
-        if 19 < h < 160:
-            return chr(h)
-        else:
-            return ""
-    r = re.sub(r'(?:\\|)x(\w{2})', to_hx, r).replace('var ', '')
-    f = eval(scrapertools.find_single_match(r, '\s*var_0\s*=\s*([^;]+);'))
-    for i, v in enumerate(f):
-        r = r.replace('[[var_0[%s]]' % i, "." + f[i])
-        r = r.replace(':var_0[%s]' % i, ":\"" + f[i] + "\"")
-        r = r.replace(' var_0[%s]' % i, " \"" + f[i] + "\"")
-        r = r.replace('(var_0[%s]' % i, "(\"" + f[i] + "\"")
-        r = r.replace('[var_0[%s]]' % i, "." + f[i])
-        if v == "": r = r.replace('var_0[%s]' % i, '""')
-    r = re.sub(r':(function.*?\})', r":'\g<1>'", r)
-    r = re.sub(r':(var[^,]+),', r":'\g<1>',", r)
-    return r
-
-
-def obfs(data, key, n=126):
-    chars = list(data)
-    for i in range(0, len(chars)):
-        c = ord(chars[i])
-        if c <= n:
-            number = (ord(chars[i]) + key) % n
-            chars[i] = chr(number)
-    return "".join(chars)
+def get_page(item):
+    from platformcode import platformtools
+    heading = 'Introduzca nº de la Página'
+    page_num = platformtools.dialog_numeric(0, heading, default="")
+    item.url = re.sub(r'\d+$', page_num, item.url)
+    if page_num:
+        return fichas(item)

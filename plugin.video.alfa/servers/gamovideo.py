@@ -1,28 +1,34 @@
 # -*- coding: utf-8 -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
 import random
 from core import httptools
 from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
-from lib import alfaresolver
+if not PY3: from lib import alfaresolver
+else: from lib import alfaresolver_py3 as alfaresolver
 
 
 ver = random.randint(66, 67)
 headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:%s.0) Gecko/20100101 Firefox/%s.0" % (ver, ver)}
 
 DATA = ''
+ranw = False
+ranv = True
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     
-
-    data = alfaresolver.get_data(page_url, False)
+    data = alfaresolver.get_data(page_url, False, ranw=ranw, ranv=ranv)
     if not "|mp4|" in data:
         dict_cookie = {'domain': '.gamovideo.com', 'expires': 0}
         httptools.set_cookies(dict_cookie)
-        data = alfaresolver.get_data(page_url, False)
+        data = alfaresolver.get_data(page_url, False, ranw=ranw, ranv=ranv)
     
     global DATA
     DATA = data
@@ -40,7 +46,8 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-    data = httptools.downloadpage(page_url, headers=headers).data
+
+    data = DATA
 
     packer = scrapertools.find_single_match(data,
                                             "<script type='text/javascript'>(eval.function.p,a,c,k,e,d..*?)</script>")
@@ -57,7 +64,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         data = ""
         while n < 3 and not data:
             
-            data1 = alfaresolver.get_data(page_url, False)
+            data1 = alfaresolver.get_data(page_url, False, ranw=ranw, ranv=ranv)
             check_c, data = get_gcookie(data1, True)
             if check_c == False:
                 logger.error("Error get gcookie")
@@ -69,13 +76,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     if not mediaurl.startswith(host):
         mediaurl = host + mediaurl
 
-    rtmp_url = scrapertools.find_single_match(data, 'file:"(rtmp[^"]+)"')
-    playpath = scrapertools.find_single_match(rtmp_url, 'mp4:.*$')
-    rtmp_url = rtmp_url.split(playpath)[
-                   0] + " playpath=" + playpath + " swfUrl=http://gamovideo.com/player61/jwplayer.flash.swf"
-
     video_urls = []
-    video_urls.append(["RTMP [gamovideo]", rtmp_url])
+    video_urls.append(["RTMP [gamovideo]", mediaurl])
     video_urls.append([scrapertools.get_filename_from_url(mediaurl)[-4:] + " [gamovideo]", mediaurl])
 
     for video_url in video_urls:

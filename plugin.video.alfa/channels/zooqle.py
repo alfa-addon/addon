@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import re
 import sys
-import urllib
-import urlparse
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urlparse                                 # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                                 # Usamos el nativo de PY2 que es más rápido
+
+import re
 import time
 import random
 
@@ -21,16 +29,16 @@ from channels import autoplay
 
 #IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
 channel = 'zooqle'
 host = 'https://zooqle.com/'
-host_alt = ['https://zooqle.com/', 'https://zooqle1.unblocked.is/', 'https://zooqle.unblocked.win/', 
-            'https://zooqle-com.prox2.info/']
+host_alt = ['https://zooqle.unblockninja.com/', 'https://zooqle.torrentbay.to/']
 """
-https://torrents.io/proxy/zooqle
+host_alt = ['https://zooqle.unblockit.club', 'https://zooqle.unblockninja.com', 'https://zooqle.nocensor.space']
+
 host_alt = ['https://zooqle.com/', 'https://zooqle1.unblocked.is/', 'https://zooqle.unblocked.win/', 
             'https://zooqle.nocensor.xyz/',  'https://zooqle.unblockproject.xyz/',  
             'https://zooqle.123unblock.pro/',  'https://zooqle.p4y.space/',  
@@ -40,7 +48,7 @@ host_alt = ['https://zooqle.com/', 'https://zooqle1.unblocked.is/', 'https://zoo
 categoria = channel.capitalize()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)        #Actualización sólo últ. Temporada?
-timeout = config.get_setting('timeout_downloadpage', channel)
+timeout = 20
 
 
 def mainlist(item):
@@ -136,7 +144,8 @@ def generos(item):
     try:
         response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+        if not PY3:
+            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:
         pass
     if not response.sucess:
@@ -254,7 +263,8 @@ def listado(item):
         try:
             response = httptools.downloadpage(next_page_url, timeout=timeout_search, ignore_response_code=True)
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+            if not PY3:
+                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
             pass
         if not response.sucess:
@@ -302,6 +312,9 @@ def listado(item):
             patron += '"([^"]+)")?><\/a><\/td>.*?<div class="mov_head">\s*<a href="'
             patron += '([^"]+)">(.*?)<\/a>\s*<span class="[^"]+">\((\d+)\)<\/span>()'
             
+        #logger.debug("PATRON: " + patron)
+        #logger.debug(data)
+        
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches and item.extra != 'search':                              #error
             item = generictools.web_intervenida(item, data)                     #Verificamos que no haya sido clausurada
@@ -324,9 +337,7 @@ def listado(item):
         elif item.extra3 == 'novedades':
             matches = matches[mat_len:]
         
-        #logger.debug("PATRON: " + patron)
         #logger.debug(matches)
-        #logger.debug(data)
         
         #Buscamos la próxima y la última página
         if item.extra == 'search' or item.extra3 == 'novedades' or item.extra3 == 'populares': # Si es Search, no hay paginado
@@ -380,12 +391,9 @@ def listado(item):
             
             title = scrapedtitle
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
-                        .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
-                        .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&atilde;", "a")\
-                        .replace("&etilde;", "e").replace("&itilde;", "i")\
-                        .replace("&otilde;", "o").replace("&utilde;", "u")\
-                        .replace("&ntilde;", "ñ").replace("&#8217;", "'")\
-                        .replace("&amp;", "&")
+                    .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
+                    .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&#8217;", "'")\
+                    .replace("&amp;", "&")
 
             if url in title_lista:                                   #Si ya hemos procesado el título, lo ignoramos
                 continue
@@ -533,24 +541,25 @@ def findvideos(item):
 
     #Bajamos los datos de las páginas
     data = ''
-    patron = '<tr><td class="text-muted[^>]+>(\d+).<\/td><td class="text-nowrap[^>]+>'
-    patron += '<a .*?href="([^"]+)">([^<]+)<\/a>\s*.*?(?:<span class="[^"]+"><i class='
-    patron += '"[^"]+zqf-comments pad-r"><\/i>\d+<\/span>)?\s*<div class=[^>]+>\s*.*?'
-    patron += '(?:<span class=[^>]+Audio format"><i class=[^>]+zqf-mi-audio[^>]+><\/i>'
-    patron += '(.*?)<\/span>)?\s*(?:<span class="smaller[^"]+"\s*title="Detected languages">'
-    patron += '(.*?)<\/span>)?.*?(?:<span class=[^>]+hidden-md hidden-xs[^>]+><i class='
-    patron += '[^>]+zqf-mi-width[^>]+><\/i>\s*(.*?)<\/span>)?<\/div><\/td>(?:<td class='
-    patron += '[^>]+><div class="progress[^>]+><div class="progress-bar[^"]+" style=[^>]+>'
-    patron += '(.*?)<\/div><\/div><\/td>)?.*?<td class=[^>]+>.*?<\/td><td class[^>]+>'
-    patron += '<div class="[^"]+" title="Seeders:\s*(.*?)\s*\|[^>]+>.*?<\/div><\/div>'
-    patron += '<\/td><\/tr>'
+    patron = '<tr>\s*<td\s*class="text-muted[^>]+>(\d+).<\/td>\s*<td\s*class='
+    patron += '"text-nowrap[^>]+>\s*<a[^h]+href="([^"]+)">\s*([^<]+)<\/a>\s*'
+    patron += '(?:<div[^<]+)?\s*(?:<span\s*class=[^>]+Audio\s*format">\s*<i\s*class='
+    patron += '[^>]+zqf-mi-audio[^>]+>\s*<\/i>([^>]+)<\/span>(?:\s*&nbsp;)?\s*)?\s*'
+    patron += '(?:<span\s*class="smaller[^"]+"\s*title="Detected\s*languages">([^<]+)<\/span>'
+    patron += '(?:\s*&nbsp;)?\s*)?(?:<span\s*class="text-nowrap[^>]+>\s*<i\s*class='
+    patron += '"zqf[^>]+>\s*<\/i>\s*([^<]+)<\/span>(?:\s*&nbsp;)?\s*<\/div>\s*)?\s*'
+    patron += '<\/td>\s*<td\s*class="[^<]+<div\s*class="progress[^<]+<div\s*class='
+    patron += '"progress-bar[^>]+>\s*([^<]+)<\/div>\s*<\/div>\s*<\/td>\s*(?:<td\s*'
+    patron += 'class=[^>]+>[^<]+<\/td>\s*<td\s*class[^>]+>\s*<div\s*class="progress[^"]+"'
+    patron += '\s*title="Seeders:\s*(.*?)\s*\|[^>]+>)?'
         
     while curr_page <= last_page:                                               # Leemos todas las páginas
         data = ''
         try:
             response = httptools.downloadpage(next_page_url, timeout=timeout, ignore_response_code=True)
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+            if not PY3:
+                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
             pass
         if not response.sucess:
@@ -780,7 +789,8 @@ def play(item):                                 #Permite preparar la descarga de
     try:
         response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+        if not PY3:
+            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:
         pass
     if not response.sucess:
@@ -798,6 +808,7 @@ def play(item):                                 #Permite preparar la descarga de
                         ': ERROR 02: PLAY: No hay enlaces o ha cambiado la estructura de la Web.  ' 
                         + 'Verificar en la Web esto último y reportar el error con el log'))
         return itemlist
+    item.url_control = item.url
     item.url = urlparse.urljoin(host, scrapertools.find_single_match(data, patron))
     
     #buscamos subtítulos en español     ###     CÓDIGO HEREDADO DE RARBG.  LO DEJAMOS POR SI ES NECESARIO EN EL FUTURO
@@ -841,7 +852,7 @@ def play(item):                                 #Permite preparar la descarga de
                 unzipper.extract(subtitle_folder_path, videolibrary_path)
             except:
                 import xbmc
-                xbmc.executebuiltin('XBMC.Extract("%s", "%s")' % (subtitle_folder_path, videolibrary_path))
+                xbmc.executebuiltin('Extract("%s", "%s")' % (subtitle_folder_path, videolibrary_path))
                 time.sleep(1)
             
             # Borrar el zip descargado
@@ -913,8 +924,8 @@ def episodios(item):
     if item.infoLabels['number_of_seasons']:
         max_temp = item.infoLabels['number_of_seasons']
     y = []
+    patron = 'season (\d+)'
     if modo_ultima_temp_alt and item.library_playcounts:        #Averiguar cuantas temporadas hay en Videoteca
-        patron = 'season (\d+)'
         matches = re.compile(patron, re.DOTALL).findall(str(item.library_playcounts))
         for x in matches:
             y += [int(x)]
@@ -925,7 +936,8 @@ def episodios(item):
     try:
         response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+        if not PY3:
+            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:
         pass
     if not response.sucess:
@@ -958,21 +970,23 @@ def episodios(item):
             return itemlist                                                     #Salimos
         
         logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " 
-                        + " / PATRON: " + patron + " / DATA: " + temporada)
+                        + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + 
                         ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  ' 
                         + 'Reportar el error con el log'))
         return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     for season_num, temporada in temp_serie:
-        patron = '<li class="list-group-item"><div class="[^"]+"><a (?:class=".*?"\s*)?'
-        patron += 'href="([^"]+)"><span class=[^<]+<\/span>\s*<i[^>]+><\/i><\/a><\/div>'
-        patron += '<span class="smaller text-muted epnum">(\d+)<\/span>\s*<a class='
-        patron += '"pad-r2"[^>]+>(.*?)<\/a>'
+        
+        patron =  '<li\s*class="list-group-item">\s*<div\s*class="[^"]+">\s*<a\s*'
+        patron += '(?:class="([^"]*)"\s*)?href="([^"]+)">\s*(?:<span\s*class=[^<]+<\/span>\s*)?'
+        patron += '<i[^>]+>\s*<\/i>\s*<\/a>\s*<\/div>\s*<span\s*class="smaller\s*text-muted\s*epnum">'
+        patron += '\s*(\d+)\s*<\/span>(?:\s*<span[^<]+)?\s*<(?:a|span)\s*class="[^"]*pad-r2"[^>]*>\s*([^<]*)<'
         matches = re.compile(patron, re.DOTALL).findall(temporada)
 
         #logger.debug("PATRON: " + patron)
         #logger.debug(matches)
+        #logger.debug(temporada)
         
         season = max_temp
         #Comprobamos si realmente sabemos el num. máximo de temporadas
@@ -986,8 +1000,8 @@ def episodios(item):
                 break                                           #Sale del bucle actual del FOR
         
         # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
-        for epi_url, episode_num, scrapedtitle in matches:
-            if 'TBA' in scrapedtitle:
+        for muted, epi_url, episode_num, scrapedtitle in matches:
+            if 'TBA' in scrapedtitle or 'text-muted' in muted:
                 continue
             item_local = item.clone()
             item_local.action = "findvideos"
@@ -1054,6 +1068,9 @@ def episodios(item):
             itemlist.append(item_local.clone())
 
             #logger.debug(item_local)
+        
+        if len(itemlist) == 0 and max_temp > 1:
+            max_temp -= 1
             
     if len(itemlist) > 1:
         itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))       #clasificamos
@@ -1077,7 +1094,7 @@ def check_blocked_IP(data, itemlist, url, timeout=timeout):
     logger.info()
     thumb_separador = get_thumb("next.png")
     
-    host = scrapertools.find_single_match(url, '(http.?\:\/\/(?:www.)?.*?\.\w+(?:\.\w+)?\/)')
+    host = scrapertools.find_single_match(url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
     
     if 'Please wait while we try to verify your browser...' in data:
         logger.error("ERROR 99: La IP ha sido bloqueada por la Web" + " / URL: " 
@@ -1103,9 +1120,10 @@ def retry_alt(url, timeout=timeout):                                            
     logger.info()
     
     random.shuffle(host_alt)
-    host_a = scrapertools.find_single_match(url, '(http.?\:\/\/(?:www.)?.*?\.\w+(?:\.\w+)?\/)')
+    host_a = scrapertools.find_single_match(url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
     
     logger.error("ERROR 98: Web caída, reintentando..." + " / URL: " + url)
+    config.set_setting('domain_name', host, channel)                            # Reseteamos el dominio
     
     for host_b in host_alt:
         if host_b in url:
@@ -1117,7 +1135,8 @@ def retry_alt(url, timeout=timeout):                                            
         try:
             response = httptools.downloadpage(url_final, timeout=timeout, count_retries_tot=1, ignore_response_code=True)
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+            if not PY3:
+                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
             pass
             

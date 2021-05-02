@@ -18,6 +18,14 @@
       {
         "pattern": "(mega.nz/\\#F\\![A-Za-z0-9\\-\\_]+\\![A-Za-z0-9\\-\\_]+)",
         "url": "https://\\1"
+      },
+      {
+        "pattern": "mega.nz/file/([^\\#]+)\\#([A-Za-z0-9-_]+)",
+        "url": "https://mega.nz/#!\\1!\\2"
+      },
+      {
+        "pattern": "mega.nz/embed/([A-Za-z0-9-_]+)\\#([A-Za-z0-9-_]+)",
+        "url": "https://mega.nz/#!\\1!\\2"
       }
     ]
   },
@@ -53,5 +61,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_mega.png"
+  "thumbnail": "https://i.postimg.cc/7LHzN7gT/mega.png"
 }

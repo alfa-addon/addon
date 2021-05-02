@@ -1,33 +1,53 @@
 # -*- coding: utf-8 -*-
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
 
 import re
-import urlparse
 
 from core import httptools
 from core import scrapertools
+from core import servertools
 from platformcode import logger
+from bs4 import BeautifulSoup
+from channels import autoplay
 
-host = 'http://www.eporner.com'
+IDIOMAS = {'vo': 'VO'}
+list_language = list(IDIOMAS.values())
+list_quality = ['default']
+list_servers = []
+
+host = 'https://www.eporner.com'
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Últimos videos", action="videos", url=host + "/0/"))
-    itemlist.append(item.clone(title="Más visto", action="videos", url=host + "/most-viewed/"))
-    itemlist.append(item.clone(title="Mejor valorado", action="videos", url=host + "/top-rated/"))
-    itemlist.append(item.clone(title="Pornstars", action="pornstars", url=host + "/pornstars/"))
-    itemlist.append(item.clone(title="      Alfabetico", action="pornstars_list", url=host + "/pornstars/"))
-    itemlist.append(item.clone(title="Categorias", action="categorias", url=host + "/categories/"))
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
+    itemlist.append(item.clone(title="Últimos videos", action="lista", url=host + "/0/"))
+    itemlist.append(item.clone(title="Más visto", action="lista", url=host + "/most-viewed/"))
+    itemlist.append(item.clone(title="Mejor valorado", action="lista", url=host + "/top-rated/"))
+    itemlist.append(item.clone(title="Pornstars", action="pornstars_list", url=host + "/pornstar-list/"))
+    itemlist.append(item.clone(title="Categorias", action="categorias", url=host + "/cats/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
+
+    # autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = host + "/search/%s/" % texto
+    item.url = "%s/search/%s/" % (host, texto)
     try:
-        return videos(item)
+        return lista(item)
     except:
         import sys
         for line in sys.exc_info():
@@ -38,104 +58,81 @@ def search(item, texto):
 def pornstars_list(item):
     logger.info()
     itemlist = []
+    itemlist.append(item.clone(title="Mas Populares", action="categorias", url=item.url))
     for letra in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-        itemlist.append(item.clone(title=letra, url=urlparse.urljoin(item.url, letra), action="pornstars"))
-    return itemlist
-
-
-def pornstars(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<div class="mbprofile">.*?'
-    patron += '<a href="([^"]+)" title="([^"]+)">.*?'
-    patron += '<img src="([^"]+)".*?'
-    patron += '<div class="mbtim"><span>Videos: </span>([^<]+)</div>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for url, title, thumbnail, count in matches:
-        itemlist.append(
-            item.clone(title="%s (%s videos)" % (title, count), url=urlparse.urljoin(item.url, url), action="videos",
-                       thumbnail=thumbnail))
-    # Paginador           
-    next_page = scrapertools.find_single_match(data,"<a href='([^']+)' class='nmnext' title='Next page'>")
-    if next_page!="":
-        next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="pornstars", title="Página Siguiente >>", text_color="blue", url=next_page) )
+        itemlist.append(item.clone(title=letra, action="categorias", url=urlparse.urljoin(item.url, letra)))
     return itemlist
 
 
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<span class="addrem-cat">.*?'
-    patron += '<a href="([^"]+)" title="([^"]+)">.*?'
-    patron +='<div class="cllnumber">([^<]+)</div>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for url, title, cantidad in matches:
-        url = urlparse.urljoin(item.url, url)
-        title = title + " " + cantidad
-        thumbnail = ""
-        if not thumbnail:
-            thumbnail = scrapertools.find_single_match(data,'<img src="([^"]+)" alt="%s"> % title')
-        itemlist.append(item.clone(title=title, url=url, action="videos", thumbnail=thumbnail))
-    return sorted(itemlist, key=lambda i: i.title)
-
-
-def videos(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<div class="mvhdico"><span>([^<]+)</span>.*?'
-    patron += '<a href="([^"]+)" title="([^"]+)" id="[^"]+">.*?'
-    patron += 'src="([^"]+)"[^>]+>.*?'
-    patron += '<div class="mbtim">([^<]+)</div>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for quality, url, title, thumbnail, duration in matches:
-        title = "[COLOR yellow]" + duration + "[/COLOR] " + "[COLOR red]" + quality + "[/COLOR] " +title
-        itemlist.append(item.clone(title=title, url=urlparse.urljoin(item.url, url),
-                                   action="play", thumbnail=thumbnail, contentThumbnail=thumbnail,
-                                   contentType="movie", contentTitle=title))
-    # Paginador
-    next_page = scrapertools.find_single_match(data,"<a href='([^']+)' class='nmnext' title='Next page'>")
-    if next_page!="":
-        next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="videos", title="Página Siguiente >>", text_color="blue", url=next_page) )
+    soup = create_soup(item.url)
+    if "cats" in item.url:
+        matches = soup.find_all('div', class_='categoriesbox')
+    else:
+        matches = soup.find_all('div', class_='mbprofile')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.img['alt']
+        thumbnail = elem.img['src']
+        cantidad = elem.find('div', class_='mbtim')
+        if cantidad:
+            cantidad = cantidad.text.replace("Videos: ", "")
+            title = "%s (%s)" %(title, cantidad)
+        url = urlparse.urljoin(host,url)
+        itemlist.append(item.clone(title=title, url=url, action="lista", thumbnail=thumbnail, fanart=thumbnail))
+    next_page = soup.find('a', class_='nmnext')
+    if next_page:
+        next_page = next_page['href']
+        next_page = urlparse.urljoin(host,next_page)
+        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
-def int_to_base36(num):
-    """Converts a positive integer into a base36 string."""
-    assert num >= 0
-    digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'.lower()
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
 
-    res = ''
-    while not res or num > 0:
-        num, i = divmod(num, 36)
-        res = digits[i] + res
-    return res
 
-
-def play(item):
+def lista(item):
     logger.info()
     itemlist = []
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', id=re.compile(r"^vf\d+"))
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.find('p', class_='mbtit').text.strip()
+        thumbnail = elem.img['src']
+        if "gif" in thumbnail:
+            thumbnail = elem.img['data-src']
+        time = elem.find('span', class_='mbtim').text
+        quality = elem.find('div', title="Quality").text
+        url = urlparse.urljoin(host,url)
+        title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality,title)
+        itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumbnail,
+                                fanart=thumbnail, contentTitle=title ))
+    next_page = soup.find('a', class_='nmnext')
+    if next_page:
+        next_page = next_page['href']
+        next_page = urlparse.urljoin(host,next_page)
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
 
-    data = httptools.downloadpage(item.url).data
 
-    patron = "EP: { vid: '([^']+)', hash: '([^']+)'"
+def findvideos(item):
+    logger.info(item)
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
+    return itemlist
 
-    vid, hash = re.compile(patron, re.DOTALL).findall(data)[0]
-
-    hash = int_to_base36(int(hash[0:8], 16)) + int_to_base36(int(hash[8:16], 16)) + int_to_base36(
-        int(hash[16:24], 16)) + int_to_base36(int(hash[24:32], 16))
-
-    url = "https://www.eporner.com/xhr/video/%s?hash=%s" % (vid, hash)
-    jsondata = httptools.downloadpage(url).json
-
-    for source in jsondata["sources"]["mp4"]:
-        url = jsondata["sources"]["mp4"][source]["src"]
-        title = source.split(" ")[0]
-
-        itemlist.append(["%s %s [directo]" % (title, url[-4:]), url])
-
-    return sorted(itemlist, key=lambda i: int(i[0].split("p")[0]))

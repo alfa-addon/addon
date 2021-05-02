@@ -4,7 +4,7 @@
   "active": true,
   "adult": false,
   "language": ["lat", "cast"],
-  "thumbnail": "https://monoschinos.com/image/files/155/45/logo.png",
+  "thumbnail": "https://monoschinos2.com/image/files/155/45/logo.png",
   "banner": "",
   "categories": [
     "anime",
@@ -18,6 +18,20 @@
       "default": true,
       "enabled": true,
       "visible": true
+    },
+    {
+      "id": "epsxfolder",
+      "type": "list",
+      "label": "Dividir Episodios en Carpetas de...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No Dividir",
+        "25 Eps",
+        "50 Eps",
+        "100 Eps"
+      ]
     },
     {
       "id": "filter_languages",

@@ -1476,8 +1476,8 @@ msgid "The script does not support URL reduction adf.ly."
 msgstr "L'script no soporta l'acortador d' urls adf.ly."
 
 msgctxt "#60339"
-msgid "Nothing to Play"
-msgstr "No es pot visualitzar"
+msgid "No supported servers found"
+msgstr "No s'han trobat servidors compatibles"
 
 msgctxt "#60342"
 msgid "Download completed: "
@@ -1789,8 +1789,8 @@ msgid "Delete saved searches"
 msgstr "Suprimeix les cerques desades"
 
 msgctxt "#60420"
-msgid "More Options"
-msgstr "Mes Opccions"
+msgid "More search options"
+msgstr "Més opcions de cerca"
 
 msgctxt "#60421"
 msgid "Channels included in the global search "
@@ -2470,7 +2470,7 @@ msgid "Channel Options"
 msgstr "Opcions de canal"
 
 msgctxt "#60565"
-msgid "   Check the files * _data.json"
+msgid "Check the files * _data.json"
 msgstr "Comproveu els fitxers * _data.json"
 
 msgctxt "#60566"
@@ -2478,11 +2478,11 @@ msgid "Videolibrary options"
 msgstr "Eines de videoteca"
 
 msgctxt "#60567"
-msgid "   Overwrite the entire video library (strm, nfo and json)"
+msgid "Overwrite the entire video library (strm, nfo and json)"
 msgstr "Sobreescriu tota la biblioteca de vídeo (strm, nfo i json)"
 
 msgctxt "#60568"
-msgid "   Search for new episodes and update the video library"
+msgid "Search for new episodes and update the video library"
 msgstr "Cerqueu nous episodis i actualitzeu la biblioteca de vídeos"
 
 msgctxt "#60569"
@@ -2620,6 +2620,10 @@ msgstr "S'està esperant l'actualització a l'inici de Kodi"
 msgctxt "#60607"
 msgid "When Kodi starts"
 msgstr "En iniciar Kodi"
+
+msgctxt "#60608"
+msgid "Twice a day"
+msgstr "Dues vegades al dia"
 
 msgctxt "#60609"
 msgid "10 sec"
@@ -3996,7 +4000,7 @@ msgid "The data entered is not correct!"
 msgstr "Les dades introduïdes no són correctes."
 
 msgctxt "#70266"
-msgid "The search for% s did not match."
+msgid "The search for %s did not match."
 msgstr "La cerca de% s no coincideix."
 
 msgctxt "#70269"
@@ -5217,3 +5221,147 @@ msgstr "Per Gèneres"
 msgctxt "#70561"
 msgid "Search Similar"
 msgstr "Cerca similars"
+
+msgctxt "#70758"
+msgid "Relevant tutorials"
+msgstr "Tutorials rellevants"
+
+msgctxt "#70759"
+msgid "Install an external browser"
+msgstr "Instal·leu un navegador extern"
+
+msgctxt "#70760"
+msgid "(click to use [I]%s[/I])"
+msgstr "(feu clic per utilitzar [I]%s[/I])"
+
+msgctxt "#70761"
+msgid "Report an error"
+msgstr "Notifiqueu un error"
+
+msgctxt "#70762"
+msgid "Alfa Mobile Assistant Manual (helper tool)"
+msgstr "Manual d'Alfa Mobile Assistant (eina de suport)"
+
+msgctxt "#70763"
+msgid "Download from channel"
+msgstr "Descarregar des del canal"
+
+msgctxt "#70764"
+msgid "  - Enable experimental download system"
+msgstr "  - Activa sistema de descàrrega experimental"
+
+msgctxt "#80001"
+msgid "Secondary language for AutoPlay"
+msgstr "Idioma secundari per Autoplay"
+
+msgctxt "#80002"
+msgid "Force this quality in AutoPlay"
+msgstr "Forçar aquesta qualitat en Autoplay"
+
+msgctxt "#80510"
+msgid "Frequent channels"
+msgstr "Canals freqüents"
+
+msgctxt "#80511"
+msgid "Enable frequent channels"
+msgstr "Habilitar canals freqüents"
+
+msgctxt "#80512"
+msgid "Number of channels to list"
+msgstr "Nombre de canals a llistar"
+
+msgctxt "#80513"
+msgid "Enable frequents category"
+msgstr "Habilitar la categoria freqüents"
+
+msgctxt "#80514"
+msgid "Number of channels in category"
+msgstr "Nombre de canals en categoria"
+
+msgctxt "#80515"
+msgid "Choose an icon theme"
+msgstr "Triar un tema d'icones"
+
+msgctxt "#80516"
+msgid "Configure"
+msgstr "Configura"
+
+msgctxt "#80610"
+msgid "Alfa Assistant Options"
+msgstr "Opcions d'Alfa Assistant"
+
+msgctxt "#80611"
+msgid "Device to use"
+msgstr "Dispositiu a utilitzar"
+
+msgctxt "#80612"
+msgid "Manual IP"
+msgstr "IP manual"
+
+msgctxt "#80613"
+msgid "Would you like to automatically install the app if necesary?"
+msgstr "Voleu que s'instal·li l'app automàticament si és necessari?"
+
+msgctxt "#80614"
+msgid "[COLOR limegreen][B]Select here[/B][/COLOR] to install/update Alfa Assistant now"
+msgstr "[COLOR limegreen][B]Cliqueu[/B][/COLOR] perquè Alfa instal/actualitzi Alfa Assistant ara"
+
+msgctxt "#80615"
+msgid "URL for manual installation: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Select here[/COLOR] if you have a browser"
+msgstr "URL per a instal·lació manual: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Cliqueu[/COLOR] si té browser"
+
+msgctxt "#80616"
+msgid "Device root status:"
+msgstr "¿Dispositiu amb privilegis de superusuari?"
+
+msgctxt "#80740"
+msgid "To avoid long wait times when a webpage does not respond:"
+msgstr "Per evitar esperar massa quan un servidor no respon:"
+
+msgctxt "#80741"
+msgid "Conection timeout"
+msgstr "Temps d'espera de connexió"
+
+msgctxt "#80750"
+msgid "Alfa Quick Fixes Management"
+msgstr "Gestió d'actualitzacions urgents d'Alfa (Quick Fixes):"
+
+msgctxt "#80751"
+msgid "Time between checks for Quick Fixes (in hours)"
+msgstr "Interval entre recerca de Quick Fixes (en hores)"
+
+msgctxt "#80752"
+msgid "Show update notifications"
+msgstr "Veure notificacions de les actualitzacions"
+
+msgctxt "#80760"
+msgid "My Links"
+msgstr "Els meus enllaços"
+
+msgctxt "#80761"
+msgid "Active List"
+msgstr "llista Activa"
+
+msgctxt "#80770"
+msgid "Updates for Alfa related addons"
+msgstr "Gestió d'actualitzacions d'altres addon relacionats amb Alfa:"
+
+msgctxt "#80771"
+msgid "Update Quasar to avoid errors"
+msgstr "Vol actualitzar Quasar per evitar errors?"
+
+msgctxt "#80780"
+msgid "Alternative method for accessing webs"
+msgstr "Mètode alternatiu d'accés a webs:"
+
+msgctxt "#80781"
+msgid "Enable for Forced mode, disable for On-Demand mode"
+msgstr "¿Mode -Forzado-: SÍ? ¿Mode -sota demanda-: NO?"
+
+msgctxt "#80782"
+msgid "Ageing period for non-resolved domains"
+msgstr "Període d'envelliment per a dominis no resolts"
+
+msgctxt "#80783"
+msgid "Deleted all %s links"
+msgstr "S'han eliminat tots els enllaços de %s"
