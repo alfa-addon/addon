@@ -13,35 +13,33 @@ from platformcode import logger
 from core import scrapertools, httptools
 from core.item import Item
 from core import servertools
+from bs4 import BeautifulSoup
 
-HOST = "http://es.xhamster.com/"
-
+HOST = "https://xhamster.com/"
 
 def mainlist(item):
     logger.info()
 
     itemlist = []
-    itemlist.append(item.clone(action="videos", title="Útimos videos", url=HOST, viewmode="movie"))
+    itemlist.append(item.clone(action="lista", title="Útimos videos", url=HOST + "newest"))
     itemlist.append(item.clone(action="votados", title="Lo mejor"))
     itemlist.append(item.clone(action="vistos", title="Los mas vistos"))
-    itemlist.append(item.clone(action="videos", title="Recomendados",
-                         url=urlparse.urljoin(HOST, "videos/recommended")))
+    itemlist.append(item.clone(action="lista", title="Recomendados", url=HOST + "videos/recommended"))
+    itemlist.append(item.clone(title="PornStar" , action="catalogo", url=HOST + "pornstars"))
+    itemlist.append(item.clone(title="Canal" , action="catalogo", url=HOST + "channels"))
     itemlist.append(item.clone(action="categorias", title="Categorías", url=HOST))
     itemlist.append(item.clone(action="search", title="Buscar"))
 
     return itemlist
 
 
-# REALMENTE PASA LA DIRECCION DE BUSQUEDA
-
-
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search?q=%s" % (HOST, texto)
+    item.url = "%s/search/%s" % (HOST, texto)
     item.extra = "buscar"
     try:
-        return videos(item)
+        return lista(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except:
         import sys
@@ -50,46 +48,86 @@ def search(item, texto):
         return []
 
 
-def videos(item):
-    logger.info()
-    data = httptools.downloadpage(item.url).data
-    itemlist = []
-    data = scrapertools.find_single_match(data, '<article.+?>(.*?)</article>')
-    patron = '(?s)<div class="thumb-list__item.*?'
-    patron += 'href="([^"]+)".*?'
-    patron += '<i class="([^"]+)">.*?'
-    patron += 'src="([^"]+)".*?'
-    patron += 'alt="([^"]+)">.*?'
-    patron += '<div class="thumb-image-container__duration">([^<]+)<'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, quality, scrapedthumbnail, scrapedtitle, duration in matches:
-        if "uhd" in quality: quality = "4K"
-        if "hd" in quality: quality = "HD"
-        else:  quality = ""
-        title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (duration,quality, scrapedtitle.strip())
-        itemlist.append(item.clone(action="play", title=title, contentTitle=title, url=scrapedurl,
-                             fanart=scrapedthumbnail, thumbnail=scrapedthumbnail,folder=True))
-    # Paginador
-    patron = '(?s)<div class="pager-container".*?<li class="next">.*?href="([^"]+)"'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    if len(matches) > 0:
-        url=matches[0].replace("&#x3D;", "=")
-        itemlist.append(item.clone(action="videos", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=url,
-                                   thumbnail="", folder=True, viewmode="movie"))
-    return itemlist
-
-
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, '<div class="all-categories">(.*?)<li class="show-all-link">')
-    patron = '<a href="([^"]+)".*?>([^<]+)\s+<'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle in matches:
-        contentTitle = scrapedtitle.strip()
-        itemlist.append(item.clone(action="videos", title=contentTitle, url=scrapedurl))
+    soup = create_soup(item.url).find('div', class_='all-categories')
+    matches = soup.find_all('li')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.text.strip()
+        itemlist.append(item.clone(action="lista", title=title, url=url))
+    return itemlist
 
+
+def catalogo(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url)
+    if "pornstars" in item.url:
+        matches = soup.find_all('div', class_='pornstar-thumb-container')
+    else:
+        matches = soup.find_all('div', class_='channel-thumb-container')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.img['alt']
+        thumbnail = elem.img['src']
+        if elem.find('div', class_='videos'):   
+            cantidad = elem.find('div', class_='videos').text.strip()
+        else:
+            cantidad = elem.find('div', class_='channel-thumb-container__info-videos').text.strip()
+        if cantidad:
+            title = "%s (%s)" % (title,cantidad)
+        url = urlparse.urljoin(item.url,url)
+        thumbnail = urlparse.urljoin(item.url,thumbnail)
+        plot = ""
+        itemlist.append(item.clone(action="lista", title=title, url=url,
+                              thumbnail=thumbnail , plot=plot) )
+    next_page = soup.find('li', class_='next')
+    if next_page:
+        next_page = next_page.a['href']
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
+
+
+def lista(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', class_='thumb-list__item')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.find('a', class_='video-thumb-info__name role-pop').text.strip() 
+        thumbnail = elem.img['src']
+        time = elem.find('div', class_='thumb-image-container__duration').text.strip()
+        quality = ""
+        if elem.find('i', class_='thumb-image-container__icon--hd'): quality = "HD"
+        if elem.find('i', class_='thumb-image-container__icon--uhd'): quality = "4K"
+        if quality:
+            title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality,title)
+        else:
+            title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
+        plot = ""
+        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+                               plot=plot, fanart=thumbnail, contentTitle=title ))
+    next_page = soup.find('li', class_='next')
+    if next_page:
+        next_page = next_page.a['href']
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -97,13 +135,13 @@ def votados(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(action="videos", title="Día", url=urlparse.urljoin(HOST, "/best/daily"),
+    itemlist.append(item.clone(action="lista", title="Día", url=urlparse.urljoin(HOST, "/best/daily"),
                          viewmode="movie"))
-    itemlist.append(item.clone(action="videos", title="Semana", url=urlparse.urljoin(HOST, "/best/weekly"),
+    itemlist.append(item.clone(action="lista", title="Semana", url=urlparse.urljoin(HOST, "/best/weekly"),
              viewmode="movie"))
-    itemlist.append(item.clone(action="videos", title="Mes", url=urlparse.urljoin(HOST, "/best/monthly"),
+    itemlist.append(item.clone(action="lista", title="Mes", url=urlparse.urljoin(HOST, "/best/monthly"),
              viewmode="movie"))
-    itemlist.append(item.clone(action="videos", title="De siempre", url=urlparse.urljoin(HOST, "/best/"),
+    itemlist.append(item.clone(action="lista", title="De siempre", url=urlparse.urljoin(HOST, "/best/"),
              viewmode="movie"))
     return itemlist
 
@@ -111,13 +149,13 @@ def votados(item):
 def vistos(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="videos", title="Día", url=urlparse.urljoin(HOST, "/most-viewed/daily"),
+    itemlist.append(item.clone(action="lista", title="Día", url=urlparse.urljoin(HOST, "/most-viewed/daily"),
              viewmode="movie"))
-    itemlist.append(item.clone(action="videos", title="Semana", url=urlparse.urljoin(HOST, "/most-viewed/weekly"),
+    itemlist.append(item.clone(action="lista", title="Semana", url=urlparse.urljoin(HOST, "/most-viewed/weekly"),
              viewmode="movie"))
-    itemlist.append(item.clone(action="videos", title="Mes", url=urlparse.urljoin(HOST, "/most-viewed/monthly"),
+    itemlist.append(item.clone(action="lista", title="Mes", url=urlparse.urljoin(HOST, "/most-viewed/monthly"),
              viewmode="movie"))
-    itemlist.append(item.clone(action="videos", title="De siempre", url=urlparse.urljoin(HOST, "/most-viewed/"),
+    itemlist.append(item.clone(action="lista", title="De siempre", url=urlparse.urljoin(HOST, "/most-viewed/"),
              viewmode="movie"))
     return itemlist
 
