@@ -669,7 +669,7 @@ def post_tmdb_listado(item, itemlist):
         if item_local.contentType in ['season', 'tvshow', 'episode']:
             
             # Pasada por TMDB a Serie, para datos adicionales, y mejorar la experiencia en Novedades
-            if scrapertools.find_single_match(title_add, r'Episodio\s*(\d+)x(\d+)') and item_local.infoLabels['tmdb_id']:
+            if scrapertools.find_single_match(title_add, r'Episodio\s*(\d+)x(\d+)'):
                 # Salva los datos de la Serie y lo transforma temporalmente en Season o Episode
                 contentPlot = item_local.contentPlot
                 contentType = item_local.contentType

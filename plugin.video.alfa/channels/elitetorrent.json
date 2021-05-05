@@ -1,7 +1,7 @@
 {
   "id": "elitetorrent",
   "name": "Elite Torrent",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.postimg.cc/v1wqfpS7/elitetorrent.png",
