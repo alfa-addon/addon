@@ -910,7 +910,7 @@ def set_content(content_type, silent=False):
     logger.info("%s: %s" % (heading, msg_text))
 
 
-def execute_sql_kodi(sql, silent=False):
+def execute_sql_kodi(sql, silent=False, file_db=''):
     """
     Ejecuta la consulta sql contra la base de datos de kodi
     @param sql: Consulta sql valida
@@ -921,14 +921,14 @@ def execute_sql_kodi(sql, silent=False):
     @rtype records: list of tuples
     """
     if not silent: logger.info()
-    file_db = ""
     nun_records = 0
     records = None
 
     # Buscamos el archivo de la BBDD de videos segun la version de kodi
-    video_db = config.get_platform(True)['video_db']
-    if video_db:
-        file_db = filetools.join("special://userdata/Database", video_db)
+    if not file_db:
+        video_db = config.get_platform(True)['video_db']
+        if video_db:
+            file_db = filetools.join("special://userdata/Database", video_db)
 
     # metodo alternativo para localizar la BBDD
     if not file_db or not filetools.exists(file_db):

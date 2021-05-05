@@ -114,9 +114,9 @@
       "visible": true,
       "lvalues": [
         "Aleatorio",
-        "Pctreload1",
         "Pctmix1",
-        "Maxitorrent"
+        "Maxitorrent",
+        "Pctreload1"
       ]
     },
     {

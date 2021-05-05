@@ -846,6 +846,7 @@ def findvideos(item):
     ## Vídeos
     id = ""
     type = ""
+    calidad = ""
     if "###" in item.url:
         id = item.url.split("###")[1].split(";")[0]
         type = item.url.split("###")[1].split(";")[1]

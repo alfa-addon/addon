@@ -6,7 +6,7 @@ import re
 from platformcode import config, platformtools, logger
 from time import time, sleep
 from core import jsontools, filetools
-from lib.concurrent import futures
+from concurrent import futures
 from core.item import Item
 from platformcode.launcher import play_from_library
 from threading import Thread

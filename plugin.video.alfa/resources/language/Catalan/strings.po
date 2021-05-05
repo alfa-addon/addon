@@ -4000,7 +4000,7 @@ msgid "The data entered is not correct!"
 msgstr "Les dades introduïdes no són correctes."
 
 msgctxt "#70266"
-msgid "The search for% s did not match."
+msgid "The search for %s did not match."
 msgstr "La cerca de% s no coincideix."
 
 msgctxt "#70269"

@@ -16,6 +16,7 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+from bs4 import BeautifulSoup
 
 host = 'https://www.porn.com'
 
@@ -43,62 +44,90 @@ def search(item, texto):
         return []
 
 
+
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|\\", "", data)
-    patron = '<div class="list-global__item".*?'
-    patron += 'href="([^"]+)">.*?'
-    patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
-    patron += '<span>([^<]+)<'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
-        thumbnail = scrapedthumbnail
-        scrapedtitle = scrapedtitle.replace(" Porn", "")
-        title = "%s (%s)" % (scrapedtitle, cantidad)
-        itemlist.append(item.clone(action="lista", title=title, url=scrapedurl,
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', class_='list-global__item')
+    for elem in matches:
+        elem = elem.find('a', class_=False)
+        url = elem['href']
+        title = elem['title']
+        thumbnail = elem.img['data-src']
+        cantidad = elem.find('div', class_='list-global__details--right')
+        if cantidad:
+            title = "%s (%s)" % (title,cantidad.text.strip())
+        plot = ""
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
-    next_page = scrapertools.find_single_match(data, '<a class="next pagination__number" href="([^"]+)" rel="nofollow">Next')
+    next_page = soup.find('a', class_='next')
     if next_page:
+        next_page = next_page['href']
+    # next_page = scrapertools.find_single_match(data, '<a class="next pagination__number" href="([^"]+)" rel="nofollow">Next')
+    # if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
+
+
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>|amp;", "", data)
-    patron = '<div class="list-global__item(.*?)'
-    patron += 'class="go" title="([^"]+)".*?'
-    patron += 'data-src="([^"]+)".*?'
-    patron += 'duration">([^<]+)<.*?'
-    patron += '<span><a href="[^"]+">([^<]+)<'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail,time,server in matches:
-        title = "[COLOR yellow]%s[/COLOR] [%s] %s" % (time, server, scrapedtitle)
-        thumbnail = scrapedthumbnail
-        url = ""
-        url = scrapertools.find_single_match(scrapedurl,'<a href=".*?5odHRwczov([^/]+)/\d+/\d+"')
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', class_='list-global__item')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.a['title']
+        thumbnail = elem.img['data-src']
+        time = elem.find('span', class_='list-global__duration').text.strip()
+        server = elem.find('div', class_='list-global__details').a.text.strip()
+        title = "[COLOR yellow]%s[/COLOR] [%s] %s" % (time, server, title)
+        url = scrapertools.find_single_match(url,'.*?5odHRwczov([^/]+)/\d+/\d+')
         url = url.replace("%3D", "=").replace("%2F", "/")
-        import base64
-        url = base64.b64decode(url)
-        url = "https:/" + url
         plot = ""
         itemlist.append(item.clone(action="play", title=title, contentTitle = title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot))
-    next_page = scrapertools.find_single_match(data, '<a class="next pagination__number" href="([^"]+)"')
+    next_page = soup.find('a', class_='next')
     if next_page:
+        next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
+
+# https://www.milffox.com/porn-movies/Latina-Stepmom-Kailani-Kai-With-Big-Tits-Has-Sex-With-Her-Stepson/
+# https://www.pornrabbit.com/video/mom-takes-younger-cock-in-a-threesome-34648450.html
+# https://www.pornlib.com/video/horny-amateur-couple-make-their-first-homemade-video-222012
+# https://www.stileproject.com/video/asian-babe-tina-loves-giving-a-hearty-blowjob-8535556.html
+
+# https://porndoe.com/video/1318691/trikepatrol-soaking-wet-skinny-asian-grinds-big-dick-tourist
+# https://spankbang.com/4g6ay/video/filipina+cam+model+in+vip+show+dildo+anal+dildo+fisting+10+9+2020
+
+
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    import base64
+    url = base64.b64decode(item.url)
+    url = url.decode("utf8")
+    url = "https:/" + url
+    if "vid.com/v/" in url:
+        url = httptools.downloadpage(url).url
+    # logger.debug(url)
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

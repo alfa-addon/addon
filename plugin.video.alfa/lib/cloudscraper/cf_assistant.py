@@ -22,7 +22,7 @@ from .exceptions import CloudflareChallengeError
 from lib import alfa_assistant
 from core import httptools, scrapertools, filetools, jsontools
 from core.item import Item
-from platformcode import logger, config
+from platformcode import logger, config, help_window
 
 PATH_BL = filetools.join(config.get_runtime_path(), 'resources', 'cf_assistant_bl.json')
 
@@ -56,6 +56,19 @@ def get_cl(resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blackl
                 check_assistant = alfa_assistant.get_generic_call('getWebViewInfo', timeout=2, alfa_s=True)
             
         if check_assistant and isinstance(check_assistant, dict):
+
+            if check_assistant.get('assistantLatestVersion') and check_assistant.get('assistantVersion'):
+                installed_version = check_assistant['assistantVersion'].split('.')
+                available_version = check_assistant['assistantLatestVersion'].split('.')
+                newer = False
+                for i, ver in enumerate(available_version):
+                    if int(ver) > int(installed_version[i]):
+                        newer = True
+                        break
+                    if int(ver) < int(installed_version[i]):
+                        break
+                if newer:
+                    help_window.show_info('cf_2_02', wait=False)
 
             ua = get_ua(check_assistant)
             
@@ -142,7 +155,9 @@ def get_cl(resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blackl
                 logger.debug("No se obtuvieron resultados, reintentando...")
                 return get_cl(resp, timeout=timeout-5, extraPostDelay=extraPostDelay, \
                             retry=True, blacklist=True, retryIfTimeout=False, **kwargs)
-
+        elif host == 'a':
+            help_window.show_info('cf_2_01')
+        
         freequency(freequent_data)
         
         if filetools.exists(PATH_BL):

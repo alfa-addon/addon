@@ -750,7 +750,11 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         msg += str(resp.status_code)
                         stdout_acum += str(resp.status_code)
                         xbmc.executebuiltin(cmd_android)
-                        p.binary_awake = (int(time.time()) - int(p.binary_time) - 120) * 1000
+                        binary_awake = (int(time.time()) - int(p.binary_time) - 300) * 1000
+                        if p.binary_awake:
+                            if binary_awake < p.binary_awake: p.binary_awake = binary_awake
+                        else:
+                            p.binary_awake = binary_awake
                         if p.binary_awake < 2000: p.binary_awake = 2000
                         if not 'awakingInterval' in url: url += '&awakingInterval=%s' % p.binary_awake
                         time.sleep(3)
@@ -764,7 +768,11 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     xbmc.executebuiltin(cmd_android_close)
                     time.sleep(5)
                     xbmc.executebuiltin(cmd_android)
-                    if not p.binary_awake: p.binary_awake = (int(time.time()) - int(p.binary_time) - 120) * 1000
+                    binary_awake = (int(time.time()) - int(p.binary_time) - 300) * 1000
+                    if p.binary_awake:
+                        if binary_awake < p.binary_awake: p.binary_awake = binary_awake
+                    else:
+                        p.binary_awake = binary_awake
                     if p.binary_awake < 2000: p.binary_awake = 2000
                     if not 'awakingInterval' in url: url += '&awakingInterval=%s' % p.binary_awake
                     time.sleep(3)

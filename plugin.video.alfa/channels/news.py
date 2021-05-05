@@ -13,7 +13,7 @@ from platformcode import config
 from platformcode import help_window
 from platformcode import platformtools
 from channelselector import get_thumb
-from lib.concurrent import futures
+from concurrent import futures
 from datetime import date
 import math
 import os
@@ -167,7 +167,7 @@ def get_channels(category):
     return valid_channels
 
 
-def get_channel_news(channel, category):
+def get_channel_news(channel, category, all=False):
 
     logger.info()
     results = list()
@@ -186,13 +186,14 @@ def get_channel_news(channel, category):
 
     total_results = len(results)
 
-    if total_results > 40:
-        total_results = int((total_results * 20) / 100)
-    elif total_results > 20:
-        total_results = int((total_results * 50) / 100)
+    if not all:
+        if total_results > 40:
+            total_results = int((total_results * 20) / 100)
+        elif total_results > 20:
+            total_results = int((total_results * 50) / 100)
 
     for elem in results[:total_results]:
-        if category not in ["series", "anime"]:
+        if category not in ["series", "anime"] and not all:
             if not elem.contentTitle:
                 continue
             if elem.infoLabels["year"] and str(elem.infoLabels["year"]).isdigit():
@@ -204,9 +205,23 @@ def get_channel_news(channel, category):
                 continue
         elem.channel = channel
         elem.from_channel = channel
+        if not all:
+            elem.context = [{"title": "[COLOR yellow]Mas novedades[/COLOR]", "action": "get_all_news",
+                             "category": category,
+                             "channel": "news",
+                             "from_channel": channel,
+                             "switch_to": True}]
+
         brand_new.append(elem)
 
     return channel, brand_new, category
+
+
+def get_all_news(item):
+
+    itemlist = get_channel_news(item.from_channel, item.category, all=True)[1]
+
+    return itemlist
 
 
 def group_results(results):

@@ -131,13 +131,15 @@ def lista(item):
     itemlist = []
     soup = create_soup(item.url)
     matches = soup.find('div', class_='content')
-    logger.debug(matches)
     for elem in matches.find_all("article", id=re.compile(r"^post-\d+")):
-        id = elem['class'][1]
-        url = elem.find('h3').a['href']
+        id = elem['id'].replace("post-", "")
+        url = elem.a['href']
         title = elem.find('h3').text
-        thumbnail = elem.img['data-src']
-        year = elem.find('div', class_='metadata').find_all_next(string=True)[3]
+        if elem.find(src=True):
+            thumbnail = elem.img['src']
+        else:
+            thumbnail = elem.img['data-src']
+        year = elem.find('div', class_='data').find_all_next(string=True)[1]
         if year == '':
             year = '-'
         new_item = item.clone(url=url, title=title, thumbnail=thumbnail, infoLabels={"year": year})
