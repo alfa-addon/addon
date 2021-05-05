@@ -127,6 +127,7 @@ def get_channel_parameters(channel_name):
                 channel_parameters["thumbnail"] = channel_parameters.get("thumbnail", "")
                 channel_parameters["banner"] = channel_parameters.get("banner", "")
                 channel_parameters["fanart"] = channel_parameters.get("fanart", "")
+                channel_parameters["req_assistant"] = channel_parameters.get("req_assistant", "")
 
                 # Imagenes: se admiten url y archivos locales dentro de "resources/images"
                 if channel_parameters.get("thumbnail") and "://" not in channel_parameters["thumbnail"]:

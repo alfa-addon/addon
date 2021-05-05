@@ -324,6 +324,8 @@ def render_items(itemlist, parent_item):
 
     xbmcplugin.addDirectoryItems(handle=int(sys.argv[1]), items=temp_list)
 
+    special_channels = ["channelselector", "", "alfavorites", "news", "search", "videolibrary", "setting", "help"]
+
     # Fijar los tipos de vistas...
     if config.get_setting("forceview"):  # ...forzamos segun el viewcontent
         xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewcontent)
@@ -347,15 +349,16 @@ def render_items(itemlist, parent_item):
         # parent_item.viewmode = "movie_with_plot"
         parent_item.viewmode = "poster"
         viewmode_id = get_viewmode_id(parent_item)
-        logger.info(viewmode_id)
         xbmc.executebuiltin("Container.SetViewMode({})".format(viewmode_id))
 
     elif parent_item.viewType:
         xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewType)
 
-    elif parent_item.channel not in ["channelselector", "", "alfavorites", "news", "search", "videolibrary", "setting",
-                                     "help"] \
-            and parent_item.action != "mainlist":  # ... o segun el canal
+    elif parent_item.channel in ["alfavorites", "favorites", "news", "search"]:
+        if parent_item.action != "mainlist" or parent_item.channel == "favorites":
+            xbmcplugin.setContent(int(sys.argv[1]), "movies")
+
+    elif parent_item.channel not in special_channels and parent_item.action != "mainlist":  # ... o segun el canal
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
     # Fijamos el "breadcrumb"
@@ -463,9 +466,9 @@ def get_viewmode_id(parent_item):
                                          'default_seasons': 503,
                                          'default_episodes': 504,
                                          'view_list': 50,
-                                         'view_poster': 501,
+                                         'view_poster': 503,
                                          'view_thumbnails': 500,
-                                         'view_movie_with_plot': 503},
+                                         'view_movie_with_plot': 504},
                      'skin.embuary-leia': {'default_files': 50,
                                          'default_movies': 515,
                                          'default_tvshows': 508,
@@ -719,6 +722,9 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
 
             if "goto" in command:
                 context_commands.append((command["title"], "Container.Refresh (%s?%s)" %
+                                         (sys.argv[0], item.clone(**command).tourl())))
+            if "switch_to" in command:
+                context_commands.append((command["title"], "Container.Update (%s?%s)" %
                                          (sys.argv[0], item.clone(**command).tourl())))
             else:
                 context_commands.append(

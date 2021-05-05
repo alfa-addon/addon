@@ -7,7 +7,7 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'https://www.seriesantiguas.com'
+host = 'https://www.seriesantiguas.net'
 base_url_start = '/feeds/posts/default'
 base_url_end = '?alt=json-in-script&start-index=1&max-results=20&orderby=published'
 IDIOMAS = {"Latino": "LAT"}

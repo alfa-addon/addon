@@ -18,19 +18,19 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.porn00.org'
+host = 'https://www.porn00.tv'     #  https://www.porn00.org
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/browse/"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/"))
-    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/models/"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest/?sort_by=post_date&from=01"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/popular-videos/?sort_by=video_viewed_month&from=01"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-videos/?sort_by=rating_month&from=01"))
+    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/pornstar-list/?sort_by=avg_videos_popularity&from=01"))
 
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/cats/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -38,7 +38,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/search/%s" % (host,texto)
+    item.url = "%s/q/%s/?sort_by=post_date" % (host,texto)
     try:
         return lista(item)
     except:
@@ -107,7 +107,9 @@ def lista(item):
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('li', class_='next')
     if next_page:
-        next_page = next_page.a['href']
+        next1 = next_page.a['href']
+        next_page = next_page.a['data-parameters'].replace(":", "=").replace(";", "&").replace("+from_albums", "")
+        next_page = "%s?%s" % (next1,next_page)
         next_page = urlparse.urljoin(host,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist

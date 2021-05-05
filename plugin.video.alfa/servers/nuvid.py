@@ -7,12 +7,12 @@ def test_video_exists(page_url):
     logger.info()
     global server, vid
     server = scrapertools.find_single_match(page_url, 'www.([A-z0-9-]+).com')
-    vid = scrapertools.find_single_match(page_url, 'embed/([0-9]+)')
+    vid = scrapertools.find_single_match(page_url, '(?:embed|video)/([0-9]+)')
 
     data = httptools.downloadpage(page_url).data
     if "File was deleted" in data\
-       or "Page Not Found" in data\
-       or "small" in data:
+       or "not Found" in data:
+       # or "small" in data:
         return False, "[%s] El video ha sido borrado o no existe" % server
     return True, ""
 

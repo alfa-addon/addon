@@ -87,7 +87,7 @@ def mainlist(item):
 
 def get_source(url, patron=None):
 
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, random_headers=True).data
     data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
     
     if patron:

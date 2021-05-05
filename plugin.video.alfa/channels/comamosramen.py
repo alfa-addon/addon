@@ -199,7 +199,7 @@ def alpha(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    letters = soup.find('nav', class_='container navbar bg-white').find('div', class_='ml-d-27').find_all('a')
+    letters = soup.find('nav', class_='navbar bg-main-color d-flex justify-content-end').find('div', class_='ml-40').find_all('a')
     for letter in letters:
         itemlist.append(
             Item(
