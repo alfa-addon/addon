@@ -50,6 +50,7 @@ page_url = ''
 #category = 'pctmix1'                                                          # Clone preferido para Novedades
 category = ''                                                                   # Clone preferido para Novedades
 clone_num = 2                                                                   # Número de Clones "buenos"
+clone_num_ext = 3                                                               # Número de Clones "válidos"
 
 #Código para permitir usar un único canal para todas las webs clones de NewPct1
 #Cargamos en .json del canal para ver las listas de valores en settings
@@ -62,12 +63,12 @@ for settings in channel_json['settings']:                                       
 clone_list = ast.literal_eval(clone_list)                                       #la convierte en array
 clone_list_check = clone_list[:]                                                #la salvamos para otros usos
 host_index = config.get_setting('clonenewpct1_channel_default', channel_py, 0)  #Clone por defecto
-if host_index > clone_num:  config.set_setting('clonenewpct1_channel_default', 0, channel_py)   # Si el clone seleccionado no existe, se pone "Aleatorio"
+if host_index > clone_num_ext:  config.set_setting('clonenewpct1_channel_default', 0, channel_py)   # Si el clone seleccionado no existe, se pone "Aleatorio"
 host_index_check = host_index                                                   #lo salvamos para otros usos
 
 if host_index == 0:                                                             #Si el clones es "Aleatorio"...
     i = 0
-    j = clone_num                                                               #... marcamos el último de los clones "buenos"
+    j = clone_num - 1                                                           #... marcamos el último de los clones "buenos"
     for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
         if i <= j and active_clone == "1":
             clone_list_random += [clone_list[i]]                                #... añadimos el clone activo "bueno" a la lista
@@ -567,7 +568,7 @@ def listado(item):                                                              
     post = None
     forced_proxy_opt = None
     if item.post:
-        forced_proxy_opt = 'ProxyDirect'
+        forced_proxy_opt = 'ProxyCF'
     if item.post or item.post is None:                                          # Rescatamos el Post, si lo hay
         post = item.post
         del item.post
@@ -2314,7 +2315,7 @@ def newest(categoria):
     item = Item()
     
     item.title = "newest"
-    item.category_new= 'newest'
+    item.category_new = 'newest'
     item.channel = channel_py
     
     try:
@@ -2326,37 +2327,13 @@ def newest(categoria):
             item.extra2 = "pelicula"
             item.action = "listado"
             itemlist = listado(item)
-                
-        elif categoria == 'series':
-            item.url = host + 'ultimas-descargas/'
-            value = 767
-            #item.post = "categoryIDR=%s&date=%s&pg=1" % (value, fecha_rango)
-            item.extra = "novedades"
-            item.extra2 = "serie"
-            item.action = "listado"
-            itemlist = listado(item)
-                
+
         elif categoria == '4k':
             item.url = host + 'ultimas-descargas/'
             value = 1027
             #item.post = "categoryIDR=%s&date=%s&pg=1" % (value, fecha_rango)
             item.extra = "novedades"
             item.extra2 = "4k"
-            item.action = "listado"
-            itemlist = listado(item)
-                
-        elif categoria == 'anime':
-            item.url = host + 'anime/pg/1/'
-            item.extra = "peliculas"
-            item.action = "listado"
-            itemlist = listado(item)
-                                 
-        elif categoria == 'documentales':
-            item.url = host + 'ultimas-descargas/'
-            value = 780
-            #item.post = "categoryIDR=%s&date=%s&pg=1" % (value, fecha_rango)
-            item.extra = "novedades"
-            item.extra2 = "docum"
             item.action = "listado"
             itemlist = listado(item)
                 
