@@ -20,7 +20,7 @@ from platformcode import config, logger
 from channelselector import get_thumb
 from lib import generictools
 
-host = 'https://seriesflix.to/'
+host = 'https://seriesflix.nu/'
 IDIOMAS = {"Latino": "LAT", "Castellano": "CAST", "Subtitulado": "VOSE"}
 list_language = list(IDIOMAS.values())
 list_servers = ['uqload', 'fembed', 'mixdrop', 'supervideo', 'mystream']
