@@ -81,7 +81,6 @@ def categorias(item):
             scrapedtitle = "%s  (%s)" % (scrapedtitle, videos)
         itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
                                    fanart=scrapedthumbnail))
-    # Extrae la marca de siguiente página
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
     if "#" in next_page:
         next_page = scrapertools.find_single_match(data, '<li class="next">.*?data-parameters="([^"]+)">')
