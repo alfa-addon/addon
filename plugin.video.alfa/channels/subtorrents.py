@@ -299,10 +299,12 @@ def listado(item):
             title = re.sub(r'[s|S]erie', '', title)
             title = re.sub(r'- $', '', title)
             title = re.sub(r'\d+[M|m|G|g][B|b]', '', title)
+            title = re.sub(r'\(clasicos\)', "", title.lower()).strip()
 
             #Limpiamos el título de la basura innecesaria
             title = re.sub(r'(?i)TV|Online|Spanish|Torrent|en Espa\xc3\xb1ol|Español|Latino|Subtitulado|Blurayrip|Bluray rip|\[.*?\]|R2 Pal|\xe3\x80\x90 Descargar Torrent \xe3\x80\x91|Completa|Temporada|Descargar|Torren|\(iso\)|\(dvd.*?\)|(?:\d+\s*)?\d{3,4}p.*?$|extended|(?:\d+\s*)?bdrip.*?$|\(.*?\).*?$|iso$|unrated|\[.*?$|\d{4}$', '', title)
-
+            if not title:
+                continue
             #Obtenemos temporada y episodio si se trata de Episodios
             if item_local.contentType == "episode":
                 patron = '(\d+)[x|X](\d+)'
@@ -320,13 +322,11 @@ def listado(item):
                     title = re.sub(patron1, '', title)
                 else:
                     title = re.sub(patron, '', title)
-                
             #Terminamos de limpiar el título
             title = re.sub(r'\??\s?\d*?\&.*', '', title)
             title = re.sub(r'[\(|\[]\s+[\)|\]]', '', title)
             title = title.replace('()', '').replace('[]', '').strip().lower().title()
             item_local.from_title = title.strip().lower().title()           #Guardamos esta etiqueta para posible desambiguación de título
-
             #Salvamos el título según el tipo de contenido
             if item_local.contentType == "movie":
                 item_local.contentTitle = title
