@@ -2,10 +2,13 @@
 # ------------------------------------------------------------
 # Parámetros de configuración (mediaserver)
 # ------------------------------------------------------------
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import os
 import re
-import sys
+from platformcode import logger
 
 PLATFORM_NAME = "mediaserver"
 PLUGIN_NAME = "alfa"
@@ -14,25 +17,34 @@ settings_dic = {}
 adult_setting = {}
 
 
-def get_addon_version(linea_inicio=0, total_lineas=2, with_fix=False):
+def get_addon_version(with_fix=True, from_xml=False):
     '''
     Devuelve el número de de versión del addon, obtenido desde el archivo addon.xml
     '''
-    path = os.path.join(get_runtime_path(), "addon.xml")
-    f = open(path, "rb")
-    data = []
-    for x, line in enumerate(f):
-        if x < linea_inicio: continue
-        if len(data) == total_lineas: break
-        data.append(line)
-    f.close()
-    data1 = "".join(data)
-    # <addon id="plugin.video.alfa" name="Alfa" version="2.5.21" provider-name="Alfa Addon">
-    aux = re.findall('<addon id="plugin.video.alfa" name="Alfa" version="([^"]+)"', data1, re.MULTILINE | re.DOTALL)
-    version = "???"
-    if len(aux) > 0:
-        version = aux[0]
+    xmlpath = os.path.join(get_runtime_path(), "addon.xml")
+    with open(xmlpath, "r") as f:
+        data = f.read()
+        try:
+            version = re.findall('<addon.+?version=["\']([^"\']+).+?>', data, flags=re.DOTALL)[0]
+        except:
+            version = "???"
+    
+    if with_fix:
+        version = '{}{}'.format(version, get_addon_version_fix())
+
     return version
+
+
+def get_addon_version_fix():
+    last_fix_json = os.path.join(get_runtime_path(), 'last_fix.json')       # Nº del último fix instalado
+    if os.path.exists(last_fix_json):
+        with open(last_fix_json, 'r') as f: 
+            data = f.read()
+        fix = re.findall('"fix_version"\s*:\s*(\d+)', data)
+        if fix:
+            return '.fix{}'.format(fix[0])
+        else:
+            return ''
 
 
 def get_platform(full_version=False):
@@ -244,31 +256,36 @@ def set_setting(name, value, channel="", server=""):
             nodo.setAttribute("id", key)
             new_settings_root.appendChild(nodo)
 
-        fichero = open(configfilepath, "w")
-        fichero.write(new_settings.toprettyxml(encoding='utf-8'))
-        fichero.close()
+        with open(configfilepath, "wb") as fichero:
+            writedata = new_settings.toprettyxml(encoding='utf-8')
+            fichero.write(writedata)
         return value
 
 
 def get_localized_string(code):
-    translationsfile = open(TRANSLATION_FILE_PATH, "r")
-    translations = translationsfile.read()
-    translationsfile.close()
-    cadenas = re.findall('msgctxt\s*"#%s"\nmsgid\s*"(.*?)"\nmsgstr\s*"(.*?)"' % code, translations)
-
-    if len(cadenas) > 0:
-        dev = cadenas[0][1]
-        if not dev:
-            dev = cadenas[0][0]
-    else:
-        dev = "%d" % code
-
+    # logger.info(TRANSLATION_FILE_PATH)
     try:
-        dev = dev.encode("utf-8")
-    except:
-        pass
+        with open(TRANSLATION_FILE_PATH, "r", encoding="utf-8") as translationsfile:
+            translations = translationsfile.read()
+        cadenas = re.findall('msgctxt\s*"#{}"\nmsgid\s*"(.*?)"\nmsgstr\s*"(.*?)"'.format(code), translations)
 
-    return dev
+        if len(cadenas) > 0:
+            dev = cadenas[0][1]
+            if not dev:
+                dev = cadenas[0][0]
+        else:
+            dev = "%d" % code
+
+        try:
+            dev = dev.encode("utf-8").decode()
+        except:
+            pass
+
+        return dev
+    except Exception as e:
+        import traceback
+        logger.error(traceback.format_exc())
+        return "AAAA#{}".format(code)
 
 
 def get_localized_category(categ):
@@ -392,7 +409,7 @@ def load_settings():
 
 def set_settings(JsonRespuesta):
     for Ajuste in JsonRespuesta:
-        settings_dic[Ajuste] = JsonRespuesta[Ajuste].encode("utf8")
+        settings_dic[Ajuste] = JsonRespuesta[Ajuste].encode("utf8").decode()
     from xml.dom import minidom
     # Crea un Nuevo XML vacio
     new_settings = minidom.getDOMImplementation().createDocument(None, "settings", None)
@@ -404,9 +421,8 @@ def set_settings(JsonRespuesta):
         nodo.setAttribute("id", key)
         new_settings_root.appendChild(nodo)
 
-    fichero = open(configfilepath, "w")
-    fichero.write(new_settings.toprettyxml(encoding='utf-8'))
-    fichero.close()
+    with open(configfilepath, "w") as fichero:
+        fichero.write(new_settings.toprettyxml(encoding='utf-8').decode())
 
 
 # Fichero de configuración

@@ -106,17 +106,16 @@ def run(item):
         # Si existe la funcion en el canal la ejecuta
         if hasattr(channelmodule, item.action):
             logger.info("Ejectuando accion: " + item.channel + "." + item.action + "(item)")
-            exec "itemlist = channelmodule." + item.action + "(item)"
+            itemlist = getattr(channelmodule, item.action)(item)
 
         # Si existe la funcion en el launcher la ejecuta
         elif hasattr(sys.modules[__name__], item.action):
             logger.info("Ejectuando accion: " + item.action + "(item)")
-            exec "itemlist =" + item.action + "(item)"
+            itemlist = getattr(sys.modules[__name__], item.action)(item)
 
         # Si no existe devuelve un error
         else:
-            logger.info(
-                "No se ha encontrado la accion [" + item.action + "] en el canal [" + item.channel + "] ni en el launcher")
+            logger.info('No se ha encontrado la accion "{}" en el canal "{}" ni en el launcher'.format(item.action, item.channel))
 
     # Llegados a este punto ya tenemos que tener el itemlist con los resultados correspondientes
     # Pueden darse 3 escenarios distintos:
@@ -148,11 +147,17 @@ def import_channel(item):
     channel = item.channel
     channelmodule = ""
     if os.path.exists(os.path.join(config.get_runtime_path(), "channels", channel + ".py")):
-        exec "from channels import " + channel + " as channelmodule"
+        # exec "from channels import " + channel + " as channelmodule"
+        channelmodule = __import__('channels.%s' % item.channel, None,
+                                         None, ["channels.%s" % item.channel])
     elif os.path.exists(os.path.join(config.get_runtime_path(), "core", channel + ".py")):
-        exec "from core import " + channel + " as channelmodule"
+        # exec "from core import " + channel + " as channelmodule"
+        channelmodule = __import__('core.%s' % item.channel, None,
+                                         None, ["core.%s" % item.channel])
     elif os.path.exists(os.path.join(config.get_runtime_path(), channel + ".py")):
-        exec "import " + channel + " as channelmodule"
+        # exec "import " + channel + " as channelmodule"
+        channelmodule = __import__(item.channel, None,
+                                         None, [item.channel])
     return channelmodule
 
 
@@ -199,7 +204,7 @@ def download_all_episodes(item, first_episode="", preferred_server="vidspot", fi
         action = item.extra.split("###")[0]
         item.extra = item.extra.split("###")[1]
 
-    exec "episode_itemlist = channel." + action + "(item)"
+    episode_itemlist = channel.action(item)
 
     # Ordena los episodios para que funcione el filtro de first_episode
     episode_itemlist = sorted(episode_itemlist, key=lambda Item: Item.title)
@@ -240,7 +245,7 @@ def download_all_episodes(item, first_episode="", preferred_server="vidspot", fi
             mirrors_itemlist = channel.findvideos(episode_item)
         except:
             mirrors_itemlist = servertools.find_video_items(episode_item)
-        print mirrors_itemlist
+        print(mirrors_itemlist)
 
         descargado = False
 

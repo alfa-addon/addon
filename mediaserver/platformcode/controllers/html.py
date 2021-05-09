@@ -2,6 +2,10 @@
 # ------------------------------------------------------------
 # Controlador para HTML
 # ------------------------------------------------------------
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import json
 import os
 import re
@@ -41,6 +45,7 @@ class html(Controller):
 
     def run(self, path):
         if path:
+            if isinstance(path, bytes): path = path.decode()
             item = Item().fromurl(path)
         else:
             item = Item(channel="channelselector", action="mainlist", viewmode="banner")
@@ -289,11 +294,12 @@ class platform(Platformtools):
         if line2: text += "\n" + line2
         if line3: text += "\n" + line3
         text = self.kodi_labels_to_html(text)
+        if isinstance(text, bytes): text = text.decode()
         JsonData = {}
         JsonData["action"] = "Alert"
         JsonData["data"] = {}
         JsonData["data"]["title"] = heading
-        JsonData["data"]["text"] = unicode(text, "utf8", "ignore").encode("utf8")
+        JsonData["data"]["text"] = text
         ID = self.send_message(JsonData)
         self.get_data(ID)
 
