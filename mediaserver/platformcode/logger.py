@@ -7,6 +7,7 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import logging
+import inspect
 # import logging.config
 import os
 from lib import xbmcaddon
@@ -31,7 +32,7 @@ class ExtendedLogger(logging.Logger):
             while hasattr(f, "f_code"):
                 co = f.f_code
                 filename = os.path.normcase(co.co_filename)
-                if "logger" in filename:  # This line is modified.
+                if "logger" in filename or "httpandwsserver" in filename.lower():  # This line is modified.
                     f = f.f_back
                     continue
                 sinfo = None
@@ -52,7 +53,7 @@ class ExtendedLogger(logging.Logger):
             while hasattr(f, "f_code"):
                 co = f.f_code
                 filename = os.path.normcase(co.co_filename)
-                if "logger" in filename:  # This line is modified.
+                if "logger" in filename or "httpandwsserver" in filename.lower():  # This line is modified.
                     f = f.f_back
                     continue
                 filename = filename + " " + co.co_name
@@ -79,24 +80,42 @@ def log_enable(active):
 
 def info(texto="", force=False):
     if loggeractive or force:
-        if not isinstance(texto, str):
-            str(texto, "utf-8", "ignore")
+        if hasattr(texto, "__str__"):
+            texto = str(texto)
+        else:
+            try:
+                texto = str(texto, "utf-8", "ignore")
+            except:
+                texto = ""
         texto = texto.replace("\n", "\n" + " " * 67)
+        texto = "[{}] {}".format(inspect.currentframe().f_back.f_code.co_name, texto)
         logger_object.info(texto)
 
 
 def debug(texto="", force=False):
     if loggeractive or force:
-        if not isinstance(texto, str):
-            str(texto, "utf-8", "ignore")
+        if hasattr(texto, "__str__"):
+            texto = str(texto)
+        else:
+            try:
+                texto = str(texto, "utf-8", "ignore")
+            except:
+                texto = ""
         texto = texto.replace("\n", "\n" + " " * 67)
+        texto = "[{}] {}".format(inspect.currentframe().f_back.f_code.co_name, texto)
         logger_object.debug(texto)
 
 
 def error(texto=""):
-    if not isinstance(texto, str):
-        str(texto, "utf-8", "ignore")
+    if hasattr(texto, "__str__"):
+        texto = str(texto)
+    else:
+        try:
+            texto = str(texto, "utf-8", "ignore")
+        except:
+            texto = ""
     texto = texto.replace("\n", "\n" + " " * 67)
+    texto = "[{}] {}".format(inspect.currentframe().f_back.f_code.co_name, texto)
     logger_object.error(texto)
 
 

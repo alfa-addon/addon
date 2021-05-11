@@ -45,6 +45,8 @@ def get_addon_version_fix():
             return '.fix{}'.format(fix[0])
         else:
             return ''
+    else:
+        return ''
 
 
 def get_platform(full_version=False):

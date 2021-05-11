@@ -3,13 +3,20 @@
 # ------------------------------------------------------------
 # Launcher
 # ------------------------------------------------------------
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import os
 import sys
 import threading
 import time
 from functools import wraps
 # Requerido para el ejecutable en windows
-import SimpleHTTPServer
+if PY3:
+    import http.server as SimpleHTTPServer
+else:
+    import SimpleHTTPServer
 
 sys.dont_write_bytecode = True
 from platformcode import config
@@ -35,30 +42,31 @@ def thread_name_wrap(func):
 
 threading.Thread.__init__ = thread_name_wrap(threading.Thread.__init__)
 
-if sys.version_info < (2, 7, 11):
-    import ssl
+# if sys.version_info < (2, 7, 11):
+#     import ssl
 
-    ssl._create_default_https_context = ssl._create_unverified_context
-
+#     ssl._create_default_https_context = ssl._create_unverified_context
+os.system('@echo off')
 
 def show_info():
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print ("--------------------------------------------------------------------")
-    print ("Alfa %s Iniciado" %version)
-    print ("La URL para acceder es http://%s:%s" % (myip, http_port))
-    print ("--------------------------------------------------------------------")
-    print ("Runtime Path      : " + config.get_runtime_path())
-    print ("Data Path         : " + config.get_data_path())
-    print ("Download Path     : " + config.get_setting("downloadpath"))
-    print ("DownloadList Path : " + config.get_setting("downloadlistpath"))
-    print ("Bookmark Path     : " + config.get_setting("bookmarkpath"))
-    print ("Videolibrary Path : " + config.get_setting("videolibrarypath"))
-    print ("--------------------------------------------------------------------")
+    # os.system('cls' if os.name == 'nt' else 'clear')
+    os.system('echo Reloading...')
+    print("--------------------------------------------------------------------")
+    print("Alfa %s Iniciado" %version)
+    print("La URL para acceder es http://%s:%s" % (myip, http_port))
+    print("--------------------------------------------------------------------")
+    print("Runtime Path      : " + config.get_runtime_path())
+    print("Data Path         : " + config.get_data_path())
+    print("Download Path     : " + config.get_setting("downloadpath"))
+    print("DownloadList Path : " + config.get_setting("downloadlistpath"))
+    print("Bookmark Path     : " + config.get_setting("bookmarkpath"))
+    print("Videolibrary Path : " + config.get_setting("videolibrarypath"))
+    print("--------------------------------------------------------------------")
     controllers = platformtools.controllers
     for a in controllers:
         try:
-            print platformtools.controllers[a].controller.client_ip + " - (" + platformtools.controllers[
-                a].controller.name + ")"
+            print(platformtools.controllers[a].controller.client_ip + " - (" + platformtools.controllers[
+                a].controller.name + ")")
         except:
             pass
 
@@ -92,9 +100,9 @@ def start():
             time.sleep(1)
 
     except KeyboardInterrupt:
-        print 'Deteniendo el servidor HTTP...'
+        print('Deteniendo el servidor HTTP...')
         HTTPAndWSServer.stop()
-        print 'Alfa Detenido'
+        print('Alfa Detenido')
         flag = False
 
 

@@ -344,6 +344,20 @@ class platform(Platformtools):
 
         return response
 
+    def dialog_multiselect(heading, _list, autoclose=0, preselect=[], useDetails=False):
+        JsonData = {}
+        heading = self.kodi_labels_to_html(heading)
+        JsonData["action"] = "ListMulti"
+        JsonData["data"] = {}
+        JsonData["data"]["title"] = heading
+        JsonData["data"]["list"] = []
+        for Elemento in list:
+            JsonData["data"]["list"].append(self.kodi_labels_to_html(Elemento))
+        ID = self.send_message(JsonData)
+        response = self.get_data(ID)
+
+        return response
+
     def dialog_progress(self, heading, line1, line2="", line3=""):
         class Dialog(object):
             def __init__(self, heading, line1, line2, line3, platformtools):
