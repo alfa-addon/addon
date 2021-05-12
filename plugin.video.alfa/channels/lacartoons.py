@@ -110,7 +110,7 @@ def seasons(item):
         infoLabels["season"] = season
         itemlist.append(item.clone(action = "episodios",
                                    infoLabels = infoLabels,
-                                   title = title
+                                   title = title.strip()
                                    ))
     tmdb.set_infoLabels(itemlist)
     itemlist.append(Item())
@@ -127,6 +127,7 @@ def episodios(item):
     templist = seasons(item)
     for tempitem in templist:
         itemlist += episodesxseasons(tempitem)
+
     return itemlist
 
 
@@ -142,21 +143,15 @@ def episodesxseasons(item):
     matches = scrapertools.find_multiple_matches(bloque, patron)
     for url, title in matches:
         title = title.replace("</span>","")
-        title = title.replace("Capitulo ", str(item.infoLabels["season"])+"x")
         episode = scrapertools.find_single_match(title, " (\w+)")
+        title = title.replace("Capitulo ", str(item.infoLabels["season"])+"x")
         infoLabels["episode"] = episode
         itemlist.append(item.clone(action = "findvideos",
                                    infoLabels = infoLabels,
-                                   title = title,
+                                   title = title.strip(),
                                    url = host + url
                                    ))
     tmdb.set_infoLabels(itemlist)
-    next_page = scrapertools.find_single_match(data, '(?is)next" href="([^"]+)"')
-    if next_page:
-        itemlist.append(item.clone(action = "episodios",
-                                   title = "Siguiente Pagina",
-                                   url = host + next_page
-                                   ))
     return itemlist
 
 
@@ -193,7 +188,6 @@ def findvideos(item):
     # Requerido para AutoPlay
 
     autoplay.start(itemlist, item)
-
     if itemlist and item.contentChannel != "videolibrary":
         itemlist.append(Item(channel = item.channel))
         # Opción "Añadir esta película a la biblioteca de KODI"

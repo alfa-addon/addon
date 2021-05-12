@@ -1960,7 +1960,7 @@ msgstr "[COLOR skyblue]para información detallada[/COLOR]"
 
 msgctxt "#60486"
 msgid "Uploading new information"
-msgstr "Subiendo nueva inforomación"
+msgstr "Subiendo nueva información"
 
 msgctxt "#60487"
 msgid "Search in Tmdb......."

@@ -3,17 +3,16 @@
     <allowoverlays>false</allowoverlays>
     <controls>
         <control type="image" id="10">
-            <posx>0</posx>
-            <posy>0</posy>
-            <width>1920</width>
-            <height>1080</height>
+            <width>getScreenWidth()</width>
+            <height>getScreenHeight()</height>
             <texture>Infoplus/fondo.png</texture>
             <visible>Player.HasVideo</visible>
+            <aspectratio>stretch</aspectratio>
             <animation effect="slide" start="0,-2000" time="900">VisibleChange</animation>
         </control>
         <control type="image" id="10">
-            <posx>420</posx>
-            <posy>90</posy>
+            <posx>0</posx>
+            <posy>40</posy>
             <width>1100</width>
             <height>600</height>
             <texture>Infoplus/count.gif</texture>
@@ -24,45 +23,44 @@
             
         </control>
         <control type="videowindow" id="2">
-            <posx>410</posx>
-            <posy>-13</posy>
-            <width>1110</width>
-            <height>805</height>
+            <posx>236</posx>
+            <posy>56</posy>
+            <width>807</width>
+            <height>407</height>
             <visible>Player.HasVideo</visible>
             <animation effect="fade" start="0%" end="100%" time="900" delay="1500">VisibleChange</animation>
         </control>
         <control type="image" id="10">
-            <posx>870</posx>
-            <posy>300</posy>
-            <width>200</width>
-            <height>200</height>
+            <posx>590</posx>
+            <posy>400</posy>
+            <width>110</width>
+            <height>110</height>
             <texture>Infoplus/pause.png</texture>
             <visible>Player.Paused</visible>
-            <animation effect="zoom" start="0" end="100" center="auto" time="500" >VisibleChange</animation>
         </control>
         <control type="image" id="10">
-            <posx>870</posx>
-            <posy>300</posy>
-            <width>200</width>
-            <height>200</height>
+            <posx>370</posx>
+            <posy>400</posy>
+            <width>110</width>
+            <height>110</height>
             <texture>Infoplus/rewind.png</texture>
             <visible>Player.Rewinding</visible>
             <animation effect="zoom" start="0" end="100" center="auto" time="500">VisibleChange</animation>
         </control>
         <control type="image" id="10">
-            <posx>870</posx>
-            <posy>300</posy>
-            <width>200</width>
-            <height>200</height>
+            <posx>770</posx>
+            <posy>400</posy>
+            <width>110</width>
+            <height>110</height>
             <texture>Infoplus/forward.png</texture>
             <visible>Player.Forwarding</visible>
             <animation effect="zoom" start="0" end="100" center="auto" time="500">VisibleChange</animation>
         </control>
         <control type="image" id="10">
-            <posx>870</posx>
-            <posy>300</posy>
-            <width>200</width>
-            <height>200</height>
+            <posx>370</posx>
+            <posy>500</posy>
+            <width>110</width>
+            <height>110</height>
             <texture>Infoplus/play.png</texture>
             <visible>Player.Play</visible>
             <animation effect="zoom" start="0" end="100" center="auto" time="500">VisibleChange</animation>

@@ -1,23 +1,48 @@
 {
-  "id": "cinedetodo",
-  "name": "Cinedetodo",
+  "id": "peliculasflv",
+  "name": "PeliculasFlv",
   "active": true,
   "adult": false,
   "language": ["lat"],
-  "thumbnail": "https://i.imgur.com/R2fAQz5.png",
+  "thumbnail": "https://www.peliculasflv.io/img/logo.png",
   "banner": "",
-  "version": 1,
   "categories": [
-    "movie",
-    "tvshow",
-    "vos"
+    "movie"
   ],
   "settings": [
     {
-      "id": "orden_episodios",
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "Latino"
+      ]
+    },
+    {
+      "id": "include_in_global_search",
       "type": "bool",
-      "label": "Mostrar los episodios de las series en orden descendente",
-      "default": false,
+      "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+     {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "Buscar información extra",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_latino",
+      "type": "bool",
+      "label": "Incluir en Novedades - Latino",
+      "default": true,
       "enabled": true,
       "visible": true
     },
