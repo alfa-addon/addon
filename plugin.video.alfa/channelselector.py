@@ -66,6 +66,19 @@ def getmainlist(view="thumb_"):
     itemlist.append(Item(title=config.get_localized_string(30104) + " (" + config.get_localized_string(20000) +" " + config.get_addon_version(with_fix=False, from_xml=True) + ")", channel="help", action="mainlist",
                          thumbnail=os.path.join(config.get_runtime_path(), "resources", 'Screenshot.jpg'),
                          category=config.get_localized_string(30104), viewmode="list"))
+                         
+    try:
+        versiones = config.get_versions_from_repo()
+    except:
+        versiones = {}
+        logger.error(traceback.format_exc())
+    if versiones and config.get_addon_version(with_fix=False, from_xml=True) == versiones.get('plugin.video.alfa', ''):
+        itemlist.append(Item(title="[COLOR hotpink][B]Actualizar a versión[/B][/COLOR] [COLOR gold][B]%s[/B][/COLOR] (versión instalada: %s)" % 
+                         (versiones['plugin.video.alfa'], config.get_addon_version(with_fix=False, from_xml=True)), 
+                         channel="channelselector", action="install_alfa",
+                         thumbnail=os.path.join(config.get_runtime_path(), "resources", 'Screenshot.jpg'),
+                         category=config.get_localized_string(30104), viewmode="list"))
+        
 
     from lib import generictools
     browser, res = generictools.call_browser('', lookup=True)
@@ -387,3 +400,9 @@ def set_channel_info(parameters):
 
     info = '[COLOR yellow]Tipo de contenido:[/COLOR] %s\n\n[COLOR yellow]Idiomas:[/COLOR] %s' % (content, language)
     return info
+
+
+def install_alfa():
+    
+    from platformcode.custom_code import install_alfa_now
+    install_alfa_now()

@@ -120,6 +120,11 @@ def run(item=None):
             itemlist = channelselector.filterchannels(item.channel_type)
 
             platformtools.render_items(itemlist, item)
+            
+        # Action for addon install on channelselector
+        elif item.action == "install_alfa":
+            import channelselector
+            channelselector.install_alfa()
 
         # Special action for playing a video from the library
         elif item.action == "play_from_library":
