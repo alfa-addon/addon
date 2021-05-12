@@ -2,6 +2,10 @@
 # ------------------------------------------------------------
 # Controlador para acceso a archivos locales
 # ------------------------------------------------------------
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import os
 import re
 import time
@@ -25,15 +29,18 @@ class fileserver(Controller):
 
         elif path.startswith("/local/"):
             import base64
-            import urllib
+            if PY3:
+                import urllib.parse as urllib
+            else:
+                import urllib
             Path = path.replace("/local/", "").split("/")[0]
-            Path = base64.b64decode(urllib.unquote_plus(Path))
-            Size = int(os.path.getsize(Path.decode("utf8")))
-            f = open(Path.decode("utf8"), "rb")
+            Path = base64.b64decode(urllib.unquote_plus(Path)).decode()
+            Size = int(os.path.getsize(Path))
+            f = open(Path, "rb")
             if not self.handler.headers.get("range") == None:
                 if "=" in str(self.handler.headers.get("range")) and "-" in str(self.handler.headers.get("range")):
                     Inicio = int(self.handler.headers.get("range").split("=")[1].split("-")[0])
-                    if self.handler.headers.get("range").split("=")[1].split("-")[1] <> "":
+                    if self.handler.headers.get("range").split("=")[1].split("-")[1] != "":
                         Fin = int(self.handler.headers.get("range").split("=")[1].split("-")[1])
                     else:
                         Fin = Size - 1
