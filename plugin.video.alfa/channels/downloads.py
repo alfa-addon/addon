@@ -527,11 +527,14 @@ def download_all(item):
                         if download_item.downloadStatus == 0: item.downloadStatus = STATUS_CODES.completed
                         res = filetools.write(filetools.join(DOWNLOAD_LIST_PATH, fichero), download_item.tojson())
                         res = STATUS_CODES.stoped
-                        try:
-                            threading.Thread(target=start_download, args=(download_item, )).start()     # Creamos un Thread independiente
-                            time.sleep(3)                                       # Dejamos terminar la inicialización...
-                        except:
-                            logger.error(traceback.format_exc())
+                        if download_item.server == 'torrent' or download_item.sub_action or download_item.url_tvshow:
+                            try:
+                                threading.Thread(target=start_download, args=(download_item, )).start()     # Creamos un Thread independiente
+                                time.sleep(3)                                   # Dejamos terminar la inicialización...
+                            except:
+                                logger.error(traceback.format_exc())
+                        else:
+                            res = start_download(download_item)
                         platformtools.itemlist_refresh()
                         # Si se ha cancelado paramos y desencolamos
                         if res == STATUS_CODES.canceled:

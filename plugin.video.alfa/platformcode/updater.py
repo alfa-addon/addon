@@ -33,7 +33,11 @@ def check_addon_init():
         try:
             timer = int(config.get_setting('addon_update_timer'))       # Intervalo entre actualizaciones, en Ajustes de Alfa
             if timer <= 0:
-                if base64.b64decode(config.get_setting('proxy_dev')).decode('utf-8') == 'user':
+                try:
+                    user_type = base64.b64decode(config.get_setting('proxy_dev')).decode('utf-8')
+                except:
+                    user_type = 'user'
+                if user_type == 'user':
                     config.set_setting('addon_update_timer', 12)        # Si es usuario se fuerza a 12 horas
                     timer = 12
                 else:
@@ -69,7 +73,11 @@ def check_addon_init():
         try:
             timer = int(config.get_setting('addon_update_timer'))       # Intervalo entre actualizaciones, en Ajustes de Alfa
             if timer <= 0:
-                if base64.b64decode(config.get_setting('proxy_dev')).decode('utf-8') == 'user':
+                try:
+                    user_type = base64.b64decode(config.get_setting('proxy_dev')).decode('utf-8')
+                except:
+                    user_type = 'user'
+                if user_type == 'user':
                     config.set_setting('addon_update_timer', 12)        # Si es usuario se fuerza a 12 horas
                     timer = 12
                 else:

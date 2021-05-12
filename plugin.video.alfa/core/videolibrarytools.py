@@ -207,8 +207,10 @@ def save_movie(item):
         # Si existe .nfo, pero estamos añadiendo un nuevo canal lo abrimos
         head_nfo, item_nfo = read_nfo(nfo_path)
         if not item_nfo.channel:
+            logger.error('.nfo corrupto. Regenerando %s' % nfo_path)
             if not filetools.remove(nfo_path):              # .nfo corrupto.  Lo borramos para regenerarlo
                 return 0, 0, -1, path                       # Problema con el filesystem?
+            nfo_exists = False
 
     if not nfo_exists:
         # Creamos .nfo si no existe
