@@ -151,7 +151,6 @@ def seasons(item):
     logger.info()
 
     itemlist = list()
-
     soup = create_soup(item.url).find("ul", class_="TbVideoNv nav nav-tabs")
     matches = soup.find_all("li")
     infoLabels = item.infoLabels
@@ -163,10 +162,10 @@ def seasons(item):
                              infoLabels=infoLabels))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
+    if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
-                Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
-                     action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
+            Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
+                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
 
     return itemlist
 
@@ -185,11 +184,15 @@ def episodesxseasons(item):
     logger.info()
 
     itemlist = list()
-
     infoLabels = item.infoLabels
     season = infoLabels["season"]
-    soup = create_soup(item.url).find("div", id="pills-vertical-%s" % season)
-    matches = soup.find_all("a")
+    try:
+        matches = create_soup(item.url).find("div", id="pills-vertical-%s" % season).find_all("a")
+    except:
+        matches = ""
+
+    if not matches:
+        return itemlist
 
     for elem in matches:
         url = elem["href"]

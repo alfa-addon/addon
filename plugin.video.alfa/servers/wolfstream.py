@@ -26,6 +26,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
     video_urls = []
     m3u8_source = scrapertools.find_single_match(data, '\{file:"([^"]+)"\}')
-    video_urls.append(['m3u8 [highstream]', m3u8_source])
+    video_urls.append(['m3u8 [wolfstream]', m3u8_source])
     return video_urls
 
