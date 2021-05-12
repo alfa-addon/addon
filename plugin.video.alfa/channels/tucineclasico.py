@@ -74,18 +74,16 @@ def list_all(item):
     soup = create_soup(item.url)
     matches = soup.find("div", class_="content")
     for elem in matches.find_all("article", id=re.compile(r"^post-\d+")):
-
-        info_1 = elem.find("div", class_="poster")
-        info_2 = elem.find("div", class_="data")
-
-        thumb = info_1.img["src"]
-        title = info_1.img["alt"]
-        title = re.sub("VOSE", "", title)
-        url = info_1.a["href"]
         try:
-            year = info_2.find("span", text=re.compile(r"\d{4}")).text.split(",")[-1]
+            thumb = elem.img["data-src"]
         except:
-            pass
+            thumb = ""
+        title = elem.img["alt"]
+        year = elem.find("span", text=re.compile(".*?\d{4}")).text
+        year = scrapertools.find_single_match(year, "(\d{4})")
+        title = re.sub("VOSE", "", title)
+        url = elem.a["href"]
+
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
                              thumbnail=thumb, contentTitle=title, infoLabels={'year': year}))
 
@@ -107,7 +105,7 @@ def section(item):
     soup = create_soup(host)
 
     if item.title == "Generos":
-        matches = soup.find("ul", class_="genres falsescroll")
+        matches = soup.find("ul", class_="genres scrolling")
     elif item.title == "Años":
         matches = soup.find("ul", class_="releases")
 
@@ -129,12 +127,14 @@ def findvideos(item):
     soup = create_soup(item.url)
     matches = soup.find("div", class_="dooplay_player")
 
-    for elem in matches.find_all("div", class_="source-box"):
-        if "trailer" in elem["id"] or elem.find("script"):
+    for elem in matches.find_all("li", class_="dooplay_player_option"):
+        if elem["data-nume"] == "trailer":
             continue
-        url = elem.find("iframe")["src"]
-        lang = matches.find("li", id=elem["id"].replace("source-player", "player-option")).img["src"]
-        lang = scrapertools.find_single_match(lang, r"flags/([^\.]+)\.png")
+        base_url = "%s/wp-json/dooplayer/v2/%s/%s/%s" % (host, elem["data-post"], elem["data-type"], elem["data-nume"])
+        data = httptools.downloadpage(base_url).json["embed_url"]
+        url = scrapertools.find_single_match(data, '(?:IFRAME SRC|iframe src)="([^"]+)"')
+        lang = elem.find("span", class_="flag").img["src"]
+        lang = scrapertools.find_single_match(lang, "/flags/([^.]+).")
         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                             language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels))
 
