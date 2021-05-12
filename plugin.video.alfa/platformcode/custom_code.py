@@ -329,22 +329,15 @@ def verify_script_alfa_update_helper():
                     logger.error(traceback.format_exc())
 
 
-    file_db = ''
-    for f in sorted(filetools.listdir("special://userdata/Database"), reverse=True):
-        path_f = filetools.join("special://userdata/Database", f)
-
-        if filetools.isfile(path_f) and f.lower().startswith('addons') and f.lower().endswith('.db'):
-            file_db = path_f
-            break
-    if file_db:
+    if versiones.get('addons_db', ''):
         
         repos = [(alfa_repo[0], alfa_repo[0]), (alfa_repo[0], ADDON_NAME), (alfa_repo[0], alfa_helper), \
                     (torrest_repo[0], torrest_repo[0]), (torrest_repo[0], torrest_addon), \
                     ('repository.xbmc.org', futures_script[0].replace(repos_dir, ''))]
         try:
             for repo, addon in repos:
-                sql = 'update installed set origin = "%s" where addonID= "%s" and origin <> "%s"' % (repo, addon, repo)
-                nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql, silent=True, file_db=file_db)
+                sql = 'update installed set origin = "%s" where addonID = "%s" and origin <> "%s"' % (repo, addon, repo)
+                nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql, silent=True, file_db=versiones['addons_db'])
         except:
             logger.error(traceback.format_exc())
     
@@ -761,7 +754,7 @@ def verify_Kodi_video_DB():
         path = filetools.join("special://masterprofile/", "Database")
         if filetools.exists(path):
             platform = config.get_platform(full_version=True)
-            if platform and platform['num_version'] <= 19:
+            if platform and platform.get('video_db', ''):
                 db_files = filetools.walk(path)
                 if filetools.exists(filetools.join(path, platform['video_db'])):
                     for root, folders, files in db_files:
