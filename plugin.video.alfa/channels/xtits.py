@@ -27,8 +27,8 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/?sort_by=post_date&from=01"))
     itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/?sort_by=video_viewed_month&from=01"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/1/?sort_by=rating_month&from=01"))
-    itemlist.append(item.clone(title="Mas comentado" , action="lista", url=host + "/most-commented/1/?sort_by=most_commented_month&from=01"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/?sort_by=rating_month&from=01"))
+    itemlist.append(item.clone(title="Mas comentado" , action="lista", url=host + "/most-commented/?sort_by=most_commented_month&from=01"))
     itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/models/?sort_by=avg_videos_popularity&from=01"))
     itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/sites/?sort_by=avg_videos_popularity&from=01"))
 
@@ -40,7 +40,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/search/%s/" % (host,texto)
+    item.url = "%s/search/%s/?sort_by=post_date" % (host,texto)
     try:
         return lista(item)
     except:
@@ -109,8 +109,9 @@ def lista(item):
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('li', class_='item-pagin is_last')
     if next_page:
-        next_page = next_page.a['data-parameters'].replace(":", "=").split(";")
-        next_page = "?%s&%s" % (next_page[0], next_page[1])
+        next_page = next_page.a['data-parameters'].replace(":", "=").replace(";", "&").replace("+from_albums", "")
+        next_page = "?%s" % next_page
+        # next_page = "?%s&%s" % (next_page[0], next_page[1])
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist

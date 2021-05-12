@@ -1209,7 +1209,7 @@ def newest(categoria):
             item.action = "listado"
             itemlist = listado(item)
 
-        if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
+        if len(itemlist) > 0 and (">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla

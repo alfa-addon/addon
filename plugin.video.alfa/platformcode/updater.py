@@ -11,6 +11,7 @@ import time
 import threading
 import traceback
 import base64
+import xbmc
 
 from platformcode import config
 from platformcode import logger
@@ -45,7 +46,6 @@ def check_addon_init():
         timer = timer * 3600                                            # Lo pasamos a segundos
 
         if config.get_platform(True)['num_version'] >= 14:              # Si es Kodi, lanzamos el monitor
-            import xbmc
             monitor = xbmc.Monitor()
         else:                                                           # Lanzamos solo una actualización y salimos
             check_addon_updates(verbose)                                # Lanza la actualización
@@ -87,6 +87,9 @@ def check_addon_init():
 def check_addon_updates(verbose=False):
     logger.info()
 
+    # Forzamos la actualización de los repos para facilitar la actualización del addon Alfa
+    xbmc.executebuiltin('UpdateAddonRepos')
+    
     ADDON_UPDATES_JSON = 'https://extra.alfa-addon.com/addon_updates/updates.json'
     ADDON_UPDATES_ZIP = 'https://extra.alfa-addon.com/addon_updates/updates.zip'
 
@@ -161,7 +164,6 @@ def check_addon_updates(verbose=False):
             unzipper = ziptools.ziptools()
             unzipper.extract(localfilename, config.get_runtime_path())
         except:
-            import xbmc
             xbmc.executebuiltin('Extract("%s", "%s")' % (localfilename, config.get_runtime_path()))
             time.sleep(1)
         
@@ -203,15 +205,13 @@ def check_update_to_others(verbose=False, app=True):
     logger.info()
     
     try:
-        import xbmc
-        
         list_folder = os.listdir(os.path.join(config.get_runtime_path(), 'tools'))
         for folder in list_folder:
             in_folder = os.path.join(config.get_runtime_path(), 'tools', folder)
             if not os.path.isdir(in_folder):
                 continue
 
-            out_folder = xbmc.translatePath(os.path.join('special://home/', 'addons', folder))
+            out_folder = os.path.join(config.translatePath('special://home/addons'), folder)
             if os.path.exists(out_folder):
                 
                 copytree(in_folder, out_folder)

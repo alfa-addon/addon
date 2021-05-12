@@ -25,9 +25,9 @@ host = 'https://severeporn.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/latest-updates/"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/most-popular/?sort_by=video_viewed_month"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/top-rated/?sort_by=video_viewed_month"))
+    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/latest-updates/?sort_by=post_date&from=1"))
+    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/most-popular/?sort_by=video_viewed_month&from=1"))
+    itemlist.append( Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/top-rated/?sort_by=video_viewed_month&from=1"))
     itemlist.append( Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/models/"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
@@ -69,7 +69,8 @@ def categorias(item):
         itemlist.sort(key=lambda x: x.title)
     next_page = soup.find('li', class_='next')
     if next_page:
-        next_page = next_page.a['href']
+        next_page = next_page.a['data-parameters'].replace(":", "=").replace(";", "&").replace("+from_albums", "")
+        next_page = "?%s" % next_page
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -107,7 +108,8 @@ def lista(item):
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = soup.find('li', class_='next')
     if next_page:
-        next_page = next_page.a['href']
+        next_page = next_page.a['data-parameters'].replace(":", "=").replace(";", "&").replace("+from_albums", "")
+        next_page = "?%s" % next_page
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist

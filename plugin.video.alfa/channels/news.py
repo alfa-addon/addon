@@ -14,14 +14,20 @@ from platformcode import help_window
 from platformcode import platformtools
 from channelselector import get_thumb
 from concurrent import futures
-from datetime import date
 import math
 import os
+import datetime
+
+
+workers = [None, 1, 2, 4, 6, 8, 16, 24, 32, 64]
+max_workers = config.get_setting("max_workers", "news")
+max_workers = workers[max_workers]
+
 
 def mainlist(item):
     logger.info()
+    itemlist = list()
 
-    itemlist = []
     list_items = [[30122, "peliculas", "channels_movie.png" ],
                  [70208, "4k", "channels_movie_4k.png"],
                  [70209, "terror", "channels_horror.png"],
@@ -41,9 +47,9 @@ def mainlist(item):
                     thumbnail=thumbnail)
         set_category_context(new_item)
         itemlist.append(new_item)
-
+    itemlist.append(Item(channel="news", title="Configuración", action="news_setting",
+                         thumbnail=get_thumb("setting_0.png")))
     help_window.show_info("news")
-
     return itemlist
 
 
@@ -51,7 +57,13 @@ def set_category_context(item):
     item.context = [{"title": config.get_localized_string(60514) % item.title,
                      "news": item.news,
                      "action": "setting_channel",
-                     "channel": item.channel}]
+                     "channel": item.channel},
+                    {"title": "Ver canales de esta categoría",
+                     "category": item.news,
+                     "action": "list_channels",
+                     "channel": item.channel,
+                     "switch_to": True}
+                    ]
     item.category = config.get_localized_string(60679) % item.news
 
 
@@ -85,7 +97,7 @@ def news(item):
         pass
 
     if len(channel_list) > 20:
-        executor = futures.ThreadPoolExecutor()
+        executor = futures.ThreadPoolExecutor(max_workers=max_workers)
         executor.submit(process, channel_list[limit + 1:], item.category, item.news, valid_channels_number, True, True)
         executor.shutdown(wait=False)
 
@@ -114,7 +126,7 @@ def process(channel_list, category, news, total_channels, startpage=False, save=
        progress = platformtools.dialog_progress("%s (%s) Seleccionados " % (category, total_channels),
                                                 "Obteniendo novedades. Por favor espere...")
 
-    with futures.ThreadPoolExecutor() as executor:
+    with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         c_results = [executor.submit(get_channel_news, ch, news) for ch in channel_list]
 
         for index, res in enumerate(futures.as_completed(c_results)):
@@ -146,7 +158,8 @@ def process(channel_list, category, news, total_channels, startpage=False, save=
     config.set_setting('tmdb_active', True)
     return itemlist
 
-def get_channels(category):
+
+def get_channels(category, all=False):
     logger.info()
 
     valid_channels = list()
@@ -160,8 +173,7 @@ def get_channels(category):
         if not ch_param.get("active", False):
             continue
         valid = config.get_setting("include_in_newest_" + category, channel)
-
-        if valid:
+        if valid or (valid is not None and all):
             valid_channels.append(channel)
 
     return valid_channels
@@ -172,7 +184,9 @@ def get_channel_news(channel, category, all=False):
     logger.info()
     results = list()
     brand_new = list()
-
+    news_range = config.get_setting("news_range", "news")
+    if news_range == 5:
+        news_range = 100
     ch_params = channeltools.get_channel_parameters(channel)
     module = __import__('channels.%s' % ch_params["channel"], fromlist=["channels.%s" % ch_params["channel"]])
     
@@ -186,20 +200,21 @@ def get_channel_news(channel, category, all=False):
 
     total_results = len(results)
 
-    if not all:
+    if not all and news_range != 100:
         if total_results > 40:
             total_results = int((total_results * 20) / 100)
         elif total_results > 20:
             total_results = int((total_results * 50) / 100)
 
+
     for elem in results[:total_results]:
-        if category not in ["series", "anime"] and not all:
+        if category not in ["series", "anime"] and not all and news_range != 100:
             if not elem.contentTitle:
                 continue
             if elem.infoLabels["year"] and str(elem.infoLabels["year"]).isdigit():
                 item_year = int(elem.infoLabels["year"])
-                this_year = date.today().year
-                if not item_year in range(this_year - 1, this_year + 1):
+                this_year = datetime.date.today().year
+                if not item_year in range(this_year - news_range, this_year + 1):
                     continue
             else:
                 continue
@@ -376,3 +391,20 @@ def cb_custom_button(item, dict_values):
     else:
         return {"label": "Todos"}
 
+
+def list_channels(item):
+    itemlist = list()
+    channels = get_channels(item.category, all=True)
+
+    for ch in channels:
+        ch_param = channeltools.get_channel_parameters(ch)
+        if ch_param["active"]:
+            itemlist.append(Item(channel=ch, action="mainlist", title=ch_param["title"],
+                                 thumbnail=ch_param["thumbnail"]))
+
+    return itemlist
+
+
+def news_setting(item):
+    platformtools.show_channel_settings()
+    return
