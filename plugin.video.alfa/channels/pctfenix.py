@@ -252,7 +252,7 @@ def listado(item):                                                              
     post = None
     forced_proxy_opt = None
     if item.post:
-        forced_proxy_opt = 'ProxyDirect'
+        forced_proxy_opt = 'ProxyCF'
     if item.post or item.post is None:                                          # Rescatamos el Post, si lo hay
         post = item.post
         del item.post
@@ -666,15 +666,16 @@ def findvideos(item):
     data_servidores_stat = False
     size = ''
     post = None
+    timeout_search = timeout * 2                                                # Timeout para descargas
     forced_proxy_opt = None
     if item.post:
-        forced_proxy_opt = 'ProxyDirect'
+        forced_proxy_opt = 'ProxyCF'
     if item.post:
         post = item.post
         del item.post
     
     if not item.matches:
-        data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
+        data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, 
                                           decode_code=decode_code, quote_rep=True, post=post, 
                                           forced_proxy_opt=forced_proxy_opt, 
                                           item=item, itemlist=[])               # Descargamos la página)

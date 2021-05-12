@@ -16,17 +16,17 @@ from core import servertools
 from core.item import Item
 from platformcode import logger
 
-host = "https://www.vipporns.com"  # https://www.youfreeporntube.net
+host = "https://www.vipporns.com" 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="lista", title="Útimos videos", url= host + "/latest-updates/1/"))
-    itemlist.append(item.clone(action="lista", title="Populares", url=host + "/most-popular/1/"))
-    itemlist.append(item.clone(action="lista", title="Mejor valorado", url=host + "/top-rated/1/"))
+    itemlist.append(item.clone(action="lista", title="Útimos videos", url= host + "/latest-updates/?sort_by=post_date&from=1"))
+    itemlist.append(item.clone(action="lista", title="Populares", url=host + "/most-popular/?sort_by=video_viewed_month&from=1"))
+    itemlist.append(item.clone(action="lista", title="Mejor valorado", url=host + "/top-rated/?sort_by=rating_month&from=1"))
     itemlist.append(item.clone(action="categorias", title="Canal", url=host + "/categories/"))
 
-    itemlist.append(item.clone(action="search", title="Buscar", url=host + "/search.php?keywords="))
+    itemlist.append(item.clone(action="search", title="Buscar"))
     return itemlist
 
 
@@ -34,7 +34,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = host + "/search/%s/" % texto
+    item.url = "%s/searches/%s/?sort_by=post_date" % (host,texto)
     try:
         return lista(item)
     except:
@@ -78,12 +78,10 @@ def lista(item):
         title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
         itemlist.append(item.clone(action="play", thumbnail=thumbnail, fanart=thumbnail, title=title,
                              url=url, viewmode="movie", folder=True))
-    next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
-    if "#" in next_page:
-        next_page = scrapertools.find_single_match(data, 'data-parameters="([^"]+)">Next')
+    next_page = scrapertools.find_single_match(data, 'data-parameters="([^"]+)">Next')
+    if next_page:
         next_page = next_page.replace(":", "=").replace(";", "&").replace("+from_albums", "")
         next_page = "?%s" % next_page
-    if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist

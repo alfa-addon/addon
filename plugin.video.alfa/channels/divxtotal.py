@@ -16,6 +16,7 @@ else:
 import re
 import time
 import traceback
+import base64
 
 from channelselector import get_thumb
 from core import httptools
@@ -1327,6 +1328,10 @@ def search(item, texto):
     item.url = host + 'page/1/?s=%s' % texto
     item.extra = "search"
     
+    # Mientras sea necesario el proxy, entorpece las Novedades
+    if channel in base64.b64decode(config.get_setting('proxy_channel_bloqued')).decode('utf-8'):
+        return []
+    
     try:
         if texto:
             return listado(item)
@@ -1348,6 +1353,10 @@ def newest(categoria):
     item.title = "newest"
     item.category_new = "newest"
     item.channel = channel
+    
+    # Mientras sea necesario el proxy, entorpece las Novedades
+    if channel in base64.b64decode(config.get_setting('proxy_channel_bloqued')).decode('utf-8'):
+        return itemlist
 
     try:
         for cat in ['peliculas', 'series']:

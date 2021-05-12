@@ -41,8 +41,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         if not "?login" in url and not "signup" in url:
             if "function/" in url:
                 url = decode(url, license_code)
-            # url += "?download=true"
-            # url += "|verifypeer=false"
+            url += "|verifypeer=false"
             logger.debug(quality + "  --  " + url)
             itemlist.append(['%s [ktplayer]' %quality, url])
         invert = ""

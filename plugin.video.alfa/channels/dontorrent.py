@@ -29,7 +29,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://dontorrent.one/'
+host = 'https://dontorrents.one/'
 channel = 'dontorrent'
 categoria = channel.capitalize()
 
@@ -327,7 +327,7 @@ def listado(item):                                                              
     post = None
     forced_proxy_opt = None
     if item.post:
-        forced_proxy_opt = 'ProxyDirect'
+        forced_proxy_opt = 'ProxyCF'
     if item.post:                                                               # Rescatamos el Post, si lo hay
         post = item.post
     

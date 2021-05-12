@@ -389,7 +389,8 @@ def check_proxy(url, **opt):
         proxy_data['log'] = ''
         url = opt['url_save']
     try:
-        proxy_data['addr']['https'] = str('https://'+ proxy_data['addr']['https'])
+        if not PY3:
+            proxy_data['addr']['https'] = str('https://'+ proxy_data['addr']['https'])
     except:
         pass
     return url, proxy_data, opt
@@ -398,6 +399,9 @@ def check_proxy(url, **opt):
 def proxy_post_processing(url, proxy_data, response, opt):
     opt['out_break'] = False
     try:
+        if response["code"] in [404, 400]:
+            opt['proxy_retries'] = -1
+        
         if ', Proxy Web' in proxy_data.get('stat', ''):
             if not PY3: from . import proxytools
             else: from . import proxytools_py3 as proxytools
@@ -413,6 +417,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
                 opt['forced_proxy'] = 'ProxyDirect'
                 url = opt['url_save']
                 opt['post'] = opt['post_save']
+                response['sucess'] = False
                 response['sucess'] = False
         elif response["code"] == 302:
             response['sucess'] = True

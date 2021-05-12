@@ -240,7 +240,7 @@ def labeler(item, seekTmdb=False):
     if item.infoLabels['tmdb_id'] == '':
         item.infoLabels['first_air_date'] = ''
         item.infoLabels['year'] = ''
-        tmdb.set_infoLabels(item, seekTmdb, include_adult)
+        tmdb.set_infoLabels(item, seekTmdb, include_adult=True)
     return item
 
 def filter_by_selection(item, clearUrl=False):
@@ -541,12 +541,13 @@ def episodesxseason(item, get_episodes = False):
     for article in epmatch:
         scpepnum = int(scrapertools.find_single_match(str(article.find('h2', class_='h-title').string), '.+?(\d+)'))
         scpdate = str(article.find('header', class_='h-header').find('time').string)
-        title = scrapertools.get_season_and_episode(str(item.infoLabels['season']) + 'x' + str(item.infoLabels['episode'])) + ': ' + item.contentSerieName
         date = datetime.datetime.strptime(scpdate, "%B %d, %Y")
         infoLabels['first_air_date'] = date.strftime("%Y/%m/%d")
         infoLabels['premiered'] = infoLabels['first_air_date']
         infoLabels['year'] = date.strftime("%Y")
         infoLabels['episode'] = scpepnum
+        title = scrapertools.get_season_and_episode(str(item.infoLabels['season']) + 'x' + str(item.infoLabels['episode'])) + ': ' + item.contentSerieName
+
         itemlist.append(
             item.clone(
                 action = "findvideos",
@@ -563,7 +564,8 @@ def episodesxseason(item, get_episodes = False):
     labeler_async(itemlist, seekTmdb = SEEK_TMDB)
 
     for i in itemlist:
-        i.title = scrapertools.get_season_and_episode(str(i.infoLabels['season']) + 'x' + str(i.infoLabels['episode'])) + ': ' + i.infoLabels['title']
+        if i.infoLabels.get('title'):
+            i.title = scrapertools.get_season_and_episode(str(i.infoLabels['season']) + 'x' + str(i.infoLabels['episode'])) + ': ' + i.infoLabels['title']
         if not PREFER_TMDB_REVIEW:
             i.infoLabels['plot'] = infoLabels['plot']
 
