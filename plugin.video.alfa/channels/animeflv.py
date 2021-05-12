@@ -21,19 +21,17 @@ from core.item import Item
 from platformcode import config, logger
 from channels import autoplay
 from channels import filtertools
+from channelselector import get_thumb
 
 IDIOMAS = {'LAT': 'LAT','SUB': 'VOSE'}
 list_language = list(IDIOMAS.values())
 list_servers = ['directo', 'rapidvideo', 'streamango', 'yourupload', 'mailru', 'netutv', 'okru']
 list_quality = ['default']
 
-clone = False
-# clone = config.get_setting("use_clone", channel="animeflv")
-# from lib import alfa_assistant
-# if alfa_assistant.is_alfa_installed():
-    # clone = True
+clone = config.get_setting("use_clone", channel="animeflv")
 OGHOST = "https://www3.animeflv.net/"
 CLONEHOST = "https://www10.animeflv.cc/"
+
 if clone:
     HOST = CLONEHOST
 else:
@@ -59,19 +57,19 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="listado", title="Animes",
                          url=HOST + "browse?order=%s" % order, thumbnail='https://i.imgur.com/50lMcjW.png'))
     
-    itemlist.append(Item(channel=item.channel, action="search_section", title="    Género",
+    itemlist.append(Item(channel=item.channel, action="search_section", title="-  Género",
                          url=HOST + "browse", thumbnail='https://i.imgur.com/Xj49Wa7.png',
                          extra="genre"))
     
-    itemlist.append(Item(channel=item.channel, action="search_section", title="    Tipo",
+    itemlist.append(Item(channel=item.channel, action="search_section", title="-  Tipo",
                          url=HOST + "browse", thumbnail='https://i.imgur.com/0O5U8Y0.png',
                          extra="type"))
     
-    itemlist.append(Item(channel=item.channel, action="search_section", title="    Año",
+    itemlist.append(Item(channel=item.channel, action="search_section", title="-  Año",
                          url=HOST + "browse", thumbnail='https://i.imgur.com/XzPIQBj.png',
                          extra="year"))
     
-    itemlist.append(Item(channel=item.channel, action="search_section", title="    Estado",
+    itemlist.append(Item(channel=item.channel, action="search_section", title="-  Estado",
                          url=HOST + "browse", thumbnail='https://i.imgur.com/7LKKjSN.png',
                          extra="status"))
     
@@ -79,15 +77,25 @@ def mainlist(item):
                          thumbnail='https://i.imgur.com/4jH5gpT.png'))
     
     itemlist = renumbertools.show_option(item.channel, itemlist)
-
+    
     autoplay.show_option(item.channel, itemlist)
-
+    
+    itemlist.append(Item(channel=item.channel, action="setting_channel", title="Configurar canal",
+                         thumbnail=get_thumb("setting_0.png")))
+    
     return itemlist
+
+
+def setting_channel(item):
+    from platformcode import platformtools
+    ret = platformtools.show_channel_settings()
+    platformtools.itemlist_refresh()
+    return ret
 
 
 def get_source(url, patron=None):
 
-    data = httptools.downloadpage(url, random_headers=True).data
+    data = httptools.downloadpage(url).data
     data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
     
     if patron:
@@ -403,10 +411,10 @@ def episodios(item):
 
 def findvideos(item):
     logger.info()
-    
+
     from core import jsontools
     itemlist = []
-    
+
     if clone and OGHOST in item.url:
         item.url = item.url.replace(OGHOST, "")
         item.url = "{}{}".format(HOST, scrapertools.find_single_match(item.url, 'ver/\d+/(.+)'))
@@ -432,9 +440,9 @@ def findvideos(item):
                 )
 
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title)
+
     else:
         videos = scrapertools.find_single_match(data, 'var videos = (.*?);')
-    
         videos_json = jsontools.load(videos)
         
         for video_lang in list(videos_json.items()):

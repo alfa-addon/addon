@@ -1,14 +1,22 @@
 ﻿# -*- coding: utf-8 -*-
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import os
 import random
 import re
 import threading
 import time
+import inspect
 import traceback
 from platformcode import platformtools
-from BaseHTTPServer import HTTPServer
-from HTTPWebSocketsHandler import HTTPWebSocketsHandler
+if PY3:
+    from HTTPWebSocketsHandler_py3 import HTTPWebSocketsHandler
+    from http.server import HTTPServer
+else:
+    from HTTPWebSocketsHandler import HTTPWebSocketsHandler
+    from BaseHTTPServer import HTTPServer
 
 from platformcode import config, logger
 from core import jsontools as json
@@ -36,11 +44,21 @@ class MyHTTPServer(HTTPServer):
         if not "socket.py" in traceback.format_exc():
             logger.error(traceback.format_exc())
 
-
 class Handler(HTTPWebSocketsHandler):
     def log_message(self, format, *args):
-        # sys.stderr.write("%s - - [%s] %s\n" %(self.client_address[0], self.log_date_time_string(), format%args))
-        pass
+        # if sys.version_info[0:2] >= (3, 5, 0):
+        #     caller_function = inspect.stack()[1].function
+        # else:
+        #     caller_function = inspect.stack()[1][3]
+        caller_function = inspect.currentframe().f_back.f_code.co_name
+        try:
+            logger.info("[{}]".format(caller_function, ("%s - - %s\n" % (self.client_address[0], format%args)).strip()))
+        except TypeError:
+            logger.info("%s - - %s\n" % (self.client_address[0], args))
+
+    # def log_error(self, format, *args):
+        # logger.error(("%s - - %s\n" %(self.client_address[0], format%args)).strip())
+        # self.log_message(self, format, )
 
     def sendMessage(self, message):
         self.send_message(message)
@@ -49,20 +67,20 @@ class Handler(HTTPWebSocketsHandler):
         from platformcode import platformtools
         from platformcode import controllers
         # Control de accesos
-        Usuario = "user"
-        Password = "password"
-        ControlAcceso = False
-        import base64
+        # Usuario = "user"
+        # Password = "password"
+        # ControlAcceso = False
+        # import base64
         # Comprueba la clave
-        if ControlAcceso and self.headers.getheader('Authorization') <> "Basic " + base64.b64encode(
-                                Usuario + ":" + Password):
-            self.send_response(401)
-            self.send_header('WWW-Authenticate',
-                             'Basic realm=\"' + config.get_localized_string(70264) + '\"')
-            self.send_header('Content-type', 'text/html; charset=utf-8')
-            self.end_headers()
-            self.wfile.write('¡Los datos introducidos no son correctos!')
-            return
+        # if ControlAcceso and self.headers.getheader('Authorization') != "Basic " + base64.b64encode(
+        #                         Usuario + ":" + Password):
+        #     self.send_response(401)
+        #     self.send_header('WWW-Authenticate',
+        #                      'Basic realm=\"' + config.get_localized_string(70264) + '\"')
+        #     self.send_header('Content-type', 'text/html; charset=utf-8')
+        #     self.end_headers()
+        #     self.wfile.write('¡Los datos introducidos no son correctos!')
+        #     return
 
         data = re.compile('/data/([^/]+)/([^/]+)/([^/]+)', re.DOTALL).findall(self.path)
         if data:
@@ -70,7 +88,7 @@ class Handler(HTTPWebSocketsHandler):
             if data[0] in platformtools.requests:
                 c = platformtools.requests[data[0]]
                 response = {"id": data[1], "result": data[2]}
-                print response
+                print(response)
                 c.handler = self
                 c.set_data(response)
                 while data[0] in platformtools.requests and not self.wfile.closed:
@@ -122,8 +140,8 @@ class Handler(HTTPWebSocketsHandler):
             logger.error(traceback.format_exc())
 
     def on_ws_closed(self):
-        self.controller.__del__()
-        del self.controller
+        # self.controller.__del__()
+        # del self.controller
         self.server.fnc_info()
 
     def address_string(self):
@@ -133,20 +151,25 @@ class Handler(HTTPWebSocketsHandler):
 PORT = config.get_setting("server.port")
 server = None
 waking_server = True
+exc = None
 attempts = 0
 while waking_server:
     try:
         server = MyHTTPServer(('', int(PORT)), Handler)
         config.set_setting("server.port", PORT)
         waking_server = False
-    except:
-        if attempts < 3:
+    except Exception as e:
+        if attempts < 3 and True == False:
             PORT = input("El puerto {} está ocupado.\nIngresa otro número de puerto (ej. 8888): ".format(PORT))
             attempts += 1
         else:
             waking_server = False
+            exc = e
 if server == None:
-    raise Exception("No fue posible iniciar el servidor\n(¿Tienes permisos suficientes o hay algún cortafuegos bloqueando a Python?)")
+    if isinstance(exc, Exception):
+        raise exc
+    else:
+        raise Exception("No fue posible iniciar el servidor\n(¿Tienes permisos suficientes o hay algún cortafuegos bloqueando a Python?)")
 
 def run(controller, path):
     try:
@@ -172,11 +195,9 @@ def show_error_message(err_info):
             "Se ha producido un error en Alfa",
             "Comprueba el log para ver mas detalles del error.")
 
-
 def start(fnc_info):
     server.fnc_info = fnc_info
     threading.Thread(target=server.serve_forever).start()
-
 
 def stop():
     server.socket.close()
