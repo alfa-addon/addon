@@ -116,7 +116,8 @@ def process(channel_list, category, news, total_channels, startpage=False, save=
 
     number_of_channels = float(100) / len(channel_list)
 
-    config.set_setting('tmdb_active', False)
+    if '4k' not in category: 
+        config.set_setting('tmdb_active', False)
 
     searching += channel_list
     searching_titles += channel_list
@@ -199,6 +200,7 @@ def get_channel_news(channel, category, all=False):
         return channel, results, category
 
     total_results = len(results)
+    results = sorted(results, reverse=True, key=lambda it: (str(it.infoLabels["year"])))
 
     if not all and news_range != 100:
         if total_results > 40:
