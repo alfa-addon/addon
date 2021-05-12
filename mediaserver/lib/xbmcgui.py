@@ -30,3 +30,10 @@ class WindowXML(object):
 
     def __str__(self):
         return 'xbmc dummy'
+
+class ListItem(dict):
+    def __init__(label="", label2="", path="", offscreen=False):
+        self.label = label
+        self.label2 = label2
+        self.path = path
+        self.offscreen = offscreen
