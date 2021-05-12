@@ -53,8 +53,7 @@ class Handler(HTTPWebSocketsHandler):
         caller_function = inspect.currentframe().f_back.f_code.co_name
         try:
             logger.info("[{}]".format(caller_function, ("%s - - %s\n" % (self.client_address[0], format%args)).strip()))
-        except Exception as e:
-            logger.error(traceback.format_exc())
+        except TypeError:
             logger.info("%s - - %s\n" % (self.client_address[0], args))
 
     # def log_error(self, format, *args):

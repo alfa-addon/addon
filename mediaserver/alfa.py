@@ -46,11 +46,11 @@ threading.Thread.__init__ = thread_name_wrap(threading.Thread.__init__)
 #     import ssl
 
 #     ssl._create_default_https_context = ssl._create_unverified_context
-os.system('@echo off')
+# os.system('@echo off')
 
 def show_info():
-    # os.system('cls' if os.name == 'nt' else 'clear')
-    os.system('echo Reloading...')
+    os.system('cls' if os.name == 'nt' else 'clear')
+    # os.system('echo Reloading...')
     print("--------------------------------------------------------------------")
     print("Alfa %s Iniciado" %version)
     print("La URL para acceder es http://%s:%s" % (myip, http_port))
@@ -72,7 +72,7 @@ def show_info():
 
 
 def start():
-    logger.info("server init...")
+    logger.info("server init {}...".format(sys.version_info[0:2]))
     config.verify_directories_created()
     try:
         HTTPAndWSServer.start(show_info)

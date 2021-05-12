@@ -79,6 +79,7 @@ def run(item):
         logger.info("search")
         tecleado = platformtools.dialog_input()
         if tecleado:
+            if isinstance(tecleado, bytes): tecleado = tecleado.decode()
             itemlist = channelmodule.search(item, tecleado)
         else:
             itemlist = []
