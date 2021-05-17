@@ -42,10 +42,10 @@
 	{
       "id": "use_clone",
       "type": "bool",
-      "label": "Utilizar clon (si no tienes Assistant/no te cargan los enlaces)",
+      "label": "Utilizar clon (si no te cargan los enlaces)",
       "default": false,
-      "enabled": false,
-      "visible": false
+      "enabled": true,
+      "visible": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "id": "siska",
   "name": "siska",
-  "active": false,
+  "active": true,
   "adult": true,
   "language": ["*"],
   "thumbnail": "http://siska.video/images/logo.png?5",

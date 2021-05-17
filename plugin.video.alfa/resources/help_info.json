@@ -16,5 +16,10 @@
     "title": "[COLOR red]Alfa Assistant:[/COLOR] la version instalada está desactualizada",
     "text": "La versión instalada de [COLOR limegreen][B]Alfa Assistant[/B][/COLOR] no es la última disponible.  Las nuevas versiones aportan mayor funcionalidad y estabilidad, además de mejor rendimiento.  [B]Acualiza a la última versión[/B]\n\n[B]CONSEJOS[/B]\n\n - En los ajustes de Alfa, vete a la pestaña [COLOR yellow]'Opciones de Alfa Assistant'[/COLOR].\n - Activa [COLOR yellow]¿Desea que instale la app automáticamente si es necsario?[/COLOR].\n - Pincha en [COLOR limegreen]'Pinche [/COLOR][COLOR yellow]para que Alfa instale/actualice Alfa Assistant ahora[/COLOR].\n - Se inciará la actualización de Alfa Assistant.  El proceso de actualización puede variar mucho de un dispositivo Android a otro.  Sigue las instrucciones.\n - Si ha terminado la actualización con éxito, si es necesario repite la operación que estabas haciendo con el canal y probablemente ahora obtengas mejores resultados.",
     "version": true
+  },
+  "hdfull_login": {
+    "title": "HDFull require estar registrado en la web",
+    "text": "Ahora el webmaster de HDFull exige que los accesos a la web sean bajo registro.\n\n[B]CONSEJOS[/B]\n\n - Accede a la web desde un navegador y [COLOR yellow]regístrate en la web de HDFull[/COLOR].  Es un proceso sencillo.\n - En Alfa, en el canal HDFull, en el apartado [COLOR blue]'Habilita tu cuenta...'[/COLOR] [COLOR yellow]introduce tus credenciales[/COLOR] y podrás acceder a todo el contenido",
+    "version": true
   }
 }

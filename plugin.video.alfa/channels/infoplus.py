@@ -5,7 +5,6 @@
 
 from future import standard_library
 standard_library.install_aliases()
-#from builtins import str
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -283,10 +282,6 @@ class main(xbmcgui.WindowDialog):
         skin = xbmc.getSkinDir()
         self.fonts = get_fonts(skin)
         
-        #### Compatibilidad con Kodi 18 ####
-        if config.get_platform(True)['num_version'] < 18:
-            self.setCoordinateResolution(2)
-        
         self.actorButton = xbmcgui.ControlButton(995, 475, 55, 55, '', font='Font40', alignment=0x00000006,
                                                  noFocusTexture='https://s17.postimg.cc/40acsuihb/thumb_search_star_no.png',
                                                  focusTexture='https://s33.postimg.cc/ikk0qyvrj/thumb_search_star.png',
@@ -515,7 +510,6 @@ class main(xbmcgui.WindowDialog):
              ('focus', 'effect=zoom center=auto end=130% reversible=false',),
              ('WindowClose', 'effect=slide end=0,700 time=1000 condition=true',)])
         self.botones.insert(3, self.global_search)
-        self.buscar = None
         if self.from_window:
             canal = self.item.from_channel
             if not canal:
@@ -535,12 +529,16 @@ class main(xbmcgui.WindowDialog):
                      ('unfocus', 'effect=zoom center=auto start=70% end=100% time=700 reversible=false',),
                      ('focus', 'effect=zoom center=auto end=130% reversible=false',),
                      ('WindowClose', 'effect=slide end=0,700 time=1000 condition=true',)])
+        else:
+            self.buscar = xbmcgui.ControlButton(1095, 320, 140, 53, '', "", "")
+            self.buscar.setVisible(False)
         xbmc.sleep(200)
         self.dialog.close()
 
     def onAction(self, action):
         if action == ACTION_PREVIOUS_MENU or action == ACTION_GESTURE_SWIPE_LEFT or action == 110 or action == 92:
-            xbmc.executebuiltin('PlayMedia(Stop)')
+            global mainWindow
+            xbmc.executebuiltin('PlayerControl(Stop)')
             self.close()
             mainWindow.pop()
             if not mainWindow:
@@ -592,25 +590,25 @@ class main(xbmcgui.WindowDialog):
                     pass
 
     def onControl(self, control):
-        if control == self.actorButton:
+        if control.getId() == self.actorButton.getId():
             global ActoresWindow
             ActoresWindow = Actores('DialogSelect.xml', config.get_runtime_path(), tmdb_id=self.infoLabels["tmdb_id"],
                                     item=self.item, fonts=self.fonts)
             ActoresWindow.doModal()
 
-        elif control == self.trailerButton:
+        elif control.getId() == self.trailerButton.getId():
             global TrailerWindow
             item = self.item.clone(thumbnail=self.infoLabels.get("thumbnail", ""), contextual=True,
                                    contentTitle=self.name, windowed=True, infoLabels=self.infoLabels)
             TrailerWindow = Trailer('TrailerWindow.xml', config.get_runtime_path()).Start(item, self.trailers)
 
-        elif control == self.thumbnail:
+        elif control.getId() == self.thumbnail.getId():
             global imagesWindow
             imagesWindow = images(fanartv=self.images, tmdb=self.infoLabels["images"])
             imagesWindow.doModal()
 
-        elif control == self.buscar or control == self.global_search:
-            if control == self.buscar:
+        elif control.getId() == self.buscar.getId() or control.getId() == self.global_search.getId():
+            if control.getId() == self.buscar.getId():
                 check_busqueda = "no_global"
                 try:
                     canal = self.item.from_channel
@@ -648,7 +646,7 @@ class main(xbmcgui.WindowDialog):
                     if set_animation:
                         self.notfound.setAnimations(
                         [('conditional', 'effect=zoom center=auto start=500% end=0% time=2000 condition=true',)])
-        elif control == self.btn_right:
+        elif control.getId() == self.btn_right.getId():
             try:
                 i = 1
                 count = 0
@@ -698,7 +696,7 @@ class main(xbmcgui.WindowDialog):
                 xbmc.sleep(300)
             except:
                 pass
-        elif control == self.btn_left:
+        elif control.getId() == self.btn_left.getId():
             try:
                 i = 1
                 count = 0
@@ -751,7 +749,7 @@ class main(xbmcgui.WindowDialog):
                 pass
         else:
             for boton, peli, id, poster2 in self.idps:
-                if control == boton:
+                if control.getId() == boton.getId():
                     dialog = platformtools.dialog_progress(config.get_localized_string(60486),
                                                            config.get_localized_string(60487))
                     tipo = self.item.contentType
@@ -816,10 +814,6 @@ class related(xbmcgui.WindowDialog):
             import traceback
             logger.error(traceback.format_exc())
 
-        #### Compatibilidad con Kodi 18 ####
-        if config.get_platform(True)['num_version'] < 18:
-            self.setCoordinateResolution(2)
-        
         self.background = xbmcgui.ControlImage(178, 50, 1053, 634, self.infoLabels.get("fanart",
                                                                                       "http://s6.postimg.cc/fflvear2p/nofanart.png"))
         self.addControl(self.background)
@@ -1099,7 +1093,6 @@ class related(xbmcgui.WindowDialog):
              ('WindowClose', 'effect=zoom end=0 center=auto time=700 condition=true',)])
 
         self.focus = -1
-        self.buscar = None
         canal = self.item.from_channel
         if not canal:
             canal = self.item.channel
@@ -1120,6 +1113,10 @@ class related(xbmcgui.WindowDialog):
                                            'effect=zoom center=auto start=100% end=120% reversible=false tween=bounce time=1000 loop=true condition=Control.HasFocus(' + str(
                                                self.buscar.getId()) + ')'),
                                        ('WindowClose', 'effect=rotatey end=-300 time=1500 condition=true',)])
+        else:
+            self.buscar = xbmcgui.ControlButton(1040, 550, 150, 53, '', "", "")
+            self.buscar.setVisible(False)
+            
         self.global_search = xbmcgui.ControlButton(1046, 620, 140, 53, '', 'https://s33.postimg.cc/3k39ww24f/logo-alfa.png',
                                                    'https://s33.postimg.cc/3k39ww24f/logo-alfa.png')
         self.addControl(self.global_search)
@@ -1153,7 +1150,7 @@ class related(xbmcgui.WindowDialog):
 
     def onControl(self, control):
         global TrailerWindow, BusquedaWindow
-        if control == self.plusinfo:
+        if control.getId() == self.plusinfo.getId():
             global ActorInfoWindow, relatedWindow, ActoresWindow, imagesWindow, exit_loop, mainWindow
             exit_loop = True
             borrar = [relatedWindow, ActorInfoWindow, ActoresWindow, BusquedaWindow, TrailerWindow, imagesWindow]
@@ -1168,13 +1165,13 @@ class related(xbmcgui.WindowDialog):
             mainWindow[-1].close()
             xbmc.sleep(200)
             start(item=item_new, from_window=True)
-        elif control == self.trailer_r:
+        elif control.getId() == self.trailer_r.getId():
             item = self.item.clone(thumbnail=self.infoLabels.get("thumbnail"), contextual=True,
                                    contentTitle=self.infoLabels.get("title"), windowed=True, infoLabels=self.infoLabels)
             item.infoLabels["images"] = ""
             TrailerWindow = Trailer('TrailerWindow.xml', config.get_runtime_path()).Start(item, self.trailers)
         else:
-            if control == self.buscar:
+            if control.getId() == self.buscar.getId():
                 try:
                     check_busqueda = "no_global"
                     canal = self.item.from_channel
@@ -1188,7 +1185,7 @@ class related(xbmcgui.WindowDialog):
                     import traceback
                     logger.error(traceback.format_exc())
 
-            elif control == self.global_search:
+            elif control.getId() == self.global_search.getId():
                 check_busqueda = "global"
                 itemlist = busqueda_global(self.item, self.infoLabels)
                 if len(itemlist) == 1 and self.infoLabels.get("originaltitle"):
@@ -1230,17 +1227,6 @@ def busqueda_global(item, infoLabels, org_title=False):
     from channels import search
     return search.channel_search(new_item)
 
-    # new_item = Item()
-    # new_item.extra = infoLabels.get("title", "")
-    # new_item.extra = re.sub('\[.*?\]', '', new_item.extra)
-    #
-    # if org_title:
-    #     new_item.extra = infoLabels.get("originaltitle", "")
-    # new_item.category = item.contentType
-    #
-    # from channels import search
-    # return search.do_search(new_item, cat)
-
 
 class Busqueda(xbmcgui.WindowXMLDialog):
     def __init__(self, *args, **kwargs):
@@ -1265,10 +1251,7 @@ class Busqueda(xbmcgui.WindowXMLDialog):
         items = []
         for item_l in self.lista:
             item = xbmcgui.ListItem(item_l.title)
-            try:
-                item.setArt({"thumb": item_l.thumbnail})
-            except:
-                item.setThumbnailImage(item_l.thumbnail)
+            item.setArt({"thumb": item_l.thumbnail})
             item.setProperty("item_copy", item_l.tourl())
             items.append(item)
 
@@ -1281,7 +1264,7 @@ class Busqueda(xbmcgui.WindowXMLDialog):
             dialog = platformtools.dialog_progress_bg(config.get_localized_string(60496), config.get_localized_string(60497))
             selectitem = self.getControl(6).getSelectedItem()
             item = Item().fromurl(selectitem.getProperty("item_copy"))
-            #exec("import channels." + item.channel + " as channel")
+            item.channel = item.from_channel
             channel = __import__('channels.%s' % item.channel, fromlist=["channels.%s" % item.channel])
             itemlist = getattr(channel, item.action)(item)
             global SearchWindows
@@ -1327,10 +1310,7 @@ class GlobalSearch(xbmcgui.WindowXMLDialog):
             items = []
             for item_l in self.lista:
                 item = xbmcgui.ListItem(item_l.title)
-                try:
-                    item.setArt({"thumb": item_l.thumbnail})
-                except:
-                    item.setThumbnailImage(item_l.thumbnail)
+                item.setArt({"thumb": item_l.thumbnail})
                 item.setProperty("item_copy", item_l.tourl())
                 items.append(item)
             self.getControl(6).addItems(items)
@@ -1570,10 +1550,6 @@ class ActorInfo(xbmcgui.WindowDialog):
         elif not actor_tmdb.result.get("biography"):
             actor_tmdb.result["biography"] = "Sin información"
 
-        #### Compatibilidad con Kodi 18 ####
-        if config.get_platform(True)['num_version'] < 18:
-            self.setCoordinateResolution(2)
-        
         self.background = xbmcgui.ControlImage(30, -5, 1250, 730, 'http://imgur.com/7ccBX3g.png')
         self.addControl(self.background)
         if set_animation:
@@ -1841,7 +1817,7 @@ class ActorInfo(xbmcgui.WindowDialog):
 
     def onControl(self, control):
         try:
-            if control == self.btn_right:
+            if control.getId() == self.btn_right.getId():
                 i = 1
                 count = 0
                 for afoto, neon, fadelabel, peli in self.botones_maspelis:
@@ -1893,7 +1869,7 @@ class ActorInfo(xbmcgui.WindowDialog):
         except:
             pass
         try:
-            if control == self.btn_left:
+            if control.getId() == self.btn_left.getId():
                 i = 1
                 count = 0
                 if self.mas_pelis == len(self.botones_maspelis):
@@ -1940,7 +1916,7 @@ class ActorInfo(xbmcgui.WindowDialog):
             pass
 
         for boton, peli, id, poster2 in self.idps:
-            if control == boton:
+            if control.getId() == boton.getId():
                 dialog = platformtools.dialog_progress(config.get_localized_string(60486),
                                                        config.get_localized_string(60487))
                 tipo = self.item.contentType
@@ -1979,10 +1955,6 @@ class images(xbmcgui.WindowDialog):
         for imagen, title in self.mal:
             self.imagenes.append(imagen)
 
-        #### Compatibilidad con Kodi 18 ####
-        if config.get_platform(True)['num_version'] < 18:
-            self.setCoordinateResolution(2)
-        
         self.shadow = xbmcgui.ControlImage(245, 10, 1011, 700, 'http://imgur.com/66VSLTo.png')
         self.addControl(self.shadow)
         if set_animation:
@@ -2106,7 +2078,7 @@ class images(xbmcgui.WindowDialog):
 
     def onControl(self, control):
         try:
-            if control == self.btn_right:
+            if control.getId() == self.btn_right.getId():
                 i = 1
                 count = 0
                 for image, neon in self.botones_imgs:
@@ -2144,7 +2116,7 @@ class images(xbmcgui.WindowDialog):
             pass
 
         try:
-            if control == self.btn_left:
+            if control.getId() == self.btn_left.getId():
                 i = 1
                 count = 0
                 if self.imgcount == len(self.botones_imgs):
@@ -2186,7 +2158,7 @@ class images(xbmcgui.WindowDialog):
             pass
 
         for boton, url in self.urls:
-            if control == boton:
+            if control.getId() == boton.getId():
                 if "fanart.tv" in url:
                     url = url.replace("/preview/", "/fanart/")
                 elif "filmaffinity" in url:
@@ -2205,10 +2177,6 @@ class Trailer(xbmcgui.WindowXMLDialog):
         self.doModal()
 
     def onInit(self):
-        #### Compatibilidad con Kodi 18 ####
-        if config.get_platform(True)['num_version'] < 18:
-            self.setCoordinateResolution(0)
-        
         if not self.video_url:
             platformtools.dialog_notification(config.get_localized_string(60507),
                                               config.get_localized_string(60508), 2)
@@ -2220,7 +2188,8 @@ class Trailer(xbmcgui.WindowXMLDialog):
             while True:
                 if new_video:
                     self.doModal()
-                xlistitem = xbmcgui.ListItem(path=self.video_url, thumbnailImage=self.item.thumbnail)
+                xlistitem = xbmcgui.ListItem(path=self.video_url)
+                xlistitem.setArt({"thumb": self.item.thumbnail})
                 pl = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
                 pl.clear()
                 pl.add(self.video_url, xlistitem)
@@ -2256,7 +2225,7 @@ class Trailer(xbmcgui.WindowXMLDialog):
             self.close()
 
     def onClick(self, control):
-        if control == self.getControl(2):
+        if control.getId() == self.getControl(2).getId():
             self.player.pause()
 
 
@@ -2290,7 +2259,7 @@ def get_filmaf(item, infoLabels):
         tipo = "serie"
     url_filmaf = scrapertools.find_single_match(data, '<div class="mc-poster">\s*<a title="[^"]*" href="([^"]+)"')
     if url_filmaf:
-        url_filmaf = "http://www.filmaffinity.com%s" % url_filmaf
+        if not url_filmaf.startswith("http"): url_filmaf = "http://www.filmaffinity.com%s" % url_filmaf
         data = httptools.downloadpage(url_filmaf).data
 
         rating = scrapertools.find_single_match(data, 'itemprop="ratingValue" content="([^"]+)"')

@@ -212,7 +212,7 @@ def marshal_check():
         logger.error(traceback.format_exc(1))
 
 
-def verify_script_alfa_update_helper():
+def verify_script_alfa_update_helper(silent=True):
     logger.info()
     
     import json
@@ -239,7 +239,7 @@ def verify_script_alfa_update_helper():
     addonid = alfa_helper[0]
     new_version = versiones.get(addonid, alfa_helper[1])
     package = addonid + '-%s.zip' % new_version
-    filetools.remove(filetools.join('special://home', 'addons', 'packages', package), silent=True)
+    filetools.remove(filetools.join('special://home', 'addons', 'packages', package), silent=silent)
     updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
     if updated:
         installed_version = xbmc.getInfoLabel('System.AddonVersion(%s)' % addonid)
@@ -261,7 +261,7 @@ def verify_script_alfa_update_helper():
             # Si el .zip es correcto los extraemos e instalamos
             try:
                 unzipper = ziptools.ziptools()
-                unzipper.extract(pkg_updated, addons_path)
+                unzipper.extract(pkg_updated, addons_path, silent=silent)
             except:
                 xbmc.executebuiltin('Extract("%s", "%s")' % (pkg_updated, addons_path))
                 time.sleep(1)
@@ -295,7 +295,7 @@ def verify_script_alfa_update_helper():
         
         new_version = versiones.get(addonid, version)
         package = addonid + '-%s.zip' % new_version
-        filetools.remove(filetools.join('special://home', 'addons', 'packages', package), silent=True)
+        filetools.remove(filetools.join('special://home', 'addons', 'packages', package), silent=silent)
         updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
         if updated:
             installed_version = xbmc.getInfoLabel('System.AddonVersion(%s)' % addonid)
@@ -313,7 +313,7 @@ def verify_script_alfa_update_helper():
                 # Si el .zip es correcto los extraemos e instalamos
                 try:
                     unzipper = ziptools.ziptools()
-                    unzipper.extract(pkg_updated, addons_path)
+                    unzipper.extract(pkg_updated, addons_path, silent=silent)
                 except:
                     xbmc.executebuiltin('Extract("%s", "%s")' % (pkg_updated, addons_path))
                     time.sleep(1)
@@ -329,22 +329,15 @@ def verify_script_alfa_update_helper():
                     logger.error(traceback.format_exc())
 
 
-    file_db = ''
-    for f in sorted(filetools.listdir("special://userdata/Database"), reverse=True):
-        path_f = filetools.join("special://userdata/Database", f)
-
-        if filetools.isfile(path_f) and f.lower().startswith('addons') and f.lower().endswith('.db'):
-            file_db = path_f
-            break
-    if file_db:
+    if versiones.get('addons_db', ''):
         
         repos = [(alfa_repo[0], alfa_repo[0]), (alfa_repo[0], ADDON_NAME), (alfa_repo[0], alfa_helper), \
                     (torrest_repo[0], torrest_repo[0]), (torrest_repo[0], torrest_addon), \
                     ('repository.xbmc.org', futures_script[0].replace(repos_dir, ''))]
         try:
             for repo, addon in repos:
-                sql = 'update installed set origin = "%s" where addonID= "%s" and origin <> "%s"' % (repo, addon, repo)
-                nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql, silent=True, file_db=file_db)
+                sql = 'update installed set origin = "%s" where addonID = "%s" and origin <> "%s"' % (repo, addon, repo)
+                nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql, silent=silent, file_db=versiones['addons_db'])
         except:
             logger.error(traceback.format_exc())
     
@@ -352,7 +345,7 @@ def verify_script_alfa_update_helper():
     addonid = ADDON_NAME
     new_version = versiones.get(addonid, ADDON_VERSION)
     package = addonid + '-%s.zip' % new_version
-    filetools.remove(filetools.join('special://home', 'addons', 'packages', package), silent=True)
+    filetools.remove(filetools.join('special://home', 'addons', 'packages', package), silent=silent)
     updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
     if updated:
         if ADDON_VERSION != new_version:
@@ -372,6 +365,76 @@ def verify_script_alfa_update_helper():
                 time.sleep(1)
             except:
                 logger.error(traceback.format_exc())
+
+
+def install_alfa_now(silent=True):
+    logger.info()
+    import json
+    from core import ziptools
+    from core import httptools
+
+    try:
+        versiones = config.get_versions_from_repo()
+    except:
+        versiones = {}
+        logger.error(traceback.format_exc())
+    if not versiones:
+        return
+    
+    addons_path = filetools.translatePath("special://home/addons")
+    alfa_addon = ['plugin.video.alfa', '3.4.2', '*']
+    addonid = alfa_addon[0]
+    new_version = versiones.get(addonid, alfa_addon[1])
+    package = addonid + '-%s.zip' % new_version
+        
+    url = '%s%s/%s' % (versiones.get('url', ''), addonid, package)
+    response = httptools.downloadpage(url, ignore_response_code=True, alfa_s=True, json_to_utf8=False)
+    if response.code == 200:
+        zip_data = response.data
+        pkg_updated = filetools.join(addons_path, 'packages', package)
+        
+        logger.info("Downloading %s" % package)
+        res = filetools.write(pkg_updated, zip_data, mode='wb')
+        if res:
+            logger.info("backing and removing installed version... %s" % package)
+            backup_path = filetools.join(addons_path, "temp", addonid)
+            if filetools.exists(backup_path):
+                res = filetools.rmdirtree(backup_path, silent=silent)
+                if not res: return
+            time.sleep(3)
+            if not filetools.exists(backup_path):
+                filetools.copy(ADDON_PATH, backup_path)
+                time.sleep(3)
+                res = filetools.rmdirtree(ADDON_PATH, silent=silent)
+                time.sleep(3)
+                if filetools.exists(ADDON_PATH):
+                    logger.error("backing and removing installed version FAILED ... %s" % package)
+                    return
+            else:
+                logger.error("backing and removing installed version FAILED ... %s" % package)
+                return
+        else:
+            logger.error("Unable to download %s" % package)
+            return
+
+        # Si el .zip es correcto los extraemos e instalamos
+        try:
+            unzipper = ziptools.ziptools()
+            unzipper.extract(pkg_updated, addons_path, silent=silent)
+        except:
+            xbmc.executebuiltin('Extract("%s", "%s")' % (pkg_updated, addons_path))
+            time.sleep(1)
+
+        logger.info("Installing %s" % package)
+        xbmc.executebuiltin('UpdateLocalAddons')
+        time.sleep(2)
+        method = "Addons.SetAddonEnabled"
+        xbmc.executeJSONRPC(
+            '{"jsonrpc": "2.0", "id":1, "method": "%s", "params": {"addonid": "%s", "enabled": true}}' % (method, addonid))
+        profile = json.loads(xbmc.executeJSONRPC('{"jsonrpc": "2.0", "id":1, "method": "Profiles.GetCurrentProfile"}'))
+        logger.info("Reloading Profile...")
+        user = profile["result"]["label"]
+        xbmc.executebuiltin('LoadProfile(%s)' % user)
 
 
 def create_folder_structure(custom_code_dir):
@@ -761,7 +824,7 @@ def verify_Kodi_video_DB():
         path = filetools.join("special://masterprofile/", "Database")
         if filetools.exists(path):
             platform = config.get_platform(full_version=True)
-            if platform and platform['num_version'] <= 19:
+            if platform and platform.get('video_db', ''):
                 db_files = filetools.walk(path)
                 if filetools.exists(filetools.join(path, platform['video_db'])):
                     for root, folders, files in db_files:

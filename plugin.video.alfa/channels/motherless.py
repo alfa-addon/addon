@@ -63,6 +63,7 @@ def categorias(item):
     return itemlist
 
 
+
 def lista(item):
     logger.info()
     itemlist = []
@@ -73,7 +74,7 @@ def lista(item):
     patron = '<div class="thumb.*?'
     patron += '<a href="([^"]+)".*?'
     patron += '<span class="size">([^<]+)<.*?'
-    patron += 'src="([^"]+)?from_helper".*?'
+    patron += 'src="([^"]+.jpg)".*?'
     patron += 'alt="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,time,scrapedthumbnail,scrapedtitle in matches:

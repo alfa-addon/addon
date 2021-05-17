@@ -102,7 +102,7 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
     Devuelve los números de versiones de los addons y repos incluidos en el Alfa Repo, así como la url desde donde se ha descargado
     '''
     from core import httptools
-    from core.filetools import decode
+    from core import filetools
     
     versiones = {}
     if not urls:
@@ -122,7 +122,18 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
             for addon in xml["addons"]["addon"]:
                 versiones[addon["@id"]] = addon["@version"]
             versiones['url'] = url
-            versiones = decode(versiones)
+            response = httptools.downloadpage(url+xml_repo+'.md5', timeout=5, ignore_response_code=True, alfa_s=True)
+            
+            if response.code == 200 and response.data:
+                versiones['repository.alfa-addon.md5'] = response.data
+            
+            for f in sorted(filetools.listdir("special://userdata/Database"), reverse=True):
+                path_f = filetools.join("special://userdata/Database", f)
+                if filetools.isfile(path_f) and f.lower().startswith('addons') and f.lower().endswith('.db'):
+                    versiones['addons_db'] = path_f
+                    break
+            
+            versiones = filetools.decode(versiones)
             break
         except:
             import traceback
@@ -160,7 +171,7 @@ def get_platform(full_version=False):
     code_db = {'10': 'MyVideos37.db', '11': 'MyVideos60.db', '12': 'MyVideos75.db',
                '13': 'MyVideos78.db', '14': 'MyVideos90.db', '15': 'MyVideos93.db',
                '16': 'MyVideos99.db', '17': 'MyVideos107.db', '18': 'MyVideos116.db', 
-               '19': 'MyVideos119.db'}
+               '19': 'MyVideos119.db', '20': 'MyVideos119.db'}
 
     num_version = xbmc.getInfoLabel('System.BuildVersion')
     num_version = re.match("\d+\.\d+", num_version).group(0)

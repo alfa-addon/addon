@@ -49,8 +49,9 @@ page_url = ''
 
 #category = 'pctmix1'                                                          # Clone preferido para Novedades
 category = ''                                                                   # Clone preferido para Novedades
-clone_num = 2                                                                   # Número de Clones "buenos"
+clone_num = 3                                                                   # Número de Clones "buenos"
 clone_num_ext = 3                                                               # Número de Clones "válidos"
+clone_num_post = 1                                                              # Número de Clones "válidos" sin proxy-post
 
 #Código para permitir usar un único canal para todas las webs clones de NewPct1
 #Cargamos en .json del canal para ver las listas de valores en settings
@@ -81,6 +82,8 @@ if host_index == 0:                                                             
 if host_index > 0 or not clone_list_random:     #Si el Clone por defecto no es Aleatorio, o hay ya un aleatorio seleccionado...
     i = 1
     for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
+        if i == clone_num_post:
+            channel_clone_post = channel_clone                                  #Nombre del Canal elegido para POST
         if i == host_index:
             channel_clone_name = channel_clone                                  #Nombre del Canal elegido
             host = host_clone                                                   #URL del Canal elegido
@@ -516,7 +519,7 @@ def listado(item):                                                              
     thumb_series = get_thumb("channels_tvshow.png")
     
     global host
-    item, host = verify_host(item, host)                                        # Actualizamos la url del host
+    item, host = verify_host(item, host, post=item.post)                        # Actualizamos la url del host
     if channel_clone_name == "*** DOWN ***":                                    #Ningún clones activo !!!
         itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
         return itemlist 
@@ -838,13 +841,13 @@ def listado(item):                                                              
             
             # Tratamiento especial para Novedades, con opciones como 4K
             if item.extra == "novedades" and item.extra2:
-                if not item.extra2 in url and not item.extra2 in scrapedtitle and not item.extra2 in scrapedthumbnail:
+                if not item.extra2 in url.lower() and not item.extra2 in scrapedtitle.lower() and not item.extra2 in scrapedtitle.lower():
                     continue
             
             cnt_title += 1                                                      # Incrementamos el contador de entradas válidas
             
-            item_local = item.clone()                                           #Creamos copia de Item para trabajar
-            if item_local.tipo:                                                 #... y limpiamos
+            item_local = item.clone()                                           # Creamos copia de Item para trabajar
+            if item_local.tipo:                                                 # ... y limpiamos
                 del item_local.tipo
             if item_local.totalItems:
                 del item_local.totalItems
@@ -1051,7 +1054,7 @@ def listado(item):                                                              
             title = re.sub(r'(?i)fullbluray\s*|en\s*bluray\s*|bluray\s*en\s*|bluray\s*|bonus\s*disc\s*|de\s*cine\s*', '', title)
             title = re.sub(r'(?i)telecine\s*|argentina\s*|\+\+sub\w+\s*|\+-\+sub\w+\s*|directors\s*cut\s*|\s*en\s*hd', '', title)
             title = re.sub(r'(?i)subs.\s*integrados\s*|subtitulos\s*|blurayrip(?:\])?|descarga\w*\s*otras\s*|\(comple.*?\)', '', title).strip()
-            title = re.sub(r'(?i)resubida|montaje\s*del\s*director|-*v.cine\s*|x264\s*|mkv\s*|sub\w*\s*', '', title).strip()
+            title = re.sub(r'(?i)resubida|montaje\s*del\s*director|-*v.cine\s*|x264\s*|mkv\s*|sub\w*\s*|remaste\w+', '', title).strip()
             title = title.replace("a?o", 'año').replace("a?O", 'año').replace("A?o", 'Año')\
                     .replace("A?O", 'Año').strip()
             title = title.replace("(", "-").replace(")", "-").replace(".", " ").strip()
@@ -2222,7 +2225,7 @@ def find_language(item, json_category=''):
     return item
 
 
-def verify_host(item, host_call, force=True, category=''):
+def verify_host(item, host_call, force=True, category='', post=None):
     clone_list_alt = []
     
     item.url = urlparse.urljoin(host_call, item.url)
@@ -2236,11 +2239,13 @@ def verify_host(item, host_call, force=True, category=''):
     elif item.from_channel_alt:
         category = item.category.lower()
 
-    if force or host_index_check > 0:                                           # Si se quiere usar el mismo clone, en lo posible ...
+    if force or host_index_check > 0 or post:                                   # Si se quiere usar un clone, en lo posible ...
         if not category:
             category = scrapertools.find_single_match(item.url, 'http.*\:\/\/(?:www.)?(\w+)\.\w+\/')
         if host_index_check > 0 and not category:
             category = channel_clone_name
+        if post:
+            category = channel_clone_post
         x = 0
         for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list_check:
             if category == channel_clone and active_clone == '1':               # Se comprueba que el clone esté activo
