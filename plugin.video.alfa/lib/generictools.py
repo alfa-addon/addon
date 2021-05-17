@@ -1439,7 +1439,7 @@ def post_tmdb_episodios(item, itemlist):
         del item.intervencion
     
     #Si ha habido fail-over, lo comento
-    if channel_alt and not item.downloadFilename:
+    if channel_alt and not item.downloadFilename and not (item.library_playcounts or item.add_videolibrary):
         itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + channel_alt.capitalize() 
                         + '[/COLOR] [ALT ] en uso', contentType='episode'))
         itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + item.category.capitalize() 

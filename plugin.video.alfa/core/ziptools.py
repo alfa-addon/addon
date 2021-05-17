@@ -16,7 +16,7 @@ from core import filetools
 
 
 class ziptools(object):
-    def extract(self, file, dir, folder_to_extract="", overwrite_question=False, backup=False):
+    def extract(self, file, dir, folder_to_extract="", overwrite_question=False, backup=False, silent=False):
         logger.info("file=%s" % file)
         logger.info("dir=%s" % dir)
 
@@ -30,13 +30,13 @@ class ziptools(object):
 
         for nameo in zf.namelist():
             name = nameo.replace(':', '_').replace('<', '_').replace('>', '_').replace('|', '_').replace('"', '_').replace('?', '_').replace('*', '_')
-            logger.info("name=%s" % nameo)
+            if not silent: logger.info("name=%s" % nameo)
             if not name.endswith('/'):
-                logger.info("no es un directorio")
+                if not silent: logger.info("no es un directorio")
                 try:
                     (path, filename) = filetools.split(filetools.join(dir, name))
-                    logger.info("path=%s" % path)
-                    logger.info("name=%s" % name)
+                    if not silent: logger.info("path=%s" % path)
+                    if not silent: logger.info("name=%s" % name)
                     if folder_to_extract:
                         if path != filetools.join(dir, folder_to_extract):
                             break
@@ -49,7 +49,7 @@ class ziptools(object):
 
                 else:
                     outfilename = filetools.join(dir, name)
-                logger.info("outfilename=%s" % outfilename)
+                if not silent: logger.info("outfilename=%s" % outfilename)
                 try:
                     if filetools.exists(outfilename) and overwrite_question:
                         from platformcode import platformtools

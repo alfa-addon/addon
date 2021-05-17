@@ -58,6 +58,9 @@ class Platformtools(object):
     def dialog_select(self, heading, list):
         pass
 
+    def dialog_multiselect(heading, _list, autoclose=0, preselect=[], useDetails=False):
+        pass
+
     def dialog_progress(self, heading, line1, line2="", line3=""):
         class Dialog(object):
             def __init__(self, heading, line1, line2, line3, PObject):

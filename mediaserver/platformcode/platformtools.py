@@ -32,6 +32,12 @@ def dialog_select(*args, **kwargs):
     return controllers[id].dialog_select(*args, **kwargs)
 
 
+def dialog_multiselect(heading, _list, autoclose=0, preselect=[], useDetails=False):
+    id = threading.current_thread().name
+    return controllers[id].dialog_select(*args, **kwargs)
+    # return xbmcgui.Dialog().multiselect(heading, _list, autoclose=autoclose, preselect=preselect, useDetails=useDetails)
+
+
 def dialog_progress(*args, **kwargs):
     id = threading.current_thread().name
     return controllers[id].dialog_progress(*args, **kwargs)
@@ -50,6 +56,16 @@ def dialog_input(*args, **kwargs):
 def dialog_numeric(*args, **kwargs):
     id = threading.current_thread().name
     return controllers[id].dialog_numeric(*args, **kwargs)
+
+
+def dialog_textviewer(heading, text):
+    id = threading.current_thread().name
+    return controllers[id].dialog_textviewer(*args, **kwargs)
+
+
+def dialog_browse(_type, heading, shares='files', default=""):
+    id = threading.current_thread().name
+    return controllers[id].dialog_browse(*args, **kwargs)
 
 
 def itemlist_refresh(*args, **kwargs):

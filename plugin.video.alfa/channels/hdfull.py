@@ -27,14 +27,14 @@ from core import scrapertools
 from core import servertools, tmdb
 from core import channeltools
 from core.item import Item
-from platformcode import config, logger
+from platformcode import config, logger, help_window
 from channels import autoplay
 from channels import filtertools
 from platformcode import platformtools
 from channelselector import get_thumb
 
 host = config.get_setting("current_host", channel="hdfull")
-host_blacklist = ['https://www2.hdfull.cx/', 'https://hdfull.sh/']
+host_blacklist = ['https://www2.hdfull.cx/', 'https://hdfull.sh/', 'https://hdfull.ch/']
 
 
 _silence = config.get_setting('silence_mode', channel='hdfull')
@@ -56,18 +56,22 @@ def login():
     _logged = 'id="header-signout" href="/logout"'
     if _logged in data:
         config.set_setting("logged", True, channel="hdfull")
+        logger.info('LOGGED', force=True)
         return True
     else:
         patron = "<input type='hidden' name='__csrf_magic' value=\"([^\"]+)\" />"
         sid = urllib.quote(scrapertools.find_single_match(data, patron))
-        user_ = urllib.quote(config.get_setting('hdfulluser', channel='hdfull'))
-        pass_ = urllib.quote(config.get_setting('hdfullpassword', channel='hdfull'))
+        user_ = urllib.quote(config.get_setting('hdfulluser', channel='hdfull', default=''))
+        pass_ = config.get_setting('hdfullpassword', channel='hdfull', default='')
+        if pass_:
+            pass_ = urllib.quote(pass_)
         if not pass_:
             if not _silence:
                 platformtools.dialog_notification("Falta la contraseña", 
                                               "Revise sus datos en la configuración del canal",
                                               sound=False)
             config.set_setting("logged", False, channel="hdfull")
+            logger.info('NO password for LOGIN', force=True)
             return False
         post = '__csrf_magic=%s&username=%s&password=%s&action=login' % (sid, user_, pass_)
 
@@ -75,10 +79,12 @@ def login():
 
         if _logged in new_data:
             config.set_setting("logged", True, channel="hdfull")
+            logger.info('Just LOGGED', force=True)
             return True
         
         elif _silence:
             config.set_setting("logged", False, channel="hdfull")
+            logger.info('Error on LOGIN', force=True)
             return False
         
         else:
@@ -86,6 +92,7 @@ def login():
                                              "Revise sus datos en la configuración del canal",
                                              sound=False)
             config.set_setting("logged", False, channel="hdfull")
+            logger.info('Error on LOGIN', force=True)
             return False
 
 
@@ -191,6 +198,9 @@ def mainlist(item):
         account = login()
     else:
         account = False
+    if not account:
+        logger.info('NO LOGIN credentials', force=True)
+        help_window.show_info('hdfull_login', wait=False)
 
 
     autoplay.init(item.channel, list_servers, list_quality)
@@ -814,13 +824,12 @@ def generos(item):
     itemlist = []
     
     data = agrupa_datos(item.url)
-    
     tipo = '(?:series|tv-shows)'
     if item.type == 'peliculas':
         tipo = '(?:peliculas|movies)'
 
     data = scrapertools.find_single_match(data, 
-        '<li class="dropdown"><a href="%s%s"(.*?)</ul>' % (host, tipo))
+        '<li class="dropdown"><a href="/%s"(.*?)</ul>' % tipo)
     patron = '<li><a href="([^"]+)">([^<]+)</a></li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle in matches:

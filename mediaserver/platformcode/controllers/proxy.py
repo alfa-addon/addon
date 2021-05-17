@@ -2,10 +2,19 @@
 # ------------------------------------------------------------
 # Controlador para acceso indirecto a ficheros remotos
 # ------------------------------------------------------------
-import base64
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
-import urllib
-import urllib2
+import base64
+
+if PY3:
+    import urllib.parse as urllib
+    from urllib import request as urllib2
+else:
+    import urllib
+    import urllib3 as urllib2
 
 from controller import Controller
 
@@ -35,7 +44,7 @@ class proxy(Controller):
 
         try:
             h = opener.open(req)
-        except urllib2.HTTPError, e:
+        except urllib2.HTTPError as e:
             h = e
         except:
             self.handler.send_response("503")

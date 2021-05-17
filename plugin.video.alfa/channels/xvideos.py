@@ -36,7 +36,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/?k=%s" % (host, texto)
+    item.url = "%s/?k=%s&sort=uploaddate" % (host, texto)
     try:
         return lista(item)
     except:
