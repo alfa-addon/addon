@@ -290,6 +290,10 @@ class Daemon(object):
         logging.debug("Creating process with command %s and params %s", cmd, kwargs)
         try:
             self._p = call_binary('openBinary', cmd, p=self._p, **kwargs)
+            if self._p.returncode == 888:
+                self._p.returncode = None
+                self._root = False
+                logging.info("Process to cannot be run as root")
 
             if self._root and PLATFORM.system == System.android:
                 read_select(self._p.stdout.fileno(), 10)
@@ -368,6 +372,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
     import requests
     import time
     import json
+    import xbmcvfs
     
     # Lets try first the traditional way
     if not p:
@@ -421,6 +426,11 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                   }
     
     TORREST_ADDON_SETTING = xbmcaddon.Addon()
+    run_as_root = False
+    if TORREST_ADDON_SETTING.getSetting('run_as_root') == 'true':
+        TORREST_ADDON_SETTING.setSetting('run_as_root', 'false')
+        run_as_root = True
+        logging.info('## Assistant checking "run_as_root": SET to False')
     TORREST_ADDON_USERDATA = xbmc.translatePath(TORREST_ADDON_SETTING.getAddonInfo("profile"))
     USER_APP_URL = ''
     USER_APP_URL_ALT = ''
@@ -456,6 +466,9 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                     USER_ADDON_SETTING = xbmcaddon.Addon(id="%s" % user_params['USER_ADDON'])
                     USER_ADDON = user_params['USER_ADDON']
                     USER_ADDON_STATUS = True
+                    if USER_ADDON_SETTING.getSetting('is_rooted_device') == 'rooted':
+                        USER_ADDON_SETTING.setSetting('is_rooted_device', 'check')
+                        logging.info('## Assistant checking "is_rooted_device": SET to "check"')
                     if USER_ADDON_SETTING.getSetting('assistant_mode') == 'este' and \
                             os.path.exists(os.path.join(USER_APP_PATH, user_params['USER_APP'])):
                         USER_APP = user_params['USER_APP']
@@ -487,22 +500,96 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
 
     if USER_APP_STATUS:
         try:
-            for arg in cmd:
-                # If settings.json does not exists, it creates an initial one to avoid Torrest mkdir "downloads" in bin read-only folder
-                if 'settings.json' in arg and not os.path.exists(arg):
-                    import json
-                    from lib import kodi
-                    from lib.utils import assure_unicode
-                    _settings_prefix = "s"
-                    _settings_separator = ":"
-                    _settings_spec = [s for s in kodi.get_all_settings_spec() if s["id"].startswith(
-                                    _settings_prefix + _settings_separator)]
-                    s = kodi.generate_dict_settings(_settings_spec, separator=_settings_separator)[_settings_prefix]
-                    s["download_path"] = assure_unicode(xbmc.translatePath(s["download_path"]))
-                    s["torrents_path"] = assure_unicode(xbmc.translatePath(s["torrents_path"]))
-                    with open(arg, "w") as f:
-                        json.dump(s, f, indent=3)
+            try:
+                # Special process for Android 11+: setting download paths in a "free zone"
+                os_release = 0
+                if PY3:
+                    FF = b'\n'
+                else:
+                    FF = '\n'
+                try:
+                    for label_a in subprocess.check_output('getprop').split(FF):
+                        if PY3 and isinstance(label_a, bytes):
+                            label_a = label_a.decode()
+                        if 'build.version.release' in label_a:
+                            os_release = int(re.findall(':\s*\[(.*?)\]$', label_a, flags=re.DOTALL)[0])
+                            break
+                except:
+                    try:
+                        with open(os.environ['ANDROID_ROOT'] + '/build.prop', "r") as f:
+                            labels = read(f)
+                        for label_a in labels.split():
+                            if PY3 and isinstance(label_a, bytes):
+                                label_a = label_a.decode()
+                            if 'build.version.release' in label_a:
+                                os_release = int(re.findall('=(.*?)$', label_a, flags=re.DOTALL)[0])
+                                break
+                    except:
+                        os_release = 10
+                
+                # If Android 11+, reset the download & torrents paths to /storage/emulated/0/Download/Kodi/Torrest/...
+                if os.path.exists(cmd[-1]):
+                    os.remove(cmd[-1])
+                if os_release >= 11:
+                    cmd[-1] = cmd[-1].replace('Android/data/org.xbmc.kodi/files/.kodi/userdata/addon_data/plugin.video.torrest', \
+                                            'Download/Kodi/Torrest')
+                    if 'userdata/addon_data/plugin.video.' in TORREST_ADDON_SETTING.getSetting('s:download_path'):
+                        download_path = '/storage/emulated/0/Download/Kodi/Torrest/downloads/'
+                        TORREST_ADDON_SETTING.setSetting('s:download_path', download_path)
+                        if not os.path.exists(download_path):
+                            res = xbmcvfs.mkdirs(download_path)
+                    if 'userdata/addon_data/plugin.video.' in TORREST_ADDON_SETTING.getSetting('s:torrents_path'):
+                        torrents_path = '/storage/emulated/0/Download/Kodi/Torrest/torrents/'
+                        TORREST_ADDON_SETTING.setSetting('s:torrents_path', torrents_path)
+                        if not os.path.exists(torrents_path):
+                            res = xbmcvfs.mkdirs(torrents_path)
+                    if os.path.exists(cmd[-1]):
+                        os.remove(cmd[-1])
+                
+                # As settings.json does not exists, it creates an initial one to avoid Torrest mkdir "downloads" in bin read-only folder
+                cmd_back = cmd[:]
+                for arg in cmd:
+                    s = {}
+                    if 'settings.json' in arg:
+                        from lib import kodi
+                        from lib.utils import assure_unicode
+                        argum = arg
+                        # "run_as_root" is incompatible with this process, creating a wrong format for the call.  It has to be reseted
+                        if run_as_root:
+                            cmd_back = argum.replace('echo $$ && exec ', '').split(' ')
+                            for argum in cmd_back:
+                                if 'settings.json' in argum:
+                                    break
+                            else:
+                                argum = ''
 
+                        if not s:
+                            _settings_prefix = "s"
+                            _settings_separator = ":"
+                            _settings_spec = [s for s in kodi.get_all_settings_spec() if s["id"].startswith(
+                                            _settings_prefix + _settings_separator)]
+                            s = kodi.generate_dict_settings(_settings_spec, separator=_settings_separator)[_settings_prefix]
+                            s["download_path"] = assure_unicode(xbmc.translatePath(s["download_path"]))
+                            s["torrents_path"] = assure_unicode(xbmc.translatePath(s["torrents_path"]))
+                            try:
+                                if not os.path.exists(os.path.dirname(argum)):
+                                    res = xbmcvfs.mkdirs(os.path.dirname(argum))
+                                if not os.path.exists(s["download_path"]):
+                                    res = xbmcvfs.mkdirs(s["download_path"])
+                                if not os.path.exists(s["torrents_path"]):
+                                    res = xbmcvfs.mkdirs(s["torrents_path"])
+                            except:
+                                logging.info('## Assistant ERROR creating DIRS for "download_path" or "torrents_path"')
+                            with open(argum, "w") as f:
+                                json.dump(s, f, indent=3)
+                            logging.info('## Assistant CREATING initial settings.json: %s - AT %s/ %s', \
+                                            s, os.path.dirname(argum), os.listdir(os.path.dirname(argum)))
+                            
+                cmd = cmd_back[:]
+            except:
+                logging.info('## Assistant checking settings.json: ERROR on processing .json AT %s', arg)
+                logging.info(traceback.format_exc())
+            
             """
             Assistant APP acts as a CONSOLE for binaries management in Android 10+ and Kodi 19+
             
@@ -675,7 +762,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
             if not launch_status:
                 p.returncode = 999
                 raise ValueError("No app response:  error code: %s" % status_code)
-            
+
             try:
                 p.pid = int(app_response['pid'])
             except:
@@ -694,6 +781,10 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                     # Is the binary hung?  Lets restart it
                     return call_binary(function, command_base64, retry=True, kwargs={})
 
+            # Tell the caller that run_as_root is not possible
+            if run_as_root:
+                p.returncode = 888
+            
             logging.info('## Assistant executing CMD: %s - PID: %s', command[0], p.pid)
             logging.debug('## Assistant executing CMD **kwargs: %s', command[1])
         except:
@@ -723,6 +814,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
 
         url_close = p.url_app + '/terminate'
         cmd_android = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'open', 'about:blank')
+        cmd_android_quit = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'quit', 'about:blank')
         cmd_android_close = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'terminate', 'about:blank')
         cmd_android_permissions = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'checkPermissions', 'about:blank')
 
@@ -826,8 +918,8 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     kodi.notification('Accept Assitant permissions', time=15000)
                     time.sleep(5)
                     xbmc.executebuiltin(cmd_android_permissions)
-                    time.sleep(15)
-                    xbmc.executebuiltin(cmd_android)
+                    time.sleep(10)
+                    xbmc.executebuiltin(cmd_android_quit)
                     time.sleep(3)
                 
                 if msg:
