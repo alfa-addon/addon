@@ -5265,3 +5265,7 @@ msgstr "Período de envelhecimento para domínios não resolvidos"
 msgctxt "#80783"
 msgid "Deleted all %s links"
 msgstr "Todos os links de %s foram removidos"
+
+msgctxt "#80784"
+msgid "Search in MyAnimeList"
+msgstr "Pesquise em MyAnimeList"

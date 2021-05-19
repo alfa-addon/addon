@@ -5365,3 +5365,7 @@ msgstr "Període d'envelliment per a dominis no resolts"
 msgctxt "#80783"
 msgid "Deleted all %s links"
 msgstr "S'han eliminat tots els enllaços de %s"
+
+msgctxt "#80784"
+msgid "Search in MyAnimeList"
+msgstr "Cercar en MyAnimeList"
