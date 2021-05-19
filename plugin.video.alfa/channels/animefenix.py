@@ -75,7 +75,7 @@ def new_episodes(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url)
+    soup = create_soup(item.url).find("div", class_="capitulos-grid")
 
     for elem in soup.find_all("div", "overarchingdiv"):
         title = elem.img["alt"]

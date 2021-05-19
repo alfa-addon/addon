@@ -20,7 +20,7 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-HOST = 'https://www17.doramasmp4.com/'
+HOST = 'https://www27.doramasmp4.com/'
 host = httptools.downloadpage('https://www17.doramasmp4.com/', only_headers=True).url
 
 IDIOMAS = {'sub': 'VOSE', 'VO': 'VO'}
@@ -247,9 +247,11 @@ def findvideos(item):
         headers = {'referer': item.url}
         token = scrapertools.find_single_match(video_url, 'token=(.*)')
         #
-        video_data = httptools.downloadpage(video_url, headers=headers, follow_redirects=False).data
-        url = scrapertools.find_single_match(video_data, '(?:<iframe class=".*?"|<source) src="([^"]+)"')
-
+        try:
+            video_data = httptools.downloadpage(video_url, headers=headers, follow_redirects=False).data
+            url = scrapertools.find_single_match(video_data, '(?:iframe (?:class=".*?" )?src="([^"]+)")')
+        except:
+            continue
         if "redirect.php" in url:
             video_data = httptools.downloadpage(url, headers=headers, follow_redirects=False).data
             url = scrapertools.find_single_match(video_data, "window.location.href = '([^']+)'")

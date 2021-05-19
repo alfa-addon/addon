@@ -16,6 +16,7 @@ def getmainlist(view="thumb_"):
     itemlist = list()
 
     # Añade los canales que forman el menú principal
+
     itemlist.append(Item(title=config.get_localized_string(30130), channel="news", action="mainlist",
                          thumbnail=get_thumb("news.png", view),
                          category=config.get_localized_string(30119), viewmode="thumbnails",
@@ -25,6 +26,12 @@ def getmainlist(view="thumb_"):
     itemlist.append(Item(title=config.get_localized_string(30118), channel="channelselector", action="getchanneltypes",
                          thumbnail=get_thumb("channels.png", view), view=view,
                          category=config.get_localized_string(30119), viewmode="thumbnails"))
+
+    itemlist.append(Item(title="Lista de deseos", channel="info_popup", action="mainlist",
+                         thumbnail=get_thumb("wishlist.png", view),
+                         category="wishlist", viewmode="thumbnails",
+                         context=[{"title": "Configurar Lista de deseos", "channel": "info_popup",
+                                   "action": "show_settings"}]))
 
     itemlist.append(Item(title=config.get_localized_string(70527), channel="alfavorites", action="mainlist",
                          thumbnail=get_thumb("mylink.png", view), view=view,
@@ -72,7 +79,7 @@ def getmainlist(view="thumb_"):
     except:
         versiones = {}
         logger.error(traceback.format_exc())
-    if versiones and config.get_addon_version(with_fix=False, from_xml=True) == versiones.get('plugin.video.alfa', ''):
+    if versiones and config.get_addon_version(with_fix=False, from_xml=True) != versiones.get('plugin.video.alfa', ''):
         itemlist.append(Item(title="[COLOR hotpink][B]Actualizar a versión[/B][/COLOR] [COLOR gold][B]%s[/B][/COLOR] (versión instalada: %s)" % 
                          (versiones['plugin.video.alfa'], config.get_addon_version(with_fix=False, from_xml=True)), 
                          channel="channelselector", action="install_alfa",

@@ -20,7 +20,7 @@ from channels import autoplay
 from channels import filtertools
 from bs4 import BeautifulSoup
 
-host = 'https://www.peliculasdeprincesas.net/'
+host = 'https://princesas.tv/'
 
 list_language = list()
 list_quality = []
