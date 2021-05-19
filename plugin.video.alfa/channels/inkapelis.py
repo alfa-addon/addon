@@ -361,11 +361,12 @@ def search_results(item):
     soup = create_soup(item.url)
 
     for elem in soup.find_all("article", class_="item movies"):
+
         url = elem.a["href"]
         thumb = elem.img["src"]
         title = elem.img["alt"]
         try:
-            year = elem.find("span", class_="year").text
+            year = elem.find("span", text=re.compile(r"\d{4}")).text
         except:
             year = '-'
 
@@ -403,7 +404,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas']:
-            item.url = host + 'pelicula'
+            item.url = host + 'genero/estrenos-hd'
         elif categoria == 'latino':
             item.url = host + 'idioma/latino'
         elif categoria == 'castellano':

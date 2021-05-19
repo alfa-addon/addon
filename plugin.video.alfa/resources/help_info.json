@@ -21,5 +21,9 @@
     "title": "HDFull require estar registrado en la web",
     "text": "Ahora el webmaster de HDFull exige que los accesos a la web sean bajo registro.\n\n[B]CONSEJOS[/B]\n\n - Accede a la web desde un navegador y [COLOR yellow]regístrate en la web de HDFull[/COLOR].  Es un proceso sencillo.\n - En Alfa, en el canal HDFull, en el apartado [COLOR blue]'Habilita tu cuenta...'[/COLOR] [COLOR yellow]introduce tus credenciales[/COLOR] y podrás acceder a todo el contenido",
     "version": true
+  },
+  "infopopup": {
+    "title": "Lista de deseos",
+    "text": "Comenzaremos una búsqueda preliminar de estrenos y sugerencias, tomará unos minutos, luego Alfa te presentará una ventana con sugerencias y o estrenos que están disponibles en internet, en ella podrás seleccionar lo que quieras guardar en tu lista de deseos para luego buscarlo en los canales. Esa ventana se mostrará cuando se encuentre durante la búsqueda algún estreno o recomendación\n\n[B]CONSEJOS[/B]\n\n - Desde la configuración puedes definir cuantas veces al día se realizará la búsqueda.\n - Puedes quitar elementos desde el menú contextual (click derecho/pulsación larga)\n - Puedes deshabilitar la búsqueda desde la configuración"
   }
 }

@@ -103,13 +103,13 @@ def buscartrailer(item, trailers=[]):
         else:
             title = "%s"
         itemlist.append(item.clone(title=title % config.get_localized_string(70507), action="youtube_search",
-                                   text_color="green"))
+                                   text_color="green", current=""))
         itemlist.append(item.clone(title=title % config.get_localized_string(70024),
-                                   action="filmaffinity_search", text_color="green"))
+                                   action="filmaffinity_search", text_color="green", current=""))
         # Si se trata de una serie, no se incluye la opción de buscar en Abandomoviez
         if not item.show and not item.infoLabels['tvshowtitle']:
             itemlist.append(item.clone(title=title % config.get_localized_string(70508),
-                                       action="abandomoviez_search", text_color="green"))
+                                       action="abandomoviez_search", text_color="green", current=""))
 
     if item.contextual:
         global window_select, result
@@ -117,6 +117,10 @@ def buscartrailer(item, trailers=[]):
                         caption=config.get_localized_string(70506) + item.contentTitle)
         window_select.append(select)
         select.doModal()
+
+        if item.current != "" and item.current >= 0:
+            from channels import info_popup
+            info_popup.show_popup(item, ignore_new_wish=True)
 
         if item.windowed:
             return result, window_select

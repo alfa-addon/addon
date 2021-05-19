@@ -13,6 +13,8 @@ try:
     import xbmc, os, time
     librerias = os.path.join(config.get_runtime_path(), 'lib')
     sys.path.append(librerias)
+    for module in ['script.module.futures']:
+        config.importer(module)
 except:
     import os, time
     try:
@@ -474,6 +476,10 @@ if __name__ == "__main__":
     # Añade al LOG las variables de entorno necesarias para diagnóstico
     from platformcode import envtal
     envtal.list_env()
+
+    # Busqueda de estrenos
+    from channels import info_popup
+    info_popup.autoscan()
 
     # Se ejecuta ciclicamente
     if config.get_platform(True)['num_version'] >= 14:
