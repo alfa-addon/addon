@@ -378,6 +378,9 @@ def get_environment():
             environment['assistant_version'] = filetools.read(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version'))
         environment['assistant_version'] += '; Req: %s' % str(config.get_setting('assistant_binary', default=False))
         environment['assistant_cf_ua'] = str(config.get_setting('cf_assistant_ua', default=None))
+        assistant_path = filetools.join(os.getenv('ANDROID_STORAGE'), 'emulated', '0', 'Android', 'data', 'com.alfa.alfamobileassistant')
+        if xbmc.getCondVisibility("system.platform.Android") and filetools.exists(assistant_path):
+            environment['assistant_path'] = str(filetools.file_info(assistant_path))
     
     except:
         logger.error(traceback.format_exc())
@@ -492,7 +495,8 @@ def list_env(environment={}):
     logger.info('Proxy: ' + environment['proxy_active'])
     
     logger.info('Assistant ver.: ' + environment['assistant_version'] + \
-                            ' - Assistant UA: ' + environment['assistant_cf_ua'])
+                            ' - Assistant UA: ' + environment['assistant_cf_ua'] + \
+                            ' - Assistant path: ' + environment.get('assistant_path', ''))
     
     logger.info('TAMAÑO del LOG: ' + environment['log_size'].replace('.', ',') + ' MB')
     logger.info("----------------------------------------------")
@@ -672,7 +676,8 @@ def paint_env(item, environment={}):
     
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Assistant ver.: [/COLOR]' + 
                     environment['assistant_version'] + ' - [COLOR yellow]Assistant UA: [/COLOR]' + 
-                    environment['assistant_cf_ua'], action="", plot=assistant, thumbnail=thumb, 
+                    environment['assistant_cf_ua'] + ' - [COLOR yellow]Assistant path: [/COLOR]' + 
+                    environment.get('assistant_path', ''), action="", plot=assistant, thumbnail=thumb, 
                     folder=False))
     
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]TAMAÑO del LOG: [/COLOR]' + 

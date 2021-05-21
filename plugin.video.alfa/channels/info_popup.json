@@ -1,0 +1,35 @@
+{
+  "id": "info_popup",
+  "force_unify": "true",
+  "name": "Lista de deseos",
+  "language": ["*"],
+  "active": false,
+  "adult": false,
+  "thumbnail": "",
+  "banner": "",
+  "categories": [
+  ],
+  "settings": [
+    {
+      "id": "autoscan",
+      "type": "bool",
+      "label": "Buscar estrenos y sugerencias (mostrar notificación)",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "autoscan_timer",
+      "type": "list",
+      "label": "Cuantas veces desea buscar estrenos por día?",
+      "default": 0,
+      "enabled": "eq(-1,true)",
+      "visible": "eq(-1,true)",
+      "lvalues": [
+        "3",
+        "2",
+        "1"
+      ]
+    }
+  ]
+}

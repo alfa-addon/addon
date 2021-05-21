@@ -27,7 +27,7 @@ list_servers = [
     'youtube',
     ]
 
-host = 'https://www.cinematteflix.com/'
+host = 'https://www.cinematte.com.es/'
 
 
 def mainlist(item):
@@ -37,16 +37,8 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Todas', url=host, action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Todas', url=host + "category/videoclub", action='list_all',
                          thumbnail=get_thumb('all', auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title='Destacadas',
-                         url=host + "search/label/CINEMATTE%20FLIX%20DESTACADOS", action='list_all',
-                         thumbnail=get_thumb('destacadas', auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title='Colecciones',
-                         url=host + "search/label/CINEMATTE%20FLIX%20COLECCIONES", action='list_all',
-                         thumbnail=get_thumb('colecciones', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title='Generos', url=host, action='section',
                          thumbnail=get_thumb('all', auto=True)))
@@ -80,14 +72,11 @@ def section(item):
     logger.info()
     itemlist = list()
 
-    soup = create_soup(item.url).find("div", id="PageList2")
-    matches = soup.find_all("li")
+    soup = create_soup(item.url).find_all("a", href=re.compile("/tag/"))
 
-    for elem in matches[1:]:
-        title = elem.a.text.lower().replace("cine de ", "").capitalize()
-        if "colecciones" in title:
-            continue
-        url = elem.a["href"]
+    for elem in soup:
+        title = elem.text.lower().replace("cinematte ", "").capitalize()
+        url = elem["href"]
         itemlist.append(Item(channel=item.channel, url=url, action="list_all", title=title))
 
     itemlist = sorted(itemlist, key=lambda i: i.title)
@@ -101,46 +90,50 @@ def list_all(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find_all("article", class_="post-outer-container")
+    matches = soup.find_all("article")
 
     for elem in matches:
+        url = elem.h4.a["href"]
+
         try:
-            url = elem.h3.a["href"].strip()
-            info = elem.find("div", class_="r-snippetized").text.strip()
-
-            if "serie" in info.lower() or "temporada" in info.lower():
-                continue
-
-            if "subt" in info.lower():
-                lang = "VOSE"
-            else:
-                lang = "CAST"
-            title = info.split("|")[0]
-            title = re.sub(r" \(.*?\)", "", title)
-            year = scrapertools.find_single_match(info, "\d{4}")
-
-            new_item = Item(channel=item.channel, title=title.capitalize(), url=url, infoLabels={"year": year})
-
-            if "/coleccion" in url:
-                new_item.action = "list_collection"
-            else:
-                new_item.action = "findvideos"
-                new_item.contentTitle = title
-                new_item.language = lang
-
-            itemlist.append(new_item)
+            title = clear_title(elem.h4.a.text.lower())
+            title, year = scrapertools.find_single_match(title, "([^\|]+)\| (\d{4})?")
         except:
-            pass
-    tmdb.set_infoLabels_itemlist(itemlist, True)
+            continue
+        if not year:
+            year = "-"
+        thumb = elem.img["src"]
+        new_item = Item(channel=item.channel, title=title.capitalize(), thumbnail=thumb,
+                        url=url, infoLabels={"year": year})
+    #
+        if "/coleccion" in url:
+            new_item.action = "list_collection"
+        else:
+            if "serie" in url:
+                new_item.contentSerieName = title
+            else:
+                new_item.contentTitle = title
+            new_item.action = "findvideos"
 
+    #
+        itemlist.append(new_item)
+    #     except:
+    #         pass
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+    #
     try:
-        url_next_page = soup.find("a", class_="blog-pager-older-link")["href"]
+        url_next_page = soup.find("a", class_="next page-numbers")["href"]
     except:
         return itemlist
-    if len(itemlist) > 20:
+    if len(itemlist):
         itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
-
+    #
     return itemlist
+
+
+def clear_title(title):
+    title = re.sub("(?:videoclub \| )?(?:ver )?(?:y descargar )?(?:pel.*?cula\S? de)?(?:pel.*?cula\S?)?(?:gratis)?(?:en tu videoclub )?(?:serie)?(?:online)?", "", title)
+    return title.strip()
 
 
 def list_collection(item):
@@ -169,7 +162,7 @@ def list_collection(item):
             ct = title
         except:
             ct = ""
-            no_title = re.sub(r":|colecciÓn|'|\d+", "", item.title.lower()).strip()
+            no_title = re.sub(r":|colección|'|\d+", "", item.title.lower()).strip()
             if cnt == 1:
                 title = "%s" % (no_title)
             else:
@@ -181,7 +174,7 @@ def list_collection(item):
         itemlist.append(Item(channel=item.channel, title=title.capitalize(), contentTitle=ct, action="findvideos", url=url,
                              language=item.language, thumbnail=thumb, infoLabels={"year": "-"}))
 
-    tmdb.set_infoLabels_itemlist(itemlist, True)
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
 
     return itemlist
@@ -193,12 +186,17 @@ def findvideos(item):
 
     if not "youtube" in item.url:
         soup = create_soup(item.url)
-        url = soup.find("iframe")["src"]
+        urls = soup.find_all("iframe")
+        for url in urls:
+            url = url["src"]
+            if "youtube" not in url:
+                continue
+            itemlist.append(Item(channel=item.channel, title="%s", action="play", url=url,
+                                 language=item.language, infoLabels=item.infoLabels))
     else:
-        url = item.url
+        itemlist.append(Item(channel=item.channel, title="%s", action="play", url=item.url,
+                             language=item.language, infoLabels=item.infoLabels))
 
-    itemlist.append(Item(channel=item.channel, title="%s", action="play", url=url,
-                         language=item.language, infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
