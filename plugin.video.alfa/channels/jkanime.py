@@ -165,10 +165,15 @@ def episodios(item):
         patron = '"number"\:"(\d+)","title"\:"([^"]+)"'
         matches = scrapertools.find_multiple_matches(data2, patron)
         for numero, scrapedtitle in matches:
+            try: int(numero.strip())
+            except: pass
+            infoLabels = item.infoLabels
+            infoLabels["season"] = 1
+            infoLabels["episode"] = numero
             title = scrapedtitle.strip()
             url = item.url + numero
             plot = scrapedplot
-            itemlist.append(item.clone(action="findvideos", title=title, url=url, plot=plot))
+            itemlist.append(item.clone(action="findvideos", infoLabels=infoLabels, title=title, url=url, plot=plot))
     if len(itemlist) == 0:
         try:
             itemlist.append(Item(channel=item.channel, action="findvideos", title="Serie por estrenar", url="",
@@ -176,6 +181,7 @@ def episodios(item):
                                  server="directo", folder=False))
         except:
             pass
+    tmdb.set_infoLabels(itemlist, True)
     return itemlist
 
 

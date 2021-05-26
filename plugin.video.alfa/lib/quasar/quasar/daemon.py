@@ -379,6 +379,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
     import requests
     import time
     import json
+    import xbmcvfs
     
     # Lets try first the traditional way
     if not p:
@@ -502,6 +503,53 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
 
     if USER_APP_STATUS:
         try:
+            try:
+                # Special process for Android 11+: setting download paths in a "free zone"
+                os_release = 0
+                if PY3:
+                    FF = b'\n'
+                else:
+                    FF = '\n'
+                try:
+                    for label_a in subprocess.check_output('getprop').split(FF):
+                        if PY3 and isinstance(label_a, bytes):
+                            label_a = label_a.decode()
+                        if 'build.version.release' in label_a:
+                            os_release = int(re.findall(':\s*\[(.*?)\]$', label_a, flags=re.DOTALL)[0])
+                            break
+                except:
+                    try:
+                        with open(os.environ['ANDROID_ROOT'] + '/build.prop', "r") as f:
+                            labels = read(f)
+                        for label_a in labels.split():
+                            if PY3 and isinstance(label_a, bytes):
+                                label_a = label_a.decode()
+                            if 'build.version.release' in label_a:
+                                os_release = int(re.findall('=(.*?)$', label_a, flags=re.DOTALL)[0])
+                                break
+                    except:
+                        os_release = 10
+                
+                log.info(os_release)
+                # If Android 11+, reset the download & torrents paths to /storage/emulated/0/Download/Kodi/Quasar/...
+                if os_release >= 11:
+                    if 'userdata/addon_data/plugin.video.' in QUASAR_ADDON_SETTING.getSetting('download_path') \
+                                    or not QUASAR_ADDON_SETTING.getSetting('download_path'):
+                        download_path = '/storage/emulated/0/Download/Kodi/Quasar/downloads/'
+                        QUASAR_ADDON_SETTING.setSetting('download_path', download_path)
+                        if not os.path.exists(download_path):
+                            res = xbmcvfs.mkdirs(download_path)
+                    if 'userdata/addon_data/plugin.video.' in QUASAR_ADDON_SETTING.getSetting('library_path') \
+                                    or not QUASAR_ADDON_SETTING.getSetting('library_path'):
+                        library_path = '/storage/emulated/0/Download/Kodi/Quasar/Library/'
+                        QUASAR_ADDON_SETTING.setSetting('library_path', library_path)
+                        if not os.path.exists(library_path):
+                            res = xbmcvfs.mkdirs(library_path)
+
+            except:
+                log.info('## Assistant checking download_path: ERROR on processing')
+                log.info(traceback.format_exc())
+            
             """
             Assistant APP acts as a CONSOLE for binaries management in Android 10+ and Kodi 19+
             
@@ -728,6 +776,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
 
         url_close = p.url_app + '/terminate'
         cmd_android = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'open', 'about:blank')
+        cmd_android_quit = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'quit', 'about:blank')
         cmd_android_close = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'terminate', 'about:blank')
         cmd_android_permissions = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'checkPermissions', 'about:blank')
 
@@ -834,8 +883,8 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     notify('Accept Assitant permissions', time=15000)
                     time.sleep(5)
                     xbmc.executebuiltin(cmd_android_permissions)
-                    time.sleep(15)
-                    xbmc.executebuiltin(cmd_android)
+                    time.sleep(10)
+                    xbmc.executebuiltin(cmd_android_quit)
                     time.sleep(5)
                 
                 if msg:

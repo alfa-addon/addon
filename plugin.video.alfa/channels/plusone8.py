@@ -94,6 +94,7 @@ def lista(item):
         thumbnail = elem.img['data-src']
         if "svg" in thumbnail:
             thumbnail = elem.img['data-lazy-src']
+        thumbnail += "|verifypeer=false"
         time = elem.find('span', class_='duration')
         actors = elem['class']
         actriz = ""
