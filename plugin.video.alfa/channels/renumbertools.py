@@ -17,6 +17,7 @@ try:
 except:
     xbmcgui = None
 
+from channelselector import get_thumb
 from platformcode import config, logger
 from core import jsontools
 from core.item import Item
@@ -68,7 +69,7 @@ def context(item):
 def show_option(channel, itemlist):
     if access():
         itemlist.append(Item(channel=__channel__, title="[COLOR yellow]Configurar renumeración en series...[/COLOR]",
-                             action="load", from_channel=channel))
+                             action="load", from_channel=channel, thumbnail=get_thumb("setting_0.png")))
 
     return itemlist
 

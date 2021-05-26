@@ -7,6 +7,7 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
 from core import servertools
@@ -19,11 +20,11 @@ host = "https://jkanime.net"
 def mainlist(item):
     logger.info()
     itemlist = list()
-    itemlist.append(Item(channel=item.channel, action="ultimas_series", title="Últimas Series", url=host))
-    itemlist.append(Item(channel=item.channel, action="ultimos_episodios", title="Últimos Episodios", url=host))
-    itemlist.append(Item(channel=item.channel, action="p_tipo", title="Listado Alfabetico", url=host, list_type="letras"))
-    itemlist.append(Item(channel=item.channel, action="p_tipo", title="Listado por Genero", url=host, list_type="generos"))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar"))
+    itemlist.append(Item(channel=item.channel, thumbnail=get_thumb("tvshows", auto=True), action="ultimas_series", title="Últimas Series", url=host))
+    itemlist.append(Item(channel=item.channel, thumbnail=get_thumb("new episodes", auto=True),action="ultimos_episodios", title="Últimos Episodios", url=host))
+    itemlist.append(Item(channel=item.channel, thumbnail=get_thumb("alphabet", auto=True),action="p_tipo", title="Listado Alfabetico", url=host, list_type="letras"))
+    itemlist.append(Item(channel=item.channel, thumbnail=get_thumb("genres", auto=True),action="p_tipo", title="Listado por Genero", url=host, list_type="generos"))
+    itemlist.append(Item(channel=item.channel, thumbnail=get_thumb("search", auto=True),action="search", title="Buscar"))
     return itemlist
 
 
