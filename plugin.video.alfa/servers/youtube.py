@@ -20,7 +20,6 @@ from core import jsontools as json
 from core import scrapertools
 from platformcode import config, logger
 
-
 itag_list = {1: "video",
              5: "flv 240p",
              6: "flv 270p",
@@ -101,12 +100,13 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-
+    video_urls = list()
     if not page_url.startswith("http"):
         page_url = "https://www.youtube.com/watch?v=%s" % page_url
         logger.info(" page_url->'%s'" % page_url)
 
     video_id = scrapertools.find_single_match(page_url, '(?:v=|embed/)([A-z0-9_-]{11})')
+    logger.debug("video_id: %s" % video_id)
     video_urls = extract_videos(video_id)
 
     return sorted(video_urls, reverse=True)
@@ -140,7 +140,7 @@ def extract_flashvars(data):
             data = line[p1 + 1:p2]
             break
     data = remove_additional_ending_delimiter(data)
-    #logger.error(data)
+    logger.error(data)
     if found:
         data = json.load(data)
         if assets:
@@ -181,7 +181,7 @@ def get_signature(youtube_page_data):
 def extract_videos(video_id):
 
     youtube_page_data = ''
-    url = 'https://www.youtube.com/get_video_info?video_id=%s&eurl=https://youtube.googleapis.com/v/%s&ssl_stream=1' % \
+    url = 'https://www.youtube.com/get_video_info?html5=1&video_id=%s&eurl=https://youtube.googleapis.com/v/%s&ssl_stream=1' % \
           (video_id, video_id)
     data = httptools.downloadpage(url).data
 
