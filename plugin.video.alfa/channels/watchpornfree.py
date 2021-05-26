@@ -36,7 +36,7 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(item.clone(title="Videos" , action="lista", url=host + "/category/clips-scenes"))
+    itemlist.append(item.clone(title="Videos" , action="lista", url=host + "/scenes/"))
     itemlist.append(item.clone(title="Peliculas" , action="lista", url=host))
     itemlist.append(item.clone(title="Parodia" , action="lista", url=host + "/category/parodies"))
     itemlist.append(item.clone(title="Canal" , action="categorias", url=host))
@@ -68,12 +68,12 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     if item.title == "Canal":
-        data = scrapertools.find_single_match(data,'Scenes</a></li>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'Studios</a>(.*?)</ul>')
     if item.title == "Año":
-        data = scrapertools.find_single_match(data,'Year</a>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'Years</a>(.*?)</ul>')
     if item.title == "Categorias":
         data = scrapertools.find_single_match(data,'>Categories</div>(.*?)</ul>')
-    patron  = '<a href="([^"]+)".*?>([^"]+)</a></li>'
+    patron  = 'href="([^"]+)".*?>([^"]+)</a></li>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle  in matches:
         scrapedplot = ""

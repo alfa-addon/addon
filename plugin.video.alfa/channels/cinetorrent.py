@@ -536,7 +536,7 @@ def findvideos(item):
     #Bajamos los datos de la página y seleccionamos el bloque
     patron = '\s*<th\s*class="hide-on-mobile">Total\s*Descargas<\/th>\s*<th>'
     patron += 'Descargar<\/th>\s*<\/thead>\s*<tbody>\s*(.*?<\/tr>)\s*<\/tbody>'
-    patron += '\s*<\/table>\s*<\/div>\s*<\/div>\s*<\/div>'
+    patron += '\s*<\/table>\s*<\/div>'
     
     if not item.matches:
         data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 

@@ -766,7 +766,7 @@ def downloadpage(url, **opt):
         response, url, opt = proxy_post_processing(url, proxy_data, response, opt)
         
         info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
-        if not 'api.themoviedb' in url and not opt.get('alfa_s', False) and not opt.get("hide_infobox"):
+        if not 'api.themoviedb' in url and not 'api.trakt' in url and not opt.get('alfa_s', False) and not opt.get("hide_infobox"):
             show_infobox(info_dict)
         
         # Si proxy ordena salir del loop, se sale

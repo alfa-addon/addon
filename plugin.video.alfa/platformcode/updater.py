@@ -118,15 +118,20 @@ def check_addon_updates(verbose=False):
         
         # Descargar json con las posibles actualizaciones
         # -----------------------------------------------
-        data = httptools.downloadpage(ADDON_UPDATES_JSON, timeout=5).data
-        if data == '': 
+        resp = httptools.downloadpage(ADDON_UPDATES_JSON, timeout=5)
+        if not resp.sucess and resp.code != 404: 
+            logger.info('ERROR en la descarga de actualizaciones: %s' % resp.code)
+            if verbose:
+                dialog_notification('Alfa: error en la actualización', 'Hay un error al descargar la actualización')
+            return False
+        if not resp.data: 
             logger.info('No se encuentran actualizaciones del addon')
             if verbose:
                 dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
             check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
             return False
 
-        data = jsontools.load(data)
+        data = jsontools.load(resp.data)
         if 'addon_version' not in data or 'fix_version' not in data: 
             logger.info('No hay actualizaciones del addon')
             if verbose:

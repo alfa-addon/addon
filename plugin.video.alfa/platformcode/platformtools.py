@@ -731,7 +731,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                     (command["title"], "RunPlugin(%s?%s)" % (sys.argv[0], item.clone(**command).tourl())))
 
     # No añadir más opciones predefinidas si se está dentro de Alfavoritos
-    if parent_item.channel == 'alfavorites':
+    if parent_item.channel in ['alfavorites', 'info_popup']:
         return context_commands
         # Opciones segun criterios, solo si el item no es un tag (etiqueta), ni es "Añadir a la videoteca", etc...
 
