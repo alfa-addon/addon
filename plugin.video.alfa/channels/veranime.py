@@ -17,7 +17,7 @@ from core import servertools
 from core import scrapertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
-from platformcode import config, logger
+from platformcode import config, logger, unify
 from channels import filtertools, autoplay
 
 IDIOMAS = {"audio castellano": "CAST", "audio latino": "LAT", "subtitulado": "VOSE"}
@@ -103,7 +103,10 @@ def list_all(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find("div", id="archive-content")
+    if "genero" in item.url or "tendencias" in item.url or "ratings" in item.url:
+        matches = soup.find("div", class_="items")
+    else:
+        matches = soup.find("div", id="archive-content")
     for elem in matches.find_all("article", id=re.compile(r"^post-\d+")):
 
         info_1 = elem.find("div", class_="poster")
@@ -121,7 +124,7 @@ def list_all(item):
         new_item = Item(channel=item.channel, url=url, title=title, thumbnail=thumb,
                         infoLabels={"year": year.strip(), 'filtro': filtro_tmdb})
 
-        if "online" in url:
+        if "online" in url and not "pelicula" in url:
             new_item.action = "seasons"
             new_item.contentSerieName = title
         else:
@@ -183,6 +186,7 @@ def latest(item):
         pass
 
     return itemlist
+
 
 def seasons(item):
     logger.info()
@@ -257,6 +261,7 @@ def episodesxseasons(item):
 
     return itemlist
 
+
 def findvideos(item):
     logger.info()
 
@@ -272,27 +277,27 @@ def findvideos(item):
     if not matches:
         return itemlist
     for elem in matches.find_all("li"):
-        
         server = elem.find("span", class_="server").text
         server = re.sub(r"\.\w{2,4}", "", server.lower())
         server = servers.get(server, server)
-        
+
         if not server:
             continue
 
-        doo_url = "%swp-json/dooplayer/v1/post/%s?type=%s&source=%s" % \
-                 (host, elem["data-post"], elem["data-type"], elem["data-nume"])
-        
         lang = elem.find("span", class_="title").text
         lang = re.sub(r'SERVER \d+ ', '', lang)
         language=IDIOMAS.get(lang.lower(), "VOSE")
-
         title = '%s [%s]' % (server.capitalize(), language)
+
         #Sistema movidy
         if lang.lower() == 'multiserver':
-            data = httptools.downloadpage(doo_url, headers=headers).json
-            url = data.get("embed_url", "")
-            soup = create_soup(url).find("div", class_="OptionsLangDisp")
+            players = soup.find_all("div", id=re.compile(r"^source-player-\d+"))
+            doo_url = players[0].find("iframe")["src"]
+            # doo_url = "%swp-json/dooplayer/v1/post/%s?type=%s&source=%s" % \
+            #           (host, elem["data-post"], elem["data-type"], elem["data-nume"])
+            # data = httptools.downloadpage(doo_url, headers=headers).json
+            # url = data.get("embed_url", "")
+            soup = create_soup(doo_url).find("div", class_="OptionsLangDisp")
 
             for elem in soup.find_all("li"):
                 url = elem["onclick"]
@@ -308,7 +313,7 @@ def findvideos(item):
                 language=IDIOMAS.get(lang.lower(), "VOSE")
 
                 url = scrapertools.find_single_match(url, r"\('([^']+)")
-                stitle = ' [%s]' % language
+                stitle = unify.add_languages("", language)
 
                 if url:
                     itemlist2.append(Item(channel=item.channel, title='%s'+stitle,
@@ -357,7 +362,7 @@ def search_results(item):
         new_item = Item(channel=item.channel, url=url, title=title, thumbnail=thumb,
                         infoLabels={"year": year.strip()})
 
-        if "online" in url:
+        if "online" in url and not "pelicula" in url:
             new_item.action = "seasons"
             new_item.contentSerieName = title
         else:
@@ -391,23 +396,19 @@ def play(item):
     logger.info()
     itemlist = []
     
-    if not item.headers:
+    if not 'embed.php' in item.url:
         return [item]
-    
-    url = item.url
-    header = item.headers
+
+    data = httptools.downloadpage(item.url).data
+    item.url = scrapertools.find_single_match(data, 'vp.setup\(\{.+?"file":"([^"]+).+?\);').replace("\\/", "/")
+    logger.info(item.url)
     item.server = ''
-    
-    data = httptools.downloadpage(url, headers=header).json
-    url = data.get("embed_url", "")
-    
-    if url:
-          item.url = url
 
     itemlist.append(item.clone())
     itemlist = servertools.get_servers_itemlist(itemlist)
-    
+
     return itemlist
+
 
 def get_tags(page, sname):
     tags = ""
