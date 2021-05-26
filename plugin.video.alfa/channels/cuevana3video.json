@@ -1,10 +1,10 @@
 {
-  "id": "allpeliculastv",
-  "name": "Allpeliculastv",
+  "id": "cuevana3video",
+  "name": "Cuevana 3.video",
   "active": true,
   "adult": false,
   "language": ["lat"],
-  "thumbnail": "https://allpeliculas.tv/wp-content/uploads/2020/04/logo2.png",
+  "thumbnail": "https://www1.cuevana3.video/static/img/cuevana3.png",
   "banner": "",
   "categories": [
     "movie",
