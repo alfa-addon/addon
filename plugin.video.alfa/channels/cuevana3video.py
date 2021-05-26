@@ -146,11 +146,8 @@ def play(item):
     if "pelisplus.icu" in item.url:
         data = httptools.downloadpage(item.url).data
         item.url = scrapertools.find_single_match(data, "file: '([^']+)")
-        logger.info("Intel22 %s" %item.url)
         if not item.url:
-            logger.info("Intel33 %s" %item.url)
             item.url = scrapertools.find_single_match(data, '(?is)<iframe id="embedvideo" src="(https://[^"]+)')
-        logger.info("Intel11 %s" %item.url)
     if "peliscloud.net" in item.url:
         dominio = urlparse.urlparse(item.url)[1]
         id = scrapertools.find_single_match(item.url, 'id=(\w+)')
