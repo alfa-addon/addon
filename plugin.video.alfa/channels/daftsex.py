@@ -120,17 +120,20 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, 'class="frame_wrapper">.*?src="([^"]+)"')
+    hash = scrapertools.find_single_match(data, 'hash:\s*"([^"]+)"')
+    color = scrapertools.find_single_match(data, 'color:\s*"([^"]+)"')
+    url = "https://daxab.com/player/%s?color=%s"  % (hash, color)
     headers = {'Referer': item.url}
     data = httptools.downloadpage(url, headers=headers).data
-    server = scrapertools.find_single_match(data, 'thumb: "([^"]+)"')
+    id = scrapertools.find_single_match(data, 'id:\s*"([^"]+)"')
+    id1, id2 = id.split('_')
+    server =  scrapertools.find_single_match(data, 'server:\s*"([^"]+)')[::-1]
     server = base64.b64decode(server).decode('utf-8')
-    server = scrapertools.find_single_match(server, '(.*?)/thumb.jpg')
-    server = "https:%s" % server
+    server = "https://%s" % server
     patron = '"mp4_\d+":"(\d+).([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for quality,url in matches:
-        url = "%s/%s.mp4?extra=%s" %(server,quality,url)
+        url = "%s/videos/%s/%s/%s.mp4?extra=%s" %(server,id1,id2,quality,url)
         itemlist.append(['.mp4 %s' %quality, url])
     return itemlist
 
