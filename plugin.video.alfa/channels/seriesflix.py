@@ -266,21 +266,21 @@ def findvideos(item):
 
     itemlist = list()
     soup = create_soup(item.url)
-
-    bloq = soup.find("ul", class_="ListOptions")
-    for elem in bloq.find_all("li"):
-        url = "%s?trembed=%s&trid=%s&trtype=2" % (host, elem["data-key"], elem["data-id"])
-        server = elem.find("p", class_="AAIco-dns").text
-        if server.lower() == "embed":
-            server = "Mystream"
-        lang = elem.find("p", class_="AAIco-language").text.split(' ')[1]
-        qlty = elem.find("p", class_="AAIco-equalizer").text
-        title = "%s [%s]" % (server, lang)
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
-                             language=IDIOMAS.get(lang, lang), quality=qlty, infoLabels=item.infoLabels,
-                             server=server))
-
-
+    try:
+        bloq = soup.find("ul", class_="ListOptions")
+        for elem in bloq.find_all("li"):
+            url = "%s?trembed=%s&trid=%s&trtype=2" % (host, elem["data-key"], elem["data-id"])
+            server = elem.find("p", class_="AAIco-dns").text
+            if server.lower() == "embed":
+                server = "Mystream"
+            lang = elem.find("p", class_="AAIco-language").text.split(' ')[1]
+            qlty = elem.find("p", class_="AAIco-equalizer").text
+            title = "%s [%s]" % (server, lang)
+            itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
+                                 language=IDIOMAS.get(lang, lang), quality=qlty, infoLabels=item.infoLabels,
+                                 server=server))
+    except:
+        return itemlist
     #Requerido para FilterTools
 
     itemlist = filtertools.get_links(itemlist, item, list_language)
