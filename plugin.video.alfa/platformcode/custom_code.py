@@ -223,7 +223,7 @@ def verify_script_alfa_update_helper(silent=True):
     addons_path = filetools.translatePath("special://home/addons")
     repos_dir = 'downloads/repos/'
     alfa_repo = ['repository.alfa-addon', '1.0.6', '*']
-    alfa_helper = ['script.alfa-update-helper', '0.0.5', '*']
+    alfa_helper = ['script.alfa-update-helper', '0.0.6', '*']
     torrest_repo = ['repository.github', '0.0.6', '*']
     torrest_addon = 'plugin.video.torrest'
     futures_script = ['%sscript.module.futures' % repos_dir, '2.2.1', 'PY2']
@@ -235,50 +235,12 @@ def verify_script_alfa_update_helper(silent=True):
         logger.error(traceback.format_exc())
     if not versiones:
         return
-        
-    addonid = alfa_helper[0]
-    new_version = versiones.get(addonid, alfa_helper[1])
-    package = addonid + '-%s.zip' % new_version
-    filetools.remove(filetools.join('special://home', 'addons', 'packages', package), silent=silent)
-    updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
-    if updated:
-        installed_version = xbmc.getInfoLabel('System.AddonVersion(%s)' % addonid)
-        if installed_version != new_version:
-            updated = False
     
-    # Comprobamos si hay acceso a Github
-    if not 'github' in versiones.get('url', '') and not updated:
-        
-        # Si no lo hay, descargamos el Script desde GitLab y lo salvamos a disco
-        url = '%s%s/%s' % (versiones.get('url', ''), addonid, package)
-        response = httptools.downloadpage(url, ignore_response_code=True, alfa_s=True, json_to_utf8=False)
-        if response.code == 200:
-            zip_data = response.data
-            pkg_updated = filetools.join(addons_path, 'packages', package)
-            
-            res = filetools.write(pkg_updated, zip_data, mode='wb')
-
-            # Si el .zip es correcto los extraemos e instalamos
-            try:
-                unzipper = ziptools.ziptools()
-                unzipper.extract(pkg_updated, addons_path, silent=silent)
-            except:
-                xbmc.executebuiltin('Extract("%s", "%s")' % (pkg_updated, addons_path))
-                time.sleep(1)
-
-            logger.info("Installing %s" % package)
-            xbmc.executebuiltin('UpdateLocalAddons')
-            time.sleep(2)
-            method = "Addons.SetAddonEnabled"
-            xbmc.executeJSONRPC(
-                '{"jsonrpc": "2.0", "id":1, "method": "%s", "params": {"addonid": "%s", "enabled": true}}' % (method, addonid))
-            profile = json.loads(xbmc.executeJSONRPC('{"jsonrpc": "2.0", "id":1, "method": "Profiles.GetCurrentProfile"}'))
-            logger.info("Reloading Profile...")
-            user = profile["result"]["label"]
-            xbmc.executebuiltin('LoadProfile(%s)' % user)
-
-
     repos = [futures_script, alfa_repo, torrest_repo]
+    # Comprobamos si hay acceso a Github
+    if not 'github' in versiones.get('url', '') or bool(xbmc.getCondVisibility("System.HasAddon(%s)" % alfa_helper[0])):
+        repos += [alfa_helper]
+
     for addon_name, version, py in repos:
         if py != '*':
             if py == 'PY2' and PY3:
@@ -331,7 +293,7 @@ def verify_script_alfa_update_helper(silent=True):
 
     if versiones.get('addons_db', ''):
         
-        repos = [(alfa_repo[0], alfa_repo[0]), (alfa_repo[0], ADDON_NAME), (alfa_repo[0], alfa_helper), \
+        repos = [(alfa_repo[0], alfa_repo[0]), (alfa_repo[0], ADDON_NAME), (alfa_repo[0], alfa_helper[0]), \
                     (torrest_repo[0], torrest_repo[0]), (torrest_repo[0], torrest_addon), \
                     ('repository.xbmc.org', futures_script[0].replace(repos_dir, ''))]
         try:
@@ -386,16 +348,16 @@ def install_alfa_now(silent=True):
     addonid = alfa_addon[0]
     new_version = versiones.get(addonid, alfa_addon[1])
     package = addonid + '-%s.zip' % new_version
-        
+
+    logger.info("Downloading %s" % package)
     url = '%s%s/%s' % (versiones.get('url', ''), addonid, package)
     response = httptools.downloadpage(url, ignore_response_code=True, alfa_s=True, json_to_utf8=False)
     if response.code == 200:
         zip_data = response.data
         pkg_updated = filetools.join(addons_path, 'packages', package)
-        
-        logger.info("Downloading %s" % package)
         res = filetools.write(pkg_updated, zip_data, mode='wb')
-        if res:
+        
+        if res and filetools.exists(pkg_updated):
             logger.info("backing and removing installed version... %s" % package)
             backup_path = filetools.join(addons_path, "temp", addonid)
             if filetools.exists(backup_path):
@@ -409,6 +371,8 @@ def install_alfa_now(silent=True):
                 time.sleep(3)
                 if filetools.exists(ADDON_PATH):
                     logger.error("backing and removing installed version FAILED ... %s" % package)
+                    filetools.copy(backup_path, ADDON_PATH)
+                    time.sleep(3)
                     return
             else:
                 logger.error("backing and removing installed version FAILED ... %s" % package)
@@ -421,9 +385,15 @@ def install_alfa_now(silent=True):
         try:
             unzipper = ziptools.ziptools()
             unzipper.extract(pkg_updated, addons_path, silent=silent)
+            time.sleep(3)
         except:
-            xbmc.executebuiltin('Extract("%s", "%s")' % (pkg_updated, addons_path))
-            time.sleep(1)
+            try:
+                xbmc.executebuiltin('Extract("%s", "%s")' % (pkg_updated, addons_path))
+                time.sleep(3)
+            except:
+                filetools.copy(backup_path, ADDON_PATH)
+                time.sleep(3)
+                return
 
         logger.info("Installing %s" % package)
         xbmc.executebuiltin('UpdateLocalAddons')
