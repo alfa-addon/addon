@@ -1194,6 +1194,10 @@ def post_tmdb_episodios(item, itemlist):
             item_local.url_tvshow = item.url                                    # Salvamos la url de la serie/temporada para descargas
         
         #logger.debug(item_local)
+        if not isinstance(item_local.contentSeason, int):
+            continue
+        if not isinstance(item_local.contentEpisodeNumber, int):
+            continue
 
         #Ajustamos el nombre del canal si es un clone de NewPct1 y viene de Videoteca. Tomamos el canal original, no el actual
         if item_local.channel == channel_py and (item.library_urls or item.add_videolibrary):

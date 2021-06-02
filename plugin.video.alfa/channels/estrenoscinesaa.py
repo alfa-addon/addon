@@ -20,7 +20,7 @@ from channels import filtertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 
-host = ' https://www.estrenoscinesaa.com'  
+host = 'https://www.estrenoscinesaa.com'  
 
 list_language = []
 list_servers = ['Fembed', 'Uqload', 'Youtube']
@@ -130,7 +130,10 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find('div', class_='content')
+    if "genre" in item.url:
+        matches = soup.find('div', class_='content')
+    else:
+        matches = soup.find('div', id='archive-content')
     for elem in matches.find_all("article", id=re.compile(r"^post-\d+")):
         id = elem['id'].replace("post-", "")
         url = elem.a['href']

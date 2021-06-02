@@ -934,7 +934,7 @@ def emergency_urls(item, channel=None, path=None, headers={}):
     En la lista [0] siempre deben ir los enlaces torrents, si los hay.  Si se desea cachear los .torrents, la búsqueda va contra esa lista.
     En la lista dos irán los enlaces de servidores directos, pero también pueden ir enlaces magnet (que no son cacheables)
     """
-    #lanazamos un "lookup" en el "findvideos" del canal para obtener los enlaces de emergencia
+    # Lanzamos un "lookup" en el "findvideos" del canal para obtener los enlaces de emergencia
     try:
         if channel == None:                             #Si el llamador no ha aportado la estructura de channel, se crea
             channel = generictools.verify_channel(item.channel)             #Se verifica si es un clon, que devuelva "newpct1"
@@ -970,7 +970,7 @@ def emergency_urls(item, channel=None, path=None, headers={}):
         item_res.headers = headers_save
         item_res.post = post_save
     
-    #Si el usuario ha activado la opción "emergency_urls_torrents", se descargarán los archivos .torrent de cada título
+    # Si el usuario ha activado la opción "emergency_urls_torrents", se descargarán los archivos .torrent de cada título
     else:                                                                   #Si se han cacheado con éxito los enlaces...
         try:
             referer = None
@@ -1002,15 +1002,15 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                         item_res.subtitle = subtitles_list[0].replace(videolibrary_path, '')  #se guarda el "path" relativo
                     i += 1
                     
-                #Restauramos variables originales
-                if referer_save and not item_res.referer:
-                    item_res.referer = referer_save
-                if headers_save and not item_res.headers:
-                    item_res.headers = headers_save
-                if post_save and not item_res.post:
-                    item_res.post = post_save
-                item_res.url = item.url
-                
+            # Restauramos variables originales
+            if referer_save and not item_res.referer:
+                item_res.referer = referer_save
+            if headers_save and not item_res.headers:
+                item_res.headers = headers_save
+            if post_save and not item_res.post:
+                item_res.post = post_save
+            item_res.url = item.url
+
         except:
             logger.error('ERROR al cachear el .torrent de: ' + item.channel + ' / ' + item.title)
             logger.error(traceback.format_exc())

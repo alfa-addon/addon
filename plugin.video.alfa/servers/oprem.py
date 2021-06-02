@@ -3,7 +3,12 @@
 # Conector Oprem By Alfa development Group
 # --------------------------------------------------------
 
+import sys, base64
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import os
+import codecs
 from core import httptools
 from core import scrapertools
 from platformcode import logger, config
@@ -27,11 +32,14 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
 
+    v_type = "hls"
+    url = page_url
+
     video_urls = list()
     if "const source = '" in data:
         url = scrapertools.find_single_match(data, "const source = '([^']+)")
         v_type = "hls"
-    else:
+    if '"file": ' in data:
         url, v_type = scrapertools.find_single_match(data, '"file": "([^"]+)",\s+"type": "([^"]+)"')
     headers = {"referer": page_url}
 
@@ -46,7 +54,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         hls_data = hls_data.replace(base_url, 'http://localhost:8781')
         m3u8 = os.path.join(config.get_data_path(), "op_master.m3u8")
         outfile = open(m3u8, 'wb')
-        outfile.write(hls_data)
+        outfile.write(codecs.encode(hls_data, "utf-8"))
         outfile.close()
         page_url = m3u8
         v_type = "m3u8"
