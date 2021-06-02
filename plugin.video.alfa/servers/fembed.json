@@ -10,6 +10,10 @@
       {
         "pattern": "(?:animekao|sypl|xstreamcdn).\\w{2,4}/(?:f|v)/([A-z0-9_-]+)",
         "url": "https://www.fembed.com/api/source/\\1"
+      },
+      {
+        "pattern": "fcdn.stream/(?:f|v)/([A-z0-9_-]+)",
+        "url": "https://www.fembed.com/api/source/\\1"
       }
     ]
   },

@@ -37,7 +37,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Categorias", action="categorias", url=host + "/cats/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
 
-    # autoplay.show_option(item.channel, itemlist)
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 

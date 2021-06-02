@@ -16,6 +16,7 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+from bs4 import BeautifulSoup
 
 host = 'https://porndoe.com'
 
@@ -24,7 +25,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host +"/videos"))
-    itemlist.append(item.clone(title="Exclusivos" , action="lista", url=host + "/category/74/premium-hd"))
+    itemlist.append(item.clone(title="Exclusivos" , action="lista2", url=host + "/category/74/premium-hd"))
     itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/videos?sort=views-down"))
     itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/videos?sort=likes-down"))
     itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/videos?sort=duration-down"))
@@ -56,22 +57,30 @@ def categorias(item):
     patron  = 'class="item">(.*?)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for match in matches:
+        if "channels" in item.url:
+            action = "lista"
+        else:
+            action = "lista2"
         scrapedurl = scrapertools.find_single_match(match,'href="([^"]+)"')
+        if "channel-profile" in scrapedurl:
+            scrapedurl = scrapedurl.replace("channel-profile", "channel-profile-videos")
+            scrapedurl += "?sort=date-down"
         thumbnail = scrapertools.find_single_match(match,'data-src="([^"]+)"')
         scrapedtitle = ""
         scrapedtitle = scrapertools.find_single_match(match,'title="([^"]+)"')
         if not scrapedtitle:
             scrapedtitle = scrapertools.find_single_match(match,'class="item-title">([^<]+)<').strip()
-        quality = ""
+        cantidad = ""
         if "/category" in scrapedurl:
-            quality = scrapertools.find_single_match(match,'<span class="count">([^<]+)<')
+            cantidad = scrapertools.find_single_match(match,'<span class="count">([^<]+)<')
         if "/pornstars-profile" in scrapedurl:
-            quality = scrapertools.find_single_match(match,'<span class="txt">([^<]+)<')
-            quality = "(%s)" % quality
-        title = "%s %s" % (scrapedtitle, quality)
+            cantidad = scrapertools.find_single_match(match,'<span class="txt">([^<]+)<')
+            cantidad = "(%s)" % cantidad
+
+        title = "%s %s" % (scrapedtitle, cantidad)
         scrapedurl = scrapedurl.replace("https://letsdoeit.com", "")
         url = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(item.clone(action=action, title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     next_page = scrapertools.find_single_match(data, '<li class="page next page-hide-mobile">.*?href="([^"]+)"')
     if next_page:
@@ -80,31 +89,72 @@ def categorias(item):
     return itemlist
 
 
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
+
+
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = 'video-item class="item".*?'
-    patron += 'data-src="([^"]+)".*?'
-    patron += '<span class="txt">([^<]+)<(.*?)<\/span>.*?'
-    patron += 'href="([^"]+)".*?>([^<]+)<'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedthumbnail,time,quality,scrapedurl,scrapedtitle in matches:
-        time = time.strip()
-        title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle.strip())
-        if "icon-hd" in quality or "icon-vr" in quality:
-            title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time, scrapedtitle.strip())
-        thumbnail = scrapedthumbnail
-        url = urlparse.urljoin(host,scrapedurl)
-        plot = ""
-        if not "/watch/" in url:
-            itemlist.append(item.clone(action="play", title=title, url=url,
-                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
-    next_page = scrapertools.find_single_match(data, '<li class="page page-mobile current">.*?href="([^"]+)"').replace("amp;", "")
+    soup = create_soup(item.url)
+    matches = soup.find('div', class_='videos-listing').find_all('div', class_='item')
+    for elem in matches:
+        url = elem.a['href']
+        if "redirect" in url:
+            continue
+        title = elem.find('a', class_='video-item-title')['aria-label']
+        thumbnail = elem.svg['data-src']
+        time = elem.find('span', class_='txt').text.strip()
+        quality = elem.find('span', class_=re.compile(r"^mm_icon-\w+"))
+        if "mm_icon-hd" in str(quality): quality = "HD"
+        if "mm_icon-vr" in str(quality): quality = "VR"
+        if "mm_icon-eye" in str(quality): quality = ""
+        url = urlparse.urljoin(host,url)
+        title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality,title)
+        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+                                fanart=thumbnail, contentTitle=title ))
+    next_page = soup.find('a', class_='pager-next')
     if next_page:
-        next_page = urlparse.urljoin(item.url,next_page)
+        next_page = next_page['href']
+        next_page = urlparse.urljoin(host,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def lista2(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', class_='video-item')
+    for elem in matches:
+        url = elem.a['href']
+        if "redirect" in url:
+            continue
+        title = elem.find('a', class_='video-item-title')['title']
+        thumbnail = elem.svg['data-src']
+        time = elem['data-duration']
+        hd = elem['data-hd']
+        vr = elem['data-vr']
+        quality = ""
+        if "true" in hd: quality = "HD"
+        if "true" in vr: quality = "VR"
+        url = urlparse.urljoin(host,url)
+        title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality,title)
+        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+                                fanart=thumbnail, contentTitle=title ))
+    next_page = soup.find('a', class_='pager-next')
+    if next_page:
+        next_page = next_page['href']
+        next_page = urlparse.urljoin(host,next_page)
+        itemlist.append(item.clone(action="lista2", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 

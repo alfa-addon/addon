@@ -6,7 +6,15 @@
 import requests
 import xbmc
 from platformcode import logger
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+
+import sys, base64
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+else:
+    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 
 domain = ""
