@@ -104,7 +104,8 @@ def list_all(item):
             year = scrapertools.find_single_match(fulltitle, r"\((\d{4})\)")
         else:
             title = fulltitle
-        thumb = elem.img["src"]
+        thumb = elem.img["data-src"] if elem.img else ""
+
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={'year': year})
 
         if "/serie" in url:
