@@ -85,7 +85,7 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('div', class_='main')
-    matches = soup.find_all('a', class_='th')
+    matches = soup.find('div', class_='thumbs').find_all('a', class_='th')
     for elem in matches:
         url = elem['href']
         stitle = elem['title']
