@@ -2371,21 +2371,18 @@ def get_fonts(skin):
 
 
 def translate(to_translate, to_language="auto", language="auto", i=0, bio=[]):
+    logger.info("")
     '''Return the translation using google translate
         you must shortcut the langage you define (French = fr, English = en, Spanish = es, etc...)
         if you don't define anything it will detect it or use english by default
         Example:
         print(translate("salut tu vas bien?", "en"))
         hello you alright?'''
-    import urllib.request, urllib.error, urllib.parse
     agents = {
         'User-Agent': "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30)"}
     before_trans = 'class="t0">'
     to_translate = urllib.parse.quote(to_translate.replace(" ", "+")).replace("%2B", "+")
     link = "http://translate.google.com/m?hl=%s&sl=%s&q=%s" % (to_language, language, to_translate)
-    request = urllib.request.Request(link, headers=agents)
-    page = urllib.request.urlopen(request).read()
-    result = page[page.find(before_trans) + len(before_trans):]
-    result = result.split("<")[0]
-    result = re.sub(r"d>|nn", "", result)
+    page = httptools.downloadpage(link, headers=agents).data
+    result = scrapertools.find_single_match(page, 'result-container">([^<]+)')
     bio.append([i, result])
