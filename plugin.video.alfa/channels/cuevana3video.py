@@ -43,7 +43,7 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel = item.channel, title = "Películas:", text_bold = True))
     itemlist.append(Item(channel = item.channel, action="list_all", title = "     Estrenos", url=host + "/estrenos", thumbnail=get_thumb('newest', auto=True)))
-    itemlist.append(Item(channel = item.channel, action="list_all", title = "     ültimas", url=host + "/peliculas-mas-vistas", thumbnail=get_thumb('newest', auto=True)))
+    itemlist.append(Item(channel = item.channel, action="list_all", title = "     Ultimas", url=host + "/peliculas-mas-vistas", thumbnail=get_thumb('newest', auto=True)))
     itemlist.append(Item(channel = item.channel, action="list_all", title = "     Películas", url=host + "/peliculas", thumbnail=get_thumb('movie', auto=True)))
     itemlist.append(Item(channel = item.channel, action="generos"  , title = "     Por género", url=host, thumbnail=get_thumb('genere', auto=True)))
     itemlist.append(Item(channel = item.channel, title = ""))
