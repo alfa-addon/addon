@@ -140,7 +140,7 @@ def extract_flashvars(data):
             data = line[p1 + 1:p2]
             break
     data = remove_additional_ending_delimiter(data)
-    logger.error(data)
+    #logger.error(data)
     if found:
         data = json.load(data)
         if assets:
@@ -162,6 +162,7 @@ def get_signature(youtube_page_data):
     from lib.jsinterpreter import JSInterpreter
 
     urljs = scrapertools.find_single_match(youtube_page_data, '"assets":.*?"js":\s*"([^"]+)"')
+    if not urljs: urljs = scrapertools.find_single_match(youtube_page_data, '"jsUrl":"([^"]+)')
     urljs = urljs.replace("\\", "")
     if urljs:
         if not re.search(r'https?://', urljs):
@@ -171,6 +172,7 @@ def get_signature(youtube_page_data):
     pattern = r'(?P<fname>\w+)=function\(\w+\){(\w)=\2\.split\(""\);.*?return\s+\2\.join\(""\)}'
 
     funcname = re.search(pattern, data_js).group('fname')
+
 
     jsi = JSInterpreter(data_js)
     js_signature = jsi.extract_function(funcname)
