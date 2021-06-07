@@ -93,7 +93,7 @@ def test_video_exists(page_url):
 
     data = httptools.downloadpage(page_url).data
 
-    if "File was deleted" in data or 'El vídeo no está disponible' in data:
+    if "File was deleted" in data or 'El vídeo no está disponible' in data or "privado" in data or "derechos de autor" in data:
         return False, config.get_localized_string(70449) % "Youtube"
     return True, ""
 
