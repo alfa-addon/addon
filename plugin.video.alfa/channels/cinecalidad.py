@@ -18,6 +18,7 @@ else:
     import urllib                                               # Usamos el nativo de PY2 que es más rápido
 
 import re
+import base64
 from core import tmdb
 from core import httptools
 from core.item import Item
@@ -37,7 +38,7 @@ list_servers = ['gounlimited',
                 'torrent'
                 ]
 
-host = 'https://www.cinecalidad.im'
+host = 'https://www.cine-calidad.com/'
 
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
@@ -75,11 +76,11 @@ def mainlist(item):
                          host=host+'/espana/',
                          thumbnail=thumbes))
 
-    itemlist.append(Item(channel=item.channel,
-                         title="CineCalidad Portugues",
-                         action="submenu",
-                         host="https://www.cinemaqualidade.im",
-                         thumbnail=thumbbr))
+    # itemlist.append(Item(channel=item.channel,
+    #                      title="CineCalidad Portugues",
+    #                      action="submenu",
+    #                      host="https://www.cinemaqualidade.im",
+    #                      thumbnail=thumbbr))
 
     itemlist.append(Item(channel=item.channel,
                          title="Configurar Canal...",
@@ -99,9 +100,9 @@ def submenu(item):
     idioma = 'peliculas'
     idioma2 = "destacada"
     host = item.host
-    if item.host == "https://www.cinemaqualidade.im":
-        idioma = "filmes"
-        idioma2 = "destacado"
+    # if item.host == "https://www.cinemaqualidade.im":
+    #     idioma = "filmes"
+    #     idioma2 = "destacado"
     logger.info()
     itemlist = []
 
@@ -111,24 +112,25 @@ def submenu(item):
                          url=host,
                          thumbnail=get_thumb('movies', auto=True),
                          ))
-    itemlist.append(Item(channel=item.channel,
-                         title="Destacadas",
-                         action="list_all",
-                         url=host + "/genero-" + idioma + "/" + idioma2 + "/",
-                         thumbnail=get_thumb('hot', auto=True),
-                         ))
-    itemlist.append(Item(channel=item.channel,
-                         title="Generos",
-                         action="genres",
-                         url=host,
-                         thumbnail=get_thumb('genres', auto=True),
-                         ))
-    itemlist.append(Item(channel=item.channel,
-                         title="Por Año",
-                         action="by_year",
-                         url=host + idioma + "-por-ano",
-                         thumbnail=get_thumb('year', auto=True),
-                         ))
+    if "/espana/" not in item.host:
+        itemlist.append(Item(channel=item.channel,
+                             title="Destacadas",
+                             action="featured",
+                             url=host,
+                             thumbnail=get_thumb('hot', auto=True),
+                             ))
+        itemlist.append(Item(channel=item.channel,
+                             title="Generos",
+                             action="genres",
+                             url=host,
+                             thumbnail=get_thumb('genres', auto=True),
+                             ))
+        itemlist.append(Item(channel=item.channel,
+                             title="Por Año",
+                             action="by_year",
+                             url=host + idioma + "-por-ano",
+                             thumbnail=get_thumb('year', auto=True),
+                             ))
     itemlist.append(Item(channel=item.channel,
                          title="Buscar...",
                          action="search",
@@ -167,6 +169,27 @@ def create_soup(url, referer=None, unescape=False):
 
     return soup
 
+def featured(item):
+    logger.info()
+    itemlist = list()
+    soup = create_soup(item.url).find("div", class_="destacados-widget")
+    matches = soup.find_all("div", class_="upw-image")
+
+    for elem in matches:
+
+
+        url = elem.a["href"]
+
+        title = elem.a["title"]
+        year = scrapertools.find_single_match(title, " \((\d{4})\)")
+        contentTitle = title.replace("(%s)" % year, "").strip()
+        
+        itemlist.append(Item(channel=item.channel, title=contentTitle, contentTitle=contentTitle, url=url,
+                             action="findvideos", infoLabels={"year": year}))
+        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    return itemlist
+
+
 def list_all(item):
     logger.info()
 
@@ -174,9 +197,10 @@ def list_all(item):
 
     soup = create_soup(item.url, unescape=True)
     for elem in soup.find_all("div", class_="home_post_cont"):
-        url = elem.a["href"]
-        if not host in url:
-            url = "{}{}".format(host, url)
+        if elem.find("noscript"):
+            url = scrapertools.find_single_match(elem.img["extract"], "href='([^']+)'")
+        else:
+            url = elem.a["href"]
         try:
             title, year = elem.img["title"].split(' (')
             year = re.sub(r"\)","", year)
@@ -208,7 +232,6 @@ def by_year(item):
     itemlist = list()
 
     soup = create_soup(item.url, unescape=True).find("div", class_="page_single_left")
-
     for elem in soup.find_all('a'):
         url = elem["href"]
         title = elem.text
@@ -224,9 +247,6 @@ def genres(item):
     if item.url == "https://www.cinemaqualidade.im":
         pl = "filmes"
 
-    itemlist.append(Item(title='4K UHD', url='%s%s/4k-ultra-hd/' % (item.url, pl),
-    					 action="list_all", channel=item.channel))
-    
     soup = create_soup(item.url, unescape=True).find("ul")
     for elem in soup.find_all("li", class_=re.compile("menu-item-object-category")):
         url = elem.a["href"]
@@ -247,7 +267,7 @@ def settingCanal(item):
 
 
 def dec(item, dec_value):
-    link = []
+    link = list()
     val = item.split(' ')
     link = list(map(int, val))
     for i in range(len(link)):
@@ -260,126 +280,108 @@ def findvideos(item):
 
     logger.info()
     itemlist = []
+    dl_itemlist = list()
     duplicados = []
 
     if 'cinemaqualidade' in item.url:
         lang = 'portugues'
     elif 'espana' in item.url:
         lang = 'castellano'
-    elif 'cinecalidad' in item.url:
+    elif 'cine-calidad' in item.url:
         lang = 'latino'
     
-    data = httptools.downloadpage(item.url).data
-    patron = 'target=_blank.*? service=.*? data="(.*?)"><li>(.*?)<\/li>'
+    data = httptools.downloadpage(item.url).data.replace("'", '"')
+    patron = '(?:onclick="Abrir.*?"|class="link(?: onlinelink)?").*?data(?:-url)?="([^"]+)".*?<li>([^<]+)</li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-
-    patronk = '<a href="(/vip/v.php\?i=.*?")'
-    matchesk = re.compile(patronk, re.DOTALL).findall(data)
 
     server_url = {'yourupload': 'https://www.yourupload.com/embed/%s',
                   'trailer': 'https://www.youtube.com/embed/%s',
                   'bittorrent': '',
                   'mega': 'https://mega.nz/file/%s',
-                  'fembed': 'https://www.fembed.com/v/%s',
+                  'fembed': '%s',
                   'gounlimited': 'https://gounlimited.to/embed-%s.html',
                   'clipwatching': 'https://clipwatching.com/embed-%s.html',
                   'vidcloud': 'https://vidcloud.co/embed/%s',
                   'jetload': 'https://jetload.net/e/%s',
-                  'evoload': 'https://evoload.io/e/%s'}
-    
+                  'evoload': 'https://evoload.io/e/%s',
+                  'doodstream': '%s',
+                  'cineplay': '%s'}
+
     dec_value = scrapertools.find_single_match(data, 'String\.fromCharCode\(parseInt\(str\[i\]\)-(\d+)\)')
-    torrent_link = scrapertools.find_single_match(data, '<a href=".*?/protect/v\.php\?i=([^"]+)"')
-    if not torrent_link: torrent_link = scrapertools.find_single_match(data, '<a\s*href="[^"]*?s=([^"]+)"\s*target=[^>]*service=BitTorrent>')
-    if not torrent_link: 
-        torrent_link = scrapertools.find_single_match(data, '<a\s*href="[^"]*\/go\.php\?u=([^"]+)"\s*target=[^>]*service=BitTorrent>')
-        if torrent_link:
-            from lib.generictools import convert_url_base64
-            torrent_link = convert_url_base64(torrent_link)
+    protected_links = scrapertools.find_multiple_matches(data, '<a href="(%sprotect/v.php[^"]+)" target="_blank"><li>([^<]+)</li>\s+?</a>' % host)
     subs = scrapertools.find_single_match(data, '<a id=subsforlink href=(.*?) ')
 
-    for scrapedurl in matchesk:
-        
-        base_url = host + scrapedurl
-        
-        headers={'Cookie': 'codigovip=100734121;'}
-        protect = httptools.downloadpage(base_url, headers=headers).data
-        
-        url = scrapertools.find_single_match(protect, 'font-size:1.05em"><a href="([^"]+)')
-        server = servertools.get_server_from_url(url)
-
-        title = '(%s)' % server.capitalize()
-        quality = '4K'
+    if protected_links:
+        headers = {'Referer': item.url}
         language = IDIOMAS[lang]
-        if url:
+        quality = '1080p'
+        for protected, server_id in protected_links:
+            is_dl = False
+            protected_link = scrapertools.decodeHtmlentities(protected)
+            if "torrent" not in server_id.lower():
+                enc_url = scrapertools.find_single_match(protected_link, "i=([^&]+)")
+                url = base64.b64decode(enc_url).decode("utf-8")
+                if url.startswith("https://mega.nz/file"):
+                    continue
+                is_dl = True
+            else:
+                p_data = httptools.downloadpage(protected_link, headers=headers, ignore_response_code=True).data
+                url = scrapertools.find_single_match(p_data, 'value="(magnet.*?)"')
+                quality = '1080p'
+                if "4K" in server_id:
+                    quality = '4K'
+                language = IDIOMAS[lang]
+            if url and url in duplicados:
+                continue
+            else:
+                duplicados.append(url)
             new_item = Item(channel=item.channel,
                             action='play',
-                            title=title,
+                            title="%s",
                             contentTitle=item.contentTitle,
                             url=url,
                             language=language,
-                            thumbnail=item.thumbnail,
                             quality=quality,
-                            server=server
+                            subtitle=subs,
+                            infoLabels=item.infoLabels
                             )
-            itemlist.append(new_item)
-    
-    if torrent_link != '':
-        headers = {'Referer': item.url}
-        """
-        base_url = '%s/protect/v.php' % host
-        post = {'i': torrent_link, 'title': item.title}
-        post = urllib.urlencode(post)
-        protect = httptools.downloadpage(base_url + '?' + post, headers=headers).data
-        """
-        base_url = torrent_link
-        if '/protect/v' not in torrent_link: base_url = '%s/protect/v.php?i=%s' % (host, torrent_link)
-        protect = httptools.downloadpage(base_url, headers=headers).data
-        url = scrapertools.find_single_match(protect, 'value="(magnet.*?)"')
-        server = 'torrent'
-
-        title = item.contentTitle + ' (%s)' % server
-        quality = '1080p'
-        language = IDIOMAS[lang]
-
-        new_item = Item(channel=item.channel,
-                        action='play',
-                        title=title,
-                        contentTitle=item.contentTitle,
-                        url=url,
-                        language=language,
-                        thumbnail=item.thumbnail,
-                        quality=quality,
-                        server=server
-                        )
-        itemlist.append(new_item)
+            if is_dl:
+                dl_itemlist.append(new_item)
+            else:
+                new_item.server = "Torrent"
+                itemlist.append(new_item)
 
     for video_cod, server_id in matches:
         thumbnail = item.thumbnail
+
         server = server_id.lower()
-        if server in server_url and server not in duplicados:
-            video_id = dec(video_cod, dec_value)
+        if server == "trailer":
+            continue
+        video_id = dec(video_cod, dec_value)
+        url = server_url.get(server, '')
 
-            url = server_url.get(server, '')
-            
-            title = '(%s)' % server.capitalize()
-            quality = '1080p'
-            language = IDIOMAS[lang]
-            if url:
-                url = url % video_id
-                new_item = Item(channel=item.channel,
-                                action='play',
-                                title=server.capitalize(),
-                                contentTitle=item.contentTitle,
-                                url=url,
-                                language=language,
-                                thumbnail=thumbnail,
-                                quality=quality,
-                                server=server,
-                                subtitle=subs
-                                )
-                itemlist.append(new_item)
-                duplicados.append(server)
+        quality = '1080p'
+        language = IDIOMAS[lang]
+        if url:
+            duplicados.append(url)
+            url = url % video_id
+            new_item = Item(channel=item.channel,
+                            action='play',
+                            title="%s",
+                            contentTitle=item.contentTitle,
+                            url=url,
+                            language=language,
+                            thumbnail=thumbnail,
+                            quality=quality,
+                            subtitle=subs,
+                            infoLabels=item.infoLabels
+                            )
+            itemlist.append(new_item)
 
+    if dl_itemlist:
+        itemlist += dl_itemlist
+
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     # Requerido para FilterTools
 
@@ -414,24 +416,6 @@ def get_urls(item, link):
     return dict_data['link']
 
 
-def play(item):
-    logger.info()
-    itemlist = []
-    if 'juicyapi' not in item.url:
-        itemlist = servertools.find_video_items(data=item.url)
-
-        for videoitem in itemlist:
-            videoitem.title = item.contentTitle
-            videoitem.contentTitle = item.contentTitle
-            videoitem.thumbnail = item.thumbnail
-            videoitem.channel = item.channel
-            videoitem.subtitle = item.subtitle
-    else:
-        itemlist.append(item)
-
-    return itemlist
-
-
 def newest(categoria):
     logger.info()
     itemlist = []
@@ -440,11 +424,11 @@ def newest(categoria):
         if categoria in ['peliculas', 'latino']:
             item.url = host
         elif categoria == 'infantiles':
-            item.url = '%s/genero-peliculas/infantil/' % host
+            item.url = '%sinfantil/' % host
         elif categoria == 'terror':
-            item.url = '%s/genero-peliculas/terror/' % host
+            item.url = '%sterror/' % host
         elif categoria == 'castellano':
-            item.url = '%s/espana/' % host
+            item.url = '%sespana/' % host
         itemlist = list_all(item)
         if itemlist[-1].title == 'Página siguiente >>':
             itemlist.pop()

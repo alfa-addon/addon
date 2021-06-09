@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://dood(?:stream|).(?:watch|to|so|com|cx)/(?:e|d)/[a-z0-9]+)",
+        "pattern": "(https://streams3.com/redirect.php\\?data=\\w+)",
         "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "doodstream",
-  "name": "doodstream",
+  "id": "share3",
+  "name": "share3",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/vTbw1YRM/doodstream.png"
+  "thumbnail": ""
 }

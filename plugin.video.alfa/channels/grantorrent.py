@@ -135,25 +135,27 @@ def submenu(item):
                         + 'Reportar el error con el log'))
         return itemlist                                             # si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-    for scrapedurl, scrapedtitle in matches:
-        thumb = item.thumbnail
-        url = urlparse.urljoin(host, scrapedurl)
-        if not url.endswith('/'): url += '/'
-        title = scrapedtitle.strip()
-        if scrapedtitle.lower() == 'ayuda': continue
-        if scrapedtitle.lower() == 'inicio':
-            if item.extra == "peliculas":
+    if item.extra == "series":
+        title = 'Series'
+        itemlist.append(item.clone(title=title, action="listado", 
+                                 url=urlparse.urljoin(item.url, 'page/1/')))
+    else:
+        for scrapedurl, scrapedtitle in matches:
+            thumb = item.thumbnail
+            url = urlparse.urljoin(host, scrapedurl)
+            if not url.endswith('/'): url += '/'
+            title = scrapedtitle.strip()
+            if title.lower() == 'ayuda': continue
+            if title.lower() == 'inicio':
                 title = 'Novedades'
                 thumb = thumb_cartelera
-            else:
-                title = 'Series'
-        if '4k' in scrapedtitle.lower():
-            url = url.replace('4k', '4k-2')
-        if 'hdrip' in scrapedtitle.lower():
-            url = url.replace('HDRip', 'HDRip-2')
-        
-        itemlist.append(item.clone(title=title, action="listado", thumbnail=thumb, 
-                             url=urlparse.urljoin(url, 'page/1/')))
+            if '4k' in title.lower():
+                url = url.replace('4k', '4k-2')
+            if 'hdrip' in title.lower():
+                url = url.replace('HDRip', 'HDRip-2')
+            
+            itemlist.append(item.clone(title=title, action="listado", thumbnail=thumb, 
+                                 url=urlparse.urljoin(url, 'page/1/')))
 
     if item.extra != 'search':
         itemlist.append(item.clone(action="", title="Géneros", thumbnail=thumb_generos))        #Lista de Géneros
@@ -274,10 +276,10 @@ def listado(item):                                                              
         data_foot = ''
         if last_page == 99999:                                                  # Si es el valor inicial, salvamos data para el pié de página
             data_foot = data
-        patron = '<div\s*class="contenedor-home"[^>]*>(?:\s*<div\s*class="titulo-inicial"'
-        patron += '[^>]*>[^<]*<\/div>)?\s*<div\s*class="contenedor-imagen"[^>]*>\s*(<div\s*'
-        patron += 'class="imagen-post"[^>]*>.*?<\/div>\s*<\/div>)\s*<\/div>'
-        data = scrapertools.find_single_match(data, patron)
+        patron_init = '<div\s*class="contenedor-home"[^>]*>(?:\s*<div\s*class="titulo-inicial"'
+        patron_init += '[^>]*>[^<]*<\/div>)?\s*<div\s*class="contenedor-imagen"[^>]*>.*?(<div\s*'
+        patron_init += 'class="imagen-post"[^>]*>.*?<\/div>\s*<\/div>)\s*<\/div>'
+        data = scrapertools.find_single_match(data, patron_init)
         
         # Patrón para búsquedas, géneros, pelis y series
         patron = '<div\s*class="imagen-post"[^>]*>\s*<a\s*href="(?P<url>[^"]+)"[^>]*>\s*'
@@ -294,9 +296,10 @@ def listado(item):                                                              
             matches = item.matches
             del item.matches
             
+        #logger.debug("PATRON inicial: " + patron_init)
+        #logger.debug(data_foot)
         #logger.debug("PATRON: " + patron)
         #logger.debug(matches)
-        #logger.debug(data_foot)
         #logger.debug(data)
 
         if not matches and item.extra != 'search':                              # error o fin

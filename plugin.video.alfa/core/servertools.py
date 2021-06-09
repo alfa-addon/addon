@@ -244,7 +244,8 @@ def parse_hls(video_urls, server):
         
         data = httptools.downloadpage(url, headers=headers).data
         patron = r'#EXT-X-STREAM-INF.*?RESOLUTION=(\d+x\d+).*?\s(http.*?)\s'
-        matches = scrapertools.find_multiple_matches(codecs.decode(data, "utf-8"), patron)
+        if not isinstance(data, str): data = codecs.decode(data, "utf-8")
+        matches = scrapertools.find_multiple_matches(data, patron)
 
         if len(matches) > 1:
             for res, video_url in matches:
