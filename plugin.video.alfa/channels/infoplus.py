@@ -295,7 +295,7 @@ class main(xbmcgui.WindowDialog):
         self.rating = xbmcgui.ControlTextBox(260, 112, 1040, 50)
         self.rating_filma = xbmcgui.ControlTextBox(417, 112, 1043, 50)
         self.tagline = xbmcgui.ControlFadeLabel(117, 50, 420, 45, self.fonts["12"])
-        self.plot = xbmcgui.ControlTextBox(117, 145, 700, 600)
+        self.plot = xbmcgui.ControlTextBox(117, 145, 700, 340)
         self.fanart = xbmcgui.ControlImage(-40, -40, 1500, 830, self.infoLabels.get("fanart", ""))
         self.poster = xbmcgui.ControlImage(860, 140, 350, 330, self.item.thumbnail)
         self.icon = xbmcgui.ControlImage(200, 100, 40, 40, icono)
@@ -1058,7 +1058,7 @@ class related(xbmcgui.WindowDialog):
             pass
 
         self.botones = []
-        self.trailer_r = xbmcgui.ControlButton(790, 62, 55, 55, '', 'http://i.imgur.com/cGI2fxC.png',
+        self.trailer_r = xbmcgui.ControlButton(790, 55, 67, 67, '', 'http://i.imgur.com/cGI2fxC.png',
                                                'http://i.imgur.com/cGI2fxC.png')
         self.addControl(self.trailer_r)
         if set_animation:
@@ -1073,7 +1073,7 @@ class related(xbmcgui.WindowDialog):
                                       ('WindowClose', 'effect=slide end=2000 time=700 condition=true',)])
         self.botones.append(self.trailer_r)
 
-        self.plusinfo = xbmcgui.ControlButton(1090, 50, 100, 100, '', 'http://i.imgur.com/1w5CFCL.png',
+        self.plusinfo = xbmcgui.ControlButton(1090, 55, 67, 67, '', 'http://i.imgur.com/1w5CFCL.png',
                                               'http://i.imgur.com/1w5CFCL.png')
         self.addControl(self.plusinfo)
         if set_animation:
@@ -1514,37 +1514,8 @@ class ActorInfo(xbmcgui.WindowDialog):
             data = httptools.downloadpage("http://www.imdb.com/name/%s/bio" % actor_tmdb.result["imdb_id"]).data
             info = scrapertools.find_single_match(data, '<div class="soda odd">.*?<p>(.*?)</p>')
             if info:
-                bio = dhe(scrapertools.htmlclean(info.strip()))
-                try:
-                    info_list = []
-                    while bio:
-                        info_list.append(bio[:1900])
-                        bio = bio[1900:]
-                    bio = []
-                    threads = {}
-                    for i, info_ in enumerate(info_list):
-                        t = Thread(target=translate, args=[info_, "es", "en", i, bio])
-                        t.setDaemon(True)
-                        t.start()
-                        threads[i] = t
-
-                    while threads:
-                        for key, t in list(threads.items()):
-                            if not t.isAlive():
-                                threads.pop(key)
-                        xbmc.sleep(100)
-                    if bio:
-                        bio.sort(key=lambda x: x[0])
-                        biography = ""
-                        for i, b in bio:
-                            biography += b
-                        actor_tmdb.result["biography"] = dhe(biography)
-                    else:
-                        bio = dhe(scrapertools.htmlclean(info.strip()))
-                        actor_tmdb.result["biography"] = dhe(bio)
-                except:
-                    bio = dhe(scrapertools.htmlclean(info.strip()))
-                    actor_tmdb.result["biography"] = bio
+                bio = translate(dhe(scrapertools.htmlclean(info.strip())), "es", "en")
+                actor_tmdb.result["biography"] = dhe(bio)
             else:
                 actor_tmdb.result["biography"] = config.get_localized_string(60504)
         elif not actor_tmdb.result.get("biography"):
@@ -2370,22 +2341,15 @@ def get_fonts(skin):
     return fonts
 
 
-def translate(to_translate, to_language="auto", language="auto", i=0, bio=[]):
+def translate(to_translate, to_language="auto", language="auto"):
+    logger.info("")
     '''Return the translation using google translate
         you must shortcut the langage you define (French = fr, English = en, Spanish = es, etc...)
         if you don't define anything it will detect it or use english by default
         Example:
         print(translate("salut tu vas bien?", "en"))
         hello you alright?'''
-    import urllib.request, urllib.error, urllib.parse
-    agents = {
-        'User-Agent': "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30)"}
-    before_trans = 'class="t0">'
-    to_translate = urllib.parse.quote(to_translate.replace(" ", "+")).replace("%2B", "+")
     link = "http://translate.google.com/m?hl=%s&sl=%s&q=%s" % (to_language, language, to_translate)
-    request = urllib.request.Request(link, headers=agents)
-    page = urllib.request.urlopen(request).read()
-    result = page[page.find(before_trans) + len(before_trans):]
-    result = result.split("<")[0]
-    result = re.sub(r"d>|nn", "", result)
-    bio.append([i, result])
+    page = httptools.downloadpage(link, headers={"User-Agent":httptools.get_user_agent()}).data
+    result = scrapertools.find_single_match(page, 'result-container">([^<]+)')
+    return result

@@ -43,13 +43,14 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel = item.channel, title = "Películas:", text_bold = True))
     itemlist.append(Item(channel = item.channel, action="list_all", title = "     Estrenos", url=host + "/estrenos", thumbnail=get_thumb('newest', auto=True)))
-    itemlist.append(Item(channel = item.channel, action="list_all", title = "     ültimas", url=host + "/peliculas-mas-vistas", thumbnail=get_thumb('newest', auto=True)))
+    itemlist.append(Item(channel = item.channel, action="list_all", title = "     Ultimas", url=host + "/peliculas-mas-vistas", thumbnail=get_thumb('newest', auto=True)))
     itemlist.append(Item(channel = item.channel, action="list_all", title = "     Películas", url=host + "/peliculas", thumbnail=get_thumb('movie', auto=True)))
     itemlist.append(Item(channel = item.channel, action="generos"  , title = "     Por género", url=host, thumbnail=get_thumb('genere', auto=True)))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Series:", text_bold = True))
     itemlist.append(Item(channel = item.channel, action="last_episodes", title = "     Ultimos episodios", url=host + "/serie", thumbnail=get_thumb('tvshow', auto=True)))
-    itemlist.append(Item(channel = item.channel, action="last_tvshows",  title = "     Ultimas series", url=host + "/serie", thumbnail=get_thumb('tvshow', auto=True)))
+    itemlist.append(Item(channel = item.channel, action="last_tvshows",  title = "     Ultimas series", url=host + "/serie", type_tvshow="tabserie-1", thumbnail=get_thumb('tvshow', auto=True)))
+    itemlist.append(Item(channel = item.channel, action="last_tvshows",  title = "     Mas vistas", url=host + "/serie", type_tvshow="tabserie-4", thumbnail=get_thumb('tvshow', auto=True)))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host, thumbnail = get_thumb("search", auto = True)))
     autoplay.show_option(item.channel, itemlist)
@@ -86,8 +87,11 @@ def last_episodes(item):
 def last_tvshows(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.find_single_match(data, 'id="tabserie-1".*?</ul>')
+    url = item.url
+    if not item.page: item.page = 1
+    if not item.extra: url += "?page=%s" %item.page
+    data = httptools.downloadpage(url).data
+    bloque = scrapertools.find_single_match(data, 'id="%s".*?</ul>' %item.type_tvshow)
     patron  = '(?is)TPost C.*?<a href="([^"]+)'
     patron += '.*?src="([^"]+)'
     patron += '.*?"Title">([^<]+)'
@@ -101,6 +105,11 @@ def last_tvshows(item):
                                    url = host + scrapedurl,
                                    ))
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
+    item.page += 1
+    url_pagina = scrapertools.find_single_match(data, 'page=%s' %item.page)
+    if url_pagina != "":
+        pagina = "Pagina: %s" %item.page
+        itemlist.append(Item(channel = item.channel, action = "last_tvshows", page=item.page, title = pagina, type_tvshow = item.type_tvshow, url = item.url))
     return itemlist
 
 
@@ -118,9 +127,11 @@ def seasons(item):
                                    id = scrapedid,
                                    infoLabels = infoLabels,
                                    contentSerieName = item.contentSerieName,
+                                   season = scrapedid,
                                    title = scrapedtitle,
                                    ))
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
+    itemlist = sorted(itemlist, key=lambda i: i.season)
     if config.get_videolibrary_support() and len(itemlist) > 0 and "serie" in item.url:
         itemlist.append(Item(channel=item.channel, title = ""))
         itemlist.append(
@@ -157,6 +168,7 @@ def episodesxseasons(item):
         contentSerieName = scrapertools.find_single_match(scrapedtitle, '(.*?) \d')
         itemlist.append(item.clone(channel = item.channel,
                                    action = "findvideos",
+                                   episode = episode,
                                    infoLabels = infoLabels,
                                    contentSerieName = contentSerieName,
                                    title = scrapedtitle,
@@ -164,10 +176,8 @@ def episodesxseasons(item):
                                    url = host + scrapedurl
                                    ))
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
+    itemlist = sorted(itemlist, key=lambda i: i.episode)
     return itemlist
-
-
-
 
 
 def search(item, texto):
@@ -184,9 +194,10 @@ def search(item, texto):
 def list_all(item):
     logger.info()
     itemlist = []
+    url = item.url
     if not item.page: item.page = 1
-    if not item.extra: item.url += "?page=%s" %item.page
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    if not item.extra: url += "?page=%s" %item.page
+    data = httptools.downloadpage(url, encoding=encoding).data
     patron  = '(?is)TPost C.*?<a href="([^"]+)'
     patron += '.*?data-src="([^"]+)'
     patron += '.*?"Title">([^<]+)'
