@@ -78,9 +78,6 @@ def sub_menu(item):
     else:
         content = item.title.lower()[:-1]
 
-    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all",
-                         url=host + '%s/estrenos' % item.title.lower(), thumbnail=get_thumb('last', auto=True)))
-
     itemlist.append(Item(channel=item.channel,title="Todas", action="list_all", url=host + '%s' % item.title.lower(),
                          thumbnail=get_thumb('all', auto=True)))
 

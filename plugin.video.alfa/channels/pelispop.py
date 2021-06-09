@@ -244,9 +244,17 @@ def findvideos(item):
                 if not enc_url:
                     continue
                 enc_url = re.sub(r"/p/(\d+).php\?v=", r"/p/redirector.php?server=\1&value=", enc_url)
-
-                data = httptools.downloadpage(enc_url).data
-                url = scrapertools.find_single_match(data, "window.location.href = '([^']+)'")
+                try:
+                    data = httptools.downloadpage(enc_url, headers={"referer": host}).data
+                except:
+                   continue
+                if "ikta.me" in enc_url:
+                    from lib import jsunpack
+                    packed = scrapertools.find_single_match(data, '<script type="text/javascript">(eval.*?)</script>')
+                    unpacked = jsunpack.unpack(packed)
+                    url = scrapertools.find_single_match(unpacked, '"file":"([^"]+)')
+                else:
+                    url = scrapertools.find_single_match(data, "window.location.href = '([^']+)'")
                 if url:
                     itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                                          language=lang, infoLabels=item.infoLabels))
