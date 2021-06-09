@@ -17,13 +17,15 @@ def test_video_exists(page_url):
        or "is no longer available" in response.data:
         return False, "[redtube] El fichero no existe o ha sido borrado"
     data = response.data
+    # url = scrapertools.find_single_match(data,'"format":"mp4","videoUrl":"([^"]+)"')
     return True, ""
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info()
     video_urls = []
-    data2 = scrapertools.find_single_match(data,'mediaDefinition: \[(.*?)\]')
+    url = scrapertools.find_single_match(data,'"format":"mp4","videoUrl":"([^"]+)"').replace("\\", "")
+    data2 = httptools.downloadpage(url).data
     patron  = '"defaultQuality":.*?,"quality":"([^"]+)","videoUrl"\:"([^"]+)"'
     matches = scrapertools.find_multiple_matches(data2, patron)
     for quality,scrapedurl  in matches:
