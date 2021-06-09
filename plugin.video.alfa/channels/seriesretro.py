@@ -254,7 +254,8 @@ def findvideos(item):
         opt = btn["data-tplayernv"]
         srv = btn.span.text.lower()
         if "opci" in srv.lower():
-            srv = "okru"
+            # srv = "okru"
+            continue
         itemlist.append(Item(channel=item.channel, title=srv, url=item.url, action='play', server=srv, opt=opt,
                              language='LAT', infoLabels=infoLabels))
 
