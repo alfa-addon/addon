@@ -633,18 +633,33 @@ def set_infolabels(listitem, item, player=False):
     infoLabels_kodi = {}
 
     if item.infoLabels:
+        try:
+            if config.get_platform(True)['num_version'] < 18.0:
+                listitem.setUniqueIDs({"tmdb": item.infoLabels.get("tmdb_id", 0),
+                                  "imdb": item.infoLabels.get("imdb_id", 0),
+                                  "tvdb": item.infoLabels.get("tvdb_id", 0)})
+            elif config.get_platform(True)['num_version'] < 20.0:
+                listitem.setUniqueIDs({"tmdb": item.infoLabels.get("tmdb_id", 0),
+                                  "imdb": item.infoLabels.get("imdb_id", 0),
+                                  "tvdb": item.infoLabels.get("tvdb_id", 0)}, "imdb")
+            else:
+                InfoTagVideo.setUniqueIDs({"tmdb": item.infoLabels.get("tmdb_id", 0),
+                                  "imdb": item.infoLabels.get("imdb_id", 0),
+                                  "tvdb": item.infoLabels.get("tvdb_id", 0)}, "imdb")
+        except:
+            import traceback
+            logger.error(traceback.format_exc())
+
         if 'mediatype' not in item.infoLabels:
             item.infoLabels['mediatype'] = item.contentType
-
         try:
             for label_tag, label_value in list(item.infoLabels.items()):
                 try:
-                    # logger.debug(str(label_tag) + ': ' + str(infoLabels_dict[label_tag]))
+                    #logger.debug(str(label_tag) + ': ' + str(infoLabels_dict[label_tag]))
                     if infoLabels_dict[label_tag] != 'None':
                         infoLabels_kodi.update({infoLabels_dict[label_tag]: item.infoLabels[label_tag]})
                 except:
                     continue
-
             listitem.setInfo("video", infoLabels_kodi)
 
         except:

@@ -34,7 +34,7 @@ from platformcode import platformtools
 from channelselector import get_thumb
 
 host = config.get_setting("current_host", channel="hdfull")
-host_blacklist = ['https://www2.hdfull.cx/', 'https://hdfull.sh/', 'https://hdfull.ch/']
+host_blacklist = ['https://www2.hdfull.cx/', 'https://hdfull.sh/', 'https://hdfull.ch/', 'https://hdfull.im/']
 
 
 _silence = config.get_setting('silence_mode', channel='hdfull')
