@@ -3,7 +3,7 @@
   "name": "elCine",
   "force_unify": true,
   "language": ["lat"],
-  "active": true,
+  "active": false,
   "adult": false,
   "thumbnail": "https://elcine.online/img/150xNxlogo.png.pagespeed.ic.Ul6yTwzzQr.webp",
   "banner": "",

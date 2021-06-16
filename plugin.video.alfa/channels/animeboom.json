@@ -1,7 +1,7 @@
 {
   "id": "animeboom",
   "name": "AnimeBoom",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://animebum.net/images/logo.png",
