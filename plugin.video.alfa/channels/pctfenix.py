@@ -38,6 +38,8 @@ list_quality = []
 list_servers = ['torrent']
 
 host = 'https://pctfenix.com/'
+sufix = scrapertools.find_single_match(host, '\.\w+\/*$')
+download_sufix = 'descargar-gratis/'
 channel_py = 'pctfenix'
 categoria = channel_py.capitalize()
 decode_code = ''
@@ -252,7 +254,7 @@ def listado(item):                                                              
     post = None
     forced_proxy_opt = None
     if item.post:
-        forced_proxy_opt = 'ProxyCF'
+        forced_proxy_opt = None
     if item.post or item.post is None:                                          # Rescatamos el Post, si lo hay
         post = item.post
         del item.post
@@ -390,14 +392,15 @@ def listado(item):                                                              
                 except:
                     pass
                 contentEpisodeNumber_multi = scrapertools.find_single_match(url, 'capitulo-\d+-al-(\d+)')
-                url = re.sub('temporada-\d+', '', url)
-                url = re.sub('capitulo-\d+(?:-al-\d+)?', '', url)
+                #url = re.sub('temporada-\d+', 'temporada-1', url)
+                #url = re.sub('capitulo-\d+(?:-al-\d+)?', 'capitulo-01', url)
                 title = scrapertools.find_single_match(title, '(^.*?)\s*(?:-\s*)?[T|t]emp')     #Quitamos info de temp x epi
 
+            # Slugify, pero más light
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
                     .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
-                    .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&#8217;", "'")\
-                    .replace("&amp;", "&")
+                    .replace("ï¿½", "ñ").replace("Ã±", "ñ")
+            title = scrapertools.decode_utf8_error(title)
 
             #logger.debug(title)
             
@@ -662,22 +665,23 @@ def findvideos(item):
     data_servidores = ''
     enlaces_ver = []
     enlaces_descargar = []
-    url_servidores = item.url
     data_servidores_stat = False
     size = ''
     post = None
     timeout_search = timeout * 2                                                # Timeout para descargas
     forced_proxy_opt = None
     if item.post:
-        forced_proxy_opt = 'ProxyCF'
-    if item.post:
+        forced_proxy_opt = None
+        #timeout_search = timeout * 3                                            # Timeout para proxy
         post = item.post
         del item.post
+    else:
+        if not download_sufix in item.url:
+            item.url = item.url.replace(sufix, sufix+download_sufix)
     
     if not item.matches:
         data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, 
                                           decode_code=decode_code, quote_rep=True, post=post, 
-                                          forced_proxy_opt=forced_proxy_opt, 
                                           item=item, itemlist=[])               # Descargamos la página)
         data = data.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
 
@@ -1129,8 +1133,22 @@ def episodios(item):
     if item.library_playcounts: 
         max_page = old_div(max_page, 5)                                         # Si es una actualización, recortamos
     page = 1
-    list_pages = [item.url]
     
+    if item.post:
+        post = item.post
+        del item.post
+    else:
+        post = None
+    list_pages = []
+    if item.serie_info:
+        list_pages = [urlparse.urljoin(host, '/controllers/load.chapters.type.php')]
+        post = item.serie_info
+    if not download_sufix in item.url:
+        item.url = item.url.replace(sufix, sufix+download_sufix)
+    if '///' in item.url:
+        item.url = item.url.replace('///', '/temporada-1/capitulo-01/')
+    
+    if not list_pages: list_pages = [item.url]
     data = ''
     list_episodes = []
     first = True
@@ -1141,7 +1159,7 @@ def episodios(item):
         
         if not data:
             data, success, code, item, itemlist = generictools.downloadpage(list_pages[0], timeout=timeout, 
-                                          decode_code=decode_code, quote_rep=True, no_comments=False, 
+                                          decode_code=decode_code, quote_rep=True, no_comments=False, post=post, 
                                           item=item, itemlist=itemlist)         # Descargamos la página
 
         #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
@@ -1167,17 +1185,18 @@ def episodios(item):
         page += 1                                                               # Apuntamos a la página siguiente
         list_pages = []                                                         # ... si no hay, es última página
             
-        try:
-            patron_serie_info = '<script\s*type="text\/javascript">var\s*CNAME\s*=\s*"([^"]+)"\s*,\s*'
-            patron_serie_info += 'CID\s*=\s*"([^"]+)"\s*,\s*CIDR\s*=\s*"([^"]+)"\s*;\s*<\/script>'
-            item.serie_info = '_cname=%s&_cid=%s&_cidr=%s' % scrapertools.find_single_match(data, patron_serie_info)
-            if '_cidr=1469' in item.serie_info:
-                item.serie_info += '&_o=0'
-            elif '_cidr=767' in item.serie_info:
-                item.serie_info += '&_o=1'
-        except:
-            logger.error(data)
-            item.serie_info = '_cname=&_cid=&_cidr=&_o=0'
+        if not item.serie_info:
+            try:
+                patron_serie_info = '<script\s*type="text\/javascript">var\s*CNAME\s*=\s*"([^"]+)"\s*,\s*'
+                patron_serie_info += 'CID\s*=\s*"([^"]+)"\s*,\s*CIDR\s*=\s*"([^"]+)"\s*;\s*<\/script>'
+                item.serie_info = '_cname=%s&_cid=%s&_cidr=%s' % scrapertools.find_single_match(data, patron_serie_info)
+                if '_cidr=1469' in item.serie_info:
+                    item.serie_info += '&_o=0'
+                elif '_cidr=767' in item.serie_info:
+                    item.serie_info += '&_o=1'
+            except:
+                logger.error('ERROR en formato de SERIES: %s' % data)
+                item.serie_info = '_cname=&_cid=&_cidr=&_o=0'
         
         url = urlparse.urljoin(host, '/controllers/show.chapters.php')
 

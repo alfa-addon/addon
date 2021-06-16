@@ -73,13 +73,13 @@ def sub_menu(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False):
+def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}, forced_proxy_opt='ProxyWeb').data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, forced_proxy_opt=forced_proxy_opt).data
     else:
-        data = httptools.downloadpage(url, forced_proxy_opt='ProxyWeb').data
+        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt).data
 
     if unescape:
         data = scrapertools.unescape(data)

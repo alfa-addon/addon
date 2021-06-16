@@ -163,7 +163,7 @@ def p_portipo(item):
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<br>", "", data)
     action = ''
     patron = '<li class="item"><a href="([^"]+)" class="category">.*?'  # url
-    patron += '<div class="[^<]+<img class="[^"]+" src="/([^"]+)"></div><div class="[^"]+">([^<]+)</div>'
+    patron += '<div class="[^<]+<img class="[^"]+" src="([^"]+)"></div><div class="[^"]+">([^<]+)</div>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         if item.extra == 'movie':
@@ -186,11 +186,11 @@ def peliculas(item):
     # contentType = ''
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<br>", "", data)
-    patron = '<img class="posterentrada" src="/([^"]+)".*?'         # img
+    patron = '<img class="posterentrada" src="([^"]+)".*?'          # img
     patron += '<a href="([^"]+)">.*?'                               # url
-    patron += '<p class="description_poster">.*?\(([^<]+)\)</p>.*?'  # year
-    patron += '<div class="Description"> <div>([^<]+)</div>.*?'     # plot
-    patron += '<strong>([^<]+)</strong></h4>'                       # title
+    patron += '<p class="description_poster">.*?\(([^<]+)\)<\/p>.*?'  # year
+    patron += '<div class="Description"> <div>([^<]+)<\/div>.*?'    # plot
+    patron += '<strong>([^<]+)<\/strong><\/h4>'                     # title
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -278,8 +278,8 @@ def series(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<br>", "", data)
-    patron = '<img class="portada" src="/([^"]+)"><[^<]+><a href="([^"]+)".*?'
-    patron += 'class="link-title"><h2>([^<]+)</h2>'  # title
+    patron = '<img class="portada" src="([^"]+)"><[^<]+><a href="([^"]+)".*?'
+    patron += 'class="link-title"><h2>([^<]+)<\/h2>'  # title
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
@@ -303,8 +303,8 @@ def temporadas(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<br>", "", data)
-    patron = '<img class="posterentrada" src="/([^"]+)" alt="\w+\s*(\w+).*?'
-    patron += 'class="abrir_temporada" href="([^"]+)">'  # img, season
+    patron = '<img class="posterentrada"\s*src="([^"]+)"\s*alt="\w+\s*(\w+).*?'
+    patron += 'class="abrir_temporada"\s*href="([^"]+)">'  # img, season
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     if len(matches) > 1:
@@ -355,6 +355,8 @@ def episodesxseason(item):
     data_s = scrapertools.find_single_match(data, '<a data-s="([^"]+)" data-t="[^"]+"')
     post = {'t': data_t, 's': data_s, '_token': token}
     json_data = httptools.downloadpage(post_link, post=post).json
+    if not json_data:
+        return itemlist
 
     for element in json_data['data']['episodios']:
         scrapedname = element['titulo']
@@ -406,7 +408,8 @@ def findvideos(item):
         token = scrapertools.find_single_match(data, 'data-token="([^"]+)">')
         post = {'data': data_player, 'tipo': 'videohost', '_token': token}
         json_data = httptools.downloadpage(post_link, post=post).json
-        url = json_data['data']
+        url = json_data.get('data', '')
+        if not url: continue
 
         if 'pelisplay.co/embed/' in url:
             new_data = httptools.downloadpage(url).data

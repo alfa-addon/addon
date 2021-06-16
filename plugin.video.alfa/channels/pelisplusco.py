@@ -9,8 +9,10 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
     import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urlparse
 else:
     import urllib                                                               # Usamos el nativo de PY2 que es más rápido
+    import urlparse
 
 import re
 
@@ -103,7 +105,9 @@ def sub_search(item):
     logger.info()
     itemlist =[]
     headers = {'Referer': host, 'X-Requested-With': 'XMLHttpRequest'}
-    dict_data = httptools.downloadpage(item.url, headers=headers, post="query=%s" % item.query).json
+    dict_data = httptools.downloadpage(item.url, headers=headers, post="query=%s" % item.query, forced_proxy_opt='ProxyCF').json
+    if not dict_data or dict_data.get('error', False):
+        return itemlist
     list = dict_data["data"][item.type]
 
     for dict in list:
@@ -167,7 +171,7 @@ def list_all (item):
     if 'pagination' in item.url:
         post = {'page':item.page, 'type':item.type,'slug':item.slug,'id':item.id}
         post = urllib.urlencode(post)
-        data =httptools.downloadpage(item.url, post=post, headers=CHANNEL_HEADERS).data
+        data =httptools.downloadpage(item.url, post=post, headers=CHANNEL_HEADERS, forced_proxy_opt=None).data
         data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
         patron = '<a href="([^"]+)">.*?<figure><img.*?src="([^"]+)".*?'
         patron +='<span class="year text-center">(\d{4})</span>.*?<p>([^<]+)</p>'
@@ -178,7 +182,7 @@ def list_all (item):
 
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedyear, scrapedtitle in matches:
-        url = host+scrapedurl
+        url = urlparse.urljoin(host, scrapedurl)
         thumbnail = scrapedthumbnail
         contentTitle=scrapedtitle
         title = contentTitle
@@ -245,13 +249,13 @@ def seccion(item):
         type = 'genre'
         pat = 'genero/'
     elif item.seccion == 'anios':
-        patron = '<li><a href="(\/peliculas.*?)">(\d{4})<\/a>'
+        patron = '<li><a href="[^"]*(\/peliculas.*?)">(\d{4})<\/a>'
         type = 'year'
         pat = 'peliculas-'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle in matches:
         title = scrapedtitle
-        url = host+scrapedurl
+        url = urlparse.urljoin(host, scrapedurl)
         slug = scrapertools.find_single_match(scrapedurl, "%s(.*?)/" %pat)
         itemlist.append(
             Item(action="list_all",
@@ -266,7 +270,7 @@ def seccion(item):
 
         if itemlist != []:
             next_page = scrapertools.find_single_match(data, '<li><a class= item href=(.*?)&limit=.*?>Siguiente <')
-            next_page_url = host + next_page
+            next_page_url = urlparse.urljoin(host, next_page)
             import inspect
             if next_page != '':
                 itemlist.append(item.clone(action="seccion",
@@ -343,7 +347,7 @@ def season_episodes(item):
         title = '%sx%s - %s' % (infoLabels['season'], episodenumber, episode)
         itemlist.append(Item(channel=item.channel,
                         title= title,
-                        url = host+url,
+                        url = urlparse.urljoin(host, url),
                         action = 'findvideos',
                         infoLabels=infoLabels,
                         contentEpisodeNumber=episode
@@ -404,7 +408,7 @@ def findvideos(item):
         new_url = base_url.replace('/serie/', '/player/serie/')
         new_url += '|%s|%s/'  % (item.contentSeason, item.contentEpisodeNumber)
 
-    data_json = httptools.downloadpage(new_url, headers=CHANNEL_HEADERS).json
+    data_json = httptools.downloadpage(new_url, headers=CHANNEL_HEADERS, forced_proxy_opt='ProxyCF').json
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data_json.get('html', ''))
     
     if not data:
