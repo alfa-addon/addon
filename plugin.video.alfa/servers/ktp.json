@@ -68,6 +68,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://pornwild.to(?:/es|)/embed/\\w+)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://pornwild.to(?:/es|)/videos/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       }

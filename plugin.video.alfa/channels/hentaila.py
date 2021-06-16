@@ -448,7 +448,7 @@ def list_all(item):
             infoLabels = {}
             scptime = str(article.find('header', class_='h-header').time.string)
             scpthumbnail = article.find('img')['src']
-            scpurl = scrapertools.find_single_match(article.find('a')['href'], '/ver/(.*?)-\d+')
+            scpurl = scrapertools.find_single_match(article.find('a')['href'], '/ver/(.+?)-\d+$')
             infoLabels['episode'] = int(scrapertools.find_single_match(str(article.find('span', class_='num-episode').string), '.+?(\d+)'))
             infoLabels['season'] = 1
             infoLabels['title'] = str(article.find('h2', class_='h-title').string)

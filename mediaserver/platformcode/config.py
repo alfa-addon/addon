@@ -48,6 +48,55 @@ def get_addon_version_fix():
     else:
         return ''
 
+def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
+    '''
+    Devuelve los números de versiones de los addons y repos incluidos en el Alfa Repo, así como la url desde donde se ha descargado
+    '''
+    from core import httptools
+    from core import filetools
+    
+    versiones = {}
+    if not urls:
+        url_base = ['https://github.com/alfa-addon/alfa-repo/raw/master/', 
+                    'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/']
+    elif isinstance(urls, (list, tuple)):
+        url_base = urls
+    else:
+        url_base = [urls]
+    
+    for url in url_base:
+        response = httptools.downloadpage(url+xml_repo, timeout=5, ignore_response_code=True, alfa_s=True)
+        if response.code != 200: continue
+        try:
+            import xmltodict
+            xml = xmltodict.parse(response.data)
+            for addon in xml["addons"]["addon"]:
+                versiones[addon["@id"]] = addon["@version"]
+            versiones['url'] = url
+            response = httptools.downloadpage(url+xml_repo+'.md5', timeout=5, ignore_response_code=True, alfa_s=True)
+            
+            if response.code == 200 and response.data:
+                versiones['repository.alfa-addon.md5'] = response.data
+            
+            for f in sorted(filetools.listdir("special://userdata/Database"), reverse=True):
+                path_f = filetools.join("special://userdata/Database", f)
+                if filetools.isfile(path_f) and f.lower().startswith('addons') and f.lower().endswith('.db'):
+                    versiones['addons_db'] = path_f
+                    break
+            
+            versiones = filetools.decode(versiones)
+            break
+        except:
+            import traceback
+            from platformcode import logger
+            logger.error("Unable to download repo xml: %s" % versiones)
+            versiones = {}
+            logger.error(traceback.format_exc())
+    else:
+        from platformcode import logger
+        logger.error("Unable to download repo xml: %s, %s" % (xml_repo, url_base))
+    
+    return versiones
 
 def get_platform(full_version=False):
     # full_version solo es util en xbmc/kodi

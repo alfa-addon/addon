@@ -1944,7 +1944,7 @@ msgstr "Colección de imágenes en FANART.TV"
 
 msgctxt "#60482"
 msgid "Tuned Instruments in Vtunes"
-msgstr "Afinado instrumentos en Vtunes"
+msgstr "Instrumentos Afinados en Vtunes"
 
 msgctxt "#60483"
 msgid "Picture collection on FANART.TV"

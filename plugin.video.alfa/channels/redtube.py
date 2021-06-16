@@ -80,7 +80,7 @@ def categorias(item):
         patron  = '<li id="recommended_pornstars_block_ps_.*?'
     patron += 'href="([^"]+)".*?'
     patron += 'data-src\s*=\s*"([^"]+)".*?'
-    patron += 'title="([^"]+)".*?'
+    patron += 'alt="([^"]+)".*?'
     patron += 'count">\s*([^<]+)\s*Videos'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:

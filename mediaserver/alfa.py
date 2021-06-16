@@ -8,7 +8,6 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import os
-import sys
 import threading
 import time
 from functools import wraps
@@ -52,7 +51,7 @@ def show_info():
     os.system('cls' if os.name == 'nt' else 'clear')
     # os.system('echo Reloading...')
     print("--------------------------------------------------------------------")
-    print("Alfa %s Iniciado" %version)
+    print("Alfa %s Iniciado" % version)
     print("La URL para acceder es http://%s:%s" % (myip, http_port))
     print("--------------------------------------------------------------------")
     print("Runtime Path      : " + config.get_runtime_path())
@@ -65,21 +64,23 @@ def show_info():
     controllers = platformtools.controllers
     for a in controllers:
         try:
-            print(platformtools.controllers[a].controller.client_ip + " - (" + platformtools.controllers[
-                a].controller.name + ")")
-        except:
-            pass
+            print(platformtools.controllers[a].controller.client_ip + " - (" + platformtools.controllers[a].controller.name + ")")
+        except Exception as e:
+            print(e)
 
 
 def start():
     logger.info("server init {}...".format(sys.version_info[0:2]))
     config.verify_directories_created()
+    if PY3:
+        from platformcode import custom_code
+        custom_code.marshal_check()
     try:
         HTTPAndWSServer.start(show_info)
 
         # Da por levantado el servicio
         logger.info("--------------------------------------------------------------------")
-        logger.info("Alfa %s Iniciado" %version)
+        logger.info("Alfa %s Iniciado" % version)
         logger.info("La URL para acceder es http://%s:%s" % (myip, http_port))
         logger.info("--------------------------------------------------------------------")
         logger.info("Runtime Path      : " + config.get_runtime_path())
@@ -92,7 +93,11 @@ def start():
         show_info()
 
         # Identifica la dirección Proxy y la lista de alternativas
-        from core import proxytools
+        if not PY3:
+            from core import proxytools
+        else:
+            from core import proxytools_py3 as proxytools
+           
         proxytools.get_proxy_list()
 
         flag = True

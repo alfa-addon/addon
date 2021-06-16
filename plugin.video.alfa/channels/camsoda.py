@@ -12,21 +12,35 @@ from core.item import Item
 from core import servertools
 from core import httptools
 from core import jsontools as json
+from channels import autoplay
+
+IDIOMAS = {'vo': 'VO'}
+list_language = list(IDIOMAS.values())
+list_quality = ['default']
+list_servers = []
 
 host = 'https://es.camsoda.com'
+
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/api/v1/browse/online"))
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/api/v1/browse/react/?p=1"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/api/v1/tags/index?page=1"))
+    # itemlist.append(item.clone(title="Buscar" , action="search"))
+
+    autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = host + "?query=%s" % texto
+    texto = texto.replace(" ", "%20")
+    item.url = "%s/api/v1/browse/react/search/%s?p=1" % (host, texto)
     try:
         return lista(item)
     except:
@@ -36,87 +50,71 @@ def search(item, texto):
         return []
 
 
-
-
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '"tag_slug":"([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedtitle in matches:
-        title = scrapedtitle
+    data = httptools.downloadpage(item.url).json
+    for elem in data['tag_list']:
+        name = elem['tag_slug']
+        cantidad = elem['tag_count']
+        title = "%s (%s)" %(name, cantidad)
         thumbnail = ""
-        url = "https://es.camsoda.com/api/v1/browse/tag-%s" % scrapedtitle
+        url = "https://es.camsoda.com/api/v1/browse/react/tag/%s-cams?p=1" % name
+        plot = "[COLOR yellow]%s[/COLOR]" %name
         itemlist.append(item.clone(action="lista", title=title, url=url,
-                              fanart=thumbnail, thumbnail=thumbnail, plot="") )
-    page = scrapertools.find_single_match(item.url, "(.*?)=\d+")
-    current_page = scrapertools.find_single_match(item.url, ".*?=(\d+)")
-    if current_page:
-        current_page = int(current_page)
-        current_page = current_page + 1
-        next_page = "%s=%s" %(page,current_page)
+                              fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
+    count= data['tag_count']
+    current_page = scrapertools.find_single_match(item.url, ".*?page=(\d+)")
+    current_page = int(current_page)
+    if (current_page * 26) <= int(count) and (int(count) - (current_page*26)) > 26:
+        current_page += 1
+        next_page = re.sub(r"page=\d+", "page={0}".format(current_page), item.url)
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
-       
     return itemlist
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    data = data.replace("\/", "/")
-    patron = '"(//media.camsoda.com/thumbs/[^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedthumbnail in matches:
+    data = httptools.downloadpage(item.url).json
+    for elem in data['userList']:
+        title = elem['username']
+        is_on = elem['status']
+        thumbnail = elem['thumbUrl']
         username = "guest_22596"
-        title = scrapertools.find_single_match(scrapedthumbnail, '([A-z0-9-]+).jpg')
         url = "https://es.camsoda.com/api/v1/video/vtoken/%s?username=%s" % (title,username)
-        if not scrapedthumbnail.startswith("https"):
-            thumbnail = "https:%s" % scrapedthumbnail
-        itemlist.append(item.clone(action="play", title=title, contentTitle=title, url=url,
-                              thumbnail=thumbnail, fanart=thumbnail, plot=""))
+        if not "online" in is_on:
+            title = "[COLOR red]%s[/COLOR]" % title
+        if not thumbnail.startswith("https"):
+            thumbnail = "https:%s" % thumbnail
+        itemlist.append(item.clone(action="findvideos", title=title, contentTitle=title, url=url,
+                              thumbnail=thumbnail, fanart=thumbnail))
+    count= data['totalCount']
+    current_page = scrapertools.find_single_match(item.url, ".*?p=(\d+)")
+    current_page = int(current_page)
+    if (current_page * 60) <= int(count) and (int(count) - (current_page*60)) > 60:
+        current_page += 1
+        next_page = re.sub(r"p=\d+", "p={0}".format(current_page), item.url)
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    token = scrapertools.find_single_match(data, '"token":"([^"]+)"')
-    server = scrapertools.find_single_match(data, '"edge_servers":\[(.*?)\],')
-    server = server.replace("\"", "").split(",")
-    dir = scrapertools.find_single_match(data, '"stream_name":"([^"]+)"')
-    dir = dir.replace("\/", "/")
-    if "vide" in server[0]:
-        url = "https://%s/cam/mp4:%s_h264_aac_480p/chunklist_w206153776.m3u8?token=%s"  %(server[0],dir,token)
-    else:
-        url = "https://%s/%s_h264_aac_480p/tracks-v1a1/mono.m3u8?token=%s" %(server[0],dir,token)
-    itemlist.append(item.clone(action="play", title=url, contentTitle = item.title, url=url))
-    return itemlist
-
-
-def play(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    token = scrapertools.find_single_match(data, '"token":"([^"]+)"')
-    server = scrapertools.find_single_match(data, '"edge_servers":\[(.*?)\],')
-    server = server.replace("\"", "").split(",")
-    dir = scrapertools.find_single_match(data, '"stream_name":"([^"]+)"')
-    dir = dir.replace("\/", "/")
-    if server =="":
-        return False, "[%s] El video ha sido borrado o no existe" % server
+    data = httptools.downloadpage(item.url).json
+    server = data['edge_servers']
+    token = data['token']
+    dir = data['stream_name']
+    if dir == "":
+        return False, "El video ha sido borrado o no existe"
     if "vide" in server[0]:
         url = "https://%s/cam/mp4:%s_h264_aac_480p/chunklist_w206153776.m3u8?token=%s"  %(server[0],dir,token)
     else:
         url = "https://%s/%s_h264_aac_720p/tracks-v1a1/mono.m3u8?token=%s" %(server[0],dir,token)
-    url = url + "|verifypeer=false"
-    itemlist.append(item.clone(action="play", title=url, contentTitle = item.title, url=url))
+    url += "|verifypeer=false"
+    itemlist.append(item.clone(action="play", title=url, contentTitle = item.title, url=url, server="Directo" ))
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
     return itemlist
-
 

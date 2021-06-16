@@ -34,7 +34,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host_list = ['https://www.divxtotal.se/']
+host_list = ['https://www.divxtotal.ch/']
 channel = 'divxtotal'
 categoria = channel.capitalize()
 host_index = config.get_setting('choose_domain', channel)

@@ -87,8 +87,8 @@ def init():
             config.set_setting('tmdb_cache_expire', 2)
 
         #Borra el .zip de instalación de Alfa de la carpeta Packages, por si está corrupto, y que así se pueda descargar de nuevo
-        version = 'plugin.video.alfa-%s.zip' % ADDON_VERSION
-        filetools.remove(filetools.join('special://home', 'addons', 'packages', version), True)
+        #version = 'plugin.video.alfa-%s.zip' % ADDON_VERSION
+        #filetools.remove(filetools.join('special://home', 'addons', 'packages', version), True)
 
         #Verifica si es necesario instalar script.alfa-update-helper
         verify_script_alfa_update_helper()
@@ -306,8 +306,6 @@ def verify_script_alfa_update_helper(silent=True):
 
     addonid = ADDON_NAME
     new_version = versiones.get(addonid, ADDON_VERSION)
-    package = addonid + '-%s.zip' % new_version
-    filetools.remove(filetools.join('special://home', 'addons', 'packages', package), silent=silent)
     updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
     if updated:
         if ADDON_VERSION != new_version:

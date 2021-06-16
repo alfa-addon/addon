@@ -30,6 +30,7 @@ import json
 from core.jsontools import to_utf8
 from platformcode import config, logger
 from platformcode.logger import WebErrorException
+from collections import OrderedDict
 
 #Dominios que necesitan Cloudscraper.  AÑADIR dominios de canales sólo si es necesario
 
@@ -50,7 +51,7 @@ cj = cookielib.MozillaCookieJar()
 ficherocookies = os.path.join(config.get_data_path(), "cookies.dat")
 
 # Headers por defecto, si no se especifica nada
-default_headers = dict()
+default_headers = OrderedDict()
 # default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) Chrome/79.0.3945.117"
 
 ver = config.get_setting("chrome_ua_version")
@@ -519,7 +520,10 @@ def downloadpage(url, **opt):
     url = url.strip()
 
     # Headers por defecto, si no se especifica nada
-    req_headers = default_headers.copy()
+    req_headers = OrderedDict()
+    #req_headers['Host'] = urlparse.urlparse(url).netloc
+    req_headers.update(default_headers.copy())
+
     if opt.get('add_referer', False):
         req_headers['Referer'] = "/".join(url.split("/")[:3])
 
@@ -575,7 +579,7 @@ def downloadpage(url, **opt):
             #session.keep_alive =  opt['keep_alive']
             req_headers['Connection'] = "close"
         
-        session.headers.update(req_headers)
+        session.headers = req_headers.copy()
         
         # Prepara la url en caso de necesitar proxy, o si se envía "proxy_addr_forced" desde el canal
         url, proxy_data, opt = check_proxy(url, **opt)
@@ -700,9 +704,10 @@ def downloadpage(url, **opt):
                 encoding = response['encoding']
             if not encoding:
                 encoding = 'utf-8'
-            if PY3 and isinstance(response['data'], bytes) and 'Content-Type' in req.headers \
-                        and ('text/' in req.headers['Content-Type'] or 'json' in req.headers['Content-Type'] \
-                        or 'xml' in req.headers['Content-Type']):
+            if PY3 and isinstance(response['data'], bytes) \
+                        and ('text/' in req.headers.get('Content-Type', '') \
+                        or 'json' in req.headers.get('Content-Type', '') \
+                        or 'xml' in req.headers.get('Content-Type', '')):
                 response['data'] = response['data'].decode(encoding)
         except:
             import traceback
@@ -718,8 +723,9 @@ def downloadpage(url, **opt):
             logger.error(traceback.format_exc(1))
 
         try:
-            if 'Content-Type' in req.headers and ('text/' in req.headers['Content-Type'] \
-                        or 'json' in req.headers['Content-Type'] or 'xml' in req.headers['Content-Type']):
+            if 'text/' in req.headers.get('Content-Type', '') \
+                        or 'json' in req.headers.get('Content-Type', '') \
+                        or 'xml' in req.headers.get('Content-Type', ''):
                 response['data'] = response['data'].replace('&Aacute;', 'Á').replace('&Eacute;', 'É')\
                       .replace('&Iacute;', 'Í').replace('&Oacute;', 'Ó').replace('&Uacute;', 'Ú')\
                       .replace('&Uuml;', 'Ü').replace('&iexcl;', '¡').replace('&iquest;', '¿')\
@@ -735,11 +741,12 @@ def downloadpage(url, **opt):
         if not response['data']:
             response['data'] = ''
         try:
-            if 'Content-Type' in req.headers and 'bittorrent' not in req.headers['Content-Type'] \
+            if 'bittorrent' not in req.headers.get('Content-Type', '') \
+                        and 'octet-stream' not in req.headers.get('Content-Type', '') \
                         and opt.get('json_to_utf8', True):
                 response['json'] = to_utf8(req.json())
             else:
-                response['json'] = dict()
+                response['json'] = req.json()
         except:
             response['json'] = dict()
         response['code'] = response_code
