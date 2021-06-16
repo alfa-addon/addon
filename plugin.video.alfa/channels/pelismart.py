@@ -131,8 +131,6 @@ def findvideos(item):
                             server = server,
                             url = url1
                         ))
-    logger.info("Intel33")
-    scrapertools.printMatches(itemlist)
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
