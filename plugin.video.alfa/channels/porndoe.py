@@ -54,7 +54,10 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|amp;", "", data)
-    patron  = 'class="item">(.*?)</div>'
+    if "pornstars" in item.url:
+        patron  = 'class="actors-list-item">(.*?)</div>'
+    else:
+        patron  = 'class="item">(.*?)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for match in matches:
         if "channels" in item.url:
@@ -74,9 +77,9 @@ def categorias(item):
         if "/category" in scrapedurl:
             cantidad = scrapertools.find_single_match(match,'<span class="count">([^<]+)<')
         if "/pornstars-profile" in scrapedurl:
-            cantidad = scrapertools.find_single_match(match,'<span class="txt">([^<]+)<')
+            thumbnail = scrapertools.find_single_match(match,';(https://p.cdn.porndoe.com/image/porn_star/.*?.jpg)')
+            cantidad = scrapertools.find_single_match(match,'<span class="-grow">([^<]+)<')
             cantidad = "(%s)" % cantidad
-
         title = "%s %s" % (scrapedtitle, cantidad)
         scrapedurl = scrapedurl.replace("https://letsdoeit.com", "")
         url = urlparse.urljoin(item.url,scrapedurl)
@@ -161,14 +164,6 @@ def lista2(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    id = scrapertools.find_single_match(data, '"id": "(\d+)"')
-    post = "https://porndoe.com/service/index?device=desktop&page=video&id=%s" %id
-    headers = {"Referer": item.url}
-    data = httptools.downloadpage(post, headers=headers).data
-    patron = '"(\d+)":\{"type":"video","url":"([^"]+)",'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for quality,url in matches:
-        url = url.replace("\/", "/")
-        itemlist.append(['%sp' %quality, url])
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

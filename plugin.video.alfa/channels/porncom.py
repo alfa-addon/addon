@@ -44,7 +44,6 @@ def search(item, texto):
         return []
 
 
-
 def categorias(item):
     logger.info()
     itemlist = []
@@ -53,14 +52,16 @@ def categorias(item):
     for elem in matches:
         elem = elem.find('a', class_=False)
         url = elem['href']
-        title = elem['title']
+        title = elem.img['alt']
         thumbnail = elem.img['data-src']
-        cantidad = elem.find('div', class_='list-global__details--right')
+        cantidad = elem.find('div', class_='list-global__details')
         if cantidad:
             title = "%s (%s)" % (title,cantidad.text.strip())
         plot = ""
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
+    if "Categorias" in item.title:
+        itemlist.sort(key=lambda x: x.title)
     next_page = soup.find('a', class_='next')
     if next_page:
         next_page = next_page['href']
@@ -107,15 +108,14 @@ def lista(item):
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
+# https://www.pornlib.com/video/horny-amateur-couple-make-their-first-homemade-video-222012
 
 # https://www.milffox.com/porn-movies/Latina-Stepmom-Kailani-Kai-With-Big-Tits-Has-Sex-With-Her-Stepson/
-# https://www.pornrabbit.com/video/mom-takes-younger-cock-in-a-threesome-34648450.html
-# https://www.pornlib.com/video/horny-amateur-couple-make-their-first-homemade-video-222012
-# https://www.stileproject.com/video/asian-babe-tina-loves-giving-a-hearty-blowjob-8535556.html
-
-# https://porndoe.com/video/1318691/trikepatrol-soaking-wet-skinny-asian-grinds-big-dick-tourist
-# https://spankbang.com/4g6ay/video/filipina+cam+model+in+vip+show+dildo+anal+dildo+fisting+10+9+2020
-
+# https://porntop.com/video/238835/deepika-bernie-svintis-our-boobs-are-the-same/
+# https://ebonyo.com/black-chick-with-big-boobs-tori-taylor-riding-white-man/
+# https://www.jacquieetmicheltv.net/en/videos/show/1672/ania-and-caroline-two-beautiful-lesbian-milfs-with-big-tits.html
+# https://www.stileproject.com/video/amy-rogue-takes-her-step-brothers-cock-in-her-pussy-9913541.html
+# https://www.pornrabbit.com/video/yuzuna-oshima-hot-japanese-girl-being-fucked-39797102.html var desktopFile='https://cdn.pornrabbit.com/media/videos/8/2/8/8/7/82887c73cecbf95d298b8458a1fa67ba.mp4'
 
 def play(item):
     logger.info()
@@ -123,10 +123,10 @@ def play(item):
     import base64
     url = base64.b64decode(item.url)
     url = url.decode("utf8")
-    url = "https:/" + url
+    url = "https:/%s" % url
     if "vid.com/v/" in url:
         url = httptools.downloadpage(url).url
-    # logger.debug(url)
+    logger.debug(url)
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

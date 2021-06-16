@@ -105,17 +105,16 @@ def play(item):
     itemlist = []
     soup = create_soup(item.url)
     matches = soup.find('div', id='player')
+    id= matches["data-id"]
     server = matches["data-n"]
     data = matches['data-q']
     for elem in data.split(","):
         elem = elem.split(";")
-        logger.debug(elem)
         quality = elem[0]
         pal = elem[-1]
         num = elem[-2]
-        vid = elem[-3]
-        v = int(vid)/1000 *1000
+        vid = int(id)/1000 *1000
         # /cqlvid/  /wqlvid/
-        url = "https://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, num, pal,v, vid,vid, quality)
+        url = "https://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, num, pal,vid, id,id, quality)
         itemlist.append([quality, url])
     return itemlist
