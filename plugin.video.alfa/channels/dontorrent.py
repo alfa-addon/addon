@@ -327,7 +327,7 @@ def listado(item):                                                              
     post = None
     forced_proxy_opt = None
     if item.post:
-        forced_proxy_opt = 'ProxyCF'
+        forced_proxy_opt = None
     if item.post:                                                               # Rescatamos el Post, si lo hay
         post = item.post
     
@@ -461,10 +461,11 @@ def listado(item):                                                              
 
             title_subs = []                                                     #creamos una lista para guardar info importante
             
+            # Slugify, pero más light
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
                     .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
-                    .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&#8217;", "'")\
-                    .replace("&amp;", "&")
+                    .replace("ï¿½", "ñ").replace("Ã±", "ñ")
+            title = scrapertools.decode_utf8_error(title)
 
             # Salvo que venga la llamada desde Episodios, se filtran las entradas para evitar duplicados de Temporadas
             url_list = url

@@ -400,8 +400,8 @@ def listado(item):                                                              
             # Slugify, pero más light
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
                     .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
-                    .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&#8217;", "'")\
-                    .replace("&amp;", "&")
+                    .replace("ï¿½", "ñ").replace("Ã±", "ñ")
+            title = scrapertools.decode_utf8_error(title)
 
             # Ignoramos los tipos de vídeos que no correspondan con las categorías gestionadas
             if (item.extra == 'search' or item.extra2 == 'novedades') and 'pelicula' \

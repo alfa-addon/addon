@@ -267,10 +267,12 @@ def listado(item):
             else:
                 url = scrapedurl
             size = scrapedsize
+            
+            # Slugify, pero más light
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
                     .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
-                    .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&#8217;", "'")\
-                    .replace("&amp;", "&")
+                    .replace("ï¿½", "ñ").replace("Ã±", "ñ")
+            title = scrapertools.decode_utf8_error(title)
 
             if scrapedurl in title_lista:                                   #Si ya hemos procesado el título, lo ignoramos
                 continue
