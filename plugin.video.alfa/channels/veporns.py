@@ -149,14 +149,12 @@ def findvideos(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url in matches:
         url = url.replace("'", "").split(",")
-        url = "http://www.veporns.com/ajax.php?page=video_play&thumb=%s&theme=%s&video=%s&id=%s&catid=%s&tip=%s&server=%s" %(url[0],url[1],url[2],url[3],url[4],url[5],str(url[6]))
+        url = "%s/ajax.php?page=video_play&thumb=%s&theme=%s&video=%s&id=%s&catid=%s&tip=%s&server=%s" %(host,url[0],url[1],url[2],url[3],url[4],url[5],str(url[6]))
         headers = {"X-Requested-With":"XMLHttpRequest"}
         data = httptools.downloadpage(url, headers=headers).data
-        logger.debug(data)
         url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
         if not url:
             url = scrapertools.find_single_match(data, "<iframe src='([^']+)'")
-      
         itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para FilterTools

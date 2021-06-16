@@ -63,6 +63,11 @@ def check_addon_init():
                 break                                                   # Cancelación de Kodi, salimos
                 
         check_update_to_others(verbose=False, app=False)                # Actualizamos otros add-ons antes de irnos, para el siguiente inicio
+        #Borra el .zip de instalación de Alfa de la carpeta Packages, por si está corrupto, y que así se pueda descargar de nuevo
+        version = 'plugin.video.alfa-%s.zip' % config.get_addon_version(with_fix=False, from_xml=True)
+        packages_path = os.path.join(config.translatePath('special://home'), 'addons', 'packages', version)
+        if os.path.exists(packages_path):
+            os.remove(packages_path)
         return
                 
     # Lanzamos en Servicio de actualización de FIXES

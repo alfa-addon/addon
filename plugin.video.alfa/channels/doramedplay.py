@@ -66,7 +66,7 @@ def list_all(item):
     itemlist = []
     
     data = get_source(item.url)
-    patron = '<article id="post-\d+".*?<img data-src="([^"]+").*?<div class="rating">([^<]+)?<.*?'
+    patron = '<article id="post-\d+".*?<img (?:data-)?src="([^"]+").*?<div class="rating">([^<]+)?<.*?'
     patron += '<h3><a href="([^"]+)".*?>([^<]+)<.*?<span>.*?, (\d{4})<.*?<div class="texto">([^<]+)<'
     
     matches = re.compile(patron, re.DOTALL).findall(data)

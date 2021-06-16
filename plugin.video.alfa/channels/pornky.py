@@ -100,38 +100,22 @@ def lista(item):
     return itemlist
 
 
-def findvideos(item):
-    logger.info()
-    itemlist = []
-    soup = create_soup(item.url)
-    matches = soup.find('div', id='plinks').find_all('div')
-    for elem in matches:
-        elem = elem['data-c'].split(";")
-        quality = elem[1]
-        server = elem[-1]
-        pal = elem[-2]
-        num = elem[-3]
-        vid = elem[-4]
-        v = int(vid)/1000 *1000
-        url = "http://s%s.fapmedia.com/cqlvid/%s/%s/%s/%s/%s_%s.mp4/%s_%s.mp4"   % (server, num, pal,v, vid,vid, quality,vid, quality)
-        itemlist.append(item.clone(action="play", title= quality, contentTitle = item.title, url=url))
-    return itemlist
-
-
 def play(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find('div', id='plinks').find_all('div')
-    for elem in matches:
-        elem = elem['data-c'].split(";")
-        quality = elem[1]
-        server = elem[-1]
-        pal = elem[-2]
-        num = elem[-3]
-        vid = elem[-4]
+    matches = soup.find('div', id='player')
+    server = matches["data-n"]
+    data = matches['data-q']
+    for elem in data.split(","):
+        elem = elem.split(";")
+        logger.debug(elem)
+        quality = elem[0]
+        pal = elem[-1]
+        num = elem[-2]
+        vid = elem[-3]
         v = int(vid)/1000 *1000
-        url = "http://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, num, pal,v, vid,vid, quality)
-        # url = "http://s%s.fapmedia.com/wqlvid/%s/%s/%s/%s/%s_%s.mp4/%s_%s.mp4"   % (server, num, pal,v, vid,vid, quality,vid, quality)
+        # /cqlvid/  /wqlvid/
+        url = "https://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, num, pal,v, vid,vid, quality)
         itemlist.append([quality, url])
-    return itemlist[::-1]
+    return itemlist

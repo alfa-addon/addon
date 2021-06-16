@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- Channel Comamos Ramen -*-
 # -*- Created for Alfa-addon -*-
-# -*- By the Alfa Develop Group (SistemaRayoXP)-*-
+# -*- By the Alfa Develop Group -*-
 
 import sys
 PY3 = False
@@ -213,7 +213,14 @@ def alpha(item):
     return itemlist
 
 def set_lang(title):
-    exceptions = {'vivo': '#Saraitda'}
+    """
+        Función para asignación y corrección de títulos e idioma
+    """
+    # Funcionamiento de las excepciones:
+    # En la clave va un patrón a buscar, en el valor va el título con el que se reemplazará
+    exceptions = {'^vivo': '#Vivo'}
+    
+    # Buscamos si hay un "|", que divida en idioma
     array = title.encode().decode().split('|')
     if len(array) > 1:
         if 'latino' in array[1].lower():
@@ -221,10 +228,10 @@ def set_lang(title):
         else:
             language = ''
     else:
-        language = ''
+        language = 'VOSE'
     title = array[0].strip()
     for exc, repl in exceptions.items():
-        if exc in title.lower():
+        if scrapertools.find_single_match(title.lower(), exc):
             title = repl
     return title, language
 
@@ -233,51 +240,70 @@ def list_all(item):
     itemlist = []
     matches = []
     if item.list_type in ['pais', 'pelicula', 'categorias', 'data', 'buscar', 'novedades']:
+        # Si es de este tipo de página (títulos en html)
         if item.list_type in ['pais', 'pelicula', 'categorias', 'data']:
+            # Descargamos la página (contiene el JSON)
             soup = create_soup(item.url)
+
+            # Cargamos el JSON (contiene la info de episodios, imág., url)
             json = jsontools.load(soup.find('script', id='__NEXT_DATA__').text)['props']['pageProps']['data']
+
+            # Criterios de determinación de contentType
             if item.list_type in ['pelicula']:
                 contentType = 'movie'
             elif item.list_type in ['categorias', 'pais', 'data']:
                 contentType = 'tvshow'
+
+            # Obtenemos el listado de elementos (contiene los títulos)
             container = soup.find('div', class_='container wrapper').find('div', class_='row')
-            items = container.find_all('a', class_='mb-3')
+            if item.list_type in ['categorias', 'pais', 'data']:
+                items = container.find_all('div', class_='mb-3')
+            else:
+                items = container.find_all('a', class_='mb-3')
+
+            # Recorremos los títulos
             for i, it in enumerate(items):
-                j = json[i]
+                j = json[i] # No. de elem. en el JSON
+
                 action = 'seasons'
                 status = j['estado']
                 title, language = set_lang(it.find('span', class_='text-dark').text)
+                thumb = 'https://img.comamosramen.com/{}-high.webp'.format(j['img'])
+                url = '{}/v/{}'.format(host, j.get('uniqid', ''))
+
+                # Criterios de determinación de contentType, parte 2
                 if contentType == 'movie':
                     contentSerieName = None
                     contentTitle = title
                 else:
                     contentSerieName = title
                     contentTitle = None
-                thumb = 'https://img.comamosramen.com/{}-high.webp'.format(j['img'])
-                url = '{}{}'.format(host, it['href'])
+
                 matches.append([action, contentSerieName, contentTitle, contentType, language, status, title, thumb, url])
+
+        # Si es de este tipo de página (todos los datos en JSON)
         elif item.list_type in ['buscar', 'novedades']:
+            # El JSON viene desde el API, la mayoría de info ya vendrá en el JSON
             json = httptools.downloadpage(item.url).json
-            contentType = ''
             for j in json:
                 action = 'seasons'
                 status = j['estado']
                 title, language = set_lang(j['uniqid'].split('-', 1)[1])
-                if contentType == 'movie':
-                    contentSerieName = None
-                    contentTitle = title
-                else:
-                    contentSerieName = title
-                    contentTitle = None
+                contentSerieName = title
+                contentTitle = None
+                contentType = ''
                 thumb = 'https://img.comamosramen.com/{}-high.webp'.format(j['img'])
                 id_ = j['uniqid'].split('-', 1)
-                url = '{}/ver/{}'.format(host, '{}-{}'.format(id_[0], id_[1].replace('-', '%20')))
+                url = '{}/v/{}'.format(host, '{}-{}'.format(id_[0], id_[1].replace('-', '%20')))
                 matches.append([action, contentSerieName, contentTitle, contentType, language, status, title, thumb, url])
+
     else:
+        # La sección cambió drásticamente, requiere reconstrucción
         logger.debug("\n" + str(soup.prettify()))
-        raise Exception('No soportado (¿Cambio de estructura?)')
+        raise Exception('Item malformado, list_type no válido')
         return
 
+    # Recorremos la lista construída de matches
     for action, contentSerieName, contentTitle, contentType, language, status, title, thumb, url in matches:
         it = Item(
                 action = action,
@@ -288,24 +314,34 @@ def list_all(item):
                 thumbnail = thumb,
                 url = url
             )
+
+        # Determinación dinámica de contentType
         if contentSerieName:
             it.contentSerieName = contentSerieName
         elif contentTitle:
             it.contentTitle = contentTitle
         itemlist.append(it)
+
     return itemlist
 
 def seasons(item):
     logger.info()
     itemlist = []
+    seasons = []
+    # Obtenemos el HTML y cargamos el JSON
     soup = create_soup(item.url)
     json = jsontools.load(soup.find('script', id='__NEXT_DATA__').text)
+
+    # Buscamos el "content_id", requerido para búsqueda en la API de la página
     content_id = json['props']['pageProps'].get('id')
     if not content_id:
         id_ = item.url.replace(host, '').split('/')[2].split('-', 1)
         content_id = '{}-{}'.format(id_[0], id_[1].replace('-', '%20'))
+
+    # Obtenemos el JSON con los episodios desde la API para clasificar temporadas (vienen en lotes)
     episodios = httptools.downloadpage('https://fapi.comamosramen.com/api/byUniqId/{}'.format(content_id)).json
-    seasons = []
+
+    # Recorremos la lista de episodios y obtenemos las temporadas según haya diferencias entre c/ep
     for episodio in episodios['temporadas']:
         if len(seasons) > 0 and seasons[-1]['temporada'] == int(episodio['temporada']):
             seasons[-1]['episodios'].append(episodio)
@@ -313,16 +349,20 @@ def seasons(item):
             seasons.append({'temporada': int(episodio['temporada']), 'episodios': []})
             seasons[-1]['episodios'].append(episodio)
 
+    # Recorremos la lista de temporadas para procesamiento
     for season in seasons:
         title, language = set_lang(episodios.get('titulo'))
+        infoLabels = {'year': episodios.get('año')}
         ogtitle = title
-        # if scrapertools.find_single_match(ogtitle, '(?is)Título original (.*?)\n'):
-            # ogtitle = scrapertools.find_single_match(ogtitle, '(?is)Título original (.*?)\n')
+
+        # Determinación del idioma
         if item.language:
             language = item.language
         if episodios.get('categorias'):
             if 'Audio Latino' in episodios.get('categorias'):
                 language = 'LAT'
+
+        # Determinación dinámica del contentType
         if episodios.get('tipo'):
             if episodios.get('tipo') in ['pelicula']:
                 contentType = 'movie'
@@ -330,7 +370,7 @@ def seasons(item):
                 contentType = 'tvshow'
         else:
             contentType = ''
-        infoLabels = {'year': episodios.get('año')}
+
         it = Item(
                 action = 'episodesxseason',
                 channel = item.channel,
@@ -343,17 +383,24 @@ def seasons(item):
                 title = unify.add_languages((config.get_localized_string(60027) % str(season['temporada'])), language),
                 url = item.url
             )
+
+        # Asignamos valores al item según su contentType
         if contentType == 'movie':
             it.contentTitle = ogtitle
         else:
             it.contentSeason = season['temporada']
             it.contentSerieName = ogtitle
-        # unify.title_format(it)
         itemlist.append(it)
+
+    # Asignamos las infoLabels (si aplica)
     if not item.videolibrary:
         tmdb.set_infoLabels(itemlist, True, force_no_year = True)
+
+    # Si solo hay una temporada, retornamos directamente los episodios
     if len(itemlist) == 1:
         itemlist = episodesxseason(itemlist[0])
+
+    # Agregamos elemento "Agregar a videoteca"
     if len(itemlist) > 0 and config.get_videolibrary_support() and not itemlist[0].contentType == 'movie' and not item.videolibrary:
         itemlist.append(
             Item(
@@ -366,6 +413,7 @@ def seasons(item):
                 url = item.url
             )
         )
+
     return itemlist
 
 def episodios(item):
@@ -373,6 +421,7 @@ def episodios(item):
     itemlist = []
     item.videolibrary = True
 
+    # Si es peli, retornamos enlaces
     if not item.contentType == 'movie':
         seasons_list = seasons(item)
         if len(seasons_list) > 0:
@@ -381,23 +430,31 @@ def episodios(item):
                     itemlist.extend(episodesxseason(season))
             else:
                 return seasons_list
+
+    # Si es serie, retornamos los episodios
     else:
         itemlist.extend(findvideos(item))
+
     return itemlist
 
 def episodesxseason(item):
     logger.info()
     itemlist = []
+    # Los episodios deben venir en un JSON en el item
     episodios = item.json_episodios
+
     for episodio in episodios:
         infoLabels = item.infoLabels
         language = 'VOSE'
+
+        # Asignación de idioma
         if not item.language:
             if episodio.get('estado'):
                 if 'SUBT' in episodio.get('estado'):
                     language = 'VOSE'
         else:
             language = item.language
+
         it = Item(
                 action = 'findvideos',
                 channel = item.channel,
@@ -408,14 +465,22 @@ def episodesxseason(item):
                 urls = episodio['opciones'],
                 url = item.url
             )
+
+        # Determinación dinámica de contentType
         if not item.contentType == 'movie':
             it.contentSeason = item.contentSeason
             it.contentEpisodeNumber = episodio['capitulo']
         itemlist.append(it)
+
+    # Asignación de infoLabels
     if not item.videolibrary:
         tmdb.set_infoLabels(itemlist, True)
+
+    # Formateamos título
     for it in itemlist:
         it.title = unify.add_languages('{}x{}: {}'.format(it.contentSeason, it.contentEpisodeNumber, it.contentTitle), it.language)
+
+    # Si es peli, mandamos directo a findvideos
     if len(itemlist) == 1 and item.contentType == 'movie':
         return findvideos(itemlist[0])
     else:
@@ -426,14 +491,17 @@ def findvideos(item):
     itemlist = []
     if item.videolibrary:
         return seasons(item)
-    servers = item.urls
+    servers = [opcion for opcion in ({key: val for key, val in sub.items() if val} for sub in item.urls) if opcion]
+
+    # Recorremos la lista de servidores
     for option in servers:
-        url = ''
         server = server_list.get(option['opcion'].lower())
-        url = '{}{}'.format(server_urls.get(server, ''), option['url'])
+        # Si no hay server (server nuevo o inválido), continuamos
         if not server:
             continue
+        url = '{}{}'.format(server_urls.get(server, ''), option['url'])
         serv_name = servertools.get_server_name(server)
+
         new_item = Item(
             action = 'play',
             channel = item.channel,
@@ -444,13 +512,17 @@ def findvideos(item):
             title = unify.add_languages('{}: {}'.format(config.get_localized_string(60335), serv_name.title()), item.language),
             url = url
         )
-        if hasattr(item, 'fanart'):
+
+        # Chequeos (asignar fanart, plot y formatear títulos)
+        if item.fanart and not new_item.fanart:
             new_item.fanart = item.fanart
-        if item.contentPlot:
+        if item.contentPlot and not new_item.contentPlot:
             new_item.contentPlot = item.contentPlot
         if not item.contentType == 'movie':
             unify.title_format(new_item)
         itemlist.append(new_item)
+
+    # Si es peli y podemos, agregamos el elemento "Agregar a videoteca"
     if len(itemlist) > 0 and config.get_videolibrary_support() and item.contentType == 'movie' and not item.videolibrary:
         itemlist.append(
             Item(

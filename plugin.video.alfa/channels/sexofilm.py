@@ -77,7 +77,7 @@ def lista(item):
         title = scrapedtitle.replace(" Porn DVD", "").replace("Permalink to ", "").replace(" Porn Movie", "")
         itemlist.append(item.clone(action="play", title=title, contentTitle = title, url=scrapedurl,
                                    fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=plot) )
-    next_page = scrapertools.find_single_match(data,'<a class="nextpostslink" rel="next" href="([^"]+)">')
+    next_page = scrapertools.find_single_match(data,'<a class="nextpostslink".*?href="([^"]+)">')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )

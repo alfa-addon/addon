@@ -4,8 +4,8 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://dood(?:stream|).(?:watch|to|so|com|cx)/(?:e|d)/[a-z0-9]+)",
-        "url": "\\1"
+        "pattern": "https://dood(?:stream|).(?:watch|to|so|com|cx|la)/(?:e|d)/([a-z0-9]+)",
+        "url": "https://dood.to/e/\\1"
       }
     ]
   },
