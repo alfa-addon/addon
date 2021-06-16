@@ -10,18 +10,6 @@
       {
         "pattern": "(https://mylust.com/videos/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
-      },
-      {
-        "pattern": "(https://www.stileproject.com/embed/[0-9]+)",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://www.pornwatchers.com/embed/[0-9]+)",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://www.pornrabbit.com/embed/[0-9]+)",
-        "url": "\\1"
       }
     ]
   },

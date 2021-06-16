@@ -9,8 +9,9 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data
     data = httptools.downloadpage(page_url).data
+    logger.debug(page_url)
     if "<h2>WE ARE SORRY</h2>" in data or '<title>404 Not Found</title>' in data:
-        return False, "[Mixdrop] El fichero no existe o ha sido borrado"
+        return False, "[gotporn] El fichero no existe o ha sido borrado"
     return True, ""
 
 

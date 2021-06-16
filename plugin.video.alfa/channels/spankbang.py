@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://es.spankbang.com'
+host = 'https://spankbang.com'
 
 
 def mainlist(item):
@@ -132,20 +132,8 @@ def lista(item):
 
 def play(item):
     logger.info()
-    video_urls = []
-    data = httptools.downloadpage(item.url).data
-    skey = scrapertools.find_single_match(data,'data-streamkey="([^"]+)"')
-    session="523034c1c1fc14aabde7335e4f9d9006b0b1e4984bf919d1381316adef299d1e"
-    post = {"id": skey, "data": 0}
-    headers = {'Referer':item.url}
-    url ="%s%s" % (host, "/api/videos/stream")
-    data = httptools.downloadpage(url, post=post, headers=headers).data
-    patron = '"(\d+(?:p|k))":\["([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for quality,url in matches:
-        if "4k" in quality:
-            quality = "2160p"
-        video_urls.append(['%s [.mp4]' %quality, url])
-    video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
-    return video_urls
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
 
