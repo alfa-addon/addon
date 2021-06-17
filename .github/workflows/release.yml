@@ -1,0 +1,49 @@
+# This is a basic workflow to help you get started with Actions
+name: new_release
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches:
+      - master
+      - develop
+      # - /v\.\d+\.\d+\.\d+/
+    paths:
+        - '.github/workflows/*.yml'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  deploy:
+    name: Deploy Job
+    runs-on: ubuntu-18.04
+    if: ${{ github.event.head_commit.message == 'release' }}
+
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      ADDON: 'plugin.video.alfa'
+
+    steps:
+      - name: Set-up Python version 
+        uses: actions/setup-python@v2
+        with:
+          python-version: '2.7'
+
+      - name: Setting environment variables
+        run: |
+          export GH_TOKEN=${{ secrets.GH_TOKEN }}
+          export ADDON='plugin.video.alfa'
+
+      - name: Cloning repo
+        run: git clone https://github.com/$GITHUB_REPOSITORY
+
+      - name: Preparing ZIP and deploying
+        run: |
+          cd addon
+          wget https://raw.githubusercontent.com/Alfa-addon/travis_scripts/master/deploy_addon.py
+          python deploy_addon.py -z
+          export RELEASE_ZIP=$(ls *.zip)
+          python deploy_addon.py -r
