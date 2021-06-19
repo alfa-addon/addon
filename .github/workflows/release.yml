@@ -48,6 +48,11 @@ jobs:
           cd addon
           echo "1: Download deployment script"
           wget https://raw.githubusercontent.com/alfa-addon/travis_scripts/master/deploy_addon.py
+          echo "2: Prepare ZIP"
+          python deploy_addon.py -z
+          export RELEASE_ZIP=$(ls *.zip)
+          echo "3: Deploy to repo"
+          python deploy_addon.py -r
           echo "4: Create release"
           curl --request POST \
           --header 'authorization: Bearer ${{ secrets.GH_TOKEN }}' \
