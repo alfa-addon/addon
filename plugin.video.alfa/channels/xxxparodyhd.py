@@ -32,12 +32,12 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(item.clone(title="Videos" , action="lista", url=host + "/genre/clips-scenes/"))
-    itemlist.append(item.clone(title="Peliculas" , action="lista", url=host + "/movies/"))
-    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "/genre/new-release/"))
-    itemlist.append(item.clone(title="Parodias" , action="lista", url=host + "/genre/parodies/"))
-    itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/genre/clips-scenes/"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/genre/clips-scenes/"))
+    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "/movies/"))
+    itemlist.append(item.clone(title="Mas Vistas" , action="lista", url=host + "/most-viewed/"))
+    itemlist.append(item.clone(title="Mejor Valoradas" , action="lista", url=host + "/most-rating/"))
+    itemlist.append(item.clone(title="Año" , action="years", url=host))
+    itemlist.append(item.clone(title="Canal" , action="categorias", url=host))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
     itemlist.append(item.clone(title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
@@ -58,6 +58,21 @@ def search(item, texto):
         return []
 
 
+def years(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = scrapertools.find_single_match(data,'>Years</a>(.*?)</ul>')
+    patron  = '<a href="([^"]+)">([^<]+)</a>'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for scrapedurl,scrapedtitle in matches:
+        scrapedplot = ""
+        scrapedthumbnail = ""
+        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
+                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
+    return itemlist[::-1]
+
+
 def categorias(item):
     logger.info()
     itemlist = []
@@ -65,7 +80,7 @@ def categorias(item):
     if item.title == "Canal" :
         data = scrapertools.find_single_match(data,'>Studios</a>(.*?)</ul>')
     else:
-        data = scrapertools.find_single_match(data,'>Categories</a>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'>Genres</a>(.*?)</ul>')
     patron  = '<a href="([^"]+)">([^<]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle in matches:

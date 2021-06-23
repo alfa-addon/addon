@@ -414,12 +414,23 @@ def proxy_post_processing(url, proxy_data, response, opt):
                                                                   proxy_data['web_name'], opt['url_save'])
             if response["data"] == 'ERROR' or response["code"] == 302:
                 if response["code"] == 200: response["code"] = 666
-                proxy_data['stat'] = ', Proxy Direct'
-                opt['forced_proxy'] = 'ProxyDirect'
-                url = opt['url_save']
-                opt['post'] = opt['post_save']
-                response['sucess'] = False
-                response['sucess'] = False
+                if not opt.get('post_cookie', False):
+                    url_domain = '%s://%s' % (urlparse.urlparse(opt['url_save']).scheme, urlparse.urlparse(opt['url_save']).netloc)
+                    forced_proxy_temp = 'ProxyWeb:' + proxy_data['web_name']
+                    data_domain = downloadpage(url_domain, alfa_s=True, ignore_response_code=True, \
+                                post_cookie=True, forced_proxy=forced_proxy_temp, proxy_retries_counter=0)
+                    if data_domain.code == 200:
+                        url = opt['url_save']
+                        opt['post'] = opt['post_save']
+                        opt['forced_proxy'] = forced_proxy_temp
+                        return response, url, opt
+                if response["data"] == 'ERROR' or response["code"] == 302:
+                    proxy_data['stat'] = ', Proxy Direct'
+                    opt['forced_proxy'] = 'ProxyDirect'
+                    url = opt['url_save']
+                    opt['post'] = opt['post_save']
+                    response['sucess'] = False
+                    response['sucess'] = False
         elif response["code"] == 302:
             response['sucess'] = True
 
@@ -487,6 +498,9 @@ def downloadpage(url, **opt):
         @param replace_headers: Si True, los headers pasados por el parametro "headers" sustituiran por completo los headers por defecto.
                                 Si False, los headers pasados por el parametro "headers" modificaran los headers por defecto.
         @type replace_headers: bool
+        @param add_host: Indica si añadir el header Host al principio, como si fuese navegador común.
+                         Desactivado por defecto, solo utilizarse con webs problemáticas (da problemas con proxies).
+        @type add_host: bool
         @param add_referer: Indica si se ha de añadir el header "Referer" usando el dominio de la url como valor.
         @type add_referer: bool
         @param referer: Si se establece, agrega el header "Referer" usando el parámetro proporcionado como valor.
@@ -521,7 +535,8 @@ def downloadpage(url, **opt):
 
     # Headers por defecto, si no se especifica nada
     req_headers = OrderedDict()
-    #req_headers['Host'] = urlparse.urlparse(url).netloc
+    if opt.get('add_host', False):
+        req_headers['Host'] = urlparse.urlparse(url).netloc
     req_headers.update(default_headers.copy())
 
     if opt.get('add_referer', False):
@@ -769,13 +784,13 @@ def downloadpage(url, **opt):
                     show_infobox(info_dict)
                     raise WebErrorException(urlparse.urlparse(url)[1])
 
-        # Si hay error del proxy, refresca la lista y reintenta el numero indicada en proxy_retries
-        response, url, opt = proxy_post_processing(url, proxy_data, response, opt)
-        
         info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
         if not 'api.themoviedb' in url and not 'api.trakt' in url and not opt.get('alfa_s', False) and not opt.get("hide_infobox"):
             show_infobox(info_dict)
-        
+
+        # Si hay error del proxy, refresca la lista y reintenta el numero indicada en proxy_retries
+        response, url, opt = proxy_post_processing(url, proxy_data, response, opt)
+
         # Si proxy ordena salir del loop, se sale
         if opt.get('out_break', False):
             break
@@ -821,6 +836,11 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
     
 def fill_fields_post(info_dict, req, response, req_headers, inicio):
     try:
+        if isinstance(response["data"], str) and \
+                        ('Hotlinking directly to proxied pages is not permitted.' in response["data"] \
+                        or '<h3>Something is wrong</h3>' in response["data"]):
+            response["code"] = 666
+        
         info_dict.append(('Cookies', req.cookies))
         info_dict.append(('Data Encoding', req.encoding))
         info_dict.append(('Response code', response['code']))

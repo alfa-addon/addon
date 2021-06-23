@@ -2,7 +2,7 @@
   "id": "sleazemovies",
   "name": "SleazeMovies",
   "force_unify": true,
-  "active": true,
+  "active": false,
   "adult": true,
   "language": ["*"],
   "thumbnail": "https://i.imgur.com/x0tzGxQ.jpg",

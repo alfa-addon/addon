@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://upornia.com/videos/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(https://porndoe.com/video/[A-z0-9]+/[A-z0-9-]+)",
         "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "txx2",
-  "name": "txx2",
+  "id": "porndoe",
+  "name": "porndoe",
   "settings": [
     {
       "default": false,

@@ -1,7 +1,7 @@
 {
   "id": "XXXvintage",
   "name": "XXXvintage",
-  "active": true,
+  "active": false,
   "adult": true,
   "language": ["*"],
   "thumbnail": "https://vintagetube.xxx/images/logo-retina.png",

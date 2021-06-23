@@ -21,7 +21,7 @@ list_quality = []
 list_servers = ['fembed', 'streamtape', 'fastplay', 'gvideo', 'netutv', 'Jawcloud']
 
 
-__channel__='allcalidad'
+__channel__='cinelibreonline'
 
 host = "https://www.cinelibreonline.com"
 encoding = None

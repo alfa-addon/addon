@@ -20,6 +20,7 @@ from channelselector import get_thumb
 
 __channel__ = "thumbzilla"
 
+
 host = 'https://thumbzilla.com'
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -168,12 +169,11 @@ def categorias(item):
 
 
 def play(item):
-    itemlist = []
+    logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    logger.debug(data)
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '"mp4","videoUrl":"([^"]+)","quality":"([^"]+)"'
+    patron = 'data-quality="([^"]+)">([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for url,quality in matches:
         url = url.replace("\/", "/")

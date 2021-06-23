@@ -19,7 +19,7 @@ def test_video_exists(page_url):
         referer = page_url.split("|")[1]
         page_url = page_url.split("|")[0]
     data = httptools.downloadpage(page_url, headers={"Referer":referer}).data
-    if "File is no longer available" in data:
+    if "File is no longer available" in data or "Video link direct restricted" in data:
         return False, "[ZPlayer] El fichero no existe o ha sido borrado"
     return True, ""
 

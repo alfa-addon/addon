@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:streamsb.net|sbembed.com|sbembed1.com)/(?:embed-|d/|e/)([A-z0-9]+)",
+        "pattern": "(?:streamsb.net|sbembed.com|sbembed1.com|sbplay.org)/(?:embed-|d/|e/)([A-z0-9]+)",
         "url": "https://streamsb.net/play/\\1"
       }
     ]

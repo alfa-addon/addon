@@ -100,6 +100,7 @@ def play(item):
     url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
     if not url:
         url = scrapertools.find_single_match(data, 'src="([^"]+)"')
+    url = urlparse.urljoin(item.url, url)
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

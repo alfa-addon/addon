@@ -292,6 +292,7 @@ def slugify(title):
     title = title.replace("ñ", "n")
     title = title.replace("/", "-")
     title = title.replace("&amp;", "&")
+    title = title.replace("&#038;", "&")
 
     # Pasa a minúsculas
     title = title.lower().strip()
@@ -618,4 +619,22 @@ def decode_utf8_error(path):
         except:
             pass
         
+        path = htmlparser(path)
+        
     return path
+
+
+def htmlparser(data):
+    """
+    Convierte los carateres HTML (&#038;, ...) a su equivalente utf-8
+    """
+    
+    if PY3:
+        from html.parser import HTMLParser
+    else:
+        from HTMLParser import HTMLParser
+    
+    hparser = HTMLParser()
+    data = hparser.unescape(data)
+    
+    return data
