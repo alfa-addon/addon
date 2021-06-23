@@ -1158,6 +1158,7 @@ def findvideos(item):
     
     global host
     item, host = verify_host(item, host)                                        # Actualizamos la url del host
+    host_torrent = host[:-1]
     if channel_clone_name == "*** DOWN ***":                                    #Ningún clones activo !!!
         itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
         return itemlist 
@@ -1422,6 +1423,11 @@ def findvideos(item):
     
     """ Ahora tratamos el enlace .torrent """
     if url_torr:
+        if url_torr.startswith('http') or url_torr.startswith('//'):
+            url_torr = generictools.convert_url_base64(url_torr, host_torrent)
+        else:
+            url_torr = generictools.convert_url_base64(url_torr)
+        
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
 
@@ -1430,14 +1436,22 @@ def findvideos(item):
         # Restauramos urls de emergencia si es necesario
         local_torr = ''
         if item.emergency_urls and not item.videolibray_emergency_urls:
-            item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
-            if item.armagedon:
-                if item_local.url.startswith("\\") or item_local.url.startswith("/"):
-                    from core import filetools
-                    if item.contentType == 'movie':
-                        FOLDER = config.get_setting("folder_movies")
-                    else:
-                        FOLDER = config.get_setting("folder_tvshows")
+            try:                                                                # Guardamos la url ALTERNATIVA
+                if item.emergency_urls[0][0].startswith('http') or item.emergency_urls[0][0].startswith('//'):
+                    item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0], host_torrent)
+                else:
+                    item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0])
+            except:
+                item_local.torrent_alt = ''
+                item.emergency_urls[0] = []
+            from core import filetools
+            if item.contentType == 'movie':
+                FOLDER = config.get_setting("folder_movies")
+            else:
+                FOLDER = config.get_setting("folder_tvshows")
+            if item.armagedon and item_local.torrent_alt:
+                item_local.url = item_local.torrent_alt                         # Restauramos la url
+                if not item.torrent_alt.startswith('http'):
                     local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
             if len(item.emergency_urls[0]) > 1:
                 del item.emergency_urls[0][0]
@@ -1458,9 +1472,17 @@ def findvideos(item):
             size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)   #Buscamos el tamaño en el .torrent
             if 'ERROR' in size and item.emergency_urls and not item.videolibray_emergency_urls:
                 item_local.armagedon = True
-                item_local.url = item.emergency_urls[0][0]                      #Restauramos la url
-                local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
-                size = generictools.get_torrent_size(item_local.url, local_torr=local_torr) #Buscamos el tamaño en el .torrent emergencia
+                try:                                                        # Restauramos la url
+                    if item.emergency_urls[0][0].startswith('http') or item.emergency_urls[0][0].startswith('//'):
+                        item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0], host_torrent)
+                    else:
+                        item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0])
+                        if not item.url.startswith('http'):
+                            local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
+                except:
+                    item_local.torrent_alt = ''
+                    item.emergency_urls[0] = []
+                size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)
 
         if size:
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
@@ -1853,6 +1875,9 @@ def episodios(item):
     while list_pages and page < max_page:                                       # Recorre la lista de páginas, con límite
         patron = '<li[^>]*>\s*<a href="(?P<url>[^"]+)"\s*title="[^>]+>\s*<img.*?'
         patron += 'src="(?P<thumb>[^"]+)?".*?<h2[^>]+>(?P<info>.*?)?<\/h2>'
+        patron_noepis = 'Visitas:[^>]*>\s*0<\/span><span[^>]*>[^>]*>Genero:[^>]*>\s*<\/span>'
+        patron_noepis += '<span[^>]*>[^>]*>Estreno:[^>]*>\s*\d*<\/span><\/br><\/div><\/div><\/div>'
+        patron_noepis += '<\/div>\s*<aside class="sidebar">'
         
         if not data:
             data, success, code, item, itemlist = generictools.downloadpage(list_pages[0], timeout=timeout, 
@@ -1861,8 +1886,10 @@ def episodios(item):
 
         #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
         if not success or not data or not scrapertools.find_single_match(data, patron) \
-                        or not ' ) Capitulos encontrados <' in data or '>( 0 ) Capitulos encontrados <' in data:
-            if (len(itemlist) > 0 and not ') Capitulos encontrados <' in data) or '>( 0 ) Capitulos encontrados <' in data:
+                        or not ' ) Capitulos encontrados <' in data or '>( 0 ) Capitulos encontrados <' in data \
+                        or scrapertools.find_single_match(data, patron_noepis):
+            if (len(itemlist) > 0 and not ') Capitulos encontrados <' in data) or '>( 0 ) Capitulos encontrados <' in data\
+                        or scrapertools.find_single_match(data, patron_noepis):
                 break
                 
             #Si a la url de la serie que se ha quitado el código final por fail-over, en algunos canales puede dar error

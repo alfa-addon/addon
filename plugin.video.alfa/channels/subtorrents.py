@@ -28,6 +28,7 @@ list_servers = ['torrent']
 #host = 'https://www.subtorrents.tv/'
 #sufix = '.tv/'
 host = 'https://www.subtorrents.ch/'
+host_torrent = host[:-1]
 sufix = '.ch/'
 channel = 'subtorrents'
 categoria = channel.capitalize()
@@ -512,7 +513,14 @@ def findvideos(item):
     if item.videolibray_emergency_urls:
         item.emergency_urls = []                                                #Iniciamos emergency_urls
         item.emergency_urls.append([])                              #Reservamos el espacio para los .torrents locales
-        item.emergency_urls.append(matches)                                     #Salvamnos matches de los vídeos...  
+        matches_list = []                                                       # Convertimos matches-tuple a matches-list
+        for tupla in matches:
+            if isinstance(tupla, tuple):
+                matches_list.append(list(tupla))
+        if matches_list:
+            item.emergency_urls.append(matches_list)                            # Salvamnos matches de los vídeos...  
+        else:
+            item.emergency_urls.append(matches)
         item.emergency_urls.append(subtitles)                                   #Salvamnos matches de los subtítulos
     
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
@@ -520,7 +528,13 @@ def findvideos(item):
         item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent
-    for scrapedurl in matches:                                      #leemos los torrents con la diferentes calidades
+    for x, _scrapedurl in enumerate(matches):                                   #leemos los torrents con la diferentes calidades
+        
+        scrapedurl = generictools.convert_url_base64(_scrapedurl, host_torrent)
+        # Si ha habido un cambio en la url, actualizados matches para emergency_urls
+        if item.videolibray_emergency_urls and scrapedurl != _scrapedurl:
+            item.emergency_urls[1][x] = scrapedurl
+        
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
 
@@ -528,16 +542,49 @@ def findvideos(item):
         if item.videolibray_emergency_urls:
             item.emergency_urls[0].append(scrapedurl)                           #guardamos la url y pasamos a la siguiente
             continue
+        
+        # Restauramos urls de emergencia si es necesario
+        local_torr = ''
         if item.emergency_urls and not item.videolibray_emergency_urls:
-            item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
-            if item.armagedon:
-                item_local.url = item.emergency_urls[0][0]                      #... ponemos la emergencia como primaria
-            del item.emergency_urls[0][0]                                       #Una vez tratado lo limpiamos
+            try:                                                                # Guardamos la url ALTERNATIVA
+                if item.emergency_urls[0][0].startswith('http') or item.emergency_urls[0][0].startswith('//'):
+                    item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0], host_torrent)
+                else:
+                    item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0])
+            except:
+                item_local.torrent_alt = ''
+                item.emergency_urls[0] = []
+            from core import filetools
+            if item.contentType == 'movie':
+                FOLDER = config.get_setting("folder_movies")
+            else:
+                FOLDER = config.get_setting("folder_tvshows")
+            if item.armagedon and item_local.torrent_alt:
+                item_local.url = item_local.torrent_alt                         # Restauramos la url
+                if not item.torrent_alt.startswith('http'):
+                    local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
+            if len(item.emergency_urls[0]) > 1:
+                del item.emergency_urls[0][0]
         
         #Buscamos si ya tiene tamaño, si no, los buscamos en el archivo .torrent
         size = scrapertools.find_single_match(item_local.quality, '\s*\[(\d+,?\d*?\s\w\s*[b|B])\]')
-        if not size and not item.armagedon:
-            size = generictools.get_torrent_size(scrapedurl)                    #Buscamos el tamaño en el .torrent
+        if not size and not item.videolibray_emergency_urls:
+            if not item.armagedon:
+                # Buscamos el tamaño en el .torrent desde la web
+                size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)     
+                if 'ERROR' in size and item.emergency_urls and not item.videolibray_emergency_urls:
+                    item_local.armagedon = True
+                    try:                                                        # Restauramos la url
+                        if item.emergency_urls[0][0].startswith('http') or item.emergency_urls[0][0].startswith('//'):
+                            item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0], host_torrent)
+                        else:
+                            item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0])
+                            if not item.url.startswith('http'):
+                                local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
+                    except:
+                        item_local.torrent_alt = ''
+                        item.emergency_urls[0] = []
+                    size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)
         if size:
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                         .replace('Mb', 'M·b').replace('.', ',').replace('G B', 'G·B').replace('M B', 'M·B')
