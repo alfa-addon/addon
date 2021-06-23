@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'http://porn4days.org/'
+host = 'http://porn4days.biz/'
 
 
 def mainlist(item):
@@ -123,6 +123,13 @@ def lista(item):
 
 def play(item):
     logger.info(item)
-    itemlist = servertools.find_video_items(item.clone(url = item.url, contentTitle = item.title))
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    videos = scrapertools.find_multiple_matches(data, '\("#playerframe"\).attr\("src", "([^"]+)"')
+    for elem in videos:
+        url = elem
+        if url:
+            itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

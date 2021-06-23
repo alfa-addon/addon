@@ -862,19 +862,20 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
         cmd_android_permissions = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'checkPermissions', 'about:blank')
 
         finished = False
-        retry = False
+        retry_req = False
+        retry_app = False
         stdout_acum = ''
         stderr_acum = ''
         msg = ''
         while not finished:
             if not app_response:
                 resp = httptools.downloadpage(url+str(p.pid), timeout=5, ignore_response_code=True, alfa_s=True)
-                if resp.code != 200 and not retry:
+                if resp.code != 200 and not retry_req:
                     if action == 'killBinary' or p.monitor.abortRequested():
                         app_response = {'pid': p.pid, 'retCode': 998}
                     else:
-                        logger.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s" % (p.pid, resp.code, retry))
-                        retry = True
+                        logger.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s" % (p.pid, resp.code, retry_req))
+                        retry_req = True
                         url = url_alt
                         msg += str(resp.code)
                         stdout_acum += str(resp.code)
@@ -882,9 +883,9 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         res = open_alfa_assistant()
                         time.sleep(5)
                         continue
-                if resp.code != 200 and retry:
+                if resp.code != 200 and retry_req:
                     logger.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s.  Closing Assistant" % \
-                                    (p.pid, resp.code, retry))
+                                    (p.pid, resp.code, retry_req))
                     msg += str(resp.code)
                     stdout_acum += str(resp.code)
                     app_response = {'pid': p.pid, 'retCode': 998}
@@ -903,14 +904,14 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                         test_json = app_response["pid"]
                     except:
                         status_code = resp.data
-                        logger.error("## Binary_stat: Invalid app response for PID: %s: %s - retry: %s" % (p.pid, resp.data, retry))
-                        if retry:
+                        logger.error("## Binary_stat: Invalid app response for PID: %s: %s - retry: %s" % (p.pid, resp.data, retry_app))
+                        if retry_app:
                             app_response = {'pid': p.pid}
                             app_response['retCode'] = 999
                             msg += app_response_save
                             stdout_acum += app_response_save
                         else:
-                            retry = True
+                            retry_app = True
                             app_response = {}
                             time.sleep(1)
                             continue

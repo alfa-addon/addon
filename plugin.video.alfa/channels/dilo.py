@@ -35,7 +35,7 @@ list_servers = ['openload', 'streamango', 'powvideo', 'clipwatching', 'streampla
 
 def get_source(url):
     logger.info()
-    data = httptools.downloadpage(url, forced_proxy_opt='ProxyWeb').data
+    data = httptools.downloadpage(url).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
@@ -291,7 +291,7 @@ def decode_link(enc_url):
         if "gamovideo" in enc_url:
             url = scrapertools.find_single_match(new_data, '<a href="([^"]+)"')
         else:
-            new_enc_url = scrapertools.find_single_match(new_data, 'src="([^"]+)"')
+            new_enc_url = scrapertools.find_single_match(new_data, '<iframe\s*class=[^>]+src="([^"]+)"')
 
             try:
                 url = httptools.downloadpage(new_enc_url, follow_redirects=False).headers['location']

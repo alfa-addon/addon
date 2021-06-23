@@ -819,10 +819,13 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
         cmd_android_permissions = 'StartAndroidActivity("%s", "", "%s", "%s")' % (p.app, 'checkPermissions', 'about:blank')
 
         finished = False
-        retry = False
+        retry_req = False
+        retry_app = False
         stdout_acum = ''
         stderr_acum = ''
         msg = ''
+        binary_awake = 0
+        binary_awake_safe = 300*1000
         while not finished:
             if not app_response.get('retCode', 0) >= 999:
                 try:
@@ -831,43 +834,51 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     resp = requests.Response()
                     resp.status_code = str(e)
                 
-                if resp.status_code != 200 and not retry:
+                if resp.status_code != 200 and not retry_req:
                     if action == 'killBinary' or p.monitor.abortRequested():
                         app_response = {'pid': p.pid, 'retCode': 998}
                     else:
                         logging.info("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s - awake: %s", \
-                                    p.pid, resp.status_code, retry, p.binary_awake)
-                        retry = True
+                                    p.pid, resp.status_code, retry_req, p.binary_awake)
+                        retry_req = True
                         url = url_alt
                         msg += str(resp.status_code)
                         stdout_acum += str(resp.status_code)
                         xbmc.executebuiltin(cmd_android)
-                        binary_awake = (int(time.time()) - int(p.binary_time) - 300) * 1000
-                        if p.binary_awake:
-                            if binary_awake < p.binary_awake: p.binary_awake = binary_awake
-                        else:
-                            p.binary_awake = binary_awake
-                        if p.binary_awake < 2000: p.binary_awake = 2000
-                        if not 'awakingInterval' in url: url += '&awakingInterval=%s' % p.binary_awake
-                        time.sleep(3)
+                        binary_awake = (int(time.time()) - int(p.binary_time)) * 1000 - binary_awake_safe
+                        if binary_awake < binary_awake_safe:
+                            binary_awake = 0
+                        logging.info('## Time.awake: %s; binary_awake: %s; p.binary_awake: %s', \
+                                    (int(time.time()) - int(p.binary_time))*1000, binary_awake, p.binary_awake)
+                        time.sleep(5)
                         continue
-                if resp.status_code != 200 and retry and app_response.get('retCode', 0) != 999:
+                if resp.status_code != 200 and retry_req and app_response.get('retCode', 0) != 999:
                     logging.info("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s - awake: %s.  Closing Assistant", \
-                                    p.pid, resp.status_code, retry, p.binary_awake)
+                                    p.pid, resp.status_code, retry_req, p.binary_awake)
                     msg += str(resp.status_code)
                     stdout_acum += str(resp.status_code)
                     app_response = {'pid': p.pid, 'retCode': 999}
                     xbmc.executebuiltin(cmd_android_close)
                     time.sleep(5)
                     xbmc.executebuiltin(cmd_android)
-                    binary_awake = (int(time.time()) - int(p.binary_time) - 300) * 1000
-                    if p.binary_awake:
-                        if binary_awake < p.binary_awake: p.binary_awake = binary_awake
-                    else:
-                        p.binary_awake = binary_awake
-                    if p.binary_awake < 2000: p.binary_awake = 2000
-                    if not 'awakingInterval' in url: url += '&awakingInterval=%s' % p.binary_awake
-                    time.sleep(3)
+                    binary_awake = (int(time.time()) - int(p.binary_time)) * 1000 - binary_awake_safe
+                    if binary_awake > binary_awake_safe:
+                        if p.binary_awake:
+                            if binary_awake < p.binary_awake: p.binary_awake = binary_awake
+                        else:
+                            p.binary_awake = binary_awake
+                        time.sleep(5)
+                        logging.info('## Time.awake: %s; binary_awake: %s; p.binary_awake: %s; awakingInterval: True', \
+                                    (int(time.time()) - int(p.binary_time))*1000, binary_awake, p.binary_awake)
+                        try:
+                            if not 'awakingInterval' in url: 
+                                url += '&awakingInterval=%s' % p.binary_awake
+                                resp = p.sess.get(url, timeout=5)
+                        except:
+                            pass
+                        time.sleep(1)
+                        continue
+                    time.sleep(5)
                     continue
 
                 if resp.status_code == 200:
@@ -883,16 +894,23 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     except:
                         status_code = resp.content
                         logging.info("## Binary_stat: Invalid app response for PID: %s: %s - retry: %s - awake: %s", \
-                                    p.pid, resp.content, retry, p.binary_awake)
-                        if retry:
+                                    p.pid, resp.content, retry_app, binary_awake)
+                        if retry_app:
                             app_response = {'pid': p.pid}
                             app_response['retCode'] = 999
                             msg += app_response_save
                             stdout_acum += app_response_save
                         else:
-                            retry = True
+                            retry_app = True
                             app_response = {}
-                            if not 'awakingInterval' in url and p.binary_awake > 0: url += '&awakingInterval=%s' % p.binary_awake
+                            if not 'awakingInterval' in url and (binary_awake > 0 or p.binary_awake > 0):
+                                if p.binary_awake:
+                                    if binary_awake and binary_awake < p.binary_awake: p.binary_awake = binary_awake
+                                else:
+                                    p.binary_awake = binary_awake
+                                url += '&awakingInterval=%s' % p.binary_awake
+                                logging.info('## Time.awake: %s; binary_awake: %s; p.binary_awake: %s; awakingInterval: True', \
+                                            (int(time.time()) - int(p.binary_time))*1000, binary_awake, p.binary_awake)
                             time.sleep(1)
                             continue
                         

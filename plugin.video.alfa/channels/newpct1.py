@@ -73,6 +73,8 @@ if host_index == 0:                                                             
     for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
         if i <= j and active_clone == "1":
             clone_list_random += [clone_list[i]]                                #... añadimos el clone activo "bueno" a la lista
+        if i == clone_num_post:
+            channel_clone_post = channel_clone                                  #Nombre del Canal elegido para POST
         i += 1
     if clone_list_random:                                                       #Si hay clones en la lista aleatoria...
         clone_list = [random.choice(clone_list_random)]                         #Seleccionamos un clone aleatorio
@@ -82,8 +84,6 @@ if host_index == 0:                                                             
 if host_index > 0 or not clone_list_random:     #Si el Clone por defecto no es Aleatorio, o hay ya un aleatorio seleccionado...
     i = 1
     for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
-        if i == clone_num_post:
-            channel_clone_post = channel_clone                                  #Nombre del Canal elegido para POST
         if i == host_index:
             channel_clone_name = channel_clone                                  #Nombre del Canal elegido
             host = host_clone                                                   #URL del Canal elegido
@@ -96,6 +96,8 @@ if host_index > 0 or not clone_list_random:     #Si el Clone por defecto no es A
                     host = host_clone                                           #URL del Canal elegido
                     break
         i += 1
+sufix = scrapertools.find_single_match(host, '\.\w+\/*$')
+download_sufix = 'descargar/torrent/'
 
 #Carga de opciones del canal        
 __modo_grafico__ = config.get_setting('modo_grafico', channel_py)               #TMDB?
@@ -571,7 +573,7 @@ def listado(item):                                                              
     post = None
     forced_proxy_opt = None
     if item.post:
-        forced_proxy_opt = 'ProxyCF'
+        forced_proxy_opt = None
     if item.post or item.post is None:                                          # Rescatamos el Post, si lo hay
         post = item.post
         del item.post
@@ -816,10 +818,11 @@ def listado(item):                                                              
             url = urlparse.urljoin(host, scrapedurl)
             title_subs = []                                                     #creamos una lista para guardar info importante
             
+            # Slugify, pero más light
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
                     .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
-                    .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&#8217;", "'")\
-                    .replace("&amp;", "&")
+                    .replace("ï¿½", "ñ").replace("Ã±", "ñ")
+            title = scrapertools.decode_utf8_error(title)
 
             #logger.debug(title)
 
@@ -1163,9 +1166,9 @@ def findvideos(item):
     # item.url = item.url.replace(".com/",".com/ver-online/")
     # item.url = item.url.replace(".com/",".com/descarga-directa/")
     # item.url = item.url.replace("/descarga-torrent/descargar", "/descargar")
-    item.url = item.url.replace(".com/descargar/",".com/descargar/torrent/")
-    item.url = item.url.replace("torrent/torrent/","torrent/")
-    torrent_tag = item.channel_host + 'descargar/torrent/'
+    if not download_sufix in item.url:
+        item.url = item.url.replace(sufix+"descargar/", sufix+download_sufix)
+    torrent_tag = item.channel_host + download_sufix
     
     
     """ Función para limitar la verificación de enlaces de Servidores para Ver online y Descargas """
@@ -2278,8 +2281,9 @@ def verify_host(item, host_call, force=True, category='', post=None):
         
     item = generictools.verify_channel_regex(item, clone_list_alt)              # Procesamos los regex de url que tenga el clone
         
-    global host
+    global host, sufix
     host = host_call
+    sufix = scrapertools.find_single_match(host, '\.\w+\/*$')
     
     return (item, host)
 

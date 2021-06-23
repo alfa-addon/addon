@@ -493,10 +493,11 @@ def listado(item):                                                              
             
             title_subs = []                                                     #creamos una lista para guardar info importante
             
+            # Slugify, pero más light
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
                     .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
-                    .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&#8217;", "'")\
-                    .replace("&amp;", "&")
+                    .replace("ï¿½", "ñ").replace("Ã±", "ñ")
+            title = scrapertools.decode_utf8_error(title)
 
             # Se filtran las entradas para evitar duplicados de Temporadas
             url_list = url

@@ -32,7 +32,7 @@ def mainlist(item):
         Item(channel=item.channel,
              title="Peliculas",
              action="sub_menu",
-             url=host + "movies/",
+             url=host + "movies-hd/",
              thumbnail=get_thumb('movies', auto=True)))
 
     itemlist.append(
@@ -193,7 +193,7 @@ def seasons(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<strong>Temporada(\d+)</strong>'
+    patron = '<strong>Temporada\s*(\d+)\s*<\/strong>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for temporada in matches:
@@ -235,7 +235,7 @@ def episodesxseason(item):
     itemlist = []
     season = item.contentSeasonNumber
     data = get_source(item.url)
-    data = scrapertools.find_single_match(data, '<strong>Temporada%s</strong>.*?</ul>' % season)
+    data = scrapertools.find_single_match(data, '<strong>Temporada\s*%s\s*<\/strong>.*?<\/ul>' % season)
     patron = '<a href="([^"]+)"><i class="fa fa-play"></i>([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     ep = 1

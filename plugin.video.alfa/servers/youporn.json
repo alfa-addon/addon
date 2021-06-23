@@ -4,11 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://www.youporn.com/(?:embed|watch)/[0-9]+/[A-z0-9-]+/)",
-        "url": "\\1"
-      },
-       {
-        "pattern": "(https://www.youporn.com/embed/[0-9]+/)",
+        "pattern": "(https://www.youporn.com/(?:embed|watch)/[0-9]+/)",
         "url": "\\1"
       }
    ]

@@ -216,10 +216,12 @@ def listado(item):
         for scrapedlanguage, scrapedurl, scrapedtitle, year, scrapedcategory, scrapedquality in matches:
             title = scrapedtitle
             url = scrapedurl.replace('&#038;', '&')
+            
+            # Slugify, pero más light
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
                     .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
-                    .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&#8217;", "'")\
-                    .replace("&amp;", "&")
+                    .replace("ï¿½", "ñ").replace("Ã±", "ñ")
+            title = scrapertools.decode_utf8_error(title)
             
             #cnt_title += 1
             item_local = item.clone()                                                   #Creamos copia de Item para trabajar
