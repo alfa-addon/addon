@@ -955,7 +955,9 @@ def reset_videotlibrary_by_channel(inactive=True):
     ###### LISTA DE CANALES PARA SOBRESCRIBIR SU VIDEOTECA 
     channels_list = ['grantorrent', 'cinetorrent', 'magnetpelis', 'pelispanda', 'mitorrent', 'mejortorrent']
 
-    if not channels_list: return
+    if not channels_list or not config.get_setting("update", "videolibrary") or \
+                    config.get_setting("videolibrary_backup_scan", "videolibrary"):
+        return
 
     try:
         # Vemos si ya se ha sobrescrito, si no marcamos

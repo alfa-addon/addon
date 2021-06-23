@@ -13,14 +13,18 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; basestring = str
 
 import os
+import re
 import traceback
 
 from core import scrapertools
 from core.item import Item
-from platformcode import platformtools, logger
+from platformcode import platformtools, logger, config
 
-from platformcode import config
-KODI = config.is_xbmc()
+if config.is_xbmc():
+    KODI = True
+    import xbmc
+else:
+    KODI = False
 
 xbmc_vfs = True                                                 # False para desactivar XbmcVFS, True para activar
 if xbmc_vfs:
@@ -59,7 +63,6 @@ def validate_path(path, replacement='', trans_none=''):
     pattern_url = "[:\*\?<>\|]"
     if scrapertools.find_single_match(path, '(^\w+:\/\/)'):
         protocolo = scrapertools.find_single_match(path, '(^\w+:\/\/)')
-        import re
         parts = re.split(r'^\w+:\/\/(.+?)/(.+)', path)[1:3]
         parts[1] = parts[1].replace("\\", "/")
         return '{}{}/{}'.format(protocolo, parts[0], re.sub(pattern_url, replacement, parts[1]))
@@ -529,7 +532,6 @@ def chmod(path, ch_mod, su=False, silent=False):
     else:
         try:
             import subprocess
-            from platformcode import config
             if not su:
                 command = ['chmod', ch_mod, path]
                 if not silent:
@@ -696,7 +698,6 @@ def copy(path, dest, silent=False, vfs=True, ch_mod='', su=False):
                 result = bool(xbmcvfs.copy(path, dest))
             
             # Si la copia no ha funcionado y se ha especificado su=True, se intenta el comando CP vía SU del sistema
-            from platformcode import config
             if not result and su and config.is_rooted(silent=True) == 'rooted':
                 error_cmd = True
                 for subcmd in ['-c', '-0']:
@@ -781,7 +782,6 @@ def isfile(path, silent=False, vfs=True):
     @rtype: bool
     @return: Retorna True si la ruta existe y es un archivo
     """
-    from platformcode import config
     platform = config.get_system_platform()
     path = encode(path)
     try:
@@ -880,7 +880,6 @@ def remove(path, silent=False, vfs=True, su=False):
             result = bool(xbmcvfs.delete(path))
         
             # Si el borrado no ha funcionado y se especificado su=True, se intenta el comando RM vía SU del sistema
-            from platformcode import config
             if not result and su and config.is_rooted(silent=True) == 'rooted':
                 error_cmd = True
                 for subcmd in ['-c', '-0']:
