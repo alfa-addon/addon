@@ -12,6 +12,7 @@ import errno
 import math
 import traceback
 import re
+import time
 
 from core import filetools, scraper, scrapertools
 from core.item import Item
@@ -118,7 +119,7 @@ def read_nfo(path_nfo, item=None):
     return head_nfo, it
 
 
-def save_movie(item):
+def save_movie(item, silent=False):
     """
     guarda en la libreria de peliculas el elemento item, con los valores que contiene.
     @type item: item
@@ -164,7 +165,7 @@ def save_movie(item):
     _id = item.infoLabels['code'][0]
 
     # progress dialog
-    p_dialog = platformtools.dialog_progress(config.get_localized_string(20000), config.get_localized_string(60062))
+    if not silent: p_dialog = platformtools.dialog_progress(config.get_localized_string(20000), config.get_localized_string(60062))
 
     if config.get_setting("original_title_folder", "videolibrary") == 1 and item.infoLabels['originaltitle']:
         base_name = item.infoLabels['originaltitle']
@@ -258,12 +259,12 @@ def save_movie(item):
         if item.from_channel_alt: del item.from_channel_alt
         if item_nfo.from_channel_alt: del item_nfo.from_channel_alt
         if filetools.write(json_path, item.tojson()):
-            p_dialog.update(100, 'Añadiendo película...' + '\n' + item.contentTitle + '\n' + ' ')
+            if not silent: p_dialog.update(100, 'Añadiendo película...' + '\n' + item.contentTitle + '\n' + ' ')
             item_nfo.library_urls[item.channel] = item.url
 
             if filetools.write(nfo_path, head_nfo + item_nfo.tojson()):
                 # actualizamos la videoteca de Kodi con la pelicula
-                if config.is_xbmc():
+                if config.is_xbmc() and not silent:
                     from platformcode import xbmc_videolibrary
                     xbmc_videolibrary.update(FOLDER_MOVIES, '_scan_series')
                 # Si el usuario quiere un backup de la película (local o remoto), se toma la dirección/direcciones de destino y se copia
@@ -276,17 +277,17 @@ def save_movie(item):
                         logger.error('Error en el backup de la película %s' % item_nfo.strm_path)
                         logger.error(traceback.format_exc(1))
 
-                p_dialog.close()
+                if not silent: p_dialog.close()
                 return insertados, sobreescritos, fallidos
 
     # Si llegamos a este punto es por q algo ha fallado
     logger.error("No se ha podido guardar %s en la videoteca" % item.contentTitle)
-    p_dialog.update(100, config.get_localized_string(60063) + '\n' + item.contentTitle + '\n' + ' ')
-    p_dialog.close()
+    if not silent: p_dialog.update(100, config.get_localized_string(60063) + '\n' + item.contentTitle + '\n' + ' ')
+    if not silent: p_dialog.close()
     return 0, 0, -1
 
 
-def save_tvshow(item, episodelist):
+def save_tvshow(item, episodelist, silent=False, overwrite=True):
     """
     guarda en la libreria de series la serie con todos los capitulos incluidos en la lista episodelist
     @type item: item
@@ -409,7 +410,10 @@ def save_tvshow(item, episodelist):
             else:
                 item_tvshow.library_filter_show = {item.channel: item.show}
 
-    if item.channel != "downloads":
+    if int(overwrite) == 3 and item_tvshow.active == 0 and (item_tvshow.infoLabels["status"] == "Ended" 
+                            or item_tvshow.infoLabels["status"] == "Canceled"):
+        item_tvshow.active = 0  # lo dejamos inactivo
+    elif item.channel != "downloads":
         item_tvshow.active = 1  # para que se actualice a diario cuando se llame a videolibrary_service
 
     filetools.write(tvshow_path, head_nfo + item_tvshow.tojson())
@@ -421,7 +425,7 @@ def save_tvshow(item, episodelist):
     # Guardar los episodios
     '''import time
     start_time = time.time()'''
-    insertados, sobreescritos, fallidos = save_episodes(path, episodelist, item)
+    insertados, sobreescritos, fallidos = save_episodes(path, episodelist, item, silent=silent, overwrite=overwrite)
     '''msg = "Insertados: %d | Sobreescritos: %d | Fallidos: %d | Tiempo: %2.2f segundos" % \
           (insertados, sobreescritos, fallidos, time.time() - start_time)
     logger.debug(msg)'''
@@ -460,6 +464,9 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     sobreescritos = 0
     fallidos = 0
     news_in_playcounts = {}
+    overwrite_back = overwrite
+    if int(overwrite) == 3:
+        overwrite = True
 
     # Listamos todos los ficheros de la serie, asi evitamos tener que comprobar si existe uno por uno
     raiz, carpetas_series, ficheros = next(filetools.walk(path))
@@ -554,6 +561,10 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
             if e.videolibray_emergency_urls:
                 del e.videolibray_emergency_urls
+            e.library_playcounts = {}
+            del e.library_playcounts
+            if e.ow_force:
+                del e.ow_force
             if e.video_path:
                 del e.video_path
             if e.channel_redir:
@@ -763,6 +774,185 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     logger.debug("%s [%s]: insertados= %s, sobreescritos= %s, fallidos= %s" %
                  (serie.contentSerieName, serie.channel, insertados, sobreescritos, fallidos))
     return insertados, sobreescritos, fallidos
+
+
+def reset_movie(movie_file, p_dialog=None, i=100, t=1):
+    import math
+    from core import jsontools
+    
+    movie_json_list = []
+    heading = config.get_localized_string(60586)
+
+    try:
+        active = False
+        if not p_dialog:
+            active = True
+            p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(60585), heading)
+            p_dialog.update(0, '')
+
+        path = filetools.dirname(movie_file)
+        if movie_file.endswith('.json'):
+            movie = Item().fromjson(filetools.read(movie_file))
+            library_urls = {movie.channel: movie.url}
+            movie, it, overwrite = generictools.redirect_clone_newpct1(movie, overwrite=3)
+            movie_clone = movie.clone()
+            movie_clone.clave = '%s|%s' % (movie.channel, movie.url)
+            movie_json_list.append(movie_clone)
+        else:
+            head_nfo, movie = read_nfo(movie_file)
+            library_urls = movie.library_urls
+            del movie.library_urls
+            for channel, url in list(library_urls.items()):
+                json_path = filetools.join(path, ("%s [%s].json" % (movie.title.lower(), channel)))
+                if filetools.exists(json_path):
+                    try:
+                        movie_clone = Item().fromjson(filetools.read(json_path))
+                        movie_clone.clave = '%s|%s' % (channel, url)
+                        movie_json_list.append(movie_clone)
+                    except:
+                        pass
+        
+        if movie.emergency_urls: del movie.emergency_urls
+        if movie.library_playcounts: del movie.library_playcounts
+        if movie.strm_path: del movie.strm_path
+        if movie.path: del movie.path
+
+        # Eliminamos la carpeta con la pelicula ...
+        filetools.rmdirtree(path)
+
+        # ... y la volvemos a añadir
+        if not movie.contentPlot and movie.infoLabels.get('plot', ''):
+            movie.contentPlot = movie.infoLabels['plot']
+        if not movie.fanart and movie.infoLabels.get('fanart', ''):
+            movie.fanart = movie.infoLabels['fanart']
+        for channel, url in list(library_urls.items()):
+            clave = '%s|%s' % (channel, url)
+            movie_clone = movie.clone()
+            movie_clone.channel = channel
+            movie_clone.category = channel.capitalize()
+            movie_clone.url = url
+            movie_clone, it, overwrite = generictools.redirect_clone_newpct1(movie_clone, overwrite=3)
+            p_dialog.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (movie_clone.contentTitle,
+                                                                              movie_clone.channel.capitalize()))
+            for movie_clone_json in movie_json_list:
+                if not movie_clone_json.channel:
+                    logger.error("Error al crear de nuevo la película: %s" % json_path)
+                    continue
+                if movie_clone_json.clave != clave:
+                    continue
+                if not movie_clone.clean_plot and movie_clone_json.clean_plot:
+                    movie_clone.clean_plot = movie_clone_json.clean_plot
+                if not movie_clone.context and movie_clone_json.context:
+                    movie_clone.context = movie_clone_json.context
+                if not movie_clone.extra and movie_clone_json.extra:
+                    movie_clone.extra = movie_clone_json.extra
+                if not movie_clone.extra2 and movie_clone_json.extra2:
+                    movie_clone.extra2 = movie_clone_json.extra2
+                if not movie_clone.language and movie_clone_json.language:
+                    movie_clone.language = movie_clone_json.language
+                if movie_clone_json.thumbnail:
+                    movie_clone.thumbnail = movie_clone_json.thumbnail
+                if movie_clone_json.list_language:
+                    movie_clone.list_language = movie_clone_json.list_language
+                if movie_clone_json.list_quality:
+                    movie_clone.list_quality = movie_clone_json.list_quality
+                if movie_clone_json.text_bold:
+                    movie_clone.text_bold = movie_clone_json.text_bold
+                if movie_clone_json.password:
+                    movie_clone.password = movie_clone_json.password
+                if movie_clone_json.post:
+                    movie_clone.post = movie_clone_json.post
+                if movie_clone_json.sid:
+                    movie_clone.sid = movie_clone_json.sid
+                if movie_clone_json.referer:
+                    movie_clone.referer = movie_clone_json.referer
+                if movie_clone_json.headers:
+                    movie_clone.headers = movie_clone_json.headers
+                if movie_clone_json.torrent_info:
+                    movie_clone.torrent_info = movie_clone_json.torrent_info
+                if movie_clone_json.wanted:
+                    movie_clone.wanted = movie_clone_json.wanted
+                movie_clone.title = movie_clone_json.title
+                save_movie(movie_clone, silent=True)
+                break
+            else:
+                save_movie(movie_clone, silent=True)
+    except Exception as ex:
+        heading = "Error al crear de nuevo la película"
+        logger.error(heading)
+        template = "An exception of type %s occured. Arguments:\n%r"
+        message = template % (type(ex).__name__, ex.args)
+        logger.error(message)
+        p_dialog.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (movie.contentTitle,
+                                                                          movie.channel.capitalize()))
+        time.sleep(3)
+    
+    if active:
+        p_dialog.close()
+        if config.is_xbmc():
+            import xbmc
+            from platformcode import xbmc_videolibrary
+            xbmc_videolibrary.update(FOLDER_MOVIES, '_scan_series')             # Se escanea el directorio de cine para catalogar en Kodi
+            while xbmc.getCondVisibility('Library.IsScanningVideo()'):          # Se espera a que acabe el scanning
+                time.sleep(1)
+            if movie_file.endswith('.nfo'):
+                xbmc_videolibrary.mark_content_as_watched_on_alfa(movie_file)
+
+
+def reset_serie(tvshow_file, p_dialog=None, i=100, t=1, inactive=False):
+
+    try:
+        active = False
+        if not p_dialog:
+            active = True
+            heading = config.get_localized_string(60584)
+            p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(60585), heading)
+            p_dialog.update(0, '')
+        
+        head_nfo, serie = read_nfo(tvshow_file)
+        path = filetools.dirname(tvshow_file)
+
+        if not serie.active and not active and not inactive:
+            # si la serie no esta activa descartar
+            return
+
+        # Limpiamos el .nfo y forzamos recarga de todos los episodios
+        if serie.emergency_urls: del serie.emergency_urls
+        serie.library_playcounts = {serie.contentSerieName: 0}
+        serie.ow_force = '1'
+        
+        # Eliminamos la carpeta con la serie ...
+        filetools.rmdirtree(path)
+        time.sleep(1)
+
+        # ... y la volvemos a añadir con el .nfo
+        filetools.mkdir(path)
+        res = filetools.write(tvshow_file, head_nfo + serie.tojson())
+        if res:
+            from videolibrary_service import update
+            update(path, p_dialog, i, t, serie, 3)
+        else:
+            logger.error("Error al crear de nuevo la serie")
+    except Exception as ex:
+        heading = "Error al crear de nuevo la serie"
+        logger.error(heading)
+        template = "An exception of type %s occured. Arguments:\n%r"
+        message = template % (type(ex).__name__, ex.args)
+        logger.error(message)
+        import math
+        p_dialog.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (serie.contentSerieName,
+                                                                          serie.channel.capitalize()))
+        time.sleep(3)
+    
+    if active:
+        p_dialog.close()
+        if config.is_xbmc():
+            import xbmc
+            from platformcode import xbmc_videolibrary
+            xbmc_videolibrary.update(FOLDER_TVSHOWS, '_scan_series')            # Se escanea el directorio de series para catalogar en Kodi
+            while xbmc.getCondVisibility('Library.IsScanningVideo()'):          # Se espera a que acabe el scanning
+                time.sleep(1)
+            xbmc_videolibrary.mark_content_as_watched_on_alfa(tvshow_file)
 
 
 def add_movie(item):

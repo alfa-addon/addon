@@ -422,7 +422,7 @@ def listado(item):
             item_local.text_color = True
             del item_local.text_color
                 
-            item_local.language = []                                                #creamos lista para los idiomas
+            item_local.language = ['VO']                                            #creamos lista para los idiomas
             item_local.quality = scrapedquality                                     #iniciamos calidad
             if item_local.quality == 'ultra':
                 item_local.quality = '4K'

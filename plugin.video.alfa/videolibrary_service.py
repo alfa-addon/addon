@@ -43,6 +43,10 @@ def update(path, p_dialog, i, t, serie, overwrite):
         from platformcode import xbmc_videolibrary
 
     insertados_total = 0
+    insertados = 0
+    sobreescritos = 0
+    fallidos = 0
+    overwrite_back = overwrite
       
     head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')
     category = serie.category
@@ -83,9 +87,11 @@ def update(path, p_dialog, i, t, serie, overwrite):
                 itemlist = getattr(obj, 'episodios')(serie)                     #... se procesa Episodios para ese canal
 
                 try:
-                    if int(overwrite) == 3:
+                    if int(overwrite_back) == 3:
                         # Sobrescribir todos los archivos (tvshow.nfo, 1x01.nfo, 1x01 [canal].json, 1x01.strm, etc...)
-                        insertados, sobreescritos, fallidos, notusedpath = videolibrarytools.save_tvshow(serie, itemlist)
+                        insertados, sobreescritos, fallidos, notusedpath = videolibrarytools.save_tvshow(serie, itemlist, 
+                                                                                              silent=True,
+                                                                                              overwrite=overwrite_back)
                         #serie= videolibrary.check_season_playcount(serie, serie.contentSeason)
                         #if filetools.write(path + '/tvshow.nfo', head_nfo + it.tojson()):
                         #    serie.infoLabels['playcount'] = serie.playcount
@@ -104,6 +110,7 @@ def update(path, p_dialog, i, t, serie, overwrite):
                     message = template % (type(ex).__name__, ex.args)
                     logger.error(message)
                     logger.error(traceback.format_exc())
+                    continue
 
             except Exception as ex:
                 logger.error("Error al obtener los episodios de: %s" % serie.show)
@@ -111,10 +118,11 @@ def update(path, p_dialog, i, t, serie, overwrite):
                 message = template % (type(ex).__name__, ex.args)
                 logger.error(message)
                 logger.error(traceback.format_exc())
+                continue
                 
             #Si el canal lo permite, se comienza el proceso de descarga de los nuevos episodios descargados
             serie.channel = generictools.verify_channel(serie.channel)
-            if insertados > 0  and config.get_setting('auto_download_new', serie.channel, default=False):
+            if insertados > 0 and config.get_setting('auto_download_new', serie.channel, default=False) and int(overwrite_back) != 3:
                 config.set_setting("search_new_content", 1, "videolibrary")     # Escaneamos a final todas la series
                 serie.sub_action = 'auto'
                 serie.category = itemlist[0].category
@@ -127,7 +135,8 @@ def update(path, p_dialog, i, t, serie, overwrite):
 
     #Sincronizamos los episodios vistos desde la videoteca de Kodi con la de Alfa
     try:
-        if config.is_xbmc() and not config.get_setting('cleanlibrary', 'videolibrary', default=False):  #Si es Kodi, lo hacemos
+        if config.is_xbmc() and not config.get_setting('cleanlibrary', 'videolibrary', default=False) \
+                    and int(overwrite_back) != 3:                               #Si es Kodi, lo hacemos
             xbmc_videolibrary.mark_content_as_watched_on_alfa(path + '/tvshow.nfo')
     except:
         logger.error(traceback.format_exc())
