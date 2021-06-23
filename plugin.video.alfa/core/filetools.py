@@ -19,12 +19,9 @@ from core import scrapertools
 from core.item import Item
 from platformcode import platformtools, logger
 
-try:
-    import xbmc
-    KODI = True
-except:
-    KODI = False
-    
+from platformcode import config
+KODI = config.is_xbmc()
+
 xbmc_vfs = True                                                 # False para desactivar XbmcVFS, True para activar
 if xbmc_vfs:
     try:
@@ -38,11 +35,7 @@ if xbmc_vfs:
 
 samba = None
 if not xbmc_vfs:
-    try:
-        from lib.sambatools import libsmb as samba
-    except:
-        samba = None
-        # Python 2.4 No compatible con modulo samba, hay que revisar
+    from lib.sambatools import libsmb as samba
 
 # Windows es "mbcs" linux, osx, android es "utf8"
 if not PY3 and os.name == "nt":
@@ -51,10 +44,9 @@ else:
     fs_encoding = "utf-8"
 
 
-
-def validate_path(path, trans_none=''):
+def validate_path(path, replacement='', trans_none=''):
     """
-    Elimina cáracteres no permitidos
+    Reemplaza o elimina cáracteres no permitidos
     @param path: cadena a validar
     @type path: str
     @rtype: str
@@ -63,12 +55,14 @@ def validate_path(path, trans_none=''):
     if not path or not isinstance(path, (unicode, basestring, bytes)):
         if path is None: path = trans_none
 
-    chars = ":*?<>|\\/"
+    pattern = "[:\*\?<>\|\\/]"
+    pattern_url = "[:\*\?<>\|]"
     if scrapertools.find_single_match(path, '(^\w+:\/\/)'):
         protocolo = scrapertools.find_single_match(path, '(^\w+:\/\/)')
         import re
         parts = re.split(r'^\w+:\/\/(.+?)/(.+)', path)[1:3]
-        return protocolo + parts[0] + "/" + ''.join([c for c in parts[1] if c not in chars])
+        parts[1] = parts[1].replace("\\", "/")
+        return '{}{}/{}'.format(protocolo, parts[0], re.sub(pattern_url, replacement, parts[1]))
 
     else:
         if path.find(":\\") == 1:
@@ -77,7 +71,7 @@ def validate_path(path, trans_none=''):
         else:
             unidad = ""
 
-        return unidad + ''.join([c for c in path if c not in chars])
+        return '{}{}'.format(unidad, re.sub(pattern, replacement, path))
 
 
 def translatePath(path, trans_none=''):
@@ -98,10 +92,10 @@ def translatePath(path, trans_none=''):
         path = xbmcvfs.translatePath(path)
         if isinstance(path, bytes):
             path = path.decode(fs_encoding)
-    
+
     elif KODI:
         path = xbmc.translatePath(path)
-        
+
     return path
 
 
@@ -123,7 +117,7 @@ def makeLegalFilename(path, trans_none=''):
         path = xbmcvfs.makeLegalFilename(path)
         if isinstance(path, bytes):
             path = path.decode(fs_encoding)
-    
+
     elif KODI:
         path = xbmc.makeLegalFilename(path)
         
