@@ -1,23 +1,19 @@
-# This is a basic workflow to help you get started with Actions
+# Release script for Alfa-addon
 name: release
 
-# Controls when the action will run. 
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
   push:
     branches:
       - master
       - devel
-      # - /v\.\d+\.\d+\.\d+/
     paths:
-        - '.github/workflows/*.yml'
+        - '.github/workflows/release.yml'
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Set permissions for GitHub key 
 permissions: write-all
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   deploy:
     name: Deploy Job
@@ -26,41 +22,42 @@ jobs:
 
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       ADDON: 'plugin.video.alfa'
 
     steps:
+      - name: Setting-up environment
+        run: sudo snap install --classic hub
+
       - name: Set-up Python version 
         uses: actions/setup-python@v2
         with:
           python-version: '2.7'
 
-      - name: Setting environment variables
-        run: |
-          export GH_TOKEN=${{ secrets.GH_TOKEN }}
-          export ADDON='plugin.video.alfa'
-
-      - name: Cloning repo
-        run: git clone https://github.com/$GITHUB_REPOSITORY
+      - name: Checkout repo
+        uses: actions/checkout@v2
 
       - name: Start deployment
         run: |
-          echo "Changing to addon directory"
-          cd addon
-          echo "1: Download deployment script"
+          echo "Entering Git repo directory"
+          cd ${{ github.workspace }}
+          echo "Downloading deployment script"
           wget https://raw.githubusercontent.com/alfa-addon/travis_scripts/master/deploy_addon.py
-          echo "2: Prepare ZIP"
+          echo "Preparing ZIP"
           python deploy_addon.py -z
-          export RELEASE_ZIP=$(ls *.zip)
-          echo "3: Deploy to repo"
+          echo "- Deploying to Alfa repo"
           python deploy_addon.py -r
-          echo "4: Create release"
-          curl --request POST \
-          --header 'authorization: Bearer ${{ secrets.GH_TOKEN }}' \
-          --header "Accept: application/vnd.github.v3+json" \
-          --header 'content-type: application/json' \
-          --url https://api.github.com/repos/$GITHUB_REPOSITORY/releases \
-          --data '{
-            "tag_name": "release-${{ github.run_id }}",
-            "body": ""
-            }' \
-          --fail
+      - name: Release on GitHub
+        run: |
+          echo "Entering Git repo directory"
+          cd ${{ github.workspace }}
+          echo "Getting assets"
+          assets=()
+          for asset in ./*.zip; do
+            assets+=("-a" "${asset}")
+          done
+          echo "Getting addon version"
+          python deploy_addon.py -v
+          git_tag="$(cat version)"
+          echo "Releasing the kraken"
+          hub release create "${assets[@]}" -m "Alfa-v${git_tag}" "Alfa-v${git_tag}"
