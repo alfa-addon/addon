@@ -34,7 +34,7 @@ list_servers = ['mailru', 'openload',  'streamango', 'estream']
 
 
 host = 'https://pelisplus.me'
-CHANNEL_HEADERS = {"X-Requested-With": "XMLHttpRequest"}
+CHANNEL_HEADERS = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", "X-Requested-With": "XMLHttpRequest"}
 
 def mainlist(item):
     logger.info()
@@ -63,8 +63,8 @@ def movie_menu(item):
 
     itemlist.append(item.clone(title="Estrenos",
                                action="list_all",
-                               url = host+'/estrenos/',
-                               type = 'normal'
+                               url = host+ '/pelis-2021/',   #'/estrenos/',
+                               type = 'recents'
                                ))
 
     itemlist.append(item.clone(title="Generos",
@@ -83,6 +83,28 @@ def movie_menu(item):
                                action="search",
                                url=host + "/suggest/",
                                type="m",
+                               seccion='buscar'
+                               ))
+
+    return itemlist
+
+
+def series_menu(item):
+
+    logger.info()
+
+    itemlist =[]
+
+    itemlist.append(item.clone(title="Todas",
+                               action="list_all",
+                               url=host + '/series/',
+                               type='recents'
+                               ))
+
+    itemlist.append(item.clone(title="Buscar",
+                               action="search",
+                               url=host + "/suggest/",
+                               type="s",
                                seccion='buscar'
                                ))
 
@@ -128,28 +150,6 @@ def sub_search(item):
     return itemlist
 
 
-def series_menu(item):
-
-    logger.info()
-
-    itemlist =[]
-
-    itemlist.append(item.clone(title="Todas",
-                               action="list_all",
-                               url=host + '/series/',
-                               type='serie'
-                               ))
-
-    itemlist.append(item.clone(title="Buscar",
-                               action="search",
-                               url=host + "/suggest/",
-                               type="s",
-                               seccion='buscar'
-                               ))
-
-    return itemlist
-
-
 def get_source(url, referer=None):
     logger.info()
     if referer is None:
@@ -162,14 +162,17 @@ def get_source(url, referer=None):
 def list_all (item):
     logger.info ()
     itemlist = []
-    if item.type in ['serie','recents']:
+    if 'series' in item.url:
         contentType = 'serie'
         action = 'seasons'
     else:
         contentType = 'pelicula'
         action = 'findvideos'
     if 'pagination' in item.url:
-        post = {'page':item.page, 'type':item.type,'slug':item.slug,'id':item.id}
+        if item.slug:
+            post = {'page':item.page, 'type':item.type,'slug':item.slug}
+        else:
+            post = {'page':item.page, 'type':item.type}
         post = urllib.urlencode(post)
         data =httptools.downloadpage(item.url, post=post, headers=CHANNEL_HEADERS, forced_proxy_opt=None).data
         data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
@@ -204,46 +207,38 @@ def list_all (item):
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb =True)
  #Paginacion
 
-    next_page_valid = scrapertools.find_single_match(data, '<div class="butmore" site=(?:""|"series") page="(\d+)" '
-                                                           'id="(.*?)" type="([^"]+)" limit="\d+">')
-    if item.type != 'normal' and (len(itemlist)>19 or next_page_valid):
-        type = item.type
-        if item.type == 'serie':
-            type = 'recents'
-        if next_page_valid:
-            page = str(int(next_page_valid[0])+1)
-            if item.type != 'recents':
-                id = next_page_valid[1]
-                type = next_page_valid[2]
-            else:
-                id =''
+    next_page_valid = scrapertools.find_single_match(data, '<div class="butmore" ([^>]+)>')
+    if (len(itemlist)>=19 or next_page_valid):
+        page = scrapertools.find_single_match(next_page_valid, 'page="([^"]+)"')
+        if item.type:
+            type = item.type
+        else:
+            type = scrapertools.find_single_match(next_page_valid, 'type="([^"]+)"')
+        if page:
+            page = int(page)
+            page += page
         else:
             if not item.page:
-                item.page = "1"
-            page = str(int(item.page)+1)
-            id = item.id
-
-        if type =='recents':
-            type_pagination = '/series/pagination/'
-        else:
-            type_pagination = '/pagination/'
-
-        url = host+type_pagination
-
+                item.page = 1
+            page = item.page + 1
+        
+        url = '%s/pagination/' %host
+        if 'series' in item.url:
+            url = '%s/series/pagination/' %host
         itemlist.append(item.clone(action = "list_all",
                                    title = 'Siguiente >>>',
                                    page=page,
                                    url = url,
-                                   id = id,
                                    type = type
                                    ))
     return itemlist
+
 
 def seccion(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
-    page = "1"
+    page = 1
     if item.seccion == 'generos':
         patron = '<li><a href="([^"]+)"><i class="ion-cube"></i>([^<]+)<'
         type = 'genre'
@@ -260,7 +255,7 @@ def seccion(item):
         itemlist.append(
             Item(action="list_all",
                  channel=item.channel,
-                 page = "1",
+                 page = 1,
                  slug = slug,
                  title=title,
                  type = type,
