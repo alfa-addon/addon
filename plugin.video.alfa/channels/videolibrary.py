@@ -159,6 +159,7 @@ def list_movies(item, silent=False):
                     texto_eliminar = config.get_localized_string(60018)
                 else:
                     texto_eliminar = config.get_localized_string(60019)
+                texto_reset = 'Sobrescribir película'
 
                 new_item.context = [{"title": texto_visto,
                                      "action": "mark_content_as_watched",
@@ -166,6 +167,10 @@ def list_movies(item, silent=False):
                                      "playcount": contador},
                                     {"title": texto_eliminar,
                                      "action": "delete",
+                                     "channel": "videolibrary",
+                                     "multicanal": multicanal}, 
+                                    {"title": texto_reset,
+                                     "action": "reset_movie",
                                      "channel": "videolibrary",
                                      "multicanal": multicanal}]
                 # ,{"title": "Cambiar contenido (PENDIENTE)",
@@ -313,6 +318,7 @@ def list_tvshows(item):
                     texto_eliminar = config.get_localized_string(60024)
                 else:
                     texto_eliminar = config.get_localized_string(60025)
+                texto_reset = 'Sobrescribir serie'
 
                 item_tvshow.context = [{"title": texto_visto,
                                         "action": "mark_content_as_watched",
@@ -324,6 +330,10 @@ def list_tvshows(item):
                                         "active": value},
                                        {"title": texto_eliminar,
                                         "action": "delete",
+                                        "channel": "videolibrary",
+                                        "multicanal": multicanal},
+                                       {"title": texto_reset,
+                                        "action": "reset_serie",
                                         "channel": "videolibrary",
                                         "multicanal": multicanal},
                                        {"title": config.get_localized_string(70269),
@@ -1126,6 +1136,24 @@ def delete(item):
         if platformtools.dialog_yesno(heading,
                                       config.get_localized_string(70088) % item.infoLabels['title']):
             delete_all(item)
+
+
+def reset_movie(item):
+    logger.info()
+    
+    if item.nfo:
+        videolibrarytools.reset_movie(item.nfo)
+    else:
+        logger.error("Error al crear de nuevo la película. No .nfo")
+
+
+def reset_serie(item):
+    logger.info()
+    
+    if item.nfo:
+        videolibrarytools.reset_serie(item.nfo)
+    else:
+        logger.error("Error al crear de nuevo la serie. No .nfo")
 
 
 def check_season_playcount(item, season):

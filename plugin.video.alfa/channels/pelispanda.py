@@ -581,7 +581,14 @@ def findvideos(item):
     if item.videolibray_emergency_urls:
         item.emergency_urls = []                                                #Iniciamos emergency_urls
         item.emergency_urls.append([])                                          #Reservamos el espacio para los .torrents locales
-        item.emergency_urls.append(matches)                                     #Salvamnos matches de los vídeos...  
+        matches_list = []                                                       # Convertimos matches-tuple a matches-list
+        for tupla in matches:
+            if isinstance(tupla, tuple):
+                matches_list.append(list(tupla))
+        if matches_list:
+            item.emergency_urls.append(matches_list)                            # Salvamnos matches de los vídeos...  
+        else:
+            item.emergency_urls.append(matches)
 
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     if not item.videolibray_emergency_urls:
@@ -596,20 +603,27 @@ def findvideos(item):
 
         item_local.url = generictools.convert_url_base64(scrapedurl, host_torrent)
         if item.videolibray_emergency_urls and item_local.url != scrapedurl:
-            item.emergency_urls[1][x] = item_local.url
+            item.emergency_urls[1][x][4] = item_local.url
         
         # Restauramos urls de emergencia si es necesario
         local_torr = ''
         if item.emergency_urls and not item.videolibray_emergency_urls:
-            item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0])     #Guardamos la url ALTERNATIVA
-            if item.armagedon:
-                item_local.url = item_local.torrent_alt                         #Restauramos la url
-                if item_local.url.startswith("\\") or item_local.url.startswith("/"):
-                    from core import filetools
-                    if item.contentType == 'movie':
-                        FOLDER = config.get_setting("folder_movies")
-                    else:
-                        FOLDER = config.get_setting("folder_tvshows")
+            try:                                                                # Guardamos la url ALTERNATIVA
+                if item.emergency_urls[0][0].startswith('http') or item.emergency_urls[0][0].startswith('//'):
+                    item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0], host_torrent)
+                else:
+                    item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0])
+            except:
+                item_local.torrent_alt = ''
+                item.emergency_urls[0] = []
+            from core import filetools
+            if item.contentType == 'movie':
+                FOLDER = config.get_setting("folder_movies")
+            else:
+                FOLDER = config.get_setting("folder_tvshows")
+            if item.armagedon and item_local.torrent_alt:
+                item_local.url = item_local.torrent_alt                         # Restauramos la url
+                if not item.torrent_alt.startswith('http'):
                     local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
             if len(item.emergency_urls[0]) > 1:
                 del item.emergency_urls[0][0]
@@ -639,9 +653,17 @@ def findvideos(item):
                 size = generictools.get_torrent_size(item_local.url, local_torr=local_torr) #Buscamos el tamaño en el .torrent desde la web
                 if 'ERROR' in size and item.emergency_urls and not item.videolibray_emergency_urls:
                     item_local.armagedon = True
-                    item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0])     #Restauramos la url
-                    local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
-                    size = generictools.get_torrent_size(item_local.url, local_torr=local_torr) #Buscamos el tamaño en el .torrent emergencia
+                    try:                                                        # Restauramos la url
+                        if item.emergency_urls[0][0].startswith('http') or item.emergency_urls[0][0].startswith('//'):
+                            item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0], host_torrent)
+                        else:
+                            item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0])
+                            if not item.url.startswith('http'):
+                                local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
+                    except:
+                        item_local.torrent_alt = ''
+                        item.emergency_urls[0] = []
+                    size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)
         if size:
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                         .replace('Mb', 'M·b').replace('.', ',')

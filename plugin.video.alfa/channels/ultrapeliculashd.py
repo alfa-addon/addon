@@ -96,9 +96,9 @@ def list_all(item):
     itemlist = list()
     next = False
 
-    soup = create_soup(item.url).find("div", class_="items")
+    soup = create_soup(item.url)
 
-    matches = soup.find_all("article", id=re.compile(r"^post-\d+"))
+    matches = soup.find("div", class_="items").find_all("article", id=re.compile(r"^post-\d+"))
 
     first = item.first
     last = first + 20
@@ -124,10 +124,10 @@ def list_all(item):
         url_next_page = item.url
         first = last
     else:
-        try:
-            url_next_page = soup.find("a", class_="arrow_pag")["href"]
-        except:
-            return itemlist
+        #try:
+        url_next_page = soup.find("a", class_="arrow_pag")["href"]
+        # except:
+        #     return itemlist
 
         url_next_page = '%s' % url_next_page
         first = 0

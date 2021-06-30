@@ -197,7 +197,7 @@ def sub_search(item):
     patron  = '(?is)class="col-xs-2".*?href="([^"]+)'
     patron += '.*?title="([^"]+)'
     patron += '.*?src="([^"]+)'
-    patron += '.*?main-info-list">Pel.cula de (\w+)'
+    patron += '.*?main-info-list">Pel.*?cula de (\w+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedyear in matches:
         idioma = "Latino"
