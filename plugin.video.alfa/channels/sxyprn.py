@@ -18,7 +18,6 @@ from core.item import Item
 from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
-from lib import alfa_assistant
 
 host = 'https://www.sxyprn.com'
 

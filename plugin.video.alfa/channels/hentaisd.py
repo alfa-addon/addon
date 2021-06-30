@@ -148,7 +148,7 @@ def findvideos(item):
             phantom = scrapertools.find_single_match(data, 'Phantom.Start\("(.*?)"\)')
             phantom = phantom.replace('"+"', '')
             import base64
-            packed = base64.b64decode(phantom)
+            packed = base64.b64decode(phantom).decode("utf8")
             unpacked = jsunpack.unpack(packed)
             url = scrapertools.find_single_match(unpacked, '"src","([^"]+)"')
             if not url.startswith("https"):
