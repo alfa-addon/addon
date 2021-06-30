@@ -122,9 +122,9 @@ def list_all(item):
         title = elem.find(["div", "ul"], class_="Title").text
         #thumb = elem.img["data-src"]
         thumb = elem.img["src"]
-
+        year = elem.find("span", class_="Qlty Yr").text
         itemlist.append(Item(channel=item.channel, url=url, title=title, thumbnail=thumb, action="seasons",
-                             contentSerieName=title,
+                             contentSerieName=title, infoLabels={"year": year},
                              context=filtertools.context(item, list_language, list_quality)))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
