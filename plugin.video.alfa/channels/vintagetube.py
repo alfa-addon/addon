@@ -95,7 +95,7 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     txt = scrapertools.find_single_match(data,'src=".*?(aHR0[^"]+)"')
     import base64
-    url = base64.b64decode(txt)
+    url = base64.b64decode(txt).decode("utf8")
     itemlist.append(item.clone(action="play", title = "%s", url=url, contentTitle=item.title))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
