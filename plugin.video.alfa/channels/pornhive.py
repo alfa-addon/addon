@@ -99,7 +99,7 @@ def findvideos(item):
     patron  = ';extra_urls\[\d+\]=\'([^\']+)\''
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl in matches:
-        url = base64.b64decode(scrapedurl)
+        url = base64.b64decode(scrapedurl).decode('utf-8')
         if "strdef" in url: 
             url = decode_url(url)
             if "strdef" in url:
@@ -139,8 +139,8 @@ def decode_url(txt):
     while rep == True:
         b64_data = scrapertools.find_single_match(data, '\(dhYas638H\("([^"]+)"\)')
         if b64_data:
-            b64_url = base64.b64decode(b64_data + "=")
-            b64_url = base64.b64decode(b64_url + "==")
+            b64_url = base64.b64decode(b64_data + "=").decode("utf8")
+            b64_url = base64.b64decode(b64_url + "==").decode("utf8")
             data = b64_url
         else:
             rep = False
