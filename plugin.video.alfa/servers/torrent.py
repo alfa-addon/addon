@@ -1956,7 +1956,6 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
     if item.url.startswith('magnet:'):
         item.downloadFilename = ':%s: %s' % (torr_client.upper(), filetools.join(folder, video_name))
         if item.torr_folder: item.torr_folder = folder
-    item.downloadQueued = 0
     time.sleep(1)
     update_control(item, function='wait_for_download_start')
     
@@ -2073,9 +2072,13 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                         "Te iremos guiando...", time=10000)
                 wait_time = wait_time / 6
                 fast = True
+                item.downloadQueued = 0
+                update_control(item, function='wait_for_download_downloading')
             elif torr_client in ['quasar', 'elementum', 'torrest'] and not torr_data['label'].startswith('0.00%') and not fast:
                 wait_time = wait_time / 6
                 fast = True
+                item.downloadQueued = 0
+                update_control(item, function='wait_for_download_downloading')
             
             if not torr_data['label'].startswith('100.00%'):
                 if not ret and rar_file:
@@ -2121,6 +2124,10 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
             except:
                 pass
             return (rar_file, save_path_videos, folder, rar_control)
+    else:
+        item.downloadQueued = 0
+        time.sleep(1)
+        update_control(item, function='wait_for_download_noweb')
     
     try:
         progreso.close()
