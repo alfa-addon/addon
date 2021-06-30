@@ -783,6 +783,8 @@ def post_tmdb_listado(item, itemlist):
                 en_videoteca = '(V)-'
 
         title += title_add.replace(' (MAX_EPISODIOS)', '')                      #Se añaden etiquetas adicionales, si las hay
+        if title_add and item_local.contentType == 'movie':
+            item_local.contentTitle += title_add.replace(' (MAX_EPISODIOS)', '')
 
         #Ahora maquillamos un poco los titulos dependiendo de si se han seleccionado títulos inteleigentes o no
         if not config.get_setting("unify"):                                     #Si Titulos Inteligentes NO seleccionados:
