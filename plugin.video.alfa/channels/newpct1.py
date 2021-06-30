@@ -47,11 +47,12 @@ decode_code = ''
 #page_url = 'pg/1'
 page_url = ''
 
-#category = 'pctmix1'                                                          # Clone preferido para Novedades
+#category = 'pctmix1'                                                            # Clone preferido para Novedades
 category = ''                                                                   # Clone preferido para Novedades
 clone_num = 3                                                                   # Número de Clones "buenos"
 clone_num_ext = 3                                                               # Número de Clones "válidos"
 clone_num_post = 1                                                              # Número de Clones "válidos" sin proxy-post
+channel_clone_post = ''
 
 #Código para permitir usar un único canal para todas las webs clones de NewPct1
 #Cargamos en .json del canal para ver las listas de valores en settings
@@ -96,6 +97,7 @@ if host_index > 0 or not clone_list_random:     #Si el Clone por defecto no es A
                     host = host_clone                                           #URL del Canal elegido
                     break
         i += 1
+if not channel_clone_post: channel_clone_post = channel_clone_post
 sufix = scrapertools.find_single_match(host, '\.\w+\/*$')
 download_sufix = 'descargar/torrent/'
 
