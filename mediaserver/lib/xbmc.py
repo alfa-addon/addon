@@ -2,6 +2,9 @@
 
 # librería que simula xbmc para evitar errores en módulos que lo usen en mediaserver
 # y no tener que poner excepciones en el código del addon
+import os
+
+warning_xbmcvfs = "WARNING: xbmc.{} is deprecated and might be removed in future kodi versions. Please use xbmcvfs.{} instead."
 
 def getCondVisibility(cond):
     cond = cond.lower()
@@ -16,19 +19,51 @@ def getCondVisibility(cond):
                 is_platform =  True
             elif 'win32' in platform and cond.endswith('windows'):
                 is_platform =  True
+            return is_platform
     elif cond.startswith('window'):
         if cond.startswith('window.ismedia'):
             return False
     else:
         return False
 
-
-def getInfoLabel(parm):
-    if parm == 'Container.PluginName': return 'plugin.video.alfa'
-    elif parm == 'Container.FolderName': return 'Alfa'
-
+def getInfoLabel(param):
+    param = str(param)
+    if param.startswith("Container"):
+        if param == 'Container.PluginName': return 'plugin.video.alfa'
+        elif param == 'Container.FolderName': return 'Alfa'
     return ''
 
+def sleep(time):
+    milisec = float(time) / 1000
+    time.sleep(milisec)
+
+
+# xbmcvfs functions (deprecated in Kodi 19 Matrix)
+
+def makeLegalFilename(path):
+    print(warning_xbmcvfs.format("makeLegalFilename", "makeLegalFilename"))
+    from lib import xbmcvfs
+    return xbmcvfs.makeLegalFilename(path)
+
+def translatePath(path):
+    print(warning_xbmcvfs.format("translatePath", "translatePath"))
+    from lib import xbmcvfs
+    return xbmcvfs.translatePath(path)
+
+def validatePath(path):
+    print(warning_xbmcvfs.format("validatePath", "validatePath"))
+    from lib import xbmcvfs
+    return xbmcvfs.validatePath(path)
+
+class Monitor(object):
+    class Monitor(object):
+        def waitForAbort(time):
+            milisec = float(time) / 1000
+            time.sleep(milisec)
+
+    def waitForAbort(time):
+        milisec = float(time) / 1000
+        time.sleep(milisec)
 
 class Player(object):
     def __init__(self):
@@ -54,20 +89,3 @@ class Player(object):
 
     def setSubtitles(subtitleFile):
         return True
-
-
-
-class Monitor(object):
-    class Monitor(object):
-        def waitForAbort(time):
-            milisec = float(time) / 1000
-            time.sleep(milisec)
-
-    def waitForAbort(time):
-        milisec = float(time) / 1000
-        time.sleep(milisec)
-
-
-def sleep(time):
-    milisec = float(time) / 1000
-    time.sleep(milisec)

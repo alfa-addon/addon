@@ -818,6 +818,7 @@ def channel_status(item, dict_values):
 
 
 def overwrite_tools(item):
+    import time
     import videolibrary_service
     from core import videolibrarytools
 
@@ -833,62 +834,51 @@ def overwrite_tools(item):
         show_list = []
         for path, folders, files in filetools.walk(videolibrarytools.TVSHOWS_PATH):
             show_list.extend([filetools.join(path, f) for f in files if f == "tvshow.nfo"])
+            
+        logger.debug("series_list %s" % show_list)
 
         if show_list:
             t = float(100) / len(show_list)
 
         for i, tvshow_file in enumerate(show_list):
-            head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)
-            path = filetools.dirname(tvshow_file)
-
-            if not serie.active:
-                # si la serie no esta activa descartar
-                continue
-
-            # Eliminamos la carpeta con la serie ...
-            filetools.rmdirtree(path)
-
-            # ... y la volvemos a añadir
-            videolibrary_service.update(path, p_dialog, i, t, serie, 3)
+            videolibrarytools.reset_serie(tvshow_file, p_dialog, i, t)
         p_dialog.close()
+        
+        if config.is_xbmc():
+            import xbmc
+            from platformcode import xbmc_videolibrary
+            xbmc_videolibrary.update(config.get_setting("folder_tvshows"), '_scan_series')      # Se cataloga SERIES en Kodi
+            while xbmc.getCondVisibility('Library.IsScanningVideo()'):                          # Se espera a que acabe el scanning
+                time.sleep(1)
+            for tvshow_file in show_list:
+                xbmc_videolibrary.mark_content_as_watched_on_alfa(tvshow_file)
 
         # movies
         heading = config.get_localized_string(60586)
-        p_dialog2 = platformtools.dialog_progress_bg(config.get_localized_string(60585), heading)
-        p_dialog2.update(0, '')
+        p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(60585), heading)
+        p_dialog.update(0, '')
 
         movies_list = []
         for path, folders, files in filetools.walk(videolibrarytools.MOVIES_PATH):
-            movies_list.extend([filetools.join(path, f) for f in files if f.endswith(".json")])
+            movies_list.extend([filetools.join(path, f) for f in files if f.endswith(".nfo")])
 
         logger.debug("movies_list %s" % movies_list)
 
         if movies_list:
             t = float(100) / len(movies_list)
 
-        for i, movie_json in enumerate(movies_list):
-            try:
-                from core import jsontools
-                path = filetools.dirname(movie_json)
-                movie = Item().fromjson(filetools.read(movie_json))
-
-                # Eliminamos la carpeta con la pelicula ...
-                filetools.rmdirtree(path)
-
-                import math
-                heading = config.get_localized_string(60587)
-
-                p_dialog2.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (movie.contentTitle,
-                                                                                   movie.channel.capitalize()))
-                # ... y la volvemos a añadir
-                videolibrarytools.save_movie(movie)
-            except Exception as ex:
-                logger.error("Error al crear de nuevo la película")
-                template = "An exception of type %s occured. Arguments:\n%r"
-                message = template % (type(ex).__name__, ex.args)
-                logger.error(message)
-
-        p_dialog2.close()
+        for i, movie_nfo in enumerate(movies_list):
+            videolibrarytools.reset_movie(movie_nfo, p_dialog, i, t)
+        p_dialog.close()
+        
+        if config.is_xbmc():
+            import xbmc
+            from platformcode import xbmc_videolibrary
+            xbmc_videolibrary.update(config.get_setting("folder_movies"), '_scan_series')       # Se cataloga CINE en Kodi
+            while xbmc.getCondVisibility('Library.IsScanningVideo()'):                          # Se espera a que acabe el scanning
+                time.sleep(1)
+            for movie_nfo in movies_list:
+                xbmc_videolibrary.mark_content_as_watched_on_alfa(movie_nfo)
 
 
 def report_menu(item):

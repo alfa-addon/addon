@@ -183,7 +183,7 @@ def get_signature(youtube_page_data):
 def extract_videos(video_id):
 
     youtube_page_data = ''
-    url = 'https://www.youtube.com/get_video_info?html5=1&video_id=%s&eurl=https://youtube.googleapis.com/v/%s&ssl_stream=1' % \
+    url = 'https://www.youtube.com/get_video_info?c=TVHTML5&cver=7.20201028&html5=1&video_id=%s&eurl=https://youtube.googleapis.com/v/%s&ssl_stream=1' % \
           (video_id, video_id)
     data = httptools.downloadpage(url).data
 

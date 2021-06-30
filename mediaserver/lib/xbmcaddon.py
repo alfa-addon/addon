@@ -3,7 +3,9 @@
 # librería que simula xbmcaddon para evitar errores en módulos que lo usen en mediaserver
 # y no tener que poner excepciones en el código del addon
 # =======================================================================================
-import os
+import os, sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 class Addon(object):
     def __init__(self, id):
@@ -60,7 +62,7 @@ class Addon(object):
                 return False
             else:
                 # special case return as str
-                if name in ["adult_password", "adult_aux_intro_password", "adult_aux_new_password1",
+                if setting_name in ["adult_password", "adult_aux_intro_password", "adult_aux_new_password1",
                             "adult_aux_new_password2"]:
                     return value
                 else:
@@ -107,7 +109,6 @@ class Addon(object):
             return os.getcwd()
 
         def addonProfile():
-            # return os.path.join(os.path.expanduser("~"), self.addon_name)
             return os.path.join(os.path.expanduser("~"), ".{}".format(self.addon_name.split(".")[2]))
         
         functions = {"path": addonPath(),

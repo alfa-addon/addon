@@ -163,6 +163,9 @@ def init():
         except:                                                                 # Si hay problemas de threading, nos vamos
             logger.error(traceback.format_exc())
 
+        #Ejecuta la sobrescritura de la videoteca para los canales seleccionados
+        reset_videotlibrary_by_channel()
+
     except:
         logger.error(traceback.format_exc())
 
@@ -946,3 +949,97 @@ def call_unrar(rar_control):
     return platformtools.rar_control_mng(item, xlistitem, mediaurl, rar_files, \
                     torr_client, password, size, rar_control)
 
+
+def reset_videotlibrary_by_channel(inactive=True):
+
+    ###### LISTA DE CANALES PARA SOBRESCRIBIR SU VIDEOTECA 
+    channels_list = ['grantorrent', 'cinetorrent', 'magnetpelis', 'pelispanda', 'mitorrent', 'mejortorrent']
+
+    if not channels_list or not config.get_setting("update", "videolibrary") or \
+                    config.get_setting("videolibrary_backup_scan", "videolibrary"):
+        return
+
+    try:
+        # Vemos si ya se ha sobrescrito, si no marcamos
+        if filetools.exists(ADDON_CUSTOMCODE_JSON):
+            json_data = jsontools.load(filetools.read(ADDON_CUSTOMCODE_JSON))
+        else:
+            json_data = {}
+        if json_data.get('reset_videotlibrary_by_channel', ''): return
+        json_data['reset_videotlibrary_by_channel'] = channels_list
+        if not filetools.write(ADDON_CUSTOMCODE_JSON, jsontools.dump(json_data)):
+            logger.error('No se puede actualizar el .json %s' % ADDON_CUSTOMCODE_JSON)
+            logger.error('Error sobrescribiendo la Videoteca para los canales: %s' % channels_list)
+            return
+
+        logger.info('Sobrescribiendo para canales: %s' % channels_list, force=True)
+        from core import videolibrarytools
+
+        # SERIES
+        show_list = []
+        for path, folders, files in filetools.walk(videolibrarytools.TVSHOWS_PATH):
+            for f in files:
+                if f == "tvshow.nfo":
+                    nfo_path = filetools.join(path, f)
+                    head_nfo, it = videolibrarytools.read_nfo(nfo_path)
+                    for channel, url in list(it.library_urls.items()):
+                        if channel in channels_list:
+                            show_list.extend([nfo_path])
+
+        logger.info("Lista de SERIES a sobrescribir: %s" % show_list, force=True)
+        if show_list:
+            heading = config.get_localized_string(60584)
+            p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(60585), heading)
+            p_dialog.update(0, '')
+            time.sleep(5)
+
+            if show_list:
+                t = float(100) / len(show_list)
+
+            for i, tvshow_file in enumerate(show_list):
+                videolibrarytools.reset_serie(tvshow_file, p_dialog, i, t, inactive)
+            p_dialog.close()
+
+            if config.is_xbmc():
+                import xbmc
+                from platformcode import xbmc_videolibrary
+                xbmc_videolibrary.update(config.get_setting("folder_tvshows"), '_scan_series')      # Se cataloga SERIES en Kodi
+                while xbmc.getCondVisibility('Library.IsScanningVideo()'):                          # Se espera a que acabe el scanning
+                    time.sleep(1)
+                for tvshow_file in show_list:
+                    xbmc_videolibrary.mark_content_as_watched_on_alfa(tvshow_file)
+
+        # MOVIES
+        movies_list = []
+        for path, folders, files in filetools.walk(videolibrarytools.MOVIES_PATH):
+            for f in files:
+                if f.endswith(".nfo"):
+                    nfo_path = filetools.join(path, f)
+                    head_nfo, it = videolibrarytools.read_nfo(nfo_path)
+                    for channel, url in list(it.library_urls.items()):
+                        if channel in channels_list:
+                            movies_list.extend([nfo_path])
+
+        logger.info("Lista de PELÍCULAS a sobrescribir: %s" % movies_list, force=True)
+        if movies_list:
+            heading = config.get_localized_string(60584)
+            p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(60585), heading)
+            p_dialog.update(0, '')
+
+            if movies_list:
+                t = float(100) / len(movies_list)
+
+            for i, movie_nfo in enumerate(movies_list):
+                videolibrarytools.reset_movie(movie_nfo, p_dialog, i, t)
+            p_dialog.close()
+
+            if config.is_xbmc():
+                import xbmc
+                from platformcode import xbmc_videolibrary
+                xbmc_videolibrary.update(config.get_setting("folder_movies"), '_scan_series')       # Se cataloga SERIES en Kodi
+                while xbmc.getCondVisibility('Library.IsScanningVideo()'):                          # Se espera a que acabe el scanning
+                    time.sleep(1)
+                for movie_nfo in movies_list:
+                    xbmc_videolibrary.mark_content_as_watched_on_alfa(movie_nfo)
+    except:
+        logger.error(traceback.format_exc())

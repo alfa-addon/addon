@@ -1490,6 +1490,7 @@ def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[], p
             #logger.debug(item_found.infoLabels['tmdb_id'] + ' / ' + item.infoLabels['tmdb_id'])
             #logger.debug(str(item_found.language) + ' / ' + str(item.language))
             #logger.debug(str(item_found.quality) + ' / ' + str(item.quality))
+            #logger.debug(str(item_found.url) + ' / ' + str(item.url))
             if item_found.url in str(list_temps):                               # Si ya está la url, pasamos a la siguiente
                 continue
             if not item_found.infoLabels['tmdb_id']:                            # tiene TMDB?
@@ -2809,6 +2810,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     if item: item_back = item.clone()
     it_back = it.clone()
     ow_force_param = True
+    overwrite_param = overwrite
     update_stat = 0
     delete_stat = 0
     canal_org_des_list = []
@@ -2959,35 +2961,42 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         logger.error('Error en el proceso de RECARGA de URLs de Emergencia')
         logger.error(traceback.format_exc())
     """
+    
+    import ast
+    intervencion_list = ast.literal_eval(intervencion)                      #Convertir a Array el string
+    #logger.debug(intervencion_list)
         
-    try:    
-        if item.url and not channel_py in item.url and it.emergency_urls:       #Viene de actualización de videoteca de series
-            #Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
-            if (config.get_setting("emergency_urls", item.channel) == 1 and (not item.emergency_urls \
-                        or (item.emergency_urls and not item.emergency_urls.get(channel_alt, False)))) or \
-                        (config.get_setting("emergency_urls", item.channel) == 2 \
-                        and item.emergency_urls.get(channel_alt, False)) or \
-                        config.get_setting("emergency_urls", item.channel) == 3 or emergency_urls_force:
-                intervencion += ", ('1', '%s', '%s', '', '', '', '', '', '', '', '*', '%s', 'emerg')" % \
-                        (channel_alt, channel_alt, config.get_setting("emergency_urls", item.channel))
-
-        elif it.library_urls:                                                   #Viene de "listar peliculas´"
-            for canal_vid, url_vid in list(it.library_urls.items()):            #Se recorre "item.library_urls" para buscar canales candidatos
-                if canal_vid == channel_py:                                     #Si tiene Newcpt1 en canal, es un error
-                    continue
-                canal_vid_alt = "'%s'" % canal_vid
-                if canal_vid_alt in fail_over_list:                             #Se busca si es un clone de newpct1
-                    channel_bis = channel_py
-                else:
-                    channel_bis = canal_vid
+    try:
+        for activo, canal_org, canal_des, url_org, url_des, patron1, patron2, patron3, patron4, patron5, content_inc, content_exc, ow_force in intervencion_list:
+            if activo == '1' and channel_alt == canal_org: break
+        else:
+            if item.url and not channel_py in item.url and it.emergency_urls:       #Viene de actualización de videoteca de series
                 #Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
-                if (config.get_setting("emergency_urls", channel_bis) == 1 and (not it.emergency_urls \
-                        or (it.emergency_urls and not it.emergency_urls.get(canal_vid, False)))) \
-                        or (config.get_setting("emergency_urls", channel_bis) == 2 \
-                        and it.emergency_urls.get(canal_vid, False)) or \
-                        config.get_setting("emergency_urls", channel_bis) == 3 or emergency_urls_force:
+                if (config.get_setting("emergency_urls", item.channel) == 1 and (not item.emergency_urls \
+                            or (item.emergency_urls and not item.emergency_urls.get(channel_alt, False)))) or \
+                            (config.get_setting("emergency_urls", item.channel) == 2 \
+                            and item.emergency_urls.get(channel_alt, False)) or \
+                            config.get_setting("emergency_urls", item.channel) == 3 or emergency_urls_force:
                     intervencion += ", ('1', '%s', '%s', '', '', '', '', '', '', '', '*', '%s', 'emerg')" % \
-                        (canal_vid, canal_vid, config.get_setting("emergency_urls", channel_bis))
+                            (channel_alt, channel_alt, config.get_setting("emergency_urls", item.channel))
+
+            elif it.library_urls:                                                   #Viene de "listar peliculas´"
+                for canal_vid, url_vid in list(it.library_urls.items()):            #Se recorre "item.library_urls" para buscar canales candidatos
+                    if canal_vid == channel_py:                                     #Si tiene Newcpt1 en canal, es un error
+                        continue
+                    canal_vid_alt = "'%s'" % canal_vid
+                    if canal_vid_alt in fail_over_list:                             #Se busca si es un clone de newpct1
+                        channel_bis = channel_py
+                    else:
+                        channel_bis = canal_vid
+                    #Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
+                    if (config.get_setting("emergency_urls", channel_bis) == 1 and (not it.emergency_urls \
+                            or (it.emergency_urls and not it.emergency_urls.get(canal_vid, False)))) \
+                            or (config.get_setting("emergency_urls", channel_bis) == 2 \
+                            and it.emergency_urls.get(canal_vid, False)) or \
+                            config.get_setting("emergency_urls", channel_bis) == 3 or emergency_urls_force:
+                        intervencion += ", ('1', '%s', '%s', '', '', '', '', '', '', '', '*', '%s', 'emerg')" % \
+                            (canal_vid, canal_vid, config.get_setting("emergency_urls", channel_bis))
     except:
         logger.error('Error en el proceso de ALMACENAMIENTO de URLs de Emergencia')
         logger.error(traceback.format_exc())
@@ -2996,12 +3005,12 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     if (channel not in intervencion and channel_py_alt not in intervencion and \
                         category not in intervencion and channel_alt != 'videolibrary') or not \
                         item.title or status_migration:                     #lookup o migración
+        if int(overwrite_param) == 3 and item.channel == channel_py and not path: item.channel = item.category.lower()
         return (item, it, overwrite)                                        #... el canal/clone está listado
-        
-    import ast
+
     intervencion_list = ast.literal_eval(intervencion)                      #Convertir a Array el string
     #logger.debug(intervencion_list)
-
+    
     if lookup == True:
         overwrite = False                                                   #Solo avisamos si hay cambios
     i = 0
@@ -3162,6 +3171,16 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     item.channel = canal_des_def                    #Cambiamos el canal.  Si es clone, lo hace el canal
                     if channel_alt == item.category.lower():                    #Actualizamos la Categoría y si la tenía
                         item.category = item.channel.capitalize()
+                if item.channel == channel_py and int(overwrite_param) == 3:    #Si se resetea la videoteca, se regeneran a clones actuales
+                    if not path: item.channel = canal_des_def
+                    item.category = canal_des_def.capitalize()
+                    if item.channel_redir: del item.channel_redir
+                    if it.channel_redir: del it.channel_redir
+                    if item.category_alt: del item.category_alt
+                    if item.library_urls:
+                        item.library_urls.pop(canal_org_def, None)
+                        it.library_urls = item.library_urls
+                        filetools.write(filetools.join(path, '/tvshow.nfo'), head_nfo + it.tojson())    #escribo el .nfo
                 if ow_force_def == 'force' and item.contentType != 'movie':     #Queremos que el canal revise la serie entera?
                     item.ow_force = '1'                                         #Se lo decimos
                 if ow_force_def in ['force', 'auto']:                           #Sobreescribir la series?
@@ -3311,6 +3330,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
             logger.debug('URL cambiada: '+ str(it.library_urls))
         else:
             logger.debug('URL cambiada: '+ str(item.url))
+    if update_stat == 0 and path == False and int(overwrite_param) == 3 and item.channel == channel_py:
+        item.channel = item.category.lower()
 
     return (item, it, overwrite)
     
