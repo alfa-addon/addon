@@ -7,6 +7,11 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+if PY3:
+    import urllib.parse as urllib
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from core import httptools
@@ -144,20 +149,42 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
+    servers = {"6": "https://www.yourupload.com/embed/%s", "15": "https://mega.nz/embed/%s",
+               "21": "https://www.burstcloud.co/embed/%s", "12": "https://ok.ru/videoembed/%s",
+               "17": "https://videobin.co/embed-%s.html", "9": host + "stream/amz.php?v=%s",
+               "11": host +"stream/amz.php?v=%s", "2": "https://www.fembed.com/v/%s",
+               "3": "https://www.mp4upload.com/embed-%s.html", "4": "https://sendvid.com/embed/%s",
+               "19": "https://videa.hu/player?v=%s"}
 
     soup = create_soup(item.url, unescape=True)
 
     pl = soup.find("div", class_="player-container")
+
+
+
     script = pl.find("script").text
     urls = scrapertools.find_multiple_matches(script, "src='([^']+)'")
 
     for url in urls:
 
+        srv_id, v_id = scrapertools.find_single_match(url, "player=(\d+)&code=([^$]+)")
+        if urllib.unquote(v_id).startswith("/"):
+            v_id = v_id[1:]
+
+        if srv_id not in servers:
+            srv_data = httptools.downloadpage(url).data
+            url = scrapertools.find_single_match(srv_data, 'playerContainer.innerHTML .*?src="([^"]+)"')
+        else:
+            srv = servers.get(srv_id, "directo")
+            if srv != "directo":
+                url = srv % v_id
+
         if "/stream/" in url:
-            url = host+url.replace('..', '').replace("/stream/", "stream/")
             data = httptools.downloadpage(url, headers={'Referer': item.url}).data
             url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace('\\/', '/')
-
+        if not url:
+            continue
+        url = urllib.unquote(url)
         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, language=IDIOMAS['vose'],
                              infoLabels=item.infoLabels))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())

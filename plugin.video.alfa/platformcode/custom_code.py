@@ -953,7 +953,7 @@ def call_unrar(rar_control):
 def reset_videotlibrary_by_channel(inactive=True):
 
     ###### LISTA DE CANALES PARA SOBRESCRIBIR SU VIDEOTECA 
-    channels_list = ['grantorrent', 'cinetorrent', 'magnetpelis', 'pelispanda', 'mitorrent', 'mejortorrent']
+    channels_list = []
 
     if not channels_list or not config.get_setting("update", "videolibrary") or \
                     config.get_setting("videolibrary_backup_scan", "videolibrary"):

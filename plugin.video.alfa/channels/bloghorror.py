@@ -127,9 +127,12 @@ def findvideos(item):
             lang = 'VO'
         else:
             lang = 'VOSE'
+        try:
+            qlty = quality[qlty_cnt]
+            qlty_cnt += 1
+        except:
+            qlty = "SD"
 
-        qlty = quality[qlty_cnt]
-        qlty_cnt += 1
 
         itemlist.append(Item(channel=item.channel, title="[%s][%s][%s]", url=url, action="play", quality=qlty,
                              language=lang, subtitle=sub_url, infoLabels=item.infoLabels))

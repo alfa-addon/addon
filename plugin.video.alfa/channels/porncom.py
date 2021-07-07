@@ -121,12 +121,12 @@ def play(item):
     logger.info()
     itemlist = []
     import base64
-    url = base64.b64decode(item.url)
-    url = url.decode("utf8")
-    url = "https:/%s" % url
+    url = base64.b64decode(item.url).decode("utf8")
+    if not url.startswith("https"):
+        url = "https:/%s" % url
     if "vid.com/v/" in url:
         url = httptools.downloadpage(url).url
-    logger.debug(url)
+    # logger.debug(url)
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
