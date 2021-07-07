@@ -197,6 +197,8 @@ def episodesxseason(item):
     infoLabels = item.infoLabels
 
     for elem in matches:
+        if elem.find("i", class_="fa fa-calendar"):
+            continue
         url = elem.a["href"]
         episode = scrapertools.find_single_match(elem.h2.text, "\d+x(\d+)")
         title = "%sx%s" % (infoLabels["season"], episode)
