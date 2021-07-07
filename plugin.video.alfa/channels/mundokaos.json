@@ -1,11 +1,11 @@
 {
-  "id": "pelisflix",
-  "name": "Pelisflix",
+  "id": "mundokaos",
+  "name": "mundokaos",
   "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat", "cast"],
-  "thumbnail": "https://pelisflix.io/wp-content/uploads/2020/04/cropped-abc5d335434b5b03a7d1c54f40ac3425.png",
+  "thumbnail": "https://mundokaos.net/wp-content/uploads/2021/06/cropped-Untitled-2.png",
   "banner": "",
   "categories": [
     "movie",

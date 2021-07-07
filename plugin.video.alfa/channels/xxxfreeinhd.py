@@ -135,8 +135,8 @@ def decode_url(txt):
     n = 2
     while n > 0:
         b64_url = scrapertools.find_single_match(data, '\(dhYas638H\("([^"]+)"\)')
-        b64_url = base64.b64decode(b64_url + "=")
-        b64_url = base64.b64decode(b64_url + "==")
+        b64_url = base64.b64decode(b64_url + "=").decode("utf8")
+        b64_url = base64.b64decode(b64_url + "==").decode("utf8")
         data = b64_url
         n -= 1
     url = scrapertools.find_single_match(b64_url, '<iframe src="([^"]+)"')

@@ -216,7 +216,11 @@ def listado(item):                                                              
         
         if item.extra == 'search':
             #Patrón para búsquedas
-            patron = '<div\s*id="*fgsdhkrhskhs"*\s*>\s*()<a\s*href="*([^>]+)"*\s*>\s*([^<]+)<\/a>(?:.*?<div\s*class="*fjewiqo"*>\s*([^<]+)<)?.*?<img.*?src="*((?:http|\/)[^"]+(?:\.jpg|\.png))"*(?:.*?<div\s*id=[^>]+>\s*([^<]*)<)?(?:.*?<i\s*class="*fa[^>]+><\/i>\s*([^<]+)<)?'
+            patron = '<div\s*id="*fgsdhkrhskhs"*\s*>\s*()<a\s*href="*([^>]+)"*\s*>'
+            patron += '\s*([^<]+)<\/a>(?:.*?<div\s*class="*fjewiqo"*>\s*([^<]+)<)?'
+            patron += '.*?<img.*?src="*((?:http|\/)[^"]+(?:\.jpg|\.png))"*'
+            patron += '(?:.*?<div\s*id=[^>]+>\s*([^<]*)<)?(?:.*?<i\s*class="*fa[^>]+><\/i>\s*([^<]+)<)?'
+            patron += '(?:.*div\s*class="*bcvxgfgjnvcf"*>\s*([^>|\s*]*)\s*<\/div>)?'
         else:
             #Patrón para pelis, series y documentales
             patron = 'data-index="*(\d*)"*>\s*<div\s*id="*[^>]+"*>\s*<a\s*href='
@@ -224,6 +228,7 @@ def listado(item):                                                              
             patron += '(?:id="*mjikfdoia|class="*fjewiqo)"*>\s*([^<]+)<)?(?:.*?<div\s*class='
             patron += '"*ansias"*>\s*([^<]*)<)?.*?<img.*?src="*((?:http|\/)[^"]+(?:\.jpg|\.png))"*'
             patron += '.*?<div\s*id="*vfdsyydystyretg"*>\s*([^<]+)<\/div>'
+            patron += '()'
 
         if not item.matches:                                                    # De pasada anterior?
             matches = re.compile(patron, re.DOTALL).findall(data)
@@ -293,7 +298,7 @@ def listado(item):                                                              
         #            ' / last_page_print: ' + str(last_page_print) + ' / search_lines: ' + str(search_lines))
         
         #Empezamos el procesado de matches
-        for index, scrapedurl, scrapedtitle, scrapedyear, _scrapedlanguage, _scrapedthumb, scrapedquality in matches:
+        for index, scrapedurl, scrapedtitle, scrapedyear, _scrapedlanguage, _scrapedthumb, scrapedquality, scrapedinfo in matches:
             cnt_match += 1
             
             if item.extra == 'search':
@@ -313,6 +318,8 @@ def listado(item):                                                              
             url = scrapedurl
 
             title_subs = []                                                     #creamos una lista para guardar info importante
+            if scrapedinfo:
+                title_subs += [scrapedinfo]
             
             # Slugify, pero más light
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
@@ -451,7 +458,6 @@ def listado(item):                                                              
         
         #Buscamos la próxima página
         if item.extra == 'search':
-            logger.error(cnt_tot_match)
             next_page_url = re.sub(r'start=\d+', 'start=%s' % str(int(cnt_tot_match)), next_page_url)
     
     #Pasamos a TMDB la lista completa Itemlist

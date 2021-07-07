@@ -23,7 +23,7 @@ host = 'http://www.vintagexxxsex.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Top" , action="lista", url=host + "/all-top/1/"))
+    itemlist.append(item.clone(title="Top" , action="lista", url=host))
     itemlist.append(item.clone(title="Novedades" , action="lista", url=host + "/all-new/1/"))
     itemlist.append(item.clone(title="Longitud" , action="lista", url=host + "/all-longest/1/"))
     # itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
@@ -63,6 +63,22 @@ def categorias(item):
     return itemlist
 
 
+
+# <div class="preview">
+                    # <div class="prev">
+                        # <a href="/real.php?tube=/en/video/oldxschoo0748-05/" target="_blank" title="OLDXSCHOO0748 05">
+                            # <div class="thumb">
+                                # <img src="//th.cdngangsta.com/images/xvideos/63/a1/8c/63a18cfbe913496b1b4d12d04f11cdb8.jpg" alt="OLDXSCHOO0748 05">
+                                # <div class="icon-bg"><div class="icon"><i class="fa fa-play"></i></div></div>
+                            # </div>
+                            # <div class="name">OLDXSCHOO0748 05</div>
+                        # </a>
+                        # <div class="info">
+                            # <i class="fa fa-thumbs-up"></i> 82% / <i class="fa fa-eye"></i> 917 813 / <i class="fa fa-clock-o"></i> 29:00
+                        # </div>
+                    # </div>
+                # </div>
+
 def lista(item):
     logger.info()
     itemlist = []
@@ -74,6 +90,7 @@ def lista(item):
     patron += '<div class="name">([^<]+)<.*?'
     patron += '<i class="fa fa-clock-o"></i>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
+    logger.debug(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" %(scrapedtime.strip(),scrapedtitle)
         scrapedurl = scrapedurl.replace("/real.php?tube=", "")
@@ -97,7 +114,7 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     txt = scrapertools.find_single_match(data,'src=".*?(aHR0[^"]+)"')
     import base64
-    url = base64.b64decode(txt)
+    url = base64.b64decode(txt).decode("utf8")
     itemlist.append(item.clone(action="play", title = "%s", url=url, contentTitle=item.title))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
