@@ -93,14 +93,14 @@ def update(path, p_dialog, i, t, serie, overwrite):
                                                                                               silent=True,
                                                                                               overwrite=overwrite_back)
                         #serie= videolibrary.check_season_playcount(serie, serie.contentSeason)
-                        #if filetools.write(path + '/tvshow.nfo', head_nfo + it.tojson()):
+                        #if videolibrarytools.write_nfo(path + '/tvshow.nfo', head_nfo, it):
                         #    serie.infoLabels['playcount'] = serie.playcount
                     else:
                         insertados, sobreescritos, fallidos = videolibrarytools.save_episodes(path, itemlist, serie,
                                                                                               silent=True,
                                                                                               overwrite=overwrite)
                         #it = videolibrary.check_season_playcount(it, it.contentSeason)
-                        #if filetools.write(path + '/tvshow.nfo', head_nfo + it.tojson()):
+                        #if videolibrarytools.write_nfo(path + '/tvshow.nfo', head_nfo, it):
                         #    serie.infoLabels['playcount'] = serie.playcount
                     insertados_total += insertados
 
@@ -294,7 +294,7 @@ def check_for_update(overwrite=True):
                             serie.active = interval
                         serie.channel = "videolibrary"
                         serie.action = "get_seasons"
-                        filetools.write(tvshow_file, head_nfo + serie.tojson())
+                        res = videolibrarytools.write_nfo(tvshow_file, head_nfo, serie)
 
                     if serie_actualizada and not config.get_setting('cleanlibrary', 'videolibrary', default=False):
                         if config.get_setting("search_new_content", "videolibrary") == 0:
