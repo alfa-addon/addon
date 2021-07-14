@@ -52,6 +52,14 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://max.porn/videos/[0-9]+/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://hello.porn/videos/[0-9]+/)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://www.pervclips.com/tube/videos/[A-z0-9-]+/)",
         "url": "\\1"
       },
