@@ -193,7 +193,7 @@ def sync_trakt_addon(path_folder):
                             serie.library_playcounts.update({serie.title: 1})
 
                         logger.debug("los valores nuevos %s " % serie.library_playcounts)
-                        filetools.write(tvshow_file, head_nfo + serie.tojson())
+                        res = videolibrarytools.write_nfo(tvshow_file, head_nfo, serie)
 
                         break
                     else:
@@ -530,7 +530,7 @@ def mark_content_as_watched_on_alfa(path):
                 season_num = int(scrapertools.find_single_match(season, 'season (\d+)'))    #salvamos el núm, de Temporada
                 item = videolibrary.check_season_playcount(item, season_num)    #llamamos al método que actualiza Temps. y Series
 
-    filetools.write(path, head_nfo + item.tojson())
+    res = videolibrarytools.write_nfo(path, head_nfo, item)
     
     #logger.debug(item)
     

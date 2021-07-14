@@ -298,7 +298,8 @@ def play(item):
     itemlist = list()
 
     url = create_soup(item.url).find("div", class_="Video").iframe["src"]
-    if "streamcheck" in url:
+
+    if "streamcheck" in url or "//sc." in url:
         api_url = "%sstreamcheck/r.php" % host
         v_id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
         post = {"h": v_id}

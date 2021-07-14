@@ -27,6 +27,7 @@ from bs4 import BeautifulSoup
 
 
 host = 'https://cuevana3.io/'
+forced_proxy_opt = 'ProxyDirect'
 
 
 IDIOMAS = {"optl": "LAT", "opte": "CAST", "opts": "VOSE"}
@@ -165,13 +166,10 @@ def findvideos(item):
             if 'goto_ddh.php' in url:
                 base_url = "https://api.cuevana3.io/ir/redirect_ddh.php"
 
-            url = httptools.downloadpage(base_url, post={param: id}, timeout=5, 
+            url = httptools.downloadpage(base_url, post={param: id}, timeout=5, forced_proxy_opt=forced_proxy_opt, 
                                        follow_redirects=False, ignore_response_code=True)
             if url.sucess or url.code == 302:
                 url = url.headers.get('location', '')
-            else:
-                url = httptools.downloadpage(base_url, post={param: id}, forced_proxy='ProxyCF', 
-                                       follow_redirects=False).headers.get('location', '')
 
         if url:
             itemlist.append(Item(channel=item.channel, title="%s", url=url, action="play", language=lang,
@@ -245,7 +243,7 @@ def play(item):
     if "damedamehoy" in item.url:
         item.url, id = item.url.split("#")
         new_url = "https://damedamehoy.xyz/details.php?v=%s" % id
-        v_data = httptools.downloadpage(new_url).json
+        v_data = httptools.downloadpage(new_url, forced_proxy_opt=forced_proxy_opt).json
         item.url = v_data["file"]
 
     return [item]

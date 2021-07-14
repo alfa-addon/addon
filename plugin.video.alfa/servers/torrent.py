@@ -577,6 +577,7 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
         return torrents_path, []                                                #Si hay un error, devolvemos el "path" vacío
 
     torrent_file = ''
+    torrent_file_list = []                                                      # Creamos una lista por si el zip/rar tiene más de un .torrent
     t_hash = ''
     url_save = url
     PK = 'PK'
@@ -699,7 +700,8 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
             subtitle_path = config.get_kodi_setting("subtitles.custompath")
             logger.info('Es un archivo .%s: ' % arch_ext.upper() + url)
             
-            torrents_path_zip = filetools.join(videolibrary_path, 'temp_torrents_arch')                     #Carpeta de trabajo
+            torrents_path_zip = filetools.join(videolibrary_path, 'temp_torrents_arch', \
+                        filetools.basename(url).replace('.zip', '').replace('.rar', ''))
             torrents_path_zip = filetools.encode(torrents_path_zip)
             torrents_path_zip_file = filetools.join(torrents_path_zip, 'temp_torrents_arch.%s' % arch_ext)  #Nombre del .zip
             
@@ -707,10 +709,11 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
             time.sleep(1)                                                       #Hay que esperar, porque si no da error
             filetools.mkdir(torrents_path_zip)                                  #La creamos de nuevo
             
-            if filetools.write(torrents_path_zip_file, torrent_file, vfs=VFS):  #Salvamos el .zip
+            if filetools.write(torrents_path_zip_file, torrent_file, vfs=VFS):  #Salvamos el .zip/.rar
                 torrent_file = ''                                               #Borramos el contenido en memoria
                 if arch_ext == 'zip':
-                    try:                                                            #Extraemos el .zip
+                    # Extraemos el .zip
+                    try:
                         from core import ziptools
                         unzipper = ziptools.ziptools()
                         unzipper.extract(torrents_path_zip_file, torrents_path_zip)
@@ -719,7 +722,7 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
                         xbmc.executebuiltin('Extract("%s", "%s")' % (torrents_path_zip_file, torrents_path_zip))
                         time.sleep(1)
                 else:
-                    # Empezando la extracción del .rar del APK
+                    # Empezando la extracción del .rar
                     try:
                         from lib import rarfile
                         archive = rarfile.RarFile(torrents_path_zip_file)
@@ -732,13 +735,19 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
                         input_file = filetools.join(root, file)                 #ruta al archivo
                         if file.endswith(".torrent"):
                             torrent_file = filetools.read(input_file, mode='rb', vfs=VFS)  #leemos el .torrent
+                            torrent_file_list += [(input_file, torrent_file)]
                         elif file.endswith(".srt") and not lookup:              #archivo de subtítulos.  Lo copiamos
                             res = filetools.copy(input_file, filetools.join(filetools.dirname(torrents_path_encode), file), silent=True)
                             if res: subtitles += [filetools.join(filetools.dirname(torrents_path_encode), file)]
                             if subtitle_path:
                                 filetools.copy(input_file, filetools.join(subtitle_path, file), silent=True)
 
-            filetools.rmdirtree(torrents_path_zip)                              #Borramos la carpeta temporal
+            if len(torrent_file_list) <= 1:
+                filetools.rmdirtree(torrents_path_zip)                          #Borramos la carpeta temporal
+            else:
+                if data_torrent:
+                    return (torrent_file_list, '', subtitles)
+                return torrent_file_list, subtitles
 
         #Si no es un archivo .torrent (RAR, HTML,..., vacío) damos error
         patron = '^d\d+:.*?\d+:'
