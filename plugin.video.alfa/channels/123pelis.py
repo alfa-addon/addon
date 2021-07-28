@@ -103,16 +103,12 @@ def list_all(item):
     soup = create_soup(item.url)
     matches = soup.find("div", class_="content")
     for elem in matches.find_all("article", id=re.compile(r"^post-\d+")):
-
-        info_1 = elem.find("div", class_="poster")
-        info_2 = elem.find("div", class_="data")
-
-        thumb = info_1.img["src"]
-        title = info_1.img["alt"]
+        title = elem.img["alt"]
         title = re.sub("VOSE", "", title)
-        url = info_1.a["href"]
+        url = elem.a["href"]
+        thumb = elem.img["data-src"]
         try:
-            year = info_2.find("span", text=re.compile(r"\d{4}")).text.split(",")[-1]
+            year = elem.find("span", text=re.compile(r"\d{4}")).text.split(",")[-1]
         except:
             pass
         new_item = Item(channel=item.channel, url=url, title=title, thumbnail=thumb, infoLabels={"year": year.strip()})

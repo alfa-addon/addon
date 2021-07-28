@@ -33,7 +33,6 @@ def get_video_url(page_url, user="", password="", video_password=""):
         subtitle= base_sub % (sub_data['hash'], sub_data['id'], sub_data['extension'])
     except:
         subtitle = ''
-    logger.error(data)
     for url in data["data"]:
         video_urls.append([url["label"] + " [Fembed]", url["file"],0, subtitle])
     return video_urls
