@@ -101,7 +101,7 @@ def list_movies(item, silent=False):
                             if not new_item.zombie:
                                 nfo_path = filetools.join(raiz, f)
                                 zombie_item = new_item.clone(zombie=True)
-                                filetools.write(nfo_path, head_nfo + zombie_item.tojson())
+                                res = videolibrarytools.write_nfo(nfo_path, head_nfo, zombie_item)
                         else:
                             confirm = True
 
@@ -115,7 +115,7 @@ def list_movies(item, silent=False):
                                 zombie_list.append(canal)
                                 nfo_path = filetools.join(raiz, f)
                                 zombie_item = new_item.clone(zombie=True)
-                                filetools.write(nfo_path, head_nfo + zombie_item.tojson())
+                                res = videolibrarytools.write_nfo(nfo_path, head_nfo, zombie_item)
 
                 if len(dead_list) > 0:
                     for canal in dead_list:
@@ -258,7 +258,7 @@ def list_tvshows(item):
                             if not item_tvshow.zombie:
                                 tvshow_path = filetools.join(raiz, f)
                                 zombie_item = item_tvshow.clone(zombie=True)
-                                filetools.write(tvshow_path, head_nfo + zombie_item.tojson())
+                                res = videolibrarytools.write_nfo(tvshow_path, head_nfo, zombie_item)
                         else:
                             confirm = True
 
@@ -272,7 +272,7 @@ def list_tvshows(item):
                                 zombie_list.append(canal)
                                 tvshow_path = filetools.join(raiz, f)
                                 zombie_item = item_tvshow.clone(zombie=True)
-                                filetools.write(tvshow_path, head_nfo + zombie_item.tojson())
+                                res = videolibrarytools.write_nfo(tvshow_path, head_nfo, zombie_item)
 
                 if len(dead_list) > 0:
                     for canal in dead_list:
@@ -891,7 +891,7 @@ def verify_playcount_series(item, path):
                 season = scrapertools.find_single_match(key, 'season (\d+)')        #Obtenemos en núm. de Temporada
                 it = check_season_playcount(it, season)
         # Guardamos los cambios en item.nfo
-        if filetools.write(nfo_path, head_nfo + it.tojson()):
+        if videolibrarytools.write_nfo(nfo_path, head_nfo, it):
             return (it, estado)
     return (item, False)
 
@@ -932,7 +932,7 @@ def mark_content_as_watched2(item):
             #logger.debug(it) 
 
         # Guardamos los cambios en item.nfo
-        if filetools.write(item.nfo, head_nfo + it.tojson()):
+        if videolibrarytools.write_nfo(item.nfo, head_nfo, it):
             item.infoLabels['playcount'] = item.playcount
             #logger.debug(item.playcount)
 
@@ -972,7 +972,7 @@ def mark_content_as_watched(item):
             it = check_season_playcount(it, item.contentSeason)
 
         # Guardamos los cambios en item.nfo
-        if filetools.write(item.nfo, head_nfo + it.tojson()):
+        if videolibrarytools.write_nfo(item.nfo, head_nfo, it):
             item.infoLabels['playcount'] = item.playcount
 
             if item.contentType == 'tvshow' and item.type != 'episode' :
@@ -1041,7 +1041,7 @@ def mark_season_as_watched(item):
             it = check_tvshow_playcount(it, item.contentSeason)
 
         # Guardamos los cambios en tvshow.nfo
-        filetools.write(f, head_nfo + it.tojson())
+        res = videolibrarytools.write_nfo(f, head_nfo, it)
         item.infoLabels['playcount'] = item.playcount
 
         if config.is_xbmc():
@@ -1056,7 +1056,7 @@ def mark_tvshow_as_updatable(item):
     logger.info()
     head_nfo, it = videolibrarytools.read_nfo(item.nfo)
     it.active = item.active
-    filetools.write(item.nfo, head_nfo + it.tojson())
+    res = videolibrarytools.write_nfo(item.nfo, head_nfo, it)
 
     platformtools.itemlist_refresh()
 
@@ -1124,7 +1124,7 @@ def delete(item):
             del item_nfo.library_urls[canal]
             if item_nfo.emergency_urls and item_nfo.emergency_urls.get(canal, False):
                 del item_nfo.emergency_urls[canal]
-            filetools.write(item.nfo, head_nfo + item_nfo.tojson())
+            res = videolibrarytools.write_nfo(item.nfo, head_nfo, item_nfo)
 
         if not msg_txt:
             msg_txt = config.get_localized_string(70087) % (num_enlaces, canal)

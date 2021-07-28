@@ -40,7 +40,8 @@ def mainlist(item):
             channel = item.channel,
             fanart = item.fanart,
             title = "Novedades",
-            thumbnail = get_thumb("newest", auto=True)
+            thumbnail = get_thumb("newest", auto=True),
+            viewType = "videos"
         )
     )
     itemlist.append(
@@ -49,8 +50,8 @@ def mainlist(item):
             channel = item.channel,
             fanart = item.fanart,
             param = "",
-            title = "Mejor valorados",
-            thumbnail = get_thumb("more voted", auto=True),
+            title = "Populares",
+            thumbnail = get_thumb("more watched", auto=True),
             url = host + "/directorio?filter=popular"
         )
     )
@@ -93,9 +94,10 @@ def mainlist(item):
             channel = item.channel,
             fanart = item.fanart,
             param = "",
-            title = "Categorías",
+            title = "Directorio Hentai (Categorías)",
             thumbnail = get_thumb("categories", auto=True),
-            url = host
+            url = host,
+            viewType = "–"
         )
     )
     itemlist.append(
@@ -142,54 +144,59 @@ def categories(item):
     itemlist = []
     itemlist.append(
         Item(
-            channel = item.channel,
-            title = "Por género",
             action = "filter_by_selection",
+            channel = item.channel,
+            fanart = item.fanart,
             param = "genre",
-            fanart = item.fanart,
-            thumbnail = get_thumb("genres", auto=True)
+            plot = "Yuri, Yaoi, Tentáculos, Lolis, Vanilla, Netorare, Súcubos, Ahegao, etc.",
+            thumbnail = get_thumb("genres", auto=True),
+            title = "Por género"
         )
     )
     itemlist.append(
         Item(
-            channel = item.channel,
-            title = "Por letra",
             action = "filter_by_selection",
+            channel = item.channel,
+            fanart = item.fanart,
             param = "alphabet",
-            fanart = item.fanart,
-            thumbnail = get_thumb("alphabet", auto=True)
+            plot = "A-Z",
+            thumbnail = get_thumb("alphabet", auto=True),
+            title = "Por letra"
         )
     )
     itemlist.append(
         Item(
-            channel = item.channel,
-            title = "Sin censura",
             action = "list_all",
-            param = "",
-            url = host + "/hentai-sin-censura",
+            channel = item.channel,
             fanart = item.fanart,
-            thumbnail = get_thumb("adults", auto=True)
+            param = "",
+            plot = "Adiós, píxeles y barras negras 7u7",
+            thumbnail = get_thumb("adults", auto=True),
+            title = "Sin censura",
+            url = host + "/hentai-sin-censura"
         )
     )
     itemlist.append(
         Item(
-            channel = item.channel,
-            title = "Por estado",
             action = "filter_by_selection",
-            param = "status",
+            channel = item.channel,
             fanart = item.fanart,
-            thumbnail = get_thumb("on air", auto=True)
+            param = "status",
+            plot = "En emisión y finalizados",
+            thumbnail = get_thumb("on air", auto=True),
+            title = "Por estado"
         )
     )
     itemlist.append(
         Item(
-            channel = item.channel,
-            title = "Combinar categorías",
             action = "set_adv_filter",
-            param = "",
-            filters = {'genre': '', 'alphabet': '', 'censor': '', 'status': '', 'orderby': ''},
+            channel = item.channel,
             fanart = item.fanart,
-            thumbnail = get_thumb("categories", auto=True)
+            filters = {'genre': '', 'alphabet': '', 'censor': '', 'status': '', 'orderby': ''},
+            param = "",
+            plot = "Refinar la búsqueda combinando género, estado, sin censura, etc.",
+            thumbnail = get_thumb("categories", auto=True),
+            title = "Combinar criterios"
         )
     )
     return itemlist
@@ -473,10 +480,20 @@ def list_all(item):
             i.thumbnail = i.thumbnail_backup
 
     else:
-        pattern = '(?s)class="hentai".+?img.+?src=".+?(\d+?)\..+?".+?h-title.+?>([^<]+).+?href="([^"]+)'
-        matches = scrapertools.find_multiple_matches(str(soup), pattern)
+        if 'directorio' in item.url:
+            pattern = '(?s)class="hentai".+?img.+?src=".+?(\d+?)\..+?".+?class="favorites.+?>([^<]+).+?h-title.+?>([^<]+).+?href="([^"]+)'
+            pre_matches = scrapertools.find_multiple_matches(str(soup), pattern)
+            matches = []
+            for scpthumbid, scpfavs, scptitle, scpurl in pre_matches:
+                matches.append((scpthumbid, "{} en favoritos".format(scpfavs), scptitle, scpurl))
+        else:
+            pattern = '(?s)class="hentai".+?img.+?src=".+?(\d+?)\..+?".+?h-title.+?>([^<]+).+?href="([^"]+)'
+            pre_matches = scrapertools.find_multiple_matches(str(soup), pattern)
+            matches = []
+            for scpthumbid, scptitle, scpurl in pre_matches:
+                matches.append((scpthumbid, "", scptitle, scpurl))
 
-        for scpthumbid, scptitle, scpurl in matches:
+        for scpthumbid, scpfavs, scptitle, scpurl in matches:
             infoLabels = {}
             itemlist.append(
                 Item(
@@ -485,6 +502,7 @@ def list_all(item):
                     contentSerieName = scptitle.strip(),
                     fanart = host + '/uploads/fondos/' + scpthumbid + '.jpg',
                     infoLabels = infoLabels,
+                    plot = scpfavs,
                     title = scptitle.strip(),
                     thumbnail = host + '/uploads/portadas/' + scpthumbid + '.jpg',
                     url = host + scpurl
@@ -539,7 +557,8 @@ def episodesxseason(item, get_episodes = False):
         for i in range(len(genmatch)):
             infoLabels['genre'] += ', ' + str(genmatch[i].string)
     for article in epmatch:
-        scpepnum = int(scrapertools.find_single_match(str(article.find('h2', class_='h-title').string), '.+?(\d+)'))
+        scpepnum = str(article.find('h2', class_='h-title').string)
+        scpepnum = int(scrapertools.find_single_match(scpepnum, '(\d+)$'))
         scpdate = str(article.find('header', class_='h-header').find('time').string)
         date = datetime.datetime.strptime(scpdate, "%B %d, %Y")
         infoLabels['first_air_date'] = date.strftime("%Y/%m/%d")
@@ -568,6 +587,10 @@ def episodesxseason(item, get_episodes = False):
             i.title = scrapertools.get_season_and_episode(str(i.infoLabels['season']) + 'x' + str(i.infoLabels['episode'])) + ': ' + i.infoLabels['title']
         if not PREFER_TMDB_REVIEW:
             i.infoLabels['plot'] = infoLabels['plot']
+
+        preplot  = "[I][COLOR=lime]Votos:[/COLOR] [COLOR=beige]{} ({} votos)[/COLOR]\n\n".format(infoLabels['rating'], infoLabels['votes'])
+        preplot += "[COLOR=lime]Géneros:[/COLOR] [COLOR=yellow]{}[/COLOR][/I]".format(infoLabels['genre'])
+        i.infoLabels['plot'] = "{}\n\n{}".format(preplot, i.infoLabels['plot'])
 
     if not get_episodes:
         premiereptn = '(?s)class="content-title".+?>(\d+?-\d+?-\d+?)<'

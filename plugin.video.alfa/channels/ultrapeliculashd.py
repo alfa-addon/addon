@@ -18,6 +18,7 @@ from channelselector import get_thumb
 from bs4 import BeautifulSoup
 
 host = 'https://www.ultrapeliculashd.com'
+forced_proxy_opt = 'ProxyDirect'
 
 
 IDIOMAS = {'mx': 'LAT', 'es': 'CAST', 'en':'VOSE'}
@@ -178,7 +179,7 @@ def alpha(item):
     itemlist = []
 
     url = '%s/wp-json/dooplay/glossary/?term=%s&nonce=4e850b7d59&type=all' % (host, item.title.lower())
-    dict_data = httptools.downloadpage(url).json
+    dict_data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt).json
     if 'error' not in dict_data:
         for elem in dict_data:
             elem = dict_data[elem]
