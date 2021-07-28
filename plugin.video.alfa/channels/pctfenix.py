@@ -218,6 +218,7 @@ def listado(item):                                                              
     page_url = urlparse.urljoin(host, '/controllers/load-more.php')             # URL para paginar
     page_post_url = '/' + item.url.replace(host, '')
     page_post = 'i=%s&c=300&u=%s'                                               # Paginador
+    
     if item.curr_page:
         curr_page = int(item.curr_page)                                         # Si viene de una pasada anterior, lo usamos
         del item.curr_page                                                      # ... y lo borramos
@@ -293,6 +294,12 @@ def listado(item):                                                              
             
             #Ver si hay datos consistentes
             if not data or not scrapertools.find_single_match(data, patron):
+                
+                """ TEMPORAL: aparente error en la Web """
+                if last_page == 99999 and next_page_url != page_url and item.extra != "search":
+                    next_page_url = page_url
+                    post = page_post % (1, page_post_url)
+                    continue
 
                 last_page = 0
                 if len(itemlist) > 0 or success:                                # Si hay algo que pintar lo pintamos
