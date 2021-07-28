@@ -80,12 +80,28 @@ def lista(item):
         if not scrapedthumbnail.startswith("https"):
             scrapedthumbnail = "https:%s" % scrapedthumbnail
         url = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=scrapedthumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=scrapedthumbnail,
                               fanart=scrapedthumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<a class="btn_wrapper__btn" href="([^"]+)">Next</a></li>')
     if next_page:
         next_page = urlparse.urljoin(item.url, next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page ))
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron  = '<source src="([^"]+)" res="\d+" label="([^"]+)" type="video/mp4"'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for url,quality in matches:
+        if not url.startswith("https"):
+            url = "http:%s" % url
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
     return itemlist
 
 
@@ -100,4 +116,3 @@ def play(item):
             url = "http:%s" % url
         itemlist.append(['%s' %quality, url])
     return itemlist
-

@@ -78,13 +78,30 @@ def lista(item):
         title = "[COLOR yellow]%s[/COLOR] %s" % (scrapedtime, scrapedtitle)
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail, plot=plot,
                               fanart=thumbnail, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<span class="text16">\d+</span> <a href="..([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", 
                               url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron  = 'servervideo = \'([^\']+)\'.*?'
+    patron += 'path = \'([^\']+)\'.*?'
+    patron += 'filee = \'([^\']+)\'.*?'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for servervideo,path,filee  in matches:
+        scrapedurl = "%s%s56ea912c4df934c216c352fa8d623af3%s" % (servervideo, path, filee)
+        itemlist.append(item.clone(action="play", title= item.title, url=scrapedurl))
     return itemlist
 
 

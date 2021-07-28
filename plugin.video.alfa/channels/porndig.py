@@ -149,7 +149,10 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (stime,stitle)
         url = urlparse.urljoin(host,url)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, plot=plot,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, plot=plot,
                                fanart=thumbnail, thumbnail=thumbnail, contentTitle=title ))
     next_page = scrapertools.find_single_match(str(soup), '"has_more":(true)')
     if next_page:

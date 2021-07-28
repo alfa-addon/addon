@@ -12,7 +12,6 @@ from core.item import Item
 from core import servertools
 from core import httptools
 from core import jsontools as json
-from channels import autoplay
 
 IDIOMAS = {'vo': 'VO'}
 list_language = list(IDIOMAS.values())
@@ -25,15 +24,8 @@ host = 'https://es.camsoda.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    autoplay.init(item.channel, list_servers, list_quality)
-
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/api/v1/browse/react/?p=1"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/api/v1/tags/index?page=1"))
-    # itemlist.append(item.clone(title="Buscar" , action="search"))
-
-    autoplay.show_option(item.channel, itemlist)
-
     return itemlist
 
 
@@ -87,7 +79,10 @@ def lista(item):
             title = "[COLOR red]%s[/COLOR]" % title
         if not thumbnail.startswith("https"):
             thumbnail = "https:%s" % thumbnail
-        itemlist.append(item.clone(action="findvideos", title=title, contentTitle=title, url=url,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, contentTitle=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail))
     count= data['totalCount']
     current_page = scrapertools.find_single_match(item.url, ".*?p=(\d+)")
@@ -113,8 +108,23 @@ def findvideos(item):
     else:
         url = "https://%s/%s_h264_aac_720p/tracks-v1a1/mono.m3u8?token=%s" %(server[0],dir,token)
     url += "|verifypeer=false"
-    itemlist.append(item.clone(action="play", title=url, contentTitle = item.title, url=url, server="Directo" ))
-    # Requerido para AutoPlay
-    autoplay.start(itemlist, item)
+    itemlist.append(item.clone(action="play", url=url, server="Directo" ))
     return itemlist
 
+
+def play(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).json
+    server = data['edge_servers']
+    token = data['token']
+    dir = data['stream_name']
+    if dir == "":
+        return False, "El video ha sido borrado o no existe"
+    if "vide" in server[0]:
+        url = "https://%s/cam/mp4:%s_h264_aac_480p/chunklist_w206153776.m3u8?token=%s"  %(server[0],dir,token)
+    else:
+        url = "https://%s/%s_h264_aac_720p/tracks-v1a1/mono.m3u8?token=%s" %(server[0],dir,token)
+    url += "|verifypeer=false"
+    itemlist.append(item.clone(action="play", title=url, contentTitle = item.title, url=url, server="Directo" ))
+    return itemlist

@@ -116,7 +116,10 @@ def lista(item):
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play" , title=title , url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title , url=url, thumbnail=thumbnail,
                              fanart=thumbnail, plot=plot, contentTitle = contentTitle))
     next_page_url = scrapertools.find_single_match(data,'<a class="llNav" href="([^"]+)">')
     if next_page_url!="":
@@ -138,6 +141,22 @@ def ref(url):
     return url
 
 
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    url= ref(item.url)
+    headers = {'Referer': item.url}
+    data = httptools.downloadpage(url, headers=headers).data
+    patron = '<res>(.*?)</res>.*?'
+    patron += '<videoLink><([^<]+)></videoLink>'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for title, url in matches:
+        url= url.replace("![CDATA[", "http:").replace("]]", "")
+        itemlist.append(item.clone(action="play", title=title, url=url) )
+    # itemlist.reverse()
+    return itemlist
+
+
 def play(item):
     logger.info()
     itemlist = []
@@ -152,5 +171,3 @@ def play(item):
         itemlist.append([".mp4 %s" % (title), url])
     # itemlist.reverse()
     return itemlist
-
-

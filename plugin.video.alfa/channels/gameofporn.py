@@ -102,7 +102,10 @@ def lista(item):
         title = elem.a['title']
         thumbnail = elem.a['style']
         thumbnail = scrapertools.find_single_match(thumbnail, 'url\(([^\)]+)')
-        itemlist.append(item.clone(action="play", title=title, url=url, contentTitle=title, fanart=thumbnail, thumbnail=thumbnail ))
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, contentTitle=title, fanart=thumbnail, thumbnail=thumbnail ))
     next_page = soup.find('p', class_='sayfalama').find('a', class_='active')
     if next_page:
         next_page = next_page.find_next_sibling("a")
@@ -110,6 +113,22 @@ def lista(item):
             next_page = next_page['href']
             next_page = urlparse.urljoin(item.url,next_page)
             itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    matches =scrapertools.find_single_match(data,'onClick="toplay\((.*?)\)')
+    matches = matches.replace("'", "")
+    link = matches.split(",")
+    url = "%s/ajax.php?page=video_play&thumb=%s&theme=%s&video=%s&id=%s&catid=%s&tip=%s&server=%s" % (host,link[0],link[1],link[2],link[3],link[4],link[5],link[6])
+    headers = {'Referer': item.url, 'X-Requested-With': 'XMLHttpRequest'}
+    data = httptools.downloadpage(url, headers=headers).data
+    url = scrapertools.find_single_match(data,'<iframe src="([^"]+)"')
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
@@ -127,4 +146,3 @@ def play(item):
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-

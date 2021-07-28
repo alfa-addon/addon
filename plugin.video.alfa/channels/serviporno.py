@@ -101,7 +101,10 @@ def videos(item):
     for url, thumbnail, title,duration in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" % (duration, title)
         url = urlparse.urljoin(item.url, url)
-        itemlist.append(item.clone(action='play', title=title, contentTitle = title, url=url, 
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=url, 
                              thumbnail=thumbnail, fanart=thumbnail))
     # Paginador
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="btn-pagination">Siguiente')
@@ -111,14 +114,21 @@ def videos(item):
     return itemlist
 
 
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    url = scrapertools.find_single_match(data, "sendCdnInfo.'([^']+)")
+    url = url.replace("&amp;", "&")
+    itemlist.append(item.clone(action="play", title="Directo", url=url))
+    return itemlist
+
+
 def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, "sendCdnInfo.'([^']+)")
     url = url.replace("&amp;", "&")
-    itemlist.append(
-        Item(channel=item.channel, action="play", title=item.title, url=url, thumbnail=item.thumbnail,
-             plot=item.plot, folder=False))
+    itemlist.append(item.clone(action="play", url=url))
     return itemlist
-

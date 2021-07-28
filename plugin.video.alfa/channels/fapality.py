@@ -85,13 +85,28 @@ def lista(item):
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=scrapedurl, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=scrapedurl, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = contentTitle) )
     next_page_url = scrapertools.find_single_match(data,'<li itemprop="url" class="current">.*?<a href="([^"]+)"')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page_url) )
     return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron = '<source id="video_source_\d+" src="([^"]+)".*?'
+    patron += 'title="([^"]+)"'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for url, quality  in matches:
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
+    return itemlist[::-1]
 
 
 def play(item):
@@ -104,4 +119,3 @@ def play(item):
     for url, quality  in matches:
         itemlist.append(['%s' %quality, url])
     return itemlist[::-1]
-

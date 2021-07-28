@@ -103,7 +103,10 @@ def lista(item):
         if quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (stime,stitle)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('li', class_='next')
     if next_page:
@@ -115,7 +118,7 @@ def lista(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     logger.info()
     itemlist = []
     url = item.url
@@ -123,3 +126,11 @@ def play(item):
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
+
+def play(item):
+    logger.info()
+    itemlist = []
+    url = item.url
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist

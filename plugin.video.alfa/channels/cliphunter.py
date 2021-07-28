@@ -94,12 +94,28 @@ def lista(item):
         title = "[COLOR yellow]%s[/COLOR] %s" % (scrapedtime, scrapedtitle)
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail, plot=plot,
                               fanart=thumbnail, contentTitle = title ))
     next_page = scrapertools.find_single_match(data,'<li class="arrow"><a rel="next" href="([^"]+)">&raquo;</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron  = '"url"\:"(.*?)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl  in matches:
+        scrapedurl = scrapedurl.replace("\/", "/")
+        title = scrapedurl
+    itemlist.append(item.clone(action="play", title="mp4", url=scrapedurl))
     return itemlist
 
 
@@ -114,4 +130,3 @@ def play(item):
         title = scrapedurl
     itemlist.append(item.clone(action="play", title=item.title, url=scrapedurl))
     return itemlist
-

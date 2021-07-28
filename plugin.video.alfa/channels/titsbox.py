@@ -66,7 +66,10 @@ def lista(item):
         url= url.get('480', domain)
         url = url.replace("/\n/", "/")
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, contentTitle = title, url=url,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot))
     Actual = int(scrapertools.find_single_match(item.url, '&page=([0-9]+)'))
     if JSONData["pagesLeft"] - 1 > Actual:
@@ -76,5 +79,7 @@ def lista(item):
 
 
 def findvideos(item):
-    return
-
+    logger.info()
+    itemlist = []
+    itemlist.append(item.clone(action="play", title="Directo", url=item.url) )
+    return itemlist

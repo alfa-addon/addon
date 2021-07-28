@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 
 host = 'https://pornmz.com'  
 
-
+     ############################# cloudflare ###################################
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -102,6 +102,7 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
+    logger.debug(soup)
     matches = soup.find_all('article',id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
@@ -127,7 +128,10 @@ def lista(item):
         if "px.gif" in thumbnail:
             thumbnail = elem.img['data-src']
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', class_='current')
     if next_page:
@@ -135,6 +139,29 @@ def lista(item):
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url).find('div', class_='responsive-player')
+    url = soup.find('iframe')['src']
+    url = urlparse.urljoin(item.url,url)
+    soup = create_soup(url)#.find('video', id='video')
+    matches = soup.find_all('source')
+    for elem in matches:
+        url = elem['src']
+        if elem.has_attr('title'):
+            quality = elem['title']
+        else:
+            quality =  "-"
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
+    if not matches:
+        url = soup.find('iframe')['src']
+        url = create_soup(url).find('iframe')['src']
+        itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist[::-1]
 
 
 def play(item):
@@ -158,4 +185,3 @@ def play(item):
         itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist[::-1]
-

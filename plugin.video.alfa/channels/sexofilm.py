@@ -75,12 +75,31 @@ def lista(item):
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         plot = ""
         title = scrapedtitle.replace(" Porn DVD", "").replace("Permalink to ", "").replace(" Porn Movie", "")
-        itemlist.append(item.clone(action="play", title=title, contentTitle = title, url=scrapedurl,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=scrapedurl,
                                    fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=plot) )
     next_page = scrapertools.find_single_match(data,'<a class="nextpostslink".*?href="([^"]+)">')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    url = ""
+    data = httptools.downloadpage(item.url).data
+    data = scrapertools.find_single_match(data,'<div class="entry-inner">(.*?)<h4>')
+    url = scrapertools.find_single_match(data,'<source src=\'([^\']+)\'')
+    if not url:
+        url = scrapertools.find_single_match(data,'<source src="([^"]+)"')
+    if not url:
+        itemlist = servertools.find_video_items(item.clone(url = item.url))
+    if url:
+        itemlist.append(item.clone(action="play", title= "Directo", url=url, contentTitle = item.title, timeout=40))
     return itemlist
 
 
@@ -98,5 +117,3 @@ def play(item):
     if url:
         itemlist.append(item.clone(action="play", title= url, url=url, contentTitle = item.title, timeout=40))
     return itemlist
-
-

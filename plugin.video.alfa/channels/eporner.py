@@ -15,7 +15,7 @@ from core import scrapertools
 from core import servertools
 from platformcode import logger
 from bs4 import BeautifulSoup
-from channels import autoplay
+# from channels import autoplay
 
 IDIOMAS = {'vo': 'VO'}
 list_language = list(IDIOMAS.values())
@@ -28,7 +28,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    autoplay.init(item.channel, list_servers, list_quality)
+    # autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(item.clone(title="Últimos videos", action="lista", url=host + "/0/"))
     itemlist.append(item.clone(title="Más visto", action="lista", url=host + "/most-viewed/"))
@@ -37,7 +37,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Categorias", action="categorias", url=host + "/cats/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
 
-    autoplay.show_option(item.channel, itemlist)
+    # autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -117,7 +117,10 @@ def lista(item):
         quality = elem.find('div', title="Quality").text
         url = urlparse.urljoin(host,url)
         title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality,title)
-        itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                 fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', class_='nmnext')
     if next_page:
@@ -133,6 +136,13 @@ def findvideos(item):
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para AutoPlay
-    autoplay.start(itemlist, item)
+    # autoplay.start(itemlist, item)
     return itemlist
 
+
+def play(item):
+    logger.info(item)
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist

@@ -124,7 +124,10 @@ def videos(item):
         title = "[%s] %s" % (time, scrapedtitle)
         if ">HD<" in scrapedtime:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time, scrapedtitle)
-        itemlist.append(item.clone(action='play', title=title, thumbnail=scrapedthumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, thumbnail=scrapedthumbnail,
                              url=host + scrapedurl, contentTitle=title, fanart=scrapedthumbnail))
     paginacion = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />').replace('amp;', '')
     if paginacion:
@@ -168,6 +171,19 @@ def categorias(item):
     return itemlist
 
 
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    patron = 'data-quality="([^"]+)">([^<]+)<'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    for url,quality in matches:
+        url = url.replace("\/", "/")
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
+    return itemlist
+
+
 def play(item):
     logger.info()
     itemlist = []
@@ -179,4 +195,3 @@ def play(item):
         url = url.replace("\/", "/")
         itemlist.append(['.mp4 %s' %quality, url])
     return itemlist
-

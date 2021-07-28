@@ -76,7 +76,10 @@ def lista(item):
         url = urlparse.urljoin(item.url, scrapedurl)
         thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
         title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
-        itemlist.append(item.clone(action="play", thumbnail=thumbnail, fanart=thumbnail, title=title,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, thumbnail=thumbnail, fanart=thumbnail, title=title,
                              url=url, viewmode="movie", folder=True))
     next_page = scrapertools.find_single_match(data, 'data-parameters="([^"]+)">Next')
     if next_page:
@@ -87,10 +90,17 @@ def lista(item):
     return itemlist
 
 
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
+
+
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="play", title=item.title, url=item.url ))
-    itemlist = servertools.get_servers_itemlist(itemlist)
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-

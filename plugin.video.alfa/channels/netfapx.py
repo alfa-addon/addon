@@ -112,7 +112,10 @@ def lista(item):
         stime = elem.find_all("div")[-2].text.split("\n")[3]
         title = "[COLOR yellow]%s[/COLOR] %s" % (stime.strip(),stitle)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, contentTitle=title, url=url,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, contentTitle=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))
     try:
         next_page = soup.find('a', class_='next')['href']
@@ -123,12 +126,21 @@ def lista(item):
     return itemlist
 
 
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
+    url = scrapertools.find_single_match(data, 'source: "([^"]+)"')
+    itemlist.append(item.clone(action="play", title = "Direto", url=url))
+    return itemlist
+
+
 def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     url = scrapertools.find_single_match(data, 'source: "([^"]+)"')
-    itemlist.append(item.clone(action="play", timeout=40, title = url, url=url))
+    itemlist.append(item.clone(action="play", timeout=30, title = url, url=url))
     return itemlist
-

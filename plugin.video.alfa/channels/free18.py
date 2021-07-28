@@ -88,7 +88,10 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,title)
         url = urlparse.urljoin(item.url,url)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail, plot=plot,
                               contentTitle = title))
     next_page = soup.find('span', class_='ThisPage').find_next_siblings("a")
     if next_page:
@@ -98,11 +101,19 @@ def lista(item):
     return itemlist
 
 
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url)
+    url = soup.find(id='hdPlayer').find('source')['src']
+    itemlist.append(item.clone(action="play", title = "mp4", url=url ))
+    return itemlist
+
+
 def play(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
     url = soup.find(id='hdPlayer').find('source')['src']
-    itemlist.append(item.clone(action="play", title = url, url=url ))
+    itemlist.append(item.clone(action="play", url=url ))
     return itemlist
-

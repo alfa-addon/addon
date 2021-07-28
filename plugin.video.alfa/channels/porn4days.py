@@ -109,7 +109,10 @@ def lista(item):
         url = urlparse.urljoin(host,url)
         thumbnail = urlparse.urljoin(host,thumbnail)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', rel='next')
     if next_page:
@@ -118,6 +121,19 @@ def lista(item):
             next_page = "/search%s" %next_page
         next_page = urlparse.urljoin(host,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info(item)
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    videos = scrapertools.find_multiple_matches(data, '\("#playerframe"\).attr\("src", "([^"]+)"')
+    for elem in videos:
+        url = elem
+        if url:
+            itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
@@ -132,4 +148,3 @@ def play(item):
             itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-
