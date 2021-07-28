@@ -89,8 +89,10 @@ def videos(item):
         thumbnail = "http://img.beeg.com/264x198/4x3/%s" %image
         url = '%s/video/%s?v=2&s=%s&e=%s&p=%s' % (url_api, id, start, end, pid)
         title = "[COLOR yellow]%s[/COLOR] %s - %s" %( duration, canal, title)
-
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail, 
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail, 
                              fanart=thumbnail, plot="",contentTitle=title, contentType="movie"))
     # Paginador
     Actual = int(scrapertools.find_single_match(item.url, '/([0-9]+)/pc'))
@@ -128,6 +130,24 @@ def canal(item):
     return itemlist
 
 
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    JSONData = json.load(data)
+    for key in JSONData:
+        videourl = re.compile("([0-9]+p)", re.DOTALL).findall(key)
+        if videourl:
+            videourl = videourl[0]
+            if not JSONData[videourl] == None:
+                url = JSONData[videourl]
+                url = url.replace("{DATA_MARKERS}", "data=pc.ES")
+                if not url.startswith("https:"): url = "https:" + url
+                quality = videourl
+                itemlist.append(item.clone(action="play", title = quality, contentTitle = item.title, url=url))
+    return itemlist
+
+
 def play(item):
     logger.info()
     itemlist = []
@@ -145,4 +165,3 @@ def play(item):
                 itemlist.append(["%s [%s]" % (quality, url[-4:]), url])
     itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return itemlist
-

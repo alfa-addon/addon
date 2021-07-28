@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.pornky.com/'   #   'https://www.tubxxporn.com'  https://www.pornktube.porn  'https://www.joysporn.com/'
+host = 'https://www.pornky.com'   #   'https://www.tubxxporn.com'  https://www.pornktube.porn  'https://www.joysporn.com/'
 
 
 def mainlist(item):
@@ -90,13 +90,36 @@ def lista(item):
         if stime:
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('div', class_='pages')
     if next_page:
         next_page = next_page.find('span').find_next_sibling('a')['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url)
+    matches = soup.find('div', id='player')
+    id= matches["data-id"]
+    server = matches["data-n"]
+    data = matches['data-q']
+    for elem in data.split(","):
+        elem = elem.split(";")
+        quality = elem[0]
+        pal = elem[-1]
+        num = elem[-2]
+        vid = int(id)/1000 *1000
+        # /cqlvid/  /wqlvid/
+        url = "https://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, num, pal,vid, id,id, quality)
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
     return itemlist
 
 

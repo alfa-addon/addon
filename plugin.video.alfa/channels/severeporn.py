@@ -104,7 +104,10 @@ def lista(item):
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append( Item(channel=item.channel, action=action, title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = soup.find('li', class_='next')
     if next_page:
@@ -112,6 +115,20 @@ def lista(item):
         next_page = "?%s" % next_page
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url).find('div', class_='player')
+    url = soup.find('iframe')
+    if url:
+        url = url['src']
+    else:
+        url = item.url
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
@@ -127,4 +144,3 @@ def play(item):
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-

@@ -84,7 +84,7 @@ def categorias(item):
     for elem in matches:
         url = elem.parent['href'].replace("trending", "latest")
         title = elem.find('span', class_='htag_el_tag').text.strip().replace("#", "")
-        thumbnail = elem.img['src']
+        thumbnail = elem.img['data-src']
         cantidad = elem.find('span', class_='htag_el_count').text.strip()
         title = "%s (%s)" %(title, cantidad)
         thumbnail = "https:" + thumbnail
@@ -141,7 +141,7 @@ def lista(item):
         titulo = elem.find('a', class_='post_time')['title']
         thumbnail = elem.img
         if thumbnail: 
-            thumbnail = thumbnail['src']
+            thumbnail = thumbnail['data-src']
             if "removed.png" in thumbnail: thumbnail = urlparse.urljoin(item.url,thumbnail)
         titulo = re.sub("#\w+", "", titulo).strip()
         title = scrapertools.find_single_match(titulo, '(.*?)https')

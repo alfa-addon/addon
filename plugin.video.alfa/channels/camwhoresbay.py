@@ -81,7 +81,10 @@ def lista(item):
             scrapedthumbnail = "http:%s" % scrapedthumbnail
         scrapedthumbnail += "|Referer=%s" % item.url
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=scrapedthumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=scrapedthumbnail,
                               fanart=scrapedthumbnail, contentTitle=title, plot=plot))
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
     if "#" in next_page:
@@ -94,6 +97,14 @@ def lista(item):
     return itemlist
 
 
+def findvideos(item):
+    logger.info(item)
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
+
+
 def play(item):
     logger.info(item)
     itemlist = []
@@ -103,4 +114,3 @@ def play(item):
     itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-

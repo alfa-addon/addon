@@ -99,7 +99,10 @@ def lista(item):
         url = scrapertools.find_single_match(url,'.*?5odHRwczov([^/]+)/\d+/\d+')
         url = url.replace("%3D", "=").replace("%2F", "/")
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, contentTitle = title, url=url,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot))
     next_page = soup.find('a', class_='next')
     if next_page:
@@ -117,7 +120,7 @@ def lista(item):
 # https://www.stileproject.com/video/amy-rogue-takes-her-step-brothers-cock-in-her-pussy-9913541.html
 # https://www.pornrabbit.com/video/yuzuna-oshima-hot-japanese-girl-being-fucked-39797102.html var desktopFile='https://cdn.pornrabbit.com/media/videos/8/2/8/8/7/82887c73cecbf95d298b8458a1fa67ba.mp4'
 
-def play(item):
+def findvideos(item):
     logger.info()
     itemlist = []
     import base64
@@ -131,3 +134,17 @@ def play(item):
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
+
+def play(item):
+    logger.info()
+    itemlist = []
+    import base64
+    url = base64.b64decode(item.url).decode("utf8")
+    if not url.startswith("https"):
+        url = "https:/%s" % url
+    if "vid.com/v/" in url:
+        url = httptools.downloadpage(url).url
+    # logger.debug(url)
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist

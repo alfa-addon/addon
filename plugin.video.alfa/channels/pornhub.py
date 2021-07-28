@@ -136,8 +136,11 @@ def lista(item):
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
         url = urlparse.urljoin(item.url, url)
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
         if not premium and not elem.find('div', class_='thumbTextPlaceholder'):
-            itemlist.append(item.clone(action="play", title=title, contentTitle = title, url=url,
+            itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail))
     next_page = soup.find('li', class_='page_next')
     if next_page:
@@ -147,18 +150,18 @@ def lista(item):
     return itemlist
 
 
-def play(item):
-    logger.info(item)
-    itemlist = servertools.find_video_items(item.clone(url = item.url))
-    return itemlist
-
-
 def findvideos(item):
     logger.info(item)
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '"embedUrl": "([^"]+)"')
-    itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 
+    itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
+    return itemlist
+
+
+def play(item):
+    logger.info(item)
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=item.url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 

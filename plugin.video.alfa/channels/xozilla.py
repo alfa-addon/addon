@@ -95,8 +95,10 @@ def lista(item):
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
-        year = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                              fanart=thumbnail, plot=plot, contentTitle=contentTitle))
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
     page = scrapertools.find_single_match(item.url, '([^"]+)\d+')
@@ -110,7 +112,7 @@ def lista(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     logger.info(item)
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -120,3 +122,13 @@ def play(item):
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
+
+def play(item):
+    logger.info(item)
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    if "kt_player" in data:
+        url = item.url
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist

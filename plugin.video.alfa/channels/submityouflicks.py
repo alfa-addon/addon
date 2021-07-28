@@ -61,8 +61,11 @@ def lista(item):
         title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" %(scrapedtime,quality,scrapedtitle)
         url = scrapedurl
         thumbnail = scrapedthumbnail.replace(" ", "%20")
-        itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                             fanart=thumbnail, contentTitle = title))
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url,
+                             thumbnail=thumbnail, fanart=thumbnail, contentTitle = title))
     current_page = int(scrapertools.find_single_match(item.url,'.*?=(\d+)'))
     page = scrapertools.find_single_match(item.url, "(.*?)=\d+")
     if ">Load more...<" in data or ">Next<" in data:
@@ -72,8 +75,17 @@ def lista(item):
     return itemlist  
 
 
-def play(item):
+def findvideos(item):
     logger.info(item)
-    itemlist = servertools.find_video_items(item.clone(url = item.url, contentTitle = item.title))
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
+
+def play(item):
+    logger.info(item)
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist

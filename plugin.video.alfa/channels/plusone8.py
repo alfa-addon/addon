@@ -109,7 +109,10 @@ def lista(item):
             time = time.text.strip()
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', class_='current')
     if next_page:
@@ -122,25 +125,26 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('video', class_='video-js')
-    matches = soup.find_all('source')
+    soup = create_soup(item.url).find('div', class_='video-player-area')
+    matches = soup.find_all('a', class_='button')
     for elem in matches:
-        url = elem['src']
+        url = elem['href']
         url = url.replace(" ", "%20")
-        url = url + "|verifypeer=false"
+        url += "|verifypeer=false"
         itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
+
 def play(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('video', class_='video-js')
-    matches = soup.find_all('source')
+    soup = create_soup(item.url).find('div', class_='video-player-area')
+    matches = soup.find_all('a', class_='button')
     for elem in matches:
-        url = elem['src']
+        url = elem['href']
         url = url.replace(" ", "%20")
-        url = url + "|verifypeer=false"
+        url += "|verifypeer=false"
         itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

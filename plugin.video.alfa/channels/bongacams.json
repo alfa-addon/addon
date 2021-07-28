@@ -1,0 +1,14 @@
+{
+  "id": "bongacams",
+  "name": "bongacams",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "https://i.postimg.cc/fb0rbznD/bongacams.png",
+  "banner": "",
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+  ]
+}

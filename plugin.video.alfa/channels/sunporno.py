@@ -104,12 +104,28 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (duracion, scrapedtitle)
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play" , title=title , url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title , url=url, thumbnail=thumbnail,
                               fanart=scrapedthumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data,'<li><a class="pag-next" href="(.*?)">Next &gt;</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron  = '<video src="([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl  in matches:
+        scrapedurl = scrapedurl.replace("https:", "http:")
+        scrapedurl += "|Referer=%s" % host
+        itemlist.append(item.clone(action="play", title="Directo", url=scrapedurl))
     return itemlist
 
 
@@ -124,4 +140,3 @@ def play(item):
         scrapedurl += "|Referer=%s" % host
         itemlist.append(item.clone(action="play", contentTitle=item.title, url=scrapedurl))
     return itemlist
-
