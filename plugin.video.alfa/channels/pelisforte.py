@@ -20,6 +20,7 @@ from core import tmdb
 from channels import autoplay
 from platformcode import config, logger
 from channelselector import get_thumb
+import codecs
 
 host = 'https://pelisforte.co/'
 
@@ -197,7 +198,6 @@ def findvideos(item):
 
     soup = create_soup(item.url)
     matches = soup.find("ul", id="fenifdev-lang-ul")
-    logger.debug(soup)
     if not matches:
         return itemlist
     infoLabels = item.infoLabels
@@ -205,7 +205,6 @@ def findvideos(item):
     for elem in matches:
         lang = ""
         try:
-            logger.debug(elem.find("div").text)
             lang = elem.find("div").text.lower()
             if "latino" in lang:
                 lang = IDIOMAS.get("Lat", "VOSE")
@@ -217,16 +216,17 @@ def findvideos(item):
             continue
         opts = elem.find_all("li")
         for opt in opts:
-            logger.debug(opt)
-            logger.debug(opt.text.split("-"))
+
             srv = opt.text.split("-")[1].strip()
+            if srv.lower() == "hlshd":
+                srv = "fembed"
             opt_id = opt["data-tplayernv"]
 
             itemlist.append(Item(channel=item.channel, title=srv, url=item.url, action='play', server=srv, opt=opt_id,
                                  infoLabels=infoLabels, language=lang))
 
-    #downlist = get_downlist(item, data)
-    #itemlist.extend(downlist)
+    # downlist = get_downlist(item, soup)
+    # itemlist.extend(downlist)
 
     itemlist = sorted(itemlist, key=lambda i: (i.language, i.server))
 
@@ -265,6 +265,13 @@ def play(item):
     url = scrapertools.find_single_match(str(soup), 'src="([^"]+)"')
     url = re.sub("amp;|#038;", "", url)
     url = create_soup(url).find("div", class_="Video").iframe["src"]
+    if "trhide" in url:
+
+        try:
+            url = scrapertools.find_single_match(url, "tid=([A-z0-9]+)")[::-1]
+            url = codecs.decode(url, "hex")
+        except:
+            pass
     itemlist.append(item.clone(url=url, server=""))
     itemlist = servertools.get_servers_itemlist(itemlist)
 
@@ -292,38 +299,37 @@ def fix_title(title):
     return title
 
 
-def get_downlist(item, data):
-    import base64
-    logger.info()
+# def get_downlist(item, data):
+#     import base64
+#     logger.info()
 
-    downlist = list()
-    servers = {'drive': 'gvideo', '1fichier': 'onefichier'}
+#     downlist = list()
+#     servers = {'drive': 'gvideo', '1fichier': 'onefichier'}
 
-    soup = data.find("tbody").find_all("tr")
-    infoLabels = item.infoLabels
+#     soup = data.find("tbody").find_all("tr")
+#     logger.debug(soup)
+#     infoLabels = item.infoLabels
 
-    for tr in soup:
-        burl = tr.a["href"].split('?l=')[1]
-        try:
-            for x in range(7):
-                durl = base64.b64decode(burl).decode('utf-8')
-                burl = durl
-        except:
-            url = burl
+#     for tr in soup:
+#         logger.debug(tr)
+#         url = tr.a["href"]
+#         # try:
+#         #     for x in range(7):
+#         #         durl = base64.b64decode(burl).decode('utf-8')
+#         #         burl = durl
+#         # except:
+#         #     url = burl
 
-        info = tr.span.findNext('span')
-        info1 = info.findNext('span')
+#         info = tr.span.findNext('span')
+#         info1 = info.findNext('span')
+#         srv = info.text.strip().lower()
+#         srv = servers.get(srv, srv)
+#         lang = info1.text.strip()
+#         lang = IDIOMAS.get(lang, lang)
+#         quality = info1.findNext('span').text
 
-        srv = info.text.strip().lower()
-        srv = servers.get(srv, srv)
+#         downlist.append(Item(channel=item.channel, title=srv, url=url, action='play', server=srv,
+#                              infoLabels=infoLabels, language=lang, quality=quality))
 
-        lang = info1.text.strip()
-        lang = IDIOMAS.get(lang, lang)
-
-        quality = info1.findNext('span').text
-
-        downlist.append(Item(channel=item.channel, title=srv, url=url, action='play', server=srv,
-                             infoLabels=infoLabels, language=lang, quality=quality))
-
-    return downlist
+#     return downlist
 

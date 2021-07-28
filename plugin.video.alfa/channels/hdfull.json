@@ -2,6 +2,7 @@
   "id": "hdfull",
   "name": "HDFull",
   "active": true,
+  "login_required": true,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.postimg.cc/HskwLYrk/hdfull.png",
