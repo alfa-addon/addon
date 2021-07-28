@@ -5,8 +5,6 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
     import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
     import urllib.parse as urlparse
 else:
@@ -19,7 +17,10 @@ from core import httptools
 from core import jsontools as json
 from core import scrapertools
 from platformcode import config, logger
-
+if not PY3:
+    from lib import alfaresolver
+else:
+    from lib import alfaresolver_py3 as alfaresolver
 itag_list = {1: "video",
              5: "flv 240p",
              6: "flv 270p",
@@ -95,147 +96,21 @@ def test_video_exists(page_url):
 
     if "File was deleted" in data or 'El vídeo no está disponible' in data or "privado" in data or "derechos de autor" in data:
         return False, config.get_localized_string(70449) % "Youtube"
+
+    if "Accede para confirmar tu edad" in data:
+        return False, "El video está restringido"
     return True, ""
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-    video_urls = list()
+    vid = list()
     if not page_url.startswith("http"):
         page_url = "https://www.youtube.com/watch?v=%s" % page_url
         logger.info(" page_url->'%s'" % page_url)
 
-    video_id = scrapertools.find_single_match(page_url, '(?:v=|embed/)([A-z0-9_-]{11})')
-    logger.debug("video_id: %s" % video_id)
-    video_urls = extract_videos(video_id)
+    return alfaresolver.gvd_check(page_url)
 
-    return sorted(video_urls, reverse=True)
-
-
-def remove_additional_ending_delimiter(data):
-    pos = data.find("};")
-    if pos != -1:
-        data = data[:pos + 1]
-    return data
-
-
-def normalize_url(url):
-    if url[0:2] == "//":
-        url = "https:" + url
-    return url
-
-
-def extract_flashvars(data):
-    assets = 0
-    flashvars = {}
-    found = False
-    #logger.error(data)
-    for line in data.split("\n"):
-        if line.strip().find(";ytplayer.config = ") > 0:
-            found = True
-            p1 = line.find(";ytplayer.config = ") + len(";ytplayer.config = ") - 1
-            p2 = line.rfind(";")
-            if p1 <= 0 or p2 <= 0:
-                continue
-            data = line[p1 + 1:p2]
-            break
-    data = remove_additional_ending_delimiter(data)
-    #logger.error(data)
-    if found:
-        data = json.load(data)
-        if assets:
-            flashvars = data["assets"]
-        else:
-            flashvars = data["args"]
-    else:
-        data = dict(info)
-
-    for k in ["html", "css", "js"]:
-        if k in flashvars:
-            flashvars[k] = normalize_url(flashvars[k])
-
-    return flashvars
-
-
-def get_signature(youtube_page_data):
-
-    from lib.jsinterpreter import JSInterpreter
-
-    urljs = scrapertools.find_single_match(youtube_page_data, '"assets":.*?"js":\s*"([^"]+)"')
-    if not urljs: urljs = scrapertools.find_single_match(youtube_page_data, '"jsUrl":"([^"]+)')
-    urljs = urljs.replace("\\", "")
-    if urljs:
-        if not re.search(r'https?://', urljs):
-            urljs = urlparse.urljoin("https://www.youtube.com", urljs)
-        data_js = httptools.downloadpage(urljs).data
-
-    pattern = r'(?P<fname>\w+)=function\(\w+\){(\w)=\2\.split\(""\);.*?return\s+\2\.join\(""\)}'
-
-    funcname = re.search(pattern, data_js).group('fname')
-
-
-    jsi = JSInterpreter(data_js)
-    js_signature = jsi.extract_function(funcname)
-
-    return js_signature
-
-
-def extract_videos(video_id):
-
-    youtube_page_data = ''
-    url = 'https://www.youtube.com/get_video_info?c=TVHTML5&cver=7.20201028&html5=1&video_id=%s&eurl=https://youtube.googleapis.com/v/%s&ssl_stream=1' % \
-          (video_id, video_id)
-    data = httptools.downloadpage(url).data
-
-    if PY3 and isinstance(data, bytes):
-        data = data.decode('utf-8')
-
-    video_urls = []
-    params = dict(urlparse.parse_qsl(data))
-    if params.get('hlsvp'):
-        video_urls.append(["(LIVE .m3u8) [youtube]", params['hlsvp']])
-        return video_urls
-
-    if config.is_xbmc():
-        import xbmc
-        xbmc_version = config.get_platform(True)['num_version']
-        if xbmc_version >= 17 and xbmc.getCondVisibility('System.HasAddon(inputstream.adaptive)') \
-                and params.get('dashmpd'):
-            if params.get('use_cipher_signature', '') != 'True':
-                video_urls.append(['mpd  HD [youtube]', params['dashmpd'], 0, '', True])
-    #logger.error(params)
-    if not params.get('player_response', ''):
-        youtube_page_data = httptools.downloadpage("https://www.youtube.com/watch?v=%s" % video_id).data
-        params = extract_flashvars(youtube_page_data)
-    
-
-    if params.get('player_response'):
-        params = json.load(params.get('player_response'))
-        data_flashvars = params["streamingData"]
-
-        for s_data in data_flashvars:
-            if s_data in ["adaptiveFormats", "formats"]:
-                for opt in data_flashvars[s_data]:
-                    #logger.error(opt)
-                    opt = dict(opt)
-                    if "audioQuality" not in opt:
-                        continue
-                    if "audio" in opt['mimeType']:
-                        continue
-                    if "signatureCipher" in opt:
-                        if not youtube_page_data:
-                            youtube_page_data = httptools.downloadpage("https://www.youtube.com/watch?v=%s" % video_id).data
-                        signature = get_signature(youtube_page_data)
-                        cipher = dict(urlparse.parse_qsl(urllib.unquote(opt["signatureCipher"])))
-                        url = re.search('url=(.*)', opt["signatureCipher"]).group(1)
-                        s = cipher.get('s')
-                        url = "%s&sig=%s" % (urllib.unquote(url), signature([s]))
-                        #logger.error(url)
-                        video_urls.append(["%s" % itag_list.get(opt["itag"], "video"), url])
-                    elif opt["itag"] in itag_list:
-                        video_urls.append(["%s" % itag_list.get(opt["itag"], "video"), opt["url"]])
-
-    return video_urls
 
 def set_cookie():
     dict_cookie = {'domain': '.youtube.com',
