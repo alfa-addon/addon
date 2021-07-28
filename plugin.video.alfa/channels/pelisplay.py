@@ -28,6 +28,7 @@ from channelselector import get_thumb
 __channel__ = "pelisplay"
 
 host = "https://www.pelisplay.co/"
+forced_proxy_opt = None
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -354,7 +355,7 @@ def episodesxseason(item):
     data_t = scrapertools.find_single_match(data, '<a data-s="[^"]+" data-t="([^"]+)"')
     data_s = scrapertools.find_single_match(data, '<a data-s="([^"]+)" data-t="[^"]+"')
     post = {'t': data_t, 's': data_s, '_token': token}
-    json_data = httptools.downloadpage(post_link, post=post).json
+    json_data = httptools.downloadpage(post_link, post=post, forced_proxy_opt=forced_proxy_opt).json
     if not json_data:
         return itemlist
 
@@ -407,7 +408,7 @@ def findvideos(item):
         post_link = '%sentradas/procesar_player' % host
         token = scrapertools.find_single_match(data, 'data-token="([^"]+)">')
         post = {'data': data_player, 'tipo': 'videohost', '_token': token}
-        json_data = httptools.downloadpage(post_link, post=post).json
+        json_data = httptools.downloadpage(post_link, post=post, forced_proxy_opt=forced_proxy_opt).json
         url = json_data.get('data', '')
         if not url: continue
 

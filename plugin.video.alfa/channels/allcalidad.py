@@ -24,6 +24,7 @@ list_servers = ['fembed', 'streamtape', 'fastplay', 'gvideo', 'netutv', 'Jawclou
 __channel__='allcalidad'
 
 host = "https://allcalidad.la"
+forced_proxy_opt = 'ProxyDirect'
 encoding = None
 
 try:
@@ -164,7 +165,7 @@ def findvideos(item):
     data = httptools.downloadpage(item.url, encoding=encoding).data
 
     match = scrapertools.find_single_match(data, "<link rel='shortlink'.*?=([^']+)" )
-    data1 = httptools.downloadpage(host + "/wp-json/elifilms/movies?id=" + match, encoding=encoding).json
+    data1 = httptools.downloadpage(host + "/wp-json/elifilms/movies?id=" + match, encoding=encoding, forced_proxy_opt=forced_proxy_opt).json
     for url in data1["data"]["server_list"]:
         if not url["link"]: continue
         url1 = clear_url(url["link"])

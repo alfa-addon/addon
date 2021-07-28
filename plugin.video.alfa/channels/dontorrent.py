@@ -29,7 +29,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://dontorrents.one/'
+host = 'https://dontorrent.app/'
 host_torrent = 'https://blazing.network'
 channel = 'dontorrent'
 categoria = channel.capitalize()

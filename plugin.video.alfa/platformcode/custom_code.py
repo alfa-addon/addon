@@ -94,6 +94,7 @@ def init():
         verify_script_alfa_update_helper()
         
         #Borrar contenido de carpeta de Torrents y de Subtitles
+        filetools.rmdirtree(filetools.join(config.get_videolibrary_path(), 'temp_torrents_arch'), silent=True)
         filetools.rmdirtree(filetools.join(config.get_videolibrary_path(), 'temp_torrents_Alfa'), silent=True)
         subtitle_path = config.get_kodi_setting("subtitles.custompath")
         if subtitle_path and filetools.exists(subtitle_path):

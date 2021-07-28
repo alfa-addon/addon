@@ -501,7 +501,7 @@ def findvideos(item):
     #logger.debug(item)
 
     #Bajamos los datos de la página y seleccionamos el bloque
-    patron = '<li>\s*<a\s*title="*[^"]+"*\s*href="*([^>]+)"*\s*>\s*([^<]+)<\/a>\s*<\/li>'
+    patron = '()<li>\s*<a\s*title="*[^"]+"*\s*href="*([^>]+)"*\s*>\s*([^<]+)<\/a>\s*<\/li>'
     
     if not item.matches:
         data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
@@ -545,20 +545,21 @@ def findvideos(item):
         else:
             item.emergency_urls.append(matches)
 
-    #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
+    # Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     if not item.videolibray_emergency_urls:
         item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
-    #Ahora tratamos los enlaces .torrent con las diferentes calidades
-    for x, (_scrapedurl, info) in enumerate(matches):
+    # Ahora tratamos los enlaces .torrent con las diferentes calidades
+    for x, (_size, _scrapedurl, info) in enumerate(matches):
         scrapedpassword = ''
         scrapedquality = info
         language = info
+        size = _size
         
         scrapedurl = generictools.convert_url_base64(_scrapedurl, host_torrent)
         # Si ha habido un cambio en la url, actualizados matches para emergency_urls
         if item.videolibray_emergency_urls and scrapedurl != _scrapedurl:
-            item.emergency_urls[1][x][0] = scrapedurl
+            item.emergency_urls[1][x][1] = scrapedurl
 
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
@@ -576,12 +577,11 @@ def findvideos(item):
             except:
                 item_local.torrent_alt = ''
                 item.emergency_urls[0] = []
-            from core import filetools
             if item.contentType == 'movie':
                 FOLDER = config.get_setting("folder_movies")
             else:
                 FOLDER = config.get_setting("folder_tvshows")
-            if item.armagedon and item_local.torrent_alt:
+            if (item.armagedon or size) and item_local.torrent_alt:
                 item_local.url = item_local.torrent_alt                         # Restauramos la url
                 if not item.torrent_alt.startswith('http'):
                     local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
@@ -628,8 +628,7 @@ def findvideos(item):
                 item_local.language = item.language                             # por defecto el original
         
         #Buscamos tamaño en el archivo .torrent
-        size = ''
-        if item_local.torrent_info:
+        if item_local.torrent_info and not size:
             size = item_local.torrent_info
         if not size and not item.videolibray_emergency_urls and not item_local.url.startswith('magnet:'):
             if not item.armagedon:
@@ -837,29 +836,63 @@ def episodios(item):
         #logger.debug(matches_alt)
         #logger.debug(data)
         
-        # Ordenamos los episodios
+        # Ordenamos los episodios, y analizamos si estos vienen dentro de un archivo .zip/.rar
         matches = []
-        x = 0
         patron_cap = '(?i).*?((?:\()?)cap\S*\s*(\d{1})x'
-        for scrapedurl, info in matches_alt:
-            if scrapertools.find_single_match(info, patron_cap):
+        patron_num_tit = '.*?(\d+)x(\d+)\s*'
+        patron_num_tit2 = '(?i).*?cap.?\s*(\d+)\s*'
+        patron_num_url = '(?i)temp\w+a-(\d+)x(\d+)'
+        
+        for _scrapedurl, info in matches_alt:
+            # Antes de tratar los enlaces a .torrent, analizamos si estos vienen dentro de un archivo .zip/.rar
+            # Si es así, hay que descargarlo, desempaquetarlo y crear tantas entradas en matches como archivos .torreent haya
+            scrapedurl = generictools.convert_url_base64(_scrapedurl, host_torrent)
+            size_list = ''
+            
+            # Extraemos números de temporada para solo buscar SIZE en temporadas específicas
+            if not item.season_colapse:
                 try:
-                    matches.append((scrapedurl, scrapertools.remove_htmltags(re.sub(patron_cap, r'\1cap. 0\2x' , info))))
+                    if scrapertools.find_single_match(info, patron_num_tit):
+                        season_num, episode_num = scrapertools.find_single_match(info, patron_num_tit)
+                    elif scrapertools.find_single_match(item_local.url, patron_num_url):
+                        season_num, episode_num = scrapertools.find_single_match(scrapedurl, patron_num_url)
+                    season_num = int(season_num)
                 except:
-                    matches.append((scrapedurl, scrapertools.remove_htmltags(info)))
+                    season_num = 1
+                if season_display == 0 or season_display == season_num:         # Son de la temporada estos episodios?
+                    size_list = generictools.get_torrent_size(scrapedurl)       # Buscamos el tamaño en el .torrent desde la web
+            
+            # Si no es una lista, es el proceso normal
+            if not isinstance(size_list, list):
+                if scrapertools.find_single_match(info, patron_cap):
+                    try:
+                        matches.append(('', scrapedurl, scrapertools.remove_htmltags(re.sub(patron_cap, r'\1cap. 0\2x' , info))))
+                    except:
+                        matches.append(('', scrapedurl, scrapertools.remove_htmltags(info)))
+                else:
+                    matches.append(('', scrapedurl, scrapertools.remove_htmltags(info)))
+
             else:
-                matches.append((scrapedurl, scrapertools.remove_htmltags(info)))
-        matches = sorted(matches, key=lambda mt: mt[1])
+                # Es una lista, luego en size vienen todos las rutas y cuerpos de los archivos .torrent contenidos en el .zip/.rar
+                from core import filetools
+                for size, torrents_path, torrent_f, files in size_list:
+                    title = filetools.basename(torrents_path).replace('.torrent', '').lower()
+                    contentSerieName = scrapertools.slugify(item.contentSerieName).replace('-', ' ').lower()
+                    title = title.replace('_720p', '').replace('_', ' ').replace(contentSerieName, '').strip()
+                    url = '%s|%s' % (torrents_path, scrapedurl)
+                    matches.append((size, url, title))
+                
+        matches = sorted(matches, key=lambda mt: mt[2])
 
         # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
-        x = 0
         season_num = 1
         episode_num = 1
-        for scrapedurl, info in matches:
+        for size, _scrapedurl, info in matches:
             scrapedquality = info
             language = info
             scrapedsize = ''
             episode_al = ''
+            scrapedurl = _scrapedurl
             
             item_local = item.clone()
             item_local.action = "findvideos"
@@ -883,19 +916,20 @@ def episodios(item):
             if item_local.season_colapse:
                 del item_local.season_colapse
 
+            # Si los .torrent vienen dentro de un archivo .zip/.rar, guardamos la url del episodio oroginal
+            if '|' in scrapedurl:
+                item_local.url_episode = scrapedurl.split('|')[1]
+                scrapedurl = scrapedurl.split('|')[0]
             item_local.url = urlparse.urljoin(host, scrapedurl)                 # Usamos las url de la temporada, no hay de episodio
             item_local.matches = []
-            item_local.matches.append(matches[x])                               # Salvado Matches de cada episodio
-            x += 1
+            item_local.matches.append((size, item_local.url, info))             # Salvando Matches de cada episodio
+            
             item_local.context = "['buscar_trailer']"
             if not item_local.infoLabels['poster_path']:
                 item_local.thumbnail = item_local.infoLabels['thumbnail']
             
             # Extraemos números de temporada y episodio
             try:
-                patron_num_tit = '.*?(\d+)x(\d+)\s*'
-                patron_num_tit2 = '(?i).*?cap.?\s*(\d+)\s*'
-                patron_num_url = '(?i)temp\w+a-(\d+)x(\d+)'
                 if 'completa' in info:
                     episode_num = 1
                 elif scrapertools.find_single_match(info, patron_num_tit):
