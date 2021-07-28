@@ -2153,6 +2153,8 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     
     #Móludo principal
     size = ''
+    size_lista = []
+    size_amount = []
     torrent_f = ''
     torrent_file = ''
     files = {}
@@ -2196,106 +2198,120 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
             torrent_file = filetools.read(local_torr, mode='rb')
             torrents_path = local_torr
         
-        if not torrents_path or torrents_path == 'CF_BLOCKED' or (PY3 and isinstance(torrent_file, bytes) \
-                    and torrent_file.startswith(b"magnet")) or (not PY3 and torrent_file.startswith("magnet")):
-            size = 'ERROR'
-            
-            # si el archivo .torrent está bloqueado con CF, se intentará descargarlo a través de un browser externo
-            if torrent_file and torrents_path == 'CF_BLOCKED':
-                size += ' [COLOR hotpink][B]BLOQUEO[/B][/COLOR]'
-                browser, res = call_browser('', lookup=True, strict=True)
-                if not browser:
-                    browser, res = call_browser('', lookup=True)
-                if not browser:
-                    size += ': [COLOR magenta][B]Instala un browser externo para usar este enlace[/B][/COLOR] (Chrome, Firefox, Opera)'
-                elif res is None and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
-                    size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
-                elif res is None and config.get_setting("capture_thru_browser_path", server="torrent", default=""):
-                    size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
-                elif res or config.get_setting("capture_thru_browser_path", server="torrent", default=""):
-                    if res and res is not True:
-                        config.set_setting("capture_thru_browser_path", res, server="torrent")
-                        size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
-                    elif res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+        if isinstance(torrents_path, list):
+            torrents_path_list = torrents_path[:]
+            torrent_lista = True
+        else:
+            torrents_path_list = [(torrents_path, torrent_file)]
+            torrent_lista = False
+        
+        for torrents_path, torrent_file in torrents_path_list:
+            size = ''
+            if not torrents_path or torrents_path == 'CF_BLOCKED' or (PY3 and isinstance(torrent_file, bytes) \
+                        and torrent_file.startswith(b"magnet")) or (not PY3 and torrent_file.startswith("magnet")):
+                size = 'ERROR'
+                
+                # si el archivo .torrent está bloqueado con CF, se intentará descargarlo a través de un browser externo
+                if torrent_file and torrents_path == 'CF_BLOCKED':
+                    size += ' [COLOR hotpink][B]BLOQUEO[/B][/COLOR]'
+                    browser, res = call_browser('', lookup=True, strict=True)
+                    if not browser:
+                        browser, res = call_browser('', lookup=True)
+                    if not browser:
+                        size += ': [COLOR magenta][B]Instala un browser externo para usar este enlace[/B][/COLOR] (Chrome, Firefox, Opera)'
+                    elif res is None and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
                         size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
-                    else:
+                    elif res is None and config.get_setting("capture_thru_browser_path", server="torrent", default=""):
                         size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
-                else:
-                    size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
-            
-            if not lookup and subtitles:
-                return (size, torrents_path, torrent_f, files, subtitles_list)
-            elif not lookup:
-                return (size, torrents_path, torrent_f, files)
-            elif file_list and data_torrent:
-                return (size, torrent_f, files)
-            elif file_list:
-                return (size, files)
-            elif data_torrent:
-                return (size, torrent_f)
-            return size                                         #Si hay un error, devolvemos el "size" y "torrent" vacíos
+                    elif res or config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                        if res and res is not True:
+                            config.set_setting("capture_thru_browser_path", res, server="torrent")
+                            size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
+                        elif res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                            size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
+                        else:
+                            size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
+                    else:
+                        size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
+                
+                if not lookup and subtitles:
+                    return (size, torrents_path, torrent_f, files, subtitles_list)
+                elif not lookup:
+                    return (size, torrents_path, torrent_f, files)
+                elif file_list and data_torrent:
+                    return (size, torrent_f, files)
+                elif file_list:
+                    return (size, files)
+                elif data_torrent:
+                    return (size, torrent_f)
+                return size                                                     #Si hay un error, devolvemos el "size" y "torrent" vacíos
 
-        if PY3 and isinstance(torrent_file, bytes):                             # Convertimos a String para poder hacer el decode
-            torrent_file = "".join(chr(x) for x in torrent_file)
-        torrent_f = decode(torrent_file)                                        #decodificamos el .torrent
+            if PY3 and isinstance(torrent_file, bytes):                         # Convertimos a String para poder hacer el decode
+                torrent_file = "".join(chr(x) for x in torrent_file)
+            torrent_f = decode(torrent_file)                                    #decodificamos el .torrent
 
-        #si sólo tiene un archivo, tomamos la longitud y la convertimos a una unidad legible, si no dará error
-        try:
-            sizet = torrent_f["info"]['length']
-            size = convert_size(sizet)
-            
-            files = torrent_f["info"].copy()
-            if 'path' not in files: files.update({'path': ['']})
-            if 'piece length' in files: del files['piece length']
-            if 'pieces' in files: del files['pieces']
-            if 'name' in files: del files['name']
-            files = [files]
-            files.append({"__name": torrent_f["info"]["name"], 'length': 0})
-        except:
-            pass
-            
-        #si tiene múltiples archivos sumamos la longitud de todos
-        if not size:
+            #si sólo tiene un archivo, tomamos la longitud y la convertimos a una unidad legible, si no dará error
             try:
-                check_video = scrapertools.find_multiple_matches(str(torrent_f["info"]["files"]), "'length': (\d+).*?}")
-                sizet = sum([int(i) for i in check_video])
+                sizet = torrent_f["info"]['length']
                 size = convert_size(sizet)
                 
-                files = torrent_f["info"]["files"][:]
+                files = torrent_f["info"].copy()
+                if 'path' not in files: files.update({'path': ['']})
+                if 'piece length' in files: del files['piece length']
+                if 'pieces' in files: del files['pieces']
+                if 'name' in files: del files['name']
+                files = [files]
                 files.append({"__name": torrent_f["info"]["name"], 'length': 0})
-                
             except:
-                size = 'ERROR'
+                pass
+                
+            #si tiene múltiples archivos sumamos la longitud de todos
+            if not size:
+                try:
+                    check_video = scrapertools.find_multiple_matches(str(torrent_f["info"]["files"]), "'length': (\d+).*?}")
+                    sizet = sum([int(i) for i in check_video])
+                    size = convert_size(sizet)
+                    
+                    files = torrent_f["info"]["files"][:]
+                    files.append({"__name": torrent_f["info"]["name"], 'length': 0})
+                    
+                except:
+                    size = 'ERROR'
+            
+            # Marcamos si es hay archivos RAR
+            if '.rar' in str(files):
+                size = '[COLOR magenta][B]RAR-[/B][/COLOR]%s' % size
+                
+            # Puede haber errores de decode en los paths.  Se intentan arreglar
+            try:
+                for entry in files:
+                    for file, path in list(entry.items()):
+                        if file == 'path':
+                            for x, file_r in enumerate(path):
+                                entry[file][x] = scrapertools.decode_utf8_error(file_r)
+                        elif file == '__name':
+                            entry[file] = scrapertools.decode_utf8_error(path)
+            except:
+                logger.error(traceback.format_exc())
+            
+            size_lista += [(size, torrents_path, torrent_f, files)]
+            size_amount += [size]
+        
+        if len(size_amount) > 1:
+            size = str(size_amount)
 
     except:
         size = 'ERROR'
+        torrent_lista = False
         logger.error('ERROR al buscar el tamaño de un .Torrent: ' + str(url))
         logger.error(traceback.format_exc())
-        
-    #try:
-    #    os.remove(torrents_path + "/generictools.torrent")                      #borramos el .torrent
-    #except:
-    #    pass
 
-    if '.rar' in str(files):
-        size = '[COLOR magenta][B]RAR-[/B][/COLOR]%s' % size
-        
-    # Puede haber errores de decode en los paths.  Se intentan arreglar
-    try:
-        for entry in files:
-            for file, path in list(entry.items()):
-                if file == 'path':
-                    for x, file_r in enumerate(path):
-                        entry[file][x] = scrapertools.decode_utf8_error(file_r)
-                elif file == '__name':
-                    entry[file] = scrapertools.decode_utf8_error(path)
-    except:
-        logger.error(traceback.format_exc())
-        
     #logger.debug(str(url))
-    logger.info(str(size))
+    logger.info('Torrent SIZE: %s' % str(size), force=True)
     
-    if not lookup and subtitles:
+    if torrent_lista and size_lista:
+        return size_lista
+    elif not lookup and subtitles:
         return (size, torrents_path, torrent_f, files, subtitles_list)
     elif not lookup:
         return (size, torrents_path, torrent_f, files)
@@ -2758,7 +2774,9 @@ def web_intervenida(item, data, desactivar=True):
     
 def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=False, lookup=False):
     logger.info()
+    import ast
     from builtins import next
+    from core.videolibrarytools import read_nfo, write_nfo, reset_movie, reset_serie
     
     """
         
@@ -2821,159 +2839,86 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     status_migration =  False
     patron_category = 'http.*\:\/\/(?:.*ww[^\.]*\.)?([^\.]+)\.[^\/]+(?:\/|\?|$)'
     
-    #if item.ow_force == '1':                                       #Ha podido qudar activado de una pasada anteriores
-    #    del item.ow_force
-    #    logger.error('** item.ow_force: ' + item.path)             #aviso que ha habido una incidencia
-    if it.ow_force == '1':                                          #Ha podido quedar activado de una pasada anterior
+    # Ha podido quedar activado ow_force de una pasada anterior
+    if it.ow_force == '1':
         del it.ow_force
         if path and it.infoLabels['mediatype'] in ['tvshow', 'season']:
-            try:
-                nfo = filetools.join(path, '/tvshow.nfo')
-                filetools.write(nfo, head_nfo + it.tojson())                #escribo el .nfo de la peli por si aborta update
-                logger.error('** .nfo ACTUALIZADO: it.ow_force: ' + nfo)    #aviso que ha habido una incidencia
-            except:
-                logger.error('** .nfo ERROR actualizar: it.ow_force: %s' % nfo)     #aviso que ha habido una incidencia
-                logger.error(traceback.format_exc(1))
+            nfo = filetools.join(path, '/tvshow.nfo')
+            res = write_nfo(nfo, head_nfo, it)                                  # escribo el .nfo de la peli por si aborta update
+            if res:
+                logger.info('** .nfo ACTUALIZADO: it.ow_force: %s' % nfo, force=True)   # aviso que ha habido una incidencia
+            else:
+                logger.error('** .nfo ERROR actualizar: it.ow_force: %s' % nfo) #aviso que ha habido una incidencia
     
     # Si no existe el path al .nfo, se regenera
     if it.library_urls and head_nfo and path and not it.path:
-        try:
-            it.path = filetools.join(' ', filetools.basename(path)).strip()
-            nfo = filetools.join(path, '/tvshow.nfo')
-            filetools.write(nfo, head_nfo + it.tojson())                    #escribo el .nfo de la peli por si aborta update
-            logger.error('** .nfo ACTUALIZADO: it.path: %s' % it.path)      #aviso que ha habido una incidencia
-        except:
-            logger.error('** .nfo ERROR actualizar: it.path: %s' % it.path) #aviso que ha habido una incidencia
-            logger.error(traceback.format_exc(1))
+        it.path = filetools.join(' ', filetools.basename(path)).strip()
+        nfo = filetools.join(path, '/tvshow.nfo')
+        res = write_nfo(nfo, head_nfo, it)                                      # escribo el .nfo de la peli por si aborta update   
+        if res:
+            logger.info('** .nfo ACTUALIZADO: it.path: %s' % it.path, force=True)   # aviso que ha habido una incidencia
+        else:
+            logger.error('** .nfo ERROR actualizar: it.path: %s' % it.path)     # aviso que ha habido una incidencia
 
-    #Array con los datos de los canales alternativos
-    #Cargamos en .json de Newpct1 para ver las listas de valores en settings
+    # Array con los datos de los canales alternativos.  Cargamos en .json de Newpct1 para ver las listas de valores en settings
     fail_over_list = channeltools.get_channel_json(channel_py)
-    for settings in fail_over_list['settings']:                             #Se recorren todos los settings
-        if settings['id'] == "clonenewpct1_channels_list":                  #Encontramos en setting
-            fail_over_list = settings['default']                            #Carga lista de clones
-        if settings['id'] == "intervenidos_channels_list":                  #Encontramos en setting
-            intervencion = settings['default']                              #Carga lista de clones y canales intervenidos
+    for settings in fail_over_list['settings']:                                 # Se recorren todos los settings
+        if settings['id'] == "clonenewpct1_channels_list":                      # Encontramos en setting
+            fail_over_list = settings['default']                                # Carga lista de clones
+        if settings['id'] == "intervenidos_channels_list":                      # Encontramos en setting
+            intervencion = settings['default']                                  # Carga lista de clones y canales intervenidos
 
-    #primero tratamos los clones de Newpct1
+    # Salvamos el canal y categoría
     channel_alt = item.channel
-    #if item.url and not it.library_urls:
-    #    channel_alt = scrapertools.find_single_match(item.url, patron_category).lower()     #Salvamos en nombre del canal o clone
-    #    if not channel_alt:
-    #        channel_alt = item.channel
     channel = "'%s'" % channel_alt
     category = ''
     if channel_alt != 'videolibrary':
         item.category = channel_alt.capitalize()
         category = "'%s'" % channel_alt
     channel_py_alt = 'xyz123'
-    if channel in fail_over_list :                      #Si es un clone de Newpct1, se actualiza el canal y la categoría
+    
+    # Si es un clone de Newpct1, se actualiza el canal y la categoría y se se borran restos de pasadas anteriores 
+    if channel in fail_over_list :                                          
         item.channel = channel_py
         item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()
         channel_py_alt = "'%s'" % channel_py
-        if item.channel_host:                                               #y se borran resto de pasadas anteriores
+        if item.channel_host:
             del item.channel_host
 
+    # Refrescamos emergency_urls desde el nfo
     if it.emergency_urls:
-        item.emergency_urls = it.emergency_urls                             #Refrescar desde el .nfo
+        item.emergency_urls = it.emergency_urls
+        
+    """ Reparaciones TEMPORALES """
+    #item, emergency_urls_force = verify_cached_torrents(path, item, emergency_urls_force)   # Verificamos si los .torrents son correctos
 
 
-    #Analizamos si hay series o películas que migrar, debido a que se ha activado en el .json del canal la opción "guardar" 
-    #"emergency_urls = 1", y hay que calcularla para todos los episodios y película existentes en la Videoteca.
-    #Si "emergency_urls" está activada para uno o más canales, se verifica en el .nfo del vídeo si ya se ha realizado
-    #la carga de las urls de emergencia.  Sí se ha hecho, se ignora el proceso de conversión.  Si no, se convierte por el
-    #canal en curso cuando hay item.url, o para todos los canales en item.library_urls si no hay un canal específico en curso.
-    #El mecanismo consiste en generar una regla temporal de migración para cada canal activado.  Esta regla actua borrando
-    #todos los .json de la serie/película.  En el caso de la serie, el proceso de actualización de la videoteca los regenerará
-    #automáticamente.  En el caso de peliculas, se general aquí el json actualizado y se marca el .nfo como actualizado.
-    #Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
-    #Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
-    
-    """
-    if it.verified_encode:
-        try:
-            del it.verified_encode
-            it.path = filetools.join(' ', filetools.basename(path)).strip()
-            nfo = filetools.join(path, '/tvshow.nfo')
-            filetools.write(nfo, head_nfo + it.tojson())                                #escribo el .nfo de la peli por si aborta update
-            logger.error('** .nfo ACTUALIZADO: it.verified_encode: %s' % it.path)       #aviso que ha habido una incidencia
-        except:
-            logger.error('** .nfo ERROR actualizar: it.verified_encode: %s' % it.path)  #aviso que ha habido una incidencia
-            logger.error(traceback.format_exc(1))
-    
-    if not it.verified_encode and path and it.library_playcounts and it.infoLabels['mediatype'] in ['tvshow', 'season', 'episode']:
-        it = borrar_episodio_add_videolibrary(path, head_nfo, it)
-    
-    try:
-        item, it = borrar_jsons_dups(item, it, path, head_nfo)      #TEMPORAL: Reparación de Videoteca con Newpct1
-    except:
-        logger.error('Error en el proceso de borrar_jsons_dups')
-        logger.error(traceback.format_exc())
-       
-    status_migration = regenerate_clones()                          #TEMPORAL: Reparación de Videoteca con Newpct1
-    
-    verify_cached_torrents()                                        #TEMPORAL: verificamos si los .torrents son correctos
-    try:                                                            #Si ha habido errores, vemos la lista y los reparamos
-        json_error_path = filetools.join(config.get_runtime_path(), 'error_cached_torrents.json')
-        if filetools.exists(json_error_path):                               #hay erroer que hay que reparar?
-            from core import jsontools
-            json_error_file = jsontools.load(filetools.read(json_error_path))   #Leemos la lista de errores
-            if not json_error_file:
-                filetools.remove(json_error_path)                           #si ya no quedan errores, borramos el .json
-            elif path in json_error_file:                                   #está este títu,o en la lista de errores?
-                json_error_file.pop(path)                                   #sí.  Lo quitamos
-                if not json_error_file:
-                    filetools.remove(json_error_path)                       #si ya no quedan errores, borramos el .json
-                else:
-                    filetools.write(json_error_path, jsontools.dump(json_error_file))   #si quedan, actualizamos el .json
-                if item.contentType == 'movie':                             #si es una pelicula, forzamos su actualización
-                    emergency_urls_force = True
-                else:                                                       #si es una serie, que regenere los episodios que faltan (en error)
-                    item.ow_force = '1'                                     #... de todas las temporadas
-    except:
-        logger.error('Error en el proceso de REPARACION de vídeos con .torrents dañados')
-        logger.error(traceback.format_exc())
+    # Analizamos si hay series o películas que migrar, debido a que se ha activado en el .json del canal la opción "guardar" 
+    # "emergency_urls = 1", y hay que calcularla para todos los episodios y película existentes en la Videoteca.
+    # Si "emergency_urls" está activada para uno o más canales, se verifica en el .nfo del vídeo si ya se ha realizado
+    # la carga de las urls de emergencia.  Sí se ha hecho, se ignora el proceso de conversión.  Si no, se convierte por el
+    # canal en curso cuando hay item.url, o para todos los canales en item.library_urls si no hay un canal específico en curso.
+    # El mecanismo consiste en generar una regla temporal de migración para cada canal activado.  Esta regla actua borrando
+    # todos los .json de la serie/película.  En el caso de la serie, el proceso de actualización de la videoteca los regenerará
+    # automáticamente.  En el caso de peliculas, se genera aquí el json actualizado y se marca el .nfo como actualizado.
+    # Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
+    # Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
 
-    #Arreglo temporal para Newpct1
-    try:
-        if channel in fail_over_list or channel_alt == 'videolibrary':
-            channel_bis = channel_py
-            if not item.url and it.library_urls and channel_alt == 'videolibrary':
-                for canal_vid, url_vid in it.library_urls.items():              #Se recorre "item.library_urls" para buscar canales candidatos
-                    canal_vid_alt = "'%s'" % canal_vid
-                    if canal_vid_alt in fail_over_list:                         #Se busca si es un clone de newpct1
-                        channel_bis = channel_py
-                        channel_alt = canal_vid
-                        channel = "'%s'" % channel_alt
-                        break
-                    else:
-                        channel_bis = canal_vid
-            if channel_bis == channel_py and config.get_setting("emergency_urls", channel_bis) == 1 and config.get_setting("emergency_urls_torrents", channel_bis) and item.emergency_urls and item.emergency_urls.get(channel_alt, False):
-                raiz, carpetas_series, ficheros = filetools.walk(path).next()
-                objetivo = '[%s]_01.torrent' % channel_alt
-                encontrado = False
-                for fichero in ficheros:
-                    if objetivo in fichero:
-                        encontrado = True
-                        break
-                if not encontrado:
-                    logger.error('REGENERANDO: ' + str(item.emergency_urls))
-                    item.emergency_urls.pop(channel_alt, None)
-        except:
-        logger.error('Error en el proceso de RECARGA de URLs de Emergencia')
-        logger.error(traceback.format_exc())
-    """
-    
-    import ast
-    intervencion_list = ast.literal_eval(intervencion)                      #Convertir a Array el string
+
+    # Convertir a Array el string
+    intervencion_list = ast.literal_eval(intervencion)
     #logger.debug(intervencion_list)
         
+    # Si el canal no está intervenido hay que verificar que las urls de emergencia estén en el estado correcto: guardar o borrar
     try:
-        for activo, canal_org, canal_des, url_org, url_des, patron1, patron2, patron3, patron4, patron5, content_inc, content_exc, ow_force in intervencion_list:
+        for activo, canal_org, canal_des, url_org, url_des, patron1, patron2, patron3, \
+                    patron4, patron5, content_inc, content_exc, ow_force in intervencion_list:
             if activo == '1' and channel_alt == canal_org: break
         else:
-            if item.url and not channel_py in item.url and it.emergency_urls:       #Viene de actualización de videoteca de series
-                #Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
+            # Viene de actualización de videoteca de series
+            if item.url and not channel_py in item.url and it.emergency_urls:
+                
+                # Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
                 if (config.get_setting("emergency_urls", item.channel) == 1 and (not item.emergency_urls \
                             or (item.emergency_urls and not item.emergency_urls.get(channel_alt, False)))) or \
                             (config.get_setting("emergency_urls", item.channel) == 2 \
@@ -2982,16 +2927,18 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     intervencion += ", ('1', '%s', '%s', '', '', '', '', '', '', '', '*', '%s', 'emerg')" % \
                             (channel_alt, channel_alt, config.get_setting("emergency_urls", item.channel))
 
-            elif it.library_urls:                                                   #Viene de "listar peliculas´"
-                for canal_vid, url_vid in list(it.library_urls.items()):            #Se recorre "item.library_urls" para buscar canales candidatos
-                    if canal_vid == channel_py:                                     #Si tiene Newcpt1 en canal, es un error
+            # Viene de "listar peliculas|series´"
+            elif it.library_urls:
+                for canal_vid, url_vid in list(it.library_urls.items()):        # Se recorre "item.library_urls" para buscar canales candidatos
+                    if canal_vid == channel_py:                                 # Si tiene Newcpt1 en canal, es un error
                         continue
                     canal_vid_alt = "'%s'" % canal_vid
-                    if canal_vid_alt in fail_over_list:                             #Se busca si es un clone de newpct1
+                    if canal_vid_alt in fail_over_list:                         # Se busca si es un clone de newpct1
                         channel_bis = channel_py
                     else:
                         channel_bis = canal_vid
-                    #Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
+                    
+                    # Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
                     if (config.get_setting("emergency_urls", channel_bis) == 1 and (not it.emergency_urls \
                             or (it.emergency_urls and not it.emergency_urls.get(canal_vid, False)))) \
                             or (config.get_setting("emergency_urls", channel_bis) == 2 \
@@ -3006,439 +2953,315 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #Ahora tratamos las webs intervenidas, tranformamos la url, el nfo y borramos los archivos obsoletos de la serie
     if (channel not in intervencion and channel_py_alt not in intervencion and \
                         category not in intervencion and channel_alt != 'videolibrary') or not \
-                        item.title or status_migration:                     #lookup o migración
-        if int(overwrite_param) == 3 and item.channel == channel_py and not path: item.channel = item.category.lower()
-        return (item, it, overwrite)                                        #... el canal/clone está listado
+                        item.title or status_migration:                         # Lookup o migración
+        if int(overwrite_param) == 3 and item.channel == channel_py and not path:
+            item.channel = item.category.lower()
+        return (item, it, overwrite)                                            # ... el canal/clone NO está listado
 
-    intervencion_list = ast.literal_eval(intervencion)                      #Convertir a Array el string
+
+    # Convertir a Array el string (refresco)
+    intervencion_list = ast.literal_eval(intervencion)
     #logger.debug(intervencion_list)
-    
-    if lookup == True:
-        overwrite = False                                                   #Solo avisamos si hay cambios
+
+    """ Analizamos los cambios necesarios para este canal en la lista de intervención """
+    if lookup:
+        overwrite = False                                                       # Solo avisamos si hay cambios
     i = 0
-    for activo, canal_org, canal_des, url_org, url_des, patron1, patron2, patron3, patron4, patron5, content_inc, content_exc, ow_force in intervencion_list:
+    for activo, canal_org, canal_des, url_org, url_des, patron1, patron2, patron3, patron4, \
+                            patron5, content_inc, content_exc, ow_force in intervencion_list:
         i += 1
         opt = ''
-        #Es esta nuestra entrada?
-        if activo == '1' and (canal_org == channel_alt or canal_org == item.category.lower() or channel_alt == 'videolibrary' or ow_force == 'del' or ow_force == 'emerg'):     
-            
+
+        # Es esta nuestra entrada?
+        if activo == '1' and (canal_org == channel_alt or canal_org == item.category.lower() \
+                            or channel_alt == 'videolibrary' or ow_force == 'del' or ow_force == 'emerg'):     
+
             if item.url:
-                logger.debug('INTERV. LIST: ' + str(intervencion_list[i-1]) + 
-                            ' / CHANNEL: ' + str(channel_alt) + ' / URL: ' + 
-                            str(item.url))
-            
-            if ow_force == 'del' or ow_force == 'emerg':    #Si es un borrado de estructuras erroneas, hacemos un proceso aparte
-                canal_des_def = canal_des                   #Si hay canal de sustitución para item.library_urls, lo usamos
-                if not canal_des_def and canal_org in item.library_urls and len(item.library_urls) == 1:    #Si no, lo extraemos de la url
-                    canal_des_def = scrapertools.find_single_match(item.library_urls[canal_org], patron_category).lower()            #salvamos la url actual de la estructura a borrar
+                logger.debug('INTERV. LIST: %s / CHANNEL: %s / URL: %s' % \
+                            (intervencion_list[i-1], channel_alt, item.url))
+
+            """ Si es un BORRADO de estructuras erroneas, hacemos un proceso aparte """
+            if ow_force == 'del' or ow_force == 'emerg':
+                # Si hay canal de sustitución para item.library_urls, lo usamos
+                canal_des_def = canal_des
+
+                # Si no, lo extraemos de la url
+                if not canal_des_def and canal_org in item.library_urls and len(item.library_urls) == 1:
+                    # Salvamos la url actual de la estructura a borrar
+                    canal_des_def = scrapertools.find_single_match(item.library_urls[canal_org], patron_category).lower()
+
+                # Si existe item.url, lo salvamos para futuro uso
                 url_total = ''
                 if item.url:
-                    url_total = item.url                                    #Si existe item.url, lo salvamos para futuro uso
-                if item.library_urls and canal_org in item.library_urls:    #Si existe una entrada con el canal a borrar, lo procesamos
-                    if lookup == True:                                      #Queremos que el canal solo visualice sin migración?
-                        overwrite = True                                    #Avisamos que hay cambios
+                    url_total = item.url
+
+                # Si existe una entrada en library_urls con el canal a borrar, lo procesamos
+                if item.library_urls and canal_org in item.library_urls:
+                    if lookup:                                                  # Queremos que el canal solo visualice sin migración?
+                        overwrite = True                                        # Avisamos que hay cambios
                         continue
-                    logger.error('** REGLA: ' + canal_org + ', ' + canal_des+ ', ' + ow_force)
-                    logger.error('item.library_urls PREVIA: ' + str(item.library_urls))
-                    url_total = item.library_urls[canal_org]                #salvamos la url actual de la estructura a borrar
+
+                    logger.info('** REGLA: %s, %s, %s' % (canal_org, canal_des, ow_force), force=True)
+                    logger.info('** item.library_urls PREVIA: %s' % item.library_urls, force=True)
+
+                    url_total = item.library_urls[canal_org]                    # Salvamos la url actual de la estructura a borrar
                     url_total_status = False
-                    if len(item.library_urls) == 1 or canal_des:            #si el nuevo canal no existe ya...
-                        item.library_urls.update({canal_des_def: url_total})    #restauramos la url con el nuevo canal
-                        url_total_status = True                             #marcamos esta url como válida
-                        overwrite = True                                    #Le decimos que sobreescriba todos los .jsons
-                        item.ow_force = '1'                                 #Le decimos que revise todas las temporadas
+                    
+                    # Si el nuevo canal no existe ya...
+                    if len(item.library_urls) == 1 or canal_des:
+                        item.library_urls.update({canal_des_def: url_total})    # Restauramos la url con el nuevo canal
+                        url_total_status = True                                 # Marcamos esta url como válida
+                        overwrite = True                                        # Le decimos que sobreescriba todos los .jsons
+                        item.ow_force = '1'                                     # Le decimos que revise todas las temporadas
+                    
+                    # Si no, borramos la url del canal a borrar
                     if len(item.library_urls) > 1 and ow_force == 'del':
-                        item.library_urls.pop(canal_org, None)              #borramos la url del canal a borrar
-                        overwrite = True                                    #Le decimos que sobreescriba todos los .jsons
-                        item.ow_force = '1'                                 #Le decimos que revise todas las temporadas
+                        item.library_urls.pop(canal_org, None)                  
+                        overwrite = True                                        # Le decimos que sobreescriba todos los .jsons
+                        item.ow_force = '1'                                     # Le decimos que revise todas las temporadas
+                    
+                    # Lo salvamos en el .nfo, si lo hay
                     if it.library_urls:
-                        it.library_urls = item.library_urls                 #lo salvamos en el .nfo, si lo hay
+                        it.library_urls = item.library_urls
                         
-                    if item.url and item.url == url_total and url_total_status == False:    #si la url es la del canal borrado...
+                    # Si la url es la del canal borrado...
+                    if item.url and item.url == url_total and url_total_status == False:
+                        canal_vid = canal_org
+                        canal_vid_alt = "'%s'" % canal_vid
                         for canal_vid, url_vid in list(item.library_urls.items()):
                             canal_vid_alt = "'%s'" % canal_vid
-                            if canal_vid_alt not in intervencion:           #... la sustituimos por la primera válida
+                            if canal_vid_alt not in intervencion:               # ... la sustituimos por la primera válida
                                 item.url = url_vid                          
                                 break
-                        if canal_vid_alt in fail_over_list:         #Si es un clone de Newpct1, salvamos la nueva categoría
-                            item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()      #Salvamos categoría
+                        if canal_vid_alt in fail_over_list:                     # Si es un clone de Newpct1, salvamos la nueva categoría
+                            item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()      # Salvamos categoría
                         else:
-                            item.category = canal_vid.capitalize()          #si no, salvamos nueva categoría
-                    logger.error('item.library_urls ACTUALIZADA: ' + str(item.library_urls))
+                            item.category = canal_vid.capitalize()              # Si no, salvamos nueva categoría
+                    logger.info('** item.library_urls ACTUALIZADA: %s' % item.library_urls, force=True)
                 
-                if lookup == False:                                         #si es migración completa...
-                    delete_stat += 1                                        #Ya hemos actualizado algo, o habrá que hacerlo...
-                    if ow_force == 'emerg': opt = content_exc               #Salvamos la opción de Guardar o Borrar enlaces
-                    canal_org_des_list += [(canal_org, canal_des, url_total, opt, ow_force)]     #salvamos el resultado para su proceso
+                # Si es migración completa...
+                if not lookup:                                         
+                    delete_stat += 1                                            # Ya hemos actualizado algo, o habrá que hacerlo...
+                    if ow_force == 'emerg': opt = content_exc                   # Salvamos la opción de Guardar o Borrar enlaces
+                    canal_org_des_list += [(canal_org, canal_des, url_total, opt, ow_force)]     # Salvamos el resultado para su proceso
+
 
             else:
-                if channel_alt == 'videolibrary':                           #Viene de videolibrary.list_movies: IMPRESCINDIBLE
+                """ Proceso estándar """
+
+                """ Verificación de canales """
+                # Viene de videolibrary.list_movies: IMPRESCINDIBLE
+                if channel_alt == 'videolibrary':
                     for canal_vid, url_vid in list(item.library_urls.items()):
-                        if canal_org != canal_vid:              #Miramos si canal_org de la regla está en item.library_urls
+                        if canal_org != canal_vid:                              # Miramos si canal_org de la regla está en item.library_urls
                             continue
                         else:
-                            channel_alt = canal_org                         #Sí, ponermos el nombre del canal de origen
+                            channel_alt = canal_org                             # Sí, ponermos el nombre del canal de origen
                             channel_b = "'%s'" % canal_org
-                            if channel_b in fail_over_list:                 #Si es un clone de Newpct1, se actualiza a newpct1
+                            if channel_b in fail_over_list:                     # Si es un clone de Newpct1, se actualiza a newpct1
                                 channel_alt = channel_py
                     if channel_alt == 'videolibrary':
                         continue
 
-                if item.contentType == "list":                              #Si viene de Videolibrary, le cambiamos ya el canal
+                # Si viene de Videolibrary, le cambiamos ya el canal
+                if item.contentType == "list":
                     if item.channel != channel_py:
-                        item.channel = canal_des                            #Cambiamos el canal.  Si es clone, lo hace el canal
-                        continue                                            #Salimos sin hacer nada más. item está casi vacío
+                        item.channel = canal_des                                # Cambiamos el canal.  Si es clone, lo hace el canal
+                        continue                                                # Salimos sin hacer nada más. item está casi vacío
                 
-                if item.contentType and item.contentType not in content_inc and "*" not in content_inc:  #Está el contenido el la lista de incluidos
+                # Está el contenido en listas de incluidos/excluidos ?
+                if item.contentType and item.contentType not in content_inc and "*" not in content_inc:  # NO está el contenido en lista incluidos
                     continue
                 
-                if item.contentType and item.contentType in content_exc:    #Está el contenido excluido?
+                if item.contentType and item.contentType in content_exc:        # Está el contenido excluido?
                     continue
+                
+                # verificamos si el canal de origen está activo
                 channel_enabled = 0
                 channel_enabled_alt = 1
                 if item.channel != channel_py:
                     try:
                         if channeltools.is_enabled(channel_alt): channel_enabled = 1    #Verificamos que el canal esté inactivo
-                        if config.get_setting('enabled', channel_alt) == False: channel_enabled_alt = 0
+                        if not config.get_setting('enabled', channel_alt): channel_enabled_alt = 0
                         channel_enabled = channel_enabled * channel_enabled_alt         #Si está inactivo en algún sitio, tomamos eso
                     except:
                         pass
-                if channel_enabled == 1 and canal_org != canal_des:         #Si el canal está activo, puede ser solo...
-                    continue                                                #... una intervención que afecte solo a una región
-                #if ow_force == 'no' and it.library_urls:                    #Esta regla solo vale para findvideos...
-                #    continue                                                #... salidmos si estamos actualizando
-                if lookup == True:                                          #Queremos que el canal solo visualice sin migración?
-                    if ow_force != 'no':
-                        overwrite = True                                    #Avisamos que hay cambios
-                    continue                                                #Salimos sin tocar archivos
+                if channel_enabled == 1 and canal_org != canal_des:             # Si el canal está activo, puede ser solo...
+                    continue                                                    # ... una intervención que afecte solo a una región
 
+                # Queremos que el canal solo visualice sin migración?
+                if lookup :                                              
+                    if ow_force != 'no':
+                        overwrite = True                                        # Avisamos que hay cambios
+                    continue                                                    # Salimos sin tocar archivos
+
+                """ Convertimos las URLs """
+                # Salvamos la url
                 url_total = ''
                 if item.url:
                     url_total = item.url
-                elif not item.url and item.library_urls:
+                elif item.library_urls:
                     url_total = item.library_urls[canal_org]
                 
-                if item.channel == channel_py:                  #Si es un clone de Newpct1, salvamos la nueva categoría
-                    item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()      #Salvamos categoría
+                # Si es un clone de Newpct1, salvamos la nueva categoría desde la url
+                if item.channel == channel_py:
+                    item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()
                     if canal_org != item.category.lower():
                         item.category_alt = canal_org.capitalize()
                 else:
-                    item.category = canal_des.capitalize()                      #si no, salvamos nueva categoría
+                    # Si no, salvamos nueva categoría desde el canal de destino
+                    item.category = canal_des.capitalize()                      
                 
-                if url_org == '*':                                              #Si se quiere cambiar desde cualquier url ...
+                # Reemplazamos las urls del canal origen por el de destino
+                if url_org == '*':                                              # Si se quiere cambiar desde CUALQUIER url ...
                     url_host = scrapertools.find_single_match(url_total, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
-                    if url_host: url_total = url_total.replace(url_host, url_des)   #reemplazamos una parte de url
-                elif url_des.startswith('http'):
+                    if url_host: 
+                        url_total = url_total.replace(url_host, url_des)        # Reemplazamos el dominio de actual por el de destino
+                elif url_des.startswith('http'):                                # Si se quiere cambiar desde una URL específica ...
                     if item.channel != channel_py or (item.channel == channel_py \
                             and item.category.lower() == canal_org):
                         url_total = scrapertools.find_single_match(url_total, \
-                            'http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+(.*?$)')     #quitamos el http*:// inicial
-                        url_total = urlparse.urljoin(url_des, url_total)        #reemplazamos una parte de url
-                else:
-                    if url_host: url_total = url_total.replace(url_org, url_des)    #reemplazamos una parte de url
+                            'http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+(.*?$)')     # Quitamos el http*://DOMINIO inicial
+                        url_total = urlparse.urljoin(url_des, url_total)        # Añadimos el dominio de destino
+                else:                                                           # Si se quiere cambiar desde un DOMINIO ...
+                    if url_host: url_total = url_total.replace(url_org, url_des)    #reemplazamos una parte del dominio
+                
+                # Si hay expresiones regex, las aplicamos sobre la url convertida
                 url = ''
-                if patron1:                                                     #Hay expresión regex?
-                    url += scrapertools.find_single_match(url_total, patron1)   #La aplicamos a url
-                if patron2:                                                     #Hay más expresión regex?
-                    url += scrapertools.find_single_match(url_total, patron2)   #La aplicamos a url
-                if patron3:                                                     #Hay más expresión regex?
-                    url += scrapertools.find_single_match(url_total, patron3)   #La aplicamos a url
-                if patron4:                                                     #Hay más expresión regex?
-                    url += scrapertools.find_single_match(url_total, patron4)   #La aplicamos a url
-                if patron5:                                                     #Hay más expresión regex?
-                    url += scrapertools.find_single_match(url_total, patron5)   #La aplicamos a url
+                if patron1:
+                    url += scrapertools.find_single_match(url_total, patron1)
+                if patron2:
+                    url += scrapertools.find_single_match(url_total, patron2)
+                if patron3:
+                    url += scrapertools.find_single_match(url_total, patron3)
+                if patron4:
+                    url += scrapertools.find_single_match(url_total, patron4)
+                if patron5:
+                    url += scrapertools.find_single_match(url_total, patron5)
+                
+                # Guardamos la suma de los resultados intermedios
                 if url:
-                    url_total = url                                     #Guardamos la suma de los resultados intermedios
-                if item.channel == channel_py or channel in fail_over_list:     #Si es Newpct1...
-                    #if item.contentType == "tvshow" and ow_force != 'no':       #parece que con el título encuentra.., ### VIGILAR
-                    if item.contentType in ["tvshow", "season"] and canal_org not in canal_des: #parece que con el título solo encuentra..,
-                        url_total = re.sub(r'\/\d{4,20}\/*$', '', url_total)    #mejor la serie, a menos que sea una redir del mismo canal
+                    url_total = url                                     
+                
+                # Si es el canal Newpct1, se analiza la url de la serie para quitarle códigos específicos de los clones
+                if item.channel == channel_py or channel in fail_over_list:
+                    #if item.contentType == "tvshow" and ow_force != 'no':       # Parece que con el título encuentra.., ### VIGILAR
+                    if item.contentType in ["tvshow", "season"] and canal_org not in canal_des:     # Parece que con el título sólo, encuentra..,
+                        url_total = re.sub(r'\/\d{4,20}\/*$', '', url_total)    # mejor la serie, a menos que sea una redir del mismo canal
                         item.channel_redir = item.category
+                
+                """ SALVAMOS el resultado para su proceso """
                 update_stat += 1                                                #Ya hemos actualizado algo
-                canal_org_des_list += [(canal_org, canal_des, url_total, opt, ow_force)]   #salvamos el resultado para su proceso
+                canal_org_des_list += [(canal_org, canal_des, url_total, opt, ow_force)]
             
-    if update_stat > 0 or delete_stat > 0:                  #Ha habido alguna actualización o borrado?  Entonces salvamos
+    
+    """ PROCESAMOS las actualizaciones y borrados """
+    #Ha habido alguna actualización o borrado?  Entonces salvamos los cambios
+    if update_stat > 0 or delete_stat > 0:
         if (update_stat > 0 and path != False) or item.ow_force == '1':
-            logger.error('** Lista de Actualizaciones a realizar: ' + str(canal_org_des_list))
-        for canal_org_def, canal_des_def, url_total, opt_def, ow_force_def in canal_org_des_list:   #pasamos por todas las "parejas" cambiadas
+            logger.info('** Lista de Actualizaciones a realizar: %s' % canal_org_des_list, force=True)
+        
+        # REPASAMOS por todas las "parejas" cambiadas
+        for canal_org_def, canal_des_def, url_total, opt_def, ow_force_def in canal_org_des_list:
             url_total_def = url_total
+            # Actualizaciones normales, diferentes de borrados o urls de emergencia
             if ow_force_def != 'del' and ow_force_def != 'emerg':
+                
+                # Salvamos la url convertida
                 if item.url:
-                    item.url = url_total                                        #Salvamos la url convertida
+                    item.url = url_total
+                # Salvamos la url convertida en el canal de destino de library_urls, y borramos la del canal de origen
                 if item.library_urls:
                     item.library_urls.pop(canal_org_def, None)
                     item.library_urls.update({canal_des_def: url_total})
-                    it.library_urls = item.library_urls
+                    if it.library_urls: it.library_urls = item.library_urls     # Lo salvamos al .nfo
+                
+                # Cambiamos el canal si no es Newpct1
                 if item.channel != channel_py and item.channel != 'videolibrary':
-                    item.channel = canal_des_def                    #Cambiamos el canal.  Si es clone, lo hace el canal
+                    item.channel = canal_des_def                                #Cambiamos el canal
                     if channel_alt == item.category.lower():                    #Actualizamos la Categoría y si la tenía
                         item.category = item.channel.capitalize()
-                if item.channel == channel_py and int(overwrite_param) == 3:    #Si se resetea la videoteca, se regeneran a clones actuales
+
+                # Queremos que el canal revise/regenere la serie entera?
+                if ow_force_def == 'force' and item.contentType != 'movie':
+                    item.ow_force = '1'                                         # Se lo decimos
+                if ow_force_def in ['force', 'auto']:                           # Sobreescribir la series?
+                    overwrite = True                                            # Sí, lo marcamos
+                
+                #Si se resetea la videoteca, se regeneran a webs/clones actuales
+                if it.library_urls and int(overwrite_param) == 3:
                     if not path: item.channel = canal_des_def
                     item.category = canal_des_def.capitalize()
                     if item.channel_redir: del item.channel_redir
                     if it.channel_redir: del it.channel_redir
                     if item.category_alt: del item.category_alt
-                    if item.library_urls:
-                        item.library_urls.pop(canal_org_def, None)
-                        it.library_urls = item.library_urls
-                        filetools.write(filetools.join(path, '/tvshow.nfo'), head_nfo + it.tojson())    #escribo el .nfo
-                if ow_force_def == 'force' and item.contentType != 'movie':     #Queremos que el canal revise la serie entera?
-                    item.ow_force = '1'                                         #Se lo decimos
-                if ow_force_def in ['force', 'auto']:                           #Sobreescribir la series?
-                    overwrite = True                                            #Sí, lo marcamos
+                    ow_force_def = 'no'
+                    if it.library_urls and head_nfo and path:
+                        file = 'tvshow.nfo'
+                        if item.contentType == 'movie':
+                            file = filetools.basename(path) + '.nfo'
+                        res = write_nfo(filetools.join(path, file), head_nfo, it)       # Actualizo el .nfo
 
-        if it.library_urls and path != False and ow_force_def != 'no':          #Continuamos si hay .nfo, path, y queremos actualizarlo
+        """ Continuamos si hay .NFO, path, y queremos ACTUALIZARLO """
+        if it.library_urls and head_nfo and path and ow_force_def != 'no':
+            # Borramos estos campos para forzar la actualización ya
             item.update_next = '1'
-            del item.update_next                                    #Borramos estos campos para forzar la actualización ya
+            del item.update_next
             it.update_next = '1'
             del it.update_next
+            
+            # Si hay .nfo lo salvamos actualizado
+            file = 'tvshow.nfo'
+            if item.contentType == 'movie':
+                file = filetools.basename(path) + '.nfo'
+            res = write_nfo(filetools.join(path, file), head_nfo, it)           # Actualizo el .nfo
         
-            #Verificamos que las webs de los canales estén activas antes de borrar los .json, para asegurar que se pueden regenerar
+            # Verificamos que las webs de los canales estén activas antes de borrar los .json, para asegurar que se pueden regenerar
             i = 0
-            canal_org_des_list_ALT = []                                         #Creamos esta lista para salvar las parejas
-            canal_org_des_list_ALT.extend(canal_org_des_list)                   #... y borrar de la original las web caidas
-            for canal_org_def, canal_des_def, url_total, opt_def, ow_force_def in canal_org_des_list_ALT: #pasamos por las "parejas" a borrar
-                if "magnet:" in url_total or not isinstance(url_total, str):    #Si la url es un Magnet, o es una lista, pasamos
-                    i += 1
-                    continue
-                try:
-                    response = httptools.downloadpage(url_total)
-                except:
-                    logger.error(traceback.format_exc())
-                    logger.error('Web ' + canal_des_def.upper() + ' ERROR.  Regla no procesada: ' + str(canal_org_des_list[i]))
-                    del canal_org_des_list[i]                                   #Borro regla
-                    continue                                                    #... y paso a la siguiente
-                if not response:
-                    logger.error('Web ' + canal_des_def.upper() + ' INACTIVA.  Regla no procesada: ' + str(canal_org_des_list[i]))
-                    del canal_org_des_list[i]                                   #Borro regla
-                    continue                                                    #... y paso a la siguiente
-                i += 1
-            if i == 0:
+            for channel, url in list(it.library_urls.items()):
+                if not url.startswith('magnet'):
+                    url_domain = scrapertools.find_single_match(url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+)') 
+                    response = httptools.downloadpage(url_domain, timeout=10, ignore_response_code=True, hide_infobox=True)
+                    if not response.sucess:
+                        logger.error('Web %s en ERROR %s.  URL no procesada: %s' % (channel.upper(), response.code, url))
+                        i = 0
+                        break
+                i =+ 1
+            
+            # Si hay urls verificadas, llamamos a la función de RESET series o películas de videolibrarytools
+            if i > 0:
+                if item.contentType == 'movie':
+                    reset_movie(filetools.join(path, file))
+                else:
+                    reset_serie(filetools.join(path, file))
+            else:
+                # Si no hay url válidas, marcamos el proceso como fallido
                 item = item_back.clone()                                        #Restauro las imágenes inciales
                 it = it_back.clone()
                 item.torrent_caching_fail = True                                #Marcamos el proceso como fallido
                 return (item, it, False)
 
-            # Listamos todos los ficheros de la serie, asi evitamos tener que comprobar si existe uno por uno
-            canal_erase_list = []
-            from core import videolibrarytools
-            #raiz, carpetas_series, ficheros = filetools.walk(path).next()
-            raiz, carpetas_series, ficheros = next(filetools.walk(path))
-            ficheros = [filetools.join(path, f) for f in ficheros]      #Almacenamos la lista de archivos de la carpeta
-            #logger.error(ficheros)
-            for archivo in ficheros:
-                for canal_org_def, canal_des_def, url_total, opt_def, ow_force_def in canal_org_des_list: #pasamos por las "parejas" a borrar
-                    canal_erase = '[%s]' % canal_org_def
-                    canal_erase_alt = "'%s'" % canal_org_def
-                    canal_new = '[%s]' % canal_des_def
-                    archivo_alt = "'%s'" % scrapertools.find_single_match(archivo, '\[(\w+)\].json')
-                    if archivo_alt == "''": archivo_alt = "'xyz123'"
-                    #logger.error(canal_erase + canal_new + archivo + archivo_alt)
-                    #Borramos los .json que sean de los canal afectados, incluidos todos los de los clones de newpct1 si éste es el canal
-                    if canal_erase in archivo or (ow_force_def == 'emerg' and canal_erase_alt in fail_over_list and archivo_alt in fail_over_list and it.contentType != 'movie'):
-                        if canal_des_def and it.contentType == 'movie' and not '.torrent' in archivo:   #Si es película ...
-                            item_json = ''
-                            item_json = Item().fromjson(filetools.read(archivo))    #leemos el .json ante de borrarlo para salvar...
-                            if not item_json:                                   #error al leer el .json.  Algo no funciona...
-                                continue
-                            title = item_json.title                             #... el título con su formato
-                            language = item_json.language                       #... los idiomas, que no están en el .nfo
-                            wanted = item_json.wanted                           #... y wanted con el título original
-                            json_path = archivo.replace(canal_erase, canal_new) #Salvamos el path del .json para luego crearlo
-                            json_path_list += [(canal_org_def, canal_des_def, url_total, json_path, title, language, wanted, ow_force_def, opt_def, archivo)]
-                        filetools.remove(archivo)                               #Borramos el .json y el .torrent
-                        logger.error('** BORRAMOS: ' + str(archivo))
-                        if ow_force_def == 'del' or ow_force_def == 'emerg':    #Si la función es 'del' or 'emerg' ...
-                            overwrite = True                                    #Le decimos que sobreescriba todos los .jsons
-                            item.ow_force = '1'                                 #Le decimos que revise todas las temporadas
-            
-                #Si se ha cambiado algo, se actualizan los .nfo
-                if it.nfo: del it.nfo                                           #Borramos variables innecesarias
-                if it.path: del it.path                                         #Borramos variables innecesarias
-                if it.text_color: del it.text_color                             #Borramos variables innecesarias
-                if item.contentType == "movie" and ".nfo" in archivo:           #Para películas
-                    archivo_nfo = archivo                                       #Guardamos el path del .nfo para futuro uso
-                    if it.ow_force: del it.ow_force
-                    filetools.write(archivo, head_nfo + it.tojson())            #escribo el .nfo de la peli
-                if item.contentType != "movie" and "tvshow.nfo" in archivo:
-                    archivo_nfo = archivo                                       #Guardamos el path del .nfo para futuro uso
-                    filetools.write(archivo, head_nfo + it.tojson())            #escribo el tvshow.nfo por si aborta update
-            
-            #Aquí convertimos las películas.  Después de borrado el .json, dejamos que videolibrarytools lo regenere
-            if item.contentType == "movie":                                     #Dejamos que regenere el archivo .json
-                item_movie = item.clone()
-                if item_movie.ow_force: del item_movie.ow_force
-                item_movie.update_last = '1'
-                if item_movie.update_last: del item_movie.update_last
-                if item_movie.library_playcounts: del item_movie.library_playcounts     #Borramos lo que no es necesario en el .json
-                if item_movie.library_urls: del item_movie.library_urls
-                if item_movie.nfo: del item_movie.nfo
-                if item_movie.path: del item_movie.path
-                if item_movie.strm_path: del item_movie.strm_path
-                if item_movie.text_color: del item_movie.text_color
-                if item_movie.channel_host: del item_movie.channel_host
-                if not item_movie.context: item_movie.context = "['buscar_trailer']"
-                if not item_movie.extra: item_movie.extra = "peliculas"
-                
-                if json_path_list:
-                    logger.error('** .json LIST: ' + str(json_path_list))
-                for canal_org_def, canal_des_def, url_total, json_path, title, language, wanted, ow_force_def, opt_def, archivo in json_path_list:                                      #pasamos por todos canales
-                    logger.error('** ESCRIBIMOS: ' + json_path)
-                    item_movie.emergency_urls = False
-                    del item_movie.emergency_urls
-                    item_movie.channel = canal_des_def                          #mombre del canal migrado
-                    if not item_movie.category: item_movie.category = canal_des_def.capitalize()        #categoría
-                    item_movie.url = url_total                                  #url migrada
-                    if title: item_movie.title = title                          #restaurmos el título con formato
-                    if language: item_movie.language = language                 #restaurmos los idiomas
-                    if wanted: item_movie.wanted = wanted                       #restaurmos wanted
-                    item_movie.added_replacing = canal_org_def                  #guardamos la traza del canal reemplazado
-                    
-                    if ow_force_def == 'emerg' and opt_def in ['1', '3']:       #Si era una op. para añadir/actualizar urls de emergencia ...
-                        item_movie = videolibrarytools.emergency_urls(item_movie, None, archivo)   #... ejecutamos "findvideos" del canal para obtenerlas
-                        if item_movie.channel_host: del item_movie.channel_host
-                        if item_movie.unify: del item_movie.unify
-                        if item_movie.extra2: del item_movie.extra2
-                        if item_movie.emergency_urls:                           #... si las hay ...
-                            if it.emergency_urls and not isinstance(it.emergency_urls, dict):
-                                del it.emergency_urls
-                            if not it.emergency_urls:                           #... lo actualizamos en el .nfo
-                                it.emergency_urls = dict()                      #... iniciamos la variable si no existe
-                            if it.library_urls.get(canal_des_def, False):       #... y si existe el canal
-                                it.emergency_urls.update({canal_des_def: True}) #... se marca como activo
-                            if it.ow_force: del it.ow_force
-                            filetools.write(archivo_nfo, head_nfo + it.tojson())        #actualizo el .nfo de la peli    
-                        else:
-                            logger.error('Error en FINDVIDEOS: ' + archivo + ' / Regla: ' + canal_org_def + ', ' + opt_def + ', ' + ow_force_def)
 
-                    if ow_force_def == 'emerg' and opt_def == '2':  #Si era una operación para borrar urls de emergencia ...
-                        if it.emergency_urls and not isinstance(it.emergency_urls, dict):
-                            del it.emergency_urls
-                        if it.emergency_urls and it.emergency_urls.get(item_movie.channel, False):
-                            it.emergency_urls.pop(item_movie.channel, None)     #borramos la entrada del .nfo
-                            if it.ow_force: del it.ow_force
-                            filetools.write(archivo_nfo, head_nfo + it.tojson())        #actualizo el .nfo de la peli    
-
-                    filetools.write(json_path, item_movie.tojson())             #Salvamos el nuevo .json de la película
-
-    if (update_stat > 0 and path != False and ow_force_def in ['force', 'auto']) or item.ow_force == '1' or len(json_path_list) > 0:
-        logger.error('ITEM cambiado')
-        if it.emergency_urls:
-            logger.error(it.emergency_urls)
-        logger.error(item)
-    if update_stat > 0 and path == False:
+    """ FIN del proceso.  Avisamos de algunos cambios """
+    if (update_stat > 0 and path and ow_force_def in ['force', 'auto']) or item.ow_force == '1' or len(json_path_list) > 0:
+        logger.info('** ITEM cambiado: Canal: %s; Categoría: %s; Url: %s' % \
+                        (item.channel, item.category, item.url), force=True)
         if it.library_urls:
-            logger.debug('URL cambiada: '+ str(it.library_urls))
+            logger.info('** NFO Library_urls: %s' % it.library_urls, force=True)
+        if it.emergency_urls:
+            logger.info('** NFO Emergency_urls: %s' % it.emergency_urls, force=True)
+    if update_stat > 0 and not path:
+        if it.library_urls:
+            logger.info('** URLs cambiadas: %s' % it.library_urls, force=True)
         else:
-            logger.debug('URL cambiada: '+ str(item.url))
-    if update_stat == 0 and path == False and int(overwrite_param) == 3 and item.channel == channel_py:
+            logger.info('** URL cambiada: %s' % item.url, force=True)
+    if update_stat == 0 and not path and int(overwrite_param) == 3 and item.channel == channel_py:
         item.channel = item.category.lower()
 
     return (item, it, overwrite)
-    
-
-def borrar_episodio_add_videolibrary(path, head_nfo, nfo):
-    logger.info()
-    # Por error se ha creado un episodio en la actualización de la videteca que hace referencia a "añadir a la Videoteca"
-    # Hay que borrar ese episodio completo (json, strm, nfo, torrents) y borraar la entrada de library_playcounts del .nfo
-    # Hay que restaurar la temporada/serie como vista/no vista y hay que limpiar el Catálogo de Kodi para que borre los episodios
-
-    from channels import videolibrary
-
-    # Pasamos por todos los episodios de la SERIE
-    sesxepi_list = []
-    season = 0
-    files = sorted(filetools.listdir(path), reverse=True)
-    for file in files:
-        if not '.json' in file:
-            continue
-            
-        # Localizamos y cargamos el .json con el error
-        """
-        json_file = Item(path=filetools.join(path, file)).fromjson(
-                    filetools.read(filetools.join(path, file)))
-        if not 'serie a videoteca' in json_file.title.lower() and not \
-                    'temp. a videoteca' in json_file.title.lower() and not \
-                    'vista previa videoteca' in json_file.title.lower():
-            continue
-        """
-        json_file = filetools.read(filetools.join(path, file))
-        if 'infoLabels' in json_file:
-            continue
-            
-        # Estraemos el nº de temporada y episodio para localizar y borrar los otros archivos del episodio (strm, nfo, torrents)
-        sesxepi = '%sx%s' % (str(scrapertools.find_single_match(file, '^(\d+)x\d+\s*\[')), \
-                    str(scrapertools.find_single_match(file, '^\d+x(\d+)\s*\[')).zfill(2))
-        sesxepi_list += [sesxepi]
-        season = str(scrapertools.find_single_match(file, '^(\d+)x\d+\s*\['))
-        for file in files:
-            if file.startswith(sesxepi):
-                filetools.remove(filetools.join(path, file))
-                logger.error('Episodio borrado: %s' % file)
-        break
-            
-    logger.error('Serie: %s, Episodios: %s' % (filetools.basename(path), str(sesxepi_list)))
-    """
-    if sesxepi_list:
-        # Actualizamos el .nfo borrado las entradas de library_playcounts que no procedan
-        for epi, valor in list(nfo.library_playcounts.items()):
-            if epi in str(sesxepi_list):
-                nfo.library_playcounts.pop(epi, None)
-                logger.error('pop %s: %s' % (epi, valor))
-        
-        # Llamamos al método que reestablece los vistos/no vistos en el .nfo
-        nfo.active = 1
-        nfo = videolibrary.check_season_playcount(nfo, season)
-        config.set_setting('cleanlibrary', True, 'videolibrary')
-        logger.error('.nfo actualizado de Serie: %s, %s' % (nfo.infoLabels['tvshowtitle'], nfo.library_playcounts))
-    """
-    nfo.verified_encode = True
-    if nfo.verified: del nfo.verified
-    filetools.write(filetools.join(path, 'tvshow.nfo'), head_nfo + nfo.tojson())
-    
-    return nfo
 
 
-def borrar_jsons_dups(item, it, path, head_nfo):
-    logger.info()
-    
-    contentType = ['tvshow', 'season']
-    if it.contentType not in contentType or it.channel != 'videolibrary' or not item \
-                or not it or not path or not head_nfo:
-        return item, it
-    
-    logger.error('Conversión de : [%s]' % it.contentSerieName)
-    claves = []
-    for clave, value in list(it.library_urls.items()):
-        claves.append(clave)
-    
-    if it.emergency_urls:
-        nfo_upd = False
-        for clave, value in list(it.emergency_urls.items()):
-            if clave in claves:
-                continue
-            item.emergency_urls.pop(clave, None)
-            it.emergency_urls.pop(clave, None)
-            nfo_upd = True
-            logger.error('Emergency_urls borrado: [%s] de %s' % (clave, str(claves)))
-        if nfo_upd:
-            nfo = filetools.join(path, '/tvshow.nfo')
-            filetools.write(nfo, head_nfo + it.tojson())                        #escribo el .nfo
-        
-    if path:
-        file_list = filetools.listdir(path)
-        for file in file_list:
-            file_del = filetools.join(path, file)
-            if os.path.splitext(file_del)[1] in ['.json', '.torrent']:
-                if not scrapertools.find_single_match(file, '\[(\w+)\]') in claves:
-                    filetools.remove(file_del)
-                    logger.error('Archivo borrado: "%s" de %s' % (file, str(claves)))
-
-    return item, it
-
-
-def verify_cached_torrents():
+def verify_cached_torrents(path, item, emergency_urls_force):
     logger.info()
     import json
     
@@ -3455,7 +3278,7 @@ def verify_cached_torrents():
         json_path = filetools.exists(filetools.join(config.get_runtime_path(), 'verify_cached_torrents.json'))
         if json_path:
             logger.info('Torrents verificados anteriormente: NOS VAMOS')
-            return
+            return item, emergency_urls_force
         json_path = filetools.join(config.get_runtime_path(), 'verify_cached_torrents.json')
         json_error_path = filetools.join(config.get_runtime_path(), 'error_cached_torrents.json')
         json_error_path_BK = filetools.join(config.get_runtime_path(), 'error_cached_torrents_BK.json')
@@ -3529,168 +3352,29 @@ def verify_cached_torrents():
         logger.error('Lista de .torrents DESCOMPRIMIDOS: ' + str(descomprimidos))
     if errores:
         logger.error('Lista de .torrents en ERROR: ' + str(errores))
-
-
-def regenerate_clones():
-    logger.info()
-    import json
-    from core import videolibrarytools
     
-    """
-    Regenera los archivos .json que ha sido machacado con la migración.  También borrar los archivos tvshow.nfo en
-    películas.
-    
-    Método para uso temporal y controlado
-    """
-    
-    try:
-        #Localiza los paths donde dejar el archivo .json de control, y de la Videoteca
-        json_path = filetools.exists(filetools.join(config.get_runtime_path(), 'verify_cached_torrents.json'))
-        if json_path:
-            logger.info('Videoteca reparada anteriormente: NOS VAMOS')
-            return False
-        json_path = filetools.join(config.get_runtime_path(), 'verify_cached_torrents.json')
-        filetools.write(json_path, json.dumps({"CINE_verify": True}))   #Evita que se lance otro proceso simultaneo
-        json_error_path = filetools.join(config.get_runtime_path(), 'error_cached_torrents.json')
-        json_error_path_BK = filetools.join(config.get_runtime_path(), 'error_cached_torrents_BK.json')
-            
-        #Calculamos el path absoluto a partir de la Videoteca
-        torrents_movies = movies_videolibrary_path                              #path de CINE
-        torrents_series = series_videolibrary_path                              #path de SERIES
-        
-        #Cargamos en .json de Newpct1 para ver las listas de valores en settings
-        fail_over_list = channeltools.get_channel_json(channel_py)
-        for settings in fail_over_list['settings']:                             #Se recorren todos los settings
-            if settings['id'] == "clonenewpct1_channels_list":                  #Encontramos en setting
-                fail_over_list = settings['default']                            #Carga lista de clones
-        
-        #Inicializa variables
-        torren_list = []
-        torren_list.append(torrents_movies)
-        #torren_list.append(torrents_series)
-        i = 0
-        j = 0
-        k = 0
-        descomprimidos = []
-        errores = []
-        json_data = dict()
-        
-        #Recorre las carpetas de CINE y SERIES de la Videoteca, leyendo, descomprimiendo y regrabando los archivos .torrent
-        for contentType in torren_list:
-            for root, folders, files in filetools.walk(contentType):
-                nfo = ''
-                newpct1 = False
-                file_list = str(files)
-                logger.error(file_list)
-                
-                #Borra los archivos Tvshow.nfo y verifica si el .nfo tiene más de un canal y uno es clone Newpct1
-                for file in files:
-                    #logger.info('file - nfos: ' + file)
-                    if 'tvshow.nfo' in file:
-                        file_path = filetools.join(root, 'tvshow.nfo')
-                        filetools.remove(file_path)
-                        continue
-                    
-                    if '.nfo' in file:
-                        peli_name = file.replace('.nfo', '')
-                        nfo = ''
-                        try:
-                            head_nfo, nfo = videolibrarytools.read_nfo(filetools.join(root, file))
-                        except:
-                            logger.error('** NFO: error de lectura en: ' + file)
-                            break
-                        if not nfo:
-                            logger.error('** NFO: error de lectura en: ' + file)
-                            break
-                        if nfo.ow_force:                #Si tiene ow_force lo quitamos para evitar futuros problemas
-                            del nfo.ow_force
-                            try:
-                                filetools.write(filetools.join(root, file), head_nfo + nfo.tojson())    #actualizo el .nfo
-                            except:
-                                logger.error('** NFO: error de escritura en: ' + file)
-                                break
-                        
-                        if '.torrent' not in file_list and nfo.emergency_urls:
-                            del nfo.emergency_urls                              #Si tiene emergency_urls, lo reseteamos
-                            try:
-                                filetools.write(filetools.join(root, file), head_nfo + nfo.tojson())    #actualizo el .nfo
-                            except:
-                                logger.error('** NFO: error de escritura en: ' + file)
-                                break
-                            newpct1 = True                                      #marcamos par a resetar los .jsons
-                        
-                        if len(nfo.library_urls) > 1:                           #Tiene más de un canal?
-                            for canal, url in list(nfo.library_urls.items()):
-                                canal_json = "[%s].json" % canal
-                                if canal_json not in file_list:                 #Canal zomby, lo borramos
-                                    logger.error('pop: ' + canal)
-                                    nfo.library_urls.pop(canal, None)
-                                    if nfo.emergency_urls:
-                                        del nfo.emergency_urls                  #Si tiene emergency_urls, lo reseteamos
-                                    try:
-                                        filetools.write(filetools.join(root, file), head_nfo + nfo.tojson())    #actualizo el .nfo
-                                    except:
-                                        logger.error('** NFO: error de escritura en: ' + file)
-                                        break
-                                    newpct1 = True                              #marcamos par a resetar los .jsons
-                                
-                                canal_nwepct1 = "'%s'" % canal
-                                if canal_nwepct1 in fail_over_list:             #Algún canal es clone de Newpct1
-                                    newpct1 = True                              #Si es que sí, lo marcamos
-                                    if nfo.emergency_urls:
-                                        del nfo.emergency_urls                  #Si tiene emergency_urls, lo reseteamos
-                                        try:
-                                            filetools.write(filetools.join(root, file), head_nfo + nfo.tojson())    #actualizo el .nfo
-                                        except:
-                                            logger.error('** NFO: error de escritura en: ' + file)
-                                            break
-
-                #Zona para arrelgar los archivos .json
-                if not newpct1:
-                    continue
-                for file in files:
-                    file_path = filetools.join(root, file)
-                    if '.json' in file:
-                        logger.info('** file: ' + file)
-                        canal_json = scrapertools.find_single_match(file, '\[(\w+)\].json')
-                        if canal_json not in nfo.library_urls:
-                            filetools.remove(file_path)                             #borramos el .json es un zomby
-                        item_movie = ''
-                        try:
-                            item_movie = Item().fromjson(filetools.read(file_path)) #leemos el .json
-                        except:
-                            logger.error('** JSON: error de lectura en: ' + file)
-                            continue
-                        if not item_movie:
-                            logger.error('** JSON: error de lectura en: ' + file)
-                            continue
-                        if item_movie.emergency_urls: del item_movie.emergency_urls
-                        item_movie.channel = canal_json                             #mombre del canal
-                        item_movie.category = canal_json.capitalize()               #categoría
-                        item_movie.url = nfo.library_urls[canal_json]               #url
-                        if scrapertools.find_single_match(item_movie.title, '(.*?)\[\d+.\d+\s*.\s*B\]'):
-                            item_movie.title = scrapertools.find_single_match(item_movie.title, '(.*?)\[\d+.\d+\s*.\s*B\]').strip()                                                 #quitamos Size
-                        if item_movie.added_replacing: del item_movie.added_replacing   #quitamos traza del canal reemplazado
-                        try:
-                            filetools.write(file_path, item_movie.tojson())         #Salvamos el nuevo .json de la película
-                        except:
-                            logger.error('** JSON: error de escritura en: ' + file)
-                        else:
-                            errores += [file]
-                    if '.torrent' in file:
-                        filetools.remove(file_path)                                 #borramos los .torrent salvados
-                        
-                            
-        logger.error('** Lista de peliculas reparadas: ' + str(errores))
-        filetools.write(json_error_path, json.dumps(json_data))
-        filetools.write(json_error_path_BK, json.dumps(json_data))
-        filetools.write(json_path, json.dumps({"CINE_verify": True}))                        
+    try:                                                                        # Si ha habido errores, vemos la lista y los reparamos
+        #json_error_path = filetools.join(config.get_runtime_path(), 'error_cached_torrents.json')
+        if filetools.exists(json_error_path):                                   # hay erroer que hay que reparar?
+            from core import jsontools
+            json_error_file = jsontools.load(filetools.read(json_error_path))   # Leemos la lista de errores
+            if not json_error_file:
+                filetools.remove(json_error_path)                               # si ya no quedan errores, borramos el .json
+            elif path in json_error_file:                                       # está este títu,o en la lista de errores?
+                json_error_file.pop(path)                                       # sí.  Lo quitamos
+                if not json_error_file:
+                    filetools.remove(json_error_path)                           # si ya no quedan errores, borramos el .json
+                else:
+                    filetools.write(json_error_path, jsontools.dump(json_error_file))   #si quedan, actualizamos el .json
+                if item.contentType == 'movie':                                 # si es una pelicula, forzamos su actualización
+                    emergency_urls_force = True
+                else:                                                           # si es una serie, que regenere los episodios que faltan (en error)
+                    item.ow_force = '1'                                         # ... de todas las temporadas
     except:
-        filetools.remove(json_path)                             #borramos el bloqueo para que se pueda lanzar de nuevo
-        logger.error('Error en el proceso de REPARACIÓN de Videoteca de CINE')
+        logger.error('Error en el proceso de REPARACION de vídeos con .torrents dañados')
         logger.error(traceback.format_exc())
     
-    return True
+    return item, emergency_urls_force
 
                             
 def call_browser(url, download_path='', lookup=False, strict=False, wait=False, intent='', dataType=''):

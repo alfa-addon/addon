@@ -27,6 +27,7 @@ from platformcode import config, logger
 from channelselector import get_thumb
 
 host = 'https://www.dilo.nu/'
+forced_proxy_opt = 'ProxyCF'
 
 IDIOMAS = {'Español': 'CAST', 'Latino': 'LAT', 'Subtitulado': 'VOSE'}
 list_language = list(IDIOMAS.values())
@@ -196,7 +197,7 @@ def seasons(item):
     post = urllib.urlencode(post)
     seasons_url = '%sapi/web/seasons.php' % host
     headers = {'Referer':item.url}
-    data = httptools.downloadpage(seasons_url, post=post, headers=headers).json
+    data = httptools.downloadpage(seasons_url, post=post, headers=headers, forced_proxy_opt=forced_proxy_opt).json
     infoLabels = item.infoLabels
     for dict in data:
         season = dict['number']
@@ -228,7 +229,7 @@ def episodesxseason(item):
 
     seasons_url = '%sapi/web/episodes.php' % host
     headers = {'Referer': item.url}
-    data = httptools.downloadpage(seasons_url, post=post, headers=headers).json
+    data = httptools.downloadpage(seasons_url, post=post, headers=headers, forced_proxy_opt=forced_proxy_opt).json
     infoLabels = item.infoLabels
     for dict in data:
         episode = dict['number']

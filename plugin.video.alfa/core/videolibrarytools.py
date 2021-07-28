@@ -24,6 +24,7 @@ FOLDER_TVSHOWS = config.get_setting("folder_tvshows")
 VIDEOLIBRARY_PATH = config.get_videolibrary_path()
 MOVIES_PATH = filetools.join(VIDEOLIBRARY_PATH, FOLDER_MOVIES)
 TVSHOWS_PATH = filetools.join(VIDEOLIBRARY_PATH, FOLDER_TVSHOWS)
+NFO_FORMAT = 'url_scraper'      # 'url_scraper' o 'xml'
 
 if not FOLDER_MOVIES or not FOLDER_TVSHOWS or not VIDEOLIBRARY_PATH \
         or not filetools.exists(MOVIES_PATH) or not filetools.exists(TVSHOWS_PATH):
@@ -93,9 +94,10 @@ def read_nfo(path_nfo, item=None):
     @rtype: tuple (str, Item)
     """
     head_nfo = ""
-    it = None
+    it = Item()
 
     data = filetools.read(path_nfo)
+    if data and data.endswith('-->'): data = data[:-4]      # Si el json forma parte de un comentario de una xml, se quita la cola
 
     if data:
         head_nfo = data.splitlines()[0] + "\n"
@@ -115,8 +117,52 @@ def read_nfo(path_nfo, item=None):
 
         if 'fanart' in it.infoLabels:
             it.fanart = it.infoLabels['fanart']
+            
+        # Si hay cambio de formato del .nfo se realiza una conversión silenciosa al nuevo formato
+        if NFO_FORMAT == 'xml' and not head_nfo.startswith('<?xml'):
+            res = write_nfo(path_nfo, head_nfo, it)
+        elif NFO_FORMAT == 'url_scraper' and head_nfo.startswith('<?xml'):
+            logger.info(head_nfo, force=True)
+            head_nfo = scraper.get_nfo(it, nfo_format=NFO_FORMAT)
+            res = write_nfo(path_nfo, head_nfo, it)
 
     return head_nfo, it
+
+
+def write_nfo(path_nfo, head_nfo=None, item=None, nfo_format=NFO_FORMAT):
+    """
+    Metodo para escribir archivos nfo.
+        Los arcivos nfo tienen la siguiente extructura: url_scraper | xml + item_json
+        [url_scraper] y [xml] son opcionales, pero solo uno de ellos ha de existir siempre.
+    @param path_nfo: ruta absoluta al archivo nfo
+    @type path_nfo: str
+    @param head_nfo:'url_scraper'|'xml'
+    @type: str
+    @param item: json a guardar
+    @type: Item
+    @return: resultado de la operación: True|False
+    @rtype: Bool
+    """
+    res = False
+    tail_nfo = ''
+    
+    if not path_nfo or not head_nfo or not item:
+        logger.error('Algún campo está vacío: path_nfo=%s; head_nfo=%s; item=%s' % (path_nfo, head_nfo, item))
+        return res
+        
+    if nfo_format == 'xml':
+        if not head_nfo.startswith('<?xml'):
+            logger.info(head_nfo, force=True)
+            head_nfo = scraper.get_nfo(item, nfo_format=nfo_format)
+        if not head_nfo.endswith('<!--\n'):
+            head_nfo = head_nfo[:-1] + '<!--\n'
+        tail_nfo = '\n-->'
+    
+    res = filetools.write(path_nfo, head_nfo + item.tojson() + tail_nfo)
+    if not res:
+        logger.error('Error de escritura en %s; head_nfo: %s; tail_nfo=%s; item=%s' % (path_nfo, head_nfo, tail_nfo, item))
+
+    return res
 
 
 def save_movie(item, silent=False):
@@ -216,7 +262,7 @@ def save_movie(item, silent=False):
     if not nfo_exists:
         # Creamos .nfo si no existe
         logger.info("Creando .nfo: " + nfo_path)
-        head_nfo = scraper.get_nfo(item)
+        head_nfo = scraper.get_nfo(item, nfo_format=NFO_FORMAT)
 
         item_nfo = Item(title=item.contentTitle, channel="videolibrary", action='findvideos',
                         library_playcounts={"%s [%s]" % (base_name, _id): 0}, infoLabels=item.infoLabels,
@@ -262,7 +308,7 @@ def save_movie(item, silent=False):
             if not silent: p_dialog.update(100, 'Añadiendo película...' + '\n' + item.contentTitle + '\n' + ' ')
             item_nfo.library_urls[item.channel] = item.url
 
-            if filetools.write(nfo_path, head_nfo + item_nfo.tojson()):
+            if write_nfo(nfo_path, head_nfo, item_nfo):
                 # actualizamos la videoteca de Kodi con la pelicula
                 if config.is_xbmc() and not silent:
                     from platformcode import xbmc_videolibrary
@@ -384,7 +430,7 @@ def save_tvshow(item, episodelist, silent=False, overwrite=True):
     if not filetools.exists(tvshow_path):
         # Creamos tvshow.nfo, si no existe, con la head_nfo, info de la serie y marcas de episodios vistos
         logger.info("Creando tvshow.nfo: " + tvshow_path)
-        head_nfo = scraper.get_nfo(item)
+        head_nfo = scraper.get_nfo(item, nfo_format=NFO_FORMAT)
         item.infoLabels['mediatype'] = "tvshow"
         item.infoLabels['title'] = item.contentSerieName
         item_tvshow = Item(title=item.contentSerieName, channel="videolibrary", action="get_seasons",
@@ -416,7 +462,9 @@ def save_tvshow(item, episodelist, silent=False, overwrite=True):
     elif item.channel != "downloads":
         item_tvshow.active = 1  # para que se actualice a diario cuando se llame a videolibrary_service
 
-    filetools.write(tvshow_path, head_nfo + item_tvshow.tojson())
+    if not write_nfo(tvshow_path, head_nfo, item_tvshow):
+        # Error de escritura del .nfo
+        return 0, 0, 0, path
 
     if not episodelist:
         # La lista de episodios esta vacia
@@ -645,14 +693,14 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         if not nfo_exists and e.infoLabels["code"]:
             # Si no existe season_episode.nfo añadirlo
             scraper.find_and_set_infoLabels(e)
-            head_nfo = scraper.get_nfo(e)
+            head_nfo = scraper.get_nfo(e, nfo_format=NFO_FORMAT)
 
             item_nfo = e.clone(channel="videolibrary", url="", action='findvideos',
                                strm_path=strm_path.replace(TVSHOWS_PATH, ""))
             if item_nfo.emergency_urls:
                 del item_nfo.emergency_urls                     #Solo se mantiene en el .json del episodio
 
-            nfo_exists = filetools.write(nfo_path, head_nfo + item_nfo.tojson())
+            nfo_exists = write_nfo(nfo_path, head_nfo, item_nfo)
 
         # Solo si existen season_episode.nfo y season_episode.strm continuamos
         if nfo_exists and strm_exists:
@@ -747,7 +795,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             update_next = datetime.date.today() + datetime.timedelta(days=int(tvshow_item.active))
             tvshow_item.update_next = update_next.strftime('%Y-%m-%d')
 
-            filetools.write(tvshow_path, head_nfo + tvshow_item.tojson())
+            res = write_nfo(tvshow_path, head_nfo, tvshow_item)
         except:
             logger.error("Error al actualizar tvshow.nfo")
             logger.error("No se ha podido guardar las urls de emergencia de %s en la videoteca" % tvshow_item.contentSerieName)
@@ -777,11 +825,13 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
 
 
 def reset_movie(movie_file, p_dialog=None, i=100, t=1):
+    logger.info(movie_file)
     import math
     from core import jsontools
     
     movie_json_list = []
     heading = config.get_localized_string(60586)
+    head_nfo = ''
 
     try:
         active = False
@@ -793,15 +843,22 @@ def reset_movie(movie_file, p_dialog=None, i=100, t=1):
         path = filetools.dirname(movie_file)
         if movie_file.endswith('.json'):
             movie = Item().fromjson(filetools.read(movie_file))
-            library_urls = {movie.channel: movie.url}
             movie, it, overwrite = generictools.redirect_clone_newpct1(movie, overwrite=3)
+            library_urls = {movie.channel: movie.url}
             movie_clone = movie.clone()
             movie_clone.clave = '%s|%s' % (movie.channel, movie.url)
             movie_json_list.append(movie_clone)
         else:
             head_nfo, movie = read_nfo(movie_file)
-            library_urls = movie.library_urls
+            library_urls = movie.library_urls.copy()
             del movie.library_urls
+            movie_clone = movie.clone()
+            for channel, url in list(library_urls.items()):
+                movie_clone.channel = channel
+                movie_clone.url = url
+                movie_clone, it, overwrite = generictools.redirect_clone_newpct1(movie_clone, overwrite=3)
+                library_urls_clone = {movie_clone.channel: movie_clone.url}
+            library_urls = library_urls_clone.copy()
             for channel, url in list(library_urls.items()):
                 json_path = filetools.join(path, ("%s [%s].json" % (movie.title.lower(), channel)))
                 if filetools.exists(json_path):
@@ -812,19 +869,27 @@ def reset_movie(movie_file, p_dialog=None, i=100, t=1):
                     except:
                         pass
         
+        # Verificamos que las webs de los canales estén activas
+        from core import httptools
+        for channel, url in list(library_urls.items()):
+            if not url.startswith('magnet'):
+                url_domain = scrapertools.find_single_match(url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+)') 
+                response = httptools.downloadpage(url_domain, timeout=10, ignore_response_code=True, hide_infobox=True)
+                if not response.sucess:
+                    raise Exception(response.code)
+        
         if movie.emergency_urls: del movie.emergency_urls
         if movie.library_playcounts: del movie.library_playcounts
         if movie.strm_path: del movie.strm_path
         if movie.path: del movie.path
+        if movie.nfo: del movie.nfo
+        if not movie.fanart and movie.infoLabels.get('fanart', ''):
+            movie.fanart = movie.infoLabels['fanart']
 
         # Eliminamos la carpeta con la pelicula ...
         filetools.rmdirtree(path)
 
         # ... y la volvemos a añadir
-        if not movie.contentPlot and movie.infoLabels.get('plot', ''):
-            movie.contentPlot = movie.infoLabels['plot']
-        if not movie.fanart and movie.infoLabels.get('fanart', ''):
-            movie.fanart = movie.infoLabels['fanart']
         for channel, url in list(library_urls.items()):
             clave = '%s|%s' % (channel, url)
             movie_clone = movie.clone()
@@ -886,6 +951,7 @@ def reset_movie(movie_file, p_dialog=None, i=100, t=1):
         p_dialog.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (movie.contentTitle,
                                                                           movie.channel.capitalize()))
         time.sleep(3)
+        logger.error(traceback.format_exc())
     
     if active:
         p_dialog.close()
@@ -900,7 +966,8 @@ def reset_movie(movie_file, p_dialog=None, i=100, t=1):
 
 
 def reset_serie(tvshow_file, p_dialog=None, i=100, t=1, inactive=False):
-
+    logger.info(tvshow_file)
+    res = False
     try:
         active = False
         if not p_dialog:
@@ -914,12 +981,34 @@ def reset_serie(tvshow_file, p_dialog=None, i=100, t=1, inactive=False):
 
         if not serie.active and not active and not inactive:
             # si la serie no esta activa descartar
+            if active:
+                p_dialog.close()
             return
 
         # Limpiamos el .nfo y forzamos recarga de todos los episodios
         if serie.emergency_urls: del serie.emergency_urls
+        if serie.nfo: del serie.nfo
+        if serie.strm_path: del serie.strm_path
+        if not serie.fanart and serie.infoLabels.get('fanart', ''):
+            serie.fanart = serie.infoLabels['fanart']
+        if not serie.thumbnail and serie.infoLabels.get('thumbnail', ''):
+            serie.thumbnail = serie.infoLabels['thumbnail']
         serie.library_playcounts = {serie.contentSerieName: 0}
         serie.ow_force = '1'
+        
+        # Verificamos que las webs de los canales estén activas
+        from core import httptools
+        serie_clone = serie.clone()
+        del serie_clone.library_urls
+        for channel, url in list(serie.library_urls.items()):
+            if not url.startswith('magnet'):
+                serie_clone.channel = channel
+                serie_clone.url = url
+                serie_clone, it, overwrite = generictools.redirect_clone_newpct1(serie_clone, overwrite=3)
+                serie_clone.url = scrapertools.find_single_match(serie_clone.url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+)') 
+                response = httptools.downloadpage(serie_clone.url, timeout=10, ignore_response_code=True, hide_infobox=True)
+                if not response.sucess:
+                    raise Exception(response.code)
         
         # Eliminamos la carpeta con la serie ...
         filetools.rmdirtree(path)
@@ -927,7 +1016,7 @@ def reset_serie(tvshow_file, p_dialog=None, i=100, t=1, inactive=False):
 
         # ... y la volvemos a añadir con el .nfo
         filetools.mkdir(path)
-        res = filetools.write(tvshow_file, head_nfo + serie.tojson())
+        res = write_nfo(tvshow_file, head_nfo, serie)
         if res:
             from videolibrary_service import update
             update(path, p_dialog, i, t, serie, 3)
@@ -946,7 +1035,7 @@ def reset_serie(tvshow_file, p_dialog=None, i=100, t=1, inactive=False):
     
     if active:
         p_dialog.close()
-        if config.is_xbmc():
+        if config.is_xbmc() and res:
             import xbmc
             from platformcode import xbmc_videolibrary
             xbmc_videolibrary.update(FOLDER_TVSHOWS, '_scan_series')            # Se escanea el directorio de series para catalogar en Kodi
@@ -1165,7 +1254,7 @@ def emergency_urls(item, channel=None, path=None, headers={}):
         try:
             referer = None
             post = None
-            subtitles_list =[]
+            subtitles_list = []
             channel_bis = generictools.verify_channel(item.channel)
             if config.get_setting("emergency_urls_torrents", channel_bis) and item_res.emergency_urls and path != None:
                 videolibrary_path = config.get_videolibrary_path()              #detectamos el path absoluto del título
@@ -1182,11 +1271,15 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                 for url in item_res.emergency_urls[0]:                          #Recorremos las urls de emergencia...
                     torrents_path = re.sub(r'(?:\.\w+$)', '_%s.torrent' % str(i).zfill(2), path)
                     path_real = ''
-                    if magnet_caching_e or not url.startswith('magnet'):
+                    if filetools.exists(url):
+                        filetools.copy(url, torrents_path, silent=True)
+                        path_real = torrents_path
+                    elif magnet_caching_e or not url.startswith('magnet'):
                         path_real, subtitles_list = torrent.caching_torrents(url, referer, post, \
                                 torrents_path=torrents_path, headers=headers)   #...  para descargar los .torrents
                     if path_real:                                               #Si ha tenido éxito...
                         item_res.emergency_urls[0][i-1] = path_real.replace(videolibrary_path, '')  #se guarda el "path" relativo
+                        if filetools.exists(url): item_res.url = item_res.emergency_urls[0][i-1]
                         if 'ERROR' in item.torrent_info: item.torrent_info = ''
                     if subtitles_list and not item_res.subtitle:
                         item_res.subtitle = subtitles_list[0].replace(videolibrary_path, '')  #se guarda el "path" relativo

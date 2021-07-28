@@ -38,7 +38,7 @@
       "id": "current_host",
       "type": "text",
       "label": "Host actual",
-      "default": "https://hdfull.in/",
+      "default": "https://hdfull.pro/",
       "enabled": true,
       "visible": false
     },

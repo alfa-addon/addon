@@ -230,7 +230,8 @@ def callback_cuadro_completar(item, dict_values):
     return False
 
 
-def get_nfo(item):
+def get_nfo(item, nfo_format='url_scraper'):
+    global scraper
     """
     Devuelve la información necesaria para que se scrapee el resultado en la videoteca de kodi,
 
@@ -240,33 +241,67 @@ def get_nfo(item):
     @return:
     """
     logger.info()
-    if "infoLabels" in item and "noscrap_id" in item.infoLabels:
+    if "infoLabels" in item and ("noscrap_id" in item.infoLabels or nfo_format == 'xml'):
         # Crea el fichero xml con los datos que se obtiene de item ya que no hay ningún scraper activo
         info_nfo = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>'
 
         if "season" in item.infoLabels and "episode" in item.infoLabels:
             info_nfo += '<episodedetails><title>%s</title>' % item.infoLabels['title']
             info_nfo += '<showtitle>%s</showtitle>' % item.infoLabels['tvshowtitle']
-            info_nfo += '<thumb>%s</thumb>' % item.thumbnail
+            info_nfo += '<thumb>%s</thumb>' % item.thumbnail or item.infoLabels['thumbnail']
 
-            info_nfo += '</episodedetails>\n'
+            close_nfo = '</episodedetails>\n'
 
         elif item.infoLabels["mediatype"] == "tvshow":
             info_nfo += '<tvshow><title>%s</title>' % item.infoLabels['title']
-            info_nfo += '<thumb aspect="poster">%s</thumb>' % item.thumbnail
-            info_nfo += '<fanart><thumb>%s</thumb></fanart>' % item.fanart
+            info_nfo += '<thumb aspect="poster">%s</thumb>' % item.thumbnail or item.infoLabels['thumbnail']
+            info_nfo += '<fanart><thumb>%s</thumb></fanart>' % item.fanart or item.infoLabels['fanart']
 
-            info_nfo += '</tvshow>\n'
+            close_nfo = '</tvshow>\n'
 
         else:
             info_nfo += '<movie><title>%s</title>' % item.infoLabels['title']
-            info_nfo += '<thumb aspect="poster">%s</thumb>' % item.thumbnail
-            info_nfo += '<fanart><thumb>%s</thumb></fanart>' % item.fanart
+            info_nfo += '<thumb aspect="poster">%s</thumb>' % item.infoLabels['thumbnail'] or item.thumbnail
+            info_nfo += '<fanart><thumb>%s</thumb></fanart>' % item.infoLabels['fanart'] or item.fanart
 
-            info_nfo += '</movie>\n'
+            close_nfo = '</movie>\n'
+        
+        default = 'true'
+        if item.contentType == "movie":
+            scraper_actual = ['tmdb'][config.get_setting("scraper_movies", "videolibrary", default=0)]
+        else:
+            scraper_actual = ['tmdb', 'tvdb'][config.get_setting("scraper_tvshows", "videolibrary", default=0)]
+        if item.infoLabels['tmdb_id']:
+            if scraper_actual != 'tmdb': default = 'false'
+            info_nfo += '<uniqueid type="tmdb" default="%s">%s</uniqueid>' % (default, item.infoLabels['tmdb_id'])
+            if scraper_actual == 'tmdb': default = 'false'
+            if scraper_actual != 'tmdb': default = 'true'
+        if item.infoLabels['tvdb_id']:
+            info_nfo += '<uniqueid type="tvdb" default="%s">%s</uniqueid>' % (default, item.infoLabels['tvdb_id'])
+            default = 'false'
+        if item.infoLabels['IMDBNumber']:
+            info_nfo += '<uniqueid type="imdb" default="%s">%s</uniqueid>' % (default, item.infoLabels['IMDBNumber'])
+            default = 'false'
+        if default == 'true':
+            info_nfo += '<uniqueid type="home" default="%s">%s</uniqueid>' % (default, 'home001')
+            default = 'false'
+        info_nfo += close_nfo
 
         return info_nfo
     else:
+        if not scraper:
+            # Importamos el scraper
+            if item.contentType == "movie":
+                scraper_actual = ['tmdb'][config.get_setting("scraper_movies", "videolibrary", default=0)]
+            else:
+                scraper_actual = ['tmdb', 'tvdb'][config.get_setting("scraper_tvshows", "videolibrary", default=0)]
+            try:
+                scraper = __import__('core.%s' % scraper_actual, fromlist=["core.%s" % scraper_actual])
+            except ImportError:
+                exec("import core." + scraper_actual + " as scraper")
+            except:
+                import traceback
+                logger.error(traceback.format_exc())
         return scraper.get_nfo(item)
 
 
