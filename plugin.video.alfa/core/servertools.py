@@ -121,10 +121,10 @@ def get_servers_itemlist(itemlist, fnc=None, sort=False):
     itemlist = filter_servers(itemlist)
 
     for item in itemlist:
-        # Asignamos "directo" en caso de que el server no se encuentre en Alfa
+        # Asignamos "directo" en caso de que el server no se encuentre en Alfa y agregado el thumbnail
         if not item.server and item.url:
             item.server = "directo"
-
+            item.contentThumbnail = item.thumbnail
         if fnc:
             item.title = fnc(item)
 
@@ -199,12 +199,6 @@ def findvideosbyserver(data, serverid):
                 logger.info(msg)
 
     return devuelve
-
-
-def guess_server_thumbnail(serverid):
-    server = get_server_name(serverid)
-    server_parameters = get_server_parameters(server)
-    return server_parameters.get('thumbnail', "")
 
 
 def get_server_from_url(url):
