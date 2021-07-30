@@ -366,7 +366,6 @@ def get_filename_from_url(url):
 
 
 def get_domain_from_url(url):
-
     parsed_url = urlparse.urlparse(url)
     try:
         domain = parsed_url[1]
@@ -374,35 +373,6 @@ def get_domain_from_url(url):
         domain = ""
 
     return domain
-
-def urlencode(params):
-    encoded_url = ''
-    if isinstance(params, dict):
-        encoded_url = urllib.urlencode(params)
-    return encoded_url
-
-def urldecode(url):
-    params = dict()
-    query_data = urlparse.urlparse(url).query
-    if query_data:
-        params = dict(urlparse.parse_qsl(query_data))
-
-    return params
-
-def unquote(url, plus=False):
-    if plus:
-        url = urllib.unquote_plus(url)
-    else:
-        url = urllib.unquote(url)
-    
-    return url
-
-def quote(url, plus=False):
-    if plus:
-        url = urllib.quote_plus(url)
-    else:
-        url = urllib.quote(url)
-    return url
 
 def remove_format(string):
     #logger.info()
