@@ -374,6 +374,24 @@ def get_domain_from_url(url):
 
     return domain
 
+
+def unquote(url, plus=False):
+    if plus:
+        url = urllib.unquote_plus(url)
+    else:
+        url = urllib.unquote(url)
+    
+    return url
+
+def quote(url, plus=False):
+    if plus:
+        url = urllib.quote_plus(url)
+    else:
+        url = urllib.quote(url)
+    return url
+
+
+
 def remove_format(string):
     #logger.info()
     string = string.rstrip()
