@@ -1655,7 +1655,7 @@ def play_torrent(item, xlistitem, mediaurl):
         try:
             xbmcplugin.setResolvedUrl(int(sys.argv[1]), False,
                                       xlistitem)  # Preparamos el entorno para evitar error Kod1 18
-            time.sleep(0.5)  # Dejamos tiempo para que se ejecute
+            time.sleep(1)       # Dejamos tiempo para que se ejecute
         except:
             pass
 
@@ -1778,7 +1778,7 @@ def play_torrent(item, xlistitem, mediaurl):
             if not filetools.exists(item.subtitle):
                 item.subtitle = filetools.join(videolibrary_path, folder, item.subtitle)
             log("##### 'Subtítulos externos: %s" % item.subtitle)
-            time.sleep(0.5)
+            time.sleep(1)
             xbmc_player.setSubtitles(item.subtitle)  # Activamos los subtítulos
 
         # Si no existe, creamos un archivo de control para que sea gestionado desde Descargas
