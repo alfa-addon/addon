@@ -44,7 +44,7 @@ def start():
     #         filetools.move(origin, destination, silent=True)
     #config.set_setting('show_once', True)
     # Test if all the required directories are created
-    config.verify_directories_created()
+    #config.verify_directories_created()
     
 def run(item=None):
     logger.info()
@@ -491,7 +491,7 @@ def play_from_library(item):
                                   path=os.path.join(config.get_runtime_path(), "resources", "subtitle.mp4")))
 
     # Por si acaso la imagen hiciera (en futuras versiones) le damos a stop para detener la reproduccion
-    sleep(0.5)              ### Si no se pone esto se bloquea Kodi
+    sleep(2)                  ### Si no se pone esto se bloquea Kodi
     xbmc.Player().stop()
 
     # modificamos el action (actualmente la videoteca necesita "findvideos" ya que es donde se buscan las fuentes
