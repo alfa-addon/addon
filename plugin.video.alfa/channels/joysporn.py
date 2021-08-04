@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.joysporn.com/'    #   'https://www.tubxxporn.com' 'https://www.pornky.com/'  https://www.pornktube.porn
+host = 'https://www.joysporn.vip'    #   'https://www.tubxxporn.com' 'https://www.pornky.com/'  https://www.pornktube.porn
 
 
 def mainlist(item):
@@ -84,7 +84,10 @@ def lista(item):
         if stime:
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     pagination = soup.find('div', class_='navigation')
     next_page = ""

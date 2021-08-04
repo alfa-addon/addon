@@ -87,12 +87,27 @@ def lista(item):
             thumbnail = "%s/%s" %(host,thumbnail)
         url = urlparse.urljoin(item.url,scrapedurl)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)" rel="next"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    url= scrapertools.find_single_match(data, '<iframe sandbox="[^"]+" src="([^"]+)"')
+    # pornstars = scrapertools.find_multiple_matches(data, '<h3 class="hireq">([^<]+)<')
+    patron = '<iframe sandbox="[^"]+" src="([^"]+)"'
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
@@ -106,4 +121,3 @@ def play(item):
     itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-

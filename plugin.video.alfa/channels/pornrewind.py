@@ -77,12 +77,31 @@ def lista(item):
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<li class="direction"><a href="([^"]+)" data-ajax="pagination">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page ) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info(item)
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data= scrapertools.find_single_match(data, '<div class="player">(.*?)<div class="media-info">')
+    patron = '<(?:IFRAME SRC|iframe src)="([^"]+)"'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for scrapedurl in matches:
+        url=scrapedurl
+    if "kt_player" in data:
+        url = item.url
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 

@@ -83,7 +83,10 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] [COLOR red][HD][/COLOR] %s" % (duration, scrapedtitle)
         if not scrapedthumbnail.startswith("https"):
             scrapedthumbnail = "https:%s" % scrapedthumbnail
-        itemlist.append(item.clone(action="play", title=title, contentTitle = title, url=scrapedurl,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=scrapedurl,
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail))
     next_page = scrapertools.find_single_match(data, '<li class="next1">.*?href="([^"]+)"')
     if next_page:

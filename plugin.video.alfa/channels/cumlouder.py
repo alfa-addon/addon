@@ -156,14 +156,32 @@ def lista(item):
             url = urlparse.urljoin(host, url)
             if not thumbnail.startswith("https"):
                 thumbnail = "https:%s" % thumbnail
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
         itemlist.append(item.clone(title=title, url=url,
-                                   action="play", thumbnail=thumbnail, contentThumbnail=thumbnail,
+                                   action=action, thumbnail=thumbnail, contentThumbnail=thumbnail,
                                    fanart=thumbnail, contentType="movie", contentTitle=title))
     # Paginador
     next_page = scrapertools.find_single_match(data,'<a class="btn-pagination" itemprop="name" href="([^"]+)">Next')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron = '<source src="([^"]+)" type=\'video/([^\']+)\' label=\'[^\']+\' res=\'([^\']+)\''
+    url, type, res = re.compile(patron, re.DOTALL).findall(data)[0]
+    if "go.php?" in url:
+        url = urllib.unquote(url.split("/go.php?u=")[1].split("&")[0])
+    elif not url.startswith("http"):
+        url = "https:%s" % url.replace("&amp;", "&")
+    url = url.replace("amp;", "")
+    itemlist.append(item.clone(action="play", title=res, contentTitle=item.contentTitle, url=url, server="directo"))
     return itemlist
 
 

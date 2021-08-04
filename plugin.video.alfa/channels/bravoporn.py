@@ -76,7 +76,10 @@ def lista(item):
         title = "[COLOR yellow]%s[/COLOR] %s" % (duracion, scrapedtitle)
         thumbnail = "https:" + scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data,'<a href="([^"]+)" class="[^"]+" title="Next">Next</a>')
     if next_page!="":
@@ -87,6 +90,13 @@ def lista(item):
 
 def play(item):
     logger.info(item)
-    itemlist = servertools.find_video_items(item.clone(url = item.url, contentTitle = item.title))
+    # itemlist = servertools.find_video_items(item.clone(url = item.url, contentTitle = item.title))
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
+
+def play(item):
+    logger.info(item)
+    itemlist = servertools.find_video_items(item.clone(url = item.url, contentTitle = item.title))
+    return itemlist

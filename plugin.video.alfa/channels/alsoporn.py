@@ -75,14 +75,31 @@ def lista(item):
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
         if not "0:00" in scrapedtime:
-            itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+            itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                   fanart=thumbnail, plot=plot, contentTitle = title))
 
     next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)" target="_self"><span class="alsoporn_page">NEXT</span></a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    scrapedurl = scrapertools.find_single_match(data,'<iframe frameborder=0 scrolling="no"  src=\'([^\']+)\'')
+    data = httptools.downloadpage(scrapedurl).data
+    scrapedurl = scrapertools.find_single_match(data,'<iframe.*?src="(.*?)"')
+    scrapedurl = scrapedurl.replace("//www.playercdn.com/ec/i2.php?url=", "")
+    scrapedurl = base64.b64decode(scrapedurl).decode("utf8")
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 

@@ -89,7 +89,10 @@ def lista(item):
         thumbnail = scrapedthumbnail
         plot = ""
         year = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = contentTitle))
     patron = 'data-from="([^"]+)" data-id="([^"]+)" data-total="([^"]+)" data-page="([^"]+)" data-url="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -101,10 +104,17 @@ def lista(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
+
+def play(item):
+    logger.info()
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist

@@ -100,7 +100,10 @@ def lista(item):
         title = "[COLOR yellow]%s[/COLOR] %s" % (scrapedtime, scrapedtitle)
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail, plot=plot,
                               fanart=thumbnail, contentTitle = title))
     last_page= scrapertools.find_single_match(data,'<li class="last-page">.*?:(\d+)">Última<')
     page = scrapertools.find_single_match(item.url, "(.*?)\d+")
@@ -116,6 +119,14 @@ def lista(item):
     return itemlist
 
 
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
+
+
 def play(item):
     logger.info()
     itemlist = []
@@ -125,4 +136,3 @@ def play(item):
     itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-

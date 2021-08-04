@@ -329,8 +329,9 @@ def newest(categoria):
 def play(item):
     itemlist = list()
 
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, 'window.location="([^"]+)"')
+    soup = create_soup(item.url)
+    url = soup.find("iframe")["src"]
+
     if not url.startswith("http"):
         url = "https:" + url
     item.server = ""

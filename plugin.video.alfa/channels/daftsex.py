@@ -100,7 +100,10 @@ def lista(item):
         thumbnail = scrapedthumbnail.replace("amp;", "")
         url = "%s/watch/%s" %(host, scrapedurl)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<div class="(more)"')
     if not next_page:
@@ -113,6 +116,28 @@ def lista(item):
             next_page = urlparse.urljoin(host,next_page)
             itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", 
                               url=next_page, page=page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    hash = scrapertools.find_single_match(data, 'hash:\s*"([^"]+)"')
+    color = scrapertools.find_single_match(data, 'color:\s*"([^"]+)"')
+    url = "https://daxab.com/player/%s?color=%s"  % (hash, color)
+    headers = {'Referer': item.url}
+    data = httptools.downloadpage(url, headers=headers).data
+    id = scrapertools.find_single_match(data, 'id:\s*"([^"]+)"')
+    id1, id2 = id.split('_')
+    server =  scrapertools.find_single_match(data, 'server:\s*"([^"]+)')[::-1]
+    server = base64.b64decode(server).decode('utf-8')
+    server = "https://%s" % server
+    patron = '"mp4_\d+":"(\d+).([^"]+)"'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for quality,url in matches:
+        url = "%s/videos/%s/%s/%s.mp4?extra=%s" %(server,id1,id2,quality,url)
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
     return itemlist
 
 
@@ -136,4 +161,3 @@ def play(item):
         url = "%s/videos/%s/%s/%s.mp4?extra=%s" %(server,id1,id2,quality,url)
         itemlist.append(['.mp4 %s' %quality, url])
     return itemlist
-

@@ -67,7 +67,7 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a href="([^"]+)" itemprop="url">.*?'
-    patron += '<img src="([^"]+)" alt="([^"]+)">.*?'
+    patron += 'contentUrl="([^"]+)" alt="([^"]+)">.*?'
     patron += '<span itemprop="duration" class="length">(.*?)</span>(.*?)<span class="thumb-info">'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,duracion,calidad  in matches:
@@ -78,12 +78,23 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] %s" %(duracion,scrapedtitle)
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=scrapedthumbnail, contentTitle = title ))
     next_page = scrapertools.find_single_match(data,'<li><a data=\'\d+\' href="([^"]+)" title="Next">')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
@@ -93,4 +104,3 @@ def play(item):
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-

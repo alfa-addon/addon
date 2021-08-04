@@ -84,6 +84,8 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] %s" % (duration.strip(), scrapedtitle)
         else:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (duration.strip(), scrapedtitle)
+        if logger.info() == False:
+            action = "findvideos"
         itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=scrapedurl,
                                    fanart=scrapedthumbnail, thumbnail=scrapedthumbnail))
     # Extrae la marca de siguiente página
@@ -95,6 +97,24 @@ def lista(item):
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page ) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    if "video_url_text" in data:
+        patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
+        patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
+    else:
+        patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
+        patron += 'postfix:\s*\'([^\']+)\''
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url,quality in matches:
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
+    if item.extra == "play_menu":
+        return itemlist, data
     return itemlist
 
 

@@ -112,7 +112,10 @@ def lista(item):
         contentTitle = title
         thumbnail = thumbnail.replace("\/", "/")
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url,
                               thumbnail=thumbnail, plot=plot, contentTitle = contentTitle))
     total= int(JSONData["total_count"])
     page = int(scrapertools.find_single_match(item.url,'(\d+).all..'))
@@ -122,6 +125,12 @@ def lista(item):
     if (page*60) < total:
         next_page = "%s.%s.all..%s" %(url_page,next_page,post)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info(item)
+    itemlist = servertools.find_video_items(item.clone(url = item.url, contentTitle = item.title))
     return itemlist
 
 

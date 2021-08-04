@@ -107,7 +107,10 @@ def lista(item):
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                    plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('div', class_='pagination _767p').find('a', class_='next')
     if next_page:
@@ -120,10 +123,16 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    url = soup.find('source')['src']
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    data = httptools.downloadpage(item.url).data
+    m3u = scrapertools.find_single_match(data, 'file: "([^"]+)"')
+    data = httptools.downloadpage(m3u).data
+    data = data.decode("utf8")
+    patron = 'RESOLUTION=\d+x(\d+),.*?'
+    patron += '(index-.*?).m3u8'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for quality,url in matches:
+        url = m3u.replace("master", url)
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
     return itemlist
 
 

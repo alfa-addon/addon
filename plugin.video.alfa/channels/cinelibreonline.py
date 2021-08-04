@@ -196,4 +196,7 @@ def list_all(item):
 
 def play(item):
     item.thumbnail = item.contentThumbnail
+    if "wikipedia" in item.url:
+        data = httptools.downloadpage(item.url).data
+        item.url = "https:" + scrapertools.find_single_match(data, '<source src="([^"]+)')
     return [item]

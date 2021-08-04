@@ -25,7 +25,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host +"/videos"))
-    itemlist.append(item.clone(title="Exclusivos" , action="lista2", url=host + "/category/74/premium-hd"))
+    itemlist.append(item.clone(title="Exclusivos" , action="lista", url=host + "/category/74/premium-hd"))
     itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/videos?sort=views-down"))
     itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/videos?sort=likes-down"))
     itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/videos?sort=duration-down"))
@@ -108,34 +108,6 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find('div', class_='videos-listing').find_all('div', class_='item')
-    for elem in matches:
-        url = elem.a['href']
-        if "redirect" in url:
-            continue
-        title = elem.find('a', class_='video-item-title')['aria-label']
-        thumbnail = elem.svg['data-src']
-        time = elem.find('span', class_='txt').text.strip()
-        quality = elem.find('span', class_=re.compile(r"^mm_icon-\w+"))
-        if "mm_icon-hd" in str(quality): quality = "HD"
-        if "mm_icon-vr" in str(quality): quality = "VR"
-        if "mm_icon-eye" in str(quality): quality = ""
-        url = urlparse.urljoin(host,url)
-        title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality,title)
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
-                                fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('a', class_='pager-next')
-    if next_page:
-        next_page = next_page['href']
-        next_page = urlparse.urljoin(host,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
-    return itemlist
-
-
-def lista2(item):
-    logger.info()
-    itemlist = []
-    soup = create_soup(item.url)
     matches = soup.find_all('div', class_='video-item')
     for elem in matches:
         url = elem.a['href']
@@ -147,17 +119,28 @@ def lista2(item):
         hd = elem['data-hd']
         vr = elem['data-vr']
         quality = ""
-        if "true" in hd: quality = "HD"
         if "true" in vr: quality = "VR"
+        if "true" in hd: quality = "HD"
         url = urlparse.urljoin(host,url)
         title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality,title)
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                 fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', class_='pager-next')
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(host,next_page)
-        itemlist.append(item.clone(action="lista2", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
