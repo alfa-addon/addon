@@ -18,7 +18,6 @@ from core import servertools
 from core.item import Item
 from core import httptools
 from channels import filtertools
-from channels import autoplay
 
 
 IDIOMAS = {'vo': 'VO'}
@@ -88,13 +87,63 @@ def lista(item):
         title = elem.a['title']
         thumbnail = elem.img['data-src']
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', class_='current')
     if next_page:
         next_page = next_page.parent.find_next_sibling("li").a['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', class_='responsive-player')
+    for elem in matches:
+        url = elem.iframe['src']
+        if "cine-matik.com" in url:
+            n = "yandex"
+            m = url.replace("https://cine-matik.com/player/play.php?", "")
+            post = "%s&alternative=%s" %(m,n)
+            headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+            data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
+            if data1=="":
+                n = "blogger"
+                m = url.replace("https://cine-matik.com/player/play.php?", "")
+                post = "%s&alternative=%s" %(m,n)
+                headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+                data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
+            url = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
+            if not url:
+                n = scrapertools.find_single_match(data1,'"alternative":"([^"]+)"')
+                post = "%s&alternative=%s" %(m,n)
+                headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+                data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
+                url = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
+            url = url.replace("\/", "/")
+        if "spankbang" in url:
+            data = httptools.downloadpage(url).data
+            skey = scrapertools.find_single_match(data,'data-streamkey="([^"]+)"')
+            logger.debug(skey)
+            session="523034c1c1fc14aabde7335e4f9d9006b0b1e4984bf919d1381316adef299d1e"
+            post = {"id": skey, "data": 0}
+            headers = {'Referer':item.url}
+            url ="https://spankbang.com/api/videos/stream_embed"
+            data = httptools.downloadpage(url, post=post, headers=headers).data
+            patron = '"(\d+(?:p|k))":\["([^"]+)"'
+            matches = re.compile(patron,re.DOTALL).findall(data)
+            for quality,url in matches:
+                itemlist.append(['.mp4 %s' %quality, url])
+            return itemlist
+        if not "meta" in url:
+            itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 

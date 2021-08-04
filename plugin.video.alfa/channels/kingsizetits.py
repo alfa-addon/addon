@@ -82,13 +82,27 @@ def lista(item):
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, contentTitle = title, url=scrapedurl,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=scrapedurl,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot))
     next_page = scrapertools.find_single_match(data, '<a class="btn default-btn page-next page-nav" href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    url = scrapertools.find_single_match(data,'label:"\d+", file\:"([^"]+)"')
+    itemlist.append(item.clone(action="play", title="directo", url=url ))
+    return itemlist
+
 
 def play(item):
     logger.info()
@@ -98,5 +112,3 @@ def play(item):
     url = scrapertools.find_single_match(data,'label:"\d+", file\:"([^"]+)"')
     itemlist.append(item.clone(action="play", server="directo", url=url ))
     return itemlist
-
-

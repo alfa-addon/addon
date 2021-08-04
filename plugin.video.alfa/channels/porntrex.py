@@ -114,6 +114,8 @@ def lista(item):
         if not scrapedthumbnail.startswith("https"):
             scrapedthumbnail = "https:%s" % scrapedthumbnail
         scrapedtitle = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (duration, quality, scrapedtitle)
+        if logger.info() == False:
+            action = "findvideos"
         itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, 
                               contentThumbnail=scrapedthumbnail, fanart=scrapedthumbnail, contentTitle = scrapedtitle))
     # Extrae la marca de siguiente página
@@ -125,6 +127,22 @@ def lista(item):
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = get_data(item.url)
+    patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
+    patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
+    matches = scrapertools.find_multiple_matches(data, patron)
+    scrapertools.printMatches(matches)
+    for url, quality in matches:
+        quality = quality.replace(" HD" , "").replace(" 4k", "")
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
+    # if item.extra == "play_menu":
+        # return itemlist, data
     return itemlist
 
 

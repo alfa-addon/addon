@@ -148,7 +148,10 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] %s" % (duration, scrapedtitle)
         thumbnail = scrapedthumbnail.replace("\/", "/")
         plot = ""
-        itemlist.append(item.clone(action="play" , title=title , url=scrapedurl, thumbnail=thumbnail, 
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title , url=scrapedurl, thumbnail=thumbnail, 
                         fanart=thumbnail, plot=plot, contentTitle=title) )
     total= int(JSONData["total_count"])
     page = int(scrapertools.find_single_match(item.url,'(\d+).all..'))
@@ -161,7 +164,7 @@ def lista(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=item.url))
@@ -169,3 +172,9 @@ def play(item):
     return itemlist
 
 
+def play(item):
+    logger.info()
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist

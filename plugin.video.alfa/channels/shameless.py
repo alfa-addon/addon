@@ -74,13 +74,32 @@ def lista(item):
         title = "[COLOR yellow]%s[/COLOR] %s" %(scrapedtime, scrapedtitle)
         thumbnail = scrapedthumbnail + "|Referer=https://www.shameless.com/"
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=scrapedurl,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=scrapedurl,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, 'class="active">.*?<a href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
+    patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url, quality in matches:
+        headers = {'Referer': item.url}
+        url = httptools.downloadpage(url, headers=headers , follow_redirects=False, only_headers=True).headers.get("location", "")
+        url += "|Referer=%s" % item.url
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
+    return itemlist[::-1]
 
 
 def play(item):
@@ -97,5 +116,3 @@ def play(item):
         url += "|Referer=%s" % item.url
         itemlist.append([quality, url])
     return itemlist[::-1]
-
-

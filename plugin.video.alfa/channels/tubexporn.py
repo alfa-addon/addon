@@ -74,12 +74,32 @@ def lista(item):
         title = '[COLOR yellow] %s [/COLOR] %s' % (scrapedtime , scrapedtitle)
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=scrapedurl,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=scrapedurl,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="mobnav">Next')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    id,data,server = scrapertools.find_single_match(data, '<div id="player" data-id="(\d+)".*?data-q="([^"]+)".*?data-n="(\d+)"')
+    patron = '&nbsp;([A-z0-9]+);\d+;(\d+);([^,"]+)'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for quality,number,key in matches:
+        nt = int(int(id)/1000)
+        n = str(nt*1000)
+        url = "http://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
+        # url = "http://s%s.fapmedia.com/wqpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
+        url= url.replace("_720p", "")
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
     return itemlist
 
 
@@ -98,5 +118,3 @@ def play(item):
         url= url.replace("_720p", "")
         itemlist.append(['.mp4 %s' %quality, url])
     return itemlist
-
-

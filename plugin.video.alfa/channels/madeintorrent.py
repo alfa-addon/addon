@@ -564,7 +564,7 @@ def findvideos(item):
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
 
-        item_local.url = urlparse.urljoin(host, scrapedurl)
+        if not size: item_local.url = urlparse.urljoin(host, scrapedurl)
 
         # Restauramos urls de emergencia si es necesario
         local_torr = ''
@@ -920,7 +920,9 @@ def episodios(item):
             if '|' in scrapedurl:
                 item_local.url_episode = scrapedurl.split('|')[1]
                 scrapedurl = scrapedurl.split('|')[0]
-            item_local.url = urlparse.urljoin(host, scrapedurl)                 # Usamos las url de la temporada, no hay de episodio
+                item_local.url = scrapedurl
+            else:
+                item_local.url = urlparse.urljoin(host, scrapedurl)             # Usamos las url de la temporada, no hay de episodio
             item_local.matches = []
             item_local.matches.append((size, item_local.url, info))             # Salvando Matches de cada episodio
             

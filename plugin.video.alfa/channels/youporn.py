@@ -120,9 +120,11 @@ def lista(item):
         if not thumbnail.startswith("https"):
             thumbnail = "https:%s" % thumbnail
         url = urlparse.urljoin(host,url).replace("watch", "embed")
-        contentTitle = title
-        itemlist.append(item.clone(action="play" , title=title , url=url, thumbnail=thumbnail,
-                              fanart=thumbnail, contentTitle = contentTitle))
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title , url=url, thumbnail=thumbnail,
+                              fanart=thumbnail, contentTitle = title))
     next_page = soup.find('link', rel='next')
     if next_page:
         next_page = next_page['href']

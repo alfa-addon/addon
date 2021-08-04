@@ -83,7 +83,10 @@ def lista(item):
         if not scrapedthumbnail.startswith("https"):
             thumbnail = "https:%s" % scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = contentTitle))
     next_page = scrapertools.find_single_match(data,'...<a href="([^"]+)" class="next">&#187;</a>')
     if next_page!="":
@@ -112,3 +115,23 @@ def play(item):
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
+    patron = 'url:\'([^\']+)\'.*?'
+    patron += 'data:\'([^\']+)\''
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl,post in matches:
+        post = post.replace("%3D", "=")
+        scrapedurl = host + scrapedurl
+        datas = httptools.downloadpage(scrapedurl, post=post, headers={'Referer':item.url}).data
+        datas = datas.replace("\\", "")
+        url = scrapertools.find_single_match(datas, 'src="([^"]+)"')
+        if not url.startswith("https"):
+            url = "https:%s" % url
+        itemlist.append(item.clone(action="play", title="%s",contentTitle = item.title, url=url ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist

@@ -80,7 +80,10 @@ def lista(item):
         title = "[COLOR yellow]%s[/COLOR] %s" % (scrapedtime,scrapedtitle)
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=scrapedurl,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=scrapedurl,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<li class="next">.*?data-parameters="([^"]+)"')
     if next_page:
@@ -88,6 +91,20 @@ def lista(item):
         next_page = "?%s" % next_page
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
+    url = ""
+    url = scrapertools.find_single_match(data, 'src="(https://mangovideo.pw/embed/\d+)"')
+    if not url:
+        url = scrapertools.find_single_match(data, '<div class="embed-wrap".*?<iframe src="([^"]+)\?ref=')
+    itemlist.append(item.clone(action="play", title="%s", url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
 
@@ -103,4 +120,3 @@ def play(item):
     itemlist.append(item.clone(action="play", title="%s", url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
-

@@ -1,0 +1,14 @@
+{
+  "id": "stripchat",
+  "name": "cam_stripchat",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "https://i.postimg.cc/zGXSGYnX/stripchat.png",
+  "banner": "",
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+  ]
+}

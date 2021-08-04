@@ -100,7 +100,10 @@ def lista(item):
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play" , title=title , url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title , url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = contentTitle) )
     prev_page = scrapertools.find_single_match(item.url,"(.*?)page=\d+")
     num= int(scrapertools.find_single_match(item.url,".*?page=(\d+)"))
@@ -115,6 +118,18 @@ def lista(item):
     return itemlist
 
 
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron  = '<source src="([^"]+)"'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for url  in matches:
+        url = url.replace("amp;", "")
+        itemlist.append(item.clone(action="play", title="Directo", url=url))
+    return itemlist
+
+
 def play(item):
     logger.info()
     itemlist = []
@@ -125,4 +140,3 @@ def play(item):
         url = url.replace("amp;", "")
         itemlist.append(item.clone(action="play", title=url, url=url))
     return itemlist
-

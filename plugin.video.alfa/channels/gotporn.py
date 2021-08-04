@@ -123,7 +123,10 @@ def lista(item):
         if not thumbnail.startswith("https"):
             thumbnail = "https:%s" % thumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot,))
     next_page = soup.find('link', rel='next')
     next = soup.find('button', id='show-more-videos-btn')
@@ -146,9 +149,18 @@ def lista(item):
     return itemlist
 
 
+def findvideos(item):
+    logger.info(item)
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    # itemlist = servertools.find_video_items(item.clone(url = item.url, contentTitle = item.title))
+    return itemlist
+
+
 def play(item):
     logger.info(item)
     itemlist = []
-    itemlist = servertools.find_video_items(item.clone(url = item.url, contentTitle = item.title))
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-

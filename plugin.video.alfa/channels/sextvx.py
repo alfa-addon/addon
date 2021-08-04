@@ -93,7 +93,10 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         url = urlparse.urljoin(host, url)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('li', class_='next')
     if next_page:
@@ -110,9 +113,9 @@ def findvideos(item):
     matches = soup.find_all('source')
     for elem in matches:
         url = elem['src']
-        title = elem['title']
-        itemlist.append(item.clone(action="play", title= title, contentTitle = item.title, url=url))
-    return itemlist
+        quality = elem['title']
+        itemlist.append(item.clone(action="play", title= quality, url=url))
+    return itemlist[::-1]
 
 def play(item):
     logger.info()

@@ -84,13 +84,33 @@ def lista(item):
             thumbnail = "http:%s" % scrapedthumbnail
         url = 'videoId=%s' %scrapedurl
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<a class="pagination__arrow pagination__arrow--next" href="([^"]+)">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    url = 'https://sexu.com/api/video-info'
+    headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
+    data = httptools.downloadpage(url, post=item.url, headers=headers).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
+    JSONData = json.load(data)
+    for cat in  JSONData["sources"]:
+        url = cat["src"]
+        quality = cat["quality"]
+        if not url.startswith("https"):
+            url = "https:%s" % url
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
+    return itemlist[::-1]
 
 
 def play(item):
@@ -108,4 +128,3 @@ def play(item):
             url = "https:%s" % url
         itemlist.append(['%s' %quality, url])
     return itemlist[::-1]
-

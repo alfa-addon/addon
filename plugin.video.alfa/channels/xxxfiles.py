@@ -137,7 +137,10 @@ def lista(item):
         else:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (stime,quality,stitle)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', string='Next')
     if next_page:
@@ -145,6 +148,18 @@ def lista(item):
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url)
+    matches = soup.find_all('source', type='video/mp4')
+    for elem in matches:
+        url = elem['src']
+        quality = elem['label']
+        itemlist.append(item.clone(action="play", title=quality, url=url) )
+    return itemlist[::-1]
 
 
 def play(item):
@@ -157,4 +172,3 @@ def play(item):
         quality = elem['label']
         itemlist.append(['.mp4 %s' %quality, url])
     return itemlist[::-1]
-
