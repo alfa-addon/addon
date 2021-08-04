@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import sys, base64
+import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
@@ -81,7 +81,7 @@ def peliculas(item):
 def findvideos(item):
     itemlist = []
     
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding=encoding).data.replace("í","i")
     patron  = '(?is)>ver \w+ online:.*?href="([^"]+)'
     patron += '.*?/span>.*?\(([^\)]+)'
     matches = scrapertools.find_multiple_matches(data, patron )

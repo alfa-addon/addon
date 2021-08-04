@@ -192,26 +192,21 @@ def findvideos(item):
             logger.info("source: " + source_url)
             DIRECT_HOST = "v.pandrama.com"
             if DIRECT_HOST in source_url:
-                # logger.info(source_url)
-                directo_result = httptools.downloadpage(source_url, headers={"Referer": item.url})
-                directo_result = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", directo_result.data)
-                metadata_url = scrapertools.find_single_match(directo_result, 'videoSources\":\[{\"file\":\"([^"]+)\"')
-                metadata_url = re.sub(r'\\', "", metadata_url)
-                metadata_url = re.sub(r'/1/', "/" + DIRECT_HOST + "/", metadata_url)
-                metadata_url += "?s=1&d="
-                # logger.info(metadata_url)
-                # logger.info('metadata_url: ' + re.sub(r'\\', "", metadata_url))
-                # get metadata_url
-                logger.info(source_url)
-                # metadata_headers = dict()
-                # metadata_headers["Referer"] = source_url
-                # metadata = httptools.downloadpage(metadata_url, headers=metadata_headers)
-                # metadata = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", metadata.data)
-                metadata = requests.get(metadata_url, headers={"Referer": source_url}).content
+                xdata = scrapertools.find_single_match(source_url, 'data=(\w+)')
+                post = "hash=%s" %xdata
+                directo_result = httptools.downloadpage(source_url + "&do=getVideo", headers={"Referer": item.url, "x-requested-with": "XMLHttpRequest"}, post = post).json
+                metadata_url = directo_result["videoSource"]
+                headers = {
+                "accept": "*/*",
+                "referer": source_url,
+                "user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
+                }
+                metadata = httptools.downloadpage(metadata_url, headers=headers).data
                 # metadata = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", metadata)
                 # Get URLs
+                # https://1/cdn/hls/9be120188fe6b91e70db037b674c686d/master.txt
                 patron = "RESOLUTION=(.*?)http([^#]+)"
-                video_matches = re.compile(patron, re.DOTALL).findall(metadata)
+                video_matches = scrapertools.find_multiple_matches(metadata, patron)
                 for video_resolution, video_url in video_matches:
                     final_url = "http" + video_url.strip()
                     url_video = final_url + "|referer="+ final_url
