@@ -20,7 +20,7 @@ from channels import autoplay
 from channels import filtertools
 from bs4 import BeautifulSoup
 
-host = 'https://www.blogdepelis.to/'
+host = 'https://www.blogdepelis.io/'
 
 list_language = list()
 list_quality = []
