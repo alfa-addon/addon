@@ -296,6 +296,7 @@ def wait_for_update_trakt():
     t = Thread(update_all)
     t.setDaemon(True)
     t.start()
+    if "is_alive" in dir(t): t.isAlive = t.is_alive
     t.isAlive()
 
 def update_all():
