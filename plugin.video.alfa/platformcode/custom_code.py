@@ -80,6 +80,9 @@ def init():
         #Se realizan algunas funciones con cada nueva versión de Alfa
         if not filetools.exists(ADDON_CUSTOMCODE_JSON):
             config.set_setting('cf_assistant_ua', '')                   # Se limpia CF_UA. Mejora de rendimiento en httptools CF
+            
+        #Se verifica si están bien las rutas a la videoteca
+        config.verify_directories_created()
         
         #Comprime la BD de cache de TMDB para evitar que crezca demasiado
         bd_tmdb_maintenance()
