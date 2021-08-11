@@ -59,7 +59,7 @@ def save_log_lista_shared(msg):
 def text_clean(txt, disallowed_chars = '[^a-zA-Z0-9\-_()\[\]. ]+', blank_char = ' '):
     import unicodedata
     try:
-        txt = unicode(txt, 'utf-8')
+        if not PY3: txt = unicode(txt, 'utf-8')
     except NameError: # unicode is a default on python 3 
         pass
     txt = unicodedata.normalize('NFKD', txt).encode('ascii', 'ignore')
