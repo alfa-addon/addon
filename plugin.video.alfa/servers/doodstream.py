@@ -11,13 +11,14 @@ from core import scrapertools
 from platformcode import logger
 
 data = ""
-host = "https://dood.to"
+host = "https://dood.la"
 
 def test_video_exists(page_url):
     global data
     page_url = page_url.replace('/d/', '/e/')
     logger.info("(page_url='%s')" % page_url)
-    response = httptools.downloadpage(page_url, headers={"referer": host})
+    #response = httptools.downloadpage(page_url, headers={"referer": host})
+    response = httptools.downloadpage(page_url)
     if response.code == 404:
         return False, "[Doodstream] El archivo no existe o ha sido borrado"
     elif not scrapertools.find_single_match(response.data, ("(function\s?makePlay.*?;})")):
@@ -40,10 +41,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     base_url = scrapertools.find_single_match(data, r"\$.get\('(/pass[^']+)'")
 
-    new_data = httptools.downloadpage("%s%s" % (host, base_url), headers={"referer": host}).data
+    new_data = httptools.downloadpage("%s%s" % (host, base_url), add_referer=True).data
     retries = 0
     while "We are checking your browser" in new_data and retries < 3:
-        new_data = httptools.downloadpage("%s%s" % (host, base_url), headers={"referer": host}).data
+        new_data = httptools.downloadpage("%s%s" % (host, base_url), add_referer=True).data
         retries += 1
     if retries > 3:
         return video_urls

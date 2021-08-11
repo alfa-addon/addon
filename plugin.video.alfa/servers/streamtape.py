@@ -30,6 +30,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
 
     video_urls = []
-    url = "https:" + eval(scrapertools.find_single_match(data, "innerHTML = ([^;]+)"))
+    pattern = """getElementById\('videoolink'\).innerHTML = "([^"]+)" \+ \('([^']+)'\)(.substring\(\d+\))"""""
+    url_data = scrapertools.find_single_match(data, pattern)
+    url = "https:" + url_data[0].strip() + url_data[1][int(scrapertools.find_single_match(url_data[2], "\d+")):]
     video_urls.append(['MP4 [streamtape]', url + "|User-Agent=%s" % httptools.get_user_agent()])
     return video_urls

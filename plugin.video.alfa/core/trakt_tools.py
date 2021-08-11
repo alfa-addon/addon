@@ -239,7 +239,7 @@ def trakt_check(itemlist):
                             season = str(info['season'])
 
                             if season in id_result[id]:
-                                episode = str(info['episode'])
+                                episode = str(info['episode'].lstrip("0"))
 
                                 if episode in id_result[id][season]:
                                     season_watched = id_result[id][season]
@@ -296,7 +296,7 @@ def wait_for_update_trakt():
     t = Thread(update_all)
     t.setDaemon(True)
     t.start()
-    t.isAlive()
+    t.is_alive()
 
 def update_all():
     from time import sleep

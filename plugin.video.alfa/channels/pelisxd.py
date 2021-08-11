@@ -292,17 +292,6 @@ def findvideos(item):
     return itemlist
 
 
-def play(item):
-    logger.info()
-
-    itemlist = list()
-
-    url = create_soup(item.url).find("div", class_="Video").iframe["src"]
-    itemlist.append(item.clone(url=url, server=""))
-    itemlist = servertools.get_servers_itemlist(itemlist)
-    return itemlist
-
-
 def search(item, texto):
     logger.info()
     try:
