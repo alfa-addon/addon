@@ -1,39 +1,38 @@
-
-import os, sys, socket, urllib2, mimetypes, mimetools, tempfile
-from urllib import (unwrap, unquote, splittype, splithost, quote,
-     addinfourl, splitport, splittag,
-     splitattr, ftpwrapper, splituser, splitpasswd, splitvalue)
+import os, sys, socket, urllib.request, urllib.error, urllib.parse, mimetypes, email, tempfile
+from urllib.parse import (unwrap, unquote, splittype, splithost, quote,
+     splitport, splittag, splitattr, splituser, splitpasswd, splitvalue)
+from urllib.response import addinfourl
+from urllib.request import ftpwrapper
 from nmb.NetBIOS import NetBIOS
 from smb.SMBConnection import SMBConnection
 
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+from io import BytesIO
 
 USE_NTLM = True
 MACHINE_NAME = None
 
-class SMBHandler(urllib2.BaseHandler):
+class SMBHandler(urllib.request.BaseHandler):
 
     def smb_open(self, req):
         global USE_NTLM, MACHINE_NAME
 
-        host = req.get_host()
-        if not host:
-            raise urllib2.URLError('SMB error: no host given')
-        host, port = splitport(host)
+        if not req.host:
+            raise urllib.error.URLError('SMB error: no host given')
+        host, port = splitport(req.host)
         if port is None:
             port = 139
         else:
             port = int(port)
 
         # username/password handling
+
         user, host = splituser(host)
+        
         if user:
             user, passwd = splitpasswd(user)
         else:
             passwd = None
+        
         host = unquote(host)
         user = user or ''
 
@@ -48,47 +47,44 @@ class SMBHandler(urllib2.BaseHandler):
 
         if server_name is None:
             n = NetBIOS()
+
             names = n.queryIPForName(host)
             if names:
                 server_name = names[0]
             else:
-                raise urllib2.URLError('SMB error: Hostname does not reply back with its machine name')
+                raise urllib.error.URLError('SMB error: Hostname does not reply back with its machine name')
 
-        path, attrs = splitattr(req.get_selector())
+        path, attrs = splitattr(req.selector)
         if path.startswith('/'):
             path = path[1:]
         dirs = path.split('/')
-        dirs = map(unquote, dirs)
+        dirs = list(map(unquote, dirs))
         service, path = dirs[0], '/'.join(dirs[1:])
 
         try:
             conn = SMBConnection(user, passwd, myname, server_name, domain=domain, use_ntlm_v2 = USE_NTLM)
             conn.connect(host, port)
 
-            if req.has_data():
-                data_fp = req.get_data()
-                filelen = conn.storeFile(service, path, data_fp)
+            headers = email.message.Message()
+            if req.data:
+                filelen = conn.storeFile(service, path, req.data)
 
-                headers = "Content-length: 0\n"
-                fp = StringIO("")
+                headers.add_header('Content-length', '0')
+                fp = BytesIO(b"")
             else:
                 fp = self.createTempFile()
                 file_attrs, retrlen = conn.retrieveFile(service, path, fp)
                 fp.seek(0)
 
-                headers = ""
                 mtype = mimetypes.guess_type(req.get_full_url())[0]
                 if mtype:
-                    headers += "Content-type: %s\n" % mtype
+                    headers.add_header('Content-type', mtype)
                 if retrlen is not None and retrlen >= 0:
-                    headers += "Content-length: %d\n" % retrlen
-
-            sf = StringIO(headers)
-            headers = mimetools.Message(sf)
+                    headers.add_header('Content-length', '%d' % retrlen)
 
             return addinfourl(fp, headers, req.get_full_url())
-        except Exception, ex:
-            raise urllib2.URLError, ('smb error: %s' % ex), sys.exc_info()[2]
+        except Exception as ex:
+            raise urllib.error.URLError('smb error: %s' % ex).with_traceback(sys.exc_info()[2])
 
     def createTempFile(self):
         return tempfile.TemporaryFile()

@@ -1,8 +1,8 @@
 
-import os, logging, select, socket, struct, errno
-from smb_constants import *
-from smb_structs import *
-from base import SMB, NotConnectedError, NotReadyError, SMBTimeout
+import os, logging, select, socket, types, struct, errno
+from .smb_constants import *
+from .smb_structs import *
+from .base import SMB, NotConnectedError, NotReadyError, SMBTimeout
 
 
 class SMBConnection(SMB):
@@ -95,22 +95,27 @@ class SMBConnection(SMB):
     # Public Methods
     #
 
-    def connect(self, ip, port = 139, sock_family = socket.AF_INET, timeout = 60):
+    def connect(self, ip, port = 139, sock_family = None, timeout = 60):
         """
         Establish the SMB connection to the remote SMB/CIFS server.
 
         You must call this method before attempting any of the file operations with the remote server.
         This method will block until the SMB connection has attempted at least one authentication.
 
+        :param port: Defaults to 139. If you are using direct TCP mode (is_direct_tcp=true when creating this SMBConnection instance), use 445.
+        :param sock_family: In Python 3.x, use *None* as we can infer the socket family from the provided *ip*. In Python 2.x, it must be either *socket.AF_INET* or *socket.AF_INET6*.
         :return: A boolean value indicating the result of the authentication atttempt: True if authentication is successful; False, if otherwise.
         """
         if self.sock:
             self.sock.close()
 
         self.auth_result = None
-        self.sock = socket.socket(sock_family)
-        self.sock.settimeout(timeout)
-        self.sock.connect(( ip, port ))
+        if sock_family:
+            self.sock = socket.socket(sock_family)
+            self.sock.settimeout(timeout)
+            self.sock.connect(( ip, port ))
+        else:
+            self.sock = socket.create_connection(( ip, port ))
 
         self.is_busy = True
         try:
@@ -309,19 +314,19 @@ class SMBConnection(SMB):
 
         :param string/unicode service_name: the name of the shared folder for the *path*
         :param string/unicode path: Path of the file on the remote server. If the file cannot be opened for reading, an :doc:`OperationFailure<smb_exceptions>` will be raised.
-        :param file_obj: A file-like object that has a *write* method. Data will be written continuously to *file_obj* until EOF is received from the remote service.
+        :param file_obj: A file-like object that has a *write* method. Data will be written continuously to *file_obj* until EOF is received from the remote service. In Python3, this file-like object must have a *write* method which accepts a bytes parameter.
         :return: A 2-element tuple of ( file attributes of the file on server, number of bytes written to *file_obj* ).
                  The file attributes is an integer value made up from a bitwise-OR of *SMB_FILE_ATTRIBUTE_xxx* bits (see smb_constants.py)
         """
-        return self.retrieveFileFromOffset(service_name, path, file_obj, 0L, -1L, timeout)
+        return self.retrieveFileFromOffset(service_name, path, file_obj, 0, -1, timeout)
 
-    def retrieveFileFromOffset(self, service_name, path, file_obj, offset = 0L, max_length = -1L, timeout = 30):
+    def retrieveFileFromOffset(self, service_name, path, file_obj, offset = 0, max_length = -1, timeout = 30):
         """
         Retrieve the contents of the file at *path* on the *service_name* and write these contents to the provided *file_obj*.
 
         :param string/unicode service_name: the name of the shared folder for the *path*
         :param string/unicode path: Path of the file on the remote server. If the file cannot be opened for reading, an :doc:`OperationFailure<smb_exceptions>` will be raised.
-        :param file_obj: A file-like object that has a *write* method. Data will be written continuously to *file_obj* up to *max_length* number of bytes.
+        :param file_obj: A file-like object that has a *write* method. Data will be written continuously to *file_obj* up to *max_length* number of bytes. In Python3, this file-like object must have a *write* method which accepts a bytes parameter.
         :param integer/long offset: the offset in the remote *path* where the first byte will be read and written to *file_obj*. Must be either zero or a positive integer/long value.
         :param integer/long max_length: maximum number of bytes to read from the remote *path* and write to the *file_obj*. Specify a negative value to read from *offset* to the EOF.
                                         If zero, the method returns immediately after the file is opened successfully for reading.
@@ -359,12 +364,12 @@ class SMBConnection(SMB):
         :param string/unicode service_name: the name of the shared folder for the *path*
         :param string/unicode path: Path of the file on the remote server. If the file at *path* does not exist, it will be created. Otherwise, it will be overwritten.
                                     If the *path* refers to a folder or the file cannot be opened for writing, an :doc:`OperationFailure<smb_exceptions>` will be raised.
-        :param file_obj: A file-like object that has a *read* method. Data will read continuously from *file_obj* until EOF.
+        :param file_obj: A file-like object that has a *read* method. Data will read continuously from *file_obj* until EOF. In Python3, this file-like object must have a *read* method which returns a bytes parameter.
         :return: Number of bytes uploaded
         """
-        return self.storeFileFromOffset(service_name, path, file_obj, 0L, True, timeout)
+        return self.storeFileFromOffset(service_name, path, file_obj, 0, True, timeout)
 
-    def storeFileFromOffset(self, service_name, path, file_obj, offset = 0L, truncate = False, timeout = 30):
+    def storeFileFromOffset(self, service_name, path, file_obj, offset = 0, truncate = False, timeout = 30):
         """
         Store the contents of the *file_obj* at *path* on the *service_name*.
 
@@ -458,7 +463,7 @@ class SMBConnection(SMB):
 
         self.is_busy = True
         try:
-            self._resetFileAttributes(service_name, path_file_pattern, cb, eb, file_attributes, timeout = timeout)
+            self._resetFileAttributes(service_name, path_file_pattern, cb, eb, file_attributes, timeout)
             while self.is_busy:
                 self._pollForNetBIOSPacket(timeout)
         finally:
@@ -583,7 +588,7 @@ class SMBConnection(SMB):
     def _pollForNetBIOSPacket(self, timeout):
         expiry_time = time.time() + timeout
         read_len = 4
-        data = ''
+        data = b''
 
         while read_len > 0:
             try:
@@ -600,14 +605,14 @@ class SMBConnection(SMB):
 
                 data = data + d
                 read_len -= len(d)
-            except select.error, ex:
-                if isinstance(ex, types.TupleType):
+            except select.error as ex:
+                if isinstance(ex, tuple):
                     if ex[0] != errno.EINTR and ex[0] != errno.EAGAIN:
                         raise ex
                 else:
                     raise ex
 
-        type_, flags, length = struct.unpack('>BBH', data)
+        type, flags, length = struct.unpack('>BBH', data)
         if flags & 0x01:
             length = length | 0x10000
 
@@ -627,8 +632,8 @@ class SMBConnection(SMB):
 
                 data = data + d
                 read_len -= len(d)
-            except select.error, ex:
-                if isinstance(ex, types.TupleType):
+            except select.error as ex:
+                if isinstance(ex, tuple):
                     if ex[0] != errno.EINTR and ex[0] != errno.EAGAIN:
                         raise ex
                 else:

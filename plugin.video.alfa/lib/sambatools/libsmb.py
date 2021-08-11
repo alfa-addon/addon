@@ -2,13 +2,21 @@
 
 import os
 import re
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; basestring = str
 
-from nmb.NetBIOS import NetBIOS
+if PY3:
+    from nmb3.NetBIOS import NetBIOS
+    from smb3.SMBConnection import SMBConnection
+else:
+    from nmb.NetBIOS import NetBIOS
+    from smb.SMBConnection import SMBConnection
+
 from platformcode import logger
-from smb.SMBConnection import SMBConnection
 
 GitHub = 'https://github.com/miketeo/pysmb'     #buscar aquí de vez en cuando la última versiónde SMB-pysmb, y actualizar en Alfa
-vesion_actual_pysmb = '1.1.25'                  #actualizada el 25/11/2018
+vesion_actual_pysmb = '1.2.7'                  #actualizada el 11/08/2021
 
 remote = None
 

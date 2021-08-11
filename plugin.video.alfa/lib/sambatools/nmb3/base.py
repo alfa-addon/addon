@@ -1,8 +1,8 @@
 
 import struct, logging, random
-from nmb_constants import *
-from nmb_structs import *
-from utils import encode_name
+from .nmb_constants import *
+from .nmb_structs import *
+from .utils import encode_name
 
 class NMBSession:
 
@@ -12,7 +12,7 @@ class NMBSession:
         self.my_name = my_name.upper()
         self.remote_name = remote_name.upper()
         self.host_type = host_type
-        self.data_buf = ''
+        self.data_buf = b''
 
         if is_direct_tcp:
             self.data_nmb = DirectTCPSessionMessage()
@@ -112,7 +112,8 @@ class NBNS:
         if len(data) < self.HEADER_STRUCT_SIZE:
             raise Exception
 
-        trn_id, code, question_count, answer_count, authority_count, additional_count = struct.unpack(self.HEADER_STRUCT_FORMAT, data[:self.HEADER_STRUCT_SIZE])
+        trn_id, code, question_count, answer_count, authority_count, additional_count = \
+            struct.unpack(self.HEADER_STRUCT_FORMAT, data[:self.HEADER_STRUCT_SIZE])
 
         is_response = bool((code >> 15) & 0x01)
         opcode = (code >> 11) & 0x0F
@@ -120,12 +121,14 @@ class NBNS:
         rcode = code & 0x0F
 
         if opcode == 0x0000 and is_response:
-            name_len = ord(data[self.HEADER_STRUCT_SIZE])
-            offset = self.HEADER_STRUCT_SIZE+2+name_len+8 # constant 2 for the padding bytes before/after the Name and constant 8 for the Type, Class and TTL fields in the Answer section after the Name
-            record_count = (struct.unpack('>H', data[offset:offset+2])[0]) / 6
+            name_len = data[self.HEADER_STRUCT_SIZE]
+            # Constant 2 for the padding bytes before/after the Name and constant 8 for the Type,
+            # Class and TTL fields in the Answer section after the Name:
+            offset = self.HEADER_STRUCT_SIZE + 2 + name_len + 8
+            record_count = (struct.unpack('>H', data[offset:offset+2])[0]) // 6
 
             offset += 4  # Constant 4 for the Data Length and Flags field
-            ret = [ ]
+            ret = []
             for i in range(0, record_count):
                 ret.append('%d.%d.%d.%d' % struct.unpack('4B', (data[offset:offset + 4])))
                 offset += 6
@@ -133,11 +136,10 @@ class NBNS:
         else:
             return trn_id, None
 
-
     def prepareNameQuery(self, trn_id, name, is_broadcast = True):
         header = struct.pack(self.HEADER_STRUCT_FORMAT,
                              trn_id, (is_broadcast and 0x0110) or 0x0100, 1, 0, 0, 0)
-        payload = encode_name(name, 0x20) + '\x00\x20\x00\x01'
+        payload = encode_name(name, 0x20) + b'\x00\x20\x00\x01'
 
         return header + payload
 
@@ -156,7 +158,7 @@ class NBNS:
         rcode = code & 0x0F
 
         try:
-            numnames = struct.unpack('B', data[self.HEADER_STRUCT_SIZE + 44])[0]
+            numnames = data[self.HEADER_STRUCT_SIZE + 44]
 
             if numnames > 0:
                 ret = [ ]
@@ -165,13 +167,13 @@ class NBNS:
                 for i in range(0, numnames):
                     mynme = data[offset:offset + 15]
                     mynme = mynme.strip()
-                    ret.append(( mynme, ord(data[offset+15]) ))
+                    ret.append(( str(mynme, 'ascii'), data[offset+15] ))
                     offset += 18
 
                 return trn_id, ret
         except IndexError:
             pass
-
+            
         return trn_id, None
 
     #
@@ -180,6 +182,6 @@ class NBNS:
     def prepareNetNameQuery(self, trn_id, is_broadcast = True):
         header = struct.pack(self.HEADER_STRUCT_FORMAT,
                              trn_id, (is_broadcast and 0x0010) or 0x0000, 1, 0, 0, 0)
-        payload = encode_name('*', 0) + '\x00\x21\x00\x01'
+        payload = encode_name('*', 0) + b'\x00\x21\x00\x01'
 
         return header + payload

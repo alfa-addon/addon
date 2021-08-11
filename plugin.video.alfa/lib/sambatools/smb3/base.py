@@ -1,20 +1,20 @@
 
 import logging, binascii, time, hmac
 from datetime import datetime
-from smb_constants import *
-from smb2_constants import *
-from smb_structs import *
-from smb2_structs import *
+from .smb_constants import *
+from .smb2_constants import *
+from .smb_structs import *
+from .smb2_structs import *
 from .security_descriptors import SecurityDescriptor
 from nmb.base import NMBSession
-from utils import convertFILETIMEtoEpoch
-import ntlm, securityblob
+from .utils import convertFILETIMEtoEpoch
+from . import ntlm, securityblob
 
 try:
     import hashlib
     sha256 = hashlib.sha256
 except ImportError:
-    from utils import sha256
+    from .utils import sha256
 
 
 class NotReadyError(Exception):
@@ -28,12 +28,6 @@ class NotConnectedError(Exception):
 class SMBTimeout(Exception):
     """Raised when a timeout has occurred while waiting for a response or for a SMB/CIFS operation to complete."""
     pass
-
-
-def _convert_to_unicode(string):
-    if not isinstance(string, unicode):
-        string = unicode(string, "utf-8")
-    return string
 
 
 class SMB(NMBSession):
@@ -59,9 +53,9 @@ class SMB(NMBSession):
 
     def __init__(self, username, password, my_name, remote_name, domain = '', use_ntlm_v2 = True, sign_options = SIGN_WHEN_REQUIRED, is_direct_tcp = False):
         NMBSession.__init__(self, my_name, remote_name, is_direct_tcp = is_direct_tcp)
-        self.username = _convert_to_unicode(username)
+        self.username = username
         self._password = password
-        self.domain = _convert_to_unicode(domain)
+        self.domain = domain
         self.sign_options = sign_options
         self.is_direct_tcp = is_direct_tcp
         self.use_ntlm_v2 = use_ntlm_v2 #: Similar to LMAuthenticationPolicy and NTAuthenticationPolicy as described in [MS-CIFS] 3.2.1.1
@@ -108,8 +102,9 @@ class SMB(NMBSession):
 
     @property
     def password(self):
-        password = self._password() if callable(self._password) else self._password
-        return _convert_to_unicode(password)
+        if callable(self._password):
+            return self._password()
+        return self._password
 
     #
     # NMBSession Methods
@@ -202,8 +197,8 @@ class SMB(NMBSession):
         self._listShares = self._listShares_SMB2
         self._listPath = self._listPath_SMB2
         self._listSnapshots = self._listSnapshots_SMB2
-        self._getAttributes = self._getAttributes_SMB2
         self._getSecurity = self._getSecurity_SMB2
+        self._getAttributes = self._getAttributes_SMB2
         self._retrieveFile = self._retrieveFile_SMB2
         self._retrieveFileFromOffset = self._retrieveFileFromOffset_SMB2
         self._storeFile = self._storeFile_SMB2
@@ -280,7 +275,7 @@ class SMB(NMBSession):
                             self.onAuthOK()
                         else:
                             raise ProtocolError('SMB2_COM_SESSION_SETUP status is 0 but security blob negResult value is %d' % result, message.raw_data, message)
-                    except securityblob.BadSecurityBlobError, ex:
+                    except securityblob.BadSecurityBlobError as ex:
                         raise ProtocolError(str(ex), message.raw_data, message)
                 elif message.status == 0xc0000016:  # STATUS_MORE_PROCESSING_REQUIRED
                     self.session_id = message.session_id
@@ -288,7 +283,7 @@ class SMB(NMBSession):
                         result, ntlm_token = securityblob.decodeChallengeSecurityBlob(message.payload.security_blob)
                         if result == securityblob.RESULT_ACCEPT_INCOMPLETE:
                             self._handleSessionChallenge(message, ntlm_token)
-                    except ( securityblob.BadSecurityBlobError, securityblob.UnsupportedSecurityProvider ), ex:
+                    except ( securityblob.BadSecurityBlobError, securityblob.UnsupportedSecurityProvider ) as ex:
                         raise ProtocolError(str(ex), message.raw_data, message)
                 elif (message.status == 0xc000006d   # STATUS_LOGON_FAILURE
                     or message.status == 0xc0000064  # STATUS_NO_SUCH_USER
@@ -444,9 +439,9 @@ class SMB(NMBSession):
                 # The data_bytes are binding call to Server Service RPC using DCE v1.1 RPC over SMB. See [MS-SRVS] and [C706]
                 # If you wish to understand the meanings of the byte stream, I would suggest you use a recent version of WireShark to packet capture the stream
                 data_bytes = \
-                    binascii.unhexlify("""05 00 0b 03 10 00 00 00 74 00 00 00""".replace(' ', '')) + \
+                    binascii.unhexlify(b"""05 00 0b 03 10 00 00 00 74 00 00 00""".replace(b' ', b'')) + \
                     struct.pack('<I', call_id) + \
-                    binascii.unhexlify("""
+                    binascii.unhexlify(b"""
 b8 10 b8 10 00 00 00 00 02 00 00 00 00 00 01 00
 c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
 03 00 00 00 04 5d 88 8a eb 1c c9 11 9f e8 08 00
@@ -454,7 +449,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
 70 16 d3 01 12 78 5a 47 bf 6e e1 88 03 00 00 00
 2c 1c b7 6c 12 98 40 45 03 00 00 00 00 00 00 00
 01 00 00 00
-""".replace(' ', '').replace('\n', ''))
+""".replace(b' ', b'').replace(b'\n', b''))
                 m = SMB2Message(SMB2WriteRequest(create_message.payload.fid, data_bytes, 0))
                 m.tid = kwargs['tid']
                 self._sendSMBMessage(m)
@@ -479,26 +474,26 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             if read_message.status == 0:
                 call_id = self._getNextRPCCallID()
 
-                padding = ''
+                padding = b''
                 remote_name = '\\\\' + self.remote_name
                 server_len = len(remote_name) + 1
                 server_bytes_len = server_len * 2
                 if server_len % 2 != 0:
-                    padding = '\0\0'
+                    padding = b'\0\0'
                     server_bytes_len += 2
 
                 # The data bytes are the RPC call to NetrShareEnum (Opnum 15) at Server Service RPC.
                 # If you wish to understand the meanings of the byte stream, I would suggest you use a recent version of WireShark to packet capture the stream
                 data_bytes = \
-                    binascii.unhexlify("""05 00 00 03 10 00 00 00""".replace(' ', '')) + \
+                    binascii.unhexlify(b"""05 00 00 03 10 00 00 00""".replace(b' ', b'')) + \
                     struct.pack('<HHI', 72+server_bytes_len, 0, call_id) + \
-                    binascii.unhexlify("""4c 00 00 00 00 00 0f 00 00 00 02 00""".replace(' ', '')) + \
+                    binascii.unhexlify(b"""4c 00 00 00 00 00 0f 00 00 00 02 00""".replace(b' ', b'')) + \
                     struct.pack('<III', server_len, 0, server_len) + \
                     (remote_name + '\0').encode('UTF-16LE') + padding + \
-                    binascii.unhexlify("""
+                    binascii.unhexlify(b"""
 01 00 00 00 01 00 00 00 04 00 02 00 00 00 00 00
 00 00 00 00 ff ff ff ff 08 00 02 00 00 00 00 00
-""".replace(' ', '').replace('\n', ''))
+""".replace(b' ', b'').replace(b'\n', b''))
                 m = SMB2Message(SMB2IoctlRequest(kwargs['fid'], 0x0011C017, flags = 0x01, max_out_size = 8196, in_data = data_bytes))
                 m.tid = kwargs['tid']
                 self._sendSMBMessage(m)
@@ -513,7 +508,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                 # The payload.data_bytes will contain the results of the RPC call to NetrShareEnum (Opnum 15) at Server Service RPC.
                 data_bytes = result_message.payload.out_data
 
-                if ord(data_bytes[3]) & 0x02 == 0:
+                if data_bytes[3] & 0x02 == 0:
                     sendReadRequest(kwargs['tid'], kwargs['fid'], data_bytes)
                 else:
                     decodeResults(kwargs['tid'], kwargs['fid'], data_bytes)
@@ -532,7 +527,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             for i in range(0, shares_count):
                 max_length, _, length = struct.unpack('<III', data_bytes[offset:offset+12])
                 offset += 12
-                results[i].name = unicode(data_bytes[offset:offset+length*2-2], 'UTF-16LE')
+                results[i].name = data_bytes[offset:offset+length*2-2].decode('UTF-16LE')
 
                 if length % 2 != 0:
                     offset += (length * 2 + 2)
@@ -541,7 +536,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
 
                 max_length, _, length = struct.unpack('<III', data_bytes[offset:offset+12])
                 offset += 12
-                results[i].comments = unicode(data_bytes[offset:offset+length*2-2], 'UTF-16LE')
+                results[i].comments = data_bytes[offset:offset+length*2-2].decode('UTF-16LE')
 
                 if length % 2 != 0:
                     offset += (length * 2 + 2)
@@ -564,7 +559,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             if read_message.status == 0:
                 data_bytes = read_message.payload.data
 
-                if ord(data_bytes[3]) & 0x02 == 0:
+                if data_bytes[3] & 0x02 == 0:
                     sendReadRequest(kwargs['tid'], kwargs['fid'], kwargs['data_bytes'] + data_bytes[24:])
                 else:
                     decodeResults(kwargs['tid'], kwargs['fid'], kwargs['data_bytes'] + data_bytes[24:])
@@ -585,7 +580,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             elif kwargs['error'] is not None:
                 errback(OperationFailure(kwargs['error'], messages_history))
 
-        if not self.connected_trees.has_key(path):
+        if path not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if connect_message.status == 0:
@@ -615,14 +610,14 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         results = [ ]
 
         def sendCreate(tid):
-            create_context_data = binascii.unhexlify("""
+            create_context_data = binascii.unhexlify(b"""
 28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00
 44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00 18 00 00 00 10 00 04 00
 00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00
 00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00
 51 46 69 64 00 00 00 00
-""".replace(' ', '').replace('\n', ''))
+""".replace(b' ', b'').replace(b'\n', b''))
             m = SMB2Message(SMB2CreateRequest(path,
                                               file_attributes = 0,
                                               access_mask = FILE_READ_DATA | FILE_READ_EA | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
@@ -640,8 +635,8 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         def createCB(create_message, **kwargs):
             messages_history.append(create_message)
             if create_message.status == 0:
-                sendQuery(kwargs['tid'], create_message.payload.fid, '')
-            elif create_message.status == 0xC0000034L: # [MS-ERREF]: STATUS_OBJECT_NAME_INVALID
+                sendQuery(kwargs['tid'], create_message.payload.fid, b'')
+            elif create_message.status == 0xC0000034: # [MS-ERREF]: STATUS_OBJECT_NAME_INVALID
                 errback(OperationFailure('Failed to list %s on %s: Path not found' % ( path, service_name ), messages_history))
             else:
                 errback(OperationFailure('Failed to list %s on %s: Unable to open directory' % ( path, service_name ), messages_history))
@@ -661,10 +656,10 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             if query_message.status == 0:
                 data_buf = decodeQueryStruct(kwargs['data_buf'] + query_message.payload.data)
                 sendQuery(kwargs['tid'], kwargs['fid'], data_buf)
-            elif query_message.status == 0xC000000FL: # [MS-ERREF]: STATUS_NO_SUCH_FILE
+            elif query_message.status == 0xC000000F: # [MS-ERREF]: STATUS_NO_SUCH_FILE
                 # If there are no matching files, we just treat as success instead of failing
                 closeFid(kwargs['tid'], kwargs['fid'], results = results)
-            elif query_message.status == 0x80000006L:  # STATUS_NO_MORE_FILES
+            elif query_message.status == 0x80000006:  # STATUS_NO_MORE_FILES
                 closeFid(kwargs['tid'], kwargs['fid'], results = results)
             else:
                 closeFid(kwargs['tid'], kwargs['fid'], error = query_message.status)
@@ -706,7 +701,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                     offset += next_offset
                 else:
                     break
-            return ''
+            return b''
 
         def closeFid(tid, fid, results = None, error = None):
             m = SMB2Message(SMB2CloseRequest(fid))
@@ -725,7 +720,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                 else:
                     errback(OperationFailure('Failed to list %s on %s: Query failed with errorcode 0x%08x' % ( path, service_name, kwargs['error'] ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if connect_message.status == 0:
@@ -780,7 +775,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             messages_history.append(create_message)
             if create_message.status == 0:
                 p = create_message.payload
-                filename = self._extractLastPathComponent(unicode(path))
+                filename = self._extractLastPathComponent(path)
                 info = SharedFile(p.create_time, p.lastaccess_time, p.lastwrite_time, p.change_time,
                                   p.file_size, p.allocation_size, p.file_attributes,
                                   filename, filename)
@@ -801,7 +796,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             elif kwargs['error'] is not None:
                 errback(OperationFailure('Failed to get attributes for %s on %s: Query failed with errorcode 0x%08x' % ( path, service_name, kwargs['error'] ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if connect_message.status == 0:
@@ -882,7 +877,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             elif kwargs['error'] is not None:
                 errback(OperationFailure('Failed to get the security descriptor of %s on %s: Query failed with errorcode 0x%08x' % ( path, service_name, kwargs['error'] ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if connect_message.status == 0:
@@ -899,7 +894,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             sendCreate(self.connected_trees[service_name])
 
     def _retrieveFile_SMB2(self, service_name, path, file_obj, callback, errback, timeout = 30):
-        return self._retrieveFileFromOffset(service_name, path, file_obj, callback, errback, 0L, -1L, timeout)
+        return self._retrieveFileFromOffset(service_name, path, file_obj, callback, errback, 0, -1, timeout)
 
     def _retrieveFileFromOffset_SMB2(self, service_name, path, file_obj, callback, errback, starting_offset, max_length, timeout = 30):
         if not self.has_authenticated:
@@ -915,14 +910,14 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         results = [ ]
 
         def sendCreate(tid):
-            create_context_data = binascii.unhexlify("""
+            create_context_data = binascii.unhexlify(b"""
 28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00
 44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00 18 00 00 00 10 00 04 00
 00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00
 00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00
 51 46 69 64 00 00 00 00
-""".replace(' ', '').replace('\n', ''))
+""".replace(b' ', b'').replace(b'\n', b''))
             m = SMB2Message(SMB2CreateRequest(path,
                                               file_attributes = 0,
                                               access_mask = FILE_READ_DATA | FILE_READ_EA | FILE_READ_ATTRIBUTES | READ_CONTROL | SYNCHRONIZE,
@@ -945,7 +940,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                                                      additional_info = 0,
                                                      info_type = SMB2_INFO_FILE,
                                                      file_info_class = 0x05,  # FileStandardInformation [MS-FSCC] 2.4
-                                                     input_buf = '',
+                                                     input_buf = b'',
                                                      output_buf_len = 4096))
                 m.tid = kwargs['tid']
                 self._sendSMBMessage(m)
@@ -1014,7 +1009,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             elif kwargs['error'] is not None:
                 errback(OperationFailure('Failed to retrieve %s on %s: Read failed' % ( path, service_name ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if connect_message.status == 0:
@@ -1031,7 +1026,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             sendCreate(self.connected_trees[service_name])
 
     def _storeFile_SMB2(self, service_name, path, file_obj, callback, errback, timeout = 30):
-        self._storeFileFromOffset_SMB2(service_name, path, file_obj, callback, errback, 0L, True, timeout)
+        self._storeFileFromOffset_SMB2(service_name, path, file_obj, callback, errback, 0, True, timeout)
 
     def _storeFileFromOffset_SMB2(self, service_name, path, file_obj, callback, errback, starting_offset, truncate = False, timeout = 30):
         if not self.has_authenticated:
@@ -1046,7 +1041,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         messages_history = [ ]
 
         def sendCreate(tid):
-            create_context_data = binascii.unhexlify("""
+            create_context_data = binascii.unhexlify(b"""
 28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00
 44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00 20 00 00 00 10 00 04 00
@@ -1055,7 +1050,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
 00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00
 00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00
 51 46 69 64 00 00 00 00
-""".replace(' ', '').replace('\n', ''))
+""".replace(b' ', b'').replace(b'\n', b''))
             m = SMB2Message(SMB2CreateRequest(path,
                                               file_attributes = ATTR_ARCHIVE,
                                               access_mask = FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | FILE_READ_EA | FILE_WRITE_EA | READ_CONTROL | SYNCHRONIZE,
@@ -1112,7 +1107,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             elif kwargs['error'] is not None:
                 errback(OperationFailure('Failed to store %s on %s: Write failed' % ( path, service_name ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if connect_message.status == 0:
@@ -1170,7 +1165,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             files_queue.extend(files_list)
             deleteCB(None)
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if connect_message.status == 0:
@@ -1225,14 +1220,14 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         messages_history = [ ]
 
         def sendCreate(tid):
-            create_context_data = binascii.unhexlify("""
-28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00
-44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00 18 00 00 00 10 00 04 00
-00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00
-00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00
-51 46 69 64 00 00 00 00
-""".replace(' ', '').replace('\n', ''))
+            create_context_data = binascii.unhexlify(b"""
+    28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00
+    44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00
+    00 00 00 00 00 00 00 00 18 00 00 00 10 00 04 00
+    00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00
+    00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00
+    51 46 69 64 00 00 00 00
+    """.replace(b' ', b'').replace(b'\n', b''))
             m = SMB2Message(SMB2CreateRequest(path,
                                               file_attributes = 0,
                                               access_mask = DELETE | FILE_READ_ATTRIBUTES,
@@ -1252,9 +1247,9 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             messages_history.append(open_message)
             if open_message.status == 0:
                 sendDelete(open_message.tid, open_message.payload.fid)
-            elif open_message.status == 0xC0000034L:  # [MS-ERREF]: STATUS_OBJECT_NAME_NOT_FOUND
+            elif open_message.status == 0xc0000034:  # STATUS_OBJECT_NAME_NOT_FOUND
                 callback(path)
-            elif open_message.status == 0xC00000BAL:  # [MS-ERREF]: STATUS_FILE_IS_A_DIRECTORY
+            elif open_message.status == 0xC00000BA:  # [MS-ERREF]: STATUS_FILE_IS_A_DIRECTORY
                 errback(OperationFailure('Failed to delete %s on %s: Cannot delete a folder. Please use deleteDirectory() method or append "/*" to your path if you wish to delete all files in the folder.' % ( path, service_name ), messages_history))
             else:
                 errback(OperationFailure('Failed to delete %s on %s: Unable to open file' % ( path, service_name ), messages_history))
@@ -1264,7 +1259,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                                                additional_info = 0,
                                                info_type = SMB2_INFO_FILE,
                                                file_info_class = 0x0d,  # SMB2_FILE_DISPOSITION_INFO
-                                               data = '\x01'))
+                                               data = b'\x01'))
             # [MS-SMB2]: 2.2.39, [MS-FSCC]: 2.4.11
             m.tid = tid
             self._sendSMBMessage(m)
@@ -1306,14 +1301,14 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         messages_history = [ ]
 
         def sendCreate(tid):
-            create_context_data = binascii.unhexlify("""
+            create_context_data = binascii.unhexlify(b"""
 28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00
 44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00 18 00 00 00 10 00 04 00
 00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00
 00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00
 51 46 69 64 00 00 00 00
-""".replace(' ', '').replace('\n', ''))
+""".replace(b' ', b'').replace(b'\n', b''))
 
             m = SMB2Message(SMB2CreateRequest(path,
                                               file_attributes = 0,
@@ -1341,7 +1336,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                                                additional_info = 0,
                                                info_type = SMB2_INFO_FILE,
                                                file_info_class = 4,  # FileBasicInformation
-                                               data = struct.pack('qqqqii',0,0,0,0,file_attributes,0)))
+                                               data = struct.pack('qqqqii', 0, 0, 0, 0, file_attributes, 0)))
             # [MS-SMB2]: 2.2.39, [MS-FSCC]: 2.4, [MS-FSCC]: 2.4.7, [MS-FSCC]: 2.6
             m.tid = tid
             self._sendSMBMessage(m)
@@ -1368,7 +1363,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             else:
                 errback(OperationFailure('Failed to reset attributes of %s on %s: Reset failed' % ( path, service_name ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if connect_message.status == 0:
@@ -1397,14 +1392,14 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         messages_history = [ ]
 
         def sendCreate(tid):
-            create_context_data = binascii.unhexlify("""
+            create_context_data = binascii.unhexlify(b"""
 28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00
 44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00 18 00 00 00 10 00 04 00
 00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00
 00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00
 51 46 69 64 00 00 00 00
-""".replace(' ', '').replace('\n', ''))
+""".replace(b' ', b'').replace(b'\n', b''))
             m = SMB2Message(SMB2CreateRequest(path,
                                               file_attributes = 0,
                                               access_mask = FILE_READ_DATA | FILE_WRITE_DATA | FILE_READ_EA | FILE_WRITE_EA | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | READ_CONTROL | DELETE | SYNCHRONIZE,
@@ -1436,7 +1431,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         def closeCB(close_message, **kwargs):
             callback(path)
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if connect_message.status == 0:
@@ -1465,14 +1460,14 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         messages_history = [ ]
 
         def sendCreate(tid):
-            create_context_data = binascii.unhexlify("""
+            create_context_data = binascii.unhexlify(b"""
 28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00
 44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00 18 00 00 00 10 00 04 00
 00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00
 00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00
 51 46 69 64 00 00 00 00
-""".replace(' ', '').replace('\n', ''))
+""".replace(b' ', b'').replace(b'\n', b''))
             m = SMB2Message(SMB2CreateRequest(path,
                                               file_attributes = 0,
                                               access_mask = DELETE | FILE_READ_ATTRIBUTES,
@@ -1499,7 +1494,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                                                additional_info = 0,
                                                info_type = SMB2_INFO_FILE,
                                                file_info_class = 0x0d,  # SMB2_FILE_DISPOSITION_INFO
-                                               data = '\x01'))
+                                               data = b'\x01'))
             m.tid = tid
             self._sendSMBMessage(m)
             self.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, deleteCB, errback, tid = tid, fid = fid)
@@ -1525,7 +1520,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             else:
                 errback(OperationFailure('Failed to delete %s on %s: Delete failed' % ( path, service_name ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if connect_message.status == 0:
@@ -1561,14 +1556,14 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             old_path = old_path[:-1]
 
         def sendCreate(tid):
-            create_context_data = binascii.unhexlify("""
+            create_context_data = binascii.unhexlify(b"""
 28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00
 44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00 18 00 00 00 10 00 04 00
 00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00
 00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00
 51 46 69 64 00 00 00 00
-""".replace(' ', '').replace('\n', ''))
+""".replace(b' ', b'').replace(b'\n', b''))
             m = SMB2Message(SMB2CreateRequest(old_path,
                                               file_attributes = 0,
                                               access_mask = DELETE | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
@@ -1591,7 +1586,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                 errback(OperationFailure('Failed to rename %s on %s: Unable to open file/directory' % ( old_path, service_name ), messages_history))
 
         def sendRename(tid, fid):
-            data = '\x00'*16 + struct.pack('<I', len(new_path)*2) + new_path.encode('UTF-16LE')
+            data = b'\x00'*16 + struct.pack('<I', len(new_path)*2) + new_path.encode('UTF-16LE')
             m = SMB2Message(SMB2SetInfoRequest(fid,
                                                additional_info = 0,
                                                info_type = SMB2_INFO_FILE,
@@ -1622,7 +1617,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             else:
                 errback(OperationFailure('Failed to rename %s on %s: Rename failed' % ( old_path, service_name ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if connect_message.status == 0:
@@ -1651,12 +1646,12 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         messages_history = [ ]
 
         def sendCreate(tid):
-            create_context_data = binascii.unhexlify("""
+            create_context_data = binascii.unhexlify(b"""
 28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00
 44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00 00 00 00 00 10 00 04 00
 00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00
-""".replace(' ', '').replace('\n', ''))
+""".replace(b' ', b'').replace(b'\n', b''))
             m = SMB2Message(SMB2CreateRequest(path,
                                               file_attributes = 0,
                                               access_mask = FILE_READ_DATA | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
@@ -1682,7 +1677,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             m = SMB2Message(SMB2IoctlRequest(fid,
                                              ctlcode = 0x00144064,  # FSCTL_SRV_ENUMERATE_SNAPSHOTS
                                              flags = 0x0001,
-                                             in_data = ''))
+                                             in_data = b''))
             m.tid = tid
             self._sendSMBMessage(m)
             self.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, enumSnapshotsCB, errback, tid = tid, fid = fid)
@@ -1695,7 +1690,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                 snapshots_count = struct.unpack('<I', enum_message.payload.out_data[4:8])[0]
                 for i in range(0, snapshots_count):
                     s = enum_message.payload.out_data[12+i*50:12+48+i*50].decode('UTF-16LE')
-                    results.append(datetime(*map(int, ( s[5:9], s[10:12], s[13:15], s[16:18], s[19:21], s[22:24] ))))
+                    results.append(datetime(*list(map(int, ( s[5:9], s[10:12], s[13:15], s[16:18], s[19:21], s[22:24] )))))
                 closeFid(kwargs['tid'], kwargs['fid'], results = results)
             else:
                 closeFid(kwargs['tid'], kwargs['fid'], status = enum_message.status)
@@ -1713,7 +1708,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             else:
                 errback(OperationFailure('Failed to list snapshots %s on %s: List failed' % ( path, service_name ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if connect_message.status == 0:
@@ -1806,14 +1801,14 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                                 self.onAuthOK()
                             else:
                                 raise ProtocolError('SMB_COM_SESSION_SETUP_ANDX status is 0 but security blob negResult value is %d' % result, message.raw_data, message)
-                        except securityblob.BadSecurityBlobError, ex:
+                        except securityblob.BadSecurityBlobError as ex:
                             raise ProtocolError(str(ex), message.raw_data, message)
                     elif message.status.internal_value == 0xc0000016:  # STATUS_MORE_PROCESSING_REQUIRED
                         try:
                             result, ntlm_token = securityblob.decodeChallengeSecurityBlob(message.payload.security_blob)
                             if result == securityblob.RESULT_ACCEPT_INCOMPLETE:
                                 self._handleSessionChallenge(message, ntlm_token)
-                        except ( securityblob.BadSecurityBlobError, securityblob.UnsupportedSecurityProvider ), ex:
+                        except ( securityblob.BadSecurityBlobError, securityblob.UnsupportedSecurityProvider ) as ex:
                             raise ProtocolError(str(ex), message.raw_data, message)
                     elif (message.status.internal_value == 0xc000006d    # STATUS_LOGON_FAILURE
                         or message.status.internal_value == 0xc0000064   # STATUS_NO_SUCH_USER
@@ -1908,7 +1903,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             self.log.info('Performing NTLMv1 authentication (with extended security) with server challenge "%s"', binascii.hexlify(server_challenge))
             nt_challenge_response, lm_challenge_response, session_key = ntlm.generateChallengeResponseV1(self.password, server_challenge, True)
 
-        ntlm_data, session_signing_key = ntlm.generateAuthenticateMessage(server_flags,
+        ntlm_data, signing_session_key = ntlm.generateAuthenticateMessage(server_flags,
                                                                           nt_challenge_response,
                                                                           lm_challenge_response,
                                                                           session_key,
@@ -1934,7 +1929,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
 
         if self.is_signing_active:
             self.log.info("SMB signing activated. All SMB messages will be signed.")
-            self.signing_session_key = session_signing_key
+            self.signing_session_key = signing_session_key
             if self.capabilities & CAP_EXTENDED_SECURITY:
                 self.signing_challenge_response = None
             else:
@@ -1993,13 +1988,13 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                 # The data_bytes are binding call to Server Service RPC using DCE v1.1 RPC over SMB. See [MS-SRVS] and [C706]
                 # If you wish to understand the meanings of the byte stream, I would suggest you use a recent version of WireShark to packet capture the stream
                 data_bytes = \
-                    binascii.unhexlify("""05 00 0b 03 10 00 00 00 48 00 00 00""".replace(' ', '')) + \
+                    binascii.unhexlify(b"""05 00 0b 03 10 00 00 00 48 00 00 00""".replace(b' ', b'')) + \
                     struct.pack('<I', call_id) + \
-                    binascii.unhexlify("""
+                    binascii.unhexlify(b"""
 b8 10 b8 10 00 00 00 00 01 00 00 00 00 00 01 00
 c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
 03 00 00 00 04 5d 88 8a eb 1c c9 11 9f e8 08 00
-2b 10 48 60 02 00 00 00""".replace(' ', '').replace('\n', ''))
+2b 10 48 60 02 00 00 00""".replace(b' ', b'').replace(b'\n', b''))
                 m = SMBMessage(ComTransactionRequest(max_params_count = 0,
                                                      max_data_count = 4280,
                                                      max_setup_count = 0,
@@ -2017,11 +2012,11 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             if not trans_message.status.hasError:
                 call_id = self._getNextRPCCallID()
 
-                padding = ''
+                padding = b''
                 server_len = len(self.remote_name) + 1
                 server_bytes_len = server_len * 2
                 if server_len % 2 != 0:
-                    padding = '\0\0'
+                    padding = b'\0\0'
                     server_bytes_len += 2
 
                 # See [MS-CIFS]: 2.2.5.6.1 for more information on TRANS_TRANSACT_NMPIPE (0x0026) parameters
@@ -2029,15 +2024,15 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                 # The data bytes are the RPC call to NetrShareEnum (Opnum 15) at Server Service RPC.
                 # If you wish to understand the meanings of the byte stream, I would suggest you use a recent version of WireShark to packet capture the stream
                 data_bytes = \
-                    binascii.unhexlify("""05 00 00 03 10 00 00 00""".replace(' ', '')) + \
+                    binascii.unhexlify(b"""05 00 00 03 10 00 00 00""".replace(b' ', b'')) + \
                     struct.pack('<HHI', 72+server_bytes_len, 0, call_id) + \
-                    binascii.unhexlify("""4c 00 00 00 00 00 0f 00 00 00 02 00""".replace(' ', '')) + \
+                    binascii.unhexlify(b"""4c 00 00 00 00 00 0f 00 00 00 02 00""".replace(b' ', b'')) + \
                     struct.pack('<III', server_len, 0, server_len) + \
                     (self.remote_name + '\0').encode('UTF-16LE') + padding + \
-                    binascii.unhexlify("""
+                    binascii.unhexlify(b"""
 01 00 00 00 01 00 00 00 04 00 02 00 00 00 00 00
 00 00 00 00 ff ff ff ff 08 00 02 00 00 00 00 00
-""".replace(' ', '').replace('\n', ''))
+""".replace(b' ', b'').replace(b'\n', b''))
                 m = SMBMessage(ComTransactionRequest(max_params_count = 0,
                                                      max_data_count = 4280,
                                                      max_setup_count = 0,
@@ -2057,7 +2052,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                 # The payload.data_bytes will contain the results of the RPC call to NetrShareEnum (Opnum 15) at Server Service RPC.
                 data_bytes = result_message.payload.data_bytes
 
-                if ord(data_bytes[3]) & 0x02 == 0:
+                if data_bytes[3] & 0x02 == 0:
                     sendReadRequest(result_message.tid, kwargs['fid'], data_bytes)
                 else:
                     decodeResults(result_message.tid, kwargs['fid'], data_bytes)
@@ -2076,7 +2071,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             for i in range(0, shares_count):
                 max_length, _, length = struct.unpack('<III', data_bytes[offset:offset+12])
                 offset += 12
-                results[i].name = unicode(data_bytes[offset:offset+length*2-2], 'UTF-16LE')
+                results[i].name = data_bytes[offset:offset+length*2-2].decode('UTF-16LE')
 
                 if length % 2 != 0:
                     offset += (length * 2 + 2)
@@ -2085,7 +2080,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
 
                 max_length, _, length = struct.unpack('<III', data_bytes[offset:offset+12])
                 offset += 12
-                results[i].comments = unicode(data_bytes[offset:offset+length*2-2], 'UTF-16LE')
+                results[i].comments = data_bytes[offset:offset+length*2-2].decode('UTF-16LE')
 
                 if length % 2 != 0:
                     offset += (length * 2 + 2)
@@ -2110,7 +2105,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             if not read_message.status.hasError:
                 data_bytes = read_message.payload.data
 
-                if ord(data_bytes[3]) & 0x02 == 0:
+                if data_bytes[3] & 0x02 == 0:
                     sendReadRequest(read_message.tid, kwargs['fid'], kwargs['data_bytes'] + data_bytes[24:])
                 else:
                     decodeResults(read_message.tid, kwargs['fid'], kwargs['data_bytes'] + data_bytes[24:])
@@ -2171,7 +2166,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             if support_dfs:
                 m.flags2 |= SMB_FLAGS2_DFS
             self._sendSMBMessage(m)
-            self.pending_requests[m.mid] = _PendingRequest(m.mid, expiry_time, findFirstCB, errback, support_dfs=support_dfs)
+            self.pending_requests[m.mid] = _PendingRequest(m.mid, expiry_time, findFirstCB, errback)
             messages_history.append(m)
 
         def decodeFindStruct(data_bytes):
@@ -2211,22 +2206,22 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                     offset += next_offset
                 else:
                     break
-            return ''
+            return b''
 
         def findFirstCB(find_message, **kwargs):
             messages_history.append(find_message)
             if not find_message.status.hasError:
-                if not kwargs.has_key('total_count'):
+                if 'total_count' not in kwargs:
                     # TRANS2_FIND_FIRST2 response. [MS-CIFS]: 2.2.6.2.2
                     sid, search_count, end_of_search, _, last_name_offset = struct.unpack('<HHHHH', find_message.payload.params_bytes[:10])
-                    kwargs.update({ 'sid': sid, 'end_of_search': end_of_search, 'last_name_offset': last_name_offset, 'data_buf': '' })
+                    kwargs.update({ 'sid': sid, 'end_of_search': end_of_search, 'last_name_offset': last_name_offset, 'data_buf': b'' })
                 else:
                     sid, end_of_search, last_name_offset = kwargs['sid'], kwargs['end_of_search'], kwargs['last_name_offset']
 
                 send_next = True
                 if find_message.payload.data_bytes:
                     d = decodeFindStruct(kwargs['data_buf'] + find_message.payload.data_bytes)
-                    if not kwargs.has_key('data_count'):
+                    if 'data_count' not in kwargs:
                         if len(find_message.payload.data_bytes) != find_message.payload.total_data_count:
                             kwargs.update({ 'data_count': len(find_message.payload.data_bytes),
                                             'total_count': find_message.payload.total_data_count,
@@ -2253,7 +2248,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                 else:
                     errback(OperationFailure('Failed to list %s on %s: Unable to retrieve file list' % ( path, service_name ), messages_history))
 
-        def sendFindNext(tid, sid, resume_key, resume_file, support_dfs=False):
+        def sendFindNext(tid, sid, resume_key, resume_file, support_dfs):
             setup_bytes = struct.pack('<H', 0x0002)  # TRANS2_FIND_NEXT2 sub-command. See [MS-CIFS]: 2.2.6.3.1
             params_bytes = \
                 struct.pack('<HHHIH',
@@ -2279,17 +2274,17 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         def findNextCB(find_message, **kwargs):
             messages_history.append(find_message)
             if not find_message.status.hasError:
-                if not kwargs.has_key('total_count'):
+                if 'total_count' not in kwargs:
                     # TRANS2_FIND_NEXT2 response. [MS-CIFS]: 2.2.6.3.2
                     search_count, end_of_search, _, last_name_offset = struct.unpack('<HHHH', find_message.payload.params_bytes[:8])
-                    kwargs.update({ 'end_of_search': end_of_search, 'last_name_offset': last_name_offset, 'data_buf': '' })
+                    kwargs.update({ 'end_of_search': end_of_search, 'last_name_offset': last_name_offset, 'data_buf': b'' })
                 else:
                     end_of_search, last_name_offset = kwargs['end_of_search'], kwargs['last_name_offset']
 
                 send_next = True
                 if find_message.payload.data_bytes:
                     d = decodeFindStruct(kwargs['data_buf'] + find_message.payload.data_bytes)
-                    if not kwargs.has_key('data_count'):
+                    if 'data_count' not in kwargs:
                         if len(find_message.payload.data_bytes) != find_message.payload.total_data_count:
                             kwargs.update({ 'data_count': len(find_message.payload.data_bytes),
                                             'total_count': find_message.payload.total_data_count,
@@ -2330,7 +2325,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         def dfsReferralCB(dfs_message, **kwargs):
             sendFindFirst(dfs_message.tid, True)
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if not connect_message.status.hasError:
@@ -2386,7 +2381,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                 info_size = struct.calcsize(info_format)
                 create_time, last_access_time, last_write_time, last_attr_change_time, \
                 file_attributes, _, alloc_size, file_size = struct.unpack(info_format, query_message.payload.data_bytes[:info_size])
-                filename = self._extractLastPathComponent(unicode(path))
+                filename = self._extractLastPathComponent(path)
 
                 info = SharedFile(convertFILETIMEtoEpoch(create_time), convertFILETIMEtoEpoch(last_access_time), convertFILETIMEtoEpoch(last_write_time), convertFILETIMEtoEpoch(last_attr_change_time),
                                   file_size, alloc_size, file_attributes, filename, filename)
@@ -2394,7 +2389,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             else:
                 errback(OperationFailure('Failed to get attributes for %s on %s: Read failed' % ( path, service_name ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if not connect_message.status.hasError:
@@ -2414,7 +2409,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         raise NotReadyError('getSecurity is not yet implemented for SMB1')
 
     def _retrieveFile_SMB1(self, service_name, path, file_obj, callback, errback, timeout = 30):
-        return self._retrieveFileFromOffset(service_name, path, file_obj, callback, errback, 0L, -1L, timeout)
+        return self._retrieveFileFromOffset(service_name, path, file_obj, callback, errback, 0, -1, timeout)
 
     def _retrieveFileFromOffset_SMB1(self, service_name, path, file_obj, callback, errback, starting_offset, max_length, timeout = 30):
         if not self.has_authenticated:
@@ -2439,9 +2434,9 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             if not open_message.status.hasError:
                 if max_length == 0:
                     closeFid(open_message.tid, open_message.payload.fid)
-                    callback(( file_obj, open_message.payload.file_attributes, 0L ))
+                    callback(( file_obj, open_message.payload.file_attributes, 0 ))
                 else:
-                    sendRead(open_message.tid, open_message.payload.fid, starting_offset, open_message.payload.file_attributes, 0L, max_length)
+                    sendRead(open_message.tid, open_message.payload.fid, starting_offset, open_message.payload.file_attributes, 0, max_length)
             else:
                 errback(OperationFailure('Failed to retrieve %s on %s: Unable to open file' % ( path, service_name ), messages_history))
 
@@ -2491,7 +2486,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             self._sendSMBMessage(m)
             messages_history.append(m)
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if not connect_message.status.hasError:
@@ -2508,7 +2503,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             sendOpen(self.connected_trees[service_name])
 
     def _storeFile_SMB1(self, service_name, path, file_obj, callback, errback, timeout = 30):
-        self._storeFileFromOffset_SMB1(service_name, path, file_obj, callback, errback, 0L, True, timeout)
+        self._storeFileFromOffset_SMB1(service_name, path, file_obj, callback, errback, 0, True, timeout)
 
     def _storeFileFromOffset_SMB1(self, service_name, path, file_obj, callback, errback, starting_offset, truncate = False, timeout = 30):
         if not self.has_authenticated:
@@ -2564,7 +2559,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             self._sendSMBMessage(m)
             messages_history.append(m)
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if not connect_message.status.hasError:
@@ -2621,7 +2616,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             files_queue.extend(files_list)
             deleteCB(None)
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if not connect_message.status.hasError:
@@ -2672,7 +2667,6 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
 
         self._listPath_SMB1(service_name, path, listCB, errback, search = search, pattern = pattern, timeout = timeout)
 
-
     def _deleteFiles_SMB1__del(self, service_name, tid, path, callback, errback, timeout = 30):
         messages_history = [ ]
 
@@ -2688,12 +2682,12 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             messages_history.append(delete_message)
             if not delete_message.status.hasError:
                 callback(path)
-            elif delete_message.status.internal_value == 0xC000000FL: # [MS-ERREF]: STATUS_NO_SUCH_FILE
+            elif delete_message.status.internal_value == 0xC000000F: # [MS-ERREF]: STATUS_NO_SUCH_FILE
                 # If there are no matching files, we just treat as success instead of failing
                 callback(path_file_pattern)
-            elif delete_message.status.internal_value == 0xC00000BAL: # [MS-ERREF]: STATUS_FILE_IS_A_DIRECTORY
+            elif delete_message.status.internal_value == 0xC00000BA: # [MS-ERREF]: STATUS_FILE_IS_A_DIRECTORY
                 errback(OperationFailure('Failed to delete %s on %s: Cannot delete a folder. Please use deleteDirectory() method or append "/*" to your path if you wish to delete all files in the folder.' % ( path, service_name ), messages_history))
-            elif delete_message.status.internal_value == 0xC0000034L: # [MS-ERREF]: STATUS_OBJECT_NAME_INVALID
+            elif delete_message.status.internal_value == 0xC0000034: # [MS-ERREF]: STATUS_OBJECT_NAME_INVALID
                 errback(OperationFailure('Failed to delete %s on %s: Path not found' % ( path, service_name ), messages_history))
             else:
                 errback(OperationFailure('Failed to delete %s on %s: Delete failed' % ( path, service_name ), messages_history))
@@ -2724,7 +2718,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             else:
                 errback(OperationFailure('Failed to create directory %s on %s: Create failed' % ( path, service_name ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if not connect_message.status.hasError:
@@ -2761,7 +2755,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             else:
                 errback(OperationFailure('Failed to delete directory %s on %s: Delete failed' % ( path, service_name ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if not connect_message.status.hasError:
@@ -2801,7 +2795,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             else:
                 errback(OperationFailure('Failed to rename %s on %s: Rename failed' % ( old_path, service_name ), messages_history))
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if not connect_message.status.hasError:
@@ -2871,7 +2865,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                 snapshots_count = struct.unpack('<I', enum_message.payload.data_bytes[4:8])[0]
                 for i in range(0, snapshots_count):
                     s = enum_message.payload.data_bytes[12+i*50:12+48+i*50].decode('UTF-16LE')
-                    results.append(datetime(*map(int, ( s[5:9], s[10:12], s[13:15], s[16:18], s[19:21], s[22:24] ))))
+                    results.append(datetime(*list(map(int, ( s[5:9], s[10:12], s[13:15], s[16:18], s[19:21], s[22:24] )))))
                 closeFid(kwargs['tid'], kwargs['fid'])
                 callback(results)
             else:
@@ -2884,7 +2878,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             self._sendSMBMessage(m)
             messages_history.append(m)
 
-        if not self.connected_trees.has_key(service_name):
+        if service_name not in self.connected_trees:
             def connectCB(connect_message, **kwargs):
                 messages_history.append(connect_message)
                 if not connect_message.status.hasError:
@@ -2972,7 +2966,7 @@ class SharedDevice:
         return bool(self._type & 0x40000000)
 
     def __unicode__(self):
-        return u'Shared device: %s (type:0x%02x comments:%s)' % (self.name, self.type, self.comments )
+        return 'Shared device: %s (type:0x%02x comments:%s)' % (self.name, self.type, self.comments )
 
 
 class SharedFile:
@@ -3014,7 +3008,7 @@ class SharedFile:
 
     @property
     def isDirectory(self):
-        """A convenient property to return True if this file resource is a directory on the remote server"""
+        """A convenience property to return True if this file resource is a directory on the remote server"""
         return bool(self.file_attributes & ATTR_DIRECTORY)
 
     @property
@@ -3033,7 +3027,7 @@ class SharedFile:
         return (self.file_attributes==ATTR_NORMAL) or ((self.file_attributes & 0xff)==0)
 
     def __unicode__(self):
-        return u'Shared file: %s (FileSize:%d bytes, isDirectory:%s)' % ( self.filename, self.file_size, self.isDirectory )
+        return 'Shared file: %s (FileSize:%d bytes, isDirectory:%s)' % ( self.filename, self.file_size, self.isDirectory )
 
 
 class _PendingRequest:

@@ -1,10 +1,10 @@
 
 import os, sys, struct, types, logging, binascii, time
-from StringIO import StringIO
-from smb_structs import ProtocolError
-from smb_constants import *
-from smb2_constants import *
-from utils import convertFILETIMEtoEpoch
+from io import StringIO
+from .smb_structs import ProtocolError
+from .smb_constants import *
+from .smb2_constants import *
+from .utils import convertFILETIMEtoEpoch
 
 
 class SMB2Message:
@@ -37,11 +37,11 @@ class SMB2Message:
         b.write('PID: %d %s' % ( self.pid, os.linesep ))
         b.write('MID: %d %s' % ( self.mid, os.linesep ))
         b.write('TID: %d %s' % ( self.tid, os.linesep ))
-        b.write('Data: %d bytes %s%s %s' % ( len(self.data), os.linesep, binascii.hexlify(self.data), os.linesep ))
+        b.write('Data: %d bytes %s%s %s' % ( len(self.data), os.linesep, str(binascii.hexlify(self.data)), os.linesep ))
         return b.getvalue()
 
     def reset(self):
-        self.raw_data = ''
+        self.raw_data = b''
         self.command = 0
         self.status = 0
         self.flags = 0
@@ -49,9 +49,9 @@ class SMB2Message:
         self.next_command_offset = 0
         self.mid = 0
         self.session_id = 0
-        self.signature = '\0'*16
+        self.signature = b'\0'*16
         self.payload = None
-        self.data = ''
+        self.data = b''
 
         # For async SMB2 message
         self.async_id = 0
@@ -63,8 +63,8 @@ class SMB2Message:
         # Not used in this class. Maintained for compatibility with SMBMessage class
         self.flags2 = 0
         self.uid = 0
-        self.security = 0L
-        self.parameters_data = ''
+        self.security = 0
+        self.parameters_data = b''
 
     def encode(self):
         """
@@ -79,7 +79,7 @@ class SMB2Message:
         self.payload.prepare(self)
 
         headers_data = struct.pack(self.HEADER_STRUCT_FORMAT,
-                                   '\xFESMB', self.HEADER_SIZE, 0, self.status, self.command, 0, self.flags) + \
+                                   b'\xFESMB', self.HEADER_SIZE, 0, self.status, self.command, 0, self.flags) + \
                        struct.pack(self.SYNC_HEADER_STRUCT_FORMAT, self.next_command_offset, self.mid, self.pid, self.tid, self.session_id, self.signature)
         return headers_data + self.data
 
@@ -108,7 +108,7 @@ class SMB2Message:
         protocol, struct_size, self.credit_charge, self.status, \
             self.command, self.credit_re, self.flags = struct.unpack(self.HEADER_STRUCT_FORMAT, buf[:self.HEADER_STRUCT_SIZE])
 
-        if protocol != '\xFESMB':
+        if protocol != b'\xFESMB':
             raise ProtocolError('Invalid 4-byte SMB2 protocol field', buf)
 
         if struct_size != self.HEADER_SIZE:
@@ -353,7 +353,7 @@ class SMB2CreateRequest(Structure):
                  access_mask = 0, share_access = 0, create_disp = 0, create_options = 0,
                  impersonation = SEC_ANONYMOUS,
                  oplock = SMB2_OPLOCK_LEVEL_NONE,
-                 create_context_data = ''):
+                 create_context_data = b''):
         self.filename = filename
         self.file_attributes = file_attributes
         self.access_mask = access_mask
@@ -362,7 +362,7 @@ class SMB2CreateRequest(Structure):
         self.create_options = create_options
         self.oplock = oplock
         self.impersonation = impersonation
-        self.create_context_data = create_context_data or ''
+        self.create_context_data = create_context_data or b''
 
     def initMessage(self, message):
         Structure.initMessage(self, message)
@@ -374,7 +374,7 @@ class SMB2CreateRequest(Structure):
         if self.create_context_data:
             n = SMB2Message.HEADER_SIZE + self.STRUCTURE_SIZE + len(buf)
             if n % 8 != 0:
-                buf += '\0'*(8-n%8)
+                buf += b'\0'*(8-n%8)
                 create_context_offset = SMB2Message.HEADER_SIZE + self.STRUCTURE_SIZE + len(buf)
             else:
                 create_context_offset = n
@@ -382,7 +382,7 @@ class SMB2CreateRequest(Structure):
         else:
             create_context_offset = 0
         if not buf:
-            buf = '\0'
+            buf = b'\0'
 
         assert create_context_offset % 8 == 0
         message.data = struct.pack(self.STRUCTURE_FORMAT,
@@ -530,7 +530,7 @@ class SMB2ReadRequest(Structure):
                                    0,    # RemainingBytes
                                    0,    # ReadChannelInfoOffset
                                    0     # ReadChannelInfoLength
-                                  ) + '\0'
+                                  ) + b'\0'
 
 
 class SMB2ReadResponse(Structure):
@@ -619,12 +619,12 @@ class SMB2IoctlResponse(Structure):
             if input_len > 0:
                 self.in_data = message.raw_data[input_offset:input_offset+input_len]
             else:
-                self.in_data = ''
+                self.in_data = b''
 
             if output_len > 0:
                 self.out_data = message.raw_data[output_offset:output_offset+output_len]
             else:
-                self.out_data = ''
+                self.out_data = b''
 
 
 class SMB2CloseRequest(Structure):
@@ -738,7 +738,7 @@ class SMB2QueryInfoRequest(Structure):
         self.info_type = info_type
         self.file_info_class = file_info_class
         self.output_buf_len = output_buf_len
-        self.input_buf = input_buf or ''
+        self.input_buf = input_buf or b''
 
     def initMessage(self, message):
         Structure.initMessage(self, message)
@@ -798,7 +798,7 @@ class SMB2SetInfoRequest(Structure):
         self.additional_info = additional_info
         self.info_type = info_type
         self.file_info_class = file_info_class
-        self.data = data or ''
+        self.data = data or b''
 
     def initMessage(self, message):
         Structure.initMessage(self, message)
