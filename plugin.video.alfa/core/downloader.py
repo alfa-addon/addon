@@ -147,9 +147,9 @@ class Downloader(object):
             # Detenemos la descarga
             self._state = self.states.stopped
             for t in self._threads:
-                if t.isAlive(): t.join()
+                if t.is_alive(): t.join()
 
-            if self._save_thread.isAlive(): self._save_thread.join()
+            if self._save_thread.is_alive(): self._save_thread.join()
 
             if self._seekable:
                 # Guardamos la info al final del archivo

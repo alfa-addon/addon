@@ -39,7 +39,10 @@ if xbmc_vfs:
 
 samba = None
 if not xbmc_vfs:
-    from lib.sambatools import libsmb as samba
+    if PY3:
+        from lib.sambatools_py3 import libsmb as samba
+    else:
+        from lib.sambatools_py2 import libsmb as samba
 
 # Windows es "mbcs" linux, osx, android es "utf8"
 if not PY3 and os.name == "nt":

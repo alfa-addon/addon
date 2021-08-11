@@ -561,7 +561,7 @@ def findvideos(item):
         data = scrapertools.find_single_match(data, patron)
 
     patron = '<tr>(?:\s*<td>(\d+)<\/td>)?\s*<td>([^<]+)<\/td>\s*<td>([^<]+)<\/td>'
-    patron += '\s*<td\s*class=[^<]+<\/td>(?:\s*<td>([^<]+)<\/td>)?\s*<td\s*class=[^<]+<\/td>'
+    patron += '\s*<td\s*class=[^<]+<\/td>(?:\s*<td[^>]*>([^<]+)<\/td>)?\s*<td\s*class=[^<]+<\/td>'
     patron += '\s*<td>\s*<a\s*class="[^>]+href="([^"]+)"'
 
     if not item.armagedon:

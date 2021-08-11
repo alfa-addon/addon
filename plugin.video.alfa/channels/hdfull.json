@@ -39,7 +39,7 @@
       "id": "current_host",
       "type": "text",
       "label": "Host actual",
-      "default": "https://hdfull.pro/",
+      "default": "https://hdfull.one/",
       "enabled": true,
       "visible": false
     },
