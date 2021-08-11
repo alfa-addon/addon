@@ -156,7 +156,7 @@ def peliculas(item):
     else:
         data = httptools.downloadpage(uuu, post=post, headers = headers).data
 
-    patron  = '(?is).*?href="([^"]+)"'
+    patron  = '(?is)jeg_thumb.*?href="([^"]+)"'
     patron += '.*?data-src="([^"]+)"'
     patron += '.*?"jeg_post_title">.*?">([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
