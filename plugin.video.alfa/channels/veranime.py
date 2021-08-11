@@ -291,16 +291,18 @@ def findvideos(item):
 
         #Sistema movidy
         if lang.lower() == 'multiserver':
-            players = soup.find_all("div", id=re.compile(r"^source-player-\d+"))
-            doo_url = players[0].find("iframe")["src"]
-            # doo_url = "%swp-json/dooplayer/v1/post/%s?type=%s&source=%s" % \
-            #           (host, elem["data-post"], elem["data-type"], elem["data-nume"])
-            # data = httptools.downloadpage(doo_url, headers=headers).json
-            # url = data.get("embed_url", "")
-            soup = create_soup(doo_url).find("div", class_="OptionsLangDisp")
+            # players = soup.find_all("div", id=re.compile(r"^source-player-\d+"))
+            # doo_url = players.find("iframe")["src"]
+            doo_url = "%swp-json/dooplayer/v1/post/%s?type=%s&source=%s" % \
+                      (host, elem["data-post"], elem["data-type"], elem["data-nume"])
+            data = httptools.downloadpage(doo_url, headers=headers).json
+            url = data.get("embed_url", "")
+            soup = create_soup(url).find("div", class_="OptionsLangDisp")
 
             for elem in soup.find_all("li"):
                 url = elem["onclick"]
+                url = scrapertools.find_single_match(url, r"\('([^']+)")
+                if "cloudemb.com" in url: continue
                 server = elem.find("span").text
                 lang = elem.find("p").text
                 
@@ -312,7 +314,6 @@ def findvideos(item):
                 lang = re.sub(' -.*', '', lang)
                 language=IDIOMAS.get(lang.lower(), "VOSE")
 
-                url = scrapertools.find_single_match(url, r"\('([^']+)")
                 stitle = unify.add_languages("", language)
 
                 if url:
@@ -329,6 +330,8 @@ def findvideos(item):
     else:
         itemlist.sort(key=lambda i: (i.language, i.server))
 
+    for i in itemlist:
+        logger.info(i)
     # Requerido para FilterTools
 
     itemlist = filtertools.get_links(itemlist, item, list_language)
