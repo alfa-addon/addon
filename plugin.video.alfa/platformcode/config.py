@@ -623,6 +623,10 @@ def verify_directories_created():
     from platformcode import logger
     from core import filetools
     from platformcode import xbmc_videolibrary
+    import time
+    
+    logger.info()
+    time.sleep(1)
 
     config_paths = [["videolibrarypath", "videolibrary"],
                     ["downloadpath", "downloads"],

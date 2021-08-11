@@ -324,33 +324,6 @@ def remove_htmltags(string):
     return re.sub('<[^<]+?>', '', string)
 
 
-def remove_show_from_title(title, show):
-    # print slugify(title)+" == "+slugify(show)
-    # Quita el nombre del programa del título
-    if slugify(title).startswith(slugify(show)):
-
-        # Convierte a unicode primero, o el encoding se pierde
-        if not PY3: title = unicode(title, "utf-8", "replace")
-        if not PY3: show = unicode(show, "utf-8", "replace")
-        title = title[len(show):].strip()
-
-        if title.startswith("-"):
-            title = title[1:].strip()
-
-        if title == "":
-            title = str(time.time())
-
-        # Vuelve a utf-8
-        title = title.encode("utf-8", "ignore")
-        if PY3 and isinstance(title, bytes):
-            title = title.decode("utf-8")
-        show = show.encode("utf-8", "ignore")
-        if PY3 and isinstance(show, bytes):
-            show = show.decode("utf-8")
-
-    return title
-
-
 def get_filename_from_url(url):
 
     parsed_url = urlparse.urlparse(url)
@@ -366,7 +339,6 @@ def get_filename_from_url(url):
 
 
 def get_domain_from_url(url):
-
     parsed_url = urlparse.urlparse(url)
     try:
         domain = parsed_url[1]
@@ -375,19 +347,6 @@ def get_domain_from_url(url):
 
     return domain
 
-def urlencode(params):
-    encoded_url = ''
-    if isinstance(params, dict):
-        encoded_url = urllib.urlencode(params)
-    return encoded_url
-
-def urldecode(url):
-    params = dict()
-    query_data = urlparse.urlparse(url).query
-    if query_data:
-        params = dict(urlparse.parse_qsl(query_data))
-
-    return params
 
 def unquote(url, plus=False):
     if plus:
@@ -404,6 +363,14 @@ def quote(url, plus=False):
         url = urllib.quote(url)
     return url
 
+
+def normalize(string):
+    import unicodedata
+    if not PY3 and isinstance(string, str):
+        string = string.decode('utf-8')
+    normal = ''.join((c for c in unicodedata.normalize('NFD', unicode(string)) if unicodedata.category(c) != 'Mn'))
+    return normal
+
 def remove_format(string):
     #logger.info()
     string = string.rstrip()
@@ -413,13 +380,6 @@ def remove_format(string):
     string = re.sub(r'\s+', ' ', string).strip()
     #logger.debug('sale de remove: %s' % string)
     return string
-
-def normalize(string):
-    import unicodedata
-    if not PY3 and isinstance(string, str):
-        string = string.decode('utf-8')
-    normal = ''.join((c for c in unicodedata.normalize('NFD', unicode(string)) if unicodedata.category(c) != 'Mn'))
-    return normal
 
 def simplify(title, year):
     
