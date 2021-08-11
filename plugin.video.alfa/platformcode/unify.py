@@ -263,7 +263,7 @@ def set_color(title, category):
            title= re.sub(r'\[COLOR .*?\]','[COLOR %s]' % color_scheme[category],title)
         else:
             if category not in ['movie', 'tvshow', 'library', 'otro']:
-                title = "[COLOR %s][%s][/COLOR]"%(color_scheme[category], title)
+                title = "[COLOR %s][%s][/COLOR]" % (color_scheme.get(category, 'blue'), title)
             else:
                 title = "[COLOR %s]%s[/COLOR]" % (color_scheme[category], title)
     return title
