@@ -18,7 +18,7 @@
 			"id": "include_in_global_search",
 			"type": "bool",
 			"label": "Incluir en busqueda global",
-			"default": true,
+			"default": false,
 			"enabled": true,
 			"visible": true
 		},
@@ -26,14 +26,6 @@
 			"id": "include_in_newest_anime",
 			"type": "bool",
 			"label": "Incluir en Novedades - Episodios de anime",
-			"default": false,
-			"enabled": true,
-			"visible": true
-		},
-		{
-			"id": "play_direct",
-			"type": "bool",
-			"label": "Al seleccionar un episodio, mostrar los enlaces en vez de ver todos los episodios",
 			"default": false,
 			"enabled": true,
 			"visible": true
@@ -65,7 +57,7 @@
 		{
 			"id": "include_vo",
 			"type": "bool",
-			"label": "Incluir versiones originales",
+			"label": "Incluir versiones originales (raws)",
 			"default": false,
 			"enabled": "eq(-2,true)",
 			"visible": true

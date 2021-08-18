@@ -172,7 +172,7 @@ def convert_url_base64(url, host='', rep_blanks=True):
 
     url_base64 = url
     if len(url_base64) > 1 and not 'magnet:' in url_base64 and not '.torrent' in url_base64:
-        patron_php = 'php(?:#|\?u=)(.*?$)'
+        patron_php = 'php(?:#|\?\w+=)(.*?$)'
         if scrapertools.find_single_match(url_base64, patron_php):
             url_base64 = scrapertools.find_single_match(url_base64, patron_php)
         try:
