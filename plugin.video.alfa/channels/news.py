@@ -210,8 +210,9 @@ def get_channel_news(channel, category, all=False):
 
 
     for elem in results[:total_results]:
+
         if category not in ["series", "anime"] and not all and news_range != 100:
-            if not elem.contentTitle:
+            if not elem.contentTitle or "-Próximamente-" in elem.title:
                 continue
             if elem.infoLabels["year"] and str(elem.infoLabels["year"]).isdigit():
                 item_year = int(elem.infoLabels["year"])
@@ -249,7 +250,8 @@ def group_results(results):
     tmdb.set_infoLabels_itemlist(results, seekTmdb=True)
 
     for elem in results:
-        if not elem.infoLabels["tmdb_id"]:
+
+        if not elem.infoLabels["tmdb_id"] or "-Próximamente-" in elem.title:
             continue
         if elem.infoLabels["tmdb_id"] not in grouped:
             grouped[elem.infoLabels["tmdb_id"]] = list()
