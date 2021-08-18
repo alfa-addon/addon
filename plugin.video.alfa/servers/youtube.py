@@ -97,8 +97,6 @@ def test_video_exists(page_url):
     if "File was deleted" in data or 'El vídeo no está disponible' in data or "privado" in data or "derechos de autor" in data:
         return False, config.get_localized_string(70449) % "Youtube"
 
-    if "Accede para confirmar tu edad" in data:
-        return False, "El video está restringido"
     return True, ""
 
 

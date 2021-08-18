@@ -96,7 +96,7 @@ def videos(item):
         data = httptools.downloadpage(item.url).data
     patron = 'Populares</a>(.*?)</div></article></div></div>'
     data = scrapertools.find_single_match(data, patron)
-    patron  = 'href="([^"]+).*?'
+    patron  = 'wp-post-image-link.*?href="([^"]+).*?'
     patron += 'src="([^"]+).*?'
     patron += 'bookmark">([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
