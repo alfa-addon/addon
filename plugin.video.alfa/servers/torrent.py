@@ -182,12 +182,14 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     if not rar_files and item.url.startswith('magnet:') and item.downloadServer \
                         and 'url' in str(item.downloadServer):
         for x in range(60):
-            if filetools.exists(item.downloadServer['url']):
+            if (filetools.isfile(item.downloadServer['url']) or filetools.isdir(item.downloadServer['url'])) \
+                        and filetools.exists(item.downloadServer['url']):
                 break
             time.sleep(1)
             continue
         time.sleep(5)
-        if filetools.exists(item.downloadServer['url']):
+        if (filetools.isfile(item.downloadServer['url']) or filetools.isdir(item.downloadServer['url'])) \
+                        and filetools.exists(item.downloadServer['url']):
             for x in range(12):
                 size, url, torrent_f, rar_files = generictools.get_torrent_size(item.downloadServer['url'], 
                             file_list=True, lookup=False, torrents_path=item.downloadServer['url'], 
@@ -198,7 +200,8 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
             else:
                 torrent_stop =  True
             item.torrent_info = size
-        if not filetools.exists(item.downloadServer['url']) or torrent_stop:
+        if ((filetools.isfile(item.downloadServer['url']) or filetools.isdir(item.downloadServer['url'])) \
+                        and not filetools.exists(item.downloadServer['url'])) or torrent_stop:
             torrent_stop =  True
             if not DOWNGROUND:
                 platformtools.dialog_notification("Magnet a Torrent", "No se convierte a .torrent.  Cancelado")
@@ -1901,12 +1904,14 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
     if not rar_files and item.url.startswith('magnet:') and item.downloadServer \
                         and 'url' in str(item.downloadServer):
         for x in range(600):
-            if filetools.exists(item.downloadServer['url']):
+            if (filetools.isfile(item.downloadServer['url']) or filetools.isdir(item.downloadServer['url'])) \
+                        and filetools.exists(item.downloadServer['url']):
                 break
             time.sleep(1)
             continue
         time.sleep(5)
-        if filetools.exists(item.downloadServer['url']):
+        if (filetools.isfile(item.downloadServer['url']) or filetools.isdir(item.downloadServer['url'])) \
+                        and filetools.exists(item.downloadServer['url']):
             for x in range(30):
                 size, url, torrent_f, rar_files = generictools.get_torrent_size(item.downloadServer['url'], 
                             file_list=True, lookup=False, torrents_path=item.downloadServer['url'], 
@@ -1947,7 +1952,7 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
     if len(rar_names) > 1:
         log("##### rar_names: %s" % str(rar_names))
     if video_names:
-        video_name = sorted(video_names)[0]
+        video_name = video_names[0]
         if not rar_file: log("##### video_name: %s/%s" % (folder, video_name))
     else:
         video_name = ''

@@ -661,6 +661,7 @@ def findvideos(item):
         patron += 'title="Contraseña\s*del\s*Torrent.*?data-clave="([^"]+)">)?'
     
     if not item.matches:
+        if item.emergency_urls and item.url_tvshow: item.url = item.url_tvshow  #### Parche para rodear videoteca corrupta de SERIES
         data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
                                           s2=False, patron=patron, item=item, itemlist=[])      # Descargamos la página)
     
@@ -687,13 +688,13 @@ def findvideos(item):
     #logger.debug(matches)
     #logger.debug(data)
     
-    if not matches:                                                             #error
+    if not matches:                                                             # error
         return itemlist
     
     #Si es un lookup para cargar las urls de emergencia en la Videoteca...
     if item.videolibray_emergency_urls:
-        item.emergency_urls = []                                                #Iniciamos emergency_urls
-        item.emergency_urls.append([])                                          #Reservamos el espacio para los .torrents locales
+        item.emergency_urls = []                                                # Iniciamos emergency_urls
+        item.emergency_urls.append([])                                          # Reservamos el espacio para los .torrents locales
         matches_list = []                                                       # Convertimos matches-tuple a matches-list
         for tupla in matches:
             if tupla[1].startswith('//'): 
