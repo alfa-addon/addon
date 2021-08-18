@@ -27,12 +27,14 @@ remote = None
 def parse_url(url):
     # logger.info("Url: %s" % url)
     url = url.strip()
-    patron = "^smb://(?:([^;\n]+);)?(?:([^:@\n]+)[:|@])?(?:([^@\n]+)@)?([^/]+)/([^/\n]+)([/]?.*?)$"
-    domain, user, password, server_name, share_name, path = re.compile(patron, re.DOTALL).match(url).groups()
+    patron = "^smb:\/\/(?:([^;\n]+);)?(?:([^:@\n]+)[:|@])?(?:([^@\n]+)@)?(?:\@*(\w+)\|)?([^\/]+)\/([^\/\n]+)([\/]?.*?)$"
+    domain, user, password, server_name, server_ip, share_name, path = re.compile(patron, re.DOTALL).match(url).groups()
 
-    server_name, server_ip = get_server_name_ip(server_name)
+    if not server_name or not server_ip:
+        server_name, server_ip = get_server_name_ip(server_ip)
 
     if not user: user = 'guest'
+    if user == 'None': user = ""
     if not password: password = ""
     if not domain: domain = ""
     if path.endswith("/"): path = path[:-1]
@@ -53,8 +55,12 @@ def get_server_name_ip(server):
         server_ip = None
         server_name = server.upper()
 
-    if not server_ip: server_ip = NetBIOS().queryName(server_name)[0]
-    if not server_name: server_name = NetBIOS().queryIPForName(server_ip)[0]
+    if not server_ip: server_ip = NetBIOS(broadcast=False).queryName(server_name, timeout=5)
+    if isinstance(server_ip, (list, tuple)) and len(server_ip) > 0: server_ip = server_ip[0]
+    if not server_ip: server_ip = ''
+    if not server_name: server_name = NetBIOS(broadcast=False).queryIPForName(server_ip, timeout=5)
+    if isinstance(server_name, (list, tuple)) and len(server_name) > 0: server_name = server_name[0]
+    if not server_name: server_name = ''
 
     return server_name, server_ip
 
@@ -71,7 +77,14 @@ def connect(url):
         remote.connect(server_ip, 139)
     """
     remote = SMBConnection(user, password, domain, server_name)
-    remote.connect(ip=server_ip, timeout=20)
+    try:
+        remote.connect(ip=server_ip, timeout=5)
+    except:
+        try:
+            remote.close()
+        except:
+            pass
+        remote.connect(ip=server_ip, timeout=5)
 
     return remote, share_name, path
 
@@ -112,7 +125,12 @@ def walk(url, topdown=True, onerror=None):
             yield unicode(url, "utf8"), dirs, nondirs
 
     for name in dirs:
-        new_path = "/".join(url.split("/") + [name.encode("utf8")])
+        if PY3 and isinstance(name, bytes):
+            new_path = "/".join(url.split("/") + [name.decode("utf8")])
+        elif not PY3:
+            new_path = "/".join(url.split("/") + [name.encode("utf8")])
+        else:
+            new_path = "/".join(url.split("/") + [name])
         for x in walk(new_path, topdown, onerror):
             yield x
     if not topdown:
@@ -208,6 +226,7 @@ class SMBFile(object):
         import random
         try:
             from core import filetools
+            xbmc = True
         except:
             xbmc = None
         self.url = url

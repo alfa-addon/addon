@@ -1228,7 +1228,8 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             if item.channel_redir:                      #... si hay un redir, se restaura temporamente el canal alternativo
                 item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
                 item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
-            item_res = getattr(channel, 'findvideos')(item)                 #... se procesa Findvideos
+            item_res = item.clone()
+            item_res = getattr(channel, 'findvideos')(item_res)             #... se procesa Findvideos
             item_res.channel = channel_save             #... restaura el canal original por si hay fail-over en Newpct1
             item_res.category = category_save           #... restaura la categoría original por si hay fail-over o redirección en Newpct1
             item.category = category_save               #... restaura la categoría original por si hay fail-over o redirección en Newpct1
@@ -1271,7 +1272,7 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                 for url in item_res.emergency_urls[0]:                          #Recorremos las urls de emergencia...
                     torrents_path = re.sub(r'(?:\.\w+$)', '_%s.torrent' % str(i).zfill(2), path)
                     path_real = ''
-                    if filetools.exists(url):
+                    if (filetools.isfile(url) or filetools.isdir(url)) and filetools.exists(url):
                         filetools.copy(url, torrents_path, silent=True)
                         path_real = torrents_path
                     elif magnet_caching_e or not url.startswith('magnet'):
@@ -1279,7 +1280,8 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                                 torrents_path=torrents_path, headers=headers)   #...  para descargar los .torrents
                     if path_real:                                               #Si ha tenido éxito...
                         item_res.emergency_urls[0][i-1] = path_real.replace(videolibrary_path, '')  #se guarda el "path" relativo
-                        if filetools.exists(url): item_res.url = item_res.emergency_urls[0][i-1]
+                        if (filetools.isfile(url) or filetools.isdir(url)) and filetools.exists(url):
+                            item_res.url = item_res.emergency_urls[0][i-1]
                         if 'ERROR' in item.torrent_info: item.torrent_info = ''
                     if subtitles_list and not item_res.subtitle:
                         item_res.subtitle = subtitles_list[0].replace(videolibrary_path, '')  #se guarda el "path" relativo
