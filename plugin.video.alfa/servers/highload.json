@@ -4,18 +4,22 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:streamsb.net|sbembed.com|sbembed1.com|sbplay.org|pelistop.co)/(?:embed-|d/|e/)([A-z0-9]+)",
-        "url": "https://streamsb.net/play/\\1"
+        "pattern": "(https://highload.to/f/[A-z0-9]+)",
+        "url": "\\1"
       },
       {
-        "pattern": "(?:cloudemb.com)/([A-z0-9]+)",
-        "url": "https://streamsb.net/play/\\1"
+        "pattern": "(https://upvideo.to/v/[A-z0-9]+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "streamsb",
-  "name": "streamsb",
+  "id": {
+    "value": [
+      "highload"
+    ]
+  },
+  "name": "highload",
   "settings": [
     {
       "default": false,
@@ -42,5 +46,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://streamsb.com/xfilesharingtemplates_images/logo.png"
+  "thumbnail": "https://i.postimg.cc/3JrRZv5w/highload.png"
 }

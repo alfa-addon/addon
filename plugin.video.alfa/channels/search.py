@@ -249,6 +249,8 @@ def channel_search(item):
                     continue
             tmdb.set_infoLabels_itemlist(value, True, forced=True)
             for elem in value:
+                if "-Próximamente-" in elem.title:
+                    continue
                 if not elem.infoLabels.get('year', ""):
                     elem.infoLabels['year'] = '-'
                     tmdb.set_infoLabels_item(elem, True)
@@ -263,7 +265,7 @@ def channel_search(item):
         for it in value:
             if it.channel == item.channel:
                 it.channel = key
-            if it in valid:
+            if it in valid or "-Próximamente-" in it.title:
                 continue
             if mode == 'all' or (it.contentType and mode == it.contentType):
                 if not it.infoLabels or not item.text.lower() in it.title.lower():
