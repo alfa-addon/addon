@@ -220,7 +220,7 @@ class main(xbmcgui.WindowDialog):
         else:
             self.dialog.update(80, config.get_localized_string(60483))
 
-        while thread2.isAlive():
+        while thread2.is_alive():
             xbmc.sleep(100)
         if not self.infoLabels.get("fanart") and self.images:
             try:
@@ -429,7 +429,7 @@ class main(xbmcgui.WindowDialog):
         self.btn_left.setVisible(False)
         self.botones.append(self.btn_left)
         if thread1:
-            while thread1.isAlive():
+            while thread1.is_alive():
                 xbmc.sleep(100)
         for idp, peli, thumb in self.recomendaciones:
             if thumb is None: continue
