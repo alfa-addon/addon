@@ -27,6 +27,8 @@ from datetime import datetime
 from core.item import Item
 from platformcode import config, logger, platformtools
 from core import filetools, jsontools
+from bs4 import BeautifulSoup
+from core import httptools
 
 
 def fechahora_actual():
@@ -626,7 +628,7 @@ def acciones_lista(item):
     logger.info()
 
     acciones = ['Establecer como lista activa', 'Cambiar nombre de la lista', 
-                'Compartir en tinyupload', 'Eliminar lista', 'Información de la lista'] 
+                'Compartir lista', 'Eliminar lista', 'Información de la lista']
 
     ret = platformtools.dialog_select(item.lista, acciones)
 
@@ -733,8 +735,8 @@ def informacion_lista(item):
     if 'downloaded_date' in alfav.info_lista:
         txt += '[CR]Descargada el %s desde [COLOR blue]%s[/COLOR]' % (alfav.info_lista['downloaded_date'], alfav.info_lista['downloaded_from'])
 
-    if 'tinyupload_date' in alfav.info_lista:
-        txt += '[CR]Compartida en tinyupload el %s con el código [COLOR blue]%s[/COLOR]' % (alfav.info_lista['tinyupload_date'], alfav.info_lista['tinyupload_code'])
+    if 'upload_date' in alfav.info_lista:
+        txt += '[CR]Compartida  el %s con el código [COLOR blue]%s[/COLOR]' % (alfav.info_lista['upload_date'], alfav.info_lista['upload_code'])
     
     txt += '[CR]Número de carpetas: %d' % len(alfav.user_favorites)
     for perfil in alfav.user_favorites:
@@ -752,49 +754,21 @@ def compartir_lista(item):
         platformtools.dialog_ok('Alfa', 'Error, no se encuentra la lista!', fullfilename)
         return False
 
-    try:
-        progreso = platformtools.dialog_progress_bg('Compartir lista', 'Conectando con tinyupload ...')
-        
-        # Acceso a la página principal de tinyupload para obtener datos necesarios
-        from core import httptools, scrapertools
-        data = httptools.downloadpage('http://s000.tinyupload.com/index.php').data
-        upload_url = scrapertools.find_single_match(data, 'form action="([^"]+)')
-        sessionid = scrapertools.find_single_match(upload_url, 'sid=(.+)')
-        
-        progreso.update(10, 'Subiendo fichero', 'Espera unos segundos a que acabe de subirse tu fichero de lista a tinyupload')
+    service_url = "https://api.anonfiles.com/upload"
+    upload = httptools.downloadpage(service_url, file=fullfilename).json
 
-        # Envío del fichero a tinyupload mediante multipart/form-data 
-        from future import standard_library
-        standard_library.install_aliases()
-        from lib import MultipartPostHandler
-        import urllib.request, urllib.error
-        opener = urllib.request.build_opener(MultipartPostHandler.MultipartPostHandler)
-        params = { 'MAX_FILE_SIZE' : '52428800', 'file_description' : '', 'sessionid' : sessionid, 'uploaded_file' : open(fullfilename, 'rb') }
-        handle = opener.open(upload_url, params)
-        data = handle.read()
-        
-        progreso.close()
+    if upload.get("status", False):
+        codigo = upload["data"]["file"]["metadata"]["id"]
 
-        if not 'File was uploaded successfuly' in data:
-            logger.debug(data)
-            platformtools.dialog_ok('Alfa', 'Error, no se ha podido subir el fichero a tinyupload.com!')
-            return False
-
-        codigo = scrapertools.find_single_match(data, 'href="index\.php\?file_id=([^"]+)')
-
-    except:
-        platformtools.dialog_ok('Alfa', 'Error, al intentar subir el fichero a tinyupload.com!', item.lista)
-        return False
-
-    # Apuntar código en fichero de log y dentro de la lista
-    save_log_lista_shared('Subido fichero %s a tinyupload.com. El código para descargarlo es: %s' % (item.lista, codigo))
-    
+    # # Apuntar código en fichero de log y dentro de la lista
+    save_log_lista_shared('Se ha compartido con exito %s. El código para descargarlo es: %s' % (item.lista, codigo))
+    #
     alfav = AlfavoritesData(item.lista)
-    alfav.info_lista['tinyupload_date'] = fechahora_actual()
-    alfav.info_lista['tinyupload_code'] = codigo
+    alfav.info_lista['upload_date'] = fechahora_actual()
+    alfav.info_lista['upload_code'] = codigo
     alfav.save()
 
-    platformtools.dialog_ok('Alfa', 'Subida lista a tinyupload. Si quieres compartirla con alguien, pásale este código:', codigo)
+    platformtools.dialog_ok('Alfa', 'Lista Subida.\nUtiliza este codigo para compartirla:', codigo)
     return True
         
 
@@ -803,9 +777,8 @@ def acciones_nueva_lista(item):
     logger.info()
 
     acciones = ['Crear una nueva lista', 
-                'Descargar lista con código de tinyupload',
-                'Descargar lista de una url directa',
-                'Información sobre las listas'] 
+                'Descargar lista con código',
+                'Información sobre las listas']
 
     ret = platformtools.dialog_select('Listas de enlaces', acciones)
 
@@ -816,24 +789,18 @@ def acciones_nueva_lista(item):
         return crear_lista(item)
 
     elif ret == 1:
-        codigo = platformtools.dialog_input(default='', heading='Código de descarga de tinyupload') # 05370382084539519168
+        codigo = platformtools.dialog_input(default='', heading='Código de descarga') # 05370382084539519168
         if codigo is None or codigo == '':
             return False
-        return descargar_lista(item, 'http://s000.tinyupload.com/?file_id=' + codigo)
+        return descargar_lista(item, 'https://anonfiles.com/' + codigo)
 
     elif ret == 2:
-        url = platformtools.dialog_input(default='https://', heading='URL de dónde descargar la lista')
-        if url is None or url == '':
-            return False
-        return descargar_lista(item, url)
-
-    elif ret == 3:
         txt = '- Puedes tener diferentes listas, pero solamente una de ellas está activa. La lista activa es la que se muestra en "Mis enlaces" y dónde se guardan los enlaces que se vayan añadiendo.'
         txt += '[CR]- Puedes ir cambiando la lista activa y alternar entre las que tengas.'
-        txt += '[CR]- Puedes compartir una lista a través de tinyupload y luego pasarle el código resultante a tus amistades para que se la puedan bajar.'
-        txt += '[CR]- Puedes descargar una lista si te pasan un código de tinyupload o una url dónde esté alojada.'
+        txt += '[CR]- Puedes compartir una lista y luego pasarle el código resultante a tus amistades para que se la puedan bajar.'
+        txt += '[CR]- Puedes descargar una lista si te pasan un código'
         txt += '[CR]- Si lo quieres hacer manualmente, puedes copiar una lista alfavorites-*.json que te hayan pasado a la carpeta userdata del addon. Y puedes subir estos json a algún servidor y pasar sus urls a tus amigos para compartirlas.'
-        txt += '[CR]- Para compartir listas desde el addon se utiliza el servicio de tinyupload.com por ser gratuíto, privado y relativamente rápido. Los ficheros se guardan mientras no pasen 100 días sin que nadie lo descargue, son privados porque requieren un código para acceder a ellos, y la limitación de 50MB es suficiente para las listas.'
+        txt += '[CR]- Para compartir listas desde el addon se utiliza el servicio de anonfiles.com por ser gratuíto, privado y relativamente rápido. Los ficheros se guardan mientras no pasen 100 días sin que nadie lo descargue, son privados porque requieren un código para acceder a ellos, y la limitación de 50MB es suficiente para las listas.'
 
         platformtools.dialog_textviewer('Información sobre las listas', txt)
         return False
@@ -865,44 +832,21 @@ def crear_lista(item):
 def descargar_lista(item, url):
     logger.info()
     from core import httptools, scrapertools
-    
-    if 'tinyupload.com/' in url:
-        try:
-            from urllib.parse import urlparse
-            data = httptools.downloadpage(url).data
-            logger.debug(data)
-            down_url, url_name = scrapertools.find_single_match(data, ' href="(download\.php[^"]*)"><b>([^<]*)')
-            url_json = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(url)) + down_url
-        except:
-            platformtools.dialog_ok('Alfa', 'Error, no se puede descargar la lista!', url)
-            return False
 
-    elif 'zippyshare.com/' in url:
-        from core import servertools
-        video_urls, puedes, motivo = servertools.resolve_video_urls_for_playing('zippyshare', url)
-        
-        if not puedes:
-            platformtools.dialog_ok('Alfa', 'Error, no se puede descargar la lista!', motivo)
-            return False
-        url_json = video_urls[0][1] # https://www58.zippyshare.com/d/qPzzQ0UM/25460/alfavorites-testeanding.json
-        url_name = url_json[url_json.rfind('/')+1:]
 
-    elif 'friendpaste.com/' in url:
-        url_json = url if url.endswith('/raw') else url + '/raw'
-        url_name = 'friendpaste'
-
-    else:
-        url_json = url
-        url_name = url[url.rfind('/')+1:]
-
+    url_name = url[url.rfind('/')+1:]
 
     # Download json
-    data = httptools.downloadpage(url_json).data
-    
+
+
+    soup = BeautifulSoup(httptools.downloadpage(url).data, "html5lib")
+    url_json = soup.find("a", class_="btn")["href"]
+
+    jsondata = httptools.downloadpage(url_json).json
+
     # Verificar formato json de alfavorites y añadir info de la descarga
-    jsondata = jsontools.load(data)
+
     if 'user_favorites' not in jsondata or 'info_lista' not in jsondata:
-        logger.debug(data)
         platformtools.dialog_ok('Alfa', 'Error, el fichero descargado no tiene el formato esperado!')
         return False
 
