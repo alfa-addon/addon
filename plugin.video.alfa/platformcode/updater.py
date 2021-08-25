@@ -123,7 +123,7 @@ def check_addon_updates(verbose=False):
         
         # Descargar json con las posibles actualizaciones
         # -----------------------------------------------
-        resp = httptools.downloadpage(ADDON_UPDATES_JSON, timeout=5)
+        resp = httptools.downloadpage(ADDON_UPDATES_JSON, timeout=5, ignore_response_code=True)
         if not resp.sucess and resp.code != 404: 
             logger.info('ERROR en la descarga de actualizaciones: %s' % resp.code)
             if verbose:
@@ -193,9 +193,17 @@ def check_addon_updates(verbose=False):
             pass
         
         # Si es PY3 se actualizan los módulos marshal
-        if PY3:
-            from platformcode.custom_code import marshal_check
-            marshal_check()
+        # Se reinicia Proxytools
+        try:
+            if PY3:
+                from platformcode.custom_code import marshal_check
+                marshal_check()
+            if not PY3: from core.proxytools import get_proxy_list
+            else: from core.proxytools_py3 import get_proxy_list
+            get_proxy_list(monitor_start=False)
+        except:
+            logger.error('Error Marshalizando e iniciando Proxytools')
+            logger.error(traceback.format_exc())
         
         # Guardar información de la versión fixeada
         # -----------------------------------------
@@ -313,8 +321,10 @@ def get_ua_list():
     logger.info()
     url = "http://omahaproxy.appspot.com/all?csv=1"
     current_ver = config.get_setting("chrome_ua_version", default="").split(".")
-    data = httptools.downloadpage(url, alfa_s=True).data
+    data = httptools.downloadpage(url, alfa_s=True, ignore_response_code=True).data
     new_ua_ver = scrapertools.find_single_match(data, "win64,stable,([^,]+),")
+    if not new_ua_ver:
+        return
 
     if not current_ver:
         config.set_setting("chrome_ua_version", new_ua_ver)

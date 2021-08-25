@@ -172,7 +172,7 @@ def convert_url_base64(url, host='', rep_blanks=True):
 
     url_base64 = url
     if len(url_base64) > 1 and not 'magnet:' in url_base64 and not '.torrent' in url_base64:
-        patron_php = 'php(?:#|\?\w+=)(.*?$)'
+        patron_php = 'php(?:#|\?\w=)(.*?$)'
         if scrapertools.find_single_match(url_base64, patron_php):
             url_base64 = scrapertools.find_single_match(url_base64, patron_php)
         try:
@@ -2294,6 +2294,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
             except:
                 logger.error(traceback.format_exc())
             
+            files = sorted(files, reverse=True, key=lambda k: k['length'])
             size_lista += [(size, torrents_path, torrent_f, files)]
             size_amount += [size]
         

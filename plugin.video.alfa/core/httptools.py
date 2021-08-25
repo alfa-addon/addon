@@ -356,6 +356,8 @@ def check_proxy(url, **opt):
                         proxy_data['stat'] = ', Proxy Direct ' + proxy_data['log']
 
             if proxy_web and proxy_data['web_name']:
+                if proxy_data['web_name'] in ['hidester.com']:
+                    opt['timeout'] = 40                                         ##### TEMPORAL
                 if opt.get('post', None): proxy_data['log'] = '(POST) ' + proxy_data['log']
                 url, opt['post'], headers_proxy, proxy_data['web_name'] = \
                     proxytools.set_proxy_web(url, proxy_data['web_name'], post=opt.get('post', None), force_proxy_get=force_proxy_get)
@@ -719,7 +721,7 @@ def downloadpage(url, **opt):
                 encoding = response['encoding']
             if not encoding:
                 encoding = 'utf-8'
-            if PY3 and isinstance(response['data'], bytes) \
+            if PY3 and isinstance(response['data'], bytes) and opt.get('encoding', '') is not None \
                         and ('text/' in req.headers.get('Content-Type', '') \
                         or 'json' in req.headers.get('Content-Type', '') \
                         or 'xml' in req.headers.get('Content-Type', '')):

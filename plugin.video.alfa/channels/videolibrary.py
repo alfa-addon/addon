@@ -775,6 +775,8 @@ def play(item):
             v.thumbnail = item.thumbnail
             v.contentThumbnail = item.thumbnail
             v.contentChannel = item.contentChannel
+            if item.action == "save_download" and item.channel == "downloads" and item.from_channel:
+                v.contentAction = 'videolibrary'
 
     return itemlist
 
