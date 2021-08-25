@@ -31,7 +31,7 @@ if xbmc_vfs:
     try:
         import xbmcvfs
         if not PY3:
-            reload(sys)                                         ### Workoround.  Revisar en la migración a Python 3
+            reload(sys)                                         ### Workoround Python 2
             sys.setdefaultencoding('utf-8')                     # xbmcvfs degrada el valor de defaultencoding.  Se reestablece
         xbmc_vfs = True
     except:
@@ -43,6 +43,8 @@ if not xbmc_vfs:
         from lib.sambatools_py3 import libsmb as samba
     else:
         from lib.sambatools_py2 import libsmb as samba
+        reload(sys)                                             ### Workoround Python 2
+        sys.setdefaultencoding('utf-8')                         # Samba degrada el valor de defaultencoding.  Se reestablece
 
 # Windows es "mbcs" linux, osx, android es "utf8"
 if not PY3 and os.name == "nt":
@@ -124,7 +126,7 @@ def makeLegalFilename(path, trans_none=''):
         if isinstance(path, bytes):
             path = path.decode(fs_encoding)
 
-    elif KODI:
+    elif KODI and not PY3:
         path = xbmc.makeLegalFilename(path)
         
     return path
@@ -308,6 +310,7 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, mode='r', silent=Fal
 
         elif path.lower().startswith("smb://"):
             f = samba.smb_open(path, "rb")
+            mode = 'rbs'
         
         elif PY3 and mode in ['r', 'ra']:
             f = open(path, mode_open, encoding=fs_encoding)
@@ -335,6 +338,8 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, mode='r', silent=Fal
             return "".join(data)
         elif mode in ['rbs', 'rabs'] and isinstance(data, (bytes, bytearray)):
             return "".join(chr(x) for x in data)
+        elif mode in ['rbs', 'rabs'] and isinstance(data, (list)):
+            return "".join(decode(data))
         else:
             return b"".join(data)
 

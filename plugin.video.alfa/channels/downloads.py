@@ -1807,6 +1807,12 @@ def save_download_en(item, silent=False):
 
 def save_download(item, silent=False):
     logger.info()
+    
+    # Si viene de Videolibrary.Play, recomponemos contentAction y contentChannel
+    if item.action == "save_download" and item.channel == "downloads" and \
+                    item.contentAction == 'videolibrary' and item.from_channel and item.from_action:
+        item.contentAction = item.from_action
+        item.contentChannel = item.from_channel
 
     # Descarga desde menú contextual
     if item.from_action and item.from_channel:

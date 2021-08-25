@@ -1,580 +1,325 @@
 # -*- coding: utf-8 -*-
-# ------------------------------------------------------------
-# Channel for recent videos on several channels
-# ------------------------------------------------------------
+# -*- Channel New News -*-
+# -*- Created for Alfa-addon -*-
+# -*- By the Alfa Develop Group -*-
 
-#from builtins import str
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-import glob
-import os
-import re
-import time
-from threading import Thread
-
-from channelselector import get_thumb
-from core import channeltools
-from core import scrapertools
+import channelselector
 from core.item import Item
-from platformcode import config, logger
-from platformcode import platformtools
+from core import channeltools
+from core import tmdb
 from core import jsontools
+from platformcode import logger
+from platformcode import config
+from platformcode import help_window
+from platformcode import platformtools
+from channelselector import get_thumb
+from concurrent import futures
+import math
+import os
+import datetime
 
 
-THUMBNAILS = {'0': 'posters', '1': 'banners', '2': 'squares'}
-
-__perfil__ = config.get_setting('perfil', "news")
-
-# Fijar perfil de color
-perfil = [['0xFF0B7B92', '0xFF89FDFB', '0xFFACD5D4'],
-          ['0xFFB31313', '0xFFFF9000', '0xFFFFEE82'],
-          ['0xFF891180', '0xFFCB22D7', '0xFFEEA1EB'],
-          ['0xFFA5DEE5', '0xFFE0F9B5', '0xFFFEFDCA'],
-          ['0xFFF23557', '0xFF22B2DA', '0xFFF0D43A']]
-
-#color1, color2, color3 = ["white", "white", "white"]
-color1, color2, color3 = perfil[__perfil__]
-
-list_newest = []
-list_newest_tourl = []
-channels_id_name = {}
-
-menu_cache_path = os.path.join(config.get_data_path(), "settings_channels", 'menu_cache_data.json')
-menu_settings_path = os.path.join(config.get_data_path(), "settings_channels", 'menu_settings_data.json')
+workers = [None, 1, 2, 4, 6, 8, 16, 24, 32, 64]
+max_workers = config.get_setting("max_workers", "news")
+max_workers = workers[max_workers]
 
 
 def mainlist(item):
     logger.info()
+    itemlist = list()
 
-    itemlist = []
-    list_canales, any_active = get_channels_list()
+    list_items = [[30122, "peliculas", "channels_movie.png" ],
+                 [70208, "4k", "channels_movie_4k.png"],
+                 [70209, "terror", "channels_horror.png"],
+                 [60510, "infantiles", "channels_children.png"],
+                 [60511, "series", "channels_tvshow.png"],
+                 [60512, "anime", "channels_anime.png"],
+                 [70014, "castellano", "channels_spanish.png"],
+                 [59976, "latino", "channels_latino.png"],
+                 [70171, "torrent", "channels_torrent.png"],
+                 [60513, "documentales", "channels_documentary.png"]
+                ]
 
-    #if list_canales['peliculas']:
-    thumbnail = get_thumb("channels_movie.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="peliculas", title=config.get_localized_string(30122),
+    for it in list_items:
+
+        thumbnail = get_thumb(it[2])
+        new_item = Item(channel=item.channel, action="news", news=it[1], title=config.get_localized_string(it[0]),
                     thumbnail=thumbnail)
-
-    set_category_context(new_item)
-    itemlist.append(new_item)
-
-    thumbnail = get_thumb("channels_movie_4k.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="4k", title=config.get_localized_string(70208), thumbnail=thumbnail)
-
-    set_category_context(new_item)
-    itemlist.append(new_item)
-
-    #if list_canales['terror']:
-    thumbnail = get_thumb("channels_horror.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="terror", title=config.get_localized_string(70209),
-                    thumbnail=thumbnail)
-    set_category_context(new_item)
-    itemlist.append(new_item)
-
-    #if list_canales['infantiles']:
-    thumbnail = get_thumb("channels_children.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="infantiles", title=config.get_localized_string(60510),
-                    thumbnail=thumbnail)
-    set_category_context(new_item)
-    itemlist.append(new_item)
-
-    #if list_canales['series']:
-    thumbnail = get_thumb("channels_tvshow.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="series", title=config.get_localized_string(60511),
-                    thumbnail=thumbnail)
-    set_category_context(new_item)
-    itemlist.append(new_item)
-
-    #if list_canales['anime']:
-    thumbnail = get_thumb("channels_anime.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="anime", title=config.get_localized_string(60512),
-                    thumbnail=thumbnail)
-    set_category_context(new_item)
-    itemlist.append(new_item)
-
-    # if list_canales['Castellano']:
-    thumbnail = get_thumb("channels_spanish.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="castellano", title=config.get_localized_string(70014),
-                    thumbnail=thumbnail)
-    set_category_context(new_item)
-    itemlist.append(new_item)
-
-    # if list_canales['Latino']:
-    thumbnail = get_thumb("channels_latino.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="latino", title=config.get_localized_string(59976),
-                    thumbnail=thumbnail)
-    set_category_context(new_item)
-    itemlist.append(new_item)
-
-    # if list_canales['Torrent']:
-    thumbnail = get_thumb("channels_torrent.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="torrent", title=config.get_localized_string(70171), thumbnail=thumbnail)
-    set_category_context(new_item)
-    itemlist.append(new_item)
-
-    #if list_canales['documentales']:
-    thumbnail = get_thumb("channels_documentary.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="documentales", title=config.get_localized_string(60513),
-                    thumbnail=thumbnail)
-    set_category_context(new_item)
-    itemlist.append(new_item)
-
+        set_category_context(new_item)
+        itemlist.append(new_item)
+    itemlist.append(Item(channel="news", title="Configuración", action="news_setting",
+                         thumbnail=get_thumb("setting_0.png")))
+    help_window.show_info("news")
     return itemlist
 
 
 def set_category_context(item):
     item.context = [{"title": config.get_localized_string(60514) % item.title,
-                     "extra": item.extra,
+                     "news": item.news,
                      "action": "setting_channel",
-                     "channel": item.channel}]
-    item.category = config.get_localized_string(60679) % item.extra
+                     "channel": item.channel},
+                    {"title": "Ver canales de esta categoría",
+                     "category": item.news,
+                     "action": "list_channels",
+                     "channel": item.channel,
+                     "switch_to": True}
+                    ]
+    item.category = config.get_localized_string(60679) % item.news
 
 
-def get_channels_list():
+def news(item):
     logger.info()
+    channel_list = list()
+    channel_list.extend(get_channels(item.news))
+    valid_channels_number = len(channel_list)
+    limit = len(channel_list)
+    next = False
 
-    list_canales = {'peliculas': [], '4k': [], 'terror': [], 'infantiles': [], 'series': [], 'anime': [],
-                    'castellano': [], 'latino':[], 'torrent':[], 'documentales': []}
-    any_active = False
-    # Rellenar listas de canales disponibles
-    channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
-    channel_language = config.get_setting("channel_language", default="all")
-
-    for infile in sorted(glob.glob(channels_path)):
-        channel_id = os.path.basename(infile)[:-5]
-        channel_parameters = channeltools.get_channel_parameters(channel_id)
-
-        # No incluir si es un canal inactivo
-        if not channel_parameters["active"]:
-            continue
-
-        # No incluir si es un canal para adultos, y el modo adulto está desactivado
-        if channel_parameters["adult"] and config.get_setting("adult_mode") == 0:
-            continue
-
-        # No incluir si el canal es en un idioma filtrado
-        if channel_language != "all" and channel_language not in channel_parameters["language"] \
-                and "*" not in channel_parameters["language"]:
-            continue
-
-        # Incluir en cada categoria, si en su configuracion el canal esta activado para mostrar novedades
-
-        for categoria in list_canales:
-            include_in_newest = config.get_setting("include_in_newest_" + categoria, channel_id)
-            if include_in_newest:
-                channels_id_name[channel_id] = channel_parameters["title"]
-                list_canales[categoria].append((channel_id, channel_parameters["title"]))
-                any_active = True
-
-    return list_canales, any_active
-
-def set_cache(item):
-    logger.info()
-    item.mode = 'set_cache'
-    t = Thread(target=novedades, args=[item])
-    t.start()
-    #t.join()
-
-def get_from_cache(item):
-    logger.info()
-    itemlist=[]
-    cache_node = jsontools.get_node_from_file('menu_cache_data.json', 'cached')
-    first=item.last
-    last = first+40
-    #if last >=len(cache_node[item.extra]):
-    #    last = len(cache_node[item.extra])
-
-    for cached_item in cache_node[item.extra][first:last]:
-        new_item= Item()
-        new_item = new_item.fromurl(cached_item)
-        itemlist.append(new_item)
-    if item.mode == 'silent':
-        set_cache(item)
-    if last >= len(cache_node[item.extra]):
-        item.mode='finish'
-        itemlist = add_menu_items(item, itemlist)
-    else:
-        item.mode='get_cached'
-        item.last =last
-        itemlist = add_menu_items(item, itemlist)
-
-    return itemlist
-
-def add_menu_items(item, itemlist):
-    logger.info()
-
-    menu_icon = get_thumb('menu.png')
-    menu = Item(channel="channelselector", action="getmainlist", viewmode="movie", thumbnail=menu_icon, title='Menu')
-    itemlist.insert(0, menu)
-    if item.mode != 'finish':
-        if item.mode == 'get_cached':
-            last=item.last
-        else:
-            last = len(itemlist)
-        refresh_icon = get_thumb('more.png')
-        refresh = item.clone(thumbnail=refresh_icon, mode='get_cached',title='Mas', last=last)
-        itemlist.insert(len(itemlist), refresh)
-
-    return itemlist
-
-def novedades(item):
-    logger.info()
-
-    global list_newest
-    threads = []
-    list_newest = []
-    start_time = time.time()
-
-    mode = item.mode
-    if mode == '':
-        mode = 'normal'
-
-    if mode=='get_cached':
-        if os.path.exists(menu_cache_path):
-            return get_from_cache(item)
-
-    multithread = config.get_setting("multithread", "news")
-    logger.info("multithread= " + str(multithread))
-
-    if not multithread:
-        if platformtools.dialog_yesno(config.get_localized_string(60515),
-                                      config.get_localized_string(60516),
-                                      config.get_localized_string(60517),
-                                      config.get_localized_string(60518)):
-            if config.set_setting("multithread", True, "news"):
-                multithread = True
-
-    if mode == 'normal':
-        progreso = platformtools.dialog_progress(item.category, config.get_localized_string(60519))
-
-    list_canales, any_active = get_channels_list()
-
-    if config.is_xbmc():
-        from channels import side_menu
-        if mode=='silent' and any_active and len(list_canales[item.extra]) > 0:
-            side_menu.set_menu_settings(item)
-            aux_list=[]
-            for canal in list_canales[item.extra]:
-                if len(aux_list)<2:
-                    aux_list.append(canal)
-            list_canales[item.extra]=aux_list
-
-    if mode == 'set_cache':
-        list_canales[item.extra] = list_canales[item.extra][2:]
-
-    if any_active and len(list_canales[item.extra])>0:
-        import math
-        # fix float porque la division se hace mal en python 2.x
-        number_of_channels = float(100) / len(list_canales[item.extra])
-
-        for index, channel in enumerate(list_canales[item.extra]):
-            channel_id, channel_title = channel
-            percentage = int(math.ceil((index + 1) * number_of_channels))
-
-            # if progreso.iscanceled():
-            #     progreso.close()
-            #     logger.info("Búsqueda cancelada")
-            #     return itemlist
-
-            # Modo Multi Thread
-            if multithread:
-                t = Thread(target=get_newest, args=[channel_id, item.extra], name=channel_title)
-                t.start()
-                threads.append(t)
-                if mode == 'normal':
-                    progreso.update(percentage, "", config.get_localized_string(60520) % channel_title)
-
-            # Modo single Thread
-            else:
-                if mode == 'normal':
-                    logger.info("Obteniendo novedades de channel_id=" + channel_id)
-                    progreso.update(percentage, "", config.get_localized_string(60520) % channel_title)
-                get_newest(channel_id, item.extra)
-
-        # Modo Multi Thread: esperar q todos los hilos terminen
-        if multithread:
-            pendent = [a for a in threads if a.is_alive()]
-            t = float(100) / len(pendent)
-            while pendent:
-                index = (len(threads) - len(pendent)) + 1
-                percentage = int(math.ceil(index * t))
-
-                list_pendent_names = [a.getName() for a in pendent]
-                if mode == 'normal':
-                    mensaje = config.get_localized_string(30994) % (", ".join(list_pendent_names))
-                    progreso.update(percentage, config.get_localized_string(60521) % (len(threads) - len(pendent), len(threads)),
-                                mensaje)
-                    logger.debug(mensaje)
-
-                    if progreso.iscanceled():
-                        logger.info("Busqueda de novedades cancelada")
-                        break
-
-                time.sleep(0.5)
-                pendent = [a for a in threads if a.is_alive()]
-        if mode == 'normal':
-            mensaje = config.get_localized_string(60522) % (len(list_newest), time.time() - start_time)
-            progreso.update(100, mensaje, " ", " ")
-            logger.info(mensaje)
-            start_time = time.time()
-            # logger.debug(start_time)
-
-        result_mode = config.get_setting("result_mode", "news")
-        if mode != 'normal':
-            result_mode=0
-
-        if result_mode == 0:  # Agrupados por contenido
-            ret = group_by_content(list_newest)
-        elif result_mode == 1:  # Agrupados por canales
-            ret = group_by_channel(list_newest)
-        else:  # Sin agrupar
-            ret = no_group(list_newest)
-
-        while time.time() - start_time < 2:
-            # mostrar cuadro de progreso con el tiempo empleado durante almenos 2 segundos
-            time.sleep(0.5)
-        if mode == 'normal':
-            progreso.close()
-        if mode == 'silent':
-            set_cache(item)
-            item.mode = 'set_cache'
-            ret = add_menu_items(item, ret)
-        if mode != 'set_cache':
-            return ret
-    else:
-        if mode != 'set_cache':
-            no_channels = platformtools.dialog_ok('Novedades - %s'%item.extra, 'No se ha definido ningun canal para la '
-                                                                               'busqueda.','Utilice el menu contextual '
-                                                                                           'para agregar al menos uno')
+    if not channel_list:
+        platformtools.dialog_ok('Novedades - %s' % item.news, 'No se ha definido ningun canal para la '
+                                                               'busqueda.', 'Utilice el menu contextual '
+                                                                            'para agregar al menos uno')
         return
+    if len(channel_list) > 20:
+        next = True
 
+    if len(channel_list) > 40:
+        limit = int(len(channel_list) * 30 / 100)
+    elif len(channel_list) > 20:
+        limit = int(len(channel_list) * 50 / 100)
 
-def get_newest(channel_id, categoria):
-    logger.info("channel_id=" + channel_id + ", categoria=" + categoria)
+    clear_cache(item.news)
 
-    global list_newest
-    global list_newest_tourl
-
-    # Solicitamos las novedades de la categoria (item.extra) buscada en el canal channel
-    # Si no existen novedades para esa categoria en el canal devuelve una lista vacia
+    itemlist = process(channel_list[:limit], item.category, item.news, valid_channels_number, item.startpage)
     try:
+        itemlist = sorted(group_results(itemlist), key=lambda i: int(i.infoLabels["year"]), reverse=True)
+    except:
+        pass
 
-        puede = True
-        try:
-            modulo = __import__('channels.%s' % channel_id, fromlist=["channels.%s" % channel_id])
-        except:
-            try:
-                #exec("import channels." + channel_id + " as modulo")
-                modulo = __import__('channels.%s' % channel_id, fromlist=["channels.%s" % channel_id])
-            except:
-                puede = False
+    if len(channel_list) > 20:
+        executor = futures.ThreadPoolExecutor(max_workers=max_workers)
+        executor.submit(process, channel_list[limit + 1:], item.category, item.news, valid_channels_number, True, True)
+        executor.shutdown(wait=False)
 
-        if not puede:
-            return
+    if itemlist and next:
+        next_icon = get_thumb('more.png')
+        next = item.clone(action="load_results", viewmode="movie", thumbnail=next_icon, title='Siguiente >>>')
+        itemlist.insert(len(itemlist), next)
+    return itemlist
 
-        logger.info("running channel " + modulo.__name__ + " " + modulo.__file__)
-        list_result = modulo.newest(categoria)
-        logger.info("canal= %s %d resultados" % (channel_id, len(list_result)))
-        exist=False
-        if os.path.exists(menu_cache_path):
-            cache_node = jsontools.get_node_from_file('menu_cache_data.json', 'cached')
-            exist=True
+
+def process(channel_list, category, news, total_channels, startpage=False, save=False):
+
+    itemlist = list()
+    searching = list()
+    searching_titles = list()
+
+    number_of_channels = float(100) / len(channel_list)
+
+    if '4k' not in category: 
+        config.set_setting('tmdb_active', False)
+
+    searching += channel_list
+    searching_titles += channel_list
+    cnt = 0
+
+    if not startpage:
+       progress = platformtools.dialog_progress("%s (%s) Seleccionados " % (category, total_channels),
+                                                "Obteniendo novedades. Por favor espere...")
+
+    with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        c_results = [executor.submit(get_channel_news, ch, news) for ch in channel_list]
+
+        for index, res in enumerate(futures.as_completed(c_results)):
+            cnt += 1
+            percentage = int(math.ceil((index + 1) * number_of_channels))
+            finished = res.result()[0]
+
+            if not startpage:
+               if progress.iscanceled():
+                   break
+
+            if finished in searching:
+                searching_titles.remove(searching_titles[searching.index(finished)])
+                searching.remove(finished)
+            if not startpage:
+                progress.update(percentage, "Obteniendo novedades. Por favor espere..." +
+                                '\n' + str(searching_titles) + '\n' + ' ' + '\n' + ' ' + '\n' + ' ')
+
+            if len(res.result()) > 1:
+                if save:
+                    save_results(finished, res.result()[1], news)
+                else:
+                    itemlist += res.result()[1]
+
+
+    if not startpage:
+       progress.close()
+
+    config.set_setting('tmdb_active', True)
+    return itemlist
+
+
+def get_channels(category, all=False):
+    logger.info()
+
+    valid_channels = list()
+
+    all_channels = channelselector.filterchannels('all')
+
+    for ch in all_channels:
+        channel = ch.channel
+        ch_param = channeltools.get_channel_parameters(channel)
+
+        if not ch_param.get("active", False):
+            continue
+        valid = config.get_setting("include_in_newest_" + category, channel)
+        if valid or (valid is not None and all):
+            valid_channels.append(channel)
+
+    return valid_channels
+
+
+def get_channel_news(channel, category, all=False):
+
+    logger.info()
+    results = list()
+    brand_new = list()
+    news_range = config.get_setting("news_range", "news")
+    if news_range == 5:
+        news_range = 100
+    ch_params = channeltools.get_channel_parameters(channel)
+    module = __import__('channels.%s' % ch_params["channel"], fromlist=["channels.%s" % ch_params["channel"]])
+    
+    try:
+        results = module.newest(category)
+    except:
+        return channel, results, category
+
+    if not results:
+        return channel, results, category
+
+    total_results = len(results)
+    results = sorted(results, reverse=True, key=lambda it: (str(it.infoLabels["year"])))
+
+    if not all and news_range != 100:
+        if total_results > 40:
+            total_results = int((total_results * 20) / 100)
+        elif total_results > 20:
+            total_results = int((total_results * 50) / 100)
+
+
+    for elem in results[:total_results]:
+
+        if category not in ["series", "anime"] and not all and news_range != 100:
+            if not elem.contentTitle or "-Próximamente-" in elem.title:
+                continue
+            if elem.infoLabels["year"] and str(elem.infoLabels["year"]).isdigit():
+                item_year = int(elem.infoLabels["year"])
+                this_year = datetime.date.today().year
+                if not item_year in range(this_year - news_range, this_year + 1):
+                    continue
+            else:
+                continue
+        elem.channel = channel
+        elem.from_channel = channel
+        if not all:
+            elem.context = [{"title": "[COLOR yellow]Mas novedades[/COLOR]", "action": "get_all_news",
+                             "category": category,
+                             "channel": "news",
+                             "from_channel": channel,
+                             "switch_to": True}]
+
+        brand_new.append(elem)
+
+    return channel, brand_new, category
+
+
+def get_all_news(item):
+
+    itemlist = get_channel_news(item.from_channel, item.category, all=True)[1]
+
+    return itemlist
+
+
+def group_results(results):
+    logger.info
+
+    grouped = dict()
+    itemlist = list()
+    tmdb.set_infoLabels_itemlist(results, seekTmdb=True)
+
+    for elem in results:
+
+        if not elem.infoLabels["tmdb_id"] or "-Próximamente-" in elem.title:
+            continue
+        if elem.infoLabels["tmdb_id"] not in grouped:
+            grouped[elem.infoLabels["tmdb_id"]] = list()
+        grouped[elem.infoLabels["tmdb_id"]].append(elem)
+
+    for key, value in grouped.items():
+
+        if len(value) == 1:
+            itemlist.append(value[0])
         else:
-            cache_node = {}
-        #logger.debug('cache node: %s' % cache_node)
-        for item in list_result:
-            # logger.info("item="+item.tostring())
-            item.channel = channel_id
-            list_newest.append(item)
-            list_newest_tourl.append(item.tourl())
+            title = '[+]' + value[0].contentTitle.capitalize()
+            contentTitle = value[0].contentTitle.capitalize()
+            infoLabels = value[0].infoLabels
+            itemlist.append(Item(channel="news", title=title, contentTitle=contentTitle, action="show_group",
+                                 sub_list=[i.tourl() for i in value], from_channel='', infoLabels=infoLabels,
+                                 thumbnail=infoLabels["thumbnail"]))
+    return itemlist
 
-        cache_node[categoria] = list_newest_tourl
 
+def show_group(item):
+    itemlist = list()
+
+    for x in item.sub_list:
+        itemlist.append(Item().fromurl(x))
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    return itemlist
+
+
+def clear_cache(category):
+    menu_cache_path = os.path.join(config.get_data_path(), "settings_channels", 'menu_cache_data.json')
+    if os.path.exists(menu_cache_path):
+        cache_node = jsontools.get_node_from_file('menu_cache_data.json', 'cached')
+        cache_node = dict()
+        cache_node[category] = list()
         jsontools.update_node(cache_node, 'menu_cache_data.json', "cached")
 
-    except:
-        logger.error("No se pueden recuperar novedades de: " + channel_id)
-        import traceback
-        logger.error(traceback.format_exc())
+
+def save_results(channel_id, list_result, category):
+    menu_cache_path = os.path.join(config.get_data_path(), "settings_channels", 'menu_cache_data.json')
+    list_newest = list()
+    list_newest_tourl = list()
+
+    if os.path.exists(menu_cache_path):
+        cache_node = jsontools.get_node_from_file('menu_cache_data.json', 'cached')
+    else:
+        cache_node = dict()
+
+    for item in list_result:
+        item.channel = channel_id
+        list_newest.append(item)
+        list_newest_tourl.append(item.tourl())
+    if category not in cache_node:
+        cache_node[category] = list()
+    cache_node[category].extend(list_newest_tourl)
+    jsontools.update_node(cache_node, 'menu_cache_data.json', "cached")
 
 
-def get_title(item):
-    if item.contentSerieName:  # Si es una serie
-        title = item.contentSerieName
-        if not scrapertools.get_season_and_episode(title) and item.contentEpisodeNumber:
-            if not item.contentSeason:
-                item.contentSeason = '1'
-            title = "%s - %sx%s" % (title, item.contentSeason, str(item.contentEpisodeNumber).zfill(2))
+def load_results(item):
 
-    elif item.contentTitle:  # Si es una pelicula con el canal adaptado
-        title = item.contentTitle
-    elif item.contentTitle:  # Si el canal no esta adaptado
-        title = item.contentTitle
-    else:  # Como ultimo recurso
-        title = item.title
-
-    # Limpiamos el titulo de etiquetas de formato anteriores
-    title = re.compile("\[/*COLO.*?\]", re.DOTALL).sub("", title)
-    title = re.compile("\[/*B\]", re.DOTALL).sub("", title)
-    title = re.compile("\[/*I\]", re.DOTALL).sub("", title)
-
-    return title
-
-
-def no_group(list_result_canal):
-    itemlist = []
-    global channels_id_name
-
-    for i in list_result_canal:
-        i.title = get_title(i) + " [" + channels_id_name[i.channel] + "]"
-        i.text_color = color3
-
-        itemlist.append(i.clone())
-
-    return sorted(itemlist, key=lambda it: it.title.lower())
-
-
-def group_by_channel(list_result_canal):
-    global channels_id_name
-    dict_canales = {}
-    itemlist = []
-
-    for i in list_result_canal:
-        if i.channel not in dict_canales:
-            dict_canales[i.channel] = []
-        # Formatear titulo
-        i.title = get_title(i)
-        # Añadimos el contenido al listado de cada canal
-        dict_canales[i.channel].append(i)
-
-    # Añadimos el contenido encontrado en la lista list_result
-    for c in sorted(dict_canales):
-        itemlist.append(Item(channel="news", title=channels_id_name[c] + ':', text_color=color1, text_bold=True))
-
-        for i in dict_canales[c]:
-            if i.contentQuality:
-                i.title += ' (%s)' % i.contentQuality
-            if i.language:
-                i.title += ' [%s]' % i.language
-            i.title = '    %s' % i.title
-            i.text_color = color3
-            itemlist.append(i.clone())
-
-    return itemlist
-
-
-def group_by_content(list_result_canal):
-    global channels_id_name
-    dict_contenidos = {}
-    list_result = []
-
-    for i in list_result_canal:
-        # Formatear titulo
-        i.title = get_title(i)
-
-        # Eliminar tildes y otros caracteres especiales para la key
-        import unicodedata
-        try:
-            new_key = i.title.lower().strip().decode("UTF-8")
-            new_key = ''.join((c for c in unicodedata.normalize('NFD', new_key) if unicodedata.category(c) != 'Mn'))
-
-        except:
-            new_key = i.title
-
-        if new_key in dict_contenidos:
-            # Si el contenido ya estaba en el diccionario añadirlo a la lista de opciones...
-            dict_contenidos[new_key].append(i)
-        else:  # ...sino añadirlo al diccionario
-            dict_contenidos[new_key] = [i]
-
-    # Añadimos el contenido encontrado en la lista list_result
-    for v in list(dict_contenidos.values()):
-        title = v[0].title
-        if len(v) > 1:
-            # Eliminar de la lista de nombres de canales los q esten duplicados
-            canales_no_duplicados = []
-            for i in v:
-                if i.channel not in canales_no_duplicados:
-                    canales_no_duplicados.append(channels_id_name[i.channel])
-
-            if len(canales_no_duplicados) > 1:
-                canales = ', '.join([i for i in canales_no_duplicados[:-1]])
-                title += config.get_localized_string(70210) % (canales, canales_no_duplicados[-1])
-            else:
-                title += config.get_localized_string(70211) % (', '.join([i for i in canales_no_duplicados]))
-
-            new_item = v[0].clone(channel="news", title=title, action="show_channels",
-                                  sub_list=[i.tourl() for i in v], extra=channels_id_name)
-        else:
-            new_item = v[0].clone(title=title)
-
-        new_item.text_color = color3
-        list_result.append(new_item)
-
-    return sorted(list_result, key=lambda it: it.title.lower())
-
-
-def show_channels(item):
-    logger.info()
-    global channels_id_name
-    channels_id_name = item.extra
-    itemlist = []
-
-    for i in item.sub_list:
-        new_item = Item()
-        new_item = new_item.fromurl(i)
-        # logger.debug(new_item.tostring())
-        if new_item.contentQuality:
-            new_item.title += ' (%s)' % new_item.contentQuality
-        if new_item.language:
-            new_item.title += ' [%s]' % new_item.language
-        new_item.title += ' (%s)' % channels_id_name[new_item.channel]
-        new_item.text_color = color1
-
-        itemlist.append(new_item.clone())
-
-    return itemlist
-
-
-def menu_opciones(item):
+    cache_node = jsontools.get_node_from_file('menu_cache_data.json', 'cached')
     itemlist = list()
-    itemlist.append(Item(channel=item.channel, title=config.get_localized_string(60525),
-                         text_bold = True, thumbnail=get_thumb("setting_0.png"),
-                         folder=False))
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="peliculas", title=config.get_localized_string(60526),
-                         thumbnail=get_thumb("channels_movie.png"),
-                         folder=False))
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="4K", title=config.get_localized_string(70207),
-                         thumbnail=get_thumb("channels_movie.png"), folder=False))
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="infantiles", title=config.get_localized_string(60527),
-                         thumbnail=get_thumb("channels_children.png"),
-                         folder=False))
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="series",
-                         title=config.get_localized_string(60528),
-                         thumbnail=get_thumb("channels_tvshow.png"),
-                         folder=False))
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="anime",
-                         title=config.get_localized_string(60529),
-                         thumbnail=get_thumb("channels_anime.png"),
-                         folder=False))
-    itemlist.append(
-        Item(channel=item.channel, action="setting_channel", extra="castellano", title=config.get_localized_string(70212),
-             thumbnail=get_thumb("channels_documentary.png"), folder=False))
 
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="latino", title=config.get_localized_string(70213),
-                         thumbnail=get_thumb("channels_documentary.png"), folder=False))
+    for cached_item in cache_node[item.news]:
+        new_item = Item()
+        new_item = new_item.fromurl(cached_item)
+        itemlist.append(new_item)
+    itemlist = group_results(itemlist)
 
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="Torrent", title=config.get_localized_string(70214),
-                         thumbnail=get_thumb("channels_documentary.png"), folder=False))
-
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="documentales",
-                         title=config.get_localized_string(60530),
-                         thumbnail=get_thumb("channels_documentary.png"),
-                         folder=False))
-    itemlist.append(Item(channel=item.channel, action="settings", title=config.get_localized_string(60531),
-                         thumbnail=get_thumb("setting_0.png"),
-                         folder=False))
     return itemlist
 
 
@@ -583,29 +328,28 @@ def settings(item):
 
 
 def setting_channel(item):
+    import glob
+
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
     channel_language = config.get_setting("channel_language", default="all")
 
     list_controls = []
     for infile in sorted(glob.glob(channels_path)):
+
         channel_id = os.path.basename(infile)[:-5]
         channel_parameters = channeltools.get_channel_parameters(channel_id)
 
-        # No incluir si es un canal inactivo
         if not channel_parameters["active"]:
             continue
 
-        # No incluir si es un canal para adultos, y el modo adulto está desactivado
         if channel_parameters["adult"] and config.get_setting("adult_mode") == 0:
             continue
 
-        # No incluir si el canal es en un idioma filtrado
         if channel_language != "all" and channel_language not in channel_parameters["language"] \
                 and "*" not in channel_parameters["language"]:
             continue
 
-        # No incluir si en su configuracion el canal no existe 'include_in_newest'
-        include_in_newest = config.get_setting("include_in_newest_" + item.extra, channel_id)
+        include_in_newest = config.get_setting("include_in_newest_" + item.news, channel_id)
         if include_in_newest is None:
             continue
 
@@ -635,7 +379,7 @@ def setting_channel(item):
 
 def save_settings(item, dict_values):
     for v in dict_values:
-        config.set_setting("include_in_newest_" + item.extra, dict_values[v], v)
+        config.set_setting("include_in_newest_" + item.news, dict_values[v], v)
 
 
 def cb_custom_button(item, dict_values):
@@ -651,3 +395,435 @@ def cb_custom_button(item, dict_values):
     else:
         return {"label": "Todos"}
 
+
+def list_channels(item):
+    itemlist = list()
+    channels = get_channels(item.category, all=True)
+
+    for ch in channels:
+        ch_param = channeltools.get_channel_parameters(ch)
+        if ch_param["active"]:
+            itemlist.append(Item(channel=ch, action="mainlist", title=ch_param["title"],
+                                 thumbnail=ch_param["thumbnail"]))
+
+    return itemlist
+
+
+def news_setting(item):
+    platformtools.show_channel_settings()
+    return
+=======
+# -*- coding: utf-8 -*-
+# -*- Channel New News -*-
+# -*- Created for Alfa-addon -*-
+# -*- By the Alfa Develop Group -*-
+
+import channelselector
+from core.item import Item
+from core import channeltools
+from core import tmdb
+from core import jsontools
+from platformcode import logger
+from platformcode import config
+from platformcode import help_window
+from platformcode import platformtools
+from channelselector import get_thumb
+from concurrent import futures
+import math
+import os
+import datetime
+
+
+workers = [None, 1, 2, 4, 6, 8, 16, 24, 32, 64]
+max_workers = config.get_setting("max_workers", "news")
+max_workers = workers[max_workers]
+
+
+def mainlist(item):
+    logger.info()
+    itemlist = list()
+
+    list_items = [[30122, "peliculas", "channels_movie.png" ],
+                 [70208, "4k", "channels_movie_4k.png"],
+                 [70209, "terror", "channels_horror.png"],
+                 [60510, "infantiles", "channels_children.png"],
+                 [60511, "series", "channels_tvshow.png"],
+                 [60512, "anime", "channels_anime.png"],
+                 [70014, "castellano", "channels_spanish.png"],
+                 [59976, "latino", "channels_latino.png"],
+                 [70171, "torrent", "channels_torrent.png"],
+                 [60513, "documentales", "channels_documentary.png"]
+                ]
+
+    for it in list_items:
+
+        thumbnail = get_thumb(it[2])
+        new_item = Item(channel=item.channel, action="news", news=it[1], title=config.get_localized_string(it[0]),
+                    thumbnail=thumbnail)
+        set_category_context(new_item)
+        itemlist.append(new_item)
+    itemlist.append(Item(channel="news", title="Configuración", action="news_setting",
+                         thumbnail=get_thumb("setting_0.png")))
+    help_window.show_info("news")
+    return itemlist
+
+
+def set_category_context(item):
+    item.context = [{"title": config.get_localized_string(60514) % item.title,
+                     "news": item.news,
+                     "action": "setting_channel",
+                     "channel": item.channel},
+                    {"title": "Ver canales de esta categoría",
+                     "category": item.news,
+                     "action": "list_channels",
+                     "channel": item.channel,
+                     "switch_to": True}
+                    ]
+    item.category = config.get_localized_string(60679) % item.news
+
+
+def news(item):
+    logger.info()
+    channel_list = list()
+    channel_list.extend(get_channels(item.news))
+    valid_channels_number = len(channel_list)
+    limit = len(channel_list)
+    next = False
+
+    if not channel_list:
+        platformtools.dialog_ok('Novedades - %s' % item.news, 'No se ha definido ningun canal para la '
+                                                               'busqueda.', 'Utilice el menu contextual '
+                                                                            'para agregar al menos uno')
+        return
+    if len(channel_list) > 20:
+        next = True
+
+    if len(channel_list) > 40:
+        limit = int(len(channel_list) * 30 / 100)
+    elif len(channel_list) > 20:
+        limit = int(len(channel_list) * 50 / 100)
+
+    clear_cache(item.news)
+
+    itemlist = process(channel_list[:limit], item.category, item.news, valid_channels_number, item.startpage)
+    try:
+        itemlist = sorted(group_results(itemlist), key=lambda i: int(i.infoLabels["year"]), reverse=True)
+    except:
+        pass
+
+    if len(channel_list) > 20:
+        executor = futures.ThreadPoolExecutor(max_workers=max_workers)
+        executor.submit(process, channel_list[limit + 1:], item.category, item.news, valid_channels_number, True, True)
+        executor.shutdown(wait=False)
+
+    if itemlist and next:
+        next_icon = get_thumb('more.png')
+        next = item.clone(action="load_results", viewmode="movie", thumbnail=next_icon, title='Siguiente >>>')
+        itemlist.insert(len(itemlist), next)
+    return itemlist
+
+
+def process(channel_list, category, news, total_channels, startpage=False, save=False):
+
+    itemlist = list()
+    searching = list()
+    searching_titles = list()
+
+    number_of_channels = float(100) / len(channel_list)
+
+    if '4k' not in category: 
+        config.set_setting('tmdb_active', False)
+
+    searching += channel_list
+    searching_titles += channel_list
+    cnt = 0
+
+    if not startpage:
+       progress = platformtools.dialog_progress("%s (%s) Seleccionados " % (category, total_channels),
+                                                "Obteniendo novedades. Por favor espere...")
+
+    with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        c_results = [executor.submit(get_channel_news, ch, news) for ch in channel_list]
+
+        for index, res in enumerate(futures.as_completed(c_results)):
+            cnt += 1
+            percentage = int(math.ceil((index + 1) * number_of_channels))
+            finished = res.result()[0]
+
+            if not startpage:
+               if progress.iscanceled():
+                   break
+
+            if finished in searching:
+                searching_titles.remove(searching_titles[searching.index(finished)])
+                searching.remove(finished)
+            if not startpage:
+                progress.update(percentage, "Obteniendo novedades. Por favor espere..." +
+                                '\n' + str(searching_titles) + '\n' + ' ' + '\n' + ' ' + '\n' + ' ')
+
+            if len(res.result()) > 1:
+                if save:
+                    save_results(finished, res.result()[1], news)
+                else:
+                    itemlist += res.result()[1]
+
+
+    if not startpage:
+       progress.close()
+
+    config.set_setting('tmdb_active', True)
+    return itemlist
+
+
+def get_channels(category, all=False):
+    logger.info()
+
+    valid_channels = list()
+
+    all_channels = channelselector.filterchannels('all')
+
+    for ch in all_channels:
+        channel = ch.channel
+        ch_param = channeltools.get_channel_parameters(channel)
+
+        if not ch_param.get("active", False):
+            continue
+        valid = config.get_setting("include_in_newest_" + category, channel)
+        if valid or (valid is not None and all):
+            valid_channels.append(channel)
+
+    return valid_channels
+
+
+def get_channel_news(channel, category, all=False):
+
+    logger.info()
+    results = list()
+    brand_new = list()
+    news_range = config.get_setting("news_range", "news")
+    if news_range == 5:
+        news_range = 100
+    ch_params = channeltools.get_channel_parameters(channel)
+    module = __import__('channels.%s' % ch_params["channel"], fromlist=["channels.%s" % ch_params["channel"]])
+    
+    try:
+        results = module.newest(category)
+    except:
+        return channel, results, category
+
+    if not results:
+        return channel, results, category
+
+    total_results = len(results)
+    results = sorted(results, reverse=True, key=lambda it: (str(it.infoLabels["year"])))
+
+    if not all and news_range != 100:
+        if total_results > 40:
+            total_results = int((total_results * 20) / 100)
+        elif total_results > 20:
+            total_results = int((total_results * 50) / 100)
+
+
+    for elem in results[:total_results]:
+
+        if category not in ["series", "anime"] and not all and news_range != 100:
+            if not elem.contentTitle or "-Próximamente-" in elem.title:
+                continue
+            if elem.infoLabels["year"] and str(elem.infoLabels["year"]).isdigit():
+                item_year = int(elem.infoLabels["year"])
+                this_year = datetime.date.today().year
+                if not item_year in range(this_year - news_range, this_year + 1):
+                    continue
+            else:
+                continue
+        elem.channel = channel
+        elem.from_channel = channel
+        if not all:
+            elem.context = [{"title": "[COLOR yellow]Mas novedades[/COLOR]", "action": "get_all_news",
+                             "category": category,
+                             "channel": "news",
+                             "from_channel": channel,
+                             "switch_to": True}]
+
+        brand_new.append(elem)
+
+    return channel, brand_new, category
+
+
+def get_all_news(item):
+
+    itemlist = get_channel_news(item.from_channel, item.category, all=True)[1]
+
+    return itemlist
+
+
+def group_results(results):
+    logger.info
+
+    grouped = dict()
+    itemlist = list()
+    tmdb.set_infoLabels_itemlist(results, seekTmdb=True)
+
+    for elem in results:
+
+        if not elem.infoLabels["tmdb_id"] or "-Próximamente-" in elem.title:
+            continue
+        if elem.infoLabels["tmdb_id"] not in grouped:
+            grouped[elem.infoLabels["tmdb_id"]] = list()
+        grouped[elem.infoLabels["tmdb_id"]].append(elem)
+
+    for key, value in grouped.items():
+
+        if len(value) == 1:
+            itemlist.append(value[0])
+        else:
+            title = '[+]' + value[0].contentTitle.capitalize()
+            contentTitle = value[0].contentTitle.capitalize()
+            infoLabels = value[0].infoLabels
+            itemlist.append(Item(channel="news", title=title, contentTitle=contentTitle, action="show_group",
+                                 sub_list=[i.tourl() for i in value], from_channel='', infoLabels=infoLabels,
+                                 thumbnail=infoLabels["thumbnail"]))
+    return itemlist
+
+
+def show_group(item):
+    itemlist = list()
+
+    for x in item.sub_list:
+        itemlist.append(Item().fromurl(x))
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    return itemlist
+
+
+def clear_cache(category):
+    menu_cache_path = os.path.join(config.get_data_path(), "settings_channels", 'menu_cache_data.json')
+    if os.path.exists(menu_cache_path):
+        cache_node = jsontools.get_node_from_file('menu_cache_data.json', 'cached')
+        cache_node = dict()
+        cache_node[category] = list()
+        jsontools.update_node(cache_node, 'menu_cache_data.json', "cached")
+
+
+def save_results(channel_id, list_result, category):
+    menu_cache_path = os.path.join(config.get_data_path(), "settings_channels", 'menu_cache_data.json')
+    list_newest = list()
+    list_newest_tourl = list()
+
+    if os.path.exists(menu_cache_path):
+        cache_node = jsontools.get_node_from_file('menu_cache_data.json', 'cached')
+    else:
+        cache_node = dict()
+
+    for item in list_result:
+        item.channel = channel_id
+        list_newest.append(item)
+        list_newest_tourl.append(item.tourl())
+    if category not in cache_node:
+        cache_node[category] = list()
+    cache_node[category].extend(list_newest_tourl)
+    jsontools.update_node(cache_node, 'menu_cache_data.json', "cached")
+
+
+def load_results(item):
+
+    cache_node = jsontools.get_node_from_file('menu_cache_data.json', 'cached')
+    itemlist = list()
+
+    for cached_item in cache_node[item.news]:
+        new_item = Item()
+        new_item = new_item.fromurl(cached_item)
+        itemlist.append(new_item)
+    itemlist = group_results(itemlist)
+
+    return itemlist
+
+
+def settings(item):
+    return platformtools.show_channel_settings(caption=config.get_localized_string(60532))
+
+
+def setting_channel(item):
+    import glob
+
+    channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
+    channel_language = config.get_setting("channel_language", default="all")
+
+    list_controls = []
+    for infile in sorted(glob.glob(channels_path)):
+
+        channel_id = os.path.basename(infile)[:-5]
+        channel_parameters = channeltools.get_channel_parameters(channel_id)
+
+        if not channel_parameters["active"]:
+            continue
+
+        if channel_parameters["adult"] and config.get_setting("adult_mode") == 0:
+            continue
+
+        if channel_language != "all" and channel_language not in channel_parameters["language"] \
+                and "*" not in channel_parameters["language"]:
+            continue
+
+        include_in_newest = config.get_setting("include_in_newest_" + item.news, channel_id)
+        if include_in_newest is None:
+            continue
+
+        control = {'id': channel_id,
+                   'type': "bool",
+                   'label': channel_parameters["title"],
+                   'default': include_in_newest,
+                   'enabled': True,
+                   'visible': True}
+
+        list_controls.append(control)
+
+    caption = config.get_localized_string(60533) + item.title.replace(config.get_localized_string(60525), "- ").strip()
+    if config.get_setting("custom_button_value_news", item.channel):
+        custom_button_label = config.get_localized_string(59992)
+    else:
+        custom_button_label = config.get_localized_string(59991)
+
+    return platformtools.show_channel_settings(list_controls=list_controls,
+                                               caption=caption,
+                                               callback="save_settings", item=item,
+                                               custom_button={'visible': True,
+                                                              'function': "cb_custom_button",
+                                                              'close': False,
+                                                              'label': custom_button_label})
+
+
+def save_settings(item, dict_values):
+    for v in dict_values:
+        config.set_setting("include_in_newest_" + item.news, dict_values[v], v)
+
+
+def cb_custom_button(item, dict_values):
+    value = config.get_setting("custom_button_value_news", item.channel)
+    if value == "":
+        value = False
+
+    for v in list(dict_values.keys()):
+        dict_values[v] = not value
+
+    if config.set_setting("custom_button_value_news", not value, item.channel) == True:
+        return {"label": "Ninguno"}
+    else:
+        return {"label": "Todos"}
+
+
+def list_channels(item):
+    itemlist = list()
+    channels = get_channels(item.category, all=True)
+
+    for ch in channels:
+        ch_param = channeltools.get_channel_parameters(ch)
+        if ch_param["active"]:
+            itemlist.append(Item(channel=ch, action="mainlist", title=ch_param["title"],
+                                 thumbnail=ch_param["thumbnail"]))
+
+    return itemlist
+
+
+def news_setting(item):
+    platformtools.show_channel_settings()
+    return

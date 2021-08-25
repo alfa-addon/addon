@@ -328,10 +328,11 @@ def newest(categoria):
 
 def play(item):
     itemlist = list()
-
-    soup = create_soup(item.url)
-    url = soup.find("iframe")["src"]
-
+    id = scrapertools.find_single_match(item.url, "h=([^$]+)")
+    headers = {"referer": item.url}
+    post = {"h": id}
+    base_url = "%sr.php" % host
+    url = httptools.downloadpage(base_url, post=post, headers=headers, follow_redirects=False).headers["location"]
     if not url.startswith("http"):
         url = "https:" + url
     item.server = ""
