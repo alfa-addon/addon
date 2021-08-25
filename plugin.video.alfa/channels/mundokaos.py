@@ -20,7 +20,7 @@ from channels import filtertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 
-SERVER = {'Ok': 'okru','Flixplayer': 'gounlimited', 'gounlimited': 'gounlimited', 'VIP': 'VIP', 'Dood': 'Doodstream' }
+SERVER = {'Ok': 'okru','Flixplayer': 'gounlimited', 'gounlimited': 'gounlimited', 'VIP': 'VIP', 'DOOD': 'Doodstream' }
 IDIOMAS = {"Spain": "CAST", "Mexico": "LAT", "United-States-of-AmericaUSA": "VOSE", "Castellano": "CAST", "Latino": "LAT", "Subtitulado": "VOSE"}
 list_language = list(IDIOMAS.values())
 list_quality = []
@@ -29,6 +29,8 @@ list_servers = list(SERVER.values())
 __channel__='mundokaos'
 
 host = 'https://mundokaos.net'     #  https://peliculasflix.co   https://seriesflix.nu/     https://pelisflix.li     https://mundokaos.net
+
+# FALTA    server  https://streamsb8.com/embed/9a0f1083-0492-4db9-a287-8b9bb897069c
 
 
 def mainlist(item):
@@ -116,11 +118,15 @@ def alpha_list(item):
     if not matches:
         return itemlist
     for elem in matches.find_all("tr"):
+        logger.debug(elem)
         info = elem.find("td", class_="MvTbTtl")
-        thumbnail = elem.img["data-lazy-src"]
+        thumbnail = elem.img["src"]
         url = info.a["href"]
         title = info.a.text.strip()
         year = elem.find_all('td')[4].text
+        if not thumbnail.startswith("https"):
+            thumbnail = "https:%s" % thumbnail
+
         new_item = item.clone(url=url, title=title, thumbnail=thumbnail, infoLabels={"year": year})
         if "series" in url:
             new_item.action = "seasons"
@@ -168,7 +174,8 @@ def create_soup(url, referer=None, post=None, unescape=False):
 def lista(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url, referer=host)
+    # soup = create_soup(item.url, referer=host)
+    soup = create_soup(item.url)
     matches = soup.find_all("li", id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
@@ -270,23 +277,24 @@ def episodios(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
+    soup = create_soup(item.url).find('ul', class_='optnslst')
     if "episodios" in item.url:
         type = "2"
     else:
         type = "1"
-    matches = soup.find_all('li', class_='OptionBx')
+    matches = soup.find_all('li')
     serv=[]
     for elem in matches:
-        num= elem['data-key']
-        id= elem['data-id']
-        lang= elem.find('p', class_='AAIco-language').text.split()
-        server =  elem.find('p', class_='AAIco-dns').text.strip()
-        lang = lang[-1]
+        num= elem.button['data-key']
+        id= elem.button['data-id']
+        txt = elem.button.text.split()
+        # lang= elem.find('p', class_='AAIco-language').text.split()
+        # server =  elem.find('p', class_='AAIco-dns').text.strip()
+        server = txt[-1]
+        server = SERVER.get(server, server)
+        lang = txt[1]
         lang = IDIOMAS.get(lang, lang)
         url = "%s/?trembed=%s&trid=%s&trtype=%s"  %  (host,num,id, type)
-        server = SERVER.get(server, server)
-
         if not config.get_setting('unify') and not channeltools.get_channel_parameters(__channel__)['force_unify']:
             title = "[%s] [COLOR darkgrey][%s][/COLOR]" %(server,lang)
         else:
