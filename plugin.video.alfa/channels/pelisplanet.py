@@ -19,7 +19,7 @@ from core.item import Item
 from core import channeltools
 from core import tmdb
 
-host = "http://www.pelisplanet.com/"
+host = "http://www.pelisplanet.to/"
 
 __channel__ = "pelisplanet"
 parameters = channeltools.get_channel_parameters('pelisplanet')
@@ -222,15 +222,12 @@ def generos(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    # logger.info(data)
     patron = '<div class="todos">.*?'
-    patron += '<a href="([^"]+)".*?'
     patron += 'title="([^"]+)".*?'
-    patron += '<img src="([^"]+)"'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
+    patron += 'href="([^"]+)".*?'
+    patron += 'src="([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedtitle, scrapedurl, scrapedthumbnail in matches:
         itemlist.append(Item(channel=item.channel, action="peliculas", title=scrapedtitle,
                              url=scrapedurl, text_color=color3, thumbnail=scrapedthumbnail,
                              plot="", viewmode="movie_with_plot", folder=True))
@@ -244,8 +241,6 @@ def findvideos(item):
     from lib import players_parse
     
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
-    # logger.info(datas)
     patron = '<a id="[^"]+" style="cursor:pointer; cursor: hand" rel="([^"]+)".*?'
     patron += '<span class="optxt"><span>(.*?)</span>.*?'
     patron += '<span class="q">([^<]+)</span>'
