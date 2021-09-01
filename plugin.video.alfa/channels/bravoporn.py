@@ -17,7 +17,7 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'http://www.bravoporn.com'
+host = 'https://www.bravoporn.com' 
 
 
 def mainlist(item):

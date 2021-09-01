@@ -50,6 +50,7 @@ def categorias(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='list-global__item')
     for elem in matches:
+        # logger.debug(elem)
         elem = elem.find('a', class_=False)
         url = elem['href']
         title = elem.img['alt']
@@ -65,8 +66,6 @@ def categorias(item):
     next_page = soup.find('a', class_='next')
     if next_page:
         next_page = next_page['href']
-    # next_page = scrapertools.find_single_match(data, '<a class="next pagination__number" href="([^"]+)" rel="nofollow">Next')
-    # if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -90,6 +89,8 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='list-global__item')
     for elem in matches:
+        if elem.has_attr('data-adch'):
+            continue
         url = elem.a['href']
         title = elem.a['title']
         thumbnail = elem.img['data-src']
@@ -148,3 +149,4 @@ def play(item):
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
+

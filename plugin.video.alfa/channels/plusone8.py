@@ -28,7 +28,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/?filter=date"))
     itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/?filter=popular"))
     itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/?orderby=likes"))
-    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/pornstars"))
+    # itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/pornstars"))
 
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/porn-categories"))
     itemlist.append(item.clone(title="Buscar", action="search"))
@@ -51,8 +51,8 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    matches = soup.find_all('article', id=re.compile(r"^post-\d+"))
+    soup = create_soup(item.url).find('main', id='main')
+    matches = soup.find_all('div', id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
@@ -87,27 +87,30 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('main', id='main')
-    matches = soup.find_all('article')
+    matches = soup.find_all('div', id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
+        if "test" in url:
+            continue
         title = elem.a['title']
-        thumbnail = elem.img['data-src']
+        thumbnail = elem.img['src']
         if "svg" in thumbnail:
             thumbnail = elem.img['data-lazy-src']
         thumbnail += "|verifypeer=false"
-        time = elem.find('span', class_='duration')
+        time = elem.find('span', class_='length')
         actors = elem['class']
         actriz = ""
         for x in actors:
             if not "actors-" in x:
                 continue
             actor = x.replace("actors-", "").replace("-", " ")
-            actriz += "%s, " %actor
+            actriz += "%s & " %actor
         if actriz:
-            title = "(%s) %s" %(actriz[:-2], title)
+            title = "[COLOR cyan]%s[/COLOR] %s" %(actriz[:-2], title)
         if time:
             time = time.text.strip()
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
+
         plot = ""
         action = "play"
         if logger.info() == False:
