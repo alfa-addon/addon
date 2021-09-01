@@ -562,14 +562,14 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
 
 
 def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=10, \
-                     lookup=False, data_torrent=False, headers={}, proxy_retries=1):
+                     lookup=False, data_torrent=False, headers=None, proxy_retries=1):
     if torrents_path != None:
         logger.info("path = " + torrents_path)
         if url != torrents_path:
             logger.info("url = " + str(url))
     else:
         logger.info("url = " + str(url))
-    if referer and post:
+    if referer:
         logger.info('REFERER: ' + str(referer))
     
     if not isinstance(url, (str, unicode, bytes)):
@@ -589,6 +589,7 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
     subtitles = []
     if PY3: RAR = bytes(RAR, 'utf-8')
     if referer:
+        if not headers: headers = {}
         headers.update({'Content-Type': 'application/x-www-form-urlencoded', 'Referer': referer})   #Necesario para el Post del .Torrent
     
     """

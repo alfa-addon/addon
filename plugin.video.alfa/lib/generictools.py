@@ -15,8 +15,10 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
     import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urllib
 else:
     import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+    import urllib 
 
 from builtins import range
 from past.utils import old_div
@@ -51,6 +53,9 @@ idioma_busqueda_VO = 'es,en'
 movies_videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
 series_videolibrary_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
 list_nfos = []
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
+patron_canal = '(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
 
 
 def downloadpage(url, post=None, headers=None, random_headers=False, replace_headers=False, 
@@ -169,6 +174,8 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
 
 def convert_url_base64(url, host='', rep_blanks=True):
     logger.info('URL: ' + url + ', HOST: ' + host)
+    host_whitelist = ['mediafire.com', 'acortaenlace.com']
+    domain = scrapertools.find_single_match(url, patron_domain)
 
     url_base64 = url
     if len(url_base64) > 1 and not 'magnet:' in url_base64 and not '.torrent' in url_base64:
@@ -187,15 +194,28 @@ def convert_url_base64(url, host='', rep_blanks=True):
             #logger.error(traceback.format_exc())
             if not url_base64:
                 url_base64 = url
+            if url_base64.startswith('magnet'):
+                return url_base64
+            
+            from lib.unshortenit import sortened_urls
+            if domain and domain in str(host_whitelist):
+                url_base64_bis = sortened_urls(url_base64, url_base64, host)
+            else:
+                url_base64_bis = sortened_urls(url, url_base64, host)
+            domain_bis = scrapertools.find_single_match(url_base64_bis, patron_domain)
+            if domain_bis: domain = domain_bis
+            if url_base64_bis != url_base64:
+                url_base64 = url_base64_bis
+                logger.info('Url base64 RE-convertida: %s' % url_base64)
                 
-    if host and host not in url_base64 and not url_base64.startswith('magnet:'):
+    if not domain: domain = 'default'
+    if host and host not in url_base64 and not url_base64.startswith('magnet') and domain not in str(host_whitelist):
         url_base64 = urlparse.urljoin(host, url_base64)
         if url_base64 != url:
-            host_name = scrapertools.find_single_match(url_base64, '(http.*\:\/\/(?:.*ww[^\.]*)?\.?[^\.]+\.\w+(?:\.\w+)?)(?:\/|\?|$)')
+            host_name = scrapertools.find_single_match(url_base64, patron_host)
             url_base64 = re.sub(host_name, host, url_base64)
             logger.info('Url base64 urlparsed: %s' % url_base64)
-        
-    
+
     return url_base64
 
 
@@ -212,7 +232,7 @@ def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=N
     
     # Obtiene nombre del dominio para la cookie
     if not domain_name:
-        domain_name = scrapertools.find_single_match(url, 'http.*\:\/\/(?:.*ww[^\.]*)?(\.?[^\.]+\.\w+(?:\.\w+)?)(?:\/|\?|$)')
+        domain_name = scrapertools.find_single_match(url, patron_domain)
     logger.info(domain_name)
 
     # Obtiene nombre del canal que hace la llamada para marcarlo en su settings.xml
@@ -362,12 +382,12 @@ def update_title(item):
         del item.from_update
         if item.contentType == "movie":
             if item.channel == channel_py:  #Si es una peli de NewPct1, ponemos el nombre del clone
-                item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')
+                item.channel = scrapertools.find_single_match(item.url, patron_canal)
     else:
         new_item = item.clone()             #Salvamos el Item inicial para restaurarlo si el usuario cancela
         if item.contentType == "movie":
             if item.channel == channel_py:  #Si es una peli de NewPct1, ponemos el nombre del clone
-                item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')
+                item.channel = scrapertools.find_single_match(item.url, patron_canal)
         #Borramos los IDs y el año para forzar a TMDB que nos pregunte
         if item.infoLabels['tmdb_id'] or item.infoLabels['tmdb_id'] == None: item.infoLabels['tmdb_id'] = ''
         if item.infoLabels['tvdb_id'] or item.infoLabels['tvdb_id'] == None: item.infoLabels['tvdb_id'] = ''
@@ -584,7 +604,7 @@ def post_tmdb_listado(item, itemlist):
 
         #Ajustamos el nombre de la categoría
         if item_local.channel == channel_py:
-            item_local.category = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+            item_local.category = scrapertools.find_single_match(item_local.url, patron_canal).capitalize()
         
         #Restauramos la info adicional guarda en la lista title_subs, y la borramos de Item
         title_add = ' '
@@ -805,13 +825,13 @@ def post_tmdb_listado(item, itemlist):
         #Viene de Novedades.  Lo preparamos para Unify
         if item_local.from_channel == "news":
             """
-            if scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/'):
-                title += ' -%s-' % scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+            if scrapertools.find_single_match(item_local.url, patron_canal):
+                title += ' -%s-' % scrapertools.find_single_match(item_local.url, patron_canal).capitalize()
             else:
                 title += ' -%s-' % item_local.channel.capitalize()
             if item_local.contentType == "movie":
-                if scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/'):
-                    item_local.contentTitle += ' -%s-' % scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+                if scrapertools.find_single_match(item_local.url, patron_canal):
+                    item_local.contentTitle += ' -%s-' % scrapertools.find_single_match(item_local.url, patron_canal).capitalize()
                 else:
                     item_local.contentTitle += ' -%s-' % item_local.channel.capitalize()
             """
@@ -1107,7 +1127,7 @@ def post_tmdb_episodios(item, itemlist):
 
     #Ajustamos el nombre de la categoría
     if item.channel == channel_py:
-        item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+        item.category = scrapertools.find_single_match(item.url, patron_canal).capitalize()
     
     #Restauramos valores si ha habido fail-over
     channel_alt = ''
@@ -1205,8 +1225,8 @@ def post_tmdb_episodios(item, itemlist):
         if item_local.channel == channel_py and (item.library_urls or item.add_videolibrary):
             item_local.channel = item_local.category.lower()
             #if item.library_urls or item.add_videolibrary:                     # Si videne de videoteca cambiamos el nombre de canal al clone
-            #    item_local.channel = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
-            #item_local.category = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+            #    item_local.channel = scrapertools.find_single_match(item_local.url, patron_canal).lower()
+            #item_local.category = scrapertools.find_single_match(item_local.url, patron_canal).capitalize()
         #Restauramos valores para cada Episodio si ha habido fail-over de un clone de NewPct1
         if (item_local.channel_alt or item_local.channel_redir) and not item.downloadFilename:
             #item_local.channel = item_local.channel_redir.lower() or item_local.channel_alt.lower()
@@ -1216,8 +1236,8 @@ def post_tmdb_episodios(item, itemlist):
         if (item_local.channel_alt or item_local.channel_redir) and item.downloadFilename:
             item_local.channel_alt = channel_alt
         if item_local.url_alt:
-            host_act = scrapertools.find_single_match(item_local.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
-            host_org = scrapertools.find_single_match(item_local.url_alt, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
+            host_act = scrapertools.find_single_match(item_local.url, patron_host)
+            host_org = scrapertools.find_single_match(item_local.url_alt, patron_host)
             dom_sufix_act = scrapertools.find_single_match(host_act, ':\/\/(.*?)\/*$').replace('.', '-')
             dom_sufix_org = scrapertools.find_single_match(host_org, ':\/\/(.*?)\/*$').replace('.', '-')
             if dom_sufix_act:
@@ -1349,7 +1369,7 @@ def post_tmdb_episodios(item, itemlist):
         if item.channel_redir:
             item.channel = item.channel_redir.lower()
         else:
-            item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')
+            item.channel = scrapertools.find_single_match(item.url, patron_canal)
     if item.channel_redir:
         del item.channel_redir
     
@@ -1403,8 +1423,8 @@ def post_tmdb_episodios(item, itemlist):
             if item.action == 'get_seasons':                    #si es actualización desde videoteca, título estándar
                 #Si hay una nueva Temporada, se activa como la actual
                 try:
-                    if item.library_urls[scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')] != item.url and (item.contentType == "season" or modo_ultima_temp):
-                        item.library_urls[scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')] = item.url     #Se actualiza la url apuntando a la última Temporada
+                    if item.library_urls[scrapertools.find_single_match(item.url, patron_canal)] != item.url and (item.contentType == "season" or modo_ultima_temp):
+                        item.library_urls[scrapertools.find_single_match(item.url, patron_canal)] = item.url     #Se actualiza la url apuntando a la última Temporada
                         from core import videolibrarytools      #Se fuerza la actualización de la url en el .nfo
                         itemlist_fake = []                      #Se crea un Itemlist vacio para actualizar solo el .nfo
                         videolibrarytools.save_tvshow(item, itemlist_fake)      #Se actualiza el .nfo
@@ -1616,7 +1636,7 @@ def post_tmdb_findvideos(item, itemlist):
     
     #Ajustamos el nombre de la categoría
     if item.channel == channel_py:
-        category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+        category = scrapertools.find_single_match(item.url, patron_canal).capitalize()
         if category:
             item.category = category
             
@@ -2003,7 +2023,7 @@ def find_rar_password(item):
     #                            'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-0', 'capitulo-'], \
     #                            ['capitulos-0', 'capitulos-']]], 
     
-    url_host = scrapertools.find_single_match(item.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
+    url_host = scrapertools.find_single_match(item.url, patron_host)
     dom_sufix_org = scrapertools.find_single_match(item.url, ':\/\/(.*?)[\/|?]').replace('.', '-')
     url_host_act = url_host
     url_password = item.url
@@ -2018,7 +2038,7 @@ def find_rar_password(item):
             if x == '2' and clone_id not in url_host: continue
             if x == '1' and clone_id in item.url: continue
             url_password = url_password.replace(url_host_act, clone_id)
-            url_host_act = scrapertools.find_single_match(url_password, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
+            url_host_act = scrapertools.find_single_match(url_password, patron_host)
 
             dom_sufix_clone = scrapertools.find_single_match(url_host_act, ':\/\/(.*?)\/*$').replace('.', '-')
             if 'descargas2020' not in dom_sufix_clone and 'descargas2020' not in \
@@ -2445,7 +2465,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
     channel_failed = ''
     url_alt = []
     decode_code = 'iso-8859-1'
-    item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+    item.category = scrapertools.find_single_match(item.url, patron_canal).capitalize()
     if not item.extra2:
         item.extra2 = 'z9z8z7z6z5'
 
@@ -2517,8 +2537,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         #channel_host_bis = re.sub(r'(?i)http.*://', '', channel_host)[:-1]
         channel_host_bis = channel_host[:-1]
         #channel_host_failed_bis = re.sub(r'(?i)http.*://', '', channel_host_failed)
-        channel_host_failed_bis = scrapertools.find_single_match(item.url, \
-                            '((?:http.*\:)?\/\/(?:www\.)?[^\?|\/]+)(?:\?|\/)')
+        channel_host_failed_bis = scrapertools.find_single_match(item.url, patron_host)
         item.url = item.url.replace(channel_host_failed_bis, channel_host_bis)
 
         if item.url.endswith('-org'):
@@ -2838,7 +2857,6 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     json_path_list = []
     emergency_urls_force = False
     status_migration =  False
-    patron_category = 'http.*\:\/\/(?:.*ww[^\.]*\.)?([^\.]+)\.[^\/]+(?:\/|\?|$)'
     
     # Ha podido quedar activado ow_force de una pasada anterior
     if it.ow_force == '1':
@@ -2881,7 +2899,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     # Si es un clone de Newpct1, se actualiza el canal y la categoría y se se borran restos de pasadas anteriores 
     if channel in fail_over_list :                                          
         item.channel = channel_py
-        item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()
+        item.category = scrapertools.find_single_match(item.url, patron_canal).capitalize()
         channel_py_alt = "'%s'" % channel_py
         if item.channel_host:
             del item.channel_host
@@ -2989,7 +3007,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 # Si no, lo extraemos de la url
                 if not canal_des_def and canal_org in item.library_urls and len(item.library_urls) == 1:
                     # Salvamos la url actual de la estructura a borrar
-                    canal_des_def = scrapertools.find_single_match(item.library_urls[canal_org], patron_category).lower()
+                    canal_des_def = scrapertools.find_single_match(item.library_urls[canal_org], patron_canal).lower()
 
                 # Si existe item.url, lo salvamos para futuro uso
                 url_total = ''
@@ -3035,7 +3053,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                                 item.url = url_vid                          
                                 break
                         if canal_vid_alt in fail_over_list:                     # Si es un clone de Newpct1, salvamos la nueva categoría
-                            item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()      # Salvamos categoría
+                            item.category = scrapertools.find_single_match(item.url, patron_canal).capitalize()      # Salvamos categoría
                         else:
                             item.category = canal_vid.capitalize()              # Si no, salvamos nueva categoría
                     logger.info('** item.library_urls ACTUALIZADA: %s' % item.library_urls, force=True)
@@ -3106,7 +3124,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 
                 # Si es un clone de Newpct1, salvamos la nueva categoría desde la url
                 if item.channel == channel_py:
-                    item.category = scrapertools.find_single_match(item.url, patron_category).capitalize()
+                    item.category = scrapertools.find_single_match(item.url, patron_canal).capitalize()
                     if canal_org != item.category.lower():
                         item.category_alt = canal_org.capitalize()
                 else:
@@ -3115,7 +3133,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 
                 # Reemplazamos las urls del canal origen por el de destino
                 if url_org == '*':                                              # Si se quiere cambiar desde CUALQUIER url ...
-                    url_host = scrapertools.find_single_match(url_total, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
+                    url_host = scrapertools.find_single_match(url_total, patron_host)
                     if url_host: 
                         url_total = url_total.replace(url_host, url_des)        # Reemplazamos el dominio de actual por el de destino
                 elif url_des.startswith('http'):                                # Si se quiere cambiar desde una URL específica ...
@@ -3221,7 +3239,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
             i = 0
             for channel, url in list(it.library_urls.items()):
                 if not url.startswith('magnet'):
-                    url_domain = scrapertools.find_single_match(url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+)') 
+                    url_domain = scrapertools.find_single_match(url, patron_host) 
                     response = httptools.downloadpage(url_domain, timeout=10, ignore_response_code=True, hide_infobox=True)
                     if not response.sucess:
                         logger.error('Web %s en ERROR %s.  URL no procesada: %s' % (channel.upper(), response.code, url))
