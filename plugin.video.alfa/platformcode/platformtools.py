@@ -816,7 +816,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                   'channel=favorites&action=addFavourite&from_channel=' + item.channel + '&from_action=' + item.action)))
 
         # Añadir a Alfavoritos (Mis enlaces)
-        if item.channel not in ["favorites", "videolibrary", "help", ""] and parent_item.channel != "favorites":
+        if item.channel not in ["favorites", "videolibrary", "help", "search", ""] and parent_item.channel != "favorites":
             context_commands.append(
                 ('[COLOR blue]%s[/COLOR]' % config.get_localized_string(70557), "RunPlugin(%s?%s&%s)" %
                  (sys.argv[0], item_url, urllib.urlencode({'channel': "alfavorites", 'action': "addFavourite",
@@ -877,7 +877,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                                           'action=add_pelicula_to_library&from_action=' + item.action)))
 
         # Descargar
-        if item.channel != "downloads":
+        if item.channel not in ["downloads", "search"]:
             # Seleccionar qué canales aceptan Descargar en ...
             if 'torrent' in str(categories_channel) and item.server and item.server != 'torrent':
                 tc = '_en'

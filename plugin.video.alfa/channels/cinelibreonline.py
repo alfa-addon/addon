@@ -47,7 +47,7 @@ def mainlist(item):
 def peliculas(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding="utf-8").data
     data = data.replace("&nbsp;","")
     patron  = "(?is)post-title entry.*?href='([^']+)'>"
     patron += "([^<]+)"
@@ -81,7 +81,7 @@ def peliculas(item):
 def findvideos(item):
     itemlist = []
     
-    data = httptools.downloadpage(item.url, encoding=encoding).data.replace("í","i")
+    data = httptools.downloadpage(item.url, encoding="utf-8").data.replace("í","i")
     patron  = '(?is)>ver \w+ online:.*?href="([^"]+)'
     patron += '.*?/span>.*?\(([^\)]+)'
     matches = scrapertools.find_multiple_matches(data, patron )
@@ -120,12 +120,8 @@ def newest(categoria):
     itemlist = []
     item = Item()
     try:
-        if categoria in ['peliculas','latino']:
-            item.url = host
-        elif categoria == 'infantiles':
-            item.url = host + '/category/animacion/'
-        elif categoria == 'terror':
-            item.url = host + '/category/torror/'
+        if categoria in ['peliculas']:
+            item.url = host + "/search?max-results=%s" %max_result
         itemlist = peliculas(item)
         if "Pagina" in itemlist[-1].title:
             itemlist.pop()
@@ -143,16 +139,22 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = host + "/search?q=" + texto
     item.extra = "busca"
-    if texto != '':
-        return peliculas(item)
-    else:
+    try:
+        if texto != '':
+            return peliculas(item)
+        else:
+            return []
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("%s" % line)
         return []
 
 
 def generos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding="utf-8").data
     patron = """(?is)data-version='1' id='HTML6'>.*?widget-content(.*?)widget-content"""
     bloque = scrapertools.find_single_match(data, patron)
     patron   = '(?is)href="([^"]+)'
@@ -173,7 +175,7 @@ def generos(item):
 def list_all(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding="utf-8").data
     patron = """(?is)id='post-body(.*?)clear: both;"""
     bloque = scrapertools.find_single_match(data, patron)
     patron   = 'href="([^"]+)'
@@ -197,6 +199,6 @@ def list_all(item):
 def play(item):
     item.thumbnail = item.contentThumbnail
     if "wikipedia" in item.url:
-        data = httptools.downloadpage(item.url).data
+        data = httptools.downloadpage(item.url, encoding="utf-8").data
         item.url = "https:" + scrapertools.find_single_match(data, '<source src="([^"]+)')
     return [item]
