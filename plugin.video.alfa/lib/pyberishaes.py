@@ -2,24 +2,24 @@
 """
 Transcodificación de GibberishAES a Python 2/3
 Solo decodifica texto, no se necesitó mas que para eso,
-pero si se requiere, se pueden transportar más cosas ;)
+pero si se requiere, se pueden transformar más cosas ;)
 
-@autor: SistemaRayoXP (con ayuda de Delta)
+@autor: SistemaRayoXP (con ayuda de Delta y Kingbox)
 @version: 0.5
 """
 
 class GibberishAES(object):
 
-    def __init__(self, string="", pass_=""):
+    def __init__(self, string="", pass_="", Nr=14, Nk=8, Decrypt=False):
         # Requerido para determinar versión de Python
         import sys
         self.PY3 = False
         if sys.version_info[0] >= 3:
             self.PY3 = True
 
-        self.Nr = 14
-        self.Nk = 8
-        self.Decrypt = False
+        self.Nr = Nr
+        self.Nk = Nk
+        self.Decrypt = Decrypt
         self.SBox = self.strhex('637c777bf26b6fc53001672bfed7ab76ca82c97dfa5947f0add4a2af9ca472c0b7fd9326363ff7cc34a5e5f171d8311504c723c31896059a071280e2eb27b27509832c1a1b6e5aa0523bd6b329e32f8453d100ed20fcb15b6acbbe394a4c58cfd0efaafb434d338545f9027f503c9fa851a3408f929d38f5bcb6da2110fff3d2cd0c13ec5f974417c4a77e3d645d197360814fdc222a908846eeb814de5e0bdbe0323a0a4906245cc2d3ac629195e479e7c8376d8dd54ea96c56f4ea657aae08ba78252e1ca6b4c6e8dd741f4bbd8b8a703eb5664803f60e613557b986c11d9ee1f8981169d98e949b1e87e9ce5528df8ca1890dbfe6426841992d0fb054bb16', 2)
         self.SBoxInv = self.invertArr(self.SBox)
         self.Rcon = self.strhex('01020408102040801b366cd8ab4d9a2f5ebc63c697356ad4b37dfaefc591', 2)
