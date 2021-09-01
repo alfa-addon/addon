@@ -20,7 +20,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://severeporn.com/embed/\\w+)",
+        "pattern": "(https://(?:severeporn|anon-v).com/embed/\\w+)",
         "url": "\\1"
       },
       {

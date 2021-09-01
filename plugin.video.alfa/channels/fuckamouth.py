@@ -17,7 +17,7 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'http://hd-porn.co'   #  http://freehdporn.ru     https://fuckamouth.com
+host = 'https://fuckamouth.com'   #  http://freehdporn.ru     https://fuckamouth.com   http://hd-porn.co
 
 
 def mainlist(item):
@@ -32,8 +32,8 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "%20")
-    item.url = "%s/results/%s" % (host, texto)
+    texto = texto.replace(" ", "+")
+    item.url = "%s/porn/search?search=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -71,6 +71,7 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
+    logger.debug(data)
     patron = '<div class="item large-3.*?'
     patron += '<a href="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?'
