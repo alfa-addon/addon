@@ -32,10 +32,10 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://magnetpelis.com/'
+host = 'https://yestorrent.net/'
 host_torrent = host[:-1]
-domain = 'magnetpelis.com'
-channel = 'magnetpelis'
+domain = 'yestorrent.net'
+channel = 'yestorrent'
 categoria = channel.capitalize()
 
 __modo_grafico__ = config.get_setting('modo_grafico', channel)                  # TMDB?

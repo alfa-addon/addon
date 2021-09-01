@@ -24,6 +24,8 @@ from lib import generictools
 from channels import filtertools
 from channels import autoplay
 
+# Canal común con Cinetorrent, Magnetpelis, Pelispanda, Yestorrent
+
 
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
 list_language = list(IDIOMAS.values())
@@ -69,7 +71,8 @@ def mainlist(item):
                 url=host, thumbnail=thumb_genero, extra="peliculas"))
     itemlist.append(Item(channel=item.channel, title="    - por Año", action="anno", 
                 url=host, thumbnail=thumb_anno, extra="peliculas"))
-    itemlist.append(Item(channel=item.channel, title="    - por Calidad", action="calidad", 
+    if channel not in ['magnetpelis']:
+        itemlist.append(Item(channel=item.channel, title="    - por Calidad", action="calidad", 
                 url=host, thumbnail=thumb_calidad, extra="peliculas"))
     
     itemlist.append(Item(channel=item.channel, title="Series", action="submenu", 
@@ -124,7 +127,9 @@ def submenu(item):
         
     for scrapedurl, scrapedtitle in matches:
         if scrapertools.slugify(scrapedtitle) in item.extra:
-            item.url = scrapedurl + 'page/1'
+            item.url = scrapedurl
+            if not item.url.endswith('/'): item.url += '/'
+            item.url += 'page/1'
             return listado(item)
             
     return itemlist
@@ -135,9 +140,38 @@ def anno(item):
     from platformcode import platformtools
     
     itemlist = []
+    
+    patron = '(?i)<a\s*class="dropdown-toggle\s*header__nav-link"\s*href="#"\s*'
+    patron += 'role="button"\s*data-toggle="dropdown">[^<]*A.O\s*<\/a>\s*'
+    patron += '<ul\s*class="dropdown-menu\s*header__dropdown-menu">\s*(.*?)\s*<\/ul>\s*<\/li>'
+
+    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout,  s2=False, 
+                                          patron=patron, item=item, itemlist=[])    # Descargamos la página
+
+    #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
+    if not success or itemlist:                                                 # Si ERROR o lista de errores ...
+        return itemlist                                                         # ... Salimos
+
+    data = scrapertools.find_single_match(data, patron)
+    patron = '<li><a\s*href="([^"]+)"\s*target="[^"]*">([^<]+)\s*<\/a>\s*<\/li>'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    #logger.debug(patron)
+    #logger.debug(matches)
+    #logger.debug(data)
+
+    if not matches:
+        logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + 
+                        " / PATRON: " + patron + " / DATA: " + data)
+        itemlist.append(item.clone(action='', title=item.category + 
+                        ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  '
+                        + 'Reportar el error con el log'))
+        return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     year = platformtools.dialog_numeric(0, "Introduzca el Año de búsqueda", default="")
-    item.url = '%syears/%s/page/1/' % (host, year)
+    item.url = re.sub(r'years/\d+', 'years/%s' % year, matches[0][0])
+    if not item.url.endswith('/'): item.url += '/'
+    item.url += 'page/1'
     item.extra2 = 'anno' + str(year)
 
     return listado(item)
@@ -147,9 +181,9 @@ def genero(item):
     logger.info()
     itemlist = []
 
-    patron = '<a class="dropdown-toggle header__nav-link"\s*href="#"\s*role="button"'
-    patron += '\s*data-toggle="dropdown">Genero<\/a>\s*<ul class="dropdown-menu header__dropdown-menu">'
-    patron += '\s*(.*?)\s*<\/ul>\s*<\/li>'
+    patron = '(?i)<a\s*class="dropdown-toggle\s*header__nav-link"\s*href="#"\s*'
+    patron += 'role="button"\s*data-toggle="dropdown">[^<]*G.nero\s*<\/a>\s*'
+    patron += '<ul\s*class="dropdown-menu\s*header__dropdown-menu">\s*(.*?)\s*<\/ul>\s*<\/li>'
 
     data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout,  s2=False, 
                                           patron=patron, item=item, itemlist=[])    # Descargamos la página
@@ -175,7 +209,7 @@ def genero(item):
         return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     for scrapedurl, gen in matches:
-        itemlist.append(item.clone(action="listado", title=gen.capitalize(), url=scrapedurl + 'page/1/', 
+        itemlist.append(item.clone(action="listado", title=gen.capitalize(), url=scrapedurl + 'page/1', 
                         extra2='genero'))
 
     return itemlist
@@ -186,9 +220,9 @@ def calidad(item):
     logger.info()
     itemlist = []
 
-    patron = '<a class="dropdown-toggle header__nav-link"\s*href="#"\s*role="button"'
-    patron += '\s*data-toggle="dropdown">CALIDAD\s*<\/a>\s*<ul class="dropdown-menu header__dropdown-menu">'
-    patron += '\s*(.*?)\s*<\/ul>\s*<\/li>'
+    patron = '(?i)<a\s*class="dropdown-toggle\s*header__nav-link"\s*href="#"\s*'
+    patron += 'role="button"\s*data-toggle="dropdown">[^<]*calidad\s*<\/a>\s*'
+    patron += '<ul\s*class="dropdown-menu\s*header__dropdown-menu">\s*(.*?)\s*<\/ul>\s*<\/li>'
 
     data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout,  s2=False, 
                                           patron=patron, item=item, itemlist=[])    # Descargamos la página
@@ -214,7 +248,8 @@ def calidad(item):
         return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     for scrapedurl, cal in matches:
-        itemlist.append(item.clone(action="listado", title=cal.capitalize(), url=scrapedurl + 'page/1/', 
+        if cal not in ['HD', '720p']:
+            itemlist.append(item.clone(action="listado", title=cal.capitalize(), url=scrapedurl + 'page/1', 
                         extra2='calidad'))
 
     return itemlist
@@ -297,10 +332,11 @@ def listado(item):                                                              
                 return itemlist                                                 # Si no hay nada más, salimos directamente
         
         #Patrón para búsquedas, pelis y series
-        patron = '<div\s*class="[^"]+">\s*<div\s*class="card">\s*<a\s*href="([^"]+)"\s*'
-        patron += 'class="card__cover">\s*<img[^>]+src="([^"]+)"\s*alt="[^"]*">\s*'
+        patron = '<div\s*class="[^"]+">\s*<div\s*class="card">\s*<a\s*href="([^"]+)"'
+        patron += '\s*class="card__cover">\s*<img[^>]+src="([^"]*)"\s*alt="[^"]*"\s*\/*>\s*'
         patron += '<div\s*class="card__play">.*?<\/div>\s*<ul\s*class="card__list">\s*'
-        patron += '<li>([^<]+)<\/li>\s*<\/ul>\s*<\/a>\s*<div\s*class="card__content">\s*'
+        patron += '<li>([^<]+)<\/li>\s*<\/ul>\s*(?:<ul\s*class="card__list\s*right">\s*'
+        patron += '<li>(\w*)<\/li>[^"]*<\/ul>\s*)?<\/a>\s*<div\s*class="card__content">\s*'
         patron += '<h3\s*class="card__title"><a\s*href="[^"]+">([^<]+)<\/a><\/h3>'
         patron += '.*?<\/div>\s*<\/div>\s*<\/div>'
 
@@ -328,11 +364,19 @@ def listado(item):                                                              
                 break
             return itemlist                                                     #Salimos
 
-        #Buscamos la próxima página
+        # Actualizado la url por si ha habido redirecciones
+        if last_page == 99999:                                                  #Si es la primera pasada...
+            patron_canonical = '<link\s*rel="canonical"\s*href="([^"]+)"\s*\/*>'
+            if scrapertools.find_single_match(data, patron_canonical):
+                canonical = scrapertools.find_single_match(data, patron_canonical)
+                if not canonical.endswith('/'): canonical += '/'
+                item.url = canonical + 'page/1'
+        
+        # Buscamos la próxima página
         next_page_url = re.sub(r'page\/(\d+)', 'page/%s' % str(curr_page), item.url)
         #logger.debug('curr_page: ' + str(curr_page) + ' / last_page: ' + str(last_page))
         
-        #Buscamos la última página
+        # Buscamos la última página
         if last_page == 99999:                                                  #Si es el valor inicial, buscamos
             patron_last = '<ul\s*class="pagination[^"]+">.*?<li>\s*<a\s*class="page-numbers"\s*href="[^"]+">'
             patron_last += '(\d+)<\/a><\/li>\s*<li>\s*<a\s*class="next page-numbers"\s*href="[^"]+">»<\/a><\/li>\s*<\/ul>'
@@ -346,7 +390,7 @@ def listado(item):                                                              
             #logger.debug('curr_page: ' + str(curr_page) + ' / last_page: ' + str(last_page))
         
         #Empezamos el procesado de matches
-        for scrapedurl, scrapedthumb, scrapedquality, scrapedtitle in matches:
+        for scrapedurl, scrapedthumb, scrapedquality, scrapedlanguage, scrapedtitle in matches:
             cnt_match += 1
             
             title = scrapedtitle
@@ -370,9 +414,9 @@ def listado(item):                                                              
                 title_lista += [url_list]                                       #la añadimos a la lista de títulos
 
             # Si es una búsqueda por años, filtramos por tipo de contenido
-            if 'anno' in item.extra2 and item.extra == 'series' and '/serie' not in url:
+            if item.extra == 'series' and '/serie' not in url:
                 continue
-            elif 'anno' in item.extra2 and item.extra == 'peliculas' and '/serie' in url:
+            elif item.extra == 'peliculas' and '/serie' in url:
                 continue
             
             cnt_title += 1                                                      # Incrementamos el contador de entradas válidas
@@ -403,11 +447,14 @@ def listado(item):                                                              
             # Procesamos idiomas
             item_local.language = []                                            #creamos lista para los idiomas
             if '[Subs. integrados]' in scrapedquality or '(Sub Forzados)' in scrapedquality \
-                        or 'Sub' in scrapedquality:
+                        or 'Sub' in scrapedquality or 'ing' in scrapedlanguage.lower():
                 item_local.language = ['VOS']                                   # añadimos VOS
-            if 'castellano' in scrapedquality.lower() or ('español' in scrapedquality.lower() and not 'latino' in scrapedquality.lower()): 
+            if 'lat' in scrapedlanguage.lower():
+                item_local.language += ['LAT']                                  # añadimos LAT
+            if 'castellano' in scrapedquality.lower() or ('español' in scrapedquality.lower() \
+                        and not 'latino' in scrapedquality.lower()) or 'cas' in scrapedlanguage.lower(): 
                 item_local.language += ['CAST']                                 # añadimos CAST
-            if '[Dual' in title or 'dual' in scrapedquality.lower():
+            if '[Dual' in title or 'dual' in scrapedquality.lower() or 'dual' in scrapedlanguage.lower():
                 title = re.sub(r'(?i)\[dual.*?\]', '', title)
                 item_local.language += ['DUAL']                                 # añadimos DUAL
             if not item_local.language:
@@ -560,9 +607,9 @@ def findvideos(item):
         # Seleccionamos el bloque y buscamos los apartados
         data = scrapertools.find_single_match(data, patron)
 
-    patron = '<tr>(?:\s*<td>(\d+)<\/td>)?\s*<td>([^<]+)<\/td>\s*<td>([^<]+)<\/td>'
-    patron += '\s*<td\s*class=[^<]+<\/td>(?:\s*<td>([^<]+)<\/td>)?\s*<td\s*class=[^<]+<\/td>'
-    patron += '\s*<td>\s*<a\s*class="[^>]+href="([^"]+)"'
+    patron = '<tr>(?:\s*<td>(\d+)<\/td>)?\s*<td>([^<]+)<\/td>\s*<td>([^<]*)<\/td>\s*'
+    patron += '<td\s*class=[^<]+<\/td>(?:\s*<td>([^<]+)<\/td>)?(?:\s*<td\s*class=[^<]+<\/td>)?'
+    patron += '\s*<td\s*class=[^<]+<\/td>\s*<td>\s*<a\s*class="[^>]+href="([^"]+)"'
 
     if not item.armagedon:
         if not item.matches:
@@ -650,7 +697,7 @@ def findvideos(item):
             size = scrapedsize
         if not size and not item.videolibray_emergency_urls and not item_local.url.startswith('magnet:'):
             if not item.armagedon:
-                size = generictools.get_torrent_size(item_local.url, local_torr=local_torr) #Buscamos el tamaño en el .torrent desde la web
+                size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)     #Buscamos el tamaño en el .torrent
                 if 'ERROR' in size and item.emergency_urls and not item.videolibray_emergency_urls:
                     item_local.armagedon = True
                     try:                                                        # Restauramos la url
@@ -672,7 +719,8 @@ def findvideos(item):
             item_local.torrent_info += ' Magnet'
         if item_local.torrent_info:
             item_local.torrent_info = item_local.torrent_info.strip().strip(',')
-            item.torrent_info = item_local.torrent_info
+            if item.videolibray_emergency_urls:
+                item.torrent_info = item_local.torrent_info
             if not item.unify:
                 item_local.torrent_info = '[%s]' % item_local.torrent_info
    
@@ -711,18 +759,18 @@ def findvideos(item):
                         .replace("()", "").replace("(/)", "").replace("[/]", "")\
                         .replace("|", "").strip()
         
-        if not size or 'Magnet' in size:
+        if not item_local.torrent_info or 'Magnet' in item_local.torrent_info:
             item_local.alive = "??"                                             #Calidad del link sin verificar
-        elif 'ERROR' in size and 'Pincha' in size:
+        elif 'ERROR' in item_local.torrent_info and 'Pincha' in item_local.torrent_info:
             item_local.alive = "ok"                                             #link en error, CF challenge, Chrome disponible
-        elif 'ERROR' in size and 'Introduce' in size:
+        elif 'ERROR' in item_local.torrent_info and 'Introduce' in item_local.torrent_info:
             item_local.alive = "??"                                             #link en error, CF challenge, ruta de descarga no disponible
             item_local.channel = 'setting'
             item_local.action = 'setting_torrent'
             item_local.unify = False
             item_local.folder = False
             item_local.item_org = item.tourl()
-        elif 'ERROR' in size:
+        elif 'ERROR' in item_local.torrent_info:
             item_local.alive = "no"                                             #Calidad del link en error, CF challenge?
         else:
             item_local.alive = "ok"                                             #Calidad del link verificada
@@ -821,6 +869,7 @@ def episodios(item):
     # Si la series tiene solo una temporada, o se lista solo una temporada, guardamos la url y seguimos normalmente
     list_temp = []
     list_temp.append(item.url)
+    #logger.debug(list_temp)
 
     # Descarga las páginas
     for url in list_temp:                                                       # Recorre todas las temporadas encontradas
@@ -844,9 +893,9 @@ def episodios(item):
         
         for season_num, episodes in matches_temp:
 
-            patron = '<tr>(?:\s*<td>(\d+)<\/td>)?\s*<td>([^<]+)<\/td>\s*<td>([^<]+)<\/td>'
-            patron += '\s*<td\s*class=[^<]+<\/td>(?:\s*<td>([^<]+)<\/td>)?\s*<td\s*class=[^<]+<\/td>'
-            patron += '\s*<td>\s*<a\s*class="[^>]+href="([^"]+)"'
+            patron = '<tr>(?:\s*<td>(\d+)<\/td>)?\s*<td>([^<]+)<\/td>\s*<td>([^<]*)<\/td>\s*'
+            patron += '(?:<td>[^<]*<\/td>\s*)?<td\s*class=[^<]+<\/td>(?:\s*<td>([^<]+)<\/td>)?\s*'
+            patron += '<td\s*class=[^<]+<\/td>\s*<td>\s*<a\s*class="[^>]+href="([^"]+)"'
             
             matches = re.compile(patron, re.DOTALL).findall(episodes)
 
