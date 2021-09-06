@@ -127,9 +127,12 @@ def section(item):
         base_url = "%s/filtro/?year=%s"
 
     for elem in matches.find_all("li"):
+        gendata = elem.get('data-value', '')
         title = elem.text
-        url =  base_url % (item.url, elem["data-value"])
-        itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url))
+        url =  base_url % (item.url, gendata)
+
+        if gendata:
+            itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url))
 
     return itemlist
 
