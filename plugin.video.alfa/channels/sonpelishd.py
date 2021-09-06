@@ -141,7 +141,7 @@ def list_all(item):
         matches = soup.find_all("article")
     for elem in matches:
         url = elem.a['href']
-        thumbnail = elem.img['data-src']
+        thumbnail = elem.img['src']
         title = elem.img['alt']
         year = elem.find(class_='year')
         if year: year = year.text.strip()
