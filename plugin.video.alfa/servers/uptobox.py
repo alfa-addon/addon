@@ -97,13 +97,19 @@ def atob(s):
 def uptobox(url, data):
     video_urls = []
     post = ""
-    matches = scrapertools.find_multiple_matches(data, '<input type="hidden".*?name="([^"]+)".*?value="([^"]*)">')
+    matches = scrapertools.find_multiple_matches(data, """input name=["']([^"']+)["'] value=["']([^"]+)["'] type=["']hidden["']""")
     for inputname, inputvalue in matches:
         post += inputname + "=" + inputvalue + "&"
 
-    data = httptools.downloadpage(url, post=post[:-1]).data
-    media = scrapertools.find_single_match(data, '<a href="([^"]+)">\s*<span class="button_upload green">')
+    data = httptools.downloadpage(url, post=post[:-1], random_headers=True).data
+    media = scrapertools.find_multiple_matches(data, """<a href=["']([^"']+)["'] class=["']big-button-green.+?>""")
     # Solo es necesario codificar la ultima parte de la url
+
+    for m in media:
+        if "uptobox.com" in m:
+            media = m
+            break
+
     url_strip = urllib.quote(media.rsplit('/', 1)[1])
     media_url = media.rsplit('/', 1)[0] + "/" + url_strip
     video_urls.append([media_url[-4:] + " [uptobox]", media_url])
