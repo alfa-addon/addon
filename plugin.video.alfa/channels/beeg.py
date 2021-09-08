@@ -7,36 +7,25 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import re
 
-from core import jsontools as json
+# from core import jsontools as json
 from core import scrapertools
 from core.item import Item
 from platformcode import logger
 from core import httptools
 
 
-url_api = ""
 Host = "https://beeg.com"
 
-def get_api_url():
-    global url_api
-    data = httptools.downloadpage(Host).data
-    # version = re.compile('var beeg_version = ([\d]+)').findall(data)[0]
-    url_api = Host + "/api/v6/1593617312958" #+ version    # https://beeg.com/api/v6/1568386822920/  https://api.beeg.com/api/v6/1593617312958/index/main/0/pc
 
-get_api_url()
+url_api = "https://store.externulls.com"
 
 def mainlist(item):
     logger.info()
-    get_api_url()
     itemlist = []
-    itemlist.append(item.clone(action="videos", title="Útimos videos", url=url_api + "/index/main/0/pc",
-                         viewmode="movie"))
-    itemlist.append(item.clone(action="canal", title="Canal",
-                        url=url_api + "/channels"))
-    itemlist.append(item.clone(action="listcategorias", title="Categorias",
-                         url=url_api + "/index/main/0/pc", extra="nonpopular"))
-    itemlist.append(
-        Item(channel=item.channel, action="search", title="Buscar"))
+    itemlist.append(item.clone(action="lista", title="Útimos videos", url=url_api + "/facts/index?limit=48&offset=0"))
+    itemlist.append(item.clone(action="categorias", title="Canal", url= "https://store.externulls.com/tags/top"))
+    itemlist.append(item.clone(action="categorias", title="Categorias", url= "https://store.externulls.com/tags/top"))
+    # itemlist.append(item.clone(title="Buscar...", action="search"))
     return itemlist
 
 
@@ -54,25 +43,41 @@ def search(item, texto):
             logger.error("%s" % line)
         return []
 
-# falla el numero svid
 
-
-def videos(item):
+def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    JSONData = json.load(data)
-    for Video in JSONData["videos"]:
-        title = Video["title"]
-        canal = Video["ps_name"]
-        id = Video['svid']
-        segundos = Video["duration"]
-        th2= Video['thumbs']
-        end= scrapertools.find_single_match(str(th2),"'end': (\d+),")
-        image= scrapertools.find_single_match(str(th2),"'image': '([^']+)'")
-        pid= scrapertools.find_single_match(str(th2),"'pid': '([^']+)',")
-        start= scrapertools.find_single_match(str(th2),"'start': (\d+),")
+    data = httptools.downloadpage(item.url).json
+    for tag in data:
+        thumbnail = ""
+        id = tag["id"]
+        title = tag["tg_name"]
+        slug = tag["tg_slug"]
+        if tag.get("thumbs", ""):
+            th2 = tag["thumbs"]
+            thumbnail = "https://thumbs-015.externulls.com/tags/%s" %th2[0]
+        url = '%s/facts/tag?slug=%s&limit=48&offset=0' % (url_api, slug)
+        if "Canal" in item.title and thumbnail:
+            itemlist.append(item.clone(action="lista", title=title, url=url, thumbnail=thumbnail))
+        if "Categorias" in item.title and not thumbnail:
+            itemlist.append(item.clone(action="lista", title=title, url=url, thumbnail=thumbnail))
+            
+    return itemlist
 
+
+def lista(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).json
+    for Video in data:
+        id = Video['fc_file_id']
+        th2= Video["fc_facts"][0]['fc_thumbs']
+        segundos = Video["file"]["fl_duration"]
+        title = Video["file"]["stuff"]
+        if title.get("sf_name", ""):
+            title = title["sf_name"]
+        else:
+            title = id
         horas=int(old_div(segundos,3600))
         segundos-=horas*3600
         minutos=int(old_div(segundos,60))
@@ -85,48 +90,20 @@ def videos(item):
             duration = "%s:%s" % (minutos,segundos)
         else:
             duration = "%s:%s:%s" % (horas,minutos,segundos)
-
-        thumbnail = "http://img.beeg.com/264x198/4x3/%s" %image
-        url = '%s/video/%s?v=2&s=%s&e=%s&p=%s' % (url_api, id, start, end, pid)
-        title = "[COLOR yellow]%s[/COLOR] %s - %s" %( duration, canal, title)
+        thumbnail = "https://thumbs-015.externulls.com/videos/%s/%s.jpg" %(id, th2[0])
+        url = '%s/facts/file/%s' % (url_api, id)
+        title = "[COLOR yellow]%s[/COLOR] %s" %( duration, title)
         action = "play"
         if logger.info() == False:
             action = "findvideos"
         itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail, 
                              fanart=thumbnail, plot="",contentTitle=title, contentType="movie"))
     # Paginador
-    Actual = int(scrapertools.find_single_match(item.url, '/([0-9]+)/pc'))
-    if JSONData["pages"] - 1 > Actual:
-        next_page = item.url.replace("/" + str(Actual) + "/", "/" + str(Actual + 1) + "/")
-        itemlist.append(item.clone(action="videos", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page))
-    return itemlist
-
-
-def listcategorias(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    JSONData = json.load(data)
-    for Tag in JSONData["tags"]:
-        url = url_api + "/index/tag/0/pc?tag=%s" % Tag["tag"]
-        url = url.replace("%20", "-")
-        title = '%s (%s)' % (str(Tag["tag"]), str(Tag["videos"]))
-        itemlist.append(item.clone(action="videos", title=title, url=url, viewmode="movie", type="item"))
-    return itemlist
-
-
-def canal(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    JSONData = json.load(data)
-    for Tag in JSONData["channels"]:
-        canal = Tag["channel"]
-        url = url_api + "/index/channel/0/pc?channel=%s" % canal 
-        url = url.replace("%20", "-")
-        title = '%s (%s)' % (str(Tag["ps_name"]), str(Tag["videos"]))
-        itemlist.append(item.clone(action="videos", title=title, url=url, viewmode="movie", type="item"))
+    page = int(scrapertools.find_single_match(item.url, '&offset=([0-9]+)'))
+    next_page = (page+ 48)
+    if next_page:
+        next_page = re.sub(r"&offset=\d+", "&offset={0}".format(next_page), item.url)
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page))
     return itemlist
 
 
@@ -134,17 +111,11 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    JSONData = json.load(data)
-    for key in JSONData:
-        videourl = re.compile("([0-9]+p)", re.DOTALL).findall(key)
-        if videourl:
-            videourl = videourl[0]
-            if not JSONData[videourl] == None:
-                url = JSONData[videourl]
-                url = url.replace("{DATA_MARKERS}", "data=pc.ES")
-                if not url.startswith("https:"): url = "https:" + url
-                quality = videourl
-                itemlist.append(item.clone(action="play", title = quality, contentTitle = item.title, url=url))
+    patron = '"fl_cdn_(\d+)": "([^"]+)"'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for quality,url in matches:
+        url = "https://video.beeg.com/%s" %url
+        itemlist.append(item.clone(action="play", title = quality, contentTitle = item.title, url=url))
     return itemlist
 
 
@@ -152,16 +123,10 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    JSONData = json.load(data)
-    for key in JSONData:
-        videourl = re.compile("([0-9]+p)", re.DOTALL).findall(key)
-        if videourl:
-            videourl = videourl[0]
-            if not JSONData[videourl] == None:
-                url = JSONData[videourl]
-                url = url.replace("{DATA_MARKERS}", "data=pc.ES")
-                if not url.startswith("https:"): url = "https:" + url
-                quality = videourl
-                itemlist.append(["%s [%s]" % (quality, url[-4:]), url])
+    patron = '"fl_cdn_(\d+)": "([^"]+)"'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for quality,url in matches:
+        url = "https://video.beeg.com/%s" %url
+        itemlist.append(['.mp4 %s' %quality, url])
     itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return itemlist
