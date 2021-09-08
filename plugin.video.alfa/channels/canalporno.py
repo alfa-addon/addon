@@ -15,7 +15,7 @@ from core.item import Item
 from core import scrapertools
 from platformcode import logger
 
-host = "http://www.canalporno.com"
+host = "https://www.canalporno.com"
 
 
 def mainlist(item):

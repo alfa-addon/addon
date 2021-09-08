@@ -19,6 +19,7 @@ from channelselector import get_thumb
 from bs4 import BeautifulSoup
 from channels import filtertools
 from channels import autoplay
+import datetime
 
 
 list_language = ["LAT"]
@@ -27,6 +28,7 @@ list_quality = []
 list_servers = ["streampe", "fembed", "jawcloud"]
 
 host = "https://allpeliculas.la/"
+this_year = datetime.date.today().year
 
 
 def create_soup(url, referer=None, unescape=False):
@@ -52,8 +54,8 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas", url=host + "peliculas-populares", action="list_all",
-                         thumbnail=get_thumb("more-watched", auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Estrenos", url=host + "year_pelicula/%s/" % this_year,
+                         action="list_all", thumbnail=get_thumb("premieres", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Todas", url=host + "peliculas", action="list_all",
                          thumbnail=get_thumb("all", auto=True)))
@@ -61,7 +63,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Generos", url=host + "peliculas", action="section",
                          thumbnail=get_thumb("all", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", url=host+ "peliculas/?type=post&search=",
+    itemlist.append(Item(channel=item.channel, title="Buscar...", url=host+ "?s=",
                          action="search", thumbnail=get_thumb("search", auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
@@ -73,29 +75,25 @@ def list_all(item):
     logger.info()
 
     itemlist = list()
-    #for p in range(2):
-    soup = create_soup(item.url)
-    matches = soup.find("div", class_="container-fluid mt-5 mr-0 px-lg-5")
 
-    for elem in matches.find_all("div", class_="col-xl-3 col-md-6 col-12 mb-4 position-relative movie-item"):
-        url = elem.a["href"]
-        title = elem.img["alt"]
+    soup = create_soup(item.url)
+    matches = soup.find("ul", class_="cc-list")
+
+    for elem in matches.find_all("article"):
+        url = elem.find("a", class_="btn")["href"]
+
+        full_title = elem.h2.text
+        title, year = scrapertools.find_single_match(full_title, "(.*) \((\d{4})\)")
         thumb = elem.img["src"]
-        year = elem.find("div", class_="rounded-10 px-3 py-2 float-right dark-bg font-size-14 text-inversed").text.strip()
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos", thumbnail=thumb,
                              contentTitle=title, infoLabels={"year": year}))
-
-        # try:
-        #     item.url = soup.find("a", class_="next page-numbers")["href"]
-        # except:
-        #     break
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
     # Pagination
     try:
-        next_page = soup.find("a", class_="next page-numbers")["href"]
+        next_page = soup.find("a", class_="next")["href"]
         itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
     except:
         pass
@@ -107,42 +105,15 @@ def section(item):
     logger.info()
 
     itemlist = list()
-
-    soup = create_soup(item.url).find("div", class_="filter-options-mob")
-    matches = soup.find_all("label", class_=re.compile("dropdown-item"))
+    matches = create_soup(host).find_all("li", class_="inline-flex")
 
     for elem in matches:
-
-        value = elem.find("input", class_="filter-radio")["value"]
-        title = elem["title"]
-        url = "%s?type=post&genres[]=%s&search" % (item.url, value)
+        title = elem.a.text
+        url = elem.a["href"]
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
 
     return itemlist
-
-
-def make_link(item, link_data):
-    logger.info()
-
-    srvs = {"play": "zplayer", "stp": "streamtape"}
-
-    if hasattr(link_data, "a"):
-        id = link_data.a["data-id"]
-        server = link_data.a["data-server"]
-    else:
-        id = link_data.span["data-id"]
-        server = link_data.span["data-server"]
-
-    srv = server
-    if server.lower() in srvs:
-        srv = srvs[server.lower()]
-
-    url = "%swp-json/get/player?id=%s&server=%s" % (host, id, server)
-    new_item = Item(channel=item.channel, title=server.capitalize(), url=url, action="play", server=srv.capitalize(),
-                    language="LAT", infoLabels=item.infoLabels)
-
-    return new_item
 
 
 def findvideos(item):
@@ -151,17 +122,14 @@ def findvideos(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find("div", class_="episodes-container position-relative")
-    if not matches:
-        matches = soup.find("div", class_="video-player my-5 my-xl-0")
-        new_item = make_link(item, matches)
-        if new_item.title.lower() not in ['netu']:
-            itemlist.append(new_item)
-    else:
-        for elem in matches.find_all("li"):
-            new_item = make_link(item, elem)
-            if new_item.title.lower() not in ['netu']:
-                itemlist.append(new_item)
+    matches = soup.find("div", class_="players").find_all("iframe")
+
+    for elem in matches:
+        url = elem["data-src"]
+        itemlist.append(Item(channel=item.channel, title="%s", url=url, action="play",
+                        language="LAT", infoLabels=item.infoLabels))
+
+    itemlist = servertools.get_servers_itemlist(itemlist)
 
     # Requerido para FilterTools
 
@@ -172,20 +140,6 @@ def findvideos(item):
     autoplay.start(itemlist, item)
 
     return itemlist
-
-
-def play(item):
-    logger.info()
-
-    itemlist = list()
-
-    data = httptools.downloadpage(item.url).json
-    itemlist.append(item.clone(url=data["embed_player"]))
-
-    servertools.get_servers_itemlist(itemlist)
-
-    return itemlist
-
 
 def search(item, texto):
     logger.info()
@@ -209,7 +163,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas','latino']:
-            item.url = host + "peliculas"
+            item.url = host + "year_pelicula/%s/" % this_year
             itemlist = list_all(item)
 
             if itemlist[-1].action == "list_all":

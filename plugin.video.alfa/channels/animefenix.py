@@ -86,7 +86,8 @@ def new_episodes(item):
         title = elem.img["alt"]
         thumb = elem.img["src"]
         url = elem.a["href"]
-        name = elem.find("div", class_="overtitle").text
+        # name = elem.find("div", class_="overtitle").text
+        name = title
         itemlist.append(Item(channel=item.channel, title=title, thumbnail=thumb, url=url, action="findvideos",
                              contentSerieName=name))
 
