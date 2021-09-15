@@ -14,7 +14,6 @@
   ],
   "force_unify": true,
   "settings": [
-
     {
       "id": "include_in_global_search",
       "type": "bool",

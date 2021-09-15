@@ -4,7 +4,7 @@
   "active": true,
   "adult": false,
   "language": ["vos", "lat"],
-  "thumbnail": "https://comamosramen.com/manifest/icon-512x512.png"
+  "thumbnail": "https://comamosramen.com/manifest/icon-512x512.png",
   "banner": "https://comamosramen.com/banner-navidad.jpeg",
   "fanart": "https://comamosramen.com/login-bg.png",
   "categories": [
@@ -37,5 +37,5 @@
       "enabled": true,
       "visible": true
     }
-  ],
+  ]
 }
