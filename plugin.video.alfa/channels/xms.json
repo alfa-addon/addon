@@ -4,13 +4,13 @@
   "active": false,
   "adult": true,
   "language": ["*"],
-  "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/xthearebg.jpg",
   "thumbnail": "https://i.postimg.cc/wB0NsMTX/xms.png",
   "banner": "https://i.postimg.cc/c6yh5C3K/xmsbn.png",
-   "categories": [
-   "adult"
- ],
- "settings": [
+  "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/xthearebg.jpg",
+  "categories": [
+    "adult"
+  ],
+  "settings": [
     {
       "id": "modo_grafico",
       "type": "bool",

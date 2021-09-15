@@ -1,17 +1,18 @@
 {
   "id": "tioanime",
   "name": "Tio Anime",
-  "force_unify": true,
-  "thumbnail":"https://tioanime.com/assets/img/logo-dark.png",
-  "banner":"",
   "active": true,
   "adult": false,
   "language": [],
-  "version": 1,
+  "thumbnail":"https://tioanime.com/assets/img/logo-dark.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "anime",
     "vos"
   ],
+  "force_unify": true,
+  "version": 1,
   "settings": [
     {
       "id": "include_in_global_search",
@@ -40,6 +41,6 @@
       "default": true,
       "enabled": true,
       "visible": true
-    }]
-
+    }
+  ]
 }

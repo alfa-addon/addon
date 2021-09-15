@@ -1,16 +1,17 @@
 {
   "id": "veranime",
   "name": "VerAnime",
-  "force_unify": false,
-  "thumbnail":"https://i.imgur.com/1QaWK0X.png",
-  "banner":"",
   "active": true,
   "adult": false,
   "language": [],
-  "version": 1,
+  "thumbnail":"https://i.imgur.com/1QaWK0X.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "anime"
   ],
+  "force_unify": false,
+  "version": 1,
   "settings": [
     {
       "id": "filter_languages",
