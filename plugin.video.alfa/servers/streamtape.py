@@ -16,10 +16,8 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data
+    data = httptools.downloadpage(page_url, referer=page_url).data
 
-    referer = {"Referer": page_url}
-
-    data = httptools.downloadpage(page_url, headers=referer).data
     if "Video not found" in data:
         return False, "[streamtape] El archivo no existe o ha sido borrado"
 
@@ -30,8 +28,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
 
     video_urls = []
-    pattern = """getElementById\('vide\w+link'\).innerHTML = "([^"]+)" .* \('([^']+)'\)(.substring\(\d+\))"""
+    pattern = """getElementById\('\w+link'\).innerHTML = "[^"]+" .* \('.+?/([^']+)'\)"""
     url_data = scrapertools.find_single_match(data, pattern)
-    url = "https:" + url_data[0].strip() + url_data[1][int(scrapertools.find_single_match(url_data[2], "\d+")):]
+    url = "https://streamtape.com/" + url_data + "&stream=1"
     video_urls.append(['MP4 [streamtape]', url + "|User-Agent=%s" % httptools.get_user_agent()])
+
     return video_urls

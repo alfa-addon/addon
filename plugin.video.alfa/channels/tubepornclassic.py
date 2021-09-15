@@ -29,7 +29,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Mas vistos" , action="lista", url=url_api + "/str/most-viewed/60/..1.all..day.json"))
     itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=url_api + "/str/top-rated/60/..1.all..day.json"))
     itemlist.append(item.clone(title="PornStar" , action="catalogo", url=host + "/api/json/models/86400/str/filt........../most-popular/65/1.json"))
-    itemlist.append(item.clone(title="Categorias" , action="categoria", url=host + "/api/json/categories/14400/all.json"))
+    itemlist.append(item.clone(title="Categorias" , action="categoria", url=host + "/api/json/categories/14400/str.all.en.json"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 

@@ -194,7 +194,7 @@ def marshal_check():
         marshal_modules = ['lib/alfaresolver_py3', 'core/proxytools_py3']
         for module in marshal_modules:
             path = filetools.join(ADDON_PATH, filetools.dirname(module))
-            path_list = filetools.listdir(path)
+            path_list = sorted(filetools.listdir(path))
             library = filetools.dirname(module).rstrip('/')
             module_name = filetools.basename(module)
             for alt_module in path_list:

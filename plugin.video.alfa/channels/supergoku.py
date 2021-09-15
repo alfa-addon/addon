@@ -628,9 +628,9 @@ def seasons(item, add_to_videolibrary = False):
                 infoLabels['premiered'] = infoLabels['last_air_date']
 
             if not infoLabels['plot']:
-                plot = str(soup.find('div', id='info').find('div', class_='wp-content').p.contents[0])
+                plot = soup.find('div', id='info').find('div', class_='wp-content')
                 if plot:
-                    infoLabels['plot'] = plot
+                    infoLabels['plot'] = "\n".join([x.text for x in plot.find_all('p')])
 
             # --- Si buscamos nº de temporada y es película, devolverá la cadena 'PELI' en vez de número --- #
             if 'PELI' in seasontitle:
