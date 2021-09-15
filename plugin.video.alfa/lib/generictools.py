@@ -3137,8 +3137,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     if not _url: continue
                     _url_ = _url
                     
+                    url_host = scrapertools.find_single_match(_url_, patron_host)
                     if url_org == '*':                                          # Si se quiere cambiar desde CUALQUIER url ...
-                        url_host = scrapertools.find_single_match(_url_, patron_host)
                         if url_host: 
                             _url_ = _url_.replace(url_host, url_des)    # Reemplazamos el dominio de actual por el de destino
                     elif url_des.startswith('http'):                            # Si se quiere cambiar desde una URL específica ...
@@ -3150,6 +3150,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     else:                                                       # Si se quiere cambiar desde un DOMINIO ...
                         if url_host: _url_ = _url_.replace(url_org, url_des)    #reemplazamos una parte del dominio
                     
+                    if not _url_.endswith('/'):
+                        _url_ += '/'
                     if x == 0:
                         url_total = _url_
                         if item.url:
