@@ -33,14 +33,14 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host_list = ['https://grantorrent.nl/']
+host_list = ['https://www.grantorrent.ch/']
 channel = 'grantorrent'
 categoria = channel.capitalize()
 host_index = config.get_setting('choose_domain', channel)
 host = host_list[host_index]
 host_emergency = False
 #domain_alt = host_list[1][-6:]
-host_torrent = 'https://files.grantorrent.nl'
+host_torrent = 'https://files.grantorrent.ch'
 movies_sufix = ''
 series_sufix = 'series/'
 
