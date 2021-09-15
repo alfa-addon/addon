@@ -84,8 +84,27 @@ def update(path, p_dialog, i, t, serie, overwrite):
                     serie.show = serie.library_filter_show.get(serie.channel, serie.contentSerieName)
 
                 obj = __import__('channels.%s' % serie.channel, fromlist=["channels.%s" % serie.channel])
-                itemlist = getattr(obj, 'episodios')(serie)                     #... se procesa Episodios para ese canal
 
+                try:
+                    if obj.host and isinstance(obj.host, str):
+                        channel_host = obj.host
+                except:
+                    channel_host = ''
+                if channel_host and (not serie.url.startswith(channel_host) or not serie.library_urls[serie.channel].startswith(channel_host)):
+                    if generictools.verify_channel(nom_canal) != 'newpct1':
+                        logger.debug("vl channel: %s" % channel)
+                        logger.debug("vl url: %s" % serie.library_urls[serie.channel])
+                        logger.debug("cambiando dominio....")
+                        import re
+                        if serie.url: serie.url = re.sub("(https?:\/\/.+?\/)", channel_host, serie.url)
+                        serie.library_urls[serie.channel] = re.sub("(https?:\/\/.+?\/)", channel_host, serie.library_urls[serie.channel])
+                        logger.debug("serie: %s" % serie.library_urls[serie.channel])
+                        if serie.url_tvshow: 
+                            serie.url_tvshow = re.sub("(https?:\/\/.+?\/)", channel_host, serie.url_tvshow)
+                            logger.debug("serie: %s" % serie.url_tvshow)
+                
+                itemlist = getattr(obj, 'episodios')(serie)                     #... se procesa Episodios para ese canal
+                
                 try:
                     if int(overwrite_back) == 3:
                         # Sobrescribir todos los archivos (tvshow.nfo, 1x01.nfo, 1x01 [canal].json, 1x01.strm, etc...)
