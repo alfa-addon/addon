@@ -1,20 +1,21 @@
 {
-    "id": "zonatorrent",
-    "name": "ZonaTorrent",
-    "active": true,
-    "adult": false,
-    "language": ["cast", "lat"],
-    "banner": "",
-    "thumbnail": "https://i.postimg.cc/DShGBR8v/zonatorrent.png",
-    "version": 1,
-    "categories": [
-      "torrent",
-      "movie",
-      "tvshow",
-      "vos",
-      "direct"
-    ],
-    "settings": [
+  "id": "zonatorrent",
+  "name": "ZonaTorrent",
+  "active": true,
+  "adult": false,
+  "language": ["cast", "lat"],
+  "thumbnail": "https://i.postimg.cc/DShGBR8v/zonatorrent.png",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+    "torrent",
+    "movie",
+    "tvshow",
+    "vos",
+    "direct"
+  ],
+  "version": 1,
+  "settings": [
     {
       "id": "include_in_global_search",
       "type": "bool",
@@ -130,5 +131,5 @@
       "enabled": true,
       "visible": true
     }
-    ]
+  ]
 }
