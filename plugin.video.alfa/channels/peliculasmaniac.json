@@ -6,11 +6,12 @@
   "language": ["lat","cast"],
   "thumbnail": "http://peliculasmaniac.com/img/logo.png",
   "banner": "",
-  "version": 1,
+  "fanart": "",
   "categories": [
     "movie",
     "vos"
   ],
+  "version": 1,
   "settings": [
     {
       "id": "include_in_global_search",

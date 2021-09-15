@@ -1,16 +1,17 @@
 {
   "id": "pelisflix",
   "name": "Pelisflix",
-  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://pelisflix.io/wp-content/uploads/2020/04/cropped-abc5d335434b5b03a7d1c54f40ac3425.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "filter_languages",

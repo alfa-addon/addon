@@ -3,21 +3,16 @@
 	"name": "Playdede",
 	"active": true,
 	"adult": false,
-	"language": [
-		"cast",
-		"lat",
-		"vose",
-		"vos"
-	],
-	"login_required": true,
+	"language": ["cast", "lat", "vose", "vos"],
 	"thumbnail": "https://playdede.com/assets/image/logo.png",
-	"fanart": "https://i.imgur.com/A1AZwk6.jpg",
 	"banner": "",
+	"fanart": "https://i.imgur.com/A1AZwk6.jpg",
 	"categories": [
 		"anime",
 		"movie",
 		"tvshow"
 	],
+	"login_required": true,
 	"settings": [
 		{
 			"id": "user",
@@ -40,7 +35,7 @@
 			"label": "Mostrar idiomas en titulos",
 			"default": false,
 			"enabled": false,
-			"visible": true
+			"visible": false
 		},
 		{
 			"id": "filter_languages",

@@ -1,18 +1,19 @@
 {
   "id": "peliserieslive",
   "name": "Peliserieslive",
-  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://peliseries.live/img/logopelis.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow",
     "anime",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "filter_languages",

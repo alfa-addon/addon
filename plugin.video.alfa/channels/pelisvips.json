@@ -5,6 +5,8 @@
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "http://pelisvips.com/wp-content/uploads/2019/02/PV2.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "direct",
