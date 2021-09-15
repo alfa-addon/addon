@@ -1,17 +1,18 @@
 {
   "id": "mobidy",
   "name": "mobidy",
-  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://movidy.mobi/storage/branding_media/aZFgoaNgIt6a3YIIr3fv40CsjEsdpzyQSFDjI19d.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "filter_languages",

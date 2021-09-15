@@ -4,9 +4,13 @@
 	"active": true,
 	"adult": true,
 	"language": ["vos"],
-	"fanart": "https://hentaila.com/uploads/fondos/13.jpg",
 	"thumbnail": "https://hentaila.com/assets/img/media.webp",
-	"categories": ["adult", "vos"],
+	"banner": "",
+	"fanart": "https://hentaila.com/uploads/fondos/13.jpg",
+	"categories": [
+		"adult",
+		"vos"
+	],
 	"settings": [
 		{
 			"id": "include_in_global_search",

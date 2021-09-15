@@ -1,16 +1,17 @@
 {
   "id": "mundodonghua",
   "name": "Mundo Donghua",
-  "thumbnail":"https://www.mundodonghua.com/images/logo-md.png",
-  "banner":"",
   "active": true,
   "adult": false,
   "language": [],
-  "version": 1,
+  "thumbnail": "https://www.mundodonghua.com/images/logo-md.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "anime",
     "vos"
   ],
+  "version": 1,
   "settings": [
     {
       "id": "include_in_global_search",
