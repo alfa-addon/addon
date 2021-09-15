@@ -1,15 +1,16 @@
 {
-"id": "clasicotv",
+  "id": "clasicotv",
   "name": "Clasico TV",
-  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://i.postimg.cc/dQWWWSYj/clasicotv.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "tvshow"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

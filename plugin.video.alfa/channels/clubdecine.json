@@ -1,16 +1,17 @@
 {
   "id": "clubdecine",
   "name": "Club De Cine",
-  "force_unify": true,
-  "thumbnail":"https://i.postimg.cc/05JfQNw9/clubdecine.png",
-  "banner":"",
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
+  "thumbnail":"https://i.postimg.cc/05JfQNw9/clubdecine.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "filter_languages",

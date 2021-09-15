@@ -6,8 +6,11 @@
   "language": ["vos"],
   "thumbnail": "https://i.postimg.cc/RJQsxbWB/cinehindi.png",
   "banner": "http://i.imgur.com/cau9TVe.png",
+  "fanart": "",
   "categories": [
     "movie",
     "vos"
+  ],
+  "settings": [
   ]
 }

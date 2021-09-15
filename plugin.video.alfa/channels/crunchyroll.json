@@ -1,10 +1,12 @@
 {
   "id": "crunchyroll",
   "name": "Crunchyroll",
-  "language": ["cast", "lat"],
   "active": true,
   "adult": false,
+  "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/O49fDS1.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "anime",
     "tvshow"
@@ -82,6 +84,14 @@
         "Perfil 2",
         "Perfil 1"
       ]
-    }
+    },
+    {
+			"id": "include_in_global_search",
+			"type": "bool",
+			"label": "Incluir en busqueda global",
+			"default": false,
+			"enabled": true,
+			"visible": true
+		}
   ]
 }

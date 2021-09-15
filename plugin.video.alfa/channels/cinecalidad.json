@@ -1,17 +1,18 @@
 {
   "id": "cinecalidad",
   "name": "CineCalidad",
-  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://s9.postimg.cc/58xyblsvj/cinecalidad.png",
   "banner": "https://s32.postimg.cc/kihkdpx1x/banner_cinecalidad.png",
+  "fanart": "",
   "categories": [
     "movie",
     "direct",
     "torrent"
   ],
+  "force_unify": true,
   "settings": [
 
     {
