@@ -5,6 +5,8 @@
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://i.postimg.cc/873qtwTC/cinetorrent.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "torrent",
     "movie",

@@ -3,14 +3,15 @@
   "name": "movidy",
   "active": false,
   "adult": false,
-  "force_unify": true,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.imgur.com/Q8CJ6Wc.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

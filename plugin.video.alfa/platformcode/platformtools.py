@@ -660,6 +660,12 @@ def set_infolabels(listitem, item, player=False):
                         infoLabels_kodi.update({infoLabels_dict[label_tag]: item.infoLabels[label_tag]})
                 except:
                     continue
+
+            # HACK: Arreglo para 'Invalid media type "list"'
+            # TODO: Investigar por qué no se puede arreglar antes
+            if infoLabels_kodi['mediatype'] == 'list':
+                infoLabels_kodi['mediatype'] = 'video'
+
             listitem.setInfo("video", infoLabels_kodi)
 
         except:

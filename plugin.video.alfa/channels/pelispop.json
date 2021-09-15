@@ -1,17 +1,18 @@
 {
   "id": "pelispop",
   "name": "PelisPop",
-  "force_unify": true,
-  "language": ["lat"],
   "active": true,
   "adult": false,
+  "language": ["lat"],
   "thumbnail": "https://pelispop.com/wp-content/uploads/2019/09/logo-pelispop.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

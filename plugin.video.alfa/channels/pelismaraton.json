@@ -1,16 +1,17 @@
 {
   "id": "pelismaraton",
   "name": "PelisMaraton",
-  "force_unify": true,
-  "language": ["lat"],
   "active": true,
   "adult": false,
+  "language": ["lat"],
   "thumbnail": "https://pelismaraton.com//images/pelismaraton.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

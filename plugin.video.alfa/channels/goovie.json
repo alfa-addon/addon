@@ -1,11 +1,12 @@
 {
-"id": "goovie",
+  "id": "goovie",
   "name": "Goovie",
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://s15.postimg.cc/n9wp4nnzv/goovie.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow"

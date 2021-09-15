@@ -2,15 +2,15 @@
   "id": "cine24h",
   "name": "Cine24H",
   "active": true,
-  "force_unify": true,
   "adult": false,
   "language": ["lat", "cast", "vose"],
-  "fanart": "https://cine24h.net/wp-content/uploads/2018/10/background.png",
   "thumbnail": "https://i.imgur.com/GiMfAkC.png",
   "banner": "",
+  "fanart": "https://cine24h.net/wp-content/uploads/2018/10/background.png",
   "categories": [
     "movie"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "host_lang",

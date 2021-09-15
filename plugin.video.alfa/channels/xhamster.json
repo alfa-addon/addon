@@ -4,8 +4,9 @@
   "active": true,
   "adult": true,
   "language": ["*"],
-  "banner": "",
   "thumbnail": "https://i.postimg.cc/V0NGrdPh/xhamster.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "adult"
   ],

@@ -2,14 +2,15 @@
   "id": "pelisforte",
   "name": "PelisForte",
   "active": true,
-  "force_unify": true,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://i.postimg.cc/rmc1Dxj3/pelisforte.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

@@ -5,6 +5,8 @@
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.postimg.cc/t7GcMYW9/mejortorrent.jpg",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "torrent",
     "movie",
@@ -21,7 +23,7 @@
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "mejortorrento.net",
+        "mejortorrento.info",
         "mejortorrent.one"
       ]
     },{

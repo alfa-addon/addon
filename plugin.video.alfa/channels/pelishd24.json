@@ -3,15 +3,15 @@
   "name": "PelisHD24",
   "active": true,
   "adult": false,
-  "force_unify": true,
   "language": ["lat", "cast"],
-  "fanart": "https://pelishd24.com/wp-content/uploads/2018/11/background.png",
   "thumbnail": "https://pelishd24.com/wp-content/uploads/2018/07/pelishd24.2.png",
   "banner": "",
+  "fanart": "https://pelishd24.com/wp-content/uploads/2018/11/background.png",
   "categories": [
     "movie",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "filter_languages",

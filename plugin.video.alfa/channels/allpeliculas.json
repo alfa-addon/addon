@@ -1,16 +1,17 @@
 {
   "id": "allpeliculas",
   "name": "Allpeliculas",
-  "force_unify": true,
-  "language": ["lat"],
   "active": true,
   "adult": false,
+  "language": ["lat"],
   "thumbnail": "https://allpeliculas.la/wp-content/uploads/2020/03/Logo22.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

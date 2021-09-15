@@ -1,16 +1,17 @@
 {
   "id": "inkapelis",
   "name": "InkaPelis",
-  "force_unify": true,
-  "language": ["lat"],
   "active": true,
   "adult": false,
+  "language": ["lat"],
   "thumbnail": "https://i.postimg.cc/fTVV35zr/inkapelis.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

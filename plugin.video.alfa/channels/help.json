@@ -3,5 +3,12 @@
   "name": "Ayuda",
   "active": false,
   "adult": false,
-  "language": ["*"]
+  "language": ["*"],
+  "thumbnail": "",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+  ],
+  "settings": [
+  ]
 }

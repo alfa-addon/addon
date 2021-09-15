@@ -1,16 +1,17 @@
 {
   "id": "peliculasflix",
   "name": "peliculasflix",
-  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://peliculasflix.co/wp-content/uploads/2020/07/logo-peliculasflix.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "filter_languages",
@@ -28,5 +29,3 @@
     }
   ]
 }
-
-

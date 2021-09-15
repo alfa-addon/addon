@@ -1,16 +1,17 @@
 {
   "id": "animefenix",
   "name": "AnimeFenix",
-  "thumbnail":"https://www.animefenix.com/themes/animefenix-frans185/images/AveFenix.png",
-  "banner":"",
   "active": true,
   "adult": false,
   "language": [],
-  "version": 1,
+  "thumbnail":"https://www.animefenix.com/themes/animefenix-frans185/images/AveFenix.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "anime",
     "vos"
   ],
+  "version": 1,
   "settings": [
     {
       "id": "include_in_global_search",
@@ -39,6 +40,6 @@
       "default": true,
       "enabled": true,
       "visible": true
-    }]
-
+    }
+  ]
 }

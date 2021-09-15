@@ -1,17 +1,18 @@
 {
   "id": "kindor",
   "name": "kindor",
-  "force_unify": true,
-  "language": ["lat", "cast"],
   "active": true,
   "adult": false,
+  "language": ["lat", "cast"],
   "thumbnail": "https://i.postimg.cc/cH3jPtqW/kindor.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",
