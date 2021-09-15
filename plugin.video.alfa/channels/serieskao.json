@@ -1,17 +1,18 @@
 {
-"id": "serieskao",
+  "id": "serieskao",
   "name": "SeriesKao",
   "active": true,
-  "force_unify": true,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://serieskao.tv/wp-content/uploads/2020/08/logotipo.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

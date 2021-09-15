@@ -1,11 +1,12 @@
 {
   "id": "simpsons-latino",
   "name": "Simpsons-Latino",
-  "thumbnail":"https://simpsons-latino.com/wp-content/themes/vizer/assets/img/logo.png",
-  "banner":"",
   "active": false,
   "adult": false,
   "language": ["lat"],
+  "thumbnail":"https://simpsons-latino.com/wp-content/themes/vizer/assets/img/logo.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "tvshow"
   ],

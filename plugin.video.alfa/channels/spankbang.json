@@ -1,5 +1,15 @@
 {
+  "id": "spankbang",
+  "name": "spankbang",
   "active": true,
+  "adult": true,
+  "language": [],
+  "thumbnail": "https://assets.sb-cd.com/static/desktop/Images/logo_v5@2x.png",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+    "adult"
+  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -10,8 +20,6 @@
     ]
   },
   "free": true,
-  "id": "spankbang",
-  "name": "spankbang",
   "settings": [
     {
       "default": false,
@@ -38,5 +46,4 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://assets.sb-cd.com/static/desktop/Images/logo_v5@2x.png"
 }
