@@ -38,8 +38,8 @@
 			"id": "show_langs",
 			"type": "bool",
 			"label": "Mostrar idiomas en titulos",
-			"default": true,
-			"enabled": true,
+			"default": false,
+			"enabled": false,
 			"visible": true
 		},
 		{
@@ -47,8 +47,8 @@
 			"type": "list",
 			"label": "Mostrar enlaces en idioma...",
 			"default": 0,
-			"enabled": true,
-			"visible": true,
+			"enabled": false,
+			"visible": false,
 			"lvalues": [
 				"No filtrar",
 				"CAST",
