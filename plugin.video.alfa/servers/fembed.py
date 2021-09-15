@@ -34,5 +34,11 @@ def get_video_url(page_url, user="", password="", video_password=""):
     except:
         subtitle = ''
     for url in data["data"]:
-        video_urls.append([url["label"] + " [Fembed]", url["file"],0, subtitle])
+        try:
+            from platformcode import config
+            if config.get_platform(True)['num_version'] >= 19.0:
+                url["file"] = url["file"].replace('https', 'http')
+        except:
+            pass
+        video_urls.append([url["label"] + " [Fembed]", url["file"], 0, subtitle])
     return video_urls
