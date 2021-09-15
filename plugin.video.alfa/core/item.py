@@ -13,10 +13,11 @@ if PY3:
     #from future import standard_library
     #standard_library.install_aliases()
     import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
-    from html.parser import HTMLParser
+    from html.parser import unescape
 else:
     import urllib                                               # Usamos el nativo de PY2 que es más rápido
     from HTMLParser import HTMLParser
+    unescape = HTMLParser().unescape
 
 import base64
 import copy
@@ -454,7 +455,7 @@ class Item(object):
         """
         try:
             unicode_title = unicode(value, "utf8", "ignore")
-            return HTMLParser().unescape(unicode_title).encode("utf8")
+            return unescape(unicode_title).encode("utf8")
         except:
             if PY3 and isinstance(value, bytes):
                 value = value.decode("utf8")
