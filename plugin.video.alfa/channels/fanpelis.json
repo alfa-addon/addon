@@ -1,16 +1,17 @@
 {
   "id": "fanpelis",
   "name":"Fanpelis",
-  "thumbnail":"https://i.postimg.cc/KjrjvwQS/fanpelis.png",
-  "banner":"",
   "active": true,
   "adult": false,
   "language": ["lat"],
-  "version": 1,
+  "thumbnail":"https://i.postimg.cc/KjrjvwQS/fanpelis.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow"
   ],
+  "version": 1,
   "settings": [
     {
       "id": "include_in_newest_peliculas",

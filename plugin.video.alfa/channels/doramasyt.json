@@ -1,16 +1,17 @@
 {
   "id": "doramasyt",
   "name": "DoramasYT",
-  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://www.doramasyt.com/assets/img/logo.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "tvshow",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

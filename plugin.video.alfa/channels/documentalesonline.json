@@ -5,6 +5,8 @@
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/fsrnC4m.jpg",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "documentary"
   ],

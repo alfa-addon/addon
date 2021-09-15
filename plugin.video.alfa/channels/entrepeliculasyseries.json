@@ -1,17 +1,18 @@
 {
   "id": "entrepeliculasyseries",
   "name": "EntrePeliculasySeries",
-  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://www.entrepeliculasyseries.com/images/Entrepeliculasyseries.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",
