@@ -39,7 +39,7 @@
       "id": "current_host",
       "type": "text",
       "label": "Host actual",
-      "default": "https://hdfull.one/",
+      "default": "https://hd-full.cc/",
       "enabled": true,
       "visible": false
     },
