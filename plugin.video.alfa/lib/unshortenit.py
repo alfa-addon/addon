@@ -11,9 +11,10 @@ import os
 import re
 import time
 import urllib
+import traceback
 from base64 import b64decode
 
-from core import httptools
+from core import httptools, scrapertools
 from platformcode import config, logger
 
 
@@ -484,3 +485,64 @@ def unshorten(uri, type=None, timeout=10):
     if status == 200:
         uri, status = unshortener.unwrap_30x(uri, timeout=timeout)
     return uri, status
+
+
+def sortened_urls(url, url_base64, host):
+
+    sortened_domains = {'acortalink.me': ['linkser=uggcf%3A%2F%2Flrfgbeerag.arg', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
+                        'short-link.one': ['linkser=uggcf%3A%2F%2Fzntargcryvf.pbz', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
+                        'mediafire.com': [None, '(?i)=\s*"Download file"\s*href="([^"]+)"\s*id\s*=\s*"downloadButton"', 0, 0, False]}
+
+    patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+    patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
+    
+    domain = scrapertools.find_single_match(url, patron_domain)
+    if sortened_domains.get(domain, False) == False or not url_base64 or url_base64.startswith('magnet'):
+        return url_base64
+
+    key = config.get_setting(domain, server='torrent', default='')
+    key_saved = key
+    if not key:
+        post = sortened_domains[domain][0]
+        host_name = scrapertools.find_single_match(url, patron_host)
+        if host_name and not host_name.endswith('/'): host_name += '/'
+
+        data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(url, proxy_retries=0, 
+                    timeout=10, referer=host, ignore_response_code=True, alfa_s=True).data)
+
+        if sortened_domains[domain][1] and scrapertools.find_single_match(data_new, sortened_domains[domain][1]):       # mediafire???
+            url_base64 = scrapertools.find_single_match(data_new, sortened_domains[domain][1])
+            if url_base64.startswith('magnet') or url_base64.startswith('http'):
+                return url_base64
+
+        headers = {'Content-type': 'application/x-www-form-urlencoded'}
+        data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(host_name, proxy_retries=0, 
+                    timeout=10, referer=url, post=post, headers=headers, ignore_response_code=True, alfa_s=True).data)
+
+        if data_new :
+            key = scrapertools.find_single_match(data_new, sortened_domains[domain][1])
+            if not key or not sortened_domains[domain][1]:
+                return url_base64
+    
+    try:
+        from lib import pyberishaes
+        url_base64_bis = None
+        url_base64_bis = pyberishaes.GibberishAES(string=url_base64, pass_=key, 
+                         Nr=sortened_domains[domain][2], Nk=sortened_domains[domain][3], 
+                         Decrypt=sortened_domains[domain][4])
+        if url_base64_bis.result and (url_base64_bis.result.startswith('magnet') or url_base64_bis.result.startswith('http')):
+            url_base64 = url_base64_bis.result
+        else:
+            logger.error('ERROR en GibberishAES: Result: %s' % url_base64_bis.result)
+    except:
+        logger.error('ERROR en GibberishAES: Key: %s' % key)
+        logger.error(traceback.format_exc())
+
+    if not (url_base64.startswith('magnet') or url_base64.startswith('http')):
+        key = ''
+    if key != key_saved:
+        config.set_setting(domain, key, server='torrent')
+    if key_saved and not key:
+        return sortened_urls(url, url_base64, host)
+
+    return url_base64

@@ -177,6 +177,9 @@ def episodesxseasons(item):
 
         epi_list = elem.find("ul", class_="episodios")
         for epi in epi_list.find_all("li"):
+            if 'none' in epi['class']:
+                continue
+
             info = epi.find("div", class_="episodiotitle")
             url = info.a["href"]
             epi_name = info.a.text

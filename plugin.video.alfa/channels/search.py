@@ -366,14 +366,21 @@ def get_channels(item):
     for ch in all_channels:
         channel = ch.channel
         ch_param = channeltools.get_channel_parameters(channel)
+
         if not ch_param.get("active", False):
             continue
 
         if ch_param.get("login_required", False):
-            ch_user = config.get_setting("hdfulluser", channel)
-            ch_pass = config.get_setting("hdfullpassword", channel)
+            ch_user = config.get_setting("user", channel)
+            ch_pass = config.get_setting("pass", channel)
+
             if not ch_user or not ch_pass:
-                continue
+
+                ch_user = config.get_setting("hdfulluser", channel)
+                ch_pass = config.get_setting("hdfullpassword", channel)
+
+                if not ch_user or not ch_pass:
+                    continue
 
         list_cat = ch_param.get("categories", [])
 

@@ -519,6 +519,10 @@ def episodesxseason(item, get_episodes = False, get_movie = False):
         moviespecial = False
 
         menu = soup.find(id=re.compile('menu\d+'))
+
+        if "No episodes have been added yet" in menu.text:
+            return []
+
         type = soup.find(class_='alphabet-title').text
 
         # Detect what kind of content we're dealing with

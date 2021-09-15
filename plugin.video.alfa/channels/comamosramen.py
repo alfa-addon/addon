@@ -71,6 +71,7 @@ def mainlist(item):
             url = '{}/categorias/BL'.format(host)
         )
     )
+    """
     itemlist.append(
         Item(
             action = "country",
@@ -80,6 +81,7 @@ def mainlist(item):
             thumbnail = 'https://i.postimg.cc/gkyDw9VZ/ramon4.png'
         )
     )
+    """
     itemlist.append(
         Item(
             action = "alpha",
@@ -99,28 +101,6 @@ def mainlist(item):
             thumbnail = 'https://i.postimg.cc/kgnyKjsh/ramon13.png'
         )
     )
-    # itemlist.append(
-        # Item(
-            # action = "list_all",
-            # channel = item.channel,
-            # fanart = item.fanart,
-            # list_type = 'doramasmp4',
-            # title = "De DoramasMP4",
-            # thumbnail = get_thumb("doramas", auto=True),
-            # url = '{}/origen/doramasmp4'.format(host)
-        # )
-    # )
-    # itemlist.append(
-        # Item(
-            # action = "list_all",
-            # channel = item.channel,
-            # fanart = item.fanart,
-            # list_type = 'anime',
-            # title = "Animes",
-            # thumbnail = get_thumb("anime", auto=True),
-            # url = '{}/animes'.format(host)
-        # )
-    # )
     return itemlist
 
 def newest(categoria):
@@ -135,6 +115,7 @@ def newest(categoria):
         item.url = '{}/ultimos/48'.format(apihost)
     return list_all(item)
 
+# Deshabilitado: La web lo quitó, son medio indecisos, como yo :P
 def country(item):
     logger.info()
     itemlist = []
@@ -256,10 +237,7 @@ def list_all(item):
 
             # Obtenemos el listado de elementos (contiene los títulos)
             container = soup.find('div', class_='container wrapper').find('div', class_='row')
-            if item.list_type in ['categorias', 'pais', 'data']:
-                items = container.find_all('div', class_='mb-3')
-            else:
-                items = container.find_all('a', class_='mb-3')
+            items = container.find_all('div', class_='mb-3')
 
             # Recorremos los títulos
             for i, it in enumerate(items):
