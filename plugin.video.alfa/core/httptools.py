@@ -823,8 +823,8 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
         else:
             info_dict.append(('Peticion', 'GET' + proxy_data.get('stat', '')))
         info_dict.append(('Descargar Pagina', not opt.get('only_headers', False)))
-        if opt.get('files', {}): 
-            info_dict.append(('Fichero Objeto', opt.get('files', {})))
+        if opt.get('files', {}) and not isinstance(opt.get('files'), (tuple, dict)):
+            info_dict.append(('Objeto fichero', opt.get('files', {})))
         elif file_name: 
             info_dict.append(('Fichero para Upload', file_name))
         if opt.get('params', {}): info_dict.append(('Params', opt.get('params', {})))
