@@ -478,10 +478,6 @@ def proxy_post_processing(url, proxy_data, response, opt):
 
 
 def downloadpage(url, **opt):
-    if not opt.get('alfa_s', False):
-        logger.info()
-    from . import scrapertools
-
     """
         Abre una url y retorna los datos obtenidos
 
@@ -529,6 +525,10 @@ def downloadpage(url, **opt):
                 HTTPResponse.time:      float  Tiempo empleado para realizar la petición
 
         """
+    if not opt.get('alfa_s', False):
+        logger.info()
+    from . import scrapertools
+
     load_cookies(opt.get('alfa_s', False))
     import requests
 
@@ -816,7 +816,7 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
             info_dict.append(('Keep Alive', opt.get('keep_alive', True)))
         if opt.get('cf_v2', False):
             info_dict.append(('CF v2 Assistant', opt.get('cf_v2', False)))
-        if opt.get('post', None):
+        if opt.get('post', None) is not None or opt.get('files', None):
             info_dict.append(('Peticion', 'POST' + proxy_data.get('stat', '')))
         elif opt.get('only_headers', False):
             info_dict.append(('Peticion', 'HEAD' + proxy_data.get('stat', '')))
