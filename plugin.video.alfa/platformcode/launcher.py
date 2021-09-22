@@ -85,51 +85,46 @@ def run(item=None):
 
     logger.info(item.tostring())
 
+    # If item has no action, stops here
+    if item.action == "":
+        logger.info("Item sin accion")
+        return
+
+    # Cleans infoLabels["playcount"] if set by generictools
+    if item.video_path:
+        item.infoLabels["playcount"] = 1
+        del item.infoLabels["playcount"]
+
     try:
         if not config.get_setting('tmdb_active'):
             config.set_setting('tmdb_active', True)
 
-        # Cleans infoLabels["playcount"] if set by generictools
-        if item.video_path:
-            item.infoLabels["playcount"] = 1
-            del item.infoLabels["playcount"]
-        
-        # If item has no action, stops here
-        if item.action == "":
-            logger.info("Item sin accion")
-            return
-
-        # Action for main menu in channelselector
-        elif item.action == "getmainlist":
-            import channelselector
-
-            itemlist = channelselector.getmainlist()
-
-            platformtools.render_items(itemlist, item)
-
-        # Action for channel types on channelselector: movies, series, etc.
-        elif item.action == "getchanneltypes":
-            import channelselector
-            itemlist = channelselector.getchanneltypes()
-
-            platformtools.render_items(itemlist, item)
-
-        # Action for channel listing on channelselector
-        elif item.action == "filterchannels":
-            import channelselector
-            itemlist = channelselector.filterchannels(item.channel_type)
-
-            platformtools.render_items(itemlist, item)
-            
-        # Action for addon install on channelselector
-        elif item.action == "install_alfa":
-            import channelselector
-            channelselector.install_alfa()
-
         # Special action for playing a video from the library
-        elif item.action == "play_from_library":
+        if item.action == "play_from_library":
             play_from_library(item)
             return
+
+        elif item.channel == 'channelselector':
+            import channelselector
+
+            # Action for addon install on channelselector
+            if item.action == "install_alfa":
+                channelselector.install_alfa()
+
+            else:
+                # Action for main menu in channelselector
+                if item.action == "getmainlist":
+                    itemlist = channelselector.getmainlist()
+
+                # Action for channel types on channelselector: movies, series, etc.
+                elif item.action == "getchanneltypes":
+                    itemlist = channelselector.getchanneltypes()
+
+                # Action for channel listing on channelselector
+                elif item.action == "filterchannels":
+                    itemlist = channelselector.filterchannels(item.channel_type)
+
+                platformtools.render_items(itemlist, item)
 
         elif item.action == "keymap":
             from platformcode import keymaptools

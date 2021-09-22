@@ -24,15 +24,18 @@ list_language = list(IDIOMAS.values())
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP']
 list_servers = list(SERVIDORES.values())
 
+timeout = 30
 show_langs = config.get_setting('show_langs', channel='playdede')
 account = None
 
-def create_soup(url, post=None, headers=None, referer=False):
+def get_source(url, get_soup=True, post=None, multipart_post=None, headers=None, referer=False):
     logger.info()
 
-    data = httptools.downloadpage(url, post=post, headers=headers, referer=referer).data
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-    return soup
+    data = httptools.downloadpage(url, post=post, files=multipart_post, headers=headers, referer=referer, add_host=True, timeout=30).data
+    if get_soup:
+        return BeautifulSoup(data, "html5lib")
+    else:
+        return data
 
 
 def login():
@@ -40,9 +43,9 @@ def login():
 
     usuario = config.get_setting('user', channel='playdede')
     clave = config.get_setting('pass', channel='playdede')
-    credentials = {'user': usuario,
-                   'pass': clave,
-                   '_method': 'auth/login'}
+    credentials = (('user',    (None, usuario)),
+                   ('pass',    (None, clave)),
+                   ('_method', (None, 'auth/login')))
 
     if not usuario:
         return False
@@ -53,15 +56,15 @@ def login():
         return False
 
     if not httptools.get_cookie(host, 'MoviesWebsite'):
-        httptools.downloadpage(host)
+        httptools.downloadpage(host, timeout=timeout)
 
     if httptools.get_cookie(host, 'utoken'):
         return True
 
-    logger.info('Casi...')
+    logger.info('Iniciando sesión...')
 
-    httptools.downloadpage('{}/ajax.php'.format(host), post=credentials, referer=True, add_host=True, headers={'Origin': host})
-    httptools.downloadpage(host)
+    httptools.downloadpage('{}/ajax.php'.format(host), files=credentials, add_referer=True, add_host=True, timeout=timeout)
+    httptools.downloadpage(host, timeout=timeout)
     
     if httptools.get_cookie(host, 'utoken'):
         logger.info('¡Token de sesión conseguido!')
@@ -211,7 +214,7 @@ def genres(item):
     logger.info()
 
     itemlist = []
-    soup = create_soup(item.url)
+    soup = get_source(item.url)
 
     if not soup:
         platformtools.dialog_notification("Cambio de estructura", "Reporta el error desde el menú principal", sound=False)
@@ -256,8 +259,11 @@ def genres(item):
 def list_all(item):
     logger.info()
 
+    # item.url = 'https://extra.alfa-addon.com/reqtester/'
     itemlist = []
-    soup = create_soup(item.url)
+    multipart = (('_method', ( None, 'async' ) ),
+                 ( 'url',    ( None, item.url) ))
+    soup = get_source(item.url, multipart_post=multipart, referer=item.url)
 
     if not soup:
         platformtools.dialog_notification("Cambio de estructura", "Reporta el error desde el menú principal", sound=False)
@@ -341,7 +347,7 @@ def seasons(item):
     logger.info()
 
     itemlist = []
-    soup = create_soup(item.url)
+    soup = get_source(item.url)
     items = soup.find('div', id='seasons').find_all('div', class_='se-c')
 
     for div in items:
@@ -407,7 +413,7 @@ def findvideos(item):
     logger.info()
 
     itemlist = []
-    soup = create_soup(item.url)
+    soup = get_source(item.url)
     items = []
     linklists = soup.findAll('div', class_='linkSorter')
     items.extend(soup.find('div', class_='contEP contepID_1 contEP_A').find('div', class_='innerSelector').find_all('div', class_="playerItem"))

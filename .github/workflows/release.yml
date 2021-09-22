@@ -1,4 +1,4 @@
-# Release script for Alfa-addon
+# Release script for Alfa-addon 
 name: release
 
 on:

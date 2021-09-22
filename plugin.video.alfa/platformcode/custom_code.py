@@ -168,7 +168,8 @@ def init():
             logger.error(traceback.format_exc())
 
         #Ejecuta la sobrescritura de la videoteca para los canales seleccionados
-        reset_videotlibrary_by_channel()
+        reset_videolibrary_by_channel()
+        clean_videolibrary_unused_channels()
 
     except:
         logger.error(traceback.format_exc())
@@ -963,9 +964,9 @@ def call_unrar(rar_control):
                     torr_client, password, size, rar_control)
 
 
-def reset_videotlibrary_by_channel(inactive=True):
+def reset_videolibrary_by_channel(inactive=True):
 
-    ###### LISTA DE CANALES PARA SOBRESCRIBIR SU VIDEOTECA 
+    ###### LISTA DE CANALES PARA SOBRESCRIBIR SU VIDEOTECA, o "*" PARA TODOS
     channels_list = []
 
     if not channels_list or not config.get_setting("update", "videolibrary") or \
@@ -978,8 +979,8 @@ def reset_videotlibrary_by_channel(inactive=True):
             json_data = jsontools.load(filetools.read(ADDON_CUSTOMCODE_JSON))
         else:
             json_data = {}
-        if json_data.get('reset_videotlibrary_by_channel', ''): return
-        json_data['reset_videotlibrary_by_channel'] = channels_list
+        if json_data.get('reset_videolibrary_by_channel', ''): return
+        json_data['reset_videolibrary_by_channel'] = channels_list
         if not filetools.write(ADDON_CUSTOMCODE_JSON, jsontools.dump(json_data)):
             logger.error('No se puede actualizar el .json %s' % ADDON_CUSTOMCODE_JSON)
             logger.error('Error sobrescribiendo la Videoteca para los canales: %s' % channels_list)
@@ -987,6 +988,7 @@ def reset_videotlibrary_by_channel(inactive=True):
 
         logger.info('Sobrescribiendo para canales: %s' % channels_list, force=True)
         from core import videolibrarytools
+        from lib.generictools import verify_channel
 
         # SERIES
         show_list = []
@@ -996,8 +998,9 @@ def reset_videotlibrary_by_channel(inactive=True):
                     nfo_path = filetools.join(path, f)
                     head_nfo, it = videolibrarytools.read_nfo(nfo_path)
                     for channel, url in list(it.library_urls.items()):
-                        if channel in channels_list:
+                        if channel in channels_list or verify_channel(channel) in channels_list or '*' in channels_list:
                             show_list.extend([nfo_path])
+                            break
 
         logger.info("Lista de SERIES a sobrescribir: %s" % show_list, force=True)
         if show_list:
@@ -1030,8 +1033,9 @@ def reset_videotlibrary_by_channel(inactive=True):
                     nfo_path = filetools.join(path, f)
                     head_nfo, it = videolibrarytools.read_nfo(nfo_path)
                     for channel, url in list(it.library_urls.items()):
-                        if channel in channels_list:
+                        if channel in channels_list or verify_channel(channel) in channels_list or '*' in channels_list:
                             movies_list.extend([nfo_path])
+                            break
 
         logger.info("Lista de PELÍCULAS a sobrescribir: %s" % movies_list, force=True)
         if movies_list:
@@ -1054,5 +1058,63 @@ def reset_videotlibrary_by_channel(inactive=True):
                     time.sleep(1)
                 for movie_nfo in movies_list:
                     xbmc_videolibrary.mark_content_as_watched_on_alfa(movie_nfo)
+    except:
+        logger.error(traceback.format_exc())
+
+
+def clean_videolibrary_unused_channels():
+
+    ###### LISTA DE CANALES PARA LIMPIAR SU VIDEOTECA, o "*" PARA TODOS
+    channels_list = []
+
+    if not channels_list or not config.get_setting("update", "videolibrary") or \
+                    config.get_setting("videolibrary_backup_scan", "videolibrary"):
+        return
+
+    try:
+        # Vemos si ya se ha limpiado, si no marcamos
+        if filetools.exists(ADDON_CUSTOMCODE_JSON):
+            json_data = jsontools.load(filetools.read(ADDON_CUSTOMCODE_JSON))
+        else:
+            json_data = {}
+        if json_data.get('clean_videolibrary_unused_channels', ''): return
+        json_data['clean_videolibrary_unused_channels'] = channels_list
+        if not filetools.write(ADDON_CUSTOMCODE_JSON, jsontools.dump(json_data)):
+            logger.error('No se puede actualizar el .json %s' % ADDON_CUSTOMCODE_JSON)
+            logger.error('Error limpiando la Videoteca para los canales: %s' % channels_list)
+            return
+
+        logger.info('Limpiando los canales: %s' % channels_list, force=True)
+        from core import videolibrarytools
+        from core import scrapertools
+        from lib.generictools import verify_channel
+
+        # SERIES y PELIS
+        for x, video_folder in enumerate([videolibrarytools.TVSHOWS_PATH, videolibrarytools.MOVIES_PATH]):
+            for path, folders, files in filetools.walk(video_folder):
+                for f in files:
+                    if (x == 0 and f == "tvshow.nfo") or (x == 1 and f.endswith(".nfo")):
+                        nfo_path = filetools.join(path, f)
+                        head_nfo, it = videolibrarytools.read_nfo(nfo_path)
+                        
+                        show_list = False
+                        for channel, url in list(it.library_urls.items()):
+                            if channel in channels_list or verify_channel(channel) in channels_list or '*' in channels_list:
+                                show_list = True
+                                break
+                        if show_list:
+                            show_list = []
+                            for channel, url in list(it.library_urls.items()):
+                                show_list += [channel]
+                        if not show_list:
+                            break
+                        
+                        logger.info('Limpiando los canales distintos de: %s de la serie/peli: %s' % (show_list, it.title), force=True)
+                        for ff in filetools.listdir(path):
+                            if '.json' in ff or '.torrent' in ff.lower():
+                                if not scrapertools.find_single_match(ff, '\[([^\]]+)\]') in show_list:
+                                    logger.info('Borrando archivo: %s' % ff, force=True)
+                                    filetools.remove(filetools.join(path, ff))
+                        break
     except:
         logger.error(traceback.format_exc())

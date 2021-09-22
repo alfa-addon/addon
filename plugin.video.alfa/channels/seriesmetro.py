@@ -232,7 +232,12 @@ def episodesxseason(item):
 
     while not Stop:
         post = 'action=action_pagination_ep&page={}&object={}&season={}'.format(str(n), obj, season)
-        new_data = httptools.downloadpage(item.url, post=post, add_referer=True).data
+        new_data = httptools.downloadpage(item.url, post=post, add_referer=True, ignore_response_code=True)
+        if new_data.sucess:
+            new_data = new_data.data
+        else:
+            Stop = True
+            break
 
         if not '<li><a href=' in new_data:
             Stop = True
