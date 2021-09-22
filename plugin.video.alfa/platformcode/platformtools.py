@@ -11,15 +11,12 @@
 from __future__ import division
 from __future__ import absolute_import
 from past.utils import old_div
-# from builtins import str
 import sys
 
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
-    # from future import standard_library
-    # standard_library.install_aliases()
     import urllib.parse as urllib  # Es muy lento en PY2.  En PY3 es nativo
 else:
     import urllib  # Usamos el nativo de PY2 que es más rápido
@@ -48,7 +45,7 @@ class XBMCPlayer(xbmc.Player):
 
 
 xbmc_player = XBMCPlayer()
-
+PLUGIN_HANDLE = int(sys.argv[1]) if len(sys.argv) > 1 else -1
 
 def makeMessage(line1, line2, line3):
     message = line1
@@ -162,12 +159,14 @@ def render_items(itemlist, parent_item):
     @type parent_item: item
     @param parent_item: elemento padre
     """
-    # logger.debug(parent_item.tostring('\n'))
     logger.info('INICIO render_items')
-    from core import httptools
     start = time.time()
+
+    from core import httptools
+
     # Si el itemlist no es un list salimos
     if not isinstance(itemlist, list):
+        logger.error('itemlist: list expected, got {}'.format(type(itemlist)))
         return
 
     if parent_item.startpage:
@@ -198,6 +197,7 @@ def render_items(itemlist, parent_item):
 
     # for adding extendedinfo to contextual menu, if it's used
     has_extendedinfo = xbmc.getCondVisibility('System.HasAddon(script.extendedinfo)')
+
     # for adding superfavourites to contextual menu, if it's used
     sf_file_path = config.translatePath("special://home/addons/plugin.program.super.favourites/LaunchSFMenu.py")
     check_sf = os.path.exists(sf_file_path)
@@ -208,15 +208,16 @@ def render_items(itemlist, parent_item):
     categories_channel = []
     if itemlist and itemlist[0].channel:
         categories_channel = channeltools.get_channel_parameters(itemlist[0].channel.lower()).get('categories', [])
+
     temp_list = list()
     for item in itemlist:
         item_url = item.tourl()
-        # logger.debug(item)
+
         # Si el item no contiene categoria, le ponemos la del item padre
         if item.category == "":
             item.category = parent_item.category
 
-        # Si title no existe, lo iniciamos como str, para evitar errones "NoType"
+        # Si title no existe, lo iniciamos como str, para evitar errones "NoneType"
         if not item.title:
             item.title = ''
 
@@ -225,19 +226,17 @@ def render_items(itemlist, parent_item):
             item.folder = False
 
             # Si el item no contiene fanart, le ponemos el del item padre
-        if item.fanart == "":
+        if not item.fanart:
             item.fanart = parent_item.fanart
 
         if genre:
-
             thumb = get_thumb(item.title, auto=True)
             if thumb != '':
                 item.thumbnail = thumb
 
-
-
         elif ('siguiente' in item.title.lower() and '>' in item.title) or ('pagina:' in item.title.lower()):
             item.thumbnail = get_thumb("next.png")
+
         elif 'add' in item.action:
             if 'pelicula' in item.action:
                 item.thumbnail = get_thumb("videolibrary_movie.png")
@@ -247,27 +246,34 @@ def render_items(itemlist, parent_item):
         if use_unify and parent_item.channel not in ['alfavorites']:
             # Formatear titulo con unify
             item = unify.title_format(item)
+
         else:
             # Formatear titulo metodo old school
             if item.text_color:
                 item.title = '[COLOR %s]%s[/COLOR]' % (item.text_color, item.title)
+
             if item.text_bold:
                 item.title = '[B]%s[/B]' % item.title
+
             if item.text_italic:
                 item.title = '[I]%s[/I]' % item.title
+
             if item.title == r'%s' and item.action in ("findvideos", "play"):
                 item = unify.title_format(item)
 
         # Añade headers a las imagenes si estan en un servidor con cloudflare
         if item.action == 'play':
             item.thumbnail = unify.thumbnail_type(item)
+
         # if cloudflare, cookies are needed to display images taken from site
         # before checking domain (time consuming), checking if tmdb failed (so, images scraped from website are used)
         try:
             domain_cs = scrapertools.get_domain_from_url(item.url)
+
         except:
             domain_cs = '##is_dict/list'
             logger.error('URL is DICT/LIST: %s' % str(item.url))
+
         if item.action in ['findvideos'] and not item.infoLabels['tmdb_id'] and domain_cs in httptools.CF_LIST:
             item.thumbnail = httptools.get_url_headers(item.thumbnail)
             item.fanart = httptools.get_url_headers(item.fanart)
@@ -286,15 +292,17 @@ def render_items(itemlist, parent_item):
         # Creamos el listitem
         if config.get_platform(True)['num_version'] >= 18.0:
             listitem = xbmcgui.ListItem(item.title, offscreen=True)
+
         else:
             listitem = xbmcgui.ListItem(item.title)
+
         # values icon, thumb or poster are skin dependent.. so we set all to avoid problems
         # if not exists thumb it's used icon value
 
         listitem.setArt({'icon': icon_image, 'thumb': item.thumbnail, 'poster': poster, 'fanart': fanart})
 
         # No need it, use fanart instead
-        # xbmcplugin.setPluginFanart(int(sys.argv[1]), os.path.join(config.get_runtime_path(), "fanart.jpg"))
+        # xbmcplugin.setPluginFanart(PLUGIN_HANDLE, os.path.join(config.get_runtime_path(), "fanart.jpg"))
 
         # Esta opcion es para poder utilizar el xbmcplugin.setResolvedUrl()
         # if item.isPlayable == True or (config.get_setting("player_mode") == 1 and item.action == "play"):
@@ -322,44 +330,44 @@ def render_items(itemlist, parent_item):
 
         temp_list.append(['%s?%s' % (sys.argv[0], item_url), listitem, item.folder])
 
-    xbmcplugin.addDirectoryItems(handle=int(sys.argv[1]), items=temp_list)
+    xbmcplugin.addDirectoryItems(handle=PLUGIN_HANDLE, items=temp_list)
 
     special_channels = ["channelselector", "", "alfavorites", "news", "search", "videolibrary", "setting", "help"]
 
     # Fijar los tipos de vistas...
     if config.get_setting("forceview"):  # ...forzamos segun el viewcontent
-        xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewcontent)
+        xbmcplugin.setContent(PLUGIN_HANDLE, parent_item.viewcontent)
 
     elif parent_item.channel == "alfavorites" and parent_item.action == 'mostrar_perfil':
-        xbmcplugin.setContent(int(sys.argv[1]), "movies")
+        xbmcplugin.setContent(PLUGIN_HANDLE, "movies")
 
     elif parent_item.channel == "videolibrary":
         if parent_item.action == 'list_tvshows':
-            xbmcplugin.setContent(int(sys.argv[1]), "tvshows")
+            xbmcplugin.setContent(PLUGIN_HANDLE, "tvshows")
         elif parent_item.action == 'list_movies':
-            xbmcplugin.setContent(int(sys.argv[1]), "movies")
+            xbmcplugin.setContent(PLUGIN_HANDLE, "movies")
         elif parent_item.action != 'mainlist':
             if parent_item.contentType == 'movie':
-                xbmcplugin.setContent(int(sys.argv[1]), "movies")
+                xbmcplugin.setContent(PLUGIN_HANDLE, "movies")
             else:
-                xbmcplugin.setContent(int(sys.argv[1]), "episodes")
+                xbmcplugin.setContent(PLUGIN_HANDLE, "episodes")
 
     elif parent_item.startpage == True:
-        xbmcplugin.setContent(int(sys.argv[1]), "movies")
+        xbmcplugin.setContent(PLUGIN_HANDLE, "movies")
         # parent_item.viewmode = "movie_with_plot"
         parent_item.viewmode = "poster"
         viewmode_id = get_viewmode_id(parent_item)
         xbmc.executebuiltin("Container.SetViewMode({})".format(viewmode_id))
 
     elif parent_item.viewType:
-        xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewType)
+        xbmcplugin.setContent(PLUGIN_HANDLE, parent_item.viewType)
 
     elif parent_item.channel in ["alfavorites", "favorites", "news", "search"]:
         if parent_item.action != "mainlist" or parent_item.channel == "favorites":
-            xbmcplugin.setContent(int(sys.argv[1]), "movies")
+            xbmcplugin.setContent(PLUGIN_HANDLE, "movies")
 
     elif parent_item.channel not in special_channels and parent_item.action != "mainlist":  # ... o segun el canal
-        xbmcplugin.setContent(int(sys.argv[1]), "movies")
+        xbmcplugin.setContent(PLUGIN_HANDLE, "movies")
 
     # Fijamos el "breadcrumb"
     if parent_item.list_type != '':
@@ -376,13 +384,13 @@ def render_items(itemlist, parent_item):
         else:
             breadcrumb = channeltools.get_channel_parameters(item.channel).get('title', '')
 
-    xbmcplugin.setPluginCategory(handle=int(sys.argv[1]), category=breadcrumb)
+    xbmcplugin.setPluginCategory(handle=PLUGIN_HANDLE, category=breadcrumb)
 
     # No ordenar items
-    xbmcplugin.addSortMethod(handle=int(sys.argv[1]), sortMethod=xbmcplugin.SORT_METHOD_NONE)
+    xbmcplugin.addSortMethod(handle=PLUGIN_HANDLE, sortMethod=xbmcplugin.SORT_METHOD_NONE)
 
     # Cerramos el directorio
-    xbmcplugin.endOfDirectory(handle=int(sys.argv[1]), succeeded=True)
+    xbmcplugin.endOfDirectory(handle=PLUGIN_HANDLE, succeeded=True)
 
     # Fijar la vista
     if config.get_setting("forceview"):
@@ -1322,7 +1330,7 @@ def set_opcion(item, seleccion, opciones, video_urls):
             listitem.setIconImage("DefaultVideo.png")
             listitem.setThumbnailImage(item.thumbnail)
 
-        xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, listitem)
+        xbmcplugin.setResolvedUrl(PLUGIN_HANDLE, False, listitem)
 
     # "Descargar"
     elif config.get_localized_string(30153) in opciones[seleccion]:
@@ -1410,7 +1418,7 @@ def set_player(item, xlistitem, mediaurl, view, strm, autoplay):
 
     # Si es un fichero strm no hace falta el play
     elif strm:
-        xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, xlistitem)
+        xbmcplugin.setResolvedUrl(PLUGIN_HANDLE, True, xlistitem)
         if item.subtitle != "":
             xbmc.sleep(2000)
             xbmc_player.setSubtitles(item.subtitle)
@@ -1446,7 +1454,7 @@ def set_player(item, xlistitem, mediaurl, view, strm, autoplay):
                 xbmc_videolibrary.mark_auto_as_watched(item)
             # logger.debug(item)
             xlistitem.setPath(mediaurl)
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, xlistitem)
+            xbmcplugin.setResolvedUrl(PLUGIN_HANDLE, True, xlistitem)
             xbmc.sleep(2500)
 
         elif config.get_setting("player_mode") == 2:
@@ -1659,7 +1667,7 @@ def play_torrent(item, xlistitem, mediaurl):
         #### Compatibilidad con Kodi 18: evita cuelgues/cancelaciones cuando el .torrent se lanza desde pantalla convencional
         # if xbmc.getCondVisibility('Window.IsMedia'):
         try:
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), False,
+            xbmcplugin.setResolvedUrl(PLUGIN_HANDLE, False,
                                       xlistitem)  # Preparamos el entorno para evitar error Kod1 18
             time.sleep(1)       # Dejamos tiempo para que se ejecute
         except:
