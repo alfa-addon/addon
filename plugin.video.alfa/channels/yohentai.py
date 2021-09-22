@@ -166,11 +166,15 @@ def setEpisodeData(item, title):
 
 def formatDate(scpdate):
     # Capturamos cada componente
-    scpdate = scrapertools.find_multiple_matches(scpdate, '(\d+) de (\w+) (\d+)')[0]
-    # Rearmamos la fecha pero con mes en inglés
-    scpdate = "{}/{}/{}".format(scpdate[0], meses.get(scpdate[1], 'January'), scpdate[2])
-    # Creamos la fecha
-    return datetime.datetime.strptime(scpdate, "%d/%m/%Y")
+    scpdate = scrapertools.find_multiple_matches(scpdate, '(\d+) de (\w+) (\d+)')
+    if len(scpdate) > 0:
+        scpdate = scpdate[0]
+        # Rearmamos la fecha pero con mes en inglés
+        scpdate = "{}/{}/{}".format(scpdate[0], meses.get(scpdate[1], 'January'), scpdate[2])
+        # Creamos la fecha
+        return datetime.datetime.strptime(scpdate, "%d/%m/%Y")
+    else:
+        return None
 
 def recent(categoria):
     item = Item(
@@ -199,7 +203,7 @@ def genres(item):
     for g in genres:
         genre = g.find('input')['value'] if g.find('input') else ''
         year = g['href'] if g.get('href') and len(g['href']) == 4 else ''
-        status = g['href'] if g.get('href') else ''
+        status = g['href'] if g.get('href') and len(g['href']) == 1 else ''
         title = g.find('span').text if item.list_type == 'genres' else g.text if g.get('href') else ''
 
         itemlist.append(
@@ -221,12 +225,13 @@ def list_all(item):
         section = soup.find('div', class_='tvLast').find_all('div', class_='inner_tv')
     else:
         section = soup.find_all('article')
-    
+
     for div in section:
         infoLabels = {}
         infoLabels['year'] = int(div.find('span', class_='date_sld').text) if div.find('span', class_='date_sld') else None
         infoLabels['episode'] = int(div.find('span', class_='episode').text) if div.find('span', class_='episode') else None
 
+        action = "episodesxseason" if item.list_type != "newepisodes" else "findvideos"
         contentTitle = div.find('h2').text if item.list_type == "newepisodes" else div.find('h3').text
         title = "E{}: {}".format(infoLabels['episode'], contentTitle) if infoLabels.get('episode') is not None else contentTitle
         thumbnail = div.find('img')['data-src'] if item.list_type in ["recent", "newepisodes"] else div.find('img')['src']
@@ -234,7 +239,7 @@ def list_all(item):
 
         itemlist.append(
             Item(
-                action = "episodesxseason",
+                action = action,
                 channel = item.channel,
                 contentSerieName = contentTitle,
                 fanart = thumbnail,
@@ -280,9 +285,10 @@ def episodesxseason(item, get_episodes = False):
     item.infoLabels['plot'] = soup.find('div', class_='Description').text.strip()
     item.infoLabels['status'] = soup.select_one('.Type').text.strip()
     item.infoLabels['season'] = 1
-    item.infoLabels['first_air_date'] = date.strftime("%Y/%m/%d")
-    item.infoLabels['premiered'] = item.infoLabels['first_air_date']
-    item.infoLabels['year'] = date.strftime("%Y")
+    if date:
+        item.infoLabels['first_air_date'] = date.strftime("%Y/%m/%d")
+        item.infoLabels['premiered'] = item.infoLabels['first_air_date']
+        item.infoLabels['year'] = date.strftime("%Y")
 
     genmatch = [x.text.strip() for x in soup.find('div', class_='generos').find_all('a')]
     genmatch.append(item.infoLabels['status'])
