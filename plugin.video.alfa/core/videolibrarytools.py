@@ -555,7 +555,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             headers = e.headers
         if tags != [] and tags != None and any(tag in e.title.lower() for tag in tags):
             continue
-        
+
         try:
             # Valor por defecto por si no se provee temporada = 1
             # No podemos darle valor de episodio por defecto
@@ -1231,6 +1231,7 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             item_res = item.clone()
             item_res = getattr(channel, 'findvideos')(item_res)             #... se procesa Findvideos
             item_res.channel = channel_save             #... restaura el canal original por si hay fail-over en Newpct1
+            item.channel = channel_save                 #... restaura el canal original por si hay fail-over en Newpct1
             item_res.category = category_save           #... restaura la categoría original por si hay fail-over o redirección en Newpct1
             item.category = category_save               #... restaura la categoría original por si hay fail-over o redirección en Newpct1
             del item_res.videolibray_emergency_urls                         #... y se borra la marca de lookup

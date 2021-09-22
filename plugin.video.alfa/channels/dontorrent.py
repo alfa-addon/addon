@@ -649,16 +649,16 @@ def findvideos(item):
 
     #Bajamos los datos de las páginas
     if item.contentType == 'movie':
-        patron = '(?:<p><b\s*class="bold">Clave:\s*<\/b><a\s*data-toggle="popover"'
-        patron += '\s*title="Contraseña\s*del\s* Torrent.*?data-clave="([^"]+)">.*?)?'
-        patron += '<a\s*class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"'
-        patron += '\s*download>Descargar<\/a>()'
+        patron = '(?i)(?:<p><b\s*class="bold">Clave:\s*<\/b><a\s*data-toggle='
+        patron += '"popover"\s*title="[^>]*contraseña[^\/]*data-clave="([^"]+)">.*?)?'
+        patron += '<a\s*class="text-white[^"]+"\s*style="font-size[^"]+"\s*'
+        patron += 'href="([^"]+)"\s*download>Descargar<\/a>()'
     else:
-        patron = '<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a\s*class='
-        patron += '"text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"'
-        patron += '\s*download>\s*Descargar\s*<\/a>\s*(?:<\/td>\s*<td\s*style=[^<]+'
-        patron += '<\/td>\s*<td\s*style=[^>]+>\s*<a\s*data-toggle="popover"\s*'
-        patron += 'title="Contraseña\s*del\s*Torrent.*?data-clave="([^"]+)">)?'
+        patron = '(?i)<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a\s*'
+        patron += 'class="text-white[^"]+"\s*style="font-size[^"]+"\s*'
+        patron += 'href="([^"]+)"\s*download>\s*Descargar\s*<\/a>\s*(?:<\/td>\s*'
+        patron += '<td\s*style=[^<]+<\/td>\s*<td\s*style=[^>]+>\s*<a\s*data-toggle='
+        patron += '"popover"\s*title="[^>]*contraseña[^\/]*data-clave="([^"]+)">)?'
     
     if not item.matches:
         if item.emergency_urls and item.url_tvshow: item.url = item.url_tvshow  #### Parche para rodear videoteca corrupta de SERIES
@@ -955,11 +955,11 @@ def episodios(item):
 
     # Descarga las páginas
     for url in list_temp:                                                       # Recorre todas las temporadas encontradas
-        patron = '<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a\s*class='
-        patron += '"text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"'
-        patron += '\s*download>\s*Descargar\s*<\/a>\s*(?:<\/td>\s*<td\s*style=[^<]+'
-        patron += '<\/td>\s*<td\s*style=[^>]+>\s*<a\s*data-toggle="popover"\s*'
-        patron += 'title="Contraseña\s*del\s*Torrent.*?data-clave="([^"]+)">)?'
+        patron = '(?i)<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a\s*'
+        patron += 'class="text-white[^"]+"\s*style="font-size[^"]+"\s*'
+        patron += 'href="([^"]+)"\s*download>\s*Descargar\s*<\/a>\s*(?:<\/td>\s*'
+        patron += '<td\s*style=[^<]+<\/td>\s*<td\s*style=[^>]+>\s*<a\s*data-toggle='
+        patron += '"popover"\s*title="[^>]*contraseña[^\/]*data-clave="([^"]+)">)?'
         
         data, success, code, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, 
                                           patron=patron, item=item, itemlist=itemlist)      # Descargamos la página
