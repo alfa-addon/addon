@@ -1,11 +1,11 @@
 {
   "id": "areadocumental",
   "name": "Area-Documental",
-  "language": ["cast", "lat"],
-  "adult": false,
   "active": true,
-  "banner": "areadocumental.png",
+  "adult": false,
+  "language": ["cast", "lat"],
   "thumbnail": "https://i.postimg.cc/Xr0j8ZbB/areadocumental.png",
+  "banner": "areadocumental.png",
   "fanart": "http://i.imgur.com/Q7fsFI6.png",
   "categories": [
     "documentary"

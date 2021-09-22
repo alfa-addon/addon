@@ -6,11 +6,12 @@
   "language": ["lat","cast"],
   "thumbnail": "https://homecine.net/wp-content/uploads/2018/05/homedark-1-3.png",
   "banner": "",
-  "version": 1,
+  "fanart": "",
   "categories": [
     "movie",
     "direct"
   ],
+  "version": 1,
   "settings": [
     {
       "id": "include_in_global_search",

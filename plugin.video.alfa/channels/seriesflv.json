@@ -1,17 +1,18 @@
 {
   "id": "seriesflv",
   "name": "SeriesFLV",
-  "force_unify": true,
   "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.postimg.cc/qMyN4YMJ/seriesflv.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "tvshow",
     "anime",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

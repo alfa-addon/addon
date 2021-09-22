@@ -657,8 +657,24 @@ def findvideos(item):
                 item_json, it, overwrite = generictools.redirect_clone_newpct1(item_json)
         except:
             logger.error(traceback.format_exc())
+        
+        try:
+            if channel.host and isinstance(channel.host, str):
+                channel_host = channel.host
+        except:
+            channel_host = ''
+        if channel_host and not item_json.url.startswith(channel_host):
+            if generictools.verify_channel(nom_canal) != 'newpct1':
+                logger.debug("item_json: %s" % item_json.url)
+                logger.debug("el host: % s" % channel.host)
+                logger.debug("cambiando dominio....")
+                item_json.url = re.sub("(https?:\/\/.+?\/)", channel_host, item_json.url)
+                logger.debug("item_json: %s" % item_json.url)
+                if item_json.url_tvshow: 
+                    item_json.url_tvshow = re.sub("(https?:\/\/.+?\/)", channel_host, item_json.url_tvshow)
+                    logger.debug("item_json: %s" % item_json.url_tvshow)
+        
         list_servers = []
-
         try:
             # FILTERTOOLS
             # si el canal tiene filtro se le pasa el nombre que tiene guardado para que filtre correctamente.

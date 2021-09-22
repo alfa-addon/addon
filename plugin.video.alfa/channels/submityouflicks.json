@@ -4,8 +4,9 @@
   "active": true,
   "adult": true,
   "language": ["*"],
-  "banner": "",
   "thumbnail": "https://i.postimg.cc/jw3CTFx7/submityouflicks.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "adult"
   ],

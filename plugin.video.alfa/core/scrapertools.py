@@ -588,13 +588,13 @@ def htmlparser(data):
     """
     Convierte los carateres HTML (&#038;, ...) a su equivalente utf-8
     """
-    
+
     if PY3:
-        from html.parser import HTMLParser
+        from html.parser import unescape
     else:
         from HTMLParser import HTMLParser
-    
-    hparser = HTMLParser()
-    data = hparser.unescape(data)
+        unescape = HTMLParser().unescape
+        
+    data = unescape(data)
     
     return data

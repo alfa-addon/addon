@@ -6,11 +6,12 @@
   "language": ["cast"],
   "thumbnail": "https://i.postimg.cc/NFGv0pN3/legalgratis.png",
   "banner": "",
-  "version": 1,
+  "fanart": "",
   "categories": [
     "movie",
     "vos"
   ],
+  "version": 1,
   "settings": [
     {
       "id": "include_in_global_search",

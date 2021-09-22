@@ -1,11 +1,12 @@
 {
-"id": "pelix",
+  "id": "pelix",
   "name": "Pelix",
   "active": true,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://i.postimg.cc/yxVyNJ35/123.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow"

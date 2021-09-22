@@ -1895,7 +1895,7 @@ msgid "Uploading new data"
 msgstr "Cargando nuevos datos"
 
 msgctxt "#60470"
-msgid "Buscando en Tmdb......."
+msgid "Searching in Tmdb......."
 msgstr "Buscando en Tmdb......."
 
 msgctxt "#60471"

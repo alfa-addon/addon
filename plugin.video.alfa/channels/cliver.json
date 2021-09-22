@@ -6,10 +6,11 @@
   "language": ["cast", "lat"],
   "thumbnail": "https://www.cliver.to/img/logo.png",
   "banner": "",
-  "version": 1,
+  "fanart": "",
   "categories": [
     "movie"
   ],
+  "version": 1,
   "settings": [
     {
       "id": "include_in_global_search",

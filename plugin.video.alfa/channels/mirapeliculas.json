@@ -6,6 +6,7 @@
   "language": ["lat"],
   "thumbnail": "https://i.imgur.com/Z4Z5vPW.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie"
   ],
@@ -59,4 +60,3 @@
     } 
   ]
 }
-

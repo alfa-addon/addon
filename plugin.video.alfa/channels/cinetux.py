@@ -299,7 +299,7 @@ def findvideos(item):
     patron += "data-post='(\d+)'.*?"
     patron += "data-nume='(\d+).*?"
     patron += "</noscript> (.*?)</.*?"
-    patron += "assets/img/(.*?)'"
+    patron += "assets/img/(.*?)[\"']"
     matches = scrapertools.find_multiple_matches(data, patron)
     for tp, pt, nm, language, iserver in matches:
         language = language.strip()
@@ -329,9 +329,20 @@ def findvideos(item):
         server = iserver.lower()
         iserver = iserver.capitalize() + title
 
-        itemlist.append(Item(channel=item.channel, title=iserver, url="", action='play',
-                             infoLabels=item.infoLabels, language=lang, text_color = "", server=server,
-                                 spost=post, quality=quality, referer = item.url))
+        itemlist.append(
+            Item(
+                action = 'play',
+                channel = item.channel,
+                infoLabels = item.infoLabels,
+                language = lang,
+                quality = quality,
+                referer = item.url,
+                server = server,
+                spost = post,
+                text_color = "",
+                title = iserver
+            )
+        )
    
     #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     itemlist.sort(key=lambda it: (it.language, it.title, it.quality))
@@ -367,8 +378,8 @@ def get_url(url):
             if "FFFFFF" in url:
                 url = scrapertools.find_single_match(d1, 'class="cta" href="([^"]+)"')
     url = url.replace('&amp;f=frame', "")
-    logger.error(url)
     url = url.replace("povwideo","powvideo")
+    logger.info("url: " + url)
     return url
 
 
@@ -389,7 +400,7 @@ def play(item):
                                               post=post, headers={'Referer': item.referer}).data
 
 
-        url = scrapertools.find_single_match(new_data, "src='([^']+)'")
+        url = scrapertools.find_single_match(new_data, "src=[\"']([^\"']+)[\"']")
         item.url = get_url(url)
     item.server = ""
     item = servertools.get_servers_itemlist([item])

@@ -1,16 +1,17 @@
 {
   "id": "mundokaos",
   "name": "mundokaos",
-  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://mundokaos.net/wp-content/uploads/2021/06/cropped-Untitled-2.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "vos"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "filter_languages",
@@ -28,5 +29,3 @@
     }
   ]
 }
-
-

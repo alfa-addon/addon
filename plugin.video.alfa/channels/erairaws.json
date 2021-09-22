@@ -3,7 +3,6 @@
 	"name": "Erai-Raws",
 	"active": true,
 	"adult": false,
-	"force_unify": true,
 	"language": ["vos"],
 	"thumbnail": "https://i.imgur.com/GvLkFFO.png",
 	"banner": "",
@@ -13,6 +12,7 @@
 		"torrent",
 		"vos"
 	],
+	"force_unify": true,
 	"settings": [
 		{
 			"id": "include_in_global_search",

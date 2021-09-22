@@ -1,17 +1,18 @@
 {
   "id": "animeblix",
   "name": "AnimeBlix",
-  "force_unify": true,
-  "thumbnail":"https://i.postimg.cc/mk4hq5Wv/animeblix.png",
-  "banner":"",
   "active": false,
   "adult": false,
   "language": [],
-  "version": 1,
+  "thumbnail":"https://i.postimg.cc/mk4hq5Wv/animeblix.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "anime",
     "vos"
   ],
+  "force_unify": true,
+  "version": 1,
   "settings": [
     {
       "id": "include_in_global_search",
@@ -42,6 +43,6 @@
       "default": true,
       "enabled": true,
       "visible": true
-    }]
-
+    }
+  ]
 }

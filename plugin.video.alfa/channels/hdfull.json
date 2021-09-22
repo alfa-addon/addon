@@ -7,6 +7,7 @@
   "language": ["cast", "lat"],
   "thumbnail": "https://i.postimg.cc/HskwLYrk/hdfull.png",
   "banner": "hdfull.png",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow"
@@ -39,7 +40,7 @@
       "id": "current_host",
       "type": "text",
       "label": "Host actual",
-      "default": "https://hdfull.one/",
+      "default": "https://hd-full.cc/",
       "enabled": true,
       "visible": false
     },
