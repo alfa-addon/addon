@@ -6,10 +6,11 @@
   "language": ["lat"],
   "thumbnail": "https://s13.postimg.cc/jrvqmqfnb/tvseriesdk.png",
   "banner": "https://s16.postimg.cc/r6mbel0f9/tvseriesdk-banner.png",
-  "version": 1,
+  "fanart": "",
   "categories": [
     "tvshow"
   ],
+  "version": 1,
   "settings": [
     {
       "id": "include_in_global_search",

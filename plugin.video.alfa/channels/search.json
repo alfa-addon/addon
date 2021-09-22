@@ -3,8 +3,10 @@
   "name": "search",
   "active": false,
   "adult": false,
+  "language": [],
   "thumbnail": "",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie"
   ],

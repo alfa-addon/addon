@@ -1,16 +1,17 @@
 {
-"id": "blogdepelis",
+  "id": "blogdepelis",
   "name": "Blog de Pelis",
-  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://www.blogdepelis.tv/wp-content/uploads/2020/05/blogdepelis.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "direct"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

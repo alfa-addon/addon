@@ -1,13 +1,16 @@
 {
   "id": "news",
-  "force_unify": true,
   "name": "Novedades",
   "active": false,
   "adult": false,
   "language": ["*"],
+  "thumbnail": "",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "movie"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "news_range",

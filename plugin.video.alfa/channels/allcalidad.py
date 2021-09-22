@@ -25,7 +25,7 @@ __channel__='allcalidad'
 
 host = "https://allcalidad.la"
 forced_proxy_opt = 'ProxyDirect'
-encoding = None
+encoding = "utf-8"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)

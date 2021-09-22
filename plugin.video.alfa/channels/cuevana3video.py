@@ -23,13 +23,13 @@ from platformcode import config, logger
 IDIOMAS = {'Latino': 'Latino'}
 list_language = list(IDIOMAS.values())
 list_quality = []
-list_servers = ['fembed', 'streamtape', 'fastplay', 'gvideo', 'netutv', 'Jawcloud']
+list_servers = ['fembed', 'streamtape', 'fastplay', 'gvideo', 'Jawcloud']
 
 
 __channel__='allcalidad'
 
-host = "https://www1.cuevana3.video"
-encoding = None
+host = "https://cuevana3.so"
+encoding = "utf-8"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -277,6 +277,7 @@ def play(item):
     logger.info()
     itemlist = []
     item.thumbnail = item.contentThumbnail
+    item.url = item.url.replace("embedsito.com","fembed.com").replace("pelispng.online","fembed.com")
     if "hydrax.net" in item.url:
         data = httptools.downloadpage(item.url, headers={"Referer" : item.url}).data
         v = scrapertools.find_single_match(item.url, 'v=(\w+)')

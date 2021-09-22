@@ -1,16 +1,17 @@
 {
   "id": "hdfulls",
   "name": "HDFullS",
-  "force_unify": true,
   "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.postimg.cc/fywxmZ55/hdfool.png",
   "banner": "hdfull.png",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "filter_languages",

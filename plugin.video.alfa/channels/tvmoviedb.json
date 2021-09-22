@@ -5,6 +5,8 @@
   "adult": false,
   "language": ["*"],
   "thumbnail": "http://i.imgur.com/HA7fvgD.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow",

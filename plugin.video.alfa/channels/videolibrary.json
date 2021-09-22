@@ -4,6 +4,11 @@
   "active": false,
   "adult": false,
   "language": ["*"],
+  "thumbnail": "",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+  ],
   "settings": [
     {
       "id": "update",

@@ -1,11 +1,12 @@
 {
-"id": "peliculasyseries",
+  "id": "peliculasyseries",
   "name": "PeliculasySeries",
   "active": false,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://s22.postimg.cc/xy1burkep/peliculasyseries.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow",

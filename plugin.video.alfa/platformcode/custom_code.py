@@ -190,7 +190,14 @@ def bd_tmdb_maintenance():
 
 
 def marshal_check():
+    import platform
+    
     try:
+        python_ver = platform.python_version().split('.')
+        if len(python_ver) == 3:
+            python_ver = '_%s_%s' % (str(python_ver[0]), str(python_ver[1]).zfill(2))
+        else:
+            python_ver = '_0_00'
         marshal_modules = ['lib/alfaresolver_py3', 'core/proxytools_py3']
         for module in marshal_modules:
             path = filetools.join(ADDON_PATH, filetools.dirname(module))
@@ -198,6 +205,8 @@ def marshal_check():
             library = filetools.dirname(module).rstrip('/')
             module_name = filetools.basename(module)
             for alt_module in path_list:
+                if python_ver not in alt_module:
+                    continue
                 if module_name not in alt_module:
                     continue
                 if alt_module == module_name + '.py':
@@ -214,7 +223,7 @@ def marshal_check():
                 logger.info('marshal_check FOUND: %s' % alt_module, force=True)
                 break
             else:
-                logger.info('marshal_check NOT FOUND: %s.py' % module_name, force=True)
+                logger.info('marshal_check NOT FOUND: %s%s.py' % (module_name, python_ver), force=True)
     except:
         logger.error(traceback.format_exc(1))
 

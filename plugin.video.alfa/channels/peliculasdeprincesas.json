@@ -1,16 +1,17 @@
 {
-"id": "peliculasdeprincesas",
+  "id": "peliculasdeprincesas",
   "name": "Peliculas de princesas",
-  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://www.peliculasdeprincesas.net/wp-content/uploads/2019/05/peliculas-de-princesas.jpg",
   "banner": "",
+  "fanart": "",
   "categories": [
     "movie",
     "direct"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

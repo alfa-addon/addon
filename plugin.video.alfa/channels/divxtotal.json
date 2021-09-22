@@ -5,6 +5,8 @@
   "adult": false,
   "language": ["cast"],
   "thumbnail": "http://imgur.com/Madj03A.jpg",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "torrent",
     "movie",
@@ -19,7 +21,7 @@
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "www.divxtotal.one"
+        "www.divxtotal.nz"
       ]
     },{
       "id": "alternate_domain",

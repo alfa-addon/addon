@@ -6,6 +6,7 @@
   "language": ["*"],
   "thumbnail": "https://palimas.tv/images/s/logo.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "adult"
   ],
@@ -23,4 +24,3 @@
     }
   ]
 }
-

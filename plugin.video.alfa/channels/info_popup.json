@@ -1,14 +1,15 @@
 {
   "id": "info_popup",
-  "force_unify": "true",
   "name": "Lista de deseos",
-  "language": ["*"],
   "active": false,
   "adult": false,
+  "language": ["*"],
   "thumbnail": "",
   "banner": "",
+  "fanart": "",
   "categories": [
   ],
+  "force_unify": "true",
   "settings": [
     {
       "id": "autoscan",

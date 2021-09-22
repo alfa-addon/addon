@@ -2,15 +2,16 @@
   "id": "retrotv",
   "name": "RetroTV",
   "active": true,
-  "force_unify": true,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://retrotv.org/wp-content/uploads/2021/07/Sin-titulo-1-2.png",
   "banner": "",
+  "fanart": "",
   "categories": [
     "tvshow",
     "movie"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",

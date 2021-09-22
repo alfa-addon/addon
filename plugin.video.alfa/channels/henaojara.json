@@ -1,16 +1,17 @@
 {
   "id": "henaojara",
   "name": "HenaOjara",
-  "thumbnail":"https://henaojara.com/wp-content/uploads/2021/04/INICIO_new.png",
-  "banner":"",
   "active": true,
   "adult": false,
   "language": [],
-  "version": 1,
+  "thumbnail": "https://henaojara.com/wp-content/uploads/2021/04/INICIO_new.png",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "anime",
     "vos"
   ],
+  "version": 1,
   "settings": [
     {
       "id": "include_in_global_search",
@@ -39,6 +40,6 @@
       "default": true,
       "enabled": true,
       "visible": true
-    }]
-
+    }
+  ]
 }

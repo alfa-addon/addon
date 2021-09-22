@@ -6,14 +6,14 @@
   "language": ["lat"],
   "thumbnail": "https://s26.postimg.cc/jov1pmbh5/pelisplusco.png",
   "banner": "https://s26.postimg.cc/4hf259jmh/pelisplusco-banner.png",
-  "version": 1,
+  "fanart": "",
   "categories": [
     "movie",
     "tvshow",
     "documentary",
     "direct"
-
   ],
+  "version": 1,
   "settings": [
     {
       "id": "include_in_global_search",

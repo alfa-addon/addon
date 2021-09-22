@@ -5,6 +5,8 @@
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.postimg.cc/bZ5CHJqc/madeintorrent.jpg",
+  "banner": "",
+  "fanart": "",
   "categories": [
     "torrent",
     "movie",

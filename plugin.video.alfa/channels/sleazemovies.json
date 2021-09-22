@@ -1,7 +1,6 @@
 {
   "id": "sleazemovies",
   "name": "SleazeMovies",
-  "force_unify": true,
   "active": false,
   "adult": true,
   "language": ["*"],
@@ -11,6 +10,7 @@
   "categories": [
     "adult"
   ],
+  "force_unify": true,
   "settings": [
     {
       "id": "include_in_global_search",
