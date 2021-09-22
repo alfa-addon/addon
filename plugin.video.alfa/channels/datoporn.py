@@ -17,10 +17,11 @@ from core import servertools
 from platformcode import config, logger
 
 
-host= "http://dato.porn"
+host= "https://www.datoporn.com" 
 
 
 ###################   KTP page mot found       #################
+
 
 def mainlist(item):
     logger.info()
@@ -37,7 +38,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "http://dato.porn/?k=%s&op=search" % texto
+    item.url = "%s/?k=%s&op=search" % (host,texto)
     try:
         return lista(item)
     except:
@@ -75,7 +76,10 @@ def lista(item):
         title = '[COLOR yellow] %s [/COLOR] %s' % (duration , scrapedtitle)
         if "HD" in quality:
             title = '[COLOR yellow] %s [/COLOR] [COLOR red] HD [/COLOR] %s' % (duration , scrapedtitle)
-        itemlist.append(item.clone(action="play", title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
                              fanart=scrapedthumbnail.replace("_t.jpg", ".jpg"), contentTitle=title, plot = ""))
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
     if "#" in next_page:
@@ -85,6 +89,14 @@ def lista(item):
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 

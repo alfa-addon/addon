@@ -10,6 +10,7 @@ from platformcode import logger
 
 from lib.kt_player import decode
 
+
 def test_video_exists(page_url):
 
     response = httptools.downloadpage(page_url)
@@ -42,8 +43,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             if "function/" in url:
                 url = decode(url, license_code)
             url += "|verifypeer=false"
-            logger.debug(quality + "  --  " + url)
-            itemlist.append(['%s [ktplayer]' %quality, url])
+            # logger.debug(quality + "  --  " + url)
+            itemlist.append(['[ktplayer] %s' %quality, url])
         invert = ""
         if "LQ" in quality:
             invert= "true"
