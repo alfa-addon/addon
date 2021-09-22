@@ -590,11 +590,11 @@ def htmlparser(data):
     """
 
     if PY3:
-        from html.parser import unescape
+        from html.parser import unescape as unescape_parse
     else:
         from HTMLParser import HTMLParser
-        unescape = HTMLParser().unescape
+        unescape_parse = HTMLParser().unescape
         
-    data = unescape(data)
+    data = unescape_parse(data)
     
     return data

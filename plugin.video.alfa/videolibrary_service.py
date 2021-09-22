@@ -86,18 +86,20 @@ def update(path, p_dialog, i, t, serie, overwrite):
                 obj = __import__('channels.%s' % serie.channel, fromlist=["channels.%s" % serie.channel])
 
                 try:
+                    channel_host = ''
                     if obj.host and isinstance(obj.host, str):
                         channel_host = obj.host
                 except:
-                    channel_host = ''
-                if channel_host and (not serie.url.startswith(channel_host) or not serie.library_urls[serie.channel].startswith(channel_host)):
-                    if generictools.verify_channel(nom_canal) != 'newpct1':
+                    pass
+                if channel_host and (not serie.url.startswith(channel_host) or not \
+                                serie.library_urls.get(serie.channel, '').startswith(channel_host)):
+                    if generictools.verify_channel(serie.channel) != 'newpct1':
                         logger.debug("vl channel: %s" % channel)
-                        logger.debug("vl url: %s" % serie.library_urls[serie.channel])
+                        logger.debug("vl url: %s" % serie.library_urls.get(serie.channel, ''))
                         logger.debug("cambiando dominio....")
                         import re
                         if serie.url: serie.url = re.sub("(https?:\/\/.+?\/)", channel_host, serie.url)
-                        serie.library_urls[serie.channel] = re.sub("(https?:\/\/.+?\/)", channel_host, serie.library_urls[serie.channel])
+                        serie.library_urls[serie.channel] = re.sub("(https?:\/\/.+?\/)", channel_host, serie.library_urls.get(serie.channel, ''))
                         logger.debug("serie: %s" % serie.library_urls[serie.channel])
                         if serie.url_tvshow: 
                             serie.url_tvshow = re.sub("(https?:\/\/.+?\/)", channel_host, serie.url_tvshow)
