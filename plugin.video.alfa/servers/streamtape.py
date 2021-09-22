@@ -5,6 +5,7 @@
 import re
 from core import httptools
 from core import scrapertools
+from lib import js2py
 from platformcode import logger
 import sys
 
@@ -28,9 +29,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
 
     video_urls = []
-    pattern = """getElementById\('\w+link'\).innerHTML = "[^"]+" .* \('.+?/([^']+)'\)"""
-    url_data = scrapertools.find_single_match(data, pattern)
-    url = "https://streamtape.com/" + url_data + "&stream=1"
-    video_urls.append(['MP4 [streamtape]', url + "|User-Agent=%s" % httptools.get_user_agent()])
+    # Code taken from Kodi On Demand (KOD)
+    # https://github.com/kodiondemand/addon/blob/master/servers/streamtape.py
+    find_url = scrapertools.find_multiple_matches(data, 'innerHTML = ([^;]+)')[-1]
+    possible_url = js2py.eval_js(find_url)
+    url = "https:" + possible_url
+    url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
+
+    video_urls.append(['MP4 [streamtape]', "{}|{}".format(url, "User-Agent=%s" % httptools.get_user_agent())])
 
     return video_urls

@@ -12,7 +12,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data
     data = httptools.downloadpage(page_url)
-    if data.code == 404:
+    if data.code == 404 or 'File was deleted' in data.data:
         return False, "[Uqload] El archivo no existe o  ha sido borrado"
 
     return True, ""

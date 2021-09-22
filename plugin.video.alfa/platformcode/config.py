@@ -17,9 +17,9 @@ import xbmcvfs
 
 PLUGIN_NAME = "alfa"
 
-__settings__ = xbmcaddon.Addon(id="plugin.video." + PLUGIN_NAME)
+__settings__ = xbmcaddon.Addon(id="plugin.video.{}".format(PLUGIN_NAME))
 __language__ = __settings__.getLocalizedString
-
+__system_platform__ = ""
 
 def translatePath(path):
     """
@@ -266,22 +266,32 @@ def get_videolibrary_support():
 
 
 def get_system_platform():
-    """ fonction: pour recuperer la platform que xbmc tourne """
-    
-    if xbmc.getCondVisibility("System.Platform.Android"): platform = 'android'
-    elif xbmc.getCondVisibility("System.Platform.Windows"): platform = 'windows'
-    elif xbmc.getCondVisibility("System.Platform.UWP"): platform = 'windows'
-    elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"): platform = 'raspberry'
-    elif xbmc.getCondVisibility("System.Platform.Linux"): platform = 'linux'
-    elif xbmc.getCondVisibility("System.Platform.OSX"): platform = 'osx'
-    elif xbmc.getCondVisibility("System.Platform.IOS"): platform = 'ios'
-    elif xbmc.getCondVisibility("System.Platform.Darwin"): platform = 'darwin'
-    elif xbmc.getCondVisibility("System.Platform.Xbox"): platform = 'xbox'
-    elif xbmc.getCondVisibility("System.Platform.Tvos"): platform = 'tvos'
-    elif xbmc.getCondVisibility("System.Platform.Atv2"): platform = 'atv2'
-    else: platform = 'unknown'
-        
-    return platform
+    """
+    Function: To recover the platform on which xbmc runs
+    Credits to the original author (unknown)
+
+    NOTE: Expensive operation, if reused, keep it in a temp var
+    """
+    global __system_platform__
+
+    if __system_platform__ == "":
+
+        if xbmc.getCondVisibility("System.Platform.Android"): platform = 'android'
+        elif xbmc.getCondVisibility("System.Platform.Windows"): platform = 'windows'
+        elif xbmc.getCondVisibility("System.Platform.UWP"): platform = 'windows'
+        elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"): platform = 'raspberry'
+        elif xbmc.getCondVisibility("System.Platform.Linux"): platform = 'linux'
+        elif xbmc.getCondVisibility("System.Platform.OSX"): platform = 'osx'
+        elif xbmc.getCondVisibility("System.Platform.IOS"): platform = 'ios'
+        elif xbmc.getCondVisibility("System.Platform.Darwin"): platform = 'darwin'
+        elif xbmc.getCondVisibility("System.Platform.Xbox"): platform = 'xbox'
+        elif xbmc.getCondVisibility("System.Platform.Tvos"): platform = 'tvos'
+        elif xbmc.getCondVisibility("System.Platform.Atv2"): platform = 'atv2'
+        else: platform = 'unknown'
+
+        __system_platform__ = platform
+
+    return __system_platform__
 
 
 def get_all_settings_addon():
