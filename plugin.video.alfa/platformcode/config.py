@@ -10,6 +10,7 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import os
 import re
+import time
 
 import xbmc
 import xbmcaddon
@@ -19,7 +20,22 @@ PLUGIN_NAME = "alfa"
 
 __settings__ = xbmcaddon.Addon(id="plugin.video.{}".format(PLUGIN_NAME))
 __language__ = __settings__.getLocalizedString
+
+""" CACHING ALFA PARAMETERS """
+caching = 'init'
 __system_platform__ = ""
+kodi_platform = {}
+alfa_settings = {}
+channels = {}
+servers = {}
+
+def cache_init():
+    global caching
+    
+    caching = False
+    
+    return
+
 
 def translatePath(path):
     """
@@ -308,12 +324,13 @@ def get_all_settings_addon():
 
     ret = {}
 
-    matches = scrapertools.find_multiple_matches(data, '<setting id="([^"]*)" value="([^"]*)')
+    matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/')
     if not matches:
-        matches = scrapertools.find_multiple_matches(data, '<setting id="([^"]*)".*?>([^<]*)')
+        matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]*)"\s*value="([^"]*)"')
 
     for _id, value in matches:
-        ret[_id] = get_setting(_id)
+        #ret[_id] = get_setting(_id, catching_var=False)
+        ret[_id] = get_setting_values(_id, value)
 
     return ret
 
@@ -422,26 +439,30 @@ def get_setting(name, channel="", server="", default=None):
         value = __settings__.getSetting(name)
         if not value:
             return default
-        # Translate Path if start with "special://"
-        if value.startswith("special://") and "videolibrarypath" not in name:
-            value = translatePath(value)
+        return get_setting_values(name, value)
 
-        # hack para devolver el tipo correspondiente
-        if value == "true":
-            return True
-        elif value == "false":
-            return False
+
+def get_setting_values(name, value):
+    # Translate Path if start with "special://"
+    if value.startswith("special://") and "videolibrarypath" not in name:
+        value = translatePath(value)
+
+    # hack para devolver el tipo correspondiente
+    if value == "true":
+        return True
+    elif value == "false":
+        return False
+    else:
+        # special case return as str
+        if name in ["adult_password", "adult_aux_intro_password", "adult_aux_new_password1",
+                    "adult_aux_new_password2"]:
+            return value
         else:
-            # special case return as str
-            if name in ["adult_password", "adult_aux_intro_password", "adult_aux_new_password1",
-                        "adult_aux_new_password2"]:
-                return value
-            else:
-                try:
-                    value = int(value)
-                except ValueError:
-                    pass
-                return value
+            try:
+                value = int(value)
+            except ValueError:
+                pass
+            return value
 
 
 def set_setting(name, value, channel="", server=""):
@@ -525,20 +546,9 @@ def get_kodi_setting(name, total=False):
 
     for _id, value in matches:
         # hack para devolver el tipo correspondiente
-        if value == "true":
-            value = True
-        elif value == "false":
-            value =  False
-        else:
-            try:
-                value = int(value)
-            except ValueError:
-                value = str(value)
-        
+        ret[_id] = get_setting_values(_id, value)
         if _id == name and not total:
-            return value
-        
-        ret[_id] = value
+            return ret[_id]
     
     if not total:
         return None
@@ -633,7 +643,6 @@ def verify_directories_created():
     from platformcode import logger
     from core import filetools
     from platformcode import xbmc_videolibrary
-    import time
     
     logger.info()
     time.sleep(1)

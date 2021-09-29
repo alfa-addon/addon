@@ -1051,7 +1051,8 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
         return (item, itemlist)
     
     #Permitimos la actualización de los títulos, bien para uso inmediato, o para añadir a la videoteca
-    itemlist_temporadas.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
+    if len(itemlist) > 0:
+        itemlist_temporadas.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
     
     #Es un canal estándar, sólo una linea de Añadir a Videoteca
     title = ''
@@ -1388,7 +1389,7 @@ def post_tmdb_episodios(item, itemlist):
     #Permitimos la actualización de los títulos, bien para uso inmediato, o para añadir a la videoteca
     poster = item.infoLabels['temporada_poster']
     if not poster: poster = item.infoLabels['thumbnail']
-    if not item.downloadFilename:                           #... si no viene de Descargas
+    if not item.downloadFilename and len(itemlist) > 0:                         #... si no viene de Descargas
         itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", 
                     action="actualizar_titulos", tmdb_stat=False, from_action=item.action, contentType='episode', 
                     from_title_tmdb=item.title, from_update=True, thumbnail=poster))
@@ -1797,7 +1798,7 @@ def post_tmdb_findvideos(item, itemlist):
         item.quality = '[COLOR yellow][%s][/COLOR] %s' % (channel, item.quality)
     
     #agregamos la opción de Añadir a Videoteca para péliculas (no series)
-    if (item.contentType == 'movie' or item.contentType == 'season') and item.contentChannel != "videolibrary":
+    if (item.contentType == 'movie' or item.contentType == 'season') and item.contentChannel != "videolibrary" and len(itemlist) > 0:
         #Permitimos la actualización de los títulos, bien para uso inmediato, o para añadir a la videoteca
         itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", extra="peliculas", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
         

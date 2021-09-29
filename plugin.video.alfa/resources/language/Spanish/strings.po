@@ -5183,3 +5183,11 @@ msgstr "Eliminados todos los enlaces de %s"
 msgctxt "#80784"
 msgid "Search in MyAnimeList"
 msgstr "Buscar en MyAnimeList"
+
+msgctxt "#80785"
+msgid "Caching variables"
+msgstr "Caching variables"
+
+msgctxt "#80786"
+msgid "Do you like Alfa to catch most used variable in memory"
+msgstr "¿Quiere que Alfa cachee en memoria las variables más usadas?"
