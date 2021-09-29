@@ -659,10 +659,11 @@ def findvideos(item):
             logger.error(traceback.format_exc())
         
         try:
+            channel_host = ''
             if channel.host and isinstance(channel.host, str):
                 channel_host = channel.host
         except:
-            channel_host = ''
+            pass
         if channel_host and not item_json.url.startswith(channel_host):
             if generictools.verify_channel(nom_canal) != 'newpct1':
                 logger.debug("item_json: %s" % item_json.url)

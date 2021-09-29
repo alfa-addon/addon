@@ -21,6 +21,7 @@ from channelselector import get_thumb
 from lib import generictools
 
 host = 'https://seriesflix.video/'
+domain = scrapertools.find_single_match(host, 'https*:\/\/(.*?)[\/|$]')
 IDIOMAS = {"Latino": "LAT", "Castellano": "CAST", "Subtitulado": "VOSE"}
 list_language = list(IDIOMAS.values())
 list_servers = ['uqload', 'fembed', 'mixdrop', 'supervideo', 'mystream']
@@ -32,7 +33,7 @@ def create_soup(url, post=None, headers=None):
 
     data = httptools.downloadpage(url, post=post, headers=headers).data
     if 'Javascript is required' in data:
-        generictools.js2py_conversion(data, url, domain_name=".seriesflix.to")
+        generictools.js2py_conversion(data, url, domain_name=domain)
         data = httptools.downloadpage(url, post=post).data
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 

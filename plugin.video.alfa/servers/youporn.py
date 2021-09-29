@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+
 from core import httptools
 from core import scrapertools
 from platformcode import logger
-
 
 
 def test_video_exists(page_url):
@@ -21,8 +21,9 @@ def get_video_url(page_url, video_password):
     data= httptools.downloadpage(url).data
     patron  = '"quality":"([^"]+)","format":"mp4","videoUrl":"([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for quality, scrapedurl in matches:
-        url =  scrapedurl.replace("\/", "/").replace("\u0026", "&")
+    for quality, url in matches:
+        url =  url.replace("\/", "/").replace("\\u0026", "&")
+        logger.debug(url)
         video_urls.append(["[youporn] %sp" %quality, url])
     return video_urls[::-1]
 
