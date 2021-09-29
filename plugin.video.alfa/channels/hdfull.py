@@ -219,6 +219,9 @@ def mainlist(item):
     autoplay.show_option(item.channel, itemlist)
     
     if not account:
+        itemlist.append(Item(channel=item.channel,  action="", url="", text_bold=True,
+                        title="[COLOR gold]Registrate en %s y luego habilita tu cuenta[/COLOR]" % host,
+                        thumbnail=get_thumb("setting_0.png")))
         itemlist.append(Item(channel=item.channel,  action="settingCanal", url="", text_bold=True,
                         title="[COLOR dodgerblue]Habilita tu cuenta para activar los items de usuario...[/COLOR]",
                         thumbnail=get_thumb("setting_0.png")))
