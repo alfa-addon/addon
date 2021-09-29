@@ -422,9 +422,14 @@ def listado(item):                                                              
                         if not calidad: calidad = 'HDTV 720p AC3 5.1'
                     else:
                         if not calidad: calidad = 'HDTV'
+                if item.extra != "novedades":
+                    if title in title_lista:
+                        continue
+                    else:
+                        title_lista += [title]
                 title_lista += [url]
                 title_lista += [scrapedthumbnail]
-            
+
             # Tratamiento especial para Novedades, con opciones como 4K
             if item.extra == "novedades" and item.extra2:
                 if not item.extra2 in url and not item.extra2 in scrapedtitle and not item.extra2 in scrapedthumbnail:
@@ -763,15 +768,61 @@ def findvideos(item):
     #Si es un lookup para cargar las urls de emergencia en la Videoteca, lo iniciamos
     if item.videolibray_emergency_urls:
         item.emergency_urls = []
-        item.emergency_urls.append([url_torr])                                  #Guardamos el enlace del .torrent
+        item.emergency_urls.append([])                                          #Guardamos el enlace del .torrent
     
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     if not item.videolibray_emergency_urls:
         item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     
-    """ Ahora tratamos el enlace .torrent """
-    if url_torr:
+    """ Tratamos los enlaces .torrent de calidades alternativas """
+    matches_torent = []
+    if item.armagedon and item.url_quality_alt:
+        for url in item.emergency_urls[0]:
+            matches_torent.append((url, item.quality, '', ''))
+    elif url_torr:
+        matches_torent.append((url_torr, item.quality, size, data))
+
+    if not item.armagedon and item.url_quality_alt:
+        for post_match, quality in item.url_quality_alt:
+            url_torr = item.url
+            size = ''
+
+            if not url_torr.startswith('magnet'):
+                if url_torr.startswith('http') or url_torr.startswith('//'):
+                    url_torr = urlparse.urljoin(host, url_torr)
+                
+                data_alt, success, code, item, itemlist = generictools.downloadpage(url_torr, timeout=timeout_search, 
+                                          decode_code=decode_code, quote_rep=True, post=post_match, 
+                                          item=item, itemlist=itemlist)         # Descargamos la página)
+                data_alt = data_alt.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
+                
+                #Patron para .torrent
+                patron = '<div\s*class=\s*"ctn[^"]+"[^>]*>\s*<a\s*href=\s*"(?:javascript:)?[^"]*"'
+                patron += '\s*id=\s*"btn-[^"]+"\s*data-ut=\s*"([^"]+)"'
+                if not scrapertools.find_single_match(data, patron):
+                    patron = '<div\s*class=\s*"ctn[^"]+"[^>]*>\s*<a\s*href=\s*"(?:javascript:)?([^"]+)"'
+                    patron += '\s*id=\s*"btn-[^"]+"'
+                
+                if 'Archivo torrent no Existe' in data_alt:
+                    url_torr = ''
+                else:
+                    url_torr = scrapertools.find_single_match(data_alt, patron)
+                if 'javascript:' in url_torr: url_torr = ''
+                if url_torr:
+                    url_torr = urlparse.urljoin(host, url_torr)
+                else:
+                    continue
+                url_torr = url_torr.replace(" ", "%20")                         #sustituimos espacios por %20, por si acaso
+
+            matches_torent.append((url_torr, quality, size, data_alt))
+    
+    """ Ahora tratamos los enlaces .torrent """
+    for x, (url, quality, _size, _data) in enumerate(matches_torent):
+        url_torr = url
+        size = _size
+        data = _data
+
         if url_torr.startswith('http') or url_torr.startswith('//'):
             url_torr = generictools.convert_url_base64(url_torr, host_torrent)
         else:
@@ -781,6 +832,7 @@ def findvideos(item):
         item_local = item.clone()
 
         item_local.url = url_torr
+        item_local.quality = quality
 
         # Restauramos urls de emergencia si es necesario
         local_torr = ''
@@ -831,7 +883,7 @@ def findvideos(item):
             item_local.torrent_info += ' Magnet'
         if item_local.torrent_info:
             item_local.torrent_info = item_local.torrent_info.strip().strip(',')
-            item.torrent_info = item_local.torrent_info
+            #item.torrent_info = item_local.torrent_info
             if not item.unify:
                 item_local.torrent_info = '[%s]' % item_local.torrent_info
    
@@ -846,9 +898,12 @@ def findvideos(item):
                             + item.password + "'", folder=False))
                 item_local.password = item.password
 
-        # Guardamos urls de emergencia si se viene desde un Lookup de creación de Videoteca
-        if not item.videolibray_emergency_urls:
-            #... ejecutamos el proceso normal
+        #Si es un lookup para cargar las urls de emergencia en la Videoteca, guardarmos los enlaces
+        if item.videolibray_emergency_urls:
+            item.emergency_urls[0].append(url_torr)                             #Guardamos el enlace del .torrent
+        
+        #... ejecutamos el proceso normal
+        else:
             if item.armagedon:
                 item_local.quality = '[COLOR hotpink][E][/COLOR] [COLOR limegreen]%s[/COLOR]' % item_local.quality
             
@@ -898,15 +953,16 @@ def findvideos(item):
             #logger.debug("TORRENT: " + scrapedurl + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
             #logger.debug(item_local)
         
-            if len(itemlist_f) > 0:                                             #Si hay entradas filtradas...
-                itemlist.extend(itemlist_f)                                     #Pintamos pantalla filtrada
-            else:                                                                       
-                if config.get_setting('filter_languages', channel_py) > 0 and len(itemlist_t) > 0:  #Si no hay entradas filtradas ...
-                    thumb_separador = get_thumb("next.png")                     #... pintamos todo con aviso
-                    itemlist.append(Item(channel=item.channel, url=host, 
-                                title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", 
-                                thumbnail=thumb_separador, folder=False))
-                itemlist.extend(itemlist_t)                                     #Pintar pantalla con todo si no hay filtrado
+    if not item.videolibray_emergency_urls:
+        if len(itemlist_f) > 0:                                                 #Si hay entradas filtradas...
+            itemlist.extend(itemlist_f)                                         #Pintamos pantalla filtrada
+        else:                                                                       
+            if config.get_setting('filter_languages', channel_py) > 0 and len(itemlist_t) > 0:  #Si no hay entradas filtradas ...
+                thumb_separador = get_thumb("next.png")                         #... pintamos todo con aviso
+                itemlist.append(Item(channel=item.channel, url=host, 
+                            title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", 
+                            thumbnail=thumb_separador, folder=False))
+            itemlist.extend(itemlist_t)                                         #Pintar pantalla con todo si no hay filtrado
     
     
     """ VER y DESCARGAR vídeos, descargar vídeos un link,  o múltiples links"""
@@ -1164,14 +1220,17 @@ def episodios(item):
     page = 1
     
     if item.post:
-        post = item.post
+        if not isinstance(item.post, list):
+            post = [item.post]
+        else:
+            post = item.post
         del item.post
     else:
-        post = None
+        post = [None]
     list_pages = []
     if item.serie_info:
         list_pages = [urlparse.urljoin(host, '/controllers/load.chapters.type.php')]
-        post = item.serie_info
+        post = [item.serie_info]
     if not download_sufix in item.url:
         item.url = item.url.replace(sufix, sufix+download_sufix)
     if '///' in item.url:
@@ -1181,6 +1240,8 @@ def episodios(item):
     data = ''
     list_episodes = []
     first = True
+    quality = item.quality
+    url_quality_alt = {}
 
     """ Descarga las páginas """
     while list_pages and page < max_page:                                       # Recorre la lista de páginas, con límite
@@ -1188,17 +1249,58 @@ def episodios(item):
         
         if not data:
             data, success, code, item, itemlist = generictools.downloadpage(list_pages[0], timeout=timeout, 
-                                          decode_code=decode_code, quote_rep=True, no_comments=False, post=post, 
+                                          decode_code=decode_code, quote_rep=True, no_comments=False, post=post[0], 
                                           item=item, itemlist=itemlist)         # Descargamos la página
+            del list_pages[0]
+            if post:
+                if post[0]:
+                    if '_cidr=7263' in post[0]:
+                        quality = '4KWebrip'
+                    elif '_cidr=7264' in post[0]:
+                        quality = 'Bluray 1080p'
+                del post[0]
 
         #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
+        if 'Descargar (0) Capitulos' in data:
+            data = ''
+            continue
+        
         if not success or not data or not scrapertools.find_single_match(data, patron):
             if len(itemlist) > 0:
                 break
+
+        if first and not item.serie_info:
+            try:
+                patron_serie_info = '<script\s*type="text\/javascript">var\s*CNAME\s*=\s*"([^"]+)"\s*,\s*'
+                patron_serie_info += 'CID\s*=\s*"([^"]+)"\s*,\s*CIDR\s*=\s*"([^"]+)"\s*;\s*<\/script>'
+                item.serie_info = '_cname=%s&_cid=%s&_cidr=%s' % scrapertools.find_single_match(data, patron_serie_info)
+                if item.quality == 'HDTV':
+                    item.serie_info = item.serie_info.replace('_cidr=1469', '_cidr=767')
+                if '_cidr=1469' in item.serie_info:
+                    item.serie_info += '&_o=0'
+                elif '_cidr=767' in item.serie_info:
+                    item.serie_info += '&_o=1'
+                elif '_cidr=7263' in item.serie_info:
+                    item.serie_info += '&_o=2'
+                elif '_cidr=7264' in item.serie_info:
+                    item.serie_info += '&_o=3'
+                else:
+                    item.serie_info += '&_o=4'
+            except:
+                logger.error('ERROR en formato de SERIES: %s' % data)
+                item.serie_info = '_cname=&_cid=&_cidr=&_o=0'
+
+        if first and '_cidr=1469' in item.serie_info:
+            list_pages += [urlparse.urljoin(host, '/controllers/load.chapters.type.php')]
+            post += [item.serie_info.replace('_cidr=1469', '_cidr=7263').replace('&_o=0', '&_o=2')]
+            list_pages += [urlparse.urljoin(host, '/controllers/load.chapters.type.php')]
+            post += [item.serie_info.replace('_cidr=1469', '_cidr=7264').replace('&_o=0', '&_o=3')]
+        
+        url = urlparse.urljoin(host, '/controllers/show.chapters.php')
         
         matches = re.compile(patron, re.DOTALL).findall(data)
         
-        if not matches:                                                         #error
+        if not matches and 'Descargar (0) Capitulos' not in data and not scrapertools.find_single_match(data, patron_serie_info):   #error
             logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " 
                     + " / PATRON: " + patron + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.category + 
@@ -1212,22 +1314,6 @@ def episodios(item):
         #logger.debug(data)
         
         page += 1                                                               # Apuntamos a la página siguiente
-        list_pages = []                                                         # ... si no hay, es última página
-            
-        if not item.serie_info:
-            try:
-                patron_serie_info = '<script\s*type="text\/javascript">var\s*CNAME\s*=\s*"([^"]+)"\s*,\s*'
-                patron_serie_info += 'CID\s*=\s*"([^"]+)"\s*,\s*CIDR\s*=\s*"([^"]+)"\s*;\s*<\/script>'
-                item.serie_info = '_cname=%s&_cid=%s&_cidr=%s' % scrapertools.find_single_match(data, patron_serie_info)
-                if '_cidr=1469' in item.serie_info:
-                    item.serie_info += '&_o=0'
-                elif '_cidr=767' in item.serie_info:
-                    item.serie_info += '&_o=1'
-            except:
-                logger.error('ERROR en formato de SERIES: %s' % data)
-                item.serie_info = '_cname=&_cid=&_cidr=&_o=0'
-        
-        url = urlparse.urljoin(host, '/controllers/show.chapters.php')
 
         """ Recorremos todos los episodios generando un Item local por cada uno en Itemlist """
         x = 0
@@ -1256,6 +1342,11 @@ def episodios(item):
             item_local.url = url
             item_local.post = 'id=%s' % scrapedurl
             item_local.context = "['buscar_trailer']"
+            
+            patron_quality = '(?i)\[([^\]]*)\]\s*\[cap'
+            quality_temp = scrapertools.find_single_match(info, patron_quality).replace('hdtv', 'HDTV')
+            if '720p' in quality_temp or '1080p' in quality_temp:
+                item_local.quality = quality_temp
             
             x += 1
 
@@ -1296,8 +1387,8 @@ def episodios(item):
             
             if modo_ultima_temp_alt and item.library_playcounts:                #Si solo se actualiza la última temporada de Videoteca
                 if item_local.contentSeason < max_temp and modo_ultima_temp_alt and max_temp_seen > 1:
-                    list_pages = []                                             #Sale del bucle de leer páginas
-                    break                                                       #Sale del bucle actual del FOR de episodios por página
+                    #list_pages = []                                             #Sale del bucle de leer páginas
+                    continue                                                       #Sale del bucle actual del FOR de episodios por página
                 elif item_local.contentSeason < max_temp:                       #Si está desordenada ...
                     modo_ultima_temp_alt = False                                #... por seguridad leeremos toda la serie
               
@@ -1306,14 +1397,35 @@ def episodios(item):
                             and item_local.contentSeason != season_display):
                     continue
                 elif item_local.contentSeason < season_display and max_temp_seen > 1:
-                    list_pages = []                                             #Sale del bucle de leer páginas
-                    break
+                    #list_pages = []                                             #Sale del bucle de leer páginas
+                    continue
                 elif item_local.contentSeason < season_display:                 #Si no ha encontrado epis de la temp, sigue
                     continue
 
+            #logger.debug('quality: %s - item_local.quality: %s' % (quality, item_local.quality))
+            if item_local.title not in str(list_episodes):
+                if item_local.quality in item.quality:
+                    list_episodes += [item_local.title]
+                    
+                    item_local.quality = item.quality
+                    quality = item.quality
+                    itemlist.append(item_local.clone())
+            if quality not in item.quality or item_local.quality not in item.quality:
+                quality_temp = quality
+                if quality == item.quality:
+                    if 'web' in item_local.quality:
+                        quality_temp = '4KWebrip'
+                    elif '1080' in item_local.quality:
+                        quality_temp = 'Bluray 1080p'
+                    else:
+                        quality_temp = item_local.quality
+                if not url_quality_alt.get(item_local.title, ''):
+                    url_quality_alt[item_local.title] = [(item_local.post, quality_temp)]
+                else:
+                    url_quality_alt[item_local.title].append((item_local.post, quality_temp))
+                continue
+            
             max_temp_seen += 1
-
-            itemlist.append(item_local.clone())
 
             #logger.debug(item_local)
             
@@ -1324,7 +1436,11 @@ def episodios(item):
             itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))       #clasificamos
     except:
         logger.error(traceback.format_exc(1))
-        
+    
+    for item_local in itemlist:                                                 # Salvamos las urls de calidades alternativas
+        if url_quality_alt.get(item_local.title, ''):
+            item_local.url_quality_alt = url_quality_alt[item_local.title]
+    
     if item.season_colapse and not item.add_videolibrary:                       #Si viene de listado, mostramos solo Temporadas
         item, itemlist = generictools.post_tmdb_seasons(item, itemlist)
 
