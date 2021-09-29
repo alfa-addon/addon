@@ -1119,6 +1119,110 @@ def sort_method(item):
     return value
 
 
+def sort_torrents(play_items, emergency_urls=False):
+    logger.info('Enlaces: %s' % len(play_items))
+    
+    try:
+        # Para descargar los .torrents por orden de calidad, procesamos las entradas de "play_items" para hacerlo por tamaños de vídeo
+        play_items_torrent = []
+        play_items_direct = []
+        if len(play_items) > 1:
+            from lib.generictools import get_torrent_size
+            patron = '(?i)(\d+[\.|\,]?\d*?)\s[G|M]'
+            if emergency_urls:
+                SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
+                for play_item in play_items:
+                    logger.info('torrent_file: %s' % play_item)
+                    torrent_file = filetools.join(SERIES, play_item)
+                    if play_item.startswith('magnet'):
+                        return play_items
+                    elif filetools.isfile(torrent_file):
+                        size = get_torrent_size(torrent_file)
+                    else:
+                        size = get_torrent_size(play_item)
+                    if size == 'ERROR':
+                        logger.error('Size ERROR : %s' % play_item)
+                        continue
+                    else:
+                        size = scrapertools.find_single_match(size, patron).replace(',', '.')
+                    try:
+                        size = float(size)
+                    except:
+                        logger.error('Size ERROR : %s: %s' % (play_item, size))
+                        continue
+                    play_items_torrent.append([play_item, size])
+                
+                if play_items_torrent:
+                    size_order = config.get_setting('torrent_quality', channel='downloads', default=0)
+                    if size_order:
+                        play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it[1])))        # clasificamos
+                        if size_order == 1 and len(play_items_torrent) > 2:             # Tomamos la segunda calidad
+                            play_items_torrent[0][1] = 0.0                              # Ponemos el de más calidad al final de la lista
+                            play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it[1])))    # RE-clasificamos
+                    else:
+                        play_items_torrent = sorted(play_items_torrent, key=lambda it: (float(it[1])))                      # clasificamos
+                    
+                    play_items = []
+                    for play_item, size in play_items_torrent:
+                        play_items += [play_item]
+                    
+                logger.info('Size FINAL : %s' % play_items_torrent)
+                
+                return play_items
+            
+            if play_items[0].server == 'torrent' and play_items[1].server == 'torrent':
+                for play_item in play_items:
+                    
+                    if play_item.server == 'torrent':
+                        logger.info('torrent_info: %s' % play_item.torrent_info)
+                        if play_item.torrent_info and scrapertools.find_single_match(play_item.torrent_info, patron):
+                            size = scrapertools.find_single_match(play_item.torrent_info, patron).replace(',', '.')
+                        elif play_item.startswith('magnet'):
+                            return play_items
+                        else:
+                            size = get_torrent_size(play_item.url)
+                            if size == 'ERROR':
+                                logger.error('Size ERROR : %s' % play_item)
+                                continue
+                            else:
+                                size = scrapertools.find_single_match(size, patron).replace(',', '.')
+                                
+                        try:
+                            play_item.size_torr = float(size)
+                        except:
+                            logger.error('Size ERROR : %s: %s' % (play_item, size))
+                            continue
+                        play_items_torrent.append(play_item)
+                    
+                    else:
+                        logger.info('direct server: %s' % play_item.server)
+                        play_items_direct.append(play_item)
+
+        # Si hay enlaces torrent para clasificar, los clasificamos
+        if play_items_torrent:
+            size_order = config.get_setting('torrent_quality', channel='downloads', default=0)
+            if size_order:
+                play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it.size_torr)))         # clasificamos
+                if size_order == 1 and len(play_items_torrent) > 2:                 # Tomamos la segunda calidad
+                    play_items_torrent[0].size_torr = 0.0                           # Ponemos el de más calidad al final de la lista
+                    play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it.size_torr)))     # RE-clasificamos
+            else:
+                play_items_torrent = sorted(play_items_torrent, key=lambda it: (float(it.size_torr)))                       # clasificamos
+            
+            play_items = []
+            play_items.extend(play_items_torrent)
+            
+            if play_items_direct:
+                play_items.extend(play_items_direct)
+                
+        for play_item in play_items:
+            logger.info('Size FINAL : %s' % play_item.torrent_info)
+    except:
+        logger.error(traceback.format_exc())
+
+    return play_items
+
+
 def download_from_url(url, item):
     logger.info("Intentando descargar: %s" % (url))
     if url.lower().endswith(".m3u8") or url.lower().startswith("rtmp"):
@@ -1381,6 +1485,9 @@ def download_from_best_server(item, silent=False):
 
     if not silent: progreso.close()
 
+    # Para descargar los .torrents por orden de calidad, procesamos las entradas de "play_items" para hacerlo por tamaños de vídeo
+    play_items = sort_torrents(play_items)
+
     # Recorremos el listado de servers, hasta encontrar uno que funcione
     for play_item in play_items:
         if not play_item.post and item.post:
@@ -1475,7 +1582,7 @@ def get_episodes(item):
     logger.info("contentAction: %s | sub_action: %s | contentChannel: %s | contentType: %s | contentSeason: %s | contentEpisodeNumber: %s" % (
         item.contentAction, item.sub_action, item.contentChannel, item.contentType, item.contentSeason, item.contentEpisodeNumber, ))
 
-    from lib import generictools
+    from lib.generictools import verify_channel
     
     sub_action = ["tvshow", "season", "unseen", "auto"]                         # Acciones especiales desde Findvideos
     SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
@@ -1681,13 +1788,15 @@ def get_episodes(item):
                 del episode.emergency_urls
             elif episode_local:
                 episode.torrent_alt = episode.url
-                episode.url = episode.emergency_urls[0][0]
+                episode.emergency_urls[0] = sort_torrents(episode.emergency_urls[0], emergency_urls=True)
+                if episode.emergency_urls[0]:
+                    episode.url = episode.emergency_urls[0][0]
 
         # Si partiamos de un item que ya era episodio estos datos ya están bien, no hay que modificarlos
         if item.contentType != "episode":
             episode.contentAction = episode.action
             episode.contentChannel = episode.channel
-        episode.contentChannel = generictools.verify_channel(episode.contentChannel)
+        episode.contentChannel = verify_channel(episode.contentChannel)
 
         # Si es una temporada, descartameos lo que sea de esa temporada
         if item.contentType in ["season"] or item.sub_action in ["season"]:

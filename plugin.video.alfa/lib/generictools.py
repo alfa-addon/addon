@@ -1231,6 +1231,7 @@ def post_tmdb_episodios(item, itemlist):
         #Restauramos valores para cada Episodio si ha habido fail-over de un clone de NewPct1
         if (item_local.channel_alt or item_local.channel_redir) and not item.downloadFilename:
             #item_local.channel = item_local.channel_redir.lower() or item_local.channel_alt.lower()
+            if item_local.channel_redir: item_local.channel = item_local.channel_redir.lower()
             item_local.category = item_local.channel_redir.capitalize() or item_local.channel_alt.capitalize()
             if item_local.channel_alt: del item_local.channel_alt
             #if item_local.channel_redir: del item_local.channel_redir
@@ -3121,7 +3122,9 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 if item.url:
                     url_total = item.url
                 elif item.library_urls:
-                    url_total = item.library_urls[canal_org]
+                    url_total = item.library_urls.get(canal_org, '')
+                elif it.library_urls:
+                    url_total = it.library_urls.get(canal_org, '')
                 
                 # Si es un clone de Newpct1, salvamos la nueva categoría desde la url
                 if item.channel == channel_py:
@@ -3156,8 +3159,10 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                         url_total = _url_
                         if item.url:
                             item.url = url_total
-                        elif item.library_urls:
+                        if item.library_urls:
                             item.library_urls[canal_org] = url_total
+                        if it.library_urls: 
+                            it.library_urls[canal_org] = url_total
                     elif _url_:
                         item.url_tvshow = _url_
                     
@@ -3180,8 +3185,10 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                             url_total = url
                             if item.url:
                                 item.url = url_total
-                            elif item.library_urls:
+                            if item.library_urls:
                                 item.library_urls[canal_org] = url_total
+                            if it.library_urls: 
+                                it.library_urls[canal_org] = url_total
                         elif url:
                             item.url_tvshow = url
                     #logger.error('Pasada: %s - %s' %(x, url or _url_))
@@ -3191,7 +3198,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     #if item.contentType == "tvshow" and ow_force != 'no':       # Parece que con el título encuentra.., ### VIGILAR
                     if item.contentType in ["tvshow", "season"] and canal_org not in canal_des:     # Parece que con el título sólo, encuentra..,
                         url_total = re.sub(r'\/\d{4,20}\/*$', '', url_total)    # mejor la serie, a menos que sea una redir del mismo canal
-                        item.channel_redir = item.category
+                        item.channel_redir = item.category_alt or item.category
+                        if item.category_alt: del item.category_alt
                 
                 """ SALVAMOS el resultado para su proceso """
                 update_stat += 1                                                #Ya hemos actualizado algo

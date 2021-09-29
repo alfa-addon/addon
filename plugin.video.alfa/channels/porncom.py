@@ -17,6 +17,7 @@ from core.item import Item
 from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
+import base64
 
 host = 'https://www.porn.com'
 
@@ -50,9 +51,10 @@ def categorias(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='list-global__item')
     for elem in matches:
-        # logger.debug(elem)
         elem = elem.find('a', class_=False)
         url = elem['href']
+        if "Categorias" in item.title:
+            url += "?ad=30"
         title = elem.img['alt']
         thumbnail = elem.img['data-src']
         cantidad = elem.find('div', class_='list-global__details')
@@ -66,6 +68,8 @@ def categorias(item):
     next_page = soup.find('a', class_='next')
     if next_page:
         next_page = next_page['href']
+    # next_page = scrapertools.find_single_match(data, '<a class="next pagination__number" href="([^"]+)" rel="nofollow">Next')
+    # if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -121,10 +125,10 @@ def lista(item):
 # https://www.stileproject.com/video/amy-rogue-takes-her-step-brothers-cock-in-her-pussy-9913541.html
 # https://www.pornrabbit.com/video/yuzuna-oshima-hot-japanese-girl-being-fucked-39797102.html var desktopFile='https://cdn.pornrabbit.com/media/videos/8/2/8/8/7/82887c73cecbf95d298b8458a1fa67ba.mp4'
 
+
 def findvideos(item):
     logger.info()
     itemlist = []
-    import base64
     url = base64.b64decode(item.url).decode("utf8")
     if not url.startswith("https"):
         url = "https:/%s" % url
@@ -139,7 +143,6 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    import base64
     url = base64.b64decode(item.url).decode("utf8")
     if not url.startswith("https"):
         url = "https:/%s" % url

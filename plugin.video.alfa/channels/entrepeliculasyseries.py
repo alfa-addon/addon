@@ -193,6 +193,7 @@ def episodesxseason(item):
     itemlist = list()
     season = item.infoLabels["season"]
     soup = create_soup(item.url).find("ul", id="season-%s" % season)
+    if not soup: return itemlist
     matches = soup.find_all("article")
     infoLabels = item.infoLabels
 

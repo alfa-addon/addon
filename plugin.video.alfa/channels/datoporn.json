@@ -1,7 +1,7 @@
 {
   "id": "datoporn",
   "name": "DatoPorn",
-  "active": false,
+  "active": true,
   "adult": true,
   "language": ["*"],
   "thumbnail": "http://i.imgur.com/tBSWudd.png?1",

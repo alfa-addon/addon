@@ -21,6 +21,7 @@ from core import jsontools
 
 host = 'https://www.tnaflix.com'
 
+
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -104,11 +105,11 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<a class=\'thumb no_ajax\' href=\'(.*?)\'.*?'
+    patron = '<a class=\'thumb no_ajax\' href=\'.*?/video(\d+).*?'
     patron += 'data-original=\'(.*?)\' alt="([^"]+)"><div class=\'videoDuration\'>([^<]+)</div>(.*?)<div class=\'watchedInfo'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,duracion,quality in matches:
-        url = urlparse.urljoin(item.url,scrapedurl)
+        url = "https://player.tnaflix.com/video/%s" %scrapedurl
         title = "[COLOR yellow]%s[/COLOR] %s" % (duracion, scrapedtitle)
         if quality:
             quality= scrapertools.find_single_match(quality, '>(\d+p)<')
@@ -128,46 +129,18 @@ def lista(item):
     return itemlist
 
 
-def ref(url):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(url).data
-    VID = scrapertools.find_single_match(data,'id="VID" type="hidden" value="([^"]+)"')
-    vkey = scrapertools.find_single_match(data,'id="vkey" type="hidden" value="([^"]+)"')
-    thumb = scrapertools.find_single_match(data,'id="thumb" type="hidden" value="([^"]+)"')
-    nkey= scrapertools.find_single_match(data,'id="nkey" type="hidden" value="([^"]+)"')
-    url = "https://cdn-fck.tnaflix.com/tnaflix/%s.fid?key=%s&VID=%s&nomp4=1&catID=0&rollover=1&startThumb=%s" % (vkey, nkey, VID, thumb)
-    url += "&embed=0&utm_source=0&multiview=0&premium=1&country=0user=0&vip=1&cd=0&ref=0&alpha"
-    return url
-
-
 def findvideos(item):
     logger.info()
     itemlist = []
-    url= ref(item.url)
-    headers = {'Referer': item.url}
-    data = httptools.downloadpage(url, headers=headers).data
-    patron = '<res>(.*?)</res>.*?'
-    patron += '<videoLink><([^<]+)></videoLink>'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for title, url in matches:
-        url= url.replace("![CDATA[", "http:").replace("]]", "")
-        itemlist.append(item.clone(action="play", title=title, url=url) )
-    # itemlist.reverse()
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    url= ref(item.url)
-    headers = {'Referer': item.url}
-    data = httptools.downloadpage(url, headers=headers).data
-    patron = '<res>(.*?)</res>.*?'
-    patron += '<videoLink><([^<]+)></videoLink>'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for title, url in matches:
-        url= url.replace("![CDATA[", "http:").replace("]]", "")
-        itemlist.append([".mp4 %s" % (title), url])
-    # itemlist.reverse()
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
+

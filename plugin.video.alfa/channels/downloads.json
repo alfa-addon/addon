@@ -56,6 +56,19 @@
       "visible": true
     },
     {
+      "id": "torrent_quality",
+      "type": "list",
+      "label": "  - Prioridad de calidad de .torrents a descargar",
+      "lvalues": [
+        "Estándar",
+        "Alta",
+        "Suprema"
+      ],
+      "default": 0,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "block_size",
       "type": "list",
       "label": "@70233",

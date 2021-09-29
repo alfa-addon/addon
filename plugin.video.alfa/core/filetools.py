@@ -52,6 +52,7 @@ if not PY3 and os.name == "nt":
 else:
     fs_encoding = "utf-8"
 
+platform = config.get_system_platform()
 
 def validate_path(path, replacement='', trans_none=''):
     """
@@ -790,7 +791,6 @@ def isfile(path, silent=False, vfs=True):
     @rtype: bool
     @return: Retorna True si la ruta existe y es un archivo
     """
-    platform = config.get_system_platform()
     path = encode(path)
     try:
         if xbmc_vfs and vfs:
