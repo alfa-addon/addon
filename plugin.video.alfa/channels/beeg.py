@@ -18,13 +18,14 @@ Host = "https://beeg.com"
 
 
 url_api = "https://store.externulls.com"
-
+# https://store.externulls.com/facts/tag?id=27173&limit=48&offset=0
+# https://store.externulls.com/tag/facts/tags?get_original=true&slug=index
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="lista", title="Útimos videos", url=url_api + "/facts/index?limit=48&offset=0"))
-    itemlist.append(item.clone(action="categorias", title="Canal", url= "https://store.externulls.com/tags/top"))
-    itemlist.append(item.clone(action="categorias", title="Categorias", url= "https://store.externulls.com/tags/top"))
+    itemlist.append(item.clone(action="lista", title="Útimos videos", url= url_api + "/facts/tag?id=27173&limit=48&offset=0"))
+    itemlist.append(item.clone(action="categorias", title="Canal", url= url_api + "/tag/facts/tags?get_original=true&slug=index"))
+    itemlist.append(item.clone(action="categorias", title="Categorias", url= url_api + "/tag/facts/tags?get_original=true&slug=index"))
     # itemlist.append(item.clone(title="Buscar...", action="search"))
     return itemlist
 
@@ -73,9 +74,12 @@ def lista(item):
         id = Video['fc_file_id']
         th2= Video["fc_facts"][0]['fc_thumbs']
         segundos = Video["file"]["fl_duration"]
-        title = Video["file"]["stuff"]
-        if title.get("sf_name", ""):
-            title = title["sf_name"]
+        stuff = Video["file"]["stuff"]
+        if stuff.get("sf_name", ""):
+            title = stuff["sf_name"]
+        plot = ""
+        if stuff.get("sf_story", ""):
+            plot = stuff["sf_story"]
         else:
             title = id
         horas=int(old_div(segundos,3600))
@@ -97,7 +101,7 @@ def lista(item):
         if logger.info() == False:
             action = "findvideos"
         itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail, 
-                             fanart=thumbnail, plot="",contentTitle=title, contentType="movie"))
+                             fanart=thumbnail, plot=plot,contentTitle=title, contentType="movie"))
     # Paginador
     page = int(scrapertools.find_single_match(item.url, '&offset=([0-9]+)'))
     next_page = (page+ 48)
