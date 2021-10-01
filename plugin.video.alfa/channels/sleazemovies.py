@@ -63,7 +63,7 @@ def list_all(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)  # Eliminamos tabuladores, dobles espacios saltos de linea, etc...
-    patron = '<article id="post-\d+".*?'
+    patron = '<articleid="post-\d+".*?'
     patron += 'h2 class="entry-title"><a href="([^"]+)".*?>([^<]+).*?'
     patron += '<div class="twp-article-post-thumbnail">.*?'
     patron += 'src="([^?]+).*?'
