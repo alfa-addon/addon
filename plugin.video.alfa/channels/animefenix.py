@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- Channel AnimeFenix -*-
 # -*- Created for Alfa-addon -*-
-# -*- By the Alfa Develop Group -*-
+# -*- By the Alfa Development Group -*-
 
 import sys
 PY3 = False
@@ -60,17 +60,14 @@ def mainlist(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False):
+def get_source(url, soup=False, referer=None, headers={}, unescape=False):
     logger.info()
 
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
-    else:
-        data = httptools.downloadpage(url).data
+    if referer: headers['referer'] = referer
 
-    if unescape:
-        data = scrapertools.unescape(data)
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    data = httptools.downloadpage(url, headers=headers).data
+    data = scrapertools.unescape(data) if unescape else data
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8") if soup else data
 
     return soup
 
@@ -80,7 +77,7 @@ def new_episodes(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url).find("div", class_="capitulos-grid")
+    soup = get_source(item.url, soup=True).find("div", class_="capitulos-grid")
 
     for elem in soup.find_all("div", "overarchingdiv"):
         title = elem.img["alt"]
@@ -98,9 +95,18 @@ def new_episodes(item):
 def episodios(item):
     logger.info()
 
+    item.videolibrary = True
+    itemlist = episodesxseason(item)
+    
+    return itemlist
+
+
+def episodesxseason(item):
+    logger.info()
+
     itemlist = list()
 
-    soup = create_soup(item.url).find("div", class_="column is-12")
+    soup = get_source(item.url, soup=True).find("div", class_="column is-12")
 
     infoLabels = item.infoLabels
 
@@ -116,7 +122,7 @@ def episodios(item):
 
     itemlist = itemlist[::-1]
 
-    if config.get_videolibrary_support() and len(itemlist) > 0:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.videolibrary:
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
@@ -130,7 +136,7 @@ def list_all(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url).find("div", class_="list-series")
+    soup = get_source(item.url, soup=True).find("div", class_="list-series")
 
     for elem in soup.find_all("article", class_="serie-card"):
         url = elem.a["href"]
@@ -139,7 +145,7 @@ def list_all(item):
         context = renumbertools.context(item)
         context2 = autoplay.context
         context.extend(context2)
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='episodios',
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action='episodesxseason',
                              thumbnail=thumb, contentSerieName=title, context=context))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -157,7 +163,7 @@ def findvideos(item):
                "3": "https://www.mp4upload.com/embed-%s.html", "4": "https://sendvid.com/embed/%s",
                "19": "https://videa.hu/player?v=%s"}
 
-    soup = create_soup(item.url, unescape=True)
+    soup = get_source(item.url, soup=True, unescape=True)
 
     pl = soup.find("div", class_="player-container")
 
@@ -173,7 +179,7 @@ def findvideos(item):
             v_id = v_id[1:]
 
         if srv_id not in servers:
-            srv_data = httptools.downloadpage(url).data
+            srv_data = get_source(url)
             url = scrapertools.find_single_match(srv_data, 'playerContainer.innerHTML .*?src="([^"]+)"')
         else:
             srv = servers.get(srv_id, "directo")
@@ -181,7 +187,7 @@ def findvideos(item):
                 url = srv % v_id
 
         if "/stream/" in url:
-            data = httptools.downloadpage(url, headers={'Referer': item.url}).data
+            data = get_source(url, referer=item.url)
             url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace('\\/', '/')
         if not url:
             continue
