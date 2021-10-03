@@ -85,7 +85,7 @@ def mainlist(item):
     return itemlist
 
 
-def get_source(url, soup=False, json=False, unescape=True, **opt):
+def get_source(url, json=False, unescape=True, **opt):
     logger.info()
 
     data = httptools.downloadpage(url, **opt)
@@ -95,9 +95,6 @@ def get_source(url, soup=False, json=False, unescape=True, **opt):
     else:
         data = data.data
         data = scrapertools.replace(r'\n|\r|\t|&nbsp;|<br>|\s{2,}|\(|\)', "", data) if unescape else data
-        if soup:
-            from bs4 import BeautifulSoup
-            data = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
     return data
 

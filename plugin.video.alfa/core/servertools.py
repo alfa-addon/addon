@@ -283,144 +283,145 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
         if not proxy_data['web_name']:
             url_proxy = url
 
-    # Si el vídeo es "directo" o "local", no hay que buscar más
-    # Aunque hay que verificar que haya url, urls vacías pasan como buenas :S
+    # ACTUALIZACIÓN: Ahora se validan las url de directo en directo.py
+    # Si el vídeo es "directo" o "local", si hay contraseña no hay que buscar más
+    # Hay que verificar que haya url y que sea video, verlo en el server directo.py
     if (server == "directo" or server == "local") and url:
         if isinstance(video_password, list):
             return video_password, len(video_password) > 0, "<br/>".join(error_messages)
-        logger.info("Server: %s, la url es la buena" % server)
-        video_urls.append(["%s [%s]" % (urlparse.urlparse(url)[2][-4:], server), url_proxy])
+        # logger.info("Server: %s, la url es la buena" % server)
+        # video_urls.append(["%s [%s]" % (urlparse.urlparse(url)[2][-4:], server), url_proxy])
 
+    # else:
     # Averigua la URL del vídeo
+    if server:
+        server_parameters = get_server_parameters(server)
     else:
-        if server:
-            server_parameters = get_server_parameters(server)
-        else:
-            server_parameters = {}
+        server_parameters = {}
 
-        if server_parameters:
-            # Muestra un diágo de progreso
-            if muestra_dialogo:
-                progreso = platformtools.dialog_progress(config.get_localized_string(20000),
-                                                         config.get_localized_string(70180) % server_parameters["name"])
+    if server_parameters:
+        # Muestra un diágo de progreso
+        if muestra_dialogo:
+            progreso = platformtools.dialog_progress(config.get_localized_string(20000),
+                                                        config.get_localized_string(70180) % server_parameters["name"])
 
-            # Cuenta las opciones disponibles, para calcular el porcentaje
+        # Cuenta las opciones disponibles, para calcular el porcentaje
 
-            orden = [
-                ["free"] + [server] + [premium for premium in server_parameters["premium"] if not premium == server],
-                [server] + [premium for premium in server_parameters["premium"] if not premium == server] + ["free"],
-                [premium for premium in server_parameters["premium"] if not premium == server] + [server] + ["free"]
-            ]
+        orden = [
+            ["free"] + [server] + [premium for premium in server_parameters["premium"] if not premium == server],
+            [server] + [premium for premium in server_parameters["premium"] if not premium == server] + ["free"],
+            [premium for premium in server_parameters["premium"] if not premium == server] + [server] + ["free"]
+        ]
 
-            if server_parameters["free"] == True:
-                opciones.append("free")
-            opciones.extend(
-                [premium for premium in server_parameters["premium"] if config.get_setting("premium", server=premium)])
+        if server_parameters["free"] == True:
+            opciones.append("free")
+        opciones.extend(
+            [premium for premium in server_parameters["premium"] if config.get_setting("premium", server=premium)])
 
-            priority = int(config.get_setting("resolve_priority"))
-            opciones = sorted(opciones, key=lambda x: orden[priority].index(x))
+        priority = int(config.get_setting("resolve_priority"))
+        opciones = sorted(opciones, key=lambda x: orden[priority].index(x))
 
-            logger.info("Opciones disponibles: %s | %s" % (len(opciones), opciones))
-        else:
-            logger.error("No existe conector para el servidor %s" % server)
-            error_messages.append(config.get_localized_string(60004) % server)
-            muestra_dialogo = False
+        logger.info("Opciones disponibles: %s | %s" % (len(opciones), opciones))
+    else:
+        logger.error("No existe conector para el servidor %s" % server)
+        error_messages.append(config.get_localized_string(60004) % server)
+        muestra_dialogo = False
 
-        # Importa el server
+    # Importa el server
+    try:
+        server_module = __import__('servers.%s' % server, None, None, ["servers.%s" % server])
+        logger.info("Servidor importado: %s" % server_module)
+    except:
+        server_module = None
+        logger.error("No se ha podido importar el servidor: %s" % server)
+        import traceback
+        logger.error(traceback.format_exc())
+
+    # Si tiene una función para ver si el vídeo existe, lo comprueba ahora
+    if hasattr(server_module, 'test_video_exists'):
+        logger.info("Invocando a %s.test_video_exists" % server)
         try:
-            server_module = __import__('servers.%s' % server, None, None, ["servers.%s" % server])
-            logger.info("Servidor importado: %s" % server_module)
+            video_exists, message = server_module.test_video_exists(page_url=url)
+
+            if not video_exists:
+                error_messages.append(message)
+                logger.info("test_video_exists dice que el video no existe")
+            else:
+                logger.info("test_video_exists dice que el video SI existe")
         except:
-            server_module = None
-            logger.error("No se ha podido importar el servidor: %s" % server)
+            logger.error("No se ha podido comprobar si el video existe")
             import traceback
             logger.error(traceback.format_exc())
 
-        # Si tiene una función para ver si el vídeo existe, lo comprueba ahora
-        if hasattr(server_module, 'test_video_exists'):
-            logger.info("Invocando a %s.test_video_exists" % server)
-            try:
-                video_exists, message = server_module.test_video_exists(page_url=url)
+    # Si el video existe y el modo free está disponible, obtenemos la url
+    if video_exists:
+        for opcion in opciones:
+            # Opcion free y premium propio usa el mismo server
+            if opcion == "free" or opcion == server:
+                serverid = server_module
+                server_name = server_parameters["name"]
 
-                if not video_exists:
-                    error_messages.append(message)
-                    logger.info("test_video_exists dice que el video no existe")
-                else:
-                    logger.info("test_video_exists dice que el video SI existe")
-            except:
-                logger.error("No se ha podido comprobar si el video existe")
-                import traceback
-                logger.error(traceback.format_exc())
+            # Resto de opciones premium usa un debrider
+            else:
+                serverid = __import__('servers.debriders.%s' % opcion, None, None,
+                                        ["servers.debriders.%s" % opcion])
+                server_name = get_server_parameters(opcion)["name"]
 
-        # Si el video existe y el modo free está disponible, obtenemos la url
-        if video_exists:
-            for opcion in opciones:
-                # Opcion free y premium propio usa el mismo server
-                if opcion == "free" or opcion == server:
-                    serverid = server_module
-                    server_name = server_parameters["name"]
-
-                # Resto de opciones premium usa un debrider
-                else:
-                    serverid = __import__('servers.debriders.%s' % opcion, None, None,
-                                          ["servers.debriders.%s" % opcion])
-                    server_name = get_server_parameters(opcion)["name"]
-
-                # Muestra el progreso
-                if muestra_dialogo:
-                    progreso.update((old_div(100, len(opciones))) * opciones.index(opcion), config.get_localized_string(70180) % server_name)
-                
-                
-                # Modo free
-                if opcion == "free":
-                    try:
-                        logger.info("Invocando a %s.get_video_url" % server)
-                        response = serverid.get_video_url(page_url=url, video_password=video_password)
-                        video_urls.extend(response)
-                    except:
-                        logger.error("Error al obtener la url en modo free")
-                        error_messages.append("Se ha producido un error en %s" % server_name)
-                        import traceback
-                        logger.error(traceback.format_exc())
-
-                # Modo premium
-                else:
-                    try:
-                        logger.info("Invocando a %s.get_video_url" % opcion)
-                        response = serverid.get_video_url(page_url=url, premium=True,
-                                                          user=config.get_setting("user", server=opcion),
-                                                          password=config.get_setting("password", server=opcion),
-                                                          video_password=video_password)
-                        if response and response[0][1]:
-                            video_urls.extend(response)
-                        elif response and response[0][0]:
-                            error_messages.append(response[0][0])
-                        else:
-                            error_messages.append(config.get_localized_string(60006) % server_name)
-                    except:
-                        logger.error("Error en el servidor: %s" % opcion)
-                        error_messages.append(config.get_localized_string(60006) % server_name)
-                        import traceback
-                        logger.error(traceback.format_exc())
-
-                # Si ya tenemos URLS, dejamos de buscar
-                if video_urls and config.get_setting("resolve_stop") == True:
-                    break
-
-            # Cerramos el progreso
+            # Muestra el progreso
             if muestra_dialogo:
-                progreso.update(100, config.get_localized_string(60008))
-                progreso.close()
+                progreso.update((old_div(100, len(opciones))) * opciones.index(opcion), config.get_localized_string(70180) % server_name)
+            
+            
+            # Modo free
+            if opcion == "free":
+                try:
+                    logger.info("Invocando a %s.get_video_url" % server)
+                    response = serverid.get_video_url(page_url=url, video_password=video_password)
+                    video_urls.extend(response)
+                except:
+                    logger.error("Error al obtener la url en modo free")
+                    error_messages.append("Se ha producido un error en %s" % server_name)
+                    import traceback
+                    logger.error(traceback.format_exc())
 
-            # Si no hay opciones disponibles mostramos el aviso de las cuentas premium
-            if video_exists and not opciones and server_parameters.get("premium"):
-                listapremium = [get_server_parameters(premium)["name"] for premium in server_parameters["premium"]]
-                error_messages.append(
-                    config.get_localized_string(60009) % (server, " o ".join(listapremium)))
+            # Modo premium
+            else:
+                try:
+                    logger.info("Invocando a %s.get_video_url" % opcion)
+                    response = serverid.get_video_url(page_url=url, premium=True,
+                                                        user=config.get_setting("user", server=opcion),
+                                                        password=config.get_setting("password", server=opcion),
+                                                        video_password=video_password)
+                    if response and response[0][1]:
+                        video_urls.extend(response)
+                    elif response and response[0][0]:
+                        error_messages.append(response[0][0])
+                    else:
+                        error_messages.append(config.get_localized_string(60006) % server_name)
+                except:
+                    logger.error("Error en el servidor: %s" % opcion)
+                    error_messages.append(config.get_localized_string(60006) % server_name)
+                    import traceback
+                    logger.error(traceback.format_exc())
 
-            # Si no tenemos urls ni mensaje de error, ponemos uno generico
-            elif not video_urls and not error_messages:
-                error_messages.append(config.get_localized_string(60006) % get_server_parameters(server)["name"])
+            # Si ya tenemos URLS, dejamos de buscar
+            if video_urls and config.get_setting("resolve_stop") == True:
+                break
+
+        # Cerramos el progreso
+        if muestra_dialogo:
+            progreso.update(100, config.get_localized_string(60008))
+            progreso.close()
+
+        # Si no hay opciones disponibles mostramos el aviso de las cuentas premium
+        if video_exists and not opciones and server_parameters.get("premium"):
+            listapremium = [get_server_parameters(premium)["name"] for premium in server_parameters["premium"]]
+            error_messages.append(
+                config.get_localized_string(60009) % (server, " o ".join(listapremium)))
+
+        # Si no tenemos urls ni mensaje de error, ponemos uno generico
+        elif not video_urls and not error_messages:
+            error_messages.append(config.get_localized_string(60006) % get_server_parameters(server)["name"])
 
     video_urls = parse_hls(video_urls, server)
     return video_urls, len(video_urls) > 0, "<br/>".join(error_messages)

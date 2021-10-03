@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- Channel VerAnime -*-
-# -*- Created for Alfa-addon -*-
-# -*- By the Alfa Develop Group -*-
+# -*- Created for Alfa Addon -*-
+# -*- By the Alfa Development Group -*-
 
 import sys
 PY3 = False
@@ -183,8 +183,13 @@ def list_all(item):
             year = info_2.find("span", text=re.compile(r"\d{4}")).text.split(",")[-1]
         except:
             year = '-'
-        new_item = Item(channel=item.channel, url=url, title=title, thumbnail=thumb,
-                        infoLabels={"year": year.strip(), 'filtro': filtro_tmdb})
+        new_item = Item(
+                    channel = item.channel,
+                    infoLabels = {"year": year.strip(), 'filtro': filtro_tmdb},
+                    thumbnail = thumb,
+                    title = title,
+                    url = url,
+                )
 
         if "online" in url and not "pelicula" in url:
             new_item.action = "seasons"
@@ -198,7 +203,14 @@ def list_all(item):
     tmdb.set_infoLabels_itemlist(itemlist, True)
     try:
         next_page = soup.find_all("a", class_="arrow_pag")[-1]["href"]
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action="list_all"))
+        itemlist.append(
+            Item(
+                action ="list_all",
+                channel = item.channel,
+                title = "Siguiente >>",
+                url = next_page,
+            )
+        )
     except:
         pass
 
@@ -234,14 +246,28 @@ def latest(item):
         
         filtro_tmdb = list({"original_language": "ja"}.items())
 
-        itemlist.append(Item(channel=item.channel, title=ftitle, url=url,
-                             action="findvideos", thumbnail=thumb, 
-                             contentSerieName=title))
+        itemlist.append(
+            Item(
+                action = "findvideos",
+                channel = item.channel,
+                contentSerieName = title,
+                thumbnail = thumb, 
+                title = ftitle,
+                url = url
+            )
+        )
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
     try:
         next_page = soup.find_all("a", class_="arrow_pag")[-1]["href"]
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action="latest"))
+        itemlist.append(
+            Item(
+                action="latest",
+                channel = item.channel,
+                title = "Siguiente >>",
+                url = next_page
+            )
+        )
     except:
         pass
 
@@ -265,23 +291,42 @@ def seasons(item):
         title = "Temporada %s %s" % (season, tags)
         infoLabels["season"] = season
 
-        itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseasons',
-                             context=filtertools.context(item, list_language, list_quality), infoLabels=infoLabels))
+        itemlist.append(
+            Item(
+                action = 'episodesxseasons',
+                channel = item.channel,
+                context = filtertools.context(item, list_language, list_quality),
+                infoLabels = infoLabels,
+                title = title,
+                url = item.url
+            )
+        )
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
-    if config.get_videolibrary_support() and len(itemlist) > 0:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.videolibrary:
         itemlist.append(
-            Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
-                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
+            Item(
+                action = "add_serie_to_library",
+                channel = item.channel,
+                contentSerieName=item.contentSerieName,
+                extra = "episodios",
+                text_color = 'yellow',
+                title = 'Añadir esta serie a la videoteca',
+                url = item.url
+            )
+        )
 
     return itemlist
 
 
 def episodios(item):
     logger.info()
+
     itemlist = []
+    item.videolibrary = True if item.extra else False
     templist = seasons(item)
+
     for tempitem in templist:
         itemlist += episodesxseasons(tempitem)
 
@@ -300,12 +345,13 @@ def episodesxseasons(item):
     season = infoLabels["season"]
 
     for elem in matches:
-        if elem.find("span", class_="se-t").text != str(season):
-            continue
+        if elem.find("span", class_="se-t").text != str(season): continue
 
         epi_list = elem.find("ul", class_="episodios")
+
         if 'no hay episodios para' in str(epi_list):
             return itemlist
+
         for epi in epi_list.find_all("li"):
             info = epi.find("div", class_="episodiotitle")
             url = info.a["href"]
@@ -314,8 +360,15 @@ def episodesxseasons(item):
             infoLabels["episode"] = epi_num
             title = "%sx%s - %s" % (season, epi_num, epi_name)
 
-            itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
-                                 infoLabels=infoLabels))
+            itemlist.append(
+                Item(
+                    action = 'findvideos',
+                    channel = item.channel,
+                    infoLabels = infoLabels,
+                    title = title,
+                    url = url
+                )
+            )
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -432,7 +485,8 @@ def findvideos(item):
                     channel = item.channel,
                     contentTitle = item.contentTitle,
                     extra = "findvideos",
-                    title = "[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]",
+                    text_color = "yellow",
+                    title = "Añadir esta pelicula a la videoteca",
                     url = item.url
                 )
             )
@@ -454,8 +508,13 @@ def search_results(item):
         title = elem.img["alt"]
         year = elem.find("span", class_="year").text
 
-        new_item = Item(channel=item.channel, url=url, title=title, thumbnail=thumb,
-                        infoLabels={"year": year.strip()})
+        new_item = Item(
+                    channel = item.channel,
+                    infoLabels = {"year": year.strip()},
+                    title = title,
+                    thumbnail = thumb,
+                    url = url
+                )
 
         if "online" in url and not "pelicula" in url:
             new_item.action = "seasons"

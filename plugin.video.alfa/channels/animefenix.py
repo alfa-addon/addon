@@ -126,7 +126,7 @@ def list_all(item):
         context.extend(context2)
         itemlist.append(
             Item(
-                action = 'episodesxseason',
+                action = 'episodios',
                 channel = item.channel,
                 contentSerieName = title,
                 context = context,
@@ -144,7 +144,7 @@ def list_all(item):
         next_url = next_page.find_all('li')[-1].find('a')['href'] if next_page.find_all('li')[-1].find('a') else ''
         base_url = scrapertools.find_single_match(item.url, '(.+?)\?')
 
-        if url:
+        if next_url:
             itemlist.append(
                 Item(
                     action = item.action,
@@ -181,7 +181,7 @@ def new_episodes(item):
 def episodios(item):
     logger.info()
 
-    item.videolibrary = True
+    item.videolibrary = True if item.extra else False
     itemlist = episodesxseason(item)
     
     return itemlist
