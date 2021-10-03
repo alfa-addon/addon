@@ -284,7 +284,8 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
             url_proxy = url
 
     # Si el vídeo es "directo" o "local", no hay que buscar más
-    if server == "directo" or server == "local":
+    # Aunque hay que verificar que haya url, urls vacías pasan como buenas :S
+    if (server == "directo" or server == "local") and url:
         if isinstance(video_password, list):
             return video_password, len(video_password) > 0, "<br/>".join(error_messages)
         logger.info("Server: %s, la url es la buena" % server)

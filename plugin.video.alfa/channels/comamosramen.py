@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- Channel Comamos Ramen -*-
-# -*- Created for Alfa-addon -*-
-# -*- By the Alfa Develop Group -*-
+# -*- Created for Alfa Addon -*-
+# -*- By the Alfa Development Group -*-
 
 import sys
 PY3 = False
@@ -22,16 +22,16 @@ server_urls = {'doodstream': 'https://dood.to/e/', 'streamtape': 'https://stream
 
 # Funcionalidad de pelis desactivada por ahora, las películas parecen no funcionales/no parecen haber
 
-def get_source(url, soup=False, json=False, post=None, headers=None):
+def get_source(url, soup=False, json=False, **opt):
     logger.info()
-    data = httptools.downloadpage(url, post=post, headers=headers)
+
+    data = httptools.downloadpage(url, **opt)
 
     if json:
         data = data.json
-    elif soup:
-        data = BeautifulSoup(data.data, "html5lib", from_encoding="utf-8")
     else:
         data = data.data
+        data = BeautifulSoup(data, "html5lib", from_encoding="utf-8") if soup else data
 
     return data
 
