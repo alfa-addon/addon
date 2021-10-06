@@ -1,6 +1,6 @@
+# Alfa Addon
 [![GitHub Release](https://img.shields.io/github/v/release/alfa-addon/addon.svg)](https://github.com/alfa-addon/addon/releases)
 [![Build Status](https://github.com/alfa-addon/addon/actions/workflows/release.yml/badge.svg?branch=master)](https://github.com/alfa-addon/addon/actions/workflows/release.yml)
-# Alfa Addon
 ## ¿Qué es Alfa Addon?
 Alfa es un proyecto sin ánimo de lucro y con fines educativos, basado en el código abierto de pelisalacarta-ce, que permite utilizar Kodi u otra plataforma compatible como "navegador" para ver vídeos alojados en paginas web.
 
