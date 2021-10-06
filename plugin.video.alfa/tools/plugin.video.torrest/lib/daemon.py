@@ -466,9 +466,9 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                     USER_ADDON_SETTING = xbmcaddon.Addon(id="%s" % user_params['USER_ADDON'])
                     USER_ADDON = user_params['USER_ADDON']
                     USER_ADDON_STATUS = True
-                    if USER_ADDON_SETTING.getSetting('is_rooted_device') == 'rooted':
-                        USER_ADDON_SETTING.setSetting('is_rooted_device', 'check')
-                        logging.info('## Assistant checking "is_rooted_device": SET to "check"')
+                    #if USER_ADDON_SETTING.getSetting('is_rooted_device') == 'rooted':
+                    #    USER_ADDON_SETTING.setSetting('is_rooted_device', 'check')
+                    #    logging.info('## Assistant checking "is_rooted_device": SET to "check"')
                     if USER_ADDON_SETTING.getSetting('assistant_mode') == 'este' and \
                             os.path.exists(os.path.join(USER_APP_PATH, user_params['USER_APP'])):
                         USER_APP = user_params['USER_APP']

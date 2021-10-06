@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 # -*- Channel AnimeJL -*-
-# -*- Created for Alfa-addon -*-
-# -*- By the Alfa Develop Group -*-
+# -*- Created for Alfa Addon -*-
+# -*- By the Alfa Development Group -*-
 
-import re
-import base64
+from platformcode import logger
+from platformcode import config
 from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import logger
 from channelselector import get_thumb
 import sys
 PY3 = False
@@ -28,29 +27,75 @@ def mainlist(item):
 
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, title="Nuevos Episodios", action="new_episodes",
-                         thumbnail=get_thumb('new_episodes', auto=True), url=host))
-
-    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", thumbnail=get_thumb('all', auto=True),
-                         url=host + 'animes'))
-
-    itemlist.append(Item(channel=item.channel, title="Series", action="list_all",
-                         thumbnail=get_thumb('tvshows', auto=True), url=host+'animes?type%5B%5D=1&order=default'))
-
-    itemlist.append(Item(channel=item.channel, title="Películas", action="list_all",
-                         thumbnail=get_thumb('movies',auto=True), url=host + 'animes?type%5B%5D=2&order=default'))
+    itemlist.append(
+        Item(
+            action = "new_episodes",
+            channel = item.channel,
+            thumbnail = get_thumb('new_episodes', auto=True),
+            title = "Nuevos Episodios",
+            url = host,
+            viewType = "episodes"
+        )
+    )
 
     itemlist.append(
-        Item(channel=item.channel, title="Buscar", action="search", thumbnail=get_thumb('search', auto=True),
-             url=host + 'animes?q='))
+        Item(
+            action = "list_all",
+            channel = item.channel,
+            thumbnail = get_thumb('all', auto=True),
+            title = "Todas",
+            url = "%s%s" % (host, 'animes'),
+            viewType = "videos"
+        )
+    )
+
+    itemlist.append(
+        Item(
+            action = "list_all",
+            channel = item.channel,
+            thumbnail = get_thumb('movies',auto=True),
+            title = "Películas",
+            url = "%s%s" % (host, 'animes?type%5B%5D=2&order=default'),
+            viewType = "movies"
+        )
+    )
+
+    itemlist.append(
+        Item(
+            action = "list_all",
+            channel = item.channel,
+            thumbnail = get_thumb('tvshows', auto=True),
+            title = "Series",
+            url = "%s%s" % (host, 'animes?type%5B%5D=1&order=default'),
+            viewType = "tvshows"
+        )
+    )
+
+    itemlist.append(
+        Item(
+            action = "search",
+            channel = item.channel,
+            thumbnail = get_thumb('search', auto=True),
+            title = "Buscar",
+            url = "%s%s" % (host, 'animes?q='),
+            viewType = "videos"
+        )
+    )
 
     return itemlist
 
 
-def get_source(url):
+def get_source(url, json=False, unescape=True, **opt):
     logger.info()
-    data = httptools.downloadpage(url).data
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}|\(|\)', "", data)
+
+    data = httptools.downloadpage(url, **opt)
+
+    if json:
+        data = data.json
+    else:
+        data = data.data
+        data = scrapertools.replace(r'\n|\r|\t|&nbsp;|<br>|\s{2,}|\(|\)', "", data) if unescape else data
+
     return data
 
 
@@ -63,18 +108,22 @@ def new_episodes(item):
     data = scrapertools.find_single_match(data, "<h2>Últimos episodios agregados</h2>.*?</ul>")
     patron = "<li><a href='(.*?)' class.*?<img src='(.*?)' alt='(.*?)'></span><span class='Capi'>(.*?)</span>"
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = scrapertools.find_multiple_matches(data, patron)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedepi in matches:
         url = scrapedurl
         thumbnail = host+scrapedthumbnail
         title = '%s %s' % (scrapedtitle.replace('ver ', ''), scrapedepi)
-        itemlist.append(Item(channel=item.channel, action='findvideos',
-                             title=title,
-                             url=url,
-                             thumbnail=thumbnail,
-                             contentSerieName=scrapedtitle,
-                             ))
+        itemlist.append(
+            Item(
+                 action = 'findvideos',
+                 channel = item.channel,
+                 contentSerieName = scrapedtitle,
+                 thumbnail = thumbnail,
+                 title = title,
+                 url = url
+            )
+        )
 
     return itemlist
 
@@ -88,7 +137,7 @@ def list_all(item):
     patron = "<article class='Anime alt B'><a href='([^']+)'>.*?class=.*?<img src='([^']+)' alt='([^']+)'>"
     patron += "</figure><span class='Type' .*?>([^']+)</span>.*?star.*?<p>([^<]+)</p>"
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = scrapertools.find_multiple_matches(data, patron)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, _type, plot in matches:
         url = scrapedurl
@@ -99,69 +148,115 @@ def list_all(item):
             season = scrapertools.find_single_match(scrapedtitle, 'season (\d+)')
             scrapedtitle = scrapertools.find_single_match(scrapedtitle, '(.*?) season')
 
-        new_item = Item(channel=item.channel, action='episodios',
-                        title=title,
-                        url=url,
-                        thumbnail=thumbnail,
-                        plot=plot,
-                        type=_type,
-                        infoLabels={}
-                        )
+        new_item = Item(
+                    action = 'episodesxseason',
+                    channel = item.channel,
+                    plot = plot,
+                    thumbnail = thumbnail,
+                    title = title,
+                    type = _type,
+                    url = url
+                )
+
         if _type.lower() == 'anime':
+            new_item.contentType = "tvshow"
             new_item.contentSerieName = scrapedtitle
             new_item.contentSeasonNumber = season
         else:
+            new_item.contentType = "movie"
             new_item.contentTitle = scrapedtitle
 
         itemlist.append(new_item)
 
     # Paginacion
-    next_page = scrapertools.find_single_match(data,
-                                               "<li><a href='([^']+)'><span>&raquo;</span></a></li></ul>")
+    next_patron = r'<a class="page-link" href="([^"]+)" rel="next">'
+    next_page = scrapertools.find_single_match(data, next_patron)
+
     if next_page != '':
-        itemlist.append(Item(channel=item.channel,
-                             action="list_all",
-                             title=">> Página siguiente",
-                             url=host+next_page,
-                             thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
-                             ))
+        itemlist.append(
+            Item(
+                action = "list_all",
+                channel = item.channel,
+                thumbnail = 'https://s16.postimg.cc/9okdu7hhx/siguiente.png',
+                title = "Siguiente página >>",
+                url = "%s%s" % (host, next_page) if not host in next_page else next_page,
+                viewType = item.viewType
+            )
+        )
 
     return itemlist
 
 
 def episodios(item):
     logger.info()
+    item.videolibrary = True
+
+    return episodesxseason(item)
+
+
+def episodesxseason(item):
+    logger.info()
     itemlist = []
 
     data = get_source(item.url)
 
     patron = '\[(\d+),"([^"]+)","([^"]+)",[^\]]+\]'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = scrapertools.find_multiple_matches(data, patron)
 
     for epi_num, epi_url, epi_thumb in matches:
         title = 'Episodio %s' % epi_num
-        url = item.url +'/'+ epi_url
-        itemlist.append(Item(channel=item.channel, title=title, thumbnail=item.thumbnail, url=url,
-                             action='findvideos'))
+        url = "%s/%s" % (item.url, epi_url)
+
+        itemlist.append(
+            Item(
+                action = 'findvideos',
+                channel = item.channel,
+                contentSerieName = title,
+                thumbnail = item.thumbnail,
+                title = title,
+                url = url
+            )
+        )
+
     if item.type.lower != 'anime' and len(itemlist) == 1:
         return findvideos(itemlist[0])
 
-    return itemlist[::-1]
+    reversed(itemlist)
+
+    if config.get_videolibrary_support() and len(itemlist) > 0 and not (item.videolibrary or item.extra):
+        itemlist.append(
+            Item(
+                action = "add_serie_to_library",
+                channel = item.channel,
+                contentType = "tvshow",
+                contentSerieName = item.contentSerieName,
+                extra = "episodios",
+                text_color = "yellow",
+                title = 'Añadir esta serie a la videoteca',
+                url = item.url
+            )
+        )
+
+    return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
+
     try:
         if texto != '':
             return list_all(item)
         else:
             return []
+
     except:
         import sys
+
         for line in sys.exc_info():
             logger.error("%s" % line)
+
         return []
 
 
@@ -171,15 +266,25 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = 'video\[\d+\]=\'<iframe.*?src="([^"]+)"'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    patron = r'video\[\d+\]\s*=\s*\'<iframe.*?src="([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
 
     for scrapedurl in matches:
+        #import base64
         #enc_url = scrapertools.find_single_match(scrapedurl, r'hs=(.*)$')
         #url = urllib.unquote(base64.b64decode(rot13(enc_url)))
         #if url != '':
         if scrapedurl != '':
-            itemlist.append(Item(channel=item.channel, title='%s', url=scrapedurl, action='play'))
+            itemlist.append(
+                Item(
+                    action = 'play',
+                    channel = item.channel,
+                    infoLabels = item.infoLabels,
+                    title = '%s',
+                    url = scrapedurl,
+                    viewType = item.viewType
+                )
+            )
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
@@ -188,19 +293,27 @@ def findvideos(item):
 
 def newest(categoria):
     logger.info()
+
     itemlist = []
     item = Item()
+
     try:
         if categoria == 'anime':
             item.url = host
+
         itemlist = new_episodes(item)
+
         if itemlist[-1].title == '>> Página siguiente':
             itemlist.pop()
+
         return itemlist
+
     except:
         import sys
+
         for line in sys.exc_info():
             logger.error("{0}".format(line))
+
         return []
 
 

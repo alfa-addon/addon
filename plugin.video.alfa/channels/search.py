@@ -235,7 +235,7 @@ def channel_search(item):
     progress = platformtools.dialog_progress(config.get_localized_string(30993) % item.title, config.get_localized_string(60295),
                                              config.get_localized_string(60293))
 
-    config.set_setting('tmdb_active', True)
+    if not config.get_setting('tmdb_active'): config.set_setting('tmdb_active', True)
     res_count = 0
     for key, value in list(ch_list.items()):
         ch_name = channel_titles[channel_list.index(key)]
@@ -301,7 +301,7 @@ def channel_search(item):
 
 
     # send_to_temp(to_temp)
-    config.set_setting('tmdb_active', True)
+    if not config.get_setting('tmdb_active'): config.set_setting('tmdb_active', True)
     if item.mode == 'all':
         if config.get_setting('result_mode', 'search') != 0:
             res_count = len(results)

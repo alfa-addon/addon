@@ -106,13 +106,12 @@ def list_all(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find("div", class_="content").find_all("article", id=re.compile(r"^post-\d+"))
+    matches = soup.find("div", id="archive-content").find_all("article", id=re.compile(r"^post-\d+"))
 
     for elem in matches:
-
         info_1 = elem.find("div", class_="poster")
 
-        thumb = info_1.img["data-src"]
+        thumb = info_1.img.get("src", "")
         title = info_1.img["alt"]
         title = re.sub(r" \([^)]+\)", "", title)
         url = elem.a["href"]

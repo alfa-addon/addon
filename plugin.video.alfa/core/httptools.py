@@ -511,18 +511,21 @@ def downloadpage(url, **opt):
         @type ignore_response_code: bool
         @param hide_infobox: Si es True, no muestra la ventana de información en el log cuando hay una petición exitosa (no hay un response_code de error).
         @type hide_infobox: bool
+        @param soup: Si es True, establece un elemento BeautifulSoup en el atributo soup de HTTPResponse
+        @type soup: bool
         @return: Resultado de la petición
         @rtype: HTTPResponse
 
-                Parametro               Tipo    Descripción
-                ----------------------------------------------------------------------------------------------------------------
-                HTTPResponse.sucess:    bool   True: Peticion realizada correctamente | False: Error al realizar la petición
-                HTTPResponse.code:      int    Código de respuesta del servidor o código de error en caso de producirse un error
-                HTTPResponse.error:     str    Descripción del error en caso de producirse un error
-                HTTPResponse.headers:   dict   Diccionario con los headers de respuesta del servidor
-                HTTPResponse.data:      str    Respuesta obtenida del servidor
-                HTTPResponse.json:      dict    Respuesta obtenida del servidor en formato json
-                HTTPResponse.time:      float  Tiempo empleado para realizar la petición
+                Parametro             | Tipo     | Descripción
+                ----------------------|----------|-------------------------------------------------------------------------------
+                HTTPResponse.sucess:  | bool     | True: Peticion realizada correctamente | False: Error al realizar la petición
+                HTTPResponse.code:    | int      | Código de respuesta del servidor o código de error en caso de producirse un error
+                HTTPResponse.error:   | str      | Descripción del error en caso de producirse un error
+                HTTPResponse.headers: | dict     | Diccionario con los headers de respuesta del servidor
+                HTTPResponse.data:    | str      | Respuesta obtenida del servidor
+                HTTPResponse.json:    | dict     | Respuesta obtenida del servidor en formato json
+                HTTPResponse.soup:    | bs4/None | Objeto BeautifulSoup, si se solicita. None de otra forma
+                HTTPResponse.time:    | float    | Tiempo empleado para realizar la petición
 
         """
     if not opt.get('alfa_s', False):
@@ -690,6 +693,7 @@ def downloadpage(url, **opt):
             response['data'] = ''
             response['sucess'] = False
             response['code'] = ''
+            response['soup'] = None
             return type('HTTPResponse', (), response)
         
         response_code = req.status_code
@@ -709,6 +713,17 @@ def downloadpage(url, **opt):
             opt["cf_v2"] = True
             logger.debug("CF Assistant retry... for domain: %s" % urlparse.urlparse(url)[1])
             return downloadpage(url, **opt)
+
+        response['soup'] = None
+
+        if opt.get("soup", False):
+            try:
+                from bs4 import BeautifulSoup
+                response["soup"] = BeautifulSoup(req.text, "html5lib", from_encoding=req.encoding)
+            except:
+                import traceback
+                logger.error("Error creando sopa")
+                logger.error(traceback.format_exc())
 
         response['data'] = req.content
         try:
@@ -823,6 +838,7 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
         else:
             info_dict.append(('Peticion', 'GET' + proxy_data.get('stat', '')))
         info_dict.append(('Descargar Pagina', not opt.get('only_headers', False)))
+        info_dict.append(('BeautifulSoup', opt.get("soup", False)))
         if opt.get('files', {}) and not isinstance(opt.get('files'), (tuple, dict)):
             info_dict.append(('Objeto fichero', opt.get('files', {})))
         elif file_name: 
@@ -830,6 +846,7 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
         if opt.get('params', {}): info_dict.append(('Params', opt.get('params', {})))
         info_dict.append(('Usar cookies', opt.get('cookies', True)))
         info_dict.append(('Fichero de cookies', ficherocookies))
+
     except:
         import traceback
         logger.error(traceback.format_exc(1))
