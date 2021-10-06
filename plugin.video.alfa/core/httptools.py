@@ -31,7 +31,6 @@ from core.jsontools import to_utf8
 from platformcode import config, logger
 from platformcode.logger import WebErrorException
 from collections import OrderedDict
-from bs4 import BeautifulSoup
 
 #Dominios que necesitan Cloudscraper.  AÑADIR dominios de canales sólo si es necesario
 
@@ -719,9 +718,12 @@ def downloadpage(url, **opt):
 
         if opt.get("soup", False):
             try:
+                from bs4 import BeautifulSoup
                 response["soup"] = BeautifulSoup(req.text, "html5lib", from_encoding=req.encoding)
             except:
-                pass
+                import traceback
+                logger.error("Error creando sopa")
+                logger.error(traceback.format_exc())
 
         response['data'] = req.content
         try:
