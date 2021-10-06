@@ -5174,3 +5174,11 @@ msgstr "Tutti i collegamenti da %s sono stati rimossi"
 msgctxt "#80784"
 msgid "Search in MyAnimeList"
 msgstr "Cerca in MyAnimeList"
+
+msgctxt "#80785"
+msgid "Caching variables"
+msgstr "Cache delle variabili"
+
+msgctxt "#80786"
+msgid "Do you like Alfa to catch most used variable in memory"
+msgstr "Vuoi che Alpha memorizzi nella cache le variabili più utilizzate?"
