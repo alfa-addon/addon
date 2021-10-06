@@ -205,7 +205,7 @@ def filterchannels(category, view="thumb_"):
                 continue
 
             # Se salta el canal si no está activo y no estamos activando/desactivando los canales
-            channel_status = config.get_setting("enabled", channel_parameters["channel"])
+            channel_status = config.get_setting("enabled", channel_parameters["channel"], caching_var=False)
 
             if channel_status is None:
                 # si channel_status no existe es que NO HAY valor en _data.json.
@@ -252,7 +252,7 @@ def filterchannels(category, view="thumb_"):
 
             channel_info = set_channel_info(channel_parameters)
             # Si ha llegado hasta aquí, lo añade
-            frequency = channeltools.get_channel_setting("frequency", channel_parameters["channel"], 0)
+            frequency = channeltools.get_channel_setting("frequency", channel_parameters["channel"], 0, caching_var=False)
             channelslist.append(Item(title=channel_parameters["title"], channel=channel_parameters["channel"],
                                      action="mainlist", thumbnail=channel_parameters["thumbnail"],
                                      fanart=channel_parameters["fanart"], plot=channel_info, category=channel_parameters["title"],

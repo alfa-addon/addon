@@ -21,17 +21,18 @@ else:
 import re
 import time
 
-from core import httptools
 from platformcode import logger
 
 
 def get_header_from_response(url, header_to_get="", post=None, headers=None):
+    from core import httptools
     header_to_get = header_to_get.lower()
     response = httptools.downloadpage(url, post=post, headers=headers, only_headers=True)
     return response.headers.get(header_to_get)
 
 
 def read_body_and_headers(url, post=None, headers=None, follow_redirects=False, timeout=None):
+    from core import httptools
     response = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=follow_redirects,
                                       timeout=timeout)
     return response.data, response.headers
@@ -44,9 +45,9 @@ def printMatches(matches):
         i = i + 1
 
 
-def find_single_match(data, patron, index=0):
+def find_single_match(data, pattern, index=0):
     try:
-        matches = re.findall(patron, data, flags=re.DOTALL)
+        matches = re.findall(pattern, data, flags=re.DOTALL)
         return matches[index]
     except:
         return ""
@@ -55,6 +56,13 @@ def find_single_match(data, patron, index=0):
 # Parse string and extracts multiple matches using regular expressions
 def find_multiple_matches(text, pattern):
     return re.findall(pattern, text, re.DOTALL)
+
+
+def replace(pattern, replacement, data):
+    try:
+        return re.sub(pattern, replacement, data, flags=re.DOTALL)
+    except:
+        return ""
 
 
 def entityunescape(cadena):

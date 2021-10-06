@@ -63,7 +63,8 @@ def set_custom_start(item):
         menu_node={}
     parent_item= Item().fromurl(item.parent)
     parent_item.start=True
-    config.set_setting("custom_start",True)
+    if not config.get_setting("custom_start"):
+        config.set_setting("custom_start", True)
     if config.get_setting("news_start"):
         config.set_setting("news_start", False)
     menu_node['user_home']=parent_item.tourl()
