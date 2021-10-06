@@ -176,7 +176,19 @@ def findvideos(item):
     for url, lang in zip(video_urls, idioma):
         lang = lang.lower().strip()
         lang = IDIOMAS.get(lang, lang)
+        if 'streamcrypt' in url:
+            hoster, id = scrapertools.find_single_match(url, "embed/(\w+.\w+)/([^$]+)")
+            url = "https://sc.streamcrypt.net/hoster.%s.embed.php?p=2&id=%s" % (hoster, id)
+            #url = url.replace('https://streamcrypt', 'https://www.streamcrypt')
+            temp_data = httptools.downloadpage(url, headers={"referer": host}, follow_redirects=False, only_headers=True)
+            if 'location' in temp_data.headers:
+                url = temp_data.headers['location']
+            else:
+                continue
+
         itemlist.append(item.clone(action="play", title= "%s", language=lang, contentTitle = item.title, url=url))
+
+
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 
     itemlist.sort(key=lambda it: it.language, reverse=False)

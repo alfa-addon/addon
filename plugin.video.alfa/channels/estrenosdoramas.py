@@ -255,19 +255,20 @@ def episodios(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
-    
+
     plot_regex = '(<span class="clms"><b>Nombre.*?)<\/div>'
     plot_match = re.compile(plot_regex, re.DOTALL).findall(data)
     if plot_match:
         plot = scrapertools.htmlclean(plot_match[0].replace('<br />', '\n'))
     
     data = scrapertools.find_single_match(data, '<ul class="lcp_catlist".*?</ul>')
-    patron = '<li.*?<a href="(.*?)" title="(.*?)">.*?(\d*?)<\/a>'
+    patron = '<a href="([^"]+)">([^<]+)</a>'
     
     matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
 
-    for scrapedurl, scrapedtitle, scrapedep in matches:
+    for scrapedurl, scrapedtitle in matches:
+        scrapedep = scrapertools.find_single_match(scrapedtitle.lower(), "capitulo (\d+)")
         if item.url == scrapedurl:
             continue
         url = scrapedurl        
