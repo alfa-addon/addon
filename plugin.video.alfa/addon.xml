@@ -31,7 +31,7 @@
     <news>[B]Estos son los cambios para esta versión:[/B]
 
       [COLOR green][B]Arreglos[/B][/COLOR]
-      ¤ Pctfecnix                      ¤ Yestorrent                     ¤ HDFull
+      ¤ Pctfenix                      ¤ Yestorrent                     ¤ HDFull
       ¤ 18+
 
       [COLOR green][B]Novedades[/B][/COLOR]
@@ -40,13 +40,12 @@
     </news>
     <assets>
       <icon>resources/icon.png</icon>
-      <fanart>resources/fanart.jpg</fanart>
+      <fanart>resources/fanctober.jpg</fanart>
       <screenshot>resources/media/screenshots/1.jpg</screenshot>
       <screenshot>resources/media/screenshots/2.jpg</screenshot>
       <screenshot>resources/media/screenshots/3.jpg</screenshot>
       <screenshot>resources/media/screenshots/4.jpg</screenshot>
     </assets>
   </extension>
-  <extension point="xbmc.service" library="videolibrary_service.py" start="login|startup">
-  </extension>
+  <extension point="xbmc.service" library="videolibrary_service.py" start="login|startup"></extension>
 </addon>
