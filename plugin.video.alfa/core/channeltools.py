@@ -12,6 +12,17 @@ from platformcode import config, logger
 DEFAULT_UPDATE_URL = "/channels/"
 dict_channels_parameters = dict()
 
+""" CACHING CHANNELS PARAMETERS """
+alfa_caching = False
+alfa_channels = {}
+kodi = True
+try:
+    import xbmcgui
+    import json
+    window = xbmcgui.Window(10000)                                              # Home
+except:
+    kodi = False
+
 
 def has_attr(channel_name, attr):
     """
@@ -210,7 +221,8 @@ def get_channel_controls_settings(channel_name):
     return list_controls, dict_settings
 
 
-def get_channel_setting(name, channel, default=None):
+def get_channel_setting(name, channel, default=None, caching_var=True):
+    global alfa_caching, alfa_channels
     from . import filetools
     """
     Retorna el valor de configuracion del parametro solicitado.
@@ -238,12 +250,21 @@ def get_channel_setting(name, channel, default=None):
     dict_settings = {}
     dict_file = {}
     
-    if filetools.exists(file_settings):
+    if kodi and caching_var:
+        alfa_caching = bool(window.getProperty("alfa_caching"))
+        alfa_channels = json.loads(window.getProperty("alfa_channels"))
+    if alfa_caching and caching_var and alfa_channels.get(channel):
+        dict_settings = alfa_channels[channel].copy()
+
+    elif filetools.exists(file_settings):
         # Obtenemos configuracion guardada de ../settings/channel_data.json
         try:
             dict_file = jsontools.load(filetools.read(file_settings))
             if isinstance(dict_file, dict) and 'settings' in dict_file:
                 dict_settings = dict_file['settings']
+                if alfa_caching and caching_var:
+                    alfa_channels[channel] = dict_settings.copy()
+                    window.setProperty("alfa_channels", json.dumps(alfa_channels))
         except EnvironmentError:
             logger.error("ERROR al leer el archivo: %s, parámetro: %s" % (file_settings, name))
             logger.error(filetools.file_info(file_settings))
@@ -258,6 +279,9 @@ def get_channel_setting(name, channel, default=None):
         if name in default_settings:  # Si el parametro existe en el channel.json creamos el channel_data.json
             default_settings.update(dict_settings)
             dict_settings = default_settings
+            if alfa_caching and caching_var:
+                alfa_channels[channel] = dict_settings.copy()
+                window.setProperty("alfa_channels", json.dumps(alfa_channels))
             dict_file['settings'] = dict_settings
             # Creamos el archivo ../settings/channel_data.json
             json_data = jsontools.dump(dict_file)
@@ -270,6 +294,7 @@ def get_channel_setting(name, channel, default=None):
 
 
 def set_channel_setting(name, value, channel):
+    global alfa_caching, alfa_channels
     from . import filetools
     """
     Fija el valor de configuracion del parametro indicado.
@@ -301,7 +326,13 @@ def set_channel_setting(name, value, channel):
 
     dict_file = None
 
-    if filetools.exists(file_settings):
+    if kodi:
+        alfa_caching = bool(window.getProperty("alfa_caching"))
+        alfa_channels = json.loads(window.getProperty("alfa_channels"))
+    if alfa_caching and alfa_channels.get(channel):
+        dict_settings = alfa_channels[channel].copy()
+    
+    elif filetools.exists(file_settings):
         # Obtenemos configuracion guardada de ../settings/channel_data.json
         try:
             dict_file = jsontools.load(filetools.read(file_settings))
@@ -311,6 +342,14 @@ def set_channel_setting(name, value, channel):
             logger.error(filetools.file_info(file_settings))
 
     dict_settings[name] = value
+    if alfa_caching:
+        alfa_caching = bool(window.getProperty("alfa_caching"))
+        if alfa_caching:
+            alfa_channels[channel] = dict_settings.copy()
+            window.setProperty("alfa_channels", json.dumps(alfa_channels))
+        else:
+            alfa_channels = {}
+            window.setProperty("alfa_channels", json.dumps(alfa_channels))
 
     # comprobamos si existe dict_file y es un diccionario, sino lo creamos
     if dict_file is None or not dict_file:

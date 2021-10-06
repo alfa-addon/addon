@@ -32,6 +32,17 @@ from platformcode import platformtools
 
 dict_servers_parameters = {}
 
+""" CACHING SERVERS PARAMETERS """
+alfa_caching = False
+alfa_servers = {}
+kodi = True
+try:
+    import xbmcgui
+    import json
+    window = xbmcgui.Window(10000)                                              # Home
+except:
+    kodi = False
+
 
 def find_video_items(item=None, data=None):
     """
@@ -586,7 +597,8 @@ def get_server_controls_settings(server_name):
     return list_controls, dict_settings
 
 
-def get_server_setting(name, server, default=None):
+def get_server_setting(name, server, default=None, caching_var=True):
+    global alfa_caching, alfa_servers
     """
         Retorna el valor de configuracion del parametro solicitado.
 
@@ -616,12 +628,22 @@ def get_server_setting(name, server, default=None):
     file_settings = filetools.join(config.get_data_path(), "settings_servers", server + "_data.json")
     dict_settings = {}
     dict_file = {}
-    if filetools.exists(file_settings):
+    
+    if kodi and caching_var:
+        alfa_caching = bool(window.getProperty("alfa_caching"))
+        alfa_servers = json.loads(window.getProperty("alfa_servers"))
+    if alfa_caching and caching_var and alfa_servers.get(server):
+        dict_settings = alfa_servers[server].copy()
+    
+    elif filetools.exists(file_settings):
         # Obtenemos configuracion guardada de ../settings/channel_data.json
         try:
             dict_file = jsontools.load(filetools.read(file_settings))
             if isinstance(dict_file, dict) and 'settings' in dict_file:
                 dict_settings = dict_file['settings']
+                if alfa_caching and caching_var:
+                    alfa_servers[server] = dict_settings.copy()
+                    window.setProperty("alfa_servers", json.dumps(alfa_servers))
         except EnvironmentError:
             logger.info("ERROR al leer el archivo: %s" % file_settings)
 
@@ -634,6 +656,9 @@ def get_server_setting(name, server, default=None):
         if name in default_settings:  # Si el parametro existe en el server.json creamos el server_data.json
             default_settings.update(dict_settings)
             dict_settings = default_settings
+            if alfa_caching and caching_var:
+                alfa_servers[server] = dict_settings.copy()
+                window.setProperty("alfa_servers", json.dumps(alfa_servers))
             dict_file['settings'] = dict_settings
             # Creamos el archivo ../settings/channel_data.json
             if not filetools.write(file_settings, jsontools.dump(dict_file)):
@@ -644,6 +669,7 @@ def get_server_setting(name, server, default=None):
 
 
 def set_server_setting(name, value, server):
+    global alfa_caching, alfa_servers
     # Creamos la carpeta si no existe
     if not filetools.exists(filetools.join(config.get_data_path(), "settings_servers")):
         filetools.mkdir(filetools.join(config.get_data_path(), "settings_servers"))
@@ -653,7 +679,13 @@ def set_server_setting(name, value, server):
 
     dict_file = None
 
-    if filetools.exists(file_settings):
+    if kodi:
+        alfa_caching = bool(window.getProperty("alfa_caching"))
+        alfa_servers = json.loads(window.getProperty("alfa_servers"))
+    if alfa_caching and alfa_servers.get(server):
+        dict_settings = alfa_servers[server].copy()
+
+    elif filetools.exists(file_settings):
         # Obtenemos configuracion guardada de ../settings/channel_data.json
         try:
             dict_file = jsontools.load(filetools.read(file_settings))
@@ -662,6 +694,14 @@ def set_server_setting(name, value, server):
             logger.info("ERROR al leer el archivo: %s" % file_settings)
 
     dict_settings[name] = value
+    if alfa_caching:
+        alfa_caching = bool(window.getProperty("alfa_caching"))
+        if alfa_caching:
+            alfa_servers[server] = dict_settings.copy()
+            window.setProperty("alfa_servers", json.dumps(alfa_servers))
+        else:
+            alfa_servers = {}
+            window.setProperty("alfa_servers", json.dumps(alfa_servers))
 
     # comprobamos si existe dict_file y es un diccionario, sino lo creamos
     if dict_file is None or not dict_file:

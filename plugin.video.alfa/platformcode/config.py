@@ -11,10 +11,13 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 import os
 import re
 import time
+import json
+import threading
 
 import xbmc
 import xbmcaddon
 import xbmcvfs
+import xbmcgui
 
 PLUGIN_NAME = "alfa"
 
@@ -22,19 +25,85 @@ __settings__ = xbmcaddon.Addon(id="plugin.video.{}".format(PLUGIN_NAME))
 __language__ = __settings__.getLocalizedString
 
 """ CACHING ALFA PARAMETERS """
-caching = 'init'
-__system_platform__ = ""
-kodi_platform = {}
+alfa_caching = False
+alfa_system_platform = ''
+alfa_kodi_platform = {}
 alfa_settings = {}
-channels = {}
-servers = {}
+alfa_channels = {}
+alfa_servers = {}
+alfa_no_caching_vars = []
+    
+try:
+    window = xbmcgui.Window(10000)                                              # Home
+    alfa_caching = bool(window.getProperty("alfa_caching"))
+    if not alfa_caching:
+        window.setProperty("alfa_system_platform", alfa_system_platform)
+        window.setProperty("alfa_kodi_platform", json.dumps(alfa_kodi_platform))
+        window.setProperty("alfa_settings", json.dumps(alfa_settings))
+        window.setProperty("alfa_channels", json.dumps(alfa_channels))
+        window.setProperty("alfa_servers", json.dumps(alfa_servers))
+except:
+    pass
+
+class CacheInit(xbmc.Monitor, threading.Thread):
+    def __init__(self, *args, **kwargs):
+        global alfa_caching, alfa_system_platform, alfa_kodi_platform, alfa_settings, alfa_channels, alfa_servers
+        xbmc.Monitor.__init__(self)
+        threading.Thread.__init__(self)
+
+        alfa_caching = get_setting('caching', default=True, caching_var=False)
+        if alfa_caching:
+            alfa_system_platform = get_system_platform()
+            alfa_kodi_platform = get_platform(full_version=True)
+            alfa_settings = get_all_settings_addon()
+            alfa_channels = {}
+            alfa_servers = {}
+            window.setProperty("alfa_caching", str(alfa_caching))
+            window.setProperty("alfa_system_platform", alfa_system_platform)
+            window.setProperty("alfa_kodi_platform", json.dumps(alfa_kodi_platform))
+            window.setProperty("alfa_settings", json.dumps(alfa_settings))
+            window.setProperty("alfa_channels", json.dumps(alfa_channels))
+            window.setProperty("alfa_servers", json.dumps(alfa_servers))
+
+    def run(self):
+        timer = 3600
+        
+        while not self.abortRequested():                                        # Loop infinito hasta cancelar Kodi
+            window.setProperty("alfa_channels", json.dumps({}))                 # Limpiamos esta variable por si ha crecido mucho
+            window.setProperty("alfa_servers", json.dumps({}))                  # Limpiamos esta variable por si ha crecido mucho
+            if self.waitForAbort(timer):                                        # Espera el tiempo programado o hasta que cancele Kodi
+                break                                                           # Cancelación de Kodi, salimos
+
+    def onSettingsChanged(self):                                                # Si se modifican los ajuste de Alfa, se activa esta función
+        global alfa_settings
+        alfa_settings = {}
+        window.setProperty("alfa_settings", json.dumps(alfa_settings))
+        alfa_caching = get_setting('caching', default=True, caching_var=False)
+        window.setProperty("alfa_caching", str(alfa_caching))
+        if not alfa_caching:
+            alfa_system_platform = ''
+            alfa_kodi_platform = {}
+            alfa_channels = {}
+            alfa_servers = {}
+            window.setProperty("alfa_system_platform", alfa_system_platform)
+            window.setProperty("alfa_kodi_platform", json.dumps(alfa_kodi_platform))
+            window.setProperty("alfa_channels", json.dumps(alfa_channels))
+            window.setProperty("alfa_servers", json.dumps(alfa_servers))
+
 
 def cache_init():
-    global caching
-    
-    caching = False
-    
-    return
+    global alfa_caching, alfa_settings
+                
+    # Lanzamos en Servicio de actualización de FIXES
+    try:
+        monitor = CacheInit()                                                   # Creamos una clase con un Thread independiente, hasta el fin de Kodi
+        monitor.start()
+        time.sleep(1)                                                           # Dejamos terminar inicialización...
+    except:                                                                     # Si hay problemas de threading, nos vamos
+        alfa_caching = False
+        alfa_settings = {}
+        window.setProperty("alfa_caching", str(alfa_caching))
+        window.setProperty("alfa_settings", json.dumps(alfa_settings))
 
 
 def translatePath(path):
@@ -165,6 +234,7 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
 
 
 def get_platform(full_version=False):
+    global alfa_kodi_platform
     """
         Devuelve la información la version de xbmc o kodi sobre el que se ejecuta el plugin
 
@@ -178,7 +248,6 @@ def get_platform(full_version=False):
             'plaform': (str) esta compuesto por "kodi-" o "xbmc-" mas el nombre de la version segun corresponda.
         Si el parametro full_version es False (por defecto) se retorna el valor de la clave 'plaform' del diccionario anterior.
     """
-
     ret = {}
     codename = {"10": "dharma", "11": "eden", "12": "frodo",
                 "13": "gotham", "14": "helix", "15": "isengard",
@@ -189,16 +258,24 @@ def get_platform(full_version=False):
                '16': 'MyVideos99.db', '17': 'MyVideos107.db', '18': 'MyVideos116.db', 
                '19': 'MyVideos119.db', '20': 'MyVideos119.db'}
 
-    num_version = xbmc.getInfoLabel('System.BuildVersion')
-    num_version = re.match("\d+\.\d+", num_version).group(0)
-    ret['name_version'] = codename.get(num_version.split('.')[0], num_version)
-    ret['video_db'] = code_db.get(num_version.split('.')[0], "")
-    ret['num_version'] = float(num_version)
-    if ret['num_version'] < 14:
-        ret['platform'] = "xbmc-" + ret['name_version']
-    else:
-        ret['platform'] = "kodi-" + ret['name_version']
+    if alfa_caching and not alfa_kodi_platform:
+        alfa_kodi_platform = json.loads(window.getProperty("alfa_kodi_platform"))
+    ret = alfa_kodi_platform.copy()
+    if not ret:
+        num_version = xbmc.getInfoLabel('System.BuildVersion')
+        num_version = re.match("\d+\.\d+", num_version).group(0)
+        ret['name_version'] = codename.get(num_version.split('.')[0], num_version)
+        ret['video_db'] = code_db.get(num_version.split('.')[0], "")
+        ret['num_version'] = float(num_version)
+        if ret['num_version'] < 14:
+            ret['platform'] = "xbmc-" + ret['name_version']
+        else:
+            ret['platform'] = "kodi-" + ret['name_version']
 
+        if alfa_caching:
+            window.setProperty("alfa_kodi_platform", json.dumps(ret))
+        alfa_kodi_platform = ret.copy()
+    
     if full_version:
         return ret
     else:
@@ -282,15 +359,16 @@ def get_videolibrary_support():
 
 
 def get_system_platform():
+    global alfa_system_platform
     """
     Function: To recover the platform on which xbmc runs
     Credits to the original author (unknown)
 
     NOTE: Expensive operation, if reused, keep it in a temp var
     """
-    global __system_platform__
-
-    if __system_platform__ == "":
+    if alfa_caching and not alfa_system_platform:
+        alfa_system_platform = window.getProperty("alfa_system_platform")
+    if alfa_system_platform == "":
 
         if xbmc.getCondVisibility("System.Platform.Android"): platform = 'android'
         elif xbmc.getCondVisibility("System.Platform.Windows"): platform = 'windows'
@@ -305,12 +383,19 @@ def get_system_platform():
         elif xbmc.getCondVisibility("System.Platform.Atv2"): platform = 'atv2'
         else: platform = 'unknown'
 
-        __system_platform__ = platform
+        alfa_system_platform = platform
+        if alfa_caching:
+            window.setProperty("alfa_system_platform", alfa_system_platform)
 
-    return __system_platform__
+    return alfa_system_platform
 
 
-def get_all_settings_addon():
+def get_all_settings_addon(caching_var=True):
+    global alfa_caching, alfa_settings
+    # Si los settings ya están cacheados, se usan.  Si no, se cargan por el método tradicional
+    if alfa_caching and caching_var and json.loads(window.getProperty("alfa_settings")):
+        return json.loads(window.getProperty("alfa_settings")).copy()
+    
     # Lee el archivo settings.xml y retorna un diccionario con {id: value}
     from core import scrapertools
 
@@ -324,13 +409,26 @@ def get_all_settings_addon():
 
     ret = {}
 
-    matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/')
+    matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]*)"\s*value="([^"]*)"')
     if not matches:
-        matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]*)"\s*value="([^"]*)"')
+        matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/')
 
     for _id, value in matches:
-        #ret[_id] = get_setting(_id, catching_var=False)
+        #ret[_id] = get_setting(_id, caching_var=False)
         ret[_id] = get_setting_values(_id, value)
+    
+    alfa_settings = ret.copy()
+    alfa_caching = alfa_settings.get('caching', True)
+    window.setProperty("alfa_caching", str(alfa_caching))
+    if not alfa_caching:
+        alfa_settings = {}
+        alfa_kodi_platform = {}
+        alfa_channels = {}
+        alfa_servers = {}
+        window.setProperty("alfa_kodi_platform", json.dumps(alfa_kodi_platform))
+        window.setProperty("alfa_channels", json.dumps(alfa_channels))
+        window.setProperty("alfa_servers", json.dumps(alfa_servers))
+    window.setProperty("alfa_settings", json.dumps(alfa_settings))
 
     return ret
 
@@ -338,8 +436,7 @@ def get_all_settings_addon():
 def open_settings():
     settings_pre = get_all_settings_addon()
     __settings__.openSettings()
-    settings_post = get_all_settings_addon()
-
+    settings_post = get_all_settings_addon(caching_var=False)
 
     # cb_validate_config (util para validar cambios realizados en el cuadro de dialogo)
     if settings_post.get('adult_aux_intro_password', None):
@@ -390,7 +487,8 @@ def open_settings():
             xbmc_videolibrary.ask_set_content(2, silent=True)
 
 
-def get_setting(name, channel="", server="", default=None):
+def get_setting(name, channel="", server="", default=None, caching_var=True):
+    global alfa_settings
     """
     Retorna el valor de configuracion del parametro solicitado.
 
@@ -421,7 +519,7 @@ def get_setting(name, channel="", server="", default=None):
     if channel:
         # logger.info("get_setting reading channel setting '"+name+"' from channel json")
         from core import channeltools
-        value = channeltools.get_channel_setting(name, channel, default)
+        value = channeltools.get_channel_setting(name, channel, default, caching_var=caching_var)
         # logger.info("get_setting -> '"+repr(value)+"'")
         return value
 
@@ -429,17 +527,28 @@ def get_setting(name, channel="", server="", default=None):
     elif server:
         # logger.info("get_setting reading server setting '"+name+"' from server json")
         from core import servertools
-        value = servertools.get_server_setting(name, server, default)
+        value = servertools.get_server_setting(name, server, default, caching_var=caching_var)
         # logger.info("get_setting -> '"+repr(value)+"'")
         return value
 
     # Global setting
     else:
-        # logger.info("get_setting reading main setting '"+name+"'")
-        value = __settings__.getSetting(name)
-        if not value:
-            return default
-        return get_setting_values(name, value)
+        alfa_caching = bool(window.getProperty("alfa_caching"))
+        if alfa_caching and caching_var:
+            alfa_settings = json.loads(window.getProperty("alfa_settings"))
+            # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
+            if not alfa_settings:
+                get_all_settings_addon()
+        if alfa_caching and caching_var and name not in str(alfa_no_caching_vars) and alfa_settings.get(name, None) != None:
+            # Si el alfa_caching está activo y la variable cargada.  Si no, se cargan por el método tradicional
+            value = alfa_settings.get(name, default)
+            return value
+        else:
+            # logger.info("get_setting reading main setting '"+name+"'")
+            value = __settings__.getSetting(name)
+            if not value:
+                return default
+            return get_setting_values(name, value)
 
 
 def get_setting_values(name, value):
@@ -466,6 +575,7 @@ def get_setting_values(name, value):
 
 
 def set_setting(name, value, channel="", server=""):
+    global alfa_settings
     """
     Fija el valor de configuracion del parametro indicado.
 
@@ -473,7 +583,7 @@ def set_setting(name, value, channel="", server=""):
     canal 'channel'.
     Devuelve el valor cambiado o None si la asignacion no se ha podido completar.
 
-    Si se especifica el nombre del canal busca en la ruta \addon_data\plugin.video.alfa\settings_channels el
+    Si se especifica el nombre del canal busca en la ruta \addon_data\plugin.video.alfa\settings_alfa_channels el
     archivo channel_data.json y establece el parametro 'name' al valor indicado por 'value'. Si el archivo
     channel_data.json no existe busca en la carpeta channels el archivo channel.json y crea un archivo channel_data.json
     antes de modificar el parametro 'name'.
@@ -497,6 +607,13 @@ def set_setting(name, value, channel="", server=""):
         return servertools.set_server_setting(name, value, server)
     else:
         try:
+            alfa_caching = bool(window.getProperty("alfa_caching"))
+            if alfa_caching:
+                alfa_settings = json.loads(window.getProperty("alfa_settings"))
+                # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
+                if not alfa_settings:
+                    get_all_settings_addon()
+            
             if isinstance(value, bool):
                 if value:
                     value = "true"
@@ -507,8 +624,19 @@ def set_setting(name, value, channel="", server=""):
                 value = str(value)
 
             __settings__.setSetting(name, value)
+            
+            if name == 'caching':
+                window.setProperty("alfa_caching", str(value))
+                if not value:
+                    alfa_settings = {}
+                    window.setProperty("alfa_settings", json.dumps(alfa_settings))
+            if alfa_caching and alfa_settings.get(name, '') != value:
+                alfa_settings[name] = value
+                window.setProperty("alfa_settings", json.dumps(alfa_settings))
 
         except Exception as ex:
+            alfa_settings = {}
+            window.setProperty("alfa_settings", json.dumps(alfa_settings))
             from platformcode import logger
             logger.error("Error al convertir '%s' no se guarda el valor \n%s" % (name, ex))
             return None
