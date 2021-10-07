@@ -95,16 +95,18 @@ def mainlist(item):
     return itemlist
 
 
-def get_source(url, soup=False, json=False, unescape=False, **opt):
+def get_source(url, json=False, unescape=False, **opt):
     logger.info()
 
     data = httptools.downloadpage(url, **opt)
+    data.data = scrapertools.unescape(data.data) if unescape else data.data
 
     if json:
         data = data.json
+    elif opt.get('soup', False):
+        data = data.soup
     else:
-        data = scrapertools.unescape(data) if unescape else data
-        data = BeautifulSoup(data, "html5lib", from_encoding="utf-8") if soup else data
+        data = data.data
 
     return data
 

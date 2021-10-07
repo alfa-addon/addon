@@ -30,14 +30,13 @@ from bs4 import BeautifulSoup
 
 host = "https://www.estrenospapaya.com/"
 
-CF = False
 
 IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOSE', 'Español Latino': 'Latino',
            'Español Castellano': 'Español', 'Sub Español': 'VOSE'}
 
 list_idiomas = list(IDIOMAS.values())
 
-list_quality = []
+list_quality = list()
 
 list_servers = ['streamtape', 'mixdrop', 'evoload']
 
@@ -50,24 +49,8 @@ def mainlist(item):
     itemlist = list()
     
     itemlist.append(
-        Item(title="Capitulos de Estreno:", channel=item.channel,
-             folder=False, thumbnail=get_thumb("news.png")))
-
-    itemlist.append(
-        Item(action="new_episodes", title="Latino",
-             url=host + "estreno-serie-espanol-latino/",
-             channel=item.channel, thumbnail=get_thumb("channels_latino.png"),
-             extra_lang="Latino", first=1))
-
-    itemlist.append(
-        Item(action="new_episodes", title="Castellano",
-             url=host + "estreno-serie-castellano/", channel=item.channel,
-             thumbnail=get_thumb("channels_spanish.png"), extra_lang="Español", first=1))
-
-    itemlist.append(
-        Item(action="new_episodes", title="Subtitulado",
-             url=host + "estreno-serie-sub-espanol/", channel=item.channel,
-             thumbnail=get_thumb("channels_vos.png"), extra_lang="VOSE", first=1))
+        Item(title="Nuevos Capitulos", channel=item.channel, action="sub_menu",
+             thumbnail=get_thumb("news.png")))
 
     itemlist.append(
         Item(action="list_all", title="Series Nuevas", channel=item.channel,
@@ -83,6 +66,30 @@ def mainlist(item):
     itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, list_quality)
 
     autoplay.show_option(item.channel, itemlist)
+
+    return itemlist
+
+
+def sub_menu(item):
+    logger.info()
+
+    itemlist = list()
+
+    itemlist.append(
+        Item(action="new_episodes", title="Latino",
+             url=host + "estreno-serie-espanol-latino/",
+             channel=item.channel, thumbnail=get_thumb("channels_latino.png"),
+             extra_lang="Latino", first=0))
+
+    itemlist.append(
+        Item(action="new_episodes", title="Castellano",
+             url=host + "estreno-serie-castellano/", channel=item.channel,
+             thumbnail=get_thumb("channels_spanish.png"), extra_lang="Español", first=0))
+
+    itemlist.append(
+        Item(action="new_episodes", title="Subtitulado",
+             url=host + "estreno-serie-sub-espanol/", channel=item.channel,
+             thumbnail=get_thumb("channels_vos.png"), extra_lang="VOSE", first=0))
 
     return itemlist
 
@@ -134,7 +141,7 @@ def new_episodes(item):
     if not item.post:
         soup = create_soup(item.url)
     else:
-        soup = create_soup(item.url, post=item.post)
+        soup = create_soup(item.url, post={"searchquery": item.post})
 
     language = item.extra_lang
 
@@ -149,23 +156,38 @@ def new_episodes(item):
         next = False
 
     for elem in matches[first:last]:
+
         url = host + scrapertools.find_single_match(elem.get("onclick", ""), "'/([^']+)'")
-        info = elem.find("div", class_="preopacidad")
+        if not item.post:
+            info = elem.find("div", class_="preopacidad")
+            action = "findvideos"
+        else:
+            info = elem.find("div", class_="capitulo-info")
+            action = "seasons"
+
         img_info = elem.find("div", class_="capitulo-imagen").get("style", "")
         title = re.sub(r'[\ \n]{2,}|\(.*\)', "", info.text).replace('"', " ").strip()
         c_title = scrapertools.find_single_match(title, r"\d+x\d+ ([^$]+)")
+        if not c_title:
+            c_title = title
         thumb = host + scrapertools.find_single_match(img_info, "url\('([^']+)")
 
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url,
-                             thumbnail=thumb, language=language, contentSerieName=c_title))
+        new_item = Item(channel=item.channel, action=action, title=title, url=url,
+                        thumbnail=thumb, language=language, contentSerieName=c_title)
 
+        if item.post:
+            new_item.context = filtertools.context(item, list_idiomas, list_quality)
+
+        itemlist.append(new_item)
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     if next:
         url_next_page = item.url
         first = last
+    else:
+        return itemlist
 
-    if url_next_page and len(matches) > 20:
+    if len(matches) > 20:
         itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='new_episodes',
                              first=first))
     return itemlist
@@ -243,57 +265,20 @@ def episodesxseason(item):
 
 
 def search(item, texto):
-    logger.info("texto: %s" % texto)
-    itemlist = list()
-
+    logger.info()
     try:
-        post = urllib.urlencode({'searchquery': texto})
-        data = httptools.downloadpage(urlparse.urljoin(host, "/busqueda.php"), post=post).data
-        data = re.sub(r'|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-        patron = r"location.href='(.*?)'.*?background-image: url\('(.*?)'\).*?"
-        patron += '<div style="display.*?>([^<]+)'
-        matches = re.compile(patron, re.DOTALL).findall(data)
-
-        for surl, sthumb, stitle in matches:
-            url = urlparse.urljoin(host, surl)
-            thumb = urlparse.urljoin(host, sthumb)
-            stitle = stitle.strip()
-
-            syear = scrapertools.find_single_match(stitle, r'\s*\((\d{4})\)$')
-            title = re.sub(r'\s*\((.*?)\)$', '', stitle)
-
-            filtro_tmdb = list({"first_air_date": syear}.items())
-
-            itemlist.append(Item(channel=item.channel,
-                                 action="seasons",
-                                 context=filtertools.context(item, list_idiomas, list_quality),
-                                 contentSerieName=title.strip(),
-                                 thumbnail=thumb,
-                                 title=stitle.strip(),
-                                 url=url,
-                                 infoLabels={'filtro': filtro_tmdb}
-                                 ))
-
-    except:
-
-        data_dict = httptools.downloadpage(urlparse.urljoin(host, "/buscar.php?term=%s" % texto)).json
-
-        try:
-            tvshows = data_dict["myData"]
-        except:
+        texto = texto.replace(" ", "+")
+        item.post = texto
+        item.first = 0
+        if texto != '':
+            return new_episodes(item)
+        else:
             return []
-
-        for show in tvshows:
-            title = re.sub(r'\s*\((.*?)\)$', '', show["titulo"])
-            itemlist.append(item.clone(action="seasons",
-                                       context=filtertools.context(item, list_idiomas, list_quality),
-                                       contentSerieName=title,
-                                       thumbnail=urlparse.urljoin(host, show["img"]),
-                                       title=show["titulo"],
-                                       url=urlparse.urljoin(host, show["urla"])
-                                       ))
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    return itemlist
+    #Se captura la excepción, para no interrumpir al buscador global si un canal falla
+    except:
+        for line in sys.exc_info():
+            logger.error("%s" % line)
+        return []
 
 
 def findvideos(item):
@@ -332,7 +317,7 @@ def play(item):
 
         return itemlist
 
-    data = httptools.downloadpage(item.url, headers={'Referer': item.url}, CF=CF).data
+    data = httptools.downloadpage(item.url, headers={'Referer': item.url}).data
 
     item.server = ''
     item.url = scrapertools.find_single_match(data, "location.href='([^']+)'")
