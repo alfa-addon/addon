@@ -3,16 +3,17 @@
 # Logger (kodi)
 # --------------------------------------------------------------------------------
 
-import inspect
-
-import xbmc
-from platformcode import config
-
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+    
+import inspect
 
-loggeractive = (config.get_setting("debug") == True)
+import xbmc
+import xbmcaddon
+
+__settings__ = xbmcaddon.Addon(id="plugin.video.alfa")
+loggeractive = __settings__.getSetting("debug")
 
 
 def log_enable(active):

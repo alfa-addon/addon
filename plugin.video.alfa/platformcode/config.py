@@ -3,8 +3,9 @@
 # Parámetros de configuración (kodi)
 # ------------------------------------------------------------
 
-#from builtins import str
+# from builtins import str
 import sys
+
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
@@ -32,9 +33,9 @@ alfa_settings = {}
 alfa_channels = {}
 alfa_servers = {}
 alfa_no_caching_vars = []
-    
+
 try:
-    window = xbmcgui.Window(10000)                                              # Home
+    window = xbmcgui.Window(10000)  # Home
     alfa_caching = bool(window.getProperty("alfa_caching"))
     if not alfa_caching:
         window.setProperty("alfa_system_platform", alfa_system_platform)
@@ -44,6 +45,7 @@ try:
         window.setProperty("alfa_servers", json.dumps(alfa_servers))
 except:
     pass
+
 
 class CacheInit(xbmc.Monitor, threading.Thread):
     def __init__(self, *args, **kwargs):
@@ -67,14 +69,14 @@ class CacheInit(xbmc.Monitor, threading.Thread):
 
     def run(self):
         timer = 3600
-        
-        while not self.abortRequested():                                        # Loop infinito hasta cancelar Kodi
-            window.setProperty("alfa_channels", json.dumps({}))                 # Limpiamos esta variable por si ha crecido mucho
-            window.setProperty("alfa_servers", json.dumps({}))                  # Limpiamos esta variable por si ha crecido mucho
-            if self.waitForAbort(timer):                                        # Espera el tiempo programado o hasta que cancele Kodi
-                break                                                           # Cancelación de Kodi, salimos
 
-    def onSettingsChanged(self):                                                # Si se modifican los ajuste de Alfa, se activa esta función
+        while not self.abortRequested():  # Loop infinito hasta cancelar Kodi
+            window.setProperty("alfa_channels", json.dumps({}))  # Limpiamos esta variable por si ha crecido mucho
+            window.setProperty("alfa_servers", json.dumps({}))  # Limpiamos esta variable por si ha crecido mucho
+            if self.waitForAbort(timer):  # Espera el tiempo programado o hasta que cancele Kodi
+                break  # Cancelación de Kodi, salimos
+
+    def onSettingsChanged(self):  # Si se modifican los ajuste de Alfa, se activa esta función
         global alfa_settings
         alfa_settings = {}
         window.setProperty("alfa_settings", json.dumps(alfa_settings))
@@ -93,13 +95,13 @@ class CacheInit(xbmc.Monitor, threading.Thread):
 
 def cache_init():
     global alfa_caching, alfa_settings
-                
+
     # Lanzamos en Servicio de actualización de FIXES
     try:
-        monitor = CacheInit()                                                   # Creamos una clase con un Thread independiente, hasta el fin de Kodi
+        monitor = CacheInit()  # Creamos una clase con un Thread independiente, hasta el fin de Kodi
         monitor.start()
-        time.sleep(1)                                                           # Dejamos terminar inicialización...
-    except:                                                                     # Si hay problemas de threading, nos vamos
+        time.sleep(1)  # Dejamos terminar inicialización...
+    except:  # Si hay problemas de threading, nos vamos
         alfa_caching = False
         alfa_settings = {}
         window.setProperty("alfa_caching", str(alfa_caching))
@@ -125,7 +127,7 @@ def translatePath(path):
             path = path.decode('utf-8')
     else:
         path = xbmc.translatePath(path)
-        
+
     return path
 
 
@@ -140,7 +142,7 @@ def get_addon_version(with_fix=True, from_xml=False):
             import xmltodict
             xml_file = os.path.join(get_runtime_path(), 'addon.xml')
             if os.path.exists(xml_file):
-                with open(xml_file, 'rb') as f: 
+                with open(xml_file, 'rb') as f:
                     data = f.read()
                     if not PY3:
                         data = data.encode("utf-8", "ignore")
@@ -155,7 +157,7 @@ def get_addon_version(with_fix=True, from_xml=False):
                         return version
         except:
             version = ''
-    
+
     if not version:
         if with_fix:
             return __settings__.getAddonInfo('version') + get_addon_version_fix()
@@ -165,9 +167,10 @@ def get_addon_version(with_fix=True, from_xml=False):
 
 def get_addon_version_fix():
     try:
-        last_fix_json = os.path.join(get_runtime_path(), 'last_fix.json')   # información de la versión fixeada del usuario
+        last_fix_json = os.path.join(get_runtime_path(),
+                                     'last_fix.json')  # información de la versión fixeada del usuario
         if os.path.exists(last_fix_json):
-            with open(last_fix_json, 'rb') as f: 
+            with open(last_fix_json, 'rb') as f:
                 data = f.read()
                 if not PY3:
                     data = data.encode("utf-8", "ignore")
@@ -188,18 +191,18 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
     '''
     from core import httptools
     from core import filetools
-    
+
     versiones = {}
     if not urls:
-        url_base = ['https://github.com/alfa-addon/alfa-repo/raw/master/', 
+        url_base = ['https://github.com/alfa-addon/alfa-repo/raw/master/',
                     'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/']
     elif isinstance(urls, (list, tuple)):
         url_base = urls
     else:
         url_base = [urls]
-    
+
     for url in url_base:
-        response = httptools.downloadpage(url+xml_repo, timeout=5, ignore_response_code=True, alfa_s=True)
+        response = httptools.downloadpage(url + xml_repo, timeout=5, ignore_response_code=True, alfa_s=True)
         if response.code != 200: continue
         try:
             import xmltodict
@@ -207,17 +210,18 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
             for addon in xml["addons"]["addon"]:
                 versiones[addon["@id"]] = addon["@version"]
             versiones['url'] = url
-            response = httptools.downloadpage(url+xml_repo+'.md5', timeout=5, ignore_response_code=True, alfa_s=True)
-            
+            response = httptools.downloadpage(url + xml_repo + '.md5', timeout=5, ignore_response_code=True,
+                                              alfa_s=True)
+
             if response.code == 200 and response.data:
                 versiones['repository.alfa-addon.md5'] = response.data
-            
+
             for f in sorted(filetools.listdir("special://userdata/Database"), reverse=True):
                 path_f = filetools.join("special://userdata/Database", f)
                 if filetools.isfile(path_f) and f.lower().startswith('addons') and f.lower().endswith('.db'):
                     versiones['addons_db'] = path_f
                     break
-            
+
             versiones = filetools.decode(versiones)
             break
         except:
@@ -229,7 +233,7 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
     else:
         from platformcode import logger
         logger.error("Unable to download repo xml: %s, %s" % (xml_repo, url_base))
-    
+
     return versiones
 
 
@@ -251,11 +255,11 @@ def get_platform(full_version=False):
     ret = {}
     codename = {"10": "dharma", "11": "eden", "12": "frodo",
                 "13": "gotham", "14": "helix", "15": "isengard",
-                "16": "jarvis", "17": "krypton", "18": "leia", 
+                "16": "jarvis", "17": "krypton", "18": "leia",
                 "19": "matrix"}
     code_db = {'10': 'MyVideos37.db', '11': 'MyVideos60.db', '12': 'MyVideos75.db',
                '13': 'MyVideos78.db', '14': 'MyVideos90.db', '15': 'MyVideos93.db',
-               '16': 'MyVideos99.db', '17': 'MyVideos107.db', '18': 'MyVideos116.db', 
+               '16': 'MyVideos99.db', '17': 'MyVideos107.db', '18': 'MyVideos116.db',
                '19': 'MyVideos119.db', '20': 'MyVideos119.db'}
 
     if alfa_caching and not alfa_kodi_platform:
@@ -275,7 +279,7 @@ def get_platform(full_version=False):
         if alfa_caching:
             window.setProperty("alfa_kodi_platform", json.dumps(ret))
         alfa_kodi_platform = ret.copy()
-    
+
     if full_version:
         return ret
     else:
@@ -288,13 +292,13 @@ def is_xbmc():
 
 def is_rooted(silent=False):
     res = get_setting('is_rooted_device', default='check')
-    
+
     if res in ['rooted', 'no_rooted']:
         return res
-    
+
     res = 'no_rooted'
     from platformcode import logger
-    
+
     if xbmc.getCondVisibility("system.platform.windows"):
         res = 'no_rooted'
 
@@ -304,10 +308,10 @@ def is_rooted(silent=False):
             import xbmcgui
             dialog = xbmcgui.Dialog()
             dialog.notification('ALFA: Verificando privilegios de Super-usuario', \
-                        'Puede solicitarle permisos de Super usuario', time=10000)
+                                'Puede solicitarle permisos de Super usuario', time=10000)
             logger.info('### ALFA: Notificación enviada: privilegios de Super-usuario verificados', force=True)
             set_setting("libtorrent_msg", 'OK', server="torrent")
-        
+
         for subcmd in ['-c', '-0']:
             command = ['su', subcmd, 'ls']
             output_cmd, error_cmd = su_command(command, silent=silent)
@@ -330,7 +334,7 @@ def is_rooted(silent=False):
 
 def su_command(command, silent=False):
     import subprocess
-    
+
     try:
         if not silent:
             from platformcode import logger
@@ -340,7 +344,7 @@ def su_command(command, silent=False):
             logger.info('Command: %s' % str(command))
         if error_cmd and not silent:
             logger.info('Command ERROR: %s, %s' % (str(command), str(error_cmd)))
-    
+
     except Exception as e:
         if not PY3:
             e = unicode(str(e), "utf8", errors="replace").encode("utf8")
@@ -370,18 +374,30 @@ def get_system_platform():
         alfa_system_platform = window.getProperty("alfa_system_platform")
     if alfa_system_platform == "":
 
-        if xbmc.getCondVisibility("System.Platform.Android"): platform = 'android'
-        elif xbmc.getCondVisibility("System.Platform.Windows"): platform = 'windows'
-        elif xbmc.getCondVisibility("System.Platform.UWP"): platform = 'windows'
-        elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"): platform = 'raspberry'
-        elif xbmc.getCondVisibility("System.Platform.Linux"): platform = 'linux'
-        elif xbmc.getCondVisibility("System.Platform.OSX"): platform = 'osx'
-        elif xbmc.getCondVisibility("System.Platform.IOS"): platform = 'ios'
-        elif xbmc.getCondVisibility("System.Platform.Darwin"): platform = 'darwin'
-        elif xbmc.getCondVisibility("System.Platform.Xbox"): platform = 'xbox'
-        elif xbmc.getCondVisibility("System.Platform.Tvos"): platform = 'tvos'
-        elif xbmc.getCondVisibility("System.Platform.Atv2"): platform = 'atv2'
-        else: platform = 'unknown'
+        if xbmc.getCondVisibility("System.Platform.Android"):
+            platform = 'android'
+        elif xbmc.getCondVisibility("System.Platform.Windows"):
+            platform = 'windows'
+        elif xbmc.getCondVisibility("System.Platform.UWP"):
+            platform = 'windows'
+        elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
+            platform = 'raspberry'
+        elif xbmc.getCondVisibility("System.Platform.Linux"):
+            platform = 'linux'
+        elif xbmc.getCondVisibility("System.Platform.OSX"):
+            platform = 'osx'
+        elif xbmc.getCondVisibility("System.Platform.IOS"):
+            platform = 'ios'
+        elif xbmc.getCondVisibility("System.Platform.Darwin"):
+            platform = 'darwin'
+        elif xbmc.getCondVisibility("System.Platform.Xbox"):
+            platform = 'xbox'
+        elif xbmc.getCondVisibility("System.Platform.Tvos"):
+            platform = 'tvos'
+        elif xbmc.getCondVisibility("System.Platform.Atv2"):
+            platform = 'atv2'
+        else:
+            platform = 'unknown'
 
         alfa_system_platform = platform
         if alfa_caching:
@@ -395,11 +411,13 @@ def get_all_settings_addon(caching_var=True):
     # Si los settings ya están cacheados, se usan.  Si no, se cargan por el método tradicional
     if alfa_caching and caching_var and json.loads(window.getProperty("alfa_settings")):
         return json.loads(window.getProperty("alfa_settings")).copy()
-    
-    # Lee el archivo settings.xml y retorna un diccionario con {id: value}
-    from core import scrapertools
 
-    infile = open(os.path.join(get_data_path(), "settings.xml"), "rb")
+    # Lee el archivo settings.xml y retorna un diccionario con {id: value}
+    inpath = os.path.join(get_data_path(), "settings.xml")
+    if not os.path.exists(inpath):
+        # Si no existe el archivo settings.xml, llama a Kodi .setSetting para forzar la creación de un archivo con valores por defecto
+        __settings__.setSetting('caching', 'true')
+    infile = open(inpath, "rb")
     data = infile.read()
     if not PY3:
         data = data.encode("utf-8", "ignore")
@@ -409,14 +427,16 @@ def get_all_settings_addon(caching_var=True):
 
     ret = {}
 
-    matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]*)"\s*value="([^"]*)"')
+    # matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]*)"\s*value="([^"]*)"')
+    matches = re.compile('<setting\s*id="([^"]*)"\s*value="([^"]*)"', re.DOTALL).findall(data)
     if not matches:
-        matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/')
+        # matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/')
+        matches = re.compile('<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/', re.DOTALL).findall(data)
 
     for _id, value in matches:
-        #ret[_id] = get_setting(_id, caching_var=False)
+        # ret[_id] = get_setting(_id, caching_var=False)
         ret[_id] = get_setting_values(_id, value)
-    
+
     alfa_settings = ret.copy()
     alfa_caching = alfa_settings.get('caching', True)
     window.setProperty("alfa_caching", str(alfa_caching))
@@ -475,7 +495,7 @@ def open_settings():
     # si se ha cambiado la ruta de la videoteca llamamos a comprobar directorios para que lo cree y pregunte
     # automaticamente si configurar la videoteca
     if settings_pre.get("videolibrarypath", None) != settings_post.get("videolibrarypath", None) or \
-        settings_pre.get("folder_movies", None) != settings_post.get("folder_movies", None) or \
+            settings_pre.get("folder_movies", None) != settings_post.get("folder_movies", None) or \
             settings_pre.get("folder_tvshows", None) != settings_post.get("folder_tvshows", None):
         verify_directories_created()
 
@@ -539,7 +559,8 @@ def get_setting(name, channel="", server="", default=None, caching_var=True):
             # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
             if not alfa_settings:
                 get_all_settings_addon()
-        if alfa_caching and caching_var and name not in str(alfa_no_caching_vars) and alfa_settings.get(name, None) != None:
+        if alfa_caching and caching_var and name not in str(alfa_no_caching_vars) and alfa_settings.get(name,
+                                                                                                        None) != None:
             # Si el alfa_caching está activo y la variable cargada.  Si no, se cargan por el método tradicional
             value = alfa_settings.get(name, default)
             return value
@@ -613,7 +634,7 @@ def set_setting(name, value, channel="", server=""):
                 # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
                 if not alfa_settings:
                     get_all_settings_addon()
-            
+
             if isinstance(value, bool):
                 if value:
                     value = "true"
@@ -624,7 +645,7 @@ def set_setting(name, value, channel="", server=""):
                 value = str(value)
 
             __settings__.setSetting(name, value)
-            
+
             if name == 'caching':
                 window.setProperty("alfa_caching", str(value))
                 if not value:
@@ -670,14 +691,15 @@ def get_kodi_setting(name, total=False):
     infile.close()
 
     ret = {}
-    matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/setting>')
+    # matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/setting>')
+    matches = re.compile('<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/setting>', re.DOTALL).findall(data)
 
     for _id, value in matches:
         # hack para devolver el tipo correspondiente
         ret[_id] = get_setting_values(_id, value)
         if _id == name and not total:
             return ret[_id]
-    
+
     if not total:
         return None
     else:
@@ -696,7 +718,7 @@ def get_localized_string(code):
         # All encodings to utf8
         elif not PY3 and isinstance(dev, str):
             dev = unicode(dev, "utf8", errors="replace").encode("utf8")
-        
+
         # Bytes encodings to utf8
         elif PY3 and isinstance(dev, bytes):
             dev = dev.decode("utf8")
@@ -771,7 +793,7 @@ def verify_directories_created():
     from platformcode import logger
     from core import filetools
     from platformcode import xbmc_videolibrary
-    
+
     logger.info()
     time.sleep(1)
 
@@ -817,17 +839,19 @@ def verify_directories_created():
             filetools.mkdir(content_path)
 
     try:
-        from core import scrapertools
+        # from core import scrapertools
         # Buscamos el archivo addon.xml del skin activo
         skindir = filetools.join("special://home", 'addons', xbmc.getSkinDir(), 'addon.xml')
-        if not os.path.isdir(skindir): return # No hace falta mostrar error en el log si no existe la carpeta
+        if not os.path.isdir(skindir): return  # No hace falta mostrar error en el log si no existe la carpeta
         # Extraemos el nombre de la carpeta de resolución por defecto
         folder = ""
         data = filetools.read(skindir)
-        res = scrapertools.find_multiple_matches(data, '(<res .*?>)')
+        # res = scrapertools.find_multiple_matches(data, '(<res .*?>)')
+        res = re.compile('(<res .*?>)', re.DOTALL).findall(data)
         for r in res:
             if 'default="true"' in r:
-                folder = scrapertools.find_single_match(r, 'folder="([^"]+)"')
+                # folder = scrapertools.find_single_match(r, 'folder="([^"]+)"')
+                folder = re.search('folder="([^"]+)"', r).group(1)
                 break
 
         # Comprobamos si existe en el addon y sino es así, la creamos
@@ -841,7 +865,7 @@ def verify_directories_created():
                 for f in files:
                     if not filetools.exists(filetools.join(default, folder, f)) or \
                             (filetools.getsize(filetools.join(default, folder, f)) !=
-                                filetools.getsize(filetools.join(default, '720p', f))):
+                             filetools.getsize(filetools.join(default, '720p', f))):
                         filetools.copy(filetools.join(default, '720p', f),
                                        filetools.join(default, folder, f),
                                        True)
@@ -853,11 +877,13 @@ def verify_directories_created():
 
 def importer(module):
     try:
-        from core import scrapertools, filetools
+        # from core import scrapertools, filetools
+        from core import filetools
         path = os.path.join(xbmcaddon.Addon(module).getAddonInfo("path"))
         ad = filetools.read(filetools.join(path, "addon.xml"), silent=True)
         if ad:
-            lib_path = scrapertools.find_single_match(ad, 'library="([^"]+)"')
+            # lib_path = scrapertools.find_single_match(ad, 'library="([^"]+)"')
+            lib_path = re.search('library="([^"]+)"', ad).group(1)
             sys.path.append(os.path.join(path, lib_path))
     except:
         pass
