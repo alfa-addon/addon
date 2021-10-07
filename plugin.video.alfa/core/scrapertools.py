@@ -21,8 +21,6 @@ else:
 import re
 import time
 
-from platformcode import logger
-
 
 def get_header_from_response(url, header_to_get="", post=None, headers=None):
     from core import httptools
@@ -39,6 +37,7 @@ def read_body_and_headers(url, post=None, headers=None, follow_redirects=False, 
 
 
 def printMatches(matches):
+    from platformcode import logger
     i = 0
     for match in matches:
         logger.info("%d %s" % (i, match))
@@ -91,6 +90,7 @@ def unescape(text):
                 return text
 
             except ValueError:
+                from platformcode import logger
                 logger.error("error de valor")
                 pass
         else:
@@ -104,6 +104,7 @@ def unescape(text):
                 if PY3 and isinstance(text, bytes):
                     text = text.decode("utf-8")
             except KeyError:
+                from platformcode import logger
                 logger.error("keyerror")
                 pass
             except:
@@ -380,6 +381,7 @@ def normalize(string):
     return normal
 
 def remove_format(string):
+    #from platformcode import logger
     #logger.info()
     string = string.rstrip()
     string = re.sub(r'(\[|\[\/)(?:color|COLOR|b|B|i|I).*?\]', '', string)
@@ -390,6 +392,7 @@ def remove_format(string):
     return string
 
 def simplify(title, year):
+    #from platformcode import logger
     
     if not year or year == '-':
         year = find_single_match(title, r"^.+?\s*(?:(\(\d{4}\)$|\[\d{4}\]))")
@@ -423,6 +426,7 @@ def get_season_and_episode(title):
     @rtype: str
     @return: Numero de temporada y episodio en formato "1x01" o cadena vacia si no se han encontrado
     """
+    #from platformcode import logger
     filename = ""
 
     patrons = ["(\d+)\s*[x-]\s*(\d+)", "(\d+)\s*×\s*(\d+)", "(?:s|t)(\d+) ?e(\d+)",
