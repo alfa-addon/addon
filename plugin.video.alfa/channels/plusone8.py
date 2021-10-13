@@ -110,7 +110,6 @@ def lista(item):
         if time:
             time = time.text.strip()
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
-
         plot = ""
         action = "play"
         if logger.info() == False:
@@ -128,26 +127,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('div', class_='video-player-area')
-    matches = soup.find_all('a', class_='button')
-    for elem in matches:
-        url = elem['href']
-        url = url.replace(" ", "%20")
-        url += "|verifypeer=false"
-        itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    url = create_soup(item.url).find('div', id='video-download').a['href']
+    itemlist.append(item.clone(action="play", contentTitle = item.title, url=url))
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('div', class_='video-player-area')
-    matches = soup.find_all('a', class_='button')
-    for elem in matches:
-        url = elem['href']
-        url = url.replace(" ", "%20")
-        url += "|verifypeer=false"
-        itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    url = create_soup(item.url).find('div', id='video-download').a['href']
+    itemlist.append(item.clone(action="play", contentTitle = item.title, url=url))
     return itemlist

@@ -12,6 +12,7 @@ import re
 
 from core import httptools
 from core.item import Item
+from core import servertools
 from core import scrapertools
 from platformcode import logger
 
@@ -85,7 +86,10 @@ def lista(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail, duration in matches:
         title = "[COLOR yellow] %s  [/COLOR] %s" % (duration, scrapedtitle)
         url = host + scrapedurl
-        itemlist.append(item.clone(action="play", title=title, url=url, contentTitle=title,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, contentTitle=title,
                                    fanart=scrapedthumbnail, thumbnail=scrapedthumbnail))
     last=scrapertools.find_single_match(item.url,'(.*?)page=\d+')
     num= int(scrapertools.find_single_match(item.url,".*?/?page=(\d+)"))
@@ -94,6 +98,15 @@ def lista(item):
     if next_page!="":
         next_page = last + next_page
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
+    itemlist.append(item.clone(url=url, server="directo"))
     return itemlist
 
 

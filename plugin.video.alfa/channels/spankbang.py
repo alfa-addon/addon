@@ -27,7 +27,6 @@ def mainlist(item):
     itemlist.append(item.clone(title="Nuevos", action="lista", url= host + "/new_videos/"))
     itemlist.append(item.clone(title="Mas valorados", action="lista", url=host + "/trending_videos/"))
     itemlist.append(item.clone(title="Mas vistos", action="lista", url= host + "/most_popular/"))
-    itemlist.append(item.clone(title="Mas largos", action="lista", url= host + "/longest_videos/"))
     itemlist.append(item.clone(title="Pornstars" , action="catalogo", url=host + "/pornstars"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories"))
     itemlist.append(item.clone(title="Buscar", action="search"))
@@ -120,13 +119,24 @@ def lista(item):
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time.text,title)
         url =  urlparse.urljoin(item.url,url)
-        itemlist.append(item.clone(action="play" , title=title , url=url, thumbnail=thumbnail, 
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title , url=url, thumbnail=thumbnail, 
                               fanart=thumbnail, contentTitle=title) )
     next_page = soup.find('li', class_='next')
     if next_page:
         next_page = next_page.a['href']
         next_page = urlparse.urljoin(host,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page ) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
