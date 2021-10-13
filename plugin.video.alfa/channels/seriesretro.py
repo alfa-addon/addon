@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- Channel SeriesRetro -*-
-# -*- Created for Alfa-addon -*-
-# -*- By the Alfa Develop Group -*-
+# -*- Created for Alfa Addon -*-
+# -*- By the Alfa Development Group -*-
 
 import sys
 PY3 = False
@@ -28,7 +28,7 @@ list_servers = ['okru', 'yourupload', 'mega']
 list_quality = []
 
 
-def create_soup(url, referer=None, unescape=False):
+def get_source(url, soup=False, referer=None, unescape=False):
     logger.info()
 
     if referer:
@@ -49,14 +49,34 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Series", action="sub_menu",
-                         thumbnail=get_thumb("tvshows", auto=True)))
+    itemlist.append(
+        Item(
+            action = "sub_menu",
+            channel = item.channel,
+            thumbnail = get_thumb("movies", auto=True),
+            title = "Peliculas",
+            viewType = "videos"
+        )
+    )
 
-    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu",
-                         thumbnail=get_thumb("movies", auto=True)))
+    itemlist.append(
+        Item(
+            action = "sub_menu",
+            channel = item.channel,
+            thumbnail = get_thumb("tvshows", auto=True),
+            title = "Series",
+            viewType = "videos"
+        )
+    )
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
-                         thumbnail=get_thumb("search", auto=True)))
+    itemlist.append(
+        Item(
+            action = "search",
+            channel = item.channel,
+            thumbnail = get_thumb("search", auto=True),
+            title = "Buscar..."
+        )
+    )
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -75,20 +95,46 @@ def sub_menu(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all",
-                         url= host + ("lista-series/" if item.title == "Series" else "peliculas/"),
-                         thumbnail=get_thumb("All", auto=True)))
+    itemlist.append(
+        Item(
+            action = "list_all",
+            channel = item.channel,
+            thumbnail = get_thumb("All", auto=True),
+            title = "Todas",
+            url = host + ("lista-series/" if item.title == "Series" else "peliculas/")
+        )
+    )
 
     if item.title == "Series":
         itemlist.append(
-            Item(channel=item.channel, title="Animación", action="list_all", url=host + "category/animacion/",
-                 thumbnail=get_thumb("animacion", auto=True)))
+            Item(
+                action = "list_all",
+                channel = item.channel,
+                thumbnail = get_thumb("animacion", auto=True),
+                title = "Animación",
+                url = host + "category/animacion/"
+            )
+        )
 
-    itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=host,
-                         thumbnail=get_thumb("genres", auto=True)))
+    itemlist.append(
+        Item(
+            action = "section",
+            channel = item.channel,
+            thumbnail = get_thumb("genres", auto=True),
+            title = "Generos",
+            url = host
+        )
+    )
 
-    itemlist.append(Item(channel=item.channel, title="Alfabetico", action="section", url=host,
-                         thumbnail=get_thumb("alphabet", auto=True)))
+    itemlist.append(
+        Item(
+            action = "section",
+            channel = item.channel,
+            thumbnail = get_thumb("alphabet", auto=True),
+            title = "Alfabetico",
+            url = host
+        )
+    )
 
     return itemlist
 
@@ -97,7 +143,7 @@ def list_all(item):
     logger.info()
 
     itemlist = list()
-    soup = create_soup(item.url)
+    soup = get_source(item.url, soup=True)
     matches = soup.find("ul", class_="MovieList NoLmtxt Rows AX A06 B04 C03 E20")
 
     if not matches:
@@ -111,7 +157,13 @@ def list_all(item):
         thumb = thumb["data-src"] if thumb.has_attr("data-src") else thumb["src"]
         year = elem.find("span", class_="Year").text
 
-        new_item = Item(channel=item.channel, url=url, title=title, thumbnail=thumb, infoLabels={"year": year})
+        new_item = Item(
+                        channel = item.channel,
+                        infoLabels={"year": year},
+                        thumbnail = thumb,
+                        title = title,
+                        url = url
+                    )
 
         if "pelisretro" in url:
             new_item.contentTitle = title
@@ -126,7 +178,15 @@ def list_all(item):
 
     try:
         next_page = soup.find("a", class_="next page-numbers")["href"]
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
+
+        itemlist.append(
+            Item(
+                channel = item.channel,
+                title = "Siguiente >>",
+                url = next_page,
+                action = 'list_all'
+            )
+        )
     except:
         pass
 
@@ -139,16 +199,24 @@ def section(item):
     itemlist = list()
 
     if item.title == "Generos":
-        soup = create_soup(item.url).find("ul", class_="sub-menu")
+        soup = get_source(item.url, soup=True).find("ul", class_="sub-menu")
         action = "list_all"
     elif item.title == "Alfabetico":
-        soup = create_soup(item.url).find("ul", class_="AZList")
+        soup = get_source(item.url, soup=True).find("ul", class_="AZList")
         action = "alpha_list"
 
     for elem in soup.find_all("li"):
         url = elem.a["href"]
         title = elem.a.text
-        itemlist.append(Item(channel=item.channel, title=title, action=action, url=url))
+
+        itemlist.append(
+            Item(
+                action = action,
+                channel = item.channel,
+                title = title,
+                url = url
+            )
+        )
 
     return itemlist
 
@@ -158,7 +226,7 @@ def alpha_list(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url).find("tbody")
+    soup = get_source(item.url, soup=True).find("tbody")
     if not soup:
         return itemlist
     for elem in soup.find_all("tr"):
@@ -166,8 +234,17 @@ def alpha_list(item):
         thumb = elem.find("td", class_="MvTbImg").a.img["src"]
         url = info.a["href"]
         title = info.a.text.strip()
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='seasons', thumbnail=thumb,
-                             contentSerieName=title))
+
+        itemlist.append(
+            Item(
+                action = 'seasons',
+                channel = item.channel,
+                contentSerieName = title,
+                thumbnail = thumb,
+                title = title,
+                url = url
+            )
+        )
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -179,26 +256,37 @@ def seasons(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url).find_all("div", class_="Wdgt AABox")
+    soup = get_source(item.url, soup=True).find_all("div", class_="Wdgt AABox")
 
     infoLabels = item.infoLabels
     for elem in soup:
         season = elem.find("div", class_="AA-Season")["data-tab"]
         title = "Temporada %s" % season
         infoLabels["season"] = season
-        itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseason',
-                             infoLabels=infoLabels))
+        itemlist.append(
+            Item(
+                action = 'episodesxseason',
+                channel = item.channel,
+                infoLabels=infoLabels,
+                title = title,
+                url = item.url
+            )
+        )
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
-    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra:
-        itemlist.append(Item(channel=item.channel,
-                             title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
-                             url=item.url,
-                             action="add_serie_to_library",
-                             extra="episodios",
-                             contentSerieName=item.contentSerieName
-                             ))
+    if config.get_videolibrary_support() and len(itemlist) > 0 and not (item.videolibrary or item.extra):
+        itemlist.append(
+            Item(
+                action = "add_serie_to_library",
+                channel = item.channel,
+                contentType = "tvshow",
+                contentSerieName = item.contentSerieName,
+                extra = "episodios",
+                title = '[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
+                url = item.url
+            )
+        )
 
     return itemlist
 
@@ -208,6 +296,7 @@ def episodios(item):
 
     itemlist = list()
     templist = seasons(item)
+
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
 
@@ -219,7 +308,7 @@ def episodesxseason(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url).find_all("div", class_="Wdgt AABox")
+    soup = get_source(item.url, soup=True).find_all("div", class_="Wdgt AABox")
     infoLabels = item.infoLabels
     season = infoLabels["season"]
 
@@ -234,8 +323,15 @@ def episodesxseason(item):
                     infoLabels["episode"] = epi_num
                     title = "%sx%s - %s" % (season, epi_num, epi_name)
 
-                    itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos",
-                                         infoLabels=infoLabels))
+                    itemlist.append(
+                        Item(
+                            action = "findvideos",
+                            channel = item.channel,
+                            infoLabels = infoLabels,
+                            title = title,
+                            url = url,
+                        )
+                    )
                 except:
                     pass
             break
@@ -248,16 +344,27 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
-    soup = create_soup(item.url).find("ul", class_="TPlayerNv").find_all("li")
     infoLabels = item.infoLabels
+    soup = get_source(item.url, soup=True).find("ul", class_="TPlayerNv").find_all("li")
+
     for btn in soup:
         opt = btn["data-tplayernv"]
         srv = btn.span.text.lower()
         if "opci" in srv.lower():
-            # srv = "okru"
-            continue
-        itemlist.append(Item(channel=item.channel, title=srv, url=item.url, action='play', server=srv, opt=opt,
-                             language='LAT', infoLabels=infoLabels))
+            srv = "okru"
+            # continue
+        itemlist.append(
+            Item(
+                action = 'play',
+                channel = item.channel,
+                infoLabels = infoLabels,
+                language = 'LAT',
+                opt = opt,
+                server = srv,
+                title = srv,
+                url = item.url
+            )
+        )
 
     itemlist = sorted(itemlist, key=lambda i: i.server)
 
@@ -268,11 +375,19 @@ def findvideos(item):
     # Requerido para AutoPlay
 
     autoplay.start(itemlist, item)
+
     if item.contentType != "episode":
-        if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-            itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                                 url=item.url, action="add_pelicula_to_library", extra="findvideos",
-                                 contentTitle=item.contentTitle))
+        if config.get_videolibrary_support() and len(itemlist) > 0 and (not item.videolibrary or item.extra != 'findvideos'):
+            itemlist.append(
+                Item(
+                    action = "add_pelicula_to_library",
+                    contentTitle = item.contentTitle,
+                    channel = item.channel,
+                    extra = "findvideos",
+                    title = '[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                    url = item.url
+                )
+            )
 
     return itemlist
 
@@ -281,11 +396,13 @@ def play(item):
     logger.info()
     itemlist = list()
 
-    soup = create_soup(item.url).find("div", class_="TPlayerTb", id=item.opt)
+    soup = get_source(item.url, soup=True).find("div", class_="TPlayerTb", id=item.opt)
     url = scrapertools.find_single_match(str(soup), 'src="([^"]+)"')
     url = re.sub("amp;|#038;", "", url)
-    url = create_soup(url).find("div", class_="Video").iframe["src"]
-    itemlist.append(item.clone(url=url, server=""))
+    url = get_source(url, soup=True).find("div", class_="Video").iframe["src"]
+    item.url = url
+    item.server = ""
+    itemlist.append(item)
     itemlist = servertools.get_servers_itemlist(itemlist)
 
     return itemlist
@@ -314,4 +431,3 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
-

@@ -333,7 +333,7 @@ def run(item=None):
                                 'install_trakt'):
                             trakt_tools.ask_install_script()
                     itemlist = trakt_tools.trakt_check(itemlist)
-                else:
+                elif not config.get_setting('install_trakt'):
                     config.set_setting('install_trakt', True)
 
                 platformtools.render_items(itemlist, item)

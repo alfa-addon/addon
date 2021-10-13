@@ -461,6 +461,10 @@ if __name__ == "__main__":
     # modo adulto:
     # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
     # si es == 2 lo desactivamos.
+    
+    # Incializamos caching de variables
+    config.cache_init()
+    
     # Detecta la versión correcta de marshal
     if PY3:
         from platformcode import custom_code

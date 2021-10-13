@@ -731,6 +731,13 @@
 					<control type="toggle"/>
 				</setting>
 			</group>
+            <group id="caching_variables" label="80785">
+				<setting id="caching" type="boolean" label="80786" help="">
+					<level>2</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
 		</category>
 	</section>
 </settings>

@@ -14,7 +14,7 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://www.porntube.com'
+host = 'https://www.porntube.com'      #  https://www.porntube.com    https://www.pornerbros.com   https://www.4tube.com  https://www.fux.com
 url_api = "%s/api/video/list?order=%s&orientation=%s&p=1&ssr=false"
 
 
@@ -31,21 +31,22 @@ def mainlist(item):
     itemlist.append(item.clone(title="Buscar", action="search", orientation= "straight"))
 
     itemlist.append(Item(channel = item.channel, title = ""))
-    itemlist.append(item.clone(title="Trans", action="trans"))
+    itemlist.append(item.clone(title="Trans", action="submenu", orientation="shemale"))
+    itemlist.append(item.clone(title="Gay", action="submenu", orientation="gay"))
     return itemlist
 
 
-def trans(item):
+def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=url_api % (host, "date", "shemale")))
-    itemlist.append(item.clone(title="Popular" , action="lista", url=url_api %  (host, "views", "shemale")))
-    itemlist.append(item.clone(title="Mas Valorada" , action="lista", url=url_api %  (host, "rating", "shemale")))
-    itemlist.append(item.clone(title="Longitud" , action="lista", url=url_api %  (host, "duration", "shemale")))
-    itemlist.append(item.clone(title="Pornstars" , action="canal", url=host + "/api/pornstar/list?order=videos&orientation=shemale&p=1&ssr=false"))
-    itemlist.append(item.clone(title="Canal" , action="canal", url=host + "/api/channel/list?order=rating&orientation=shemale&p=1&ssr=false"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/api/tag/list?orientation=shemale&ssr=false"))
-    itemlist.append(item.clone(title="Buscar", action="search", orientation= "shemale"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=url_api % (host, "date", item.orientation)))
+    itemlist.append(item.clone(title="Popular" , action="lista", url=url_api %  (host, "views", item.orientation)))
+    itemlist.append(item.clone(title="Mas Valorada" , action="lista", url=url_api %  (host, "rating", item.orientation)))
+    itemlist.append(item.clone(title="Longitud" , action="lista", url=url_api %  (host, "duration", item.orientation)))
+    itemlist.append(item.clone(title="Pornstars" , action="canal", url=host + "/api/pornstar/list?order=videos&orientation=%s&p=1&ssr=false" % item.orientation))
+    itemlist.append(item.clone(title="Canal" , action="canal", url=host + "/api/channel/list?order=rating&orientation=%s&p=1&ssr=false" % item.orientation))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/api/tag/list?orientation=%s&ssr=false" % item.orientation))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     
     return itemlist
 
@@ -66,13 +67,15 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
+    if not item.orientation:
+        item.orientation = "straight"
     headers = {'Referer': "%s" % host}
     data = httptools.downloadpage(item.url, headers=headers).json
     for Video in  data["tags"]["_embedded"]["items"]:
         title = Video["name"]
         thumbnail = Video["thumbDesktop"]
         dir = Video["slug"]
-        url = "%s/api/tags/%s?order=%s&orientation=%s&p=1&ssr=false" %(host, dir, "date", "straight")
+        url = "%s/api/tags/%s?order=%s&orientation=%s&p=1&ssr=false" %(host, dir, "date", item.orientation)
         plot = ""
         # title = "%s (%s)" % (title, vidnum)
         itemlist.append(item.clone(action="lista", title=title, url=url,
@@ -83,6 +86,8 @@ def categorias(item):
 def canal(item):
     logger.info()
     itemlist = []
+    if not item.orientation:
+        item.orientation = "straight"
     headers = {'Referer': "%s" % host}
     data = httptools.downloadpage(item.url, headers=headers).json
     if "channel" in item.url:
@@ -100,7 +105,7 @@ def canal(item):
         dir = Video["slug"]
         thumbnail= Video["thumbUrl"]
         vidnum = Video["videoCount"]
-        url = "%s/api/%s/%s?order=date&orientation=straight&p=1&ssr=false" % (host,c,dir)
+        url = "%s/api/%s/%s?order=date&orientation=%s&p=1&ssr=false" % (host,c,dir,item.orientation)
         plot = ""
         title = "%s (%s)" % (title, vidnum)
         itemlist.append(item.clone(action="lista", title=title, url=url,

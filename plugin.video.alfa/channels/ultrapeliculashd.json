@@ -1,7 +1,7 @@
 {
   "id": "ultrapeliculashd",
   "name": "UltraPeliculasHD",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://s13.postimg.cc/d042quw9j/ultrapeliculashd.png",

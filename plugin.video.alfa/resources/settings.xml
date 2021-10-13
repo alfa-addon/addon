@@ -142,6 +142,10 @@
         <setting label="80780" type="lsep"/>
         <setting id="alternative_web_access" type="bool" label="80781"
                  default="false"/>
+        
+        <setting label="80785" type="lsep"/>
+        <setting id="caching" type="bool" label="80786"
+                 default="true"/>
     </category>
 
 </settings>
