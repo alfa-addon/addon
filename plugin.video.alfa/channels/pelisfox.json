@@ -1,7 +1,7 @@
 {
   "id": "pelisfox",
   "name": "Pelisfox",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://s14.postimg.cc/c43etc1lt/pelisfox.png",

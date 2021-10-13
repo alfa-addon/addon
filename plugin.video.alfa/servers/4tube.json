@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://dood(?:stream|).(?:watch|to|so|com|cx|la|ws)/(?:e|d)/([a-z0-9]+)",
-        "url": "https://dood.to/e/\\1"
+        "pattern": "https://www.4tube.com/(?:embed|videos)/([0-9]+)",
+        "url": "https://www.4tube.com/embed/\\1"
       }
     ]
   },
   "free": true,
-  "id": "doodstream",
-  "name": "doodstream",
+  "id": "4tube",
+  "name": "4tube",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/vTbw1YRM/doodstream.png"
+  "thumbnail": "https://www.4tube.com/assets/img/layout/4tube-logo-1f503fd81c.png"
 }

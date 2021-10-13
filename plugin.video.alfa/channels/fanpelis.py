@@ -23,7 +23,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import tmdb
 
-host = "https://fanpelis.org/"
+host = "https://fanpelis.ac/"
 
 def mainlist(item):
     logger.info()

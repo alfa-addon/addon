@@ -1132,6 +1132,7 @@ def sort_torrents(play_items, emergency_urls=False):
             if emergency_urls:
                 SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
                 for play_item in play_items:
+                    magnitude = 1.0
                     logger.info('torrent_file: %s' % play_item)
                     torrent_file = filetools.join(SERIES, play_item)
                     if play_item.startswith('magnet'):
@@ -1144,9 +1145,10 @@ def sort_torrents(play_items, emergency_urls=False):
                         logger.error('Size ERROR : %s' % play_item)
                         continue
                     else:
+                        if ' M' in size: magnitude = 0.001
                         size = scrapertools.find_single_match(size, patron).replace(',', '.')
                     try:
-                        size = float(size)
+                        size = float(size) * magnitude
                     except:
                         logger.error('Size ERROR : %s: %s' % (play_item, size))
                         continue
@@ -1172,25 +1174,27 @@ def sort_torrents(play_items, emergency_urls=False):
             
             if play_items[0].server == 'torrent' and play_items[1].server == 'torrent':
                 for play_item in play_items:
-                    
+                    magnitude = 1.0
                     if play_item.server == 'torrent':
                         logger.info('torrent_info: %s' % play_item.torrent_info)
                         if play_item.torrent_info and scrapertools.find_single_match(play_item.torrent_info, patron):
                             size = scrapertools.find_single_match(play_item.torrent_info, patron).replace(',', '.')
-                        elif play_item.startswith('magnet'):
+                            if ' M' in play_item.torrent_info: magnitude = 0.001
+                        elif play_item.url.startswith('magnet'):
                             return play_items
                         else:
                             size = get_torrent_size(play_item.url)
                             if size == 'ERROR':
-                                logger.error('Size ERROR : %s' % play_item)
+                                logger.error('Size ERROR : %s' % play_item.url)
                                 continue
                             else:
+                                if ' M' in size: magnitude = 0.001
                                 size = scrapertools.find_single_match(size, patron).replace(',', '.')
-                                
                         try:
-                            play_item.size_torr = float(size)
+                            if 'Seeds: 0' in play_item.torrent_info: magnitude = 0.0
+                            play_item.size_torr = float(size) * magnitude
                         except:
-                            logger.error('Size ERROR : %s: %s' % (play_item, size))
+                            logger.error('Size ERROR : %s: %s' % (play_item.url, size))
                             continue
                         play_items_torrent.append(play_item)
                     
@@ -1203,8 +1207,8 @@ def sort_torrents(play_items, emergency_urls=False):
             size_order = config.get_setting('torrent_quality', channel='downloads', default=0)
             if size_order:
                 play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it.size_torr)))         # clasificamos
-                if size_order == 1 and len(play_items_torrent) > 2:                 # Tomamos la segunda calidad
-                    play_items_torrent[0].size_torr = 0.0                           # Ponemos el de más calidad al final de la lista
+                if size_order == 1 and len(play_items_torrent) > 2:             # Tomamos la segunda calidad
+                    play_items_torrent[0].size_torr = 0.0                       # Ponemos el de más calidad al final de la lista
                     play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it.size_torr)))     # RE-clasificamos
             else:
                 play_items_torrent = sorted(play_items_torrent, key=lambda it: (float(it.size_torr)))                       # clasificamos

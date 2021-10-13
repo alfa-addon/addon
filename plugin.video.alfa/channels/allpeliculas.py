@@ -27,7 +27,7 @@ list_language = ["LAT"]
 list_quality = []
 list_servers = ["streampe", "fembed", "jawcloud"]
 
-host = "https://allpeliculas.la/"
+host = "https://allpeliculas.ac/"
 this_year = datetime.date.today().year
 
 
@@ -83,7 +83,12 @@ def list_all(item):
         url = elem.find("a", class_="btn")["href"]
 
         full_title = elem.h2.text
-        title, year = scrapertools.find_single_match(full_title, "(.*) \((\d{4})\)")
+        logger.debug(full_title)
+        try:
+            title, year = scrapertools.find_single_match(full_title, "(.*) \((\d{4})\)")
+        except:
+            title = full_title
+            year = "-"
         thumb = elem.img["src"]
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos", thumbnail=thumb,

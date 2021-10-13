@@ -596,7 +596,7 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
         
     if not p:
         logger.info('## Popen CMD: %s, wait=%s' % (cmd, wait), force=True)
-        config.set_setting('assistant_binary', False)
+        if config.get_setting('assistant_binary'): config.set_setting('assistant_binary', False)
         creationflags = 0
         if xbmc.getCondVisibility("system.platform.Windows"): creationflags = 0x08000000
         try:
@@ -632,7 +632,7 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
                     app_needed += addon_binary.capitalize() + ', '
                 except:
                     pass
-        config.set_setting('assistant_binary', True)
+        if not config.get_setting('assistant_binary'): config.set_setting('assistant_binary', True)
 
         if filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
             try:

@@ -21,32 +21,32 @@ else:
 import re
 import time
 
-from core import httptools
-from platformcode import logger
-
 
 def get_header_from_response(url, header_to_get="", post=None, headers=None):
+    from core import httptools
     header_to_get = header_to_get.lower()
     response = httptools.downloadpage(url, post=post, headers=headers, only_headers=True)
     return response.headers.get(header_to_get)
 
 
 def read_body_and_headers(url, post=None, headers=None, follow_redirects=False, timeout=None):
+    from core import httptools
     response = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=follow_redirects,
                                       timeout=timeout)
     return response.data, response.headers
 
 
 def printMatches(matches):
+    from platformcode import logger
     i = 0
     for match in matches:
         logger.info("%d %s" % (i, match))
         i = i + 1
 
 
-def find_single_match(data, patron, index=0):
+def find_single_match(data, pattern, index=0):
     try:
-        matches = re.findall(patron, data, flags=re.DOTALL)
+        matches = re.findall(pattern, data, flags=re.DOTALL)
         return matches[index]
     except:
         return ""
@@ -55,6 +55,13 @@ def find_single_match(data, patron, index=0):
 # Parse string and extracts multiple matches using regular expressions
 def find_multiple_matches(text, pattern):
     return re.findall(pattern, text, re.DOTALL)
+
+
+def replace(pattern, replacement, data):
+    try:
+        return re.sub(pattern, replacement, data, flags=re.DOTALL)
+    except:
+        return ""
 
 
 def entityunescape(cadena):
@@ -83,6 +90,7 @@ def unescape(text):
                 return text
 
             except ValueError:
+                from platformcode import logger
                 logger.error("error de valor")
                 pass
         else:
@@ -96,6 +104,7 @@ def unescape(text):
                 if PY3 and isinstance(text, bytes):
                     text = text.decode("utf-8")
             except KeyError:
+                from platformcode import logger
                 logger.error("keyerror")
                 pass
             except:
@@ -372,6 +381,7 @@ def normalize(string):
     return normal
 
 def remove_format(string):
+    #from platformcode import logger
     #logger.info()
     string = string.rstrip()
     string = re.sub(r'(\[|\[\/)(?:color|COLOR|b|B|i|I).*?\]', '', string)
@@ -382,6 +392,7 @@ def remove_format(string):
     return string
 
 def simplify(title, year):
+    #from platformcode import logger
     
     if not year or year == '-':
         year = find_single_match(title, r"^.+?\s*(?:(\(\d{4}\)$|\[\d{4}\]))")
@@ -415,6 +426,7 @@ def get_season_and_episode(title):
     @rtype: str
     @return: Numero de temporada y episodio en formato "1x01" o cadena vacia si no se han encontrado
     """
+    #from platformcode import logger
     filename = ""
 
     patrons = ["(\d+)\s*[x-]\s*(\d+)", "(\d+)\s*×\s*(\d+)", "(?:s|t)(\d+) ?e(\d+)",

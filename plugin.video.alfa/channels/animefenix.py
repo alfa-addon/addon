@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- Channel AnimeFenix -*-
-# -*- Created for Alfa-addon -*-
-# -*- By the Alfa Develop Group -*-
+# -*- Created for Alfa Addon -*-
+# -*- By the Alfa Development Group -*-
 
 import sys
 PY3 = False
@@ -38,20 +38,55 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Nuevos Capítulos", url=host, action="new_episodes",
-                         thumbnail=get_thumb('new episodes', auto=True)))
+    itemlist.append(
+        Item(
+            action = "new_episodes",
+            channel = item.channel,
+            thumbnail = get_thumb('new episodes', auto=True),
+            title = "Nuevos Capítulos",
+            url = host
+        )
+    )
 
-    itemlist.append(Item(channel=item.channel, title="Emision", url=host + 'animes?type%5B%5D=tv&estado%5B%5D=1',
-                         action="list_all", thumbnail=get_thumb('on air', auto=True)))
+    itemlist.append(
+        Item(
+            action = "list_all",
+            channel = item.channel,
+            thumbnail = get_thumb('on air', auto=True),
+            title = "Emision",
+            url = host + 'animes?type%5B%5D=tv&estado%5B%5D=1',
+        )
+    )
 
-    itemlist.append(Item(channel=item.channel, title="Recientes", url=host, action="list_all",
-                         thumbnail=get_thumb('recents', auto=True)))
+    itemlist.append(
+        Item(
+            action = "list_all",
+            channel = item.channel,
+            thumbnail = get_thumb('recents', auto=True),
+            title = "Recientes",
+            url = host
+        )
+    )
 
-    itemlist.append(Item(channel=item.channel, title="Todas", url=host+'animes', action="list_all",
-                        thumbnail=get_thumb('all', auto=True)))
+    itemlist.append(
+        Item(
+            action = "list_all",
+            channel = item.channel,
+            thumbnail = get_thumb('all', auto=True),
+            title = "Todas",
+            url = '%sanimes?order=title' % host
+        )
+    )
 
-    itemlist.append(Item(channel=item.channel, title="Buscar", url=host + 'animes?q=', action="search",
-                         thumbnail=get_thumb('search', auto=True)))
+    itemlist.append(
+        Item(
+            action = "search",
+            channel = item.channel,
+            thumbnail = get_thumb('search', auto=True),
+            title = "Buscar",
+            url = host + 'animes?q='
+        )
+    )
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -60,19 +95,69 @@ def mainlist(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False):
+def get_source(url, json=False, unescape=False, **opt):
     logger.info()
 
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+    data = httptools.downloadpage(url, **opt)
+    data.data = scrapertools.unescape(data.data) if unescape else data.data
+
+    if json:
+        data = data.json
+    elif opt.get('soup', False):
+        data = data.soup
     else:
-        data = httptools.downloadpage(url).data
+        data = data.data
 
-    if unescape:
-        data = scrapertools.unescape(data)
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return data
 
-    return soup
+
+def list_all(item):
+    logger.info()
+
+    itemlist = list()
+
+    soup = get_source(item.url, soup=True)
+    matches = soup.find("div", class_="list-series").find_all("article", class_="serie-card")
+
+    for elem in matches:
+        url = elem.a["href"]
+        title = elem.a["title"]
+        thumb = elem.img["src"]
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
+        itemlist.append(
+            Item(
+                action = 'episodios',
+                channel = item.channel,
+                contentSerieName = title,
+                context = context,
+                thumbnail = thumb,
+                title = title,
+                url = url
+            )
+        )
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    next_page = soup.find('div', class_='pagination')
+
+    if next_page and len(next_page.find_all('li')) > 0:
+        next_url = next_page.find_all('li')[-1].find('a')['href'] if next_page.find_all('li')[-1].find('a') else ''
+        base_url = scrapertools.find_single_match(item.url, '(.+?)\?')
+
+        if next_url:
+            itemlist.append(
+                Item(
+                    action = item.action,
+                    channel = item.channel,
+                    thumbnail = thumb,
+                    title = 'Siguiente página >',
+                    url = "%s%s" % (base_url, next_url) if not base_url in next_url else next_url
+                )
+            )
+
+    return itemlist
 
 
 def new_episodes(item):
@@ -80,7 +165,7 @@ def new_episodes(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url).find("div", class_="capitulos-grid")
+    soup = get_source(item.url, soup=True).find("div", class_="capitulos-grid")
 
     for elem in soup.find_all("div", "overarchingdiv"):
         title = elem.img["alt"]
@@ -98,9 +183,18 @@ def new_episodes(item):
 def episodios(item):
     logger.info()
 
+    item.videolibrary = True if item.extra else False
+    itemlist = episodesxseason(item)
+    
+    return itemlist
+
+
+def episodesxseason(item):
+    logger.info()
+
     itemlist = list()
 
-    soup = create_soup(item.url).find("div", class_="column is-12")
+    soup = get_source(item.url, soup=True).find("div", class_="column is-12")
 
     infoLabels = item.infoLabels
 
@@ -116,33 +210,19 @@ def episodios(item):
 
     itemlist = itemlist[::-1]
 
-    if config.get_videolibrary_support() and len(itemlist) > 0:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.videolibrary:
         itemlist.append(
-            Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
-                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
-                 extra1='library'))
+            Item(
+                action = "add_serie_to_library",
+                channel = item.channel,
+                contentSerieName = item.contentSerieName,
+                extra = 'episodios',
+                text_color = "yellow",
+                title = 'Añadir esta serie a la videoteca',
+                url = item.url
+            )
+        )
 
-    return itemlist
-
-
-def list_all(item):
-    logger.info()
-
-    itemlist = list()
-
-    soup = create_soup(item.url).find("div", class_="list-series")
-
-    for elem in soup.find_all("article", class_="serie-card"):
-        url = elem.a["href"]
-        title = elem.a["title"]
-        thumb = elem.img["src"]
-        context = renumbertools.context(item)
-        context2 = autoplay.context
-        context.extend(context2)
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='episodios',
-                             thumbnail=thumb, contentSerieName=title, context=context))
-
-    tmdb.set_infoLabels_itemlist(itemlist, True)
     return itemlist
 
 
@@ -157,7 +237,7 @@ def findvideos(item):
                "3": "https://www.mp4upload.com/embed-%s.html", "4": "https://sendvid.com/embed/%s",
                "19": "https://videa.hu/player?v=%s"}
 
-    soup = create_soup(item.url, unescape=True)
+    soup = get_source(item.url, soup=True, unescape=True)
 
     pl = soup.find("div", class_="player-container")
 
@@ -173,7 +253,7 @@ def findvideos(item):
             v_id = v_id[1:]
 
         if srv_id not in servers:
-            srv_data = httptools.downloadpage(url).data
+            srv_data = get_source(url)
             url = scrapertools.find_single_match(srv_data, 'playerContainer.innerHTML .*?src="([^"]+)"')
         else:
             srv = servers.get(srv_id, "directo")
@@ -181,7 +261,7 @@ def findvideos(item):
                 url = srv % v_id
 
         if "/stream/" in url:
-            data = httptools.downloadpage(url, headers={'Referer': item.url}).data
+            data = get_source(url, referer=item.url)
             url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace('\\/', '/')
         if not url:
             continue
