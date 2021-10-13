@@ -16,7 +16,6 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-from channels import autoplay
 
 IDIOMAS = {'vo': 'VO'}
 list_language = list(IDIOMAS.values())
@@ -31,14 +30,8 @@ api = "https://member.naiadsystems.com/search/v3/performers?domain=fapcandy.com&
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    # autoplay.init(item.channel, list_servers, list_quality)
-
     itemlist.append(item.clone(title="Chicas" , action="categorias", url=cat, chicas = True))
     itemlist.append(item.clone(title="Chicos" , action="categorias", url=cat))
-
-    # autoplay.show_option(item.channel, itemlist)
-
     return itemlist
 
 
@@ -97,7 +90,10 @@ def lista(item):
         quality = 'HD' if elem['highDefinition'] else ''
         title = "%s [%s] (%s)" %(name,age,country)
         url = " https://manifest-server.naiadsystems.com/live/s:%s.json?last=load&format=mp4-hls" % name
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                    fanart=thumbnail, contentTitle=title ))
     page = scrapertools.find_single_match(item.url, '&from=(\d+)')
     page = int(page)
@@ -105,6 +101,18 @@ def lista(item):
         page += 40
         next_page = re.sub(r"&from=\d+", "&from={0}".format(page), item.url)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).json
+    data = data["formats"]["mp4-hls"]
+    for elem in data["encodings"]:
+        quality = elem["videoHeight"]
+        url = elem["location"]
+        itemlist.append(item.clone(url=url, title=quality, quality=quality))
     return itemlist
 
 
@@ -118,7 +126,6 @@ def play(item):
         url = elem["location"]
         itemlist.append(['%sp' %quality, url])
     itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
-    # Requerido para AutoPlay
     # autoplay.start(itemlist, item)
     return itemlist
 

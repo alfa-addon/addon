@@ -12,10 +12,9 @@ else:
 import re
 
 from platformcode import config, logger
-from core import scrapertools
+from core import httptools, scrapertools, tmdb
 from core import servertools
 from core.item import Item
-from core import httptools
 from channels import filtertools
 from channels import autoplay
 
@@ -48,7 +47,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/?s=%s" % texto
+    item.url = "%s/search/%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -62,7 +61,7 @@ def years(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data,'>Years</a>(.*?)</ul>')
+    data = scrapertools.find_single_match(data,'>Releases</a>(.*?)</ul>')
     patron  = '<a href="([^"]+)">([^<]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle in matches:
@@ -80,7 +79,7 @@ def categorias(item):
     if item.title == "Canal" :
         data = scrapertools.find_single_match(data,'>Studios</a>(.*?)</ul>')
     else:
-        data = scrapertools.find_single_match(data,'>Genres</a>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'>Categories</a>(.*?)</ul>')
     patron  = '<a href="([^"]+)">([^<]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle in matches:
@@ -98,7 +97,7 @@ def lista(item):
     patron = '<div data-movie-id="\d+".*?'
     patron += '<a href="([^"]+)".*?'
     patron += 'oldtitle="([^"]+)".*?'
-    patron += 'data-original="([^"]+)".*?rel="tag">(\d+)</a>'
+    patron += 'data-lazy-src="([^"]+)".*?rel="tag">(\d+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,scrapedyear in matches:
         scrapedplot = ""
