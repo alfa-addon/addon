@@ -260,7 +260,11 @@ class Main(xbmcgui.WindowXMLDialog):
             if self.preset_mode:
                 self.color = re.sub(r"\[COLOR \w+]|\[/COLOR]", "", self.color_setting[id.replace("_color", "")])
             else:
-                self.color = re.sub(r"\[COLOR \w+]|\[/COLOR]", "", config.get_setting(id))
+                if config.get_setting(id):
+                    self.color = re.sub(r"\[COLOR \w+]|\[/COLOR]", "", config.get_setting(id))
+                else:
+                    config.set_setting(id, "white")
+                    self.color = re.sub(r"\[COLOR \w+]|\[/COLOR]", "", config.get_setting(id))
 
         config.set_setting(id, "[COLOR %s]%s[/COLOR]" % (self.color, self.color))
         if pos != "full":

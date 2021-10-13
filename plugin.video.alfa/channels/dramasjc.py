@@ -18,14 +18,15 @@ from core.item import Item
 from platformcode import config, logger
 from channels import autoplay
 from channels import filtertools
-
+from bs4 import BeautifulSoup
 
 host = 'https://www.dramasjc.com/'
 
-IDIOMAS = {'VOSE': 'VOSE', 'VO':'VO'}
+IDIOMAS = {'Su': 'VOSE', 'La': 'Lat', 'Es': 'CAST', 'Ca': 'Cast', 'VO':'VO'}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['okru', 'mailru', 'openload']
+
 
 def mainlist(item):
     logger.info()
@@ -50,88 +51,82 @@ def mainlist(item):
 def menu_doramas(item):
     logger.info()
 
-    itemlist = []
+    itemlist = list()
 
     itemlist.append(Item(channel=item.channel, title="Todos", action="list_all", url=host + 'series',
                          thumbnail=get_thumb('all', auto=True)))
-    itemlist.append(Item(channel=item.channel, title="Generos", action="section",
+    itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=host,
                          thumbnail=get_thumb('genres', auto=True)))
 
     return itemlist
 
-def get_source(url):
+
+def create_soup(url, referer=None, unescape=False):
     logger.info()
-    data = httptools.downloadpage(url).data
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    return data
+
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+
+    return soup
 
 
 def list_all(item):
     logger.info()
-    itemlist = []
 
-    data = get_source(item.url)
-    full_data = data
-    data = scrapertools.find_single_match(data, '<ul class="MovieList NoLmtxt.*?>(.*?)</ul>')
+    itemlist = list()
+    soup = create_soup(item.url)
+    matches = soup.find("ul", class_="MovieList NoLmtxt Rows AX A06 B04 C03 E20")
 
-    patron = '<article id="post-.*?<a href="([^"]+)">.*?(?:<img |-)src="([^"]+)".*?alt=".*?'
-    patron += '<h3 class="Title">([^<]+)<\/h3>.?(?:</a>|<span class="Year">(\d{4})<\/span>).*?'
-    patron += '(movie|TV)'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedthumbnail, scrapedtitle, year, type in matches:
+    if not matches:
+        return itemlist
 
-        url = scrapedurl
-        if year == '':
-            year = '-'
-        if "|" in scrapedtitle:
-            scrapedtitle= scrapedtitle.split("|")
-            contentname = scrapedtitle[0].strip()
+    for elem in soup.find_all("article"):
+
+        url = elem.a["href"]
+        title = elem.a.h3.text
+        thumb = elem.find("img")
+        thumb = thumb["data-src"] if thumb.has_attr("data-src") else thumb["src"]
+        year = elem.find("span", class_="Year").text
+
+        new_item = Item(channel=item.channel, url=url, title=title, thumbnail=thumb, infoLabels={"year": year})
+
+        if "movie" not in url:
+            new_item.contentSerieName = title
+            new_item.action = "seasons"
         else:
-            contentname = scrapedtitle
+            new_item.contentTitle = title
+            new_item.action = "findvideos"
 
-        contentname = re.sub('\(.*?\)','', contentname)
-
-        title = '%s [%s]'%(contentname, year)
-        thumbnail = 'http:'+scrapedthumbnail
-        new_item = Item(channel=item.channel,
-                        title=title,
-                        url=url,
-                        thumbnail=thumbnail,
-                        infoLabels={'year':year}
-                        )
-
-        if type == 'movie':
-            new_item.contentTitle = contentname
-            new_item.action = 'findvideos'
-        else:
-            new_item.contentSerieName = contentname
-            new_item.action = 'seasons'
         itemlist.append(new_item)
+
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
-    #  Paginación
+    try:
+        next_page = soup.find("a", class_="next page-numbers")["href"]
+        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
+    except:
+        pass
 
-    url_next_page = scrapertools.find_single_match(full_data,'<a class="next.*?href="([^"]+)">')
-    if url_next_page:
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
     return itemlist
+
 
 def section(item):
     logger.info()
-    itemlist = []
 
-    full_data = get_source(host)
-    data = scrapertools.find_single_match(full_data, '<a href="#">Dramas por Genero</a>(.*?)</ul>')
-    patron = '<a href="([^ ]+)">([^<]+)<'
-    action = 'list_all'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    itemlist = list()
 
-    for data_one, data_two in matches:
+    soup = create_soup(item.url).find("li", class_ ="menu-category")
 
-        url = data_one
-        title = data_two
-        new_item = Item(channel=item.channel, title= title, url=url, action=action)
-        itemlist.append(new_item)
+    for elem in soup.find_all("li"):
+        url = elem.a["href"]
+        title = elem.a.text
+        itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url))
 
     return itemlist
 
@@ -139,34 +134,31 @@ def section(item):
 def seasons(item):
     logger.info()
 
-    itemlist = []
+    itemlist = list()
 
-    data = get_source(item.url)
-    patron = 'class="Title AA-Season On" data-tab="1">Temporada <span>([^<]+)</span>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    soup = create_soup(item.url).find_all("div", class_="Wdgt AABox")
 
-    for temporada in matches:
-        title = 'Temporada %s' % temporada
-        contentSeasonNumber = temporada
-        item.infoLabels['season'] = contentSeasonNumber
-        itemlist.append(item.clone(action='episodesxseason',
-                                   title=title,
-                                   contentSeasonNumber=contentSeasonNumber
-                                   ))
+    infoLabels = item.infoLabels
+    for elem in soup:
+        season = elem.find("div", class_="AA-Season")["data-tab"]
+        title = "Temporada %s" % season
+        infoLabels["season"] = season
+        itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseason',
+                             infoLabels=infoLabels))
 
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    tmdb.set_infoLabels_itemlist(itemlist, True)
 
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
+    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra:
         itemlist.append(Item(channel=item.channel,
                              title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
                              url=item.url,
                              action="add_serie_to_library",
                              extra="episodios",
-                             contentSerieName=item.contentSerieName,
-                             contentSeasonNumber=contentSeasonNumber
+                             contentSerieName=item.contentSerieName
                              ))
 
     return itemlist
+
 
 def episodios(item):
     logger.info()
@@ -181,77 +173,74 @@ def episodios(item):
 def episodesxseason(item):
     logger.info()
 
-    itemlist = []
-    season = item.contentSeasonNumber
-    data = get_source(item.url)
-    data = scrapertools.find_single_match(data, '>Temporada <span>%s</span>(.*?)</ul>' % season)
-    patron = '<a href="([^"]+)">([^<]+)</a>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    ep = 1
-    for scrapedurl, scrapedtitle in matches:
-        epi = str(ep)
-        title = season + 'x%s - Episodio %s' % (epi, epi)
-        url = scrapedurl
-        contentEpisodeNumber = epi
-        item.infoLabels['episode'] = contentEpisodeNumber
-        if 'próximamente' not in scrapedtitle.lower():
-            itemlist.append(item.clone(action='findvideos',
-                                       title=title,
-                                       url=url,
-                                       contentEpisodeNumber=contentEpisodeNumber,
-                                       ))
-        ep += 1
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    itemlist = list()
+
+    soup = create_soup(item.url).find_all("div", class_="Wdgt AABox")
+    infoLabels = item.infoLabels
+    season = infoLabels["season"]
+
+    for elem in soup:
+        if elem.find("div", class_="AA-Season")["data-tab"] == str(season):
+            epi_list = elem.find_all("tr")
+            for epi in epi_list:
+                try:
+                    url = epi.a["href"]
+                    epi_num = epi.find("span", class_="Num").text
+                    epi_name = epi.find("td", class_="MvTbTtl").a.text
+                    infoLabels["episode"] = epi_num
+                    title = "%sx%s - %s" % (season, epi_num, epi_name)
+
+                    itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos",
+                                         infoLabels=infoLabels))
+                except:
+                    pass
+            break
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
     return itemlist
+
 
 def findvideos(item):
     logger.info()
 
-    itemlist = []
-    data = get_source(item.url)
-    data = scrapertools.unescape(data)
-    data = scrapertools.decodeHtmlentities(data)
+    itemlist = list()
+    soup = create_soup(item.url).find("ul", class_="TPlayerNv").find_all("li")
+    infoLabels = item.infoLabels
+    for btn in soup:
+        opt = btn["data-tplayernv"]
+        info = btn.find_all("span")
+        srv = info[0].text
+        lang = info[1].text[2]
 
-    # patron = 'id="(Opt\d+)">.*?src="([^"]+)" frameborder.*?</iframe>'
-    patron = 'id="(Opt\d+)">.*?src="(?!about:blank)([^"]+)" frameborder.*?</iframe>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+        if "opci" in srv.lower():
+            # srv = "okru"
+            continue
+        itemlist.append(Item(channel=item.channel, title=srv, url=item.url, action='play', server=srv, opt=opt,
+                             language=IDIOMAS.get(lang, "VOSE"), infoLabels=infoLabels))
 
-    for option, scrapedurl in matches:
-        scrapedurl = scrapedurl.replace('"','').replace('&#038;','&')
-        data_video = get_source(scrapedurl)
-        url = scrapertools.find_single_match(data_video, '<div class="Video">.*?src="([^"]+)"')
-        opt_data = scrapertools.find_single_match(data,'"%s"><span>.*?</span>.*?<span>([^<]+)</span>'%option).split('-')
-        language = opt_data[0].strip()
-        quality = opt_data[1].strip()
-        if 'sub' in language.lower():
-            language='VOSE'
-        else:
-            language = 'VO'
-        if url != '' and 'youtube' not in url:
-            itemlist.append(Item(channel=item.channel, title='%s', url=url, language=IDIOMAS[language], quality=quality,
-                                 action='play'))
-        elif 'youtube' in url:
-            trailer = Item(channel=item.channel, title='Trailer', url=url, action='play', server='youtube')
-
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % '%s [%s] [%s]'%(i.server.capitalize(),
-                                                                                              i.language, i.quality))
-    try:
-        itemlist.append(trailer)
-    except:
-        pass
+    itemlist = sorted(itemlist, key=lambda i: i.server)
 
     # Requerido para FilterTools
-    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
 
     # Requerido para AutoPlay
 
     autoplay.start(itemlist, item)
 
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-        itemlist.append(
-            Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
-                 action="add_pelicula_to_library", extra="findvideos", contentTitle=item.contentTitle))
+    return itemlist
 
+
+def play(item):
+    logger.info()
+    itemlist = list()
+
+    soup = create_soup(item.url).find("div", class_="TPlayerTb", id=item.opt)
+    url = scrapertools.find_single_match(str(soup), 'src="([^"]+)"')
+    url = re.sub("amp;|#038;", "", url)
+    url = create_soup(url).find("div", class_="Video").iframe["src"]
+    itemlist.append(item.clone(url=url, server=""))
+    itemlist = servertools.get_servers_itemlist(itemlist)
 
     return itemlist
 
@@ -265,6 +254,7 @@ def search(item, texto):
         return list_all(item)
     else:
         return []
+
 
 def newest(categoria):
     logger.info()
