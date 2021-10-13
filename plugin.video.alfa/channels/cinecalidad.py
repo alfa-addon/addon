@@ -124,6 +124,7 @@ def submenu(item):
                              action="genres",
                              url=host,
                              thumbnail=get_thumb('genres', auto=True),
+
                              ))
         itemlist.append(Item(channel=item.channel,
                              title="Por Año",
@@ -169,18 +170,18 @@ def create_soup(url, referer=None, unescape=False):
 
     return soup
 
+
 def featured(item):
     logger.info()
     itemlist = list()
-    soup = create_soup(item.url).find("div", class_="destacados-widget")
-    matches = soup.find_all("div", class_="upw-image")
+    soup = create_soup(item.url).find("div", class_="side_box")
+    matches = soup.find_all("a")
 
     for elem in matches:
-
-
-        url = elem.a["href"]
-
-        title = elem.a["title"]
+        url = elem["href"]
+        if scrapertools.find_single_match(url, "\d+x\d+") or "episode" in url:
+            continue
+        title = elem["title"]
         year = scrapertools.find_single_match(title, " \((\d{4})\)")
         contentTitle = title.replace("(%s)" % year, "").strip()
         
@@ -196,24 +197,28 @@ def list_all(item):
     itemlist = list()
 
     soup = create_soup(item.url, unescape=True)
-    for elem in soup.find_all("div", class_="home_post_cont"):
-        if elem.find("noscript"):
-            url = scrapertools.find_single_match(elem.img["extract"], "href='([^']+)'")
-        else:
-            url = elem.a["href"]
+    matches = soup.find_all("div", class_="home_post_cont")
+
+    for elem in matches:
+
+        url = scrapertools.find_single_match(elem.img.get("extract", ""), "href='([^']+)'")
+        if not url:
+            continue
         try:
             title, year = elem.img["title"].split(' (')
             year = re.sub(r"\)","", year)
         except:
-            continue
+            title = elem.img["alt"]
+            year = "-"
+
         thumb = re.sub(r'(-\d+x\d+.jpg)', '.jpg', elem.img["src"])
         if elem.p: 
             plot = elem.p.text
         else:
             plot = ''
         
-        if scrapertools.find_single_match(url, "\d+x\d+"):
-          continue
+        if scrapertools.find_single_match(url, "\d+x\d+") or "episode" in url:
+            continue
         itemlist.append(Item(channel=item.channel, title=title, url=url, thumbnail=thumb, action="findvideos",
                              plot=plot, contentTitle=title, infoLabels={'year': year}))
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -229,6 +234,7 @@ def list_all(item):
 
     return itemlist
 
+
 def by_year(item):
     logger.info()
 
@@ -238,22 +244,26 @@ def by_year(item):
     for elem in soup.find_all('a'):
         url = elem["href"]
         title = elem.text
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all", search=True))
 
     return itemlist
+
 
 def genres(item):
     logger.info()
 
     itemlist = list()
-    pl = 'peliculas'
-    if item.url == "https://www.cinemaqualidade.im":
-        pl = "filmes"
 
-    soup = create_soup(item.url, unescape=True).find("ul")
-    for elem in soup.find_all("li", class_=re.compile("menu-item-object-category")):
-        url = elem.a["href"]
-        title = elem.a.text
+    soup = create_soup(item.url, unescape=True).find("ul", id="menu-menu")
+    matches = soup.find_all("a")
+    for elem in matches:
+
+        url = elem["href"]
+        title = elem.text
+
+        if "series" in title.lower() or "peliculas" in title.lower():
+            continue
+
         if not url.startswith('http'):
             url = item.url +url
         
@@ -311,9 +321,8 @@ def findvideos(item):
                   'cineplay': '%s'}
 
     dec_value = scrapertools.find_single_match(data, 'String\.fromCharCode\(parseInt\(str\[i\]\)-(\d+)\)')
-    protected_links = scrapertools.find_multiple_matches(data, '<a href="(%sprotect/v.php[^"]+)" target="_blank"><li>([^<]+)</li>\s+?</a>' % host)
+    protected_links = scrapertools.find_multiple_matches(data, '<a href="(%sprotect/v.php[^"]+)" target="_blank">\s?<li>([^<]+)</li>\s+?</a>' % host)
     subs = scrapertools.find_single_match(data, '<a id=subsforlink href=(.*?) ')
-
     if protected_links:
         headers = {'Referer': item.url}
         language = IDIOMAS[lang]
@@ -360,14 +369,20 @@ def findvideos(item):
         server = server_id.lower()
         if server == "trailer":
             continue
+
         video_id = dec(video_cod, dec_value)
-        url = server_url.get(server, '')
+        if not video_id.startswith("http"):
+            url = server_url.get(server, '')
+            if not url:
+                continue
+            url = url % video_id
+        else:
+            url = video_id
 
         quality = '1080p'
         language = IDIOMAS[lang]
         if url:
             duplicados.append(url)
-            url = url % video_id
             new_item = Item(channel=item.channel,
                             action='play',
                             title="%s",
@@ -458,7 +473,7 @@ def search(item, texto):
     else:
         item.gb_search = True
         host_list = ['%s/espana/' % host, host]
-
+    item.search = True
     for host_name in host_list:
         item.url = host_name + '?s=' + texto
         if texto != '':
