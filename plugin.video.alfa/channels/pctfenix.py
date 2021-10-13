@@ -733,7 +733,7 @@ def findvideos(item):
             return itemlist                                                     #No hay enlaces
         
         logger.error("ERROR 02: FINDVIDEOS: Ha cambiado la estructura de la Web " 
-                        + " / PATRON: " + patron + " / DATA: " + str(data))     # + str(data)
+                        + " / PATRON: " + patron + " / DATA: ")     # + str(data)
         if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
             url_torr = item.emergency_urls[0][0]                                #Restauramos la url
             if len(item.emergency_urls) > 1 and item.emergency_urls[1]:

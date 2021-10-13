@@ -4,6 +4,9 @@
 # ------------------------------------------------------------
 
 from __future__ import absolute_import
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 from . import jsontools
 from core.item import Item
@@ -255,6 +258,9 @@ def get_channel_setting(name, channel, default=None, caching_var=True):
         alfa_channels = json.loads(window.getProperty("alfa_channels"))
     if alfa_caching and caching_var and alfa_channels.get(channel):
         dict_settings = alfa_channels[channel].copy()
+        if dict_settings.get(name, ''):
+            dict_settings[name] = config.decode_var(dict_settings[name])
+            #logger.error('%s, %s: A: %s - D: %s' % (name, channel, [alfa_channels[channel][name]], [config.decode_var(dict_settings[name])]))
 
     elif filetools.exists(file_settings):
         # Obtenemos configuracion guardada de ../settings/channel_data.json
