@@ -43,6 +43,8 @@ def get_environment():
         import base64
         import ast
         
+        PLATFORM = config.get_system_platform()
+        
         environment = config.get_platform(full_version=True)
         environment['num_version'] = str(environment['num_version'])
         environment['python_version'] = '%s (%s, %s)' % (str(platform.python_version()), \
@@ -55,7 +57,8 @@ def get_environment():
         except:
             environment['proc_num'] = ''
         
-        if xbmc.getCondVisibility("system.platform.Windows"):
+        if PLATFORM in ['windows', 'xbox']:
+            environment['os_name'] = PLATFORM.capitalize()
             try:
                 if platform.platform():
                     environment['os_release'] = str(platform.platform()).replace('Windows-', '')
@@ -73,8 +76,8 @@ def get_environment():
             except:
                 pass
         
-        if xbmc.getCondVisibility("system.platform.Android"):
-            environment['os_name'] = 'Android'
+        elif PLATFORM in ['android', 'atv2']:
+            environment['os_name'] = PLATFORM.capitalize()
             try:
                 for label_a in subprocess.check_output('getprop').split(FF):
                     if PY3 and isinstance(label_a, bytes):
@@ -96,8 +99,8 @@ def get_environment():
                     pass
             environment['prod_model'] += ' (%s)' % config.is_rooted(silent=True)
         
-        elif xbmc.getCondVisibility("system.platform.Linux"):
-            environment['os_name'] = 'Linux'
+        elif PLATFORM in ['linux']:
+            environment['os_name'] = PLATFORM.capitalize()
             try:
                 for label_a in subprocess.check_output('hostnamectl').split(FF):
                     if PY3 and isinstance(label_a, bytes):
@@ -116,11 +119,11 @@ def get_environment():
             except:
                 pass
 
-        elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
+        elif PLATFORM in ['raspberry']:
             environment['os_name'] = 'RaspberryPi'
         
         else:
-            environment['os_name'] = str(platform.system())
+            environment['os_name'] = str(PLATFORM.capitalize())
 
         if not environment['os_release']: environment['os_release'] = str(platform.release())
         if environment['proc_num'] and environment['prod_model']: environment['prod_model'] += environment['proc_num']
@@ -134,7 +137,7 @@ def get_environment():
         environment['mem_free'] = str(xbmc.getInfoLabel('System.Memory(free)')).replace('MB', '').replace('KB', '')
         if not environment['mem_total'] or not environment['mem_free']:
             try:
-                if environment['os_name'].lower() == 'windows':
+                if environment['os_name'].lower() in ['windows', 'xbox']:
                     kernel32 = ctypes.windll.kernel32
                     c_ulong = ctypes.c_ulong
                     c_ulonglong = ctypes.c_ulonglong
@@ -190,7 +193,7 @@ def get_environment():
         environment['userdata_path_perm'] = filetools.file_info(environment['userdata_path'])
         if not environment['userdata_path_perm']: del environment['userdata_path_perm']
         try:
-            if environment['os_name'].lower() == 'windows':
+            if environment['os_name'].lower() in ['windows', 'xbox']:
                 free_bytes = ctypes.c_ulonglong(0)
                 ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(environment['userdata_path']), 
                                 None, None, ctypes.pointer(free_bytes))
@@ -241,7 +244,7 @@ def get_environment():
         except:
             environment['videolab_update'] = '?'
         try:
-            if environment['os_name'].lower() == 'windows':
+            if environment['os_name'].lower() in ['windows', 'xbox']:
                 free_bytes = ctypes.c_ulonglong(0)
                 ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(environment['videolab_path']), 
                                 None, None, ctypes.pointer(free_bytes))
@@ -318,7 +321,7 @@ def get_environment():
             
             if cliente.get('D_load_Path', ''):
                 try:
-                    if environment['os_name'].lower() == 'windows':
+                    if environment['os_name'].lower() in ['windows', 'xbox']:
                         free_bytes = ctypes.c_ulonglong(0)
                         ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(cliente['D_load_Path']), 
                                     None, None, ctypes.pointer(free_bytes))
@@ -379,7 +382,7 @@ def get_environment():
         environment['assistant_version'] += '; Req: %s' % str(config.get_setting('assistant_binary', default=False))
         environment['assistant_cf_ua'] = str(config.get_setting('cf_assistant_ua', default=None))
         assistant_path = filetools.join(os.getenv('ANDROID_STORAGE'), 'emulated', '0', 'Android', 'data', 'com.alfa.alfamobileassistant')
-        if xbmc.getCondVisibility("system.platform.Android") and filetools.exists(assistant_path):
+        if PLATFORM in ['android', 'atv2'] and filetools.exists(assistant_path):
             environment['assistant_path'] = str(filetools.file_info(assistant_path))
     
     except:

@@ -39,12 +39,19 @@ try:
     alfa_caching = bool(window.getProperty("alfa_caching"))
     if not alfa_caching:
         window.setProperty("alfa_system_platform", alfa_system_platform)
-        window.setProperty("alfa_kodi_platform", json.dumps(alfa_kodi_platform))
         window.setProperty("alfa_settings", json.dumps(alfa_settings))
         window.setProperty("alfa_channels", json.dumps(alfa_channels))
         window.setProperty("alfa_servers", json.dumps(alfa_servers))
 except:
-    pass
+    alfa_caching = False
+    alfa_system_platform = ''
+    alfa_kodi_platform = {}
+    alfa_settings = {}
+    alfa_channels = {}
+    alfa_servers = {}
+    import traceback
+    from platformcode import logger
+    logger.error(traceback.format_exc())
 
 
 class CacheInit(xbmc.Monitor, threading.Thread):
@@ -53,19 +60,26 @@ class CacheInit(xbmc.Monitor, threading.Thread):
         xbmc.Monitor.__init__(self)
         threading.Thread.__init__(self)
 
-        alfa_caching = get_setting('caching', default=True, caching_var=False)
+        alfa_caching = __settings__.getSetting('caching')
+        if alfa_caching == 'true' or alfa_caching == None:
+            alfa_caching = True
+            __settings__.setSetting('caching', 'true')
+            window.setProperty("alfa_caching", str(alfa_caching))
+        else:
+            alfa_caching = False
+            __settings__.setSetting('caching', 'false')
+            window.setProperty("alfa_caching", '')
         if alfa_caching:
             alfa_system_platform = get_system_platform()
             alfa_kodi_platform = get_platform(full_version=True)
             alfa_settings = get_all_settings_addon()
             alfa_channels = {}
             alfa_servers = {}
-            window.setProperty("alfa_caching", str(alfa_caching))
             window.setProperty("alfa_system_platform", alfa_system_platform)
-            window.setProperty("alfa_kodi_platform", json.dumps(alfa_kodi_platform))
             window.setProperty("alfa_settings", json.dumps(alfa_settings))
             window.setProperty("alfa_channels", json.dumps(alfa_channels))
             window.setProperty("alfa_servers", json.dumps(alfa_servers))
+
 
     def run(self):
         timer = 3600
@@ -80,17 +94,8 @@ class CacheInit(xbmc.Monitor, threading.Thread):
         global alfa_settings
         alfa_settings = {}
         window.setProperty("alfa_settings", json.dumps(alfa_settings))
-        alfa_caching = get_setting('caching', default=True, caching_var=False)
+        alfa_caching = True
         window.setProperty("alfa_caching", str(alfa_caching))
-        if not alfa_caching:
-            alfa_system_platform = ''
-            alfa_kodi_platform = {}
-            alfa_channels = {}
-            alfa_servers = {}
-            window.setProperty("alfa_system_platform", alfa_system_platform)
-            window.setProperty("alfa_kodi_platform", json.dumps(alfa_kodi_platform))
-            window.setProperty("alfa_channels", json.dumps(alfa_channels))
-            window.setProperty("alfa_servers", json.dumps(alfa_servers))
 
 
 def cache_init():
@@ -104,8 +109,14 @@ def cache_init():
     except:  # Si hay problemas de threading, nos vamos
         alfa_caching = False
         alfa_settings = {}
-        window.setProperty("alfa_caching", str(alfa_caching))
-        window.setProperty("alfa_settings", json.dumps(alfa_settings))
+        import traceback
+        from platformcode import logger
+        logger.error(traceback.format_exc())
+        try:
+            window.setProperty("alfa_caching", '')
+            window.setProperty("alfa_settings", json.dumps(alfa_settings))
+        except:
+            pass
 
 
 def translatePath(path):
@@ -129,6 +140,50 @@ def translatePath(path):
         path = xbmc.translatePath(path)
 
     return path
+
+
+def decode_var(value, trans_none='', decode_var_=True):
+    """
+    Convierte una cadena de texto, lista o dict al juego de caracteres utf-8
+    eliminando los caracteres que no estén permitidos en utf-8
+    @type: str, unicode, list de str o unicode, dict list de str o unicode o list
+    @param value: puede ser una string o un list() o un dict{} con varios valores
+    @rtype: str
+    @return: valor codificado en UTF-8
+    """
+    if not decode_var_:
+        return value
+    
+    if not value:
+        if value is None: value = trans_none
+        elif PY3 and value == b'': value = ''
+        elif str(value) == '': value = ''
+        return value
+        
+    if isinstance(value, (bool, int, float)):
+        return value
+    
+    if isinstance(value, list):
+        for x in range(len(value)):
+            value[x] = decode_var(value[x], trans_none=trans_none)
+    elif isinstance(value, tuple):
+        value = tuple(decode_var(list(value), trans_none=trans_none))
+    elif isinstance(value, dict):
+        newdct = {}
+        for key in value:
+            value_unc = decode_var(value[key], trans_none=trans_none)
+            key_unc = decode_var(key, trans_none=trans_none)
+            newdct[key_unc] = value_unc
+        return newdct
+    elif isinstance(value, unicode):
+        value = value.encode("utf8")
+    elif not PY3 and isinstance(value, basestring):
+        value = unicode(value, "utf8", "ignore").encode("utf8")
+    
+    if PY3 and isinstance(value, bytes):
+        value = value.decode("utf8")
+
+    return value
 
 
 def get_addon_version(with_fix=True, from_xml=False):
@@ -262,8 +317,6 @@ def get_platform(full_version=False):
                '16': 'MyVideos99.db', '17': 'MyVideos107.db', '18': 'MyVideos116.db',
                '19': 'MyVideos119.db', '20': 'MyVideos119.db'}
 
-    if alfa_caching and not alfa_kodi_platform:
-        alfa_kodi_platform = json.loads(window.getProperty("alfa_kodi_platform"))
     ret = alfa_kodi_platform.copy()
     if not ret:
         num_version = xbmc.getInfoLabel('System.BuildVersion')
@@ -276,8 +329,6 @@ def get_platform(full_version=False):
         else:
             ret['platform'] = "kodi-" + ret['name_version']
 
-        if alfa_caching:
-            window.setProperty("alfa_kodi_platform", json.dumps(ret))
         alfa_kodi_platform = ret.copy()
 
     if full_version:
@@ -371,7 +422,7 @@ def get_system_platform():
     NOTE: Expensive operation, if reused, keep it in a temp var
     """
     if alfa_caching and not alfa_system_platform:
-        alfa_system_platform = window.getProperty("alfa_system_platform")
+        alfa_system_platform = str(window.getProperty("alfa_system_platform"))
     if alfa_system_platform == "":
 
         if xbmc.getCondVisibility("System.Platform.Android"):
@@ -413,17 +464,35 @@ def get_all_settings_addon(caching_var=True):
         return json.loads(window.getProperty("alfa_settings")).copy()
 
     # Lee el archivo settings.xml y retorna un diccionario con {id: value}
-    inpath = os.path.join(get_data_path(), "settings.xml")
+    inpath = os.path.join(get_envhome(), "settings.xml")
     if not os.path.exists(inpath):
         # Si no existe el archivo settings.xml, llama a Kodi .setSetting para forzar la creación de un archivo con valores por defecto
         __settings__.setSetting('caching', 'true')
-    infile = open(inpath, "rb")
-    data = infile.read()
-    if not PY3:
-        data = data.encode("utf-8", "ignore")
-    elif PY3 and isinstance(data, (bytes, bytearray)):
-        data = "".join(chr(x) for x in data)
-    infile.close()
+
+    try:
+        infile = open(inpath, "rb")
+        data = infile.read()
+        if not PY3:
+            data = data.encode("utf-8", "ignore")
+        elif PY3 and isinstance(data, (bytes, bytearray)):
+            data = "".join(chr(x) for x in data)
+        infile.close()
+    except:
+        data = ''
+        alfa_caching = False
+        alfa_settings = {}
+        try:
+            window.setProperty("alfa_caching", '')
+            window.setProperty("alfa_settings", json.dumps(alfa_settings))
+            import traceback
+            from platformcode import logger
+            logger.error(traceback.format_exc())
+            # Verificar si hay problemas de permisos de acceso a userdata/alfa
+            from core.filetools import file_info, listdir, dirname
+            logger.error("Error al leer settings.xml: %s, ### Folder-info: %s, ### File-info: %s" % \
+                        (inpath, file_info(dirname(inpath)), listdir(dirname(inpath), file_inf=True)))
+        except:
+            pass
 
     ret = {}
 
@@ -435,17 +504,20 @@ def get_all_settings_addon(caching_var=True):
 
     for _id, value in matches:
         # ret[_id] = get_setting(_id, caching_var=False)
-        ret[_id] = get_setting_values(_id, value)
+        ret[_id] = get_setting_values(_id, value, decode_var_=False)
 
     alfa_settings = ret.copy()
-    alfa_caching = alfa_settings.get('caching', True)
-    window.setProperty("alfa_caching", str(alfa_caching))
+    alfa_caching = False
+    if alfa_settings: alfa_caching = alfa_settings.get('caching', True)
+    if alfa_caching:
+        window.setProperty("alfa_caching", str(alfa_caching))
+    else:
+        window.setProperty("alfa_caching", '')
     if not alfa_caching:
         alfa_settings = {}
         alfa_kodi_platform = {}
         alfa_channels = {}
         alfa_servers = {}
-        window.setProperty("alfa_kodi_platform", json.dumps(alfa_kodi_platform))
         window.setProperty("alfa_channels", json.dumps(alfa_channels))
         window.setProperty("alfa_servers", json.dumps(alfa_servers))
     window.setProperty("alfa_settings", json.dumps(alfa_settings))
@@ -559,40 +631,40 @@ def get_setting(name, channel="", server="", default=None, caching_var=True):
             # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
             if not alfa_settings:
                 get_all_settings_addon()
-        if alfa_caching and caching_var and name not in str(alfa_no_caching_vars) and alfa_settings.get(name,
-                                                                                                        None) != None:
+        if alfa_caching and caching_var and name not in str(alfa_no_caching_vars) \
+                        and alfa_settings.get(name, None) != None:
             # Si el alfa_caching está activo y la variable cargada.  Si no, se cargan por el método tradicional
-            value = alfa_settings.get(name, default)
-            return value
+            return get_setting_values(name, alfa_settings.get(name, default))
         else:
             # logger.info("get_setting reading main setting '"+name+"'")
             value = __settings__.getSetting(name)
             if not value:
                 return default
-            return get_setting_values(name, value)
+            return get_setting_values(name, value, decode_var_=False)
 
 
-def get_setting_values(name, value):
+def get_setting_values(name, value, decode_var_=True):
     # Translate Path if start with "special://"
-    if value.startswith("special://") and "videolibrarypath" not in name:
+    if str(value).startswith("special://") and "videolibrarypath" not in name:
         value = translatePath(value)
 
     # hack para devolver el tipo correspondiente
-    if value == "true":
+    if value == "true" or value == True:
         return True
-    elif value == "false":
+    elif value == "false" or value == False:
         return False
     else:
         # special case return as str
         if name in ["adult_password", "adult_aux_intro_password", "adult_aux_new_password1",
                     "adult_aux_new_password2"]:
-            return value
+            return decode_var(value, decode_var_)
         else:
             try:
                 value = int(value)
+                return value
             except ValueError:
                 pass
-            return value
+            return decode_var(value, decode_var_)
 
 
 def set_setting(name, value, channel="", server=""):
@@ -647,11 +719,16 @@ def set_setting(name, value, channel="", server=""):
             __settings__.setSetting(name, value)
 
             if name == 'caching':
-                window.setProperty("alfa_caching", str(value))
-                if not value:
+                if value == "true":
+                    window.setProperty("alfa_caching", str(True))
+                    alfa_caching = True
+                else:
+                    window.setProperty("alfa_caching", '')
+                    alfa_caching = False
+                if not alfa_caching:
                     alfa_settings = {}
                     window.setProperty("alfa_settings", json.dumps(alfa_settings))
-            if alfa_caching and alfa_settings.get(name, '') != value:
+            if alfa_caching and alfa_settings and get_setting_values(name, alfa_settings.get(name, '')) != value:
                 alfa_settings[name] = value
                 window.setProperty("alfa_settings", json.dumps(alfa_settings))
 
@@ -680,15 +757,29 @@ def get_kodi_setting(name, total=False):
     """
 
     # Global Kodi setting
-    from core import scrapertools
-
-    infile = open(os.path.join(translatePath('special://masterprofile/'), "guisettings.xml"), "rb")
-    data = infile.read()
-    if not PY3:
-        data = data.encode("utf-8", "ignore")
-    elif PY3 and isinstance(data, (bytes, bytearray)):
-        data = "".join(chr(x) for x in data)
-    infile.close()
+    #from core import scrapertools
+    
+    try:
+        inpath = os.path.join(get_envhome(userdata=True), "guisettings.xml")
+        infile = open(inpath, "rb")
+        data = infile.read()
+        if not PY3:
+            data = data.encode("utf-8", "ignore")
+        elif PY3 and isinstance(data, (bytes, bytearray)):
+            data = "".join(chr(x) for x in data)
+        infile.close()
+    except:
+        data = ''
+        try:
+            import traceback
+            from platformcode import logger
+            logger.error(traceback.format_exc())
+            # Verificar si hay problemas de permisos de acceso a userdata
+            from core.filetools import file_info, listdir, dirname
+            logger.error("Error al leer guisettings.xml: %s, ### Folder-info: %s, ### File-info: %s" % \
+                        (inpath, file_info(dirname(inpath)), listdir(dirname(inpath), file_inf=True)))
+        except:
+            pass
 
     ret = {}
     # matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/setting>')
@@ -696,7 +787,7 @@ def get_kodi_setting(name, total=False):
 
     for _id, value in matches:
         # hack para devolver el tipo correspondiente
-        ret[_id] = get_setting_values(_id, value)
+        ret[_id] = get_setting_values(_id, value, decode_var_=False)
         if _id == name and not total:
             return ret[_id]
 
@@ -765,6 +856,26 @@ def get_data_path():
         os.makedirs(dev)
 
     return dev
+
+
+def get_envhome(userdata=False):
+    profile = get_data_path()
+    home = translatePath("special://home/")
+    envhome = translatePath("special://envhome/")
+    if envhome and get_system_platform() in ['tvos', 'darwin'] and envhome not in home:
+        profile_b = os.path.join(envhome, 'Documents', 'lib', 'userdata')
+        if os.path.exists(profile_b):
+            profile = profile_b
+            if not userdata:
+                profile = os.path.join(profile, 'addons_data', 'plugin.video.alfa')
+                if not os.path.exists(profile):
+                    profile = get_data_path()
+        elif userdata:
+            profile = translatePath("special://masterprofile/")
+    elif userdata:
+        profile = translatePath("special://masterprofile/")
+    
+    return profile
 
 
 def get_icon():
