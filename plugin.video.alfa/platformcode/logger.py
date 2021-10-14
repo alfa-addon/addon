@@ -14,6 +14,8 @@ import xbmcaddon
 
 __settings__ = xbmcaddon.Addon(id="plugin.video.alfa")
 loggeractive = __settings__.getSetting("debug")
+if loggeractive == "true": loggeractive = True
+elif loggeractive == "false":  loggeractive = False
 
 
 def log_enable(active):

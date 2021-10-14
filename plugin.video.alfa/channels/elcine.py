@@ -29,7 +29,7 @@ list_servers = [
     'evoload'
     ]
 
-host = 'https://elcine.online/'
+host = 'https://elcine.vip/'
 
 
 def mainlist(item):
@@ -137,24 +137,18 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
-    # srv_list = {"fembed": "fembed", "playstp": "streamtape", "stream": "mystream", "goplay": "gounlimited",
-    #             "drive": "gvideo", "meplay": "netutv", "evoplay": "netutv", "uqload": "uqload"}
-    #
-    soup = create_soup(item.url)
 
-    matches = soup.find("div", class_="float-left").find_all("a", class_="dropdown-item")
+    soup = create_soup(item.url).find("div", class_="float-left")
+    matches = soup.find_all("a", class_="dropdown-item", href="#")
 
     if not matches:
         return itemlist
 
     for elem in matches:
-        url = scrapertools.find_single_match(elem["onclick"], "setURL\('([^']+)'\)")
-        if "player.123movies" in url:
-            continue
+        id = scrapertools.find_single_match(elem.get("onclick", ""), "setURL\('([^']+)'\)")
+        srv, lang = elem.text.split(" - ")
 
-        lang = elem.text.split(" - ")[1]
-
-        itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
+        itemlist.append(Item(channel=item.channel, title='%s', action='play', server=srv, id=id, ref=item.url,
                         language=IDIOMAS.get(lang.lower(), "VOSE"), infoLabels=item.infoLabels))
 
 
@@ -174,6 +168,16 @@ def findvideos(item):
                              contentTitle=item.contentTitle))
 
     return itemlist
+
+
+def play(item):
+    logger.info()
+
+    base_url = "%sHome/Protected" % host
+    post = {"id": item.id}
+
+    item.url = httptools.downloadpage(base_url, post=post, headers={"referer": item.ref}, allow_redirects=False).json
+    return [item]
 
 
 def search(item, texto):

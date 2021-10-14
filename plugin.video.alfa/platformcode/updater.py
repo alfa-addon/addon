@@ -31,7 +31,7 @@ def check_addon_init():
         
         # Obtiene el íntervalo entre actualizaciones y si se quieren mensajes
         try:
-            timer = int(config.get_setting('addon_update_timer'))       # Intervalo entre actualizaciones, en Ajustes de Alfa
+            timer = int(config.get_setting('addon_update_timer', default=12))   # Intervalo entre actualizaciones, en Ajustes de Alfa
             if timer <= 0:
                 try:
                     user_type = base64.b64decode(config.get_setting('proxy_dev')).decode('utf-8')
@@ -42,7 +42,7 @@ def check_addon_init():
                     timer = 12
                 else:
                     return                                              # 0.  No se quieren actualizaciones
-            verbose = config.get_setting('addon_update_message')
+            verbose = config.get_setting('addon_update_message', default=False)
         except:
             logger.error(traceback.format_exc())
             timer = 12                                                  # Por defecto cada 12 horas
@@ -76,7 +76,7 @@ def check_addon_init():
         time.sleep(5)                                                   # Dejamos terminar la primera verificación...
     except:                                                             # Si hay problemas de threading, se llama una sola vez
         try:
-            timer = int(config.get_setting('addon_update_timer'))       # Intervalo entre actualizaciones, en Ajustes de Alfa
+            timer = int(config.get_setting('addon_update_timer', default=12))   # Intervalo entre actualizaciones, en Ajustes de Alfa
             if timer <= 0:
                 try:
                     user_type = base64.b64decode(config.get_setting('proxy_dev')).decode('utf-8')
@@ -87,7 +87,7 @@ def check_addon_init():
                     timer = 12
                 else:
                     return                                              # 0.  No se quieren actualizaciones
-            verbose = config.get_setting('addon_update_message')
+            verbose = config.get_setting('addon_update_message', default=False)
         except:
             verbose = False                                             # Por defecto, sin mensajes
             pass

@@ -49,8 +49,8 @@ page_url = ''
 
 #category = 'pctmix1'                                                            # Clone preferido para Novedades
 category = ''                                                                   # Clone preferido para Novedades
-clone_num = 3                                                                   # Número de Clones "buenos"
-clone_num_ext = 3                                                               # Número de Clones "válidos"
+clone_num = 1                                                                   # Número de Clones "buenos"
+clone_num_ext = 1                                                               # Número de Clones "válidos"
 clone_num_post = 1                                                              # Número de Clones "válidos" sin proxy-post
 channel_clone_post = ''
 

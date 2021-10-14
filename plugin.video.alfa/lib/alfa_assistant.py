@@ -48,6 +48,8 @@ if ASSISTANT_MODE == "otro":
 URL_CALL = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT)
 URL_PING = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT_PING)
 
+PLATFORM = config.get_system_platform()
+
 
 JS_CODE_CLICK_ON_VJS_BIG_PLAY_BUTTON = """
 ((() => { 
@@ -531,7 +533,7 @@ def check_permissions_alfa_assistant():
 ## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
 #
 def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank', wait=False):
-    if xbmc.getCondVisibility("system.platform.Android"):
+    if PLATFORM in ['android', 'atv2']:
         try:
             app = ASSISTANT_APP
             intent = ''  # com.alfa.alfamobilehelper.MainActivity'
@@ -598,7 +600,7 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
         logger.info('## Popen CMD: %s, wait=%s' % (cmd, wait), force=True)
         if config.get_setting('assistant_binary'): config.set_setting('assistant_binary', False)
         creationflags = 0
-        if xbmc.getCondVisibility("system.platform.Windows"): creationflags = 0x08000000
+        if PLATFORM in ['windows', 'xbox']: creationflags = 0x08000000
         try:
             p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
                                 stdin=subprocess.PIPE, creationflags=creationflags)
@@ -610,7 +612,7 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
                 e = e.decode("utf8")
             logger.error('## ERROR Popen CMD: %s, wait=%s - error: %s' % (cmd, wait, e))
 
-            if xbmc.getCondVisibility("system.platform.android") and ('Errno 13' in str(e) or 'Errno 2' in str(e)):
+            if PLATFORM in ['android', 'atv2'] and ('Errno 13' in str(e) or 'Errno 2' in str(e)):
                 p = None
             else:
                 return p
@@ -1109,7 +1111,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         filetools.remove(version_path, silent=True)
         update = False
         forced_menu = True
-    elif not remote and not xbmc.getCondVisibility("system.platform.android"):
+    elif not remote and PLATFORM not in ['android', 'atv2']:
         logger.info('El sistema local no es Android: %s' % app_name)
         return False, app_name
 

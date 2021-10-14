@@ -1,7 +1,7 @@
 {
   "id": "pctfenix",
   "name": "Pctfenix",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "https://i.postimg.cc/nXrSD7bG/pctfenix.png",

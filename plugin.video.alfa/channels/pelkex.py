@@ -12,6 +12,7 @@ import re
 from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
+from core import servertools
 from core import tmdb
 from core import tmdb
 from core.item import Item
@@ -19,6 +20,7 @@ from platformcode import config, logger
 from channels import autoplay
 from channels import filtertools
 from bs4 import BeautifulSoup
+from lib import generictools
 
 host = 'http://newpelis.nl/'
 
@@ -136,9 +138,13 @@ def findvideos(item):
     content_id = scrapertools.find_single_match(item.url, "/(\d+)")
 
     soup = create_soup(item.url)
-    url = soup.find("a", href=re.compile("magnet:"))["href"]
-    itemlist.append(Item(channel=item.channel, title="Torrent", url=url, server="torrent", action="play",
-                         language="LAT", infoLabels=item.infoLabels))
+    try:
+        enc_url = soup.find("a", href=re.compile("http://acortaenlace"))["href"]
+        url = generictools.convert_url_base64(enc_url)
+        itemlist.append(Item(channel=item.channel, title="Torrent", url=url, server="torrent", action="play",
+                             language="LAT", infoLabels=item.infoLabels))
+    except:
+        pass
 
     strm_url = "%swp-json/elifilms/movies/?id=%s" % (host, content_id)
 
@@ -147,8 +153,10 @@ def findvideos(item):
         url = v_data["link"]
         server = v_data["name"].lower()
 
-        itemlist.append(Item(channel=item.channel, title=server.capitalize(), url=url, server=server, action="play",
+        itemlist.append(Item(channel=item.channel, title=server.capitalize(), url=url, action="play",
                              language="LAT", infoLabels=item.infoLabels))
+
+    itemlist = servertools.get_servers_itemlist(itemlist)
 
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)

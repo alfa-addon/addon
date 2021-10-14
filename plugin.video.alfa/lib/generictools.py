@@ -3438,6 +3438,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
     
     exePath = {}
     PATHS = []
+    PLATAFORMA = config.get_system_platform()
     PM_LIST = ''
     creationFlags = 0
     prefs_file = ''
@@ -3464,7 +3465,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
                          }
 
         # Establecemos las variables relativas a cada plataforma
-        if xbmc.getCondVisibility("system.platform.Android"):
+        if PLATAFORMA in ['android', 'atv2']:
             try:
                 ANDROID_STORAGE = os.getenv('ANDROID_STORAGE')
             except:
@@ -3544,7 +3545,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
             PREF_PATHS = [ANDROID_STORAGE + '/emulated/0/Android/data']
             PREF_PATHS += [os.getenv('ANDROID_DATA') + '/user/0']
         
-        elif xbmc.getCondVisibility("system.platform.Windows"):
+        elif PLATAFORMA in ['windows', 'xbox']:
             exePath = {
                        "chrome": [['%PATH%\\Google\\Chrome\\Application\\chrome.exe'], 
                                   0x00000008, 'LOCALAPPDATA', [], ['\\Google\\Chrome\\User Data\\Default\\Preferences']], 
@@ -3566,15 +3567,19 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
             PREF_PATHS = [os.getenv('LOCALAPPDATA')]
             PREF_PATHS += [os.getenv('APPDATA')]
 
-        elif xbmc.getCondVisibility("system.platform.OSX"):
+        elif PLATAFORMA in ['osx', 'ios', 'tvos', 'darwin']:
             exePath = {
-                       "chrome": [['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'], 
+                       "chrome": [['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', 
+                                   '/Applications/Google Chrome.app/AppData/AppHome'], 
                                   0, 'HOME', [], ['Library/Application Support/Google/Chrome/Default/Preferences']], 
-                       "chromium": [['/Applications/Chromium.app/Contents/MacOS/Chromium'], 
+                       "chromium": [['/Applications/Chromium.app/Contents/MacOS/Chromium', 
+                                     '/Applications/Chromium.app/AppData/AppHome'], 
                                     0, 'HOME', [], ['Library/Application Support/Chromium/Default/Preferences']], 
-                       "firefox": [['/Applications/Firefox.app/Contents/MacOS/firefox'], 
+                       "firefox": [['/Applications/Firefox.app/Contents/MacOS/firefox', 
+                                    '/Applications/Firefox.app/AppData/AppHome'], 
                                    0, 'HOME', ['Library/Application Support/Firefox/installs.ini'], ['prefs.js']],
-                       "opera": [['/Applications/Firefox.app/Contents/MacOS/opera'], 
+                       "opera": [['/Applications/Opera.app/Contents/MacOS/opera', 
+                                  '/Applications/Opera.app/AppData/AppHome'], 
                                  0, 'HOME', [], ['/Library/Application Support/com.operasoftware.Opera/Preferences']]
                       }
             
@@ -3583,7 +3588,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
             
             PREF_PATHS = [filetools.join(os.getenv('HOME'), '/Library/Application Support')]
             
-        elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
+        elif PLATAFORMA in ['raspberry']:
             exePath = {
                        "chrome": [['%PATH%/google-chrome', '%PATH%/google-chrome-stable'], 
                                   0, 'HOME', [], ['.config/google-chrome/Default/Preferences', 
@@ -3615,7 +3620,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
             PREF_PATHS += [filetools.join(os.getenv('HOME'), '.config')]
             PREF_PATHS += [filetools.join(os.getenv('HOME'), 'snap')]
         
-        elif xbmc.getCondVisibility("system.platform.Linux"):
+        elif PLATAFORMA in ['linux']:
             exePath = {
                        "chrome": [['%PATH%/google-chrome', '%PATH%/google-chrome-stable'], 
                                   0, 'HOME', [], ['.config/google-chrome/Default/Preferences', 
@@ -3666,10 +3671,11 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
                 #if browser != 'chromium': continue
                 if path.startswith('%PATH%'):
                     for PATH in PATHS:
-                        xpath = path.replace('%PATH%', PATH)
-                        if filetools.exists(xpath):
-                            path = xpath
-                            break
+                        if PATH:
+                            xpath = path.replace('%PATH%', PATH)
+                            if filetools.exists(xpath):
+                                path = xpath
+                                break
                     else:
                         if PM_LIST and filetools.basename(xpath) in PM_LIST:
                             path = xpath
@@ -3681,10 +3687,10 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
                     creationFlags = paths[1]
                     try:
                         prefs_file = os.getenv(paths[2])
-                        if not prefs_file and xbmc.getCondVisibility("system.platform.Android"):
+                        if not prefs_file and PLATAFORMA in ['android', 'atv2']:
                             prefs_file = '/data'
                     except:
-                        if xbmc.getCondVisibility("system.platform.Android"):
+                        if PLATAFORMA in ['android', 'atv2']:
                             prefs_file = '/data'
                     break
             else:
@@ -3713,7 +3719,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
                 if browser_params[browser][2]:
                     installs = filetools.join(prefs_file, prefs_path)
                     scraper = browser_params[browser][2]
-                    if xbmc.getCondVisibility("system.platform.Android"):
+                    if PLATAFORMA in ['android', 'atv2']:
                         scraper = scraper.replace('Default', 'Path')
                     profile = scrapertools.find_single_match(filetools.read(installs, silent=True), scraper)
                     prefs_file = filetools.join(prefs_file, filetools.dirname(prefs_path), profile)
@@ -3796,7 +3802,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
         
         # Ahora hacemos la Call al Browser detectado
         # Si la plataforma es Android, se llama de una forma diferente.
-        if xbmc.getCondVisibility("system.platform.Android"):
+        if PLATAFORMA in ['android', 'atv2']:
             cmd = "StartAndroidActivity(%s,%s,%s,%s)" % (filetools.basename(path), intent, dataType, url)
             logger.info('Android Browser call: %s' % cmd, force=True)
             xbmc.executebuiltin(cmd)
@@ -3817,7 +3823,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
             
             try:
                 # Se crea un subproceso con la llama al browser
-                if xbmc.getCondVisibility("system.platform.Windows"):
+                if PLATAFORMA in ['windows', 'xbox']:
                     s = subprocess.Popen(params, shell=False, creationflags=creationFlags, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 else:
                     s = subprocess.Popen(params, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
