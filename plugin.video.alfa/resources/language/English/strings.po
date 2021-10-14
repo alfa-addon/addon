@@ -3566,7 +3566,7 @@ msgid "    - Torrent"
 msgstr ""
 
 msgctxt "#70215"
-msgid "TEST THIS CHANNEL"
+msgid "Test this channel"
 msgstr ""
 
 msgctxt "#70216"
@@ -5192,5 +5192,13 @@ msgid "Caching variables"
 msgstr ""
 
 msgctxt "#80786"
-msgid "Do you like Alfa to catch most used variable in memory"
+msgid "Would you like Alfa to cache the most used variables in memory?"
+msgstr ""
+
+msgctxt "#80787"
+msgid "Wishlist"
+msgstr ""
+
+msgctxt "#80788"
+msgid "Configure Wishlist"
 msgstr ""
