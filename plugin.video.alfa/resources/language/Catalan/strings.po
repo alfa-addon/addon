@@ -1544,7 +1544,7 @@ msgid "Download Season"
 msgstr "Descarregar Temporada"
 
 msgctxt "#60358"
-msgid "Open Configuration"
+msgid "Open settings"
 msgstr "Obrir  Configuració"
 
 msgctxt "#60359"

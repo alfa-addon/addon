@@ -1482,7 +1482,7 @@ msgid "Download Season"
 msgstr ""
 
 msgctxt "#60358"
-msgid "Open Configuration"
+msgid "Open settings"
 msgstr ""
 
 msgctxt "#60359"
