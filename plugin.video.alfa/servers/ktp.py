@@ -31,6 +31,7 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info()
     itemlist = []
+    invert = ""
     if "video_url_text" in data:
         patron = '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?'
         patron += '(?:video_url_text|video_alt_url_text|video_alt_url[0-9]*_text):\s*(?:\'|")([^\,]+)(?:\'|")'
@@ -45,7 +46,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             url += "|verifypeer=false"
             # logger.debug(quality + "  --  " + url)
             itemlist.append(['[ktplayer] %s' %quality, url])
-        invert = ""
         if "LQ" in quality:
             invert= "true"
     if invert:

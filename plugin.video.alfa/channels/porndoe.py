@@ -60,10 +60,10 @@ def categorias(item):
         patron  = 'class="item">(.*?)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for match in matches:
-        if "channels" in item.url:
-            action = "lista"
-        else:
-            action = "lista2"
+        # if "channels" in item.url:
+            # action = "lista"
+        # else:
+            # action = "lista"
         scrapedurl = scrapertools.find_single_match(match,'href="([^"]+)"')
         if "channel-profile" in scrapedurl:
             scrapedurl = scrapedurl.replace("channel-profile", "channel-profile-videos")
@@ -83,7 +83,7 @@ def categorias(item):
         title = "%s %s" % (scrapedtitle, cantidad)
         scrapedurl = scrapedurl.replace("https://letsdoeit.com", "")
         url = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append(item.clone(action=action, title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     next_page = scrapertools.find_single_match(data, '<li class="page next page-hide-mobile">.*?href="([^"]+)"')
     if next_page:

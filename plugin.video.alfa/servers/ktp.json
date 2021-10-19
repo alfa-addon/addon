@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:www.|)(?:0dayporn|severeporn|submityourflicks|3movs|xtits|sleazyneasy|babestube|wankoz|vikiporn|katestube|pornomovies|lesbian8|pornsexer|pornmega|xxxymovies).com/video(?:s|)/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:0dayporn|severeporn|submityourflicks|3movs|xtits|sleazyneasy|babestube|wankoz|vikiporn|katestube|pornomovies|lesbian8|pornsexer|pornmega|xxxymovies|pornhat|pornestro).com/video(?:s|)/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
@@ -16,7 +16,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:vipporns|pornhat|porngem|frprn).com/(?:video|videos|clips)/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:vipporns|porngem|frprn).com/(?:video|videos|clips)/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
@@ -89,6 +89,14 @@
       },
       {
         "pattern": "(https://pornwild.to(?:/es|)/embed/\\w+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://www.pornestro.com/embed/[0-9]+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://watch-my-gf.com/view(?:_|-)video.php\\?v\\=[0-9]+)",
         "url": "\\1"
       },
       {
