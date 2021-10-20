@@ -100,6 +100,8 @@ if host_index > 0 or not clone_list_random:     #Si el Clone por defecto no es A
 if not channel_clone_post: channel_clone_post = channel_clone_post
 sufix = scrapertools.find_single_match(host, '\.\w+\/*$')
 download_sufix = 'descargar/torrent/'
+download_pre_url_torr = '/download/'
+download_post_url_torr = '/download-link/'
 
 #Carga de opciones del canal        
 __modo_grafico__ = config.get_setting('modo_grafico', channel_py)               #TMDB?
@@ -1312,6 +1314,7 @@ def findvideos(item):
     url_torr = url_torr.replace(" ", "%20")                                     #sustituimos espacios por %20, por si acaso
     if url_torr and not url_torr.startswith("http"):                            #Si le falta el http.: lo ponemos
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
+    url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr)
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if url_torr:
@@ -1361,6 +1364,7 @@ def findvideos(item):
             url_torr = url_torr.replace(" ", "%20")                             #sustituimos espacios por %20, por si acaso
             if url_torr and not url_torr.startswith("http"):                    #Si le falta el http.: lo ponemos
                 url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
+            url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr)
             if url_torr:
                 size = generictools.get_torrent_size(url_torr, timeout=timeout) #Buscamos si hay .torrent y el tamaño
 
@@ -1465,6 +1469,7 @@ def findvideos(item):
                     url_torr = urlparse.urljoin(torrent_tag, url_torr)
                 else:
                     continue
+                url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr)
                 size = generictools.get_torrent_size(url_torr, timeout=timeout) #Buscamos si hay .torrent y el tamaño
             
             matches_torent.append((url_torr, quality, size, data_alt))
