@@ -81,6 +81,7 @@ def sub_menu(item):
 
     return itemlist
 
+
 def saved_search(item):
     logger.info()
 
@@ -318,40 +319,43 @@ def get_channel_results(ch, item):
 
     ch_params = channeltools.get_channel_parameters(ch)
     
-    #exec("from channels import " + ch_params["channel"] + " as module")
-    #mainlist = module.mainlist(Item(channel=ch_params["channel"]))
+    try:
     
-    module = __import__('channels.%s' % ch_params["channel"], fromlist=["channels.%s" % ch_params["channel"]])
-    mainlist = getattr(module, 'mainlist')(Item(channel=ch_params["channel"]))
+        module = __import__('channels.%s' % ch_params["channel"], fromlist=["channels.%s" % ch_params["channel"]])
+        mainlist = getattr(module, 'mainlist')(Item(channel=ch_params["channel"]))
 
-    search_action = [elem for elem in mainlist if elem.action == "search"]
+        search_action = [elem for elem in mainlist if elem.action == "search"]
 
-    if search_action:
-        for search_ in search_action:
+        if search_action:
+            for search_ in search_action:
+                try:
+                    results.extend(module.search(search_, item.text))
+                except:
+                    pass
+        else:
             try:
-                results.extend(module.search(search_, item.text))
+                results.extend(module.search(item, item.text))
             except:
                 pass
-    else:
-        try:
-            results.extend(module.search(item, item.text))
-        except:
-            pass
 
-    if len(results) < 0 and len(results) < max_results and item.mode != 'all':
+        if len(results) < 0 and len(results) < max_results and item.mode != 'all':
 
-        if len(results) == 1:
-            if not results[0].action or config.get_localized_string(30992).lower() in results[0].title.lower():
-                return [ch, []]
+            if len(results) == 1:
+                if not results[0].action or config.get_localized_string(30992).lower() in results[0].title.lower():
+                    return [ch, []]
 
-        results = get_info(results)
+            results = get_info(results)
 
-    return [ch, results]
+        return [ch, results]
+    except Exception:
+        import traceback
+        logger.error(traceback.format_exc())
+        return [ch, []]
 
 
 def get_info(itemlist):
     logger.info()
-    tmdb.set_infoLabels_itemlist(itemlist, True, forced=True)
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True, forced=True)
 
     return itemlist
 

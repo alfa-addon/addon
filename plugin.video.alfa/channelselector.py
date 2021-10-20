@@ -52,7 +52,7 @@ def getmainlist(view="thumb_"):
 
     itemlist.append(
         Item(
-            title = "Lista de deseos",
+            title = get_string(80787),
             channel = "info_popup",
             action = "mainlist",
             thumbnail = get_thumb("wishlist.png", view),
@@ -60,7 +60,7 @@ def getmainlist(view="thumb_"):
             viewmode = "thumbnails",
             context = [
                 {
-                    "title": "Configurar Lista de deseos",
+                    "title": get_string(80788),
                     "channel": "info_popup",
                     "action": "show_settings"
                 }
@@ -349,7 +349,7 @@ def filterchannels(category, view="thumb_"):
         freq = True
         category = 'all'
     # Si category = "allchannelstatus" es que estamos activando/desactivando canales
-    # Si category = "all_channels" viene del canal test
+    # Si category = "all-channels" viene del canal test
     appenddisabledchannels = False
     if category == "allchannelstatus":
         category = "all"
@@ -368,6 +368,8 @@ def filterchannels(category, view="thumb_"):
 
     for channel in channel_files:
         # logger.info("channel=%s" % channel)
+
+        # channel = os.path.basename(channel).replace(".json", "")
 
         try:
             channel_parameters = channeltools.get_channel_parameters(channel)
