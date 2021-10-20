@@ -116,14 +116,23 @@ def lista(item):
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
-# https://www.pornlib.com/video/horny-amateur-couple-make-their-first-homemade-video-222012
 
-# https://www.milffox.com/porn-movies/Latina-Stepmom-Kailani-Kai-With-Big-Tits-Has-Sex-With-Her-Stepson/
 # https://porntop.com/video/238835/deepika-bernie-svintis-our-boobs-are-the-same/
-# https://ebonyo.com/black-chick-with-big-boobs-tori-taylor-riding-white-man/
-# https://www.jacquieetmicheltv.net/en/videos/show/1672/ania-and-caroline-two-beautiful-lesbian-milfs-with-big-tits.html
-# https://www.stileproject.com/video/amy-rogue-takes-her-step-brothers-cock-in-her-pussy-9913541.html
-# https://www.pornrabbit.com/video/yuzuna-oshima-hot-japanese-girl-being-fucked-39797102.html var desktopFile='https://cdn.pornrabbit.com/media/videos/8/2/8/8/7/82887c73cecbf95d298b8458a1fa67ba.mp4'
+# https://ebonyo.com/black-chick-with-big-boobs-tori-taylor-riding-white-man/             <iframe src= BASE64
+
+# https://www.jacquieetmichelelite.com/film-porno/elite/8211/sans-tabou-ni-retenue.html   https://www.jacquieetmichelelite.com/es/pelicula-porno/elite/8211/sin-tabu-ni-moderacion.html
+
+# https://ebonyo.com/ebony-yoga-girl-banged-hard-on-the-floor/
+# <div class="responsive-player">
+    # <iframe src="https://ebonyo.com/wp-content/plugins/clean-tube-player/public/player-x.php?q=cG9zdF9pZD0yMjcmdHlwZT1pZnJhbWUmdGFnPSUzQ2lmcmFtZSUyMHNyYyUzRCUyMmh0dHBzJTNBJTJGJTJGd3d3Lnh2aWRlb3MuY29tJTJGZW1iZWRmcmFtZSUyRjMxNTk4NzIxJTIyJTIwZnJhbWVib3JkZXIlM0QlMjIwJTIyJTIwd2lkdGglM0QlMjI1MTAlMjIlMjBoZWlnaHQlM0QlMjI0MDAlMjIlMjBzY3JvbGxpbmclM0QlMjJubyUyMiUyMGFsbG93ZnVsbHNjcmVlbiUzRCUyMmFsbG93ZnVsbHNjcmVlbiUyMiUyMHNhbmRib3glM0QlMjJhbGxvdy1zYW1lLW9yaWdpbiUyMGFsbG93LXNjcmlwdHMlMjIlM0UlM0MlMkZpZnJhbWUlM0U=" frameborder="0" scrolling="no" allowfullscreen></iframe>			</div>
+
+# <div class="responsive-player">
+    # <iframe src="https://lezvids.com/wp-content/plugins/clean-tube-player/public/player-x.php?q=cG9zdF9pZD00MzY1OSZ0eXBlPWlmcmFtZSZ0YWc9JTNDaWZyYW1lJTIwc3JjJTNEJTIyaHR0cHMlM0ElMkYlMkZlbWJlZC5yZWR0dWJlLmNvbSUyRiUzRmlkJTNEMzk0NjYyODElMjIlMjBmcmFtZWJvcmRlciUzRCUyMjAlMjIlMjB3aWR0aCUzRCUyMjY0MCUyMiUyMGhlaWdodCUzRCUyMjM2MCUyMiUyMHNjcm9sbGluZyUzRCUyMm5vJTIyJTIwYWxsb3dmdWxsc2NyZWVuJTIwc2FuZGJveCUzRCUyMmFsbG93LXNhbWUtb3JpZ2luJTIwYWxsb3ctc2NyaXB0cyUyMiUzRSUzQyUyRmlmcmFtZSUzRQ==" frameborder="0" scrolling="no" allowfullscreen></iframe>        </div>
+
+
+# https://ebonyo.com/round-ass-ebony-roomie-sits-on-cock-instantly/
+# <div class="responsive-player">
+    # <iframe width="1280" height="720" src="https://www.pornestro.com/embed/775" frameborder="0" allowfullscreen sandbox="allow-same-origin allow-scripts"></iframe>			</div>
 
 
 def findvideos(item):
@@ -134,7 +143,6 @@ def findvideos(item):
         url = "https:/%s" % url
     if "vid.com/v/" in url:
         url = httptools.downloadpage(url).url
-    # logger.debug(url)
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
@@ -148,7 +156,10 @@ def play(item):
         url = "https:/%s" % url
     if "vid.com/v/" in url:
         url = httptools.downloadpage(url).url
-    # logger.debug(url)
+    if "pornhat" in url:
+        url = url.replace("video", "embed")
+        data =  httptools.downloadpage(url).data
+        url = scrapertools.find_single_match(data, '<link href="([^"]+)"')
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

@@ -14,7 +14,7 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://hclips.com'
+host = 'https://hclips.com'    #  https://hclips.com  https://hotmovs.com  https://hdzog.com  https://upornia.com  https://vjav.com  https://voyeurhit.com  https://txxx.com 
 url_api = "https://hclips.com/api/json/videos/86400/str/%s/60/%s.%s.1.all..day.json"
 
 
@@ -24,7 +24,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=url_api % ("latest-updates", "", "")))
     itemlist.append(item.clone(title="Popular" , action="lista", url=url_api %  ("most-popular", "", "")))
     itemlist.append(item.clone(title="Longitud" , action="lista", url=url_api %  ("longest", "", "")))
-    itemlist.append(item.clone(title="Canal" , action="canal", url=host + "/api/json/channels/86400/str/latest-updates/80/..1.json"))
+    itemlist.append(item.clone(title="Canal" , action="canal", url=host + "/api/json/channels/14400/str/most-viewed/80/..1.json"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/api/json/categories/14400/str.all.json"))
 
     itemlist.append(item.clone(title="Buscar", action="search"))
@@ -73,7 +73,7 @@ def canal(item):
     for Video in  JSONData["channels"]:
         scrapedtitle = Video["title"]
         dir = Video["dir"]
-        thumbnail= Video["img"]
+        thumbnail= Video["cf4"]
         vidnum = Video["statistics"]
         url = "https://hclips.com/api/json/videos/86400/str/latest-updates/20/channel.%s.1.all...json" % dir
         vidnum = scrapertools.find_single_match(vidnum, '"videos":"(\d+)"')

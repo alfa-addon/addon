@@ -18,7 +18,7 @@ from platformcode import config, logger
 from core import httptools
 from core import jsontools as json
 
-host = 'https://txxx.com'   # 'https://hdzog.com'
+host = 'https://txxx.com'   #  https://hclips.com  https://hotmovs.com  https://hdzog.com  https://upornia.com  https://vjav.com  https://voyeurhit.com  https://txxx.com 
 url_api = host + "/api/json/videos/%s/str/%s/60/%s.%s.1.all..%s.json"
 
 
@@ -31,7 +31,7 @@ def mainlist(item):
     # itemlist.append(item.clone(title="Mas vistos" , action="lista",  url=url_api % ("14400", "most-viewed", "", "", "month") ))
     itemlist.append(item.clone(title="Mas comentado" , action="lista",  url=url_api % ("14400", "most-commented", "", "", "month") ))
     itemlist.append(item.clone(title="Pornstar" , action="pornstar", url=host + "/api/json/models/86400/str/filt........../most-popular/48/1.json"))
-    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "/api/json/channels/86400/str/latest-updates/80/..1.json"))
+    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "/api/json/channels/14400/str/most-viewed/80/..1.json"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/api/json/categories/14400/str.all.json"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
@@ -90,7 +90,7 @@ def catalogo(item):
     for cat in  JSONData["channels"]:
         scrapedtitle = cat["title"]
         dir = cat["dir"]
-        scrapedthumbnail =  cat["img"]
+        scrapedthumbnail =  cat["cf3"]
         num = cat["statistics"]
         n = 'videos'
         num = num.get(n,n)
