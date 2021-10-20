@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:vidhd.net|hdvid.tv)/(?:embed-)?([A-z0-9]+)",
-        "url": "https://vidhdthe.online/\\1.html"
+        "pattern": "(https://gofile.io/d/[a-zA-Z0-9]+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "vidhd",
-  "name": "vidhd",
+  "id": "gofile",
+  "name": "gofile",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://vidhd.net/images/logo.png"
+  "thumbnail": "https://i.postimg.cc/QtJ9yqwm/gofile.png"
 }

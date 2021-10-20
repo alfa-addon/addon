@@ -1,7 +1,7 @@
 {
   "id": "hdfulls",
   "name": "HDFullS",
-  "active": false,
+  "active": true,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.postimg.cc/fywxmZ55/hdfool.png",

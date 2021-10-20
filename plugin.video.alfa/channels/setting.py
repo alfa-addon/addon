@@ -881,6 +881,17 @@ def overwrite_tools(item):
                 xbmc_videolibrary.mark_content_as_watched_on_alfa(movie_nfo)
 
 
+def call_browser(item, lookup=False):
+    from lib import generictools
+
+    if lookup:
+        browser, resultado = generictools.call_browser(item.url, lookup=lookup)
+    else:
+        browser, resultado = generictools.call_browser(item.url)
+    
+    return browser, resultado
+
+
 def icon_set_selector(item=None):
     platformtools.dialog_notification("Alfa", "Obteniendo iconos, por favor espere...")
     options = list()

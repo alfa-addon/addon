@@ -1483,7 +1483,7 @@ msgid "Download Season"
 msgstr "Descargar temporada"
 
 msgctxt "#60358"
-msgid "Open Configuration"
+msgid "Open settings"
 msgstr "Abrir configuración"
 
 msgctxt "#60359"
@@ -3567,8 +3567,8 @@ msgid "    - Torrent"
 msgstr "    - Torrent"
 
 msgctxt "#70215"
-msgid "TEST THIS CHANNEL"
-msgstr "TESTEAR ESTE CANAL"
+msgid "Test this channel"
+msgstr "Testear este canal"
 
 msgctxt "#70216"
 msgid "Back"
@@ -5189,5 +5189,13 @@ msgid "Caching variables"
 msgstr "Caching variables"
 
 msgctxt "#80786"
-msgid "Do you like Alfa to catch most used variable in memory"
+msgid "Would you like Alfa to cache the most used variables in memory?"
 msgstr "¿Quiere que Alfa cachee en memoria las variables más usadas?"
+
+msgctxt "#80787"
+msgid "Wishlist"
+msgstr "Lista de deseos"
+
+msgctxt "#80788"
+msgid "Configure Wishlist"
+msgstr "Configurar Lista de deseos"
