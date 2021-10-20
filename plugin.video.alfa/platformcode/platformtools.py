@@ -36,7 +36,7 @@ from platformcode import logger
 from platformcode import config
 from platformcode import unify
 import time
-
+from core import jsontools
 
 class XBMCPlayer(xbmc.Player):
 
@@ -210,6 +210,10 @@ def render_items(itemlist, parent_item):
         categories_channel = channeltools.get_channel_parameters(itemlist[0].channel.lower()).get('categories', [])
 
     temp_list = list()
+
+    styles_path = os.path.join(config.get_runtime_path(), 'resources', 'color_styles.json')
+    colors_file = jsontools.load((open(styles_path, "r").read()))
+
     for item in itemlist:
         item_url = item.tourl()
 
@@ -245,7 +249,8 @@ def render_items(itemlist, parent_item):
 
         if use_unify and parent_item.channel not in ['alfavorites']:
             # Formatear titulo con unify
-            item = unify.title_format(item)
+
+            item = unify.title_format(item, colors_file)
 
         else:
             # Formatear titulo metodo old school
@@ -382,7 +387,7 @@ def render_items(itemlist, parent_item):
         if parent_item.category != '':
             breadcrumb = parent_item.category.capitalize()
         else:
-            breadcrumb = channeltools.get_channel_parameters(item.channel).get('title', '')
+            breadcrumb = channeltools.get_channel_parameters(parent_item.channel).get('title', '')
 
     xbmcplugin.setPluginCategory(handle=PLUGIN_HANDLE, category=breadcrumb)
 

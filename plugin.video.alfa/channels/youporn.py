@@ -60,6 +60,8 @@ def catalogo(item):
         title = elem.img['alt']
         thumbnail = elem.img['data-original']
         cantidad = elem.find('span', class_='video-count')
+        if "/channels/" in item.url:
+            cantidad = elem.find('div', class_='channelCount')
         if not cantidad:
             cantidad = elem.find('div', class_='videoCount')
         title = "%s (%s)" %(title,cantidad.text)

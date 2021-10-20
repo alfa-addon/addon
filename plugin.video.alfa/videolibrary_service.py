@@ -8,6 +8,12 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+
+try:
+    from platformcode import logger
+except:
+    pass
+
 try:
     from platformcode import config
     import xbmc, os, time
@@ -18,17 +24,11 @@ try:
 except:
     import os, time
     try:
+        logger.error(traceback.format_exc())
         librerias = os.path.join(config.get_runtime_path(), 'lib')
         sys.path.append(librerias)
     except:
         pass
-
-
-try:
-    from platformcode import logger
-except:
-    pass
-
 
 
 def update(path, p_dialog, i, t, serie, overwrite):

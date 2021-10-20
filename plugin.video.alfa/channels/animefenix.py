@@ -143,19 +143,24 @@ def list_all(item):
     next_page = soup.find('div', class_='pagination')
 
     if next_page and len(next_page.find_all('li')) > 0:
-        next_url = next_page.find_all('li')[-1].find('a')['href'] if next_page.find_all('li')[-1].find('a') else ''
-        base_url = scrapertools.find_single_match(item.url, '(.+?)\?')
+        try:
+            next_page = next_page.find_all('li')[-1]
+            next_url = next_page.find('a')['href'] if next_page.find('a') and next_page.find('a').get('href') else ''
+            base_url = scrapertools.find_single_match(item.url, '(.+?)\?')
 
-        if next_url:
-            itemlist.append(
-                Item(
-                    action = item.action,
-                    channel = item.channel,
-                    thumbnail = thumb,
-                    title = 'Siguiente página >',
-                    url = "%s%s" % (base_url, next_url) if not base_url in next_url else next_url
+            if next_url:
+                itemlist.append(
+                    Item(
+                        action = item.action,
+                        channel = item.channel,
+                        thumbnail = thumb,
+                        title = 'Siguiente página >',
+                        url = "%s%s" % (base_url, next_url) if not base_url in next_url else next_url
+                    )
                 )
-            )
+        except:
+            import traceback
+            logger.error(traceback.format_exc())
 
     return itemlist
 
@@ -237,48 +242,63 @@ def findvideos(item):
                "3": "https://www.mp4upload.com/embed-%s.html", "4": "https://sendvid.com/embed/%s",
                "19": "https://videa.hu/player?v=%s"}
 
-    soup = get_source(item.url, soup=True, unescape=True)
+    try:
+        soup = get_source(item.url, soup=True, unescape=True)
 
-    pl = soup.find("div", class_="player-container")
+        pl = soup.find("div", class_="player-container")
 
 
 
-    script = pl.find("script").text
-    urls = scrapertools.find_multiple_matches(script, "src='([^']+)'")
+        script = pl.find("script").text
+        urls = scrapertools.find_multiple_matches(script, "src='([^']+)'")
 
-    for url in urls:
+        for url in urls:
 
-        srv_id, v_id = scrapertools.find_single_match(url, "player=(\d+)&code=([^$]+)")
-        if urllib.unquote(v_id).startswith("/"):
-            v_id = v_id[1:]
+            srv_id, v_id = scrapertools.find_single_match(url, "player=(\d+)&amp;code=([^&]+)")
 
-        if srv_id not in servers:
-            srv_data = get_source(url)
-            url = scrapertools.find_single_match(srv_data, 'playerContainer.innerHTML .*?src="([^"]+)"')
-        else:
-            srv = servers.get(srv_id, "directo")
-            if srv != "directo":
-                url = srv % v_id
+            if urllib.unquote(v_id).startswith("/"):
+                v_id = v_id[1:]
 
-        if "/stream/" in url:
-            data = get_source(url, referer=item.url)
-            url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace('\\/', '/')
-        if not url:
-            continue
-        url = urllib.unquote(url)
-        itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, language=IDIOMAS['vose'],
-                             infoLabels=item.infoLabels))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
+            if srv_id not in servers:
+                srv_data = get_source(url)
+                url = scrapertools.find_single_match(srv_data, 'playerContainer.innerHTML .*?src="([^"]+)"')
+            else:
+                srv = servers.get(srv_id, "directo")
+                if srv != "directo":
+                    url = srv % v_id
 
-    # Requerido para FilterTools
+            if "/stream/" in url:
+                data = get_source(url, referer=item.url)
+                url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace('\\/', '/')
+            if not url:
+                continue
+            url = urllib.unquote(url)
+            itemlist.append(
+                Item(
+                    action = 'play',
+                    channel = item.channel,
+                    infoLabels = item.infoLabels,
+                    language = IDIOMAS['vose'],
+                    title = '%s',
+                    url = url
+                )
+            )
 
-    itemlist = filtertools.get_links(itemlist, item, list_language)
+        itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
-    # Requerido para AutoPlay
+        # Requerido para FilterTools
 
-    autoplay.start(itemlist, item)
+        itemlist = filtertools.get_links(itemlist, item, list_language)
 
-    return itemlist
+        # Requerido para AutoPlay
+
+        autoplay.start(itemlist, item)
+
+        return itemlist
+    except:
+        import traceback
+        logger.info(traceback.format_exc())
+        return [Item(title='Cambio de estructura. Reportar en el foro')]
 
 
 def search(item, texto):
@@ -290,10 +310,10 @@ def search(item, texto):
         try:
             return list_all(item)
         except:
-            import sys
-            for line in sys.exc_info():
-                logger.error("%s" % line)
+            import traceback
+            logger.error(traceback.format_exc())
             return []
+
 
 def newest(categoria):
     itemlist = []

@@ -126,19 +126,14 @@ def findvideos(item):
     itemlist = []
     soup = create_soup(item.url).find('div', class_='responsive-player')
     url = soup.iframe['src']
-    if not "player-x.php" in url:
-        itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    else:
-        soup = create_soup(url).find_all('source')
-        for elem in soup:
-            url = elem['src']
-            quality = elem['title']
-            itemlist.append(['%s' %quality, url])
-        itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
-    # itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    # Requerido para AutoPlay
-    # autoplay.start(itemlist, item)
+    if "player-x.php" in url:
+        import base64
+        decode = scrapertools.find_single_match(url,'.*?php\?q=([A-z0-9=]+)')
+        decode = base64.b64decode(decode).decode("utf8")
+        decode = urlparse.unquote(decode)
+        url = scrapertools.find_single_match(decode,'src="([^"]+)"')
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
@@ -147,17 +142,12 @@ def play(item):
     itemlist = []
     soup = create_soup(item.url).find('div', class_='responsive-player')
     url = soup.iframe['src']
-    if not "player-x.php" in url:
-        itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    else:
-        soup = create_soup(url).find_all('source')
-        logger.debug(soup)
-        for elem in soup:
-            url = elem['src']
-            quality = elem['title']
-            itemlist.append(['%s' %quality, url])
-        itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
-    # Requerido para AutoPlay
-    # autoplay.start(itemlist, item)
+    if "player-x.php" in url:
+        import base64
+        decode = scrapertools.find_single_match(url,'.*?php\?q=([A-z0-9=]+)')
+        decode = base64.b64decode(decode).decode("utf8")
+        decode = urlparse.unquote(decode)
+        url = scrapertools.find_single_match(decode,'src="([^"]+)"')
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

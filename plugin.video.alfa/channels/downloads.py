@@ -1220,7 +1220,10 @@ def sort_torrents(play_items, emergency_urls=False):
                 play_items.extend(play_items_direct)
                 
         for play_item in play_items:
-            logger.info('Size FINAL : %s' % play_item.torrent_info)
+            if isinstance(play_item, dict):
+                logger.info('Size FINAL : %s' % play_item.torrent_info)
+            else:
+                logger.info('Size FINAL : %s' % play_item)
     except:
         logger.error(traceback.format_exc())
 

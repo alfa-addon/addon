@@ -18,16 +18,15 @@ import re
 from platformcode import config
 from core.item import Item
 from core import scrapertools
-from core import jsontools
 from platformcode import logger
-import time
+import json
 
 # Lista de elementos posibles en el titulo
 color_list = ['movie', 'tvshow', 'year', 'rating_1', 'rating_2', 'rating_3', 'quality', 'cast', 'lat', 'vose',
               'vos', 'vo', 'server', 'library', 'update', 'no_update']
 
 styles_path = os.path.join(config.get_runtime_path(), 'resources', 'color_styles.json')
-colors_file = jsontools.load((open(styles_path, "r").read()))
+colors_file = json.load(open(styles_path, "r"))
 
 thumb_dict = {"movies": "https://s10.postimg.cc/fxtqzdog9/peliculas.png",
     "tvshows": "https://s10.postimg.cc/kxvslawe1/series.png",
@@ -111,8 +110,9 @@ thumb_dict = {"movies": "https://s10.postimg.cc/fxtqzdog9/peliculas.png",
     }
 
 def init_colors():
-    for color in color_list:
-        config.set_setting("%s_color" % (color ), 'white')
+    # for color in color_list:
+    #     config.set_setting("%s_color" % (color ), 'white')
+    [config.set_setting("%s_color" % color, 'white') for color in color_list]
 
 def set_genre(string):
     #logger.info()
@@ -149,7 +149,7 @@ def set_genre(string):
                    'western':['western', 'westerns', 'oeste western']
                    }
     string = re.sub(r'peliculas de |pelicula de la |peli |cine ','', string)
-    for genre, variants in list(genres_dict.items()):
+    for genre, variants in genres_dict.items():
         if string in variants:
             string = genre
 
@@ -238,7 +238,7 @@ def set_color(title, category):
     preset = config.get_setting("preset_style", default="Estilo 1")
     color_setting = colors_file[preset]
 
-    color_scheme = {'otro': 'white', 'dual': 'white'}
+    color_scheme_generic = ['otro', 'dual']
 
     #logger.debug('category antes de remove: %s' % category)
     category = remove_format(category).lower()
@@ -251,22 +251,30 @@ def set_color(title, category):
     #  usuario, si no  pone el titulo en blanco.
     if title not in ['', ' ']:
 
-        for element in color_list:
-            if custom_colors:
-                color_scheme[element] = remove_format(config.get_setting('%s_color' % element))
-            else:
-                color_scheme[element] = remove_format(color_setting.get(element, 'white'))
-                #color_scheme[element] = 'white'
+        # for element in color_list:
+        #     if custom_colors:
+        #         color_scheme[element] = remove_format(config.get_setting('%s_color' % element))
+        #     else:
+        #         color_scheme[element] = remove_format(color_setting.get(element, 'white'))
+        #         #color_scheme[element] = 'white'
+
+        color_scheme = {
+            element: remove_format(config.get_setting('%s_color' % element)) if custom_colors else remove_format(
+                color_setting.get(element, 'white')) for element in color_list}
+        for gen in color_scheme_generic:
+            color_scheme[gen] = "white"
 
         if category in ['update', 'no_update']:
            #logger.debug('title antes de updates: %s' % title)
-           title= re.sub(r'\[COLOR .*?\]','[COLOR %s]' % color_scheme[category],title)
+           title= re.sub(r'\[COLOR .*?\]','[COLOR %s]' % color_scheme[category], title)
         else:
             if category not in ['movie', 'tvshow', 'library', 'otro']:
                 title = "[COLOR %s][%s][/COLOR]" % (color_scheme.get(category, 'blue'), title)
             else:
                 title = "[COLOR %s]%s[/COLOR]" % (color_scheme[category], title)
     return title
+
+
 
 def set_lang(language):
     #logger.info()
@@ -312,7 +320,11 @@ def set_lang(language):
 
 
 
-def title_format(item):
+def title_format(item, c_file):
+
+    global colors_file
+    colors_file = c_file
+
     #logger.info()
     #start = time.time()
     lang = False

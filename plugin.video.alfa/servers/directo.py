@@ -4,7 +4,7 @@ from platformcode import logger
 from core import scrapertools
 
 
-def test_video_exists(page_url: str):
+def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
     invaid_url ="No se ha encontrado un enlace. " \

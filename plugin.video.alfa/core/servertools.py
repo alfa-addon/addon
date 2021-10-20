@@ -634,6 +634,9 @@ def get_server_setting(name, server, default=None, caching_var=True):
         alfa_servers = json.loads(window.getProperty("alfa_servers"))
     if alfa_caching and caching_var and alfa_servers.get(server):
         dict_settings = alfa_servers[server].copy()
+        if dict_settings.get(name, ''):
+            dict_settings[name] = config.decode_var(dict_settings[name])
+            #logger.error('%s, %s: A: %s - D: %s' % (name, server, [alfa_servers[server][name]], [config.decode_var(dict_settings[name])]))
     
     elif filetools.exists(file_settings):
         # Obtenemos configuracion guardada de ../settings/channel_data.json

@@ -202,6 +202,8 @@ def decode(path, trans_none=''):
     """
     if not path:
         if path is None: path = trans_none
+        elif PY3 and path == b'': path = ''
+        elif str(path) == '': path = ''
         return path
         
     if PY3 and isinstance(path, bytes) and b"special://" in path:

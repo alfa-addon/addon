@@ -163,7 +163,10 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s %s" % (time,quality.text,actriz,title)
         else:
             title = "[COLOR yellow]%s[/COLOR] %s %s" % (time,actriz,title)
-        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                    fanart=thumbnail, contentTitle=title, plot=plot))
     next_page = soup.find('a', class_='pagination__link', string='Next')
     if next_page:
@@ -171,6 +174,23 @@ def lista(item):
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url).find('video')
+    matches = soup.find_all('source')
+    for elem in matches:
+        url = elem['src']
+        if elem['label']:
+            quality = elem['label']
+        else:  # Si unica resolucion
+            quality= scrapertools.find_single_match(url, '.*?_(\d+)m.mp4/')
+            quality += "p"
+        itemlist.append(item.clone(action="play", title= quality, quality= quality, url=url))
+        # itemlist.append(['%s' % quality, url])
+    return itemlist[::-1]
 
 
 def play(item):

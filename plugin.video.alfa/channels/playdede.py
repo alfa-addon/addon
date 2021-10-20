@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-"""
-@channel: Playdede
-@for: Alfa addon
-@author: Alfa Develop Group
-@maintainer: SistemaRayoXP
-"""
-import sys, re, datetime
+# Channel Playdede
+# Created for Alfa addon
+# By the Alfa Development Group
+# Maintained by SistemaRayoXP
+
+import sys
+import re
+import datetime
+
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
@@ -24,35 +26,43 @@ list_language = list(IDIOMAS.values())
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP']
 list_servers = list(SERVIDORES.values())
 
+__channel__ = 'playdede'
 timeout = 30
-show_langs = config.get_setting('show_langs', channel='playdede')
+show_langs = config.get_setting('show_langs', channel=__channel__)
 account = None
 
-def get_source(url, get_soup=True, post=None, multipart_post=None, headers=None, referer=False):
+
+def get_source(url, json=False, soup=True, multipart_post=None, timeout=30, add_host=True, **opt):
     logger.info()
 
-    data = httptools.downloadpage(url, post=post, files=multipart_post, headers=headers, referer=referer, add_host=True, timeout=30).data
-    if get_soup:
-        return BeautifulSoup(data, "html5lib")
+    data = httptools.downloadpage(url, soup=soup, files=multipart_post, add_host=add_host, timeout=timeout, **opt)
+
+    if json:
+        data = data.json
+    elif soup:
+        data = data.soup
     else:
-        return data
+        data = data.data
+
+    return data
 
 
 def login():
     logger.info()
 
-    usuario = config.get_setting('user', channel='playdede')
-    clave = config.get_setting('pass', channel='playdede')
+    usuario = config.get_setting('user', channel=__channel__)
+    clave = config.get_setting('pass', channel=__channel__)
     credentials = (('user',    (None, usuario)),
                    ('pass',    (None, clave)),
                    ('_method', (None, 'auth/login')))
 
     if not usuario:
+        logger.error("No se ingresó un nombre de usuario")
         return False
 
     if not clave:
         platformtools.dialog_notification("Falta la contraseña", "Revisa la contraseña en la configuración del canal.", sound=False)
-        logger.error('Contraseña no encontrada')
+        logger.error('No se ingresó una contraseña')
         return False
 
     if not httptools.get_cookie(host, 'MoviesWebsite'):
@@ -85,18 +95,21 @@ def logout(item):
         import urlparse
 
     # Borramos las cookies
-    domain = urlparse.urlparse(host).netloc
-    dict_cookie = {"domain": domain, 'expires': 0}
-    httptools.set_cookies(dict_cookie)
+    try:
+        domain = urlparse.urlparse(host).netloc
+        httptools.cj.clear(domain)
+        httptools.save_cookies()
+    except:
+        pass
 
     # Borramos el estado de login
-    config.set_setting("user", "", channel="playdede")
-    config.set_setting("pass", "", channel="playdede")
+    logger.info(config.set_setting("user", "", channel=__channel__))
+    logger.info(config.set_setting("pass", "", channel=__channel__))
 
     platformtools.dialog_notification("Sesión cerrada", "Reconfigura las credenciales", sound=False)
     
     # Mandamos a configuración del canal
-    return settings(item)
+    return platformtools.itemlist_refresh()
 
 
 def mainlist(item):
@@ -259,12 +272,10 @@ def genres(item):
 def list_all(item):
     logger.info()
 
-    # item.url = 'https://extra.alfa-addon.com/reqtester/'
     itemlist = []
-    multipart = (('_method', ( None, 'async' ) ),
-                 ( 'url',    ( None, item.url) ))
-    soup = get_source(item.url, multipart_post=multipart, referer=item.url)
+    soup = get_source(item.url)
 
+    logger.info(soup.prettify())
     if not soup:
         platformtools.dialog_notification("Cambio de estructura", "Reporta el error desde el menú principal", sound=False)
         return itemlist
@@ -337,8 +348,8 @@ def search(item, texto):
 
     except:
         # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-        for line in sys.exc_info():
-            logger.error("%s" % line)
+        import traceback
+        logger.error(traceback.format_exc())
 
         return []
 
@@ -448,7 +459,11 @@ def findvideos(item):
         title = "{}".format(server.title())
 
         if language:
-            title = unify.add_languages(title, language)
+            try:
+                title = unify.add_languages(title, language)
+            except:
+                import traceback
+                traceback.format_exc()
 
         if quality:
             title += ' [COLOR=cyan][{}][/COLOR]'.format(quality.upper())
