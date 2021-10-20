@@ -66,9 +66,10 @@ def getmainlist(view="thumb_"):
                          category=config.get_localized_string(30100), viewmode="list"))
 
     if config.is_xbmc():
-        itemlist.append(Item(title=config.get_localized_string(70761), channel="setting", action="report_menu",
-                         thumbnail=get_thumb("error.png", view),
-                         category=config.get_localized_string(30104), viewmode="list"))
+
+        itemlist.append(Item(title=config.get_localized_string(70761), channel="report", action="mainlist",
+                             thumbnail=get_thumb("error.png", view),
+                             category=config.get_localized_string(30104), viewmode="list"))
 
     itemlist.append(Item(title=config.get_localized_string(30104) + " (" + config.get_localized_string(20000) +" " + config.get_addon_version(with_fix=False, from_xml=True) + ")", channel="help", action="mainlist",
                          thumbnail=os.path.join(config.get_runtime_path(), "resources", 'Screenshot.jpg'),

@@ -64,7 +64,10 @@ def lista(item):
         video_url = Video["hlsPreviewUrl"]
         title =  "%s (%s)" % (title,pais)
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=video_url,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=video_url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     last_page= scrapertools.find_single_match(data,'<a href=".*?/latest/(\d+)"><div style="display:inline">Last<')
     page = scrapertools.find_single_match(item.url, "(.*?=)\d+")
@@ -76,3 +79,9 @@ def lista(item):
     itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
+
+def findvideos(item):
+    logger.info(item)
+    itemlist = []
+    itemlist = servertools.find_video_items(item.clone(url = item.url, contentTitle = item.title))
+    return itemlist

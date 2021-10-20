@@ -37,6 +37,8 @@ from platformcode import config
 from platformcode import platformtools
 from lib import generictools
 
+PLATFORM = config.get_system_platform()
+
 extensions_list = ['.aaf', '.3gp', '.asf', '.avi', '.flv', '.mpeg',
                    '.m1v', '.m2v', '.m4v', '.mkv', '.mov', '.mpg',
                    '.mpe', '.mp4', '.ogg', '.rar', '.wmv', '.zip']
@@ -1112,8 +1114,8 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
                 else:
                     if action_f == 'stop': action_f = 'pause'
                     uri = '%s%s/%s' % (local_host[torr_client], action_f, y)
-                
-                for z in range(10): 
+
+                for z in range(10):
                     res = httptools.downloadpage(uri, timeout=10, alfa_s=alfa_s, ignore_response_code=True)
                     if not res.sucess:
                         time.sleep(1)
@@ -1798,7 +1800,7 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
             
             downloadFilenameList = filetools.dirname(filetools.join(torrent_paths[torr_client], downloadFilename))
             if filetools.exists(downloadFilenameList) and filetools.isdir(downloadFilenameList):
-                for file_l in downloadFilenameList:
+                for file_l in filetools.listdir(downloadFilenameList):
                     if os.path.splitext(file_l)[1] in extensions_list:
                         return
             
@@ -2159,7 +2161,7 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
         cmd.append(['%s' % unrar_path, 'l', '%s' % filetools.join(save_path_videos, folder, rar_name)])
     
     creationflags = ''
-    if xbmc.getCondVisibility("system.platform.Windows"):
+    if PLATFORM in ['windows', 'xbox']:
         creationflags = 0x08000000
     loop = 30                                                                   # Loop inicial de 5 minutos hasta crear archivo
     wait_time = 10
@@ -2180,7 +2182,7 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
             try:
                 responses = []
                 for z, command in enumerate(cmd):                               # Se prueba por cada parte
-                    if xbmc.getCondVisibility("system.platform.Windows"):
+                    if PLATFORM in ['windows', 'xbox']:
                         data_rar = Popen(command, bufsize=0, stdout=PIPE, stdin=PIPE, \
                                      stderr=STDOUT, creationflags=creationflags)
                     else:
@@ -2286,7 +2288,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
     # Verificamos si hay path para UnRAR
     rarfile.UNRAR_TOOL = config.get_setting("unrar_path", server="torrent", default="")
     if not rarfile.UNRAR_TOOL:
-        if xbmc.getCondVisibility("system.platform.Android"):
+        if PLATFORM in ['android', 'atv2']:
             rarfile.UNRAR_TOOL = xbmc.executebuiltin("StartAndroidActivity(com.rarlab.rar)")
         return rar_file, False, '', ''
     log("##### unrar_path: %s" % rarfile.UNRAR_TOOL)
@@ -2517,7 +2519,7 @@ def rename_rar_dir(item, rar_file, save_path_videos, video_path, torr_client):
 
     rename_status = False
     
-    if not xbmc.getCondVisibility("system.platform.windows"):                   # Si no es Windows, no hay problema de longitud del path
+    if PLATFORM not in ['windows', 'xbox']:                                     # Si no es Windows, no hay problema de longitud del path
         return rename_status, rar_file, item
     
     if config.get_platform(True)['num_version'] >= 14:
@@ -2700,7 +2702,7 @@ def import_libtorrent(LIBTORRENT_PATH):
         sys.path.insert(0, LIBTORRENT_PATH)
         if LIBTORRENT_PATH:
             try:
-                if not xbmc.getCondVisibility("system.platform.android"):
+                if PLATFORM not in ['android', 'atv2']:
                     import libtorrent as lt
                     pathname = LIBTORRENT_PATH
                 else:

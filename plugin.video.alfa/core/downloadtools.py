@@ -24,6 +24,10 @@ import time
 from platformcode import config, logger
 from core import filetools
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
 entitydefs2 = {
     '$': '%24',
     '&': '%26',
