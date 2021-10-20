@@ -33,7 +33,7 @@ list_language = list(set(IDIOMAS.values()))
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP', 'RHDTV', 'DVDSCR']
 list_servers = ['flix555', 'clipwatching', 'gamovideo', 'powvideo', 'streamplay', 'vidoza', 'vidtodo', 'uptobox']
 
-host = "https://hdfull.se"
+host = "https://hdfull.fm"
 
 
 def mainlist(item):
@@ -294,8 +294,7 @@ def findvideos(item):
 
     data_js = get_source("%s/static/js/providers.js" % host)
     decoded = alfaresolver.jhexdecode(data_js).replace("'", '"')
-
-    providers_pattern = 'p\[(\d+)\]= {"t":"([^"]+)","d":".*?","e":.function.*?,"l":.function.*?return "([^"]+)".*?};'
+    providers_pattern = 'p\[(\d+)\]\s?=\s?{"t":"([^"]+)","d":".*?","e":.function.*?,"l":.function.*?return "([^"]+)".*?};'
     providers = scrapertools.find_multiple_matches(decoded, providers_pattern)
 
     provs = {}
@@ -303,10 +302,10 @@ def findvideos(item):
     for provider, e, l in providers:
         provs[provider] = [e, l]
 
-    try:
-        data_decrypt = jsontools.load(alfaresolver.obfs(data, js_data))
-    except:
-        return itemlist
+    #try:
+    data_decrypt = jsontools.load(alfaresolver.obfs(data, js_data))
+    #except:
+    #    return itemlist
 
     infolabels = item.infoLabels
     year = scrapertools.find_single_match(data, '<span>A&ntilde;o:\s*</span>.*?(\d{4})')
@@ -324,7 +323,6 @@ def findvideos(item):
                 pass
 
     for idioma, calidad, url, embed in matches:
-
         idioma = IDIOMAS.get(idioma.lower(), idioma)
         calidad = unicode(calidad, "utf8").upper().encode("utf8")
         title = "%s (" + calidad + ")(" + idioma + ")"

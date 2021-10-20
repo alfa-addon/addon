@@ -26,23 +26,27 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
 
-    packed = scrapertools.find_single_match(data, r"'text/javascript'>(eval.*?)\n")
-    unpacked = jsunpack.unpack(packed)
+    keys = ["op",  "id",  "fname", "hash"]
+    post = {"usr_login":"", "referer": "", "imhuman": "Proceed to video"}
+    for k in keys:
+        post[k] = scrapertools.find_single_match(data, 'input type="hidden" name="%s" value="([^"]+)"' % k)
+
+    new_data = httptools.downloadpage(page_url.replace(".html", ""), post=post, headers={"referer": page_url}).data
+
     video_urls = []
 
-    video_info = scrapertools.find_multiple_matches(unpacked, r'{(file:.*?)}')
-    subtitulo = scrapertools.find_single_match(unpacked, r'tracks:\s*\[{file:"([^"]+)"')
+    video_info = scrapertools.find_multiple_matches(new_data, r'{(file:.*?)}')
+    subtitulo = scrapertools.find_single_match(new_data, r'tracks:\s*\[{file:"([^"]+)"')
 
     for info in video_info:
-        
         video_url = scrapertools.find_single_match(info, r'file:"([^"]+)"')
         label = scrapertools.find_single_match(info, r'label:"([^"]+)"')
-        
+
         if video_url == subtitulo:
             continue
-        
+
         extension = scrapertools.get_filename_from_url(video_url)[-4:]
-        
+
         if extension == ".mpd":
             video_urls.append(["%s %s [Vidhd]" % (extension, label), video_url, 0, subtitulo, "mpd"])
         else:

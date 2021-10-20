@@ -8,7 +8,7 @@
         "url": "https://upstream.to/embed-\\1.html"
       },
       {
-        "pattern": "https://upstream.to/([a-z0-9]+)",
+        "pattern": "https://(?:upstream.to|onlystream.tv)/([a-z0-9]+)",
         "url": "https://upstream.to/embed-\\1.html"
       }
     ]

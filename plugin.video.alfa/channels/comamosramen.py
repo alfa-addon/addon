@@ -287,7 +287,7 @@ def seasons(item):
     logger.info()
     itemlist = []
     seasons = []
-    soup = get_source(item.url, soup=True)
+    soup = get_source(item.url.replace('-', '/'), soup=True, ignore_response_code=True)
     json = jsontools.load(soup.find('script', id='__NEXT_DATA__').text)
 
     # Buscamos el "content_id", requerido para búsqueda en la API de la página
