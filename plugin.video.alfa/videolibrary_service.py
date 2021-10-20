@@ -461,10 +461,7 @@ if __name__ == "__main__":
     # modo adulto:
     # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
     # si es == 2 lo desactivamos.
-    
-    # Incializamos caching de variables
-    config.cache_init()
-    
+
     # Detecta la versión correcta de marshal
     if PY3:
         from platformcode import custom_code
@@ -479,11 +476,6 @@ if __name__ == "__main__":
     if config.get_setting("adult_mode") == 2:
         config.set_setting("adult_mode", 0)
 
-    update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000]
-    wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]
-    if wait > 0:
-        xbmc.sleep(wait)
-
     # Verificar quick-fixes al abrirse Kodi, y dejarlo corriendo como Thread
     from platformcode import updater
     updater.check_addon_init()
@@ -497,6 +489,15 @@ if __name__ == "__main__":
     if not PY3: from core.proxytools import get_proxy_list
     else: from core.proxytools_py3 import get_proxy_list
     get_proxy_list()
+    
+    # Incializamos caching de variables
+    config.cache_init()
+
+    # Actualiza la videoteca de Alfa, con una espera inicial si se ha configurado
+    update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000]
+    wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]
+    if wait > 0:
+        xbmc.sleep(wait)
 
     if config.get_setting("update", "videolibrary") not in [2, 4]:
         if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):

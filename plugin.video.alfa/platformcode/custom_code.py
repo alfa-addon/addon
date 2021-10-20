@@ -787,7 +787,7 @@ def update_libtorrent():
                             server="torrent", default=""), str(custom_code_json)), force=True)
         from lib.python_libtorrent.python_libtorrent import get_libtorrent
     except Exception as e:
-        logger.error(traceback.format_exc(1))
+        logger.error(traceback.format_exc())
         if not PY3:
             e = unicode(str(e), "utf8", errors="replace").encode("utf8")
         config.set_setting("libtorrent_path", "", server="torrent")
