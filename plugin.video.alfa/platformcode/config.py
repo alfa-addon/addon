@@ -61,6 +61,7 @@ class CacheInit(xbmc.Monitor, threading.Thread):
         threading.Thread.__init__(self)
 
         alfa_caching = __settings__.getSetting('caching')
+        # Si no existe el archivo settings.xml, llama a Kodi .setSetting para forzar la creación de un archivo con valores por defecto
         if alfa_caching == 'true' or alfa_caching == None:
             alfa_caching = True
             __settings__.setSetting('caching', 'true')
@@ -69,6 +70,8 @@ class CacheInit(xbmc.Monitor, threading.Thread):
             alfa_caching = False
             __settings__.setSetting('caching', 'false')
             window.setProperty("alfa_caching", '')
+        if not os.path.exists(os.path.join(get_data_path(), "settings.xml")):
+            verify_directories_created()
         if alfa_caching:
             alfa_system_platform = get_system_platform()
             alfa_kodi_platform = get_platform(full_version=True)
@@ -464,10 +467,14 @@ def get_all_settings_addon(caching_var=True):
         return json.loads(window.getProperty("alfa_settings")).copy()
 
     # Lee el archivo settings.xml y retorna un diccionario con {id: value}
-    inpath = os.path.join(get_envhome(), "settings.xml")
+    inpath = os.path.join(get_data_path(), "settings.xml")
     if not os.path.exists(inpath):
         # Si no existe el archivo settings.xml, llama a Kodi .setSetting para forzar la creación de un archivo con valores por defecto
         __settings__.setSetting('caching', 'true')
+        verify_directories_created()
+        if not os.path.exists(inpath):
+            # Comprobamos si Kodi ha generado un archivo settings.xml accesible.  Si no es así, se cancela el cacheo y el menú de bienvenida (Apple TV)
+            __settings__.setSetting('show_once', 'true')
 
     try:
         infile = open(inpath, "rb")
@@ -676,7 +683,7 @@ def set_setting(name, value, channel="", server=""):
     canal 'channel'.
     Devuelve el valor cambiado o None si la asignacion no se ha podido completar.
 
-    Si se especifica el nombre del canal busca en la ruta \addon_data\plugin.video.alfa\settings_alfa_channels el
+    Si se especifica el nombre del canal busca en la ruta \addon_data\plugin.video.alfa\settings_channels el
     archivo channel_data.json y establece el parametro 'name' al valor indicado por 'value'. Si el archivo
     channel_data.json no existe busca en la carpeta channels el archivo channel.json y crea un archivo channel_data.json
     antes de modificar el parametro 'name'.
@@ -692,6 +699,7 @@ def set_setting(name, value, channel="", server=""):
     'value' en caso de que se haya podido fijar el valor y None en caso contrario
 
     """
+    value_init = value
     if channel:
         from core import channeltools
         return channeltools.set_channel_setting(name, value, channel)
@@ -719,7 +727,7 @@ def set_setting(name, value, channel="", server=""):
             __settings__.setSetting(name, value)
 
             if name == 'caching':
-                if value == "true":
+                if value_init:
                     window.setProperty("alfa_caching", str(True))
                     alfa_caching = True
                 else:
@@ -728,8 +736,8 @@ def set_setting(name, value, channel="", server=""):
                 if not alfa_caching:
                     alfa_settings = {}
                     window.setProperty("alfa_settings", json.dumps(alfa_settings))
-            if alfa_caching and alfa_settings and get_setting_values(name, alfa_settings.get(name, '')) != value:
-                alfa_settings[name] = value
+            if alfa_caching and alfa_settings and alfa_settings.get(name, '') != value_init:
+                alfa_settings[name] = value_init
                 window.setProperty("alfa_settings", json.dumps(alfa_settings))
 
         except Exception as ex:
@@ -760,7 +768,7 @@ def get_kodi_setting(name, total=False):
     #from core import scrapertools
     
     try:
-        inpath = os.path.join(get_envhome(userdata=True), "guisettings.xml")
+        inpath = os.path.join(translatePath('special://masterprofile/'), "guisettings.xml")
         infile = open(inpath, "rb")
         data = infile.read()
         if not PY3:
@@ -830,9 +838,6 @@ def get_localized_category(categ):
 
 def get_videolibrary_config_path():
     value = get_setting("videolibrarypath")
-    if not value:
-        verify_directories_created()
-        value = get_setting("videolibrarypath")
     return value
 
 
@@ -856,26 +861,6 @@ def get_data_path():
         os.makedirs(dev)
 
     return dev
-
-
-def get_envhome(userdata=False):
-    profile = get_data_path()
-    home = translatePath("special://home/")
-    envhome = translatePath("special://envhome/")
-    if envhome and get_system_platform() in ['tvos', 'darwin'] and envhome not in home:
-        profile_b = os.path.join(envhome, 'Documents', 'lib', 'userdata')
-        if os.path.exists(profile_b):
-            profile = profile_b
-            if not userdata:
-                profile = os.path.join(profile, 'addons_data', 'plugin.video.alfa')
-                if not os.path.exists(profile):
-                    profile = get_data_path()
-        elif userdata:
-            profile = translatePath("special://masterprofile/")
-    elif userdata:
-        profile = translatePath("special://masterprofile/")
-    
-    return profile
 
 
 def get_icon():

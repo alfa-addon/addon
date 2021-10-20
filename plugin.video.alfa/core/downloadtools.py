@@ -6,16 +6,24 @@
 from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-#from builtins import str
 from past.utils import old_div
+#from future import standard_library
+#standard_library.install_aliases()
+#from builtins import str
+
 import sys
 PY3 = False
 VFS = True
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; VFS = False
 
-import urllib.request, urllib.parse, urllib.error
+if PY3:
+    import urllib.parse as urllib   # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.request as urllib2
+    import urllib.error as urllib_error
+else:
+    import urllib                   # Usamos el nativo de PY2 que es más rápido
+    import urllib2
+    import urllib2 as urllib_error
 
 import re
 import socket
@@ -189,7 +197,7 @@ def downloadbest(video_urls, title, continuar=False):
         try:
             ret = downloadfile(url, fullpath, continuar=continuar)
         # Llegados a este punto, normalmente es un timeout
-        except urllib.error.URLError as e:
+        except urllib_error.URLError as e:
             import traceback
             logger.error(traceback.format_exc())
             ret = -2
@@ -224,6 +232,7 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
         headers = []
 
     progreso = None
+    ret = 0
 
     try:
         # Si no es XBMC, siempre a "Silent"
@@ -279,7 +288,7 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
             for additional_header in additional_headers:
                 logger.info("additional_header: " + additional_header)
                 name = re.findall("(.*?)=.*?", additional_header)[0]
-                value = urllib.parse.unquote_plus(re.findall(".*?=(.*?)$", additional_header)[0])
+                value = urllib.unquote_plus(re.findall(".*?=(.*?)$", additional_header)[0])
                 headers.append([name, value])
 
             url = url.split("|")[0]
@@ -288,8 +297,8 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
         # Timeout del socket a 60 segundos
         socket.setdefaulttimeout(60)
 
-        h = urllib.request.HTTPHandler(debuglevel=0)
-        request = urllib.request.Request(url)
+        h = urllib2.HTTPHandler(debuglevel=0)
+        request = urllib2.Request(url)
         for header in headers:
             logger.info("Header=" + header[0] + ": " + header[1])
             request.add_header(header[0], header[1])
@@ -297,11 +306,11 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
         if exist_size > 0:
             request.add_header('Range', 'bytes=%d-' % (exist_size,))
 
-        opener = urllib.request.build_opener(h)
-        urllib.request.install_opener(opener)
+        opener = urllib2.build_opener(h)
+        urllib2.install_opener(opener)
         try:
             connexion = opener.open(request)
-        except urllib.error.HTTPError as e:
+        except urllib_error.HTTPError as e:
             logger.error("error %d (%s) al abrir la url %s" %
                          (e.code, e.msg, url))
             f.close()
@@ -403,6 +412,7 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
                 from platformcode import platformtools
             platformtools.dialog_ok("No puedes descargar ese vídeo", "Las descargas en RTMP aún no", "están soportadas")
         else:
+            ret = -2
             import traceback
             from pprint import pprint
             exc_type, exc_value, exc_tb = sys.exc_info()
@@ -424,6 +434,7 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
             pass
 
     logger.info("Fin descarga del fichero")
+    return ret
 
 
 def downloadfileRTMP(url, nombrefichero, silent):
@@ -519,16 +530,16 @@ def downloadfileGzipped(url, pathfichero):
     # Timeout del socket a 60 segundos
     socket.setdefaulttimeout(10)
 
-    h = urllib.request.HTTPHandler(debuglevel=0)
-    request = urllib.request.Request(url, txdata, txheaders)
+    h = urllib2.HTTPHandler(debuglevel=0)
+    request = urllib2.Request(url, txdata, txheaders)
     # if existSize > 0:
     #    request.add_header('Range', 'bytes=%d-' % (existSize, ))
 
-    opener = urllib.request.build_opener(h)
-    urllib.request.install_opener(opener)
+    opener = urllib2.build_opener(h)
+    urllib2.install_opener(opener)
     try:
         connexion = opener.open(request)
-    except urllib.error.HTTPError as e:
+    except urllib_error.HTTPError as e:
         logger.error("error %d (%s) al abrir la url %s" %
                      (e.code, e.msg, url))
         progreso.close()
@@ -680,7 +691,7 @@ def downloadIfNotModifiedSince(url, timestamp):
 
     # Comprueba si ha cambiado
     inicio = time.clock()
-    req = urllib.request.Request(url)
+    req = urllib2.Request(url)
     req.add_header('If-Modified-Since', fecha_formateada)
     req.add_header('User-Agent',
                    'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; es-ES; rv:1.9.2.12) Gecko/20101026 Firefox/3.6.12')
@@ -688,14 +699,14 @@ def downloadIfNotModifiedSince(url, timestamp):
     updated = False
 
     try:
-        response = urllib.request.urlopen(req)
+        response = urllib2.urlopen(req)
         data = response.read()
 
         # Si llega hasta aquí, es que ha cambiado
         updated = True
         response.close()
 
-    except urllib.error.URLError as e:
+    except urllib_error.URLError as e:
         # Si devuelve 304 es que no ha cambiado
         if hasattr(e, 'code'):
             logger.info("Codigo de respuesta HTTP : %d" % e.code)
