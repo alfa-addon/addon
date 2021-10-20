@@ -174,7 +174,7 @@ def create_soup(url, referer=None, unescape=False):
 def featured(item):
     logger.info()
     itemlist = list()
-    soup = create_soup(item.url).find("div", class_="side_box")
+    soup = create_soup(item.url).find("div", class_="wdgt__movies")
     matches = soup.find_all("a")
 
     for elem in matches:
@@ -197,11 +197,13 @@ def list_all(item):
     itemlist = list()
 
     soup = create_soup(item.url, unescape=True)
-    matches = soup.find_all("div", class_="home_post_cont")
+    #matches = soup.find_all("div", class_="home_post_cont")
+    matches = soup.find_all("div", class_="postItem")
 
     for elem in matches:
+        #url = scrapertools.find_single_match(elem.img.get("extract", ""), "href='([^']+)'")
+        url = elem.a.get("href", "")
 
-        url = scrapertools.find_single_match(elem.img.get("extract", ""), "href='([^']+)'")
         if not url:
             continue
         try:
@@ -240,7 +242,7 @@ def by_year(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url, unescape=True).find("div", class_="page_single_left")
+    soup = create_soup(item.url, unescape=True).find("div", class_="yearlist")
     for elem in soup.find_all('a'):
         url = elem["href"]
         title = elem.text
@@ -254,7 +256,8 @@ def genres(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url, unescape=True).find("ul", id="menu-menu")
+    #soup = create_soup(item.url, unescape=True).find("ul", id="menu-menu")
+    soup = create_soup(item.url, unescape=True).find("div", class_="tagList__cnt")
     matches = soup.find_all("a")
     for elem in matches:
 

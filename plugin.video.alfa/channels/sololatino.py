@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel SeriesKao -*-
+# -*- Channel SoloLatino -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 import sys
@@ -22,7 +22,7 @@ from platformcode import config, logger
 from channels import filtertools, autoplay
 
 
-IDIOMAS = {'2': 'VOSE', "0": "LAT", "1": "CAST"}
+IDIOMAS = {'2': 'VOSE', "0": "LAT", "1": "CAST", "LAT": "LAT"}
 
 list_language = list(IDIOMAS.values())
 
@@ -34,7 +34,7 @@ list_servers = [
     'directo'
     ]
 
-host = 'https://serieskao.tv/'
+host = 'https://sololatino.net/'
 
 
 def mainlist(item):
@@ -47,6 +47,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=host + "pelicula",
                          thumbnail=get_thumb('movies', auto=True), type="pelicula"))
     itemlist.append(Item(channel=item.channel, title='Series', url=host + 'series', action='sub_menu',
+                         thumbnail=get_thumb('tvshows', auto=True)))
+    itemlist.append(Item(channel=item.channel, title='Anime', url=host + 'animes', action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
                          thumbnail=get_thumb("search", auto=True)))
@@ -123,13 +125,13 @@ def section(item):
         matches = soup.find("ul",  class_="Ageneros")
         base_url = "%s/filtro/?genre=%s"
     else:
-        matches = soup.find("ul", class_="Ayears")
+        matches = soup.find("ul", class_="Ayears", id="tipo_cat_1")
         base_url = "%s/filtro/?year=%s"
 
     for elem in matches.find_all("li"):
         gendata = elem.get('data-value', '')
         title = elem.text
-        url =  base_url % (item.url, gendata)
+        url = base_url % (item.url, gendata)
 
         if gendata:
             itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url))
@@ -142,7 +144,11 @@ def list_all(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url)
+    try:
+        soup = create_soup(item.url)
+    except:
+        return itemlist
+
     matches = soup.find("div", class_="content").find_all("article", id=re.compile(r"^post-\d+"))
 
     for elem in matches:
@@ -156,7 +162,7 @@ def list_all(item):
 
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
 
-        if "series/" in url:
+        if not "peliculas/" in url:
             new_item.contentSerieName = title
             new_item.action = "seasons"
             new_item.context = filtertools.context(item, list_language, list_quality)
@@ -403,11 +409,11 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas']:
-            item.url = host + 'pelicula'
+            item.url = host + 'peliculas'
         elif categoria == 'infantiles':
-            item.url = host + 'pelicula/filtro/?genre=animacion-2'
+            item.url = host + 'peliculas/filtro/?genre=animacion-2'
         elif categoria == 'terror':
-            item.url = host + 'pelicula/filtro/?genre=terror-2/'
+            item.url = host + 'peliculas/filtro/?genre=terror-2/'
         item.first = 0
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':

@@ -59,6 +59,7 @@ thumb_dict = {"movies": "https://s10.postimg.cc/fxtqzdog9/peliculas.png",
     "cast": "https://i.postimg.cc/qvfP5Xvt/cast.png",
     "lat": "https://i.postimg.cc/Gt8fMH0J/lat.png",
     "vose": "https://i.postimg.cc/kgmnbd8h/vose.png",
+    "vo": "https://i.postimg.cc/Ss9gF3nG/vo.png",
     "accion": "https://s14.postimg.cc/sqy3q2aht/action.png",
     "adolescente" : "https://s10.postimg.cc/inq7u4p61/teens.png",
     "adultos": "https://s10.postimg.cc/s8raxc51l/adultos.png",
@@ -320,7 +321,7 @@ def set_lang(language):
 
 
 
-def title_format(item, c_file):
+def title_format(item, c_file=colors_file):
 
     global colors_file
     colors_file = c_file
