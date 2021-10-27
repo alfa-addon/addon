@@ -26,11 +26,15 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     unpacked = ""
+    data = httptools.downloadpage(page_url).data
+    logger.debug(data)
+
     packed = scrapertools.find_single_match(data, r"'text/javascript'>(eval.*?)\n")
     if packed:
         unpacked = jsunpack.unpack(packed)
     video_urls = []
     if not unpacked:  unpacked = data
+    logger.debug(unpacked)
     video_srcs = scrapertools.find_single_match(unpacked, "sources:\s*\[[^\]]+\]")
     video_info = scrapertools.find_multiple_matches(video_srcs, r'{(file:.*?)}')
     try:

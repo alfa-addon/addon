@@ -103,13 +103,16 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    video_urls = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    links_data = scrapertools.find_single_match(data, '<div id="pettabs">(.*?)</ul>')
+    links_data = scrapertools.find_single_match(data, '<div id="pettabs">(.*?)<div id="pettabs">')
     patron = 'href="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(links_data)
     for url in matches:
-        itemlist.append(item.clone(title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
+        if not url in video_urls:
+            video_urls += url
+            itemlist.append(item.clone(title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)

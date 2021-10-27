@@ -37,21 +37,12 @@ except:
     __modo_grafico__ = True
 
 
-# parameters = channeltools.get_channel_parameters(__channel__)
-# unif = parameters['force_unify']
-
-
 def mainlist(item):
     logger.info()
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(item.clone(title="Peliculas" , action="lista", url= host, thumbnail=get_thumb("movies", auto=True)))
-    # itemlist.append(item.clone(title="      Mas Vistas" , action="lista", url= host + "/Seccion.html?ver=PelisMasVistos", thumbnail=get_thumb("movies", auto=True)))
-    # itemlist.append(item.clone(title="Series", action="lista", url= host + "/Series.html?page=1", thumbnail=get_thumb("tvshows", auto=True)))
-    # itemlist.append(item.clone(title="      Mas Vistas" , action="lista", url= host + "/Seccion.html?ver=MasVistos", thumbnail=get_thumb("movies", auto=True)))
-    # itemlist.append(item.clone(title="Anime", action="lista", url= host + "/Anime.html?page=1", thumbnail=get_thumb("anime", auto=True)))
-    # itemlist.append(item.clone(title="Novela", action="lista", url= host + "/Novelas.html?page=1", thumbnail=get_thumb("tvshows", auto=True)))
     itemlist.append(item.clone(title="Genero" , action="categorias", url= host, thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(item.clone(title="Buscar...", action="search", thumbnail=get_thumb("search", auto=True)))
     itemlist.append(item.clone(title="Configurar canal...", action="configuracion", text_color="gold", folder=False, thumbnail=get_thumb("setting_0.png")))
@@ -161,13 +152,14 @@ def findvideos(item):
     online = scrapertools.find_single_match(data, '<div class="centradito"><script>[A-z0-9]+ \(([^\)]+)')
     online = online.replace('"', '').split(",")
     for elem in output:
-        if "href" in elem:
+        if "href" in elem :
             ref = scrapertools.find_single_match(elem, 'href="([^"]+)"')
             id = scrapertools.find_single_match(elem, 'codigo(\d+)')
-            id = (int(id)-1)
+            if id:
+                id = (int(id)-1)
             if "codigo" in ref:
                 url = online[id]
-            else:
+            if not "no.html" in ref:
                 url = "%s%s" %(ref, online[id])
             itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     descarga = scrapertools.find_single_match(data, "var abc = '([^']+)'")
