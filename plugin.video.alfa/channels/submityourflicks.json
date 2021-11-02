@@ -1,6 +1,6 @@
 {
-  "id": "submityouflicks",
-  "name": "Submit Your Flicks",
+  "id": "submityourflicks",
+  "name": "SubmitYourFlicks",
   "active": true,
   "adult": true,
   "language": ["*"],

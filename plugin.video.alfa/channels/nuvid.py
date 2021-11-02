@@ -70,6 +70,7 @@ def lista(item):
     header = {'X-Requested-With': 'XMLHttpRequest'}
     if item.extra != "buscar":
         header['Cookie'] = 'area=EU; lang=en; search_filter_new=%s' % filter
+        logger.debug(header)
     data = httptools.downloadpage(item.url, headers=header, cookies=False).data
     patron = '<div class="box-tumb related_vid.*?'
     patron += 'href="([^"]+)" title="([^"]+)".*?'

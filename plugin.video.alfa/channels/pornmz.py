@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://pornmz.com'  
+host = 'https://pornmz.net'  
 
      ############################# cloudflare ###################################
 def mainlist(item):
