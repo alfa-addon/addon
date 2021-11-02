@@ -48,7 +48,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         patron = 'video_url:\s*(?:\'|")([^\,]+)(?:\'|").*?'
         patron += 'postfix:\s*(?:\'|")([^\,]+)(?:\'|")'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    logger.debug(matches)
     for url,quality in matches:
         if not "?login" in url and not "signup" in url:
             if "function/" in url:
