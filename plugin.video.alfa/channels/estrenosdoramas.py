@@ -216,7 +216,7 @@ def list_all(item):
     itemlist = []
 
     data = get_source(item.url)
-    data = scrapertools.find_single_match(data, '<h3 class="widgetitulo">Resultados</h3>.*?<div id="sidebar-wrapper">')
+    data = scrapertools.find_single_match(data, '<h3 class="widgetitulo">Resultados</h3>.*?<div id="(?:sidebar|footer)-wrapper">')
     
     patron = '<div.*?<a href="(.*?)"><img src="(.*?)" alt="(.*?)".*?</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -228,9 +228,6 @@ def list_all(item):
         if scrapedtitle.startswith("Pelicula") or item.type == "movie":
             new_item.action = 'findvideos'
             new_item.contentTitle = title
-        # elif 'search' in item.url:
-        #     new_item.contentSerieName=scrapedtitle
-        #     new_item.action = 'findvideos'
         elif 'capitulo' in scrapedurl:
             new_item.contentSerieName=scrapedtitle
             new_item.action = 'findvideos'
@@ -242,7 +239,7 @@ def list_all(item):
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     # Paginacion
-    patron = '<a class="nextpostslink" rel="next" href="(.*?)">'
+    patron = '<a class="nextpostslink" rel="next" aria-label="Next Page" href="(.*?)">'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     if matches:

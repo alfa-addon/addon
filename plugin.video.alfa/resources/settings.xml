@@ -18,6 +18,7 @@
         <setting id="trakt_sync" type="bool" label="70109" default="false"/>
         <setting id="forceview" type="bool" label="30043" default="false"/>
 <!--        <setting id="faster_item_serialization" type="bool" label="30300" default="false"/>-->
+        <setting id="show_fixes" type="bool" label="Mostrar informe de correcciones" default="true"/>
         <setting id="debug" type="bool" label="30003" default="false"/>
 
         <setting label="70169" type="lsep"/>
