@@ -9,10 +9,15 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 import re
 
 from bs4 import BeautifulSoup
-from core import httptools, scrapertools, servertools, jsontools, tmdb
+from core import httptools
+from core import scrapertools
+from core import servertools
+from core import jsontools
+from core import tmdb
 from core.item import Item
-from platformcode import config, logger, unify
-from channelselector import get_thumb
+from platformcode import config
+from platformcode import logger
+from platformcode import unify
 
 host = 'https://comamosramen.com'
 apihost = 'https://fapi.comamosramen.com/api'
@@ -20,7 +25,6 @@ server_list = {'dood': 'doodstream', 'stream': 'streamtape', 'mixdrop(celular)':
 server_urls = {'doodstream': 'https://dood.to/e/', 'streamtape': 'https://streamtape.com/e/', 'mixdrop': 'https://mixdrop.to/e/',
                'voe': 'https://voe.sx/e/', 'okru': 'https://ok.ru/videoembed/', 'zplayer': 'https://v2.zplayer.live/embed/'}
 
-# Funcionalidad de pelis desactivada por ahora, las películas parecen no funcionales/no parecen haber
 
 def get_source(url, soup=False, json=False, **opt):
     logger.info()
@@ -34,6 +38,7 @@ def get_source(url, soup=False, json=False, **opt):
         data = BeautifulSoup(data, "html5lib", from_encoding="utf-8") if soup else data
 
     return data
+
 
 def mainlist(item):
     logger.info()
@@ -57,7 +62,7 @@ def mainlist(item):
             list_type = 'pelicula',
             title = "Películas",
             thumbnail = 'https://i.postimg.cc/Xqdgcmtt/ramon9.png',
-            url = '{}/categorias/Peliculas/48'.format(apihost)
+            url = '{}/pages/Peliculas'.format(host)
         )
     )
     """
@@ -85,7 +90,6 @@ def mainlist(item):
             viewType = 'videos'
         )
     )
-    # """
     itemlist.append(
         Item(
             action = "country",
@@ -96,7 +100,6 @@ def mainlist(item):
             viewType = 'videos'
         )
     )
-    # """
     itemlist.append(
         Item(
             action = "alpha",
@@ -108,6 +111,19 @@ def mainlist(item):
             viewType = 'videos'
         )
     )
+    """
+    itemlist.append(
+        Item(
+            action = "categories",
+            channel = item.channel,
+            fanart = item.fanart,
+            title = "Categorías",
+            thumbnail = 'https://i.postimg.cc/Xqdgcmtt/ramon9.png',
+            url = '{}/categorias/'.format(host),
+            viewType = 'videos'
+        )
+    )
+    """
     itemlist.append(
         Item(
             action = "search",
@@ -120,21 +136,27 @@ def mainlist(item):
     )
     return itemlist
 
+
 def newest(categoria):
     logger.info()
     item = Item()
     item.channel = 'comamosramen'
+
     if categoria in ['peliculas']:
         item.list_type = 'pelicula'
-        item.url = '{}/categorias/Peliculas/48'.format(apihost)
+        item.url = '{}/pages/Peliculas'.format(host)
+
     else:
         item.list_type = 'novedades'
-        item.url = '{}/ultimos/48'.format(apihost)
+        item.url = '{}/pages/Dramas'.format(host)
+
     return list_all(item)
+
 
 def country(item):
     logger.info()
     itemlist = []
+
     itemlist.append(
         Item(
             action = "list_all",
@@ -190,13 +212,17 @@ def country(item):
             url = '{}/categorias/Filipinas/48'.format(apihost)
         )
     )
+
     return itemlist
+
 
 def alpha(item):
     logger.info()
+
     itemlist = []
     soup = get_source(item.url, soup=True)
-    letters = soup.find('nav', class_='navbar bg-main-color d-flex justify-content-end').find('div', class_='ml-40').find_all('a')
+    letters = soup.select('nav.navbar.d-flex')[0].find_all('a')
+
     for letter in letters:
         itemlist.append(
             Item(
@@ -204,10 +230,12 @@ def alpha(item):
                 channel = item.channel,
                 list_type = 'data',
                 title = letter.text.upper(),
-                url = '{}{}/48'.format(apihost, letter['href'])
+                url = '{}{}/100'.format(apihost, letter['href'])
             )
         )
+
     return itemlist
+
 
 def set_lang(title):
     """
@@ -219,24 +247,27 @@ def set_lang(title):
     
     # Buscamos si hay un "|", que divida en idioma
     array = title.encode().decode().split('|')
+
     if len(array) > 1:
-        if 'latino' in array[1].lower():
-            language = 'LAT'
-        else:
-            language = ''
+        language = 'LAT' if 'latino' in array[1].lower() else ''
+
     else:
         language = 'VOSE'
+
     title = array[0].strip()
+
     for exc, repl in exceptions.items():
-        if scrapertools.find_single_match(title.lower(), exc):
-            title = repl
+        title = repl if scrapertools.find_single_match(title.lower(), exc) else title
+
     return title, language
+
 
 def list_all(item):
     logger.info()
     itemlist = []
     matches = []
-    if item.list_type in ['pais', 'pelicula', 'categorias', 'data', 'buscar', 'novedades']:
+
+    if apihost in item.url:
         # El JSON viene desde el API, la mayoría de info ya vendrá en el JSON
         json = get_source(item.url, json=True)
 
@@ -245,20 +276,49 @@ def list_all(item):
             title, language = set_lang(j['uniqid'].split('-', 1)[1])
             _id = j['uniqid'].split('-', 1)
 
-            action = 'seasons'
+            action = 'seasons' if contentType == 'tvshow' else 'findvideos'
             contentSerieName = title if contentType == 'tvshow' else None
             contentTitle = title
             status = j['estado']
             thumb = 'https://img.comamosramen.com/{}-medium.webp'.format(j['img'])
-            url = '{}/v/{}'.format(host, '{}-{}'.format(_id[0], _id[1].replace('-', '%20')))
+            url = '{}/v/{}/{}'.format(host, _id[0], _id[1].replace('-', ' '))
             viewType = 'episodes' if contentType == 'tvshow' else 'files'
+
+            matches.append([action, contentSerieName, contentTitle, contentType, language, status, title, thumb, url, viewType])
+
+    elif host in item.url:
+        # El JSON vendrá en la página, incrustado como __NEXT_DATA__
+        soup = get_source(item.url, soup=True)
+        json = jsontools.load(soup.find('script', id='__NEXT_DATA__').text)
+        json = json['props']['pageProps']['data']['sections'][0]['data']
+
+        for j in json:
+            contentType = 'tvshow' if j.get('lastEpisodeEdited') else 'movie'
+            title, language = set_lang(j['title'])
+
+            action = 'seasons' if contentType == 'tvshow' else 'findvideos'
+            contentSerieName = title if contentType == 'tvshow' else None
+            contentTitle = title
+            thumb = 'https://img.comamosramen.com/{}-medium.webp'.format(j['img']['vertical'])
+            url = '{}/v/{}/{}/'.format(host, j['_id'], j['title'])
+            url = '{}{}'.format(url, j['lastEpisodeEdited']) if contentType == 'tvshow' else url
+            viewType = 'episodes' if contentType == 'tvshow' else 'files'
+
+            status = []
+
+            if j['status']['isOnAir']:
+                status.append('En emisión')
+            if j['status']['isOnAir']:
+                status.append('Subtitulando')
+
+            status = ", ".join(status)
 
             matches.append([action, contentSerieName, contentTitle, contentType, language, status, title, thumb, url, viewType])
 
     else:
         # La sección cambió drásticamente, requiere reconstrucción
+        soup = get_source(item.url, soup=True)
         logger.debug("\n" + str(soup.prettify()))
-        raise Exception('Item malformado, list_type no válido')
         return
 
     # Recorremos la lista construída de matches
@@ -277,24 +337,27 @@ def list_all(item):
         # Determinación dinámica de contentType
         if contentType == 'tvshow':
             it.contentSerieName = contentSerieName
+
         elif contentTitle:
             it.contentTitle = contentTitle
+
         itemlist.append(it)
 
     return itemlist
+
 
 def seasons(item):
     logger.info()
     itemlist = []
     seasons = []
-    soup = get_source(item.url.replace('-', '/'), soup=True, ignore_response_code=True)
+    soup = get_source(item.url, soup=True, ignore_response_code=True)
     json = jsontools.load(soup.find('script', id='__NEXT_DATA__').text)
 
-    # Buscamos el "content_id", requerido para búsqueda en la API de la página
-    # Actualización: Esto ya no funciona, la API cambió y no deja buscar por ID
+    # NOTE: API para buscar episodios no da resultados, verificar después
+    # NOTE[2]: La API esta sigue sin funcionar. Probablemente la descartaré completamente
+    # Buscamos el "content_id", requerido para búsqueda en la API de la página      # Esto ya no funciona, la API cambió y no deja buscar por ID
     # content_id = json['props']['pageProps'].get('id')
     # Obtenemos el JSON con los episodios desde la API para clasificar temporadas (vienen en lotes)
-    # NOTA: API para buscar episodios no da resultados, verificar después
     # episodios = get_source('https://fapi.comamosramen.com/api/byUniqId/{}'.format(content_id), json=True)
 
     seriesdata = json['props']['pageProps']['data']
@@ -308,17 +371,11 @@ def seasons(item):
 
         if item.language:
             language = item.language
-        elif seriesdata['metadata'].get('tags'):
-            if 'Audio Latino' in seriesdata['metadata'].get('tags'):
-                language = 'LAT'
 
-        if seriesdata.get('type'):
-            if seriesdata['type'].lower() in ['pelicula']:
-                contentType = 'movie'
-            else:
-                contentType = 'tvshow'
-        else:
-            contentType = ''
+        elif seriesdata['metadata'].get('tags'):
+            language = 'LAT' if 'Audio Latino' in seriesdata['metadata'].get('tags') else language
+
+        contentType = 'movie' if seriesdata.get('type') and seriesdata['type'].lower() in ['pelicula'] else 'tvshow'
 
         it = Item(
             action = 'episodesxseason',
@@ -338,9 +395,11 @@ def seasons(item):
         # Asignamos valores al item según su contentType
         if contentType == 'movie':
             it.contentTitle = ogtitle
+
         else:
             it.contentSeason = season['season']
             it.contentSerieName = ogtitle
+
         itemlist.append(it)
 
     # Asignamos las infoLabels (si aplica)
@@ -370,6 +429,7 @@ def seasons(item):
 
     return itemlist
 
+
 def episodios(item):
     logger.info()
     itemlist = []
@@ -382,6 +442,7 @@ def episodios(item):
             if isinstance(seasons_list[0], list):
                 for season in seasons_list:
                     itemlist.extend(episodesxseason(season))
+
             else:
                 return seasons_list
 
@@ -390,6 +451,7 @@ def episodios(item):
         itemlist.extend(findvideos(item))
 
     return itemlist
+
 
 def episodesxseason(item):
     logger.info()
@@ -417,20 +479,29 @@ def episodesxseason(item):
         if not item.contentType == 'movie':
             it.title = (config.get_localized_string(60036) % episode['episode'])
             it.contentEpisodeNumber = episode['episode']
+
         itemlist.append(it)
 
-    if not item.videolibrary:
-        tmdb.set_infoLabels(itemlist, seekTmdb=True)
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
 
     # Si es peli, mandamos directo a findvideos
     if len(itemlist) == 1 and item.contentType == 'movie':
         return findvideos(itemlist[0])
+
     else:
         return itemlist
+
 
 def findvideos(item):
     logger.info()
     itemlist = []
+
+    if not item.urls:
+        soup = get_source(item.url, soup=True)
+        json = jsontools.load(soup.find('script', id='__NEXT_DATA__').text)
+        seriesdata = json['props']['pageProps']['data']
+        seasons = seriesdata['seasons']
+        item.urls = seasons[0]['episodes'][0]['players']
 
     # Recorremos la lista de servidores
     for option in item.urls:
@@ -478,9 +549,11 @@ def findvideos(item):
         )
     return itemlist
 
+
 def search(item, text):
     logger.info()
     itemlist = []
+
     if text:
         try:
             text = scrapertools.slugify(text)
@@ -488,7 +561,9 @@ def search(item, text):
             item.url = '{}/buscar/{}/40'.format(apihost,text)
             item.list_type = 'buscar'
             return list_all(item)
-        except:
-            for line in sys.exc_info():
-                logger.error("%s" % line)
+
+        except Exception:
+            import traceback
+            logger.error(traceback.format_exc())
             return itemlist
+
