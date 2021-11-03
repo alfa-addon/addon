@@ -29,45 +29,45 @@ def mainlist(item):
 
     itemlist.append(
         Item(
-            action = "list_all",
-            channel = item.channel,
-            thumbnail = get_thumb("movies", auto=True),
-            title = "Peliculas",
-            url = host,
-            viewType = "movies"
+            action="list_all",
+            channel=item.channel,
+            thumbnail=get_thumb("movies", auto=True),
+            title="Peliculas",
+            url=host,
+            viewType="movies"
         )
     )
 
     itemlist.append(
         Item(
-            action = "genres",
-            channel = item.channel,
-            thumbnail = get_thumb("genres", auto=True),
-            title = "Géneros",
-            url = host,
-            viewType = "videos"
+            action="genres",
+            channel=item.channel,
+            thumbnail=get_thumb("genres", auto=True),
+            title="Géneros",
+            url=host,
+            viewType="videos"
         )
     )
 
     itemlist.append(
         Item(
-            action = "years",
-            channel = item.channel,
-            thumbnail = get_thumb("year", auto=True),
-            title = "Años",
-            url = host,
-            viewType = "videos"
+            action="years",
+            channel=item.channel,
+            thumbnail=get_thumb("year", auto=True),
+            title="Años",
+            url=host,
+            viewType="videos"
         )
     )
 
     itemlist.append(
         Item(
-            action = "search",
-            channel = item.channel,
-            thumbnail = get_thumb("search", auto=True),
-            title = "Buscar...",
-            url = host,
-            viewType = "videos"
+            action="search",
+            channel=item.channel,
+            thumbnail=get_thumb("search", auto=True),
+            title="Buscar...",
+            url=host,
+            viewType="videos"
         )
     )
 
@@ -107,11 +107,11 @@ def genres(item):
 
         itemlist.append(
             Item(
-                action = "list_all",
-                channel = item.channel,
-                title = title,
-                url = url,
-                viewType = "movies"
+                action="list_all",
+                channel=item.channel,
+                title=title,
+                url=url,
+                viewType="movies"
             )
         )
 
@@ -135,11 +135,11 @@ def years(item):
 
         itemlist.append(
             Item(
-                action = "list_all",
-                channel = item.channel,
-                title = title,
-                url = url,
-                viewType = "movies"
+                action="list_all",
+                channel=item.channel,
+                title=title,
+                url=url,
+                viewType="movies"
             )
         )
 
@@ -170,13 +170,13 @@ def list_all(item):
 
         itemlist.append(
             Item(
-                action = "findvideos",
-                channel = item.channel,
-                contentTitle = title,
-                infoLabels = {"year": year},
-                thumbnail = thumb,
-                title = title,
-                url = url
+                action="findvideos",
+                channel=item.channel,
+                contentTitle=title,
+                infoLabels={"year": year},
+                thumbnail=thumb,
+                title=title,
+                url=url
             )
         )
 
@@ -187,11 +187,11 @@ def list_all(item):
     if pagination:
         itemlist.append(
             Item(
-                action = "list_all",
-                channel = item.channel,
-                page = end,
-                title = 'Siguiente >>',
-                url = item.url,
+                action="list_all",
+                channel=item.channel,
+                page=end,
+                title='Siguiente >>',
+                url=item.url,
             )
         )
 
@@ -205,13 +205,13 @@ def findvideos(item):
 
     soup = BeautifulSoup(get_source(item.url), "html5lib")
     urls_list = soup.find(class_="player_download").find(class_="level2").find_all(class_="tab-video")
-    duration = metadata.find("ion-icon", {"name": "hourglass"}).parent.find(class_="text-descripcion").text
-    duration = scrapertools.find_single_match(duration, "(\d+):(\d+):(\d+)")
-    item.infoLabels["duration"] = (((int(duration[0]) * 60) * 60) + (int(duration[1]) * 60))
+    # duration = metadata.find("ion-icon", {"name": "hourglass"}).parent.find(class_="text-descripcion").text
+    # duration = scrapertools.find_single_match(duration, "(\d+):(\d+):(\d+)")
+    # item.infoLabels["duration"] = (((int(duration[0]) * 60) * 60) + (int(duration[1]) * 60))
 
     if not item.infoLabels["plot"]:
         metadata = soup.find(class_="serie-info")
-        item.infoLabels["plot"] = metadata.find(class_="text-descripcion sinopsis")
+        item.infoLabels["plot"] = metadata.find(class_="text-descripcion sinopsis").text
 
     for elem in urls_list:
         url = elem["data-source"]
@@ -221,12 +221,13 @@ def findvideos(item):
 
         itemlist.append(
             Item(
-                action = "play",
-                channel = item.channel,
-                infoLabels = item.infoLabels,
-                quality = quality,
-                title = "%s [%s]",
-                url = url
+                action="play",
+                channel=item.channel,
+                infoLabels=item.infoLabels,
+                quality=quality,
+                title="%s [%s]",
+                url=url,
+                infolabels=item.infoLabels
             )
         )
 
@@ -235,13 +236,13 @@ def findvideos(item):
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(
             Item(
-                action = "add_pelicula_to_library",
-                channel = item.channel,
-                contentTitle = item.contentTitle,
-                extra = "findvideos",
-                text_color = "yellow",
-                title = 'Añadir esta pelicula a la videoteca',
-                url = item.url
+                action="add_pelicula_to_library",
+                channel=item.channel,
+                contentTitle=item.contentTitle,
+                extra="findvideos",
+                text_color="yellow",
+                title='Añadir esta pelicula a la videoteca',
+                url=item.url
             )
         )
 

@@ -1,319 +1,240 @@
 # -*- coding: utf-8 -*-
-
+# -*- Channel Cuevana2Español -*-
+# -*- Created for Alfa-addon -*-
+# -*- By the Alfa Develop Group -*-
+import base64
 import sys
+
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-if PY3:
-    import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urllib                                                               # Usamos el nativo de PY2 que es más rápido
-
 import re
-
-from channelselector import get_thumb
-from core.item import Item
+from core import tmdb
 from core import httptools
-from core import jsontools
+from core.item import Item
+from core import servertools
 from core import scrapertools
-from core import servertools, tmdb
+from bs4 import BeautifulSoup
+from channelselector import get_thumb
 from platformcode import config, logger
-from channels import autoplay
+from channels import filtertools, autoplay
 
-host = "http://cuevana2espanol.com/"
+list_language = ["LAT", "CAST"]
 list_quality = []
-list_servers = ['rapidvideo', 'streamango', 'directo', 'yourupload', 'openload', 'dostream']
+list_servers = ['fembed', 'streamtape', 'streamlare', 'zplayer']
 
-def load_data(url):
-    data = httptools.downloadpage(url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+host = "https://cuevana2espanol.com/"
 
-    return data
-
-def redirect_url(url, parameters=None, scr=False):
-
-    try:
-        url = url.replace("/irgo", "/go").replace('gotoolp', 'm3u8player')
-        data = httptools.downloadpage(url, post=parameters, timeout=4.0)
-    except:
-        return
-
-   
-    if not data.data:
-        return
-    
-    link = data.url
-    data = data.data
-    
-    if scr:
-        host = 'https://' + link.split("/")[2]
-        vid = scrapertools.find_single_match(link, "\?id=(\w+)")
-        if vid:
-            link = host+ '/hls/' + vid + '/' + vid + '.playlist.m3u8'
-    elif 'm3u8' in link:
-        link = scrapertools.find_single_match(data, '"file": "([^"]+)"')
-    return link
 
 def mainlist(item):
-    itemlist = []
-    
+    logger.info()
+
+    itemlist = list()
+
     autoplay.init(item.channel, list_servers, list_quality)
-    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "movies", 
-        url = host + "ver-pelicula-online", thumbnail = get_thumb("newest", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Favoritas", action = "movies", 
-        url = host + "calificaciones", thumbnail = get_thumb("favorites", auto = True) ))
-    itemlist.append(Item(channel = item.channel, title = "Destacadas", action = "movies", 
-        url = host + "tendencias", thumbnail = get_thumb("hot", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Ranking IMDB", action = "moviesIMDB", 
-        url = host + "raking-imdb", thumbnail = get_thumb("hot", auto = True) ))
-    itemlist.append(Item(channel = item.channel, title = "--- Busqueda ---", folder=False, text_bold=True))
-    itemlist.append(Item(channel = item.channel, title = "Por Letra", action = "letters",
-        url = host, thumbnail = get_thumb("alphabet", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Buscar...", action = "search", 
-        url = host + "?s=", thumbnail = get_thumb("search", auto = True)))
+
+    itemlist.append(Item(channel=item.channel, title="Ultimas", url=host + 'ver-pelicula-online/', action="list_all",
+                         thumbnail=get_thumb('last', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Destacadas", url=host + 'calificaciones/', action="list_all",
+                         thumbnail=get_thumb('destacadas', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas", url=host + 'tendencias/', action="list_all",
+                         thumbnail=get_thumb('more watched', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Alfabético", url=host, action="alpha",
+                         thumbnail=get_thumb('alphabet', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Buscar...", url=host + '?s=', action="search",
+                         thumbnail=get_thumb('search', auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
-def movies(item):
-    itemlist = []
-    infoLabels = ''
-    data = load_data(item.url)
-    pattern = 'class="poster"><img src="([^"]+)" alt="([^"]+)".*?'
-    pattern += '</span> (.*?)</div>.*?'
-    pattern += 'href="([^"]+)".*?'
-    pattern += '<span>(\d+)</span>.*?'
 
-    matches = scrapertools.find_multiple_matches(data, pattern)
-    for img, title, ranking, link, age in matches:
-        itemTitle = "%s [COLOR yellow](%s)[/COLOR] [COLOR blue](%s)[/COLOR]" % (title, ranking, age)
-        itemlist.append(Item(channel = item.channel, title=itemTitle, contentTitle=title, thumbnail=img, 
-            url=link, action="findvideos", language="LAT", infoLabels={'year':age}))
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
 
-    next_page = scrapertools.find_single_match(data, 'href="([^"]+)" ><span class="icon-chevron-right">')
-    if next_page:
-        itemlist.append(Item(channel = item.channel, title="Siguiente Pagina", 
-            url=next_page, action="movies"))
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
 
-    tmdb.set_infoLabels(itemlist, True)
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+
+    return soup
+
+
+def list_all(item):
+    logger.info()
+
+    itemlist = list()
+
+    soup = create_soup(item.url)
+    matches = soup.find("div", class_="content").find_all("article", id=re.compile("post-\d+"))
+    for elem in matches:
+        try:
+            thumb = elem.img["data-src"]
+        except:
+            thumb = ""
+        title = elem.img["alt"]
+        try:
+            year = elem.find("span", text=re.compile(".*?\d{4}")).text
+        except:
+            year = "-"
+        url = elem.a["href"]
+
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
+                             thumbnail=thumb, contentTitle=title, infoLabels={'year': year}))
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+    try:
+        next_page = soup.find_all("a", class_="arrow_pag")[-1]["href"]
+        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
+    except:
+        pass
 
     return itemlist
 
-def moviesIMDB(item):
-    itemlist = []
 
-    data = load_data(item.url)
-    pattern = '"poster"><a href="([^"]+)"><img src="([^"]+)".*?'
-    pattern += 'class="puesto">(\d+)</div>.*?'
-    pattern += '"rating">(.*?)</div>.*?'
-    pattern += '"title">.*?>(.*?)</a>'
+def alpha(item):
+    logger.info()
 
-    matches = scrapertools.find_multiple_matches(data, pattern)
-    for link, img, rank, rating, title in matches:
-        itemTitle = "[COLOR blue](#%s)[/COLOR] %s [COLOR yellow](%s)[/COLOR]" % (rank, title, rating)
-        img = img.replace('-90x135', '')
+    itemlist = list()
+    letters = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-        itemlist.append(Item(channel = item.channel, title=itemTitle, contentTitle=title, thumbnail=img, 
-            url=link, action="findvideos", language="LAT", infoLabels={'year': '-'}))
+    for letter in letters:
+        itemlist.append(Item(channel=item.channel, title=letter, letter=letter.lower(), action="alpha_results"))
 
-    tmdb.set_infoLabels(itemlist, True)
+    return itemlist
+
+
+def alpha_results(item):
+    logger.info
+
+    itemlist = list()
+    base_url = "https://cuevana2espanol.com/wp-json/dooplay/glossary/?term=%s&nonce=4a91f28386&type=all" % item.letter
+    json_data = httptools.downloadpage(base_url).json
+    for elem in json_data.values():
+
+        itemlist.append(Item(channel=item.channel, title=elem["title"], url=elem["url"], action="findvideos",
+                             thumbnail=elem["img"], contentTitle=elem["title"], infoLabels={"year": elem["year"]}))
+
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+
+    itemlist = list()
+    srv_dict = {"clase b": "fembed", "hqq": "netu", "clase z": "zplayer"}
+    soup = create_soup(item.url)
+    matches = soup.find_all("a", class_="options")
+
+    for elem in matches:
+        opt = elem["href"][1:]
+        lang = "LAT" if item.infoLabels["original_language"] != "es" else "CAST"
+        srv = re.sub("servidor", "", elem.text.lower()).strip()
+
+        v_url = scrapertools.find_single_match(soup.find("div", id=opt).iframe["src"], 'h=([^"]+)')
+        url = ""
+        if not v_url:
+            v_url = scrapertools.find_single_match(soup.find("div", id=opt).iframe["src"], 'url=([^"]+)').encode("utf-8")
+            url = base64.urlsafe_b64decode(v_url + "==")
+
+        if srv in srv_dict.keys():
+            srv = srv_dict[srv]
+        itemlist.append(Item(channel=item.channel, title=srv.capitalize(), action='play', url=url, v_url=v_url,
+                             server=srv.capitalize(), language=lang, infoLabels=item.infoLabels))
+
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
+
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
+        itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                             url=item.url, action="add_pelicula_to_library", extra="findvideos",
+                             contentTitle=item.contentTitle))
+
+    return itemlist
+
+
+def play(item):
+    logger.info()
+
+    if not item.url:
+        item.server = ""
+        p_url = "https://player.cuevana2espanol.com/sc/r.php"
+        item.url = httptools.downloadpage(p_url, post={"h": item.v_url}, follow_redirects=False).headers["location"]
+        itemlist = servertools.get_servers_itemlist([item])
+    elif item.server.lower() == "zplayer":
+        item.url += "|referer=%s" % host
+        itemlist = [item]
     
     return itemlist
 
-def byLetter(item):
-    itemlist = []
-    letter = item.extra
 
-    pageForNonce = load_data(item.url)
-    nonce = scrapertools.find_single_match(pageForNonce, '"nonce":"([^"]+)"')
-    raw = httptools.downloadpage('http://cuevana2espanol.com/wp-json/dooplay/glossary/?term=%s&nonce=%s&type=all' % (letter, nonce)).data
-    json = jsontools.load(raw)
-    #logger.info(nonce)
-    if 'error' not in json:
-        for movie in list(json.items()):
-            data = movie[1]
-            itemTitle = data['title']
-            year = data.get('year', '-')
-            if 'year' in data:
-                itemTitle += " [COLOR blue](%s)[/COLOR]" % year
-            if data['imdb']:
-                itemTitle += " [COLOR yellow](%s)[/COLOR]" % data['imdb']
+def search_results(item):
+    logger.info()
 
-            itemlist.append(Item(channel = item.channel, title=itemTitle, contentTitle=data['title'], url=data['url'], 
-                                 thumbnail=data['img'].replace('-90x135', ''), action="findvideos",
-                                 language="LAT", infoLabels={'year': year}))
+    itemlist = list()
 
-    tmdb.set_infoLabels(itemlist, True)
+    soup = create_soup(item.url)
 
+    for elem in soup.find_all("div", class_="result-item"):
+        url = elem.a["href"]
+        thumb = elem.img["src"]
+        title = elem.img["alt"]
+        year = elem.find("span", class_="year").text
+
+        itemlist.append(Item(channel=item.channel, title=title, contentTitle=title, url=url, thumbnail=thumb,
+                             action='findvideos', infoLabels={'year': year}))
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
     return itemlist
 
-def letters(item):
-    itemlist = []
-    letter = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-    for let in letter:
-        itemlist.append(item.clone(title=let, extra=let.lower(), action="byLetter"))
-
-    return itemlist
-
-def searchMovies(item):
-    itemlist = []
-
-    data = load_data(item.url)
-    pattern = 'class="image">.*?href="([^"]+)".*?'
-    pattern += 'src="([^"]+)" alt="([^"]+)".*?'
-    pattern += 'class="year">(\d+)</span>.*?'
-    pattern += '<p>(.*?)</p>'
-
-    matches = scrapertools.find_multiple_matches(data, pattern)
-    for link, img, title, year, plot in matches:
-        itemTitle = "%s [COLOR blue](%s)[/COLOR]" % (title, year)
-        fullimg = img.replace('-150x150', '')
-        itemlist.append(Item(channel = item.channel, title=itemTitle, contentTitle=title,
-                             thumbnail=fullimg, url=link, plot=plot, action="findvideos",
-                             language="LAT", infoLabels={'year': year}))
-
-    next_page = scrapertools.find_single_match(data, 'href="([^"]+)" ><span class="icon-chevron-right">')
-    if next_page:
-        itemlist.append(Item(channel = item.channel, title="Siguiente Pagina", 
-            url=next_page, action="searchMovies"))
-
-    tmdb.set_infoLabels(itemlist, True)
-
-    return itemlist
-
-def search(item, text):
-
-    text = text.lower().replace(' ', '+')
-    item.url += text
+def search(item, texto):
+    logger.info()
     try:
-        return searchMovies(item)
+        texto = texto.replace(" ", "+")
+        item.url = item.url + texto
+        item.first = 0
+        if texto != '':
+            return search_results(item)
+        else:
+            return []
+    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except:
-        import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
 
-def RedirectLink(hash):
-    hashdata = urllib.urlencode({r'url':hash})
-    return redirect_url('https://player.cuevana2espanol.com/r.php', parameters=hashdata)
 
-def GKPluginLink(hash):
-    hashdata = urllib.urlencode({r'link':hash})
-    try:
-        json = httptools.downloadpage('https://player.cuevana2espanol.com/plugins/gkpluginsphp.php', post=hashdata).data
-    except:
-        return None
-    #logger.info(jsontools.load(json))
-
-    data = jsontools.load(json) if json else False
-    if data:
-        return data['link'] if 'link' in data else None
-    else:
-        return None
-
-def OpenloadLink(hash):
-    hashdata = urllib.urlencode({r'h':hash})
-    json = httptools.downloadpage('https://cuevana2espanol.com/openload/api.php', post=hashdata).data
-    data = jsontools.load(json) if json else False
-    return data['url'] if data['status'] == 1 else None
-
-def getContent(item, data):
-    item.infoLabels["year"] = scrapertools.find_single_match(data, 'class="date">.*?(\d+)</span>')
-    item.plot = scrapertools.find_single_match(data, 'class="wp-content"><p>(.*?)</p>')
-    genres = ''
-    for genre in scrapertools.find_multiple_matches(data, '/genero/.*?"tag">(.*?)</a>'):
-        genres += genre + ', '
-
-    item.infoLabels['genre'] = genres.strip(', ')
-
-def findvideos(item):
+def newest(categoria):
     logger.info()
-    itemlist = []
 
-    data = load_data(item.url)
-    getContent(item, data)
-    """
-    if item.extra:
-        getContentShow(data, item)
-    else:
-        getContentMovie(data, item)
-    """
-    pattern = '<div id="option-(\d)".*?<iframe class="metaframe rptss" src="([^"]+)"'
+    item = Item()
+    try:
+        if categoria == 'peliculas':
+            item.url = host + 'ver-peliculas-online'
 
-    #itemlist.append(Item(channel = item.channel, title=item.url))
-    for option, link in scrapertools.find_multiple_matches(data, pattern):
-        #php.*?=(\w+)&
-        #url=(.*?)&
-        server = ""
-        sname = scrapertools.find_single_match(data, 'href="#option-%s"><b class="icon-play_arrow"></b> Servidor (\w+)' % option)
-        sname = sname.replace("Siempre", "SO")
-        title = "[COLOR blue]Servidor "+sname+" [%s][/COLOR]"
-        if 'player' in link:
-            #~logger.info("CUEVANA LINK %s" % link)
-            #fembed y rapidvideo
-            if r'irgoto.php' in link:
-                link = scrapertools.find_single_match(link, 'php\?url=(.*)').replace('%3A', ':').replace('%2F', '/')
-                link = RedirectLink(link)
-                if not link:
-                    continue
-                server = servertools.get_server_from_url(link)
-                
-            #vanlong
-            elif r'irgotogd' in link:
-                link = redirect_url('https:'+link, scr=True)
-                server = "directo"
+        itemlist = list_all(item)
+        if itemlist[-1].title == 'Siguiente >>':
+            itemlist.pop()
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
 
-            #openloadpremium m3u8
-            elif r'irgotoolp' in link:
-                link = redirect_url('https:'+link)
-                server = "oprem"
-            
-            #openloadpremium no les va en la web, se hace un fix aqui
-            elif r'irgotogp' in link:
-                link = scrapertools.find_single_match(data, r'irgotogd.php\?url=(\w+)')
-                #link = redirect_url('https:'+link, "", True)
-                link = GKPluginLink(link)
-                server = "directo"
-            elif r'gdv.php' in link:
-                # google drive hace lento la busqueda de links, ademas no es tan buena opcion y es el primero que eliminan
-                continue
-            #amazon y vidcache, casi nunca van
-            else:
-                link = scrapertools.find_single_match(link, 'php.*?file=(\w+)')
-                link = GKPluginLink(link)
-                server = "directo"
-            
-        elif r'openload' in link:
-            link = scrapertools.find_single_match(link, '\?h=(\w+)')
-            link = OpenloadLink(link)
-            server = "openload"
-        elif 'youtube' in link:
-            title = "[COLOR yellow]Ver Trailer (%s)[/COLOR]"
-            server = "youtube"
-        else: # En caso de que exista otra cosa no implementada, reportar si no aparece pelicula
-            continue
-
-        if not link:
-            continue
-        # GKplugin puede devolver multiples links con diferentes calidades, si se pudiera colocar una lista de opciones
-        # personalizadas para Directo, se agradece, por ahora solo devuelve el primero que encuentre
-        if type(link) is list:
-            link = link[0]['link']
-        #if r'chomikuj.pl' in link:
-            # En algunas personas la opcion CH les da error 401
-            #link += "|Referer=https://player4.cuevana2.com/plugins/gkpluginsphp.php" 
-        itemlist.append(
-            item.clone(title=title % server.capitalize(), server=server,
-                       url=link, action='play'))
-
-    #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    autoplay.start(itemlist, item)
-
-    if config.get_videolibrary_support() and len(itemlist):
-                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="yellow",
-                                     action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                     contentTitle = item.contentTitle
-                                     ))
     return itemlist

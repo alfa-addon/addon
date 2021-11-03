@@ -8,7 +8,7 @@
         "url": "https://www.fembed.com/api/source/\\1"
       },
       {
-        "pattern": "(?:animekao|sypl|xstreamcdn|hlshd|dutrag).\\w{2,4}/(?:f|v)/([A-z0-9_-]+)",
+        "pattern": "(?:animekao|sypl|xstreamcdn|hlshd|dutrag|diasfem).\\w{2,4}/(?:f|v)/([A-z0-9_-]+)",
         "url": "https://www.fembed.com/api/source/\\1"
       },
       {

@@ -219,7 +219,7 @@ def trakt_check(itemlist):
                 if not synced:
                     get_sync_from_file()
                     synced = True
-                
+
                 mediatype = 'movies'
                 id_type = 'tmdb'
 
@@ -239,7 +239,7 @@ def trakt_check(itemlist):
                             season = str(info['season'])
 
                             if season in id_result[id]:
-                                episode = str(info['episode'].lstrip("0"))
+                                episode = str(info['episode']).lstrip("0")
 
                                 if episode in id_result[id][season]:
                                     season_watched = id_result[id][season]

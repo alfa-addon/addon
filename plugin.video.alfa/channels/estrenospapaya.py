@@ -212,8 +212,14 @@ def seasons(item):
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
-    itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
-         action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
+    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra:
+        itemlist.append(Item(channel=item.channel,
+                             title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
+                             url=item.url,
+                             action="add_serie_to_library",
+                             extra="episodios",
+                             contentSerieName=item.contentSerieName
+                             ))
 
     return itemlist
 
@@ -233,6 +239,7 @@ def episodios(item):
     logger.info()
     itemlist = []
     templist = seasons(item)
+
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
 
@@ -245,7 +252,7 @@ def episodesxseason(item):
 
     infoLabels = item.infoLabels
     season = infoLabels["season"]
-    matches = create_soup(item.url).find("div", id="hoh%s" % season).find_all("div", class_="ucapname")
+    matches = create_soup(item.url).find("div", id="hoh%s" % season).find_all("div", class_=("ucapname"))
 
     for elem in matches:
         data_lang = elem.find_next_sibling()
