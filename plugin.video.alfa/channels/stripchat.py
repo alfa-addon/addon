@@ -16,8 +16,7 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-# from core import jsontools as json
-# from channels import autoplay
+
 
 IDIOMAS = {'vo': 'VO'}
 list_language = list(IDIOMAS.values())
@@ -34,17 +33,11 @@ cat = 'https://es.stripchat.com/api/front/models?limit=40&primaryTag=girls&filte
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    # autoplay.init(item.channel, list_servers, list_quality)
-
     itemlist.append(item.clone(title="Female" , action="lista", url=hosta %("girls", "")))
     itemlist.append(item.clone(title="Couples" , action="lista", url=hosta % ("couples", "")))
     itemlist.append(item.clone(title="Male" , action="lista", url=hosta % ("men", "")))
     itemlist.append(item.clone(title="Transexual" , action="lista", url=hosta % ("trans", "")))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=cat))
-
-    # autoplay.show_option(item.channel, itemlist)
-
     return itemlist
 
 
@@ -76,18 +69,6 @@ def categorias(item):
             itemlist.append(item.clone(action="lista", title=title, url=url,
                                   thumbnail=thumbnail , plot=plot) )
     return sorted(itemlist, key=lambda i: i.title)
-
-
-# def create_soup(url, referer=None, unescape=False):
-    # logger.info()
-    # if referer:
-        # data = httptools.downloadpage(url, headers={'Referer': referer}).data
-    # else:
-        # data = httptools.downloadpage(url).data
-    # if unescape:
-        # data = scrapertools.unescape(data)
-    # soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-    # return soup
 
 
 def lista(item):
@@ -122,18 +103,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    item.url += "|verifypeer=false"
+    # item.url += "|verifypeer=false"
     itemlist.append(item.clone(action="play", title="Directo", url=item.url ))
-    # Requerido para AutoPlay
-    # autoplay.start(itemlist, item)
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    item.url += "|verifypeer=false"
+    # item.url += "|verifypeer=false"
     itemlist.append(item.clone(action="play", title=item.url, contentTitle = item.title, url=item.url, server="Directo" ))
-    # Requerido para AutoPlay
-    # autoplay.start(itemlist, item)
     return itemlist

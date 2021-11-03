@@ -21,6 +21,7 @@ from bs4 import BeautifulSoup
 host = 'https://netfapx.com'
 
 # Timming 
+
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -67,8 +68,8 @@ def catalogo(item):
         url = elem.a['href']
         stitle = elem.img['alt']
         thumbnail = elem.img['src']
-        cantidad = elem.find_all("div")[-2].text.split("\n")[2]
-        cantidad = cantidad.split(" ")[2]
+        cantidad = elem.find_all("div")[-2]#.text.split("\n")[2]
+        cantidad = scrapertools.find_single_match(str(cantidad), '"Videos"/>([^<]+)<').strip()
         title = "%s (%s)" %(stitle,cantidad)
         url = url.replace("pornstar", "videos")
         plot = ""

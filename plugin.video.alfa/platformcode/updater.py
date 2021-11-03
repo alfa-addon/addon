@@ -174,7 +174,8 @@ def check_addon_updates(verbose=False):
         # Descargar zip con las actualizaciones
         # -------------------------------------
 
-        downloadtools.downloadfile(ADDON_UPDATES_ZIP, localfilename, silent=True)
+        if downloadtools.downloadfile(ADDON_UPDATES_ZIP, localfilename, silent=True) < 0:
+            raise
         
         # Descomprimir zip dentro del addon
         # ---------------------------------
@@ -210,6 +211,11 @@ def check_addon_updates(verbose=False):
         if 'files' in data: data.pop('files', None)
             
         open(last_fix_json, "w").write(jsontools.dump(data))
+        # Actualiza la versión del addon en las cabeceras
+        try:
+            httptools.__version = '%s.fix%d' % (data['addon_version'], data['fix_version'])
+        except:
+            pass
         
         logger.info('Addon actualizado correctamente a %s.fix%d' % (data['addon_version'], data['fix_version']))
         if verbose:

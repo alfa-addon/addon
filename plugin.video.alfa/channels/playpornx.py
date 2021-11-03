@@ -41,7 +41,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/adult/?filter=popular"))
     itemlist.append(item.clone(title="Pornstars" , action="categorias", url=host + "/adult/pornstars/"))
     itemlist.append(item.clone(title="Canal" , action="canal", url=host + "/adult/xxx-studios/"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/adult/xxx-genres/"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/adult/genres/"))
     itemlist.append(item.clone(title="Buscar", action="search", url=host + "/adult/"))
 
     autoplay.show_option(item.channel, itemlist)

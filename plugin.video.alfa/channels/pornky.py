@@ -116,7 +116,7 @@ def findvideos(item):
         quality = elem[0]
         pal = elem[-1]
         num = elem[-2]
-        vid = int(id)/1000 *1000
+        vid = int(int(id)/1000)*1000
         # /cqlvid/  /wqlvid/
         url = "https://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, num, pal,vid, id,id, quality)
         itemlist.append(item.clone(action="play", title=quality, url=url) )
@@ -136,7 +136,7 @@ def play(item):
         quality = elem[0]
         pal = elem[-1]
         num = elem[-2]
-        vid = int(id)/1000 *1000
+        vid = int(int(id)/1000)*1000
         # /cqlvid/  /wqlvid/
         url = "https://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, num, pal,vid, id,id, quality)
         itemlist.append([quality, url])

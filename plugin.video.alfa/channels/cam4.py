@@ -83,5 +83,12 @@ def lista(item):
 def findvideos(item):
     logger.info(item)
     itemlist = []
-    itemlist = servertools.find_video_items(item.clone(url = item.url, contentTitle = item.title))
+    itemlist = servertools.find_video_items(item.clone(action="play", url = item.url))
+    return itemlist
+
+
+def play(item):
+    logger.info(item)
+    itemlist = []
+    itemlist.append(item.clone(action="play", url=item.url))
     return itemlist

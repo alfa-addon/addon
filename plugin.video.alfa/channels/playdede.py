@@ -32,10 +32,18 @@ show_langs = config.get_setting('show_langs', channel=__channel__)
 account = None
 
 
-def get_source(url, json=False, soup=True, multipart_post=None, timeout=30, add_host=True, **opt):
+def get_source(url, json=False, soup=False, multipart_post=None, timeout=30, add_host=True, **opt):
     logger.info()
 
     data = httptools.downloadpage(url, soup=soup, files=multipart_post, add_host=add_host, timeout=timeout, **opt)
+
+    # Verificamos que tenemos una sesión válida, sino, no tiene caso devolver nada
+    if "Iniciar sesión" in data.data:
+        # Si no tenemos sesión válida, mejor cerramos definitivamente la sesión
+        global account
+        if account: logout()
+        platformtools.dialog_notification("No se ha inciado sesión", "Inicia sesión en el canal {} para poder usarlo".format(__channel__))
+        return None
 
     if json:
         data = data.json
@@ -99,12 +107,12 @@ def logout(item):
         domain = urlparse.urlparse(host).netloc
         httptools.cj.clear(domain)
         httptools.save_cookies()
-    except:
+    except Exception:
         pass
 
     # Borramos el estado de login
-    logger.info(config.set_setting("user", "", channel=__channel__))
-    logger.info(config.set_setting("pass", "", channel=__channel__))
+    config.set_setting("user", "", channel=__channel__)
+    config.set_setting("pass", "", channel=__channel__)
 
     platformtools.dialog_notification("Sesión cerrada", "Reconfigura las credenciales", sound=False)
     
@@ -112,12 +120,14 @@ def logout(item):
     return platformtools.itemlist_refresh()
 
 
+account = login()
+
+
 def mainlist(item):
     logger.info()
 
-    global account
-    account = login()
     itemlist = []
+    global account
 
     if not account:
         platformtools.dialog_notification("Registro necesario", "Regístrate en playdede.com e ingresa tus credenciales para utilizar este canal", sound=False)
@@ -227,7 +237,8 @@ def genres(item):
     logger.info()
 
     itemlist = []
-    soup = get_source(item.url)
+    soup = get_source(item.url, soup=True)
+    if not soup: return []
 
     if not soup:
         platformtools.dialog_notification("Cambio de estructura", "Reporta el error desde el menú principal", sound=False)
@@ -273,9 +284,9 @@ def list_all(item):
     logger.info()
 
     itemlist = []
-    soup = get_source(item.url)
+    soup = get_source(item.url, soup=True)
+    if not soup: return []
 
-    logger.info(soup.prettify())
     if not soup:
         platformtools.dialog_notification("Cambio de estructura", "Reporta el error desde el menú principal", sound=False)
         return itemlist
@@ -346,7 +357,7 @@ def search(item, texto):
         else:
             return
 
-    except:
+    except Exception:
         # Se captura la excepción, para no interrumpir al buscador global si un canal falla
         import traceback
         logger.error(traceback.format_exc())
@@ -358,7 +369,8 @@ def seasons(item):
     logger.info()
 
     itemlist = []
-    soup = get_source(item.url)
+    soup = get_source(item.url, soup=True)
+    if not soup: return []
     items = soup.find('div', id='seasons').find_all('div', class_='se-c')
 
     for div in items:
@@ -385,7 +397,7 @@ def episodios(item):
     templist = seasons(item)
 
     for tempitem in templist:
-        itemlist += episodesxseason(tempitem)
+        itemlist.append(episodesxseason(tempitem))
 
     return itemlist
 
@@ -424,7 +436,8 @@ def findvideos(item):
     logger.info()
 
     itemlist = []
-    soup = get_source(item.url)
+    soup = get_source(item.url, soup=True)
+    if not soup: return []
     items = []
     linklists = soup.findAll('div', class_='linkSorter')
     items.extend(soup.find('div', class_='contEP contepID_1 contEP_A').find('div', class_='innerSelector').find_all('div', class_="playerItem"))
@@ -461,7 +474,7 @@ def findvideos(item):
         if language:
             try:
                 title = unify.add_languages(title, language)
-            except:
+            except Exception:
                 import traceback
                 traceback.format_exc()
 
@@ -487,7 +500,7 @@ def play(item):
     logger.info()
 
     if host in item.url and item.player:
-        data = httptools.downloadpage("{}/embed.php?id={}".format(host, item.player), post={}).data
+        data = get_source("{}/embed.php?id={}".format(host, item.player), post={})
         realurl = scrapertools.find_single_match(data, """iframe src=["'](.+?)["']""")
 
         return [item.clone(url = realurl)]

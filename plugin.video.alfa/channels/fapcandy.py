@@ -112,7 +112,7 @@ def findvideos(item):
     for elem in data["encodings"]:
         quality = elem["videoHeight"]
         url = elem["location"]
-        itemlist.append(item.clone(url=url, title=quality, quality=quality))
+        itemlist.append(item.clone(action="play",url=url, title=quality, quality=quality))
     return itemlist
 
 
