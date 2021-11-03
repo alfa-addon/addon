@@ -98,7 +98,7 @@ def findvideos(item):
     post = "vid=%s&alternative=sleazyvids&ord=0" % id
     url = "https://www.eroti.ga/player/ajax_sources.php"
     data = httptools.downloadpage(url, post=post).data
-    url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace("\/", "/")
+    url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace("\/", "/").replace(" ", "%20")
     url += "|Referer=%s" % item.url
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())

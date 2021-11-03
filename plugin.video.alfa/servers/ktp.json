@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:www.|)(?:0dayporn|severeporn|submityourflicks|3movs|xtits|sleazyneasy|babestube|wankoz|vikiporn|katestube|pornomovies|lesbian8|pornsexer|pornmega|xxxymovies|pornhat|pornestro).com/video(?:s|)/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:0dayporn|severeporn|3movs|xtits|sleazyneasy|babestube|wankoz|vikiporn|katestube|pornomovies|lesbian8|pornsexer|pornmega|xxxymovies|pornhat|pornestro).com/video(?:s|)/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)tittykings.com/videos/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:tittykings|shooshtime|love4porn|submityourflicks|freehardcore|moviesand|interracial|feetporno|chubbyporn|cartoonporn|trannylime|gotgayporn|myporntape).com/videos/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
@@ -24,7 +24,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:severeporn|anon-v).com/embed/\\w+)",
+        "pattern": "(https://(?:severeporn|anon-v|myporntape).com/embed/\\w+)",
         "url": "\\1"
       },
       {
@@ -92,11 +92,15 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.pornestro.com/embed/[0-9]+)",
+        "pattern": "(https://(?:www.|)(?:pornestro|love4porn).com/embed/[0-9]+)",
         "url": "\\1"
       },
       {
         "pattern": "(https://watch-my-gf.com/view(?:_|-)video.php\\?v\\=[0-9]+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://onlineporno.cc/(?:video|embed/)[0-9]+)(?:/|)",
         "url": "\\1"
       },
       {

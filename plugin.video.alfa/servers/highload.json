@@ -4,11 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://highload.to/f/[A-z0-9]+)",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://upvideo.to/v/[A-z0-9]+)",
+        "pattern": "(https://(highload|upvideo|streamon).\\w{2,4}/(?:f|v|e|)/[A-z0-9]+)",
         "url": "\\1"
       }
     ]
