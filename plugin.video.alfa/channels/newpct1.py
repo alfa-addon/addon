@@ -1170,7 +1170,7 @@ def findvideos(item):
     # Cualquiera de las tres opciones son válidas
     # item.url = item.url.replace(".com/",".com/ver-online/")
     # item.url = item.url.replace(".com/",".com/descarga-directa/")
-    # item.url = item.url.replace("/descarga-torrent/descargar", "/descargar")
+    item.url = item.url.replace("descarga-torrent/descargar/", download_sufix)
     if not download_sufix in item.url:
         item.url = item.url.replace(sufix+"descargar/", sufix+download_sufix)
     torrent_tag = item.channel_host + download_sufix
