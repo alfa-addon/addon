@@ -12,9 +12,7 @@ def test_video_exists(page_url):
 
     exists = True if page_url else False
     reason = invaid_url if not exists else ""
-    if "|ignore_response_code=True" in page_url:
-        page_url = page_url.split("|")[0]
-        ignore_response_code=True
+    page_url, ignore_response_code = page_url.split("|")[0], True if "|ignore_response_code=True" in page_url else page_url, False
 
     if page_url:
         pattern = r'(?:^[A-Za-z]+://|^/|^[A-Za-z]+:[\\/]+)\S+'
@@ -22,11 +20,11 @@ def test_video_exists(page_url):
         exists = True if match else False
         reason = "" if exists else "Ruta o enlace inválido."
 
-        if page_url.startswith('http') and not ignore_response_code:
+        if page_url.startswith('http'):
             from core import httptools
-            response = httptools.downloadpage(page_url, only_headers=True)
+            response = httptools.downloadpage(page_url, only_headers=True, ignore_response_code=ignore_response_code)
 
-            if not response.sucess:
+            if not ignore_response_code and not response.sucess:
                 exists = False
                 reason = "El archivo no existe." if response.code == 404 else "Se ha producido un error en el servidor (%s)" % response.code
 
