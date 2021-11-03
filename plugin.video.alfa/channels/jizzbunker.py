@@ -19,13 +19,13 @@ from core import httptools
 
 host = 'http://jizzbunker.com'
 
+
 def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "/en/newest"))
-    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/en/popular1"))
-    itemlist.append(item.clone(title="Tendencia" , action="lista", url=host + "/en/trending"))
-    itemlist.append(item.clone(title="Longitud" , action="lista", url=host + "/en/longest"))
+    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/en/straight/popular1"))
+    itemlist.append(item.clone(title="Tendencia" , action="lista", url=host + "/en/straight/trending"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/en/channels/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist

@@ -59,7 +59,8 @@ def categorias(item):
     if "pornstars" in item.url:
         matches = soup.find_all('div', class_='star')
     else:
-        matches = soup.select(".recomended ~ .categories")[0].find_all('a')
+        matches = soup.find('div', id='cats-show').find_all('div', class_='categories')[-1]
+        matches = matches.find_all('a')
     for elem in matches:
         if "pornstars" in item.url:
             url = elem.a['href']

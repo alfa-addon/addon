@@ -16,6 +16,7 @@ import base64
 
 from channelselector import get_thumb
 from core import httptools
+from core import servertools
 from core import scrapertools
 from core import tmdb
 from core.item import Item
@@ -607,9 +608,10 @@ def findvideos(item):
         # Seleccionamos el bloque y buscamos los apartados
         data = scrapertools.find_single_match(data, patron)
 
-    patron = '<tr>(?:\s*<td>(\d+)<\/td>)?\s*<td>([^<]+)<\/td>\s*<td>([^<]*)<\/td>\s*'
-    patron += '<td\s*class=[^<]+<\/td>(?:\s*<td>([^<]+)<\/td>)?(?:\s*<td\s*class=[^<]+<\/td>)?'
-    patron += '\s*<td\s*class=[^<]+<\/td>\s*<td>\s*<a\s*class="[^>]+href="([^"]+)"'
+    patron = '<tr>(?:\s*<td>(\d+)<\/td>)?(?:\s*<td>([^<]*)<\/td>)?\s*<td>([^<]+)<\/td>'
+    patron += '\s*<td>([^<]*)<\/td>\s*<td\s*class=[^<]+<\/td>(?:\s*<td>([^<]+)<\/td>)?'
+    patron += '(?:\s*<td\s*class=[^<]+<\/td>)?\s*<td\s*class=[^<]+<\/td>\s*<td>\s*'
+    patron += '<a\s*class="[^>]+href="([^"]+)"'
 
     if not item.armagedon:
         if not item.matches:
@@ -642,7 +644,7 @@ def findvideos(item):
         item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent con las diferentes calidades
-    for x, (episode_num, scrapedquality, scrapedlanguage, scrapedsize, scrapedurl) in enumerate(matches):
+    for x, (episode_num, scrapedserver, scrapedquality, scrapedlanguage, scrapedsize, scrapedurl) in enumerate(matches):
         scrapedpassword = ''
 
         #Generamos una copia de Item para trabajar sobre ella
@@ -759,6 +761,21 @@ def findvideos(item):
                         .replace("()", "").replace("(/)", "").replace("[/]", "")\
                         .replace("|", "").strip()
         
+        item_local.server = scrapedserver.lower()                               #Servidor
+        if item_local.url.startswith('magnet:') or not item_local.server:
+            item_local.server = 'torrent'
+        if item_local.server != 'torrent':
+            if config.get_setting("hidepremium"):                               #Si no se aceptan servidore premium, se ignoran
+                if not servertools.is_server_enabled(item_local.server):
+                    continue
+            devuelve = servertools.findvideosbyserver(item_local.url, item_local.server)    #existe el link ?
+            if not devuelve:
+                continue
+            item_local.url = devuelve[0][1]
+            item_local.alive = servertools.check_video_link(item_local.url, item_local.server, timeout=timeout)     #activo el link ?
+            if 'NO' in item_local.alive:
+                continue
+        
         if not item_local.torrent_info or 'Magnet' in item_local.torrent_info:
             item_local.alive = "??"                                             #Calidad del link sin verificar
         elif 'ERROR' in item_local.torrent_info and 'Pincha' in item_local.torrent_info:
@@ -776,8 +793,7 @@ def findvideos(item):
             item_local.alive = "ok"                                             #Calidad del link verificada
         if item_local.channel != 'setting':
             item_local.action = "play"                                          #Visualizar vídeo
-            item_local.server = "torrent"                                       #Seridor Torrent
-        
+
         itemlist_t.append(item_local.clone())                                   #Pintar pantalla, si no se filtran idiomas
         
         # Requerido para FilterTools
@@ -893,9 +909,10 @@ def episodios(item):
         
         for season_num, episodes in matches_temp:
 
-            patron = '<tr>(?:\s*<td>(\d+)<\/td>)?\s*<td>([^<]+)<\/td>\s*<td>([^<]*)<\/td>\s*'
-            patron += '(?:<td>[^<]*<\/td>\s*)?<td\s*class=[^<]+<\/td>(?:\s*<td>([^<]+)<\/td>)?\s*'
-            patron += '<td\s*class=[^<]+<\/td>\s*<td>\s*<a\s*class="[^>]+href="([^"]+)"'
+            patron = '<tr>(?:\s*<td>(\d+)<\/td>)?(?:\s*<td>([^<]*)<\/td>)?\s*<td>([^<]+)<\/td>'
+            patron += '\s*<td>([^<]*)<\/td>\s*<td\s*class=[^<]+<\/td>(?:\s*<td>([^<]+)<\/td>)?'
+            patron += '(?:\s*<td\s*class=[^<]+<\/td>)?\s*<td\s*class=[^<]+<\/td>\s*<td>\s*'
+            patron += '<a\s*class="[^>]+href="([^"]+)"'
             
             matches = re.compile(patron, re.DOTALL).findall(episodes)
 
@@ -904,7 +921,9 @@ def episodios(item):
             #logger.debug(episodes)
 
             # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
-            for episode_num, scrapedquality, scrapedlanguage, scrapedsize, scrapedurl in matches:
+            for episode_num, scrapedserver, scrapedquality, scrapedlanguage, scrapedsize, scrapedurl in matches:
+                server = scrapedserver
+                if not server: server = 'torrent'
                 item_local = item.clone()
                 item_local.action = "findvideos"
                 item_local.contentType = "episode"
@@ -930,7 +949,7 @@ def episodios(item):
                 item_local.url = url                                            # Usamos las url de la temporada, no hay de episodio
                 url_base64 = generictools.convert_url_base64(scrapedurl, host_torrent)
                 item_local.matches = []
-                item_local.matches.append((episode_num, scrapedquality, scrapedlanguage, scrapedsize, url_base64))  # Salvado Matches de cada episodio
+                item_local.matches.append((episode_num, server, scrapedquality, scrapedlanguage, scrapedsize, url_base64))  # Salvado Matches de cada episodio
                 item_local.context = "['buscar_trailer']"
                 if not item_local.infoLabels['poster_path']:
                     item_local.thumbnail = item_local.infoLabels['thumbnail']

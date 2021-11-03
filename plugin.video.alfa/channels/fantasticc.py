@@ -43,7 +43,7 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Collections trending" , action="collections", url=host + "/videos/collections/trending/31days/page_1"))
     itemlist.append(item.clone(title="Collections popular" , action="collections", url=host + "/videos/collections/popular/31days/page_1"))
-    itemlist.append(item.clone(title="Collections mas visto" , action="collections", url=host + "/videos/collections/views/31days/page_1"))
+    itemlist.append(item.clone(title="Collections mas visto" , action="collections", url=host + "/videos/collections/most-viewed/all_time/page_1"))
     itemlist.append(item.clone(title="Collections Categorias" , action="categorias", url=host + "/category/"))
 
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/category/"))
@@ -92,10 +92,12 @@ def collections(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='submitted-videos')
     for elem in matches:
+        logger.debug(elem)
         url = elem.a['href']
         title = elem.a.text.strip()
         cantidad = elem.find('span', class_='videosListNumber')
         yesPopunder = elem.find('a', class_='yesPopunder')
+        thumbnail = ""
         if yesPopunder:
             thumbnail= yesPopunder['style']
         if cantidad:

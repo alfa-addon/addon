@@ -122,7 +122,12 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find('div', class_='gridWrapper').find_all('div', class_='phimage')
+    if "/pornstar/" in item.url:
+        matches = soup.find('ul', id='mostRecentVideosSection').find_all('div', class_='phimage')
+    elif "channels" in item.url:
+        matches = soup.find('ul', id='showAllChanelVideos').find_all('div', class_='phimage')
+    else:
+        matches = soup.find('div', class_='gridWrapper').find_all('div', class_='phimage')
     for elem in matches:
         url = elem.a['href']
         stitle = elem.a['title']

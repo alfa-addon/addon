@@ -48,7 +48,7 @@ def find_single_match(data, pattern, index=0):
     try:
         matches = re.findall(pattern, data, flags=re.DOTALL)
         return matches[index]
-    except:
+    except Exception:
         return ""
 
 
@@ -60,7 +60,7 @@ def find_multiple_matches(text, pattern):
 def replace(pattern, replacement, data):
     try:
         return re.sub(pattern, replacement, data, flags=re.DOTALL)
-    except:
+    except Exception:
         return ""
 
 
@@ -107,7 +107,7 @@ def unescape(text):
                 from platformcode import logger
                 logger.error("keyerror")
                 pass
-            except:
+            except Exception:
                 pass
         return text  # leave as is
 
@@ -338,7 +338,7 @@ def get_filename_from_url(url):
     parsed_url = urlparse.urlparse(url)
     try:
         filename = parsed_url[2]
-    except:
+    except Exception:
         filename = ""
 
     if "/" in filename:
@@ -351,7 +351,7 @@ def get_domain_from_url(url):
     parsed_url = urlparse.urlparse(url)
     try:
         domain = parsed_url[1]
-    except:
+    except Exception:
         domain = ""
 
     return domain
@@ -441,7 +441,7 @@ def get_season_and_episode(title):
                 else:
                     filename = matches.group(1).lstrip('0') + "x" + matches.group(2).zfill(2)
                 break
-        except:
+        except Exception:
             pass
 
     # logger.info("'" + title + "' -> '" + filename + "'")
@@ -588,7 +588,7 @@ def decode_utf8_error(path):
         try:
             for char_right, chars_wrong in utf8_error_table:
                 path = path.replace(chars_wrong, char_right)
-        except:
+        except Exception:
             pass
         
         path = htmlparser(path)

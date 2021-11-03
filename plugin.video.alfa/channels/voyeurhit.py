@@ -18,7 +18,7 @@ from platformcode import config, logger
 from core import httptools
 from core import jsontools as json
 
-host = 'https://voyeurhit.com'    # https://voyeurhit.com  https://hdzog.com  https://txxx.com 
+host = 'https://voyeurhit.com'    #   https://hclips.com  https://hotmovs.com  https://hdzog.com  https://upornia.com  https://vjav.com  https://voyeurhit.com  https://txxx.com 
 url_api = host + "/api/json/videos/%s/str/%s/60/%s.%s.1.all..%s.json"
 
 

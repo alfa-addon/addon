@@ -3,16 +3,11 @@
 # httptools
 # --------------------------------------------------------------------------------
 
-
-#from __future__ import absolute_import
-#from builtins import str
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
     import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
     import urllib.parse as urllib
     import http.cookiejar as cookielib
@@ -24,15 +19,18 @@ else:
 import inspect
 import os
 import time
-
-from threading import Lock
+import requests
 import json
+
 from core.jsontools import to_utf8
 from platformcode import config, logger
 from platformcode.logger import WebErrorException
+from threading import Lock
 from collections import OrderedDict
 
-#Dominios que necesitan Cloudscraper.  AÑADIR dominios de canales sólo si es necesario
+requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+
+# Dominios que necesitan Cloudscraper. AÑADIR dominios de canales sólo si es necesario
 
 global CF_LIST
 CF_LIST = list()
@@ -40,7 +38,7 @@ CF_LIST_PATH = os.path.join(config.get_runtime_path(), "resources", "CF_Domains.
 
 if os.path.exists(CF_LIST_PATH):
     with open(CF_LIST_PATH, "rb") as CF_File:
-        CF_LIST = CF_File.read().splitlines()
+       CF_LIST = config.decode_var(CF_File.read().splitlines())
 
 ## Obtiene la versión del addon
 __version = config.get_addon_version()
@@ -79,10 +77,9 @@ def get_user_agent():
 def get_cookie(url, name, follow_redirects=False):
     if follow_redirects:
         try:
-            import requests
             headers = requests.head(url, headers=default_headers).headers
             url = headers['location']
-        except:
+        except Exception:
             pass
         
     domain = urlparse.urlparse(url).netloc
@@ -99,7 +96,7 @@ def get_cookie(url, name, follow_redirects=False):
 
 def get_url_headers(url, forced=False, dom=False):
     from . import scrapertools
-    
+
     domain = urlparse.urlparse(url)[1]
     sub_dom = scrapertools.find_single_match(domain, '\.(.*?\.\w+)')
     if sub_dom and not 'google' in url:
@@ -152,7 +149,7 @@ def set_cookies(dict_cookie, clear=True, alfa_s=False):
     if clear:
         try:
             cj.clear(domain)
-        except:
+        except Exception:
             pass
 
     ck = cookielib.Cookie(version=0, name=name, value=value, port=None, 
@@ -172,7 +169,7 @@ def load_cookies(alfa_s=False):
         if not alfa_s: logger.info("Leyendo fichero cookies")
         try:
             cj.load(ficherocookies, ignore_discard=True)
-        except:
+        except Exception:
             if not alfa_s: logger.info("El fichero de cookies existe pero es ilegible, se borra")
             os.remove(ficherocookies)
     cookies_lock.release()
@@ -218,11 +215,11 @@ def channel_proxy_list(url, forced_proxy=None):
                 ('proxy_channel_bloqued')).decode('utf-8')
         proxy_channel_bloqued = dict()
         proxy_channel_bloqued = ast.literal_eval(proxy_channel_bloqued_str)
-    except:
+    except Exception:
         logger.debug('Proxytools no inicializado correctamente')
         try:
             logger.debug('Bloqued: ' + str(proxy_channel_bloqued_str))
-        except:
+        except Exception:
             pass
         return False
 
@@ -379,7 +376,7 @@ def check_proxy(url, **opt):
                     proxy_data['dict'] = proxy_data['addr']
                     proxy_data['stat'] = ', Proxy Direct ' + proxy_data['log']
 
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc())
         opt['proxy'] = ''
@@ -394,7 +391,7 @@ def check_proxy(url, **opt):
     try:
         if not PY3:
             proxy_data['addr']['https'] = str('https://'+ proxy_data['addr']['https'])
-    except:
+    except Exception:
         pass
     return url, proxy_data, opt
 
@@ -469,7 +466,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
 
         else:
             opt['out_break'] = True
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc())
         opt['out_break'] = True
@@ -478,6 +475,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
 
 
 def downloadpage(url, **opt):
+    global CF_LIST
     """
         Abre una url y retorna los datos obtenidos
 
@@ -533,7 +531,6 @@ def downloadpage(url, **opt):
     from . import scrapertools
 
     load_cookies(opt.get('alfa_s', False))
-    import requests
 
     cf_ua = config.get_setting('cf_assistant_ua', None)
     url = url.strip()
@@ -623,7 +620,7 @@ def downloadpage(url, **opt):
                         try:
                             json.loads(opt['post'])
                             payload = opt['post']
-                        except:
+                        except Exception:
                             if not isinstance(opt['post'], dict):
                                 post = urlparse.parse_qs(opt['post'], keep_blank_values=1)
                                 payload = dict()
@@ -631,7 +628,7 @@ def downloadpage(url, **opt):
                                 for key, value in list(post.items()):
                                     try:
                                         payload[key] = value[0]
-                                    except:
+                                    except Exception:
                                         payload[key] = ''
                             else:
                                 payload = opt['post']
@@ -702,6 +699,7 @@ def downloadpage(url, **opt):
                         and not opt.get('CF', False) and opt.get('CF_test', True):
             domain = urlparse.urlparse(url)[1]
             if domain not in CF_LIST:
+                CF_LIST += [domain]
                 opt["CF"] = True
                 with open(CF_LIST_PATH, "a") as CF_File:
                     CF_File.write("%s\n" % domain)
@@ -714,43 +712,37 @@ def downloadpage(url, **opt):
             logger.debug("CF Assistant retry... for domain: %s" % urlparse.urlparse(url)[1])
             return downloadpage(url, **opt)
 
-        response['soup'] = None
-
-        if opt.get("soup", False):
-            try:
-                from bs4 import BeautifulSoup
-                response["soup"] = BeautifulSoup(req.text, "html5lib", from_encoding=req.encoding)
-            except:
-                import traceback
-                logger.error("Error creando sopa")
-                logger.error(traceback.format_exc())
-
         response['data'] = req.content
+
         try:
-            response['encoding'] = None
-            if req.encoding is not None and opt.get('encoding', '') is not None:
-                response['encoding'] = str(req.encoding).lower()
-            if opt.get('encoding', '') and opt.get('encoding', '') is not None:
+            response['encoding'] = str(req.encoding).lower() if req.encoding and req.encoding is not None else None
+
+            if opt.get('encoding') and opt.get('encoding') is not None:
                 encoding = opt["encoding"]
             else:
                 encoding = response['encoding']
+
             if not encoding:
                 encoding = 'utf-8'
-            if PY3 and isinstance(response['data'], bytes) and opt.get('encoding', '') is not None \
-                        and ('text/' in req.headers.get('Content-Type', '') \
+
+            if PY3 and isinstance(response['data'], bytes) and encoding is not None \
+                    and ('text/' in req.headers.get('Content-Type', '') \
                         or 'json' in req.headers.get('Content-Type', '') \
                         or 'xml' in req.headers.get('Content-Type', '')):
                 response['data'] = response['data'].decode(encoding)
-        except:
+
+        except Exception:
             import traceback
             logger.error(traceback.format_exc(1))
+
         try:
             if PY3 and isinstance(response['data'], bytes) \
-                        and not ('application' in req.headers.get('Content-Type', '') \
-                        or 'javascript' in req.headers.get('Content-Type', '') \
-                        or 'image' in req.headers.get('Content-Type', '')):
+                    and not ('application' in req.headers.get('Content-Type', '') \
+                    or 'javascript' in req.headers.get('Content-Type', '') \
+                    or 'image' in req.headers.get('Content-Type', '')):
                 response['data'] = "".join(chr(x) for x in bytes(response['data']))
-        except:
+
+        except Exception:
             import traceback
             logger.error(traceback.format_exc(1))
 
@@ -765,28 +757,47 @@ def downloadpage(url, **opt):
                       .replace('&aacute;', 'á').replace('&eacute;', 'é').replace('&iacute;', 'í')\
                       .replace('&oacute;', 'ó').replace('&uacute;', 'ú').replace('&ordf;', 'ª')\
                       .replace('&ordm;', 'º')
-        except:
+
+        except Exception:
             import traceback
             logger.error(traceback.format_exc(1))
 
         response['url'] = req.url
+
         if not response['data']:
             response['data'] = ''
+
+        response['soup'] = None
+
+        if opt.get("soup", False):
+            try:
+                from bs4 import BeautifulSoup
+                response["soup"] = BeautifulSoup(req.content, "html5lib", from_encoding=opt.get('encoding', response['encoding']))
+
+            except Exception:
+                import traceback
+                logger.error("Error creando sopa")
+                logger.error(traceback.format_exc())
+
         try:
             if 'bittorrent' not in req.headers.get('Content-Type', '') \
                         and 'octet-stream' not in req.headers.get('Content-Type', '') \
                         and 'zip' not in req.headers.get('Content-Type', '') \
                         and opt.get('json_to_utf8', True):
                 response['json'] = to_utf8(req.json())
+
             else:
                 response['json'] = dict()
-        except:
+
+        except Exception:
             response['json'] = dict()
         response['code'] = response_code
         response['headers'] = req.headers
         response['cookies'] = req.cookies
+
         if response['code'] == 200:
             response['sucess'] = True
+
         else:
             response['sucess'] = False
 
@@ -847,7 +858,7 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
         info_dict.append(('Usar cookies', opt.get('cookies', True)))
         info_dict.append(('Fichero de cookies', ficherocookies))
 
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc(1))
     
@@ -882,7 +893,7 @@ def fill_fields_post(info_dict, req, response, req_headers, inicio):
         for header in response['headers']:
             info_dict.append(('- %s' % header, response['headers'][header]))
         info_dict.append(('Finalizado en', time.time() - inicio))
-    except:
+    except Exception:
         import traceback
         logger.error(traceback.format_exc(1))
     

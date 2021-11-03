@@ -23,8 +23,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "/newest"))
-    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/popular30"))
-    itemlist.append(item.clone(title="Longitud" , action="lista", url=host + "/longest"))
+    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/straight/popular7"))
     itemlist.append(item.clone(title="HD" , action="lista", url=host + "/channel30/hd"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/channels"))
     itemlist.append(item.clone(title="Buscar", action="search"))
