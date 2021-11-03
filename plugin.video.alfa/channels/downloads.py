@@ -192,6 +192,9 @@ def browser(item):
                  "channel": item.channel},
                {"title": "Copiar a...",
                  "action": "copy_video",
+                 "channel": item.channel},
+               {"title": "Mover a...",
+                 "action": "move_video",
                  "channel": item.channel}]
     
     torrent_paths = torrent.torrent_dirs()
@@ -311,8 +314,12 @@ def delete_video(item):
         platformtools.itemlist_refresh()
 
 
-def copy_video(item):
-    logger.info(item.url)
+def move_video(item):
+    return copy_video(item, move=True)
+
+
+def copy_video(item, move=False):
+    logger.info('%s - Mover: %s' % (item.url, move))
     
     if not filetools.exists(item.url):
         msg = 'Carpeta/Archivo de ORIGEN no disponible: '
@@ -328,12 +335,19 @@ def copy_video(item):
     path_out = platformtools.dialog_browse(browse_type, msg, shares='')
     if path_out and filetools.exists(path_out):
         
-        def copy_background(infile, outfile):
-            if filetools.isdir(infile):
-                filetools.copy(infile, outfile, silent=True)
+        def copy_background(infile, outfile, move):
+            if move:
+                if filetools.isdir(infile):
+                    filetools.move(infile, outfile)
+                else:
+                    filetools.move(infile, filetools.join(outfile, filetools.basename(infile)))
+                msg = 'Mover terminado: '
             else:
-                filetools.copy(infile, filetools.join(outfile, filetools.basename(infile)), silent=True)
-            msg = 'Copia terminada: '
+                if filetools.isdir(infile):
+                    filetools.copy(infile, outfile, silent=True)
+                else:
+                    filetools.copy(infile, filetools.join(outfile, filetools.basename(infile)), silent=True)
+                msg = 'Copia terminada: '
             msg1 = filetools.basename(item.url)
             platformtools.dialog_notification(msg , msg1)
 
@@ -342,15 +356,18 @@ def copy_video(item):
         elif filetools.isdir(item.url):
             path_out = filetools.join(path_out, filetools.basename(item.url))
 
-        msg = 'Copiando archivo: '
+        action = 'Copiando'
+        if move:
+            action = 'Moviendo'
+        msg = '%s archivo: ' % action
         if filetools.isdir(item.url):
-            msg = 'Copiando carpeta: '
+            msg = '%s carpeta: ' % action
         if filetools.basename(item.url) == 'Extracted':
             msg1 = filetools.basename(path_out)
         else:
             msg1 = filetools.basename(item.url)
         platformtools.dialog_notification(msg , msg1)
-        threading.Thread(target=copy_background, args=(item.url, path_out)).start()
+        threading.Thread(target=copy_background, args=(item.url, path_out, move)).start()
         time.sleep(1)
     else:
         msg = 'Carpeta de DESTINO no disponible: '

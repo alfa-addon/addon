@@ -455,8 +455,8 @@ def verify_copy_folders(custom_code_dir, custom_code_json_path):
     #verificamos si es una nueva versión de Alfa instalada o era la existente.  Si es la existente, nos vamos sin hacer nada
     update = None
     json_data_file = ADDON_CUSTOMCODE_JSON
-    json_data = jsontools.load(filetools.read(json_data_file))
     try:
+        json_data = jsontools.load(filetools.read(json_data_file))
         if not json_data or not 'addon_version' in json_data: 
             create_json(custom_code_json_path)
             json_data = jsontools.load(filetools.read(json_data_file))
@@ -497,6 +497,10 @@ def init_version(json_data):
         ret = False
         if json_data.get('init_version'): return ret
         
+        if config.get_setting('alfa_version', default='') == ADDON_VERSION:
+            logger.info('### Reinstalación de versión Alfa %s' % ADDON_VERSION, force=True)
+            return True
+        
         categoria = config.get_system_platform()
 
         kodi = config.get_platform(full_version=True)
@@ -533,6 +537,7 @@ def init_version(json_data):
             else: from lib import alfaresolver_py3 as alfaresolver
             threading.Thread(target=alfaresolver.frequency_count, args=(Item(), \
                         [ADDON_VERSION, categoria + kodi + assistant])).start()
+            config.set_setting('alfa_version', ADDON_VERSION)
             ret = True
         except:
             logger.error(traceback.format_exc())

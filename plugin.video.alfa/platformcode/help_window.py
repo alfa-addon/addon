@@ -37,33 +37,38 @@ class HelpWindow(xbmcgui.WindowXMLDialog):
             self.close()
 
 
-def show_info(id, wait=True):
+def show_info(id, wait=True, title="", text=""):
     
     def show_window(title, text):
         window = HelpWindow('help_window.xml', config.get_runtime_path(), title=title, text=text)
         window.doModal()
         del window
+    if not title and not text:
+        watched = False
+        info_file = dict()
+        watched_file = dict()
 
-    watched = False
-    info_file = dict()
-    watched_file = dict()
+        if filetools.exists(info_file_path):
+            info_file = jsontools.load(filetools.read(info_file_path))
+            if filetools.exists(data_path):
+                watched_file = jsontools.load(filetools.read(data_path))
 
-    if filetools.exists(info_file_path):
-        info_file = jsontools.load(filetools.read(info_file_path))
-        if filetools.exists(data_path):
-            watched_file = jsontools.load(filetools.read(data_path))
-    
-    if watched_file.get(id, ''):
-        watched = True
+        if watched_file.get(id, ''):
+            watched = True
 
-    if info_file.get(id, '') and not watched:
-        title = info_file[id]["title"]
-        text = info_file[id]["text"]
+        if info_file.get(id, '') and not watched:
+            title = info_file[id]["title"]
+            text = info_file[id]["text"]
+            t = threading.Thread(target=show_window, args=(title, text))
+            t.start()
+            if wait:
+                t.join()
+            set_watched(id)
+    else:
         t = threading.Thread(target=show_window, args=(title, text))
         t.start()
         if wait:
             t.join()
-        set_watched(id)
 
 
 def set_watched(id):
