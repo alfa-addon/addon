@@ -272,57 +272,38 @@ def findvideos(item):
             continue
         player_url = BeautifulSoup(data, "html5lib").find("iframe")["src"]
 
-        player = httptools.downloadpage(player_url, headers={"referer": item.url}).data
-        soup = BeautifulSoup(player, "html5lib")
-        matches = soup.find_all("li", {"onclick": True})
-        lang = soup.find("li", class_="SLD_A")["data-lang"]
+        player_url = player_url.replace("https://animekao.club/video/", "https://kaocentro.net/video/")
+        if not player_url.startswith("https://re.") and not player_url.startswith("https://kaocentro.net/video/"):
+            url = process_url(player_url)
+            if not url:
+                continue
+            itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
+                                 language="LAT", infoLabels=item.infoLabels, subtitle=sub))
+        else:
+            player = httptools.downloadpage(player_url, headers={"referer": item.url}).data
+            soup = BeautifulSoup(player, "html5lib")
+            if soup.find("div", id="ErrorWin"):
+                continue
+            matches = soup.find_all("li", {"onclick": True})
 
-        for elem in matches:
-            url = base64.b64decode(elem["data-r"]).decode('utf-8')
+            lang_data = soup.find("li", class_="SLD_A")
+            if lang_data.has_attr("data-lang"):
+                lang = lang_data.get("data-lang", "2")
+            else:
+                lang = scrapertools.find_single_match(lang_data.get("onclick", ""), "this, '([^']+)'")
 
-            if "animekao.club/player.php" in url:
-                url = url.replace("animekao.club/player.php?x", "player.premiumstream.live/player.php?id")
-            elif "animekao.club/play.php" in url:
-                url = url.replace("animekao.club/play.php?x", "hls.playerd.xyz/player.php?id")
-            elif "https://animekao.club/playmp4" in url:
-                file_id = scrapertools.find_single_match(url, "link=([A-z0-9]+)")
-                post = {'link': file_id}
-                hidden_url = 'https://animekao.club/playmp4/plugins/gkpluginsphp.php'
-                dict_vip_url = httptools.downloadpage(hidden_url, post=post).json
-                url = dict_vip_url['link']
-            elif "animekao.club/reproductores" in url:
-                v_id = scrapertools.find_single_match(url, "v=([A-z0-9_-]+)")
-                url = "https://drive.google.com/file/d/%s/preview" % v_id
-            elif "animekao.club/mf/" in url:
-                unpacked = get_unpacked(url)
-                url = scrapertools.find_single_match(unpacked, '"file":"([^"]+)"')
-            elif "kaodrive" in url:
-                new_data = httptools.downloadpage(url, add_referer=True).data
-                v_id = scrapertools.find_single_match(new_data, 'var shareId = "([^"]+)"')
-                url = "https://www.amazon.com/drive/v1/shares/%s" % v_id
-            elif "playhydrax.com" in url:
-                slug = scrapertools.find_single_match(url, 'v=(\w+)')
-                post = "slug=%s&dataType=mp4" % slug
-                try:
-                    data = httptools.downloadpage("https://ping.iamcdn.net/", post=post).json
-                    url = data.get("url", '')
-                except:
-                    url = None
+            for elem in matches:
+                if not elem.has_attr("data-r"):
+                    url = scrapertools.find_single_match(elem.get("onclick", ""), "go_to_player\('([^']+)")
+                else:
+                    url = base64.b64decode(elem["data-r"]).decode('utf-8')
+                if not url or "short." in url:
+                    continue
+                url = process_url(url)
                 if not url:
                     continue
-                    url = "https://www.%s" % base64.b64decode(url[-1:]+url[:-1]).decode('utf-8')
-                    url += '|Referer=https://playhydrax.com/?v=%s&verifypeer=false' % slug
-            elif "kplayer" in url:
-                unpacked = get_unpacked(url)
-                if not unpacked:
-                    continue
-                url = "https://kplayer.animekao.club/%s" % scrapertools.find_single_match(unpacked, '"file":"([^"]+)"')
-                url = httptools.downloadpage(url, add_referer=True, follow_redirects=False).url
-
-
-
-            itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
-                                 language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels, subtitle=sub))
+                itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
+                                     language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels, subtitle=sub))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     # Requerido para FilterTools
@@ -341,6 +322,51 @@ def findvideos(item):
     return itemlist
 
 
+def process_url(url):
+    logger.info()
+    if "animekao.club/player.php" in url:
+        url = url.replace("animekao.club/player.php?x", "player.premiumstream.live/player.php?id")
+    elif "animekao.club/play.php" in url:
+        url = url.replace("animekao.club/play.php?x", "hls.playerd.xyz/player.php?id")
+    elif "https://animekao.club/playmp4" in url:
+        file_id = scrapertools.find_single_match(url, "link=([A-z0-9]+)")
+        post = {'link': file_id}
+        hidden_url = 'https://animekao.club/playmp4/plugins/gkpluginsphp.php'
+        dict_vip_url = httptools.downloadpage(hidden_url, post=post).json
+        url = dict_vip_url['link']
+    elif "animekao.club/reproductores" in url:
+        v_id = scrapertools.find_single_match(url, "v=([A-z0-9_-]+)")
+        url = "https://drive.google.com/file/d/%s/preview" % v_id
+    elif "animekao.club/mf/" in url:
+        unpacked = get_unpacked(url)
+        url = scrapertools.find_single_match(unpacked, '"file":"([^"]+)"')
+
+    elif "kaodrive" in url:
+        new_data = httptools.downloadpage(url, add_referer=True).data
+        v_id = scrapertools.find_single_match(new_data, 'var shareId = "([^"]+)"')
+        url = "https://www.amazon.com/drive/v1/shares/%s" % v_id
+    elif "playhydrax.com" in url:
+        return ""
+        # slug = scrapertools.find_single_match(url, 'v=(\w+)')
+        # post = "slug=%s&dataType=mp4" % slug
+        # try:
+        #     data = httptools.downloadpage("https://ping.iamcdn.net/", post=post).json
+        #     url = data.get("url", '')
+        # except:
+        #     url = None
+        #     url = "https://www.%s" % base64.b64decode(url[-1:] + url[:-1]).decode('utf-8')
+        #     url += '|Referer=https://playhydrax.com/?v=%s&verifypeer=false' % slug
+    elif "kplayer" in url:
+        unpacked = get_unpacked(url)
+        if unpacked:
+            url = "https://kplayer.animekao.club/%s" % scrapertools.find_single_match(unpacked, '"file":"([^"]+)"')
+        url = httptools.downloadpage(url, add_referer=True, follow_redirects=False).url
+        if "animekao.club/http" in url:
+            url = scrapertools.find_single_match(url, "https://kplayer.animekao.club/([^$]+)")
+            url = url + "|ignore_response_code=True"
+    return url
+
+
 def get_unpacked(url):
     logger.info()
     try:
@@ -352,6 +378,7 @@ def get_unpacked(url):
     unpacked = jsunpack.unpack(packed)
 
     return unpacked
+
 
 def search(item, texto):
     logger.info()

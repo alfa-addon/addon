@@ -1,6 +1,7 @@
 {
   "id": "miradetodo",
   "name": "MiraDeTodo",
+  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat"],
@@ -8,7 +9,9 @@
   "banner": "https://s7.postimg.cc/it21t0dej/miradetodo-banner.png",
   "fanart": "",
   "categories": [
-    "movie"
+    "movie",
+    "tvshow",
+    "vos"
   ],
   "settings": [
     {

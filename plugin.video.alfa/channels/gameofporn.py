@@ -20,6 +20,7 @@ from bs4 import BeautifulSoup
 
 host = 'http://www.veporno.net'  # http://www.veporno.net    https://www.fxporn.net http://www.gameofporn.net
 
+
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -61,7 +62,7 @@ def catalogo(item):
     if next_page:
         next_page = next_page.find_next_sibling("a")['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -73,7 +74,7 @@ def categorias(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.text
-        url = urlparse.urljoin(item.url,url)
+        url = urlparse.urljoin(host,url)
         thumbnail = ""
         itemlist.append(item.clone(action="lista", title=title, url=url, fanart=thumbnail, thumbnail=thumbnail ))
     return sorted(itemlist, key=lambda i: i.title)
@@ -96,12 +97,18 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('li', class_='dvd-new')
+    if "/star/" in item.url:
+        matches = soup.find('div', class_='videos').find_all('li')
+    else:
+        matches = soup.find('div', class_='box').find_all('li', class_='dvd-new')
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
-        thumbnail = elem.a['style']
-        thumbnail = scrapertools.find_single_match(thumbnail, 'url\(([^\)]+)')
+        if elem.find('img'):
+            thumbnail = elem.img['src']
+        else:
+            thumbnail = elem.a['style']
+            thumbnail = scrapertools.find_single_match(thumbnail, 'url\(([^\)]+)')
         action = "play"
         if logger.info() == False:
             action = "findvideos"

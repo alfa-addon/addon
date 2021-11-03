@@ -1,392 +1,313 @@
 # -*- coding: utf-8 -*-
+# -*- Channel MiraDeTodo -*-
+# -*- Created for Alfa-addon -*-
+# -*- By the Alfa Develop Group -*-
 
+import re
+import base64
+from core import tmdb
+from core import httptools
+from core.item import Item
+from core import scrapertools
+from core import servertools
+from bs4 import BeautifulSoup
+from channelselector import get_thumb
+from platformcode import config, logger
+from channels import filtertools, autoplay
 import sys
+
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-import re
 
-from core import httptools
-from core import scrapertools
-from core import servertools
-from core import tmdb
-from core.item import Item
-from platformcode import config, logger
-from channelselector import get_thumb
+IDIOMAS = {'la': 'LAT', 'su': 'VOSE', 'ca': 'CAST'}
+list_language = list(IDIOMAS.values())
 
-tgenero = {"Comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
-           "Suspense": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
-           "Drama": "https://s16.postimg.cc/94sia332d/drama.png",
-           "Acción": "https://s3.postimg.cc/y6o9puflv/accion.png",
-           "Aventura": "https://s10.postimg.cc/6su40czih/aventura.png",
-           "Romance": "https://s15.postimg.cc/fb5j8cl63/romance.png",
-           "Animación": "https://s13.postimg.cc/5on877l87/animacion.png",
-           "Ciencia ficción": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png",
-           "Terror": "https://s7.postimg.cc/yi0gij3gb/terror.png",
-           "Documental": "https://s16.postimg.cc/7xjj4bmol/documental.png",
-           "Música": "https://s29.postimg.cc/bbxmdh9c7/musical.png",
-           "Western": "https://s23.postimg.cc/lzyfbjzhn/western.png",
-           "Fantasía": "https://s13.postimg.cc/65ylohgvb/fantasia.png",
-           "Guerra": "https://s4.postimg.cc/n1h2jp2jh/guerra.png",
-           "Misterio": "https://s1.postimg.cc/w7fdgf2vj/misterio.png",
-           "Crimen": "https://s4.postimg.cc/6z27zhirx/crimen.png",
-           "Historia": "https://s15.postimg.cc/fmc050h1n/historia.png",
-           "película de la televisión": "https://s9.postimg.cc/t8xb14fb3/delatv.png",
-           "Action & Adventure": "https://s4.postimg.cc/neu65orz1/action_adventure.png",
-           "Sci-Fi & Fantasy": "https://s23.postimg.cc/ys5if2oez/scifi_fantasy.png",
-           "Suspenso": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
-           "Familia": "https://s7.postimg.cc/6s7vdhqrf/familiar.png",
-           "Foreign": "https://s29.postimg.cc/jdc2m158n/extranjera.png",
-           "Cartelera MDT": "https://s1.postimg.cc/6yle12szj/cartelera.png",
-           "Romanticas": "https://s21.postimg.cc/xfsj7ua0n/romantica.png"
-           }
+list_quality = []
 
-tcalidad = {"FULL HD": "https://s18.postimg.cc/qszt3n6tl/fullhd.png",
-            "HD": "https://s27.postimg.cc/m2dhhkrur/image.png",
-            "SD": "https://s29.postimg.cc/l66t2pfqf/image.png"
-            }
-host = 'http://miradetodo.co/'
+list_servers = [
+    'streamtape',
+    'doodstream',
+    'evoload',
+    ]
+
+host = 'https://miradetodo.co/'
 
 
 def mainlist(item):
     logger.info()
 
-    itemlist = []
+    itemlist = list()
 
-    itemlist.append(item.clone(title="Peliculas",
-                               action="menu_peliculas",
-                               thumbnail=get_thumb('movies', auto=True),
-                               fanart='https://s8.postimg.cc/6wqwy2c2t/peliculas.png'
-                               ))
+    autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(item.clone(title="Series",
-                               action="menu_series",
-                               thumbnail=get_thumb('tvshows', auto=True),
-                               fanart='https://s27.postimg.cc/iahczwgrn/series.png',
-                               ))
+    itemlist.append(Item(channel=item.channel, title='Peliculas',
+                         action='sub_menu', thumbnail=get_thumb('movies', auto=True)))
 
-    itemlist.append(item.clone(title="Buscar", action="search",
-                               thumbnail=get_thumb('search', auto=True),
-                               fanart='https://s30.postimg.cc/pei7txpa9/buscar.png',
-                               url=host + '?s='
-                               ))
+    itemlist.append(Item(channel=item.channel, title='Series',
+                         action='sub_menu', thumbnail=get_thumb('tvshows', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + "?s=",
+                         thumbnail=get_thumb("search", auto=True)))
+
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
 
-def menu_peliculas(item):
+def sub_menu(item):
     logger.info()
 
     itemlist = []
+    base_url = host
+    is_tvshow = False
+    if item.title == "Series":
+        base_url += "series/"
+        is_tvshow = True
 
     itemlist.append(item.clone(title="Todas",
-                               action="lista",
+                               action="list_all",
                                thumbnail=get_thumb('all', auto=True),
-                               fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
-                               url=host + 'page/1/?s'
+                               url=base_url + 'page/1/'
                                ))
 
     itemlist.append(item.clone(title="Generos",
-                               action="seccion",
-                               url=host + 'page/1/?s',
+                               action="section",
+                               url=base_url + 'page/1/',
                                thumbnail=get_thumb('genres', auto=True),
-                               fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png',
-                               seccion='generos-pelicula'
+                               is_tvshow=is_tvshow
                                ))
 
     itemlist.append(item.clone(title="Por Año",
-                               action="seccion",
-                               url=host + 'page/1/?s',
+                               action="section",
+                               url=base_url + 'page/1/',
                                thumbnail=get_thumb('year', auto=True),
-                               fanart='https://s8.postimg.cc/7eoedwfg5/pora_o.png',
-                               seccion='fecha-estreno'
-                               ))
-
-    itemlist.append(item.clone(title="Calidad",
-                               action="seccion",
-                               url=host + 'page/1/?s',
-                               thumbnail=get_thumb('quality', auto=True),
-                               fanart='https://s13.postimg.cc/6nzv8nlkn/calidad.png',
-                               seccion='calidad'
+                               is_tvshow=is_tvshow
                                ))
 
     return itemlist
 
 
-def menu_series(item):
+def create_soup(url, post=None, unescape=False):
     logger.info()
 
-    itemlist = []
+    if post:
+        data = httptools.downloadpage(url, post=post).data
+    else:
+        data = httptools.downloadpage(url, headers={"referer":host}).data
 
-    itemlist.append(item.clone(title="Todas",
-                               action="lista", thumbnail=get_thumb('all', auto=True),
-                               fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
-                               url=host + 'series/page/1/',
-                               ))
+    if unescape:
+        data = scrapertools.unescape(data)
 
-    itemlist.append(item.clone(title="Generos",
-                               action="seccion",
-                               url=host + 'series/page/1/',
-                               thumbnail=get_thumb('genres', auto=True),
-                               fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png',
-                               seccion='generos-serie'
-                               ))
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
-    itemlist.append(item.clone(title="Por Año",
-                               action="seccion",
-                               url=host + 'series/page/1/',
-                               thumbnail=get_thumb('year', auto=True),
-                               fanart='https://s8.postimg.cc/7eoedwfg5/pora_o.png',
-                               seccion='series-lanzamiento'
-                               ))
+    return soup
+
+
+def section(item):
+    logger.info()
+
+    itemlist = list()
+    soup = create_soup(host)
+    if item.is_tvshow:
+        soup = soup.find("div", id="serieshome")
+    else:
+        soup = soup.find("div", id="moviehome")
+
+    if item.title == "Generos":
+        matches = soup.find("div", class_="categorias").find_all("li", class_="cat-item")
+    elif item.title == "Calidad":
+        matches = soup.find("div", class_="categorias").find_all("li", class_="cat-item")
+    else:
+        matches = soup.find("div", class_="filtro_y").find_all("li")
+    for elem in matches:
+        url = elem.a["href"]
+        title = elem.a.text
+        itemlist.append(Item(channel=item.channel, title=title.title(), action="list_all", url=url))
 
     return itemlist
 
 
-def lista(item):
+def list_all(item):
     logger.info()
 
-    itemlist = []
-    data = get_source(item.url)
-    patron = 'class=item>.*?<a href=(.*?)><div class=image>.*?<img src=(.*?) alt=(.*?) \(\d{4}.*?ttx>(.*?)'
-    patron += '<div class=degradado>.*?fixyear><h2>.*?<\/h2>.*?<span class=year>(.*?)<\/span><\/div>(.*?)<\/div>'
+    itemlist = list()
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    soup = create_soup(item.url).find("div", class_="peliculas")
+    matches = soup.find_all("div", class_="item")
 
-    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedplot, scrapedyear, scrapedquality in matches:
-        url = scrapedurl
-        action = 'findvideos'
-        thumbnail = scrapedthumbnail
-        plot = scrapedplot
-        contentSerieName = ''
-        contentTitle = scrapedtitle
-        title = contentTitle
-        if scrapedquality != '':
-            quality = scrapertools.find_single_match(scrapedquality, 'calidad2>(.*?)<')
-            title = contentTitle + ' (%s)' % quality
-        year = scrapedyear
+    for elem in matches:
+        url = elem.a["href"]
+        title = elem.find("div", class_="fixyear").h2.text
+        title = re.sub(r"\(\d{4}(?:-Actualidad|-\d{4})?\)", "", title)
+        year = elem.find("span", class_="year").text
+        thumb = elem.img["src"]
 
-        if 'series' in item.url or 'series' in url:
-            action = 'temporadas'
-            contentSerieName = contentTitle
-            contentTitle = ''
-            quality = ''
+        new_item = Item(channel=item.channel, title=title, url=url,
+                        thumbnail=thumb, infoLabels={"year": year})
 
-        itemlist.append(Item(channel=item.channel,
-                             action=action,
-                             title=title,
-                             url=url,
-                             thumbnail=thumbnail,
-                             plot=plot,
-                             contentTitle=contentTitle,
-                             contentSerieName=contentSerieName,
-                             quality=quality,
-                             infoLabels={'year': year}
-                             ))
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    # Paginacion
+        if not "series/" in url:
+            new_item.contentTitle = title
+            new_item.action = "findvideos"
+        else:
+            new_item.contentSerieName = title
+            new_item.action = "seasons"
 
-    if itemlist != []:
-        actual_page_url = item.url
-        next_page = scrapertools.find_single_match(data,
-                                                   'alignleft><a href=(.*?) ><\/a><\/div><div class=nav-next alignright>')
-        if next_page != '':
-            itemlist.append(Item(channel=item.channel,
-                                 action="lista",
-                                 title='Siguiente >>>',
-                                 url=next_page,
-                                 thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
-                                 ))
+        itemlist.append(new_item)
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    try:
+        url_next_page = soup.find("div", class_="nav-previous").a["href"]
+    except:
+        return itemlist
+
+    if url_next_page:
+        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
+
     return itemlist
 
 
-def seccion(item):
-    logger.info()
-    itemlist = []
-    data = get_source(item.url)
-    
-    if item.seccion == 'generos-pelicula':
-        patron = '<li class=cat-item cat-item-.*?><a href=(.*?) >(.*?<\/a> <span>.*?)<\/span><\/li>'
-    elif item.seccion == 'generos-serie':
-        patron = '<li class=cat-item cat-item-.*?><a href=(.*?\/series-genero\/.*?) >(.*?<\/a> <span>.*?)<\/span><\/li>'
-    elif item.seccion in ['fecha-estreno', 'series-lanzamiento']:
-        patron = '<li><a\s*href=http\w*:\/\/miradetodo\.\w+\/fecha-estreno(.*?)>(.*?)<\/a>'
-    elif item.seccion == 'calidad':
-        patron = '<li><a href=http\w*:\/\/miradetodo\.\w+\/calidad(.*?)>(.*?)<\/a>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle in matches:
-        thumbnail = ''
-        if 'generos' in item.seccion:
-            cantidad = re.sub(r'.*?<\/a> <span>', '', scrapedtitle)
-            title = re.sub(r'<\/a> <span>|\d|\.', '', scrapedtitle)
-            url = scrapedurl
-            title = scrapertools.decodeHtmlentities(title)
-            if title in tgenero:
-                thumbnail = tgenero[title]
-            title = title + ' (%s)' % cantidad
-        elif item.seccion in ['series-lanzamiento', 'fecha-estreno', 'calidad']:
-            title = scrapedtitle
-            url = '%s%s%s' % (host, item.seccion, scrapedurl)
-            if item.seccion == 'calidad' and title in tcalidad:
-                thumbnail = tcalidad[title]
-
-        itemlist.append(item.clone(action='lista',
-                                   title=title,
-                                   url=url,
-                                   thumbnail=thumbnail
-                                   ))
-    return itemlist
-
-
-def temporadas(item):
+def seasons(item):
     logger.info()
 
-    itemlist = []
+    itemlist = list()
 
-    data = get_source(item.url)
-    patron = '<span class=title>.*?- Temporada (.*?)<\/span>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    soup = create_soup(item.url)
+    matches = soup.find_all("span", class_="se-t")
+    infoLabels = item.infoLabels
 
-    for temporada in matches:
-        title = 'Temporada %s' % temporada
-        contentSeasonNumber = temporada
-        item.infoLabels['season'] = contentSeasonNumber
-        itemlist.append(item.clone(action='episodiosxtemp',
-                                   title=title,
-                                   contentSeasonNumber=contentSeasonNumber
-                                   ))
+    for elem in matches:
+        season = elem.text
+        title = "Temporada %s" % season
+        infoLabels["season"] = season
 
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+        itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseason',
+                             context=filtertools.context(item, list_language, list_quality), infoLabels=infoLabels))
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel,
-                             title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
-                             url=item.url,
-                             action="add_serie_to_library",
-                             extra="episodios",
-                             contentSerieName=item.contentSerieName,
-                             contentSeasonNumber=contentSeasonNumber
-                             ))
+        itemlist.append(
+            Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
+                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
 
     return itemlist
 
 
 def episodios(item):
     logger.info()
-
     itemlist = []
-    data = get_source(item.url)
+    templist = seasons(item)
+    for tempitem in templist:
+        itemlist += episodesxseason(tempitem)
 
-    patron = '<li><div class=numerando>(\d+).*?x.*?(\d+)<\/div>.*?<a href=(.*?)> (.*?)<\/a>.*?<\/i>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedtemp, scrapedep, scrapedurl, scrapedtitle in matches:
-        temporada = scrapedtemp
-        title = temporada + 'x%s %s' % (scrapedep, scrapedtitle)
-        url = scrapedurl
-        contentEpisodeNumber = scrapedep
-        item.infoLabels['episode'] = contentEpisodeNumber
-        itemlist.append(item.clone(action='findvideos',
-                                   title=title,
-                                   url=url,
-                                   contentEpisodeNumber=contentEpisodeNumber,
-                                   ))
     return itemlist
 
 
-def episodiosxtemp(item):
+def episodesxseason(item):
     logger.info()
 
-    itemlist = []
-    data = get_source(item.url)
-    temporada = item.contentSeasonNumber
-    patron = '<li><div class=numerando>%s.*?x.*?(\d+)<\/div>.*?<a href=(.*?)> (.*?)<\/a>.*?<\/i>' % temporada
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    itemlist = list()
 
-    for scrapedep, scrapedurl, scrapedtitle in matches:
-        title = temporada + 'x%s %s' % (scrapedep, scrapedtitle)
-        url = scrapedurl
-        contentEpisodeNumber = scrapedep
-        item.infoLabels['episode'] = contentEpisodeNumber
-        itemlist.append(item.clone(action='findvideos',
-                                   title=title,
-                                   url=url,
-                                   contentEpisodeNumber=contentEpisodeNumber,
-                                   ))
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    soup = create_soup(item.url)
+
+    mmatches = soup.find_all("div", class_="se-c")
+    infoLabels = item.infoLabels
+    season = infoLabels["season"]
+    matches = soup.find_all("div", class_="se-c")
+
+    for elem in matches:
+        if elem.find("span", class_="se-t").text != str(season):
+            continue
+
+        epi_list = elem.find("ul", class_="episodios")
+        for epi in epi_list.find_all("li"):
+            info = epi.find("div", class_="episodiotitle")
+            url = info.a["href"]
+            epi_name = info.a.text
+            epi_num = epi.find("div", class_="numerando").text.split(" x ")[1]
+            infoLabels["episode"] = epi_num
+            title = "%sx%s - %s" % (season, epi_num, epi_name)
+
+            itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
+                                 infoLabels=infoLabels))
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
     return itemlist
 
 
 def findvideos(item):
     logger.info()
-    url_list = []
-    itemlist = []
-    duplicados = []
-    data = get_source(item.url)
-    src = data
-    patron = 'id=(?:div|player)(\d+)>.*?data-lazy-src=(.*?) scrolling'
-    matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for option, videoitem in matches:
-        sub = ''
-        lang = scrapertools.find_single_match(src,
-                                              '<a href=#(?:div|player)%s.*?>.*?(.*?)<\/a>' % option)
-        if 'audio ' in lang.lower():
-            lang=lang.lower().replace('audio ','')
-            lang=lang.capitalize()
+    itemlist = list()
 
-        data = get_source(videoitem)
-        video_urls = scrapertools.find_multiple_matches(data, '<li><a href=(.*?)><span')
-        for video in video_urls:
-            video_data = get_source(video)
-            if sub == '' and 'sub' in lang:
-                sub_file = scrapertools.find_single_match(video, '&sub=([^+]+)')
-                sub = '%sstream/subt/%s' % (host, sub_file)
-                                
-            if 'openload' in video or 'your' in video:
-                new_url= scrapertools.find_single_match(video_data,'<li><a href=(.*?srt)><span')
-                data_final = get_source(new_url)
-            else:
-                data_final=video_data
-            
-            url = scrapertools.find_single_match(data_final,'iframe src=(.*?) scrolling')
-            if url == '':
-                url = scrapertools.find_single_match(data_final, "'file':'(.*?)'")
-            
-            
-            quality = item.quality
-            server = servertools.get_server_from_url(url)
-            title = item.contentTitle + ' [%s] [%s]' % (server, lang)
-            if item.quality != '':
-                title = item.contentTitle + ' [%s] [%s] [%s]' % (server, quality, lang)
 
-            if url!='':
-                itemlist.append(item.clone(title=title, url=url, action='play', language=lang, subtitle=sub))
+    soup = create_soup(item.url)
+    matches = soup.find("ul", class_="idTabs").find_all("a")
+    if not matches:
+        return itemlist
+
+    for lang_opt in matches:
+
+        if not "episodio" in item.url:
+            lang = re.sub("audio", "", lang_opt.text.lower()).strip()[:2]
+        else:
+            lang = "su"
+        player_id = lang_opt.get("href", "")[1:]
+        if player_id.lower() in ["info", "links"]:
+            continue
+        player_data = soup.find("div", id=player_id)
+        if player_data:
+            player_url = player_data.iframe.get("data-lazy-src", "")
+        else:
+            player_url = player_data.a["href"]
+        v_data = create_soup(player_url, unescape=True).find_all("a")
+        for pl in v_data:
+            b_url = scrapertools.find_single_match(pl.get("href", ""), "id=([A-Za-z0-9+/=]+)")
+            try:
+                if PY3:
+                    url = base64.b64decode(bytes(b_url, "utf-8"))
+                else:
+                    url = base64.b64decode(b_url)
+            except:
+                continue
+            if url:
+                itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
+                                     language=lang, infoLabels=item.infoLabels))
+
     itemlist = servertools.get_servers_itemlist(itemlist)
-    if item.infoLabels['mediatype'] == 'movie':
-        if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-            itemlist.append(Item(channel=item.channel,
-                                 title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                                 url=item.url,
-                                 action="add_pelicula_to_library",
-                                 extra="findvideos",
-                                 contentTitle=item.contentTitle
-                                 ))
+
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
+
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
+        itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                             url=item.url, action="add_pelicula_to_library", extra="findvideos",
+                             contentTitle=item.contentTitle))
 
     return itemlist
 
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = item.url + texto
     try:
+        texto = texto.replace(" ", "+")
+        item.url = item.url + texto
+        item.first = 0
         if texto != '':
-            return lista(item)
+            return list_all(item)
         else:
             return []
+    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except:
-        import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
@@ -394,16 +315,17 @@ def search(item, texto):
 
 def newest(categoria):
     logger.info()
-    itemlist = []
+    itemlist = list()
     item = Item()
     try:
-        if categoria in ['peliculas','latino']:
-            item.url = host + 'page/1/?s'
-
+        if categoria == 'peliculas':
+            item.url = host + 'page/1/'
         elif categoria == 'infantiles':
             item.url = host + 'category/animacion/'
+        elif categoria == 'terror':
+            item.url = host + 'category/terror/'
 
-        itemlist = lista(item)
+        itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>>':
             itemlist.pop()
     except:
@@ -413,10 +335,3 @@ def newest(categoria):
         return []
 
     return itemlist
-
-
-def get_source(url):
-    logger.info()
-    data = httptools.downloadpage(url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    return data

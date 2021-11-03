@@ -50,7 +50,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/?s=%s" % (host,texto)
+    item.url = "%s/search/%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -69,7 +69,7 @@ def sub_menu(item):
     itemlist.append(item.clone(title="Mofos" , action="categorias", url=host, id="menu-item-1707"))
     itemlist.append(item.clone(title="Pornpros" , action="categorias", url=host, id="menu-item-3774"))
     itemlist.append(item.clone(title="Realitykings" , action="categorias", url=host, id="menu-item-844"))
-    itemlist.append(item.clone(title="Sis Loves Me" , action="lista", url=host + "/videos4/sislovesme/"))
+    itemlist.append(item.clone(title="Sis Loves Me" , action="lista", url=host + "videos4/sislovesme/"))
     itemlist.append(item.clone(title="Teamskeet" , action="categorias", url=host, id="menu-item-1713"))
     itemlist.append(item.clone(title="Networks" , action="categorias", url=host, id="menu-item-23036"))
     return itemlist
@@ -79,15 +79,15 @@ def categorias(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('li', id=item.id)
-    matches = soup.find_all('li', class_='menu-item-object-category')
+    matches = soup.find_all('a')
+    # matches = soup.find_all('li', class_='menu-item-object-category')
     for elem in matches:
-        scrapedurl = elem.a['href']
-        scrapedtitle = elem.a.text
-        scrapedplot = ""
-        scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        scrapedthumbnail = ""
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
-                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail , plot=scrapedplot) )
+        url = elem['href']
+        title = elem.text
+        plot = ""
+        thumbnail = ""
+        itemlist.append(item.clone(action="lista", title=title, url=url,
+                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     return itemlist
 
 
@@ -111,11 +111,8 @@ def create_soup(url):
             data = data.get('source', '')
             if not data:
                 return False
-    logger.debug(data)
-
     if data:
         soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-        logger.debug(soup)
         return soup
     
     return False
@@ -135,7 +132,11 @@ def lista(item):
         itemlist.append(item.clone(action="findvideos", title=title, contentTitle=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))
     try:
-        next_page = soup.find('a', class_='g1-delta g1-delta-1st next')['href']
+        if "search" in item.url:
+            next_page = soup.find('a', class_='next')['href']
+        else:
+            next_page = soup.find('link', rel='next')['href']
+            # next_page = soup.find('a', class_='g1-load-more')['data-g1-next-page-url']
     except:
         next_page = None
     if next_page:

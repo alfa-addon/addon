@@ -24,12 +24,9 @@ host = 'http://porn4days.biz/'
 def mainlist(item):
     logger.info()
     itemlist = []
-
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "newest/page1"))
     itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "popullar/page1"))
-    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/actors/?sort=by_likes"))
     itemlist.append(item.clone(title="Canal" , action="canal", url=host + "paysitelist"))
-
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "tags"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist

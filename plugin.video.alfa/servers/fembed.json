@@ -14,6 +14,10 @@
       {
         "pattern": "fcdn.stream/(?:f|v)/([A-z0-9_-]+)",
         "url": "https://www.fembed.com/api/source/\\1"
+      },
+      {
+        "pattern": "((?:serieskao|sololatino).\\w{2,4})/(?:f|v)/([A-z0-9_-]+)",
+        "url": "https://\\1/api/source/\\2"
       }
     ]
   },

@@ -102,7 +102,7 @@ def catalogo(item):
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 def create_soup(url, referer=None, unescape=False):

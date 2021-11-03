@@ -106,7 +106,7 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
-    itemlist.append(item.clone(url=url, server="directo"))
+    itemlist.append(item.clone(action="play", url=url, server="directo"))
     return itemlist
 
 
@@ -115,5 +115,5 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
-    itemlist.append(item.clone(url=url, server="directo"))
+    itemlist.append(item.clone(action="play", url=url, server="directo"))
     return itemlist
