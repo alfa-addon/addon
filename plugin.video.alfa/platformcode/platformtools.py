@@ -189,7 +189,9 @@ def render_items(itemlist, parent_item):
         genre = True
 
     use_unify = channel_param.get('force_unify', False) or config.get_setting('unify', default=False)
-
+    if use_unify:
+        from core import servertools
+        srv_lst = servertools.get_servers_list()
     if channel_param.get('adult', ''):
         use_unify = False
 
@@ -250,7 +252,7 @@ def render_items(itemlist, parent_item):
         if use_unify and parent_item.channel not in ['alfavorites']:
             # Formatear titulo con unify
 
-            item = unify.title_format(item, colors_file)
+            item = unify.title_format(item, colors_file, srv_lst)
 
         else:
             # Formatear titulo metodo old school

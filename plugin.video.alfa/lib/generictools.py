@@ -623,6 +623,7 @@ def post_tmdb_listado(item, itemlist):
                 if scrapertools.find_single_match(title_subs, r'Episodio\s*(\d+)x(\d+)'):
                     title_subs += ' (MAX_EPISODIOS)'
                 title_add = '%s -%s-' % (title_add, title_subs)                 #se agregan el resto de etiquetas salvadas
+        if len(title_add) > 1: item_local.unify_extended = True
         item_local.title_subs = []
         del item_local.title_subs
 
@@ -772,6 +773,7 @@ def post_tmdb_listado(item, itemlist):
 
             elif (item.action == "search" or item.extra == "search" or item_local.from_channel == "news") and not \
                         (item_local.extra == "varios" or item_local.extra == "documentales"):
+                item_local.unify_extended = True
                 title += " -Serie-"
                 if item_local.from_channel == "news":
                     title_add += " -Serie-"
@@ -779,6 +781,7 @@ def post_tmdb_listado(item, itemlist):
         if (item_local.extra == "varios" or item_local.extra == "documentales") \
                         and (item.action == "search" or item.extra == "search" or \
                         item.action == "listado_busqueda" or item_local.from_channel == "news"):
+            item_local.unify_extended = True
             title += " -Varios-"
             item_local.contentTitle += " -Varios-"
             if item_local.from_channel == "news":
@@ -794,6 +797,7 @@ def post_tmdb_listado(item, itemlist):
                 id_tmdb = "tmdb_%s" % item_local.infoLabels['tmdb_id']
             item_local.video_path = "%s [%s]" % (item_local.contentSerieName, id_tmdb)
             item_local.url_tvshow = item_local.url
+            item_local.unify_extended = True
             season_episode = ''
             if season and episode:
                 season_episode = '%sx%s.strm' % (str(season), str(episode).zfill(2))
@@ -802,6 +806,14 @@ def post_tmdb_listado(item, itemlist):
             if item_local.video_path:
                 item_local = context_for_videolibray(item_local)
                 en_videoteca = '(V)-'
+        
+        if item_local.contentType == 'movie' and item_local.infoLabels['tmdb_id'] \
+                        and ((item_local.infoLabels['imdb_id'] \
+                        and item_local.infoLabels['imdb_id'] in str(video_list)) \
+                        or 'tmdb_'+item_local.infoLabels['tmdb_id'] in str(video_list) \
+                    or item_local.contentTitle.lower()+' [' in str(video_list)):
+            item_local.unify_extended = True
+            en_videoteca = '(V)-'
 
         title += title_add.replace(' (MAX_EPISODIOS)', '')                      #Se añaden etiquetas adicionales, si las hay
         if title_add and item_local.contentType == 'movie':
@@ -841,10 +853,12 @@ def post_tmdb_listado(item, itemlist):
             elif "Episodio " in title:
                 if not item_local.contentSeason or not item_local.contentEpisodeNumber:
                     item_local.contentSeason, item_local.contentEpisodeNumber = scrapertools.find_single_match(title_add, 'Episodio (\d+)x(\d+)')
+            item_local.unify_extended = True
 
         if item_local.infoLabels['status'] and (item_local.infoLabels['status'].lower() == "ended" \
                         or item_local.infoLabels['status'].lower() == "canceled"):
             title += ' [TERM]'
+            item_local.unify_extended = True
         
         item_local.title = en_videoteca + title
         item_local.contentTitle = en_videoteca + item_local.contentTitle
@@ -1161,6 +1175,8 @@ def post_tmdb_episodios(item, itemlist):
         del item.library_filter_show
     if item.channel_host:
         del item.channel_host
+    if item.unify_extended:
+        del item.unify_extended
         
     for item_local in itemlist:                                                 #Recorremos el Itemlist generado por el canal
         if item_local.add_videolibrary:
@@ -1203,6 +1219,8 @@ def post_tmdb_episodios(item, itemlist):
             del item_local.extra2
         if (item.library_urls or item.add_videolibrary) and item_local.video_path:
             del item_local.video_path
+        if item_local.unify_extended:
+            del item_local.unify_extended
         item_local.wanted = 'xyz'
         del item_local.wanted
         item_local.text_color = 'xyz'
@@ -1603,6 +1621,9 @@ def post_tmdb_findvideos(item, itemlist):
     
     if item.library_filter_show:
         del item.library_filter_show
+    
+    if item.unify_extended:
+        del item.unify_extended
 
     #Salvamos la información de max num. de episodios por temporada para despues de TMDB
     num_episodios = item.contentEpisodeNumber
@@ -3154,8 +3175,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     else:                                                       # Si se quiere cambiar desde un DOMINIO ...
                         if url_host: _url_ = _url_.replace(url_org, url_des)    #reemplazamos una parte del dominio
                     
-                    if not _url_.endswith('/'):
-                        _url_ += '/'
+                    #if not _url_.endswith('/'):
+                    #    _url_ += '/'
                     if x == 0:
                         url_total = _url_
                         if item.url:

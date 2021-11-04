@@ -192,7 +192,7 @@ def findvideos(item):
             except:
                 continue
         url = clear_url(url)
-        if url in encontrado or ".srt" in url or "search" in url:
+        if url in encontrado or ".srt" in url or "search" in url or "acortalink" in url:
             continue
         if url:
             encontrado.append(url)

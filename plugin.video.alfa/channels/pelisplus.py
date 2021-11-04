@@ -60,6 +60,9 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Anime", action="sub_menu",
                          thumbnail=get_thumb('anime', auto=True)))
 
+    itemlist.append(Item(channel=item.channel, title="Doramas", action="list_all", url=host + "generos/dorama",
+                         content="serie", thumbnail=get_thumb('doramas', auto=True)))
+
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + 'search/?s=',
                          thumbnail=get_thumb('search', auto=True)))
 
@@ -78,12 +81,19 @@ def sub_menu(item):
     else:
         content = item.title.lower()[:-1]
 
-    itemlist.append(Item(channel=item.channel,title="Todas", action="list_all", url=host + '%s' % item.title.lower(),
+    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + '%s' % item.title.lower(),
                          thumbnail=get_thumb('all', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="list_all",
+                         url=host + '%s/populares' % item.title.lower(),
+                         thumbnail=get_thumb('more watched', auto=True), type=content))
 
     if item.title.lower() == "peliculas":
         itemlist.append(Item(channel=item.channel, title="Generos", action="section",
                              thumbnail=get_thumb('genres', auto=True), type=content))
+    elif item.title.lower() == "series":
+        itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="list_all",
+                             url=host + 'series/populares', thumbnail=get_thumb('more watched', auto=True), type=content))
     return itemlist
 
 
@@ -196,7 +206,7 @@ def episodesxseasons(item):
         epi_num = scrapertools.find_single_match(elem.text, "E(\d+)")
         epi_name = scrapertools.find_single_match(elem.text, ":([^$]+)")
         infoLabels['episode'] = epi_num
-        title = '%sx%s - %s' % (season, epi_num, epi_name)
+        title = '%sx%s - %s' % (season, epi_num, epi_name.strip())
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', infoLabels=infoLabels))
 

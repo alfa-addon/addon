@@ -60,20 +60,22 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Películas", action="submenu", 
+    itemlist.append(Item(channel=item.channel, title="Películas", action="listado", 
                 url=host + "page/1/", thumbnail=thumb_pelis, extra="peliculas"))
     
-    itemlist.append(Item(channel=item.channel, title="Buscar en Películas >>", action="search",
-                url=host + 'search-result/page/1/?search_query=%s&tax_generos=&tax_ano=' + 
-                '&tax_calidad=&tax_masopciones=&wpas_id=myform&wpas_submit=1' , 
-                thumbnail=thumb_buscar, extra="search"))
+    #itemlist.append(Item(channel=item.channel, title="Buscar en Películas >>", action="search",
+    #            url=host + 'search-result/page/1/?search_query=%s&tax_generos=&tax_ano=' + 
+    #            '&tax_calidad=&tax_masopciones=&wpas_id=myform&wpas_submit=1' , 
+    #            thumbnail=thumb_buscar, extra="search"))
     
-    itemlist.append(Item(channel=item.channel, title="Series", action="submenu", 
+    itemlist.append(Item(channel=item.channel, title="Series", action="listado", 
                 url=host + "series/page/1/", thumbnail=thumb_series, extra="series"))
     
-    itemlist.append(Item(channel=item.channel, title="Buscar en Series >>", action="search",
-                url=host + 'series/search-result/page/1/?search_query=%s&tax_generos=&tax_ano=' + 
-                '&wpas_id=myform&wpas_submit=1' , 
+    #itemlist.append(Item(channel=item.channel, title="Buscar en Series >>", action="search",
+    #            url=host + 'series/search-result/page/1/?search_query=%s&tax_generos=&tax_ano=' + 
+    #            '&wpas_id=myform&wpas_submit=1' , 
+    #            thumbnail=thumb_buscar, extra="search"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", 
                 thumbnail=thumb_buscar, extra="search"))
 
     itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", 
@@ -319,6 +321,7 @@ def calidad_rec(item):
 
 
 def filter_search(item, itemlist=[]):
+    return itemlist
     logger.info()
     
     year = ''
@@ -430,7 +433,7 @@ def listado(item):                                                              
         #Patrón para búsquedas, pelis y series
         patron = '<div class="browse-movie-wrap[^"]+">\s*<a\s*href="([^"]+)"\s*class='
         patron += '"browse-movie-link">\s*(?:<figure>\s*)?<img.*?class="[^"]+"\s*'
-        patron += 'src="([^"]+)"\s*alt="[^>]*>.*?class="browse-movie-title">([^<]+)<\/a>\s*'
+        patron += '.*?src="([^"]+)"\s*alt="[^>]*>.*?class="browse-movie-title">([^<]+)<\/a>\s*'
         patron += '<div\s*class="browse-movie-year">(\d+)<\/div>\s*<div\s*class='
         patron += '"browse-movie-tags">(?:\s*<a\s*href=[^>]+>([^<]+)<\/a>)?'
 
@@ -691,10 +694,7 @@ def findvideos(item):
         # Seleccionamos el bloque y buscamos los apartados
         data = scrapertools.find_single_match(data, patron)
 
-    patron = '<div\s*class="modal-torrent">\s*<div\s*class="modal-quality"\s*'
-    patron += 'id="[^"]+">\s*<span>([^<]+)<\/span>\s*<\/div>\s*(?:<p\s*class='
-    patron += '"quality-size">[^<]+<\/p>)?\s*(?:<br>\s*<p>[^<]*<\/p>\s*<p\s*class='
-    patron += '"quality-size">([^<]*)<\/p>)?<a\s*[^>]*class="[^"]+"\s*href="([^"]+)"'
+    patron = '<div\s*class="modal-torrent">\s*<div\s*class="modal-quality"\s*id="[^"]+">\s*<span>([^<]+)<\/span>\s*<\/div>\s*(?:<p\s*class="quality-size">[^<]+<\/p>)?\s*(?:<br>\s*<p>[^<]*<\/p>)?\s*(?:<p\s*class="quality-size">([^<]*)<\/p>)?\s*<a\s*[^>]*\s*href="([^"]+)"'
     
     if not item.armagedon:
         if not item.matches:
@@ -702,9 +702,9 @@ def findvideos(item):
         else:
             matches = item.matches
     
-    #logger.debug("PATRON: " + patron)
-    #logger.debug(matches)
-    #logger.debug(data)
+    logger.debug("PATRON: " + patron)
+    logger.debug(matches)
+    logger.debug(data)
     
     if not matches:                                                             #error
         return itemlist
@@ -772,7 +772,7 @@ def findvideos(item):
         if 'castellano' in scrapedlanguage.lower() or ('español' in scrapedlanguage.lower() and not 'latino' in scrapedlanguage.lower()):
             item_local.language += ['CAST']                                     # añadimos CAST
         if 'dual' in item_local.quality.lower():
-            item_local.quality = re.sub(r'(?i)dual.*?', '', item_local.quality).strip()
+            item_local.quality = re.sub(r'(?i)_*dual.*?', '', item_local.quality).strip()
             item_local.language += ['DUAL']                                     # añadimos DUAL
         if not item_local.language:
             item_local.language = ['LAT']                                       # [LAT] por defecto
@@ -950,12 +950,17 @@ def episodios(item):
             y += [int(x)]
         max_temp = max(y)
 
+    patron = '<div\s*class="accordion\s*active">\s*Temporada\s*(\d+)\s*<a\s*target="_blank"\s*href="([^"]+)"'
+    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
+                                          item=item, itemlist=[])               # Descargamos la página de Temporadas
+    
     # Si la series tiene solo una temporada, o se lista solo una temporada, guardamos la url y seguimos normalmente
-    list_temp = []
-    list_temp.append(item.url)
+    list_temp = re.compile(patron, re.DOTALL).findall(data)
+    if len(list_temp) == 0:
+        list_temp.append(item.url)
 
     # Descarga las páginas
-    for url in list_temp:                                                       # Recorre todas las temporadas encontradas
+    for temp, url in list_temp:                                                       # Recorre todas las temporadas encontradas
         
         data, success, code, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, 
                                           item=item, itemlist=itemlist)         # Descargamos la página
@@ -964,21 +969,27 @@ def episodios(item):
         if not success:                                                         # Si ERROR o lista de errores ...
             return itemlist                                                     # ... Salimos
 
+        
+        """
         patron = '(?:\s*<button\s*class="accordion"><i\s*class="fa[^"]+"><\/i>'
         patron += '.*?Temporada\s*(\d+)<\/button>\s*<div\s*class="panel">\s*'
         patron += '<ul\s*class="download-links">)?\s*<li>\s*<a\s*href="([^"]+)"\s*'
         patron += 'target="[^"]+">\s*<i\s*class="fas[^"]+d">\s*<\/i>.*?Descargar\s*'
         patron += 'Capitulo\s*(\d+)\s*<\/a>\s*<\/li>'
+        """
+        patron = '(?i)<li>[^<]*Descargar\s*Capitulo\s*(\d+)\s*<a\s*target="_blank"\s*href="([^"]+)"'
         
         matches = re.compile(patron, re.DOTALL).findall(data)
 
-        #logger.debug("PATRON: " + patron)
-        #logger.debug(matches)
-        #logger.debug(data)
+        logger.debug("PATRON: " + patron)
+        logger.debug(matches)
+        logger.debug(data)
 
         # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
         x = 0
-        for scrapedseason_num, scrapedurl, episode_num  in matches:
+        #for scrapedseason_num, scrapedurl, episode_num  in matches:
+        for episode_num, scrapedurl in matches:
+            scrapedseason_num = temp
             item_local = item.clone()
             item_local.action = "findvideos"
             item_local.contentType = "episode"
@@ -1102,7 +1113,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     
     try:
-        item.url = item.url % texto
+        item.url = '%s?s=%s' % (host, texto)
         item.extra = 'search'
 
         if texto:
