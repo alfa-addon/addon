@@ -652,6 +652,8 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
             follow_redirects = True
             if post:
                 follow_redirects = False
+            if timeout < 20 and httptools.channel_proxy_list(url):              # Si usa proxy, duplicamos el timeout
+                timeout *= 3
             response = httptools.downloadpage(url, headers=headers, post=post, \
                         follow_redirects=follow_redirects, timeout=(timeout, timeout), \
                         proxy_retries=proxy_retries)

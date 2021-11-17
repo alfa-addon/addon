@@ -832,6 +832,7 @@ def reset_movie(movie_file, p_dialog=None, i=100, t=1):
     movie_json_list = []
     heading = config.get_localized_string(60586)
     head_nfo = ''
+    movie_path = filetools.basename(filetools.dirname(movie_file))
 
     try:
         active = False
@@ -844,19 +845,21 @@ def reset_movie(movie_file, p_dialog=None, i=100, t=1):
         if movie_file.endswith('.json'):
             movie = Item().fromjson(filetools.read(movie_file))
             movie, it, overwrite = generictools.redirect_clone_newpct1(movie, overwrite=3)
+            movie = redirect_url(movie)
             library_urls = {movie.channel: movie.url}
             movie_clone = movie.clone()
             movie_clone.clave = '%s|%s' % (movie.channel, movie.url)
             movie_json_list.append(movie_clone)
         else:
             head_nfo, movie = read_nfo(movie_file)
+            movie, it, overwrite = generictools.redirect_clone_newpct1(movie, overwrite=3)
+            movie = redirect_url(movie)
             library_urls = movie.library_urls.copy()
             del movie.library_urls
             movie_clone = movie.clone()
             for channel, url in list(library_urls.items()):
                 movie_clone.channel = channel
                 movie_clone.url = url
-                movie_clone, it, overwrite = generictools.redirect_clone_newpct1(movie_clone, overwrite=3)
                 library_urls_clone = {movie_clone.channel: movie_clone.url}
             library_urls = library_urls_clone.copy()
             for channel, url in list(library_urls.items()):
@@ -873,8 +876,7 @@ def reset_movie(movie_file, p_dialog=None, i=100, t=1):
         from core import httptools
         for channel, url in list(library_urls.items()):
             if not url.startswith('magnet'):
-                url_domain = scrapertools.find_single_match(url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+)') 
-                response = httptools.downloadpage(url_domain, timeout=10, ignore_response_code=True, hide_infobox=True)
+                response = httptools.downloadpage(url, timeout=10, ignore_response_code=True, hide_infobox=True)
                 if not response.sucess:
                     raise Exception(response.code)
         
@@ -945,9 +947,7 @@ def reset_movie(movie_file, p_dialog=None, i=100, t=1):
     except Exception as ex:
         heading = "Error al crear de nuevo la película"
         logger.error(heading)
-        template = "An exception of type %s occured. Arguments:\n%r"
-        message = template % (type(ex).__name__, ex.args)
-        logger.error(message)
+        logger.error(traceback.format_exc())
         p_dialog.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (movie.contentTitle,
                                                                           movie.channel.capitalize()))
         time.sleep(3)
@@ -968,6 +968,8 @@ def reset_movie(movie_file, p_dialog=None, i=100, t=1):
 def reset_serie(tvshow_file, p_dialog=None, i=100, t=1, inactive=False):
     logger.info(tvshow_file)
     res = False
+    tvshow_path = filetools.basename(filetools.dirname(tvshow_file))
+    
     try:
         active = False
         if not p_dialog:
@@ -998,15 +1000,11 @@ def reset_serie(tvshow_file, p_dialog=None, i=100, t=1, inactive=False):
         
         # Verificamos que las webs de los canales estén activas
         from core import httptools
-        serie_clone = serie.clone()
-        del serie_clone.library_urls
+        serie, it, overwrite = generictools.redirect_clone_newpct1(serie, overwrite=3)
+        serie = redirect_url(serie)
         for channel, url in list(serie.library_urls.items()):
             if not url.startswith('magnet'):
-                serie_clone.channel = channel
-                serie_clone.url = url
-                serie_clone, it, overwrite = generictools.redirect_clone_newpct1(serie_clone, overwrite=3)
-                serie_clone.url = scrapertools.find_single_match(serie_clone.url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+)') 
-                response = httptools.downloadpage(serie_clone.url, timeout=10, ignore_response_code=True, hide_infobox=True)
+                response = httptools.downloadpage(url, timeout=10, ignore_response_code=True, hide_infobox=True)
                 if not response.sucess:
                     raise Exception(response.code)
         
@@ -1019,15 +1017,13 @@ def reset_serie(tvshow_file, p_dialog=None, i=100, t=1, inactive=False):
         res = write_nfo(tvshow_file, head_nfo, serie)
         if res:
             from videolibrary_service import update
-            update(path, p_dialog, i, t, serie, 3)
+            update(path, p_dialog, i, t, serie, 3, redir=False)
         else:
-            logger.error("Error al crear de nuevo la serie")
+            logger.error("Error al crear de nuevo la serie: %s" % tvshow_path)
     except Exception as ex:
-        heading = "Error al crear de nuevo la serie"
+        heading = "Error al crear de nuevo la serie: %s" % tvshow_path
         logger.error(heading)
-        template = "An exception of type %s occured. Arguments:\n%r"
-        message = template % (type(ex).__name__, ex.args)
-        logger.error(message)
+        logger.error(traceback.format_exc())
         import math
         p_dialog.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (serie.contentSerieName,
                                                                           serie.channel.capitalize()))
@@ -1042,6 +1038,44 @@ def reset_serie(tvshow_file, p_dialog=None, i=100, t=1, inactive=False):
             while xbmc.getCondVisibility('Library.IsScanningVideo()'):          # Se espera a que acabe el scanning
                 time.sleep(1)
             xbmc_videolibrary.mark_content_as_watched_on_alfa(tvshow_file)
+
+
+def redirect_url(video, channel=''):
+
+    try:
+        if isinstance(video, (dict, Item)):
+            if video.url:
+                video.url = redirect_url(video.url, channel=video.channel)
+            if video.library_urls:
+                for channel, url in list(video.library_urls.items()):
+                    if not url.startswith('magnet'):
+                        video.library_urls[channel] = redirect_url(url, channel)
+            if video.library_filter_show and video.channel and video.channel != 'videolibrary':
+                video.show = video.library_filter_show.get(video.channel, video.contentTitle)
+            if video.url_tvshow:
+                video.url_tvshow = redirect_url(video.url_tvshow, video.channel)
+        
+        elif channel and generictools.verify_channel(channel) != 'newpct1' and not video.startswith('magnet'):
+            obj = __import__('channels.%s' % channel, fromlist=["channels.%s" % channel])
+
+            try:
+                channel_host = ''
+                if obj.host and isinstance(obj.host, str):
+                    channel_host = obj.host
+            except:
+                pass
+            
+            if channel_host and not video.startswith(channel_host):
+                logger.debug("vl channel: %s" % channel)
+                logger.debug("vl url: %s" % video)
+                logger.debug("cambiando dominio....")
+
+                video = re.sub("(https?:\/\/.+?\/)", channel_host, video)
+                logger.debug("Nueva URL: %s" % video)
+    except:
+        logger.error(traceback.format_exc())
+    
+    return video
 
 
 def add_movie(item):

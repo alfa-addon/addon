@@ -112,8 +112,6 @@ modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', chann
 timeout = config.get_setting('clonenewpct1_timeout_downloadpage', channel_py)   #Timeout downloadpage
 #timeout = timeout * 2.5                                                         # Incremento temporal
 if timeout == 0: timeout = None
-if httptools.channel_proxy_list(host):                                          #Si usa un proxy, ...
-    timeout = timeout * 2                                                       #Duplicamos en timeout
 season_colapse = config.get_setting('season_colapse', channel_py)               # Season colapse?
 filter_languages = config.get_setting('filter_languages', channel_py)           # Filtrado de idiomas?
 
@@ -355,7 +353,7 @@ def submenu_novedades(item):
     global host
     item, host = verify_host(item, host, category=category)                     # Actualizamos la url del host
     
-    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
+    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, s2=False, 
                                           decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
@@ -363,7 +361,7 @@ def submenu_novedades(item):
     #patron = '<div class="content">.*?<ul class="noticias'
     patron = '<div class="content">.*?$'
     if not data or not scrapertools.find_single_match(data, patron):
-        item, data = generictools.fail_over_newpct1(item, patron, timeout=timeout)
+        item, data = generictools.fail_over_newpct1(item, patron, timeout=timeout_search)
     
     if not data:                                                                #Si no ha logrado encontrar nada, salimos
         itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.category + 
@@ -1155,6 +1153,7 @@ def findvideos(item):
     matches = []
     data = ''
     code = 0
+    timeout_search = timeout * 2                                                # Timeout para descargas
     if not item.language:
         item.language = ['CAST']                                                #Castellano por defecto
     
@@ -1281,7 +1280,7 @@ def findvideos(item):
     size = ''
     
     if not item.matches:
-        data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
+        data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, 
                                           decode_code=decode_code, quote_rep=True, 
                                           item=item, itemlist=[])               # Descargamos la página)
         data = data.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
@@ -1336,7 +1335,7 @@ def findvideos(item):
         else:
             #Si no hay datos consistentes, llamamos al método de fail_over para que 
             #encuentre un canal que esté activo y pueda gestionar el vídeo
-            item, data = generictools.fail_over_newpct1(item, patron_mult, timeout=timeout)
+            item, data = generictools.fail_over_newpct1(item, patron_mult, timeout=timeout_search)
             data = data.replace("$!", "#!").replace("'", '"').replace("Ã±", "ñ").replace("//pictures", "/pictures")
             
             #Volvemos a buscar el .torrent, repitiendo todo como al principio
@@ -1385,7 +1384,7 @@ def findvideos(item):
                 cnt_servidores += 1
 
         if cnt_servidores == 0:
-            item, data_servidores = generictools.fail_over_newpct1(item, patron_lu, timeout=timeout)    #intentamos recuperar servidores
+            item, data_servidores = generictools.fail_over_newpct1(item, patron_lu, timeout=timeout_search)    #intentamos recuperar servidores
             
             #Miramos si ha servidores
             if not data_servidores:                                             #Si no ha logrado encontrar nada nos vamos
@@ -1445,7 +1444,7 @@ def findvideos(item):
                 if url_torr.startswith('http') or url_torr.startswith('//'):
                     url_torr = urlparse.urljoin(torrent_tag, url_torr)
                 
-                data_alt, success, code, item, itemlist = generictools.downloadpage(url_torr, timeout=timeout, 
+                data_alt, success, code, item, itemlist = generictools.downloadpage(url_torr, timeout=timeout_search, 
                                           decode_code=decode_code, quote_rep=True, 
                                           item=item, itemlist=itemlist)         # Descargamos la página)
                 data_alt = data_alt.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
