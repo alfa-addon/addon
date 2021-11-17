@@ -142,13 +142,14 @@ class notifyWindow(xbmcgui.WindowXMLDialog):
 
 def show_popup(item, ignore_new_wish=False, first_pass=False):
     logger.info()
-    results = get_info(ignore_new_wish)
-    if results:
-        if first_pass and len(results) > 5:
-            results = results[:5]
-        window = notifyWindow('notify.xml', config.get_runtime_path(), data=results, current=int(item.current))
-        window.doModal()
-        del window
+    if not platformtools.is_playing():
+        results = get_info(ignore_new_wish)
+        if results:
+            if first_pass and len(results) > 5:
+                results = results[:5]
+            window = notifyWindow('notify.xml', config.get_runtime_path(), data=results, current=int(item.current))
+            window.doModal()
+            del window
 
 
 def get_info(ignore_new_wish=False):
@@ -196,7 +197,10 @@ def now_available():
             c_results = [executor.submit(news.get_channel_news, ch, "peliculas") for ch in channel_list]
 
             for index, res in enumerate(futures.as_completed(c_results)):
-                itemlist.extend(res.result()[1])
+                try:
+                    itemlist.extend(res.result()[1])
+                except:
+                    continue
 
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 

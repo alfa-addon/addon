@@ -44,6 +44,7 @@ show_langs = config.get_setting('show_langs', channel='hdfull')
 unify = config.get_setting('unify')
 __modo_grafico__ = config.get_setting('modo_grafico', channel='hdfull')
 account = config.get_setting("logged", channel="hdfull")
+credentials_req = True
 
 IDIOMAS = {'lat': 'LAT', 'spa': 'CAST', 'esp': 'CAST', 'sub': 'VOSE', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
 list_language = list(set(IDIOMAS.values()))
@@ -51,10 +52,35 @@ list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP', 'RHDTV', 'DVDSCR']
 list_servers = ['clipwatching', 'gamovideo', 'vidoza', 'vidtodo', 'openload', 'uptobox']
 
 
+def verify_login(force_check=False, force_login=True):
+    global account, credentials_req
+    
+    credentials = config.get_setting('hdfulluser', channel='hdfull')
+    if account and credentials and not force_check:
+        return account
+    
+    else:
+        if credentials:
+            account = login()
+        else:
+            account = False
+        if not account:
+            logger.info('NO LOGIN credentials', force=True)
+            if force_login:
+                if credentials_req:
+                    help_window.show_info('hdfull_login', wait=False)
+                    settingCanal(Item)
+                    credentials = config.get_setting('hdfulluser', channel='hdfull')
+                    if credentials:
+                        account = login()
+                    else:
+                        credentials_req = False
+        return account
+
 def login():
     logger.info()
 
-    data = agrupa_datos(host, referer=False)
+    data = agrupa_datos(host, referer=False, force_check=False, force_login=False)
     _logged = 'id="header-signout" href="/logout"'
     if _logged in data:
         config.set_setting("logged", True, channel="hdfull")
@@ -77,7 +103,7 @@ def login():
             return False
         post = '__csrf_magic=%s&username=%s&password=%s&action=login' % (sid, user_, pass_)
 
-        new_data = agrupa_datos(host, post=post, referer=False)
+        new_data = agrupa_datos(host, post=post, referer=False, force_check=False, force_login=False)
 
         if _logged in new_data:
             config.set_setting("logged", True, channel="hdfull")
@@ -104,6 +130,7 @@ def settingCanal(item):
     return 
     
 def logout(item):
+    global account
     logger.info()
     domain = urlparse.urlparse(host).netloc
     dict_cookie = {"domain": domain, 'expires': 0}
@@ -114,17 +141,22 @@ def logout(item):
     config.set_setting("hdfulluser", "", channel="hdfull")
     config.set_setting("hdfullpassword", "", channel="hdfull")
     config.set_setting("logged", False, channel="hdfull")
+    account = False
     
     #avisamos, si nos dejan
     if not _silence:
         platformtools.dialog_notification("Deslogueo completo", 
                                           "Reconfigure su cuenta",
                                           sound=False,)
-    #y mandamos a configuracion del canal
-    return settingCanal(item)
+    platformtools.itemlist_refresh()
+    return item
 
-def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_proxy=None, proxy_retries=1):
-    global host
+def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_proxy=None, 
+                 proxy_retries=1, force_check=False, force_login=True):
+    global host, account
+    
+    if force_check or force_login:
+        verify_login(force_check=force_check, force_login=force_login)
     
     headers = {'Referer': host}
     if 'episodes' in url or 'buscar' in url:
@@ -160,6 +192,9 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
             return agrupa_datos(url, post=post, referer=referer, json=json, proxy=True, forced_proxy='ProxyWeb', proxy_retries=0)
     if not page.sucess and not proxy:
         return agrupa_datos(url, post=post, referer=referer, json=json, proxy=True, forced_proxy='ProxyWeb', proxy_retries=0)
+    if not page.sucess:
+        account = False
+        config.set_setting("logged", False, channel="hdfull")
     
     new_host = scrapertools.find_single_match(page.data,
                     r'location.replace\("(http(?:s|)://\w+.hdfull.\w{2,4})')
@@ -193,17 +228,12 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
     data = re.sub(r'>\s<', '><', data)
     return data
 
+
 def mainlist(item):
     logger.info()
     itemlist = []
-    if config.get_setting('hdfulluser', channel='hdfull'):
-        account = login()
-    else:
-        account = False
-    if not account:
-        logger.info('NO LOGIN credentials', force=True)
-        help_window.show_info('hdfull_login', wait=False)
-
+    
+    verify_login(force_check=True, force_login=False)
 
     autoplay.init(item.channel, list_servers, list_quality)
     
@@ -369,6 +399,8 @@ def search(item, texto):
     logger.info()
     
     try:
+        verify_login(force_check=True, force_login=False)
+        
         data = agrupa_datos(host, referer=False)
         sid = scrapertools.find_single_match(data, '.__csrf_magic. value="(sid:[^"]+)"')
         item.extra = urllib.urlencode({'__csrf_magic': sid}) + '&menu=search&query=' + texto
@@ -622,7 +654,7 @@ def seasons(item):
         type = item.url.split("###")[1].split(";")[1]
         item.url = item.url.split("###")[0]
     
-    data = agrupa_datos(item.url)
+    data = agrupa_datos(item.url, force_check=False, force_login=False)
     
     if account:
         str = get_status(status, "shows", id)
@@ -669,8 +701,14 @@ def seasons(item):
 
 
 def episodios(item):
-    logger.info()
+    logger.info(item)
     itemlist = []
+    
+    if item.library_playcounts and item.action == 'get_seasons':    # Es actualización background de videoteca
+        verify_login(force_check=True, force_login=False)
+    else:
+        verify_login(force_check=True, force_login=True)
+    
     templist = seasons(item)
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
@@ -692,7 +730,7 @@ def episodesxseason(item):
     
     post = "action=season&start=0&limit=0&show=%s&season=%s" % (sid, ssid)
     #episodes = httptools.downloadpage(url, post=post).json
-    episodes = agrupa_datos(url, post=post, json=True)
+    episodes = agrupa_datos(url, post=post, json=True, force_check=False, force_login=False)
     
     for episode in episodes:
 
@@ -887,8 +925,12 @@ def findvideos(item):
     for provider, e, l in providers:
         provs[provider]=[e,l]
 
-    data = agrupa_datos(item.url)
-    data_decrypt = jsontools.load(alfaresolver.obfs(data, js_data))
+    data = agrupa_datos(item.url, force_check=True, force_login=True)
+    try:
+        data_decrypt = jsontools.load(alfaresolver.obfs(data, js_data))
+    except:
+        return []
+    
     infolabels = item.infoLabels
     year = scrapertools.find_single_match(data, '<span>Año:\s*</span>.*?(\d{4})')
     infolabels["year"] = year

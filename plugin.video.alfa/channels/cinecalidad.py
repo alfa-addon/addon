@@ -38,7 +38,7 @@ list_servers = ['gounlimited',
                 'torrent'
                 ]
 
-host = 'https://www.cine-calidad.com/'
+host = 'https://cinecalidad.website/'
 
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
@@ -299,11 +299,9 @@ def findvideos(item):
     dl_itemlist = list()
     duplicados = []
 
-    if 'cinemaqualidade' in item.url:
-        lang = 'portugues'
-    elif 'espana' in item.url:
+    if 'espana' in item.url:
         lang = 'castellano'
-    elif 'cine-calidad' in item.url:
+    else:
         lang = 'latino'
     
     data = httptools.downloadpage(item.url).data.replace("'", '"')

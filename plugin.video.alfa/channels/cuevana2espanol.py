@@ -14,16 +14,17 @@ from core import httptools
 from core.item import Item
 from core import servertools
 from core import scrapertools
-from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from platformcode import config, logger
 from channels import filtertools, autoplay
+from lib.AlfaChannelHelper import DooPlay
 
 list_language = ["LAT", "CAST"]
 list_quality = []
 list_servers = ['fembed', 'streamtape', 'streamlare', 'zplayer']
 
 host = "https://cuevana2espanol.com/"
+AlfaChannel = DooPlay(host, movie_path="ver-pelicula-online/")
 
 
 def mainlist(item):
@@ -53,51 +54,10 @@ def mainlist(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False):
-    logger.info()
-
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
-    else:
-        data = httptools.downloadpage(url).data
-
-    if unescape:
-        data = scrapertools.unescape(data)
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-
-    return soup
-
-
 def list_all(item):
     logger.info()
 
-    itemlist = list()
-
-    soup = create_soup(item.url)
-    matches = soup.find("div", class_="content").find_all("article", id=re.compile("post-\d+"))
-    for elem in matches:
-        try:
-            thumb = elem.img["data-src"]
-        except:
-            thumb = ""
-        title = elem.img["alt"]
-        try:
-            year = elem.find("span", text=re.compile(".*?\d{4}")).text
-        except:
-            year = "-"
-        url = elem.a["href"]
-
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
-                             thumbnail=thumb, contentTitle=title, infoLabels={'year': year}))
-
-    tmdb.set_infoLabels_itemlist(itemlist, True)
-    try:
-        next_page = soup.find_all("a", class_="arrow_pag")[-1]["href"]
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
-    except:
-        pass
-
-    return itemlist
+    return AlfaChannel.list_all(item)
 
 
 def alpha(item):
@@ -107,13 +67,13 @@ def alpha(item):
     letters = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
     for letter in letters:
-        itemlist.append(Item(channel=item.channel, title=letter, letter=letter.lower(), action="alpha_results"))
+        itemlist.append(Item(channel=item.channel, title=letter, letter=letter.lower(), action="list_alpha"))
 
     return itemlist
 
 
-def alpha_results(item):
-    logger.info
+def list_alpha(item):
+    logger.info()
 
     itemlist = list()
     base_url = "https://cuevana2espanol.com/wp-json/dooplay/glossary/?term=%s&nonce=4a91f28386&type=all" % item.letter
@@ -133,7 +93,7 @@ def findvideos(item):
 
     itemlist = list()
     srv_dict = {"clase b": "fembed", "hqq": "netu", "clase z": "zplayer"}
-    soup = create_soup(item.url)
+    soup = AlfaChannel.create_soup(item.url)
     matches = soup.find_all("a", class_="options")
 
     for elem in matches:
@@ -183,34 +143,13 @@ def play(item):
     return itemlist
 
 
-def search_results(item):
-    logger.info()
-
-    itemlist = list()
-
-    soup = create_soup(item.url)
-
-    for elem in soup.find_all("div", class_="result-item"):
-        url = elem.a["href"]
-        thumb = elem.img["src"]
-        title = elem.img["alt"]
-        year = elem.find("span", class_="year").text
-
-        itemlist.append(Item(channel=item.channel, title=title, contentTitle=title, url=url, thumbnail=thumb,
-                             action='findvideos', infoLabels={'year': year}))
-
-    tmdb.set_infoLabels_itemlist(itemlist, True)
-    return itemlist
-
-
 def search(item, texto):
     logger.info()
     try:
         texto = texto.replace(" ", "+")
         item.url = item.url + texto
-        item.first = 0
         if texto != '':
-            return search_results(item)
+            return AlfaChannel.search_results(item)
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla

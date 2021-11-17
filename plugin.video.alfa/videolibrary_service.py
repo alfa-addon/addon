@@ -31,7 +31,7 @@ except:
         pass
 
 
-def update(path, p_dialog, i, t, serie, overwrite):
+def update(path, p_dialog, i, t, serie, overwrite, redir=True):
     logger.info("Actualizando " + path)
     
     from core import filetools
@@ -57,17 +57,18 @@ def update(path, p_dialog, i, t, serie, overwrite):
         serie.url = url
         
         ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
-        try:
-            head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')         #Refresca el .nfo para recoger actualizaciones
-            if not it:
-                logger.error('.nfo erroneo en ' + str(path))
-                continue
-            if it.emergency_urls:
-                serie.emergency_urls = it.emergency_urls
-            serie.category = category
-            serie, it, overwrite = generictools.redirect_clone_newpct1(serie, head_nfo, it, path, overwrite)
-        except:
-            logger.error(traceback.format_exc())
+        if redir:
+            try:
+                head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')         #Refresca el .nfo para recoger actualizaciones
+                if not it:
+                    logger.error('.nfo erroneo en ' + str(path))
+                    continue
+                if it.emergency_urls:
+                    serie.emergency_urls = it.emergency_urls
+                serie.category = category
+                serie, it, overwrite = generictools.redirect_clone_newpct1(serie, head_nfo, it, path, overwrite)
+            except:
+                logger.error(traceback.format_exc())
 
         channel_enabled = channeltools.is_enabled(serie.channel)
 
@@ -78,33 +79,15 @@ def update(path, p_dialog, i, t, serie, overwrite):
                                                                               serie.channel.capitalize()))
             try:
                 pathchannels = filetools.join(config.get_runtime_path(), "channels", serie.channel + '.py')
-                logger.info("Cargando canal: " + pathchannels)
+                logger.info("Cargando canal: " + pathchannels + " " +
+                            serie.channel)
 
                 if serie.library_filter_show:
-                    serie.show = serie.library_filter_show.get(serie.channel, serie.contentSerieName)
+                    serie.show = serie.library_filter_show.get(channel, serie.contentSerieName)
+                
+                if redir: serie = videolibrarytools.redirect_url(serie)
 
                 obj = __import__('channels.%s' % serie.channel, fromlist=["channels.%s" % serie.channel])
-
-                try:
-                    channel_host = ''
-                    if obj.host and isinstance(obj.host, str):
-                        channel_host = obj.host
-                except:
-                    pass
-                if channel_host and (not serie.url.startswith(channel_host) or not \
-                                serie.library_urls.get(serie.channel, '').startswith(channel_host)):
-                    if generictools.verify_channel(serie.channel) != 'newpct1':
-                        logger.debug("vl channel: %s" % channel)
-                        logger.debug("vl url: %s" % serie.library_urls.get(serie.channel, ''))
-                        logger.debug("cambiando dominio....")
-                        import re
-                        if serie.url: serie.url = re.sub("(https?:\/\/.+?\/)", channel_host, serie.url)
-                        serie.library_urls[serie.channel] = re.sub("(https?:\/\/.+?\/)", channel_host, serie.library_urls.get(serie.channel, ''))
-                        logger.debug("serie: %s" % serie.library_urls[serie.channel])
-                        if serie.url_tvshow: 
-                            serie.url_tvshow = re.sub("(https?:\/\/.+?\/)", channel_host, serie.url_tvshow)
-                            logger.debug("serie: %s" % serie.url_tvshow)
-                
                 itemlist = getattr(obj, 'episodios')(serie)                     #... se procesa Episodios para ese canal
                 
                 try:

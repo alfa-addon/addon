@@ -5,7 +5,11 @@
 
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+if sys.version_info[0] >= 3:
+    PY3 = True
+    unicode = str
+    unichr = chr
+    long = int
 
 if PY3:
     import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
@@ -140,40 +144,20 @@ def findvideos(item):
     logger.info()
 
     itemlist = list ()
-
+    servers_list = {"1": "directo", "2": "streamtape", "3": "fembed", "4": "netu"}
     soup = create_soup(item.url).find("div", class_="TPlayer embed_div")
 
     matches = soup.find_all("div", class_="TPlayerTb")
-
     for elem in matches[:-1]:
+        srv = servers_list.get(elem["id"][-1], "directo")
         lang = IDIOMAS.get(elem["id"][:-1].lower(), "VOSE")
         elem = elem.find("iframe")
         url = elem["data-src"]
-
-        id = scrapertools.find_single_match(url, '\?h=(.*)')
-
-        if 'cuevana3.io' in url:
-
-
-            base_url = "https://api.cuevana3.io/ir/rd.php"
-            param = 'url'
-
-
-            if '/sc/' in url:
-                base_url = "https://api.cuevana3.io/sc/r.php"
-                param = 'h'
-
-            if 'goto_ddh.php' in url:
-                base_url = "https://api.cuevana3.io/ir/redirect_ddh.php"
-
-            url = httptools.downloadpage(base_url, post={param: id}, timeout=5, forced_proxy_opt=forced_proxy_opt, 
-                                       follow_redirects=False, ignore_response_code=True)
-            if url.sucess or url.code == 302:
-                url = url.headers.get('location', '')
+        v_id = scrapertools.find_single_match(url, '\?h=(.*)')
 
         if url:
-            itemlist.append(Item(channel=item.channel, title="%s", url=url, action="play", language=lang,
-                                 infoLabels=item.infoLabels))
+            itemlist.append(Item(channel=item.channel, title="%s", url=url, action="play", server=srv.capitalize(),
+                                 language=lang, v_id=v_id, infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % '%s [%s]' % (i.server.capitalize(),
                                                                                            i.language))
@@ -216,8 +200,9 @@ def search(item, texto):
 
 def newest(categoria):
     logger.info()
-    itemlist = []
     item = Item()
+
+
     try:
         if categoria == 'peliculas':
             item.url = host+'estrenos'
@@ -238,13 +223,51 @@ def newest(categoria):
 
     return itemlist
 
-def play(item):
 
+def play(item):
+    logger.info()
+
+    item.server = ""
+
+    if "cuevana3.io" in item.url:
+        item.url = get_urls(item.url, item.v_id)
     if "damedamehoy" in item.url:
         item.url, id = item.url.split("#")
         new_url = "https://damedamehoy.xyz/details.php?v=%s" % id
-        v_data = httptools.downloadpage(new_url, forced_proxy_opt=forced_proxy_opt).json
-        item.url = v_data["file"]
+        item.url = httptools.downloadpage(new_url, forced_proxy_opt=forced_proxy_opt).json["file"]
+    elif "embed.html#" in item.url:
+        new_url = item.url.replace("=", "").replace("embed.html#", "details.php?v=") + "&r"
+        item.url = httptools.downloadpage(new_url, forced_proxy_opt=forced_proxy_opt).json["file"]
+    if "netu" in item.url:
+        return []
 
-    return [item]
+    itemlist = servertools.get_servers_itemlist([item])
 
+    return itemlist
+
+
+def get_urls(url, v_id):
+
+    base_url = "https://api.cuevana3.io/ir/rd.php"
+    param = 'url'
+
+    if '/sc/' in url:
+        base_url = "https://api.cuevana3.io/sc/r.php"
+        param = 'h'
+
+    if 'goto_ddh.php' in url:
+        base_url = "https://api.cuevana3.io/ir/redirect_ddh.php"
+
+    if 'goto.php' in url:
+        base_url = "https://api.cuevana3.io/ir/goto.php"
+
+    url = httptools.downloadpage(base_url, post={param: v_id}, timeout=5, forced_proxy_opt=forced_proxy_opt,
+                                 follow_redirects=False, ignore_response_code=True)
+    if url.sucess or url.code == 302:
+        url = url.headers.get('location', '')
+
+    if "cuevana3.io" in url:
+        v_id = scrapertools.find_single_match(url, '\?h=(.*)')
+        url = get_urls(url, v_id)
+
+    return url

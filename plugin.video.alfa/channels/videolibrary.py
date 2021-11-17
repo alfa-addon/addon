@@ -286,7 +286,14 @@ def list_tvshows(item):
                     item_tvshow.path = raiz
                     item_tvshow.nfo = tvshow_path
                     # Menu contextual: Marcar como visto/no visto
-                    visto = item_tvshow.library_playcounts.get(item_tvshow.contentTitle, 0)
+                    if item_tvshow.library_playcounts:
+                        visto = item_tvshow.library_playcounts.get(item_tvshow.contentTitle, 0)
+                    else:
+                        item_tvshow, visto = verify_playcount_series(item_tvshow, raiz)
+                        visto = int(visto)
+                        if config.is_xbmc():                                    #Si es Kodi, lo hacemos
+                            from platformcode import xbmc_videolibrary
+                            xbmc_videolibrary.mark_content_as_watched_on_alfa(tvshow_path)
                     item_tvshow.infoLabels["playcount"] = visto
                     if visto > 0:
                         texto_visto = config.get_localized_string(60020)
@@ -655,25 +662,9 @@ def findvideos(item):
         try:
             if item_json:
                 item_json, it, overwrite = generictools.redirect_clone_newpct1(item_json)
+                item_json = videolibrarytools.redirect_url(item_json)
         except:
             logger.error(traceback.format_exc())
-        
-        try:
-            channel_host = ''
-            if channel.host and isinstance(channel.host, str):
-                channel_host = channel.host
-        except:
-            pass
-        if channel_host and not item_json.url.startswith(channel_host):
-            if generictools.verify_channel(nom_canal) != 'newpct1':
-                logger.debug("item_json: %s" % item_json.url)
-                logger.debug("el host: % s" % channel.host)
-                logger.debug("cambiando dominio....")
-                item_json.url = re.sub("(https?:\/\/.+?\/)", channel_host, item_json.url)
-                logger.debug("item_json: %s" % item_json.url)
-                if item_json.url_tvshow: 
-                    item_json.url_tvshow = re.sub("(https?:\/\/.+?\/)", channel_host, item_json.url_tvshow)
-                    logger.debug("item_json: %s" % item_json.url_tvshow)
         
         list_servers = []
         try:
@@ -875,7 +866,7 @@ def verify_playcount_series(item, path):
         nfo_path = filetools.join(path, "tvshow.nfo")
         head_nfo, it = videolibrarytools.read_nfo(nfo_path)                         #Obtenemos el .nfo de la Serie
         if not hasattr(it, 'library_playcounts') or not it.library_playcounts:      #Si el .nfo no tiene library_playcounts se lo creamos
-            logger.error('** No tiene PlayCount')
+            logger.error('** %s: No tiene PlayCount' % it.title)
             it.library_playcounts = {}
         
         # Obtenemos los archivos de los episodios
@@ -902,8 +893,9 @@ def verify_playcount_series(item, path):
                     estado_update = True                                                   #Marcamos que hemos actualizado algo
                 
         if estado_update:
-            logger.error('** Estado de actualización: ' + str(estado) + ' / PlayCount: ' + str(it.library_playcounts))
+            logger.error('** Estado de actualización de %s: %s / PlayCount: %s' % (it.title, str(estado), str(it.library_playcounts)))
             estado = estado_update
+
         # se comprueba que si todos los episodios de una temporada están marcados, se marque tb la temporada
         for key, value in it.library_playcounts.items():
             if key.startswith("season"):
