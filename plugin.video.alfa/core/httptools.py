@@ -475,7 +475,6 @@ def proxy_post_processing(url, proxy_data, response, opt):
 
 
 def downloadpage(url, **opt):
-    global CF_LIST
     """
         Abre una url y retorna los datos obtenidos
 
@@ -524,8 +523,8 @@ def downloadpage(url, **opt):
                 HTTPResponse.json:    | dict     | Respuesta obtenida del servidor en formato json
                 HTTPResponse.soup:    | bs4/None | Objeto BeautifulSoup, si se solicita. None de otra forma
                 HTTPResponse.time:    | float    | Tiempo empleado para realizar la petición
-
-        """
+    """
+    global CF_LIST
     if not opt.get('alfa_s', False):
         logger.info()
     from . import scrapertools

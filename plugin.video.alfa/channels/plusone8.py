@@ -128,6 +128,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     url = create_soup(item.url).find('div', id='video-download').a['href']
+    url = url.replace(" ", "%20")
     itemlist.append(item.clone(action="play", contentTitle = item.title, url=url))
     return itemlist
 
@@ -136,5 +137,6 @@ def play(item):
     logger.info()
     itemlist = []
     url = create_soup(item.url).find('div', id='video-download').a['href']
+    url = url.replace(" ", "%20")
     itemlist.append(item.clone(action="play", contentTitle = item.title, url=url))
     return itemlist
