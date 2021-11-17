@@ -564,7 +564,10 @@ def downloadfileGzipped(url, pathfichero):
             logger.info("Nombre del fichero no encontrado, Colocando nombre temporal :sin_nombre.txt")
             titulo = "sin_nombre.txt"
             nombrefichero = filetools.join(pathfichero, titulo)
-    totalfichero = int(connexion.headers["Content-Length"])
+    try:
+        totalfichero = int(connexion.headers["Content-Length"])
+    except ValueError:
+        totalfichero = 1
 
     # despues
     f = filetools.file_open(nombrefichero, 'w', vfs=VFS)

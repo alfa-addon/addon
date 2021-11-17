@@ -92,6 +92,8 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
         logger.error('Formato de url incompatible: %s (%s)' % (str(url), str(type(url))))
         return ('', success, code, item, itemlist)
 
+    if timeout and timeout < 20 and httptools.channel_proxy_list(url):          # Si usa proxy, duplicamos el timeout
+        timeout *= 3
 
     try:
         response = httptools.downloadpage(url, post=post, headers=headers, random_headers=random_headers, 
@@ -3158,62 +3160,67 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     item.category = canal_des.capitalize()                      
                 
                 # Reemplazamos las urls del canal origen por el de destino
-                for x, _url in enumerate([url_total, item.url_tvshow]):
+                for x, _url in enumerate([[[url_total, '']], [[item.url_tvshow, '']], item.url_quality_alt]):
                     if not _url: continue
-                    _url_ = _url
-                    
-                    url_host = scrapertools.find_single_match(_url_, patron_host)
-                    if url_org == '*':                                          # Si se quiere cambiar desde CUALQUIER url ...
-                        if url_host: 
-                            _url_ = _url_.replace(url_host, url_des)    # Reemplazamos el dominio de actual por el de destino
-                    elif url_des.startswith('http'):                            # Si se quiere cambiar desde una URL específica ...
-                        if item.channel != channel_py or (item.channel == channel_py \
-                                and item.category.lower() == canal_org):
-                            _url_ = scrapertools.find_single_match(_url_, \
-                                'http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+(.*?$)') # Quitamos el http*://DOMINIO inicial
-                            _url_ = urlparse.urljoin(url_des, _url_)    # Añadimos el dominio de destino
-                    else:                                                       # Si se quiere cambiar desde un DOMINIO ...
-                        if url_host: _url_ = _url_.replace(url_org, url_des)    #reemplazamos una parte del dominio
-                    
-                    #if not _url_.endswith('/'):
-                    #    _url_ += '/'
-                    if x == 0:
-                        url_total = _url_
-                        if item.url:
-                            item.url = url_total
-                        if item.library_urls:
-                            item.library_urls[canal_org] = url_total
-                        if it.library_urls: 
-                            it.library_urls[canal_org] = url_total
-                    elif _url_:
-                        item.url_tvshow = _url_
-                    
-                    # Si hay expresiones regex, las aplicamos sobre la url convertida
-                    url = ''
-                    if patron1:
-                        url += scrapertools.find_single_match(_url_, patron1)
-                    if patron2:
-                        url += scrapertools.find_single_match(_url_, patron2)
-                    if patron3:
-                        url += scrapertools.find_single_match(_url_, patron3)
-                    if patron4:
-                        url += scrapertools.find_single_match(_url_, patron4)
-                    if patron5:
-                        url += scrapertools.find_single_match(_url_, patron5)
-                    
-                    # Guardamos la suma de los resultados intermedios
-                    if url:
+                    for y, (__url, q) in enumerate(_url):
+                        _url_ = __url
+                        
+                        url_host = scrapertools.find_single_match(_url_, patron_host)
+                        if url_org == '*':                                          # Si se quiere cambiar desde CUALQUIER url ...
+                            if url_host: 
+                                _url_ = _url_.replace(url_host, url_des)    # Reemplazamos el dominio de actual por el de destino
+                        elif url_des.startswith('http'):                            # Si se quiere cambiar desde una URL específica ...
+                            if item.channel != channel_py or (item.channel == channel_py \
+                                    and item.category.lower() == canal_org):
+                                _url_ = scrapertools.find_single_match(_url_, \
+                                    'http.*\:\/\/(?:.*ww[^\.]*\.)?[^\?|\/]+(.*?$)') # Quitamos el http*://DOMINIO inicial
+                                _url_ = urlparse.urljoin(url_des, _url_)    # Añadimos el dominio de destino
+                        else:                                                       # Si se quiere cambiar desde un DOMINIO ...
+                            if url_host: _url_ = _url_.replace(url_org, url_des)    #reemplazamos una parte del dominio
+                        
+                        #if not _url_.endswith('/'):
+                        #    _url_ += '/'
                         if x == 0:
-                            url_total = url
+                            url_total = _url_
                             if item.url:
                                 item.url = url_total
                             if item.library_urls:
                                 item.library_urls[canal_org] = url_total
                             if it.library_urls: 
                                 it.library_urls[canal_org] = url_total
-                        elif url:
+                        elif x == 1 and _url_:
+                            item.url_tvshow = _url_
+                        elif x > 1 and _url_:
+                            item.url_quality_alt[y][0] = _url_
+                        
+                        # Si hay expresiones regex, las aplicamos sobre la url convertida
+                        url = ''
+                        if patron1:
+                            url += scrapertools.find_single_match(_url_, patron1)
+                        if patron2:
+                            url += scrapertools.find_single_match(_url_, patron2)
+                        if patron3:
+                            url += scrapertools.find_single_match(_url_, patron3)
+                        if patron4:
+                            url += scrapertools.find_single_match(_url_, patron4)
+                        if patron5:
+                            url += scrapertools.find_single_match(_url_, patron5)
+                        
+                        # Guardamos la suma de los resultados intermedios
+                        if url:
+                            if x == 0:
+                                url_total = url
+                                if item.url:
+                                    item.url = url_total
+                                if item.library_urls:
+                                    item.library_urls[canal_org] = url_total
+                                if it.library_urls: 
+                                    it.library_urls[canal_org] = url_total
+                        elif x == 1 and url:
                             item.url_tvshow = url
-                    #logger.error('Pasada: %s - %s' %(x, url or _url_))
+                        elif x > 1 and url:
+                            item.url_quality_alt[y][0] = url
+                        #logger.error('Pasada: %s - %s' %(x, url or _url_))
                 
                 # Si es el canal Newpct1, se analiza la url de la serie para quitarle códigos específicos de los clones
                 if item.channel == channel_py or channel in fail_over_list:
