@@ -8,7 +8,7 @@
         "url": "https://streamsb.net/play/\\1"
       },
       {
-        "pattern": "(?:cloudemb.com)/([A-z0-9]+)",
+        "pattern": "(?:cloudemb|embedsb).\\w{2,4}/(?:st/|e/|v/)?([A-z0-9]+)",
         "url": "https://streamsb.net/play/\\1"
       }
     ]

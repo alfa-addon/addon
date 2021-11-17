@@ -7,217 +7,108 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-if PY3:
-    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
-
-import re
-
 from channelselector import get_thumb
-from core import httptools
-from core import jsontools
-from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
-from core import tmdb
+from lib.AlfaChannelHelper import PsyPlay
+from channels import autoplay
+from channels import filtertools
+
+
+list_language = ['LAT']
+
+list_quality = []
+
+list_servers = [
+    'fembed',
+    'zplayer',
+    'streamtape'
+    ]
+
 
 host = "https://fanpelis.ac/"
+AlfaChannel = PsyPlay(host, movie_path="movies-hd")
+
 
 def mainlist(item):
     logger.info()
-    itemlist = list()
-    itemlist.append(
-        Item(channel=item.channel,
-             title="Peliculas",
-             action="sub_menu",
-             url=host + "movies-hd/",
-             thumbnail=get_thumb('movies', auto=True)))
 
-    itemlist.append(
-        Item(channel=item.channel,
-             title="Series",
-             action="sub_menu",
-             url=host + "series/",
-             thumbnail=get_thumb('tvshows', auto=True)))
-
-    itemlist.append(
-        Item(channel=item.channel,
-             title="Buscar",
-             action="search",
-             url=host,
-             thumbnail=get_thumb("search", auto=True)))
-
-    return itemlist
-
-
-def sub_menu(item):
-    logger.info()
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
 
-    itemlist.append(
-        Item(channel=item.channel,
-             title="Ultimas",
-             action="list_all",
-             url=item.url,
-             thumbnail=get_thumb("last", auto=True)))
+    itemlist.append(Item(channel=item.channel,
+                         title="Peliculas",
+                         action="list_all",
+                         url=host + "movies-hd/",
+                         thumbnail=get_thumb('movies', auto=True)
+                         )
+                    )
 
-    itemlist.append(
-        Item(channel=item.channel,
-             title="Generos",
-             action="categories",
-             url=host,
-             thumbnail=get_thumb('genres', auto=True)
+    itemlist.append(Item(channel=item.channel,
+                         title="Series",
+                         action="list_all",
+                         url=host + "series/",
+                         thumbnail=get_thumb('tvshows', auto=True)
+                         )
+                    )
 
-             ))
+    itemlist.append(Item(channel=item.channel,
+                         title="Generos",
+                         action="section",
+                         url=host,
+                         thumbnail=get_thumb('genres', auto=True)
+                         )
+                    )
 
-    itemlist.append(
-        Item(channel=item.channel,
-             title="Por Año",
-             action="categories",
-             url=host,
-             thumbnail=get_thumb('year', auto=True)
-             ))
+    itemlist.append(Item(channel=item.channel,
+                         title="Por Año",
+                         action="section",
+                         url=host,
+                         thumbnail=get_thumb('year', auto=True)
+                         )
+                    )
 
-    return itemlist
+    itemlist.append(Item(channel=item.channel,
+                         title="Buscar",
+                         action="search",
+                         url=host + "?s=",
+                         thumbnail=get_thumb("search", auto=True)
+                         )
+                    )
 
-def get_source(url):
-    logger.info()
-    data = httptools.downloadpage(url).data
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    return data
-
-
-def categories(item):
-    logger.info()
-    itemlist = []
-
-    data = get_source(item.url)
-    if item.title == 'Generos':
-        patron = 'menu-item-object-category menu-item-\d+"><a href="([^"]+)">([^<]+)<'
-    else:
-        patron = 'menu-item-object-release-year menu-item-\d+"><a href="([^"]+)">([^<]+)<'
-
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for url, title in matches:
-        itemlist.append(Item(channel=item.channel,
-                             action="list_all",
-                             title=title,
-                             url=url
-                             ))
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
-
-
-def search(item, texto):
-    logger.info()
-    texto = texto.replace(" ", "+")
-    try:
-        if texto != '':
-            item.texto = texto
-            return list_all(item)
-        else:
-            return []
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("%s" % line)
-        return []
 
 
 def list_all(item):
     logger.info()
-    itemlist = []
 
-    if item.texto != '':
-        url = item.url + "?s=%s" % item.texto
+    return AlfaChannel.list_all(item)
+
+
+def section(item):
+    logger.info()
+
+    if item.title == 'Generos':
+        return AlfaChannel.section(item, menu_id="19")
     else:
-        url = item.url
-
-    try:
-        data = get_source(url)
-    except:
-        return itemlist
-    data = data.replace("'", '"')
-
-    pattern = 'class="ml-item.*?"><a href="([^"]+)".*?oldtitle="([^"]+)".*?'
-    pattern += '<img data-original="([^"]+)".*?<div id(.*?)/a>'
-    matches = scrapertools.find_multiple_matches(data, pattern)
-
-    for url, title, thumb, info in matches:
-        year = scrapertools.find_single_match(info, 'rel="tag">(\d{4})<')
-        new_item = Item(channel=item.channel,
-                        title=title,
-                        url=url,
-                        thumbnail=thumb,
-                        infoLabels = {'year': year}
-                        )
-        if 'series' in url:
-            new_item.action = 'seasons'
-            new_item.contentSerieName = title
-        else:
-            new_item.action = 'findvideos'
-            new_item.contentTitle = title
-
-        itemlist.append(new_item)
-
-    tmdb.set_infoLabels(itemlist, seekTmdb=True)
-
-    active_page = scrapertools.find_single_match(data, '<li class="active"><a class="">(\d+)</a>')
-    if item.texto != '':
-        next_page = host + 'page/%s/' % (int(active_page) + 1)
-    else:
-        if not 'page/' in item.url:
-            next_page = item.url +'page/%s/' % (int (active_page) + 1)
-        else:
-            next_page = re.sub(r'page\/\d+\/', 'page/%s/' % (int (active_page) + 1), item.url)
-
-    if next_page:
-
-        url = urlparse.urljoin(host, next_page)
-        itemlist.append(Item(channel=item.channel,
-                             action="list_all",
-                             title=">> Página siguiente",
-                             url=url,
-                             texto=item.texto,
-                             thumbnail=get_thumb("next.png")))
-    return itemlist
+        return AlfaChannel.section(item, menu_id="20")
 
 
 def seasons(item):
     logger.info()
 
-    itemlist = []
+    return AlfaChannel.seasons(item)
 
-    data = get_source(item.url)
-    patron = '<strong>Temporada\s*(\d+)\s*<\/strong>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for temporada in matches:
-        title = 'Temporada %s' % temporada
-        contentSeasonNumber = temporada
-        item.infoLabels['season'] = contentSeasonNumber
-        itemlist.append(item.clone(action='episodesxseason',
-                                   title=title,
-                                   contentSeasonNumber=contentSeasonNumber
-                                   ))
+def episodesxseason(item):
+    logger.info()
 
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    return AlfaChannel.episodes(item)
 
-    if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel,
-                             title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
-                             url=item.url,
-                             action="add_serie_to_library",
-                             extra="episodios",
-                             contentSerieName=item.contentSerieName,
-                             contentSeasonNumber=contentSeasonNumber
-                             ))
-
-    return itemlist
 
 def episodios(item):
     logger.info()
@@ -229,33 +120,6 @@ def episodios(item):
     return itemlist
 
 
-def episodesxseason(item):
-    logger.info()
-
-    itemlist = []
-    season = item.contentSeasonNumber
-    data = get_source(item.url)
-    data = scrapertools.find_single_match(data, '<strong>Temporada\s*%s\s*<\/strong>.*?<\/ul>' % season)
-    patron = '<a href="([^"]+)"><i class="fa fa-play"></i>([^<]+)</a>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    ep = 1
-    for scrapedurl, scrapedtitle in matches:
-        epi = str(ep)
-        title = season + 'x%s - Episodio %s' % (epi, epi)
-        #url = scrapedurl
-        url = urlparse.urljoin(host, scrapedurl)
-        contentEpisodeNumber = epi
-        item.infoLabels['episode'] = contentEpisodeNumber
-        itemlist.append(item.clone(action='findvideos',
-                                   title=title,
-                                   url=url,
-                                   contentEpisodeNumber=contentEpisodeNumber,
-                                   ))
-        ep += 1
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    return itemlist
-
-
 def findvideos(item):
     logger.info()
 
@@ -263,31 +127,61 @@ def findvideos(item):
     urls = []
     from lib import players_parse
 
-    data = get_source(item.url)
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = 'data-url="([^"]+)" class="[^"]+">(.*?)<\/a'
-    
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    soup, matches = AlfaChannel.get_video_options(item.url)
 
-    for url, server in matches:
+    for elem in matches:
+
+        server = elem.string
+        url = elem.a["data-url"]
         url = players_parse.player_parse(url, server, 'https://www.fembed.com')
+
         if url not in urls:
-            itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', infoLabels=item.infoLabels))
+            itemlist.append(Item(channel=item.channel,
+                                 title='%s',
+                                 url=url,
+                                 action='play',
+                                 language="LAT",
+                                 infoLabels=item.infoLabels))
             urls.append(url)
-    
+
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server)
 
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
+
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-        itemlist.append(
-            Item(channel=item.channel,
-                 title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                 url=item.url,
-                 action="add_pelicula_to_library",
-                 extra="findvideos",
-                 contentTitle=item.contentTitle
-                 ))
+        itemlist.append(Item(channel=item.channel,
+                             title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                             url=item.url,
+                             action="add_pelicula_to_library",
+                             extra="findvideos",
+                             contentTitle=item.contentTitle
+                             )
+                        )
 
     return itemlist
+
+
+def search(item, texto):
+    logger.info()
+    texto = texto.replace(" ", "+")
+    try:
+        if texto != '':
+            item.url += texto
+            return list_all(item)
+        else:
+            return []
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("%s" % line)
+        return []
+
 
 def newest(category):
     logger.info()

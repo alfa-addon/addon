@@ -7,17 +7,14 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-import re
-
-from core import tmdb
-from core import httptools
 from core.item import Item
 from core import servertools
 from core import scrapertools
-from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from platformcode import config, logger
+from lib.AlfaChannelHelper import DooPlay
 from channels import filtertools, autoplay
+
 
 IDIOMAS = {'es': 'CAST', 'en': 'VOSE'}
 list_language = list(IDIOMAS.values())
@@ -25,6 +22,7 @@ list_quality = []
 list_servers = ['supervideo']
 
 host = "https://online.tucineclasico.es/"
+AlfaChannel = DooPlay(host, movie_path="peliculas/")
 
 
 def mainlist(item):
@@ -37,10 +35,10 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Todas", url=host+'peliculas', action="list_all",
                          thumbnail=get_thumb('all', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Generos", action="section",
+    itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=host,
                          thumbnail=get_thumb('genres', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Años", action="section",
+    itemlist.append(Item(channel=item.channel, title="Años", action="section", url=host,
                         thumbnail=get_thumb('year', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...",  url=host + '?s=',  action="search",
@@ -51,72 +49,19 @@ def mainlist(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False):
-    logger.info()
-
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
-    else:
-        data = httptools.downloadpage(url).data
-
-    if unescape:
-        data = scrapertools.unescape(data)
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-
-    return soup
-
-
 def list_all(item):
     logger.info()
 
-    itemlist = list()
-
-    soup = create_soup(item.url)
-    matches = soup.find("div", class_="content")
-    for elem in matches.find_all("article", id=re.compile(r"^post-\d+")):
-        try:
-            thumb = elem.img["data-src"]
-        except:
-            thumb = ""
-        title = elem.img["alt"]
-        year = elem.find("span", text=re.compile(".*?\d{4}")).text
-        year = scrapertools.find_single_match(year, "(\d{4})")
-        title = re.sub("VOSE", "", title)
-        url = elem.a["href"]
-
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
-                             thumbnail=thumb, contentTitle=title, infoLabels={'year': year}))
-
-    tmdb.set_infoLabels_itemlist(itemlist, True)
-    try:
-        next_page = soup.find_all("a", class_="arrow_pag")[-1]["href"]
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
-    except:
-        pass
-
-    return itemlist
+    return AlfaChannel.list_all(item)
 
 
 def section(item):
     logger.info()
 
-    itemlist = list()
-
-    soup = create_soup(host)
-
     if item.title == "Generos":
-        matches = soup.find("ul", class_="genres scrolling")
+        return AlfaChannel.section(item, section="genre")
     elif item.title == "Años":
-        matches = soup.find("ul", class_="releases")
-
-    if not matches: return itemlist
-        
-    for elem in matches.find_all("li"):
-        url = elem.a["href"]
-        title = elem.a.text
-        itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url))
-
-    return itemlist
+        return AlfaChannel.section(item, section="year")
 
 
 def findvideos(item):
@@ -124,21 +69,22 @@ def findvideos(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url)
-    matches = soup.find("div", class_="dooplay_player")
+    soup, matches = AlfaChannel.get_video_options(item.url)
 
-    for elem in matches.find_all("li", class_="dooplay_player_option"):
+    for elem in matches:
         if elem["data-nume"] == "trailer":
             continue
-        base_url = "%s/wp-json/dooplayer/v2/%s/%s/%s" % (host, elem["data-post"], elem["data-type"], elem["data-nume"])
-        data = httptools.downloadpage(base_url).json["embed_url"]
-        url = scrapertools.find_single_match(data, '(?:IFRAME SRC|iframe src)="([^"]+)"')
         lang = elem.find("span", class_="flag").img["src"]
         lang = scrapertools.find_single_match(lang, "/flags/([^.]+).")
+        data = AlfaChannel.get_data_by_post(elem).json
+        url = data.get("embed_url", "")
+        if not url or "youtube" in url:
+            continue
+
         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                             language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels))
 
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server)
 
     # Requerido para FilterTools
 
@@ -157,24 +103,8 @@ def findvideos(item):
 
 
 def search_results(item):
-    logger.info()
 
-    itemlist = list()
-
-    soup = create_soup(item.url)
-
-    for elem in soup.find_all("div", class_="result-item"):
-
-        url = elem.a["href"]
-        thumb = elem.img["src"]
-        title = elem.img["alt"]
-        year = elem.find("span", class_="year").text
-
-        itemlist.append(Item(channel=item.channel, title=title, contentTitle=title, url=url, thumbnail=thumb,
-                             action='findvideos', infoLabels={'year': year}))
-
-    tmdb.set_infoLabels_itemlist(itemlist, True)
-    return itemlist
+    return AlfaChannel.search_results(item, postprocess=get_lang)
 
 
 def search(item, texto):
@@ -192,3 +122,19 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
+
+
+def get_lang(*args):
+
+    langs = list()
+    try:
+        lang_list = args[1].find_all("span", class_="flag")
+        for lang in lang_list:
+            lang = scrapertools.find_single_match(lang["style"], r'/flags/(.*?).png\)')
+            if not lang in langs:
+                langs.append(lang)
+    except:
+        langs = ""
+
+    args[2].language = langs
+    return args[2]
