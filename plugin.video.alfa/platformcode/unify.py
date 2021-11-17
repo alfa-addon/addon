@@ -345,7 +345,7 @@ def title_format(item, c_file=colors_file, srv_lst={}):
     # Ignored actions
 
     if item.action in ["mainlist", "submenu_tools", "setting_torrent", "channel_config", "buscartrailer",
-                       "actualizar_titulos"]:
+                       "actualizar_titulos", "no_filter"] or item.channel in ["downloads"]:
         return item
 
     # Define Content type
@@ -444,7 +444,7 @@ def title_format(item, c_file=colors_file, srv_lst={}):
             new_title.append(format_rating(info["rating"]))
         title = " ".join(new_title)
         item.title = title
-        item.plot = add_info_plot(item.plot, simple_language, item.quality, vextend)
+    item.plot = add_info_plot(item.plot, simple_language, item.quality, vextend)
 
     item = add_extra_info(item, checks)
     return item

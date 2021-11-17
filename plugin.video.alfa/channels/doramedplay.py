@@ -18,15 +18,18 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 from channels import autoplay
+from lib.AlfaChannelHelper import DooPlay
 from channels import filtertools
 
 
 host = 'https://doramedplay.com/'
+AlfaChannel = DooPlay(host, tv_path="tvshows")
 
-IDIOMAS = {'VOSE': 'VOSE', 'LAT':'LAT'}
+IDIOMAS = {'VOSE': 'VOSE', 'LAT': 'LAT'}
 list_language = list(IDIOMAS.values())
-list_quality = []
+list_quality = list()
 list_servers = ['okru', 'mailru', 'openload']
+
 
 def mainlist(item):
     logger.info()
@@ -40,11 +43,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", url=host+'movies/',
                          type='movies', thumbnail=get_thumb('movies', auto=True)))
     
-    # itemlist.append(Item(channel=item.channel, title="Generos", action="section",
-    #                      url=host + 'catalogue', thumbnail=get_thumb('genres', auto=True)))
-
-    # itemlist.append(Item(channel=item.channel, title="Por Años", action="section", url=host + 'catalogue',
-    #                      thumbnail=get_thumb('year', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Generos", action="section",
+                         url=host, thumbnail=get_thumb('genres', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+'?s=',
                                thumbnail=get_thumb('search', auto=True)))
@@ -54,86 +54,22 @@ def mainlist(item):
     return itemlist
 
 
-def get_source(url):
-    logger.info()
-    data = httptools.downloadpage(url).data
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    return data
-
-
 def list_all(item):
     logger.info()
-    itemlist = []
-    
-    data = get_source(item.url)
-    patron = '<article id="post-\d+".*?<img (?:data-)?src="([^"]+").*?<div class="rating">([^<]+)?<.*?'
-    patron += '<h3><a href="([^"]+)".*?>([^<]+)<.*?<span>.*?, (\d{4})<.*?<div class="texto">([^<]+)<'
-    
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedthumbnail, scrapedrating, scrapedurl, scrapedtitle, scrapedyear, scrapedplot in matches:
 
-        url = scrapedurl
-        year = scrapedyear
-        filtro_tmdb = list({"first_air_date": year}.items())
-        contentname = scrapedtitle
-        title = '%s (%s) [%s]'%(contentname, scrapedrating, year)
-        thumbnail = scrapedthumbnail
-        new_item = Item(channel=item.channel,
-                        title=title,
-                        contentSerieName=contentname,
-                        plot=scrapedplot,
-                        url=url,
-                        thumbnail=thumbnail,
-                        infoLabels={'year':year, 'filtro': filtro_tmdb}
-                        )
+    return AlfaChannel.list_all(item, postprocess=set_plot)
 
-        if item.type == 'tvshows':
-            new_item.action = 'seasons'
-        else:
-            new_item.action = 'findvideos'
-            
-        itemlist.append(new_item)
+def section(item):
 
-    tmdb.set_infoLabels_itemlist(itemlist, True)
-
-    #  Paginación
-    url_next_page = scrapertools.find_single_match(data,"<span class=\"current\">.?<\/span>.*?<a href='([^']+)'")
-    if url_next_page:
-        itemlist.append(Item(channel=item.channel, type=item.type, title="Siguiente >>", url=url_next_page, action='list_all'))
-    return itemlist
+    if item.title == "Generos":
+        return AlfaChannel.section(item, section="genres")
 
 
 def seasons(item):
     logger.info()
-    
-    itemlist = []
-    data = get_source(item.url)
 
-    patron = "<div id='seasons'>.*?>Temporada([^<]+)<i>([^<]+).*?<\/i>"
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    logger.info("hola mundo")
-    for temporada, fecha in matches:
-        title = 'Temporada %s (%s)' % (temporada.strip(), fecha)
-        contentSeasonNumber = temporada.strip()
-        item.infoLabels['season'] = contentSeasonNumber
-        itemlist.append(item.clone(action='episodesxseason',
-                                   title=title,
-                                   contentSeasonNumber=contentSeasonNumber
-                                   ))
+    return AlfaChannel.seasons(item)
 
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
-        itemlist.append(Item(channel=item.channel,
-                             title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
-                             url=item.url,
-                             action="add_serie_to_library",
-                             extra="episodios",
-                             contentSerieName=item.contentSerieName,
-                             contentSeasonNumber=contentSeasonNumber
-                             ))
-
-    return itemlist
 
 def episodios(item):
     logger.info()
@@ -148,73 +84,21 @@ def episodios(item):
 def episodesxseason(item):
     logger.info()
 
-    itemlist = []
-    season = item.contentSeasonNumber
-    data = get_source(item.url)
-    data = scrapertools.find_single_match(data, ">Temporada %s .*?<ul class='episodios'>(.*?)<\/ul>" % season)
-    patron = "<a href='([^']+)'>([^<]+)<\/a>.*?<span[^>]+>([^<]+)<\/span>"
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    ep = 1
-    for scrapedurl, scrapedtitle, fecha in matches:
-        epi = str(ep)
-        title = season + 'x%s - Episodio %s (%s)' % (epi, epi, fecha)
-        url = scrapedurl
-        contentEpisodeNumber = epi
-        item.infoLabels['episode'] = contentEpisodeNumber
-        itemlist.append(item.clone(action='findvideos',
-                                    title=title,
-                                    url=url,
-                                    contentEpisodeNumber=contentEpisodeNumber,
-                                    ))
-        ep += 1
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    return AlfaChannel.episodes(item)
+
     return itemlist
+
 
 def findvideos(item):
     logger.info()
 
-    itemlist = []
-    data = get_source(item.url)
-    post_id = scrapertools.find_single_match(data, "'https:\/\/doramedplay\.com\/\?p=(\d+)'")
-    body = "action=doo_player_ajax&post=%s&nume=1&type=tv" % post_id
+    itemlist = list()
 
-    source_headers = dict()
-    source_headers["Content-Type"] = "application/x-www-form-urlencoded; charset=UTF-8"
-    source_headers["X-Requested-With"] = "XMLHttpRequest"
-    source_headers["Referer"] = host
-    source_result = httptools.downloadpage(host + "wp-admin/admin-ajax.php", post=body, headers=source_headers)
-    
-    # logger.info(source_result.json)
-    if source_result.code == 200:
-        source_json = source_result.json
-        if source_json['embed_url']:
-            source_url = source_json['embed_url']
-            logger.info("source: " + source_url)
-            DIRECT_HOST = "v.pandrama.com"
-            if DIRECT_HOST in source_url:
-                xdata = scrapertools.find_single_match(source_url, 'data=(\w+)')
-                post = "hash=%s" %xdata
-                directo_result = httptools.downloadpage(source_url + "&do=getVideo", headers={"Referer": item.url, "x-requested-with": "XMLHttpRequest"}, post = post).json
-                metadata_url = directo_result["videoSource"]
-                headers = {
-                "accept": "*/*",
-                "referer": source_url,
-                "user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
-                }
-                metadata = httptools.downloadpage(metadata_url, headers=headers).data
-                # metadata = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", metadata)
-                # Get URLs
-                # https://1/cdn/hls/9be120188fe6b91e70db037b674c686d/master.txt
-                patron = "RESOLUTION=(.*?)http([^#]+)"
-                video_matches = scrapertools.find_multiple_matches(metadata, patron)
-                for video_resolution, video_url in video_matches:
-                    final_url = "http" + video_url.strip()
-                    url_video = final_url + "|referer="+ final_url
-                    logger.info(final_url)
-                    itemlist.append(Item(channel=item.channel, title='%s (' + video_resolution.strip() + ')', url=url_video, action='play'))
-                # https://1/cdn/hls/9be120188fe6b91e70db037b674c686d/master.txt
-            else:
-                itemlist.append(Item(channel=item.channel, title='%s', url=source_json['embed_url'], action='play'))
+    soup, matches = AlfaChannel.get_video_options(item.url)
+
+    for elem in matches:
+        data = AlfaChannel.get_data_by_post(elem).json
+        itemlist.append(Item(channel=item.channel, title='%s', url=data['embed_url'], action='play'))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
@@ -233,56 +117,23 @@ def findvideos(item):
     return itemlist
 
 
-def list_search(item):
-    logger.info()
-    itemlist = []
-
-    data = get_source(item.url)
-
-    patron = '<div class="result-item">.*?<div class="thumbnail.*?<a href="([^"]+)">'
-    patron += '<img src="([^"]+)".*?<span class="([^"]+)".*?<div class="title">'
-    patron += '<a href="[^"]+">([^<]+)<.*?<span class="year">([^<]+)<.*?<p>([^<]+)<'
-
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedthumbnail, scrapedtype, scrapedtitle, scrapedyear, scrapedplot in matches:
-        # logger.info(scrapedurl)
-        url = scrapedurl
-        year = scrapedyear
-        contentname = scrapedtitle
-        title = '%s (%s) (%s)'%(contentname, scrapedtype, year)
-        thumbnail = scrapedthumbnail
-        new_item = Item(channel=item.channel,
-                        title=title,
-                        url=url,
-                        thumbnail=thumbnail,
-                        plot=scrapedplot,
-                        type=scrapedtype,
-                        action='list_all',
-                        infoLabels={'year':year}
-                        )
-
-        new_item.contentSerieName = contentname
-        if new_item.type == 'tvshows':
-            new_item.action = 'seasons'
-        else:
-            new_item.action = 'findvideos'
-        itemlist.append(new_item)
-
-    # tmdb.set_infoLabels_itemlist(itemlist, True)
-
-    return itemlist
-
-
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
 
     try:
-        return list_search(item)
+        return AlfaChannel.search_results(item)
     except:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
 
+
+def set_plot(*args):
+
+    plot = args[1].find("div", "texto").string
+    args[2].plot = plot
+
+    return args[2]

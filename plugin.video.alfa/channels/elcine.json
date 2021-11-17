@@ -1,7 +1,7 @@
 {
   "id": "elcine",
   "name": "elCine",
-  "active": false,
+  "active": true,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://elcine.online/img/150xNxlogo.png.pagespeed.ic.Ul6yTwzzQr.webp",

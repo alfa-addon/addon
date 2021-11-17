@@ -133,7 +133,10 @@ def process(channel_list, category, news, total_channels, startpage=False, save=
         for index, res in enumerate(futures.as_completed(c_results)):
             cnt += 1
             percentage = int(math.ceil((index + 1) * number_of_channels))
-            finished = res.result()[0]
+            try:
+                finished = res.result()[0]
+            except:
+                continue
 
             if not startpage:
                if progress.iscanceled():
@@ -183,8 +186,13 @@ def get_channels(category, all=False):
 def get_channel_news(channel, category, all=False):
 
     logger.info()
+
     results = list()
     brand_new = list()
+    if platformtools.is_playing():
+        return channel, brand_new, category
+
+
     news_range = config.get_setting("news_range", "news")
     if news_range == 5:
         news_range = 100

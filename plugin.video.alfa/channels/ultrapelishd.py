@@ -3,15 +3,12 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
-import re
-from core import tmdb
-from core import httptools
 from core.item import Item
 from core import scrapertools
 from core import servertools
-from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from platformcode import config, logger
+from lib.AlfaChannelHelper import DooPlay
 from channels import filtertools, autoplay
 import sys
 
@@ -19,7 +16,7 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 
-IDIOMAS = {'la': 'LAT', 'ca': 'CAST', 'su': 'VOSE'}
+IDIOMAS = {'la': 'LAT', 'ca': 'CAST', 'su': 'VOSE', 'en': 'VOSE'}
 list_language = list(IDIOMAS.values())
 
 list_quality = []
@@ -30,6 +27,7 @@ list_servers = [
     ]
 
 host = 'https://ultrapelishd.net/'
+AlfaChannel = DooPlay(host, "/pelicula")
 
 
 def mainlist(item):
@@ -48,7 +46,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Netflix', url=host + 'genre/netflix/', action='list_all',
                          thumbnail=get_thumb('movies', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Generos', action='section',
+    itemlist.append(Item(channel=item.channel, title='Generos', action='section', url=host,
                          thumbnail=get_thumb('genres', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
@@ -59,74 +57,17 @@ def mainlist(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False):
+def list_all(item):
     logger.info()
 
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
-    else:
-        data = httptools.downloadpage(url).data
-
-    if unescape:
-        data = scrapertools.unescape(data)
-
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-
-    return soup
+    return AlfaChannel.list_all(item)
 
 
 def section(item):
     logger.info()
 
-    itemlist = list()
-    soup = create_soup(host)
-
     if item.title == "Generos":
-        matches = soup.find("ul", class_="genres")
-
-    for elem in matches.find_all("li")[1:]:
-        url = elem.a["href"]
-        title = elem.a.text.title()
-
-        itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url))
-
-    return itemlist
-
-
-def list_all(item):
-    logger.info()
-
-    itemlist = list()
-
-    soup = create_soup(item.url)
-    matches = soup.find("div", class_="content").find_all("article", id=re.compile(r"^post-\d+"))
-
-    for elem in matches:
-
-        url = elem.a.get("href", "")
-        if not url:
-            continue
-        title = elem.h3.text
-        thumb = elem.img.get("src", "")
-        try:
-            year = elem.find("span", text=re.compile("\d{4}")).text
-        except:
-            year = "-"
-
-        itemlist.append(Item(channel=item.channel, title=title, url=url, thumbnail=thumb, action="findvideos",
-                        contentTitle=title, infoLabels={"year": year}))
-
-    tmdb.set_infoLabels_itemlist(itemlist, True)
-
-    try:
-        url_next_page = soup.find("div", class_="pagination").find("span", class_="current").next_sibling["href"]
-    except:
-        return itemlist
-
-    if url_next_page and len(matches) > 16:
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
-
-    return itemlist
+        return AlfaChannel.section(item, section="genre")
 
 
 def findvideos(item):
@@ -134,21 +75,15 @@ def findvideos(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url)
-    matches = soup.find("ul", id="playeroptionsul")
+    soup, matches = AlfaChannel.get_video_options(item.url)
 
-    for elem in matches.find_all("li"):
+    for elem in matches:
         lang = elem.find("span", class_="title").text[:2].lower()
-        post = {"action": "doo_player_ajax", "post": elem["data-post"], "nume": elem["data-nume"],
-                "type": elem["data-type"]}
-        doo_url = "%swp-admin/admin-ajax.php" % host
-        data = httptools.downloadpage(doo_url, post=post, add_referer=True).json
-        if not data:
-            continue
+        data = AlfaChannel.get_data_by_post(elem).json
         url = data.get("embed_url", "")
         if not url or "youtube" in url:
             continue
-        itemlist.append(Item(channel=item.channel, title="%s", action="play", post=post, url=url,
+        itemlist.append(Item(channel=item.channel, title="%s", action="play", url=url,
                              language=IDIOMAS.get(lang, "LAT"), infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server)
@@ -169,21 +104,6 @@ def findvideos(item):
     return itemlist
 
 
-def get_language(lang_data):
-    logger.info()
-
-    language = list()
-
-    lang_list = lang_data.find_all("span", class_="flag")
-    for lang in lang_list:
-        lang = scrapertools.find_single_match(lang["style"], '/flags/(.*?).png\)')
-        if lang == 'en':
-            lang = 'vose'
-        if lang not in language:
-            language.append(lang)
-    return language
-
-
 def search(item, texto):
     logger.info()
     try:
@@ -191,7 +111,7 @@ def search(item, texto):
         item.url = item.url + texto
 
         if texto != '':
-            return search_results(item)
+            return AlfaChannel.search_results(item, postprocess=get_lang)
         else:
             return []
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -199,40 +119,6 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
-
-
-def search_results(item):
-    logger.info()
-
-    itemlist = list()
-
-    soup = create_soup(item.url)
-
-    for elem in soup.find_all("article"):
-
-        url = elem.a["href"]
-        thumb = elem.img["src"]
-        title = elem.img["alt"].replace("4K", "")
-        try:
-            year = elem.find("span", text=re.compile(r"\d{4}")).text
-        except:
-            year = '-'
-
-        language = get_language(elem)
-
-        itemlist.append(Item(channel=item.channel, title=title, url=url, thumbnail=thumb, action="findvideos",
-                        contentTitle=title, language=language, infoLabels={'year': year}))
-
-    tmdb.set_infoLabels_itemlist(itemlist, True)
-
-    try:
-        url_next_page = soup.find_all("a", class_="arrow_pag")[-1]["href"]
-    except:
-        return itemlist
-
-    itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='search_results'))
-
-    return itemlist
 
 
 def newest(categoria):
@@ -256,3 +142,19 @@ def newest(categoria):
         return []
 
     return itemlist
+
+
+def get_lang(*args):
+
+    langs = list()
+    try:
+        lang_list = args[1].find_all("span", class_="flag")
+        for lang in lang_list:
+            lang = scrapertools.find_single_match(lang["style"], r'/flags/(.*?).png\)')
+            if not lang in langs:
+                langs.append(lang)
+    except:
+        langs = ""
+
+    args[2].language = langs
+    return args[2]
