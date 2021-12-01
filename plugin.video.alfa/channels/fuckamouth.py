@@ -48,9 +48,9 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<div class="post thumb-border".*?'
+    patron = '<div class="post thumb-border">.*?'
     patron += '<a href="([^"]+)".*?'
-    patron += '<img src="([^"]+)".*?'
+    patron += '<img data-src="([^"]+)".*?'
     patron += 'alt="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
@@ -105,7 +105,6 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url= scrapertools.find_single_match(data, '<iframe sandbox="[^"]+" src="([^"]+)"')
-    # pornstars = scrapertools.find_multiple_matches(data, '<h3 class="hireq">([^<]+)<')
     patron = '<iframe sandbox="[^"]+" src="([^"]+)"'
     itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
@@ -117,7 +116,16 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url= scrapertools.find_single_match(data, '<iframe sandbox="[^"]+" src="([^"]+)"')
-    # pornstars = scrapertools.find_multiple_matches(data, '<h3 class="hireq">([^<]+)<')
+    pornstars = scrapertools.find_multiple_matches(data, '<h3 class="hireq">([^<]+)<')
+    pornstar = ' & '.join(pornstars)
+    pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+    lista = item.title.split()
+    logger.debug(lista)
+    if "HD" in item.title:
+        lista.insert (5, pornstar)
+    else:
+        lista.insert (3, pornstar)
+    item.title = ' '.join(lista)
     patron = '<iframe sandbox="[^"]+" src="([^"]+)"'
     itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
