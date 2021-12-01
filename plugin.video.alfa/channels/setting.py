@@ -431,7 +431,7 @@ def submenu_tools(item):
         if filetools.exists(user_custom):
             filetools.copy(user_custom, channel_custom, silent=True)
     if filetools.exists(channel_custom):
-        itemlist.append(Item(channel='custom', action='mainlist', title='Custom Channel', thumbnail=get_thumb('setting_0.png')))
+        itemlist.append(Item(channel='custom', action='mainlist', title='Custom Channel', thumbnail=get_thumb('setting_0.png'), viewType='files'))
 
 
     itemlist.append(Item(action = "check_quickfixes", channel= CHANNELNAME, folder = False,
