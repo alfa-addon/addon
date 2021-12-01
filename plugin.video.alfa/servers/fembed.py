@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------
-# Conector Fembed By Alfa development Group
+# Conector Fembed By Alfa Development Group
 # --------------------------------------------------------
 
+import sys
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -29,16 +30,25 @@ def get_video_url(page_url, user="", password="", video_password=""):
     video_urls = []
     base_sub = "https://thumb.fvs.io/asset/userdata/240560/caption/%s/%s.%s"
     try:
-        sub_data = data.get("captions",[])[0]
-        subtitle= base_sub % (sub_data['hash'], sub_data['id'], sub_data['extension'])
+        sub_data = data.get("captions", [])[0]
+        subtitle = base_sub % (
+            sub_data['hash'], sub_data['id'], sub_data['extension'])
     except:
         subtitle = ''
     for url in data["data"]:
         try:
-            from platformcode import config
-            if config.get_platform(True)['num_version'] >= 19.0:
-                url["file"] = url["file"].replace('https', 'http')
+            if sys.version_info[0] >= 3:
+                for x in range(5):
+                    location = httptools.downloadpage(
+                        url["file"], only_headers=True, follow_redirects=False)
+
+                    if 'Location' in location.headers:
+                        url["file"] = location.headers['Location']
+                    else:
+                        url["file"] = url["file"].replace('https', 'http')
+                        break
         except:
             pass
-        video_urls.append([url["label"] + " [Fembed]", url["file"], 0, subtitle])
+        video_urls.append(
+            [url["label"] + " [Fembed]", url["file"], 0, subtitle])
     return video_urls
