@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Alfa WebTools -*-
+# -*- Alfa Channel Helper -*-
 # -*- Herramientas genericas para canales BS -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
