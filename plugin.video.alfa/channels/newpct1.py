@@ -98,10 +98,12 @@ if host_index > 0 or not clone_list_random:     #Si el Clone por defecto no es A
                     break
         i += 1
 if not channel_clone_post: channel_clone_post = channel_clone_post
+domain = scrapertools.find_single_match(host, '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)')
 sufix = scrapertools.find_single_match(host, '\.\w+\/*$')
 download_sufix = 'descargar/torrent/'
 download_pre_url_torr = '/download/'
 download_post_url_torr = '/download-link/'
+download_post_url_torr_tail = '/dom-t/%s'
 
 #Carga de opciones del canal        
 __modo_grafico__ = config.get_setting('modo_grafico', channel_py)               #TMDB?
@@ -1307,13 +1309,15 @@ def findvideos(item):
                 patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'          #Patron .torrent (planetatorrent)
     
     # Salvamos el enlace .torrent
-    url_torr = scrapertools.find_single_match(data, patron)
+    url_torr = scrapertools.find_single_match(data, patron).replace('javascript:;', '').strip()
     if url_torr:
         url_torr = urlparse.urljoin(torrent_tag, scrapertools.find_single_match(data, patron))
     url_torr = url_torr.replace(" ", "%20")                                     #sustituimos espacios por %20, por si acaso
     if url_torr and not url_torr.startswith("http"):                            #Si le falta el http.: lo ponemos
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
-    url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr)
+    if url_torr:
+        if url_torr.endswith('/'): url_torr = url_torr[:-1]
+        url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr) + download_post_url_torr_tail % domain
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if url_torr:
@@ -1352,7 +1356,7 @@ def findvideos(item):
             if 'Archivo torrent no Existe' in data:
                 url_torr = ''
             else:
-                url_torr = scrapertools.find_single_match(data, patron)
+                url_torr = scrapertools.find_single_match(data, patron).replace('javascript:;', '').strip()
             if url_torr:
                 url_torr = urlparse.urljoin(torrent_tag, scrapertools.find_single_match(data, patron))
             elif 'Archivo torrent no Existe' in data:
@@ -1363,8 +1367,9 @@ def findvideos(item):
             url_torr = url_torr.replace(" ", "%20")                             #sustituimos espacios por %20, por si acaso
             if url_torr and not url_torr.startswith("http"):                    #Si le falta el http.: lo ponemos
                 url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
-            url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr)
             if url_torr:
+                if url_torr.endswith('/'): url_torr = url_torr[:-1]
+                url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr) + download_post_url_torr_tail % domain
                 size = generictools.get_torrent_size(url_torr, timeout=timeout) #Buscamos si hay .torrent y el tamaño
 
     #Si no ha logrado encontrar nada, verificamos si hay servidores
@@ -1463,12 +1468,13 @@ def findvideos(item):
                 if 'Archivo torrent no Existe' in data_alt:
                     url_torr = ''
                 else:
-                    url_torr = scrapertools.find_single_match(data_alt, patron)
+                    url_torr = scrapertools.find_single_match(data_alt, patron).replace('javascript:;', '').strip()
                 if url_torr:
                     url_torr = urlparse.urljoin(torrent_tag, url_torr)
                 else:
                     continue
-                url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr)
+                if url_torr.endswith('/'): url_torr = url_torr[:-1]
+                url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr) + download_post_url_torr_tail % domain
                 size = generictools.get_torrent_size(url_torr, timeout=timeout) #Buscamos si hay .torrent y el tamaño
             
             matches_torent.append((url_torr, quality, size, data_alt))
@@ -2393,9 +2399,10 @@ def verify_host(item, host_call, force=True, category='', post=None):
         
     item = generictools.verify_channel_regex(item, clone_list_alt)              # Procesamos los regex de url que tenga el clone
         
-    global host, sufix
+    global host, sufix, domain
     host = host_call
     sufix = scrapertools.find_single_match(host, '\.\w+\/*$')
+    domain = scrapertools.find_single_match(host, '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)')
     
     return (item, host)
 
