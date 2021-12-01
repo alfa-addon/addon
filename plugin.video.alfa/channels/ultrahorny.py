@@ -27,10 +27,11 @@ host = 'https://ultrahorny.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/porno-gratis-mas-valorado/"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/?filter=latest"))
+    itemlist.append(item.clone(title="Mas visto" , action="lista", url=host + "/?filter=most-viewed"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/?filter=popular"))
+    itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/?filter=longest"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
-    # itemlist.append(item.clone(title="Pornstars" , action="categorias", url=host + "/pornstar/?filter=popular"))  #no tiene contenido
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -51,23 +52,16 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('ul', class_='lst_categorias') 
-    matches = soup.find_all('li')
+    soup = create_soup(item.url)
+    matches = soup.find_all('li', class_='tag-menu')
     for elem in matches:
         url = elem.a['href']
-        thumbnail = elem.img['src']
-        title = elem.find('h5')
-        if title:
-            title = title.text.strip()
-        else:
-            title = elem.find('h3').text.strip() #para pornstars
-        cantidad = elem.find('div', class_='float-right')
-        if cantidad:
-            cantidad = cantidad.text.strip()
-            title = "%s (%s)" % (title,cantidad)
+        title = elem.text.strip()
+        thumbnail = ""
         plot = ""
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
+    itemlist.sort(key=lambda x: x.title)
     return itemlist
 
 def create_soup(url, referer=None, unescape=False):
@@ -86,13 +80,12 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('article')
+    matches = soup.find_all('div', class_='video-block')
     for elem in matches:
         url = elem.a['href']
-        title = elem.a.text.strip()
-        thumbnail = elem.img['src']
-        time = elem.find('span', class_='ico-duracion')
-        quality = elem.find('span', class_='is-hd')
+        title = elem.find('span', class_='title').text.strip()
+        thumbnail = elem.img['data-src']
+        time = elem.find('span', class_='duration')
         if time:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time.text, title)
         plot = ""
@@ -101,9 +94,9 @@ def lista(item):
             action = "findvideos"
         itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('div', class_='wp-pagenavi')
+    next_page = soup.find('a', class_='next')
     if next_page:
-        next_page = next_page.find_all('a')[-1]['href']
+        next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -113,9 +106,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    url = soup.find('div', class_='video-container').iframe['src']
-    soup = create_soup(url)
-    url = soup.find('iframe', class_='iframe')['src']
+    url = soup.find('div', class_='video-player').iframe['src']
     itemlist.append(Item(channel=item.channel, title='%s', contentTitle = item.contentTitle, url=url, action='play'))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
     return itemlist
@@ -125,9 +116,8 @@ def play(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    url = soup.find('div', class_='video-container').iframe['src']
-    soup = create_soup(url)
-    url = soup.find('iframe', class_='iframe')['src']
+    url = soup.find('div', class_='video-player').iframe['src']
     itemlist.append(Item(channel=item.channel, title='%s', contentTitle = item.contentTitle, url=url, action='play'))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
     return itemlist
+

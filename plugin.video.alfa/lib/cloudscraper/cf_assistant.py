@@ -118,7 +118,8 @@ def get_cl(resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blackl
                 logger.debug("Lista cookies: %s" % data_assistant.get("cookies", []))
                 for cookie in data_assistant["cookies"]:
                     cookieslist = cookie.get("cookiesList", None)
-                    val = scrapertools.find_single_match(cookieslist, 'cf_clearance=([A-z0-9_-]+)')
+                    val = scrapertools.find_single_match(cookieslist, 'cf_clearance=([A-z0-9_\-\.]+)')
+                    #val = scrapertools.find_single_match(cookieslist, 'cf_clearance=([^;]+)')
                     dom = cookie.get("urls", None)
                     logger.debug("dominios: %s" % dom[0])
 

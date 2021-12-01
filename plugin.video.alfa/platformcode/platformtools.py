@@ -249,22 +249,21 @@ def render_items(itemlist, parent_item):
             elif 'serie' in item.action:
                 item.thumbnail = get_thumb("videolibrary_tvshow.png")
 
+        if item.text_color:
+            item.title = '[COLOR %s]%s[/COLOR]' % (item.text_color, item.title)
+
+        if item.text_bold:
+            item.title = '[B]%s[/B]' % item.title
+
+        if item.text_italic:
+            item.title = '[I]%s[/I]' % item.title
+
         if use_unify and parent_item.channel not in ['alfavorites']:
             # Formatear titulo con unify
-
             item = unify.title_format(item, colors_file, srv_lst)
 
         else:
             # Formatear titulo metodo old school
-            if item.text_color:
-                item.title = '[COLOR %s]%s[/COLOR]' % (item.text_color, item.title)
-
-            if item.text_bold:
-                item.title = '[B]%s[/B]' % item.title
-
-            if item.text_italic:
-                item.title = '[I]%s[/I]' % item.title
-
             if item.title == r'%s' and item.action in ("findvideos", "play"):
                 item = unify.title_format(item)
 

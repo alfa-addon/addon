@@ -32,21 +32,25 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 from servers import torrent
+from platformcode import unify
+from channelselector import get_thumb
 
-STATUS_COLORS = {0: "orange", 1: "orange", 2: "green", 3: "red", 4: "magenta", 5: "gray"}
+STATUS_COLORS = {0: "orange", 1: "orange", 2: "limegreen", 3: "red", 4: "magenta", 5: "gray"}
 STATUS_CODES = type("StatusCode", (), {"stoped": 0, "canceled": 1, "completed": 2, "error": 3, "auto": 4, "control": 5})
 DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath")
 DOWNLOAD_PATH = config.get_setting("downloadpath")
 STATS_FILE = filetools.join(config.get_data_path(), "servers.json")
 
-TITLE_FILE = "[COLOR %s][%i%%][/COLOR] %s"
-TITLE_TVSHOW = "[COLOR %s][%i%%][/COLOR] %s [%s]"
+TITLE_FILE = "[COLOR %s][%i%%][/COLOR] %s %s %s %s" 
+TITLE_TVSHOW = "%s -Serie-" % TITLE_FILE
 
 null = 'None'
 
 
 def mainlist(item):
     logger.info()
+    
+    
     itemlist = []
     pausar = False
     resetear = False
@@ -72,6 +76,16 @@ def mainlist(item):
             pausar = True
         if i.downloadProgress != 0 or i.downloadCompleted != 0:
             resetear = True
+        if i.language or i.quality:
+            i.contentPlot = '[COLOR limegreen]Idiomas: [/COLOR]%s\n[COLOR limegreen]Calidad: [/COLOR]%s\n\n%s' \
+                         % (i.language, i.quality, i.contentPlot)
+        if i.infoLabels['mediatype'] == 'movie':
+            year = i.infoLabels['year']
+        else:
+            year = scrapertools.find_single_match(i.infoLabels['aired'], '\d{4}')
+        if not year and i.infoLabels['release_date']:
+            year = scrapertools.find_single_match(i.infoLabels['release_date'], '\d{4}')
+            i.infoLabels['year'] = year
 
         # Listado principal
         if not item.contentType == "tvshow":
@@ -82,36 +96,43 @@ def mainlist(item):
                 if not [x for x in itemlist if (x.infoLabels.get('tmdb_id') is not None and x.infoLabels.get('tmdb_id') == i.infoLabels.get('tmdb_id')) or x.contentSerieName.lower() == i.contentSerieName.lower()]:
 
                     i_bis = Item.clone(i)
-                    title = TITLE_FILE % (
-                        STATUS_COLORS[i.downloadStatus], i.downloadProgress, i.contentSerieName)
+                    title = TITLE_TVSHOW % (STATUS_COLORS[i.downloadStatus], i.downloadProgress, 
+                                            unify.set_color(i.contentSerieName, 'tvshow'), 
+                                            unify.set_color(year, 'year'), 
+                                            unify.format_rating(i.infoLabels['rating']), 
+                                            unify.set_color(i.contentChannel.capitalize(), 'channel'))
                     if i_bis.infoLabels['season']: del i_bis.infoLabels['season']
                     if i_bis.infoLabels['episode']: del i_bis.infoLabels['episode']
                     if i_bis.infoLabels['title']: del i_bis.infoLabels['title']
+                    i_bis.infoLabels['mediatype'] = 'tvshow'
                     itemlist.append(i_bis.clone(channel="downloads", action="mainlist", title=title, 
-                                                contentType="tvshow", downloadProgress=[i.downloadProgress]))
-
-                    """
-                    itemlist.append(Item(title=title, channel="downloads", action="mainlist", contentType="tvshow",
-                                         contentSerieName=i.contentSerieName, contentChannel=i.contentChannel,
-                                         downloadStatus=i.downloadStatus, downloadProgress=[i.downloadProgress],
-                                         fanart=i.fanart, thumbnail=i.thumbnail))
-                    """
+                                                downloadProgress=[i_bis.downloadProgress]))
 
                 else:
-                    s = [x for x in itemlist if (x.infoLabels.get('tmdb_id') is not None and x.infoLabels.get('tmdb_id') == i.infoLabels.get('tmdb_id')) or x.contentSerieName.lower() == i.contentSerieName.lower()][0]
+                    s = [x for x in itemlist if (x.infoLabels.get('tmdb_id') is not None \
+                                and x.infoLabels.get('tmdb_id') == i.infoLabels.get('tmdb_id')) \
+                                or x.contentSerieName.lower() == i.contentSerieName.lower()][0]
                     s.downloadProgress.append(i.downloadProgress)
                     downloadProgress = old_div(sum(s.downloadProgress), len(s.downloadProgress))
 
-                    if not s.downloadStatus in [STATUS_CODES.error, STATUS_CODES.canceled] and not i.downloadStatus in [
-                        STATUS_CODES.completed, STATUS_CODES.stoped]:
+                    if not s.downloadStatus in [STATUS_CODES.error, STATUS_CODES.canceled] \
+                                and not i.downloadStatus in [STATUS_CODES.completed, STATUS_CODES.stoped]:
                         s.downloadStatus = i.downloadStatus
 
-                    s.title = TITLE_FILE % (
-                        STATUS_COLORS[s.downloadStatus], downloadProgress, i.contentSerieName)
+                    s.title = TITLE_TVSHOW % (STATUS_COLORS[s.downloadStatus], downloadProgress, 
+                                              unify.set_color(s.contentSerieName, 'tvshow'), 
+                                              unify.set_color(year, 'year'), 
+                                              unify.format_rating(s.infoLabels['rating']), 
+                                              unify.set_color(s.contentChannel.capitalize(), 'channel'))
 
             # Peliculas
             elif i.contentType == "movie" or i.contentType == "video":
-                i.title = TITLE_FILE % (STATUS_COLORS[i.downloadStatus], i.downloadProgress, i.contentTitle)
+                i.title = TITLE_FILE % (STATUS_COLORS[i.downloadStatus], i.downloadProgress, 
+                                        "%s %s" % (unify.set_color(i.contentTitle, 'movie'), 
+                                        unify.set_color(i.server.capitalize(), 'server') if i.server else ''), 
+                                        unify.set_color(year, 'year'), 
+                                        unify.format_rating(i.infoLabels['rating']), 
+                                        unify.set_color(i.contentChannel.capitalize(), 'channel'))
                 itemlist.append(i)
 
         # Listado dentro de una serie
@@ -119,9 +140,12 @@ def mainlist(item):
             if i.contentType == "episode" and (i.infoLabels.get('tmdb_id') is not None and i.infoLabels.get('tmdb_id') == item.infoLabels.get('tmdb_id')
                                                or i.contentSerieName.lower() == item.contentSerieName.lower()):
                 i.title = TITLE_FILE % (STATUS_COLORS[i.downloadStatus], i.downloadProgress,
-                                        "%dx%0.2d: %s [%s] [%s] [%s]" % (i.contentSeason, i.contentEpisodeNumber, i.contentTitle, 
-                                        i.contentChannel, scrapertools.find_single_match(i.infoLabels['aired'], '\d{4}'), 
-                                        str(i.infoLabels['rating']).zfill(1)))
+                                        "%dx%0.2d: %s %s" % (i.contentSeason, i.contentEpisodeNumber, 
+                                        unify.set_color(i.contentTitle, 'tvshow'), 
+                                        unify.set_color(i.server.capitalize(), 'server') if i.server else ''), 
+                                        unify.set_color(year, 'year'), 
+                                        unify.format_rating(i.infoLabels['rating']), 
+                                        unify.set_color(i.contentChannel.capitalize(), 'channel'))
                 itemlist.append(i)
 
     estados = [i.downloadStatus for i in itemlist]
@@ -130,46 +154,46 @@ def mainlist(item):
     # Si hay alguno completado
     if 2 in estados:
         itemlist.insert(0, Item(channel=item.channel, action="clean_ready", title=config.get_localized_string(70218),
-                                contentType=item.contentType, contentChannel=item.contentChannel,
+                                contentType=item.contentType, contentChannel=item.contentChannel, thumbnail=get_thumb("folder.png"), 
                                 contentSerieName=item.contentSerieName, text_color="sandybrown"))
 
     # Si hay alguno con error
     if 3 in estados:
         itemlist.insert(0, Item(channel=item.channel, action="restart_error", title=config.get_localized_string(70219),
-                                contentType=item.contentType, contentChannel=item.contentChannel,
+                                contentType=item.contentType, contentChannel=item.contentChannel, thumbnail=get_thumb("update.png"), 
                                 contentSerieName=item.contentSerieName, text_color="orange"))
 
     # Reiniciar todos
     if len(itemlist) and resetear:
         itemlist.insert(0, Item(channel=item.channel, action="restart_all", title=config.get_localized_string(70227),
-                                contentType=item.contentType, contentChannel=item.contentChannel,
+                                contentType=item.contentType, contentChannel=item.contentChannel, thumbnail=get_thumb("update.png"), 
                                 contentSerieName=item.contentSerieName, text_color="orange"))
                                 
     # Pausar todos
     if len(itemlist) and pausar:
         itemlist.insert(0, Item(channel=item.channel, action="pause_all", title="Pausar descargas",
-                                contentType=item.contentType, contentChannel=item.contentChannel,
+                                contentType=item.contentType, contentChannel=item.contentChannel, thumbnail=get_thumb("error.png"), 
                                 contentSerieName=item.contentSerieName, text_color="orange"))
     
     # Si hay alguno pendiente
     if 1 in estados or 0 in estados or 4 in estados or 5 in estados or (2 in estados and item.downloadProgress != 100):
         itemlist.insert(0, Item(channel=item.channel, action="download_all", title=config.get_localized_string(70220),
-                                contentType=item.contentType, contentChannel=item.contentChannel,
-                                contentSerieName=item.contentSerieName, text_color="green"))
+                                contentType=item.contentType, contentChannel=item.contentChannel, thumbnail=get_thumb("downloads.png"), 
+                                contentSerieName=item.contentSerieName, text_color="limegreen"))
 
     if len(itemlist):
         itemlist.insert(0, Item(channel=item.channel, action="clean_all", title=config.get_localized_string(70221),
-                                contentType=item.contentType, contentChannel=item.contentChannel,
+                                contentType=item.contentType, contentChannel=item.contentChannel, thumbnail=get_thumb("folder.png"), 
                                 contentSerieName=item.contentSerieName, text_color="red"))
 
     if not item.contentType == "tvshow" and config.get_setting("browser", "downloads") == True:
         itemlist.insert(0, Item(channel=item.channel, action="browser", title='[COLOR gold][B]%s[/B][/COLOR]' 
-                                % config.get_localized_string(70222),
+                                % config.get_localized_string(70222), thumbnail=get_thumb("search.png"),  
                                 url=DOWNLOAD_PATH, text_color="yellow"))
 
     if not item.contentType == "tvshow":
         itemlist.insert(0, Item(channel=item.channel, action="settings", title=config.get_localized_string(70223),
-                                text_color="blue"))
+                                text_color="blue", thumbnail=get_thumb("setting_0.png")))
 
     return itemlist
 
@@ -203,31 +227,22 @@ def browser(item):
     else:
         torrent_paths_list = []
     torrent_paths_list_seen = []
-    plot = '[COLOR gold][B]Ruta de descarga:[/COLOR][/B]\n\n %s'
+    contentPlot = '[COLOR limegreen]Idiomas: [/COLOR]%s\n[COLOR limegreen]Calidad: [/COLOR]%s\n\n'
+    plot = '[COLOR gold][B]Tamaño:[/COLOR][/B] %s\n\n[COLOR gold][B]Ruta de descarga:[/COLOR][/B]\n\n %s'
+    TITLE_VIDEO = "%s %s %s %s %s"
 
-    if item.url not in str(torrent_paths_list):
-        for file in filetools.listdir(item.url):
-            if file == "list": continue
-            url = filetools.join(item.url, file)
-            torrent_paths_list_seen += [url]
-            if filetools.isdir(url):
-                if file.startswith('.') or file == 'MCT-torrents': continue
-                itemlist.append(
-                    Item(channel=item.channel, title=file, action=item.action, url=url, context=context,
-                                 plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
-            else:
-                if scrapertools.find_single_match(file, '(\.\w+)$') in extensions_list:
-                    if scrapertools.find_single_match(file, '(\.\w+)$') == '.rar': 
-                        action = ''
-                    else:
-                        action = 'play'
-                    itemlist.append(Item(channel=item.channel, title=file, action=action, url=url, context=context, 
-                                 plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
-            
     if config.get_localized_string(70222) in item.title:
         for file in sorted(filetools.listdir(DOWNLOAD_LIST_PATH)):
             if file.endswith(".json"):
                 download_item = Item().fromjson(filetools.read(filetools.join(DOWNLOAD_LIST_PATH, file)))
+                if download_item.infoLabels['mediatype'] == 'movie':
+                    year = download_item.infoLabels['year']
+                else:
+                    year = scrapertools.find_single_match(download_item.infoLabels['aired'], '\d{4}')
+                if not year and download_item.infoLabels['release_date']:
+                    year = scrapertools.find_single_match(download_item.infoLabels['release_date'], '\d{4}')
+                    download_item.infoLabels['year'] = year
+                
                 if download_item.downloadFilename.startswith(':'):
                     torr_client = scrapertools.find_single_match(download_item.downloadFilename, '^\:(\w+)\:').upper()
                     if not torr_client or not torrent_paths[torr_client]:
@@ -239,7 +254,6 @@ def browser(item):
                         title = '%s [%sx%s]' % (download_item.infoLabels['tvshowtitle'], \
                                 download_item.infoLabels['season'], str(download_item.infoLabels['episode']).zfill(2))
                     if not title: title = scrapertools.find_single_match(download_item.downloadFilename, '^\:\w+\:\s*([^$]+$)')
-                    title =  '%s [COLOR gold][B][%s][/B][/COLOR]' % (title, download_item.category.lower())
                     if filetools.dirname(path) and filetools.isdir(filetools.join(torrent_paths[torr_client], filetools.dirname(path))):
                         url = filetools.join(torrent_paths[torr_client], filetools.dirname(path))
                     else:
@@ -253,7 +267,6 @@ def browser(item):
                         title = '%s [%sx%s]' % (download_item.infoLabels['tvshowtitle'], \
                                 download_item.infoLabels['season'], str(download_item.infoLabels['episode']).zfill(2))
                     if not title: title = download_item.downloadFilename
-                    title =  '%s [COLOR gold][B][%s][/B][/COLOR]' % (title, download_item.contentChannel.lower())
                     
                 else:
                     url = filetools.join(DOWNLOAD_PATH, download_item.downloadFilename)
@@ -263,31 +276,42 @@ def browser(item):
                         title = '%s [%sx%s]' % (download_item.infoLabels['tvshowtitle'], \
                                 download_item.infoLabels['season'], str(download_item.infoLabels['episode']).zfill(2))
                     if not title: title = download_item.downloadFilename
-                    title =  '%s [COLOR gold][B][%s][/B][/COLOR]' % (title, download_item.contentChannel.lower())
                     
+                title = TITLE_VIDEO % (unify.set_color(title, 'movie'), 
+                                       unify.set_color(download_item.server.capitalize(), 'server') if download_item.server else '', 
+                                       unify.set_color(year, 'year'), 
+                                       unify.format_rating(download_item.infoLabels['rating']), 
+                                       unify.set_color(download_item.contentChannel.capitalize(), 'channel'))
+                
                 if filetools.exists(url):
                     torrent_paths_list_seen += [url]
+                    plot_q = ''
+                    if download_item.language or download_item.quality:
+                        plot_q = contentPlot % (download_item.language, download_item.quality)
                     if filetools.isdir(url):
-                        itemlist.append(
-                            Item(channel=item.channel, title=title, action=item.action, context=context, 
-                                        url=url, plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
+                        itemlist.append(download_item.clone(channel=item.channel, title=title, action=item.action, context=context, 
+                                        url=url, plot=plot_q + plot % (get_size(url), url.replace('\\', ' \\ ').replace('/', ' / ')), 
+                                        thumbnail=download_item.thumbnail or download_item.contentThumbnail))
                     elif filetools.exists(url):
+                        torrent_paths_list_seen += [url]
                         if scrapertools.find_single_match(filetools.basename(download_item.downloadFilename), '(\.\w+)$') in extensions_list:
-                            itemlist.append(Item(channel=item.channel, title=title, action="play", context=context, 
-                                        url=url, plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
+                            itemlist.append(download_item.clone(channel=item.channel, title=title, action="play", context=context, 
+                                        url=url, plot=plot_q + plot % (get_size(url), url.replace('\\', ' \\ ').replace('/', ' / ')), 
+                                        thumbnail=download_item.thumbnail or download_item.contentThumbnail))
 
         if torrent_paths_list:
             for torr_client, path in torrent_paths_list:
                 for file in sorted(filetools.listdir(path)):
                     if file == "list": continue
-                    if file.startswith('.') or file.lower().startswith('torrent'): continue
+                    if file.startswith('.') or 'torrents' in file.lower(): continue
                     url = filetools.join(path, file)
-                    if url in str(torrent_paths_list_seen): continue
+                    if url in [c for c in torrent_paths_list_seen]: continue
                     torrent_paths_list_seen += [url]
                     if filetools.isdir(url):
                         itemlist.append(
                             Item(channel=item.channel, title=file, action=item.action, url=url, context=context,
-                                         plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
+                                         plot=plot % (get_size(url), url.replace('\\', ' \\ ').replace('/', ' / ')), 
+                                         thumbnail=get_thumb("videolibrary_movie.png")))
                     else:
                         if scrapertools.find_single_match(file, '(\.\w+)$') in extensions_list:
                             if scrapertools.find_single_match(file, '(\.\w+)$') == '.rar': 
@@ -295,9 +319,60 @@ def browser(item):
                             else:
                                 action = 'play'
                             itemlist.append(Item(channel=item.channel, title=file, action=action, url=url, context=context, 
-                                         plot=plot % url.replace('\\', ' \\ ').replace('/', ' / ')))
+                                         plot=plot % (get_size(url), url.replace('\\', ' \\ ').replace('/', ' / ')), 
+                                         thumbnail=get_thumb("videolibrary_movie.png")))
+
+    for file in filetools.listdir(item.url):
+        if file == "list": continue
+        url = filetools.join(item.url, file)
+        if url in [c for c in torrent_paths_list_seen]: continue
+        torrent_paths_list_seen += [url]
+        plot_q = ''
+        if item.language or item.quality:
+            plot_q = contentPlot % (item.language, item.quality)
+        if filetools.isdir(url):
+            if file.startswith('.') or file == 'MCT-torrents': continue
+            itemlist.append(item.clone(channel=item.channel, title=file, action=item.action, context=context,
+                            url=url, plot=plot_q + plot % (get_size(url), url.replace('\\', ' \\ ').replace('/', ' / '))))
+        else:
+            if scrapertools.find_single_match(file, '(\.\w+)$') in extensions_list:
+                if scrapertools.find_single_match(file, '(\.\w+)$') == '.rar': 
+                    action = ''
+                else:
+                    action = 'play'
+                itemlist.append(item.clone(channel=item.channel, title=file, action=action, context=context, 
+                                url=url, plot=plot_q + plot % (get_size(url), url.replace('\\', ' \\ ').replace('/', ' / '))))
 
     return itemlist
+
+
+def get_size(url, file_stat=True):
+    size = '0,0 GB'
+    size_bytes = 0
+    file_stat_pattern = '([^\s]+)\s+\d+\s+([^\s]+)\s+([^\s]+)\s+\d+\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})'
+    file_stat_result = ''
+    
+    if filetools.exists(url):
+        if filetools.isfile(url):
+            size_bytes = filetools.getsize(url)
+            
+        elif filetools.isdir(url):
+            for raiz, folders, files in filetools.walk(url):
+                for f in files:
+                    size_bytes += filetools.getsize(filetools.join(raiz, f))
+                    
+        if file_stat:
+            file_stat = filetools.file_info(url)
+            if scrapertools.find_single_match(file_stat, file_stat_pattern):
+                file_stat_result = '%s %s %s %s' % scrapertools.find_single_match(file_stat, file_stat_pattern)
+    
+    if size_bytes:
+        size = '%s GB' % str(round(size_bytes/(1024*1024*1024), 2)).replace('.', ',')
+    
+    if file_stat_result:
+        size = '%s\n\n[COLOR gold][B]Info:[/COLOR][/B] %s' % (size, file_stat_result)
+    
+    return size
 
 
 def delete_video(item):
@@ -632,7 +707,7 @@ def menu(item):
     # Opciones disponibles para el menu
     op = [config.get_localized_string(70225), config.get_localized_string(70226), config.get_localized_string(70227),
           "Pausar descarga", "Modificar servidor: %s" % (servidor.capitalize()), config.get_localized_string(70221),
-          config.get_localized_string(70146)]
+          config.get_localized_string(70146), "[COLOR gold]Ver[/COLOR]"]
 
     opciones = []
 
@@ -659,6 +734,7 @@ def menu(item):
             opciones.append(op[2])  # Reiniciar descarga
         if item.downloadProgress == 100:
             opciones.append(op[6])  # Agregar a la videoteca
+            opciones.append(op[7])  # Eliminar todo
         opciones.append(op[1])  # Eliminar de la lista
         opciones.append(op[5])  # Eliminar todo
 
@@ -735,6 +811,19 @@ def menu(item):
     # Agregar a la videoteca
     if opciones[seleccion] == op[6]:
         move_to_library(item, forced=True)
+        
+    # Ver vídeo (carpeta)
+    if opciones[seleccion] == op[7]:
+        if item.server == 'torrent':
+            torrent_paths = torrent.torrent_dirs()
+            torr_client = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:')
+            folder_view = torrent_paths[torr_client.upper()]
+            file_view = scrapertools.find_single_match(item.downloadFilename, '^\:\w+\:\s*(.*?)$')
+        else:
+            folder_view = DOWNLOAD_PATH
+            file_view = item.downloadFilename
+        item.url = filetools.dirname(filetools.join(item.downloadAt or folder_view, file_view))
+        return browser(item)
     
     platformtools.itemlist_refresh()
 
@@ -1237,9 +1326,9 @@ def sort_torrents(play_items, emergency_urls=False):
                 play_items.extend(play_items_direct)
                 
         for play_item in play_items:
-            if isinstance(play_item, dict):
+            try:
                 logger.info('Size FINAL : %s' % play_item.torrent_info)
-            else:
+            except:
                 logger.info('Size FINAL : %s' % play_item)
     except:
         logger.error(traceback.format_exc())
@@ -1422,6 +1511,8 @@ def download_from_server(item, silent=False):
         if item.downloadStatus == 0:
             item.downloadStatus = STATUS_CODES.completed
         item.downloadCompleted = 0
+        if item.quality: result["quality"] = item.quality
+        if item.language: result["language"] = item.language
         if item.post or item.post is None or item.post_back: result["post"] = item.post
         if item.post or item.post is None or item.post_back: result["post_back"] = item.post_back
         if item.referer or item.referer is None or item.referer_back: result["referer"] = item.referer
@@ -1523,9 +1614,15 @@ def download_from_best_server(item, silent=False):
         if not play_item.headers and item.headers:
             item.headers_back = item.headers
             item.headers = None
+        quality = play_item.quality
+        language = play_item.language
         play_item = item.clone(**play_item.__dict__)
         play_item.contentAction = play_item.action
         play_item.infoLabels = item.infoLabels
+        if quality:
+            play_item.quality = quality
+        if language:
+            play_item.language = language
 
         result = download_from_server(play_item, silent=silent)
 
