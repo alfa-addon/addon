@@ -1,7 +1,7 @@
 {
   "id": "peliculasflix",
   "name": "peliculasflix",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://peliculasflix.co/wp-content/uploads/2020/07/logo-peliculasflix.png",
