@@ -277,7 +277,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('li', class_='OptionBx')
+    matches = soup.find_all('button', class_='sgty')
     serv=[]
     for elem in matches:
         num= elem['data-key']
@@ -285,9 +285,9 @@ def findvideos(item):
         type = elem['data-typ']
         if "movie" in type: type = "1"
         else: type = "2"
-        lang= elem.find('p', class_='AAIco-language').text.split()
-        server =  elem.find('p', class_='AAIco-dns').text.strip()
-        lang = lang[-1]
+        prop = elem.find_all('span')[1].text.split()
+        lang= prop[0]
+        server = prop[-1]
         lang = IDIOMAS.get(lang, lang)
         url = "%s/?trembed=%s&trid=%s&trtype=%s"  %  (host,num,id, type)
         server = SERVER.get(server, server)
@@ -327,6 +327,10 @@ def play(item):
     logger.debug("ITEM: %s" % item)
     if "pelisflix" in item.url:
         url = create_soup(item.url).find(class_='Video').iframe['src']
+        id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
+        post_url= "https://pelisflix.li/stream/r.php"
+        post = {'h' : id}
+        url = httptools.downloadpage(post_url, post=post, follow_redirects=False).headers['location']
     else:
         url = item.url
     if "byegoto" in url:
