@@ -72,20 +72,6 @@
       "enabled": "!eq(+1,true)"
     },
     {
-      "id": "perfil",
-      "type": "list",
-      "label": "Perfil de color",
-      "default": 3,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "Sin color",
-        "Perfil 3",
-        "Perfil 2",
-        "Perfil 1"
-      ]
-    },
-    {
 			"id": "include_in_global_search",
 			"type": "bool",
 			"label": "Incluir en busqueda global",

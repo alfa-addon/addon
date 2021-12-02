@@ -16,17 +16,7 @@ from core import scrapertools
 from core.item import Item
 from platformcode import config, logger
 
-__perfil__ = config.get_setting('perfil', "crunchyroll")
 
-# Fijar perfil de color            
-perfil = [['0xFFFFE6CC', '0xFFFFCE9C', '0xFF994D00', '0xFFFE2E2E', '0xFF088A08'],
-          ['0xFFA5F6AF', '0xFF5FDA6D', '0xFF11811E', '0xFFFE2E2E', '0xFF088A08'],
-          ['0xFF58D3F7', '0xFF2E9AFE', '0xFF2E64FE', '0xFFFE2E2E', '0xFF088A08']]
-
-if __perfil__ - 1 >= 0:
-    color1, color2, color3, color4, color5 = perfil[__perfil__ - 1]
-else:
-    color1 = color2 = color3 = color4 = color5 = ""
 host = "https://www.crunchyroll.com"
 headers = {'User-Agent': 'Mozilla/5.0', 'Accept-Language': '*'}
 #proxys y sus lios... El proxy debe ser el mismo en el conector
@@ -96,7 +86,6 @@ def login():
 def mainlist(item):
     logger.info()
     itemlist = []
-    item.text_color = color1
 
     proxy_usa = config.get_setting("proxy_usa", "crunchyroll")
     
@@ -109,36 +98,36 @@ def mainlist(item):
     item.login, error_message, premium = login()
     
     if not item.login and error_message:
-        itemlist.append(item.clone(title=error_message, action="configuracion", folder=False, text_color=color4))
+        itemlist.append(Item(channel=item.channel, title=error_message, action="configuracion", folder=False ))
     
     elif item.login:
-        itemlist.append(item.clone(title="Tipo de cuenta: %s" % premium, action="",
-                                   folder=False, text_color=color5))
+        itemlist.append(Item(channel=item.channel, title="Tipo de cuenta: %s" % premium, action="",
+                                   folder=False ))
     if item.proxy:
-        itemlist.append(item.clone(title="Usando proxy: %s" % item.proxy.capitalize(), 
-                                    action="",  folder=False, text_color='darkgrey'))
+        itemlist.append(Item(channel=item.channel, title="Usando proxy: %s" % item.proxy.capitalize(), 
+                                    action="",  folder=False))
     
-    itemlist.append(item.clone(title="Anime", action="", folder=False, text_color=color2))
+    itemlist.append(Item(channel=item.channel, title="Anime", action="", folder=False ))
     item.contentType = "tvshow"
     itemlist.append(
-        item.clone(title="     Novedades", action="lista", url=host + "/videos/anime/updated/ajax_page?pg=0", page=0))
+        Item(channel=item.channel, title="     Novedades", action="lista", url=host + "/videos/anime/updated/ajax_page?pg=0", page=0))
     itemlist.append(
-        item.clone(title="     Popular", action="lista", url=host + "/videos/anime/popular/ajax_page?pg=0", page=0))
-    itemlist.append(item.clone(title="     Emisiones Simultáneas", action="lista",
+        Item(channel=item.channel, title="     Popular", action="lista", url=host + "/videos/anime/popular/ajax_page?pg=0", page=0))
+    itemlist.append(Item(channel=item.channel, title="     Emisiones Simultáneas", action="lista",
                                url=host + "/videos/anime/simulcasts/ajax_page?pg=0", page=0))
-    itemlist.append(item.clone(title="     Índices", action="indices"))
+    itemlist.append(Item(channel=item.channel, title="     Índices", action="indices"))
 
-    itemlist.append(item.clone(title="Drama", action="", text_color=color2))
+    itemlist.append(Item(channel=item.channel, title="Drama", action="" ))
     itemlist.append(
-        item.clone(title="     Popular", action="lista", url=host + "/videos/drama/popular/ajax_page?pg=0", page=0))
-    itemlist.append(item.clone(title="     Índice Alfabético", action="indices",
+        Item(channel=item.channel, title="     Popular", action="lista", url=host + "/videos/drama/popular/ajax_page?pg=0", page=0))
+    itemlist.append(Item(channel=item.channel, title="     Índice Alfabético", action="indices",
                                url=host + "/videos/drama/alpha"))
-    itemlist.append(item.clone(title="Buscar...", action="search",
-                               url=host + "/search?q=%s&o=m", text_color=color2))
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
+                               url=host + "/search?q=%s&o=m" ))
     
-    itemlist.append(item.clone(action="calendario", title="Calendario de Estrenos Anime", text_color=color4,
+    itemlist.append(Item(channel=item.channel, action="calendario", title="Calendario de Estrenos Anime" ,
                                    url=host + "/simulcastcalendar"))
-    itemlist.append(item.clone(title="Configuración del canal", action="configuracion", text_color="gold"))
+    itemlist.append(Item(channel=item.channel, title="Configuración del canal", action="configuracion"))
     return itemlist
 
 
@@ -178,12 +167,10 @@ def lista(item):
             plot = plot.encode().decode('unicode-escape', "ignore")
         else:
             plot = unicode(plot, 'unicode-escape', "ignore")
-        itemlist.append(item.clone(action="episodios", url=url, title=scrapedtitle, thumbnail=thumb,
-                                   contentTitle=title, contentSerieName=title, infoLabels={'plot': plot},
-                                   text_color=color2))
+        itemlist.append(Item(channel=item.channel, action="episodios", url=url, title=scrapedtitle, thumbnail=thumb,
+                                   contentTitle=title, contentSerieName=title, infoLabels={'plot': plot}))
     if '<li id="media_group' in data_next:
-        itemlist.append(item.clone(action="lista", url=next, title=">> Página Siguiente", page=item.page + 1,
-                                   text_color=""))
+        itemlist.append(Item(channel=item.channel, action="lista", url=next, title=">> Página Siguiente", page=item.page + 1))
     return itemlist
 
 
@@ -206,7 +193,7 @@ def episodios(item):
             matches = scrapertools.find_multiple_matches(b, patron)
             matches.reverse()
             if matches:
-                itemlist.append(item.clone(action="", title=season, text_color=color3))
+                itemlist.append(Item(channel=item.channel, action="", title=season ))
             for url, thumb, media_id, visto, scrapedtitle, subt, plot in matches:
                 
                 url_p = urllib.unquote(scrapertools.find_single_match(url, 'php\?u=([^*&]+)'))
@@ -239,7 +226,7 @@ def episodios(item):
                 episodes_list_1.append(count_title)
                 
                 if visto.strip() != "0":
-                    title += " [COLOR %s][V][/COLOR]" % color5
+                    title += " [COLOR limegreen][V][/COLOR]"
                 if PY3:
                     plot = plot.encode().decode('unicode-escape', "ignore")
                 else:
@@ -252,7 +239,7 @@ def episodios(item):
             
                 itemlist.append(
                     Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumb, media_id=media_id,
-                         server="crunchyroll", text_color=item.text_color, contentTitle=item.contentTitle,
+                         server="crunchyroll", contentTitle=item.contentTitle,
                          contentSerieName=item.contentSerieName, plot=plot))
     else:
         matches = scrapertools.find_multiple_matches(data, patron)
@@ -272,7 +259,7 @@ def episodios(item):
             title = scrapertools.htmlclean("%s - %s" % (title, subt))
             
             if visto.strip() != "0":
-                title += " [COLOR %s][V][/COLOR]" % color5
+                title += " [COLOR limegreen][V][/COLOR]"
             
             if PY3:
                 plot = plot.encode().decode('unicode-escape', "ignore")
@@ -287,12 +274,12 @@ def episodios(item):
             
             itemlist.append(
                 Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumb, media_id=media_id,
-                     server="crunchyroll", text_color=item.text_color, contentTitle=item.contentTitle,
+                     server="crunchyroll", contentTitle=item.contentTitle,
                      contentSerieName=item.contentSerieName, plot=plot))
     
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", 
-                             url=item.url, text_color=color1, action="add_serie_to_library",
+                             url=item.url , action="add_serie_to_library",
                              proxy=item.proxy,
                              extra="episodios",  contentSerieName=item.contentSerieName))
     return itemlist
@@ -336,7 +323,7 @@ def search_results(item):
             
         title = title.strip()
 
-        itemlist.append(item.clone(action="episodios", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="episodios", title=title, url=url,
                                     page=0, plot=plot, contentSerieName=title,
                                     thumbnail=img, contentTitle=title))
     
@@ -346,10 +333,10 @@ def indices(item):
     logger.info()
     itemlist = []
     if not item.url:
-        itemlist.append(item.clone(title="Alfabético", url=host + "/videos/anime/alpha"))
-        itemlist.append(item.clone(title="Géneros", url=host + "/videos/anime"))
+        itemlist.append(Item(channel=item.channel, title="Alfabético", url=host + "/videos/anime/alpha"))
+        itemlist.append(Item(channel=item.channel, title="Géneros", url=host + "/videos/anime"))
         if not item.proxy:
-            itemlist.append(item.clone(title="Temporadas", url=host + "/videos/anime/seasons"))
+            itemlist.append(Item(channel=item.channel, title="Temporadas", url=host + "/videos/anime/seasons"))
     else:
         data = get_source(item.url).data
         if "Alfabético" in item.title:
@@ -362,7 +349,7 @@ def indices(item):
                     url = proxy_i + url.replace("&amp;b=4/", "")
                 else:
                     url = host + url
-                itemlist.append(item.clone(action="alpha", title=title, url=url, page=0))
+                itemlist.append(Item(channel=item.channel, action="alpha", title=title, url=url, page=0))
         elif "Temporadas" in item.title:
             bloque = scrapertools.find_single_match(data,
                                                     '<div class="season-selectors cf selectors">(.*?)<div id="container"')
@@ -373,7 +360,7 @@ def indices(item):
                     url = proxy_i + url.replace("&amp;b=4/", "")
                 else:
                     url = host + url
-                itemlist.append(item.clone(action="lista", title=title, url=url, page=0))
+                itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, page=0))
         else:
             bloque = scrapertools.find_single_match(data, '<div class="genre-selectors selectors">(.*?)</div>')
             matches = scrapertools.find_multiple_matches(bloque, '<input id="([^"]+)".*?title="([^"]+)"')
@@ -382,7 +369,7 @@ def indices(item):
                 if item.proxy:
                     url = proxy % url.replace("&", "%26")
                 
-                itemlist.append(item.clone(action="lista", title=title, url=url, page=0))
+                itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, page=0))
     return itemlist
 
 
@@ -400,9 +387,8 @@ def alpha(item):
             url = host + url
         thumb = urllib.unquote(thumb.replace("/browse.php?u=", "").replace("_small", "_full").replace("&amp;b=4", ""))
         scrapedtitle = "%s (%s)" % (title, videos.strip())
-        itemlist.append(item.clone(action="episodios", url=url, title=scrapedtitle, thumbnail=thumb,
-                                   contentTitle=title, contentSerieName=title, infoLabels={'plot': plot},
-                                   text_color=color2))
+        itemlist.append(Item(channel=item.channel, action="episodios", url=url, title=scrapedtitle, thumbnail=thumb,
+                                   contentTitle=title, contentSerieName=title, infoLabels={'plot': plot}))
     return itemlist
 
 
@@ -418,7 +404,7 @@ def calendario(item):
         matches = scrapertools.find_multiple_matches(b, patron)
         if matches:
             title = "%s/%s - %s" % (dia, mes, title.strip())
-            itemlist.append(item.clone(action="", title=title))
+            itemlist.append(Item(channel=item.channel, action="", title=title))
         for hora, title, url, subt, datos in matches:
             subt = subt.replace("Available", "Disponible").replace("Episode", "Episodio").replace("in ", "en ")
             subt = re.sub(r"\s{2,}", " ", subt)
@@ -440,22 +426,22 @@ def calendario(item):
             if thumb:
                 thumb = urllib.unquote(thumb.replace("/browse.php?u=", "").replace("_thumb", "_full") \
                                        .replace("&amp;b=4", "").replace("_large", "_full"))
-            itemlist.append(item.clone(action=action, url=url, title=scrapedtitle, contentTitle=title, thumbnail=thumb,
-                                       text_color=color2, contentSerieName=title, server=server))
+            itemlist.append(Item(channel=item.channel, action=action, url=url, title=scrapedtitle, contentTitle=title, thumbnail=thumb,
+                                 contentSerieName=title, server=server))
     next = scrapertools.find_single_match(data, 'js-pagination-next"\s*href="([^"]+)"')
     if next:
         if item.proxy:
             next = proxy_i + url.replace("&amp;b=4", "")
         else:
             next = host + next
-        itemlist.append(item.clone(action="calendario", url=next, title=">> Siguiente Semana"))
+        itemlist.append(Item(channel=item.channel, action="calendario", url=next, title=">> Siguiente Semana"))
     prev = scrapertools.find_single_match(data, 'js-pagination-last"\s*href="([^"]+)"')
     if prev:
         if item.proxy:
             prev = proxy_i + url.replace("&amp;b=4", "")
         else:
             prev = host + prev
-        itemlist.append(item.clone(action="calendario", url=prev, title="<< Semana Anterior"))
+        itemlist.append(Item(channel=item.channel, action="calendario", url=prev, title="<< Semana Anterior"))
     return itemlist
 
 def get_source(url, post=None):

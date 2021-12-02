@@ -74,7 +74,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,title="Más Vistas",
                     action="list_all",
                     thumbnail=get_thumb('more_watched', auto=True),
-                    url=xhr_list, page=0, tipo=listpar[1][type_content],
+                    url=xhr_list, page=0, tipo=listpar[0][type_content],
                     tmod=mod, plot=item.plot
                     ))
     if type_content == 0:
@@ -95,14 +95,14 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Por Género",
                          action="seccion",
                          thumbnail=get_thumb('genres', auto=True),
-                         url=host, page=0, tipo=listpar[2][type_content],
+                         url=host, page=0, tipo=listpar[1][type_content],
                          tmod=mod, plot=item.plot
                         ))
 
     itemlist.append(Item(channel=item.channel,title="Por Año",
                     action="seccion",
                     thumbnail=get_thumb('year', auto=True),
-                    url=host, page=0, tipo=listpar[0][type_content],
+                    url=host, page=0, tipo=listpar[2][type_content],
                     tmod=mod, plot=item.plot
                     ))
     if type_content != 0:
@@ -141,7 +141,7 @@ def switchmod(item):
     return mainlist(item)
 
 def get_source(url, post=None, ctype=None):
-    logger.info()
+    logger.info(post)
     headers = {"Cookie": "tipo_contenido=%s" % ctype}
 
     data = httptools.downloadpage(url, post=post).data
@@ -416,7 +416,7 @@ def findvideos(item):
     if not item.contentSerieName:
         headers = {"Cookie": "tipo_contenido=%s" % item.tmod}
         post = {"pelicula": item.content_id}
-        data = httptools.downloadpage(xhr_film, post=post, headers=headers).json
+        data = httptools.downloadpage(xhr_film, post=post, headers=headers, forced_proxy_opt='ProxyCF').json
 
         for langs in data:
             language = IDIOMAS.get(langs, langs)
@@ -488,7 +488,7 @@ def findvideos(item):
 def play(item):
     if item.token:
         post = {"hash": item.token}
-        new_data = httptools.downloadpage(xhr_srv, post=post).json
+        new_data = httptools.downloadpage(xhr_srv, post=post, forced_proxy_opt='ProxyCF').json
         item.url = new_data['url'].rstrip()
         item.url = item.url.replace(' ', '%20')
     return [item]

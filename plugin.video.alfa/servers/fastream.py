@@ -2,23 +2,12 @@
 # --------------------------------------------------------
 # Conector Fastream By Alfa Development Group
 # --------------------------------------------------------
-import re
-from core import httptools, servertools, scrapertools
+
+from core import httptools, scrapertools
 from platformcode import config, logger
+from lib import jsunpack
 
 data = ''
-
-def resolve_patterns(page_url):
-    # Recorre los patrones
-    server_parameters = servertools.get_server_parameters("fastream")
-    patterns = server_parameters.get("find_videos", {}).get("patterns")
-    for pattern in patterns:
-        for match in re.compile(pattern["pattern"], re.DOTALL).finditer(page_url):
-            url = pattern["url"]
-            for x in range(len(match.groups())):
-                url = url.replace("\\{}".format(x + 1), match.groups()[x])
-            page_url = url
-    return page_url
 
 
 def test_video_exists(page_url):
@@ -26,8 +15,6 @@ def test_video_exists(page_url):
         page_url, referer = page_url.split("|", 1)
 
     logger.info("(page_url='{}')".format(page_url))
-    page_url = resolve_patterns(page_url)
-    logger.info("pre_resolved_url={}".format(page_url))
 
     if 'referer' in locals():
         page_url += referer
@@ -47,14 +34,12 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         page_url, referer = page_url.split("|", 1)
     global data
 
-    if not data:
-        page_url = resolve_patterns(page_url)
-        logger.info("pre_resolved_url={}".format(page_url))
-        data = httptools.downloadpage(page_url).data
-    data = scrapertools.find_single_match(data, "(?is)var player =.+?sources.+?\[(.+?)\]")
+    packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
+    unpacked = jsunpack.unpack(packed)
+    data = scrapertools.find_single_match(unpacked, "(?is)var player\s?=.+?sources.+?\[(.+?)\]")
 
     video_urls = []
-    pattern = "(?is)src: [\"'](.+?)[\"']"
+    pattern = "src:\s?[\"'](.+?)[\"']"
     matches = scrapertools.find_multiple_matches(data, pattern)
     for url in matches:
         if 'referer' in locals():
