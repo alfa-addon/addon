@@ -902,14 +902,17 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
                 if file_rar:
                     delete_RAR = False
                     res = False
+                    folder_new_mod = folder_new.rstrip('/').rstrip('\\')+'xyz123'
+                    res = filetools.rename(folder_new, filetools.basename(folder_new_mod), strict=True)
+                    if not res: delete_RAR = True
                     if filetools.join(torrent_paths[torr_client.upper()], folder) != folder_new:
-                        res = filetools.rename(folder_new, folder, silent=True, strict=True)
+                        res = filetools.rename(folder_new_mod, folder+'xyz123', silent=True, strict=True)
                         if not res: delete_RAR = True
                     if not delete_RAR:
                         if res: folder_new = filetools.join(torrent_paths[torr_client.upper()], folder)
                         item.downloadFilename = ':%s: %s' % (torr_client.upper(), filetools.join(folder, file_rar))
-                        filetools.remove(filetools.join(folder_new, '_rar_control.json'), silent=True)
-                        filetools.rmdirtree(filetools.join(folder_new, 'Extracted'), silent=True)
+                        filetools.remove(filetools.join(folder_new_mod, '_rar_control.json'), silent=True)
+                        filetools.rmdirtree(filetools.join(folder_new_mod, 'Extracted'), silent=True)
                         
             elif action in ['reset', 'delete'] and 'RAR-' in item.torrent_info and item.downloadProgress != 99:
                 delete_RAR = True

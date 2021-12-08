@@ -108,7 +108,7 @@ def seasons(item):
     for title in matches:
         season = scrapertools.find_single_match(title, " (\w+)")
         infoLabels["season"] = season
-        itemlist.append(item.clone(action = "episodios",
+        itemlist.append(item.clone(action = "episodesxseasons",
                                    infoLabels = infoLabels,
                                    title = title.strip()
                                    ))
