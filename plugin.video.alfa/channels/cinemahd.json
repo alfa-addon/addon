@@ -1,7 +1,7 @@
 {
   "id": "cinemahd",
   "name": "CinemaHD",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://s13.postimg.cc/bnesayzcn/cinemahd.png",

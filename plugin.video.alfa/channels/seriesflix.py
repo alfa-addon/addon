@@ -17,7 +17,23 @@ from platformcode import logger
 from channelselector import get_thumb
 from lib.AlfaChannelHelper import ToroFlix
 
-host = 'https://seriesflix.la/'
+
+def check_host():
+    primary_host = 'https://seriesflix.la/'
+    aux_host = 'https://seriesflix.video/'
+    try:
+        result = httptools.downloadpage(primary_host, only_headers=True)
+    except:
+        return aux_host
+
+    if result.code == 200:
+        return primary_host
+    else:
+        return aux_host
+
+
+host = check_host()
+
 AlfaChannel = ToroFlix(host, tv_path="/series/")
 
 domain = scrapertools.find_single_match(host, 'https*:\/\/(.*?)[\/|$]')
@@ -36,7 +52,7 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all", url=host + "ver-series-online",
+    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all", url=host + "ver-series-online/",
                          thumbnail=get_thumb("last", auto=True), first=0))
 
     itemlist.append(Item(channel=item.channel, title="Productoras", action="section", url=host))

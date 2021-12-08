@@ -399,9 +399,12 @@ def check_proxy(url, **opt):
 def proxy_post_processing(url, proxy_data, response, opt):
     opt['out_break'] = False
     try:
-        if response["code"] in [404, 400]:
+        if response["code"] not in [200, 302] and opt.get('forced_proxy_opt', '') == 'ProxyJSON':
+            opt['forced_proxy_opt'] = 'ProxyCF'
+            opt['forced_proxy'] = opt['forced_proxy_opt']
+        elif response["code"] in [404, 400]:
             opt['proxy_retries'] = -1
-        
+
         if ', Proxy Web' in proxy_data.get('stat', ''):
             if not PY3: from . import proxytools
             else: from . import proxytools_py3 as proxytools
@@ -409,26 +412,28 @@ def proxy_post_processing(url, proxy_data, response, opt):
             if not ('application' in response['headers'].get('Content-Type', '') \
                         or 'javascript' in response['headers'].get('Content-Type', '') \
                         or 'image' in response['headers'].get('Content-Type', '')):
-                response["data"] = proxytools.restore_after_proxy_web(response["data"],
-                                                                  proxy_data['web_name'], opt['url_save'])
+                response = proxytools.restore_after_proxy_web(response,
+                                                              proxy_data, opt['url_save'])
             if response["data"] == 'ERROR' or response["code"] == 302:
-                if response["code"] == 200: response["code"] = 666
-                if not opt.get('post_cookie', False):
-                    url_domain = '%s://%s' % (urlparse.urlparse(opt['url_save']).scheme, urlparse.urlparse(opt['url_save']).netloc)
-                    forced_proxy_temp = 'ProxyWeb:' + proxy_data['web_name']
-                    data_domain = downloadpage(url_domain, alfa_s=True, ignore_response_code=True, \
-                                post_cookie=True, forced_proxy=forced_proxy_temp, proxy_retries_counter=0)
-                    if data_domain.code == 200:
-                        url = opt['url_save']
-                        opt['post'] = opt['post_save']
-                        opt['forced_proxy'] = forced_proxy_temp
-                        return response, url, opt
-                if response["data"] == 'ERROR' or response["code"] == 302:
+                if response["code"] == 200: 
+                    response["code"] = 666
+                    if not opt.get('post_cookie', False):
+                        url_domain = '%s://%s' % (urlparse.urlparse(opt['url_save']).scheme, urlparse.urlparse(opt['url_save']).netloc)
+                        forced_proxy_temp = 'ProxyWeb:' + proxy_data['web_name']
+                        data_domain = downloadpage(url_domain, alfa_s=True, ignore_response_code=True, \
+                                    post_cookie=True, forced_proxy=forced_proxy_temp, proxy_retries_counter=0)
+                        if data_domain.code == 200:
+                            url = opt['url_save']
+                            opt['post'] = opt['post_save']
+                            opt['forced_proxy'] = forced_proxy_temp
+                            return response, url, opt
+                elif response["code"] == 302 and response['headers'].get('location', ''):
+                    response['sucess'] = True
+                if response["data"] == 'ERROR' or (response["code"] == 302 and not response['sucess']):
                     proxy_data['stat'] = ', Proxy Direct'
                     opt['forced_proxy'] = 'ProxyDirect'
                     url = opt['url_save']
                     opt['post'] = opt['post_save']
-                    response['sucess'] = False
                     response['sucess'] = False
         elif response["code"] == 302:
             response['sucess'] = True
@@ -565,7 +570,7 @@ def downloadpage(url, **opt):
     opt['post_save'] = opt.get('post', None)
     if opt.get('forced_proxy_opt', None) and channel_proxy_list(url):
         if opt['forced_proxy_opt'] in ['ProxyCF', 'ProxyDirect']:
-            if '/' not in url:                                                  ### TEMPORAL
+            if 'cliver' not in url:
                 opt['forced_proxy_opt'] = 'ProxyJSON'
             else:
                 opt['forced_proxy'] = opt['forced_proxy_opt']
