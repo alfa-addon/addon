@@ -53,6 +53,7 @@ modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', chann
 timeout = config.get_setting('timeout_downloadpage', channel)
 season_colapse = config.get_setting('season_colapse', channel)                  # Season colapse?
 filter_languages = config.get_setting('filter_languages', channel)              # Filtrado de idiomas?
+forced_proxy_opt = 'ProxyCF'
 
 
 def mainlist(item):
@@ -714,11 +715,13 @@ def findvideos(item):
                 return itemlist                                     # si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     # Seleccionamos las matches
-    patron = '<a\s*class="linktorrent[^"]*"\s*(?:target="[^"]*"\s*)?href="([^"]+)"'
+    patron = '<a\s*class="linktorrent".*?<(?:div\s*id|td\s*class)="opcion2_\w+".*?href="([^"]+)"'
     if not scrapertools.find_single_match(data, patron):                        # Buscar con patrón alternativo
-        patron = '<td\s*class="opcion2[^>]*>\s*<a\s*href="([^"]+)"'
+        patron = '<a\s*class="linktorrent[^"]*"\s*(?:target="[^"]*"\s*)?href="([^"]+)"'
         if not scrapertools.find_single_match(data, patron):                    # Buscar con patrón alternativo
-            patron += 'onclick="post\("(?P<url>[^"]+",\s*{u:\s*"[^"]+)"}\);'
+            patron = '<td\s*class="opcion2[^>]*>\s*<a\s*href="([^"]+)"'
+            if not scrapertools.find_single_match(data, patron):                # Buscar con patrón alternativo
+                patron += 'onclick="post\("(?P<url>[^"]+",\s*{u:\s*"[^"]+)"}\);'
 
     if not item.armagedon:
         if not item.matches:
@@ -763,15 +766,17 @@ def findvideos(item):
 
     # Ahora tratamos los enlaces .torrent con las diferentes calidades
     for x, scrapedurl_la in enumerate(matches):                                 # Leemos los torrents con la diferentes calidades
+        scrapedurl_base = urlparse.urljoin(host_torrent, 'download_tt.php?u=')
         if '/' not in scrapedurl_la:
-            scrapedurl = urlparse.urljoin(host_torrent, 'download_tt.php?u=')
-            scrapedurl = urlparse.urljoin(scrapedurl, generictools.convert_url_base64(scrapedurl_la))
+            scrapedurl = urlparse.urljoin(scrapedurl_base, generictools.convert_url_base64(scrapedurl_la))
         elif '.php?' in scrapedurl_la:
             scrapedurl = generictools.convert_url_base64(scrapedurl_la, host_torrent)
         elif not 'download' in scrapedurl_la and not ('.torrent' in scrapedurl_la or 'magnet:' in scrapedurl_la):
             scrapedurl = generictools.convert_url_base64(scrapedurl_la.split('/')[-1], host_torrent)
         else:
             scrapedurl = urlparse.urljoin(host_torrent, scrapedurl_la).replace("download/torrent.php', {u: ", "download_tt.php?u=")
+        if '.php?u=http' in scrapedurl:
+            scrapedurl = scrapedurl.replace(scrapedurl_base, '')
         
         # Si ha habido un cambio en la url, actualizados matches para emergency_urls
         if item.videolibray_emergency_urls and scrapedurl != scrapedurl_la:
@@ -1083,7 +1088,7 @@ def episodios(item):
     for url in list_temp:                                                       # Recorre todas las temporadas encontradas
 
         data, success, code, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, 
-                                          item=item, itemlist=itemlist)         # Descargamos la página
+                                          item=item, itemlist=itemlist, forced_proxy_opt=forced_proxy_opt)      # Descargamos la página
         
         #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
         if not success:                                                         # Si ERROR o lista de errores ...

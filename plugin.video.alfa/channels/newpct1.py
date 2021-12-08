@@ -723,9 +723,9 @@ def listado(item):                                                              
             matches = item.matches
             del item.matches
             
-        #logger.debug("PATRON: " + patron)
+        logger.debug("PATRON: " + patron)
         #logger.debug(len(matches))
-        #logger.debug(matches)
+        logger.debug(matches)
         #logger.debug(fichas)
 
         if not matches and not search1 in fichas and not scrapertools.find_single_match(data, search2) \
@@ -820,7 +820,7 @@ def listado(item):                                                              
             title = scrapedtitle
             title = scrapertools.remove_htmltags(title).rstrip('.')             # Removemos Tags del título
             url = urlparse.urljoin(host, scrapedurl)
-            title_subs = []                                                     #creamos una lista para guardar info importante
+            title_subs = []                                                     # creamos una lista para guardar info importante
             
             # Slugify, pero más light
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
@@ -896,7 +896,7 @@ def listado(item):                                                              
             """Si son episodios sueltos de Series que vienen de Novedades, se busca la url de la Serie"""
             pattern = '<div\s*class="content.*?">.*?<h1.*?>.*?<a\s*href="([^"]+)"'  #Patron para Serie completa
             pattern_al = '\/temp.*?-(\d+)-?\/cap.*?-(\d+(?:-al-\d+)?)-?(?:\/|$)'
-            if item.extra == "novedades" and "/serie" in url and episodio_serie == 1:
+            if item.extra == "novedades" and "/serie" in url and 'serie-1080p' not in url and episodio_serie == 1:
                 item_local.url = url
                 item_local.extra2 = 'serie_episodios'                           #Creamos acción temporal excluyente para otros clones
 
@@ -941,7 +941,7 @@ def listado(item):                                                              
                 #logger.debug(item_local.url)
                 
             if item.extra == "novedades" and "/serie" in url:
-                if not item_local.url or episodio_serie == 0:
+                if not item_local.url or episodio_serie == 0 or 'serie-1080p' in url:
                     item_local.url = url
                     if scrapertools.find_single_match(url, pattern_al):
                         title_subs += ["Episodio %sx%s" % (scrapertools.find_single_match(url, pattern_al))]
@@ -951,7 +951,8 @@ def listado(item):                                                              
             
             #Establecemos los valores básicos en función del tipo de contenido
             if (item_local.extra == "series" or ".com/serie" in url or "/serie" in url or "-serie" in url) \
-                             and not "/miniseries" in url and not "/capitulo" in url:           #Series
+                             and not "/miniseries" in url and not "/capitulo" in url \
+                             and 'serie-1080p' not in url :                                     #Series
                 item_local.action = "episodios"
                 item_local.contentType = "tvshow"
                 item_local.season_colapse = True
@@ -960,7 +961,7 @@ def listado(item):                                                              
                 item_local.action = "findvideos"
                 item_local.contentType = "movie"
                 item_local.extra = "varios"
-            elif "/capitulo" in url and not "/miniseries":                                      #Documentales y varios
+            elif "/capitulo" in url and not "/miniseries"in url and 'serie-1080p' in url :      #Documentales y varios
                 item_local.action = "findvideos"
                 item_local.contentType = "episode"
                 item_local.extra = "series"
@@ -974,7 +975,7 @@ def listado(item):                                                              
 
             #Determinamos y marcamos idiomas
             item_local.language = []
-            if "[vos" in title.lower() or "v.o.s" in title.lower() or "vo" in title.lower() \
+            if "[vos" in title.lower() or "v.o.s" in title.lower() or "v.o" in title.lower() \
                         or "subs" in title.lower() or "-vo/" in scrapedurl or "vos" in \
                         calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower() \
                         or "sub" in calidad.lower() or "-vo/" in item.url:

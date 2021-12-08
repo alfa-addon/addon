@@ -702,13 +702,13 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
             if status_code != 200 and not retry:
                 logging.info("## Calling/Killing Torrest: Invalid app requests response: %s.  Closing Assistant (1)", status_code)
                 xbmc.executebuiltin(cmd_android_close)
-                time.sleep(5)
+                time.sleep(4)
                 return call_binary(function, cmd, retry=True, **kwargs)
             elif status_code != 200 and retry:
                 logging.info("## Calling/Killing Torrest: Invalid app requests response: %s.  Closing Assistant (2)", status_code)
                 launch_status = False
                 xbmc.executebuiltin(cmd_android_close)
-                time.sleep(5)
+                time.sleep(4)
             try:
                 app_response = resp.content
                 if launch_status:
@@ -850,7 +850,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                             binary_awake = 0
                         logging.info('## Time.awake: %s; binary_awake: %s; p.binary_awake: %s', \
                                     (int(time.time()) - int(p.binary_time))*1000, binary_awake, p.binary_awake)
-                        time.sleep(5)
+                        time.sleep(4)
                         continue
                 if resp.status_code != 200 and retry_req and app_response.get('retCode', 0) != 999:
                     logging.info("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s - awake: %s.  Closing Assistant", \
@@ -859,7 +859,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     stdout_acum += str(resp.status_code)
                     app_response = {'pid': p.pid, 'retCode': 999}
                     xbmc.executebuiltin(cmd_android_close)
-                    time.sleep(5)
+                    time.sleep(4)
                     xbmc.executebuiltin(cmd_android)
                     binary_awake = (int(time.time()) - int(p.binary_time)) * 1000 - binary_awake_safe
                     if binary_awake > binary_awake_safe:
@@ -867,7 +867,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                             if binary_awake < p.binary_awake: p.binary_awake = binary_awake
                         else:
                             p.binary_awake = binary_awake
-                        time.sleep(5)
+                        time.sleep(4)
                         logging.info('## Time.awake: %s; binary_awake: %s; p.binary_awake: %s; awakingInterval: True', \
                                     (int(time.time()) - int(p.binary_time))*1000, binary_awake, p.binary_awake)
                         try:
@@ -878,7 +878,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                             pass
                         time.sleep(1)
                         continue
-                    time.sleep(5)
+                    time.sleep(4)
                     continue
 
                 if resp.status_code == 200:
@@ -934,9 +934,10 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                 if 'permission denied' in msg:
                     from lib import kodi
                     kodi.notification('Accept Assitant permissions', time=15000)
-                    time.sleep(5)
+                    time.sleep(4)
                     xbmc.executebuiltin(cmd_android_permissions)
-                    time.sleep(10)
+                    time.sleep(4)
+                    time.sleep(4)
                     xbmc.executebuiltin(cmd_android_quit)
                     time.sleep(3)
                 
@@ -986,7 +987,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                             pass
                     elif p.returncode == 998:
                         xbmc.executebuiltin(cmd_android_close)
-                        time.sleep(5)
+                        time.sleep(4)
                 except:
                     logging.info(traceback.format_exc())
                     time.sleep(1)
@@ -994,7 +995,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     time.sleep(2)
                 return p
             
-            time.sleep(5)
+            time.sleep(4)
             msg = ''
             app_response = {}
 
@@ -1069,7 +1070,7 @@ def install_app(APP_PARAMS):
                         logging.info("## Install_app: APP installed: %s", user_params['USER_APP'])
                         kodi.notification('Accept Assistant permissions')
                         logging.info("## Install_app: Requesting permissions: %s", user_params['USER_APP'])
-                        time.sleep(5)
+                        time.sleep(4)
                         xbmc.executebuiltin(cmd_android_permissions)
                         time.sleep(15)
                         logging.info("## Install_app: closing APP: %s", user_params['USER_APP'])

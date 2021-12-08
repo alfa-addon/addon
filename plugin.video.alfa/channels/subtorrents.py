@@ -25,11 +25,9 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-#host = 'https://www.subtorrents.tv/'
-#sufix = '.tv/'
-host = 'https://www.subtorrents.in/'
+host = 'https://www.subtorrents.li/'
 host_torrent = host[:-1]
-sufix = '.in/'
+sufix = '.li/'
 channel = 'subtorrents'
 categoria = channel.capitalize()
 color1, color2, color3 = ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']
@@ -92,9 +90,8 @@ def submenu(item):
     if item.extra == "peliculas":
     
         itemlist.append(Item(channel=item.channel, title="Novedades", action="listado", url=host + "peliculas-subtituladas/?filtro=estrenos", thumbnail=thumb_cartelera, extra="peliculas"))
-        itemlist.append(Item(channel=item.channel, title="    Castellano o Latino", action="listado", url=host + "peliculas-subtituladas/?filtro=estrenos&filtro2=audio-latino", thumbnail=thumb_latino, extra="peliculas"))
-        itemlist.append(Item(channel=item.channel, title="Películas", action="listado", url=host + "peliculas-subtituladas", thumbnail=thumb_pelis, extra="peliculas"))
-        itemlist.append(Item(channel=item.channel, title="    Castellano o Latino", action="listado", url=host + "peliculas-subtituladas/?filtro=audio-latino", thumbnail=thumb_latino, extra="peliculas"))
+        itemlist.append(Item(channel=item.channel, title="Películas", action="listado", url=host + "peliculas-subtituladas/", thumbnail=thumb_pelis, extra="peliculas"))
+        itemlist.append(Item(channel=item.channel, title="    Latino", action="listado", url=host + "peliculas-subtituladas/?filtro=audio-latino", thumbnail=thumb_latino, extra="peliculas"))
         itemlist.append(Item(channel=item.channel, title="    Alfabético A-Z", action="alfabeto", url=host + "peliculas-subtituladas/?s=letra-%s", thumbnail=thumb_pelis_AZ, extra="peliculas"))
         itemlist.append(Item(channel=item.channel, title="3D", action="listado", url=host + "peliculas-3d/", thumbnail=thumb_pelis, extra="peliculas"))
         itemlist.append(Item(channel=item.channel, title="Calidad DVD", action="listado", url=host + "calidad/dvd-full/", thumbnail=thumb_pelis, extra="peliculas"))
@@ -161,7 +158,7 @@ def listado(item):
         # Descarga la página
         data = ''
         try:
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(next_page_url, timeout=timeout_search).data)
+            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(next_page_url, timeout=timeout_search, ignore_response_code=True).data)
             #data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
         except:
             pass
@@ -173,11 +170,22 @@ def listado(item):
             break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         #Patrón para todo, menos para Series completas, incluido búsquedas en cualquier caso
-        patron = '<td\s*class="vertThseccion"[^>]*>\s*<img\s*src="([^"]+)"[^>]*>\s*<a\s*href="([^"]+)"\s*title="([^"]+)"\s*>[^<]+<\/a>\s*<\/td>\s*(?:<td>[^<]*(\d+)?<\/td>)?\s*<td>([^<]+)?<\/td>\s*<td>([^<]+)?<\/td>\s*<\/tr>'
+        patron = '<td\s*class="vertThseccion"[^>]*>\s*<img\s*src="([^"]+)"[^>]*>\s*<a\s*href="([^"]+)"\s*title="([^"]+)"\s*>[^<]+<\/a>\s*<\/td>\s*(?:<td>[^<]*\d+?<\/td>)?\s*<td>([^<]+)?<\/td>\s*<td>([^<]+)?<\/td>\s*<\/tr>'
+        if not scrapertools.find_single_match(data, patron):
+            #patron = '<div\s*class="ProductBlock"\s*>\s*<div\s*class="Content"[^>]+>\s*<div\s*class="img-fill">\s*()<a\s*href="([^"]+)"\s*title="([^"]+)">\s*<img\s*src="([^"]+)"\s*alt="[^"]+">\s*()()<\/a>\s*<\/div>'
+            patron = '<div\s*class="pintinia[^>]*>\s*<div\s*class="[^>]*>\s*<h6\s*class="[^>]*>\s*<a\s*href="([^"]+)"\s*title="([^"]+)".*?<img\s*style="background-image:'
+            patron += "\s*url\('([^']+)'\)"
+            patron += '"[^>]*>\s*<span[^>]*><\/span>\s*.*?<span\s*class="pc_games_cracker"\s*>([^<]*)<\/span>\s*<span[^<]+'
+            patron += "<img src='([^']+)'"
         
         #Si son series completas, ponemos un patrón especializado
         if item.extra == 'series':
             patron = '<(td)><a href="([^"]+)"\s*title="([^"]+)"\s*><[^>]+src="[^"]+\/(\d{4})[^"]+"[^>]+>(?:(\d+))?\s*(?:(\d+))?<\/a>'
+            if not scrapertools.find_single_match(data, patron):
+                patron = '<div\s*class="pintinia[^>]*>\s*<div\s*class="[^>]*>\s*<h6\s*class="[^>]*>\s*<a\s*href="([^"]+)"\s*title="([^"]+)"\s*>[^<]*<\/a>\s*<\/h6>\s*<\/div>\s*<\/div>\s*<a[^<]*>\s*<img\s*style="background-image:'
+                patron += "\s*url\('([^']+)'\)"
+                patron += '"[^>]*>\s*<span[^>]*>[^<]*()<\/span>\s*<span[^>]+class="last_flags"\s*>[^<]+<img src=[^<]+title='
+                patron += "'([^']+)"
             
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches and not '<p>Lo sentimos, pero que esta buscando algo que no esta aqui. </p>' in data and not item.extra2 and not '<h2>Sin resultados</h2> in data':    #error
@@ -214,9 +222,24 @@ def listado(item):
         #logger.debug('curr_page: ' + str(curr_page) + '/ last_page: ' + str(last_page) + '/ next_page_url: ' + next_page_url)
         
         #Empezamos el procesado de matches
-        for scrapedlanguage, scrapedurl, scrapedtitle, year, scrapedcategory, scrapedquality in matches:
+        for _scrapedurl, _scrapedtitle, _scrapedthumb, _scrapedquality, _scrapedlanguage in matches:
+            if item.extra == "search":
+                scrapedurl = _scrapedtitle
+                scrapedtitle = _scrapedthumb
+                scrapedthumb = _scrapedquality
+                scrapedquality = _scrapedlanguage
+                scrapedlanguage = _scrapedurl
+            else:
+                scrapedurl = _scrapedurl
+                scrapedtitle = _scrapedtitle
+                scrapedthumb = _scrapedthumb
+                scrapedquality = _scrapedquality
+                scrapedlanguage = _scrapedlanguage
+            
             title = scrapedtitle
             url = scrapedurl.replace('&#038;', '&')
+            year = ''
+            scrapedcategory = ''
             
             # Slugify, pero más light
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
@@ -244,9 +267,9 @@ def listado(item):
             del item_local.text_color
                 
             title_subs = []                                             #creamos una lista para guardar info importante
-            item_local.language = []                                    #creamos lista para los idiomas
+            item_local.language = ['VOSE']                              #creamos lista para los idiomas
             item_local.quality = scrapedquality                         #iniciamos calidad                                     
-            item_local.thumbnail = ''
+            item_local.thumbnail = scrapedthumb
             item_local.url = url.replace('&#038;', '&').replace('.io/', sufix).replace('.com/', sufix)       #guardamos la url final
             item_local.context = "['buscar_trailer']"
 
@@ -263,7 +286,6 @@ def listado(item):
             #Detectamos idiomas            
             if "1.png" in scrapedlanguage: item_local.language += ['CAST']
             if "512.png" in scrapedlanguage or 'latino' in title.lower(): item_local.language += ['LAT']
-            if ("1.png" not in scrapedlanguage and "512.png" not in scrapedlanguage) or "eng" in title.lower() or "sub" in title.lower(): item_local.language += ['VOSE']
             
             if '-3d' in scrapedurl:
                 title = title.replace('3D', '').replace('3d', '')
@@ -454,7 +476,9 @@ def findvideos(item):
             #Modalidad de un archivo
             else:
                 data_torrents = data
-                patron = '<div class="fichasubtitulos">.*?<\/div><\/li><\/ul>.*?<a href="([^"]+)"'
+                patron = '<div\s*class="fichasubtitulos">\s*<\/div>\s*<\/li>\s*<\/ul>\s*<a\s*target="[^"]+"\s*href="([^"]+)"'
+                if not scrapertools.find_single_match(data_torrents, patron):
+                    patron = '<div class="fichasubtitulos">.*?<\/div><\/li><\/ul>.*?<a href="([^"]+)"'
             matches = re.compile(patron, re.DOTALL).findall(data_torrents)
             if not matches:                                                             #error
                 logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " + " / PATRON: " + patron + data)
@@ -733,6 +757,8 @@ def episodios(item):
         return itemlist
 
     patron = '<td\s*class="capitulonombre">\s*<img\s*src="([^"]+)[^>]+>(?:<a\s*href="[^>]+>)(.*?)<\/a>\s*<\/td>\s*<td\s*class="capitulodescarga">\s*<a\s*href="([^"]+)[^>]+>.*?(?:<td\s*class="capitulofecha">.*?(\d{4})?.*?<\/td>)?(?:<td\s*class="capitulosubtitulo">\s*<a\s*href="([^"]+)[^>]+>.*?<\/td>)?'
+    if not scrapertools.find_single_match(data, patron):
+        patron = '<td\s*class="capitulonombre">\s*<img\s*src="([^"]+)[^>]+><a\s*(?:target="[^"]*"\s*)?href="[^>]*title="([^"]+)">[^<]*<\/a>\s*<\/td>\s*<td\s*class="capitulodescarga">\s*<a\s*(?:target="[^"]*"\s*)?href="([^"]+)"[^>]+>.*?(?:<td\s*class="capitulofecha">.*?(\d{4})?.*?<\/td>)?.*?(?:<td\s*class="capitulosubtitulo">\s*<a\s*href="([^"]+)[^>]+>.*?<\/td>)?.*?(?:<td\s*class="capitulodescarga">\s*<a\s*(?:target="[^"]*"\s*)?href="([^"]+)")'
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                                             #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
@@ -756,7 +782,7 @@ def episodios(item):
         num_temporadas_flag = False
 
     # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
-    for scrapedlanguage, scrapedtitle, scrapedurl, year, scrapedsubtitle in matches:
+    for scrapedlanguage, scrapedtitle, scrapedurl, year, scrapedsubtitle, scrapedurl2 in matches:
         item_local = item.clone()
         item_local.action = "findvideos"
         item_local.contentType = "episode"
@@ -782,9 +808,10 @@ def episodios(item):
         
         item_local.title = ''
         item_local.context = "['buscar_trailer']"
-        item_local.url = scrapedurl.replace('&#038;', '&').replace('.io/', sufix).replace('.com/', sufix)
+        item_local.url = scrapedurl.replace('&#038;', '&').replace('.io/', sufix).replace('.in/', sufix).replace('.com/', sufix)
+        if scrapedurl2: item_local.url = scrapedurl2.replace('&#038;', '&').replace('.io/', sufix).replace('.in/', sufix).replace('.com/', sufix)
         if scrapedsubtitle:
-            item_local.subtitle = scrapedsubtitle.replace('&#038;', '&').replace('.io/', sufix).replace('.com/', sufix)
+            item_local.subtitle = scrapedsubtitle.replace('&#038;', '&').replace('.io/', sufix).replace('.in/', sufix).replace('.com/', sufix)
         title = scrapedtitle
         item_local.language = []
         

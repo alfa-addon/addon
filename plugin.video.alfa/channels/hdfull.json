@@ -40,7 +40,7 @@
       "id": "current_host",
       "type": "text",
       "label": "Host actual",
-      "default": "https://hdfull.vip/",
+      "default": "https://hdfull.stream/",
       "enabled": true,
       "visible": false
     },
