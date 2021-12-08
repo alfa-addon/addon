@@ -43,7 +43,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     new_data = httptools.downloadpage("%s%s" % (host, base_url), add_referer=True).data
     retries = 0
-    while "We are checking your browser" in new_data and retries < 3:
+    while ("We are checking your browser" in new_data or "5xx-error-landing" in new_data) and retries < 3:
         new_data = httptools.downloadpage("%s%s" % (host, base_url), add_referer=True).data
         retries += 1
     if retries > 3:
