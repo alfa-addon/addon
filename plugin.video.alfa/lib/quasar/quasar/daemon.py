@@ -799,6 +799,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                 if resp.status_code != 200 and not retry_req:
                     if action == 'killBinary' or p.monitor.abortRequested():
                         app_response = {'pid': p.pid, 'retCode': 998}
+                        retry_req = False
                     else:
                         log.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s - awake: %s" % \
                                     (p.pid, resp.status_code, retry_req, p.binary_awake))
@@ -814,7 +815,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                                     ((int(time.time()) - int(p.binary_time))*1000, binary_awake, p.binary_awake))
                         time.sleep(4)
                         continue
-                if resp.status_code != 200 and retry_req and app_response.get('retCode', 0) != 999:
+                if resp.status_code != 200 and retry_req and app_response.get('retCode', 0) != 999 and not p.monitor.abortRequested():
                     log.error("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s - awake: %s.  Closing Assistant" % \
                                     (p.pid, resp.status_code, retry_req, p.binary_awake))
                     msg += str(resp.status_code)
@@ -897,12 +898,12 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                 # If still app permissions not allowed, give it a retry
                 if 'permission denied' in msg:
                     notify('Accept Assitant permissions', time=15000)
-                    time.sleep(4)
+                    if not p.monitor.abortRequested(): time.sleep(4)
                     xbmc.executebuiltin(cmd_android_permissions)
-                    time.sleep(4)
-                    time.sleep(4)
+                    if not p.monitor.abortRequested(): time.sleep(4)
+                    if not p.monitor.abortRequested(): time.sleep(4)
                     xbmc.executebuiltin(cmd_android_quit)
-                    time.sleep(4)
+                    if not p.monitor.abortRequested(): time.sleep(4)
                 
                 if msg:
                     try:
@@ -961,7 +962,10 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     time.sleep(2)
                 return p
             
-            time.sleep(4)
+            if not p.monitor.abortRequested():
+                time.sleep(4)
+            else:
+                return p
             msg = ''
             app_response = {}
 

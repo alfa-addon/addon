@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import os
 import pipes
@@ -12,6 +13,14 @@ from io import FileIO
 
 from lib.os_platform import PLATFORM, System
 from lib.utils import bytes_to_str, PY3
+
+
+def compute_hex_digest(file_path, hash_type, buff_size=4096):
+    h = hash_type()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(buff_size), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def get_current_app_id():
@@ -163,12 +172,13 @@ class DaemonNotFoundError(Exception):
 
 class Daemon(object):
     def __init__(self, name, daemon_dir, work_dir=None, android_find_dest_dir=True,
-                 android_extra_dirs=(), dest_dir=None, pid_file=None, root=False):
+                 android_extra_dirs=(), dest_dir=None, pid_file=None, root=False, contains_sha1=False):
         self._name = name
         self._work_dir = work_dir
         self._pid_file = pid_file
         self._root = root
         self._root_pid = -1
+        self._contains_sha1 = contains_sha1
         if PLATFORM.system == System.windows:
             self._name += ".exe"
 
@@ -192,7 +202,7 @@ class Daemon(object):
         self._path = os.path.join(self._dir, self._name)
 
         if self._dir is not daemon_dir:
-            if not os.path.exists(self._path) or self._get_sha1(src_path) != self._get_sha1(self._path):
+            if not os.path.exists(self._path) or self._compute_sha1(src_path) != self._compute_sha1(self._path):
                 logging.info("Updating %s daemon '%s'", PLATFORM.system, self._path)
                 try:
                     if os.path.exists(self._dir):
@@ -205,13 +215,18 @@ class Daemon(object):
         self._p = None  # type: subprocess.Popen or None
         self._logger = None  # type: DaemonLogger or None
 
-    @staticmethod
-    def _get_sha1(path):
-        # Using FileIO instead of open as fseeko with OFF_T=64 is broken in android NDK
-        # See https://trac.kodi.tv/ticket/17827
-        with FileIO(path) as f:
-            f.seek(-40, os.SEEK_END)
-            return f.read()
+    def _compute_sha1(self, path):
+        if self._contains_sha1:
+            # Legacy code
+            # Using FileIO instead of open as fseeko with OFF_T=64 is broken in android NDK
+            # See https://trac.kodi.tv/ticket/17827
+            with FileIO(path) as f:
+                f.seek(-40, os.SEEK_END)
+                digest = f.read()
+        else:
+            digest = compute_hex_digest(path, hashlib.sha1)
+
+        return digest
 
     def kill_leftover_process(self):
         if self._pid_file and os.path.exists(self._pid_file):
@@ -837,6 +852,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                 if resp.status_code != 200 and not retry_req:
                     if action == 'killBinary' or p.monitor.abortRequested():
                         app_response = {'pid': p.pid, 'retCode': 998}
+                        retry_req = False
                     else:
                         logging.info("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s - awake: %s", \
                                     p.pid, resp.status_code, retry_req, p.binary_awake)
@@ -852,7 +868,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                                     (int(time.time()) - int(p.binary_time))*1000, binary_awake, p.binary_awake)
                         time.sleep(4)
                         continue
-                if resp.status_code != 200 and retry_req and app_response.get('retCode', 0) != 999:
+                if resp.status_code != 200 and retry_req and app_response.get('retCode', 0) != 999 and not p.monitor.abortRequested():
                     logging.info("## Binary_stat: Invalid app requests response for PID: %s: %s - retry: %s - awake: %s.  Closing Assistant", \
                                     p.pid, resp.status_code, retry_req, p.binary_awake)
                     msg += str(resp.status_code)
@@ -934,12 +950,12 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                 if 'permission denied' in msg:
                     from lib import kodi
                     kodi.notification('Accept Assitant permissions', time=15000)
-                    time.sleep(4)
+                    if not p.monitor.abortRequested(): time.sleep(4)
                     xbmc.executebuiltin(cmd_android_permissions)
-                    time.sleep(4)
-                    time.sleep(4)
+                    if not p.monitor.abortRequested(): time.sleep(4)
+                    if not p.monitor.abortRequested(): time.sleep(4)
                     xbmc.executebuiltin(cmd_android_quit)
-                    time.sleep(3)
+                    if not p.monitor.abortRequested(): time.sleep(3)
                 
                 if msg:
                     try:
@@ -995,7 +1011,10 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
                     time.sleep(2)
                 return p
             
-            time.sleep(4)
+            if not p.monitor.abortRequested():
+                time.sleep(4)
+            else:
+                return p
             msg = ''
             app_response = {}
 
