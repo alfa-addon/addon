@@ -20,7 +20,7 @@ from channels import autoplay
 from channels import filtertools
 from bs4 import BeautifulSoup
 
-host = 'https://entrepeliculasyseries.io/'
+host = 'https://entrepeliculasyseries.nu/'
 
 IDIOMAS = {"latino": "LAT", "castellano": "CAST", "subtitulado": "VOSE"}
 list_language = list(set(IDIOMAS.values()))
