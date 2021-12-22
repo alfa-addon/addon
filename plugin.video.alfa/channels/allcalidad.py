@@ -23,7 +23,7 @@ list_servers = ['fembed', 'streamtape', 'fastplay', 'gvideo', 'netutv', 'Jawclou
 
 __channel__='allcalidad'
 
-host = "https://allcalidad.la"
+host = "https://allcalidad.ac"
 forced_proxy_opt = 'ProxyDirect'
 encoding = "utf-8"
 
@@ -51,8 +51,10 @@ def favorites(item):
     itemlist = []
     data = httptools.downloadpage(item.url, encoding=encoding).data
     patron  = '(?s)short_overlay.*?<a href="([^"]+)'
-    patron += '.*?img.*?src="([^"]+)'
-    patron += '.*?title="([^"]+).*?'
+    patron += '.*?img.*?-src="([^"]+)'
+    patron += '.*?(?:title="([^"]+))?'
+    #patron += '.*?title="([^"]+).*?'
+
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, thumbnail, titulo in matches:
         idioma = "Latino"
@@ -131,7 +133,7 @@ def peliculas(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url, encoding=encoding).data
-    matches = scrapertools.find_multiple_matches(data, '(?s)shortstory cf(.*?)rate_post')
+    matches = scrapertools.find_multiple_matches(data, '(?s)shortstory cf(.*?)(?:rate_post|ratebox)')
     for datos in matches:
         url = scrapertools.find_single_match(datos, 'href="([^"]+)')
         titulo = scrapertools.htmlclean(scrapertools.find_single_match(datos, 'short_header">([^<]+)').strip())
@@ -161,14 +163,21 @@ def peliculas(item):
 def findvideos(item):
     itemlist = []
     encontrado = []
+    from lib.generictools import convert_url_base64
     
     data = httptools.downloadpage(item.url, encoding=encoding).data
-
+    
+    matches = scrapertools.find_multiple_matches(data, '<tr>\s*<td>\s*<a\s*href="([^"]+)"')
+    for url in matches:
+        url1 = convert_url_base64(url)
+        url1 = clear_url(url1)
+        """
     match = scrapertools.find_single_match(data, "<link rel='shortlink'.*?=([^']+)" )
     data1 = httptools.downloadpage(host + "/wp-json/elifilms/movies?id=" + match, encoding=encoding, forced_proxy_opt=forced_proxy_opt).json
     for url in data1["data"]["server_list"]:
         if not url["link"]: continue
         url1 = clear_url(url["link"])
+        """
         if url1 in encontrado or "youtube.com" in url1 or "search" in url1 or 'salaload.com' in url1:
             continue
         encontrado.append(url1)

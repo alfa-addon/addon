@@ -488,12 +488,16 @@ def unshorten(uri, type=None, timeout=10):
 
 
 def sortened_urls(url, url_base64, host):
+    # https://unicode-table.com/es/#basic-latin
+    # https://www.ionos.es/digitalguide/servidores/know-how/ascii-american-standard-code-for-information-interchange/
 
     sortened_domains = {'acortalink.me': ['linkser=uggcf%3A%2F%2Flrfgbeerag.arg', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
+                        'acortaenlace.com': ['linkser=uggcf%3A%2F%2Fzntargcryvf.pbz', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
                         'short-link.one': ['linkser=uggcf%3A%2F%2Fzntargcryvf.pbz', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
                         'mediafire.com': [None, '(?i)=\s*"Download file"\s*href="([^"]+)"\s*id\s*=\s*"downloadButton"', 0, 0, False], 
-                        'sub-short.link': [None, [64, 123 ,77, 91, 109, 13, 13], 0, 0, False], 
-                        'divxto.site': [None, [64, 123 ,77, 91, 109, 13, 13], 0, 0, False]
+                        'sub-short.link': [None, [64, 123 ,77, 91, 96, 109, 13, 13], 0, 0, False], 
+                        'divxto.site': [None, [64, 123 ,77, 91, 96, 109, 13, 13], 0, 0, False] , 
+                        'ddtorrent.live': [None, [64, 123 ,77, 91, 96, 109, 13, 13], 0, 0, False]
                         }
 
     patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
@@ -515,11 +519,13 @@ def sortened_urls(url, url_base64, host):
             for c in chars:
                 if chors[0] < c < chors[1]:
                     if chors[2] < c < chors[3]:
-                        chers.append(c - chors[5])
-                    elif c > chors[4]:
-                        chers.append(c - chors[5])
+                        chers.append(c - chors[6])
+                    elif c > chors[5]:
+                        chers.append(c - chors[6])
+                    elif chors[3] <= c <= chors[4]:
+                        chers.append(c)
                     else:
-                        chers.append(c + chors[6])
+                        chers.append(c + chors[7])
                 else:
                     chers.append(c)
 

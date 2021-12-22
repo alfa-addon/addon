@@ -33,7 +33,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host_list = ['https://www.grantorrent.ch/']
+host_list = ['https://grantorrent.ch/']
 channel = 'grantorrent'
 categoria = channel.capitalize()
 host_index = config.get_setting('choose_domain', channel)
@@ -49,7 +49,7 @@ IDIOMAS_TMDB = {0: 'es', 1: 'en', 2: 'es,en'}
 idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', channel)]    # Idioma base para TMDB
 idioma_busqueda_VO = IDIOMAS_TMDB[2]                                                # Idioma para VO
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel) # Actualización sólo últ. Temporada?
-timeout = config.get_setting('timeout_downloadpage', channel)
+timeout = config.get_setting('timeout_downloadpage', channel) * 2
 season_colapse = config.get_setting('season_colapse', channel)                  # Season colapse?
 filter_languages = config.get_setting('filter_languages', channel)              # Filtrado de idiomas?
 
@@ -595,7 +595,7 @@ def findvideos(item):
     patron = '<td>\s*.*?<img\s*src="[^"]+icono_[^\.]+.png"\s*(?:title|alt)='
     patron += '"(?P<lang>[^"]+)"[^>]+>\s*(?:<\/noscript>)?[^<]*(?:<\/noscript>)?<\/td>'
     patron += '\s*<td>(?P<quality>[^>]*)(?:\s*\(Contraseña:[^>]*>(.*?)(?:<[^>]+>)?\))?\s*<\/td>'
-    patron += '\s*(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link"\s*'
+    patron += '\s*(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link"\s*(?:target="[^"]*"\s*)?'
     patron += '(?:onclick="[^"]*post\("[^"]+"\s*\,\s*\{u:\s*"|href=")(?P<url>[^"]+)'
 
     if not item.armagedon:
@@ -969,7 +969,7 @@ def episodios(item):
         patron = '<td>\s*.*?<img\s*src="[^"]+icono_[^\.]+.png"\s*(?:title|alt)='
         patron += '"(?P<lang>[^"]+)"[^>]+>\s*(?:<\/noscript>)?[^<]*(?:<\/noscript>)?<\/td>'
         patron += '\s*<td>(?P<quality>[^>]*)(?:\s*\(Contraseña:[^>]*>(.*?)(?:<[^>]+>)?\))?\s*<\/td>'
-        patron += '\s*(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link"\s*'
+        patron += '\s*(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link"\s*(?:target="[^"]*"\s*)?'
         patron += '(?:onclick="[^"]*post\("[^"]+"\s*\,\s*\{u:\s*"|href=")(?P<url>[^"]+)'
         
         patron_epi = '(?i)(\d{1,2})(?:x|&#215;)(\d{1,2})(?:[-|\s*](?:al|-)?[-|\s*]?'

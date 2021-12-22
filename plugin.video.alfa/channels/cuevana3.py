@@ -76,13 +76,13 @@ def mainlist(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False):
+def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, headers={'Referer': referer}).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -145,7 +145,7 @@ def findvideos(item):
 
     itemlist = list ()
     servers_list = {"1": "directo", "2": "streamtape", "3": "fembed", "4": "netu"}
-    soup = create_soup(item.url).find("div", class_="TPlayer embed_div")
+    soup = create_soup(item.url, forced_proxy_opt=forced_proxy_opt).find("div", class_="TPlayer embed_div")
 
     matches = soup.find_all("div", class_="TPlayerTb")
     for elem in matches[:-1]:

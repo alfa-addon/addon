@@ -176,10 +176,13 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
 
 def convert_url_base64(url, host='', rep_blanks=True):
     logger.info('URL: ' + url + ', HOST: ' + host)
-    host_whitelist = ['mediafire.com', 'acortaenlace.com']
+    host_whitelist = ['mediafire.com']
     domain = scrapertools.find_single_match(url, patron_domain)
 
     url_base64 = url
+    if '=http' in url_base64:
+        url_base64 = scrapertools.find_single_match(url_base64, '=(http.*?$)')
+    
     if len(url_base64) > 1 and not 'magnet:' in url_base64 and not '.torrent' in url_base64:
         patron_php = 'php(?:#|\?\w=)(.*?$)'
         if scrapertools.find_single_match(url_base64, patron_php):
@@ -212,9 +215,9 @@ def convert_url_base64(url, host='', rep_blanks=True):
                 
     if not domain: domain = 'default'
     if host and host not in url_base64 and not url_base64.startswith('magnet') \
-                    and not url_base64.startswith('http')and domain not in str(host_whitelist):
+                    and domain not in str(host_whitelist):
         url_base64 = urlparse.urljoin(host, url_base64)
-        if url_base64 != url:
+        if url_base64 != url or host not in url_base64:
             host_name = scrapertools.find_single_match(url_base64, patron_host)
             url_base64 = re.sub(host_name, host, url_base64)
             logger.info('Url base64 urlparsed: %s' % url_base64)
@@ -2029,19 +2032,13 @@ def find_rar_password(item):
     
     # Si no hay, buscamos en páginas alternativas
     rar_search = [
-                 ['1', 'https://pctreload1.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                 ['1', 'https://atomixhq.net/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
-                 ['1', 'https://pctfenix.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
-                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['descargar\/', ''], ['capitulo-[^0][^\d]', 'None'], \
-                                ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
-                 ['1', 'https://pctmix1.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
-                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
-                                ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
-                 ['2', 'https://grantorrent.net/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
+                 ['2', 'https://www.grantorrent.ch/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
                                 ['-temporada', '/temporada'], ['^((?!serie).)*$', 'None'], \
                                 ['.net\/', '.net/descargar/peliculas-castellano/'], ['\/$', '/blurayrip-ac3-5-1/']]], 
-                 ['2', 'https://mejortorrent1.net/', [[]], [['^((?!temporada).)*$', 'None'], \
+                 ['2', 'https://www.mejortorrentes.net/', [[]], [['^((?!temporada).)*$', 'None'], \
                                 ['.net\/', '.net/descargar/peliculas-castellano/'], ['-microhd-1080p\/$', '']]]
     ]
     
@@ -3164,6 +3161,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     if not _url: continue
                     for y, (__url, q) in enumerate(_url):
                         _url_ = __url
+                        if not _url_: continue
                         
                         url_host = scrapertools.find_single_match(_url_, patron_host)
                         if url_org == '*':                                          # Si se quiere cambiar desde CUALQUIER url ...

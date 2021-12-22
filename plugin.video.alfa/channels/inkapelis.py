@@ -140,7 +140,8 @@ def findvideos(item):
     for elem in matches:
         if elem["data-nume"].lower() == "trailer":
             continue
-        data = AlfaChannel.get_data_by_post(elem).data
+        data = AlfaChannel.get_data_by_post(elem, custom_url="%s%s" % (host, "security-scanner-cf")).data
+
         try:
             lang = elem.find("img", class_=re.compile(r"lazyload"))["data-src"]
             lang = scrapertools.find_single_match(lang, r"flags/([^\.]+)\.svg")
