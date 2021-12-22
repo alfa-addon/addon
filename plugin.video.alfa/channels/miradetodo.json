@@ -2,7 +2,7 @@
   "id": "miradetodo",
   "name": "MiraDeTodo",
   "force_unify": true,
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://s17.postimg.cc/e8kp12mcv/miradetodo.png",

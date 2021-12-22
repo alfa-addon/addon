@@ -2,16 +2,18 @@
 # -*- Channel DoramasYT -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-if PY3:
-    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse
+import sys
+import base64
 import re
-import urllib
+PY3 = False
+
+if sys.version_info[0] >= 3:
+    PY3 = True
+    unicode = str
+    unichr = chr
+    long = int
+
 from channels import filtertools
 from bs4 import BeautifulSoup
 from core import httptools
@@ -54,19 +56,19 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="En Emisión", action="list_all", url=host + "emision",
                          thumbnail=get_thumb("on air", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Doramas", action="sub_menu", url=host + "doramas",
+    itemlist.append(Item(channel=item.channel, title="Doramas", action="sub_menu", url=host + "doramas?categoria=dorama",
                          thumbnail=get_thumb("doramas", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url=host + "categoria/pelicula",
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url=host + "doramas?categoria=pelicula",
                          thumbnail=get_thumb("movies", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Alfabetico", action="section",
-                         url=host + "doramas", thumbnail=get_thumb("alphabet", auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Alfabetico", action="section", section="letra",
+                         url=host + "doramas?categoria=dorama", thumbnail=get_thumb("alphabet", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Por Años", action="section",
-                         url=host + "doramas", thumbnail=get_thumb("year", auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Por Años", action="section", section="fecha",
+                         url=host + "doramas?categoria=dorama", thumbnail=get_thumb("year", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + "search?q=",
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + "buscar?q=",
                          thumbnail=get_thumb("search", auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
@@ -81,7 +83,7 @@ def sub_menu(item):
     itemlist.append(Item(channel=item.channel, title="Todas", action="list_all",
                          url=item.url, thumbnail=get_thumb("all", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Generos", action="section",
+    itemlist.append(Item(channel=item.channel, title="Generos", action="section", section="genero",
                          url=item.url, thumbnail=get_thumb("genres", auto=True)))
 
     return itemlist
@@ -93,21 +95,18 @@ def list_all(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find("div", class_="row").find_all("article")
+    matches = soup.find_all("div", class_="col-lg-2 col-md-4 col-6")
 
     for elem in matches:
         url = elem.a["href"]
-        title = elem.h3.text
-        try:
-            year = elem.find("span", class_="fecha").text
-        except:
-            year = ""
-        content = elem.find("span", class_="category").text
+        lang, title = clear_title(elem.find("p").text)
+        thumb = elem.img["src"]
+        year = elem.find("button", class_="btntwo").text
+        c_type = elem.find("button", class_="btnone").text.lower()
+        new_item = Item(channel=item.channel, title=title, url=url, action="episodios", language=lang,
+                        thumbnail=thumb, infoLabels={"year": year})
 
-        new_item = Item(channel=item.channel, url=url, title=title,
-                             action="episodios", infoLabels= {"year": year})
-
-        if not "pelicula" in content.lower():
+        if c_type not in ["live action", "pelicula"]:
             new_item.contentSerieName = title
         else:
             new_item.contentTitle = title
@@ -116,13 +115,10 @@ def list_all(item):
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
-    # Paginación
-
     try:
-        next_page = soup.find("ul", class_="pagination").find("a", class_="page-link", text="Sig")["href"]
-        next_page = scrapertools.find_single_match(item.url, "([^\?]+)\??") + next_page
-        if next_page:
-            itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
+        url_next_page = soup.find("a", rel="next")["href"]
+        if url_next_page and len(itemlist) > 8:
+            itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
     except:
         pass
 
@@ -130,22 +126,17 @@ def list_all(item):
 
 
 def section(item):
-    logger.info()
 
     itemlist = list()
 
     soup = create_soup(item.url)
-    if item.title == "Generos":
-        data = soup.find("div", {"aria-labelledby": "genreMenuButton"})
-    elif item.title == "Por Años":
-        data = soup.find("div", {"aria-labelledby": "yearMenuButton"})
-    else:
-        data = soup.find("div", {"aria-labelledby": "letterMenuButton"})
 
-    matches = data.find_all("a")
+    matches = soup.find("select", {"name": "%s" % item.section}).find_all("option")
+
     for elem in matches[1:]:
-        title = elem.text
-        url = host + elem["href"]
+
+        url = "%s&%s=%s" % (item.url, item.section, elem["value"])
+        title = elem["value"].capitalize()
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
 
     return itemlist
@@ -156,7 +147,7 @@ def episodios(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url).find("div", class_="SerieCaps")
+    soup = create_soup(item.url).find("div", class_="row jpage row-cols-md-5")
     matches = soup.find_all("a")
     infoLabels = item.infoLabels
     for elem in matches:
@@ -165,18 +156,15 @@ def episodios(item):
         infoLabels["season"] = 1
         infoLabels["episode"] = epi_num
         title = "1x%s - Episodio %s" %(epi_num, epi_num)
-        if "sub" in elem.text.lower():
-            language = IDIOMAS.get("sub", "VOSE")
-        elif "latino" in elem.text.lower():
-            language = IDIOMAS.get("la", "VOSE")
 
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos",
-                             language=language, infoLabels=infoLabels))
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos", language=item.language,
+                             infoLabels=infoLabels))
 
     if item.contentTitle and len(itemlist) == 1:
         return findvideos(itemlist[0])
+
     tmdb.set_infoLabels_itemlist(itemlist, True)
-    itemlist = itemlist[::-1]
+
     if item.contentSerieName != '' and config.get_videolibrary_support() and len(itemlist) > 0 and not item.foldereps:
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
@@ -191,20 +179,19 @@ def findvideos(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find_all("li", class_="Button")
+    matches = soup.find_all("p", class_="play-video")
 
     for elem in matches:
-        srv = elem["title"]
-        if srv.lower() == "ok":
-            srv = "okru"
-        opt_id = elem["data-tplayernv"]
+        url = base64.b64decode(elem["data-player"]).decode("utf-8")
 
-        itemlist.append(Item(channel=item.channel, url=item.url, title=srv, server=srv, action="play",
-                             opt=opt_id, language=item.language, infoLabels=item.infolabels))
+        itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language=item.language,
+                             infoLabels=item.infoLabels))
+
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     # Requerido para FilterTools
 
-    itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
+    itemlist = filtertools.get_links(itemlist, item, list_idiomas)
 
     # Requerido para AutoPlay
 
@@ -216,18 +203,15 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = list()
-    soup = create_soup(item.url).find("div", class_="TPlayerTb", id=item.opt)
-    if not soup.find("iframe"):
-        soup = BeautifulSoup(soup.text)
 
-    url = soup.find("iframe")["src"]
-    url = urllib.unquote(scrapertools.find_single_match(url, "url=([^&]+)"))
-    if "monoschinos" in url:
-        data = httptools.downloadpage(url).data
+    if "monoschinos" in item.url:
+        data = httptools.downloadpage(item.url).data
         url = scrapertools.find_single_match(data, "file: '([^']+)'")
 
-    itemlist.append(item.clone(url=url, server=""))
-    itemlist = servertools.get_servers_itemlist(itemlist)
+        itemlist.append(item.clone(url=url, server=""))
+        itemlist = servertools.get_servers_itemlist(itemlist)
+    else:
+        itemlist.append(item)
 
     return itemlist
 
@@ -247,3 +231,17 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
+
+
+def clear_title(title):
+    if 'latino' in title.lower():
+        lang = 'Latino'
+    elif 'castellano' in title.lower():
+        lang = 'Castellano'
+    else:
+        lang = 'VOSE'
+
+    title = re.sub(r'Audio|Latino|Castellano|\((.*?)\)', '', title)
+    title = re.sub(r'\s:', ':', title)
+
+    return lang, title

@@ -38,7 +38,7 @@ list_servers = ['gounlimited',
                 'torrent'
                 ]
 
-host = 'https://cinecalidad.website/'
+host = 'https://www.cinecalidad.lat/'
 
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'

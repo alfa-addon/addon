@@ -701,7 +701,7 @@ def seasons(item):
 
 
 def episodios(item):
-    logger.info(item)
+    logger.info()
     itemlist = []
     
     if item.library_playcounts and item.action == 'get_seasons':    # Es actualización background de videoteca
@@ -911,19 +911,13 @@ def findvideos(item):
 
         it1.append(Item(channel=item.channel, action="set_status", title=title, url=url_targets,
                         thumbnail=item.thumbnail, contentTitle=item.contentTitle, language=item.language, folder=True))
-    js_url =  urlparse.urljoin(host, "/templates/hdfull/js/jquery.hdfull.view.min.js")
+    js_url = urlparse.urljoin(host, "/templates/hdfull/js/jquery.hdfull.view.min.js")
     js_data = agrupa_datos(js_url)
     
     data_js_url = urlparse.urljoin(host, "/js/providers.js")
     data_js = agrupa_datos(data_js_url)
     
-    decoded = alfaresolver.jhexdecode(data_js)
-    
-    providers_pattern = 'p\[(\d+)\]= {"t":"([^"]+)","d":".*?","e":.function.*?,"l":.function.*?return "([^"]+)".*?};'
-    providers = scrapertools.find_multiple_matches (decoded, providers_pattern)
-    provs = {}
-    for provider, e, l in providers:
-        provs[provider]=[e,l]
+    provs = alfaresolver.jhexdecode(data_js)
 
     data = agrupa_datos(item.url, force_check=True, force_login=True)
     try:
@@ -938,8 +932,8 @@ def findvideos(item):
     for match in data_decrypt:
         if match['provider'] in provs:
             try:
-                embed = provs[match['provider']][0]
-                url = provs[match['provider']][1]+match['code']
+                embed = provs[match['provider']]['t']
+                url = provs[match['provider']]['d'] % match['code']
                 matches.append([match['lang'], match['quality'], url, embed])
             except:
                 pass

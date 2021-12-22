@@ -293,19 +293,10 @@ def findvideos(item):
     js_data = get_source("%s/static/style/js/jquery.hdfull.view.min.js" % host)
 
     data_js = get_source("%s/static/js/providers.js" % host)
-    decoded = alfaresolver.jhexdecode(data_js).replace("'", '"')
-    providers_pattern = 'p\[(\d+)\]\s?=\s?{"t":"([^"]+)","d":".*?","e":.function.*?,"l":.function.*?return "([^"]+)".*?};'
-    providers = scrapertools.find_multiple_matches(decoded, providers_pattern)
 
-    provs = {}
+    provs = alfaresolver.jhexdecode(data_js)
 
-    for provider, e, l in providers:
-        provs[provider] = [e, l]
-
-    #try:
     data_decrypt = jsontools.load(alfaresolver.obfs(data, js_data))
-    #except:
-    #    return itemlist
 
     infolabels = item.infoLabels
     year = scrapertools.find_single_match(data, '<span>A&ntilde;o:\s*</span>.*?(\d{4})')
@@ -316,8 +307,8 @@ def findvideos(item):
     for match in data_decrypt:
         if match['provider'] in provs:
             try:
-                embed = provs[match['provider']][0]
-                url = provs[match['provider']][1] + match['code']
+                embed = provs[match['provider']]['t']
+                url = provs[match['provider']]['d'] % match['code']
                 matches.append([match['lang'], match['quality'], url, embed])
             except:
                 pass
