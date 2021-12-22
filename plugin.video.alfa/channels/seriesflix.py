@@ -18,21 +18,7 @@ from channelselector import get_thumb
 from lib.AlfaChannelHelper import ToroFlix
 
 
-def check_host():
-    primary_host = 'https://seriesflix.la/'
-    aux_host = 'https://seriesflix.video/'
-    try:
-        result = httptools.downloadpage(primary_host, only_headers=True)
-    except:
-        return aux_host
-
-    if result.code == 200:
-        return primary_host
-    else:
-        return aux_host
-
-
-host = check_host()
+host = 'https://seriesflix.video/'
 
 AlfaChannel = ToroFlix(host, tv_path="/series/")
 

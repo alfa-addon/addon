@@ -32,6 +32,7 @@ class AlfaChannelHelper:
         """
 
         kwargs["soup"] = True
+        kwargs["add_referer"] = True
         soup = httptools.downloadpage(url, **kwargs).soup
         return soup
 
@@ -360,13 +361,16 @@ class DooPlay(AlfaChannelHelper):
 
         return results[0]
 
-    def get_data_by_post(self, elem=None, post=None):
+    def get_data_by_post(self, elem=None, post=None, custom_url=""):
         if not post:
             post = {"action": "doo_player_ajax",
                     "post": elem["data-post"],
                     "nume": elem["data-nume"],
                     "type": elem["data-type"]
                     }
+
+        if custom_url:
+            self.doo_url = custom_url
 
         data = httptools.downloadpage(self.doo_url, post=post, add_referer=True, soup=True)
 
