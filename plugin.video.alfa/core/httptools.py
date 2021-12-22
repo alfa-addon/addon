@@ -69,6 +69,10 @@ if HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT == 0: HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT =
 # Uso aleatorio de User-Agents, si no se especifica nada
 HTTPTOOLS_DEFAULT_RANDOM_HEADERS = False
 
+patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?[\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
+
+
 def get_user_agent():
     # Devuelve el user agent global para ser utilizado cuando es necesario para la url.
     return default_headers["User-Agent"]
@@ -225,18 +229,16 @@ def channel_proxy_list(url, forced_proxy=None):
 
     if not url.endswith('/'):
         url += '/'
-    if scrapertools.find_single_match(url, '(?:http.*\:)?\/\/(?:www\.)?([^\?|\/]+)(?:\?|\/)') \
-                in proxy_channel_bloqued:
+
+    if proxy_channel_bloqued.get(scrapertools.find_single_match(url, patron_domain), ''):
         if forced_proxy and forced_proxy not in ['Total', 'ProxyDirect', 'ProxyCF', 'ProxyWeb']:
-            if forced_proxy in proxy_channel_bloqued[scrapertools.find_single_match(url, 
-                        '(?:http.*\:)?\/\/(?:www\.)?([^\?|\/]+)(?:\?|\/)')]:
+            if forced_proxy in proxy_channel_bloqued[scrapertools.find_single_match(url, patron_domain)]:
                 return True
             else:
                 return False
         if forced_proxy:
             return True
-        if not 'OFF' in proxy_channel_bloqued[scrapertools.find_single_match(url, 
-                '(?:http.*\:)?\/\/(?:www\.)?([^\?|\/]+)(?:\?|\/)')]:
+        if not 'OFF' in proxy_channel_bloqued[scrapertools.find_single_match(url, patron_domain)]:
             return True
 
     return False

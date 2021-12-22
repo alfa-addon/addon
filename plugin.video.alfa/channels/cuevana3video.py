@@ -29,7 +29,7 @@ list_servers = ['fembed', 'streamtape', 'fastplay', 'gvideo', 'Jawcloud']
 
 __channel__='allcalidad'
 
-host = "https://cuevana3.so"
+host = "https://www1.cuevana3.so"
 encoding = "utf-8"
 
 try:
@@ -164,7 +164,7 @@ def last_episodes(item):
                 infoLabels = infoLabels,
                 thumbnail = "https://" + scrapedthumbnail,
                 title = scrapedtitle + " %s" %scrapeddate,
-                url = host + scrapedurl,
+                url = urlparse.urljoin(host, scrapedurl),
             )
         )
 
@@ -195,7 +195,7 @@ def last_tvshows(item):
                 contentSerieName = scrapedtitle,
                 thumbnail = "https://" + scrapedthumbnail,
                 title = scrapedtitle,
-                url = host + scrapedurl
+                url = urlparse.urljoin(host, scrapedurl)
             )
         )
 
@@ -300,7 +300,7 @@ def episodesxseasons(item):
                 contentSerieName = contentSerieName,
                 title = scrapedtitle,
                 thumbnail = scrapedthumbnail,
-                url = host + scrapedurl
+                url = urlparse.urljoin(host, scrapedurl)
             )
         )
 
@@ -354,7 +354,7 @@ def list_all(item):
                     contentSerieName = scrapedtitle,
                     thumbnail = "https://" + scrapedthumbnail,
                     title = scrapedtitle,
-                    url = host + scrapedurl,
+                    url = urlparse.urljoin(host, scrapedurl),
                 )
             )
 
@@ -367,7 +367,7 @@ def list_all(item):
                     contentTitle = scrapedtitle,
                     thumbnail = "https://" + scrapedthumbnail,
                     title = scrapedtitle,
-                    url = host + scrapedurl,
+                    url = urlparse.urljoin(host, scrapedurl),
                 )
             )
 
@@ -394,7 +394,7 @@ def list_all(item):
 
 def findvideos(item):
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding=encoding, forced_proxy_opt='ProxyCF').data
     bloques = scrapertools.find_multiple_matches(data, '(?is)open_submenu .*?</ul>' )
 
     for scrapedblock in bloques:
@@ -535,7 +535,7 @@ def generos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for url, titulo in matches:
-        if not url.startswith("http"): url = host + url
+        if not url.startswith("http"): url = urlparse.urljoin(host, url)
 
         itemlist.append(
             Item(
