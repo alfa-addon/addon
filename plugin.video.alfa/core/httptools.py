@@ -319,7 +319,7 @@ def check_proxy(url, **opt):
             if not PY3: from . import proxytools
             else: from . import proxytools_py3 as proxytools
             proxy_data['addr'], proxy_data['CF_addr'], proxy_data['web_name'], \
-            proxy_data['log'] = proxytools.get_proxy_addr(url, post=opt.get('post', None), forced_proxy=forced_proxy)
+            proxy_data['log'] = proxytools.get_proxy_addr(url, forced_proxy_m=forced_proxy, **opt)
             
             if proxy_addr_forced and proxy_data['log']:
                 proxy_data['log'] = scrapertools.find_single_match(str(proxy_addr_forced), "{'http.*':\s*'(.*?)'}")
@@ -342,7 +342,7 @@ def check_proxy(url, **opt):
                 proxy = False
                 if not proxy_data['web_name']:
                     proxy_data['addr'], proxy_data['CF_addr'], proxy_data['web_name'], \
-                    proxy_data['log'] = proxytools.get_proxy_addr(url, forced_proxy='Total')
+                    proxy_data['log'] = proxytools.get_proxy_addr(url, forced_proxy_m='Total', **opt)
                 if proxy_data['web_name']:
                     proxy_web = True
                 else:
@@ -357,15 +357,15 @@ def check_proxy(url, **opt):
                     opt['timeout'] = 40                                         ##### TEMPORAL
                 if opt.get('post', None): proxy_data['log'] = '(POST) ' + proxy_data['log']
                 url, opt['post'], headers_proxy, proxy_data['web_name'] = \
-                    proxytools.set_proxy_web(url, proxy_data['web_name'], post=opt.get('post', None), force_proxy_get=force_proxy_get)
+                    proxytools.set_proxy_web(url, proxy_data, **opt)
                 if proxy_data['web_name']:
                     proxy_data['stat'] = ', Proxy Web ' + proxy_data['log']
                     if headers_proxy:
-                        request_headers.update(dict(headers_proxy))
+                        opt['headers_proxy'] = dict(headers_proxy)
             if proxy_web and not proxy_data['web_name']:
                 proxy_web = False
                 proxy_data['addr'], proxy_data['CF_addr'], proxy_data['web_name'], \
-                proxy_data['log'] = proxytools.get_proxy_addr(url, forced_proxy='Total')
+                proxy_data['log'] = proxytools.get_proxy_addr(url, forced_proxy_m='Total', **opt)
                 if proxy_data['CF_addr']:
                     proxy = True
                     proxy_data['dict'] = proxy_data['CF_addr']
@@ -399,9 +399,12 @@ def check_proxy(url, **opt):
 def proxy_post_processing(url, proxy_data, response, opt):
     opt['out_break'] = False
     try:
-        if response["code"] in [404, 400]:
+        if response["code"] not in [200, 302] and opt.get('forced_proxy_opt', '') == 'ProxyJSON':
+            opt['forced_proxy_opt'] = 'ProxyCF'
+            opt['forced_proxy'] = opt['forced_proxy_opt']
+        elif response["code"] in [404, 400]:
             opt['proxy_retries'] = -1
-        
+
         if ', Proxy Web' in proxy_data.get('stat', ''):
             if not PY3: from . import proxytools
             else: from . import proxytools_py3 as proxytools
@@ -409,26 +412,28 @@ def proxy_post_processing(url, proxy_data, response, opt):
             if not ('application' in response['headers'].get('Content-Type', '') \
                         or 'javascript' in response['headers'].get('Content-Type', '') \
                         or 'image' in response['headers'].get('Content-Type', '')):
-                response["data"] = proxytools.restore_after_proxy_web(response["data"],
-                                                                  proxy_data['web_name'], opt['url_save'])
+                response = proxytools.restore_after_proxy_web(response,
+                                                              proxy_data, opt['url_save'])
             if response["data"] == 'ERROR' or response["code"] == 302:
-                if response["code"] == 200: response["code"] = 666
-                if not opt.get('post_cookie', False):
-                    url_domain = '%s://%s' % (urlparse.urlparse(opt['url_save']).scheme, urlparse.urlparse(opt['url_save']).netloc)
-                    forced_proxy_temp = 'ProxyWeb:' + proxy_data['web_name']
-                    data_domain = downloadpage(url_domain, alfa_s=True, ignore_response_code=True, \
-                                post_cookie=True, forced_proxy=forced_proxy_temp, proxy_retries_counter=0)
-                    if data_domain.code == 200:
-                        url = opt['url_save']
-                        opt['post'] = opt['post_save']
-                        opt['forced_proxy'] = forced_proxy_temp
-                        return response, url, opt
-                if response["data"] == 'ERROR' or response["code"] == 302:
+                if response["code"] == 200: 
+                    response["code"] = 666
+                    if not opt.get('post_cookie', False):
+                        url_domain = '%s://%s' % (urlparse.urlparse(opt['url_save']).scheme, urlparse.urlparse(opt['url_save']).netloc)
+                        forced_proxy_temp = 'ProxyWeb:' + proxy_data['web_name']
+                        data_domain = downloadpage(url_domain, alfa_s=True, ignore_response_code=True, \
+                                    post_cookie=True, forced_proxy=forced_proxy_temp, proxy_retries_counter=0)
+                        if data_domain.code == 200:
+                            url = opt['url_save']
+                            opt['post'] = opt['post_save']
+                            opt['forced_proxy'] = forced_proxy_temp
+                            return response, url, opt
+                elif response["code"] == 302 and response['headers'].get('location', ''):
+                    response['sucess'] = True
+                if response["data"] == 'ERROR' or (response["code"] == 302 and not response['sucess']):
                     proxy_data['stat'] = ', Proxy Direct'
                     opt['forced_proxy'] = 'ProxyDirect'
                     url = opt['url_save']
                     opt['post'] = opt['post_save']
-                    response['sucess'] = False
                     response['sucess'] = False
         elif response["code"] == 302:
             response['sucess'] = True
@@ -564,7 +569,13 @@ def downloadpage(url, **opt):
     opt['url_save'] = url
     opt['post_save'] = opt.get('post', None)
     if opt.get('forced_proxy_opt', None) and channel_proxy_list(url):
-        opt['forced_proxy'] = opt['forced_proxy_opt']
+        if opt['forced_proxy_opt'] in ['ProxyCF', 'ProxyDirect']:
+            if 'cliver' not in url:
+                opt['forced_proxy_opt'] = 'ProxyJSON'
+            else:
+                opt['forced_proxy'] = opt['forced_proxy_opt']
+        else:
+            opt['forced_proxy'] = opt['forced_proxy_opt']
 
     while opt['proxy_retries_counter'] <= opt.get('proxy_retries', 1):
         response = {}
@@ -594,15 +605,17 @@ def downloadpage(url, **opt):
         if not opt.get('keep_alive', True):
             #session.keep_alive =  opt['keep_alive']
             req_headers['Connection'] = "close"
-        
-        session.headers = req_headers.copy()
-        
+
         # Prepara la url en caso de necesitar proxy, o si se envía "proxy_addr_forced" desde el canal
         url, proxy_data, opt = check_proxy(url, **opt)
         if opt.get('proxy_addr_forced', {}):
             session.proxies = opt['proxy_addr_forced']
         elif proxy_data.get('dict', {}):
             session.proxies = proxy_data['dict']
+        if opt.get('headers_proxy', {}):
+            req_headers.update(dict(opt['headers_proxy']))
+            
+        session.headers = req_headers.copy()
 
         inicio = time.time()
         

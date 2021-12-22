@@ -84,7 +84,7 @@ def sub_menu(item):
 def list_all(item):
     logger.info()
 
-    if item.c_type != "search":
+    if item.c_type != "search" and not "?type=" in item.url:
         item.url += "?type=%s" % item.c_type
     return AlfaChannel.list_all(item, postprocess=get_language_and_set_filter)
 

@@ -1241,7 +1241,10 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             if '.rar' in download:
                 # Empezando la extracción del .rar del APK
                 try:
-                    import rarfile
+                    if PY3:
+                        import rarfile
+                    else:
+                        import rarfile_py2 as rarfile
                     archive = rarfile.RarFile(apk_path)
                     if alfa_assistant_pwd: archive.setpassword(alfa_assistant_pwd)
                     archive.extractall(apk_updated)

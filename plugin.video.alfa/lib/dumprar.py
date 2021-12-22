@@ -6,11 +6,16 @@ from __future__ import division, absolute_import, print_function
 
 import io
 import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; VFS = False
 import getopt
 
 from datetime import datetime
 
-import rarfile as rf
+if PY3:
+    import rarfile as rf
+else:
+    import rarfile_py2 as rf
 
 
 usage = """

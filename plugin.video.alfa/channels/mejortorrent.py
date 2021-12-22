@@ -31,7 +31,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host_list = ['https://www.mejortorrentes.com/', 'https://mejortorrent.one/']
+host_list = ['https://www.mejortorrentes.net/', 'https://mejortorrent.one/']
 channel = 'mejortorrent'
 categoria = channel.capitalize()
 host_index = config.get_setting('choose_domain', channel)

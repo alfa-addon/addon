@@ -224,7 +224,7 @@ def downloadbest(video_urls, title, continuar=False):
     return -2
 
 
-def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False, resumir=True):
+def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False, resumir=True, title="Alfa"):
     logger.info("url=" + url)
     logger.info("nombrefichero=" + nombrefichero)
 
@@ -272,7 +272,7 @@ def downloadfile(url, nombrefichero, headers=None, silent=False, continuar=False
 
         # Crea el diálogo de progreso
         if not silent:
-            progreso = platformtools.dialog_progress("plugin", "Descargando...", url, nombrefichero)
+            progreso = platformtools.dialog_progress(title, "Descargando...", url, nombrefichero)
 
         # Si la plataforma no devuelve un cuadro de diálogo válido, asume modo silencio
         if progreso is None:

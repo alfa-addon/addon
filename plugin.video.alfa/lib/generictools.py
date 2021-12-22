@@ -985,7 +985,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
     title = title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
     
     if config.get_setting("show_all_seasons", 'videolibrary'):
-        itemlist_temporadas.append(item_season.clone(title=title, from_title_season_colapse=item.title))
+        itemlist_temporadas.append(item_season.clone(title=title, from_title_season_colapse=item.title, unify=False))
     
     #Repasamos todos los episodios para detectar las diferentes temporadas
     marca_visto = None
