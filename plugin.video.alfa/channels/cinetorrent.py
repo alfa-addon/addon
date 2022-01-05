@@ -33,7 +33,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'http://cinetorrent.co/'
+host = 'https://cinetorrent.co/'
 host_torrent = host[:-1]
 domain = 'cinetorrent.co'
 channel = 'cinetorrent'

@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 
 try:
-    from urllib.parse import urlsplit, urlparse, parse_qs, urljoin
+    from urllib.parse import urlsplit, urlparse, parse_qs, urljoin, quote_plus
 except:
     from urlparse import urlsplit, urlparse, parse_qs, urljoin
+    from urllib import quote_plus
 
 import json
 import os
@@ -493,7 +494,7 @@ def sortened_urls(url, url_base64, host):
 
     sortened_domains = {'acortalink.me': ['linkser=uggcf%3A%2F%2Flrfgbeerag.arg', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
                         'acortaenlace.com': ['linkser=uggcf%3A%2F%2Fzntargcryvf.pbz', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
-                        'short-link.one': ['linkser=uggcf%3A%2F%2Fzntargcryvf.pbz', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
+                        'short-link.one': ['linkser=uggcf%3A%2F%2Fpvargbeerag.pb', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
                         'mediafire.com': [None, '(?i)=\s*"Download file"\s*href="([^"]+)"\s*id\s*=\s*"downloadButton"', 0, 0, False], 
                         'sub-short.link': [None, [64, 123 ,77, 91, 96, 109, 13, 13], 0, 0, False], 
                         'divxto.site': [None, [64, 123 ,77, 91, 96, 109, 13, 13], 0, 0, False] , 
@@ -502,6 +503,7 @@ def sortened_urls(url, url_base64, host):
 
     patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
     patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
+    patron_linkser = 'name="linkser"\s*value="([^"]*)"'
     
     domain = scrapertools.find_single_match(url, patron_domain)
     if sortened_domains.get(domain, False) == False or not url_base64 or url_base64.startswith('magnet'):
@@ -536,7 +538,6 @@ def sortened_urls(url, url_base64, host):
         return url_base64
     
     if not key:
-        post = sortened_domains[domain][0]
         host_name = scrapertools.find_single_match(url, patron_host)
         if host_name and not host_name.endswith('/'): host_name += '/'
 
@@ -548,6 +549,9 @@ def sortened_urls(url, url_base64, host):
             if url_base64.startswith('magnet') or url_base64.startswith('http'):
                 return url_base64
 
+        if scrapertools.find_single_match(data_new, patron_linkser):
+            sortened_domains[domain][0] = 'linkser=%s' % quote_plus(scrapertools.find_single_match(data_new, patron_linkser))
+        post = sortened_domains[domain][0]
         headers = {'Content-type': 'application/x-www-form-urlencoded'}
         data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(host_name, proxy_retries=0, 
                     timeout=10, referer=url, post=post, headers=headers, ignore_response_code=True, alfa_s=True).data)
