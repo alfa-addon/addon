@@ -1017,7 +1017,7 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
     try:
         uri = '%s/list' % (local_host[torr_client])
         if "torrest" in torr_client:
-            uri = '%s/?status=true' % (local_host[torr_client])
+            uri = '%s?status=true' % (local_host[torr_client].rstrip('/'))
         for z in range(10): 
             res = httptools.downloadpage(uri, timeout=10, alfa_s=alfa_s)
             if not res.data:
@@ -1132,6 +1132,8 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
                     if action == 'stop' : action += 'pe'
                     if action == 'reset' : action += 'e'
                     log('##### Descarga %sD de %s: %s' % (action.upper(), str(torr_client).upper(), str(y)))
+                elif torr_client in ['torrest']:
+                    log('##### ERROR en %s%s/%s - ERROR Code: %s' % (local_host[torr_client], y, action_f, str(res.code)))
                 else:
                     log('##### ERROR en %s%s/%s - ERROR Code: %s' % (local_host[torr_client], action_f, y, str(res.code)))
                 time.sleep(1)

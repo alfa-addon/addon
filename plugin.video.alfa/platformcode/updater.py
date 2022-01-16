@@ -260,25 +260,39 @@ def check_addon_updates(verbose=False):
 
 def check_update_to_others(verbose=False, app=True):
     logger.info()
+    folder = ''
+    folder_list = []
 
     try:
         list_folder = os.listdir(os.path.join(config.get_runtime_path(), 'tools'))
-        for folder in list_folder:
+        for folder in sorted(list_folder):
             in_folder = os.path.join(config.get_runtime_path(), 'tools', folder)
             if not os.path.isdir(in_folder):
+                continue
+            if 'patch#' in folder:
+                for folder_patch in sorted(os.listdir(in_folder)):
+                    in_folder_patch = os.path.join(in_folder, folder_patch)
+                    if not os.path.isdir(in_folder):
+                        continue
+                    folder_list += [os.path.join(folder, folder_patch)]
+            else:
+                folder_list += [folder]
+
+        for folder in folder_list:
+            in_folder = os.path.join(config.get_runtime_path(), 'tools', folder)
+            out_folder = os.path.join(config.translatePath('special://home/addons'), os.path.split(in_folder)[1])
+            if not os.path.exists(out_folder):
                 continue
             if not check_dependencies(in_folder):
                 continue
 
-            out_folder = os.path.join(config.translatePath('special://home/addons'), folder)
-            if os.path.exists(out_folder):
-                copytree(in_folder, out_folder)
-                if os.path.exists(os.path.join(out_folder, ALFA_DEPENDENCIES)):
-                    os.remove(os.path.join(out_folder, ALFA_DEPENDENCIES))
+            logger.info('Updating: %s' % folder, force=True)
+            copytree(in_folder, out_folder)
+            if os.path.exists(os.path.join(out_folder, ALFA_DEPENDENCIES)):
+                os.remove(os.path.join(out_folder, ALFA_DEPENDENCIES))
 
-                logger.info('%s updated' % folder, force=True)
     except:
-        logger.error('Error al actualizar OTROS paquetes')
+        logger.error('Error al actualizar OTROS paquetes: %s' % folder)
         logger.error(traceback.format_exc())
 
     if app:
@@ -317,7 +331,10 @@ def check_dependencies(in_folder):
         addon_name = os.path.split(in_folder)[1]
         __settings__ = xbmcaddon.Addon(id="{}".format(addon_name))
         addon_version = __settings__.getAddonInfo('version').split('.')
-
+    except:
+        return False
+    
+    try:
         with open(dep_path, "r") as f:
             dep_json = jsontools.load(f.read())
 
