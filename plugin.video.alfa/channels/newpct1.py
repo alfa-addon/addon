@@ -214,8 +214,8 @@ def submenu(item):
     global host
     item, host = verify_host(item, host)                                    # Actualizamos la url del host
     
-    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
-                                          decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
+                                     decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
 
     patron = '(?:Inicio|Categorias)'
     
@@ -356,8 +356,8 @@ def submenu_novedades(item):
     global host
     item, host = verify_host(item, host, category=category)                     # Actualizamos la url del host
     
-    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, s2=False, 
-                                          decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, s2=False, 
+                                     decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
@@ -464,8 +464,8 @@ def alfabeto(item):
     global host
     item, host = verify_host(item, host)                                        # Actualizamos la url del host
     
-    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
-                                          decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
+                                     decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
 
     #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
     patron = '<ul class="alfabeto">(.*?)</ul>'
@@ -593,11 +593,11 @@ def listado(item):                                                              
         cnt_match = 0                                                           # Contador de líneas procesadas de matches
 
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
-            data, success, code, item, itemlist = generictools.downloadpage(next_page_url, 
-                                          timeout=timeout_search, post=post, s2=True, 
-                                          decode_code=decode_code, quote_rep=True, 
-                                          forced_proxy_opt=forced_proxy_opt, 
-                                          no_comments=False, item=item, itemlist=itemlist)
+            data, response, item, itemlist = generictools.downloadpage(next_page_url, 
+                                              timeout=timeout_search, post=post, s2=True, 
+                                              decode_code=decode_code, quote_rep=True, 
+                                              forced_proxy_opt=forced_proxy_opt, 
+                                              no_comments=False, item=item, itemlist=itemlist)
             curr_page += 1                                                      #Apunto ya a la página siguiente
             
             #seleccionamos el bloque que nos interesa
@@ -901,7 +901,7 @@ def listado(item):                                                              
                 item_local.url = url
                 item_local.extra2 = 'serie_episodios'                           #Creamos acción temporal excluyente para otros clones
 
-                data_serie, success, code, item, itemlist = generictools.downloadpage(item_local.url, 
+                data_serie, response, item, itemlist = generictools.downloadpage(item_local.url, 
                                           timeout=timeout, post=post, s2=True, 
                                           decode_code=decode_code, quote_rep=True, 
                                           no_comments=False, item=item, itemlist=itemlist)
@@ -1282,9 +1282,10 @@ def findvideos(item):
     category_servidores = item.category
     data_servidores_stat = False
     size = ''
+    headers = {'referer': None}
     
     if not item.matches:
-        data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, 
+        data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, 
                                           decode_code=decode_code, quote_rep=True, 
                                           item=item, itemlist=[])               # Descargamos la página)
         data = data.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
@@ -1319,14 +1320,15 @@ def findvideos(item):
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
     if url_torr:
         if url_torr.endswith('/'): url_torr = url_torr[:-1]
+        headers['referer'] = url_torr
         host_torrent = scrapertools.find_single_match(url_torr, patron_host)
         url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr) + download_post_url_torr_tail % domain
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if url_torr:
-        size = generictools.get_torrent_size(url_torr, timeout=timeout, force=True)                 #Buscamos si hay .torrent y el tamaño
+        size = generictools.get_torrent_size(url_torr, timeout=timeout, headers=headers, force=True)    #Buscamos si hay .torrent y el tamaño
     if (not data and not item.matches) or not scrapertools.find_single_match(data, patron) \
-                    or not size or 'ERROR' in size or code == 999 or 'javascript:;' in url_torr:    # Si no hay datos o url, error
+                    or not size or 'ERROR' in size or response.code == 999 or 'javascript:;' in url_torr:    # Si no hay datos o url, error
         size = ''
         if 'Archivo torrent no Existe' in data:
             logger.error("ERROR 09: FINDVIDEOS: Archivo torrent no Existe ")
@@ -1372,8 +1374,9 @@ def findvideos(item):
                 url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
             if url_torr:
                 if url_torr.endswith('/'): url_torr = url_torr[:-1]
+                headers['referer'] = url_torr
                 url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr) + download_post_url_torr_tail % domain
-                size = generictools.get_torrent_size(url_torr, timeout=timeout) #Buscamos si hay .torrent y el tamaño
+                size = generictools.get_torrent_size(url_torr, headers=headers, timeout=timeout)    #Buscamos si hay .torrent y el tamaño
 
     #Si no ha logrado encontrar nada, verificamos si hay servidores
     if not data and not matches:
@@ -1452,7 +1455,7 @@ def findvideos(item):
                 if url_torr.startswith('http') or url_torr.startswith('//'):
                     url_torr = urlparse.urljoin(torrent_tag, url_torr)
                 
-                data_alt, success, code, item, itemlist = generictools.downloadpage(url_torr, timeout=timeout_search, 
+                data_alt, response, item, itemlist = generictools.downloadpage(url_torr, timeout=timeout_search, 
                                           decode_code=decode_code, quote_rep=True, 
                                           item=item, itemlist=itemlist)         # Descargamos la página)
                 data_alt = data_alt.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
@@ -1477,8 +1480,9 @@ def findvideos(item):
                 else:
                     continue
                 if url_torr.endswith('/'): url_torr = url_torr[:-1]
+                headers['referer'] = url_torr
                 url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr) + download_post_url_torr_tail % domain
-                size = generictools.get_torrent_size(url_torr, timeout=timeout) #Buscamos si hay .torrent y el tamaño
+                size = generictools.get_torrent_size(url_torr, headers=headers, timeout=timeout)        #Buscamos si hay .torrent y el tamaño
             
             matches_torent.append((url_torr, quality, size, data_alt))
     
@@ -1532,7 +1536,7 @@ def findvideos(item):
         if not size:
             size = scrapertools.find_single_match(quality, '\s?\[(\d+.?\d*?\s?\w\s?[b|B])\]')
         if not size and item.armagedon and not item.videolibray_emergency_urls:
-            size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)   #Buscamos el tamaño en el .torrent
+            size = generictools.get_torrent_size(item_local.url, headers=headers, local_torr=local_torr)    #Buscamos el tamaño en el .torrent
             if 'ERROR' in size and item.emergency_urls and not item.videolibray_emergency_urls:
                 item_local.armagedon = True
                 try:                                                        # Restauramos la url
@@ -1545,7 +1549,7 @@ def findvideos(item):
                 except:
                     item_local.torrent_alt = ''
                     item.emergency_urls[0] = []
-                size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)
+                size = generictools.get_torrent_size(item_local.url, headers=headers, local_torr=local_torr)
 
         if size:
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
@@ -1573,9 +1577,11 @@ def findvideos(item):
         #Si es un lookup para cargar las urls de emergencia en la Videoteca, guardarmos los enlaces
         if item.videolibray_emergency_urls:
             item.emergency_urls[0].append(url_torr)                             #Guardamos el enlace del .torrent
+            item.headers = headers
         
         #... ejecutamos el proceso normal
         else:
+            item_local.headers = headers
             item_local.quality = quality
             if item.armagedon:
                 item_local.quality = '[COLOR hotpink][E][/COLOR] [COLOR limegreen]%s[/COLOR]' % item_local.quality
@@ -1948,12 +1954,12 @@ def episodios(item):
         patron_noepis += '<\/div>\s*<aside\s*class="sidebar"'
         
         if not data:
-            data, success, code, item, itemlist = generictools.downloadpage(list_pages[0], timeout=timeout, 
+            data, response, item, itemlist = generictools.downloadpage(list_pages[0], timeout=timeout, 
                                           decode_code=decode_code, quote_rep=True, no_comments=False, 
                                           item=item, itemlist=itemlist)         # Descargamos la página
 
         #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-        if not success or not data or not scrapertools.find_single_match(data, patron) \
+        if not response.sucess or not data or not scrapertools.find_single_match(data, patron) \
                         or not ' ) Capitulos encontrados <' in data or '>( 0 ) Capitulos encontrados <' in data \
                         or scrapertools.find_single_match(data, patron_noepis):
             if (len(itemlist) > 0 and not ') Capitulos encontrados <' in data) or '>( 0 ) Capitulos encontrados <' in data\
@@ -1967,7 +1973,7 @@ def episodios(item):
                 url_serie_nocode = scrapertools.find_single_match(data, patron_series)
                 if url_serie_nocode:
                     url_serie_nocode = '%s/%s/pg/1' % (item.url, url_serie_nocode)
-                    data, success, code, item, itemlist = generictools.downloadpage(url_serie_nocode, timeout=timeout, 
+                    data, response, item, itemlist = generictools.downloadpage(url_serie_nocode, timeout=timeout, 
                                           decode_code=decode_code, quote_rep=True, no_comments=False, 
                                           item=item, itemlist=itemlist)         # Descargamos la página
                 else:
