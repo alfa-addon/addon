@@ -192,8 +192,8 @@ def get_channel_news(channel, category, all=False):
     if platformtools.is_playing():
         return channel, brand_new, category
 
-
     news_range = config.get_setting("news_range", "news")
+
     if news_range == 5:
         news_range = 100
     ch_params = channeltools.get_channel_parameters(channel)
@@ -225,6 +225,10 @@ def get_channel_news(channel, category, all=False):
             if elem.infoLabels["year"] and str(elem.infoLabels["year"]).isdigit():
                 item_year = int(elem.infoLabels["year"])
                 this_year = datetime.date.today().year
+
+                if datetime.date.today().month < 6 and news_range == 0:
+                    news_range = 1
+
                 if not item_year in range(this_year - news_range, this_year + 1):
                     continue
             else:

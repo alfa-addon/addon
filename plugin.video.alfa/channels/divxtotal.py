@@ -34,7 +34,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host_list = ['https://www.divxtotal.nu/']
+host_list = ['https://www.divxtotal.nl/']
 channel = 'divxtotal'
 categoria = channel.capitalize()
 host_index = config.get_setting('choose_domain', channel)
@@ -1102,13 +1102,13 @@ def episodios(item):
             return itemlist                                                     # Si no hay nada más, salimos directamente
 
         patron = '(?i)<tr>\s*<td>\s*<img\s*src="[^>]+title="Idioma\s*Capitulo"\s*\/>'
-        patron += '\s*([^<]*)<a\s*class[^>]+>\s*([^<]+)<\/a>\s*<\/td>\s*<td>'
-        patron += '<a\s*target[^>]+\s*class="linktorrent"\s*href="([^"]*")[^>]*>'
+        patron += '\s*([^<]*)<a\s*class=[^>]+>\s*([^<]+)<\/a>\s*<\/td>\s*<td>'
+        patron += '\s*<[^>]+>\s*<[^>]+>\s*<\/a>\s*<\/td>\s*<td\s*class="opcion2_td"'
+        patron += '[^>]+>\s*<a\s*href="([^"]+)"'
         if not scrapertools.find_single_match(data, patron):
             patron = '(?i)<tr>\s*<td>\s*<img\s*src="[^>]+title="Idioma\s*Capitulo"\s*\/>'
-            patron += '\s*([^<]*)<a\s*class=[^>]+>\s*([^<]+)<\/a>\s*<\/td>\s*<td>'
-            patron += '\s*<[^>]+>\s*<[^>]+>\s*<\/a>\s*<\/td>\s*<td\s*class="opcion2_td"'
-            patron += '[^>]+>\s*<a\s*href="([^"]+)"'
+            patron += '\s*([^<]*)<a\s*class[^>]+>\s*([^<]+)<\/a>\s*<\/td>\s*<td>'
+            patron += '<a[^>]+\s*class="linktorrent"\s*[^>]+\s*href="([^"]*")[^>]*>'
         
         patron_epi = '(?i)(\d{1,2})(?:x|&#215;)(\d{1,2})(?:[-|\s*](?:al|-)?[-|\s*]?'
         patron_epi += '(?:\d{1,2}(?:x|&#215;))?(\d{1,2}))?'
@@ -1357,8 +1357,8 @@ def search(item, texto):
     item.extra = "search"
     
     # Mientras sea necesario el proxy, entorpece las Novedades
-    if channel in base64.b64decode(config.get_setting('proxy_channel_bloqued')).decode('utf-8'):
-        return []
+    #if channel in base64.b64decode(config.get_setting('proxy_channel_bloqued')).decode('utf-8'):
+    #    return []
     
     try:
         if texto:

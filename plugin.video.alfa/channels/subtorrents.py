@@ -756,9 +756,10 @@ def episodios(item):
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist
 
+    logger.debug(data)
     patron = '<td\s*class="capitulonombre">\s*<img\s*src="([^"]+)[^>]+>(?:<a\s*href="[^>]+>)(.*?)<\/a>\s*<\/td>\s*<td\s*class="capitulodescarga">\s*<a\s*href="([^"]+)[^>]+>.*?(?:<td\s*class="capitulofecha">.*?(\d{4})?.*?<\/td>)?(?:<td\s*class="capitulosubtitulo">\s*<a\s*href="([^"]+)[^>]+>.*?<\/td>)?'
     if not scrapertools.find_single_match(data, patron):
-        patron = '<td\s*class="capitulonombre">\s*<img\s*src="([^"]+)[^>]+><a\s*(?:target="[^"]*"\s*)?href="[^>]*title="([^"]+)">[^<]*<\/a>\s*<\/td>\s*<td\s*class="capitulodescarga">\s*<a\s*(?:target="[^"]*"\s*)?href="([^"]+)"[^>]+>.*?(?:<td\s*class="capitulofecha">.*?(\d{4})?.*?<\/td>)?.*?(?:<td\s*class="capitulosubtitulo">\s*<a\s*href="([^"]+)[^>]+>.*?<\/td>)?.*?(?:<td\s*class="capitulodescarga">\s*<a\s*(?:target="[^"]*"\s*)?href="([^"]+)")'
+        patron = '<td\s*class="capitulonombre">\s*<img\s*src="([^"]+)[^>]+><a\s*(?:target="[^"]*"\s*)?href="[^>]*title="([^"]+)">[^<]*<\/a>\s*<\/td>\s*<td\s*class="capitulodescarga">\s*<a\s*(?:target="[^"]*"\s*)?href="([^"]+)"[^>]+>.*?(?:<td\s*class="capitulofecha">.*?(\d{4})?.*?<\/td>)?.*?(?:<td\s*class="capitulosubtitulo">\s*<a\s*href="([^"]+)[^>]+>.*?<\/td>)?.*?(?:<td\s*class="capitulodescarga">\s*<a\s*(?:target="[^"]*"\s*)?href="([^"]+)")?'
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                                             #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada

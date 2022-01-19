@@ -18,12 +18,12 @@ from platformcode import config, logger
 IDIOMAS = {'Latino': 'Latino'}
 list_language = list(IDIOMAS.values())
 list_quality = []
-list_servers = ['fembed', 'streamtape', 'fastplay', 'gvideo', 'netutv', 'Jawcloud']
+list_servers = ['fembed', 'streamtape', 'gvideo', 'Jawcloud']
 
 
 __channel__='allcalidad'
 
-host = "https://allcalidad.la"
+host = "https://allcalidad.ac"
 forced_proxy_opt = 'ProxyDirect'
 encoding = "utf-8"
 
@@ -40,37 +40,9 @@ def mainlist(item):
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host, thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos_years", url = host, extra = "Genero", thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = "Por año", action = "generos_years", url = host, extra = ">Año<", thumbnail = get_thumb("year", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Favoritas", action = "favorites", url = host + "/favorites", thumbnail = get_thumb("favorites", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host, thumbnail = get_thumb("search", auto = True)))
     autoplay.show_option(item.channel, itemlist)
-    return itemlist
-
-def favorites(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
-    patron  = '(?s)short_overlay.*?<a href="([^"]+)'
-    patron += '.*?img.*?src="([^"]+)'
-    patron += '.*?title="([^"]+).*?'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for url, thumbnail, titulo in matches:
-        idioma = "Latino"
-        mtitulo = scrapertools.htmlclean(titulo + " (" + idioma + ")")
-        itemlist.append(item.clone(channel = item.channel,
-                                   action = "findvideos",
-                                   title = mtitulo,
-                                   contentTitle = titulo,
-                                   thumbnail = thumbnail,
-                                   url = url,
-                                   contentType="movie",
-                                   language = idioma
-                                   ))
-    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-    url_pagina = scrapertools.find_single_match(data, 'next" href="([^"]+)')
-    if url_pagina != "":
-        pagina = "Pagina: " + scrapertools.find_single_match(url_pagina, "page/([0-9]+)")
-        itemlist.append(Item(channel = item.channel, action = "peliculas", title = pagina, url = url_pagina))
     return itemlist
 
 
@@ -131,7 +103,7 @@ def peliculas(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url, encoding=encoding).data
-    matches = scrapertools.find_multiple_matches(data, '(?s)shortstory cf(.*?)rate_post')
+    matches = scrapertools.find_multiple_matches(data, '(?s)shortstory cf(.*?)(?:rate_post|ratebox)')
     for datos in matches:
         url = scrapertools.find_single_match(datos, 'href="([^"]+)')
         titulo = scrapertools.htmlclean(scrapertools.find_single_match(datos, 'short_header">([^<]+)').strip())
@@ -163,13 +135,13 @@ def findvideos(item):
     encontrado = []
     
     data = httptools.downloadpage(item.url, encoding=encoding).data
-
-    match = scrapertools.find_single_match(data, "<link rel='shortlink'.*?=([^']+)" )
-    data1 = httptools.downloadpage(host + "/wp-json/elifilms/movies?id=" + match, encoding=encoding, forced_proxy_opt=forced_proxy_opt).json
-    for url in data1["data"]["server_list"]:
-        if not url["link"]: continue
-        url1 = clear_url(url["link"])
-        if url1 in encontrado or "youtube.com" in url1 or "search" in url1 or 'salaload.com' in url1:
+    
+    matches = scrapertools.find_multiple_matches(data, 'data-id="([^"]+)"')
+    scrapertools.printMatches(matches)
+    for url in matches:
+        url1 = base64.b64decode(url)
+        url1 = clear_url(url1)
+        if url1 in encontrado or "youtube.com" in url1 or "search" in url1 or 'salaload.com' in url1 or not url1.startswith("http"):
             continue
         encontrado.append(url1)
         itemlist.append(Item(

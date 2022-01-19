@@ -477,7 +477,11 @@ def clean_ready(item):
             if not item.contentType == "tvshow" or (
                             (item.infoLabels.get('tmdb_id') is not None and item.infoLabels.get('tmdb_id') == download_item.infoLabels.get('tmdb_id'))
                              or item.contentSerieName.lower() == download_item.contentSerieName.lower()):
-                if download_item.downloadStatus == STATUS_CODES.completed and download_item.downloadProgress not in [-1, 1, 2, 3]:
+                if download_item.downloadStatus == STATUS_CODES.completed and download_item.downloadProgress not in [-1, 1, 2, 3, 99]:
+                    if download_item.server == 'torrent':
+                        delete_torrent_session(download_item)
+                    elif filetools.exists(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename)):
+                        filetools.remove(filetools.join(download_item.downloadAt or DOWNLOAD_PATH, download_item.downloadFilename))
                     filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, fichero))
 
     platformtools.itemlist_refresh()
@@ -840,6 +844,7 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
     filebase = ''
     folder_new = ''
     folder = ''
+    rar_control_json = {}
     downloadProgress = 0
     if action == 'pause':
         downloadProgress = -1
@@ -896,23 +901,29 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
             if action in ['reset'] and 'RAR-' in item.torrent_info and item.downloadProgress == 99:
                 delete_RAR = True
                 file_rar = ''
+                res = True
+                folder_new_mod = folder_new
                 files_rar = filetools.listdir(folder_new)
                 for file_rar in files_rar:
-                    if '.rar' in file_rar: break
-                if file_rar:
-                    delete_RAR = False
-                    res = False
+                    if '.rar' in file_rar:
+                        delete_RAR = False
+                        break
+                if file_rar and rar_control_json and rar_control_json.get('error', 0) < 4:
                     folder_new_mod = folder_new.rstrip('/').rstrip('\\')+'xyz123'
                     res = filetools.rename(folder_new, filetools.basename(folder_new_mod), strict=True)
+                    if not res:
+                        delete_RAR = True
+                        platformtools.dialog_notification('No es posible cancelar unRAR', 'Espere unos minutos...')
+                    else:
+                        platformtools.dialog_notification('Cancelando unRAR', 'Puede tardar unos minutos...')
+                if filetools.join(torrent_paths[torr_client.upper()], folder) != folder_new:
+                    res = filetools.rename(folder_new_mod, folder+'xyz123', silent=True, strict=True)
                     if not res: delete_RAR = True
-                    if filetools.join(torrent_paths[torr_client.upper()], folder) != folder_new:
-                        res = filetools.rename(folder_new_mod, folder+'xyz123', silent=True, strict=True)
-                        if not res: delete_RAR = True
-                    if not delete_RAR:
-                        if res: folder_new = filetools.join(torrent_paths[torr_client.upper()], folder)
-                        item.downloadFilename = ':%s: %s' % (torr_client.upper(), filetools.join(folder, file_rar))
-                        filetools.remove(filetools.join(folder_new_mod, '_rar_control.json'), silent=True)
-                        filetools.rmdirtree(filetools.join(folder_new_mod, 'Extracted'), silent=True)
+                if not delete_RAR:
+                    folder_new = filetools.join(torrent_paths[torr_client.upper()], folder)
+                    item.downloadFilename = ':%s: %s' % (torr_client.upper(), filetools.join(folder, file_rar))
+                    filetools.remove(filetools.join(folder_new_mod, '_rar_control.json'), silent=True)
+                    filetools.rmdirtree(filetools.join(folder_new_mod, 'Extracted'), silent=True)
                         
             elif action in ['reset', 'delete'] and 'RAR-' in item.torrent_info and item.downloadProgress != 99:
                 delete_RAR = True
@@ -1714,6 +1725,7 @@ def get_episodes(item):
     nfo_json = {}
     serie_path = ''
     episode_local = False
+    episode_sort = True
     remote = False
     season = item.infoLabels['season']
     sesxepi = []
@@ -1742,10 +1754,11 @@ def get_episodes(item):
             break
     
     # El item que pretendemos descargar YA es un episodio
-    if item.contentType == "episode" and item.sub_action not in sub_action:
+    if item.contentType == "episode" and (not item.sub_action or item.sub_action not in sub_action):
         episodes = [item.clone()]
         if item.strm_path and not remote:
             episode_local = True
+            episode_sort = False
 
     # El item es uma serie o temporada
     elif item.contentType in ["tvshow", "season"] or item.sub_action in sub_action:
@@ -1912,7 +1925,7 @@ def get_episodes(item):
                 del episode.emergency_urls
             elif episode_local:
                 episode.torrent_alt = episode.url
-                episode.emergency_urls[0] = sort_torrents(episode.emergency_urls[0], emergency_urls=True)
+                if episode_sort: episode.emergency_urls[0] = sort_torrents(episode.emergency_urls[0], emergency_urls=True)
                 if episode.emergency_urls[0]:
                     episode.url = episode.emergency_urls[0][0]
 

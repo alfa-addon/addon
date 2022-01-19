@@ -2499,7 +2499,10 @@ class DirectReader(RarExtFile):
 
         # open next part
         self._volfile = self._parser._next_volname(self._volfile)
-        fd = open(self._volfile, "rb", 0)
+        try:
+            fd = open(self._volfile, "rb", 0)
+        except:
+            raise RarUserBreak("Missing volume or User cancelled")
         self._fd = fd
         sig = fd.read(len(self._parser._expect_sig))
         if sig != self._parser._expect_sig:

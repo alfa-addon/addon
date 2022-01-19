@@ -955,7 +955,10 @@ def episodios(item):
                                           item=item, itemlist=[])               # Descargamos la página de Temporadas
     
     # Si la series tiene solo una temporada, o se lista solo una temporada, guardamos la url y seguimos normalmente
-    list_temp = re.compile(patron, re.DOTALL).findall(data)
+    list_temp_init = re.compile(patron, re.DOTALL).findall(data)
+    list_temp = []
+    for temp, url in list_temp_init:
+        list_temp.append((temp, generictools.convert_url_base64(url, host)))
     if len(list_temp) == 0:
         list_temp.append(item.url)
 
@@ -981,9 +984,9 @@ def episodios(item):
         
         matches = re.compile(patron, re.DOTALL).findall(data)
 
-        logger.debug("PATRON: " + patron)
-        logger.debug(matches)
-        logger.debug(data)
+        #logger.debug("PATRON: " + patron)
+        #logger.debug(matches)
+        #logger.debug(data)
 
         # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
         x = 0

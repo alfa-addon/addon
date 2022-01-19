@@ -181,7 +181,7 @@ def open_settings():
         set_setting('adult_aux_new_password2', '')
 
 
-def get_setting(name, channel="", server="", default=None):
+def get_setting(name, channel="", server="", default=None, caching_var=True):
     """
     Retorna el valor de configuracion del parametro solicitado.
 
@@ -489,3 +489,61 @@ TRANSLATION_FILE_PATH = os.path.join(get_runtime_path(), "resources", "language"
 # si es == 2 lo desactivamos.
 if get_setting("adult_mode") == 2:
     set_setting("adult_mode", 0)
+
+
+def decode_var(value, trans_none='', decode_var_=True):
+    """
+    Convierte una cadena de texto, lista o dict al juego de caracteres utf-8
+    eliminando los caracteres que no estén permitidos en utf-8
+    @type: str, unicode, list de str o unicode, dict list de str o unicode o list
+    @param value: puede ser una string o un list() o un dict{} con varios valores
+    @rtype: str
+    @return: valor codificado en UTF-8
+    """
+    if not decode_var_:
+        return value
+    
+    if not value:
+        if value is None: value = trans_none
+        elif PY3 and value == b'': value = ''
+        elif str(value) == '': value = ''
+        return value
+        
+    if isinstance(value, (bool, int, float)):
+        return value
+    
+    if isinstance(value, list):
+        for x in range(len(value)):
+            value[x] = decode_var(value[x], trans_none=trans_none)
+    elif isinstance(value, tuple):
+        value = tuple(decode_var(list(value), trans_none=trans_none))
+    elif isinstance(value, dict):
+        newdct = {}
+        for key in value:
+            value_unc = decode_var(value[key], trans_none=trans_none)
+            key_unc = decode_var(key, trans_none=trans_none)
+            newdct[key_unc] = value_unc
+        return newdct
+    elif isinstance(value, unicode):
+        value = value.encode("utf8")
+    elif not PY3 and isinstance(value, basestring):
+        value = unicode(value, "utf8", "ignore").encode("utf8")
+    
+    if PY3 and isinstance(value, bytes):
+        value = value.decode("utf8")
+
+    return value
+
+
+def importer(module):
+    try:
+        # from core import scrapertools, filetools
+        from core import filetools
+        path = os.path.join(xbmcaddon.Addon(module).getAddonInfo("path"))
+        ad = filetools.read(filetools.join(path, "addon.xml"), silent=True)
+        if ad:
+            # lib_path = scrapertools.find_single_match(ad, 'library="([^"]+)"')
+            lib_path = re.search('library="([^"]+)"', ad).group(1)
+            sys.path.append(os.path.join(path, lib_path))
+    except:
+        pass

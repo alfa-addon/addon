@@ -1017,7 +1017,7 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
     try:
         uri = '%s/list' % (local_host[torr_client])
         if "torrest" in torr_client:
-            uri = '%s/?status=true' % (local_host[torr_client])
+            uri = '%s?status=true' % (local_host[torr_client].rstrip('/'))
         for z in range(10): 
             res = httptools.downloadpage(uri, timeout=10, alfa_s=alfa_s)
             if not res.data:
@@ -1132,6 +1132,8 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
                     if action == 'stop' : action += 'pe'
                     if action == 'reset' : action += 'e'
                     log('##### Descarga %sD de %s: %s' % (action.upper(), str(torr_client).upper(), str(y)))
+                elif torr_client in ['torrest']:
+                    log('##### ERROR en %s%s/%s - ERROR Code: %s' % (local_host[torr_client], y, action_f, str(res.code)))
                 else:
                     log('##### ERROR en %s%s/%s - ERROR Code: %s' % (local_host[torr_client], action_f, y, str(res.code)))
                 time.sleep(1)
@@ -1151,14 +1153,17 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
 
 def delete_torrent_folder(folder_new):
     logger.info(folder_new)
+    folder_new_sufix = folder_new + 'xyz123'
 
     for x in range(10):
-        if not filetools.exists(folder_new):
+        if not filetools.exists(folder_new) and not filetools.exists(folder_new_sufix):
             break
-        if filetools.isdir(folder_new):
+        if filetools.isdir(folder_new) or filetools.isdir(folder_new_sufix):
             filetools.rmdirtree(folder_new, silent=True)
-        elif filetools.isfile(folder_new):
+            filetools.rmdirtree(folder_new_sufix, silent=True)
+        elif filetools.isfile(folder_new) or filetools.isfile(folder_new_sufix):
             filetools.remove(folder_new, silent=True)
+            filetools.remove(folder_new_sufix, silent=True)
         else:
             break
         time.sleep(1)
@@ -2113,7 +2118,8 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                                     '(^.*?\%)'), index, torr_data_status, torr_down_rate, \
                                     totals.get('download_rate', ''), totals.get('num_torrents', ''), 
                                     totals.get('progress', ''), totals.get('total_wanted', '')))
-                time.sleep(wait_time)
+                if monitor.waitForAbort(wait_time):                             # Esperamos un poco y volvemos a empezar
+                    return ('', '', folder, rar_control)
                 continue
 
             if len(video_names) > 1 and filetools.exists(filetools.join(torrent_paths[torr_client.upper()], folder)) \
@@ -2243,7 +2249,8 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                 if not rar or fast:
                     fast = False
                     break
-                time.sleep(wait_time)                                           # Esperamos un poco y volvemos a empezar
+                if monitor.waitForAbort(wait_time):                             # Esperamos un poco y volvemos a empezar
+                    return ('', '', folder, rar_control)
         else:
             rar = False
             break
@@ -2363,22 +2370,26 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
     rar_control = update_rar_control(erase_file_path, status='UnRARing', item=item)
 
     # Permite hasta 5 pasadas de extracción de .RARs anidados
-    platformtools.dialog_notification("Empezando extracción...", rar_file)
+    platformtools.dialog_notification("Empezando extracción...", filetools.basename(rar_file))
     for x in range(5):
         try:
-            time.sleep(3)                                                       # Dejamos un tiempo para evitar colisiones (???)
+            time.sleep(1)                                                       # Dejamos un tiempo para evitar colisiones (???)
             archive = rarfile.RarFile(file_path)
         except:
             log("##### ERROR en Archivo rar: %s" % rar_file)
             log("##### ERROR en Carpeta del rar: %s" % file_path)
-            log(traceback.format_exc())
+            log(traceback.format_exc(1))
             error_msg = "Error al abrir el RAR"
             error_msg1 = "Comprueba el log para más detalles"
             platformtools.dialog_notification(error_msg, error_msg1)
             rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
-            dp.close()
             config.set_setting("UNRAR_in_use", False, server="torrent")         # Marcamos unRAR como disponible
-            return custom_code.reactivate_unrar(init=False, mute=False)
+            if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
+                time.sleep(4)                                                   # Dejamos un tiempo para evitar colisiones (???)
+                return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
+                        torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
+            else:
+                return rar_file, False, '', erase_file_path
 
         # Analizamos si es necesaria una contraseña, que debería estar en item.password
         if archive.needs_password():
@@ -2390,9 +2401,13 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 if not password:
                     error_msg = "No se ha introducido la contraseña"
                     rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
-                    dp.close()
                     config.set_setting("UNRAR_in_use", False, server="torrent") # Marcamos unRAR como disponible
-                    return custom_code.reactivate_unrar(init=False, mute=False)
+                    if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
+                        time.sleep(4)                                           # Dejamos un tiempo para evitar colisiones (???)
+                        return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
+                                torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
+                    else:
+                        return rar_file, False, '', erase_file_path
             archive.setpassword(password)
             log("##### Password rar: %s" % password)
 
@@ -2415,9 +2430,13 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
             error_msg1 = "O no contiene archivos válidos"
             platformtools.dialog_notification(error_msg, error_msg1)
             rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
-            dp.close()
             config.set_setting("UNRAR_in_use", False, server="torrent")         # Marcamos unRAR como disponible
-            return custom_code.reactivate_unrar(init=False, mute=False)
+            if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
+                time.sleep(4)                                                   # Dejamos un tiempo para evitar colisiones (???)
+                return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
+                        torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
+            else:
+                return rar_file, False, '', erase_file_path
 
         # Seleccionamos extraer TODOS los archivos del RAR
         #selection = xbmcgui.Dialog().select("Selecciona el fichero a extraer y reproducir", info)
@@ -2444,13 +2463,16 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 log("##### RAR Extract END #####")
             except rarfile.RarUserBreak:
                 error_msg = "Cancelado por el Usuario"
-                error_msg1 = "Archivo rar no descomprimido"
+                error_msg1 = "Archivo RAR no descomprimido"
                 log("##### %s" % error_msg)
                 platformtools.dialog_notification(error_msg, error_msg1)
                 config.set_setting("UNRAR_in_use", False, server="torrent")     # Marcamos unRAR como disponible
                 save_path_videos_mod = filetools.dirname(file_path_org.rstrip('/').rstrip('\\'))+'xyz123'
                 if filetools.exists(save_path_videos_mod):
-                    res = filetools.rename(save_path_videos_mod, filetools.basename(file_path_org))
+                    res = filetools.rename(save_path_videos_mod, filetools.basename(filetools.dirname(file_path_org)))
+                    filetools.rmdirtree(filetools.join(filetools.dirname(file_path_org), 'Extracted'), silent=True)
+                    if not filetools.listdir(file_path_org) and file_path_org != org_save_path_videos:
+                        filetools.rmdirtree(file_path_org, silent=True)
                     if not res:
                         error_msg = "Error al renombrar la carpeta reseteada"
                         log("##### %s: %s" % (error_msg, save_path_videos_mod))
@@ -2461,28 +2483,39 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 error_msg1 = "Contraseña incorrecta"
                 platformtools.dialog_notification(error_msg, error_msg1)
                 rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg1, status='ERROR')
-                dp.close()
                 config.set_setting("UNRAR_in_use", False, server="torrent")     # Marcamos unRAR como disponible
-                return custom_code.reactivate_unrar(init=False, mute=False)
+                if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
+                    time.sleep(4)                                               # Dejamos un tiempo para evitar colisiones (???)
+                    return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
+                            torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
+                else:
+                    return rar_file, False, '', erase_file_path
             except rarfile.BadRarFile:
                 logger.error(traceback.format_exc(1))
                 error_msg = "Error al extraer"
-                error_msg1 = "Archivo rar con errores"
+                error_msg1 = "Archivo RAR con errores"
                 platformtools.dialog_notification(error_msg, error_msg1)
                 rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg1, status='ERROR')
-                #return rar_file, False, '', erase_file_path
-                dp.close()
                 config.set_setting("UNRAR_in_use", False, server="torrent")     # Marcamos unRAR como disponible
-                return custom_code.reactivate_unrar(init=False, mute=False)
+                if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
+                    time.sleep(4)                                                   # Dejamos un tiempo para evitar colisiones (???)
+                    return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
+                            torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
+                else:
+                    return rar_file, False, '', erase_file_path
             except:
                 logger.error(traceback.format_exc(1))
                 error_msg = "Error al extraer"
                 error_msg1 = "Comprueba el log para más detalles"
                 platformtools.dialog_notification(error_msg, error_msg1)
                 rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
-                dp.close()
                 config.set_setting("UNRAR_in_use", False, server="torrent")     # Marcamos unRAR como disponible
-                return custom_code.reactivate_unrar(init=False, mute=False)
+                if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
+                    time.sleep(4)                                               # Dejamos un tiempo para evitar colisiones (???)
+                    return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
+                            torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
+                else:
+                    return rar_file, False, '', erase_file_path
 
             extensions_list = ['.aaf', '.3gp', '.asf', '.avi', '.flv', '.mpeg',
                                '.m1v', '.m2v', '.m4v', '.mkv', '.mov', '.mpg',
@@ -2513,8 +2546,9 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                         save_path_videos = filetools.join(save_path_videos, 'Extracted')
                         rar_control = update_rar_control(erase_file_path, newextract=(rar_file))
                         if not filetools.exists(save_path_videos): filetools.mkdir(save_path_videos)
-                        platformtools.dialog_notification("Siguiente extracción...", rar_file)
+                        platformtools.dialog_notification("Siguiente extracción...", filetools.basename(rar_file))
                         break
+                time.sleep(1)                                                   # Dejamos un tiempo para evitar colisiones (???)
             
             # Si ya se ha extraido todo, preparamos el retorno            
             else:
@@ -2529,8 +2563,12 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                     error_msg1 = "O no contiene archivos válidos"
                     platformtools.dialog_notification(error_msg, error_msg1)
                     rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
-                    dp.close()
-                    return custom_code.reactivate_unrar(init=False, mute=False)
+                    if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
+                        time.sleep(4)                                           # Dejamos un tiempo para evitar colisiones (???)
+                        return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
+                                torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
+                    else:
+                        return rar_file, False, '', erase_file_path
                 
                 else:
                     item.downloadFilename = ':%s: %s' % (torr_client.upper(), \
@@ -2540,7 +2578,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                     update_control(item, function='extract_files_END')
                     
                     log("##### Archivo extraído: %s" % video_list[0])
-                    platformtools.dialog_notification("Archivo extraído...", video_list[0])
+                    platformtools.dialog_notification("Archivo extraído...", filetools.basename(video_list[0]))
                     log("##### Archivo remove: %s" % file_path)
                     #rar_control = update_rar_control(erase_file_path, status='DONE', item=item)
                     ret = filetools.remove(filetools.join(erase_file_path, '_rar_control.json'), silent=True)
@@ -2587,7 +2625,7 @@ def rename_rar_dir(item, rar_file, save_path_videos, video_path, torr_client):
         if filetools.exists(dst):                                               # Si la carpeta ya existe de una descarga anterior, salimos
             return rename_status, rar_file, item
         
-        time.sleep(5)                                                           # Tiempo de seguridad para pausar el .torrent
+        time.sleep(4)                                                           # Tiempo de seguridad para pausar el .torrent
         for x in range(20):
             if (monitor and monitor.abortRequested()) or (not monitor and xbmc.abortRequested):
                 return rename_status, rar_file, item
@@ -2700,8 +2738,38 @@ def update_rar_control(path, newpath='', newextract='', password='', error='', e
         logger.error(traceback.format_exc(1))
         
     return rar_control
+
+
+def check_rar_control(folder, error=True, torr_client=None, init=False):
     
+    rar_control_file = filetools.join(folder, '_rar_control.json')
+    if not filetools.exists(rar_control_file):
+        return {}
     
+    rar_control = jsontools.load(filetools.read(rar_control_file))
+    rar_control['status'] += ': Recovery'
+    if ('UnRARing' in rar_control['status'] or 'RECOVERY' in rar_control['status']) and not init:
+        return {}
+    if 'UnRARing' in rar_control['status'] or 'ERROR' in rar_control['status']:
+        rar_control['status'] = 'RECOVERY: ' + rar_control['status']
+    rar_control['download_path'] = folder
+    rar_control['torr_client'] = torr_client
+    if error and not init and ('ERROR' in rar_control['status'] or 'UnRARing' in rar_control['status'] \
+                or 'RECOVERY' in rar_control['status']):
+        rar_control['error'] += 1
+    ret = filetools.write(rar_control_file, jsontools.dump(rar_control))
+    logger.debug('%s, %s, %s, %s, %s, %s' % (rar_control['download_path'], \
+                rar_control['rar_names'][0], rar_control['password'], \
+                str(rar_control['error']), rar_control['error_msg'], rar_control['status']))
+    if ('ERROR' in rar_control['status'] and rar_control['error'] > 3) \
+                or ('UnRARing' in rar_control['status'] and rar_control['error'] > 3) \
+                or ('RECOVERY' in rar_control['status'] and rar_control['error'] > 3)  \
+                or 'DONE' in rar_control['status'] or not ret:
+        return {}
+    
+    return rar_control
+
+
 def shorten_rar_path(item):
     
     # Preparamos un path alternativo más corto para no sobrepasar la longitud máxima
