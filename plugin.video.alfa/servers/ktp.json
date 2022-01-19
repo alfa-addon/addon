@@ -28,11 +28,11 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.camwhores.(?:tv|com|org)/videos/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(http(?:s|)://www.(?:camwhores|camwhoreshd).(?:tv|com|org)/videos/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
-        "pattern": "(http://www.(?:camwhores|camwhoreshd|camvideos|cwtvembeds).(?:tv|com|org)/embed/[A-z0-9-]+)",
+        "pattern": "(http(?:s|)://www.(?:camwhores|camwhoreshd|camvideos|cwtvembeds).(?:tv|com|org)/embed/[A-z0-9-]+)",
         "url": "\\1"
       },
       {
@@ -40,7 +40,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.porn00.(?:org|tv)/video/[A-z0-9-]+/)",
+        "pattern": "(https://www.(?:porn00|xmegadrive).(?:org|tv|com)/video(?:s|)/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {

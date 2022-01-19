@@ -20,6 +20,8 @@ def get_video_url(page_url, video_password):
         decoded = codecs.decode(elem, "hex")
         url += decoded.decode("utf8")
     url= scrapertools.find_single_match(url, '<source src="([^"]+)"')
+    if not url:
+        url= scrapertools.find_single_match(data, '<source src="([^"]+)"')
     video_urls.append(["[youdbox]", url])
     return video_urls
 

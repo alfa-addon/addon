@@ -53,9 +53,9 @@ def categorias(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('li', class_='tag-menu')
+    matches = soup.find('div', class_='tagcloud').find_all('a')
     for elem in matches:
-        url = elem.a['href']
+        url = elem['href']
         title = elem.text.strip()
         thumbnail = ""
         plot = ""
@@ -63,6 +63,7 @@ def categorias(item):
                               thumbnail=thumbnail , plot=plot) )
     itemlist.sort(key=lambda x: x.title)
     return itemlist
+
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
@@ -80,14 +81,14 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('div', class_='video-block')
+    matches = soup.find_all('article', class_='vdeo')
     for elem in matches:
         url = elem.a['href']
-        title = elem.find('span', class_='title').text.strip()
-        thumbnail = elem.img['data-src']
-        time = elem.find('span', class_='duration')
+        title = elem.find('h2').text.strip()
+        thumbnail = elem.img['src']
+        time = elem.find('i', class_='fa-clock')
         if time:
-            title = "[COLOR yellow]%s[/COLOR] %s" % (time.text, title)
+            title = "[COLOR yellow]%s[/COLOR] %s" % (time.parent.text, title)
         plot = ""
         action = "play"
         if logger.info() == False:
@@ -106,7 +107,9 @@ def findvideos(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    url = soup.find('div', class_='video-player').iframe['src']
+    url = soup.find('div', id='player-torotube').iframe['src']
+    soup = create_soup(url)
+    url = soup.find('iframe', class_='iframe')['src']
     itemlist.append(Item(channel=item.channel, title='%s', contentTitle = item.contentTitle, url=url, action='play'))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
     return itemlist
@@ -116,7 +119,9 @@ def play(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    url = soup.find('div', class_='video-player').iframe['src']
+    url = soup.find('div', id='player-torotube').iframe['src']
+    soup = create_soup(url)
+    url = soup.find('iframe', class_='iframe')['src']
     itemlist.append(Item(channel=item.channel, title='%s', contentTitle = item.contentTitle, url=url, action='play'))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
     return itemlist

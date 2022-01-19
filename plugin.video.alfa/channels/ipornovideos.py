@@ -114,7 +114,7 @@ def findvideos(item):
     match = re.compile('data-fo="([^"]+)"\s*data-id="([^"]+)">', re.DOTALL).findall(str(soup))
     blocks = re.compile('\[data-id="([^"]+)"\]\{display:block;\}', re.DOTALL).findall(str(soup))
     for m in match:
-        if m[0] in ('k2s.cc', 'www.xmegadrive.com' ) : continue
+        if m[0] in ('k2s.cc', 'tezfiles.com' ) : continue  #, 'www.xmegadrive.com'
         if m[1] not in blocks: continue
         id = m[1]
         fo = m[0]
@@ -132,3 +132,4 @@ def findvideos(item):
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
     return itemlist
+

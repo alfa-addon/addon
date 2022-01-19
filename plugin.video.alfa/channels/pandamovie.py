@@ -18,6 +18,8 @@ from core.item import Item
 from core import httptools
 from channels import filtertools
 from channels import autoplay
+from bs4 import BeautifulSoup
+
 
 IDIOMAS = {'vo': 'VO'}
 list_language = list(IDIOMAS.values())
@@ -35,19 +37,31 @@ def mainlist(item):
 
     itemlist = []
     itemlist.append(item.clone(title="Peliculas", action="lista", url=host + "/movies"))
-    itemlist.append(item.clone(title="Canal", action="categorias", url=host + "/movies"))
-    itemlist.append(item.clone(title="Categorias", action="categorias", url=host + "/movies"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
-
+    itemlist.append(item.clone(title="Year", action="categorias", url=host + "/movies", id="menu-item-23"))
+    itemlist.append(item.clone(title="Canal", action="categorias", url=host + "/movies", id="menu-item-23"))
+    itemlist.append(item.clone(title="Categorias", action="categorias", url=host + "/movies", id="menu-item-25"))
+    itemlist.append(item.clone(title="Buscar", action="search", url=host + "/movies"))
+    itemlist.append(item.clone(title="-------------------"))
+    itemlist.append(item.clone(title="Escenas", action="submenu", url=host + "/xxxscenes"))
+    
     autoplay.show_option(item.channel, itemlist)
 
+    return itemlist
+
+
+def submenu(item):
+    logger.info()
+    itemlist = []
+    itemlist.append(item.clone(title="Ultimos", action="lista", url=item.url + "/movies"))
+    itemlist.append(item.clone(title="Categorias", action="categorias", id="menu-item-38760"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/?s=%s" % (host, texto)
+    item.url = "%s/search/%s" % (item.url, texto)
     try:
         return lista(item)
     except:
@@ -58,46 +72,61 @@ def search(item, texto):
 
 
 def categorias(item):
+    logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    if item.title == "Categorias":
-        data = scrapertools.find_single_match(data, '<a href="#">Genres</a>(.*?)</ul>')
+    soup = create_soup(item.url).find('ul', class_='top-menu')
+    if "Categorias" in item.title:
+        matches = soup.find_all(href=re.compile("/genre/"))
+    elif "Year" in item.title:
+        matches = soup.find_all(href=re.compile("/release-year/"))
     else:
-        data = scrapertools.find_single_match(data, '<a href="#">Studios</a>(.*?)</ul>')
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<a href="([^"]+)">([^<]+)</a>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle in matches:
-        scrapedplot = ""
-        scrapedthumbnail = ""
-        if not scrapedurl.startswith("https"):
-            scrapedurl = "https:%s" % scrapedurl
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, plot=scrapedplot))
+        matches = soup.find_all(href=re.compile("/director/"))
+    for elem in matches:
+        url = elem['href']
+        title = elem.text.strip()
+        plot = ""
+        thumbnail = ""
+        if not url.startswith("https"):
+            url = "https:%s" % url
+        itemlist.append(item.clone(action="lista", title=title, url=url,
+                             thumbnail=thumbnail, plot=plot))
+    if "Year" in item.title:
+        itemlist.reverse()
     return itemlist
+
+
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<div data-movie-id="\d+".*?'
-    patron += '<a href="([^"]+)".*?oldtitle="([^"]+)".*?'
-    patron += '<img data-original="([^"]+)".*?'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
-        url = urlparse.urljoin(item.url, scrapedurl)
-        title = scrapedtitle
-        thumbnail = scrapedthumbnail
-        plot = ""
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', class_='ml-item')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.a['oldtitle']
+        thumbnail = elem.img['src']
+        if not "xxxscenes" in item.url:
+            year = elem.find('div', class_='jtip-top').a.text.strip()
+        else:
+            year = ""
         itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumbnail,
-                             fanart=thumbnail, plot=plot, contentTitle=title))
-    next_page = scrapertools.find_single_match(data, '<li class=\'active\'>.*?href=\'([^\']+)\'>')
-    if next_page == "":
-        next_page = scrapertools.find_single_match(data, '<a.*?href="([^"]+)" >Next &raquo;</a>')
-    if next_page != "":
+                             fanart=thumbnail, contentTitle=title, infoLabels={"year": year} ))
+    next_page = soup.find('li', class_='active')
+    if next_page and next_page.find_next_sibling("li"):
+        next_page = next_page.find_next_sibling("li").a['href']
         next_page = urlparse.urljoin(item.url, next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page))
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -105,12 +134,10 @@ def findvideos(item):
     logger.info()
     itemlist = []
     video_urls = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    links_data = scrapertools.find_single_match(data, '<div id="pettabs">(.*?)<div id="pettabs">')
-    patron = 'href="([^"]+)"'
-    matches = re.compile(patron, re.DOTALL).findall(links_data)
-    for url in matches:
+    soup = create_soup(item.url).find('div', id='pettabs')
+    matches = soup.find_all('a')
+    for elem in matches:
+        url = elem['href']
         if not url in video_urls:
             video_urls += url
             itemlist.append(item.clone(title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
