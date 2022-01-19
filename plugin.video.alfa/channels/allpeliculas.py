@@ -83,7 +83,8 @@ def list_all(item):
         url = elem.find("a", class_="btn")["href"]
 
         full_title = elem.h2.text
-        logger.debug(full_title)
+        if "netflix" in full_title.lower():
+            continue
         try:
             title, year = scrapertools.find_single_match(full_title, "(.*) \((\d{4})\)")
         except:
