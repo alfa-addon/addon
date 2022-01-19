@@ -195,8 +195,7 @@ def get_language_and_set_filter(*args):
     else:
         lang_list = args[1].find_all("span", class_="lang")
         for lang in lang_list:
-            logger.debug(lang)
-            lang = scrapertools.find_single_match(lang.img["src"], r'/\d{02}/([^.]+).png')
+            lang = scrapertools.find_single_match(lang.img["data-lazy-src"], r'/\d{02}/([^.]+).png')
             if lang not in language:
                 language.append(IDIOMAS[lang])
 

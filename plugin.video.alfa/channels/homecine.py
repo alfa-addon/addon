@@ -103,7 +103,12 @@ def seasons(item):
 def episodesxseason(item):
     logger.info()
 
-    return AlfaChannel.episodes(item)
+    itemlist = AlfaChannel.episodes(item)
+
+    for item in itemlist:
+        if not item.url.startswith(host):
+            item.url = host + item.url
+    return itemlist
 
 
 def episodios(item):
