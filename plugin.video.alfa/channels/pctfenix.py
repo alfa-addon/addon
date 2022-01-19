@@ -126,7 +126,7 @@ def submenu(item):
     item.extra2 = ''
     matches_hd = []
     
-    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
                                           decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
         
     patron = '<div\s*class="[^"]+">\s*<h4>\s*Categorias\s*<\/h4>\s*<ul>(.*?)<\/ul>\s*<\/div>'
@@ -274,7 +274,7 @@ def listado(item):                                                              
         cnt_match = 0                                                           # Contador de líneas procesadas de matches
 
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
-            data, success, code, item, itemlist = generictools.downloadpage(next_page_url, 
+            data, response, item, itemlist = generictools.downloadpage(next_page_url, 
                                           timeout=timeout_search, post=post, s2=True, 
                                           decode_code=decode_code, quote_rep=True, 
                                           forced_proxy_opt=forced_proxy_opt, 
@@ -302,7 +302,7 @@ def listado(item):                                                              
                     continue
 
                 last_page = 0
-                if len(itemlist) > 0 or success:                                # Si hay algo que pintar lo pintamos
+                if len(itemlist) > 0 or response.sucess:                        # Si hay algo que pintar lo pintamos
                     break
 
                 logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL" 
@@ -668,7 +668,12 @@ def findvideos(item):
     itemlist_f = []                                                             #Itemlist de enlaces filtrados
     matches = []
     data = ''
-    code = 0
+    response = {
+                'data': data, 
+                'sucess': False, 
+                'code': 0
+               }
+    response = type('HTTPResponse', (), response)
     if not item.language:
         item.language = ['CAST']                                                #Castellano por defecto
     
@@ -693,7 +698,7 @@ def findvideos(item):
             item.url = item.url.replace(sufix, sufix+download_sufix)
     
     if not item.matches:
-        data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, 
+        data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, 
                                           decode_code=decode_code, quote_rep=True, post=post, 
                                           item=item, itemlist=[])               # Descargamos la página)
         data = data.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
@@ -728,7 +733,8 @@ def findvideos(item):
     if data_descargar: enlaces_descargar = re.compile(patron_directos, re.DOTALL).findall(data_descargar)
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if (not data and not item.matches) or code == 999 or (not url_torr and not enlaces_ver and not enlaces_descargar): # Si no hay datos o url, error
+    if (not data and not item.matches) or response.code == 999 or \
+                (not url_torr and not enlaces_ver and not enlaces_descargar):   # Si no hay datos o url, error
         if not url_torr and not enlaces_ver and not enlaces_descargar and 'Archivo torrent no Existe' in data:
             return itemlist                                                     #No hay enlaces
         
@@ -792,7 +798,7 @@ def findvideos(item):
                 if url_torr.startswith('http') or url_torr.startswith('//'):
                     url_torr = urlparse.urljoin(host, url_torr)
                 
-                data_alt, success, code, item, itemlist = generictools.downloadpage(url_torr, timeout=timeout_search, 
+                data_alt, response, item, itemlist = generictools.downloadpage(url_torr, timeout=timeout_search, 
                                           decode_code=decode_code, quote_rep=True, post=post_match, 
                                           item=item, itemlist=itemlist)         # Descargamos la página)
                 data_alt = data_alt.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
@@ -1238,6 +1244,12 @@ def episodios(item):
     
     if not list_pages: list_pages = [item.url]
     data = ''
+    response = {
+                'data': data, 
+                'sucess': False, 
+                'code': 0
+               }
+    response = type('HTTPResponse', (), response)
     list_episodes = []
     first = True
     quality = item.quality
@@ -1248,7 +1260,7 @@ def episodios(item):
         patron = 'onClick="modCap\((\d+)\)">([^<]+)<'
         
         if not data:
-            data, success, code, item, itemlist = generictools.downloadpage(list_pages[0], timeout=timeout, 
+            data, response, item, itemlist = generictools.downloadpage(list_pages[0], timeout=timeout, 
                                           decode_code=decode_code, quote_rep=True, no_comments=False, post=post[0], 
                                           item=item, itemlist=itemlist)         # Descargamos la página
             del list_pages[0]
@@ -1265,7 +1277,7 @@ def episodios(item):
             data = ''
             continue
         
-        if not success or not data or not scrapertools.find_single_match(data, patron):
+        if not response.sucess or not data or not scrapertools.find_single_match(data, patron):
             if len(itemlist) > 0:
                 break
 

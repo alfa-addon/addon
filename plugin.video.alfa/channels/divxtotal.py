@@ -121,14 +121,14 @@ def submenu(item):
     thumb_generos = get_thumb("genres.png")
     
     patron = '<ul\s*class="nav\s*navbar-nav"\s*>(.*?)<\/ul>'
-    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
                                           patron=patron, item=item, itemlist=[])    # Descargamos la página
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not success or itemlist:                                                 # Si ERROR o lista de errores lo reintentamos con otro Host
-        item.url, data, success, code, item, itemlist = choose_alternate_domain(item, \
+    if not response.sucess or itemlist:                                                 # Si ERROR o lista de errores lo reintentamos con otro Host
+        item.url, data, response, item, itemlist = choose_alternate_domain(item, \
                                         url=item.url, code=code, patron=patron, itemlist=[])
-        if not success or itemlist:                                             # Si ERROR o lista de errores ...
+        if not response.sucess or itemlist:                                             # Si ERROR o lista de errores ...
             return itemlist                                                     # ... Salimos
 
     # Seleccionamos bloque
@@ -220,14 +220,14 @@ def novedades(item):
     patron = '<div\s*class="row"\s*>\s*<div\s*class=[^>]*>([^<]*)<\/div>'
     patron += '(?:\s*<div[^>]*>)?\s*<a\s*onmouseover="[^"]*javascript:cambia_'
     patron += '(?:movies|series)\S*\("([^"]+)"\);"\s*href="([^"]+)"[^>]+>([^"]+)<\/a>'
-    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
                                           patron=patron, item=item, itemlist=[])    # Descargamos la página
     
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not success or itemlist:                                                 # Si ERROR o lista de errores lo reintentamos con otro Host
-        item.url, data, success, code, item, itemlist = choose_alternate_domain(item, \
+    if not response.sucess or itemlist:                                                 # Si ERROR o lista de errores lo reintentamos con otro Host
+        item.url, data, response, item, itemlist = choose_alternate_domain(item, \
                                         url=item.url, code=code, patron=patron, itemlist=[])
-        if not success or itemlist:                                             # Si ERROR o lista de errores ...
+        if not response.sucess or itemlist:                                             # Si ERROR o lista de errores ...
             return itemlist                                                     # ... Salimos
 
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -334,7 +334,7 @@ def listado(item):                                                              
         data = ''
         cnt_match = 0                                                           # Contador de líneas procesadas de matches
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
-            data, success, code, item, itemlist = generictools.downloadpage(next_page_url, headers=headers, 
+            data, response, item, itemlist = generictools.downloadpage(next_page_url, headers=headers, 
                                           timeout=timeout_search, post=post, referer=referer, 
                                           item=item, itemlist=itemlist)         # Descargamos la página)
 
@@ -665,7 +665,12 @@ def findvideos(item):
     itemlist_f = []                                                             # Itemlist de enlaces filtrados
     matches = []
     data = ''
-    code = 0
+    response = {
+                'data': data, 
+                'sucess': False, 
+                'code': 0
+               }
+    response = type('HTTPResponse', (), response)
     post = None
     headers = None
     referer = None
@@ -696,12 +701,12 @@ def findvideos(item):
     
     # Bajamos los datos de las páginas
     if not item.matches:
-        data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_find, post=post, headers=headers, 
+        data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_find, post=post, headers=headers, 
                                           referer=referer, s2=False, follow_redirects=follow_redirects, 
                                           item=item, itemlist=[])               # Descargamos la página)
     
     # Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if (not data and not item.matches) or code == 999:
+    if (not data and not item.matches) or response.code == 999:
         if item.emergency_urls and not item.videolibray_emergency_urls:         # Hay urls de emergencia?
             if len(item.emergency_urls) > 1 and item.emergency_urls[1]:
                 matches = item.emergency_urls[1]                                # Restauramos matches de vídeos
@@ -793,7 +798,7 @@ def findvideos(item):
         # Puede ser necesario baja otro nivel para encontrar la página
         if not 'magnet:' in scrapedurl and not '.torrent' in scrapedurl:
             patron_torrent = '(?i)>\s*Pincha[^<]*<a\s*href="([^"]+)"'           # VERIFICAR !!!
-            data_torrent, success, code, item, itemlist = generictools.downloadpage(scrapedurl, timeout=timeout, 
+            data_torrent, response, item, itemlist = generictools.downloadpage(scrapedurl, timeout=timeout, 
                                               referer=referer, post=post, headers=headers, 
                                               s2=False, patron=patron_torrent, item=item, itemlist=itemlist)    # Descargamos la página)
                                               
@@ -801,7 +806,7 @@ def findvideos(item):
             #logger.debug(data_torrent)
             
             # Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-            if not data_torrent or code == 999:
+            if not data_torrent or response.code == 999:
                 if item.emergency_urls and not item.videolibray_emergency_urls: # Hay urls de emergencia?
                     if len(item.emergency_urls) > 1 and item.emergency_urls[1]:
                         matches = item.emergency_urls[1]                        # Restauramos matches de vídeos
@@ -1087,12 +1092,12 @@ def episodios(item):
     # Descarga las páginas
     for url in list_temp:                                                       # Recorre todas las temporadas encontradas
 
-        data, success, code, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, 
+        data, response, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, 
                                           item=item, itemlist=itemlist, forced_proxy_opt=forced_proxy_opt)      # Descargamos la página
         
         #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-        if not success:                                                         # Si ERROR o lista de errores ...
-            if len(itemlist) > 1 or not 'timeout' in code:                      # puede ser un enlace erroneo de una temporada.  Siguiente...
+        if not response.sucess:                                                 # Si ERROR o lista de errores ...
+            if len(itemlist) > 1 or not 'timeout' in response.code:             # puede ser un enlace erroneo de una temporada.  Siguiente...
                 continue
             logger.error("ERROR 01: EPISODIOS: La Web no responde o ha cambiado de URL " + 
                             " / PATRON: " + patron + " / DATA: " + data)
@@ -1283,21 +1288,25 @@ def choose_alternate_domain(item, url='', code='', patron='', itemlist=[], heade
     logger.info('Dominio: %s, Index: %s, Emergency: %s' % (host, str(host_index), str(host_emergency)))
     
     data = ''
-    success = False
-    code = 999
+    response = {
+                'data': data, 
+                'sucess': False, 
+                'code': 999
+               }
+    response = type('HTTPResponse', (), response)
     url_alt = url
     host_index_init = host_index
     
     if not url:
         logger.info('Falta URL')
-        return url_alt, data, success, code, item, itemlist
+        return url_alt, data, response, item, itemlist
 
     if host_emergency:
         if len(host_list) > 2:
             host_index_init = config.get_setting('choose_domain', channel)
         else:
             logger.info('Dominio ALTERNATIVO no disponible: %s' % str(host_list))
-            return url_alt, data, success, code, item, itemlist
+            return url_alt, data, response, item, itemlist
 
     if item.headers: headers = item.headers
     if item.referer: referer = item.referer
@@ -1307,10 +1316,10 @@ def choose_alternate_domain(item, url='', code='', patron='', itemlist=[], heade
         if x == host_index or x == host_index_init: continue
 
         url_alt = url.replace(host, host_alt)
-        data, success, code, item, itemlist = generictools.downloadpage(url_alt, timeout=timeout, headers=headers, 
+        data, response, item, itemlist = generictools.downloadpage(url_alt, timeout=timeout, headers=headers, 
                                           referer=referer, post=post, patron=patron, item=item, itemlist=itemlist)  # Descargamos la página
         
-        if success:
+        if response.sucess:
             host_index = x
             host = host_alt
             host_emergency = True
@@ -1321,7 +1330,7 @@ def choose_alternate_domain(item, url='', code='', patron='', itemlist=[], heade
         url_alt = url
         logger.info('Dominio ALTERNATIVO no disponible: %s' % str(host_list))
 
-    return url_alt, data, success, code, item, itemlist
+    return url_alt, data, response, item, itemlist
 
 
 def adjust_alternate_domain(item, reset=False):

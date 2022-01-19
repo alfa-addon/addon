@@ -96,11 +96,11 @@ def submenu(item):
     patron = '<li\s*class="*sp-menu-item[^>]*>\s*<a\s*href="*([^>]+)"*\s*>'
     patron += '(?:\s*<i\s*class="*fa\s*fa[^>]+>\s*<\/i>)?\s*([^<]+)<\/a>'
 
-    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout,  s2=False, 
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout,  s2=False, 
                                           patron=patron, item=item, itemlist=[])    # Descargamos la página
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not success or itemlist:                                                 # Si ERROR o lista de errores ...
+    if not response.sucess or itemlist:                                                 # Si ERROR o lista de errores ...
         return itemlist                                                         # ... Salimos
         
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -196,13 +196,13 @@ def listado(item):                                                              
         cnt_match = 0                                                           # Contador de líneas procesadas de matches
         
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
-            data, success, code, item, itemlist = generictools.downloadpage(next_page_url, 
+            data, response, item, itemlist = generictools.downloadpage(next_page_url, 
                                           timeout=timeout_search, post=post, s2=False, 
                                           item=item, itemlist=itemlist)         # Descargamos la página)
             
             # Verificamos si se ha cargado una página correcta
             curr_page += 1                                                      # Apunto ya a la página siguiente
-            if not data or not success:                                         # Si la web está caída salimos sin dar error
+            if not data or not response.sucess:                                         # Si la web está caída salimos sin dar error
                 if len(itemlist) > 1:                                           # Si hay algo que pintar lo pintamos 
                     last_page = 0
                     break
@@ -496,7 +496,12 @@ def findvideos(item):
     itemlist_f = []                                                             #Itemlist de enlaces filtrados
     matches = []
     data = ''
-    code = 0
+    response = {
+                'data': data, 
+                'sucess': False, 
+                'code': 0
+               }
+    response = type('HTTPResponse', (), response)
     
     #logger.debug(item)
 
@@ -504,11 +509,11 @@ def findvideos(item):
     patron = '()<li>\s*<a\s*title="*[^"]+"*\s*href="*([^>]+)"*\s*>\s*([^<]+)<\/a>\s*<\/li>'
     
     if not item.matches:
-        data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
+        data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
                                           s2=False, item=item, itemlist=[])     # Descargamos la página)
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if (not data and not item.matches) or code == 999:
+    if (not data and not item.matches) or response.code == 999:
         if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
             if len(item.emergency_urls) > 1:
                 matches = item.emergency_urls[1]                                #Restauramos matches de vídeos
@@ -820,13 +825,13 @@ def episodios(item):
     for url in list_temp:                                                       # Recorre todas las temporadas encontradas
         patron = '<li>\s*<a\s*title="*[^"|\s+]+"*\s*href="*([^>]+)"*\s*>\s*([^<]+)<\/a>\s*<\/li>'
         
-        data, success, code, item, itemlist = generictools.downloadpage(url, timeout=timeout*2, s2=False, 
+        data, response, item, itemlist = generictools.downloadpage(url, timeout=timeout*2, s2=False, 
                                           patron=patron, item=item, itemlist=itemlist)  # Descargamos la página
         
         #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-        if not success:                                                         # Si ERROR o lista de errores ...
+        if not response.sucess:                                                         # Si ERROR o lista de errores ...
             itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
-                             '[COLOR yellow]' + str(code) + '[/COLOR]: ERROR 01: EPISODIOS: ' + 
+                             '[COLOR yellow]' + str(response.code) + '[/COLOR]: ERROR 01: EPISODIOS: ' + 
                              'La Web no responde o ha cambiado de URL'))
             return itemlist                                                     # ... Salimos
 

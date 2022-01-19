@@ -180,7 +180,7 @@ def listado(item):
         
         #Si son series completas, ponemos un patrón especializado
         if item.extra == 'series':
-            patron = '<(td)><a href="([^"]+)"\s*title="([^"]+)"\s*><[^>]+src="[^"]+\/(\d{4})[^"]+"[^>]+>(?:(\d+))?\s*(?:(\d+))?<\/a>'
+            patron = '<(td)><a href="([^"]+)"\s*title="([^"]+)"\s*><[^>]+src="[^"]+\/(\d{4})[^"]+"[^>]+>(?:(\d+))?\s*<\/a>'
             if not scrapertools.find_single_match(data, patron):
                 patron = '<div\s*class="pintinia[^>]*>\s*<div\s*class="[^>]*>\s*<h6\s*class="[^>]*>\s*<a\s*href="([^"]+)"\s*title="([^"]+)"\s*>[^<]*<\/a>\s*<\/h6>\s*<\/div>\s*<\/div>\s*<a[^<]*>\s*<img\s*style="background-image:'
                 patron += "\s*url\('([^']+)'\)"
@@ -222,8 +222,9 @@ def listado(item):
         #logger.debug('curr_page: ' + str(curr_page) + '/ last_page: ' + str(last_page) + '/ next_page_url: ' + next_page_url)
         
         #Empezamos el procesado de matches
-        for _scrapedurl, _scrapedtitle, _scrapedthumb, _scrapedquality, _scrapedlanguage in matches:
-            if item.extra == "search":
+        #for _scrapedurl, _scrapedtitle, _scrapedthumb, _scrapedquality, _scrapedlanguage in matches:
+        for _scrapedthumb, _scrapedurl, _scrapedtitle, _scrapedlanguage, _scrapedquality in matches:
+            if item.extra == "search_OLD":
                 scrapedurl = _scrapedtitle
                 scrapedtitle = _scrapedthumb
                 scrapedthumb = _scrapedquality
