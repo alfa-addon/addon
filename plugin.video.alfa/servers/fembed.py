@@ -41,7 +41,6 @@ def get_video_url(page_url, user="", password="", video_password=""):
                 url["file"] = url["file"].replace('https', 'http')
                 ua = httptools.ua
                 headers = httptools.default_headers.copy()
-                headers['Range'] = ''
                 header_str = "&".join(["%s=%s" % (x, y) for x, y in list(headers.items())])
                 url["file"] += "|User-Agent=%s&verifypeer=false&%s" % (ua, header_str)
         except:
