@@ -25,7 +25,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ["aparatcam", "streamtape", "fembed", "mixdrop", "doodstream", "clipwatching"]
 
-host = "https://animeonline.ninja/"
+host = "https://animeonline1.ninja/"
 
 
 def mainlist(item):
@@ -406,15 +406,18 @@ def findvideos(item):
         server = server.text if server else ''
 
         # Sistema movidy
+        # NOTE: De vez en cuando cambian entre un sistema de la API REST
+        # de WordPress, y uno de iframes, mantener el código comentado aquí
         if server == 'saidochesto.top':
-            players = soup.find("div", id=re.compile(r"^source-player-\d+"))
+            # players = soup.find("li", id=re.compile(r"player-option-\d+"))
             # doo_url = players.find("iframe")["src"]
-            # doo_url = "%swp-json/dooplayer/v1/post/%s?type=%s&source=%s" % \
-                      # (host, elem["data-post"], elem["data-type"], elem["data-nume"])
-            # data = get_source(doo_url, json=True, headers=headers)
-            # url = data.get("embed_url", "")
-            url = players.find("iframe")["src"]
+            doo_url = "{}wp-json/dooplayer/v1/post/{}?type={}&source={}".format(
+                host, elem["data-post"], elem["data-type"], elem["data-nume"])
+            data = get_source(doo_url, json=True, headers=headers)
+            url = data.get("embed_url", "")
+            # url = players.find("iframe")["src"]
             new_soup = get_source(url, soup=True).find("div", class_="OptionsLangDisp")
+            resultset = new_soup.find_all("li") if new_soup else []
             resultset = new_soup.find_all("li") if new_soup else []
 
             for elem in resultset:
@@ -490,6 +493,10 @@ def findvideos(item):
                     url = item.url
                 )
             )
+
+    # Para ver dónde están los "directos" y
+    # descartarlos o arreglarlos apropiadamente
+    # logger.debug([f"url: {x.url}\nserver: {x.server}\n\n" for x in itemlist])
 
     return itemlist
 

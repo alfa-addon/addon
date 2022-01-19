@@ -29,7 +29,7 @@ PATH_BL = filetools.join(config.get_runtime_path(), 'resources', 'cf_assistant_b
 
 def get_cl(resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blacklist=True, retryIfTimeout=True, **kwargs):
     blacklist_clear = True
-    if 'hideproxy' in resp.url or 'webproxy' in resp.url or kwargs.get('proxies'):
+    if 'hideproxy' in resp.url or 'webproxy' in resp.url or 'hidester' in resp.url or '__cpo=' in resp.url or kwargs.get('proxies'):
         blacklist_clear = False
         blacklist = False
     

@@ -1312,7 +1312,7 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                         path_real = torrents_path
                     elif magnet_caching_e or not url.startswith('magnet'):
                         path_real, subtitles_list = torrent.caching_torrents(url, referer, post, \
-                                torrents_path=torrents_path, headers=headers)   #...  para descargar los .torrents
+                                torrents_path=torrents_path, headers=headers or item_res.headers)   #...  para descargar los .torrents
                     if path_real:                                               #Si ha tenido éxito...
                         item_res.emergency_urls[0][i-1] = path_real.replace(videolibrary_path, '')  #se guarda el "path" relativo
                         if (filetools.isfile(url) or filetools.isdir(url)) and filetools.exists(url):
@@ -1327,6 +1327,8 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                 item_res.referer = referer_save
             if headers_save and not item_res.headers:
                 item_res.headers = headers_save
+            elif not headers_save and item_res.headers:
+                del item_res.headers
             if post_save and not item_res.post:
                 item_res.post = post_save
             item_res.url = item.url

@@ -21,6 +21,7 @@ import os
 import time
 import requests
 import json
+import re
 
 from core.jsontools import to_utf8
 from platformcode import config, logger
@@ -309,6 +310,7 @@ def check_proxy(url, **opt):
 
     proxy_data = dict()
     proxy_data['dict'] = {}
+    proxy_data['proxy__test'] = opt.get('proxy__test', '')
     proxy = opt.get('proxy', True)
     proxy_web = opt.get('proxy_web', False)
     proxy_addr_forced = opt.get('proxy_addr_forced', None)
@@ -389,6 +391,7 @@ def check_proxy(url, **opt):
         proxy_data['dict'] = {}
         proxy_data['web_name'] = ''
         proxy_data['log'] = ''
+        proxy_data['proxy__test'] = ''
         url = opt['url_save']
     try:
         if not PY3:
@@ -396,6 +399,70 @@ def check_proxy(url, **opt):
     except Exception:
         pass
     return url, proxy_data, opt
+
+
+def proxy_stat(url, opt, proxy_data):
+    if not proxy_data.get('stat', ''): return ''
+    
+    retry = ''
+    if proxy_data.get('proxy__test', '') == 'retry': 
+        retry = 'retry'
+    elif channel_proxy_list(url):
+        try:
+            import base64
+            import ast
+            from . import scrapertools
+            proxy_white_list_str = base64.b64decode(config.get_setting('proxy_white_list')).decode('utf-8')
+            proxy_white_list = dict()
+            proxy_white_list = ast.literal_eval(proxy_white_list_str)
+            if not proxy_white_list.get(scrapertools.find_single_match(url, patron_domain), ''):
+                retry = 'retry'
+        except Exception:
+            logger.debug('Proxytools no inicializado correctamente')
+            import traceback
+            logger.error(traceback.format_exc())
+            
+    
+    if 'Proxy Direct' in proxy_data['stat']: return 'ProxyDirect:%s:%s' % (proxy_data.get('log', ''), retry)
+    if 'Proxy CF' in proxy_data['stat']: return 'ProxyCF:%s:%s' % (proxy_data.get('log', ''), retry)
+    if 'Proxy Web' in proxy_data['stat']: return 'ProxyWeb:%s:%s' % (proxy_data.get('web_name', ''), retry)
+    return ''
+
+
+def blocking_error(req):
+
+    code = str(req.status_code) or ''
+    data = req.content or ''
+    if PY3 and isinstance(data, bytes):
+        data = "".join(chr(x) for x in bytes(data))
+    resp = False
+
+    if '104' in code or '10054' in code or ('502' in code and 'Por causas ajenas' in data):
+        resp = True
+    
+    return resp
+
+
+def canonical(data):
+    from . import scrapertools
+    canonical_host = ''
+    
+    if PY3 and isinstance(data, bytes):
+        data = "".join(chr(x) for x in bytes(data))
+    data = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", data).replace("'", '"')
+    pattern = 'href="([^"]+)"\s*rel="canonical"'
+    if not scrapertools.find_single_match(data, pattern):
+        pattern = 'rel="canonical"\s*href="([^"]+)"'
+    canonical_host = scrapertools.find_single_match(data, pattern).rstrip()
+    if len(canonical_host) < 8: canonical_host = ''
+    if canonical_host:
+        if not canonical_host.startswith('http'):
+            canonical_host = 'https:' + canonical_host
+        canonical_host = scrapertools.find_single_match(canonical_host, patron_host)
+        if not canonical_host.endswith('/'):
+            canonical_host += '/'
+        
+    return canonical_host
 
 
 def proxy_post_processing(url, proxy_data, response, opt):
@@ -455,7 +522,8 @@ def proxy_post_processing(url, proxy_data, response, opt):
                                                  error_skip=proxy_data['CF_addr'])
                 url = opt['url_save']
             elif ', Proxy Web' in proxy_data.get('stat', ''):
-                if channel_proxy_list(opt['url_save'], forced_proxy=proxy_data['web_name']):
+                if channel_proxy_list(opt['url_save'], forced_proxy=proxy_data['web_name']) \
+                            or channel_proxy_list(opt['url_save'], forced_proxy='ProxyCF'):
                     opt['forced_proxy'] = 'ProxyCF'
                     url =opt['url_save']
                     opt['post'] = opt['post_save']
@@ -530,6 +598,8 @@ def downloadpage(url, **opt):
                 HTTPResponse.json:    | dict     | Respuesta obtenida del servidor en formato json
                 HTTPResponse.soup:    | bs4/None | Objeto BeautifulSoup, si se solicita. None de otra forma
                 HTTPResponse.time:    | float    | Tiempo empleado para realizar la petición
+                HTTPResponse.canonical:| str     | Dirección actual de la página descargada
+                HTTPResponse.proxy__: | str      | Si la página se descarga con proxy, datos del proxy usado: proxy-type:addr:estado
     """
     global CF_LIST
     if not opt.get('alfa_s', False):
@@ -683,12 +753,15 @@ def downloadpage(url, **opt):
                                       timeout=opt.get('timeout', None), params=opt.get('params', {}))
 
             except Exception as e:
-                if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', ''):
-                    req = requests.Response()
+                req = requests.Response()
+                req.status_code = str(e)
+                if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', '') and not blocking_error(req):
                     response['data'] = ''
                     response['sucess'] = False
+                    response['proxy__'] = proxy_stat(opt['url_save'], opt, proxy_data)
+                    response['canonical'] = ''
                     info_dict.append(('Success', 'False'))
-                    response['code'] = str(e)
+                    response['code'] = req.status_code
                     info_dict.append(('Response code', str(e)))
                     info_dict.append(('Finalizado en', time.time() - inicio))
                     if not opt.get('alfa_s', False):
@@ -696,33 +769,45 @@ def downloadpage(url, **opt):
                         import traceback
                         logger.error(traceback.format_exc(1))
                     return type('HTTPResponse', (), response)
-                else:
-                    req = requests.Response()
-                    req.status_code = str(e)
         
         else:
             response['data'] = ''
             response['sucess'] = False
             response['code'] = ''
             response['soup'] = None
+            response['proxy__'] = ''
+            response['canonical'] = ''
             return type('HTTPResponse', (), response)
         
         response_code = req.status_code
+        response['proxy__'] = proxy_stat(opt['url_save'], opt, proxy_data)
+        response['canonical'] = ''
+
+        # Retries blocked domain with proxy
+        if blocking_error(req) and opt.get('proxy__test', True) and not proxy_data.get('stat', ''):
+            if not opt.get('alfa_s', False): logger.error('Error: %s in url: %s - Reintentando' % (response_code, url))
+            opt['proxy_web'] = True
+            opt['forced_proxy'] = 'ProxyWeb:croxyproxy.com'
+            opt['proxy_retries'] = 1 if PY3 else 0
+            opt['proxy__test'] = 'retry'
+            return downloadpage(url, **opt)
 
         if req.headers.get('Server', '').startswith('cloudflare') and response_code in [429, 503, 403] \
                         and not opt.get('CF', False) and opt.get('CF_test', True):
-            domain = urlparse.urlparse(url)[1]
+            domain = urlparse.urlparse(opt['url_save'])[1]
             if domain not in CF_LIST:
                 CF_LIST += [domain]
                 opt["CF"] = True
+                if not PY3: opt['proxy_retries'] = 0
                 with open(CF_LIST_PATH, "a") as CF_File:
                     CF_File.write("%s\n" % domain)
                 logger.debug("CF retry... for domain: %s" % domain)
-                return downloadpage(url, **opt)
+                return downloadpage(opt['url_save'], **opt)
         
         if req.headers.get('Server', '') == 'Alfa' and response_code in [429, 503, 403] \
                         and not opt.get('cf_v2', False) and opt.get('CF_test', True):
             opt["cf_v2"] = True
+            if not PY3: opt['proxy_retries'] = 0
             logger.debug("CF Assistant retry... for domain: %s" % urlparse.urlparse(url)[1])
             return downloadpage(url, **opt)
 
@@ -833,6 +918,7 @@ def downloadpage(url, **opt):
 
         # Si hay error del proxy, refresca la lista y reintenta el numero indicada en proxy_retries
         response, url, opt = proxy_post_processing(url, proxy_data, response, opt)
+        response['canonical'] = canonical(response['data'])
 
         # Si proxy ordena salir del loop, se sale
         if opt.get('out_break', False):
