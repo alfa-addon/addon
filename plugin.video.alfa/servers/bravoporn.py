@@ -18,7 +18,7 @@ def test_video_exists(page_url):
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    patron  = '<source (?:id="video_source_\d+" |data-fluid-hd |)src="([^"]+)".*?title="([^"]+)"'
+    patron  = '<source (?:id="video_source_\d+" |data-fluid-hd |)src="([^"]+)".*?(?:title|label)="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url,quality in matches:
         url += "|Referer=%s" % page_url

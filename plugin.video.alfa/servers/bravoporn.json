@@ -36,6 +36,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://pornone.com/embed/[0-9-]+)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://sex3.com/[0-9-]+/)",
         "url": "\\1"
       },
