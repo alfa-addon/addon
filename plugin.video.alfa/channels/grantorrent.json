@@ -15,25 +15,6 @@
   ],
   "settings": [
     {
-      "id": "choose_domain",
-      "type": "list",
-      "label": "Seleccione el dominino primario para el Canal",
-      "default": 0,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "grantorrent.nl"
-      ]
-    },{
-      "id": "alternate_domain",
-      "type": "list",
-      "label": "Seleccione el dominino primario para el Canal",
-      "default": -1,
-      "enabled": true,
-      "visible": false,
-      "lvalues": []
-    },
-    {
       "default": false, 
       "enabled": true, 
       "id": "include_in_global_search", 

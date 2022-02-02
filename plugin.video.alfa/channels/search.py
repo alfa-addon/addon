@@ -17,8 +17,9 @@ from concurrent import futures
 from core.item import Item
 from core import tmdb, scrapertools, channeltools, filetools, jsontools
 from channelselector import get_thumb
-from platformcode import logger, config, platformtools, unify
-from platformcode import help_window
+from platformcode import logger, config, platformtools, help_window
+from platformcode.platformtools import dialog_input, dialog_progress, show_channel_settings, dialog_select, dialog_numeric, dialog_ok
+
 import gc
 gc.disable()
 
@@ -134,7 +135,7 @@ def new_search(item):
     if item.search_text:
         searched_text = item.search_text
     else:
-        searched_text = platformtools.dialog_input(default=last_search, heading='')
+        searched_text = dialog_input(default=last_search, heading='')
 
     save_search(searched_text, item.tourl())
     if not searched_text:
@@ -209,8 +210,8 @@ def channel_search(item):
     searching_titles += channel_titles
     cnt = 0
 
-    progress = platformtools.dialog_progress(config.get_localized_string(30993) % item.title, config.get_localized_string(70744) % len(channel_list), 
-                                             str(searching_titles))
+    progress = dialog_progress(config.get_localized_string(30993) % item.title, config.get_localized_string(70744) % len(channel_list), 
+                               str(searching_titles))
     config.set_setting('tmdb_active', False)
 
     with futures.ThreadPoolExecutor(max_workers=set_workers()) as executor:
@@ -233,8 +234,8 @@ def channel_search(item):
     progress.close()
 
     cnt = 0
-    progress = platformtools.dialog_progress(config.get_localized_string(30993) % item.title, config.get_localized_string(60295),
-                                             config.get_localized_string(60293))
+    progress = dialog_progress(config.get_localized_string(30993) % item.title, config.get_localized_string(60295),
+                               config.get_localized_string(60293))
 
     if not config.get_setting('tmdb_active'): config.set_setting('tmdb_active', True)
     res_count = 0
@@ -408,7 +409,7 @@ def opciones(item):
     return setting_channel_new(item)
 
 def settings(item):
-    return platformtools.show_channel_settings(caption=config.get_localized_string(59993))
+    return show_channel_settings(caption=config.get_localized_string(59993))
 
 def set_workers():
     list_mode=[None,1,2,4,6,8,16,24,32,64]
@@ -473,7 +474,7 @@ def setting_channel_new(item):
         del presel_values[0]
     # else: # Call from "search on other channels" (you can skip the selection and go directly to the search)
 
-    ret = platformtools.dialog_select(config.get_localized_string(59994), preselecciones)
+    ret = dialog_select(config.get_localized_string(59994), preselecciones)
     if ret == -1:
         return False  # order cancel
     if presel_values[ret] == 'skip':
@@ -580,7 +581,7 @@ def year_cus(item):
     mode = item.mode.replace('show', '')
 
     heading = config.get_localized_string(70042)
-    year = platformtools.dialog_numeric(0, heading, default="")
+    year = dialog_numeric(0, heading, default="")
     item.discovery = {'url': 'discover/%s' % mode, 'page': '1',
                       '%s' % item.par_year: '%s' % year,
                       'sort_by': 'popularity.desc', 'language': def_lang}
@@ -642,6 +643,8 @@ def actor_list(item):
 
 def discover_list(item):
     import datetime
+    from platformcode import unify
+    
     itemlist = []
 
     year = 0
@@ -788,7 +791,7 @@ def save_search(text, item_tourl):
 
 def clear_saved_searches(item):
     config.set_setting("saved_searches_list", list(), "search")
-    platformtools.dialog_ok(config.get_localized_string(60423), config.get_localized_string(60424))
+    dialog_ok(config.get_localized_string(60423), config.get_localized_string(60424))
 
 
 def get_saved_searches():

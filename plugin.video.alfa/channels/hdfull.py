@@ -31,7 +31,7 @@ from channelselector import get_thumb
 
 host = config.get_setting("current_host", channel="hdfull", default='')
 host_alt = ['https://hdfull.click/', 'https://hdfull.stream/']
-host_black_list = ['https://hdfull.one/']
+host_black_list = ['https://hdfull.one/', 'https://hdfull.vip/', 'https://hd-full.cc/']
 host_black_list.extend(host_alt)
 
 _silence = config.get_setting('silence_mode', channel='hdfull')

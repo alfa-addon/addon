@@ -1360,6 +1360,7 @@ def download_from_url(url, item):
     config.set_setting("DOWNLOADER_in_use", True, "downloads")                  # Marcamos Downloader en uso
     # Obtenemos la ruta de descarga y el nombre del archivo
     item.downloadFilename = item.downloadFilename.replace('/','-')
+    item.downloadFilename = scrapertools.slugify(item.downloadFilename, strict=False)
     download_path = filetools.dirname(filetools.join(DOWNLOAD_PATH, item.downloadFilename))
     file_name = filetools.basename(filetools.join(DOWNLOAD_PATH, item.downloadFilename))
 

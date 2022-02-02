@@ -26,7 +26,7 @@
     {
       "id": "modo_grafico",
       "type": "bool",
-      "label": "Buscar información extra (TMDB)",
+      "label": "Buscar informacion extra (TMDB)",
       "default": true,
       "enabled": true,
       "visible": true
@@ -34,7 +34,7 @@
     {
       "id": "modo_grafico_lang",
       "type": "list",
-      "label": "Idioma para buscar información extra (TMDB)",
+      "label": "Idioma para buscar informacion extra (TMDB)",
       "default": 0,
       "enabled": true,
       "visible": true,
@@ -47,7 +47,7 @@
     {
       "id": "pseudo_titulos",
       "type": "bool",
-      "label": "Desea ver Pseudo títulos de ayuda?",
+      "label": "Desea ver Pseudo titulos de ayuda?",
       "default": true,
       "enabled": true,
       "visible": true
@@ -55,7 +55,7 @@
     {
       "id": "auto_download_new",
       "type": "bool",
-      "label": "Desea que se descarguen automáticamente los nuevos episodios de la Videoteca?",
+      "label": "Desea que se descarguen automaticamente los nuevos episodios de la Videoteca?",
       "default": false,
       "enabled": true,
       "visible": true
@@ -122,22 +122,22 @@
       "id": "clonenewpct1_channels_list",
       "type": "text",
       "label": "Lista de clones de NewPct1 y orden de uso",
-      "default": "('1', 'atomixhq', 'https://atomixhq.top/', 'movie, tvshow, season, episode', ''), ('0', 'pctmix1', 'https://pctmix1.com/', 'movie, tvshow, season, episode', ''), ('0', 'pctreload1', 'https://pctreload1.com/', 'movie, tvshow, season, episode', ''), ('0', 'maxitorrent', 'https://maxitorrent.com/', 'movie, tvshow, season, episode', ''), ('0', 'pctmix', 'https://pctmix.com/', 'movie, tvshow, season, episode', ''), ('0', 'pctreload', 'https://pctreload.com/', 'movie, tvshow, season, episode', ''), ('0', 'descargas2020', 'https://descargas2020.net/', 'movie, tvshow, season, episode', ''), ('0', 'tumejortorrent', 'https://tumejortorrent.org/', 'movie, tvshow, season, episode', ''), ('0', 'torrentrapid', 'https://torrentrapid.org/', 'movie, tvshow, season, episode', 'serie_episodios'), ('0', 'planetatorrent', 'http://planetatorrent.com/', 'movie, tvshow, season, episode', ''), ('0', 'tvsinpagar', 'http://www.tvsinpagar.com/', 'tvshow, season, episode', ''), ('0', 'torrentlocura', 'https://torrentlocura.cc/', 'movie, tvshow, season, episode', ''), ('0', 'mispelisyseries', 'http://mispelisyseries.com/', 'movie', 'search, listado_busqueda'), ('0', 'pctnew', 'https://pctnew.org/', 'movie, tvshow, season, episode', '')",
+      "default": "('1', 'atomixhq', 'https://atomixhq.art/', 'movie, tvshow, season, episode', ''), ('0', 'pctmix1', 'https://pctmix1.com/', 'movie, tvshow, season, episode', ''), ('0', 'pctreload1', 'https://pctreload1.com/', 'movie, tvshow, season, episode', ''), ('0', 'maxitorrent', 'https://maxitorrent.com/', 'movie, tvshow, season, episode', ''), ('0', 'pctmix', 'https://pctmix.com/', 'movie, tvshow, season, episode', ''), ('0', 'pctreload', 'https://pctreload.com/', 'movie, tvshow, season, episode', ''), ('0', 'descargas2020', 'https://descargas2020.net/', 'movie, tvshow, season, episode', ''), ('0', 'tumejortorrent', 'https://tumejortorrent.org/', 'movie, tvshow, season, episode', ''), ('0', 'torrentrapid', 'https://torrentrapid.org/', 'movie, tvshow, season, episode', 'serie_episodios'), ('0', 'planetatorrent', 'http://planetatorrent.com/', 'movie, tvshow, season, episode', ''), ('0', 'tvsinpagar', 'http://www.tvsinpagar.com/', 'tvshow, season, episode', ''), ('0', 'torrentlocura', 'https://torrentlocura.cc/', 'movie, tvshow, season, episode', ''), ('0', 'mispelisyseries', 'http://mispelisyseries.com/', 'movie', 'search, listado_busqueda'), ('0', 'pctnew', 'https://pctnew.org/', 'movie, tvshow, season, episode', '')",
       "enabled": true,
       "visible": false
     },
     {
       "id": "intervenidos_channels_list",
       "type": "text",
-      "label": "Lista de canales y clones de NewPct1 intervenidos y orden de sustitución de URLs",
-      "default": "('0', 'canal_org', 'canal_des', 'url_org', 'url_des', 'patron1', 'patron2', 'patron3', 'patron4', 'patron5', 'content_inc', 'content_exc', 'ow_force'), ('1', 'atomixhq', 'atomixhq', 'atomixhq.net', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'atomixhq', 'atomixhq', 'atomixhq.one', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'atomixhq', 'atomixhq', 'atomixhq.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'maxitorrent', 'atomixhq', 'maxitorrent.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'pctmix1', 'atomixhq', 'pctmix1.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'pctreload1', 'atomixhq', 'pctreload1.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'pctreload', 'atomixhq', 'pctreload.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'pctmix', 'atomixhq', 'pctmix.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'descargas2020', 'atomixhq', 'descargas2020.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'descargas2020', 'atomixhq', 'descargas2020.org', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'pctnew', 'atomixhq', 'pctnew.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'pctnew', 'atomixhq', 'pctnew.org', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'tumejortorrent', 'atomixhq', 'tumejortorrent.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'torrentrapid', 'atomixhq', 'torrentrapid.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'torrentlocura', 'atomixhq', 'torrentlocura.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'tvsinpagar', 'atomixhq', 'www.tvsinpagar.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'mispelisyseries', 'atomixhq', 'mispelisyseries.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'planetatorrent', 'atomixhq', 'planetatorrent.com', 'https://atomixhq.top/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no')",
+      "label": "Lista de canales y clones de NewPct1 intervenidos y orden de sustitucion de URLs",
+      "default": "('0', 'canal_org', 'canal_des', 'url_org', 'url_des', 'patron1', 'patron2', 'patron3', 'patron4', 'patron5', 'content_inc', 'content_exc', 'ow_force'), ('1', 'atomixhq', 'atomixhq', 'atomixhq.top', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'atomixhq', 'atomixhq', 'atomixhq.net', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'atomixhq', 'atomixhq', 'atomixhq.one', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'atomixhq', 'atomixhq', 'atomixhq.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'maxitorrent', 'atomixhq', 'maxitorrent.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'pctmix1', 'atomixhq', 'pctmix1.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'pctreload1', 'atomixhq', 'pctreload1.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'pctreload', 'atomixhq', 'pctreload.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'pctmix', 'atomixhq', 'pctmix.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'descargas2020', 'atomixhq', 'descargas2020.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'descargas2020', 'atomixhq', 'descargas2020.org', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'pctnew', 'atomixhq', 'pctnew.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'pctnew', 'atomixhq', 'pctnew.org', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'tumejortorrent', 'atomixhq', 'tumejortorrent.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'torrentrapid', 'atomixhq', 'torrentrapid.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'torrentlocura', 'atomixhq', 'torrentlocura.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'tvsinpagar', 'atomixhq', 'www.tvsinpagar.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'mispelisyseries', 'atomixhq', 'mispelisyseries.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no'), ('1', 'planetatorrent', 'atomixhq', 'planetatorrent.com', 'https://atomixhq.art/', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no')",
       "enabled": true,
       "visible": false
     },
     {
       "id": "seleccionar_ult_temporadda_activa",
       "type": "bool",
-      "label": "Seleccionar para Videoteca si estará activa solo la última Temporada",
+      "label": "Seleccionar para Videoteca si estara activa solo la última Temporada",
       "default": true,
       "enabled": true,
       "visible": true
@@ -177,7 +177,7 @@
     {
       "id": "clonenewpct1_verificar_enlaces_veronline_validos",
       "type": "bool",
-      "label": "¿Contar sólo enlaces 'verificados' en Ver Online?",
+      "label": "¿Contar solo enlaces 'verificados' en Ver Online?",
       "default": true,
       "enabled": true,
       "visible": "!eq(-1,'No') + !eq(-2,'No')"
@@ -394,7 +394,7 @@
         {
       "id": "clonenewpct1_verificar_enlaces_descargas_validos",
       "type": "bool",
-      "label": "¿Contar sólo enlaces 'verificados' en Descargar?",
+      "label": "¿Contar solo enlaces 'verificados' en Descargar?",
       "default": true,
       "enabled": true,
       "visible": "!eq(-1,'No') + !eq(-2,'No')"
@@ -604,7 +604,7 @@
     {
       "id": "clonenewpct1_timeout_downloadpage",
       "type": "list",
-      "label": "Timeout (segs.) en descarga de páginas o verificación de servidores",
+      "label": "Timeout (segs.) en descarga de paginas o verificación de servidores",
       "default": 5,
       "enabled": true,
       "visible": true,
@@ -633,7 +633,7 @@
     {
       "id": "clonenewpct1_rango_fechas_novedades",
       "type": "list",
-      "label": "Rango de fechas para búsquedas en Novedades",
+      "label": "Rango de fechas para busquedas en Novedades",
       "default": 2,
       "enabled": true,
       "visible": true,

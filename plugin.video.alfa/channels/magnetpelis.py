@@ -360,8 +360,11 @@ def listado(item):                                                              
             # Verificamos si ha cambiado el Host
             global host, canonical
             if response.canonical and response.canonical != host:
+                host_save = host
                 host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
                                   host_black_list, host='', CF=True, alfa_s=True, canonical=True)
+                item.url = item.url.replace(host_save, host)
+                next_page_url = next_page_url.replace(host_save, host)
             
             # Verificamos si se ha cargado una página correcta
             curr_page += 1                                                      # Apunto ya a la página siguiente
@@ -938,17 +941,19 @@ def episodios(item):
     #logger.debug(list_temp)
 
     # Descarga las páginas
-    for url in list_temp:                                                       # Recorre todas las temporadas encontradas
-        
+    for _url in list_temp:                                                       # Recorre todas las temporadas encontradas
+        url = _url
         data, response, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, 
                                          item=item, itemlist=itemlist)          # Descargamos la página
 
         # Verificamos si ha cambiado el Host
         global host, canonical
         if response.canonical and response.canonical != host:
+            host_save = host
             host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
                               host_black_list, host='', CF=True, alfa_s=True, canonical=True)
-
+            url = url.replace(host_save, host)
+        
         #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
         if not response.sucess:                                                 # Si ERROR o lista de errores ...
             return itemlist                                                     # ... Salimos
