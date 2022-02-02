@@ -43,6 +43,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info()
     itemlist = []
     invert = ""
+    url = ""
     if "video_url_text" in data:
         patron = '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?'
         patron += '(?:video_url_text|video_alt_url_text|video_alt_url[0-9]*_text):\s*(?:\'|")([^\,]+)(?:\'|")'
@@ -63,5 +64,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             invert= "true"
     if invert:
         itemlist.reverse()
+    if not url:
+        url = scrapertools.find_single_match(data, '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?')
+        itemlist.append(['[ktplayer]', url])
     return itemlist
 

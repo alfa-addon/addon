@@ -20,7 +20,11 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:tubepornclassic|vjav|voyeurhit|hclips|hdzog|hotmovs|upornia).com/videos/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "https://pornclassic.tube/videos/([0-9-]+/)",
+        "url": "https://tubepornclassic.com/videos/\\1/a/"
+      },
+      {
+        "pattern": "(https://(?:tubepornclassic|vjav|voyeurhit|hclips|hdzog|hotmovs|upornia|inporn).(?:com|tube)/video(?:s|)/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
