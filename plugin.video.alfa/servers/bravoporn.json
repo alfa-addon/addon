@@ -12,6 +12,14 @@
         "url": "\\1"
       },
       {
+        "pattern": "(http://www.perfectgirls.net/gal/[0-9]+/[A-z0-9-]+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://www.porncake.com/videos/[0-9]+/[A-z0-9-]+)",
+        "url": "\\1/"
+      },
+      {
         "pattern": "(https://xcafe.com/[0-9]+/)",
         "url": "\\1"
       },
@@ -24,15 +32,19 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.xfreehd.com/(?:video|embed)/[0-9]+)",
+        "pattern": "(https://www.(?:xfreehd|tubewolf).com/(?:video|embed)/[0-9]+)",
         "url": "\\1"
       },
       {
-        "pattern": "(https://xbabe.com/videos/[A-z0-9-]+/)",
+        "pattern": "(https://(?:xbabe|crocotube).com/videos/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
         "pattern": "(https://xcum.com/v/[0-9-]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:pornone|xbabe).com/embed/[0-9-]+)",
         "url": "\\1"
       },
       {
