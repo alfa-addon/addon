@@ -29,10 +29,18 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://dontorrent.pw/'
-host_torrent = 'https://blazing.network'
 channel = 'dontorrent'
 categoria = channel.capitalize()
+host = config.get_setting("current_host", channel=channel, default='')
+host_alt = ['https://dontorrent.it/', 'https://dontorrent.li/', 'https://dontorrent.pw/']
+host_black_list = ['https://dontorrent.se/', 'https://dontorrent.fun/']
+host_black_list.extend(host_alt)
+canonical = host
+host_torrent = 'https://blazing.network'
+
+if not host: 
+    host, canonical = generictools.check_host(channel, host_alt, host_black_list, 
+                      host, CF=False, alfa_s=True, canonical=True)
 
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 IDIOMAS_TMDB = {0: 'es', 1: 'en', 2: 'es,en'}
@@ -106,11 +114,17 @@ def submenu(item):
     thumb_anno = get_thumb("years.png")
 
     patron = '<h1\s*class="list-group-item top"\s*style="[^"]+">.*?<\/h1>\s*(.*?)<\/span>\s*(?:<\/a>\s*<div|<\/div>)'
-    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
-                                          patron=patron, item=item, itemlist=[])    # Descargamos la página
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
+                                     patron=patron, item=item, itemlist=[])     # Descargamos la página
 
-    #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not success or itemlist:                                                 # Si ERROR o lista de errores ...
+    # Verificamos si ha cambiado el Host
+    global host, canonical
+    if response.canonical and response.canonical != host:
+        host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
+                          host_black_list, host='', CF=False, alfa_s=True, canonical=True)
+
+    # Verificamos si se ha cargado una página, y si además tiene la estructura correcta
+    if not response.sucess or itemlist:                                         # Si ERROR o lista de errores ...
         return itemlist                                                         # ... Salimos
     
     # Seleccionamos el bloque y buscamos los apartados
@@ -197,11 +211,11 @@ def genero(item):
 
     patron = '<select\s*name="valor2"\s*id="valor2"\s*'
     patron += 'class="[^"]+">(.*?)<\/select>'
-    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout,  s2=False, 
-                                          patron=patron, item=item, itemlist=[])    # Descargamos la página
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout,  s2=False, 
+                                     patron=patron, item=item, itemlist=[])    # Descargamos la página
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not success or itemlist:                                                 # Si ERROR o lista de errores ...
+    if not response.sucess or itemlist:                                                 # Si ERROR o lista de errores ...
         return itemlist                                                         # ... Salimos
 
     data = scrapertools.find_single_match(data, patron)
@@ -244,13 +258,19 @@ def novedades(item):
 
     patron = '<span\s*class="text-muted">(?:\d{4})?[^<]+<\/span>\s*<a\s*href="([^"]+)"'
     patron += '\s*class="text-primary">([^<]+)<\/a>(?:\s*<span\s*class="text-muted">\((.*?)\)<\/span>)?'
-    data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
-                                          patron=patron, item=item, itemlist=[])     # Descargamos la página)
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
+                                     patron=patron, item=item, itemlist=[])     # Descargamos la página)
+    
+    # Verificamos si ha cambiado el Host
+    global host, canonical
+    if response.canonical and response.canonical != host:
+        host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
+                          host_black_list, host='', CF=False, alfa_s=True, canonical=True)
     
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not success or itemlist:                                                 # Si ERROR o lista de errores ...
+    if not response.sucess or itemlist:                                                 # Si ERROR o lista de errores ...
         return itemlist                                                         # ... Salimos
-
+    
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     #logger.debug(patron)
@@ -342,10 +362,16 @@ def listado(item):                                                              
         data = ''
         cnt_match = 0                                                           # Contador de líneas procesadas de matches
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
-            data, success, code, item, itemlist = generictools.downloadpage(next_page_url, 
-                                          timeout=timeout_search, post=post, s2=False, 
-                                          forced_proxy_opt=forced_proxy_opt, referer=referer, 
-                                          item=item, itemlist=itemlist)         # Descargamos la página)
+            data, response, item, itemlist = generictools.downloadpage(next_page_url, 
+                                              timeout=timeout_search, post=post, s2=False, 
+                                              forced_proxy_opt=forced_proxy_opt, referer=referer, 
+                                              item=item, itemlist=itemlist)     # Descargamos la página)
+            
+            # Verificamos si ha cambiado el Host
+            global host, canonical
+            if response.canonical and response.canonical != host:
+                host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
+                                  host_black_list, host='', CF=False, alfa_s=True, canonical=True)
             
             curr_page += 1                                                      #Apunto ya a la página siguiente
             if not data:                                                        #Si la web está caída salimos sin dar error
@@ -427,7 +453,7 @@ def listado(item):                                                              
                 patron_last = '<li\s*class="page-item\s*active"\s*aria-current="page">\s*'
                 patron_last += '<a\s*class="page-link"\s*href="[^"]*">\s*(\d+)\s*<\/a>\s*<\/li>'
                 last_page_url = re.sub(r'page\/(\d+)', 'page/9999', item.url)
-                data, success, code, item, itemlist = generictools.downloadpage(last_page_url, 
+                data, response, item, itemlist = generictools.downloadpage(last_page_url, 
                                           timeout=timeout_search, post=post, patron=patron_last, referer=referer, 
                                           s2=False, item=item, itemlist=itemlist)   # Descargamos la página)
                 
@@ -652,21 +678,27 @@ def findvideos(item):
         patron = '(?i)(?:<p><b\s*class="bold">Clave:\s*<\/b><a\s*data-toggle='
         patron += '"popover"\s*title="[^>]*contraseña[^\/]*data-clave="([^"]+)">.*?)?'
         patron += '<a\s*class="text-white[^"]+"\s*style="font-size[^"]+"\s*'
-        patron += 'href="([^"]+)"\s*download>Descargar<\/a>()'
+        patron += 'href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>()'
     else:
         patron = '(?i)<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a\s*'
         patron += 'class="text-white[^"]+"\s*style="font-size[^"]+"\s*'
-        patron += 'href="([^"]+)"\s*download>\s*Descargar\s*<\/a>\s*(?:<\/td>\s*'
+        patron += 'href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>\s*(?:<\/td>\s*'
         patron += '<td\s*style=[^<]+<\/td>\s*<td\s*style=[^>]+>\s*<a\s*data-toggle='
         patron += '"popover"\s*title="[^>]*contraseña[^\/]*data-clave="([^"]+)">)?'
     
     if not item.matches:
         if item.emergency_urls and item.url_tvshow: item.url = item.url_tvshow  #### Parche para rodear videoteca corrupta de SERIES
-        data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
-                                          s2=False, patron=patron, item=item, itemlist=[])      # Descargamos la página)
+        data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
+                                         s2=False, patron=patron, item=item, itemlist=[])       # Descargamos la página)
+    
+        # Verificamos si ha cambiado el Host
+        global host, canonical
+        if response.canonical and response.canonical != host:
+            host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
+                              host_black_list, host='', CF=False, alfa_s=True, canonical=True)
     
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if (not data and not item.matches) or code == 999:
+    if (not data and not item.matches) or response.code == 999:
         if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
             if len(item.emergency_urls) > 1:
                 matches = item.emergency_urls[1]                                #Restauramos matches de vídeos
@@ -957,16 +989,22 @@ def episodios(item):
     for url in list_temp:                                                       # Recorre todas las temporadas encontradas
         patron = '(?i)<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a\s*'
         patron += 'class="text-white[^"]+"\s*style="font-size[^"]+"\s*'
-        patron += 'href="([^"]+)"\s*download>\s*Descargar\s*<\/a>\s*(?:<\/td>\s*'
+        patron += 'href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>\s*(?:<\/td>\s*'
         patron += '<td\s*style=[^<]+<\/td>\s*<td\s*style=[^>]+>\s*<a\s*data-toggle='
         patron += '"popover"\s*title="[^>]*contraseña[^\/]*data-clave="([^"]+)">)?'
         
-        data, success, code, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, 
-                                          patron=patron, item=item, itemlist=itemlist)      # Descargamos la página
+        data, response, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, 
+                                         patron=patron, item=item, itemlist=itemlist)       # Descargamos la página
         
         #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-        if not success:                                                         # Si ERROR o lista de errores ...
+        if not response.sucess:                                                         # Si ERROR o lista de errores ...
             return itemlist                                                     # ... Salimos
+        
+        # Verificamos si ha cambiado el Host
+        global host, canonical
+        if response.canonical and response.canonical != host:
+            host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
+                              host_black_list, host='', CF=False, alfa_s=True, canonical=True)
         
         matches = re.compile(patron, re.DOTALL).findall(data)
 

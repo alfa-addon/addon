@@ -37,14 +37,6 @@
       "visible": true
     },
     {
-      "id": "current_host",
-      "type": "text",
-      "label": "Host actual",
-      "default": "https://hdfull.stream/",
-      "enabled": true,
-      "visible": false
-    },
-    {
       "id": "show_langs",
       "type": "bool",
       "label": "Mostrar idiomas en titulos",

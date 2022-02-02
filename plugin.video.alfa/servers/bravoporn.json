@@ -24,6 +24,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://www.xfreehd.com/(?:video|embed)/[0-9]+)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://xbabe.com/videos/[A-z0-9-]+/)",
         "url": "\\1"
       },

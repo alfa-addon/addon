@@ -315,7 +315,7 @@ def findvideos(item):
 
     for idioma, calidad, url, embed in matches:
         idioma = IDIOMAS.get(idioma.lower(), idioma)
-        calidad = unicode(calidad, "utf8").upper().encode("utf8")
+        if not PY3: calidad = unicode(calidad, "utf8").upper().encode("utf8")
         title = "%s (" + calidad + ")(" + idioma + ")"
 
         itemlist.append(Item(channel=item.channel, action="play", title=title, url=url,

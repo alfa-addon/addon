@@ -28,16 +28,17 @@ list_quality = []
 list_servers = ["streampe", "fembed", "jawcloud"]
 
 host = "https://allpeliculas.ac/"
+forced_proxy_opt = 'ProxyDirect'
 this_year = datetime.date.today().year
 
 
-def create_soup(url, referer=None, unescape=False):
+def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, headers={'Referer': referer}).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -127,7 +128,7 @@ def findvideos(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url)
+    soup = create_soup(item.url, forced_proxy_opt=forced_proxy_opt)
     matches = soup.find("div", class_="players").find_all("iframe")
 
     for elem in matches:

@@ -8,7 +8,7 @@ def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    patron  = '"quality":(\d+),"videoUrl":"([^"]+)"'
+    patron  = '"quality_(\d+)p":"([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for quality, scrapedurl in matches:
         url =  scrapedurl.replace("\/", "/").replace("\u0026", "&")

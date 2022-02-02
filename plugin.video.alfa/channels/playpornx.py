@@ -25,7 +25,7 @@ list_quality = ['default']
 list_servers = []
 
 # https://playpornfree.org/   https://streamporn.pw/  https://mangoporn.net/   https://watchfreexxx.net/   https://losporn.org/  https://xxxstreams.me/  https://speedporn.net/
-# "https://watchfreexxx.net/"  #  pandamovie https://watchpornfree.info  #'https://xxxparodyhd.net'  'http://www.veporns.com'  'http://streamporno.eu'
+# "https://watchfreexxx.net/"    pandamovie https://watchpornfree.info  #'https://xxxparodyhd.net'  'http://www.veporns.com'  'http://streamporno.eu'
 
 host = 'https://watchfreexxx.net'        #  https://www.netflixporno.net   https://xxxscenes.net   https://mangoporn.net   https://speedporn.net
 
@@ -40,7 +40,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Mas visto" , action="lista", url=host + "/adult/?filter=most-viewed"))
     itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/adult/?filter=popular"))
     itemlist.append(item.clone(title="Pornstars" , action="categorias", url=host + "/adult/pornstars/"))
-    itemlist.append(item.clone(title="Canal" , action="canal", url=host + "/adult/xxx-studios/"))
+    itemlist.append(item.clone(title="Canal" , action="canal", url=host + "/adult/studios/"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/adult/genres/"))
     itemlist.append(item.clone(title="Buscar", action="search", url=host + "/adult/"))
 
@@ -139,14 +139,14 @@ def findvideos(item):
     logger.info()
     itemlist = []
     video_urls = []
-    soup = create_soup(item.url)
-    matches = soup.find_all('li', class_='hosts-buttons-wpx')
+    soup = create_soup(item.url).find('div', id='pettabs')
+    matches = soup.find_all('a')
     for elem in matches:
-        url= elem.a['href']
+        url = elem['href']
         if not url in video_urls:
             video_urls += url
-            itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+            itemlist.append(item.clone(title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
     return itemlist

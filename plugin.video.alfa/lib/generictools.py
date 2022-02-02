@@ -40,7 +40,7 @@ from core import channeltools
 from core import filetools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger, platformtools
+from platformcode import config, logger
 from lib import jsunpack
 
 channel_py = "newpct1"
@@ -85,12 +85,16 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
         else:
             headers['Referer'] = referer
     data = ''
-    success = False
-    code = 999
+    response = {
+                'data': data, 
+                'sucess': False, 
+                'code': 999
+               }
+    response = type('HTTPResponse', (), response)
     if not item: item = Item()
     if not isinstance(url, (str, unicode, bytes)):
         logger.error('Formato de url incompatible: %s (%s)' % (str(url), str(type(url))))
-        return ('', success, code, item, itemlist)
+        return (data, response, item, itemlist)
 
     if timeout and timeout < 20 and httptools.channel_proxy_list(url):          # Si usa proxy, duplicamos el timeout
         timeout *= 3
@@ -108,18 +112,16 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                 data = response.json
             else:
                 data = response.data
-            success = response.sucess
-            code = response.code
             if decode_code is not None and response.encoding is not None:
                 decode_code = response.encoding
-            if success and only_headers:
+            if response.sucess and only_headers:
                 data = response.headers
-                return (data, success, code, item, itemlist)
-            if success and 'Content-Type' in response.headers and not 'text/html' \
+                return (data, response, item, itemlist)
+            if response.sucess and 'Content-Type' in response.headers and not 'text/html' \
                                 in response.headers['Content-Type'] and not 'json' \
                                 in response.headers['Content-Type'] and not 'xml' \
                                 in response.headers['Content-Type']:
-                return (data, success, code, item, itemlist)
+                return (data, response, item, itemlist)
 
         if data:
             data = js2py_conversion(data, url, domain_name=domain_name, timeout=timeout, 
@@ -141,16 +143,16 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                 if not decode_code: decode_code = 'utf8'
                 data = data.decode(decode_code)
             if patron and not scrapertools.find_single_match(data, patron):     # Se comprueba que el patrón funciona
-                code = 999                                                      # Si no funciona, se pasa error
+                response.code = 999                                                      # Si no funciona, se pasa error
                 try:
-                    logger.error('ERROR 02: ' + ERROR_02 + str(item.url) + " CODE: " + str(code) 
+                    logger.error('ERROR 02: ' + ERROR_02 + str(item.url) + " CODE: " + str(response.code) 
                             + " PATRON: " + str(patron) + " DATA: " + str(data))
                 except:
-                    logger.error('ERROR 02: ' + ERROR_02 + str(item.url) + " CODE: " + str(code)
+                    logger.error('ERROR 02: ' + ERROR_02 + str(item.url) + " CODE: " + str(response.code)
                             + " PATRON: " + str(patron) + " DATA: ")
                 if funcion != 'episodios':
                     itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
-                             '[COLOR yellow]' + str(code) + '[/COLOR]: ERROR 02: ' + ERROR_02))
+                             '[COLOR yellow]' + str(response.code) + '[/COLOR]: ERROR 02: ' + ERROR_02))
         else:                                                                   # Si no hay datos, se verifica la razón
             data = ''
             item = web_intervenida(item, data)                                  #Verificamos que no haya sido clausurada
@@ -162,16 +164,47 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                             clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + 
                             '. Reportar el problema en el foro', thumbnail=thumb_intervenido, 
                             folder=False))
-            elif not success:
-                logger.error('ERROR 01: ' + ERROR_01 + str(item.url) + " CODE: " + str(code) 
+            elif not response.sucess:
+                logger.error('ERROR 01: ' + ERROR_01 + str(item.url) + " CODE: " + str(response.code) 
                                  + " PATRON: " + str(patron) + " DATA: ")
                 if funcion != 'episodios':
                     itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
-                             '[COLOR yellow]' + str(code) + '[/COLOR]: ERROR 01: ' + ERROR_01))
+                             '[COLOR yellow]' + str(response.code) + '[/COLOR]: ERROR 01: ' + ERROR_01))
     except:
         logger.error(traceback.format_exc())
     
-    return (data, success, code, item, itemlist)
+    return (data, response, item, itemlist)
+
+
+def check_host(channel, host_alt, host_black_list=[], host='', CF=True, alfa_s=True, canonical=''):
+    if not alfa_s: logger.info()
+    if host:
+        page = httptools.downloadpage(host, ignore_response_code=True, timeout=5, alfa_s=alfa_s, CF=CF)
+        if page.sucess:
+            if not page.proxy__:
+                return host, page.canonical
+        else:
+            host = ''
+    
+    for url in host_alt:
+        page = httptools.downloadpage(url, ignore_response_code=True, timeout=5, alfa_s=alfa_s, CF=CF)
+        if page.sucess:
+            if host and host in url: return host, page.canonical
+            if page.proxy__ and host: continue
+            if canonical and page.canonical and page.canonical not in host_black_list and url != page.canonical:
+                host = page.canonical
+                logger.info('Canal: %s: Host %s cambiado a CANONICAL: %s' % (channel.capitalize(), url, page.canonical), force=True)
+            else:
+                host = url
+                logger.info('Canal: %s: HOST cambiado a: %s - Canonical: %s' % (channel.capitalize(), host, page.canonical), force=True)
+            config.set_setting("current_host", host, channel=channel)
+            return host, page.canonical
+    else:
+        if host: return host, page.canonical
+    
+    host = host_alt[0]
+    config.set_setting("current_host", '', channel=channel)
+    return host, canonical
 
 
 def convert_url_base64(url, host='', rep_blanks=True):
@@ -180,7 +213,7 @@ def convert_url_base64(url, host='', rep_blanks=True):
     domain = scrapertools.find_single_match(url, patron_domain)
 
     url_base64 = url
-    if '=http' in url_base64:
+    if '=http' in url_base64 and not 'magnet:' in url_base64:
         url_base64 = scrapertools.find_single_match(url_base64, '=(http.*?$)')
     
     if len(url_base64) > 1 and not 'magnet:' in url_base64 and not '.torrent' in url_base64:
@@ -509,6 +542,7 @@ def refresh_screen(item):
     try:
         import xbmcplugin
         import xbmcgui
+        from platformcode.platformtools import itemlist_update
         
         xlistitem = xbmcgui.ListItem(path=item.url)                     #Creamos xlistitem por compatibilidad con Kodi 18
         if config.get_platform(True)['num_version'] >= 16.0:
@@ -522,7 +556,7 @@ def refresh_screen(item):
     except:
         logger.error(traceback.format_exc())
     
-    platformtools.itemlist_update(item)                                 #refrescamos la pantalla con el nuevo Item
+    itemlist_update(item)                                               #refrescamos la pantalla con el nuevo Item
     
     return xlistitem
     
