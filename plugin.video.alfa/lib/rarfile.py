@@ -1807,7 +1807,7 @@ class RAR5Parser(CommonParser):
         if hdrlen > 2 * 1024 * 1024:
             return None
         header_size = pos + hdrlen
-        logger.debug('_parse_block_header: header_size: %s, start_bytes: %s, header_offset: %s' % (header_size, start_bytes, header_offset))
+        #logger.debug('_parse_block_header: header_size: %s, start_bytes: %s, header_offset: %s' % (header_size, start_bytes, header_offset))
 
         # read full header, check for EOF
         hdata = start_bytes + fd.read(header_size - len(start_bytes))
@@ -2808,7 +2808,7 @@ def load_vint(buf, pos):
 def load_byte(buf, pos):
     """Load single byte"""
     end = pos + 1
-    logger.debug('load_byte: buf: %s, end: %s' % (len(buf), end))
+    #logger.debug('load_byte: buf: %s, end: %s' % (len(buf), end))
     if end > len(buf):
         raise BadRarFile("cannot load byte")
     return S_BYTE.unpack_from(buf, pos)[0], end
@@ -2817,7 +2817,7 @@ def load_byte(buf, pos):
 def load_le32(buf, pos):
     """Load little-endian 32-bit integer"""
     end = pos + 4
-    logger.debug('load_le32: buf: %s, end: %s' % (len(buf), end))
+    #logger.debug('load_le32: buf: %s, end: %s' % (len(buf), end))
     if end > len(buf):
         raise BadRarFile("cannot load le32")
     return S_LONG.unpack_from(buf, pos)[0], pos + 4
@@ -2826,7 +2826,7 @@ def load_le32(buf, pos):
 def load_bytes(buf, num, pos):
     """Load sequence of bytes"""
     end = pos + num
-    logger.debug('load_bytes: buf: %s, end: %s' % (len(buf), end))
+    #logger.debug('load_bytes: buf: %s, end: %s' % (len(buf), end))
     if end > len(buf):
         raise BadRarFile("cannot load bytes")
     return buf[pos: end], end
