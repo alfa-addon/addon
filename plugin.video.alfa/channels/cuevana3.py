@@ -229,7 +229,7 @@ def play(item):
 
     item.server = ""
 
-    if "cuevana3.io" in item.url:
+    if "cuevana3.io" in item.url or "tomatomatel" in item.url:
         item.url = get_urls(item.url, item.v_id)
     if "damedamehoy" in item.url:
         item.url, id = item.url.split("#")

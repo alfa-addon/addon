@@ -214,8 +214,11 @@ def episodios(item):
     itemlist = list()
 
     templist = folders(item)
-    for tempitem in templist:
 
+    for tempitem in templist:
+        if tempitem.infoLabels["episode"]:
+            itemlist = templist
+            break
         itemlist += episodesxfolder(tempitem)
 
     return itemlist
