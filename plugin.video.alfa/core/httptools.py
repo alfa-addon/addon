@@ -659,9 +659,9 @@ def downloadpage(url, **opt):
 
         domain = urlparse.urlparse(url)[1]
         global CS_stat
-        if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True):    #Está en la lista de CF o viene en la llamada
-            from lib import cloudscraper
-            session = cloudscraper.create_scraper()                             #El dominio necesita CloudScraper
+        if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True):    # Está en la lista de CF o viene en la llamada
+            from lib.cloudscraper import create_scraper
+            session = create_scraper()                                                  # El dominio necesita CloudScraper
             session.verify = True
             CS_stat = True
             if cf_ua and cf_ua != 'Default' and get_cookie(url, 'cf_clearance'):
@@ -866,18 +866,6 @@ def downloadpage(url, **opt):
         if not response['data']:
             response['data'] = ''
 
-        response['soup'] = None
-
-        if opt.get("soup", False):
-            try:
-                from bs4 import BeautifulSoup
-                response["soup"] = BeautifulSoup(req.content, "html5lib", from_encoding=opt.get('encoding', response['encoding']))
-
-            except Exception:
-                import traceback
-                logger.error("Error creando sopa")
-                logger.error(traceback.format_exc())
-
         try:
             if 'bittorrent' not in req.headers.get('Content-Type', '') \
                         and 'octet-stream' not in req.headers.get('Content-Type', '') \
@@ -919,6 +907,17 @@ def downloadpage(url, **opt):
         # Si hay error del proxy, refresca la lista y reintenta el numero indicada en proxy_retries
         response, url, opt = proxy_post_processing(url, proxy_data, response, opt)
         response['canonical'] = canonical(response['data'])
+        
+        response['soup'] = None
+        if opt.get("soup", False):
+            try:
+                from bs4 import BeautifulSoup
+                response["soup"] = BeautifulSoup(response['data'], "html5lib", from_encoding=opt.get('encoding', response['encoding']))
+
+            except Exception:
+                import traceback
+                logger.error("Error creando sopa")
+                logger.error(traceback.format_exc())
 
         # Si proxy ordena salir del loop, se sale
         if opt.get('out_break', False):

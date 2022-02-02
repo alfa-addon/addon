@@ -7,8 +7,7 @@ import os
 
 from core import channeltools
 from core.item import Item
-from platformcode.unify import thumb_dict
-from platformcode import config, logger, unify
+from platformcode import config, logger
 
 
 def getmainlist(view="thumb_"):
@@ -565,11 +564,12 @@ def filterchannels(category, view="thumb_"):
 
 
 def get_thumb(thumb_name, view="thumb_", auto=False):
+    from platformcode.unify import thumb_dict, set_genre, simplify
 
     if auto:
         thumbnail = ''
 
-        thumb_name = unify.set_genre(unify.simplify(thumb_name))
+        thumb_name = set_genre(simplify(thumb_name))
 
 
         if thumb_name in thumb_dict:

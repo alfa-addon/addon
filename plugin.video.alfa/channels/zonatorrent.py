@@ -234,11 +234,11 @@ def listado(item):
             break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
         
         #Patrón para todo, menos para Alfabeto
-        patron = '<li class="TPostMv"><article id="[^"]+" class="[^"]+"><a href="(?P<url>[^"]+)".*?><div[^>]+><figure[^>]+><img[^>]+src="(?P<thumb>[^"]+)"[^>]+><\/figure>(?:<span class="TpTv BgA">(.*?)<\/span>)?<\/div><h2 class="Title">(?P<title>.*?)<\/h2>.*?<span class="Time[^>]+>(?P<duration>.*?)<\/span><span class="Date[^>]+>(?P<year>.*?)<\/span>(?:<span class="Qlty">(?P<quality>.*?)<\/span>)?<\/p><div class="Description">.*?<\/div><\/div><\/article><\/li>'
+        patron = '<li\s*class="TPostMv">\s*<article\s*id="[^"]+"\s*class="[^"]+">\s*<a\s*href="(?P<url>[^"]+)".*?>\s*<div[^>]+>\s*<figure[^>]+>\s*<img[^>]+src="(?P<thumb>[^"]+)"[^>]+>\s*<\/figure>\s*(?:<span\s*class="TpTv\s*BgA">(.*?)<\/span>)?\s*<\/div>\s*<h2\s*class="Title">(?P<title>.*?)<\/h2>.*?<span class="Time[^>]+>(?P<duration>.*?)<\/span>\s*<span\s*class="Date[^>]+>(?P<year>.*?)<\/span>\s*(?:<span\s*class="Qlty">(?P<quality>.*?)<\/span>)?<\/p>\s*<div\s*class="Description">.*?<\/div>\s*<\/div>\s*<\/article>\s*<\/li>'
         
         #Si viene de Alfabeto, ponemos un patrón especializado
         if item.extra2 == 'alfabeto':
-            patron = '<td class="MvTbImg"><a href="(?P<url>[^"]+)".*?src="(?P<thumb>[^"]+)"[^>]+>(?:<span class="TpTv BgA">(.*?)<\/span>)?<\/a><\/td>[^>]+>[^>]+><strong>(?P<title>.*?)<\/strong><\/a><\/td><td>(?P<year>.*?)<\/td><td><p class="Info"><span class="Qlty">(?P<quality>.*?)<\/span><\/p><\/td><td>(?P<duration>.*?)<\/td>'
+            patron = '<td\s*class="MvTbImg">\s*<a\s*href="(?P<url>[^"]+)".*?src="(?P<thumb>[^"]+)"[^>]+>\s*(?:<span\s*class="TpTv\s*BgA">(.*?)<\/span>)?<\/a>\s*<\/td>[^>]+>[^>]+>\s*<strong>(?P<title>.*?)<\/strong>\s*<\/a>\s*<\/td>\s*<td>(?P<year>.*?)<\/td>\s*<td>\s*<p\s*class="Info">\s*<span\s*class="Qlty">(?P<quality>.*?)<\/span>\s*<\/p>\s*<\/td>\s*<td>(?P<duration>.*?)<\/td>'
             
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches and not 'Lo sentimos, no tenemos nada que mostrar' in data:  #error

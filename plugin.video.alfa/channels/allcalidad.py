@@ -136,7 +136,7 @@ def findvideos(item):
     itemlist = []
     encontrado = []
     
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding=encoding, forced_proxy_opt=forced_proxy_opt).data
     
     matches = scrapertools.find_multiple_matches(data, 'data-id="([^"]+)"')
     scrapertools.printMatches(matches)

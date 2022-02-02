@@ -29,14 +29,11 @@ except:
     pass
 
 from core import filetools
-from core import httptools
 from core import scrapertools
 from core import jsontools
 from core.item import Item
 from platformcode import logger
 from platformcode import config
-from platformcode import platformtools
-from lib import generictools
 
 PLATFORM = config.get_system_platform()
 
@@ -111,6 +108,8 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     
     # Importamos el cliente
     from btserver import Client
+    from lib.generictools import get_torrent_size
+    from platformcode.platformtools import dialog_notification, dialog_yesno, dialog_progress_bg, dialog_progress
 
     played = False
     debug = False
@@ -194,7 +193,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
         if (filetools.isfile(item.downloadServer['url']) or filetools.isdir(item.downloadServer['url'])) \
                         and filetools.exists(item.downloadServer['url']):
             for x in range(12):
-                size, url, torrent_f, rar_files = generictools.get_torrent_size(item.downloadServer['url'], 
+                size, url, torrent_f, rar_files = get_torrent_size(item.downloadServer['url'], 
                             file_list=True, lookup=False, torrents_path=item.downloadServer['url'], 
                             local_torr=item.downloadServer['url'])
                 if 'ERROR' not in size:
@@ -207,7 +206,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
                         and not filetools.exists(item.downloadServer['url'])) or torrent_stop:
             torrent_stop =  True
             if not DOWNGROUND:
-                platformtools.dialog_notification("Magnet a Torrent", "No se convierte a .torrent.  Cancelado")
+                dialog_notification("Magnet a Torrent", "No se convierte a .torrent.  Cancelado")
             if not rar_files:
                 rar_files = []
 
@@ -245,7 +244,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     video_path = erase_file_path
     
     if rar and RAR and not UNRAR:
-        if not platformtools.dialog_yesno(msg_header, 'Se ha detectado un archivo .RAR en la descarga', \
+        if not dialog_yesno(msg_header, 'Se ha detectado un archivo .RAR en la descarga', \
                     'No tiene instalado el extractor UnRAR', '¿Desea descargarlo en cualquier caso?'):
             c.stop()
             return
@@ -276,12 +275,12 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
 
     # Mostramos el progreso
     if (rar and RAR and BACKGROUND) or DOWNGROUND:                              # Si se descarga un RAR...
-        progreso = platformtools.dialog_progress_bg(msg_header)
+        progreso = dialog_progress_bg(msg_header)
         if not DOWNGROUND:
-            platformtools.dialog_notification("Descarga de RAR en curso", "Puedes realizar otras tareas en Kodi mientrastanto. " + \
+            dialog_notification("Descarga de RAR en curso", "Puedes realizar otras tareas en Kodi mientrastanto. " + \
                     "Te informaremos...", time=10000)
     else:
-        progreso = platformtools.dialog_progress(msg_header, '')
+        progreso = dialog_progress(msg_header, '')
     dp_cerrado = False
 
     x = 1
@@ -349,29 +348,29 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
                     dp_cerrado = True
                 if 'Finalizado' in s.str_state or 'Seeding' in s.str_state:
                     """
-                    if not rar and platformtools.dialog_yesno(msg_header, config.get_localized_string(70198)):
+                    if not rar and dialog_yesno(msg_header, config.get_localized_string(70198)):
                         played = False
                         dp_cerrado = False
-                        progreso = platformtools.dialog_progress(msg_header, '')
+                        progreso = dialog_progress(msg_header, '')
                         progreso.update(s.buffer, txt, txt2, txt3)
                     else:
                     """
                     dp_cerrado = False
-                    progreso = platformtools.dialog_progress(msg_header, '')
+                    progreso = dialog_progress(msg_header, '')
                     break
 
                 else:
-                    if platformtools.dialog_yesno(msg_header, "¿Borramos los archivo descargados? (incompletos)",  
+                    if dialog_yesno(msg_header, "¿Borramos los archivo descargados? (incompletos)",  
                                     "Selecciona NO para seguir descargando en segundo plano"):
                         dp_cerrado = False
-                        progreso = platformtools.dialog_progress(msg_header, '')
+                        progreso = dialog_progress(msg_header, '')
                         break
 
                     else:
                         bkg_user = True
                         if not dp_cerrado: progreso.close()
                         dp_cerrado = False
-                        progreso = platformtools.dialog_progress_bg(msg_header)
+                        progreso = dialog_progress_bg(msg_header)
                         progreso.update(s.buffer, txt, txt2)
                         if not c.closed:
                             c.set_speed_limits(DOWNLOAD_LIMIT, UPLOAD_LIMIT)    # Bajamos la velocidad en background
@@ -473,23 +472,23 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
                     finalizado = True
                     break
 
-                if platformtools.dialog_yesno(msg_header, "¿Borramos los archivo descargados? (incompletos)",  
+                if dialog_yesno(msg_header, "¿Borramos los archivo descargados? (incompletos)",  
                                     "Selecciona NO para seguir descargando en segundo plano"):
-                    progreso = platformtools.dialog_progress(msg_header, '')
+                    progreso = dialog_progress(msg_header, '')
                     dp_cerrado = False
                     break
                 else:
                     bkg_user = True
                     played = False
                     if not dp_cerrado: progreso.close()
-                    progreso = platformtools.dialog_progress_bg(msg_header)
+                    progreso = dialog_progress_bg(msg_header)
                     progreso.update(s.buffer, txt, txt2)
                     dp_cerrado = False
                     continue
                 
                 # Cuando este cerrado,  Volvemos a mostrar el dialogo
                 if not (rar and bkg_user):
-                    progreso = platformtools.dialog_progress(msg_header, '')
+                    progreso = dialog_progress(msg_header, '')
                     progreso.update(s.buffer, txt + '\n' + txt2 + '\n' + txt3 + '\n' + " ")
                     dp_cerrado = False
                     
@@ -540,7 +539,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     # Y borramos los archivos de descarga restantes
     time.sleep(1)
     if (filetools.exists(erase_file_path) and not bkg_user) or torrent_stop:
-        if finalizado and not platformtools.dialog_yesno(msg_header, '¿Borrarmos los archivos descargados? (completos)'):
+        if finalizado and not dialog_yesno(msg_header, '¿Borrarmos los archivos descargados? (completos)'):
             return
         log("##### erase_file_path: %s" % erase_file_path)
         for x in range(10):
@@ -648,6 +647,7 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
                     return (torrents_path, torrent_file, subtitles)
                 return torrents_path, subtitles                                 #Si hay un error, devolvemos el "path" vacío
         else:
+            from core import httptools
             if lookup:
                 proxy_retries = 0
             follow_redirects = True
@@ -687,9 +687,10 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
                     return torrents_path                                        #Si hay un error, devolvemos el "path" vacío
             
             else:
+                from lib.generictools import js2py_conversion
                 torrent_file = response.data
                 # En caso de que sea necesaria la conversión js2py
-                torrent_file = generictools.js2py_conversion(torrent_file, url, timeout=(timeout, timeout), 
+                torrent_file = js2py_conversion(torrent_file, url, timeout=(timeout, timeout), 
                                headers=headers, referer=referer, post=post, follow_redirects=follow_redirects, 
                                proxy_retries=proxy_retries, channel=None)
 
@@ -821,13 +822,14 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
 def capture_thru_browser(url, capture_path, response, VFS):
     # Si hay un bloqueo insalvable de CloudFlare, se intenta descargar el .torrent directamente desde Chrome
     logger.info('url: %s, capture_path: %s' % (url, capture_path))
+    from lib.generictools import call_browser
     
     torrents_path = ''
     torrent_file = ''
     salida = False
         
     startlist = filetools.listdir(capture_path)
-    browser, res = generictools.call_browser(url, download_path=capture_path)
+    browser, res = call_browser(url, download_path=capture_path)
     if not browser:
         logger.error('ERROR: No Browser Externo')
         return (torrents_path, torrent_file)
@@ -877,6 +879,7 @@ def magnet2torrent(magnet, headers={}):
     btih = scrapertools.find_single_match(magnet, 'urn:btih:([\w\d]+)\&').upper()
 
     if magnet.startswith('magnet') and MAGNET2TORRENT:
+        from core import httptools
 
         # Tratamos de convertir el magnet on-line (opción más rápida, pero no se puede convertir más de un magnet a la vez)
         url_list = [
@@ -955,6 +958,7 @@ def verify_url_torrent(url, timeout=5):
 def call_torrent_via_web(mediaurl, torr_client, torrent_action='add',oper=2, alfa_s=True, timeout=5):
     # Usado para llamar a los clientes externos de Torrents para automatizar la descarga de archivos que contienen .RAR
     logger.info()
+    from core import httptools
     
     post = None
     files = {}
@@ -1015,6 +1019,7 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
         logger.info('%s: %s, web: %s, action: %s' % (torr_client.upper(), folder, local_host[torr_client], action))
     
     try:
+        from core import httptools
         uri = '%s/list' % (local_host[torr_client])
         if "torrest" in torr_client:
             uri = '%s?status=true' % (local_host[torr_client].rstrip('/'))
@@ -1170,11 +1175,12 @@ def delete_torrent_folder(folder_new):
 
 
 def torrent_dirs():
+    from platformcode.platformtools import torrent_client_installed
     
     torrent_options = []
     torrent_options.append("Cliente interno BT")
     torrent_options.append("Cliente interno MCT")
-    torrent_options.extend(platformtools.torrent_client_installed(show_tuple=False))
+    torrent_options.extend(torrent_client_installed(show_tuple=False))
     torrent_paths = {
                      'TORR_opt': 0,
                      'TORR_client': '',
@@ -1330,6 +1336,7 @@ def torrent_dirs():
 
 
 def update_control(item, function=''):
+    from lib.generictools import verify_channel
     if not function:
         function = inspect.currentframe().f_back.f_back.f_code.co_name
 
@@ -1362,9 +1369,9 @@ def update_control(item, function=''):
         item_control.folder = True
         del item_control.folder
         if item.category:
-            item_control.contentChannel = generictools.verify_channel(item.category.lower())
+            item_control.contentChannel = verify_channel(item.category.lower())
         else:
-            item_control.contentChannel = generictools.verify_channel(item.channel)
+            item_control.contentChannel = verify_channel(item.channel)
         item_control.action = 'menu'
         item_control.channel = 'downloads'
         item_control.url = item.url_control
@@ -1388,14 +1395,14 @@ def update_control(item, function=''):
                 item_control.action = 'menu'
             if item.contentChannel != item.category.lower():
                 if not item.channel or item.channel in ['list']:
-                    item.channel = generictools.verify_channel(item.category.lower())
+                    item.channel = verify_channel(item.category.lower())
                 if not item.contentChannel or item.contentChannel in ['list', 'downloads']:
-                    item.contentChannel = generictools.verify_channel(item.category.lower())
+                    item.contentChannel = verify_channel(item.category.lower())
                 item_control.contentChannel = ''
             if item.contentChannel:
                 item_control.contentChannel = item.contentChannel
             elif not item_control.contentChannel:
-                item_control.contentChannel = generictools.verify_channel(item.category.lower())
+                item_control.contentChannel = verify_channel(item.category.lower())
             item_control.channel = 'downloads'
             if item.server:
                 item_control.server = item.server
@@ -1484,6 +1491,7 @@ def mark_torrent_as_watched():
             
     # Terminar Assistant si no ha sido llamado por binarios
     if config.get_setting("assistant_binary", default='') != 'AstOK':
+        from core import httptools
         url_terminate = "http://127.0.0.1:48886/terminate"
         data = httptools.downloadpage(url_terminate, timeout=1, alfa_s=True, ignore_response_code=True).data
 
@@ -1590,6 +1598,8 @@ def restart_unfinished_downloads():
 
 def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
     logger.info()
+    from lib.generictools import get_torrent_size
+    from platformcode.platformtools import set_infolabels, rar_control_mng
     
     try:
         if not torrent_paths:
@@ -1632,7 +1642,7 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
         if config.get_setting("player_mode"):
             xlistitem.setProperty('IsPlayable', 'true')
 
-        platformtools.set_infolabels(xlistitem, item)
+        set_infolabels(xlistitem, item)
         
         referer = None
         post = None
@@ -1656,11 +1666,11 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
                         not in item.url and not item.url.startswith("magnet:"):
             item.url = filetools.join(videolibrary_path, folder, item.url)
         
-        size, url, torrent_f, rar_files = generictools.get_torrent_size(item.url, referer, post, \
+        size, url, torrent_f, rar_files = get_torrent_size(item.url, referer, post, \
                         torrents_path=torrents_path, lookup=False)
         
-        threading.Thread(target=platformtools.rar_control_mng, args=(item, xlistitem, url, \
-                        rar_files, torr_client.lower(), item.password, size, {})).start()
+        threading.Thread(target=rar_control_mng, args=(item, xlistitem, url, \
+                         rar_files, torr_client.lower(), item.password, size, {})).start()
         time.sleep(3)                                                           # Dejamos terminar la inicialización...
     except:
         logger.error(traceback.format_exc())
@@ -1858,13 +1868,14 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
 
 
 def mark_auto_as_watched(item):
+    from platformcode.platformtools import is_playing
     
     time_limit = time.time() + 150                                              #Marcamos el timepo máx. de buffering
     
     if config.get_platform(True)['num_version'] >= 14:
         monitor = xbmc.Monitor()                                                # For Kodi >= 14
 
-        while not monitor.abortRequested() and not platformtools.is_playing() \
+        while not monitor.abortRequested() and not is_playing() \
                     and time.time() < time_limit:                               #Esperamos mientra buffera    
             if monitor.waitForAbort(5):                                         #Repetimos cada intervalo
                 break
@@ -1876,7 +1887,7 @@ def mark_auto_as_watched(item):
         #subt = xbmcgui.ListItem(path=item.url, thumbnailImage=item.thumbnail)
         #subt.setSubtitles([item.subtitle])
 
-    if item.strm_path and platformtools.is_playing():                           #Sólo si es de Videoteca
+    if item.strm_path and is_playing():                           #Sólo si es de Videoteca
         from platformcode import xbmc_videolibrary
         xbmc_videolibrary.mark_auto_as_watched(item)                            #Marcamos como visto al terminar
         #logger.debug("Llamado el marcado")
@@ -1904,6 +1915,8 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
     logger.info()
 
     from subprocess import Popen, PIPE, STDOUT
+    from lib.generictools import get_torrent_size
+    from platformcode.platformtools import dialog_notification, dialog_yesno, dialog_progress_bg, dialog_progress, itemlist_refresh
     
     torrent_paths = torrent_dirs()
     
@@ -1928,7 +1941,7 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
         if (filetools.isfile(item.downloadServer['url']) or filetools.isdir(item.downloadServer['url'])) \
                         and filetools.exists(item.downloadServer['url']):
             for x in range(30):
-                size, url, torrent_f, rar_files = generictools.get_torrent_size(item.downloadServer['url'], 
+                size, url, torrent_f, rar_files = get_torrent_size(item.downloadServer['url'], 
                             file_list=True, lookup=False, torrents_path=item.downloadServer['url'], 
                             local_torr=item.downloadServer['url'])
                 if 'ERROR' not in size:
@@ -2012,7 +2025,7 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
 
     # Esperamos mientras el .torrent se descarga.  Verificamos si el .RAR está descargado al completo
     #if rar_file:
-    #   platformtools.dialog_notification("Automatizando la extracción", "Te iremos guiando...", time=10000)
+    #   dialog_notification("Automatizando la extracción", "Te iremos guiando...", time=10000)
     if rar_file:
         ret = filetools.write(filetools.join(rar_control['download_path'], \
                             '_rar_control.json'), jsontools.dump(rar_control))
@@ -2022,7 +2035,7 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
     
         progreso = ''
         if torr_client.upper() in ['TORREST'] and item.downloadStatus != 5 and not xbmc.getCondVisibility('Player.Playing'):
-            progreso = platformtools.dialog_progress_bg('Alfa %s Cliente Torrent' % torr_client.upper())
+            progreso = dialog_progress_bg('Alfa %s Cliente Torrent' % torr_client.upper())
         loop = 3600                                                             # Loop de 20 horas hasta crear archivo
         wait_time = 60
         time.sleep(wait_time/6)
@@ -2054,7 +2067,7 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                         if not xbmc.getCondVisibility('Player.Playing') and torrent_states[status.get('state', 0)] \
                                         in ['Downloading', 'Checking_resume_data', 'Buffering', 'Checking']:
                             if not progreso:
-                                progreso = platformtools.dialog_progress_bg('Alfa %s Cliente Torrent' % torr_client.upper())
+                                progreso = dialog_progress_bg('Alfa %s Cliente Torrent' % torr_client.upper())
                                 time.sleep(1)
                             overlay_info(progreso, status, totals, torr_client, folder=folder, bkg_user=True)
                         elif (xbmc.getCondVisibility('Player.Playing') or torrent_states[status.get('state', 0)] \
@@ -2090,14 +2103,14 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                 item = Item().fromjson(filetools.read(path))
                 item.downloadProgress = -1
                 update_control(item, function='wait_for_download_paused')
-                if item.downloadStatus != 5: platformtools.itemlist_refresh()
+                if item.downloadStatus != 5: itemlist_refresh()
             if item.downloadProgress == -1 and torr_data_status != 'Paused' and filetools.exists(path):
                 item = Item().fromjson(filetools.read(path))
                 item.downloadProgress = 1
                 update_control(item, function='wait_for_download_resumed')
-                if item.downloadStatus != 5: platformtools.itemlist_refresh()
+                if item.downloadStatus != 5: itemlist_refresh()
             if torr_client in ['quasar', 'elementum', 'torrest'] and not torr_data['label'].startswith('0.00%') and not fast and rar_file:
-                platformtools.dialog_notification("Descarga RAR en curso", "Puedes realizar otras tareas. " + \
+                dialog_notification("Descarga RAR en curso", "Puedes realizar otras tareas. " + \
                         "Te iremos guiando...", time=10000)
                 wait_time = wait_time / 6
                 fast = True
@@ -2227,7 +2240,7 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                         #if loop == 30 and y == len(responses):                  # Si es la primera vez en proceso ...
                         if loop == 30 and y == 1:                               # Si es la primera vez en proceso ...
                             if torr_client in ['quasar']:
-                                platformtools.dialog_notification("Descarga en curso", "Puedes realizar otras tareas en Kodi mientrastanto. " + \
+                                dialog_notification("Descarga en curso", "Puedes realizar otras tareas en Kodi mientrastanto. " + \
                                         "Te informaremos...", time=10000)
                             loop_change = 3600                                  # ... pasamos a un loop de 10 horas
                         elif loop <= 6:                                         # Recuerado el error desconocido
@@ -2270,6 +2283,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
     config.set_setting("LIBTORRENT_in_use", False, server="torrent")            # Marcamos Libtorrent como disponible
 
     from platformcode import custom_code
+    from platformcode.platformtools import dialog_notification, dialog_input
     
     if not item: item= Item()
     item.downloadProgress = 99
@@ -2298,7 +2312,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
             error_msg = "Cancelado por el Usuario"
             error_msg1 = "Archivo rar no descomprimido"
             log("##### %s" % error_msg)
-            platformtools.dialog_notification(error_msg, error_msg1)
+            dialog_notification(error_msg, error_msg1)
             return rar_file, False, '', filetools.join(save_path_videos, rar_file.split("/")[0])
         logger.debug('Esperando por unRAR en USO')
         dp.update(99, "unRAR en cola", "Espera unos minutos....")
@@ -2370,7 +2384,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
     rar_control = update_rar_control(erase_file_path, status='UnRARing', item=item)
 
     # Permite hasta 5 pasadas de extracción de .RARs anidados
-    platformtools.dialog_notification("Empezando extracción...", filetools.basename(rar_file))
+    dialog_notification("Empezando extracción...", filetools.basename(rar_file))
     for x in range(5):
         try:
             time.sleep(1)                                                       # Dejamos un tiempo para evitar colisiones (???)
@@ -2381,7 +2395,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
             log(traceback.format_exc(1))
             error_msg = "Error al abrir el RAR"
             error_msg1 = "Comprueba el log para más detalles"
-            platformtools.dialog_notification(error_msg, error_msg1)
+            dialog_notification(error_msg, error_msg1)
             rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
             config.set_setting("UNRAR_in_use", False, server="torrent")         # Marcamos unRAR como disponible
             if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
@@ -2397,7 +2411,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 pass_path = filetools.split(file_path)[0]
                 password = last_password_search(pass_path, erase_file_path)
             if not password :
-                password = platformtools.dialog_input(heading="Introduce la contraseña (Mira en %s)" % pass_path)
+                password = dialog_input(heading="Introduce la contraseña (Mira en %s)" % pass_path)
                 if not password:
                     error_msg = "No se ha introducido la contraseña"
                     rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
@@ -2428,7 +2442,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
         else:
             error_msg = "El RAR está vacío"
             error_msg1 = "O no contiene archivos válidos"
-            platformtools.dialog_notification(error_msg, error_msg1)
+            dialog_notification(error_msg, error_msg1)
             rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
             config.set_setting("UNRAR_in_use", False, server="torrent")         # Marcamos unRAR como disponible
             if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
@@ -2443,7 +2457,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
         selection = len(info) - 1
         if selection < 0:
             error_msg = "El RAR está vacío"
-            platformtools.dialog_notification(error_msg)
+            dialog_notification(error_msg)
             rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
             config.set_setting("UNRAR_in_use", False, server="torrent")         # Marcamos unRAR como disponible
             return rar_file, False, '', ''
@@ -2465,7 +2479,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 error_msg = "Cancelado por el Usuario"
                 error_msg1 = "Archivo RAR no descomprimido"
                 log("##### %s" % error_msg)
-                platformtools.dialog_notification(error_msg, error_msg1)
+                dialog_notification(error_msg, error_msg1)
                 config.set_setting("UNRAR_in_use", False, server="torrent")     # Marcamos unRAR como disponible
                 save_path_videos_mod = filetools.dirname(file_path_org.rstrip('/').rstrip('\\'))+'xyz123'
                 if filetools.exists(save_path_videos_mod):
@@ -2481,7 +2495,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 logger.error(traceback.format_exc(1))
                 error_msg = "Error al extraer"
                 error_msg1 = "Contraseña incorrecta"
-                platformtools.dialog_notification(error_msg, error_msg1)
+                dialog_notification(error_msg, error_msg1)
                 rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg1, status='ERROR')
                 config.set_setting("UNRAR_in_use", False, server="torrent")     # Marcamos unRAR como disponible
                 if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
@@ -2494,7 +2508,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 logger.error(traceback.format_exc(1))
                 error_msg = "Error al extraer"
                 error_msg1 = "Archivo RAR con errores"
-                platformtools.dialog_notification(error_msg, error_msg1)
+                dialog_notification(error_msg, error_msg1)
                 rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg1, status='ERROR')
                 config.set_setting("UNRAR_in_use", False, server="torrent")     # Marcamos unRAR como disponible
                 if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
@@ -2507,7 +2521,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 logger.error(traceback.format_exc(1))
                 error_msg = "Error al extraer"
                 error_msg1 = "Comprueba el log para más detalles"
-                platformtools.dialog_notification(error_msg, error_msg1)
+                dialog_notification(error_msg, error_msg1)
                 rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
                 config.set_setting("UNRAR_in_use", False, server="torrent")     # Marcamos unRAR como disponible
                 if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
@@ -2546,7 +2560,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                         save_path_videos = filetools.join(save_path_videos, 'Extracted')
                         rar_control = update_rar_control(erase_file_path, newextract=(rar_file))
                         if not filetools.exists(save_path_videos): filetools.mkdir(save_path_videos)
-                        platformtools.dialog_notification("Siguiente extracción...", filetools.basename(rar_file))
+                        dialog_notification("Siguiente extracción...", filetools.basename(rar_file))
                         break
                 time.sleep(1)                                                   # Dejamos un tiempo para evitar colisiones (???)
             
@@ -2561,7 +2575,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 if len(video_list) == 0:
                     error_msg = "El rar está vacío"
                     error_msg1 = "O no contiene archivos válidos"
-                    platformtools.dialog_notification(error_msg, error_msg1)
+                    dialog_notification(error_msg, error_msg1)
                     rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
                     if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
                         time.sleep(4)                                           # Dejamos un tiempo para evitar colisiones (???)
@@ -2578,7 +2592,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                     update_control(item, function='extract_files_END')
                     
                     log("##### Archivo extraído: %s" % video_list[0])
-                    platformtools.dialog_notification("Archivo extraído...", filetools.basename(video_list[0]))
+                    dialog_notification("Archivo extraído...", filetools.basename(video_list[0]))
                     log("##### Archivo remove: %s" % file_path)
                     #rar_control = update_rar_control(erase_file_path, status='DONE', item=item)
                     ret = filetools.remove(filetools.join(erase_file_path, '_rar_control.json'), silent=True)
@@ -2666,6 +2680,7 @@ def rename_rar_dir(item, rar_file, save_path_videos, video_path, torr_client):
 
 def last_password_search(pass_path, erase_file_path=''):
     logger.info(pass_path)
+    from core import httptools
     
     if not erase_file_path:
         erase_file_path = pass_path
@@ -2851,7 +2866,8 @@ def import_libtorrent(LIBTORRENT_PATH):
             logger.error(traceback.format_exc())
             if fp: fp.close()
             e = e1 or e2
-            ok = platformtools.dialog_ok('ERROR en el cliente Interno Libtorrent', \
+            from platformcode.platformtools import dialog_ok
+            ok = dialog_ok('ERROR en el cliente Interno Libtorrent', \
                         'Módulo no encontrado o imcompatible con el dispositivo.', \
                         'Reporte el fallo adjuntando un "log" %s' % str(e2))
         except:

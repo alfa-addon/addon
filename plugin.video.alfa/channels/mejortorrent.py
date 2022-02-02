@@ -31,16 +31,23 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host_list = ['https://www.mejortorrentes.net/', 'https://mejortorrent.one/']
 channel = 'mejortorrent'
 categoria = channel.capitalize()
-host_index = config.get_setting('choose_domain', channel)
-host = host_list[host_index]
-host_emergency = False
-domain_alt = host_list[1][-6:]
+host = config.get_setting("current_host", channel=channel, default='')
+host_alt = ['https://www.mejortorrentes.net/', 'https://mejortorrent.one/']
+host_black_list = []
+host_black_list.extend(host_alt)
+canonical = host
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+domain = scrapertools.find_single_match(host, patron_domain)
+domain_alt = host_alt[1][-6:]
 host_torrent = host[:-1]
 movies_sufix = ''
 series_sufix = ''
+
+if not host: 
+    host, canonical = generictools.check_host(channel, host_alt, host_black_list, 
+                      host, CF=False, alfa_s=True, canonical=True)
 
 __modo_grafico__ = config.get_setting('modo_grafico', channel)                  # búsqueda TMDB ?
 IDIOMAS_TMDB = {0: 'es', 1: 'en', 2: 'es,en'}
@@ -55,8 +62,7 @@ filter_languages = config.get_setting('filter_languages', channel)              
 def mainlist(item):
     logger.info()
     itemlist = []
-    adjust_alternate_domain('', reset=True)                                     # Resetear dominio alternativo
-    
+   
     thumb_cartelera = get_thumb("now_playing.png")
     thumb_pelis = get_thumb("channels_movie.png")
     thumb_series = get_thumb("channels_tvshow.png")
@@ -100,8 +106,7 @@ def configuracion(item):
 def submenu(item):
     logger.info()
     itemlist = []
-    adjust_alternate_domain(item)
-    
+   
     thumb_pelis = get_thumb("channels_movie.png")
     thumb_pelis_hd = get_thumb("channels_movie_hd.png")
     
@@ -112,15 +117,14 @@ def submenu(item):
 
     patron = 'class="bloqtitulo"[^>]*>\s*<span[^>]*>Torrents<\/span>\s*(?:<\/td><\/tr><\/table>)?(.*?)<\/table>'
     data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout/2, 
-                                          patron=patron, item=item, itemlist=[])    # Descargamos la página
+                                     patron=patron, item=item, itemlist=[])     # Descargamos la página
 
-    #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not response.sucess or itemlist:                                                 # Si ERROR o lista de errores lo reintentamos con otro Host
-        item.url, data, response, item, itemlist = choose_alternate_domain(item, \
-                                        url=item.url, code=code, patron=patron, itemlist=[])
-        if not response.sucess or itemlist:                                             # Si ERROR o lista de errores ...
-            return itemlist                                                     # ... Salimos
-    
+    # Verificamos si ha cambiado el Host
+    global host, canonical
+    if response.canonical and response.canonical != host:
+        host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
+                          host_black_list, host='', CF=False, alfa_s=True, canonical=True)
+
     # Seleccionamos el bloque y buscamos los apartados
     data = scrapertools.find_single_match(data, patron)
     patron = '(?i)<tr>\s*<td>\s*<a\s*href="([^"]+)"[^>]+>(?:<b>)?\s*(.*?)(?:<\/b>)?<\/a>\s*<\/td>'
@@ -160,13 +164,12 @@ def submenu(item):
 def alfabeto(item):
     logger.info()
     itemlist = []
-    adjust_alternate_domain(item)
-    
+  
     data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
-                                          item=item, itemlist=[])               # Descargamos la página
+                                     item=item, itemlist=[])                # Descargamos la página
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not response.sucess or itemlist:                                                 # Si ERROR o lista de errores ...
+    if not response.sucess or itemlist:                                         # Si ERROR o lista de errores ...
         return itemlist                                                         # ... Salimos
         
     patron = '(?i)squeda\s*de.*?culas\s*\:.*?<form\s*name="filtro"\s*action="([^"]+)"()'
@@ -204,19 +207,17 @@ def alfabeto(item):
 def novedades_menu(item):
     logger.info()
     itemlist = []
-    adjust_alternate_domain(item)
 
     patron = '(?i)<a href=\s*"([^"]+)"\s*class=\s*"menu_cabecera"\s*>[^>]+ltimos[^<]*<\/a>'
     data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout/2, 
-                                          patron=patron, item=item, itemlist=[])    # Descargamos la página
+                                     patron=patron, item=item, itemlist=[])     # Descargamos la página
 
-    #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not response.sucess or itemlist:                                                 # Si ERROR o lista de errores lo reintentamos con otro Host
-        item.url, data, response, item, itemlist = choose_alternate_domain(item, \
-                                        url=item.url, code=code, patron=patron, itemlist=[])
-        if not response.sucess or itemlist:                                             # Si ERROR o lista de errores ...
-            return itemlist                                                     # ... Salimos
-    
+    # Verificamos si ha cambiado el Host
+    global host, canonical
+    if response.canonical and response.canonical != host:
+        host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
+                          host_black_list, host='', CF=False, alfa_s=True, canonical=True)
+
     item.action = 'listado'
     item.url = urlparse.urljoin(host, scrapertools.find_single_match(data, patron))
     
@@ -227,7 +228,6 @@ def listado(item):                                                              
     logger.info()
     
     itemlist = []
-    adjust_alternate_domain(item)
 
     #logger.debug(item)
 
@@ -297,8 +297,17 @@ def listado(item):                                                              
         cnt_match = 0                                                           # Contador de líneas procesadas de matches
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
             data, response, item, itemlist = generictools.downloadpage(next_page_url, headers=headers, 
-                                          timeout=timeout_search, post=post, referer=referer, s2=False, 
-                                          item=item, itemlist=itemlist)         # Descargamos la página)
+                                             timeout=timeout_search, post=post, referer=referer, s2=False, 
+                                             item=item, itemlist=itemlist)      # Descargamos la página)
+            
+            # Verificamos si ha cambiado el Host
+            global host, canonical
+            if response.canonical and response.canonical != host:
+                host_save = host
+                host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
+                                  host_black_list, host='', CF=False, alfa_s=True, canonical=True)
+                item.url = item.url.replace(host_save, host)
+                next_page_url = next_page_url.replace(host_save, host)
             
             curr_page += 1                                                      # Apunto ya a la página siguiente
             if not data:                                                        # Si la web está caída salimos sin dar error
@@ -635,7 +644,6 @@ def listado(item):                                                              
 def findvideos(item):
     logger.info()
 
-    adjust_alternate_domain(item)
     itemlist = []
     itemlist_t = []                                                             # Itemlist total de enlaces
     itemlist_f = []                                                             # Itemlist de enlaces filtrados
@@ -666,7 +674,13 @@ def findvideos(item):
     #Bajamos los datos de las páginas
     if not item.matches:
         data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, post=post, headers=headers, 
-                                          referer=referer, s2=False, item=item, itemlist=[])     # Descargamos la página)
+                                         referer=referer, s2=False, item=item, itemlist=[])         # Descargamos la página)
+    
+    # Verificamos si ha cambiado el Host
+    global host, canonical
+    if response.canonical and response.canonical != host:
+        host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
+                          host_black_list, host='', CF=False, alfa_s=True, canonical=True)
     
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if (not data and not item.matches) or response.code == 999:
@@ -938,7 +952,6 @@ def episodios(item):
     
     itemlist = []
     search_seasons = True
-    adjust_alternate_domain(item)
     
     #logger.debug(item)
 
@@ -1006,10 +1019,18 @@ def episodios(item):
         list_temp = list_temps[:]                                               # Lista final de Temporadas a procesar
 
     # Descarga las páginas
-    for url in list_temp:                                                       # Recorre todas las temporadas encontradas
-
+    for _url in list_temp:                                                      # Recorre todas las temporadas encontradas
+        url = _url
         data, response, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, 
-                                          item=item, itemlist=itemlist)         # Descargamos la página
+                                         item=item, itemlist=itemlist)          # Descargamos la página
+        
+        # Verificamos si ha cambiado el Host
+        global host, canonical
+        if response.canonical and response.canonical != host:
+            host_save = host
+            host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
+                              host_black_list, host='', CF=False, alfa_s=True, canonical=True)
+            url = url.replace(host_save, host)
         
         #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
         if not response.sucess:                                                 # Si ERROR o lista de errores ...
@@ -1166,81 +1187,9 @@ def actualizar_titulos(item):
     return item
 
 
-def choose_alternate_domain(item, url='', code='', patron='', itemlist=[], headers=None, referer=None, post=None):
-    global host, host_index, host_emergency
-    logger.info('Dominio: %s, Index: %s, Emergency: %s' % (host, str(host_index), str(host_emergency)))
-    
-    data = ''
-    response = {
-                'data': data, 
-                'sucess': False, 
-                'code': 999
-               }
-    response = type('HTTPResponse', (), response)
-    url_alt = url
-    host_index_init = host_index
-    
-    if not url:
-        logger.info('Falta URL')
-        return url_alt, data, response, item, itemlist
-
-    if host_emergency:
-        if len(host_list) > 2:
-            host_index_init = config.get_setting('choose_domain', channel)
-        else:
-            logger.info('Dominio ALTERNATIVO no disponible: %s' % str(host_list))
-            return url_alt, data, response, item, itemlist
-
-    if item.headers: headers = item.headers
-    if item.referer: referer = item.referer
-    if item.post: post = item.post
-    
-    for x, host_alt in enumerate(host_list):
-        if x == host_index or x == host_index_init: continue
-
-        url_alt = url.replace(host, host_alt)
-        data, response, item, itemlist = generictools.downloadpage(url_alt, timeout=timeout, headers=headers, 
-                                          referer=referer, post=post, patron=patron, item=item, itemlist=itemlist)  # Descargamos la página
-        if response.sucess:
-            host_index = x
-            host = host_alt
-            host_emergency = True
-            config.set_setting('alternate_domain', host_index, channel)
-            logger.info('Dominio ALTERNATIVO: %s, Index: %s, Emergency: %s' % (host, str(host_index), str(host_emergency)))
-            break
-    else:
-        url_alt = url
-        logger.info('Dominio ALTERNATIVO no disponible: %s' % str(host_list))
-
-    return url_alt, data, response, item, itemlist
-
-
-def adjust_alternate_domain(item, reset=False):
-    global host, host_index, host_emergency
-    
-    if reset:
-        config.set_setting('alternate_domain', -1, channel)
-        return
-    
-    if item:
-        item.category = categoria
-    
-    if item and item.action in ['listado', 'findvideos', 'episodios']:
-        host = scrapertools.find_single_match(item.url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
-        if not host.endswith('/'): host += '/'
-        return
-    
-    host_index_alt = config.get_setting('alternate_domain', channel)
-    if host_index_alt >= 0:
-        host_index = host_index_alt
-        host = host_list[host_index]
-        host_emergency = True
-
-
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    adjust_alternate_domain(item)
     
     try:
         if domain_alt in host:
@@ -1264,7 +1213,6 @@ def newest(categoria):
     logger.info()
     itemlist = []
     item = Item()
-    adjust_alternate_domain(item)
 
     item.title = "newest"
     item.category_new = "newest"

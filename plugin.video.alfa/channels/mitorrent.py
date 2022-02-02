@@ -434,8 +434,11 @@ def listado(item):                                                              
             # Verificamos si ha cambiado el Host
             global host, canonical
             if response.canonical and response.canonical != host:
+                host_save = host
                 host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
                                   host_black_list, host='', CF=True, alfa_s=True, canonical=True)
+                item.url = item.url.replace(host_save, host)
+                next_page_url = next_page_url.replace(host_save, host)
             
             # Verificamos si se ha cargado una página correcta
             curr_page += 1                                                      # Apunto ya a la página siguiente

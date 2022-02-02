@@ -32,7 +32,7 @@ list_servers = ['torrent']
 channel = 'dontorrent'
 categoria = channel.capitalize()
 host = config.get_setting("current_host", channel=channel, default='')
-host_alt = ['https://dontorrent.it/', 'https://dontorrent.li/', 'https://dontorrent.pw/']
+host_alt = ['https://dontorrent.red/', 'https://dontorrent.it/', 'https://dontorrent.li/', 'https://dontorrent.pw/']
 host_black_list = ['https://dontorrent.se/', 'https://dontorrent.fun/']
 host_black_list.extend(host_alt)
 canonical = host
@@ -370,8 +370,11 @@ def listado(item):                                                              
             # Verificamos si ha cambiado el Host
             global host, canonical
             if response.canonical and response.canonical != host:
+                host_save = host
                 host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
                                   host_black_list, host='', CF=False, alfa_s=True, canonical=True)
+                item.url = item.url.replace(host_save, host)
+                next_page_url = next_page_url.replace(host_save, host)
             
             curr_page += 1                                                      #Apunto ya a la página siguiente
             if not data:                                                        #Si la web está caída salimos sin dar error
@@ -986,7 +989,8 @@ def episodios(item):
         list_temp = list_temps[:]                                               # Lista final de Temporadas a procesar
 
     # Descarga las páginas
-    for url in list_temp:                                                       # Recorre todas las temporadas encontradas
+    for _url in list_temp:                                                      # Recorre todas las temporadas encontradas
+        url = _url
         patron = '(?i)<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a\s*'
         patron += 'class="text-white[^"]+"\s*style="font-size[^"]+"\s*'
         patron += 'href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>\s*(?:<\/td>\s*'
@@ -1003,9 +1007,10 @@ def episodios(item):
         # Verificamos si ha cambiado el Host
         global host, canonical
         if response.canonical and response.canonical != host:
+            host_save = host
             host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
                               host_black_list, host='', CF=False, alfa_s=True, canonical=True)
-        
+            url = url.replace(host_save, host)
         matches = re.compile(patron, re.DOTALL).findall(data)
 
         #logger.debug("PATRON: " + patron)

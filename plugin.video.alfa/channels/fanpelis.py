@@ -95,7 +95,7 @@ def section(item):
     if item.title == 'Generos':
         return AlfaChannel.section(item, menu_id="19")
     else:
-        return AlfaChannel.section(item, menu_id="20")
+        return AlfaChannel.section(item, menu_id="84669")
 
 
 def seasons(item):

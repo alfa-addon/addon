@@ -42,6 +42,9 @@ import re
 import threading
 import time
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 from threading import Thread, Lock
 
 from core import filetools, jsontools
