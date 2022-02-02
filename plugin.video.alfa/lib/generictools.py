@@ -33,7 +33,6 @@ import json
 import base64
 
 from channelselector import get_thumb
-from core import httptools
 from core import scrapertools
 from core import servertools
 from core import channeltools
@@ -41,7 +40,6 @@ from core import filetools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
-from lib import jsunpack
 
 channel_py = "newpct1"
 intervenido_judicial = 'Dominio intervenido por la Autoridad Judicial'
@@ -68,6 +66,7 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
     # Función "wraper" que puede ser llamada desde los canales para descargar páginas de forma unificada y evitar
     # tener que hacer todas las comprobaciones dentro del canal, lo que dificulta su mantenimiento y mejora.
     # La llamada tiene todos los parámetros típicos que puede usar un canal al descargar.
+    from core import httptools
     
     if not PY3:
         funcion = inspect.stack()[1][3]                                         # Identifica el nombre de la función que llama
@@ -176,10 +175,12 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
     return (data, response, item, itemlist)
 
 
-def check_host(channel, host_alt, host_black_list=[], host='', CF=True, alfa_s=True, canonical=''):
+def check_host(channel, host_alt, host_black_list=[], host='', host_old='', CF=True, CF_test=True, alfa_s=True, canonical=''):
     if not alfa_s: logger.info()
+    from core import httptools
+    
     if host:
-        page = httptools.downloadpage(host, ignore_response_code=True, timeout=5, alfa_s=alfa_s, CF=CF)
+        page = httptools.downloadpage(host, ignore_response_code=True, timeout=5, alfa_s=alfa_s, CF=CF, CF_test=CF_test)
         if page.sucess:
             if not page.proxy__:
                 return host, page.canonical
@@ -187,7 +188,7 @@ def check_host(channel, host_alt, host_black_list=[], host='', CF=True, alfa_s=T
             host = ''
     
     for url in host_alt:
-        page = httptools.downloadpage(url, ignore_response_code=True, timeout=5, alfa_s=alfa_s, CF=CF)
+        page = httptools.downloadpage(url, ignore_response_code=True, timeout=5, alfa_s=alfa_s, CF=CF, CF_test=CF_test)
         if page.sucess:
             if host and host in url: return host, page.canonical
             if page.proxy__ and host: continue
@@ -197,14 +198,45 @@ def check_host(channel, host_alt, host_black_list=[], host='', CF=True, alfa_s=T
             else:
                 host = url
                 logger.info('Canal: %s: HOST cambiado a: %s - Canonical: %s' % (channel.capitalize(), host, page.canonical), force=True)
-            config.set_setting("current_host", host, channel=channel)
+            if channel != channel_py:
+                config.set_setting("current_host", host, channel=channel)
+            else:
+                return change_host_newpct1(host, page.canonical, host_old)
             return host, page.canonical
     else:
         if host: return host, page.canonical
     
-    host = host_alt[0]
-    config.set_setting("current_host", '', channel=channel)
+    if len(host_alt) > 0: host = host_alt[0]
+    if channel != channel_py: config.set_setting("current_host", '', channel=channel)
     return host, canonical
+
+
+def change_host_newpct1(host, canonical, host_old):
+    
+    channel_json = channeltools.get_channel_json(channel_py)
+    if not channel_json or not channel_json.get('settings', []):
+        return host, canonical
+    
+    domain_old = scrapertools.find_single_match(host_old, patron_domain)
+    label = ", ('1', 'atomixhq', 'atomixhq', '%s', '%s', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no')" \
+                % (domain_old, host)
+    update = False
+    
+    for settings in channel_json['settings']:                                   # Se recorren todos los settings
+        if settings['id'] == "clonenewpct1_channels_list":                      # Encontramos el setting
+            settings['default'] = settings.get('default', '').replace(host_old, host)   # Cambiar lista de clones
+            update = True
+        
+        if settings['id'] == "intervenidos_channels_list":                      # Encontramos el setting
+            settings['default'] = settings.get('default', '').replace(host_old, host)   # Cambiar lista de clones intervenidos
+            settings['default'] += label                                        # Añadimos redirección de host_old o host_canonical
+            update = True
+            
+    if update:
+        channel_path = filetools.join(config.get_runtime_path(), "channels", channel_py + ".json")
+        filetools.write(channel_path, json.dumps(channel_json, sort_keys=True, indent=2, ensure_ascii=True))
+    
+    return host, canonical 
 
 
 def convert_url_base64(url, host='', rep_blanks=True):
@@ -260,7 +292,8 @@ def convert_url_base64(url, host='', rep_blanks=True):
 
 def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=None, headers=None, 
                      timeout=10, follow_redirects=True, proxy_retries=1):
-
+    from core import httptools
+    
     if PY3 and isinstance(data, bytes):
         if not b'Javascript is required' in data:
             return data
@@ -1906,6 +1939,8 @@ def post_tmdb_findvideos(item, itemlist):
 
 
 def identifying_links(data, timeout=15, headers=None, referer=None, post=None, follow_redirects=True):
+    from core import httptools
+    
     if not PY3:
         from lib import alfaresolver
     else:
@@ -2063,6 +2098,7 @@ def context_for_videolibray(item):
 
 def find_rar_password(item):
     logger.info()
+    from core import httptools
     
     # Si no hay, buscamos en páginas alternativas
     rar_search = [
@@ -2486,6 +2522,7 @@ def get_field_from_kodi_DB(item, from_fields='*', files='file'):
 def fail_over_newpct1(item, patron, patron2=None, timeout=None):
     logger.info()
     import ast
+    from core import httptools
     
     """
         
@@ -3332,6 +3369,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
             i = 0
             for channel, url in list(it.library_urls.items()):
                 if not url.startswith('magnet'):
+                    from core import httptools
                     url_domain = scrapertools.find_single_match(url, patron_host) 
                     response = httptools.downloadpage(url_domain, timeout=10, ignore_response_code=True, hide_infobox=True)
                     if not response.sucess:
@@ -3907,6 +3945,8 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
 
 def dejuice(data):
     logger.info()
+    from lib import jsunpack
+    
     # Metodo para desobfuscar datos de JuicyCodes
 
     juiced = scrapertools.find_single_match(data, 'JuicyCodes.Run\((.*?)\);')
@@ -3918,6 +3958,8 @@ def dejuice(data):
 
 
 def privatedecrypt(url, headers=None):
+    from core import httptools
+    from lib import jsunpack
 
     data = httptools.downloadpage(url, headers=headers, follow_redirects=False).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
@@ -3937,6 +3979,8 @@ def privatedecrypt(url, headers=None):
 
 
 def rec(site_key, co, sa, loc):
+    from core import httptools
+    
     api_url = "https://www.google.com/recaptcha/api.js"
     headers = {
                "User-Agent": httptools.get_user_agent(),
@@ -3945,12 +3989,12 @@ def rec(site_key, co, sa, loc):
                "Accept-Language": "ro-RO,ro;q=0.8,en-US;q=0.6,en-GB;q=0.4,en;q=0.2"
                }
 
-    r_data = httptools.downloadpage(api_url, headers=headers, follow_redirects=False).data
+    r_data = httptools.downloadpage(api_url, headers=headers, follow_redirects=False, alfa_s=True).data
     v = scrapertools.find_single_match(r_data, "releases/([^/]+)")
     cb = "123456789"
     base_url = "https://www.google.com/recaptcha/api2/anchor?ar=1&k=%s&co=%s&hl=ro&v=%s&size=invisible&cb%s" % (site_key, co, v, cb)
 
-    r_data = httptools.downloadpage(base_url, headers=headers, follow_redirects=False).data
+    r_data = httptools.downloadpage(base_url, headers=headers, follow_redirects=False, alfa_s=True).data
     c = scrapertools.find_single_match(r_data, 'id="recaptcha-token" value="([^"]+)"')
 
     t_url = "https://www.google.com/recaptcha/api2/reload?k=%s" % site_key
@@ -3967,6 +4011,6 @@ def rec(site_key, co, sa, loc):
             "referer": base_url
             }
 
-    r_data = httptools.downloadpage(t_url, headers=head, follow_redirects=False, post=post).data
+    r_data = httptools.downloadpage(t_url, headers=head, follow_redirects=False, post=post, alfa_s=True).data
     response = scrapertools.find_single_match(r_data, '"rresp","([^"]+)"')
     return response

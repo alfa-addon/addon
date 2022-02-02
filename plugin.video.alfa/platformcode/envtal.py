@@ -11,6 +11,7 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import xbmc
+import xbmcgui
 import xbmcaddon
 
 import os
@@ -99,8 +100,8 @@ def get_environment():
                     pass
             environment['prod_model'] += ' (%s)' % config.is_rooted(silent=True)
         
-        elif PLATFORM in ['linux']:
-            environment['os_name'] = PLATFORM.capitalize()
+        elif PLATFORM in ['linux', 'raspberry']:
+            environment['os_name'] = PLATFORM.capitalize() if 'linux' in PLATFORM else 'RaspberryPi'
             try:
                 for label_a in subprocess.check_output('hostnamectl').split(FF):
                     if PY3 and isinstance(label_a, bytes):
@@ -118,9 +119,16 @@ def get_environment():
                         break
             except:
                 pass
-
-        elif PLATFORM in ['raspberry']:
-            environment['os_name'] = 'RaspberryPi'
+            
+            if 'libreelec' in environment['os_release'].lower() and PLATFORM != 'raspberry':
+                environment['os_name'] = 'RaspberryPi'
+                if config.get_setting("caching", default=True):
+                    try:
+                        PLATFORM = 'raspberry'
+                        window = xbmcgui.Window(10000)
+                        window.setProperty("alfa_system_platform", PLATFORM)
+                    except:
+                        pass
         
         else:
             environment['os_name'] = str(PLATFORM.capitalize())

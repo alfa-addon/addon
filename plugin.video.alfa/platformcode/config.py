@@ -434,10 +434,10 @@ def get_system_platform():
             platform = 'windows'
         elif xbmc.getCondVisibility("System.Platform.UWP"):
             platform = 'windows'
-        elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
-            platform = 'raspberry'
         elif xbmc.getCondVisibility("System.Platform.Linux"):
             platform = 'linux'
+        elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
+            platform = 'raspberry'
         elif xbmc.getCondVisibility("System.Platform.OSX"):
             platform = 'osx'
         elif xbmc.getCondVisibility("System.Platform.IOS"):

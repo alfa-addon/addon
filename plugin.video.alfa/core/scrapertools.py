@@ -271,7 +271,7 @@ def htmlclean(cadena):
     return cadena
 
 
-def slugify(title):
+def slugify(title, strict=True):
     # print title
 
     # Sustituye acentos y eñes
@@ -308,16 +308,18 @@ def slugify(title):
 
     # Elimina caracteres no válidos
     validchars = "abcdefghijklmnopqrstuvwxyz1234567890- "
+    if not strict: validchars += "()[]."
     title = ''.join(c for c in title if c in validchars)
 
-    # Sustituye espacios en blanco duplicados y saltos de línea
-    title = re.compile("\s+", re.DOTALL).sub(" ", title)
+    if strict:
+        # Sustituye espacios en blanco duplicados y saltos de línea
+        title = re.compile("\s+", re.DOTALL).sub(" ", title)
 
-    # Sustituye espacios en blanco por guiones
-    title = re.compile("\s", re.DOTALL).sub("-", title.strip())
+        # Sustituye espacios en blanco por guiones
+        title = re.compile("\s", re.DOTALL).sub("-", title.strip())
 
-    # Sustituye espacios en blanco duplicados y saltos de línea
-    title = re.compile("\-+", re.DOTALL).sub("-", title)
+        # Sustituye espacios en blanco duplicados y saltos de línea
+        title = re.compile("\-+", re.DOTALL).sub("-", title)
 
     # Arregla casos especiales
     if title.startswith("-"):

@@ -16,9 +16,11 @@ import os
 import re
 import traceback
 
-from core import scrapertools
+from core.scrapertools import find_single_match
 from core.item import Item
-from platformcode import platformtools, logger, config
+from platformcode import logger, config
+
+platform = config.get_system_platform()
 
 if config.is_xbmc():
     KODI = True
@@ -47,12 +49,11 @@ if not xbmc_vfs:
         sys.setdefaultencoding('utf-8')                         # Samba degrada el valor de defaultencoding.  Se reestablece
 
 # Windows es "mbcs" linux, osx, android es "utf8"
-if not PY3 and os.name == "nt":
+if not PY3 and platform in ['windows', 'xbox']:
     fs_encoding = ""
 else:
     fs_encoding = "utf-8"
 
-platform = config.get_system_platform()
 
 def validate_path(path, replacement='', trans_none=''):
     """
@@ -67,8 +68,8 @@ def validate_path(path, replacement='', trans_none=''):
 
     pattern = "[:\*\?<>\|\\/]"
     pattern_url = "[:\*\?<>\|]"
-    if scrapertools.find_single_match(path, '(^\w+:\/\/)'):
-        protocolo = scrapertools.find_single_match(path, '(^\w+:\/\/)')
+    if find_single_match(path, '(^\w+:\/\/)'):
+        protocolo = find_single_match(path, '(^\w+:\/\/)')
         parts = re.split(r'^\w+:\/\/(.+?)/(.+)', path)[1:3]
         parts[1] = parts[1].replace("\\", "/")
         return '{}{}/{}'.format(protocolo, parts[0], re.sub(pattern_url, replacement, parts[1]))
@@ -179,7 +180,7 @@ def encode(path, _samba=False, trans_none=''):
     if not isinstance(path, unicode):
         path = unicode(path, "utf-8", "ignore")
 
-    if scrapertools.find_single_match(path, '(^\w+:\/\/)') or _samba:
+    if find_single_match(path, '(^\w+:\/\/)') or _samba:
         path = path.encode("utf-8", "ignore")
     else:
         if fs_encoding:
@@ -296,7 +297,7 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, mode='r', silent=Fal
                     if "codec can't decode" in str(e):
                         mode = 'rbs'
                         f.seek(linea_inicio, whence)
-                        logger.error(str(e) + '.  Intentaremos leerlo en "mode=rbs", bytes a string')
+                        logger.error(str(e) + '.  Intentaremos leerlo en "mode=rbs", bytes a string, el archivo: ' + str(path))
                     else:
                         raise Exception(e)
             if mode not in ['r', 'ra']:
@@ -429,7 +430,7 @@ def file_open(path, mode="r", silent=False, vfs=True):
         elif path.lower().startswith("smb://"):
             return samba.smb_open(path, mode)
         
-        elif PY3 and mode in ['r', 'ra']:
+        elif PY3 and 'b' not in mode:
             return open(path, mode, encoding=fs_encoding)
         else:
             return open(path, mode)
@@ -438,7 +439,8 @@ def file_open(path, mode="r", silent=False, vfs=True):
         logger.error("ERROR al abrir el archivo: %s, %s" % (path, mode))
         if not silent:
             logger.error(traceback.format_exc())
-            platformtools.dialog_notification("Error al abrir", path)
+            from platformcode.platformtools import dialog_notification
+            dialog_notification("Error al abrir", path)
         return False
 
 
@@ -491,9 +493,9 @@ def file_info(path, silent=False, vfs=True):
             
             try:                                                                # Esta función NO está soportada en todas las plataformas
                 import pwd
-                uid = scrapertools.find_single_match(str(pwd.getpwuid(stat.st_uid())), "pw_name='([^']+)'")
+                uid = find_single_match(str(pwd.getpwuid(stat.st_uid())), "pw_name='([^']+)'")
                 if not uid: uid = stat.st_uid()
-                gid = scrapertools.find_single_match(str(pwd.getpwuid(stat.st_gid())), "pw_name='([^']+)'")
+                gid = find_single_match(str(pwd.getpwuid(stat.st_gid())), "pw_name='([^']+)'")
                 if not gid: gid = stat.st_gid()
             except:
                 uid = stat.st_uid()
@@ -537,7 +539,7 @@ def chmod(path, ch_mod, su=False, silent=False):
     res = False
     error_cmd = True
     
-    if KODI and xbmc.getCondVisibility("system.platform.windows"):
+    if KODI and platform in ['windows', 'xbox']:
         if not silent:
             logger.info('Command ERROR: CHMOD no soportado en esta plataforma', force=True)
     else:
@@ -613,7 +615,8 @@ def rename(path, new_name, silent=False, strict=False, vfs=True, ch_mod=''):
         logger.error("ERROR al renombrar el archivo: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
-            platformtools.dialog_notification("Error al renombrar", path)
+            from platformcode.platformtools import dialog_notification
+            dialog_notification("Error al renombrar", path)
         return False
     else:
         return True
@@ -660,7 +663,8 @@ def move(path, dest, silent=False, strict=False, vfs=True, ch_mod=''):
         # mixto En este caso se copia el archivo y luego se elimina el de origen
         else:
             if not silent:
-                dialogo = platformtools.dialog_progress("Copiando archivo", "")
+                from platformcode.platformtools import dialog_progress
+                dialogo = dialog_progress("Copiando archivo", "")
             return copy(path, dest) == True and remove(path) == True
     except:
         logger.error("ERROR al mover el archivo: %s a %s" % (path, dest))
@@ -734,7 +738,8 @@ def copy(path, dest, silent=False, vfs=True, ch_mod='', su=False):
         fd = file_open(dest, "wb")
         if fo and fd:
             if not silent:
-                dialogo = platformtools.dialog_progress("Copiando archivo", "")
+                from platformcode.platformtools import dialog_progress
+                dialogo = dialog_progress("Copiando archivo", "")
             size = getsize(path)
             copiado = 0
             while True:
@@ -796,7 +801,7 @@ def isfile(path, silent=False, vfs=True):
     path = encode(path)
     try:
         if xbmc_vfs and vfs:
-            if not scrapertools.find_single_match(path, '(^\w+:\/\/)') and not ('windows' in platform and len(path) > 260):
+            if not find_single_match(path, '(^\w+:\/\/)') and not (platform in ['windows', 'xbox'] and len(path) > 260):
                 return os.path.isfile(path)
             if path.endswith('/') or path.endswith('\\'):
                 path = path[:-1]
@@ -828,7 +833,7 @@ def isdir(path, silent=False, vfs=True):
     path = encode(path)
     try:
         if xbmc_vfs and vfs:
-            if not scrapertools.find_single_match(path, '(^\w+:\/\/)'):
+            if not find_single_match(path, '(^\w+:\/\/)'):
                 return os.path.isdir(path)
             if path.endswith('/') or path.endswith('\\'):
                 path = path[:-1]
@@ -953,7 +958,8 @@ def rmdirtree(path, silent=False, vfs=True):
         logger.error("ERROR al eliminar el directorio: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
-            platformtools.dialog_notification("Error al eliminar el directorio", path)
+            from platformcode.platformtools import dialog_notification
+            dialog_notification("Error al eliminar el directorio", path)
         return False
     else:
         return not exists(path)
@@ -981,7 +987,8 @@ def rmdir(path, silent=False, vfs=True):
         logger.error("ERROR al eliminar el directorio: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
-            platformtools.dialog_notification("Error al eliminar el directorio", path)
+            from platformcode.platformtools import dialog_notification
+            dialog_notification("Error al eliminar el directorio", path)
         return False
     else:
         return True
@@ -1016,7 +1023,8 @@ def mkdir(path, silent=False, vfs=True, ch_mod=''):
         logger.error("ERROR al crear el directorio: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
-            platformtools.dialog_notification("Error al crear el directorio", path)
+            from platformcode.platformtools import dialog_notification
+            dialog_notification("Error al crear el directorio", path)
         return False
     else:
         return True
@@ -1136,7 +1144,7 @@ def join(*paths):
                 path = encode(path)
             list_path += path.replace("\\", "/").strip("/").split("/")
 
-    if scrapertools.find_single_match(encode(paths[0]), '(^\w+:\/\/)'):
+    if find_single_match(encode(paths[0]), '(^\w+:\/\/)'):
         return str("/".join(list_path))
     else:
         return str(os.sep.join(list_path))
@@ -1151,8 +1159,8 @@ def split(path, vfs=True):
     @rtype: tuple
     """
     path = encode(path)
-    if scrapertools.find_single_match(path, '(^\w+:\/\/)'):
-        protocol = scrapertools.find_single_match(path, '(^\w+:\/\/)')
+    if find_single_match(path, '(^\w+:\/\/)'):
+        protocol = find_single_match(path, '(^\w+:\/\/)')
         if '/' not in path[6:]:
             path = path.replace(protocol, protocol + "/", 1)
         return path.rsplit('/', 1)
@@ -1207,7 +1215,7 @@ def remove_tags(title):
     """
     logger.info()
 
-    title_without_tags = scrapertools.find_single_match(title, '\[color .+?\](.+)\[\/color\]')
+    title_without_tags = find_single_match(title, '\[color .+?\](.+)\[\/color\]')
 
     if title_without_tags:
         return title_without_tags
@@ -1225,11 +1233,11 @@ def remove_smb_credential(path):
     """
     logger.info()
     
-    if not scrapertools.find_single_match(path, '(^\w+:\/\/)'):
+    if not find_single_match(path, '(^\w+:\/\/)'):
         return path
     
-    protocol = scrapertools.find_single_match(path, '(^\w+:\/\/)')
-    path_without_credentials = scrapertools.find_single_match(path, '^\w+:\/\/(?:[^;\n]+;)?(?:[^:@\n]+[:|@])?(?:[^@\n]+@)?(.*?$)')
+    protocol = find_single_match(path, '(^\w+:\/\/)')
+    path_without_credentials = find_single_match(path, '^\w+:\/\/(?:[^;\n]+;)?(?:[^:@\n]+[:|@])?(?:[^@\n]+@)?(.*?$)')
 
     if path_without_credentials:
         return (protocol + path_without_credentials)
