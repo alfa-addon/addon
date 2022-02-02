@@ -20,7 +20,7 @@ from core import tmdb
 from channels import autoplay
 from platformcode import config, logger
 
-host = 'https://seodiv.com/'
+host = 'https://areliux.com/'
 list_idiomas = ["LAT"]
 list_servers = ['sendvid', 'okru']
 list_quality = list()
@@ -108,9 +108,10 @@ def episodesxpage(item, page):
 
     itemlist = list()
 
-    elem = create_soup(page).find_all("div", class_="col-sm-4 col-xs-12")
+    elem = create_soup(page).find_all("div", class_="shortstory-news")
 
     for epi in elem:
+
         url = epi.a["href"]
         if not epi.a.img["src"].startswith("http"):
             thumb = host + epi.a.img["src"]

@@ -28,7 +28,6 @@ from core import httptools
 from core import jsontools
 from core.item import Item
 from platformcode import config, logger
-from platformcode import platformtools
 
 dict_servers_parameters = {}
 
@@ -59,6 +58,8 @@ def find_video_items(item=None, data=None):
     @rtype: list
     """
     logger.info()
+    from core import httptools
+    
     itemlist = []
 
     # Descarga la página
@@ -179,7 +180,8 @@ def findvideos(data, skip=False):
             break
     if config.get_setting("filter_servers") == False:  is_filter_servers = False
     if not devuelve and is_filter_servers:
-        platformtools.dialog_ok(config.get_localized_string(60000), config.get_localized_string(60001))
+        from platformcode.platformtools import dialog_ok
+        dialog_ok(config.get_localized_string(60000), config.get_localized_string(60001))
 
     return devuelve
 
@@ -224,6 +226,7 @@ def get_server_from_url(url):
 def parse_hls(video_urls, server):
     logger.info()
     from core import scrapertools
+    from core import httptools
 
     hs = ''
     new_video_urls = list()
@@ -234,7 +237,7 @@ def parse_hls(video_urls, server):
         if '|' in url:
             part = url.split('|')
             url = part[0]
-            if not url.endswith('master.m3u8'):
+            if not 'm3u8' in url:
                 return video_urls
             
             khs = part[1]
@@ -244,7 +247,7 @@ def parse_hls(video_urls, server):
             for key, val in matches:
                 headers[key] = val
 
-        if not url.endswith('master.m3u8'):
+        if not 'm3u8' in url:
                 return video_urls
         
         data = httptools.downloadpage(url, headers=headers).data
@@ -259,9 +262,8 @@ def parse_hls(video_urls, server):
 
             return new_video_urls
 
-
-
     return video_urls
+
 
 def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialogo=False):
     """
@@ -279,6 +281,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
     @rtype: list
     """
     logger.info("Server: %s, Url: %s" % (server, url))
+    from core import httptools
 
     server = server.lower()
 
@@ -313,8 +316,9 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
     if server_parameters:
         # Muestra un diágo de progreso
         if muestra_dialogo:
-            progreso = platformtools.dialog_progress(config.get_localized_string(20000),
-                                                        config.get_localized_string(70180) % server_parameters["name"])
+            from platformcode.platformtools import dialog_progress
+            progreso = dialog_progress(config.get_localized_string(20000),
+                                       config.get_localized_string(70180) % server_parameters["name"])
 
         # Cuenta las opciones disponibles, para calcular el porcentaje
 
@@ -782,6 +786,8 @@ def filter_servers(servers_list):
     u objetos Item. En cuyo caso es necesario q tengan un atributo item.server del tipo str.
     :return: Lista del mismo tipo de objetos que servers_list filtrada en funcion de la Lista Negra.
     """
+    from platformcode.platformtools import dialog_yesno
+    
     #Eliminamos los inactivos
     if servers_list:
         servers_list = [i for i in servers_list if not i.server or is_server_enabled(i.server)]
@@ -794,9 +800,9 @@ def filter_servers(servers_list):
             servers_list_filter = [x for x in servers_list if not config.get_setting("black_list", server=x)]
 
         # Si no hay enlaces despues de filtrarlos
-        if servers_list_filter or not platformtools.dialog_yesno(config.get_localized_string(60000),
-                                                                 config.get_localized_string(60010),
-                                                                 config.get_localized_string(70281)):
+        if servers_list_filter or not dialog_yesno(config.get_localized_string(60000),
+                                                   config.get_localized_string(60010),
+                                                   config.get_localized_string(70281)):
             servers_list = servers_list_filter
     
     if config.get_setting("favorites_servers") == True:
@@ -830,6 +836,8 @@ def check_video_link(url, server, timeout=3):
     :param url, server: Link y servidor
     :return: str(2) '??':No se ha podido comprobar. 'Ok':Parece que el link funciona. 'NO':Parece que no funciona.
     """
+    from core import httptools
+    
     try:
         server_module = __import__('servers.%s' % server, None, None, ["servers.%s" % server])
     except:
