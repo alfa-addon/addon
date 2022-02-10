@@ -170,6 +170,9 @@ def render_items(itemlist, parent_item):
         logger.error('itemlist: list expected, got {}'.format(type(itemlist)))
         return
 
+    # Dominios que necesitan Cloudscraper
+    CF_LIST = httptools.load_CF_list()
+
     if parent_item.startpage:
         menu_icon = get_thumb('menu.png')
         menu = Item(channel="channelselector", action="getmainlist", viewmode="movie", thumbnail=menu_icon,
@@ -214,8 +217,7 @@ def render_items(itemlist, parent_item):
 
     temp_list = list()
 
-    styles_path = os.path.join(config.get_runtime_path(), 'resources', 'color_styles.json')
-    colors_file = jsontools.load((open(styles_path, "r").read()))
+    colors_file = unify.colors_file
 
     for item in itemlist:
         item_url = item.tourl()
@@ -281,7 +283,7 @@ def render_items(itemlist, parent_item):
             domain_cs = '##is_dict/list'
             logger.error('URL is DICT/LIST: %s' % str(item.url))
 
-        if item.action in ['findvideos'] and not item.infoLabels['tmdb_id'] and domain_cs in httptools.CF_LIST:
+        if item.action in ['findvideos'] and not item.infoLabels['tmdb_id'] and domain_cs in CF_LIST:
             item.thumbnail = httptools.get_url_headers(item.thumbnail)
             item.fanart = httptools.get_url_headers(item.fanart)
 

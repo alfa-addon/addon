@@ -28,14 +28,21 @@ list_language = list(IDIOMAS.values())
 list_servers = ['directo', 'rapidvideo', 'streamango', 'yourupload', 'mailru', 'netutv', 'okru']
 list_quality = ['default']
 
-clone = config.get_setting("use_clone", channel="animeflv")
-OGHOST = "https://www3.animeflv.net/"
-CLONEHOST = "https://www10.animeflv.cc/"
+canonical = {
+             'channel': 'animeflv', 
+             'host': config.get_setting("current_host", 'animeflv', default=''), 
+             'host_alt': ["https://www3.animeflv.net/", "https://ww3.animeflv.cc/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
 
+clone = config.get_setting("use_clone", channel="animeflv")
+OGHOST = canonical['host_alt'][0]
+CLONEHOST = canonical['host_alt'][1]
 if clone:
-    HOST = CLONEHOST
+    host = CLONEHOST
 else:
-    HOST = OGHOST
+    host = OGHOST
 
 
 def mainlist(item):
@@ -49,28 +56,28 @@ def mainlist(item):
 
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="novedades_episodios", title="Últimos episodios",
-                         url=HOST, thumbnail="https://i.imgur.com/w941jbR.png"))
+                         url=host, thumbnail="https://i.imgur.com/w941jbR.png"))
     
     itemlist.append(Item(channel=item.channel, action="novedades_anime", title="Últimos animes",
-                         url=HOST, thumbnail="https://i.imgur.com/hMu5RR7.png"))
+                         url=host, thumbnail="https://i.imgur.com/hMu5RR7.png"))
     
     itemlist.append(Item(channel=item.channel, action="listado", title="Animes",
-                         url=HOST + "browse?order=%s" % order, thumbnail='https://i.imgur.com/50lMcjW.png'))
+                         url=host + "browse?order=%s" % order, thumbnail='https://i.imgur.com/50lMcjW.png'))
     
     itemlist.append(Item(channel=item.channel, action="search_section", title="-  Género",
-                         url=HOST + "browse", thumbnail='https://i.imgur.com/Xj49Wa7.png',
+                         url=host + "browse", thumbnail='https://i.imgur.com/Xj49Wa7.png',
                          extra="genre"))
     
     itemlist.append(Item(channel=item.channel, action="search_section", title="-  Tipo",
-                         url=HOST + "browse", thumbnail='https://i.imgur.com/0O5U8Y0.png',
+                         url=host + "browse", thumbnail='https://i.imgur.com/0O5U8Y0.png',
                          extra="type"))
     
     itemlist.append(Item(channel=item.channel, action="search_section", title="-  Año",
-                         url=HOST + "browse", thumbnail='https://i.imgur.com/XzPIQBj.png',
+                         url=host + "browse", thumbnail='https://i.imgur.com/XzPIQBj.png',
                          extra="year"))
     
     itemlist.append(Item(channel=item.channel, action="search_section", title="-  Estado",
-                         url=HOST + "browse", thumbnail='https://i.imgur.com/7LKKjSN.png',
+                         url=host + "browse", thumbnail='https://i.imgur.com/7LKKjSN.png',
                          extra="status"))
     
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
@@ -112,9 +119,9 @@ def search(item, texto):
     post = "value=%s&limit=100" % texto
 
     if clone:
-        item.url = "{}browse?q={}".format(HOST, texto)
+        item.url = "{}browse?q={}".format(host, texto)
     else:
-        item.url = urlparse.urljoin(HOST, "api/animes/search")
+        item.url = urlparse.urljoin(host, "api/animes/search")
 
     try:
         if clone:
@@ -124,7 +131,7 @@ def search(item, texto):
             matches = scrapertools.find_multiple_matches(response, patron)
             for url, thumb, _type, title, plot in matches:
                 _type = _type.lower()
-                url = urlparse.urljoin(HOST, url)
+                url = urlparse.urljoin(host, url)
                 it = Item(
                         action = "episodios",
                         contentType = "tvshow",
@@ -148,13 +155,13 @@ def search(item, texto):
                     _id = e["last_id"]
                 else:
                     _id = e["id"]
-                url = "%sanime/%s/%s" % (HOST, _id, e["slug"])
+                url = "%sanime/%s/%s" % (host, _id, e["slug"])
                 title = e["title"]
                 #if "&#039;" in title:
                 #    title = title.replace("&#039;","")
                 #if "&deg;" in title:
                 #    title = title.replace("&deg;","")
-                thumbnail = "%suploads/animes/covers/%s.jpg" % (HOST, e["id"])
+                thumbnail = "%suploads/animes/covers/%s.jpg" % (host, e["id"])
                 new_item = item.clone(action="episodios", title=title, url=url, thumbnail=thumbnail)
                 if e["type"] != "movie":
                     new_item.contentSerieName = title
@@ -214,7 +221,7 @@ def search_section(item):
 def newest(categoria):
     itemlist = []
     if categoria == 'anime':
-        itemlist = novedades_episodios(Item(url=HOST))
+        itemlist = novedades_episodios(Item(url=host))
     return itemlist
 
 
@@ -240,8 +247,8 @@ def novedades_episodios(item):
             season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, episode)
 
         title = "%s: %sx%s" % (show, season, str(episode).zfill(2))
-        url = urlparse.urljoin(HOST, url)
-        thumbnail = urlparse.urljoin(HOST, thumbnail)
+        url = urlparse.urljoin(host, url)
+        thumbnail = urlparse.urljoin(host, thumbnail)
 
         new_item = Item(channel=item.channel, action="findvideos", title=title, url=url,
                         contentSerieName=show, thumbnail=thumbnail)
@@ -267,8 +274,8 @@ def novedades_anime(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     
     for url, thumbnail, _type, title, plot in matches:
-        url = urlparse.urljoin(HOST, url)
-        thumbnail = urlparse.urljoin(HOST, thumbnail)
+        url = urlparse.urljoin(host, url)
+        thumbnail = urlparse.urljoin(host, thumbnail)
         
         new_item = Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
                         plot=plot)
@@ -312,8 +319,8 @@ def listado(item):
 
 
     for url, thumbnail, _type, title, plot in matches:
-        url = urlparse.urljoin(HOST, url)
-        thumbnail = urlparse.urljoin(HOST, thumbnail)
+        url = urlparse.urljoin(host, url)
+        thumbnail = urlparse.urljoin(host, thumbnail)
         
         new_item = Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
                         plot=plot)
@@ -330,9 +337,9 @@ def listado(item):
     
     if url_pagination:
         if clone:
-            url = urlparse.urljoin(HOST, '/browse{}'.format(url_pagination))
+            url = urlparse.urljoin(host, '/browse{}'.format(url_pagination))
         else:
-            url = urlparse.urljoin(HOST, url_pagination)
+            url = urlparse.urljoin(host, url_pagination)
         title = ">> Pagina Siguiente"
         
         itemlist.append(Item(channel=item.channel, action="listado", title=title, url=url))
@@ -347,7 +354,7 @@ def episodios(item):
     itemlist = []
     
     if clone and OGHOST in item.url:
-        item.url = item.url.replace(OGHOST, HOST)
+        item.url = item.url.replace(OGHOST, host)
     data = get_source(item.url)
     
     if clone:
@@ -359,7 +366,7 @@ def episodios(item):
             season = 1
             season, episodeRenumber = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, season, int(epnum))
             title = '{}x{} Episodio {}'.format(season, str(episodeRenumber).zfill(2), episodeRenumber)
-            url = urlparse.urljoin(HOST, url)
+            url = urlparse.urljoin(host, url)
 
             infoLabels = item.infoLabels
             infoLabels['season'] = season
@@ -384,7 +391,7 @@ def episodios(item):
         infoLabels = item.infoLabels
 
         for episode in episodes:
-            url = '{}/ver/{}/{}-{}'.format(HOST, episode[1], info[2], episode[0])
+            url = '{}/ver/{}/{}-{}'.format(host, episode[1], info[2], episode[0])
             season = 1
             season, episodeRenumber = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, season, int(episode[0]))
 
@@ -417,10 +424,10 @@ def findvideos(item):
 
     if clone and OGHOST in item.url:
         item.url = item.url.replace(OGHOST, "")
-        item.url = "{}{}".format(HOST, scrapertools.find_single_match(item.url, 'ver/\d+/(.+)'))
+        item.url = "{}{}".format(host, scrapertools.find_single_match(item.url, 'ver/\d+/(.+)'))
     elif not clone and CLONEHOST in item.url:
         item.url = item.url.replace(CLONEHOST, "")
-        item.url = "{}ver/{}".format(HOST, item.url)
+        item.url = "{}ver/{}".format(host, item.url)
     data = get_source(item.url)
 
     if clone:

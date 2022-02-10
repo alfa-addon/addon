@@ -26,13 +26,20 @@ from platformcode import config, logger
 from channelselector import get_thumb
 from lib.AlfaChannelHelper import CustomChannel
 
-host = 'https://www.d-animados.com/'
-AlfaChannel = CustomChannel(host, tv_path="/series")
-
 IDIOMAS = {'la': 'LAT', 'sub': 'VOSE'}
 list_idiomas = list(IDIOMAS.values())
 list_servers = ['fembed', 'mega', 'yourupload', 'streamsb', 'mp4upload', 'mixdrop', 'uqload']
 list_quality = []
+
+canonical = {
+             'channel': 'danimados', 
+             'host': config.get_setting("current_host", 'danimados', default=''), 
+             'host_alt': ["https://www.d-animados.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = CustomChannel(host, tv_path="/series", canonical=canonical)
 
 
 def mainlist(item):

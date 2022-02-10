@@ -151,25 +151,25 @@
       "id": "include_in_newest_peliculas",
       "type": "bool",
       "label": "Incluir en Novedades - Peliculas",
-      "default": true,
+      "default": false,
       "enabled": true,
-      "visible": false
+      "visible": true
     },
     {
       "id": "include_in_newest_series",
       "type": "bool",
       "label": "Incluir en Novedades - Series",
-      "default": true,
+      "default": false,
       "enabled": true,
-      "visible": false
+      "visible": true
     },
     {
       "id": "include_in_newest_4k",
       "type": "bool",
       "label": "Incluir en Novedades - 4K",
-      "default": true,
+      "default": false,
       "enabled": true,
-      "visible": false
+      "visible": true
     }
   ]
 }

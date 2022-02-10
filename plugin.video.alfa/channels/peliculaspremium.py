@@ -34,8 +34,15 @@ list_servers = ['fembed',
                 'mystream'
                 ]
 
-host = 'https://peliculaspremium.com/'
-AlfaChannel = DooPlay(host)
+canonical = {
+             'channel': 'peliculaspremium', 
+             'host': config.get_setting("current_host", 'peliculaspremium', default=''), 
+             'host_alt': ["https://peliculaspremium.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = DooPlay(host, canonical=canonical)
 
 
 def mainlist(item):

@@ -165,7 +165,7 @@
       "label": "Incluir en Novedades - Peliculas",
       "default": true,
       "enabled": true,
-      "visible": false
+      "visible": true
     },
     {
       "id": "include_in_newest_series",
@@ -173,7 +173,7 @@
       "label": "Incluir en Novedades - Series",
       "default": true,
       "enabled": true,
-      "visible": false
+      "visible": true
     }
   ]
 }

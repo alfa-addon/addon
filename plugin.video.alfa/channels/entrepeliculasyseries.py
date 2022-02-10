@@ -20,14 +20,21 @@ from channels import autoplay
 from channels import filtertools
 from bs4 import BeautifulSoup
 
-host = 'https://entrepeliculasyseries.nu/'
-forced_proxy_opt = 'ProxyDirect'
-
 IDIOMAS = {"latino": "LAT", "castellano": "CAST", "subtitulado": "VOSE"}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
 list_servers = ['mega', 'fembed', 'vidtodo', 'gvideo']
 
+canonical = {
+             'channel': 'entrepeliculasyseries', 
+             'host': config.get_setting("current_host", 'entrepeliculasyseries', default=''), 
+             'host_alt': ['https://entrepeliculasyseries.nu/'], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
+forced_proxy_opt = 'ProxyDirect'
 
 def mainlist(item):
     logger.info()
@@ -78,9 +85,11 @@ def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, headers={'Referer': referer}).data
+        response = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, headers={'Referer': referer}, canonical=canonical)
     else:
-        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt).data
+        response = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, canonical=canonical)
+    
+    data = response.data or ''
 
     if unescape:
         data = scrapertools.unescape(data)

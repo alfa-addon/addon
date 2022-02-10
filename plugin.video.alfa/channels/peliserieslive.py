@@ -20,8 +20,15 @@ from channels import filtertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 
-host = 'https://peliseries.live'
-url1 = "%s/?v=Opciones" %host
+canonical = {
+             'channel': 'peliserieslive', 
+             'host': config.get_setting("current_host", 'peliserieslive', default=''), 
+             'host_alt': ["https://peliculasyserieslatino.me"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+url1 = "%s/?v=Opciones" % host
 
 
 SERVER = {'www.fembed.com': 'Fembed','www.myurlshort.live': 'Fembed', 'feurl.com': 'Fembed', '1fichier.com': 'onefichier', 'www.mediafire.com': 'mediafire' ,
@@ -96,11 +103,11 @@ def categorias(item):
 def create_soup(url, referer=None, post=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     if post:
-        data = httptools.downloadpage(url, post=post).data
+        data = httptools.downloadpage(url, post=post, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")

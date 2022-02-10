@@ -19,10 +19,17 @@ from core.item import Item
 from core import channeltools
 from core import tmdb
 
-host = "http://www.pelisplanet.to/"
+canonical = {
+             'channel': 'pelisplanet', 
+             'host': config.get_setting("current_host", 'pelisplanet', default=''), 
+             'host_alt': ["https://www.pelisplanet.to/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
-__channel__ = "pelisplanet"
-parameters = channeltools.get_channel_parameters('pelisplanet')
+__channel__ = canonical['channel']
+parameters = channeltools.get_channel_parameters(canonical['channel'])
 fanart_host = parameters['fanart']
 thumbnail_host = parameters['thumbnail']
 try:
@@ -99,7 +106,7 @@ def sub_search(item):
     logger.info()
 
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     # logger.info(data)
     patron = '<div class="img">.*?<a href="([^"]+)" title="([^"]+)".*?'
@@ -173,7 +180,7 @@ def peliculas(item):
     logger.info()
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
     patron_todas = '<div class="home-movies">(.*?)<footer>'
     data = scrapertools.find_single_match(data, patron_todas)
@@ -221,7 +228,7 @@ def generos(item):
     logger.info()
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<div class="todos">.*?'
     patron += 'title="([^"]+)".*?'
     patron += 'href="([^"]+)".*?'
@@ -240,7 +247,7 @@ def findvideos(item):
     itemlist = []
     from lib import players_parse
     
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<a id="[^"]+" style="cursor:pointer; cursor: hand" rel="([^"]+)".*?'
     patron += '<span class="optxt"><span>(.*?)</span>.*?'
     patron += '<span class="q">([^<]+)</span>'

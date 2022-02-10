@@ -21,8 +21,15 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['supervideo']
 
-host = "https://online.tucineclasico.es/"
-AlfaChannel = DooPlay(host, movie_path="peliculas/")
+canonical = {
+             'channel': 'tucineclasico', 
+             'host': config.get_setting("current_host", 'tucineclasico', default=''), 
+             'host_alt': ["https://online.tucineclasico.es/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = DooPlay(host, movie_path="peliculas/", canonical=canonical)
 
 
 def mainlist(item):

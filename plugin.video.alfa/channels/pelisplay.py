@@ -464,13 +464,13 @@ def newest(categoria):
 
     try:
         if categoria == 'peliculas':
-            item.url = host + 'movies/'
+            item.url = host + 'peliculas/estrenos/'
 
         elif categoria == 'infantiles':
-            item.url = host + "genre/animacion/"
+            item.url = host + "peliculas/animacion/"
 
         elif categoria == 'terror':
-            item.url = host + "genre/terror/"
+            item.url = host + "peliculas/terror/"
 
         else:
             return []

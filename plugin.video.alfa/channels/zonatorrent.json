@@ -127,7 +127,7 @@
       "id": "include_in_newest_peliculas",
       "type": "bool",
       "label": "Incluir en Novedades - Peliculas",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     }

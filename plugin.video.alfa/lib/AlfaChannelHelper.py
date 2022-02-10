@@ -18,13 +18,15 @@ forced_proxy_def = 'ProxyCF'
 
 class AlfaChannelHelper:
 
-    def __init__(self, host, movie_path="/movies", tv_path="/serie", movie_action="findvideos", tv_action="seasons"):
+    def __init__(self, host, movie_path="/movies", tv_path="/serie", movie_action="findvideos", 
+                 tv_action="seasons", canonical={}):
         self.host = host
         self.movie_path = movie_path
         self.tv_path = tv_path
         self.movie_action = movie_action
         self.tv_action = tv_action
         self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.canonical = canonical
 
     def create_soup(self, url, **kwargs):
         """
@@ -35,7 +37,13 @@ class AlfaChannelHelper:
 
         kwargs["soup"] = True
         kwargs["add_referer"] = True
-        soup = httptools.downloadpage(url, **kwargs).soup
+        kwargs["ignore_response_code"] = True
+        kwargs["canonical"] = self.canonical
+        
+        response = httptools.downloadpage(url, **kwargs)
+        soup = response.soup or {}
+        if response.host: self.host = response.host
+
         return soup
 
     def list_all(self, item, postprocess=None):

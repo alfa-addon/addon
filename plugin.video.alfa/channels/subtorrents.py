@@ -25,11 +25,21 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://www.subtorrents.li/'
+canonical = {
+             'channel': 'subtorrents', 
+             'host': config.get_setting("current_host", 'subtorrents', default=''), 
+             'host_alt': ['https://www.subtorrents.li/'], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+channel = canonical['channel']
+categoria = channel.capitalize()
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
 host_torrent = host[:-1]
 sufix = '.li/'
-channel = 'subtorrents'
-categoria = channel.capitalize()
+
 color1, color2, color3 = ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)        #Actualización sólo últ. Temporada?
@@ -151,29 +161,45 @@ def listado(item):
     if not item.extra2:                                                         # Si viene de Catálogo o de Alfabeto
         item.extra2 = ''
     
+    post = None
+    forced_proxy_opt = None
+    referer = None
+    if item.post:                                                               # Rescatamos el Post, si lo hay
+        post = item.post
+        forced_proxy_opt = None
+    if item.referer:
+        referer = item.referer
+    
     next_page_url = item.url
     #Máximo num. de líneas permitidas por TMDB. Máx de 10 segundos por Itemlist para no degradar el rendimiento
     while cnt_title < cnt_tot * 0.5 and curr_page <= last_page and fin > time.time():
     
         # Descarga la página
         data = ''
-        try:
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(next_page_url, timeout=timeout_search, ignore_response_code=True).data)
-            #data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
-        except:
-            pass
+        cnt_match = 0                                                           # Contador de líneas procesadas de matches
+        if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
+            data, response, item, itemlist = generictools.downloadpage(next_page_url, timeout=timeout_search, 
+                                                                       post=post, canonical=canonical, 
+                                                                       forced_proxy_opt=forced_proxy_opt, referer=referer, 
+                                                                       item=item, itemlist=itemlist)        # Descargamos la página)
+            # Verificamos si ha cambiado el Host
+            if response.host:
+                next_page_url = response.url_new
         
-        curr_page += 1                                                          #Apunto ya a la página siguiente
-        if not data:                                                            #Si la web está caída salimos sin dar error
-            logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
-            break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
+            curr_page += 1                                                      #Apunto ya a la página siguiente
+            if not data:                                                        #Si la web está caída salimos sin dar error
+                if len(itemlist) > 1:                                           # Si hay algo que pintar lo pintamos
+                    last_page = 0
+                    break
+                return itemlist                                                 # Si no hay nada más, salimos directamente
 
         #Patrón para todo, menos para Series completas, incluido búsquedas en cualquier caso
-        patron = '<td\s*class="vertThseccion"[^>]*>\s*<img\s*src="([^"]+)"[^>]*>\s*<a\s*href="([^"]+)"\s*title="([^"]+)"\s*>[^<]+<\/a>\s*<\/td>\s*(?:<td>[^<]*\d+?<\/td>)?\s*<td>([^<]+)?<\/td>\s*<td>([^<]+)?<\/td>\s*<\/tr>'
+        patron = '<td\s*class="vertThseccion"[^>]*>\s*<img\s*src="([^"]+)"[^>]*>'
+        patron += '\s*<a\s*href="([^"]+)"\s*title="([^"]+)"\s*>[^<]+<\/a>\s*<\/td>\s*'
+        patron += '(?:<td>[^<]*\d+?<\/td>)?\s*<td>([^<]+)?<\/td>\s*<td>([^<]+)?<\/td>\s*<\/tr>'
         if not scrapertools.find_single_match(data, patron):
-            #patron = '<div\s*class="ProductBlock"\s*>\s*<div\s*class="Content"[^>]+>\s*<div\s*class="img-fill">\s*()<a\s*href="([^"]+)"\s*title="([^"]+)">\s*<img\s*src="([^"]+)"\s*alt="[^"]+">\s*()()<\/a>\s*<\/div>'
-            patron = '<div\s*class="pintinia[^>]*>\s*<div\s*class="[^>]*>\s*<h6\s*class="[^>]*>\s*<a\s*href="([^"]+)"\s*title="([^"]+)".*?<img\s*style="background-image:'
+            patron = '<div\s*class="pintinia[^>]*>\s*<div\s*class="[^>]*>\s*<h6\s*class="[^>]*>'
+            patron += '\s*<a\s*href="([^"]+)"\s*title="([^"]+)".*?<img\s*style="background-image:'
             patron += "\s*url\('([^']+)'\)"
             patron += '"[^>]*>\s*<span[^>]*><\/span>\s*.*?<span\s*class="pc_games_cracker"\s*>([^<]*)<\/span>\s*<span[^<]+'
             patron += "<img src='([^']+)'"
@@ -182,18 +208,21 @@ def listado(item):
         if item.extra == 'series':
             patron = '<(td)><a href="([^"]+)"\s*title="([^"]+)"\s*><[^>]+src="[^"]+\/(\d{4})[^"]+"[^>]+>(?:(\d+))?\s*<\/a>'
             if not scrapertools.find_single_match(data, patron):
-                patron = '<div\s*class="pintinia[^>]*>\s*<div\s*class="[^>]*>\s*<h6\s*class="[^>]*>\s*<a\s*href="([^"]+)"\s*title="([^"]+)"\s*>[^<]*<\/a>\s*<\/h6>\s*<\/div>\s*<\/div>\s*<a[^<]*>\s*<img\s*style="background-image:'
+                patron = '<div\s*class="pintinia[^>]*>\s*<div\s*class="[^>]*>\s*<h6\s*class="[^>]*>'
+                patron += '\s*<a\s*href="([^"]+)"\s*title="([^"]+)"\s*>[^<]*<\/a>\s*'
+                patron += '<\/h6>\s*<\/div>\s*<\/div>\s*<a[^<]*>\s*<img\s*style="background-image:'
                 patron += "\s*url\('([^']+)'\)"
                 patron += '"[^>]*>\s*<span[^>]*>[^<]*()<\/span>\s*<span[^>]+class="last_flags"\s*>[^<]+<img src=[^<]+title='
                 patron += "'([^']+)"
             
-        matches = re.compile(patron, re.DOTALL).findall(data)
-        if not matches and not '<p>Lo sentimos, pero que esta buscando algo que no esta aqui. </p>' in data and not item.extra2 and not '<h2>Sin resultados</h2> in data':    #error
-            item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
-            if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
-                item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
-                return itemlist                                                     #Salimos
-            
+        if not item.matches:                                                    # De pasada anterior o desde Novedades?
+            matches = re.compile(patron, re.DOTALL).findall(data)
+        else:
+            matches = item.matches
+            del item.matches
+        
+        if not matches and not '<p>Lo sentimos, pero que esta buscando algo que no esta aqui. </p>' in data \
+                       and not item.extra2 and not '<h2>Sin resultados</h2> in data':       # error
             logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
@@ -413,34 +442,36 @@ def findvideos(item):
     if item.extra != 'episodios':
         #Bajamos los datos de la página
         data = ''
-        patron = '<div class="secciones"><h1>[^<]+<\/h1><br\s*\/><br\s*\/><div class="fichimagen">\s*<img class="carat" src="([^"]+)"'
-        try:
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
-            #data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
-        except:
-            pass
-            
-        if not data:
+        if not item.matches:
+            data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
+                                                                       s2=False, item=item, itemlist=[]) # Descargamos la página)
+        if (not data and not item.matches) or response.code == 999:
             logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log', folder=False))
             
-            if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
-                matches = item.emergency_urls[1]                                    #Restauramos matches de vídeos
-                subtitles = item.emergency_urls[2]                                  #Restauramos matches de subtítulos
-                item.armagedon = True                                               #Marcamos la situación como catastrófica 
+            if item.emergency_urls and not item.videolibray_emergency_urls:     #Hay urls de emergencia?
+                matches = item.emergency_urls[1]                                #Restauramos matches de vídeos
+                subtitles = item.emergency_urls[2]                              #Restauramos matches de subtítulos
+                item.armagedon = True                                           #Marcamos la situación como catastrófica 
             else:
-                if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
-                    return item                                                     #Devolvemos el Item de la llamada
+                if item.videolibray_emergency_urls:                             #Si es llamado desde creación de Videoteca...
+                    return item                                                 #Devolvemos el Item de la llamada
                 else:
                     return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         if not item.armagedon:
             #Extraemos el thumb
             if not item.thumbnail:
-                item.thumbnail = scrapertools.find_single_match(data, patron)           #guardamos thumb si no existe
+                patron = '<div class="secciones"><h1>[^<]+<\/h1><br\s*\/><br\s*\/><div class="fichimagen">\s*<img class="carat" src="([^"]+)"'
+                item.thumbnail = scrapertools.find_single_match(data, patron)   #guardamos thumb si no existe
             
             #Extraemos quality, audio, year, country, size, scrapedlanguage
-            patron = '<\/script><\/div><ul>(?:<li><label>Fecha de estreno <\/label>[^<]+<\/li>)?(?:<li><label>Genero <\/label>[^<]+<\/li>)?(?:<li><label>Calidad <\/label>([^<]+)<\/li>)?(?:<li><label>Audio <\/label>([^<]+)<\/li>)?(?:<li><label>Fecha <\/label>.*?(\d+)<\/li>)?(?:<li><label>Pais de Origen <\/label>([^<]+)<\/li>)?(?:<li><label>Tamaño <\/label>([^<]+)<\/li>)?(<li> Idioma[^<]+<img src=.*?<br \/><\/li>)?'
+            patron = '<\/script><\/div><ul>(?:<li><label>Fecha de estreno <\/label>'
+            patron += '[^<]+<\/li>)?(?:<li><label>Genero <\/label>[^<]+<\/li>)?'
+            patron += '(?:<li><label>Calidad <\/label>([^<]+)<\/li>)?'
+            patron += '(?:<li><label>Audio <\/label>([^<]+)<\/li>)?(?:<li><label>Fecha <\/label>'
+            patron += '.*?(\d+)<\/li>)?(?:<li><label>Pais de Origen <\/label>([^<]+)<\/li>)?'
+            patron += '(?:<li><label>Tamaño <\/label>([^<]+)<\/li>)?(<li> Idioma[^<]+<img src=.*?<br \/><\/li>)?'
             try:
                 quality = ''
                 audio = ''
@@ -470,17 +501,24 @@ def findvideos(item):
         
             #Extraemos los enlaces .torrent
             #Modalidad de varios archivos
-            patron = '<div class="fichadescargat"><\/div><div class="table-responsive"[^>]+>.*?<\/thead><tbody>(.*?)<\/tbody><\/table><\/div>'
+            patron = '<div\s*class="fichadescargat">\s*<\/div>\s*<div\s*class="table-responsive"[^>]+>'
+            patron += '.*?<\/thead>\s*<tbody>(.*?)<\/tbody>\s*<\/table>\s*<\/div>'
             if scrapertools.find_single_match(data, patron):
                 data_torrents = scrapertools.find_single_match(data, patron)
                 patron = '<tr><td>.*?<\/td><td><a href="([^"]+)"[^>]+><[^>]+><\/a><\/td><\/tr>'
             #Modalidad de un archivo
             else:
                 data_torrents = data
-                patron = '<div\s*class="fichasubtitulos">\s*<\/div>\s*<\/li>\s*<\/ul>\s*<a\s*target="[^"]+"\s*href="([^"]+)"'
+                patron = '<div\s*class="fichasubtitulos">\s*<\/div>\s*<\/li>\s*<\/ul>\s*<a\s*target="[^>]+\s*href="([^"]+)"'
                 if not scrapertools.find_single_match(data_torrents, patron):
                     patron = '<div class="fichasubtitulos">.*?<\/div><\/li><\/ul>.*?<a href="([^"]+)"'
-            matches = re.compile(patron, re.DOTALL).findall(data_torrents)
+            
+            if not item.matches:
+                matches = re.compile(patron, re.DOTALL).findall(data)
+            else:
+                matches = item.matches
+                del item.matches
+            
             if not matches:                                                             #error
                 logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " + " / PATRON: " + patron + data)
                 itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log', folder=False))
@@ -508,11 +546,8 @@ def findvideos(item):
         else:
             subtitle = scrapertools.find_single_match(data, patron).replace('&#038;', '&').replace('.io/', sufix).replace('.com/', sufix)
         
-        try:
-            data_subtitle = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(subtitle, timeout=timeout).data)
-        except:
-            pass
-            
+        data_subtitle, response, item, itemlist = generictools.downloadpage(subtitle, timeout=timeout, 
+                                                                            item=item, itemlist=[])      # Descargamos la página)
         if not data_subtitle:
             if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
                 matches = item.emergency_urls[1]                                    #Restauramos matches de vídeos
@@ -636,9 +671,24 @@ def findvideos(item):
         item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
         item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").replace(".", ",").strip()
         
-        item_local.alive = "??"                                                 #Calidad del link sin verificar
-        item_local.action = "play"                                              #Visualizar vídeo
-        item_local.server = "torrent"                                           #Seridor Torrent
+        if not size or 'Magnet' in size:
+            item_local.alive = "??"                                             #Calidad del link sin verificar
+        elif 'ERROR' in size and 'Pincha' in size:
+            item_local.alive = "ok"                                             #link en error, CF challenge, Chrome disponible
+        elif 'ERROR' in size and 'Introduce' in size:
+            item_local.alive = "??"                                             #link en error, CF challenge, ruta de descarga no disponible
+            item_local.channel = 'setting'
+            item_local.action = 'setting_torrent'
+            item_local.unify = False
+            item_local.folder = False
+            item_local.item_org = item.tourl()
+        elif 'ERROR' in size:
+            item_local.alive = "no"                                             #Calidad del link en error, CF challenge?
+        else:
+            item_local.alive = "ok"                                             #Calidad del link verificada
+        if item_local.channel != 'setting':
+            item_local.action = "play"                                          #Visualizar vídeo
+            item_local.server = "torrent"                                       #Seridor Torrent
         
         itemlist_t.append(item_local.clone())                                   #Pintar pantalla, si no se filtran idiomas
         
@@ -746,28 +796,29 @@ def episodios(item):
 
     # Descarga la página
     data = ''                                                                               #Inserto en num de página en la url
-    try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(item.url, timeout=timeout).data)
-        #data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
-    except:                                                                                 #Algún error de proceso, salimos
-        pass
-        
-    if not data:
-        logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea" + item.url)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
-        return itemlist
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
+                                                               item=item, itemlist=[])      # Descargamos la página
+    #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
+    if not response.sucess:                                                 # Si ERROR o lista de errores ...
+        return itemlist                                                     # ... Salimos
 
-    logger.debug(data)
-    patron = '<td\s*class="capitulonombre">\s*<img\s*src="([^"]+)[^>]+>(?:<a\s*href="[^>]+>)(.*?)<\/a>\s*<\/td>\s*<td\s*class="capitulodescarga">\s*<a\s*href="([^"]+)[^>]+>.*?(?:<td\s*class="capitulofecha">.*?(\d{4})?.*?<\/td>)?(?:<td\s*class="capitulosubtitulo">\s*<a\s*href="([^"]+)[^>]+>.*?<\/td>)?'
+    patron = '<td\s*class="capitulonombre">\s*<img\s*src="([^"]+)"[^>]+><a[^>]*title="[^"]+"'
+    patron += '>\s*([^<]*)<\/a>\s*<\/td>\s*<td\s*class="capitulodescarga">\s*<a[^>]*href="([^"]+)"()()()'
     if not scrapertools.find_single_match(data, patron):
-        patron = '<td\s*class="capitulonombre">\s*<img\s*src="([^"]+)[^>]+><a\s*(?:target="[^"]*"\s*)?href="[^>]*title="([^"]+)">[^<]*<\/a>\s*<\/td>\s*<td\s*class="capitulodescarga">\s*<a\s*(?:target="[^"]*"\s*)?href="([^"]+)"[^>]+>.*?(?:<td\s*class="capitulofecha">.*?(\d{4})?.*?<\/td>)?.*?(?:<td\s*class="capitulosubtitulo">\s*<a\s*href="([^"]+)[^>]+>.*?<\/td>)?.*?(?:<td\s*class="capitulodescarga">\s*<a\s*(?:target="[^"]*"\s*)?href="([^"]+)")?'
+        patron = '<td\s*class="capitulonombre">\s*<img\s*src="([^"]+)[^>]+>(?:<a\s*href="[^>]+>)?'
+        patron += '(.*?)<\/a>\s*<\/td>\s*<td\s*class="capitulodescarga">\s*<a\s*href="([^"]+)[^>]+>'
+        patron += '.*?(?:<td\s*class="capitulofecha">.*?(\d{4})?.*?<\/td>)?'
+        patron += '(?:<td\s*class="capitulosubtitulo">\s*<a\s*href="([^"]+)[^>]+>.*?<\/td>)?'
+        if not scrapertools.find_single_match(data, patron):
+            patron = '<td\s*class="capitulonombre">\s*<img\s*src="([^"]+)[^>]+><a\s*'
+            patron += '(?:target="[^"]*"\s*)?href="[^>]*title="([^"]+)">[^<]*<\/a>\s*<\/td>'
+            patron += '\s*<td\s*class="capitulodescarga">\s*<a\s*(?:target="[^"]*"\s*)?'
+            patron += 'href="([^"]+)"[^>]+>.*?(?:<td\s*class="capitulofecha">.*?(\d{4})?.*?<\/td>)?'
+            patron += '.*?(?:<td\s*class="capitulosubtitulo">\s*<a\s*href="([^"]+)[^>]+>.*?<\/td>)?'
+            patron += '.*?(?:<td\s*class="capitulodescarga">\s*<a\s*(?:target="[^"]*"\s*)?href="([^"]+)")?'
     matches = re.compile(patron, re.DOTALL).findall(data)
+    
     if not matches:                                                             #error
-        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
-        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
-            item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
-            return itemlist                                                     #Salimos
-        
         logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos

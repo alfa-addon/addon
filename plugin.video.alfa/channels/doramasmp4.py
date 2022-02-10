@@ -28,7 +28,14 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['viwol', 'voe', 'mixdrop', 'doodstream']
 
-host = 'https://www28.doramasmp4.com/'
+canonical = {
+             'channel': 'doramasmp4', 
+             'host': config.get_setting("current_host", 'doramasmp4', default=''), 
+             'host_alt': ["https://www34.doramasmp4.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -68,9 +75,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -150,7 +157,7 @@ def findvideos(item):
     itemlist = []
     infoLabels = item.infoLabels
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     media_data = jsontools.load(scrapertools.find_single_match(data, 'var links =([^;]+)'))
 
     for media in media_data["online"]:
@@ -198,7 +205,7 @@ def search_results(item):
     itemlist = list()
 
     post = {"search": item.text, "limit": 30}
-    results = httptools.downloadpage(item.url, post=post).json
+    results = httptools.downloadpage(item.url, post=post, canonical=canonical).json
     for elem in results:
         url = host + elem["slug"]
         title = elem["title"]

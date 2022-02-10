@@ -20,21 +20,27 @@ from channels import autoplay
 from platformcode import config, logger
 from channelselector import get_thumb
 
-
-host = ''
-
 list_idiomas = ['LAT']
 list_servers = ['okru', 'yourupload', 'mega']
 list_quality = []
+
+canonical = {
+             'channel': 'seriesretro', 
+             'host': config.get_setting("current_host", 'seriesretro', default=''), 
+             'host_alt': ["https://seriesretro.com/", "https://pelisretro.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def get_source(url, soup=False, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -88,9 +94,9 @@ def sub_menu(item):
     global host
 
     if item.title == "Peliculas":
-        host = "https://pelisretro.com/"
+        host = canonical['host_alt'][1]
     else:
-        host = "https://seriesretro.com/"
+        host = canonical['host_alt'][0]
 
 
     itemlist = list()

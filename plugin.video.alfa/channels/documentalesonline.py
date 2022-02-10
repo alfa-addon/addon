@@ -9,9 +9,16 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from channelselector import get_thumb
-from platformcode import logger
+from platformcode import logger, config
 
-host = "http://documentales-online.com/"
+canonical = {
+             'channel': 'documentalesonline', 
+             'host': config.get_setting("current_host", 'documentalesonline', default=''), 
+             'host_alt': ["https://www.documentales-online.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -39,7 +46,7 @@ def mainlist(item):
 def listado(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, 'Populares</a>.*?%s(.*?)</article>' %item.title)
     if "series-temas" not in item.url:
         patron  = '<a href="([^"]+)".*?'
@@ -68,7 +75,7 @@ def listado(item):
 def seccion(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     if item.extra == "destacados":
         patron_seccion = 'Destacados(.*?)</ul>'
         action = "findvideos"
@@ -91,9 +98,9 @@ def videos(item):
     logger.info()
     itemlist = []
     if item.page:
-        data = httptools.downloadpage(item.url + "page/%s" %item.page).data
+        data = httptools.downloadpage(item.url + "page/%s" %item.page, canonical=canonical).data
     else:
-        data = httptools.downloadpage(item.url).data
+        data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = 'Populares</a>(.*?)</div></article></div></div>'
     data = scrapertools.find_single_match(data, patron)
     patron  = 'wp-post-image-link.*?href="([^"]+).*?'
@@ -111,7 +118,7 @@ def videos(item):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = scrapertools.find_single_match(data, 'a href="#">Categor(.*?)</ul>')
     matches = scrapertools.find_multiple_matches(data, '<a href="([^"]+)">(.*?)</a>')
     for url, title in matches:
@@ -136,7 +143,7 @@ def search(item, texto):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     if "Cosmos (Carl Sagan)" in item.title:
         patron  = '(?s)<p><strong>([^<]+)<.*?'
         patron += '<iframe.*?src="([^"]+)"'

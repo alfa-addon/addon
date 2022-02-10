@@ -28,8 +28,15 @@ list_servers = [
     'sendvid',
     ]
 
-host = 'https://clasico.tv/'
-AlfaChannel = DooPlay(host, tv_path="/tvshows")
+canonical = {
+             'channel': 'clasicotv', 
+             'host': config.get_setting("current_host", 'clasicotv', default=''), 
+             'host_alt': ["https://clasico.tv/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = DooPlay(host, tv_path="/tvshows", canonical=canonical)
 
 
 def mainlist(item):

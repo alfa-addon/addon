@@ -30,7 +30,14 @@ list_servers = [
     'evoload',
     ]
 
-host = 'https://pelispop.com/'
+canonical = {
+             'channel': 'pelispop', 
+             'host': config.get_setting("current_host", 'pelispop', default=''), 
+             'host_alt': ["https://pelispop.me/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -84,9 +91,9 @@ def create_soup(url, post=None, unescape=False):
     logger.info()
 
     if post:
-        data = httptools.downloadpage(url, post=post).data
+        data = httptools.downloadpage(url, post=post, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

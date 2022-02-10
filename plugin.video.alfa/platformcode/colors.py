@@ -9,6 +9,7 @@ import xbmcgui
 from platformcode import config
 from platformcode import logger
 from platformcode import platformtools
+from platformcode import unify
 from core import jsontools
 from core import filetools
 
@@ -56,7 +57,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.buttons = list()
         self.color = "white"
         self.preset = config.get_setting("preset_style", default="Estilo 1")
-        self.color_schemes = jsontools.load((open(styles_path, "r").read()))
+        self.color_schemes = unify.colors_file
         self.color_setting = self.color_schemes[self.preset]
         self.preset_mode = config.get_setting("preset_style_switch")
         self.window_title = "Titulos Inteligentes"

@@ -15,16 +15,22 @@ from core import servertools
 from core.item import Item
 from channels import autoplay
 from lib.AlfaChannelHelper import ToroPlay
-from platformcode import logger
+from platformcode import logger, config
 from channelselector import get_thumb
-
-
-host = "https://retrotv.org/"
-AlfaChannel = ToroPlay(host, tv_path="/tv")
 
 list_idiomas = ['LAT']
 list_servers = ['okru', 'yourupload', 'mega']
 list_quality = []
+
+canonical = {
+             'channel': 'retrotv', 
+             'host': config.get_setting("current_host", 'retrotv', default=''), 
+             'host_alt': ["https://retrotv.org/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = ToroPlay(host, tv_path="/tv", canonical=canonical)
 
 
 def mainlist(item):

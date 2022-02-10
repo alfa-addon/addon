@@ -11,15 +11,14 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-import os
-import unicodedata
 import re
+import os
+import json
 
 from platformcode import config
 from core.item import Item
 from core import scrapertools
 from platformcode import logger
-import json
 
 # Lista de elementos posibles en el titulo
 color_list = ['movie',
@@ -38,9 +37,6 @@ color_list = ['movie',
               'library',
               'update',
               'no_update']
-
-styles_path = os.path.join(config.get_runtime_path(), 'resources', 'color_styles.json')
-colors_file = json.load(open(styles_path, "r"))
 
 thumb_dict = {"movies": "https://s10.postimg.cc/fxtqzdog9/peliculas.png",
     "tvshows": "https://s10.postimg.cc/kxvslawe1/series.png",
@@ -124,6 +120,31 @@ thumb_dict = {"movies": "https://s10.postimg.cc/fxtqzdog9/peliculas.png",
     "western": "https://s10.postimg.cc/5wc1nokjt/western.png"
     }
 
+""" CACHING colors_file"""
+alfa_caching = False
+alfa_colors_file = {}
+colors_file = {}
+
+try:
+    import xbmcgui
+    window = xbmcgui.Window(10000)  # Home
+    alfa_caching = bool(window.getProperty("alfa_caching"))
+    if alfa_caching:
+        colors_file = alfa_colors_file = json.loads(window.getProperty("alfa_colors_file"))
+except:
+    alfa_caching = False
+    alfa_colors_file = {}
+    import traceback
+    logger.error(traceback.format_exc())
+
+if not alfa_colors_file or not alfa_caching:
+    styles_path = os.path.join(config.get_runtime_path(), 'resources', 'color_styles.json')
+    with open(styles_path, "r") as cf:
+        colors_file = json.load(cf)
+    if alfa_caching:
+        window.setProperty("alfa_colors_file", json.dumps(colors_file))
+
+
 def init_colors():
     # for color in color_list:
     #     config.set_setting("%s_color" % (color ), 'white')
@@ -181,6 +202,7 @@ def remove_format(string):
 
 
 def normalize(string):
+    import unicodedata
     if not PY3 and isinstance(string, str):
         string = string.decode('utf-8')
     normal = ''.join((c for c in unicodedata.normalize('NFD', unicode(string)) if unicodedata.category(c) != 'Mn'))

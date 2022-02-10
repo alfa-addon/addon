@@ -18,17 +18,24 @@ from core.item import Item
 from platformcode import config, logger, subtitletools
 from channelselector import get_thumb
 
-host = 'http://bloghorror.com/'
-fanart = 'http://bloghorror.com/wp-content/uploads/2015/04/bloghorror-2017-x.jpg'
+canonical = {
+             'channel': 'bloghorror', 
+             'host': config.get_setting("current_host", 'bloghorror', default=''), 
+             'host_alt': ["https://bloghorror.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+fanart = host + 'wp-content/uploads/2015/04/bloghorror-2017-x.jpg'
 
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

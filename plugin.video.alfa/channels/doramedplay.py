@@ -21,14 +21,20 @@ from channels import autoplay
 from lib.AlfaChannelHelper import DooPlay
 from channels import filtertools
 
-
-host = 'https://doramedplay.com/'
-AlfaChannel = DooPlay(host, tv_path="tvshows")
-
 IDIOMAS = {'VOSE': 'VOSE', 'LAT': 'LAT'}
 list_language = list(IDIOMAS.values())
 list_quality = list()
 list_servers = ['okru', 'mailru', 'openload']
+
+canonical = {
+             'channel': 'doramedplay', 
+             'host': config.get_setting("current_host", 'doramedplay', default=''), 
+             'host_alt': ["https://doramedplay.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = DooPlay(host, tv_path="tvshows", canonical=canonical)
 
 
 def mainlist(item):
