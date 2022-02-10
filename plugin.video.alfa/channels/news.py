@@ -22,6 +22,7 @@ import datetime
 workers = [None, 1, 2, 4, 6, 8, 16, 24, 32, 64]
 max_workers = config.get_setting("max_workers", "news")
 max_workers = workers[max_workers]
+all_channels = []
 
 
 def mainlist(item):
@@ -165,16 +166,17 @@ def process(channel_list, category, news, total_channels, startpage=False, save=
 
 def get_channels(category, all=False):
     logger.info()
+    global all_channels
 
     valid_channels = list()
 
-    all_channels = channelselector.filterchannels('all')
+    all_channels = channelselector.filterchannels('all', settings=False)
 
     for ch in all_channels:
         channel = ch.channel
-        ch_param = channeltools.get_channel_parameters(channel)
+        #ch_param = channeltools.get_channel_parameters(channel)
 
-        if not ch_param.get("active", False):
+        if not ch.active:
             continue
         valid = config.get_setting("include_in_newest_" + category, channel)
         if valid or (valid is not None and all):
@@ -196,8 +198,9 @@ def get_channel_news(channel, category, all=False):
 
     if news_range == 5:
         news_range = 100
-    ch_params = channeltools.get_channel_parameters(channel)
-    module = __import__('channels.%s' % ch_params["channel"], fromlist=["channels.%s" % ch_params["channel"]])
+    #ch_params = channeltools.get_channel_parameters(channel)
+    #module = __import__('channels.%s' % ch_params["channel"], fromlist=["channels.%s" % ch_params["channel"]])
+    module = __import__('channels.%s' % channel, fromlist=["channels.%s" % channel])
     
     try:
         results = module.newest(category)
@@ -412,11 +415,17 @@ def list_channels(item):
     itemlist = list()
     channels = get_channels(item.category, all=True)
 
+    """
     for ch in channels:
         ch_param = channeltools.get_channel_parameters(ch)
         if ch_param["active"]:
             itemlist.append(Item(channel=ch, action="mainlist", title=ch_param["title"],
                                  thumbnail=ch_param["thumbnail"]))
+    """    
+    for ch in all_channels:
+        if ch.channel in channels and ch.active:
+            itemlist.append(Item(channel=ch.channel, action="mainlist", title=ch.title,
+                                 thumbnail=ch.thumbnail))
 
     return itemlist
 

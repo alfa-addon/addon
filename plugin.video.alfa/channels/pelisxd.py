@@ -25,8 +25,15 @@ list_servers = [
     'fembed'
     ]
 
-host = 'https://www.pelisxd.com/'
-AlfaChannel = ToroFilm(host, tv_path="/serie")
+canonical = {
+             'channel': 'pelisxd', 
+             'host': config.get_setting("current_host", 'pelisxd', default=''), 
+             'host_alt': ["https://www.pelisxd.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = ToroFilm(host, tv_path="/serie", canonical=canonical)
 
 
 def mainlist(item):

@@ -26,10 +26,17 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['fembed', 'streamtape', 'fastplay', 'gvideo', 'Jawcloud']
 
-
 __channel__='allcalidad'
 
-host = "https://www1.cuevana3.so"
+canonical = {
+             'channel': 'cuevana3video', 
+             'host': config.get_setting("current_host", 'cuevana3video', default=''), 
+             'host_alt': ["https://cuevana3.cx"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 encoding = "utf-8"
 
 try:
@@ -143,7 +150,7 @@ def last_episodes(item):
 
     itemlist = []
     infoLabels = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, 'Ultimos Episodios.*?</ul>')
     patron  = '(?is)<a href="([^"]+)'
     patron += '.*?src="([^"]+)'
@@ -180,7 +187,7 @@ def last_tvshows(item):
     url = item.url
     if not item.page: item.page = 1
     if not item.extra: url += "?page=%s" %item.page
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, 'id="%s".*?</ul>' %item.type_tvshow)
     patron  = '(?is)TPost C.*?<a href="([^"]+)'
     patron += '.*?src="([^"]+)'
@@ -225,7 +232,7 @@ def seasons(item):
     logger.info()
     itemlist = []
     infoLabels = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '(?is)<option value="(\d+).*?>([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedid, scrapedtitle in matches:
@@ -278,7 +285,7 @@ def episodesxseasons(item):
 
     itemlist = []
     infoLabels = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, 'season-%s.*?</ul>' %item.id)
     patron  = '(?is)<a href="([^"]+)'
     patron += '.*?src="([^"]+)'
@@ -336,7 +343,7 @@ def list_all(item):
     url = item.url
     if not item.page: item.page = 1
     if not item.extra: url += "?page=%s" %item.page
-    data = httptools.downloadpage(url, encoding=encoding).data
+    data = httptools.downloadpage(url, encoding=encoding, canonical=canonical).data
     patron  = '(?is)TPost C.*?<a href="([^"]+)'
     patron += '.*?data-src="([^"]+)'
     patron += '.*?"Title">([^<]+)'
@@ -394,7 +401,7 @@ def list_all(item):
 
 def findvideos(item):
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding, forced_proxy_opt='ProxyCF').data
+    data = httptools.downloadpage(item.url, encoding=encoding, forced_proxy_opt='ProxyCF', canonical=canonical).data
     bloques = scrapertools.find_multiple_matches(data, '(?is)open_submenu .*?</ul>' )
 
     for scrapedblock in bloques:
@@ -504,7 +511,7 @@ def newest(categoria):
 
     try:
         if categoria in ['peliculas','latino']:
-            item.url = host
+            item.url = host + "/estrenos"
 
         elif categoria == 'infantiles':
             item.url = host + '/category/animacion/'

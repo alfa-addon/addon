@@ -10,10 +10,18 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from lib import generictools
-from platformcode import logger
+from platformcode import logger, config
 
-URL_BROWSE = "https://yts.mx/browse-movies/"
-URL = "https://yts.mx"
+canonical = {
+             'channel': 'yts', 
+             'host': config.get_setting("current_host", 'yts', default=''), 
+             'host_alt': ["https://yts.mx"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+URL_BROWSE = host + "/browse-movies"
+
 
 def mainlist(item):
     logger.info()
@@ -44,7 +52,7 @@ def mainlist(item):
                          title = "Más populares",
                          action = "movies",
                          opt = 1,
-                         url = URL ))    
+                         url = host ))    
 
     itemlist.append(Item(channel = item.channel,
                          title = "Buscar",
@@ -59,7 +67,7 @@ def mainlist(item):
 def categories(item):
     logger.info()
     itemList = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     
     block = scrapertools.find_single_match( data, '(?s)<.*?="' + item.opt + '">(.*?)</select>')
     pattern = '<option value=".*?">(?!All)(.*?)</option>'
@@ -79,7 +87,7 @@ def movies(item):
     logger.info()
     itemlist = []
     infoLabels = {}
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
 
     pattern = '(?s)class="browse-movie-wrap.*?a href="([^"]+).*?' #Movie link
     pattern += 'img class.*?src="([^"]+).*?' #Image
@@ -91,7 +99,7 @@ def movies(item):
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, year in matches:
         if item.opt == 1:
-            scrapedthumbnail = URL + scrapedthumbnail
+            scrapedthumbnail = host + scrapedthumbnail
         infoLabels['year'] = year
         title = scrapertools.htmlclean(scrapedtitle)
 
@@ -115,7 +123,7 @@ def movies(item):
             itemlist.append(Item(channel=item.channel,
                                 action="movies",
                                 title='Next >>>',
-                                url=URL + next_page))
+                                url=host + next_page))
 
     tmdb.set_infoLabels_itemlist( itemlist, seekTmdb=True)
 
@@ -123,7 +131,7 @@ def movies(item):
 
 def findvideos(item):
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
 
     pattern = '(?s)modal-quality.*?<span>(.*?)</span>' #Quality
     pattern += '.*?size">(.*?)</p>' #Type

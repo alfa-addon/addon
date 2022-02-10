@@ -29,7 +29,14 @@ list_servers = [
     'evoload'
     ]
 
-host = 'https://elcine.vip/'
+canonical = {
+             'channel': 'elcine', 
+             'host': config.get_setting("current_host", 'elcine', default=''), 
+             'host_alt': ["https://elCine.vip/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -61,9 +68,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

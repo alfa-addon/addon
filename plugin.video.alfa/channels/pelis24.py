@@ -27,7 +27,14 @@ from channelselector import get_thumb
 
 __channel__ = "pelis24"
 
-host = "https://www.pelis24.in/"
+canonical = {
+             'channel': 'pelis24', 
+             'host': config.get_setting("current_host", 'pelis24', default=''), 
+             'host_alt': ["https://pelis24.in/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -105,7 +112,7 @@ def search(item, texto):
 def genres(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     if 'Generos' in item.title:
         bloq = scrapertools.find_single_match(data, '<section id="categories-3"(.*?)</section>')
@@ -124,7 +131,7 @@ def genres(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|\s{2}", "", data)
     bloq = scrapertools.find_single_match(data, '<section class="section movies">(.*?)</section>')
     patron = '<article.*?'
@@ -167,7 +174,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|amp;|#038;|\(.*?\)|\s{2}|&nbsp;", "", data)
     data = data.replace("'",'"')
     data = scrapertools.find_single_match(data, 'class="section player(.*?)</section')

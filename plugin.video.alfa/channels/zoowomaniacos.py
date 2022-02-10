@@ -29,8 +29,15 @@ list_servers = [
     'okru'
     ]
 
-host = 'https://zoowomaniacos.org/'
-AlfaChannel = DooPlay(host)
+canonical = {
+             'channel': 'zoowomaniacos', 
+             'host': config.get_setting("current_host", 'zoowomaniacos', default=''), 
+             'host_alt': ["https://zoowomaniacos.org/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = DooPlay(host, canonical=canonical)
 
 
 def mainlist(item):

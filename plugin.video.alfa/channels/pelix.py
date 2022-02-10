@@ -167,7 +167,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas', 'latino', 'torrent']:
-            item.url = host
+            item.url = host + "/peliculas/"
         elif categoria == 'infantiles':
             item.url = host + 'category/infantil'
         elif categoria == 'terror':

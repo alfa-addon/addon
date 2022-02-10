@@ -16,7 +16,7 @@
   ],
   "settings": [
     {
-      "default": true, 
+      "default": false, 
       "enabled": true, 
       "id": "include_in_global_search", 
       "label": "Incluir en busqueda global", 
@@ -152,17 +152,17 @@
       "id": "include_in_newest_peliculas",
       "type": "bool",
       "label": "Incluir en Novedades - Peliculas",
-      "default": true,
+      "default": false,
       "enabled": true,
-      "visible": false
+      "visible": true
     },
     {
       "id": "include_in_newest_series",
       "type": "bool",
       "label": "Incluir en Novedades - Series",
-      "default": true,
+      "default": false,
       "enabled": true,
-      "visible": false
+      "visible": true
     },
     {
       "id": "include_in_newest_documentales",
@@ -170,15 +170,15 @@
       "label": "Incluir en Novedades - Documentales",
       "default": true,
       "enabled": true,
-      "visible": false
+      "visible": true
     },
     {
       "id": "include_in_newest_torrent",
       "type": "bool",
       "label": "Incluir en Novedades - Torrent",
-      "default": true,
+      "default": false,
       "enabled": true,
-      "visible": false
+      "visible": true
     }
   ]
 }

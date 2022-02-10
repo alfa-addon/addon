@@ -151,17 +151,17 @@
       "id": "include_in_newest_peliculas",
       "type": "bool",
       "label": "Incluir en Novedades - Peliculas",
-      "default": true,
+      "default": false,
       "enabled": true,
-      "visible": false
+      "visible": true
     },
     {
       "id": "include_in_newest_series",
       "type": "bool",
       "label": "Incluir en Novedades - Series",
-      "default": true,
+      "default": false,
       "enabled": true,
-      "visible": false
+      "visible": true
     },
     {
       "id": "include_in_newest_latino",
@@ -169,13 +169,13 @@
       "label": "Incluir en Novedades - Latino",
       "default": true,
       "enabled": true,
-      "visible": false
+      "visible": true
     },
     {
       "id": "include_in_newest_torrent",
       "type": "bool",
       "label": "Incluir en Novedades - Torrent",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     }

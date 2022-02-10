@@ -199,7 +199,7 @@ def list_all(item):
     soup = create_soup(item.url, unescape=True)
     #matches = soup.find_all("div", class_="home_post_cont")
     matches = soup.find_all("article")#, class_="relative group")
-    logger.debug(matches)
+    #logger.debug(matches)
     for elem in matches:
         #url = scrapertools.find_single_match(elem.img.get("extract", ""), "href='([^']+)'")
         url = elem.a.get("href", "")
@@ -229,7 +229,7 @@ def list_all(item):
 
     try:
         next_page = soup.find("span", {"aria-current": True}).find_next_sibling()["href"]
-        logger.debug(next_page)
+        #logger.debug(next_page)
         itemlist.append(Item(channel=item.channel,  action="list_all",  title="Página siguiente >>",
                              url=next_page, language=item.language ))
     except:

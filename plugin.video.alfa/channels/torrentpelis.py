@@ -30,20 +30,20 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-channel = 'torrentpelis'
+canonical = {
+             'channel': 'torrentpelis', 
+             'host': config.get_setting("current_host", 'torrentpelis', default=''), 
+             'host_alt': ['https://torrentpelis.com/'], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+channel = canonical['channel']
 categoria = channel.capitalize()
-host = config.get_setting("current_host", channel=channel, default='')
-host_alt = ['https://torrentpelis.com/']
-host_black_list = []
-host_black_list.extend(host_alt)
-canonical = host
-host_torrent = host[:-1]
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
 domain = scrapertools.find_single_match(host, patron_domain)
-
-if not host: 
-    host, canonical = generictools.check_host(channel, host_alt, host_black_list, 
-                      host, CF=True, alfa_s=False, canonical=True)
+host_torrent = host[:-1]
 
 __modo_grafico__ = config.get_setting('modo_grafico', channel)                  # TMDB?
 IDIOMAS_TMDB = {0: 'es', 1: 'en', 2: 'es,en'}
@@ -103,14 +103,8 @@ def submenu(item):
     patron = '<li\s*id="menu-item-[^"]+"\s*class="menu-item[^"]+">\s*<a\s*href="([^"]+)">'
     patron += '\s*<icona\s*class="fa[^"]+">\s*<\/icona>\s*(\w+)\s*(?:<\/a>\s*)?<\/a>.*?<\/li>'
 
-    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout,  s2=False, 
-                                     patron=patron, item=item, itemlist=[])     # Descargamos la página
-
-    # Verificamos si ha cambiado el Host
-    global host, canonical
-    if response.canonical and response.canonical != host:
-        host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
-                          host_black_list, host='', CF=True, alfa_s=True, canonical=True)
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
+                                                               s2=False, patron=patron, item=item, itemlist=[])     # Descargamos la página
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not response.sucess or itemlist:                                         # Si ERROR o lista de errores ..
@@ -147,14 +141,8 @@ def genero(item):
     patron = '<li\s*id="menu-item-[^"]+"\s*class="menu-item[^"]+genres[^"]+">\s*'
     patron += '<a\s*href="([^"]+)">\s*([^<]+)<\/a>\s*<\/li>'
 
-    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout,  s2=False, 
-                                     patron=patron, item=item, itemlist=[])     # Descargamos la página
-
-    # Verificamos si ha cambiado el Host
-    global host, canonical
-    if response.canonical and response.canonical != host:
-        host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
-                          host_black_list, host='', CF=True, alfa_s=True, canonical=True)
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
+                                                               s2=False, patron=patron, item=item, itemlist=[])     # Descargamos la página
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not response.sucess or itemlist:                                         # Si ERROR o lista de errores ...
@@ -247,18 +235,12 @@ def listado(item):                                                              
         cnt_match = 0                                                           # Contador de líneas procesadas de matches
         
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
-            data, response, item, itemlist = generictools.downloadpage(next_page_url, 
-                                             timeout=timeout_search, post=post, s2=False, 
-                                             item=item, itemlist=itemlist)      # Descargamos la página)
-            
+            data, response, item, itemlist = generictools.downloadpage(next_page_url, canonical=canonical, 
+                                                                       timeout=timeout_search, post=post, s2=False, 
+                                                                       item=item, itemlist=itemlist)    # Descargamos la página)
             # Verificamos si ha cambiado el Host
-            global host, canonical
-            if response.canonical and response.canonical != host:
-                host_save = host
-                host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
-                                  host_black_list, host='', CF=True, alfa_s=True, canonical=True)
-                item.url = item.url.replace(host_save, host)
-                next_page_url = next_page_url.replace(host_save, host)
+            if response.host:
+                next_page_url = response.url_new
             
             # Verificamos si se ha cargado una página correcta
             curr_page += 1                                                      # Apunto ya a la página siguiente
@@ -313,14 +295,6 @@ def listado(item):                                                              
                 break
             return itemlist                                                     #Salimos
 
-        # Actualizado la url por si ha habido redirecciones
-        if last_page == 99999:                                                  #Si es la primera pasada...
-            patron_canonical = '<link\s*rel="canonical"\s*href="([^"]+)"\s*\/*>'
-            if scrapertools.find_single_match(data, patron_canonical):
-                canonical = scrapertools.find_single_match(data, patron_canonical)
-                if not canonical.endswith('/'): canonical += '/'
-                item.url = canonical + 'page/1/'
-        
         # Buscamos la próxima página
         next_page_url = re.sub(r'page\/(\d+)', 'page/%s' % str(curr_page), item.url)
         #logger.debug('curr_page: ' + str(curr_page) + ' / last_page: ' + str(last_page))
@@ -499,14 +473,8 @@ def findvideos(item):
     patron += '<\/strong>\s*<\/td>\s*<td>\s*([^<]*)<\/td>\s*<td>\s*([^<]*)<\/td>'
     
     if not item.matches:
-        data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
-                                         s2=False, patron=patron, item=item, itemlist=itemlist)     # Descargamos la página
-
-        # Verificamos si ha cambiado el Host
-        global host, canonical
-        if response.canonical and response.canonical != host:
-            host, canonical = generictools.check_host(channel, [response.canonical]+host_alt, 
-                              host_black_list, host='', CF=True, alfa_s=True, canonical=True)
+        data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
+                                                                   s2=False, patron=patron, item=item, itemlist=itemlist)   # Descargamos la página
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if (not data and not item.matches) or response.code == 999:
@@ -566,8 +534,8 @@ def findvideos(item):
         # Buscamos el enlace definitivo, si es necesario
         if not item_local.url.startswith('magnet'):
             patron = '<a\s*id="link"[^>]*href="([^"]+)"'
-            data, response, item, itemlist = generictools.downloadpage(item_local.url, timeout=timeout, 
-                                        s2=False, patron=patron, item=item, itemlist=itemlist)      # Descargamos la página
+            data, response, item, itemlist = generictools.downloadpage(item_local.url, timeout=timeout, canonical=canonical, 
+                                                                       s2=False, patron=patron, item=item, itemlist=itemlist)
             item_local.url = scrapertools.find_single_match(data, patron)
             if not item_local.url: continue
         

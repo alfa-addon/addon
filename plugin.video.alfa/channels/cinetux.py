@@ -30,8 +30,14 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['directo', 'rapidvideo', 'streamango', 'okru', 'vidoza', 'openload', 'powvideo']
 
-
-CHANNEL_HOST = "https://cinetux.nu/"
+canonical = {
+             'channel': 'cinetux', 
+             'host': config.get_setting("current_host", 'cinetux', default=''), 
+             'host_alt': ["https://cinetux.nu/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 # Configuracion del canal
 __modo_grafico__ = config.get_setting('modo_grafico', 'cinetux')
@@ -52,7 +58,8 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
     item.viewmode = viewmode
-    data = httptools.downloadpage(CHANNEL_HOST + "pelicula").data
+    data = httptools.downloadpage(host, alfa_s=True, ignore_response_code=True, canonical=canonical).data
+    data = httptools.downloadpage(host + "pelicula").data
     total = scrapertools.find_single_match(data, "Películas</h1><span>(.*?)</span>")
     titulo = "Peliculas (%s)" %total
     #titulo peliculas
@@ -60,11 +67,11 @@ def mainlist(item):
                          text_bold=True, plot=item.plot, thumbnail=item.thumbnail, folder=False))
     
     itemlist.append(Item(channel=item.channel, action="peliculas", title="      Novedades",
-                         url=CHANNEL_HOST + "pelicula", thumbnail=get_thumb('newest', auto=True),
+                         url=host + "pelicula", thumbnail=get_thumb('newest', auto=True),
                          text_color=color1, plot=item.plot))
     
     itemlist.append(Item(channel=item.channel, action="destacadas", title="      Destacadas",
-                         url=CHANNEL_HOST + "mas-vistos/", thumbnail=get_thumb('hot', auto=True),
+                         url=host + "mas-vistos/", thumbnail=get_thumb('hot', auto=True),
                          text_color=color1, plot=item.plot))
     
     itemlist.append(Item(channel=item.channel, action="idioma", title="      Por idioma",
@@ -72,18 +79,18 @@ def mainlist(item):
                          plot=item.plot))
     
     itemlist.append(Item(channel=item.channel, action="generos", title="      Por géneros",
-                         url=CHANNEL_HOST, thumbnail=get_thumb('genres', auto=True),
+                         url=host, thumbnail=get_thumb('genres', auto=True),
                          text_color=color1, plot=item.plot))
     #titulo documentales
     itemlist.append(Item(channel=item.channel, title="Documentales", text_bold=True, folder=False, 
                          text_color=color2, plot=item.plot, action="", thumbnail=item.thumbnail))
     
     itemlist.append(Item(channel=item.channel, action="peliculas", title="      Novedades",
-                         url=CHANNEL_HOST + "genero/documental/", text_color=color1,
+                         url=host + "genero/documental/", text_color=color1,
                          thumbnail=get_thumb('newest', auto=True), plot=item.plot))
     
     itemlist.append(Item(channel=item.channel, action="peliculas", title="      Por orden alfabético",
-                         url=CHANNEL_HOST + "genero/documental/?orderby=title&order=asc&gdsr_order=asc",
+                         url=host + "genero/documental/?orderby=title&order=asc&gdsr_order=asc",
                          text_color=color1, plot=item.plot, thumbnail=get_thumb('alphabet', auto=True)))
     
     itemlist.append(Item(channel=item.channel, title="", action="", folder=False,
@@ -110,7 +117,7 @@ def configuracion(item):
 
 def search(item, texto):
     logger.info()
-    item.url = CHANNEL_HOST + "?s="
+    item.url = host + "?s="
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
     item.extra = "search"
@@ -130,27 +137,27 @@ def newest(categoria):
     item = Item()
     try:
         if categoria == 'peliculas':
-            item.url = CHANNEL_HOST
+            item.url = host
             item.action = "peliculas"
 
         elif categoria == 'documentales':
-            item.url = CHANNEL_HOST + "genero/documental/"
+            item.url = host + "genero/documental/"
             item.action = "peliculas"
 
         elif categoria == 'infantiles':
-            item.url = CHANNEL_HOST + "genero/animacion/"
+            item.url = host + "genero/animacion/"
             item.action = "peliculas"
 
         elif categoria == 'terror':
-            item.url = CHANNEL_HOST + "genero/terror/"
+            item.url = host + "genero/terror/"
             item.action = "peliculas"
 
         elif categoria == 'castellano':
-            item.url = CHANNEL_HOST + "idioma/espanol/"
+            item.url = host + "idioma/espanol/"
             item.action = "peliculas"
 
         elif categoria == 'latino':
-            item.url = CHANNEL_HOST + "idioma/latino/"
+            item.url = host + "idioma/latino/"
             item.action = "peliculas"
 
         itemlist = peliculas(item)
@@ -221,8 +228,8 @@ def destacadas(item):
     matches = scrapertools.find_multiple_matches(bloque, patron)
     logger.error(matches)
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
-        #scrapedurl = CHANNEL_HOST + scrapedurl
-        url = urlparse.urljoin(CHANNEL_HOST, scrapedurl)
+        #scrapedurl = host + scrapedurl
+        url = urlparse.urljoin(host, scrapedurl)
         itemlist.append(item.clone(action="findvideos", title=scrapedtitle, contentTitle=scrapedtitle,
                               url=url, thumbnail=scrapedthumbnail,
                               contentType="movie"
@@ -242,8 +249,8 @@ def generos(item):
     patron = '<li><a.*?href="([^"]+)">(.*?)</li>'
     matches = scrapertools.find_multiple_matches(bloque, patron)
     for scrapedurl, scrapedtitle in matches:
-        #scrapedurl = CHANNEL_HOST + scrapedurl
-        url = urlparse.urljoin(CHANNEL_HOST, scrapedurl)
+        #scrapedurl = host + scrapedurl
+        url = urlparse.urljoin(host, scrapedurl)
         scrapedtitle = scrapertools.htmlclean(scrapedtitle).strip().capitalize()
         if not PY3:
             scrapedtitle = unicode(scrapedtitle, "utf8").encode("utf8")
@@ -256,9 +263,9 @@ def generos(item):
 def idioma(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="peliculas", title="Español", url= CHANNEL_HOST + "idioma/espanol/"))
-    itemlist.append(item.clone(action="peliculas", title="Latino", url= CHANNEL_HOST + "idioma/latino/"))
-    itemlist.append(item.clone(action="peliculas", title="VOSE", url= CHANNEL_HOST + "idioma/subtitulado/"))
+    itemlist.append(item.clone(action="peliculas", title="Español", url= host + "idioma/espanol/"))
+    itemlist.append(item.clone(action="peliculas", title="Latino", url= host + "idioma/latino/"))
+    itemlist.append(item.clone(action="peliculas", title="VOSE", url= host + "idioma/subtitulado/"))
     return itemlist
 
 
@@ -390,13 +397,13 @@ def play(item):
         item.url = get_url(url)
     else:
         post = item.spost
-        new_data = httptools.downloadpage(CHANNEL_HOST+'wp-admin/admin-ajax.php', post=post,
+        new_data = httptools.downloadpage(host+'wp-admin/admin-ajax.php', post=post,
                                           headers={'Referer': item.referer})
 
         if new_data.sucess or new_data.code == 302:
             new_data = new_data.data
         else:
-            new_data = httptools.downloadpage(CHANNEL_HOST+'wp-admin/admin-ajax.php', forced_proxy='ProxyCF',
+            new_data = httptools.downloadpage(host+'wp-admin/admin-ajax.php', forced_proxy='ProxyCF',
                                               post=post, headers={'Referer': item.referer}).data
 
 

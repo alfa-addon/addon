@@ -26,8 +26,15 @@ list_servers = [
     'uqload',
     ]
 
-host = 'https://ultrapelishd.net/'
-AlfaChannel = DooPlay(host, "/pelicula")
+canonical = {
+             'channel': 'ultrapelishd', 
+             'host': config.get_setting("current_host", 'ultrapelishd', default=''), 
+             'host_alt': ["https://ultrapelishd.net/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = DooPlay(host, "/pelicula", canonical=canonical)
 
 
 def mainlist(item):

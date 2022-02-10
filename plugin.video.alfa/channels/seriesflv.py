@@ -20,13 +20,20 @@ from platformcode import config, logger
 from lib.AlfaChannelHelper import DooPlay
 from channelselector import get_thumb
 
-host = 'https://seriesflv.xyz/'
-AlfaChannel = DooPlay(host, tv_path="/online-series-completas")
-
 IDIOMAS = {'esp': 'CAST', 'lat': 'LAT', 'sub': 'VOSE', "ing": 'VO'}
 list_idiomas = list(IDIOMAS.values())
 list_servers = ['fembed', 'streamtape', 'cloudvideo', 'mixdrop']
 list_quality = []
+
+canonical = {
+             'channel': 'seriesflv', 
+             'host': config.get_setting("current_host", 'seriesflv', default=''), 
+             'host_alt': ["https://seriesflv.xyz/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = DooPlay(host, tv_path="/online-series-completas", canonical=canonical)
 
 
 def mainlist(item):

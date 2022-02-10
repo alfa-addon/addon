@@ -23,8 +23,15 @@ list_language = ["LAT", "CAST"]
 list_quality = []
 list_servers = ['fembed', 'streamtape', 'streamlare', 'zplayer']
 
-host = "https://cuevana2espanol.com/"
-AlfaChannel = DooPlay(host, movie_path="ver-pelicula-online/")
+canonical = {
+             'channel': 'cuevana2espanol', 
+             'host': config.get_setting("current_host", 'cuevana2espanol', default=''), 
+             'host_alt': ["https://cuevana2espanol.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = DooPlay(host, movie_path="ver-pelicula-online/", canonical=canonical)
 
 
 def mainlist(item):
@@ -165,7 +172,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria == 'peliculas':
-            item.url = host + 'ver-peliculas-online'
+            item.url = host + 'ver-pelicula-online'
 
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':

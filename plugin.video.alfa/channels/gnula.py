@@ -12,7 +12,14 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = "https://gnula.nu/"
+canonical = {
+             'channel': 'gnula', 
+             'host': config.get_setting("current_host", 'gnula', default=''), 
+             'host_alt': ["https://gnula.nu/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 host_search = "https://cse.google.com/cse/element/v1?rsz=filtered_cse&num=20&hl=es&source=gcsc&gss=.es&sig=c891f6315aacc94dc79953d1f142739e&cx=014793692610101313036:vwtjajbclpq&q=%s&safe=off&cse_tok=%s&googlehost=www.google.com&callback=google.search.Search.csqr6098&nocache=1540313852177&start=0"
 item_per_page = 20
 
@@ -39,7 +46,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    data = httptools.downloadpage(host).data
+    data = httptools.downloadpage(host, canonical=canonical).data
     cxv = scrapertools.find_single_match(data, 'cx" value="([^"]+)"')
     data = httptools.downloadpage("https://cse.google.es/cse.js?hpg=1&cx=%s" %cxv).data
     if PY3 and isinstance(data, bytes):
@@ -97,7 +104,7 @@ def sub_search(item):
 def generos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = scrapertools.find_single_match(data, '<spa[^>]+>Lista de g(.*?)/table')
     patron = '<strong>([^<]+)</strong> .<a href="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -118,7 +125,7 @@ def peliculas(item):
     logger.info()
     itemlist = []
     next = True
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '<a class="Ntooltip" href="([^"]+)">([^<]+)<span><br[^<]+'
     patron += '<img src="([^"]+)"></span></a>(.*?)<br'
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -164,7 +171,7 @@ def peliculas(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, ignore_response_code=True).data
+    data = httptools.downloadpage(item.url, ignore_response_code=True, canonical=canonical).data
     #item.plot = scrapertools.find_single_match(data, '<div class="entry">(.*?)<div class="iframes">')
     #item.plot = scrapertools.htmlclean(item.plot).strip()
     #item.contentPlot = item.plot

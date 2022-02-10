@@ -144,11 +144,11 @@ def newest(categoria):
 
     if categoria in ['peliculas']:
         item.list_type = 'pelicula'
-        item.url = '{}/pages/Peliculas'.format(host)
+        item.url = '{}/p/peliculas'.format(host)
 
     else:
         item.list_type = 'novedades'
-        item.url = '{}/pages/Dramas'.format(host)
+        item.url = '{}/p/dramas'.format(host)
 
     return list_all(item)
 
