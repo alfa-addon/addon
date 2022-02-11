@@ -13,8 +13,17 @@ import re
 
 from core import scrapertools
 from core.item import Item
-from platformcode import logger
+from platformcode import logger, config
 from core import httptools
+
+canonical = {
+             'channel': 'ecarteleratrailers', 
+             'host': config.get_setting("current_host", 'ecarteleratrailers', default=''), 
+             'host_alt': ["https://www.ecartelera.com/videos/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -22,12 +31,12 @@ def mainlist(item):
     itemlist = []
 
     if item.url == "":
-        item.url = "http://www.ecartelera.com/videos/"
+        item.url = host
 
     # ------------------------------------------------------
     # Descarga la página
     # ------------------------------------------------------
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
 
     # ------------------------------------------------------
     # Extrae las películas

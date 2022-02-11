@@ -24,8 +24,15 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ["directo", "fembed", "mixdrop", "doodstream", "clipwatching", "cloudvideo"]
 
-host = "https://123pelis.fun/"
-AlfaChannel = DooPlay(host, tv_path="/serie")
+canonical = {
+             'channel': '123pelis', 
+             'host': config.get_setting("current_host", '123pelis', default=''), 
+             'host_alt': ["https://123pelis.fun/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = DooPlay(host, tv_path="/serie", canonical=canonical)
 
 
 def mainlist(item):

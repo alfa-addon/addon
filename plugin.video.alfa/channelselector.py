@@ -7,8 +7,7 @@ import os
 
 from core import channeltools
 from core.item import Item
-from platformcode.unify import thumb_dict
-from platformcode import config, logger, unify
+from platformcode import config, logger
 
 
 def getmainlist(view="thumb_"):
@@ -339,8 +338,8 @@ def getchanneltypes(view="thumb_"):
     return itemlist
 
 
-def filterchannels(category, view="thumb_"):
-    logger.info()
+def filterchannels(category, view="thumb_", alfa_s=True, settings=False):
+    #logger.info()
 
     channelslist = []
     frequent_list = []
@@ -372,7 +371,7 @@ def filterchannels(category, view="thumb_"):
         # channel = os.path.basename(channel).replace(".json", "")
 
         try:
-            channel_parameters = channeltools.get_channel_parameters(channel)
+            channel_parameters = channeltools.get_channel_parameters(channel, settings=settings)
 
             # Si el canal está desactivado, no es un canal, o es un módulo, lo saltamos
             if channel_parameters["channel"] == 'community' \
@@ -408,7 +407,7 @@ def filterchannels(category, view="thumb_"):
             # Se muestran todos los canales si se elige "all" en el filtrado de idioma
             # Se muestran sólo los idiomas filtrados, cast o lat
             # Los canales de adultos se mostrarán siempre que estén activos
-            logger.info(channel_parameters["language"])
+            if not alfa_s: logger.info(channel_parameters["language"])
             if channel_language != "all" \
                 and not (channel_language in channel_parameters["language"] or "*" in channel_parameters["language"]) \
                     and category != "all_channels":
@@ -446,14 +445,16 @@ def filterchannels(category, view="thumb_"):
             if channel_parameters["req_assistant"]:
                 channel_parameters["title"] = "{} [COLOR=yellow](requiere Assistant)[/COLOR]".format(channel_parameters["title"])
 
-            channel_info = set_channel_info(channel_parameters)
+            channel_info = set_channel_info(channel_parameters, alfa_s=alfa_s)
 
             # Si ha llegado hasta aquí, lo añade
-            frequency = channeltools.get_channel_setting("frequency", channel_parameters["channel"], 0, caching_var=False)
+            frequency = channeltools.get_channel_setting("frequency", channel_parameters["channel"], 0, caching_var=False) \
+                        if config.get_setting('frequents') or freq else 0
 
             channelslist.append(
                 Item(
                     action = "mainlist",
+                    active = channel_parameters["active"],
                     category = channel_parameters["title"],
                     channel = channel_parameters["channel"],
                     context = context,
@@ -463,7 +464,8 @@ def filterchannels(category, view="thumb_"):
                     plot = channel_info,
                     thumbnail = channel_parameters["thumbnail"],
                     title = channel_parameters["title"],
-                    viewmode = "videos"
+                    viewmode = "videos",
+                    settings = channel_parameters.get("settings", [])
                 )
             )
 
@@ -519,7 +521,8 @@ def filterchannels(category, view="thumb_"):
         if view == "banner_" and "banner" in channel_parameters:
             channel_parameters["thumbnail"] = channel_parameters["banner"]
 
-        channelslist.insert(0, Item(title=config.get_localized_string(60088), action="mainlist", channel="url",
+        channelslist.insert(0, Item(title=config.get_localized_string(60088), action="mainlist", channel="url", 
+                                    settings=[], active=channel_parameters["active"], 
                                     thumbnail=channel_parameters["thumbnail"], type="generic", viewmode="list"))
 
     if frequent_list and config.get_setting('frequents'):
@@ -536,15 +539,18 @@ def filterchannels(category, view="thumb_"):
                 title = titles[x]
                 id = ids[x]
             channelslist.insert(x,
-                Item(channel='search', action='discover_list', title=title, search_type='list',
+                Item(channel='search', action='discover_list', title=title, search_type='list', 
+                     settings=[], active=channel_parameters["active"], 
                      list_type='%s/%s' % (category.replace('show',''), id), thumbnail=get_thumb(id+".png"),
                      mode=category))
 
-        channelslist.insert(3, Item(channel='search', action='years_menu', title='Por Años',
+        channelslist.insert(3, Item(channel='search', action='years_menu', title='Por Años', 
+                                    settings=[], active=channel_parameters["active"], 
                                     type=category.replace('show', ''), thumbnail=get_thumb("years.png"),
                                     mode=category))
 
-        channelslist.insert(4, Item(channel='search', action='genres_menu', title='Generos',
+        channelslist.insert(4, Item(channel='search', action='genres_menu', title='Generos', 
+                                    settings=[], active=channel_parameters["active"], 
                                     type=category.replace('show',''), thumbnail=get_thumb("genres.png"),
                                     mode=category))
 
@@ -559,17 +565,19 @@ def filterchannels(category, view="thumb_"):
         discovery = {"url": "discover/movie", "with_genres": "27", "primary_release_date.lte": "%s" % today,
                      "primary_release_date.gte": from_date, "page": "1"}
 
-        channelslist.insert(0, Item(channel="search", title="Halloween %s" % this_year, page=1, action='discover_list',
+        channelslist.insert(0, Item(channel="search", title="Halloween %s" % this_year, page=1, action='discover_list', 
+                                    settings=[], active=channel_parameters["active"], 
                                     discovery=discovery, mode="movie", thumbnail=get_thumb("channels_horror.png")))
     return channelslist
 
 
 def get_thumb(thumb_name, view="thumb_", auto=False):
+    from platformcode.unify import thumb_dict, set_genre, simplify
 
     if auto:
         thumbnail = ''
 
-        thumb_name = unify.set_genre(unify.simplify(thumb_name))
+        thumb_name = set_genre(simplify(thumb_name))
 
 
         if thumb_name in thumb_dict:
@@ -591,8 +599,8 @@ def get_thumb(thumb_name, view="thumb_", auto=False):
         return os.path.join(media_path, view + thumb_name)
 
 
-def set_channel_info(parameters):
-    logger.info()
+def set_channel_info(parameters, alfa_s=False):
+    if not alfa_s: logger.info()
 
     info = ''
     language = ''

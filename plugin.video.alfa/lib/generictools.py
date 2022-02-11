@@ -33,7 +33,6 @@ import json
 import base64
 
 from channelselector import get_thumb
-from core import httptools
 from core import scrapertools
 from core import servertools
 from core import channeltools
@@ -41,7 +40,6 @@ from core import filetools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
-from lib import jsunpack
 
 channel_py = "newpct1"
 intervenido_judicial = 'Dominio intervenido por la Autoridad Judicial'
@@ -58,16 +56,11 @@ patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?
 patron_canal = '(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
 
 
-def downloadpage(url, post=None, headers=None, random_headers=False, replace_headers=False, 
-                 only_headers=False, referer=None, follow_redirects=True, timeout=None, 
-                 proxy=True, proxy_web=False, proxy_addr_forced={}, forced_proxy=None, domain_name='', 
-                 proxy_retries=1, CF=False, CF_test=True, file=None, filename=None, ignore_response_code=True, 
-                 alfa_s=False, decode_code='', json=False, s2=None, patron='', quote_rep=False, 
-                 forced_proxy_opt=None, no_comments=True, item={}, itemlist=[]):
-    
+def downloadpage(url, **kwargs):
     # Función "wraper" que puede ser llamada desde los canales para descargar páginas de forma unificada y evitar
     # tener que hacer todas las comprobaciones dentro del canal, lo que dificulta su mantenimiento y mejora.
     # La llamada tiene todos los parámetros típicos que puede usar un canal al descargar.
+    from core import httptools
     
     if not PY3:
         funcion = inspect.stack()[1][3]                                         # Identifica el nombre de la función que llama
@@ -75,46 +68,61 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
         funcion = inspect.stack()[1].function
     ERROR_01 = '%s: La Web no responde o ha cambiado de URL: ' % funcion.upper()    # Prepara los literales de los errores posibles
     ERROR_02 = '%s: Ha cambiado la estructura de la Web. Reportar el error con el log: ' % funcion.upper()
+    
+    # Kwags locales que no pasan a Httptools
+    domain_name = kwargs.get('domain_name', '')
+    if kwargs.get('domain_name', ''): del kwargs['domain_name']
+    kwargs['encoding'] = kwargs.get('decode_code', '')
+    decode_code = kwargs['encoding']
+    if kwargs.get('decode_code', ''): del kwargs['decode_code']
+    soup = kwargs.get('soup', None)
+    json = kwargs.get('json', False)
+    if kwargs.get('json', ''): del kwargs['json']
+    s2 = kwargs.get('s2', None)
+    if kwargs.get('s2', ''): del kwargs['s2']
+    patron = kwargs.get('patron', '')
+    if kwargs.get('patron', ''): del kwargs['patron']
+    quote_rep = kwargs.get('quote_rep', False)
+    if kwargs.get('quote_rep', ''): del kwargs['quote_rep']
+    no_comments = kwargs.get('no_comments', True)
+    if kwargs.get('no_comments', ''): del kwargs['no_comments']
+    item = kwargs.get('item', {})
+    if not item: item = Item()
+    if kwargs.get('item', ''): del kwargs['item']
+    itemlist = kwargs.get('itemlist', [])
+    if kwargs.get('itemlist', ''): del kwargs['itemlist']
+
     if s2 is None and funcion == 'findvideos':                                  # Si es "findvideos" no sustituye los \s{2,}
         s2 = False                                                              # para no corromper las contraseñas de los .RAR
     elif s2 is None:
         s2 = True
-    if referer is not None:
-        if headers is None:
-            headers = {'Referer':referer}
-        else:
-            headers['Referer'] = referer
     data = ''
+    host_old = kwargs.get('canonical', {}).get('host', '')
     response = {
                 'data': data, 
                 'sucess': False, 
                 'code': 999
                }
     response = type('HTTPResponse', (), response)
-    if not item: item = Item()
     if not isinstance(url, (str, unicode, bytes)):
         logger.error('Formato de url incompatible: %s (%s)' % (str(url), str(type(url))))
         return (data, response, item, itemlist)
 
-    if timeout and timeout < 20 and httptools.channel_proxy_list(url):          # Si usa proxy, duplicamos el timeout
-        timeout *= 3
+    if kwargs.get('timeout', None) and kwargs['timeout'] < 20 and httptools.channel_proxy_list(url):    # Si usa proxy, triplicamos el timeout
+        kwargs['timeout'] *= 3
 
     try:
-        response = httptools.downloadpage(url, post=post, headers=headers, random_headers=random_headers, 
-                                          replace_headers=replace_headers, only_headers=only_headers, 
-                                          follow_redirects=follow_redirects, encoding=decode_code, 
-                                          timeout=timeout, proxy=proxy, proxy_web=proxy_web, forced_proxy_opt=forced_proxy_opt,  
-                                          proxy_addr_forced=proxy_addr_forced, forced_proxy=forced_proxy, 
-                                          proxy_retries=proxy_retries, CF=CF, CF_test=CF_test, file=file, filename=filename, 
-                                          ignore_response_code=ignore_response_code, alfa_s=alfa_s)
+        response = httptools.downloadpage(url, **kwargs)
         if response:
             if json and response.json:
                 data = response.json
+            elif soup and response.soup:
+                data = response.soup
             else:
                 data = response.data
             if decode_code is not None and response.encoding is not None:
                 decode_code = response.encoding
-            if response.sucess and only_headers:
+            if response.sucess and kwargs.get('only_headers', False):
                 data = response.headers
                 return (data, response, item, itemlist)
             if response.sucess and 'Content-Type' in response.headers and not 'text/html' \
@@ -124,26 +132,30 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                 return (data, response, item, itemlist)
 
         if data:
-            data = js2py_conversion(data, url, domain_name=domain_name, timeout=timeout, 
-                                channel=item.channel, headers=headers, referer=referer, 
-                                post=post, follow_redirects=follow_redirects)   # En caso de que sea necesario la conversión js2py
+            data = js2py_conversion(data, url, domain_name=domain_name, timeout=kwargs.get('timeout', None), 
+                                    channel=item.channel, headers=kwargs.get('headers', None), 
+                                    referer=kwargs.get('referer', None), post=kwargs.get('post', None), 
+                                    follow_redirects=kwargs.get('follow_redirects', True), 
+                                    ignore_response_code=kwargs.get('ignore_response_code', False),
+                                    json=json, soup=soup)                       # Conversión js2py
             
-            data = re.sub(r"\n|\r|\t", "", data).replace("'", '"')              # Reemplaza caracteres innecesarios
-            if quote_rep:
-                data = data.replace("'", '"')                                   # Reemplaza ' por "
-            if s2:
-                data = re.sub(r"\s{2,}", "", data)                              # Reemplaza blancos innecesarios, salvo en "findvideos"
-            if no_comments:
-                data = re.sub(r"(<!--.*?-->)", "", data)                        # Reemplaza comentarios
-            if decode_code is None:                                             # Si se especifica, se decodifica con el código dado
-                decode_code = 'utf8'
-            if not PY3 and isinstance(data, str) and decode_code:
-                data = unicode(data, decode_code, errors="replace").encode("utf8")
-            elif PY3 and isinstance(data, bytes):
-                if not decode_code: decode_code = 'utf8'
-                data = data.decode(decode_code)
-            if patron and not scrapertools.find_single_match(data, patron):     # Se comprueba que el patrón funciona
-                response.code = 999                                                      # Si no funciona, se pasa error
+            if not json and not soup:
+                data = re.sub(r"\n|\r|\t", "", data).replace("'", '"')          # Reemplaza caracteres innecesarios
+                if quote_rep:
+                    data = data.replace("'", '"')                               # Reemplaza ' por "
+                if s2:
+                    data = re.sub(r"\s{2,}", "", data)                          # Reemplaza blancos innecesarios, salvo en "findvideos"
+                if no_comments:
+                    data = re.sub(r"(<!--.*?-->)", "", data)                    # Reemplaza comentarios
+                if decode_code is None:                                         # Si se especifica, se decodifica con el código dado
+                    decode_code = 'utf8'
+                if not PY3 and isinstance(data, str) and decode_code:
+                    data = unicode(data, decode_code, errors="replace").encode("utf8")
+                elif PY3 and isinstance(data, bytes):
+                    if not decode_code: decode_code = 'utf8'
+                    data = data.decode(decode_code)
+            if patron and response.sucess and not scrapertools.find_single_match(data, patron):     # Se comprueba que el patrón funciona
+                response.code = 999                                             # Si no funciona, se pasa error
                 try:
                     logger.error('ERROR 02: ' + ERROR_02 + str(item.url) + " CODE: " + str(response.code) 
                             + " PATRON: " + str(patron) + " DATA: " + str(data))
@@ -153,58 +165,50 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                 if funcion != 'episodios':
                     itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
                              '[COLOR yellow]' + str(response.code) + '[/COLOR]: ERROR 02: ' + ERROR_02))
-        else:                                                                   # Si no hay datos, se verifica la razón
-            data = ''
-            item = web_intervenida(item, data)                                  #Verificamos que no haya sido clausurada
-            if item.intervencion:                                               #Sí ha sido clausurada judicialmente
-                for clone_inter, autoridad in item.intervencion:
-                    thumb_intervenido = get_thumb(autoridad)
-                    if funcion != 'episodios':
-                        itemlist.append(item.clone(action='', title="[COLOR yellow]" + 
-                            clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + 
-                            '. Reportar el problema en el foro', thumbnail=thumb_intervenido, 
-                            folder=False))
-            elif not response.sucess:
-                logger.error('ERROR 01: ' + ERROR_01 + str(item.url) + " CODE: " + str(response.code) 
-                                 + " PATRON: " + str(patron) + " DATA: ")
-                if funcion != 'episodios':
-                    itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
-                             '[COLOR yellow]' + str(response.code) + '[/COLOR]: ERROR 01: ' + ERROR_01))
+
+        if not response.sucess:
+            logger.error('ERROR 01: ' + ERROR_01 + str(item.url) + " CODE: " + str(response.code) 
+                             + " PATRON: " + str(patron) + " DATA: ")
+            if funcion != 'episodios':
+                itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
+                         '[COLOR yellow]' + str(response.code) + '[/COLOR]: ERROR 01: ' + ERROR_01))
+
+        if response.host and kwargs.get('canonical', {}).get('channel', '') == channel_py:
+            change_host_newpct1(response.host, host_old)
+        if response.host and host_old:
+            if item.channel_host: item.channel_host = item.channel_host.replace(host_old, response.host)
+            if item.url: item.url = item.url.replace(host_old, response.host)
+            if item.url_tvshow: item.url_tvshow = item.url_tvshow.replace(host_old, response.host)
     except:
         logger.error(traceback.format_exc())
     
     return (data, response, item, itemlist)
 
 
-def check_host(channel, host_alt, host_black_list=[], host='', CF=True, alfa_s=True, canonical=''):
-    if not alfa_s: logger.info()
-    if host:
-        page = httptools.downloadpage(host, ignore_response_code=True, timeout=5, alfa_s=alfa_s, CF=CF)
-        if page.sucess:
-            if not page.proxy__:
-                return host, page.canonical
-        else:
-            host = ''
+def change_host_newpct1(host, host_old):
+
+    if not host or not host_old: return
+    channel_json = channeltools.get_channel_json(channel_py)
+    if not channel_json or not channel_json.get('settings', []): return
+
+    domain_old = scrapertools.find_single_match(host_old, patron_domain)
+    label = ", ('1', 'atomixhq', 'atomixhq', '%s', '%s', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no')" \
+                % (domain_old, host)
+    update = False
     
-    for url in host_alt:
-        page = httptools.downloadpage(url, ignore_response_code=True, timeout=5, alfa_s=alfa_s, CF=CF)
-        if page.sucess:
-            if host and host in url: return host, page.canonical
-            if page.proxy__ and host: continue
-            if canonical and page.canonical and page.canonical not in host_black_list and url != page.canonical:
-                host = page.canonical
-                logger.info('Canal: %s: Host %s cambiado a CANONICAL: %s' % (channel.capitalize(), url, page.canonical), force=True)
-            else:
-                host = url
-                logger.info('Canal: %s: HOST cambiado a: %s - Canonical: %s' % (channel.capitalize(), host, page.canonical), force=True)
-            config.set_setting("current_host", host, channel=channel)
-            return host, page.canonical
-    else:
-        if host: return host, page.canonical
-    
-    host = host_alt[0]
-    config.set_setting("current_host", '', channel=channel)
-    return host, canonical
+    for settings in channel_json['settings']:                                   # Se recorren todos los settings
+        if settings['id'] == "clonenewpct1_channels_list":                      # Encontramos el setting
+            settings['default'] = settings.get('default', '').replace(host_old, host)   # Cambiar lista de clones
+            update = True
+        
+        if settings['id'] == "intervenidos_channels_list":                      # Encontramos el setting
+            settings['default'] = settings.get('default', '').replace(host_old, host)   # Cambiar lista de clones intervenidos
+            settings['default'] += label                                        # Añadimos redirección de host_old o host_canonical
+            update = True
+            
+    if update:
+        channel_path = filetools.join(config.get_runtime_path(), "channels", channel_py + ".json")
+        filetools.write(channel_path, json.dumps(channel_json, sort_keys=True, indent=2, ensure_ascii=True))
 
 
 def convert_url_base64(url, host='', rep_blanks=True):
@@ -259,8 +263,10 @@ def convert_url_base64(url, host='', rep_blanks=True):
 
 
 def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=None, headers=None, 
-                     timeout=10, follow_redirects=True, proxy_retries=1):
-
+                     json=False, soup=False, timeout=10, follow_redirects=True, proxy_retries=1,
+                     ignore_response_code=False):
+    from core import httptools
+    
     if PY3 and isinstance(data, bytes):
         if not b'Javascript is required' in data:
             return data
@@ -340,9 +346,15 @@ def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=N
 
     # Se ejecuta de nuevo la descarga de la página, ya con la nueva cookie
     data_new = ''
-    data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(url, 
-                timeout=timeout, headers=headers, referer=referer, post=post, 
-                follow_redirects=follow_redirects, proxy_retries=proxy_retries).data)
+    response = httptools.downloadpage(url, soup=soup, ignore_response_code=ignore_response_code, 
+                                      timeout=timeout, headers=headers, referer=referer, post=post, 
+                                      follow_redirects=follow_redirects, proxy_retries=proxy_retries)
+    if json and response.json:
+        data_new = response.json
+    elif soup and response.soup:
+        data_new = response.soup
+    else:
+        data_new = re.sub(r"\n|\r|\t", "", response.data)
     if data_new:
         data = data_new
     
@@ -680,7 +692,7 @@ def post_tmdb_listado(item, itemlist):
         __modo_grafico__ = config.get_setting('modo_grafico', item.channel)    
         
         # Si TMDB no ha encontrado el vídeo limpiamos el año
-        if item_local.infoLabels['year'] == "-":
+        if item_local.infoLabels['year'] == "-" and item_local.from_channel != 'news':
             item_local.infoLabels['year'] = ''
             item_local.infoLabels['aired'] = ''
             
@@ -891,7 +903,11 @@ def post_tmdb_listado(item, itemlist):
                 title = '%s %s' % (item_local.contentSerieName, title_add)
             elif "Episodio " in title:
                 if not item_local.contentSeason or not item_local.contentEpisodeNumber:
-                    item_local.contentSeason, item_local.contentEpisodeNumber = scrapertools.find_single_match(title_add, 'Episodio (\d+)x(\d+)')
+                    try:
+                        item_local.contentSeason, item_local.contentEpisodeNumber = \
+                                scrapertools.find_single_match(title_add, 'Episodio (\d+)x(\d+)')
+                    except:
+                        item_local.contentSeason = item_local.contentEpisodeNumber = 1
             item_local.unify_extended = True
 
         if item_local.infoLabels['status'] and (item_local.infoLabels['status'].lower() == "ended" \
@@ -1906,6 +1922,8 @@ def post_tmdb_findvideos(item, itemlist):
 
 
 def identifying_links(data, timeout=15, headers=None, referer=None, post=None, follow_redirects=True):
+    from core import httptools
+    
     if not PY3:
         from lib import alfaresolver
     else:
@@ -2063,6 +2081,7 @@ def context_for_videolibray(item):
 
 def find_rar_password(item):
     logger.info()
+    from core import httptools
     
     # Si no hay, buscamos en páginas alternativas
     rar_search = [
@@ -2486,6 +2505,7 @@ def get_field_from_kodi_DB(item, from_fields='*', files='file'):
 def fail_over_newpct1(item, patron, patron2=None, timeout=None):
     logger.info()
     import ast
+    from core import httptools
     
     """
         
@@ -3332,6 +3352,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
             i = 0
             for channel, url in list(it.library_urls.items()):
                 if not url.startswith('magnet'):
+                    from core import httptools
                     url_domain = scrapertools.find_single_match(url, patron_host) 
                     response = httptools.downloadpage(url_domain, timeout=10, ignore_response_code=True, hide_infobox=True)
                     if not response.sucess:
@@ -3907,6 +3928,8 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
 
 def dejuice(data):
     logger.info()
+    from lib import jsunpack
+    
     # Metodo para desobfuscar datos de JuicyCodes
 
     juiced = scrapertools.find_single_match(data, 'JuicyCodes.Run\((.*?)\);')
@@ -3918,6 +3941,8 @@ def dejuice(data):
 
 
 def privatedecrypt(url, headers=None):
+    from core import httptools
+    from lib import jsunpack
 
     data = httptools.downloadpage(url, headers=headers, follow_redirects=False).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
@@ -3937,6 +3962,8 @@ def privatedecrypt(url, headers=None):
 
 
 def rec(site_key, co, sa, loc):
+    from core import httptools
+    
     api_url = "https://www.google.com/recaptcha/api.js"
     headers = {
                "User-Agent": httptools.get_user_agent(),
@@ -3945,12 +3972,12 @@ def rec(site_key, co, sa, loc):
                "Accept-Language": "ro-RO,ro;q=0.8,en-US;q=0.6,en-GB;q=0.4,en;q=0.2"
                }
 
-    r_data = httptools.downloadpage(api_url, headers=headers, follow_redirects=False).data
+    r_data = httptools.downloadpage(api_url, headers=headers, follow_redirects=False, alfa_s=True).data
     v = scrapertools.find_single_match(r_data, "releases/([^/]+)")
     cb = "123456789"
     base_url = "https://www.google.com/recaptcha/api2/anchor?ar=1&k=%s&co=%s&hl=ro&v=%s&size=invisible&cb%s" % (site_key, co, v, cb)
 
-    r_data = httptools.downloadpage(base_url, headers=headers, follow_redirects=False).data
+    r_data = httptools.downloadpage(base_url, headers=headers, follow_redirects=False, alfa_s=True).data
     c = scrapertools.find_single_match(r_data, 'id="recaptcha-token" value="([^"]+)"')
 
     t_url = "https://www.google.com/recaptcha/api2/reload?k=%s" % site_key
@@ -3967,6 +3994,6 @@ def rec(site_key, co, sa, loc):
             "referer": base_url
             }
 
-    r_data = httptools.downloadpage(t_url, headers=head, follow_redirects=False, post=post).data
+    r_data = httptools.downloadpage(t_url, headers=head, follow_redirects=False, post=post, alfa_s=True).data
     response = scrapertools.find_single_match(r_data, '"rresp","([^"]+)"')
     return response

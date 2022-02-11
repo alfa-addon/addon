@@ -22,11 +22,18 @@ from channels import filtertools
 from bs4 import BeautifulSoup
 from lib import generictools
 
-host = 'http://newpelis.nl/'
-
 list_language = ["LAT"]
 list_quality = list()
 list_servers = ['zplayer', 'streamtape', 'mega', 'torrent']
+
+canonical = {
+             'channel': 'pelkex', 
+             'host': config.get_setting("current_host", 'pelkex', default=''), 
+             'host_alt': ["https://newpelis.nl/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -59,9 +66,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

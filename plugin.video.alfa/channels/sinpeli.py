@@ -18,14 +18,21 @@ from lib.AlfaChannelHelper import ToroPlay
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'https://www.sinpeli.com/'
-AlfaChannel = ToroPlay(host, )
-
 IDIOMAS = {'la': 'LAT', 'ca': 'CAST', 'su': 'VOSE'}
 list_idiomas = list(set(IDIOMAS.values()))
 
 list_servers = ['okru', 'yourupload', 'mega']
 list_quality = []
+
+canonical = {
+             'channel': 'sinpeli', 
+             'host': config.get_setting("current_host", 'sinpeli', default=''), 
+             'host_alt': ["https://www.sinpeli.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = ToroPlay(host, canonical=canonical)
 
 
 def mainlist(item):

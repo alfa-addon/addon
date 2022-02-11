@@ -20,13 +20,21 @@ from channels import autoplay
 from channels import filtertools
 from bs4 import BeautifulSoup
 
-host = 'https://entrepeliculasyseries.nu/'
-
 IDIOMAS = {"latino": "LAT", "castellano": "CAST", "subtitulado": "VOSE"}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
 list_servers = ['mega', 'fembed', 'vidtodo', 'gvideo']
 
+canonical = {
+             'channel': 'entrepeliculasyseries', 
+             'host': config.get_setting("current_host", 'entrepeliculasyseries', default=''), 
+             'host_alt': ['https://entrepeliculasyseries.nu/'], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
+forced_proxy_opt = 'ProxyDirect'
 
 def mainlist(item):
     logger.info()
@@ -73,13 +81,15 @@ def sub_menu(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False):
+def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        response = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, headers={'Referer': referer}, canonical=canonical)
     else:
-        data = httptools.downloadpage(url).data
+        response = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, canonical=canonical)
+    
+    data = response.data or ''
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -218,7 +228,7 @@ def findvideos(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url)
+    soup = create_soup(item.url, forced_proxy_opt=forced_proxy_opt)
 
     matches = soup.find_all("div", class_=re.compile(r"option-lang"))
 
@@ -333,7 +343,7 @@ def play(item):
     headers = {"referer": item.url}
     post = {"h": id}
     base_url = "%sr.php" % host
-    url = httptools.downloadpage(base_url, post=post, headers=headers, follow_redirects=False).headers["location"]
+    url = httptools.downloadpage(base_url, post=post, headers=headers, follow_redirects=False, forced_proxy_opt=forced_proxy_opt).headers["location"]
     if not url.startswith("http"):
         url = "https:" + url
     item.server = ""

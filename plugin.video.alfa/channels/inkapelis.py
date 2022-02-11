@@ -32,8 +32,15 @@ list_servers = [
     'gvideo'
     ]
 
-host = 'https://inkapelis.me/'
-AlfaChannel = DooPlay(host, "/pelicula")
+canonical = {
+             'channel': 'inkapelis', 
+             'host': config.get_setting("current_host", 'inkapelis', default=''), 
+             'host_alt': ["https://inkapelis.in/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = DooPlay(host, "/pelicula", canonical=canonical)
 
 
 def mainlist(item):
@@ -68,7 +75,7 @@ def menu_movies(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Ultimas', url=host + 'genero/estrenos-hd', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Ultimas', url=host + 'estado/estrenos-hd/', action='list_all',
                          thumbnail=get_thumb('all', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title='Todas', url=host + 'pelicula', action='list_all',
@@ -97,7 +104,7 @@ def section(item):
 
     item.url = "%s%s" % (host, "pelicula")
     if item.title == "Generos":
-        return AlfaChannel.section(item, section="genre")
+        return AlfaChannel.section(item, section="genres")
     else:
         return AlfaChannel.section(item, section="year")
 
@@ -234,7 +241,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas']:
-            item.url = host + 'genero/estrenos-hd'
+            item.url = host + 'estado/estrenos-hd/'
         elif categoria == 'latino':
             item.url = host + 'idioma/latino'
         elif categoria == 'castellano':

@@ -33,10 +33,18 @@ list_servers = [
     'openload',
 ]
 
-__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'seriesanimadas')
-__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'seriesanimadas')
+canonical = {
+             'channel': 'seriesanimadas', 
+             'host': config.get_setting("current_host", 'seriesanimadas', default=''), 
+             'host_alt': ["https://seriesanimadas.org/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
-host = 'https://www.seriesanimadas.net/'
+__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', canonical['channel'])
+__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', canonical['channel'])
+
 
 def mainlist(item):
     logger.info()
@@ -78,7 +86,7 @@ def menu_movies(item):
 
 def get_source(url):
     logger.info()
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 

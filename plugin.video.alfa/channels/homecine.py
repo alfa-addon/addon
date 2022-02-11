@@ -26,8 +26,15 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['cinemaupload', 'fastream']
 
-host = 'https://homecine.tv'
-AlfaChannel = PsyPlay(host, tv_path="/series")
+canonical = {
+             'channel': 'homecine', 
+             'host': config.get_setting("current_host", 'homecine', default=''), 
+             'host_alt': ["https://homecine.tv"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = PsyPlay(host, tv_path="/series", canonical=canonical)
 
 
 def mainlist(item):

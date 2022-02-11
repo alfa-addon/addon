@@ -165,7 +165,8 @@ def check_addon_updates(verbose=False):
         if os.path.exists(last_fix_json):
             try:
                 lastfix = {}
-                lastfix = jsontools.load(open(last_fix_json, "r").read())
+                with open(last_fix_json, "r") as lfj:
+                    lastfix = jsontools.load(lfj.read())
                 if lastfix['addon_version'] == data['addon_version'] and lastfix['fix_version'] == data['fix_version']:
                     logger.info('Ya está actualizado con los últimos cambios. Versión %s.fix%d' % (
                     data['addon_version'], data['fix_version']), force=True)
@@ -234,7 +235,8 @@ def check_addon_updates(verbose=False):
 
         if 'files' in data: data.pop('files', None)
         data["last_id"] = last_id
-        open(last_fix_json, "w").write(jsontools.dump(data))
+        with open(last_fix_json, "w") as lfj:
+            lfj.write(jsontools.dump(data))
         # Actualiza la versión del addon en las cabeceras
         try:
             httptools.__version = '%s.fix%d' % (data['addon_version'], data['fix_version'])

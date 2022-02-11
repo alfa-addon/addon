@@ -31,16 +31,6 @@ from collections import OrderedDict
 
 requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
 
-# Dominios que necesitan Cloudscraper. AÑADIR dominios de canales sólo si es necesario
-
-global CF_LIST
-CF_LIST = list()
-CF_LIST_PATH = os.path.join(config.get_runtime_path(), "resources", "CF_Domains.txt")
-
-if os.path.exists(CF_LIST_PATH):
-    with open(CF_LIST_PATH, "rb") as CF_File:
-       CF_LIST = config.decode_var(CF_File.read().splitlines())
-
 ## Obtiene la versión del addon
 __version = config.get_addon_version()
 
@@ -72,6 +62,22 @@ HTTPTOOLS_DEFAULT_RANDOM_HEADERS = False
 
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?[\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
+
+""" CACHING Cookies (save) and CF list"""
+alfa_caching = False
+alfa_cookies = ''
+alfa_CF_list = []
+
+try:
+    import xbmcgui
+    window = xbmcgui.Window(10000)  # Home
+    alfa_caching = bool(window.getProperty("alfa_caching"))
+except:
+    alfa_caching = False
+    alfa_cookies = ''
+    alfa_CF_list = []
+    import traceback
+    logger.error(traceback.format_exc())
 
 
 def get_user_agent():
@@ -169,11 +175,15 @@ def set_cookies(dict_cookie, clear=True, alfa_s=False):
 
 
 def load_cookies(alfa_s=False):
+    global alfa_cookies
     cookies_lock.acquire()
     if os.path.isfile(ficherocookies):
         if not alfa_s: logger.info("Leyendo fichero cookies")
         try:
             cj.load(ficherocookies, ignore_discard=True)
+            if alfa_caching:
+                alfa_cookies = cj
+                window.setProperty("alfa_cookies", str(alfa_cookies))
         except Exception:
             if not alfa_s: logger.info("El fichero de cookies existe pero es ilegible, se borra")
             os.remove(ficherocookies)
@@ -181,13 +191,51 @@ def load_cookies(alfa_s=False):
 
 
 def save_cookies(alfa_s=False):
-    cookies_lock.acquire()
-    if not alfa_s: logger.info("Guardando cookies...")
-    cj.save(ficherocookies, ignore_discard=True)
-    cookies_lock.release()
+    global alfa_cookies
+    if alfa_caching:
+        alfa_cookies = window.getProperty("alfa_cookies")
+    if alfa_cookies != str(cj):
+        cookies_lock.acquire()
+        if not alfa_s: logger.info("Guardando cookies...")
+        cj.save(ficherocookies, ignore_discard=True)
+        if alfa_caching:
+            alfa_cookies = cj
+            window.setProperty("alfa_cookies", str(alfa_cookies))
+        cookies_lock.release()
 
 
 load_cookies()
+
+
+def load_CF_list():
+    global alfa_CF_list
+    # Dominios que necesitan Cloudscraper
+    CF_LIST = list()
+    if not alfa_CF_list or not alfa_caching:
+        CF_LIST_PATH = os.path.join(config.get_runtime_path(), "resources", "CF_Domains.txt")
+        if os.path.exists(CF_LIST_PATH):
+            with open(CF_LIST_PATH, "rb") as CF_File:
+               CF_LIST = config.decode_var(CF_File.read().splitlines())
+            if alfa_caching:
+               alfa_CF_list = CF_LIST
+               window.setProperty("alfa_CF_list", str(alfa_CF_list))
+    elif alfa_caching:
+        import ast
+        CF_LIST = ast.literal_eval(window.getProperty("alfa_CF_list"))
+    
+    return CF_LIST
+
+
+def save_CF_list(domain):
+    global alfa_CF_list
+    # Dominios que necesitan Cloudscraper. AÑADIR dominios de canales sólo si es necesario
+    if domain:
+        CF_LIST_PATH = os.path.join(config.get_runtime_path(), "resources", "CF_Domains.txt")
+        with open(CF_LIST_PATH, "a") as CF_File:
+            CF_File.write("%s\n" % domain)
+        if alfa_caching:
+           alfa_CF_list += [domain]
+           window.setProperty("alfa_CF_list", str(alfa_CF_list))
 
 
 def random_useragent():
@@ -203,9 +251,10 @@ def random_useragent():
 
     UserAgentPath = os.path.join(config.get_runtime_path(), 'tools', 'UserAgent.csv')
     if os.path.exists(UserAgentPath):
-        UserAgentIem = random.choice(list(open(UserAgentPath))).strip()
-        if UserAgentIem:
-            return UserAgentIem
+        with open(UserAgentPath, "r") as uap:
+            UserAgentIem = random.choice(list(uap.read())).strip()
+            if UserAgentIem:
+                return UserAgentIem
     
     return default_headers["User-Agent"]
 
@@ -437,32 +486,87 @@ def blocking_error(req):
         data = "".join(chr(x) for x in bytes(data))
     resp = False
 
-    if '104' in code or '10054' in code or ('502' in code and 'Por causas ajenas' in data):
+    if '104' in code or '10054' in code or ('404' in code and 'Object not found' in data) \
+                    or ('502' in code and 'Por causas ajenas' in data):
         resp = True
+    elif data and '200' not in code:
+        if len(data) > 200: data = data[:200]
+        logger.debug('Error: %s, Datos: %s' % (code, data))
     
     return resp
 
 
-def canonical(data):
+def canonical_check(url, response, opt):
     from . import scrapertools
     canonical_host = ''
+    data = response['data']
+    canonical = opt.get('canonical', {})
+    canonical_new = False
     
     if PY3 and isinstance(data, bytes):
         data = "".join(chr(x) for x in bytes(data))
     data = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", data).replace("'", '"')
-    pattern = 'href="([^"]+)"\s*rel="canonical"'
+    pattern = 'href="?([^"|\s*]+)["|\s*]\s*rel="?canonical"?'
     if not scrapertools.find_single_match(data, pattern):
-        pattern = 'rel="canonical"\s*href="([^"]+)"'
-    canonical_host = scrapertools.find_single_match(data, pattern).rstrip()
+        pattern = 'rel="?canonical"?\s*href="?([^"|>]+)["|>|\s*]'
+    canonical_host = str(scrapertools.find_single_match(data, pattern).rstrip())
     if len(canonical_host) < 8: canonical_host = ''
     if canonical_host:
-        if not canonical_host.startswith('http'):
+        if not canonical_host.startswith('http') and canonical_host.startswith('//'):
             canonical_host = 'https:' + canonical_host
         canonical_host = scrapertools.find_single_match(canonical_host, patron_host)
-        if not canonical_host.endswith('/'):
+        if canonical_host and not canonical_host.endswith('/'):
             canonical_host += '/'
-        
-    return canonical_host
+    response['canonical'] = canonical_host
+
+    if response['sucess'] and response['canonical'] and canonical.get('channel', '') \
+                          and (canonical.get('host', '') or canonical.get('host_alt', [])):
+        if response['canonical'] != canonical.get('host', '') and response['canonical'] \
+                          not in canonical.get('host_black_list', []):
+            if response['canonical'] in url:
+                canonical_new = response['canonical']
+            else:
+                host_list = []
+                if canonical.get('host_alt', []) and response['canonical'] != canonical['host_alt'][0]:
+                    host_list += [str(response['canonical'])]
+                if canonical.get('host', ''):
+                    if not isinstance(canonical['host_alt'], list):
+                        host_list += [str(canonical['host'])]
+                    else:
+                        host_list += canonical['host']
+                if canonical.get('host_alt', []):
+                    if isinstance(canonical['host_alt'], list):
+                        host_list += canonical['host_alt']
+                    else:
+                        host_list += [str(canonical['host_alt'])]
+                for url_alt in host_list:
+                    page = downloadpage(url_alt, ignore_response_code=True, timeout=5, 
+                                        CF=canonical.get('CF', False), 
+                                        CF_test=canonical.get('CF_test', False),
+                                        alfa_s=canonical.get('alfa_s', True))
+                    if page.sucess:
+                        if page.proxy__ and not response['proxy__']: continue
+                        canonical_new = url_alt
+                        break
+            
+            if canonical_new:
+                logger.info('Canal: %s: Host "%s" cambiado a CANONICAL: %s - %s' % \
+                    (canonical['channel'].capitalize(), canonical.get('host', ''), \
+                    response['canonical'], canonical_new if canonical_new != response['canonical'] else ""), force=True)
+                response['host'] = canonical_new
+                if not url.startswith('magnet'):
+                    response['url_new'] = url.replace(scrapertools.find_single_match(url, patron_host), canonical_new.rstrip('/'))
+                opt['canonical']['host'] = canonical_new
+                config.set_setting("current_host", response['host'], channel=canonical['channel'])
+                try:
+                    channel = __import__('channels.%s' % canonical['channel'], None,
+                                         None, ["channels.%s" % canonical['channel']])
+                    channel.host = canonical_new
+                except:
+                    import traceback
+                    logger.error(traceback.format_exc())
+    
+    return response
 
 
 def proxy_post_processing(url, proxy_data, response, opt):
@@ -601,10 +705,12 @@ def downloadpage(url, **opt):
                 HTTPResponse.canonical:| str     | Dirección actual de la página descargada
                 HTTPResponse.proxy__: | str      | Si la página se descarga con proxy, datos del proxy usado: proxy-type:addr:estado
     """
-    global CF_LIST
     if not opt.get('alfa_s', False):
         logger.info()
     from . import scrapertools
+    
+    # Dominios que necesitan Cloudscraper
+    CF_LIST = load_CF_list()
 
     load_cookies(opt.get('alfa_s', False))
 
@@ -659,9 +765,9 @@ def downloadpage(url, **opt):
 
         domain = urlparse.urlparse(url)[1]
         global CS_stat
-        if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True):    #Está en la lista de CF o viene en la llamada
-            from lib import cloudscraper
-            session = cloudscraper.create_scraper()                             #El dominio necesita CloudScraper
+        if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True):    # Está en la lista de CF o viene en la llamada
+            from lib.cloudscraper import create_scraper
+            session = create_scraper()                                                  # El dominio necesita CloudScraper
             session.verify = True
             CS_stat = True
             if cf_ua and cf_ua != 'Default' and get_cookie(url, 'cf_clearance'):
@@ -760,6 +866,8 @@ def downloadpage(url, **opt):
                     response['sucess'] = False
                     response['proxy__'] = proxy_stat(opt['url_save'], opt, proxy_data)
                     response['canonical'] = ''
+                    response['host'] = ''
+                    response['url_new'] = ''
                     info_dict.append(('Success', 'False'))
                     response['code'] = req.status_code
                     info_dict.append(('Response code', str(e)))
@@ -777,11 +885,15 @@ def downloadpage(url, **opt):
             response['soup'] = None
             response['proxy__'] = ''
             response['canonical'] = ''
+            response['host'] = ''
+            response['url_new'] = ''
             return type('HTTPResponse', (), response)
         
         response_code = req.status_code
         response['proxy__'] = proxy_stat(opt['url_save'], opt, proxy_data)
         response['canonical'] = ''
+        response['host'] = ''
+        response['url_new'] = ''
 
         # Retries blocked domain with proxy
         if blocking_error(req) and opt.get('proxy__test', True) and not proxy_data.get('stat', ''):
@@ -799,8 +911,7 @@ def downloadpage(url, **opt):
                 CF_LIST += [domain]
                 opt["CF"] = True
                 if not PY3: opt['proxy_retries'] = 0
-                with open(CF_LIST_PATH, "a") as CF_File:
-                    CF_File.write("%s\n" % domain)
+                save_CF_list(domain)
                 logger.debug("CF retry... for domain: %s" % domain)
                 return downloadpage(opt['url_save'], **opt)
         
@@ -866,18 +977,6 @@ def downloadpage(url, **opt):
         if not response['data']:
             response['data'] = ''
 
-        response['soup'] = None
-
-        if opt.get("soup", False):
-            try:
-                from bs4 import BeautifulSoup
-                response["soup"] = BeautifulSoup(req.content, "html5lib", from_encoding=opt.get('encoding', response['encoding']))
-
-            except Exception:
-                import traceback
-                logger.error("Error creando sopa")
-                logger.error(traceback.format_exc())
-
         try:
             if 'bittorrent' not in req.headers.get('Content-Type', '') \
                         and 'octet-stream' not in req.headers.get('Content-Type', '') \
@@ -918,7 +1017,18 @@ def downloadpage(url, **opt):
 
         # Si hay error del proxy, refresca la lista y reintenta el numero indicada en proxy_retries
         response, url, opt = proxy_post_processing(url, proxy_data, response, opt)
-        response['canonical'] = canonical(response['data'])
+        response = canonical_check(url, response, opt)
+        
+        response['soup'] = None
+        if opt.get("soup", False):
+            try:
+                from bs4 import BeautifulSoup
+                response["soup"] = BeautifulSoup(response['data'], "html5lib", from_encoding=opt.get('encoding', response['encoding']))
+
+            except Exception:
+                import traceback
+                logger.error("Error creando sopa")
+                logger.error(traceback.format_exc())
 
         # Si proxy ordena salir del loop, se sale
         if opt.get('out_break', False):

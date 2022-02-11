@@ -13,16 +13,20 @@ from core.item import Item
 from platformcode import config
 from platformcode import logger
 
+forced_proxy_def = 'ProxyCF'
+
 
 class AlfaChannelHelper:
 
-    def __init__(self, host, movie_path="/movies", tv_path="/serie", movie_action="findvideos", tv_action="seasons"):
+    def __init__(self, host, movie_path="/movies", tv_path="/serie", movie_action="findvideos", 
+                 tv_action="seasons", canonical={}):
         self.host = host
         self.movie_path = movie_path
         self.tv_path = tv_path
         self.movie_action = movie_action
         self.tv_action = tv_action
         self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.canonical = canonical
 
     def create_soup(self, url, **kwargs):
         """
@@ -33,7 +37,13 @@ class AlfaChannelHelper:
 
         kwargs["soup"] = True
         kwargs["add_referer"] = True
-        soup = httptools.downloadpage(url, **kwargs).soup
+        kwargs["ignore_response_code"] = True
+        kwargs["canonical"] = self.canonical
+        
+        response = httptools.downloadpage(url, **kwargs)
+        soup = response.soup or {}
+        if response.host: self.host = response.host
+
         return soup
 
     def list_all(self, item, postprocess=None):
@@ -63,7 +73,7 @@ class AlfaChannelHelper:
     def episodes(self, item, action="findvideos", postprocess=None):
         pass
 
-    def get_video_options(self, url):
+    def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
         pass
 
     def define_content_type(self, new_item, is_tvshow=False):
@@ -92,6 +102,10 @@ class AlfaChannelHelper:
                                  )
                             )
         return itemlist
+
+
+class CustomChannel(AlfaChannelHelper):
+    pass
 
 
 class DooPlay(AlfaChannelHelper):
@@ -301,8 +315,6 @@ class DooPlay(AlfaChannelHelper):
         if not matches:
             return itemlist
 
-        matches, next_limit, next_page = self.limit_results(item, matches)
-
         for elem in matches:
             url = elem.a["href"]
             thumb = elem.img["src"]
@@ -325,28 +337,17 @@ class DooPlay(AlfaChannelHelper):
 
             new_item = self.define_content_type(new_item)
 
-
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
-        if next_page:
-
-            itemlist.append(Item(channel=item.channel,
-                                 title="Siguiente >>",
-                                 url=next_page,
-                                 action="search_results",
-                                 next_limit=next_limit,
-                                 )
-                            )
-
         return itemlist
 
-    def get_video_options(self, url):
+    def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
 
         results = list()
 
-        soup = self.create_soup(url)
+        soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
         if soup.find("nav", class_="player"):
             options = soup.find("ul", class_="options")
         else:
@@ -549,12 +550,12 @@ class ToroFilm(AlfaChannelHelper):
 
         return itemlist
 
-    def get_video_options(self, url):
+    def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
 
         options = list()
         results = list()
 
-        soup = self.create_soup(url)
+        soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
 
         try:
             matches = soup.find_all("ul", class_="aa-tbs aa-tbs-video")
@@ -804,10 +805,10 @@ class ToroPlay(AlfaChannelHelper):
 
         return itemlist
 
-    def get_video_options(self, url):
+    def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
         results = list()
 
-        soup = self.create_soup(url)
+        soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
 
         try:
             matches = soup.find("ul", class_="TPlayerNv").find_all("li")
@@ -1044,10 +1045,10 @@ class ToroFlix(AlfaChannelHelper):
 
         return itemlist
 
-    def get_video_options(self, url):
+    def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
         results = list()
 
-        soup = self.create_soup(url)
+        soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
         if soup.find("div", class_="optns-bx"):
             try:
                 matches = soup.find_all("button")
@@ -1224,10 +1225,10 @@ class PsyPlay(AlfaChannelHelper):
 
         return itemlist
 
-    def get_video_options(self, url):
+    def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
         results = list()
 
-        soup = self.create_soup(url)
+        soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
         try:
             matches = soup.find("ul", class_="idTabs").find_all("li")
         except:

@@ -14,9 +14,15 @@ from platformcode import config, logger
 from channelselector import get_thumb
 from lib.AlfaChannelHelper import DooPlay
 
-
-host = 'https://sonpelishd.net/'
-AlfaChannel = DooPlay(host, tv_path="serie")
+canonical = {
+             'channel': 'sonpelishd', 
+             'host': config.get_setting("current_host", 'sonpelishd', default=''), 
+             'host_alt': ["https://sonpelishd.net/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = DooPlay(host, tv_path="serie", canonical=canonical)
 
 
 def mainlist(item):
@@ -68,7 +74,7 @@ def seccion(item):
     logger.info()
 
     if item.title == 'Generos':
-        return AlfaChannel.section(item, section="genre")
+        return AlfaChannel.section(item, section="genres")
     else:
         return AlfaChannel.section(item, section="year")
 
@@ -162,7 +168,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas', 'latino']:
-            item.url = host + 'page/1/?s'
+            item.url = host + 'pelicula/'
 
         elif categoria == 'infantiles':
             item.url = host + 'category/animacion/'

@@ -59,7 +59,7 @@ channel_clone_post = ''
 channel_json = channeltools.get_channel_json(channel_py)
 
 for settings in channel_json['settings']:                                       #Se recorren todos los settings
-    if settings['id'] == "clonenewpct1_channels_list":                          #Encontramos en setting
+    if settings['id'] == "clonenewpct1_channels_list":                          #Encontramos el setting
         clone_list = settings['default']                                        #Carga lista de clones
         break
 clone_list = ast.literal_eval(clone_list)                                       #la convierte en array
@@ -81,7 +81,7 @@ if host_index == 0:                                                             
         clone_list = [random.choice(clone_list_random)]                         #Seleccionamos un clone aleatorio
         #logger.debug(clone_list)
     host_index = 1                              #mutamos el num. de clone para que se procese en el siguiente loop
-        
+      
 if host_index > 0 or not clone_list_random:     #Si el Clone por defecto no es Aleatorio, o hay ya un aleatorio seleccionado...
     i = 1
     for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
@@ -97,12 +97,28 @@ if host_index > 0 or not clone_list_random:     #Si el Clone por defecto no es A
                     host = host_clone                                           #URL del Canal elegido
                     break
         i += 1
+clone_list_inter = []
+for clone in clone_list:
+    clone_list_inter += [list(clone)]
+clone_list = clone_list_inter[:]
+
+canonical = {
+             'channel': channel_py, 
+             'host': host, 
+             'host_alt': [], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+
 if not channel_clone_post: channel_clone_post = channel_clone_post
-domain = scrapertools.find_single_match(host, '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)')
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
+patron_canal = '(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
+patron_torrent = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+(\/.*?\/)'
+domain = scrapertools.find_single_match(host, patron_domain)
 sufix = scrapertools.find_single_match(host, '\.\w+\/*$')
 download_sufix = 'descargar/torrent/'
-download_pre_url_torr = '/download/'
+download_pre_url_torr = '/t_download/'
 download_post_url_torr = '/download-link/'
 download_post_url_torr_tail = '/dom-t/%s'
 
@@ -125,6 +141,8 @@ elif fecha_rango == 2: fecha_rango = 'Semana'
 elif fecha_rango == 3: fecha_rango = 'Mes'
 elif fecha_rango == 4: fecha_rango = 'Siempre'
 episodio_serie = config.get_setting('clonenewpct1_serie_episodio_novedades', channel_py)    #Episodio o serie para Novedades
+
+headers = {'referer': None}
 
 #Temporal, sólo para actualizar newpct1_data.json con otro valor por defecto
 #channel_banned = config.get_setting('clonenewpct1_excluir1_enlaces_veronline', channel_py)  #1eer Canal baneado
@@ -155,7 +173,7 @@ def mainlist(item):
     thumb_settings = get_thumb("setting_0.png")
     
     global host
-    item, host = verify_host(item, host, force=False)                       # Actualizamos la url del host
+    item, host = verify_host(item, host)                                        # Actualizamos la url del host
     if channel_clone_name == "*** DOWN ***":                                    # Ningún clones activo !!!
         itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
         return itemlist                                     # si no hay más datos, algo no funciona, pintamos lo que tenemos y salimos
@@ -210,12 +228,20 @@ def submenu(item):
     itemlist = []
     item.extra2 = ''
     matches_hd = []
+    headers = {'referer': item.url}
     
     global host
-    item, host = verify_host(item, host)                                    # Actualizamos la url del host
+    item, host = verify_host(item, host)                                        # Actualizamos la url del host
     
-    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
-                                     decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, headers=headers, 
+                                                               decode_code=decode_code, canonical=canonical, 
+                                                               quote_rep=True, CF_test=False, item=item, itemlist=[])   # Descargamos la página
+    # Verificamos si ha cambiado el Host
+    if response.host:
+        global sufix, domain, clone_list
+        sufix = scrapertools.find_single_match(response.host, '\.\w+\/*$')
+        domain = scrapertools.find_single_match(response.host, patron_domain)
+        clone_list[0][2] = host
 
     patron = '(?:Inicio|Categorias)'
     
@@ -349,15 +375,23 @@ def submenu_novedades(item):
     itemlist_alt = []
     item.extra2 = ''
     timeout_search=timeout * 2                                                  #Más tiempo para Novedades, que es una búsqueda
+    headers = {'referer': item.url}
     
     thumb_buscar = get_thumb("search.png")
     thumb_settings = get_thumb("setting_0.png")
     
     global host
-    item, host = verify_host(item, host, category=category)                     # Actualizamos la url del host
+    item, host = verify_host(item, host, category=category)        # Actualizamos la url del host
     
     data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, s2=False, 
-                                     decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
+                                                               headers=headers, decode_code=decode_code, canonical=canonical, 
+                                                               quote_rep=True, CF_test=False, item=item, itemlist=[])     # Descargamos la página
+    # Verificamos si ha cambiado el Host
+    if response.host:
+        global sufix, domain, clone_list
+        sufix = scrapertools.find_single_match(response.host, '\.\w+\/*$')
+        domain = scrapertools.find_single_match(response.host, patron_domain)
+        clone_list[0][2] = host
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
@@ -460,12 +494,14 @@ def submenu_novedades(item):
 def alfabeto(item):
     logger.info()
     itemlist = []
+    headers = {'referer': item.url}
     
     global host
     item, host = verify_host(item, host)                                        # Actualizamos la url del host
     
-    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
-                                     decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, headers=headers, 
+                                                               decode_code=decode_code, quote_rep=True, 
+                                                               item=item, itemlist=[])          # Descargamos la página
 
     #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
     patron = '<ul class="alfabeto">(.*?)</ul>'
@@ -576,12 +612,16 @@ def listado(item):                                                              
         item.extra2 = ''
         
     post = None
+    headers = {'referer': item.url}
     forced_proxy_opt = None
     if item.post:
         forced_proxy_opt = None
     if item.post or item.post is None:                                          # Rescatamos el Post, si lo hay
         post = item.post
         del item.post
+    if item.headers or item.headers is None:                                    # Rescatamos el Headers, si lo hay
+        headers = item.headers
+        del item.headers
 
     next_page_url = item.url
     #Máximo num. de líneas permitidas por TMDB. Máx de 5 segundos por Itemlist para no degradar el rendimiento
@@ -593,12 +633,20 @@ def listado(item):                                                              
         cnt_match = 0                                                           # Contador de líneas procesadas de matches
 
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
-            data, response, item, itemlist = generictools.downloadpage(next_page_url, 
-                                              timeout=timeout_search, post=post, s2=True, 
-                                              decode_code=decode_code, quote_rep=True, 
-                                              forced_proxy_opt=forced_proxy_opt, 
-                                              no_comments=False, item=item, itemlist=itemlist)
+            data, response, item, itemlist = generictools.downloadpage(next_page_url, timeout=timeout_search, post=post, 
+                                                                       s2=True, headers=headers, decode_code=decode_code, 
+                                                                       quote_rep=True, no_comments=False, canonical=canonical, 
+                                                                       forced_proxy_opt=forced_proxy_opt, 
+                                                                       item=item, itemlist=itemlist)
             curr_page += 1                                                      #Apunto ya a la página siguiente
+            
+            # Verificamos si ha cambiado el Host
+            if response.host:
+                global sufix, domain, clone_list
+                sufix = scrapertools.find_single_match(response.host, '\.\w+\/*$')
+                domain = scrapertools.find_single_match(response.host, patron_domain)
+                clone_list[0][2] = host
+                return listado(item)
             
             #seleccionamos el bloque que nos interesa
             search1 = '<h3><strong>( 0 ) Resultados encontrados </strong>'
@@ -900,11 +948,12 @@ def listado(item):                                                              
             if item.extra == "novedades" and "/serie" in url and 'serie-1080p' not in url and 'serie-4k' not in url and episodio_serie == 1:
                 item_local.url = url
                 item_local.extra2 = 'serie_episodios'                           #Creamos acción temporal excluyente para otros clones
+                headers = {'referer': item.url}
 
-                data_serie, response, item, itemlist = generictools.downloadpage(item_local.url, 
-                                          timeout=timeout, post=post, s2=True, 
-                                          decode_code=decode_code, quote_rep=True, 
-                                          no_comments=False, item=item, itemlist=itemlist)
+                data_serie, response, item, itemlist = generictools.downloadpage(item_local.url, timeout=timeout, post=post, 
+                                                                                 s2=True, headers=headers, no_comments=False, 
+                                                                                 decode_code=decode_code, quote_rep=True, 
+                                                                                 item=item, itemlist=itemlist)
 
                 if not data_serie or (not scrapertools.find_single_match(data_serie, pattern) \
                                 and not search3 in data):
@@ -1163,9 +1212,10 @@ def findvideos(item):
     
     #logger.debug(item)
     
-    global host
+    global host, sufix
     item, host = verify_host(item, host)                                        # Actualizamos la url del host
     host_torrent = host[:-1]
+    sufix_save = sufix
     if channel_clone_name == "*** DOWN ***":                                    #Ningún clones activo !!!
         itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
         return itemlist 
@@ -1282,14 +1332,24 @@ def findvideos(item):
     category_servidores = item.category
     data_servidores_stat = False
     size = ''
-    headers = {'referer': None}
+    headers = {'referer': item.url}
     
     if not item.matches:
-        data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, 
-                                          decode_code=decode_code, quote_rep=True, 
-                                          item=item, itemlist=[])               # Descargamos la página)
+        data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, quote_rep=True, 
+                                                                   decode_code=decode_code, canonical=canonical, 
+                                                                   headers=headers, item=item, itemlist=[])     # Descargamos la página)
         data = data.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
         data_servidores = data                                                  #salvamos data para verificar servidores, si es necesario
+
+        # Verificamos si ha cambiado el Host
+        if response.host:
+            global domain, clone_list
+            sufix = scrapertools.find_single_match(response.host, '\.\w+\/*$')
+            domain = scrapertools.find_single_match(response.host, patron_domain)
+            url_servidores = item.url
+            headers = {'referer': item.url}
+            clone_list[0][2] = host
+            return findvideos(item)
 
     """ Procesamos los datos de las páginas """
     #Patron para .torrent
@@ -1315,18 +1375,10 @@ def findvideos(item):
     url_torr = scrapertools.find_single_match(data, patron).replace('javascript:;', '').strip()
     if url_torr:
         url_torr = urlparse.urljoin(torrent_tag, scrapertools.find_single_match(data, patron))
-    url_torr = url_torr.replace(" ", "%20")                                     #sustituimos espacios por %20, por si acaso
-    if url_torr and not url_torr.startswith("http"):                            #Si le falta el http.: lo ponemos
-        url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
-    if url_torr:
-        if url_torr.endswith('/'): url_torr = url_torr[:-1]
-        headers['referer'] = url_torr
-        host_torrent = scrapertools.find_single_match(url_torr, patron_host)
-        url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr) + download_post_url_torr_tail % domain
-
-    #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if url_torr:
+        url_torr, headers = find_torrent_link(url_torr)
         size = generictools.get_torrent_size(url_torr, timeout=timeout, headers=headers, force=True)    #Buscamos si hay .torrent y el tamaño
+    
+    # Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if (not data and not item.matches) or not scrapertools.find_single_match(data, patron) \
                     or not size or 'ERROR' in size or response.code == 999 or 'javascript:;' in url_torr:    # Si no hay datos o url, error
         size = ''
@@ -1369,13 +1421,8 @@ def findvideos(item):
             else:
                 logger.error("ERROR 02: FINDVIDEOS: Ha cambiado la estructura de la Web " 
                         + " / PATRON: " + patron + " / DATA: ")                 # + str(data)
-            url_torr = url_torr.replace(" ", "%20")                             #sustituimos espacios por %20, por si acaso
-            if url_torr and not url_torr.startswith("http"):                    #Si le falta el http.: lo ponemos
-                url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
             if url_torr:
-                if url_torr.endswith('/'): url_torr = url_torr[:-1]
-                headers['referer'] = url_torr
-                url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr) + download_post_url_torr_tail % domain
+                url_torr, headers = find_torrent_link(url_torr)
                 size = generictools.get_torrent_size(url_torr, headers=headers, timeout=timeout)    #Buscamos si hay .torrent y el tamaño
 
     #Si no ha logrado encontrar nada, verificamos si hay servidores
@@ -1455,9 +1502,9 @@ def findvideos(item):
                 if url_torr.startswith('http') or url_torr.startswith('//'):
                     url_torr = urlparse.urljoin(torrent_tag, url_torr)
                 
-                data_alt, response, item, itemlist = generictools.downloadpage(url_torr, timeout=timeout_search, 
-                                          decode_code=decode_code, quote_rep=True, 
-                                          item=item, itemlist=itemlist)         # Descargamos la página)
+                data_alt, response, item, itemlist = generictools.downloadpage(url_torr, timeout=timeout_search, quote_rep=True, 
+                                                                               decode_code=decode_code, headers=headers, 
+                                                                               item=item, itemlist=itemlist)            # Descargamos la página)
                 data_alt = data_alt.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
                 
                 #Volvemos a buscar el .torrent, repitiendo todo como al principio
@@ -1479,10 +1526,8 @@ def findvideos(item):
                     url_torr = urlparse.urljoin(torrent_tag, url_torr)
                 else:
                     continue
-                if url_torr.endswith('/'): url_torr = url_torr[:-1]
-                headers['referer'] = url_torr
-                url_torr = url_torr.replace(download_pre_url_torr, download_post_url_torr) + download_post_url_torr_tail % domain
-                size = generictools.get_torrent_size(url_torr, headers=headers, timeout=timeout)        #Buscamos si hay .torrent y el tamaño
+                url_torr, headers = find_torrent_link(url_torr)
+                size = generictools.get_torrent_size(url_torr, headers=headers, timeout=timeout)    #Buscamos si hay .torrent y el tamaño
             
             matches_torent.append((url_torr, quality, size, data_alt))
     
@@ -1944,19 +1989,29 @@ def episodios(item):
     list_episodes = []
     url_quality_alt = {}
     first = True                                                                # Primera pasada
+    headers = {'referer': item.url}
+    
+    patron = '<li[^>]*>\s*<a href="(?P<url>[^"]+)"\s*title="[^>]+>\s*<img.*?'
+    patron += 'src="(?P<thumb>[^"]+)?".*?<h2[^>]+>(?P<info>.*?)?<\/h2>'
+    patron_noepis = 'Visitas:\s*[^>]*>\s*0<\/span>\s*<span[^>]*>[^>]*>\s*Genero:\s*[^>]*>\s*[^<]*<\/span>'
+    patron_noepis += '<span[^>]*>[^>]*>\s*Estreno:[^>]*>\s*\d*<\/span>\s*<\/br>\s*<\/div>\s*<\/div>\s*<\/div>'
+    patron_noepis += '<\/div>\s*<aside\s*class="sidebar"'
 
     """ Descarga las páginas """
     while list_pages and page < max_page:                                       # Recorre la lista de páginas, con límite
-        patron = '<li[^>]*>\s*<a href="(?P<url>[^"]+)"\s*title="[^>]+>\s*<img.*?'
-        patron += 'src="(?P<thumb>[^"]+)?".*?<h2[^>]+>(?P<info>.*?)?<\/h2>'
-        patron_noepis = 'Visitas:\s*[^>]*>\s*0<\/span>\s*<span[^>]*>[^>]*>\s*Genero:\s*[^>]*>\s*[^<]*<\/span>'
-        patron_noepis += '<span[^>]*>[^>]*>\s*Estreno:[^>]*>\s*\d*<\/span>\s*<\/br>\s*<\/div>\s*<\/div>\s*<\/div>'
-        patron_noepis += '<\/div>\s*<aside\s*class="sidebar"'
-        
+
         if not data:
-            data, response, item, itemlist = generictools.downloadpage(list_pages[0], timeout=timeout, 
-                                          decode_code=decode_code, quote_rep=True, no_comments=False, 
-                                          item=item, itemlist=itemlist)         # Descargamos la página
+            data, response, item, itemlist = generictools.downloadpage(list_pages[0], timeout=timeout, headers=headers, 
+                                                                       decode_code=decode_code, canonical=canonical, 
+                                                                       quote_rep=True, no_comments=False, 
+                                                                       item=item, itemlist=itemlist)        # Descargamos la página
+            # Verificamos si ha cambiado el Host
+            if response.host:
+                global sufix, domain
+                sufix = scrapertools.find_single_match(response.host, '\.\w+\/*$')
+                domain = scrapertools.find_single_match(response.host, patron_domain)
+                clone_list[0][2] = host
+                return episodios(item)
 
         #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
         if not response.sucess or not data or not scrapertools.find_single_match(data, patron) \
@@ -1974,8 +2029,9 @@ def episodios(item):
                 if url_serie_nocode:
                     url_serie_nocode = '%s/%s/pg/1' % (item.url, url_serie_nocode)
                     data, response, item, itemlist = generictools.downloadpage(url_serie_nocode, timeout=timeout, 
-                                          decode_code=decode_code, quote_rep=True, no_comments=False, 
-                                          item=item, itemlist=itemlist)         # Descargamos la página
+                                                                               decode_code=decode_code, quote_rep=True, 
+                                                                               no_comments=False, headers=headers, 
+                                                                               item=item, itemlist=itemlist)        # Descargamos la página
                 else:
                     data = ''
 
@@ -2357,7 +2413,7 @@ def find_language(item, json_category=''):
     return item
 
 
-def verify_host(item, host_call, force=True, category='', post=None):
+def verify_host(item, host_call, force=False, category='', post=None):
     clone_list_alt = []
     
     item.url = urlparse.urljoin(host_call, item.url)
@@ -2411,9 +2467,36 @@ def verify_host(item, host_call, force=True, category='', post=None):
     global host, sufix, domain
     host = host_call
     sufix = scrapertools.find_single_match(host, '\.\w+\/*$')
-    domain = scrapertools.find_single_match(host, '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)')
+    domain = scrapertools.find_single_match(host, patron_domain)
     
     return (item, host)
+
+
+def find_torrent_link(url_torr, headers={}, item={}, itemlist=[]):
+    
+    patron_torrent_inter = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+\/.*?\/(.*?)\/'
+    torrent_token = scrapertools.find_single_match(url_torr, patron_torrent_inter)
+    patron_torrent_prefix = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+\/(.*?)\/.*?\/'
+    torrent_prefix = scrapertools.find_single_match(url_torr, patron_torrent_prefix)
+    sufix = '.torrent'
+
+    if url_torr:
+        url_torr = url_torr.replace(" ", "%20")                                 #sustituimos espacios por %20, por si acaso
+        if not url_torr.startswith("http"):                                     #Si le falta el http.: lo ponemos
+            url_torr = scrapertools.find_single_match(host, '(\w+:)//') + url_torr
+        host_torrent = scrapertools.find_single_match(url_torr, patron_host)
+        headers['referer'] = host_torrent if host_torrent.endswith('/') else host_torrent + '/'
+        torrent_link = urlparse.urljoin(host_torrent, 'to.php')
+        torrent_post = 't=%s' % torrent_token
+        headers_link = {'Content-Type': 'application/x-www-form-urlencoded', 'Referer': url_torr, 'X-Requested-With': 'XMLHttpRequest'}
+        data, response, item, itemlist = generictools.downloadpage(torrent_link, timeout=timeout, headers=headers_link, 
+                                                                   decode_code=decode_code, quote_rep=True, alfa_s=True, 
+                                                                   post=torrent_post, item=item, itemlist=[])       # Descargamos el enlace
+        
+        if data and len(data) > 20 and len(data) < 250:
+            url_torr = '%s%s/%s%s' % (host, torrent_prefix, data, sufix)
+
+    return url_torr, headers
 
 
 def actualizar_titulos(item):
@@ -2435,6 +2518,7 @@ def search(item, texto):
         item.post = "categoryIDR=&categoryID=&idioma=&calidad=&ordenar=Fecha&inon=Descendente&s=%s&pg=1" % texto
         item.pattern = "buscar-list"
         item.extra = "search"
+        item.headers = {'Referer': host+'buscar'}
         itemlist = listado(item)
         
         return itemlist

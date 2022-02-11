@@ -42,6 +42,9 @@ try:
         window.setProperty("alfa_settings", json.dumps(alfa_settings))
         window.setProperty("alfa_channels", json.dumps(alfa_channels))
         window.setProperty("alfa_servers", json.dumps(alfa_servers))
+        window.setProperty("alfa_cookies", '')
+        window.setProperty("alfa_CF_list", '')
+        window.setProperty("alfa_colors_file", json.dumps({}))
 except:
     alfa_caching = False
     alfa_system_platform = ''
@@ -82,6 +85,11 @@ class CacheInit(xbmc.Monitor, threading.Thread):
             window.setProperty("alfa_settings", json.dumps(alfa_settings))
             window.setProperty("alfa_channels", json.dumps(alfa_channels))
             window.setProperty("alfa_servers", json.dumps(alfa_servers))
+            window.setProperty("alfa_cookies", '')
+            window.setProperty("alfa_CF_list", '')
+            styles_path = os.path.join(get_runtime_path(), 'resources', 'color_styles.json')
+            with open(styles_path, "r") as cf:
+                window.setProperty("alfa_colors_file", cf.read())
 
 
     def run(self):
@@ -434,10 +442,10 @@ def get_system_platform():
             platform = 'windows'
         elif xbmc.getCondVisibility("System.Platform.UWP"):
             platform = 'windows'
-        elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
-            platform = 'raspberry'
         elif xbmc.getCondVisibility("System.Platform.Linux"):
             platform = 'linux'
+        elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
+            platform = 'raspberry'
         elif xbmc.getCondVisibility("System.Platform.OSX"):
             platform = 'osx'
         elif xbmc.getCondVisibility("System.Platform.IOS"):
@@ -477,13 +485,12 @@ def get_all_settings_addon(caching_var=True):
             __settings__.setSetting('show_once', 'true')
 
     try:
-        infile = open(inpath, "rb")
-        data = infile.read()
-        if not PY3:
-            data = data.encode("utf-8", "ignore")
-        elif PY3 and isinstance(data, (bytes, bytearray)):
-            data = "".join(chr(x) for x in data)
-        infile.close()
+        with open(inpath, "rb") as infile:
+            data = infile.read()
+            if not PY3:
+                data = data.encode("utf-8", "ignore")
+            elif PY3 and isinstance(data, (bytes, bytearray)):
+                data = "".join(chr(x) for x in data)
     except:
         data = ''
         alfa_caching = False
@@ -769,13 +776,12 @@ def get_kodi_setting(name, total=False):
     
     try:
         inpath = os.path.join(translatePath('special://masterprofile/'), "guisettings.xml")
-        infile = open(inpath, "rb")
-        data = infile.read()
-        if not PY3:
-            data = data.encode("utf-8", "ignore")
-        elif PY3 and isinstance(data, (bytes, bytearray)):
-            data = "".join(chr(x) for x in data)
-        infile.close()
+        with open(inpath, "rb") as infile:
+            data = infile.read()
+            if not PY3:
+                data = data.encode("utf-8", "ignore")
+            elif PY3 and isinstance(data, (bytes, bytearray)):
+                data = "".join(chr(x) for x in data)
     except:
         data = ''
         try:
@@ -875,9 +881,8 @@ def get_cookie_data():
     import os
     ficherocookies = os.path.join(get_data_path(), 'cookies.dat')
 
-    cookiedatafile = open(ficherocookies, 'r')
-    cookiedata = cookiedatafile.read()
-    cookiedatafile.close()
+    with open(ficherocookies, 'r') as cookiedatafile:
+        cookiedata = cookiedatafile.read()
 
     return cookiedata
 

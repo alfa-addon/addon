@@ -20,7 +20,15 @@ from core.item import Item
 from lib import unshortenit
 from bs4 import BeautifulSoup
 
-host = "http://www.descargacineclasico.net"
+canonical = {
+             'channel': 'descargacineclasico', 
+             'host': config.get_setting("current_host", 'descargacineclasico', default=''), 
+             'host_alt': ["https://descargacineclasico.net"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def mainlist(item):
     logger.info()
@@ -38,9 +46,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -118,7 +126,7 @@ def agregadas(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = scrapertools.unescape(data)
     patron = '#div_\d_\D.+?<img id=([^ ]+) .*?<span>.*?</span>.*?<span>(.*?)</span>.*?imgdes.*?imgdes/([^\.]+).*?<a href=([^\s]+)'  #Añado calidad
     matches = scrapertools.find_multiple_matches(data, patron)

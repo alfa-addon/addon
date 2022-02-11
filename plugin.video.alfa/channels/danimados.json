@@ -4,11 +4,13 @@
   "active": true,
   "adult": false,
   "language": ["lat"],
-  "thumbnail": "https://imgur.com/kU5Lx1S.png",
+  "thumbnail": "https://www.d-animados.com/wp-content/uploads/2022/01/Daniamdos-3.png",
   "banner": "https://imgur.com/xG5xqBq.png",
   "fanart": "",
   "categories": [
-    "tvshow"
+    "tvshow",
+    "anime",
+    "vos"
   ],
   "settings": [
     {

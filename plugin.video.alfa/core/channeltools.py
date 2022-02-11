@@ -116,7 +116,7 @@ def is_enabled(channel_name):
                                                                                   default=True)
 
 
-def get_channel_parameters(channel_name):
+def get_channel_parameters(channel_name, settings=False):
     from . import filetools
     global dict_channels_parameters
 
@@ -166,7 +166,7 @@ def get_channel_parameters(channel_name):
                             if (s.get('enabled', False) and s.get('visible', False)):
                                 channel_parameters["has_settings"] = True
 
-                    del channel_parameters['settings']
+                    if not settings: del channel_parameters['settings']
 
                 dict_channels_parameters[channel_name] = channel_parameters
 

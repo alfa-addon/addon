@@ -18,7 +18,7 @@ from core.item import Item
 
 from platformcode import logger
 
-host = "http://www.peliculasmx.net"
+host = "https://www.peliculasmx.net"
 
 def mainlist(item):
     logger.info()
@@ -38,7 +38,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas','latino']:
-            item.url = host
+            item.url = host + '/estrenos/'
         elif categoria == 'infantiles':
             item.url = host + '/category/animacion/'
         elif categoria == 'terror':

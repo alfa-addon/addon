@@ -18,13 +18,20 @@ from lib.AlfaChannelHelper import ToroFilm
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'https://pelisforte.co/'
-AlfaChannel = ToroFilm(host, "")
-
 IDIOMAS = {'Subtitulado': 'VOSE', 'Latino': 'LAT', 'Castellano': 'CAST'}
 list_language = list(IDIOMAS.values())
 list_servers = ['evoload', 'fembed', 'uqload']
 list_quality = []
+
+canonical = {
+             'channel': 'pelisforte', 
+             'host': config.get_setting("current_host", 'pelisforte', default=''), 
+             'host_alt': ["https://pelisforte.co/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = ToroFilm(host, "", canonical=canonical)
 
 
 def mainlist(item):

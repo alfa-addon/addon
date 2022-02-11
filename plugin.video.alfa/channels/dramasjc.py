@@ -20,7 +20,7 @@ from channels import autoplay
 from channels import filtertools
 from bs4 import BeautifulSoup
 
-host = 'https://www.dramasjc.com/'
+host = 'https://www.doramasjc.com/'
 
 IDIOMAS = {'Su': 'VOSE', 'La': 'Lat', 'Es': 'CAST', 'Ca': 'Cast', 'VO':'VO'}
 list_language = list(IDIOMAS.values())

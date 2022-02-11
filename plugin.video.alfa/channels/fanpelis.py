@@ -26,9 +26,15 @@ list_servers = [
     'streamtape'
     ]
 
-
-host = "https://fanpelis.ac/"
-AlfaChannel = PsyPlay(host, movie_path="movies-hd")
+canonical = {
+             'channel': 'fanpelis', 
+             'host': config.get_setting("current_host", 'fanpelis', default=''), 
+             'host_alt': ["https://fanpelis.ac/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = PsyPlay(host, movie_path="movies-hd", canonical=canonical)
 
 
 def mainlist(item):
@@ -95,7 +101,7 @@ def section(item):
     if item.title == 'Generos':
         return AlfaChannel.section(item, menu_id="19")
     else:
-        return AlfaChannel.section(item, menu_id="20")
+        return AlfaChannel.section(item, menu_id="84669")
 
 
 def seasons(item):

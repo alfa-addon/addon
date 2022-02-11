@@ -16,7 +16,15 @@ from core import scrapertools
 from core.item import Item
 from platformcode import config, logger
 
-host = "https://area-documental.com"
+canonical = {
+             'channel': 'areadocumental', 
+             'host': config.get_setting("current_host", 'areadocumental', default=''), 
+             'host_alt': ["https://www.area-documental.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 __perfil__ = int(config.get_setting('perfil', "areadocumental"))
 
 # Fijar perfil de color
@@ -54,7 +62,7 @@ def mainlist(item):
 
 def get_source(url):
     logger.info()
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}|"|\(|\)', "", data)
     return data
 
@@ -133,7 +141,7 @@ def destacados(item):
     itemlist = []
     item.text_color = color2
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = scrapertools.unescape(data)
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)"> ></a>')
     if next_page != "":
@@ -219,7 +227,7 @@ def entradas(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
 
     subs = scrapertools.find_multiple_matches(data, 'file: "(/webvtt[^"]+)".*?label: "([^"]+)"')
     bloque = scrapertools.find_single_match(data, 'title.*?track')

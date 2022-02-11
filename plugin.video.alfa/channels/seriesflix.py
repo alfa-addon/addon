@@ -13,16 +13,10 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from channels import autoplay
-from platformcode import logger
+from platformcode import logger, config
 from channelselector import get_thumb
 from lib.AlfaChannelHelper import ToroFlix
 
-
-host = 'https://seriesflix.video/'
-
-AlfaChannel = ToroFlix(host, tv_path="/series/")
-
-domain = scrapertools.find_single_match(host, 'https*:\/\/(.*?)[\/|$]')
 
 IDIOMAS = {"Latino": "LAT", "Castellano": "CAST", "Subtitulado": "VOSE"}
 list_language = list(IDIOMAS.values())
@@ -30,6 +24,18 @@ list_language = list(IDIOMAS.values())
 list_servers = ['uqload', 'fembed', 'mixdrop', 'supervideo', 'mystream']
 
 list_quality = []
+
+canonical = {
+             'channel': 'seriesflix', 
+             'host': config.get_setting("current_host", 'seriesflix', default=''), 
+             'host_alt': ["https://seriesflix.video/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+AlfaChannel = ToroFlix(host, tv_path="/series/", canonical=canonical)
+
+domain = scrapertools.find_single_match(host, 'https*:\/\/(.*?)[\/|$]')
 
 
 def mainlist(item):
