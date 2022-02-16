@@ -36,7 +36,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:xbabe|crocotube).com/videos/[A-z0-9-]+/)",
+        "pattern": "(https://(?:xbabe|crocotube|pinflix).com/videos/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
