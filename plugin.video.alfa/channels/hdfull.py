@@ -29,16 +29,21 @@ from channels import filtertools
 from platformcode import platformtools
 from channelselector import get_thumb
 
-host = config.get_setting("current_host", channel="hdfull", default='')
-host_alt = ['https://hdfull.click/', 'https://hdfull.stream/']
-host_black_list = ['https://hdfull.one/', 'https://hdfull.vip/', 'https://hd-full.cc/']
-host_black_list.extend(host_alt)
+canonical = {
+             'channel': 'hdfull', 
+             'host': config.get_setting("current_host", 'hdfull', default=''), 
+             'host_alt': ['https://hdfull.link/', 'https://hdfull.click/', 'https://hdfull.stream/'], 
+             'host_black_list': ['https://hdfull.one/', 'https://hdfull.vip/', 'https://hd-full.cc/'], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
 
-_silence = config.get_setting('silence_mode', channel='hdfull')
-show_langs = config.get_setting('show_langs', channel='hdfull')
+_silence = config.get_setting('silence_mode', channel=canonical['channel'])
+show_langs = config.get_setting('show_langs', channel=canonical['channel'])
 unify = config.get_setting('unify')
-__modo_grafico__ = config.get_setting('modo_grafico', channel='hdfull')
-account = config.get_setting("logged", channel="hdfull")
+__modo_grafico__ = config.get_setting('modo_grafico', channel=canonical['channel'])
+account = config.get_setting("logged", channel=canonical['channel'])
 credentials_req = True
 CF = True
 
@@ -48,43 +53,10 @@ list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP', 'RHDTV', 'DVDSCR']
 list_servers = ['clipwatching', 'gamovideo', 'vidoza', 'vidtodo', 'openload', 'uptobox']
 
 
-def check_host(host_alt):
-    global host, account
-    
-    if host:
-        page = httptools.downloadpage(host, ignore_response_code=True, only_headers=True, timeout=5, CF=CF)
-        if page.sucess:
-            if not page.proxy__:
-                return True
-        else:
-            host = ''
-    
-    for url in host_alt:
-        page = httptools.downloadpage(url, ignore_response_code=True, only_headers=True, timeout=5, CF=CF)
-        if page.sucess:
-            if url == host: return True
-            if page.proxy__ and host: continue
-            host = url
-            account = False
-            config.set_setting("logged", False, channel="hdfull")
-            config.set_setting("current_host", host, channel="hdfull")
-            return True
-    else:
-        if host: return True
-    
-    host = host_alt[0]
-    account = False
-    config.set_setting("logged", False, channel="hdfull")
-    config.set_setting("current_host", '', channel="hdfull")
-    return False
-
-if not host or host != host_alt[0]: check_host(host_alt)
-
-
 def verify_login(force_check=False, force_login=True):
     global account, credentials_req
     
-    credentials = config.get_setting('hdfulluser', channel='hdfull')
+    credentials = config.get_setting('hdfulluser', channel=canonical['channel'])
     if account and credentials and not force_check:
         return account
     
@@ -99,7 +71,7 @@ def verify_login(force_check=False, force_login=True):
                 if credentials_req:
                     help_window.show_info('hdfull_login', wait=False)
                     settingCanal(Item)
-                    credentials = config.get_setting('hdfulluser', channel='hdfull')
+                    credentials = config.get_setting('hdfulluser', channel=canonical['channel'])
                     if credentials:
                         account = login()
                     else:
@@ -109,18 +81,18 @@ def verify_login(force_check=False, force_login=True):
 def login():
     logger.info()
 
-    data = agrupa_datos(host, referer=False, force_check=False, force_login=False)
+    data = agrupa_datos(host, referer=False, force_check=False, force_login=False, alfa_s=True)
     _logged = 'id="header-signout" href="/logout"'
     if _logged in data:
-        config.set_setting("logged", True, channel="hdfull")
+        config.set_setting("logged", True, channel=canonical['channel'])
         logger.info('LOGGED', force=True)
         return True
     else:
-        host_save = host
+        host_alt = host
         patron = "<input type='hidden' name='__csrf_magic' value=\"([^\"]+)\" />"
         sid = urllib.quote(scrapertools.find_single_match(data, patron))
-        user_ = urllib.quote(config.get_setting('hdfulluser', channel='hdfull', default=''))
-        pass_ = config.get_setting('hdfullpassword', channel='hdfull', default='')
+        user_ = urllib.quote(config.get_setting('hdfulluser', channel=canonical['channel'], default=''))
+        pass_ = config.get_setting('hdfullpassword', channel=canonical['channel'], default='')
         if pass_:
             pass_ = urllib.quote(pass_)
         if not pass_:
@@ -128,22 +100,22 @@ def login():
                 platformtools.dialog_notification("Falta la contraseña", 
                                               "Revise sus datos en la configuración del canal",
                                               sound=False)
-            config.set_setting("logged", False, channel="hdfull")
+            config.set_setting("logged", False, channel=canonical['channel'])
             logger.info('NO password for LOGIN', force=True)
             return False
         post = '__csrf_magic=%s&username=%s&password=%s&action=login' % (sid, user_, pass_)
 
         new_data = agrupa_datos(host, post=post, referer=False, force_check=False, force_login=False)
 
-        if host != host_save:
+        if host != host_alt:
             return login()
         
         if _logged in new_data:
-            config.set_setting("logged", True, channel="hdfull")
+            config.set_setting("logged", True, channel=canonical['channel'])
             logger.info('Just LOGGED', force=True)
             return True
         
-        config.set_setting("logged", False, channel="hdfull")
+        config.set_setting("logged", False, channel=canonical['channel'])
         logger.info('Error on LOGIN', force=True)
         if not _silence:
             platformtools.dialog_notification("No se pudo realizar el login",
@@ -161,9 +133,9 @@ def logout(item):
     httptools.set_cookies(dict_cookie)
 
     #borramos el login
-    config.set_setting("hdfulluser", "", channel="hdfull")
-    config.set_setting("hdfullpassword", "", channel="hdfull")
-    config.set_setting("logged", False, channel="hdfull")
+    config.set_setting("hdfulluser", "", channel=canonical['channel'])
+    config.set_setting("hdfullpassword", "", channel=canonical['channel'])
+    config.set_setting("logged", False, channel=canonical['channel'])
     account = False
     
     #avisamos, si nos dejan
@@ -176,11 +148,12 @@ def logout(item):
 
 
 def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_proxy=None, 
-                 proxy_retries=1, force_check=False, force_login=True):
-    global host, account
-    
+                 proxy_retries=1, force_check=False, force_login=True, alfa_s=False):
+    global account
+
     if force_check or force_login:
         verify_login(force_check=force_check, force_login=force_login)
+        if host_save != host: url = url.replace(host_save, host)
     
     headers = {'Referer': host}
     if 'episodes' in url or 'buscar' in url:
@@ -193,34 +166,22 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
     if isinstance(referer, str):
         headers.update({'Referer': referer})
 
-    page = httptools.downloadpage(url, post=post, headers=headers, ignore_response_code=True, CF=CF, 
-                        proxy=proxy, forced_proxy=forced_proxy, proxy_retries=proxy_retries)
+    page = httptools.downloadpage(url, post=post, headers=headers, ignore_response_code=True, 
+                                  CF=CF, canonical=canonical, proxy=proxy, forced_proxy=forced_proxy, 
+                                  proxy_retries=proxy_retries, alfa_s=alfa_s)
 
-    if page.sucess and page.canonical and page.canonical not in host_black_list:
-        if page.canonical != host:
-            host = page.canonical
-            account = False
-            config.set_setting("logged", False, channel="hdfull")
-            config.set_setting("current_host", host, channel="hdfull")
-            logger.info('Host cambiado por Canonical: %s' % host, force=True)
-            url = re.sub(r'http(?:s|)://[^/]+/', host, url)
-            page = httptools.downloadpage(url, post=post, headers=headers, ignore_response_code=True, CF=CF, 
-                        proxy=proxy, forced_proxy=forced_proxy, proxy_retries=proxy_retries)
-            if not page.sucess:
-                if json:
-                    return {}
-                else:
-                    return ''
-    
-    elif not page.sucess and check_host(host_alt):
-        url = re.sub(r'http(?:s|)://[^/]+/', host, url)
-        page = httptools.downloadpage(url, post=post, headers=headers, ignore_response_code=True, CF=CF, 
-                        proxy=proxy, forced_proxy=forced_proxy, proxy_retries=proxy_retries)
+    if page.sucess and page.host and page.host != host_save:
+        account = False
+        config.set_setting("logged", False, channel=canonical['channel'])
+        url = page.url_new
+        return agrupa_datos(url, post=post, referer=referer, proxy=proxy, forced_proxy=forced_proxy, 
+                            proxy_retries=proxy_retries, json=json, force_check=force_check, 
+                            force_login=force_login, alfa_s=alfa_s)
 
     if not page.sucess:
         account = False
-        config.set_setting("logged", False, channel="hdfull")
-        config.set_setting("current_host", '', channel="hdfull")
+        config.set_setting("logged", False, channel=canonical['channel'])
+        config.set_setting("current_host", '', channel=canonical['channel'])
         if json:
             return {}
         else:
@@ -293,22 +254,22 @@ def menupeliculas(item):
     
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Películas Estreno",
-             url=urlparse.urljoin(host, "/peliculas-estreno"),
+             url=urlparse.urljoin(host, "peliculas-estreno"),
              text_bold=True, thumbnail=get_thumb('premieres', auto=True)))
     
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Últimas Películas",
-             url=urlparse.urljoin(host, "/peliculas"), text_bold=True,
+             url=urlparse.urljoin(host, "peliculas"), text_bold=True,
              thumbnail=get_thumb('last', auto=True)))
     
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Películas Actualizadas",
-             url=urlparse.urljoin(host, "/peliculas-actualizadas"), text_bold=True,
+             url=urlparse.urljoin(host, "peliculas-actualizadas"), text_bold=True,
              thumbnail=get_thumb('updated', auto=True)))
    
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Rating IMDB",
-             url=urlparse.urljoin(host, "/peliculas/imdb_rating"),
+             url=urlparse.urljoin(host, "peliculas/imdb_rating"),
              text_bold=True, thumbnail=get_thumb('recomended', auto=True)))
     
     itemlist.append(
@@ -318,23 +279,23 @@ def menupeliculas(item):
     
     # itemlist.append(
     #     Item(channel=item.channel, action="fichas", title="ABC",
-    #          url=urlparse.urljoin(host, "/peliculas/abc"), text_bold=True,
+    #          url=urlparse.urljoin(host, "peliculas/abc"), text_bold=True,
     #          thumbnail=get_thumb('alphabet', auto=True)))
     
     if account:
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR dodgerblue][B]Vistas[/B][/COLOR]",
-                             url=urlparse.urljoin(host, "/a/my?target=movies&action=seen&start=-28&limit=28"),
+                             url=urlparse.urljoin(host, "a/my?target=movies&action=seen&start=-28&limit=28"),
                              thumbnail=item.thumbnail))
 
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR orange][B]Favoritos[/B][/COLOR]",
-                             url=urlparse.urljoin(host, "/a/my?target=movies&action=favorite&start=-28&limit=28"),
+                             url=urlparse.urljoin(host, "a/my?target=movies&action=favorite&start=-28&limit=28"),
                              thumbnail=item.thumbnail))
         
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR dodgerblue][B]Pendientes[/B][/COLOR]",
-                             url=urlparse.urljoin(host, "/a/my?target=movies&action=pending&start=-28&limit=28"),
+                             url=urlparse.urljoin(host, "a/my?target=movies&action=pending&start=-28&limit=28"),
                              thumbnail=item.thumbnail))
     return itemlist
 
@@ -346,28 +307,28 @@ def menuseries(item):
     
     itemlist.append(
         Item(channel=item.channel, action="novedades_episodios", title="Episodios Estreno",
-             url=urlparse.urljoin(host, "/a/episodes?action=premiere&start=-24&limit=24&elang=ALL"), text_bold=True,
+             url=urlparse.urljoin(host, "a/episodes?action=premiere&start=-24&limit=24&elang=ALL"), text_bold=True,
              thumbnail=get_thumb('newest', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="novedades_episodios", title="Últimos Emitidos",
-             url=urlparse.urljoin(host, "/a/episodes?action=latest&start=-24&limit=24&elang=ALL"), text_bold=True,
+             url=urlparse.urljoin(host, "a/episodes?action=latest&start=-24&limit=24&elang=ALL"), text_bold=True,
              thumbnail=get_thumb('new episodes', auto=True)))
 
     itemlist.append(
         Item(channel=item.channel, action="novedades_episodios", title="Episodios Anime",
-             url=urlparse.urljoin(host, "/a/episodes?action=anime&start=-24&limit=24&elang=ALL"), text_bold=True,
+             url=urlparse.urljoin(host, "a/episodes?action=anime&start=-24&limit=24&elang=ALL"), text_bold=True,
              thumbnail=get_thumb('anime', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="novedades_episodios", title="Episodios Actualizados",
-             url=urlparse.urljoin(host, "/a/episodes?action=updated&start=-24&limit=24&elang=ALL"), text_bold=True,
+             url=urlparse.urljoin(host, "a/episodes?action=updated&start=-24&limit=24&elang=ALL"), text_bold=True,
              thumbnail=get_thumb('updated', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Últimas series",
-             url=urlparse.urljoin(host, "/series"), text_bold=True,
+             url=urlparse.urljoin(host, "series"), text_bold=True,
              thumbnail=get_thumb('last', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Rating IMDB", 
-             url=urlparse.urljoin(host, "/series/imdb_rating"), text_bold=True,
+             url=urlparse.urljoin(host, "series/imdb_rating"), text_bold=True,
              thumbnail=get_thumb('recomended', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="generos", title="Series por Género",
@@ -380,32 +341,32 @@ def menuseries(item):
 
     #Teniendo el listado alfabetico esto sobra y necesita paginación
     #itemlist.append(Item(channel=item.channel, action="listado_series", title="Listado de todas las series",
-    #                     url=host + "/series/list", text_bold=True))
+    #                     url=host + "series/list", text_bold=True))
 
     if account:
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR dodgerblue]Siguiendo[/COLOR]",
-                             url=urlparse.urljoin(host, "/a/my?target=shows&action=following&start=-28&limit=28"), text_bold=True,
+                             url=urlparse.urljoin(host, "a/my?target=shows&action=following&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
 
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR dodgerblue]Para Ver[/COLOR]",
-                             url=urlparse.urljoin(host, "/a/my?target=shows&action=watch&start=-28&limit=28"), text_bold=True,
+                             url=urlparse.urljoin(host, "a/my?target=shows&action=watch&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
 
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR orange]Favoritas[/COLOR]",
-                             url=urlparse.urljoin(host, "/a/my?target=shows&action=favorite&start=-28&limit=28"), text_bold=True,
+                             url=urlparse.urljoin(host, "a/my?target=shows&action=favorite&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
 
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR dodgerblue]Pendientes[/COLOR]",
-                             url=urlparse.urljoin(host, "/a/my?target=shows&action=pending&start=-28&limit=28"), text_bold=True,
+                             url=urlparse.urljoin(host, "a/my?target=shows&action=pending&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
 
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR dodgerblue]Vistas[/COLOR]",
-                             url=urlparse.urljoin(host, "/a/my?target=shows&action=seen&start=-28&limit=28"), text_bold=True,
+                             url=urlparse.urljoin(host, "a/my?target=shows&action=seen&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
     
     return itemlist
@@ -421,7 +382,7 @@ def search(item, texto):
         sid = scrapertools.find_single_match(data, '.__csrf_magic. value="(sid:[^"]+)"')
         item.extra = urllib.urlencode({'__csrf_magic': sid}) + '&menu=search&query=' + texto
         item.title = "Buscar..."
-        item.url = urlparse.urljoin(host,  "/buscar")
+        item.url = urlparse.urljoin(host,  "buscar")
         item.texto = texto
         return fichas(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -435,13 +396,13 @@ def search(item, texto):
 def series_abc(item):
     logger.info()
     itemlist = []
-    page = config.get_setting('pagination_abc', channel='hdfull')
+    page = config.get_setting('pagination_abc', channel=canonical['channel'])
     page = 0 if page else ''
     az = "#ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     for l in az:
         itemlist.append(
             Item(channel=item.channel, action='fichas', title=l, 
-                 url= urlparse.urljoin(host, "/series/abc/%s" %  l.replace('#', '9')),
+                 url= urlparse.urljoin(host, "series/abc/%s" %  l.replace('#', '9')),
                  thumbnail=item.thumbnail, page=page, text_bold=True))
     return itemlist
 
@@ -463,6 +424,7 @@ def items_usuario(item):
     
     ## Carga las fichas de usuario
     fichas_usuario = agrupa_datos(url, post=post, json=True)
+    if host_save != host: next_page = next_page.replace(host_save, host)
     for ficha in fichas_usuario:
         try:
             title = ficha['title']['es'].strip()
@@ -474,12 +436,12 @@ def items_usuario(item):
             pass
         show = title
         try:
-            thumbnail = urlparse.urljoin(host, "/thumbs/" + ficha['thumbnail'])
+            thumbnail = urlparse.urljoin(host, "thumbs/" + ficha['thumbnail'])
         except:
-            thumbnail = urlparse.urljoin(host,  "/thumbs/" + ficha['thumb'])
+            thumbnail = urlparse.urljoin(host,  "thumbs/" + ficha['thumb'])
         thumbnail += '|User-Agent=%s' % httptools.get_user_agent()
         try:
-            url = urlparse.urljoin(host, '/serie/' + ficha['permalink']) + "###" + ficha['id'] + ";1"
+            url = urlparse.urljoin(host, 'serie/' + ficha['permalink']) + "###" + ficha['id'] + ";1"
             action = "seasons"
             str = get_status(status, 'shows', ficha['id'])
             if "show_title" in ficha:
@@ -497,7 +459,7 @@ def items_usuario(item):
                 except:
                     title = temporada + "x" + episodio + " - " + serie.decode('iso-8859-1') + ": " + title.decode(
                         'iso-8859-1')
-                url = urlparse.urljoin(host, '/serie/' + ficha[
+                url = urlparse.urljoin(host, 'serie/' + ficha[
                     'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + ficha['id'] + ";3"
                 if str != "": title += str
             itemlist.append(
@@ -505,7 +467,7 @@ def items_usuario(item):
                         url=url, thumbnail=thumbnail,
                         contentSerieName=show, text_bold=True))
         except:
-            url = urlparse.urljoin(host, '/pelicula/' + ficha['perma']) + "###" + ficha['id'] + ";2"
+            url = urlparse.urljoin(host, 'pelicula/' + ficha['perma']) + "###" + ficha['id'] + ";2"
             str = get_status(status, 'movies', ficha['id'])
             if str != "": title += str
             itemlist.append(
@@ -544,6 +506,7 @@ def fichas(item):
     infoLabels=dict()
     ## Carga estados
     status = check_status()
+    if host_save != host: item.url = item.url.replace(host_save, host)
 
     if item.title == "Buscar...":
         data = agrupa_datos(item.url, post=item.extra)
@@ -560,6 +523,7 @@ def fichas(item):
         data = agrupa_datos(item.url, referer=item.url)
     else:
         data = agrupa_datos(item.url)
+    if host_save != host: item.url = item.url.replace(host_save, host)
 
     data = re.sub(
         r'<div class="span-6[^<]+<div class="item"[^<]+' + \
@@ -675,6 +639,9 @@ def seasons(item):
         item.url = item.url.split("###")[0]
     
     data = agrupa_datos(item.url, force_check=False, force_login=False)
+    if host_save != host: 
+        item.url = item.url.replace(host_save, host)
+        url_targets= url_targets.replace(host_save, host)
     
     if account:
         str = get_status(status, "shows", id)
@@ -739,7 +706,7 @@ def episodesxseason(item):
     logger.info()
     
     itemlist = []
-    url = urlparse.urljoin(host, "/a/episodes")
+    url = urlparse.urljoin(host, "a/episodes")
     infoLabels = item.infoLabels
     sid = item.sid
     ssid = item.contentSeasonNumber
@@ -762,7 +729,7 @@ def episodesxseason(item):
         if not thumb:
             thumb = episode['show'].get('thumbnail', '')
         ua = httptools.get_user_agent()
-        thumbnail = urlparse.urljoin(host, "/thumbs/%s|User-Agent=%s" % (thumb, ua))
+        thumbnail = urlparse.urljoin(host, "thumbs/%s|User-Agent=%s" % (thumb, ua))
         
         infoLabels['episode'] = episodio
         
@@ -792,7 +759,7 @@ def episodesxseason(item):
             str = get_status(status, 'episodes', episode['id'])
             if str != "": title += str
         
-        url = urlparse.urljoin(host, '/serie/' + episode[
+        url = urlparse.urljoin(host, 'serie/' + episode[
             'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + episode['id'] + ";3"
         itemlist.append(item.clone(action="findvideos", title=title, url=url,
                              contentType="episode", language=langs, text_bold=True,
@@ -820,6 +787,7 @@ def novedades_episodios(item):
     post = post.replace("start=" + old_start, "start=" + start)
     next_page = url + "?" + post
     episodes = agrupa_datos(url, post=post, json=True)
+    if host_save != host: next_page = next_page.replace(host_save, host)
 
     for episode in episodes:
         #Fix para thumbs
@@ -827,7 +795,7 @@ def novedades_episodios(item):
         if not thumb:
             thumb = episode.get('thumbnail', '')
         ua = httptools.get_user_agent()
-        thumbnail = urlparse.urljoin(host, "/thumbs/%s|User-Agent=%s" % (thumb, ua))
+        thumbnail = urlparse.urljoin(host, "thumbs/%s|User-Agent=%s" % (thumb, ua))
         
         temporada = episode['season']
         episodio = episode['episode']
@@ -865,7 +833,7 @@ def novedades_episodios(item):
             str = get_status(status, 'episodes', episode['id'])
             if str != "": title += str
         
-        url = urlparse.urljoin(host, '/serie/' + episode[
+        url = urlparse.urljoin(host, 'serie/' + episode[
             'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + episode['id'] + ";3"
         itemlist.append(
             Item(channel=item.channel, action="findvideos", title=title,
@@ -888,6 +856,7 @@ def generos(item):
     itemlist = []
     
     data = agrupa_datos(item.url)
+    if host_save != host: item.url = item.url.replace(host_save, host)
     tipo = '(?:series|tv-shows)'
     if item.type == 'peliculas':
         tipo = '(?:peliculas|movies)'
@@ -933,15 +902,19 @@ def findvideos(item):
 
         it1.append(Item(channel=item.channel, action="set_status__", title=title, url=url_targets,
                         thumbnail=item.thumbnail, contentTitle=item.contentTitle, language=item.language, folder=True))
-    js_url = urlparse.urljoin(host, "/templates/hdfull/js/jquery.hdfull.view.min.js")
+    js_url = urlparse.urljoin(host, "templates/hdfull/js/jquery.hdfull.view.min.js")
     js_data = agrupa_datos(js_url)
     
-    data_js_url = urlparse.urljoin(host, "/js/providers.js")
+    data_js_url = urlparse.urljoin(host, "js/providers.js")
     data_js = agrupa_datos(data_js_url)
     
     provs = alfaresolver.jhexdecode(data_js)
-
+    
+    if host_save != host: item.url = item.url.replace(host_save, host)
     data = agrupa_datos(item.url, force_check=True, force_login=True)
+    if host_save != host: 
+        item.url = item.url.replace(host_save, host)
+        url_targets = url_targets.replace(host_save, host)
     try:
         data_decrypt = jsontools.load(alfaresolver.obfs(data, js_data))
     except:
@@ -1019,7 +992,7 @@ def play(item):
         type = item.url.split("###")[1].split(";")[1]
         item.url = item.url.split("###")[0]
         post = "target_id=%s&target_type=%s&target_status=1" % (id, type)
-        data = agrupa_datos(urlparse.urljoin(host, "/a/status"), post=post)
+        data = agrupa_datos(urlparse.urljoin(host, "a/status"), post=post)
     devuelve = servertools.findvideosbyserver(item.url, item.server)
     if devuelve:
         item.url = devuelve[0][1]
@@ -1093,7 +1066,7 @@ def check_status():
     status = ""
     if account:
         try:
-            status = agrupa_datos(urlparse.urljoin(host, '/a/status/all'), json=True)
+            status = agrupa_datos(urlparse.urljoin(host, 'a/status/all'), json=True)
         except:
             pass
             

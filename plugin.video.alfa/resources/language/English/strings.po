@@ -842,7 +842,7 @@ msgid "Unexpected error on channel %s"
 msgstr ""
 
 msgctxt "#60088"
-msgid "Enter URL"
+msgid "Enter URL or Torrent"
 msgstr ""
 
 msgctxt "#60089"

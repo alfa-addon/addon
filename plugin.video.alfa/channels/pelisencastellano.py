@@ -19,8 +19,6 @@ from core import servertools, channeltools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 
-host = 'http://pelisencastellano.com/'
-
 
 IDIOMAS = {"esp": "CAST", "lat": "LAT", "sub": "VOSE"}
 
@@ -28,7 +26,18 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['fembed']
 
-__channel__='pelisencastellano'
+canonical = {
+             'channel': 'pelisencastellano', 
+             'host': config.get_setting("current_host", 'pelisencastellano', default=''), 
+             'host_alt': ["http://pelisencastellano.com/"], 
+             'host_black_list': [], 
+             'pattern': 'rel="?canonical"?\s*href="?([^"|>]+)["|>|\s*]', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
+__channel__ = canonical['channel']
+
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', __channel__)
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', __channel__)
 try:
@@ -62,7 +71,7 @@ def search(item, texto):
     logger.info()
     try:
         texto = texto.replace(" ", "+")
-        item.url = "%s/?s=%s" % (host, texto)
+        item.url = "%s?s=%s" % (host, texto)
         if texto != "":
             return lista(item)
         else:
@@ -92,11 +101,11 @@ def categorias(item):
 def create_soup(url, referer=None, post=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
-    if post:
-        data = httptools.downloadpage(url, post=post).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
+    elif post:
+        data = httptools.downloadpage(url, post=post, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -145,7 +154,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     serv=[]
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     output = scrapertools.find_single_match(data, 'var output = "(.*?)output ').replace("\\", "")
     output = output.split(";")
     quality = scrapertools.find_single_match(data, "<strong>Calidad: </strong> (\d+)p<")

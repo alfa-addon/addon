@@ -35,6 +35,7 @@ canonical = {
              'host': config.get_setting("current_host", 'cinetux', default=''), 
              'host_alt': ["https://cinetux.nu/"], 
              'host_black_list': [], 
+             'pattern': '<link\s*rel="alternate"\s*type="[^"]+"\s*title="[^"]+"\s*href="([^"]+)"', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -58,8 +59,7 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
     item.viewmode = viewmode
-    data = httptools.downloadpage(host, alfa_s=True, ignore_response_code=True, canonical=canonical).data
-    data = httptools.downloadpage(host + "pelicula").data
+    data = httptools.downloadpage(host + "pelicula", canonical=canonical).data
     total = scrapertools.find_single_match(data, "Películas</h1><span>(.*?)</span>")
     titulo = "Peliculas (%s)" %total
     #titulo peliculas

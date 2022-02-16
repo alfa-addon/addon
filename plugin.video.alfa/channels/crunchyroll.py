@@ -16,21 +16,33 @@ from core import scrapertools
 from core.item import Item
 from platformcode import config, logger
 
+canonical = {
+             'channel': 'crunchyroll', 
+             'host': config.get_setting("current_host", 'crunchyroll', default=''), 
+             'host_alt': ["http://www.crunchyroll.com"], 
+             'host_black_list': [], 
+             'pattern': '', 
+             'status': 'ERROR 403 - INACTIVO', 
+             'CF': True, 'CF_test': True, 'alfa_s': True
+            }           # No funciona en este canal
+host = canonical['host'] or canonical['host_alt'][0]
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+domain = scrapertools.find_single_match(host, patron_domain)
 
-host = "https://www.crunchyroll.com"
 headers = {'User-Agent': 'Mozilla/5.0', 'Accept-Language': '*'}
 #proxys y sus lios... El proxy debe ser el mismo en el conector
 proxy_i = "https://www.usa-proxy.org/"
 proxy = "https://www.usa-proxy.org/browse.php?u=%s&b=4"
 
+
 def set_weblang():
     
     #para el idoma usaremos la cookie c_locale y set_cookie
     langs = ['deDE', 'ptPT', 'frFR', 'itIT', 'enUS', 'esLA', 'esES']
-    lang = langs[config.get_setting("crunchyrollidioma", "crunchyroll")]
+    lang = langs[config.get_setting("crunchyrollidioma", canonical['channel'])]
     
     #creamos la cookie c_locale y le asignamos 7 dias de vida
-    dict_cookie = {'domain': '.crunchyroll.com',
+    dict_cookie = {'domain': '.%s' % domain,
                     'name': 'c_locale',
                     'value': lang,
                     'expires': 604800}
@@ -43,8 +55,8 @@ def login():
     
 
     login_page = host  + "/login"
-    user = config.get_setting("crunchyrolluser", "crunchyroll")
-    password = config.get_setting("crunchyrollpassword", "crunchyroll")
+    user = config.get_setting("crunchyrolluser", canonical['channel'])
+    password = config.get_setting("crunchyrollpassword", canonical['channel'])
     if not user or not password:
         return False, "", ""
     page = get_source(login_page)
@@ -54,7 +66,7 @@ def login():
     
     #Login con proxy
     check_login = 'href="/logout"'
-    proxy_usa = config.get_setting("proxy_usa", "crunchyroll")
+    proxy_usa = config.get_setting("proxy_usa", canonical['channel'])
     if proxy_usa:
         check_login = 'logout&amp;b=4"'
 
@@ -87,7 +99,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    proxy_usa = config.get_setting("proxy_usa", "crunchyroll")
+    proxy_usa = config.get_setting("proxy_usa", canonical['channel'])
     
     if proxy_usa:
         get_source(proxy_i)
@@ -134,9 +146,9 @@ def mainlist(item):
 def configuracion(item):
     from platformcode import platformtools
     ret = platformtools.show_channel_settings()
-    user = config.get_setting("crunchyrolluser", "crunchyroll")
-    password = config.get_setting("crunchyrollpassword", "crunchyroll")
-    sub = config.get_setting("crunchyrollsub", "crunchyroll")
+    user = config.get_setting("crunchyrolluser", canonical['channel'])
+    password = config.get_setting("crunchyrollpassword", canonical['channel'])
+    sub = config.get_setting("crunchyrollsub", canonical['channel'])
     config.set_setting("crunchyrolluser", user)
     config.set_setting("crunchyrollpassword", password)
     values = [6, 5, 4, 3, 2, 1, 0]
@@ -446,7 +458,7 @@ def calendario(item):
 
 def get_source(url, post=None):
     logger.info()
-    proxy_usa = config.get_setting("proxy_usa", "crunchyroll")
+    proxy_usa = config.get_setting("proxy_usa", canonical['channel'])
     if proxy_usa and not proxy_i in url:
         url = proxy % url
     data = httptools.downloadpage(url, post=post)

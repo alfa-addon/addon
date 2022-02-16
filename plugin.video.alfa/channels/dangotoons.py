@@ -28,11 +28,20 @@ list_servers = [
                 ]
 list_quality = ['default']
 
-host = "https://dangotoons.net"
+canonical = {
+             'channel': 'dangotoons', 
+             'host': config.get_setting("current_host", 'dangotoons', default=''), 
+             'host_alt': ["https://dangotoons.net/"], 
+             'host_black_list': ["https://www.dangotoons.net/"], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def get_source(url, soup=False, json=False, unescape=False, **opt):
     logger.info()
 
+    opt['canonical'] = canonical
     data = httptools.downloadpage(url, **opt)
 
     if 'function countdown' in data.data:
@@ -82,31 +91,31 @@ def mainlist(item):
 
     categories = [
         {"data" :  {"title": "Todos",
-                    "url": host + "/catalogo.php"},
+                    "url": host + "catalogo.php"},
                     "category_dict": category_all
         },
         {"data" :  {"title": "Anime",
-                    "url": host + "/catalogo.php?t=anime&g=&o=3"},
+                    "url": host + "catalogo.php?t=anime&g=&o=3"},
                     "category_dict": category_series
         },
         {"data" :  {"title": "Series Animadas",
-                    "url": host + "/catalogo.php?t=series-animadas&g=&o=3"},
+                    "url": host + "catalogo.php?t=series-animadas&g=&o=3"},
                     "category_dict": category_series
         },
         {"data" :  {"title": "Series Animadas Adolescentes",
-                    "url": host + "/catalogo.php?t=series-animadas-r&g=&o=3"},
+                    "url": host + "catalogo.php?t=series-animadas-r&g=&o=3"},
                     "category_dict": category_series
         },
         {"data" :  {"title": "Series Live Action",
-                    "url": host + "/catalogo.php?t=series-actores&g=&o=3"},
+                    "url": host + "catalogo.php?t=series-actores&g=&o=3"},
                     "category_dict": category_series
         },
         {"data" :  {"title": "Peliculas",
-                    "url": host + "/catalogo.php?t=peliculas&g=&o=3"},
+                    "url": host + "catalogo.php?t=peliculas&g=&o=3"},
                     "category_dict": category_movies
         },
         {"data" :  {"title": "Especiales",
-                    "url": host + "/catalogo.php?t=especiales&g=&o=3"},
+                    "url": host + "catalogo.php?t=especiales&g=&o=3"},
                     "category_dict": category_movies
         }
     ]
@@ -132,7 +141,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host +"/php/buscar.php"
+    item.url = host +"php/buscar.php"
     item.texto = texto
 
     if texto != '':

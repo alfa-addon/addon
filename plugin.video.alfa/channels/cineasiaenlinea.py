@@ -10,8 +10,16 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = "https://cineasiaenlinea.com/"
-__channel__='cineasiaenlinea'
+canonical = {
+             'channel': 'cineasiaenlinea', 
+             'host': config.get_setting("current_host", 'cineasiaenlinea', default=''), 
+             'host_alt': ["https://cineasiaenlinea.com/"], 
+             'host_black_list': [], 
+             'pattern': '<link\s*rel="stylesheet"\s*type="[^"]+"\s*media="[^"]+"\s*href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+__channel__=canonical['channel']
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -56,7 +64,7 @@ def mainlist(item):
 
 def get_source(url, patron=None):
 
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|\s{2}|<br />", "", data)
     
     if patron:

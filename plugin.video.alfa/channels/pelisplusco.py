@@ -26,15 +26,22 @@ from channels import filtertools, autoplay
 from core import tmdb
 
 
-
 IDIOMAS = {'latino':'Lat', 'castellano':'Cast', 'subtitulado':'VOSE'}
 list_language = list(IDIOMAS.values())
 list_quality = ['360p', '480p', '720p', '1080p']
 list_servers = ['mailru', 'openload',  'streamango', 'estream']
 
+canonical = {
+             'channel': 'pelisplusco', 
+             'host': config.get_setting("current_host", 'pelisplusco', default=''), 
+             'host_alt': ["https://pelisplus.me/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
-host = 'https://pelisplus.me'
 CHANNEL_HEADERS = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", "X-Requested-With": "XMLHttpRequest"}
+
 
 def mainlist(item):
     logger.info()
@@ -63,7 +70,7 @@ def movie_menu(item):
 
     itemlist.append(item.clone(title="Estrenos",
                                action="list_all",
-                               url = host+ '/pelis-2021/',   #'/estrenos/',
+                               url = host+ 'pelis-2021/',   #'/estrenos/',
                                type = 'recents'
                                ))
 
@@ -81,7 +88,7 @@ def movie_menu(item):
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
-                               url=host + "/suggest/",
+                               url=host + "suggest/",
                                type="m",
                                seccion='buscar'
                                ))
@@ -97,13 +104,13 @@ def series_menu(item):
 
     itemlist.append(item.clone(title="Todas",
                                action="list_all",
-                               url=host + '/series/',
+                               url=host + 'series/',
                                type='recents'
                                ))
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
-                               url=host + "/suggest/",
+                               url=host + "suggest/",
                                type="s",
                                seccion='buscar'
                                ))
@@ -115,7 +122,7 @@ def search(item, texto):
     logger.info()
     if not item.type:
         item.type = "m"
-        item.url = host + "/suggest/"
+        item.url = host + "suggest/"
     item.query = texto
     if texto != '':
         return sub_search(item)
@@ -127,7 +134,8 @@ def sub_search(item):
     logger.info()
     itemlist =[]
     headers = {'Referer': host, 'X-Requested-With': 'XMLHttpRequest'}
-    dict_data = httptools.downloadpage(item.url, headers=headers, post="query=%s" % item.query, forced_proxy_opt='ProxyCF').json
+    dict_data = httptools.downloadpage(item.url, headers=headers, post="query=%s" % item.query, 
+                                       forced_proxy_opt='ProxyCF', canonical=canonical).json
     if not dict_data or dict_data.get('error', False):
         return itemlist
     list = dict_data["data"][item.type]
@@ -153,9 +161,9 @@ def sub_search(item):
 def get_source(url, referer=None):
     logger.info()
     if referer is None:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url, headers={'Referer':referer, 'x-requested-with': 'XMLHttpRequest'}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer, 'x-requested-with': 'XMLHttpRequest'}, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
@@ -174,7 +182,7 @@ def list_all (item):
         else:
             post = {'page':item.page, 'type':item.type}
         post = urllib.urlencode(post)
-        data =httptools.downloadpage(item.url, post=post, headers=CHANNEL_HEADERS, forced_proxy_opt=None).data
+        data =httptools.downloadpage(item.url, post=post, headers=CHANNEL_HEADERS, forced_proxy_opt=None, canonical=canonical).data
         data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
         patron = '<a href="([^"]+)">.*?<figure><img.*?src="([^"]+)".*?'
         patron +='<span class="year text-center">(\d{4})</span>.*?<p>([^<]+)</p>'
@@ -222,9 +230,9 @@ def list_all (item):
                 item.page = 1
             page = item.page + 1
         
-        url = '%s/pagination/' %host
+        url = '%spagination/' % host
         if 'series' in item.url:
-            url = '%s/series/pagination/' %host
+            url = '%sseries/pagination/' % host
         itemlist.append(item.clone(action = "list_all",
                                    title = 'Siguiente >>>',
                                    page=page,
@@ -281,7 +289,7 @@ def seasons(item):
     logger.info()
     itemlist =[]
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
 
     patron ='<i class=ion-chevron-down arrow><\/i>(.*?)<\/div>'
@@ -326,7 +334,7 @@ def season_episodes(item):
     logger.info()
     itemlist = []
 
-    full_data = httptools.downloadpage(item.url).data
+    full_data = httptools.downloadpage(item.url, canonical=canonical).data
     full_data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", full_data)
 
     season = str(item.infoLabels['season'])
@@ -403,7 +411,7 @@ def findvideos(item):
         new_url = base_url.replace('/serie/', '/player/serie/')
         new_url += '|%s|%s/'  % (item.contentSeason, item.contentEpisodeNumber)
 
-    data_json = httptools.downloadpage(new_url, headers=CHANNEL_HEADERS, forced_proxy_opt='ProxyCF').json
+    data_json = httptools.downloadpage(new_url, headers=CHANNEL_HEADERS, forced_proxy_opt='ProxyCF', canonical=canonical).json
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data_json.get('html', ''))
     
     if not data:

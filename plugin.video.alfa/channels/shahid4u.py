@@ -25,9 +25,16 @@ list_language = list(IDIOMAS.values())
 list_quality = ['1080p', '720p', '360p']
 list_servers = ['uptobox', 'vidhd', 'okru']
 
-host = 'https://ww.shahid4u.net/'
-host_alt = 'https://on.shahid4u.net'
-channel = "shahid4u"
+canonical = {
+             'channel': 'shahid4u', 
+             'host': config.get_setting("current_host", 'shahid4u', default=''), 
+             'host_alt': ['https://ww.shahid4u.net/', 'https://on.shahid4u.net/'], 
+             'host_black_list': [], 
+             'status': 'WEB INACTIVA???', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+channel = canonical['channel']
 
 headers = {"X-Requested-With": "XMLHttpRequest"}
 
@@ -35,11 +42,12 @@ direct_link = False
 thumb_separador = get_thumb("next.png")
 thumb_buscar = get_thumb("search.png")
 
+
 def mainlist(item):
     logger.info()
     itemlist = []
     try:
-        data = httptools.downloadpage(host).data
+        data = httptools.downloadpage(host, canonical=canonical).data
         rurl, ryear = scrapertools.find_single_match(data, '<a href="(https://[A-z0-9_.-]+/category/[A-D0-9_%-]+(\d{4}))">')
         logger.error(rurl)
     except:
@@ -137,7 +145,7 @@ def listall(item):
     clist1 = ["فيلم", "مسلسل", "انمي", "مشاهدة", "اون لاين"]
     clist2 = ["مترجم", "مدبلج", "HD"]
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     url_pagination = scrapertools.find_single_match(data, 
                     '<li class="active"><a href=".*?">(\d+)</a></li>')
     
@@ -255,7 +263,7 @@ def episodes(item):
     infoLabels = item.infoLabels
     add = ""
     
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     if not '/episode/' in item.url:
         patron = 'content-box">\s*<a href="([^"]+)"'
         item.url = scrapertools.find_single_match(data, patron)
@@ -328,7 +336,7 @@ def findvideos(item):
     watch = item.url.replace("film/", "watch/").replace("episode/", "watch/").replace("post/", "watch/")
     #down = item.url.replace("film/", "download/").replace("episode/", "download/")
     
-    data = httptools.downloadpage(watch).data
+    data = httptools.downloadpage(watch, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|\s{2}", "", data)
     
     #referer=down

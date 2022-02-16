@@ -29,7 +29,16 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['directo', 'verystream', 'openload',  'streamango', 'uploadmp4', 'fembed']
 
-host = "https://www.animefenix.com/"
+canonical = {
+             'channel': 'animefenix', 
+             'host': config.get_setting("current_host", 'animefenix', default=''), 
+             'host_alt': ["https://www.animefenix.com/"], 
+             'host_black_list': [], 
+             'pattern': '<div\s*class="navbar-start">\s*<a\s*class="navbar-item"\s*href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def mainlist(item):
     logger.info()
@@ -98,6 +107,7 @@ def mainlist(item):
 def get_source(url, json=False, unescape=False, **opt):
     logger.info()
 
+    opt['canonical'] = canonical
     data = httptools.downloadpage(url, **opt)
     data.data = scrapertools.unescape(data.data) if unescape else data.data
 

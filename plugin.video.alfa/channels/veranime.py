@@ -25,7 +25,17 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ["aparatcam", "streamtape", "fembed", "mixdrop", "doodstream", "clipwatching"]
 
-host = "https://animeonline1.ninja/"
+canonical = {
+             'channel': 'veranime', 
+             'host': config.get_setting("current_host", 'veranime', default=''), 
+             'host_alt': ["https://animeonline1.ninja/"], 
+             'host_black_list': [], 
+             'pattern': 'href="?([^"|\s*]+)["|\s*]\s*rel="?canonical"?', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+domain = scrapertools.find_single_match(host, patron_domain)
 
 
 def mainlist(item):
@@ -142,13 +152,13 @@ def mainlist(item):
 def get_source(url, soup=False, json=False, unescape=False, **opt):
     logger.info()
 
+    opt['canonical'] = canonical
     data = httptools.downloadpage(url, **opt)
 
     if 'Javascript is required' in data.data:
-        from channels import cliver
-        cliver.js2py_conversion(data.data, ".animeonline.ninja")
-        data = httptools.downloadpage(url, **opt)
-
+        from lib import generictools
+        data = generictools.js2py_conversion(data, url, domain_name='.%s' % domain, 
+                    channel=canonical['channel'], headers=opt.get('headers', {}))
     if json:
         data = data.json
     else:

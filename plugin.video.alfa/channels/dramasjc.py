@@ -20,12 +20,19 @@ from channels import autoplay
 from channels import filtertools
 from bs4 import BeautifulSoup
 
-host = 'https://www.doramasjc.com/'
-
 IDIOMAS = {'Su': 'VOSE', 'La': 'Lat', 'Es': 'CAST', 'Ca': 'Cast', 'VO':'VO'}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['okru', 'mailru', 'openload']
+
+canonical = {
+             'channel': 'dramasjc', 
+             'host': config.get_setting("current_host", 'dramasjc', default=''), 
+             'host_alt': ["https://www.doramasjc.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -65,9 +72,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

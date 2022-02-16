@@ -28,8 +28,6 @@ from core.item import Item
 from platformcode import config, logger
 from bs4 import BeautifulSoup
 
-host = "https://www.estrenospapaya.com/"
-
 
 IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOSE', 'Español Latino': 'Latino',
            'Español Castellano': 'Español', 'Sub Español': 'VOSE'}
@@ -39,6 +37,16 @@ list_idiomas = list(IDIOMAS.values())
 list_quality = list()
 
 list_servers = ['streamtape', 'mixdrop', 'evoload']
+
+canonical = {
+             'channel': 'estrenospapaya', 
+             'host': config.get_setting("current_host", 'estrenospapaya', default=''), 
+             'host_alt': ["https://www.estrenospapaya.com/"], 
+             'host_black_list': [], 
+             'pattern': '<a\s*class="pull-right\s*atop" href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -58,7 +66,7 @@ def mainlist(item):
 
     itemlist.append(
         Item(action="list_all", title="Las Más Vistas", channel=item.channel,
-             thumbnail=get_thumb("channels_all.png"), url=host + "/lista-series-populares/"))
+             thumbnail=get_thumb("channels_all.png"), url=host + "lista-series-populares/"))
 
     itemlist.append(Item(action="search", title="Buscar", url= host + "busqueda.php",
                          channel=item.channel, thumbnail=get_thumb("search.png")))
@@ -98,9 +106,9 @@ def create_soup(url, post=None, unescape=False):
     logger.info()
 
     if post:
-        data = httptools.downloadpage(url, post=post).data
+        data = httptools.downloadpage(url, post=post, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

@@ -32,7 +32,16 @@ list_servers = [
     'upstream'
     ]
 
-host = 'https://pelismaraton.com/'
+canonical = {
+             'channel': 'pelismaraton', 
+             'host': config.get_setting("current_host", 'pelismaraton', default=''), 
+             'host_alt': ["https://pelismaraton.com/"], 
+             'host_black_list': [], 
+             'pattern': 'rel="?canonical"?\s*href="?([^"|>]+)["|>|\s*]', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
 
 
 def mainlist(item):
@@ -78,9 +87,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

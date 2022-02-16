@@ -19,6 +19,15 @@ if PY3:
 else:
     import urllib
 
+canonical = {
+             'channel': 'animejl', 
+             'host': config.get_setting("current_host", 'animejl', default=''), 
+             'host_alt': ["https://www.anime-jl.net/"], 
+             'host_black_list': [], 
+             'pattern': '<ul\s*class="Menu">\s*<li\s*class="Current">\s*<a\s*href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 host = 'https://www.anime-jl.net/'
 
@@ -88,6 +97,7 @@ def mainlist(item):
 def get_source(url, json=False, unescape=True, **opt):
     logger.info()
 
+    opt['canonical'] = canonical
     data = httptools.downloadpage(url, **opt)
 
     if json:

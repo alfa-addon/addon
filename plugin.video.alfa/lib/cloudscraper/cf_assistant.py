@@ -16,6 +16,7 @@ else:
 import traceback
 import xbmc
 import time
+import base64
 
 from .exceptions import CloudflareChallengeError
 
@@ -25,19 +26,24 @@ from core.item import Item
 from platformcode import logger, config, help_window
 
 PATH_BL = filetools.join(config.get_runtime_path(), 'resources', 'cf_assistant_bl.json')
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 
 
 def get_cl(resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blacklist=True, retryIfTimeout=True, **kwargs):
     blacklist_clear = True
-    if 'hideproxy' in resp.url or 'webproxy' in resp.url or 'hidester' in resp.url or '__cpo=' in resp.url or kwargs.get('proxies'):
+    
+    domain_full = urlparse.urlparse(resp.url).netloc
+    domain = domain_full
+    pcb = base64.b64decode(config.get_setting('proxy_channel_bloqued')).decode('utf-8')
+    if 'hideproxy' in resp.url or 'webproxy' in resp.url or 'hidester' in resp.url \
+                               or '__cpo=' in resp.url or kwargs.get('proxies') \
+                               or httptools.TEST_ON_AIR or domain in pcb:
         blacklist_clear = False
         blacklist = False
     
     if timeout < 15: timeout = 20
     if timeout + extraPostDelay > 35: timeout = 20
 
-    domain_full = urlparse.urlparse(resp.url).netloc
-    domain = domain_full
     if blacklist and not retry: 
         blacklist_clear = check_blacklist(domain_full)
     

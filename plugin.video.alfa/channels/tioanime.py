@@ -23,7 +23,14 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['directo', 'fembed', 'okru',  'mailru', 'mega', 'youtupload']
 
-host = "https://tioanime.com/"
+canonical = {
+             'channel': 'tioanime', 
+             'host': config.get_setting("current_host", 'tioanime', default=''), 
+             'host_alt': ["https://tioanime.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -67,9 +74,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -146,7 +153,7 @@ def episodios(item):
     logger.info()
 
     itemlist = list()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
 
     info = eval(scrapertools.find_single_match(data, "var anime_info = (\[.*?\])"))
     epi_list = eval(scrapertools.find_single_match(data, "var episodes = (\[.*?\])"))
@@ -179,7 +186,7 @@ def findvideos(item):
 
     itemlist = list()
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
 
     videos = eval(scrapertools.find_single_match(data, "var videos = (\[.*?);"))
 

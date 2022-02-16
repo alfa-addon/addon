@@ -29,8 +29,9 @@ list_servers = ['cinemaupload', 'fastream']
 canonical = {
              'channel': 'homecine', 
              'host': config.get_setting("current_host", 'homecine', default=''), 
-             'host_alt': ["https://homecine.tv"], 
+             'host_alt': ["https://homecine.tv/"], 
              'host_black_list': [], 
+             'pattern': '<div\s*class="header-logo">[^>]*href="([^"]+)"', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -47,7 +48,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,title="Películas",
                          action="list_all",
                          thumbnail=get_thumb('movies', auto=True),
-                         url='%s%s' % (host, '/peliculas/')
+                         url='%s%s' % (host, 'peliculas/')
                          )
                     )
 
@@ -55,7 +56,7 @@ def mainlist(item):
                          title="Series",
                          action="list_all",
                          thumbnail=get_thumb('tvshows', auto=True),
-                         url='%s%s'% (host, '/series/')
+                         url='%s%s'% (host, 'series/')
                          )
                     )
 
@@ -63,7 +64,7 @@ def mainlist(item):
                          title="Documentales",
                          action="list_all",
                          thumbnail=get_thumb('documentaries', auto=True),
-                         url='%s%s' % (host, '/genre/documentales/')
+                         url='%s%s' % (host, 'genre/documentales/')
                          )
                     )
 
@@ -78,7 +79,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,
                          title="Buscar",
                          action="search",
-                         url=host+'/?s=',
+                         url=host+'?s=',
                          thumbnail=get_thumb('search', auto=True)
                          )
                     )
@@ -197,11 +198,11 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas']:
-            item.url = host + '/peliculas'
+            item.url = host + 'peliculas'
         elif categoria == 'infantiles':
-            item.url = host + '/genre/animacion/'
+            item.url = host + 'genre/animacion/'
         elif categoria == 'terror':
-            item.url = host + '/genre/terror/'
+            item.url = host + 'genre/terror/'
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>>':
             itemlist.pop()

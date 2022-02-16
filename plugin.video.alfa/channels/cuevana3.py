@@ -30,14 +30,24 @@ from channels import filtertools
 from bs4 import BeautifulSoup
 
 
-host = 'https://cuevana3.io/'
-forced_proxy_opt = 'ProxyDirect'
-
-
 IDIOMAS = {"optl": "LAT", "opte": "CAST", "opts": "VOSE"}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['fastplay', 'directo', 'streamplay', 'flashx', 'streamito', 'streamango', 'vidoza']
+
+canonical = {
+             'channel': 'cuevana3', 
+             'host': config.get_setting("current_host", 'cuevana3', default=''), 
+             'host_alt': ["https://cuevana3.io/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+domain = scrapertools.find_single_match(host, patron_domain)
+domain_fix = 'cuevana3.io'
+
+forced_proxy_opt = 'ProxyDirect'
 
 
 def mainlist(item):
@@ -80,9 +90,9 @@ def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt).data
+        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -229,7 +239,7 @@ def play(item):
 
     item.server = ""
 
-    if "cuevana3.io" in item.url or "tomatomatel" in item.url:
+    if domain_fix in item.url or "tomatomatel" in item.url:
         item.url = get_urls(item.url, item.v_id)
     if "damedamehoy" in item.url:
         item.url, id = item.url.split("#")
@@ -248,25 +258,25 @@ def play(item):
 
 def get_urls(url, v_id):
 
-    base_url = "https://api.cuevana3.io/ir/rd.php"
+    base_url = "https://api.%s/ir/rd.php" % domain
     param = 'url'
 
     if '/sc/' in url:
-        base_url = "https://api.cuevana3.io/sc/r.php"
+        base_url = "https://api.%s/sc/r.php" % domain
         param = 'h'
 
     if 'goto_ddh.php' in url:
-        base_url = "https://api.cuevana3.io/ir/redirect_ddh.php"
+        base_url = "https://api.%s/ir/redirect_ddh.php" % domain
 
     if 'goto.php' in url:
-        base_url = "https://api.cuevana3.io/ir/goto.php"
+        base_url = "https://api.%s/ir/goto.php" % domain
 
     url = httptools.downloadpage(base_url, post={param: v_id}, timeout=5, forced_proxy_opt=forced_proxy_opt,
                                  follow_redirects=False, ignore_response_code=True)
     if url.sucess or url.code == 302:
         url = url.headers.get('location', '')
 
-    if "cuevana3.io" in url:
+    if domain_fix in url:
         v_id = scrapertools.find_single_match(url, '\?h=(.*)')
         url = get_urls(url, v_id)
 

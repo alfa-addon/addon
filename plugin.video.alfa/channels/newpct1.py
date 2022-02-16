@@ -20,7 +20,6 @@ import random
 import traceback
 
 from channelselector import get_thumb
-from core import httptools
 from core import scrapertools
 from core import servertools
 from core import channeltools
@@ -2477,8 +2476,10 @@ def find_torrent_link(url_torr, headers={}, item={}, itemlist=[]):
     patron_torrent_inter = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+\/.*?\/(.*?)\/'
     torrent_token = scrapertools.find_single_match(url_torr, patron_torrent_inter)
     patron_torrent_prefix = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+\/(.*?)\/.*?\/'
-    torrent_prefix = scrapertools.find_single_match(url_torr, patron_torrent_prefix)
-    sufix = '.torrent'
+    #torrent_prefix = scrapertools.find_single_match(url_torr, patron_torrent_prefix)
+    torrent_prefix = ''
+    #sufix = '.torrent'
+    sufix = ''
 
     if url_torr:
         url_torr = url_torr.replace(" ", "%20")                                 #sustituimos espacios por %20, por si acaso
@@ -2494,7 +2495,7 @@ def find_torrent_link(url_torr, headers={}, item={}, itemlist=[]):
                                                                    post=torrent_post, item=item, itemlist=[])       # Descargamos el enlace
         
         if data and len(data) > 20 and len(data) < 250:
-            url_torr = '%s%s/%s%s' % (host, torrent_prefix, data, sufix)
+            url_torr = '%s%s' % (urlparse.urljoin(host+torrent_prefix, data), sufix)
 
     return url_torr, headers
 

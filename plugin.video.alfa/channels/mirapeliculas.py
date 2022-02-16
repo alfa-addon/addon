@@ -19,14 +19,23 @@ from core import httptools, scrapertools, jsontools, tmdb
 from core import servertools
 from channels import filtertools
 
-host = 'http://mirapeliculas.net'
-
 IDIOMAS = {'Latino': 'LAT', 'Español': 'ESP', 'Subtitulado': 'VOSE'}
 list_language = list(IDIOMAS.values())
 list_servers = ['streamango', 'streamplay', 'openload', 'okru']
 list_quality = ['BR-Rip', 'HD-Rip', 'DVD-Rip', 'TS-HQ', 'TS-Screner', 'Cam']
 
-__channel__='mirapeliculas'
+canonical = {
+             'channel': 'mirapeliculas', 
+             'host': config.get_setting("current_host", 'mirapeliculas', default=''), 
+             'host_alt': ["https://mirapeliculasde.com/"], 
+             'host_black_list': [], 
+             'pattern': '<link\s*rel="[^>]*icon"[^>]+href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
+
+__channel__ = canonical['channel']
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', __channel__)
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', __channel__)
 try:
@@ -74,7 +83,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '<li class="cat-item cat-item-3"><a href="([^"]+)" title="([^"]+)">'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle in matches:
@@ -88,7 +97,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
 
     patron  = '<div class="col-mt-5 postsh">.*?<a href="([^"]+)".*?'
     patron += '<span class="under-title-gnro">([^"]+)</span>.*?'
@@ -118,7 +127,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<td><a rel="nofollow" href=.*?'
     patron += '<td>([^<]+)</td>.*?'
     patron += '<td>([^<]+)</td>.*?'

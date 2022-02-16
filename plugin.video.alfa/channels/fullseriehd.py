@@ -19,23 +19,34 @@ from core import tmdb
 from channels import autoplay
 from platformcode import config, logger
 from channelselector import get_thumb
+from lib import generictools
 
-
-host = 'https://fullseriehd.com/'
 
 IDIOMAS = {'Subtitulado': 'VOSE', 'Latino':'LAT', 'Castellano':'CAST'}
 list_language = list(IDIOMAS.values())
 list_servers = ['okru', 'fembed', 'gvideo', 'mega']
 list_quality = ['HD-1080p', 'HD-720p', 'Cam']
 
+canonical = {
+             'channel': 'fullseriehd', 
+             'host': config.get_setting("current_host", 'fullseriehd', default=''), 
+             'host_alt': ["https://megaxserie.me/"], 
+             'host_black_list': [], 
+             'pattern': 'rel="?canonical"?\s*href="?([^"|>]+)["|>|\s*]', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
+
+    data = generictools.js2py_conversion(data, url, domain_name='', canonical=canonical)
 
     if unescape:
         data = scrapertools.unescape(data)

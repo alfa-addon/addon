@@ -19,7 +19,7 @@ from platformcode import config, logger
 canonical = {
              'channel': 'areadocumental', 
              'host': config.get_setting("current_host", 'areadocumental', default=''), 
-             'host_alt': ["https://www.area-documental.com"], 
+             'host_alt': ["https://www.area-documental.com/"], 
              'host_black_list': [], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -39,16 +39,16 @@ def mainlist(item):
     itemlist = []
     item.text_color = color1
     itemlist.append(item.clone(title="Novedades", action="entradas",
-                               url= host + "/resultados-reciente.php?buscar=&genero="))
+                               url= host + "resultados-reciente.php?buscar=&genero="))
     
     itemlist.append(item.clone(title="Destacados", action="entradas",
-                               url= host + "/resultados.php?buscar=&genero="))
+                               url= host + "resultados.php?buscar=&genero="))
     
     itemlist.append(item.clone(title="Más Vistos", action="entradas",
-                               url= host + "/resultados-visto.php?buscar=&genero="))
+                               url= host + "resultados-visto.php?buscar=&genero="))
     
     itemlist.append(item.clone(title="3D", action="entradas",
-                               url= host + "/3D.php"))
+                               url= host + "3D.php"))
     
     itemlist.append(item.clone(title="Categorías", action="cat", url= host + "/index.php"))
     
@@ -76,7 +76,7 @@ def configuracion(item):
 
 def search(item, texto):
     logger.info()
-    item.url = host + "/resultados.php?buscar=%s&genero=&x=0&y=0" % texto
+    item.url = host + "resultados.php?buscar=%s&genero=&x=0&y=0" % texto
     item.action = "entradas"
     try:
         itemlist = entradas(item)
@@ -94,7 +94,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria == "documentales":
-            item.url = host + "/resultados-reciente.php?buscar=&genero="
+            item.url = host + "resultados-reciente.php?buscar=&genero="
             item.action = "entradas"
             itemlist = entradas(item)
 
@@ -115,9 +115,9 @@ def indice(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(title="Título", action="entradas",
-                               url= host + "/resultados-titulo.php?buscar=&genero="))
+                               url= host + "resultados-titulo.php?buscar=&genero="))
     itemlist.append(item.clone(title="Año", action="entradas",
-                               url= host + "/resultados-anio.php?buscar=&genero="))
+                               url= host + "resultados-anio.php?buscar=&genero="))
     return itemlist
 
 
@@ -129,7 +129,7 @@ def cat(item):
     for bloque in bloques:
         matches = scrapertools.find_multiple_matches(bloque, "<li><a href=(.*?)>(.*?)<")
         for scrapedurl, scrapedtitle in matches:
-            scrapedurl = host + "/" + scrapedurl
+            scrapedurl = host + scrapedurl
             if not "TODO" in scrapedtitle:
                 itemlist.append(item.clone(action="entradas", title=scrapedtitle, url=scrapedurl))
 
@@ -161,7 +161,7 @@ def destacados(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle, year, scrapedplot, genero, extra in matches:
         infolab = {'plot': scrapedplot, 'genre': genero}
-        scrapedurl = host + "/" + scrapedurl
+        scrapedurl = host + scrapedurl
         scrapedthumbnail = host + urllib.quote(scrapedthumbnail)
         title = scrapedtitle
         if "full_hd" in extra:
@@ -199,8 +199,8 @@ def entradas(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for  scrapedurl, scrapedthumbnail, scrapedtitle, year, genero, scrapedplot in matches:
         infolab = {'plot': scrapedplot, 'genre': genero}
-        scrapedurl = host + "/" + scrapedurl
-        scrapedthumbnail = host +'/'+ scrapedthumbnail
+        scrapedurl = host + scrapedurl
+        scrapedthumbnail = host + scrapedthumbnail
         title = scrapedtitle
         if "3D" in genero:
             quality = "3D"
@@ -234,7 +234,7 @@ def findvideos(item):
     patron = 'file:\s*"([^"]+).*?label:\s*"([^"]+)"'
     matches = scrapertools.find_multiple_matches(bloque, patron)
     for url, quality in matches:
-        url = httptools.get_url_headers(host + "/" + url, forced=True)
+        url = httptools.get_url_headers(host + url, forced=True)
         for url_sub, label in subs:
             url_sub = host + urllib.quote(url_sub)
             title = "Ver video en [[COLOR %s]%s[/COLOR]] Sub %s" % (color3, quality, label)

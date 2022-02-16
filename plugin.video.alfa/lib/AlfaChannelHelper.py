@@ -42,7 +42,9 @@ class AlfaChannelHelper:
         
         response = httptools.downloadpage(url, **kwargs)
         soup = response.soup or {}
-        if response.host: self.host = response.host
+        if response.host:
+            self.doo_url = self.doo_url.replace(self.host, response.host)
+            self.host = response.host
 
         return soup
 
@@ -373,7 +375,7 @@ class DooPlay(AlfaChannelHelper):
         if custom_url:
             self.doo_url = custom_url
 
-        data = httptools.downloadpage(self.doo_url, post=post, add_referer=True, soup=True)
+        data = httptools.downloadpage(self.doo_url, post=post, add_referer=True, soup=True, ignore_response_code=True)
 
         return data
 

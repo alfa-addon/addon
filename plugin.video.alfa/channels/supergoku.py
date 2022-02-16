@@ -12,9 +12,20 @@ from platformcode import config, logger, platformtools
 from channelselector import get_thumb
 from lib import strptime_fix
 
-host = 'https://supergoku.com'
 IDIOMAS = {'VOSE': 'VOSE', 'LAT': 'Latino'}
 list_language = list(IDIOMAS.keys())
+
+canonical = {
+             'channel': 'supergoku', 
+             'host': config.get_setting("current_host", 'supergoku', default=''), 
+             'host_alt': ["https://supergoku.com/"], 
+             'host_black_list': ['https://www.supergoku.com/'], 
+             'pattern': '<link\s*rel="[^>]*icon"[^>]+href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+channel = canonical['channel']
+
 
 def mainlist(item):
     logger.info()
@@ -58,7 +69,7 @@ def mainlist(item):
             param = "more_watched",
             title = "Animes mas vistos",
             thumbnail = get_thumb("more watched", auto=True),
-            url = host + '/tvshows/'
+            url = host + 'tvshows/'
         )
     )
     itemlist.append(
@@ -69,7 +80,7 @@ def mainlist(item):
             param = "",
             title = "Animes",
             thumbnail = get_thumb("anime", auto=True),
-            url = host + '/categoria/anime/'
+            url = host + 'categoria/anime/'
         )
     )
     itemlist.append(
@@ -80,7 +91,7 @@ def mainlist(item):
             param = "",
             title = "Películas",
             thumbnail = get_thumb("movies", auto=True),
-            url = host + '/categoria/pelicula/'
+            url = host + 'categoria/pelicula/'
         )
     )
     itemlist.append(
@@ -91,7 +102,7 @@ def mainlist(item):
             param = "",
             title = "OVAs",
             thumbnail = get_thumb("anime", auto=True),
-            url = host + '/categoria/ova/'
+            url = host + 'categoria/ova/'
         )
     )
     itemlist.append(
@@ -102,7 +113,7 @@ def mainlist(item):
             param = "",
             title = "ONAs",
             thumbnail = get_thumb("anime", auto=True),
-            url = host + '/categoria/ona/'
+            url = host + 'categoria/ona/'
         )
     )
     itemlist.append(
@@ -113,7 +124,7 @@ def mainlist(item):
             param = "",
             title = "Cortos",
             thumbnail = get_thumb("anime", auto=True),
-            url = host + '/categoria/corto/'
+            url = host + 'categoria/corto/'
         )
     )
     itemlist.append(
@@ -124,7 +135,7 @@ def mainlist(item):
             param = "",
             title = "Especiales",
             thumbnail = get_thumb("anime", auto=True),
-            url = host + '/categoria/especial/'
+            url = host + 'categoria/especial/'
         )
     )
     itemlist.append(
@@ -135,7 +146,7 @@ def mainlist(item):
             param = "genres",
             title = "Géneros",
             thumbnail = get_thumb("genres", auto=True),
-            url = host + '/tvshows/'
+            url = host + 'tvshows/'
         )
     )
     itemlist.append(
@@ -146,7 +157,7 @@ def mainlist(item):
             param = "airtime",
             title = "Filtrar por año/estado",
             thumbnail = get_thumb("year", auto=True),
-            url = host + '/tvshows/'
+            url = host + 'tvshows/'
         )
     )
     itemlist.append(
@@ -157,7 +168,7 @@ def mainlist(item):
             param = "allanimes",
             title = "Todos los animes",
             thumbnail = get_thumb("all", auto=True),
-            url = host + '/tvshows/'
+            url = host + 'tvshows/'
         )
     )
     itemlist.append(
@@ -167,7 +178,7 @@ def mainlist(item):
             fanart = item.fanart,
             title = "Buscar",
             thumbnail = get_thumb("search", auto=True),
-            url = host + '/?s='
+            url = host + '?s='
         )
     )
     return itemlist
@@ -175,7 +186,7 @@ def mainlist(item):
 def create_soup(url, post=None, headers=None):
     logger.info()
 
-    data = httptools.downloadpage(url, post=post, headers=headers).data
+    data = httptools.downloadpage(url, post=post, headers=headers, canonical=canonical).data
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
     return soup
@@ -188,7 +199,7 @@ def newest(item):
 def filter_by_selection(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     soup = create_soup(item.url)
     if item.param == "genres":
         section = soup.find('ul', class_ = 'genres falsescroll')
@@ -390,7 +401,7 @@ def get_next_page(data):
 def list_all(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     soup = create_soup(item.url)
     sectionptn = ''
     pattern = ''
@@ -766,8 +777,8 @@ def episodesxseason(item, add_to_videolibrary = False):
 def findvideos(item, add_to_videolibrary = False):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    base_url = '{}/wp-json/dooplayer/v1/post/'.format(host)
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    base_url = '{}wp-json/dooplayer/v1/post/'.format(host)
     postnum = scrapertools.find_single_match(data, '(?is)data-post=.(\d+).*?')
     srcsection = scrapertools.find_single_match(data, '(?is)playeroptionsul.+?</ul>')
     srccount = scrapertools.find_multiple_matches(srcsection, '(?is)<li .+?data-nume=["|\'](.+?)["|\']')

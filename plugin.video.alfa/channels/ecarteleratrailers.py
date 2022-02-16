@@ -19,7 +19,7 @@ from core import httptools
 canonical = {
              'channel': 'ecarteleratrailers', 
              'host': config.get_setting("current_host", 'ecarteleratrailers', default=''), 
-             'host_alt': ["https://www.ecartelera.com/videos/"], 
+             'host_alt': ["https://www.ecartelera.com/"], 
              'host_black_list': [], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -31,7 +31,7 @@ def mainlist(item):
     itemlist = []
 
     if item.url == "":
-        item.url = host
+        item.url = host + 'videos/'
 
     # ------------------------------------------------------
     # Descarga la página

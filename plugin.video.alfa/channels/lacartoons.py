@@ -23,10 +23,18 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['okru']
 
+canonical = {
+             'channel': 'lacartoons', 
+             'host': config.get_setting("current_host", 'lacartoons', default=''), 
+             'host_alt': ["http://www.lacartoons.com/"], 
+             'host_black_list': [], 
+             'status': 'SIN CANONICAL', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
+__channel__ = canonical['channel']
 
-__channel__='lacartoons'
-
-host = "http://www.lacartoons.com"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -40,7 +48,7 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "lista", url = host, page = 1, thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Categorias", action = "categorias", url = host, thumbnail = get_thumb("categories", auto = True) ))
-    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "/?Titulo=", thumbnail = get_thumb("search", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "?Titulo=", thumbnail = get_thumb("search", auto = True)))
     autoplay.show_option(item.channel, itemlist)
     return itemlist
     
@@ -48,7 +56,7 @@ def mainlist(item):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, 'botontes-categorias.*?</ul>')
     patron  = 'submit" value="([^"]+).*?'
     patron += 'value="([^"]+)'
@@ -58,7 +66,7 @@ def categorias(item):
                              action = "lista",
                              page = 0,
                              title = title,
-                             url = host + "/?Categoria_id=" + id
+                             url = host + "?Categoria_id=" + id
                         ))
     return itemlist
 
@@ -66,7 +74,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = 'a href="(/serie[^"]+).*?'
     patron += 'src="([^"]+).*?'
     patron += 'nombre-serie">([^<"]+).*?'
@@ -102,7 +110,7 @@ def seasons(item):
     logger.info()
     itemlist = []
     infoLabels = item.infoLabels
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = 'fa fa-chevron-right"></span> (.*?)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for title in matches:
@@ -135,7 +143,7 @@ def episodesxseasons(item):
     logger.info()
     itemlist = []
     infoLabels = item.infoLabels
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '%s.*?</ul>' %item.title
     bloque = scrapertools.find_single_match(data, patron)
     patron  = 'href="([^"]+).*?'
@@ -171,7 +179,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     infoLabels = item.infoLabels
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '<iframe src="([^"]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:

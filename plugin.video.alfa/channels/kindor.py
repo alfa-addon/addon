@@ -34,7 +34,16 @@ list_servers = [
     'gvideo'
     ]
 
-host = 'https://kindor.io/'
+canonical = {
+             'channel': 'kindor', 
+             'host': config.get_setting("current_host", 'kindor', default=''), 
+             'host_alt': ["https://kindor.me/"], 
+             'host_black_list': [], 
+             'pattern': '<a\s*href="([^"]+)"\s*class="healog"\s*aria-label="[^"]+">', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
 
 
 def mainlist(item):
@@ -94,9 +103,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -173,7 +182,7 @@ def seasons(item):
     logger.info()
 
     itemlist = list()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     fom, hash = scrapertools.find_single_match(data, "fom:(.*?),hash:'([^']+)'")
     json_data = jsontools.load(fom)
     infoLabels = item.infoLabels
@@ -237,7 +246,7 @@ def findvideos(item):
         json_data = item.json_data
         hash = item.hash
     else:
-        data = httptools.downloadpage(item.url).data
+        data = httptools.downloadpage(item.url, canonical=canonical).data
         json_data = jsontools.load(scrapertools.find_single_match(data, "fom:(\{.*?})"))
         hash = scrapertools.find_single_match(data, "hash:'([^']+)'")
 
