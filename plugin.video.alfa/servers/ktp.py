@@ -21,9 +21,7 @@ from lib.kt_player import decode
 
 
 def test_video_exists(page_url):
-
     response = httptools.downloadpage(page_url)
-
     if response.code == 404 \
     or "cwtvembeds" in page_url \
     or "Page not Found" in response.data \
@@ -32,7 +30,6 @@ def test_video_exists(page_url):
     or "is no longer available" in response.data\
     or "Embed Player Error" in response.data:
         return False, "[ktplayer] El fichero no existe o ha sido borrado"
-
     global data, license_code
     data = response.data
     license_code = scrapertools.find_single_match(response.data, 'license_code:\s*(?:\'|")([^\,]+)(?:\'|")')

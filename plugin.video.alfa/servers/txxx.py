@@ -8,6 +8,7 @@ from core import httptools
 from core import scrapertools
 from platformcode import logger, config
 
+
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     if ".tube/" in page_url:
@@ -59,4 +60,3 @@ def dec_url(txt):
     url = base64.b64decode(txt)
     url = url.decode("utf8")
     return url
-

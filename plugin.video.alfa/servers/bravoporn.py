@@ -27,3 +27,4 @@ def get_video_url(page_url, video_password):
             url = "http:%s" % url
         video_urls.append(["[%s] %s" %(server,quality), url])
     return video_urls
+
