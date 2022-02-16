@@ -904,8 +904,8 @@ msgid "Unexpected error on channel %s"
 msgstr "Error inesperat al canal % s"
 
 msgctxt "#60088"
-msgid "Enter URL"
-msgstr "Introduïu l'URL"
+msgid "Enter URL or Torrent"
+msgstr "Introduïu l'URL o TORRENT"
 
 msgctxt "#60089"
 msgid "Enter the URL [Link to server/download]"

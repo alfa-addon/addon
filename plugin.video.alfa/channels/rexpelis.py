@@ -24,10 +24,17 @@ list_language = ['LAT']
 list_quality = []
 list_servers = ['fembed', 'verystream','directo', 'fastplay', 'digiloaded']
 
+canonical = {
+             'channel': 'rexpelis', 
+             'host': config.get_setting("current_host", 'rexpelis', default=''), 
+             'host_alt': ["https://www.rexpelis.biz/"], 
+             'host_black_list': [], 
+             'status': 'WEB INACTIVA???', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+__channel__ = canonical['channel']
 
-__channel__='rexpelis'
-
-host = "https://www.rexpelis.biz"
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
 except:
@@ -38,7 +45,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
-    data = httptools.downloadpage(host).data
+    data = httptools.downloadpage(host, canonical=canonical).data
     matches = scrapertools.find_multiple_matches(data, 'cant-genre">(\d+)')
     cantidad = 0
     for cantidad1 in matches:
@@ -46,14 +53,14 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Actualizadas", action="peliculas",
                          url=host, page=1, type ="movie", thumbnail=get_thumb("updated", auto = True)))
     itemlist.append(Item(channel=item.channel, title="Estrenos", action="estrenos",
-                         url=host + "/estrenos",
+                         url=host + "estrenos",
                          page=1, thumbnail=get_thumb("premieres", auto = True)))
     itemlist.append(Item(channel=item.channel, title="Por género (Total películas: %s)" %cantidad,
                          action="generos", url=host, extra="Genero", thumbnail=get_thumb("genres", auto = True)))
     itemlist.append(Item(channel=item.channel, title="Por año", action="annos",
                          url=host, extra="Genero", thumbnail=get_thumb("year", auto = True)))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
-                         url=host + "/search?term=", thumbnail=get_thumb("search", auto = True)))
+                         url=host + "search?term=", thumbnail=get_thumb("search", auto = True)))
     itemlist.append(item.clone(title="Configurar canal...", text_color="gold",
                                action="configuracion", folder=False))
     autoplay.show_option(item.channel, itemlist)
@@ -68,7 +75,7 @@ def configuracion(item):
 
 def search(item, texto):
     logger.info()
-    item.url = host + "/suggest?que=" + texto
+    item.url = host + "suggest?que=" + texto
     item.extra = "busca"
     item.page = 1
     item.texto = texto
@@ -82,7 +89,7 @@ def sub_search(item):
     logger.info()
     itemlist = []
     url = item.url
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     token = scrapertools.find_single_match(data, 'csrf-token" content="([^"]+)')
     data_js = httptools.downloadpage(item.url + "&_token=" + token, headers={'X-Requested-With': 'XMLHttpRequest'}).json
     for js in data_js["data"]["m"]:
@@ -102,7 +109,7 @@ def sub_search(item):
 def estrenos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = 'item-pelicula.*?href="([^"]+).*?'
     patron += 'src="([^"]+).*?'
     patron += 'text-center">([^<]+).*?'
@@ -127,7 +134,7 @@ def estrenos(item):
 def generos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, "genressomb.*?</ul>")
     patron  = 'href="([^"]+)".*?'
     patron += '</i>([^<]+).*?'
@@ -149,12 +156,12 @@ def generos(item):
 def peliculas(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     token = scrapertools.find_single_match(data, 'csrf-token" content="([^"]+)')
     post = "page=%s&type=%s&_token=%s" %(item.page, item.type, token)
     if item.slug:
         post += "&slug=%s" %item.slug
-    data = httptools.downloadpage(host + "/pagination", post=post, headers={'X-Requested-With': 'XMLHttpRequest'}).data
+    data = httptools.downloadpage(host + "pagination", post=post, headers={'X-Requested-With': 'XMLHttpRequest'}).data
     patron  = '(?s)href="([^"]+)".*?'
     patron += 'src="([^"]+)".*?'
     patron += 'text-center">([^<]+).*?'
@@ -195,10 +202,10 @@ def newest(categoria):
             item.url = host
             item.page=1
         elif categoria == 'infantiles':
-            item.url = host + '/genero/animacion'
+            item.url = host + 'genero/animacion'
             item.page = 1
         elif categoria == 'terror':
-            item.url = host + '/genero/terror'
+            item.url = host + 'genero/terror'
             item.page = 1
         itemlist = peliculas(item)
         if "Pagina" in itemlist[-1].title:
@@ -215,7 +222,7 @@ def newest(categoria):
 def annos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, 'div class="years.*?</ul>')
     patron  = 'href="([^"]+)"'
     patron += '>([^<]+).*?'
@@ -235,11 +242,11 @@ def annos(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = 'data-player-id="([^"]+)".*?<a href.*?>([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedid, title in matches:
-        player = '%s/player/embed/movie/%s' % (host, scrapedid)
+        player = '%splayer/embed/movie/%s' % (host, scrapedid)
         new_data = httptools.downloadpage(player).data
         scrapedurl = scrapertools.find_single_match(new_data, 'src="([^"]+)"')
         if "VIP" in title: title = "fembed"

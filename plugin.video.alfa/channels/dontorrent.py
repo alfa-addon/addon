@@ -14,7 +14,6 @@ import time
 import traceback
 
 from channelselector import get_thumb
-from core import httptools
 from core import scrapertools
 from core import tmdb
 from core.item import Item
@@ -32,9 +31,8 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.si/', 
-                          'https://dontorrent.nu/', 'https://dontorrent.red/', 'https://dontorrent.li/', 
-                          'https://dontorrent.pw/', 'https://dontorrent.se/', 'https://dontorrent.fun/'], 
+             'host_alt': ['https://dontorrent.sk/', 'https://dontorrent.si/', 
+                          'https://dontorrent.nu/', 'https://dontorrent.red/', 'https://dontorrent.li/'], 
              'host_black_list': ['https://dontorrent.it/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

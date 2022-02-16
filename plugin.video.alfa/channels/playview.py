@@ -22,13 +22,23 @@ from bs4 import BeautifulSoup
 import base64
 import datetime
 
-host = 'https://playview.io/'
 
 IDIOMAS = {"Latino": "LAT", "Español": "CAST", "Subtitulado": "VOSE"}
 list_language = list(IDIOMAS.values())
 list_quality = list()
 list_servers = ['upstream', 'cloudvideo', 'mixdrop', 'mystream', 'doodstream']
 date = datetime.datetime.now()
+
+canonical = {
+             'channel': 'playview', 
+             'host': config.get_setting("current_host", 'playview', default=''), 
+             'host_alt': ["https://playview.io/"], 
+             'host_black_list': [], 
+             'pattern': '<link\s*rel="[^>]*icon"[^>]+href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def mainlist(item):
     logger.info()
@@ -77,9 +87,9 @@ def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}, forced_proxy_opt=forced_proxy_opt).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, forced_proxy_opt=forced_proxy_opt, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt).data
+        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -225,7 +235,7 @@ def episodesxseason(item):
     info = info_soup.find("div", id="ficha")
     post = {"set": set_option, 'action': "EpisodesInfo", "id": info["data-id"], "type": info["data-type"]}
 
-    episodesinfo = httptools.downloadpage(host + 'playview', post=post).data
+    episodesinfo = httptools.downloadpage(host + canonical['channel'], post=post, canonical=canonical).data
 
     matches = BeautifulSoup(episodesinfo, "html5lib").find_all("div", class_="episodeBlock")
     infoLabels = item.infoLabels
@@ -263,7 +273,7 @@ def findvideos(item):
         dtype = info["data-type"]
         post = {"set": set_option, 'action': "Step1", "id": id, "type": dtype}
 
-    step1 = httptools.downloadpage(host + 'playview', post=post).data
+    step1 = httptools.downloadpage(host + canonical['channel'], post=post, canonical=canonical).data
 
     matches = BeautifulSoup(step1, "html5lib").find_all("button", class_="select-quality")
 
@@ -271,7 +281,7 @@ def findvideos(item):
         post = {"set": set_option, "action": "Step2", "id": id, "type": dtype,
                 "quality": step2["data-quality"], "episode": episode}
 
-        options = httptools.downloadpage(host + 'playview', post=post).data
+        options = httptools.downloadpage(host + canonical['channel'], post=post, canonical=canonical).data
 
         soup = BeautifulSoup(options, "html5lib").find_all("li", class_="tb-data-single")
         for elem in soup:
@@ -307,7 +317,7 @@ def findvideos(item):
 def play(item):
     logger.info()
 
-    data = httptools.downloadpage(host + 'playview', post=item.post).data
+    data = httptools.downloadpage(host + canonical['channel'], post=item.post).data
 
     url_data = BeautifulSoup(data, "html5lib")
     try:

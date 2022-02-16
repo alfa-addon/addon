@@ -15,12 +15,13 @@ from platformcode import logger, config
 canonical = {
              'channel': 'yts', 
              'host': config.get_setting("current_host", 'yts', default=''), 
-             'host_alt': ["https://yts.mx"], 
+             'host_alt': ["https://yts.mx/"], 
              'host_black_list': [], 
+             'pattern': '<ul\s*class="nav-links">\s*<li>\s*<a\s*href="([^"]+)"', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-URL_BROWSE = host + "/browse-movies"
+URL_BROWSE = host + "browse-movies"
 
 
 def mainlist(item):
@@ -156,7 +157,7 @@ def search(item, text):
     logger.info('search: ' + text)
 
     try:
-        item.url = URL_BROWSE + text + '/all/all/0/latest/0/all'
+        item.url = URL_BROWSE + '/' + text + '/all/all/0/latest/0/all'
         itemlist = movies(item)
 
         return itemlist

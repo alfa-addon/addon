@@ -935,7 +935,8 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                     item.contentType in ["tvshow", "episode"] and item.infoLabels['tmdb_id'] == 'None'):
                 # Descargar serie
                 if item.contentType == "tvshow" or (item.contentType == "episode" and \
-                                                    item.server == 'torrent' and item.infoLabels['tmdb_id'] != 'None'):
+                                                    item.server == 'torrent' and item.infoLabels['tmdb_id'] != 'None' \
+                                                    and not item.channel_recovery):
                     context_commands.append((config.get_localized_string(60355), "RunPlugin(%s?%s&%s)" %
                                              (sys.argv[0], item_url,
                                               'channel=downloads&action=save_download&from_channel=' + channel_p + '&sub_action=tvshow' +
@@ -947,7 +948,8 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                                                   '&from_action=' + item.action)))
                 # Descargar serie NO vistos
                 if (
-                        item.contentType == "episode" and item.server == 'torrent' and item.channel == 'videolibrary') or item.video_path:
+                        item.contentType == "episode" and item.server == 'torrent' and item.channel == 'videolibrary' \
+                                                      and not item.channel_recovery) or item.video_path:
                     context_commands.append(
                         ('Descargar Epis NO Vistos', "RunPlugin(%s?%s&%s)" %
                          (sys.argv[0], item_url,
@@ -967,7 +969,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                 # Descargar temporada
                 if item.contentType == "season" or (item.contentType == "episode" \
                                                     and item.server == 'torrent' and item.infoLabels[
-                                                        'tmdb_id'] != 'None'):
+                                                        'tmdb_id'] != 'None' and not item.channel_recovery):
                     context_commands.append((config.get_localized_string(60357), "RunPlugin(%s?%s&%s)" %
                                              (sys.argv[0], item_url,
                                               'channel=downloads&action=save_download&from_channel=' + channel_p + '&sub_action=season' +
@@ -1525,7 +1527,7 @@ def play_torrent(item, xlistitem, mediaurl):
 
     from core import filetools
     from core import httptools
-    from lib.generictools import get_torrent_size
+    from lib.generictools import get_torrent_size, verify_channel
     from servers.torrent import torrent_dirs, update_control, shorten_rar_path, get_tclient_data, call_torrent_via_web
 
     # Opciones disponibles para Reproducir torrents
@@ -1907,6 +1909,13 @@ def play_torrent(item, xlistitem, mediaurl):
             item_freq = item.clone()
             if not item_freq.downloadFilename:
                 item_freq.downloadFilename = ':%s: ' % torr_client.upper()
+            if item_freq.channel_recovery == 'url':
+                item_freq.channel = verify_channel(item_freq.category.lower())
+                del item_freq.contentChannel
+            elif item_freq.channel == 'videolibrary' and item_freq.contentChannel:
+                item_freq.channel = verify_channel(item_freq.contentChannel)
+            else:
+                item_freq.channel = verify_channel(item_freq.channel)
             try:
                 import threading
                 if not PY3:

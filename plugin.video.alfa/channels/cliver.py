@@ -22,23 +22,36 @@ from platformcode import config, logger, platformtools
 from channelselector import get_thumb
 from lib import generictools
 
-direct_play = config.get_setting('direct_play', channel='cliver')
+
 IDIOMAS = {'es': 'CAST', 'lat': 'LAT', 'es_la': 'LAT', 'vose': 'VOSE', 'ingles': 'VOS'}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['openload', 'rapidvideo', 'directo']
 
-host = 'https://www.cliver.to/'
+canonical = {
+             'channel': 'cliver', 
+             'host': config.get_setting("current_host", 'cliver', default=''), 
+             'host_alt': ["https://www.cliver.to/"], 
+             'host_black_list': [], 
+             'pattern': '<div\s*class="portada-p">\s*<a\s*href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+domain = scrapertools.find_single_match(host, patron_domain)
+
+direct_play = config.get_setting('direct_play', channel=canonical['channel'])
 xhr_list = host + 'frm/cargar-mas.php'
 #xhr_ep = host + 'frm/obtener-lista-capitulos.php'
 xhr_film = host + 'frm/obtener-enlaces-pelicula.php'
 xhr_srv = 'https://directvideo.stream/getFile.php'
 
+
 def mainlist(item):
     logger.info()
     itemlist = []
     #No series
-    #type_content = config.get_setting('default_content', channel='cliver')
+    #type_content = config.get_setting('default_content', channel=canonical['channel'])
     type_content = 0
     if type_content > 0:
         mod = 'series'
@@ -134,21 +147,20 @@ def switchmod(item):
     logger.info()
     if item.tcont > 0:
         type_content = 0
-        config.set_setting('default_content', type_content, channel='cliver')
+        config.set_setting('default_content', type_content, channel=canonical['channel'])
     else:
         type_content = 1
-        config.set_setting('default_content', type_content, channel='cliver')
+        config.set_setting('default_content', type_content, channel=canonical['channel'])
     return mainlist(item)
 
 def get_source(url, post=None, ctype=None):
-    logger.info(post)
+    logger.info()
     headers = {"Cookie": "tipo_contenido=%s" % ctype}
 
-    data = httptools.downloadpage(url, post=post).data
+    data = httptools.downloadpage(url, post=post, canonical=canonical).data
 
     if 'Javascript is required' in data:
-        generictools.js2py_conversion(data, url, domain_name=".cliver.to")
-        data = httptools.downloadpage(url, post=post).data
+        data = generictools.js2py_conversion(data, url, domain_name="."+domain, post=post)
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
@@ -416,7 +428,7 @@ def findvideos(item):
     if not item.contentSerieName:
         headers = {"Cookie": "tipo_contenido=%s" % item.tmod}
         post = {"pelicula": item.content_id}
-        data = httptools.downloadpage(xhr_film, post=post, headers=headers, forced_proxy_opt='ProxyCF').json
+        data = httptools.downloadpage(xhr_film, post=post, headers=headers, forced_proxy_opt='ProxyCF', canonical=canonical).json
 
         for langs in data:
             language = IDIOMAS.get(langs, langs)
@@ -491,49 +503,4 @@ def play(item):
         new_data = httptools.downloadpage(xhr_srv, post=post, forced_proxy_opt='ProxyCF').json
         item.url = new_data['url'].rstrip()
         item.url = item.url.replace(' ', '%20')
-    return [item]
-
-def js2py_conversion(data, domain=".cliver.to"):
-    logger.info()
-    from lib import js2py
-    import base64
-        
-    patron = ",\s*S='([^']+)'"
-    data_new = scrapertools.find_single_match(data, patron)
-
-    if not data_new:
-        logger.error('js2py_conversion: NO data_new')
-        
-    try:
-        for x in range(10):                                          # Da hasta 10 pasadas o hasta que de error
-            data_end = base64.b64decode(data_new).decode('utf-8')
-            data_new = data_end
-    except:
-        js2py_code = data_new
-    else:
-        logger.error('js2py_conversion: base64 data_new NO Funciona: ' + str(data_new))
-    
-    if not js2py_code:
-        logger.error('js2py_conversion: NO js2py_code BASE64')
-        
-    js2py_code = js2py_code.replace('document', 'window').replace(" location.reload();", "")
-    js2py.disable_pyimport()
-    context = js2py.EvalJs({'atob': atob})
-    new_cookie = context.eval(js2py_code)
-    
-    logger.info('new_cookie: ' + new_cookie)
-
-    dict_cookie = {'domain': domain,
-                }
-
-    if ';' in new_cookie:
-        new_cookie = new_cookie.split(';')[0].strip()
-        namec, valuec = new_cookie.split('=')
-        dict_cookie['name'] = namec.strip()
-        dict_cookie['value'] = valuec.strip()
-    zanga = httptools.set_cookies(dict_cookie)
-    
-    
-def atob(s):
-    import base64
-    return base64.b64decode(s.to_string().value)
+    return [item]  

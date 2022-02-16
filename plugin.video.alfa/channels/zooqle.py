@@ -5,18 +5,15 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse as urlparse                                 # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
 else:
-    import urlparse                                                 # Usamos el nativo de PY2 que es más rápido
+    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
 
 import re
 import time
 import random
 
 from channelselector import get_thumb
-from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -33,9 +30,19 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-channel = 'zooqle'
-host = 'https://zooqle.com/'
-host_alt = ['https://zooqle.unblockninja.com/', 'https://zooqle.torrentbay.to/']
+canonical = {
+             'channel': 'zooqle', 
+             'host': config.get_setting("current_host", 'zooqle', default=''), 
+             'host_alt': ['https://zooqle.unblockninja.com/', 'https://zooqle.torrentbay.to/', 'https://zooqle.com/'], 
+             'host_black_list': [], 
+             'pattern': '<link\s*rel="search"[^>]+href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
+channel = canonical['channel']
+categoria = channel.capitalize()
+
 """
 host_alt = ['https://zooqle.unblockit.club', 'https://zooqle.unblockninja.com', 'https://zooqle.nocensor.space']
 
@@ -45,7 +52,7 @@ host_alt = ['https://zooqle.com/', 'https://zooqle1.unblocked.is/', 'https://zoo
             'https://zooqle.p4y.info/',  'https://zooqle.p4y.xyz/', 'https://zooqle.prox4you.icu/',  
             'https://zooqle-com.prox2.info/', 'https://zooqle.prox4you.icu/']
 """
-categoria = channel.capitalize()
+
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)        #Actualización sólo últ. Temporada?
 timeout = 20
@@ -54,8 +61,6 @@ timeout = 20
 def mainlist(item):
     logger.info()
     itemlist = []
-    
-    host = config.get_setting('domain_name', channel)
     
     thumb_cartelera = get_thumb("now_playing.png")
     thumb_pelis = get_thumb("channels_movie.png")
@@ -136,46 +141,16 @@ def generos(item):
     logger.info()
     itemlist = []
     
-    host = config.get_setting('domain_name', channel)
     extra3 = item.extra3
     del item.extra3
 
     data = ''
-    try:
-        response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-        if not PY3:
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
-    except:
-        pass
-    if not response.sucess:
-        host, data = retry_alt(item.url, timeout)                               # Si hay un error se pasa a la web alternativa
-        
     patron = '<ul class="[^"]+" id="catMenu">'
-    #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not data or not scrapertools.find_single_match(data, patron):
-        #Comprobamos si la IP ha sido bloqueada, y si es así, lo intentamos con otra url
-        status, itemlist, host, data = check_blocked_IP(data, itemlist, item.url, timeout)  
-        if status:
-            return itemlist                                                     #IP bloqueada
-        
-        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
-        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
-            for clone_inter, autoridad in item.intervencion:
-                thumb_intervenido = get_thumb(autoridad)
-                itemlist.append(item.clone(action='', title="[COLOR yellow]" + 
-                        clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + 
-                        '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
-            return itemlist                                                     #Salimos
-        
-        logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " 
-                        + item.url + data)
-    
-    if not data:    #Si no ha logrado encontrar nada, salimos
-        itemlist.append(item.clone(action='', title=item.category + 
-                        ': ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL. ' + 
-                        'Si la Web está activa, reportar el error con el log'))
-        return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
+                                                               patron=patron, item=item, itemlist=[], 
+                                                               check_blocked_IP=True)           # Descargamos la página
+    if not response.sucess or itemlist:                                         # Si ERROR o lista de errores lo reintentamos con otro Host
+        return itemlist                                                         # ... Salimos
 
     patron = '<li role="presentation">\s*<a role="menuitem" class="small" tabindex="-1" '
     patron += 'href="([^"]+)">(?:<i class="[^"]+"><\/i>)?(.*?)<\/a><\/li>'
@@ -225,8 +200,6 @@ def listado(item):
     item.category = categoria
     thumb_pelis = get_thumb("channels_movie.png")
     thumb_series = get_thumb("channels_tvshow.png")
-    
-    host = config.get_setting('domain_name', channel)
 
     #logger.debug(item)
     
@@ -260,29 +233,23 @@ def listado(item):
     
         # Descarga la página
         data = ''
-        try:
-            response = httptools.downloadpage(next_page_url, timeout=timeout_search, ignore_response_code=True)
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-            if not PY3:
-                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
-        except:
-            pass
-        if not response.sucess:
-            host, data = retry_alt(next_page_url, timeout_search)               # Si hay un error se pasa a la web alternativa
+        data, response, item, itemlist = generictools.downloadpage(next_page_url, timeout=timeout_search, canonical=canonical, 
+                                                                   item=item, itemlist=itemlist, 
+                                                                   check_blocked_IP=True)           # Descargamos la página
+        # Verificamos si ha cambiado el Host
+        if response.host:
+            next_page_url = response.url_new
         
-        curr_page += 1                                                          #Apunto ya a la página siguiente
-        if not data:                                                            #Si la web está caída salimos sin dar error
-            logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " 
-                        + item.url + " / DATA: " + data)
+        curr_page += 1                                                          # Apunto ya a la página siguiente
+        if not data:                                                            # Si la web está caída salimos sin dar error
+            if len(itemlist) > 1:                                               # Si hay algo que pintar lo pintamos
+                last_page = 0
+                break
+            logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + next_page_url + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + 
-                        ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. ' 
-                        + 'Si la Web está activa, reportar el error con el log'))
-            break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
-            
-        #Comprobamos si la IP ha sido bloqueada, y si es así, lo intentamos con otra url
-        status, itemlist, host, data = check_blocked_IP(data, itemlist, next_page_url, timeout_search)
-        if status:
-            return itemlist                                                     #IP bloqueada
+                        ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL.' 
+                        + ' Si la Web está activa, reportar el error con el log'))
+            return itemlist                                                     # Si no hay nada más, salimos directamente
 
         #Patrón para búsquedas, pelis y series
         if item.extra == 'search':                                              # Búsquedas...
@@ -317,11 +284,6 @@ def listado(item):
         
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches and item.extra != 'search':                              #error
-            item = generictools.web_intervenida(item, data)                     #Verificamos que no haya sido clausurada
-            if item.intervencion:                                               #Sí ha sido clausurada judicialmente
-                item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
-                return itemlist                                                 #Salimos
-            
             logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " 
                         + " / PATRON: " + patron + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + 
@@ -376,14 +338,14 @@ def listado(item):
                 url = scrapedthumbnail
                 thumb = scrapedurl
                 if url.startswith('/tv/'):
-                    item.extra2 = 'series'                          # Serie búsqueda
+                    item.extra2 = 'series'                                      # Serie búsqueda
                 else:
-                    item.extra2 = 'peliculas'                       # Película búsqueda
+                    item.extra2 = 'peliculas'                                   # Película búsqueda
             else:
                 url = scrapedurl
                 thumb = scrapedthumbnail
             
-            title_subs = []                                         #creamos una lista para guardar info importante
+            title_subs = []                                                     #creamos una lista para guardar info importante
             # Si viene de Novedades o Populares, pasamos de Episodio a Serie
             if item.extra == 'series' and (item.extra3 == 'novedades' or item.extra3 == 'populares'):
                 title_subs += [scrapertools.find_single_match(url, '\/(\d+[x|X]\d+)\.htm.')]
@@ -396,14 +358,14 @@ def listado(item):
                     .replace("ï¿½", "ñ").replace("Ã±", "ñ")
             title = scrapertools.decode_utf8_error(title)
 
-            if url in title_lista:                                   #Si ya hemos procesado el título, lo ignoramos
+            if url in title_lista:                                              # Si ya hemos procesado el título, lo ignoramos
                 continue
             else:
-                title_lista += [url]                                 #la añadimos a la lista de títulos
+                title_lista += [url]                                            # la añadimos a la lista de títulos
             
             #cnt_title += 1
-            item_local = item.clone()                                       #Creamos copia de Item para trabajar
-            if item_local.tipo:                                             #... y limpiamos
+            item_local = item.clone()                                           # Creamos copia de Item para trabajar
+            if item_local.tipo:                                                 # ... y limpiamos
                 del item_local.tipo
             if item_local.totalItems:
                 del item_local.totalItems
@@ -422,30 +384,30 @@ def listado(item):
             item_local.text_color = True
             del item_local.text_color
                 
-            item_local.language = ['VO']                                            #creamos lista para los idiomas
-            item_local.quality = scrapedquality                                     #iniciamos calidad
+            item_local.language = ['VO']                                        #creamos lista para los idiomas
+            item_local.quality = scrapedquality                                 #iniciamos calidad
             if item_local.quality == 'ultra':
                 item_local.quality = '4K'
             if thumb:
-                item_local.thumbnail = urlparse.urljoin(host, thumb)                #iniciamos thumbnail
+                item_local.thumbnail = urlparse.urljoin(host, thumb)            #iniciamos thumbnail
             elif item_local.extra == 'peliculas':
-                item_local.thumbnail = thumb_pelis                                  #iniciamos thumbnail
+                item_local.thumbnail = thumb_pelis                              #iniciamos thumbnail
             else:
-                item_local.thumbnail = thumb_series                                 #iniciamos thumbnail
+                item_local.thumbnail = thumb_series                             #iniciamos thumbnail
 
-            item_local.url = urlparse.urljoin(host, url)                            #guardamos la url final
+            item_local.url = urlparse.urljoin(host, url)                        #guardamos la url final
             item_local.context = "['buscar_trailer']"
 
             #Analizamos los formatos de la películas
             if item_local.extra == 'peliculas':
-                item_local.contentType = "movie"                                    #por defecto, son películas
+                item_local.contentType = "movie"                                #por defecto, son películas
                 item_local.action = "findvideos"
 
             #Analizamos los formatos de series, temporadas y episodios
             elif item_local.extra == 'series':
                 item_local.contentType = "tvshow"
                 item_local.action = "episodios"
-                item_local.season_colapse = True                            #Muestra las series agrupadas por temporadas
+                item_local.season_colapse = True                                #Muestra las series agrupadas por temporadas
 
             #Limpiamos el título de la basura innecesaria
             title = re.sub(r'(?i)TV|Online', '', title).strip()
@@ -467,7 +429,7 @@ def listado(item):
             #Terminamos de limpiar el título
             title = re.sub(r'[\(|\[]\s+[\)|\]]', '', title)
             title = title.replace('()', '').replace('[]', '').strip().lower().title()
-            item_local.from_title = title.strip().lower().title()           #Guardamos esta etiqueta para posible desambiguación de título
+            item_local.from_title = title.strip().lower().title()               #Guardamos esta etiqueta para posible desambiguación de título
 
             #Salvamos el título según el tipo de contenido
             if item_local.contentType == "movie":
@@ -492,9 +454,9 @@ def listado(item):
                 itemlist = filtertools.get_link(itemlist, item_local, list_language)
             else:
             """
-            itemlist.append(item_local.clone())                         #Si no, pintar pantalla
+            itemlist.append(item_local.clone())                                 #Si no, pintar pantalla
             
-            cnt_title = len(itemlist)                                   #Contador de líneas añadidas
+            cnt_title = len(itemlist)                                           #Contador de líneas añadidas
             
             #logger.debug(item_local)
 
@@ -529,9 +491,7 @@ def findvideos(item):
     if max_items_per_quality == 0: max_items_per_quality = 999999
     max_items_one_quality = config.get_setting('max_items_one_quality', channel)
     if max_items_one_quality == 0: max_items_one_quality = 999999
-    
-    host = config.get_setting('domain_name', channel)
-    
+
     item.url += '?pg=1&v=t&s=sz&sd=d'                                           # Vista ordenada por tamaños
     next_page_url = item.url
     
@@ -540,44 +500,27 @@ def findvideos(item):
     curr_page = 1                                                               # Página inicial
     last_page = 99999                                                           # Última página inicial
 
-    #Bajamos los datos de las páginas
     data = ''
     patron = '<tr>\s*<td\s*class="text-muted[^>]+>(\d+).<\/td>\s*<td\s*class='
     patron += '"text-nowrap[^>]+>\s*<a[^h]+href="([^"]+)">\s*([^<]+)<\/a>\s*'
-    patron += '(?:<div[^<]+)?\s*(?:<span\s*class=[^>]+Audio\s*format">\s*<i\s*class='
-    patron += '[^>]+zqf-mi-audio[^>]+>\s*<\/i>([^>]+)<\/span>(?:\s*&nbsp;)?\s*)?\s*'
-    patron += '(?:<span\s*class="smaller[^"]+"\s*title="Detected\s*languages">([^<]+)<\/span>'
-    patron += '(?:\s*&nbsp;)?\s*)?(?:<span\s*class="text-nowrap[^>]+>\s*<i\s*class='
-    patron += '"zqf[^>]+>\s*<\/i>\s*([^<]+)<\/span>(?:\s*&nbsp;)?\s*<\/div>\s*)?\s*'
-    patron += '<\/td>\s*<td\s*class="[^<]+<div\s*class="progress[^<]+<div\s*class='
-    patron += '"progress-bar[^>]+>\s*([^<]+)<\/div>\s*<\/div>\s*<\/td>\s*(?:<td\s*'
-    patron += 'class=[^>]+>[^<]+<\/td>\s*<td\s*class[^>]+>\s*<div\s*class="progress[^"]+"'
-    patron += '\s*title="Seeders:\s*(.*?)\s*\|[^>]+>)?'
-        
+    patron += '(?:<div[^<]+)?\s*(?:<span\s*class=[^>]+Audio\s*format">\s*<i\s*'
+    patron += 'class=[^>]+zqf-mi-audio[^>]+>\s*<\/i>([^>]+)<\/span>[^<]*)?\s*'
+    patron += '(?:<span\s*class="smaller[^"]+"\s*title="Detected\s*languages">([^<]+)<\/span>[^<]*)?'
+    patron += '(?:<span\s*class="text-nowrap[^>]+>\s*<i\s*class="zqf[^>]+>\s*<\/i>'
+    patron += '\s*([^<]+)<\/span>[^<]*)?<\/div>\s*<\/td>\s*<td\s*class=[^>]+>\s*'
+    patron += '(?:<div[^>]+><div class="progress-bar prog-[^>]+>\s*(.*?)\s*<\/div>\s*<\/div>\s*<\/td>)?'
+    patron += '(?:<td\s*class[^>]+>[^>]+>\s*<td\s*class[^>]+><div\s*class='
+    patron += '"progress[^"]+"\s*title="Seeders:\s*(.*?)\s*\|[^>]+>)?'
+    
+    #Bajamos los datos de las páginas
     while curr_page <= last_page:                                               # Leemos todas las páginas
         data = ''
-        try:
-            response = httptools.downloadpage(next_page_url, timeout=timeout, ignore_response_code=True)
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-            if not PY3:
-                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
-        except:
-            pass
-        if not response.sucess:
-            host, data = retry_alt(next_page_url, timeout=timeout)              # Si hay un error se pasa a la web alternativa
-            
-        if not data:
-            logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + 
-                            ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. ' 
-                            + 'Si la Web está activa, reportar el error con el log', folder=False))
-            return itemlist                             #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        data, response, item, itemlist = generictools.downloadpage(next_page_url, timeout=timeout, canonical=canonical, 
+                                                                   patron=patron, item=item, itemlist=itemlist, 
+                                                                   check_blocked_IP=True)
+        if not data or response.code in [999, 99]:                              # Si ERROR o lista de errores lo reintentamos con otro Host
+            return itemlist                                                     # ... Salimos
 
-        #Comprobamos si la IP ha sido bloqueada, y si es así, lo intentamos con otra url
-        status, itemlist, host, data = check_blocked_IP(data, itemlist, next_page_url, timeout)
-        if status:
-            return itemlist                                                     #IP bloqueada
-        
         curr_page += 1
         next_page_url = re.sub(r'pg=(\d+)', 'pg=%s' % str(curr_page), item.url)
         #Buscamos la última página
@@ -597,16 +540,13 @@ def findvideos(item):
     if not matches:                                                             #error
         if "Sorry, we haven't matched torrents for this" in data:               # No hay torrents
             return itemlist
-        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
-        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
-            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
-        else:
-            logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " 
-                        + " / PATRON: " + patron + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + 
-                        ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  ' 
-                        + 'Verificar en la Web esto último y reportar el error con el log', folder=False))
-            return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+
+        logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " 
+                    + " / PATRON: " + patron + data)
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 
+                    ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  ' 
+                    + 'Verificar en la Web esto último y reportar el error con el log', folder=False))
+        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     #logger.debug("PATRON: " + patron)
     #logger.debug(matches)
@@ -620,9 +560,9 @@ def findvideos(item):
     matches_alt = []
     for scrapedord, scrapedurl, scrapedtitle, scrapedaudio, scrapedlanguage, \
                         scrapedquality, scrapedsize, scrapedseeds in matches:
-        if not scrapedsize:
+        if not scrapedsize or not scrapedseeds or scrapedseeds == '0':
             continue
-            
+
         seeds = scrapedseeds.replace(',', '')
 
         try:
@@ -781,34 +721,16 @@ def play(item):                                 #Permite preparar la descarga de
     logger.info()
     itemlist = []
     headers = []
-    
-    host = config.get_setting('domain_name', channel)
 
     #buscamos la url del .torrent
     patron = '<a rel="nofollow" href="(magnet:[^"]+)"'
     data = ''
-    try:
-        response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-        if not PY3:
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
-    except:
-        pass
-    if not response.sucess:
-        host, data = retry_alt(item.url, timeout)                       # Si hay un error se pasa a la web alternativa
-        
-    #Comprobamos si la IP ha sido bloqueada, y si es así, lo intentamos con otra url
-    status, itemlist, host, data = check_blocked_IP(data, itemlist, item.url, timeout=timeout)
-    if status:
-        return itemlist                                                 #IP bloqueada
-    if not scrapertools.find_single_match(data, patron):
-        logger.error('ERROR 02: PLAY: No hay enlaces o ha cambiado la estructura de la Web.  ' 
-                        + 'Verificar en la Web esto último y reportar el error con el log: PATRON: ' 
-                        + patron + ' / DATA: ' + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 
-                        ': ERROR 02: PLAY: No hay enlaces o ha cambiado la estructura de la Web.  ' 
-                        + 'Verificar en la Web esto último y reportar el error con el log'))
-        return itemlist
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
+                                                               patron=patron, item=item, itemlist=[], 
+                                                               check_blocked_IP=True)
+    if not data or response.code in [999, 99]:                                  # Si ERROR o lista de errores lo reintentamos con otro Host
+        return itemlist                                                         # ... Salimos
+
     item.url_control = item.url
     item.url = urlparse.urljoin(host, scrapertools.find_single_match(data, patron))
     
@@ -824,15 +746,17 @@ def play(item):                                 #Permite preparar la descarga de
         if subt:
             item.subtitle = urlparse.urljoin(host, subt)
     
-    if item.subtitle:                                                   #Si hay urls de sub-títulos, se descargan
+    if item.subtitle:                                                           #Si hay urls de sub-títulos, se descargan
         from core import filetools
         from core import downloadtools
         from core import ziptools
+        from core import httptools
     
-        headers.append(["User-Agent", httptools.get_user_agent()])      #Se busca el User-Agent por defecto
-        videolibrary_path = config.get_videolibrary_path()              #Calculamos el path absoluto a partir de la Videoteca
-        if videolibrary_path.lower().startswith("smb://"):              #Si es una conexión SMB, usamos userdata local
-            videolibrary_path = config.get_data_path()                  #Calculamos el path absoluto a partir de Userdata
+        headers.append(["User-Agent", httptools.get_user_agent()])              #Se busca el User-Agent por defecto
+        
+        videolibrary_path = config.get_videolibrary_path()                      #Calculamos el path absoluto a partir de la Videoteca
+        if videolibrary_path.lower().startswith("smb://"):                      #Si es una conexión SMB, usamos userdata local
+            videolibrary_path = config.get_data_path()                          #Calculamos el path absoluto a partir de Userdata
         videolibrary_path = filetools.join(videolibrary_path, "subtitles")
         #Primero se borra la carpeta de subtitulos para limpiar y luego se crea
         if filetools.exists(videolibrary_path):   
@@ -841,7 +765,7 @@ def play(item):                                 #Permite preparar la descarga de
         if not filetools.exists(videolibrary_path):   
             filetools.mkdir(videolibrary_path)
         subtitle_name = 'Rarbg-ES_SUBT.zip'                                     #Nombre del archivo de sub-títulos
-        subtitle_folder_path = filetools.join(videolibrary_path, subtitle_name)   #Path de descarga
+        subtitle_folder_path = filetools.join(videolibrary_path, subtitle_name) #Path de descarga
         ret = downloadtools.downloadfile(item.subtitle, subtitle_folder_path, 
                         headers=headers, continuar=True, silent=True)
 
@@ -871,7 +795,7 @@ def play(item):                                 #Permite preparar la descarga de
                             f_es = item.infoLabels['originaltitle'] + '.spa.srt'
                             f_es = f_es.replace(':', '').lower()
                         filetools.rename(filetools.join(videolibrary_path, f), filetools.join(videolibrary_path, f_es))
-                        item.subtitle = filetools.join(videolibrary_path, f_es)   #Archivo de subtitulos
+                        item.subtitle = filetools.join(videolibrary_path, f_es) #Archivo de subtitulos
                         break
                 break
         
@@ -884,9 +808,7 @@ def episodios(item):
     logger.info()
     itemlist = []
     item.category = categoria
-    
-    host = config.get_setting('domain_name', channel)
-    
+
     #logger.debug(item)
 
     if item.from_title:
@@ -895,8 +817,8 @@ def episodios(item):
     #Limpiamos num. Temporada y Episodio que ha podido quedar por Novedades
     season_display = 0
     if item.contentSeason:
-        if item.season_colapse:                                                             #Si viene del menú de Temporadas...
-            season_display = item.contentSeason                                             #... salvamos el num de sesión a pintar
+        if item.season_colapse:                                                 #Si viene del menú de Temporadas...
+            season_display = item.contentSeason                                 #... salvamos el num de sesión a pintar
             item.from_num_season_colapse = season_display
             del item.season_colapse
             item.contentType = "tvshow"
@@ -918,7 +840,7 @@ def episodios(item):
         pass
         
     modo_ultima_temp_alt = modo_ultima_temp
-    if item.ow_force == "1":                                    #Si hay un traspaso de canal o url, se actualiza todo 
+    if item.ow_force == "1":                                                    #Si hay un traspaso de canal o url, se actualiza todo 
         modo_ultima_temp_alt = False
     
     max_temp = 1
@@ -926,38 +848,22 @@ def episodios(item):
         max_temp = item.infoLabels['number_of_seasons']
     y = []
     patron = 'season (\d+)'
-    if modo_ultima_temp_alt and item.library_playcounts:        #Averiguar cuantas temporadas hay en Videoteca
+    if modo_ultima_temp_alt and item.library_playcounts:                        #Averiguar cuantas temporadas hay en Videoteca
         matches = re.compile(patron, re.DOTALL).findall(str(item.library_playcounts))
         for x in matches:
             y += [int(x)]
         max_temp = max(y)
 
     # Descarga la página
+    patron_temp = '<ul class="list-group eplist" id="eps_(\d+)">(.*?)<\/ul><\/div><\/div><\/div>'
     data = ''
-    try:
-        response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-        if not PY3:
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
-    except:
-        pass
-    if not response.sucess:
-        host, data = retry_alt(item.url, timeout)                               # Si hay un error se pasa a la web alternativa
-        
-    if not data:
-        logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea" + item.url)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 
-                        ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. ' 
-                        + 'Si la Web está activa, reportar el error con el log'))
-        return itemlist
-    
-    #Comprobamos si la IP ha sido bloqueada, y si es así, lo intentamos con otra url
-    status, itemlist, host, data = check_blocked_IP(data, itemlist, item.url, timeout=timeout)
-    if status:
-        return itemlist                                                         #IP bloqueada
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
+                                                               patron=patron_temp, item=item, itemlist=[], 
+                                                               check_blocked_IP=True)
+    if not data or response.code in [999, 99]:                                  # Si ERROR o lista de errores lo reintentamos con otro Host
+        return itemlist                                                         # ... Salimos
 
     #Capturamos las temporadas de episodios dentro de la serie
-    patron_temp = '<ul class="list-group eplist" id="eps_(\d+)">(.*?)<\/ul><\/div><\/div><\/div>'
     temp_serie = re.compile(patron_temp, re.DOTALL).findall(data)
     
     #logger.debug("PATRON: " + patron)
@@ -965,17 +871,12 @@ def episodios(item):
     #logger.debug(data)
     
     if not temp_serie:                                                          #error
-        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
-        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
-            item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
-            return itemlist                                                     #Salimos
-        
         logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " 
                         + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + 
                         ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  ' 
                         + 'Reportar el error con el log'))
-        return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        return itemlist                                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     for season_num, temporada in temp_serie:
         
@@ -984,6 +885,10 @@ def episodios(item):
         patron += '<i[^>]+>\s*<\/i>\s*<\/a>\s*<\/div>\s*<span\s*class="smaller\s*text-muted\s*epnum">'
         patron += '\s*(\d+)\s*<\/span>(?:\s*<span[^<]+)?\s*<(?:a|span)\s*class="[^"]*pad-r2"[^>]*>\s*([^<]*)<'
         matches = re.compile(patron, re.DOTALL).findall(temporada)
+        if not matches:                                                             #error
+            logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+            return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         #logger.debug("PATRON: " + patron)
         #logger.debug(matches)
@@ -996,9 +901,9 @@ def episodios(item):
         else:
             num_temporadas_flag = False
 
-        if modo_ultima_temp_alt and item.library_playcounts:    #Si solo se actualiza la última temporada de Videoteca
+        if modo_ultima_temp_alt and item.library_playcounts:                    #Si solo se actualiza la última temporada de Videoteca
             if int(season_num) < max_temp:
-                break                                           #Sale del bucle actual del FOR
+                break                                                           #Sale del bucle actual del FOR
         
         # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
         for muted, epi_url, episode_num, scrapedtitle in matches:
@@ -1089,71 +994,7 @@ def episodios(item):
     #logger.debug(item)
 
     return itemlist
-    
-    
-def check_blocked_IP(data, itemlist, url, timeout=timeout):
-    logger.info()
-    thumb_separador = get_thumb("next.png")
-    
-    host = scrapertools.find_single_match(url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
-    
-    if 'Please wait while we try to verify your browser...' in data:
-        logger.error("ERROR 99: La IP ha sido bloqueada por la Web" + " / URL: " 
-                        + url + " / DATA: " + data)
-        host, data = retry_alt(url, timeout)                                    # Intentamos con otra web
-        if data:
-            return (False, itemlist, host, data)                                # Ha habido éxito
-        
-        itemlist.append(Item(channel=channel, url=host, 
-                        title="[COLOR yellow]La IP ha sido bloqueada por la Web.[/COLOR]", 
-                        folder=False, thumbnail=thumb_separador))
-        itemlist.append(Item(channel=channel, url=host, 
-                        title="[COLOR yellow]Fuerce la renovación de la IP en el Router[/COLOR]", 
-                        folder=False, thumbnail=thumb_separador))
-        from platformcode import platformtools
-        platformtools.dialog_notification("IP bloqueada", "ZOOQLE: Reiniciar ROUTER")
-    
-        return (True, itemlist, host, data)                                     # Webs bloqueadas
-    return (False, itemlist, host, data)                                        # No hay bloqueo
-    
-    
-def retry_alt(url, timeout=timeout):                                            # Reintentamos con la web alternativa
-    logger.info()
-    
-    random.shuffle(host_alt)
-    host_a = scrapertools.find_single_match(url, '(http.*\:\/\/(?:.*ww[^\.]*\.)?[^\.]+\.[^\/]+)(?:\/|\?|$)')
-    
-    logger.error("ERROR 98: Web caída, reintentando..." + " / URL: " + url)
-    config.set_setting('domain_name', host, channel)                            # Reseteamos el dominio
-    
-    for host_b in host_alt:
-        if host_b in url:
-            continue
 
-        url_final = url.replace(host_a, host_b)
-        
-        data = ''
-        try:
-            response = httptools.downloadpage(url_final, timeout=timeout, count_retries_tot=1, ignore_response_code=True)
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-            if not PY3:
-                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
-        except:
-            pass
-            
-        if response.sucess and not 'Please wait while we try to verify your browser...' in data:
-            break
-        logger.error("ERROR 98: Web caída, reintentando..." + " / URL: " + host_b)
-    
-    else:
-        logger.error("ERROR 97: Webs caídas, ninguna Web alternativa encontrada")
-        return (host_a, '')
-
-    logger.error("ERROR 96: Web caída encontrada" + " / URL: " + host_b)
-    config.set_setting('domain_name', host_b, channel)                          # Cambiamos el dominio por defecto
-    
-    return (host_b, data)
-    
     
 def actualizar_titulos(item):
     logger.info()
@@ -1168,8 +1009,6 @@ def actualizar_titulos(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    
-    host = config.get_setting('domain_name', channel)
     
     try:
         item.url = host + 'search?q=%s' % texto
@@ -1190,9 +1029,7 @@ def newest(categoria):
     logger.info()
     itemlist = []
     item = Item()
-    
-    host = config.get_setting('domain_name', channel)
-    
+
     item.title = "newest"
     item.category_new = "newest"
     item.channel = channel

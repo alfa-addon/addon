@@ -30,6 +30,7 @@ canonical = {
              'host': config.get_setting("current_host", 'seriesflv', default=''), 
              'host_alt': ["https://seriesflv.xyz/"], 
              'host_black_list': [], 
+             'status': 'WEB INACTIVA???', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

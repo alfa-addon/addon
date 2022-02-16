@@ -70,33 +70,36 @@ def downloadpage(url, **kwargs):
     ERROR_02 = '%s: Ha cambiado la estructura de la Web. Reportar el error con el log: ' % funcion.upper()
     
     # Kwags locales que no pasan a Httptools
-    domain_name = kwargs.get('domain_name', '')
-    if kwargs.get('domain_name', ''): del kwargs['domain_name']
-    kwargs['encoding'] = kwargs.get('decode_code', '')
-    decode_code = kwargs['encoding']
-    if kwargs.get('decode_code', ''): del kwargs['decode_code']
-    soup = kwargs.get('soup', None)
-    json = kwargs.get('json', False)
-    if kwargs.get('json', ''): del kwargs['json']
-    s2 = kwargs.get('s2', None)
-    if kwargs.get('s2', ''): del kwargs['s2']
-    patron = kwargs.get('patron', '')
-    if kwargs.get('patron', ''): del kwargs['patron']
-    quote_rep = kwargs.get('quote_rep', False)
-    if kwargs.get('quote_rep', ''): del kwargs['quote_rep']
-    no_comments = kwargs.get('no_comments', True)
-    if kwargs.get('no_comments', ''): del kwargs['no_comments']
-    item = kwargs.get('item', {})
+    domain_name = kwargs.pop('domain_name', '')
+    if kwargs.get('decode_code', ''): kwargs['encoding'] = kwargs.get('decode_code', '')
+    decode_code = kwargs.pop('decode_code', '')
+    s2 = kwargs.pop('s2', None)
+    patron = kwargs.pop('patron', '')
+    quote_rep = kwargs.pop('quote_rep', True)
+    no_comments = kwargs.pop('no_comments', True)
+    item = kwargs.pop('item', {})
     if not item: item = Item()
-    if kwargs.get('item', ''): del kwargs['item']
-    itemlist = kwargs.get('itemlist', [])
-    if kwargs.get('itemlist', ''): del kwargs['itemlist']
+    itemlist = kwargs.pop('itemlist', [])
+    json = kwargs.pop('json', False)
+    
+    soup = kwargs.get('soup', None)
+    retry_alt_status = kwargs.get('retry_alt', True)
+    if 'retry_alt' not in str(kwargs): kwargs['retry_alt'] = True
+    check_blocked_IP_status = kwargs.get('check_blocked_IP', False)
+    
+    # Valores que usamos por defecto que pasan a Kwargs
+    if not 'ignore_response_code' in str(kwargs):
+        kwargs['ignore_response_code'] = True
+    if kwargs.get('timeout', None) and kwargs['timeout'] < 20 and httptools.channel_proxy_list(url):    # Si usa proxy, triplicamos el timeout
+        kwargs['timeout'] *= 3
 
+    # Variables locales
     if s2 is None and funcion == 'findvideos':                                  # Si es "findvideos" no sustituye los \s{2,}
         s2 = False                                                              # para no corromper las contraseñas de los .RAR
     elif s2 is None:
         s2 = True
     data = ''
+    status = False
     host_old = kwargs.get('canonical', {}).get('host', '')
     response = {
                 'data': data, 
@@ -104,16 +107,23 @@ def downloadpage(url, **kwargs):
                 'code': 999
                }
     response = type('HTTPResponse', (), response)
+    
+    # Si la url tiene un formato desconocido, devolvemos el error
     if not isinstance(url, (str, unicode, bytes)):
         logger.error('Formato de url incompatible: %s (%s)' % (str(url), str(type(url))))
         return (data, response, item, itemlist)
 
-    if kwargs.get('timeout', None) and kwargs['timeout'] < 20 and httptools.channel_proxy_list(url):    # Si usa proxy, triplicamos el timeout
-        kwargs['timeout'] *= 3
-
+    # Descargamos la página y procesamos el resultado
     try:
         response = httptools.downloadpage(url, **kwargs)
         if response:
+            if check_blocked_IP_status and not status and response.data:
+                status, itemlist = check_blocked_IP(response.data, itemlist, url, kwargs.get('canonical', {}))
+            if status:
+                response.sucess = False
+                response.code = 99
+                return (data, response, item, itemlist)
+            
             if json and response.json:
                 data = response.json
             elif soup and response.soup:
@@ -125,6 +135,7 @@ def downloadpage(url, **kwargs):
             if response.sucess and kwargs.get('only_headers', False):
                 data = response.headers
                 return (data, response, item, itemlist)
+
             if response.sucess and 'Content-Type' in response.headers and not 'text/html' \
                                 in response.headers['Content-Type'] and not 'json' \
                                 in response.headers['Content-Type'] and not 'xml' \
@@ -140,7 +151,7 @@ def downloadpage(url, **kwargs):
                                     json=json, soup=soup)                       # Conversión js2py
             
             if not json and not soup:
-                data = re.sub(r"\n|\r|\t", "", data).replace("'", '"')          # Reemplaza caracteres innecesarios
+                data = re.sub(r"\n|\r|\t", "", data)                            # Reemplaza caracteres innecesarios
                 if quote_rep:
                     data = data.replace("'", '"')                               # Reemplaza ' por "
                 if s2:
@@ -203,7 +214,8 @@ def change_host_newpct1(host, host_old):
         
         if settings['id'] == "intervenidos_channels_list":                      # Encontramos el setting
             settings['default'] = settings.get('default', '').replace(host_old, host)   # Cambiar lista de clones intervenidos
-            settings['default'] += label                                        # Añadimos redirección de host_old o host_canonical
+            if label not in settings['default']:
+                settings['default'] += label                                    # Añadimos redirección de host_old o host_canonical
             update = True
             
     if update:
@@ -264,7 +276,7 @@ def convert_url_base64(url, host='', rep_blanks=True):
 
 def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=None, headers=None, 
                      json=False, soup=False, timeout=10, follow_redirects=True, proxy_retries=1,
-                     ignore_response_code=False):
+                     ignore_response_code=False, canonical={}):
     from core import httptools
     
     if PY3 and isinstance(data, bytes):
@@ -278,7 +290,6 @@ def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=N
     # Obtiene nombre del dominio para la cookie
     if not domain_name:
         domain_name = scrapertools.find_single_match(url, patron_domain)
-    logger.info(domain_name)
 
     # Obtiene nombre del canal que hace la llamada para marcarlo en su settings.xml
     if not channel and channel is not None:
@@ -348,7 +359,8 @@ def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=N
     data_new = ''
     response = httptools.downloadpage(url, soup=soup, ignore_response_code=ignore_response_code, 
                                       timeout=timeout, headers=headers, referer=referer, post=post, 
-                                      follow_redirects=follow_redirects, proxy_retries=proxy_retries)
+                                      follow_redirects=follow_redirects, proxy_retries=proxy_retries, 
+                                      canonical=canonical)
     if json and response.json:
         data_new = response.json
     elif soup and response.soup:
@@ -359,6 +371,30 @@ def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=N
         data = data_new
     
     return data
+
+
+def check_blocked_IP(data, itemlist, url, canonical={}, verbose=True):
+    logger.info()
+    thumb_separador = get_thumb("next.png")
+    channel = canonical.get('channel', '')
+    
+    host = scrapertools.find_single_match(url, patron_host)
+    
+    if 'Please wait while we try to verify your browser...' in data:
+        logger.error('ERROR 99: La IP ha sido bloqueada por la Web "%s" / DATA: %s' % (host, data[:2500]))
+        
+        itemlist.append(Item(channel=channel, url=host, 
+                        title="[COLOR yellow]La IP ha sido bloqueada por la Web.[/COLOR]", 
+                        folder=False, thumbnail=thumb_separador))
+        itemlist.append(Item(channel=channel, url=host, 
+                        title="[COLOR yellow]Fuerce la renovación de la IP en el Router[/COLOR]", 
+                        folder=False, thumbnail=thumb_separador))
+        if verbose:
+            from platformcode.platformtools import dialog_notification
+            dialog_notification("IP bloqueada", "%s: Reiniciar ROUTER" % channel.upper())
+        return (True, itemlist)                                                 # Web bloqueada
+    
+    return (False, itemlist)                                                    # No hay bloqueo
 
 
 def update_title(item):
@@ -1724,7 +1760,7 @@ def post_tmdb_findvideos(item, itemlist):
     if item.video_path and check_marks_in_videolibray(item):
         playcount = 1
     
-    if not config.get_setting("pseudo_titulos", item.channel, default=False) or item.downloadFilename:
+    if (not config.get_setting("pseudo_titulos", item.channel, default=False) and item.channel != 'url') or item.downloadFilename:
         if playcount:
             item.infoLabels["playcount"] = 1
         return (item, itemlist)
@@ -1902,7 +1938,7 @@ def post_tmdb_findvideos(item, itemlist):
         if item.contentType == 'episode': contentType = 'Episodio'
         itemlist.append(item.clone(title="-Descargar %s-" % contentType, channel="downloads", server='torrent', 
                         action="save_download", from_channel=item.channel, from_action='play', folder=False))
-        if item.contentType == 'episode':
+        if item.contentType == 'episode' and not item.channel_recovery:
             itemlist.append(item.clone(title="-Descargar Epis NO Vistos-", channel="downloads", contentType="tvshow", 
                         action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
                         sub_action="unseen"))
@@ -2085,13 +2121,13 @@ def find_rar_password(item):
     
     # Si no hay, buscamos en páginas alternativas
     rar_search = [
-                 ['1', 'https://atomixhq.net/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                 ['1', 'https://atomixhq.art', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
                  ['2', 'https://www.grantorrent.ch/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
                                 ['-temporada', '/temporada'], ['^((?!serie).)*$', 'None'], \
                                 ['.net\/', '.net/descargar/peliculas-castellano/'], ['\/$', '/blurayrip-ac3-5-1/']]], 
-                 ['2', 'https://www.mejortorrentes.net/', [[]], [['^((?!temporada).)*$', 'None'], \
+                 ['2', 'https://www.mejortorrentes.org/', [[]], [['^((?!temporada).)*$', 'None'], \
                                 ['.net\/', '.net/descargar/peliculas-castellano/'], ['-microhd-1080p\/$', '']]]
     ]
     

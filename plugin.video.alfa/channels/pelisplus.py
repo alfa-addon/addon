@@ -41,7 +41,14 @@ list_servers = [
     'mystream'
     ]
 
-host = 'https://pelisplushd.net/'
+canonical = {
+             'channel': 'pelisplushd', 
+             'host': config.get_setting("current_host", 'pelisplushd', default=''), 
+             'host_alt': ["https://pelisplushd.net/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -101,9 +108,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -236,7 +243,7 @@ def findvideos(item):
     itemlist = list()
 
 
-    data = httptools.downloadpage(item.url, forced_proxy_opt='ProxyCF')
+    data = httptools.downloadpage(item.url, forced_proxy_opt='ProxyCF', canonical=canonical)
 
     if data.sucess or data.code == 302:
         data = data.data

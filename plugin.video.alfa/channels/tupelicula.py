@@ -19,20 +19,28 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'http://www.tupelicula.tv/'
-
 IDIOMAS = {'la_la': 'LAT', 'es_es':'CAST', 'en_es':'VOSE', 'en_en':'VO'}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['xdrive', 'bitertv', 'okru']
 
+canonical = {
+             'channel': 'tupelicula', 
+             'host': config.get_setting("current_host", 'tupelicula', default=''), 
+             'host_alt': ["http://www.tupelicula.tv/"], 
+             'host_black_list': [], 
+             'pattern': '<div\s*id="logo">\s*<a\s*href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def get_source(url, referer=None):
     logger.info()
     if referer is None:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 

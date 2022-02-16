@@ -17,12 +17,22 @@ from channels import filtertools
 from channelselector import get_thumb
 import codecs
 
-host = 'https://salyn-pm.blogspot.com'
 
 list_language = []
 list_servers = ['Amazon', 'Mega', 'Gvideo']
 list_quality = []
-__channel__='salynpm'
+
+canonical = {
+             'channel': 'salynpm', 
+             'host': config.get_setting("current_host", 'salynpm', default=''), 
+             'host_alt': ["https://salyn-pm.blogspot.com/"], 
+             'host_black_list': [], 
+             'status': 'WEB INACTIVA???', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+__channel__ = canonical['channel']
+
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', __channel__)
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', __channel__)
 try:
@@ -36,8 +46,8 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(item.clone(title="Películas" , action="lista", url=host + "/search/label/Pel%C3%ADcula?&max-results=24"))
-    itemlist.append(item.clone(title="Géneros" , action="generos", url=host + "/p/categorias.html"))
+    itemlist.append(item.clone(title="Películas" , action="lista", url=host + "search/label/Pel%C3%ADcula?&max-results=24"))
+    itemlist.append(item.clone(title="Géneros" , action="generos", url=host + "p/categorias.html"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     
     itemlist.append(item.clone(title="Configurar canal...", text_color="gold", action="configuracion", thumbnail=get_thumb('setting_0.png')))
@@ -54,7 +64,7 @@ def configuracion(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/search?q=%s" % texto
+    item.url = host + "search?q=%s" % texto
     try:
         return lista(item)
     except:
@@ -81,7 +91,7 @@ def generos(item):
 
 def create_soup(url):
     logger.info()
-    data = httptools.downloadpage(url, ignore_response_code=True).data
+    data = httptools.downloadpage(url, ignore_response_code=True, canonical=canonical).data
     if "document.write" in data:
         data =  scrapertools.find_single_match(data, r"document\.write\('([^']+)'")
         data = codecs.decode(data.replace("\u000D", "\n"), "unicode_escape")

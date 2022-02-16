@@ -26,11 +26,19 @@ from channels import renumbertools
 from platformcode import platformtools
 
 
-host = "https://monoschinos2.com/"
+canonical = {
+             'channel': 'tvanime', 
+             'host': config.get_setting("current_host", 'tvanime', default=''), 
+             'host_alt': ["https://monoschinos2.com/"], 
+             'host_black_list': [], 
+             'pattern': '<meta\s*property="og:url"\s*content="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 IDIOMAS = {'VOSE': 'VOSE', 'Latino': 'LAT', 'Castellano': 'CAST'}
 
-epsxfolder = config.get_setting('epsxfolder', 'tvanime')
+epsxfolder = config.get_setting('epsxfolder', canonical['channel'])
 list_epsxf = {0: None, 1: 25, 2: 50, 3: 100}
 list_language = list(IDIOMAS.values())
 list_quality = []
@@ -128,9 +136,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

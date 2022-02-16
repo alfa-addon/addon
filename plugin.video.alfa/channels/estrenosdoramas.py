@@ -25,7 +25,9 @@ import ast
 import time
 import base64
 
-host = 'https://www.estrenosdoramas.net/'
+import requests
+import re
+import struct
 
 IDIOMAS = {'Latino': 'LAT', 'Vo':'VO', 'Vose': 'VOSE'}
 IDIOMA = "no filtrar"
@@ -33,16 +35,20 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['openload', 'streamango', 'netutv', 'okru', 'mp4upload']
 
+canonical = {
+             'channel': 'estrenosdoramas', 
+             'host': config.get_setting("current_host", 'estrenosdoramas', default=''), 
+             'host_alt': ["https://www23.estrenosdoramas.net/"], 
+             'host_black_list': [], 
+             'pattern': '<link\s*rel="shortcut\s*icon"\s*href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 source_headers = dict()
 source_headers["Content-Type"] = "application/x-www-form-urlencoded; charset=UTF-8"
 source_headers["X-Requested-With"] = "XMLHttpRequest"
 source_headers["Origin"] = "https://repro3.estrenosdoramas.us"
-
-
-import requests
-import re
-import struct
-
 
 PATRON_REGEX = "\('([^']+)','([^\']?(?:\\.|[^\'])*)','([^\']?(?:\\.|[^\'])*)','([^\']?(?:\\.|[^\'])*)'"
 PLAYER_SRC = 'test'
@@ -150,9 +156,9 @@ def decodeone(w):
 def get_source(url, referer=None):
     logger.info()
     if referer is None:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 

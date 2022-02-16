@@ -8,7 +8,6 @@ import re
 import time
 
 from channelselector import get_thumb
-from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -37,8 +36,9 @@ channel = canonical['channel']
 categoria = channel.capitalize()
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
+patron_sufix = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+(\.\w+)(?:\/|\?|$)'
 host_torrent = host[:-1]
-sufix = '.li/'
+sufix = scrapertools.find_single_match(host, patron_sufix)
 
 color1, color2, color3 = ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
@@ -722,6 +722,7 @@ def play(item):                                                                 
     headers = []
     import os
     from core import downloadtools
+    from core import httptools
     
     if item.subtitle:                                                           #Si hay urls de sub-títulos, se descargan
         headers.append(["User-Agent", httptools.random_useragent()])            #Se busca un User-Agent aleatorio

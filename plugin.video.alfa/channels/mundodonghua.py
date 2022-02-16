@@ -25,8 +25,18 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['directo', 'dailymotion']
 
-host = "https://www.mundodonghua.com/"
+canonical = {
+             'channel': 'mundodonghua', 
+             'host': config.get_setting("current_host", 'mundodonghua', default=''), 
+             'host_alt': ["https://www.mundodonghua.com/"], 
+             'host_black_list': [], 
+             'pattern': '<meta\s*property="og:image"\s*content="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
 sort_views = True
+
 
 def mainlist(item):
     logger.info()
@@ -63,7 +73,7 @@ def mainlist(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
 
-    data = httptools.downloadpage(url, headers={'Referer':referer}).data
+    data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     
     if unescape:
         data = scrapertools.unescape(data)
@@ -223,7 +233,7 @@ def findvideos(item):
 
     itemlist = list()
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     #logger.error(data)
     matches = scrapertools.find_multiple_matches(data, "(eval.*?)\n")
     if len(matches) > 1:

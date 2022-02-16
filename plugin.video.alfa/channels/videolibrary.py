@@ -249,7 +249,11 @@ def list_tvshows(item):
                                          library_urls=item_tvshow.library_urls,
                                          infoLabels={'title': item_tvshow.contentTitle})
                         if canal not in dead_list and canal not in zombie_list and not item_tvshow.zombie:
-                            confirm = platformtools.dialog_yesno('Videoteca',
+                            if item_tvshow.emergency_urls.get(canal, False):
+                                confirm = False
+                                item_tvshow.active = 0
+                            else:
+                                confirm = platformtools.dialog_yesno('Videoteca',
                                                                  'Parece que el canal [COLOR red]{}[/COLOR] ya no existe.'.format(canal.upper()),
                                                                  '¿Deseas eliminar los enlaces de este canal?')
 
@@ -607,7 +611,6 @@ def findvideos(item):
         if item_local:
             opciones.append(item_local.title)
 
-        from platformcode import platformtools
         index = platformtools.dialog_select(config.get_localized_string(30163), opciones)
         if index < 0:
             return []
@@ -634,13 +637,26 @@ def findvideos(item):
         nom_canal = item_canal.channel
             
         # Importamos el canal de la parte seleccionada
-        try:
-            channel = __import__('channels.%s' % nom_canal, fromlist=["channels.%s" % nom_canal])
-        except ImportError:
-            exec("import channels." + nom_canal + " as channel")
+        channel = None
+        for nom_canal in [nom_canal, 'url']:
+            try:
+                channel = __import__('channels.%s' % nom_canal, fromlist=["channels.%s" % nom_canal])
+            except ImportError:
+                try:
+                    exec("import channels." + nom_canal + " as channel")
+                except:
+                    pass
+            if channel: 
+                break
 
         item_json = Item().fromjson(filetools.read(json_path))
         item_json.nfo = item.nfo
+        
+        if nom_canal == 'url' and not item_json.emergency_urls:
+            platformtools.dialog_notification(item_canal.action.capitalize(), 'Canal %s no existe' % item_canal.channel.upper())
+            return []
+        if nom_canal == 'url' and item_json.emergency_urls:
+            item_canal.channel = nom_canal
 
         # Obtener la información actualizada del vídeo.  En una segunda lectura de TMDB da más información que en la primera
         try:
@@ -684,7 +700,6 @@ def findvideos(item):
                 list_servers = getattr(channel, 'findvideos')(item_json)
                 list_servers = servertools.filter_servers(list_servers)
             elif item_json.action == 'play':
-                from platformcode import platformtools
                 autoplay.set_status(True)
                 item_json.contentChannel = item_json.channel
                 item_json.channel = "videolibrary"

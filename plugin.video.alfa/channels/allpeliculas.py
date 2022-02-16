@@ -14,7 +14,7 @@ from core import httptools
 from core import servertools
 from core import scrapertools
 from core import tmdb
-from platformcode import logger
+from platformcode import logger, config
 from channelselector import get_thumb
 from bs4 import BeautifulSoup
 from channels import filtertools
@@ -27,7 +27,15 @@ list_language = ["LAT"]
 list_quality = []
 list_servers = ["streampe", "fembed", "jawcloud"]
 
-host = "https://allpeliculas.ac/"
+canonical = {
+             'channel': 'allpeliculas', 
+             'host': config.get_setting("current_host", 'allpeliculas', default=''), 
+             'host_alt': ["https://allpeliculas.ac/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 forced_proxy_opt = 'ProxyDirect'
 this_year = datetime.date.today().year
 
@@ -36,9 +44,9 @@ def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt).data
+        data = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

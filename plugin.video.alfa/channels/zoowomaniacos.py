@@ -34,6 +34,7 @@ canonical = {
              'host': config.get_setting("current_host", 'zoowomaniacos', default=''), 
              'host_alt': ["https://zoowomaniacos.org/"], 
              'host_black_list': [], 
+             'status': 'SIN CANANICAL NI DOMINIO',
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

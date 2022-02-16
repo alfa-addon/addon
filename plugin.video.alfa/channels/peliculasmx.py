@@ -16,9 +16,19 @@ from core import httptools
 from core import tmdb
 from core.item import Item
 
-from platformcode import logger
+from platformcode import logger, config
 
-host = "https://www.peliculasmx.net"
+canonical = {
+             'channel': 'peliculasmx', 
+             'host': config.get_setting("current_host", 'peliculasmx', default=''), 
+             'host_alt': ["https://www.peliculasmx.net/"], 
+             'host_black_list': [], 
+             'status': 'SIN CANONICAL NI DOMINIO', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
+
 
 def mainlist(item):
     logger.info()
@@ -38,11 +48,11 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas','latino']:
-            item.url = host + '/estrenos/'
+            item.url = host + 'estrenos/'
         elif categoria == 'infantiles':
-            item.url = host + '/category/animacion/'
+            item.url = host + 'category/animacion/'
         elif categoria == 'terror':
-            item.url = host + '/category/terror/'
+            item.url = host + 'category/terror/'
         itemlist = peliculas(item)
         if "Pagina" in itemlist[-1].title:
             itemlist.pop()
@@ -58,7 +68,7 @@ def newest(categoria):
 def generos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<li class="cat-item cat-item-.*?'
     patron += '<a href="([^"]+)".*?'
     patron += '>([^<]+).*?'
@@ -82,7 +92,7 @@ def peliculas(item):
     itemlist = []
 
     # Descarga la página
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<div id="mt-.*?'
     patron += '<a href="([^"]+)".*?'
     patron += '<img src="([^"]+)".*?'
@@ -119,7 +129,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     try:
         # Series
-        item.url = host + "/?s=%s" % texto
+        item.url = host + "?s=%s" % texto
         itemlist.extend(peliculas(item))
         itemlist = sorted(itemlist, key=lambda Item: Item.title)
 

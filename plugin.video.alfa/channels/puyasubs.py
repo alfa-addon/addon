@@ -19,8 +19,18 @@ from core.item import Item
 from megaserver import Client
 from platformcode import config, logger, platformtools
 
-__modo_grafico__ = config.get_setting('modo_grafico', 'puyasubs')
-__perfil__ = config.get_setting('perfil', "puyasubs")
+canonical = {
+             'channel': 'puyasubs', 
+             'host': config.get_setting("current_host", 'puyasubs', default=''), 
+             'host_alt': ["https://puya.moe/"], 
+             'host_black_list': [], 
+             'pattern': '<link\s*rel="[^>]*alternate"[^>]+href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
+__modo_grafico__ = config.get_setting('modo_grafico', canonical['channel'])
+__perfil__ = config.get_setting('perfil', canonical['channel'])
 
 # Fijar perfil de color            
 perfil = [['0xFFFFE6CC', '0xFFFFCE9C', '0xFF994D00', '0xFFFE2E2E', '0xFFFFD700'],
@@ -31,31 +41,29 @@ if __perfil__ < 3:
 else:
     color1 = color2 = color3 = color4 = color5 = ""
 
-host = "https://puya.moe"
-
 
 def mainlist(item):
     logger.info()
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="listado", title="Novedades Anime", thumbnail=item.thumbnail,
-                         url= host + "/?cat=4", text_color=color1))
+                         url= host + "?cat=4", text_color=color1))
     itemlist.append(Item(channel=item.channel, action="listado", title="Novedades Doramas", thumbnail=item.thumbnail,
-                         url= host + "/?cat=142", text_color=color1))
+                         url= host + "?cat=142", text_color=color1))
     itemlist.append(Item(channel=item.channel, action="", title="Descargas", text_color=color2))
     itemlist.append(Item(channel=item.channel, action="descargas", title="   Descargas Animes y Doramas en proceso",
-                         thumbnail=item.thumbnail, url= host + "/?page_id=25501", text_color=color1))
+                         thumbnail=item.thumbnail, url= host + "?page_id=25501", text_color=color1))
     itemlist.append(Item(channel=item.channel, action="descargas", title="   Descargas Animes Finalizados",
-                         thumbnail=item.thumbnail, url= host + "/?page_id=15388", text_color=color1))
+                         thumbnail=item.thumbnail, url= host + "?page_id=15388", text_color=color1))
     itemlist.append(Item(channel=item.channel, action="letra", title="   Descargas Animes Finalizados por Letra",
-                         thumbnail=item.thumbnail, url= host + "/?page_id=15388", text_color=color1))
+                         thumbnail=item.thumbnail, url= host + "?page_id=15388", text_color=color1))
     itemlist.append(Item(channel=item.channel, action="descargas", title="   Descargas Doramas Finalizados",
-                         thumbnail=item.thumbnail, url= host + "/?page_id=25507", text_color=color1))
+                         thumbnail=item.thumbnail, url= host + "?page_id=25507", text_color=color1))
     itemlist.append(Item(channel=item.channel, action="descargas", title="   Descargas Películas y Ovas",
-                         thumbnail=item.thumbnail, url= host + "/?page_id=25503", text_color=color1))
+                         thumbnail=item.thumbnail, url= host + "?page_id=25503", text_color=color1))
     itemlist.append(Item(channel=item.channel, action="torrents", title="Lista de Torrents", thumbnail=item.thumbnail,
                          url="https://www.frozen-layer.com/buscar/descargas", text_color=color1))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar anime/dorama/película",
-                         thumbnail=item.thumbnail, url= host + "/?s=", text_color=color3))
+                         thumbnail=item.thumbnail, url= host + "?s=", text_color=color3))
     itemlist.append(item.clone(title="Configurar canal", action="configuracion", text_color=color5, folder=False))
     return itemlist
 
@@ -82,7 +90,7 @@ def search(item, texto):
 def listado(item):
     logger.info()
     itemlist = list()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     bloques = scrapertools.find_multiple_matches(data, '<h2 class="entry-title">(.*?)</article>')
     patron = 'href="([^"]+)".*?>(.*?)</a>.*?(?:<span class="bl_categ">(.*?)|</span>)</footer>'
     for bloque in bloques:
@@ -118,9 +126,9 @@ def descargas(item):
     itemlist = list()
     if not item.pagina:
         item.pagina = 0
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = data.replace("/puya.se/", "/puya.si/").replace("/puya.si/", "/puya.moe/")
-    patron = '<li><a href="(%s/\?page_id=\d+|http://safelinking.net/[0-9A-z]+)">(.*?)</a>' % host
+    patron = '<li><a href="(%s?page_id=\d+|http://safelinking.net/[0-9A-z]+)">(.*?)</a>' % host
     if item.letra:
         bloque = scrapertools.find_single_match(data,
                                                 '<li>(?:<strong>|)' + item.letra + '(?:</strong>|)</li>(.*?)</ol>')
@@ -157,7 +165,7 @@ def descargas(item):
 def letra(item):
     logger.info()
     itemlist = list()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<li>(?:<strong>|)([A-z#]{1})(?:</strong>|)</li>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for match in matches:
@@ -171,8 +179,8 @@ def torrents(item):
     itemlist = list()
     if not item.pagina:
         item.pagina = 0
-    post = "utf8=%E2%9C%93&busqueda=puyasubs&search=Buscar&tab=anime&con_seeds=con_seeds"
-    data = httptools.downloadpage(item.url, post=post).data
+    post = "utf8=%E2%9C%93&busqueda=%s&search=Buscar&tab=anime&con_seeds=con_seeds" % canonical['channel']
+    data = httptools.downloadpage(item.url, post=post, canonical=canonical).data
     patron = "<td>.*?href='([^']+)' title='descargar torrent'>.*?title='informacion de (.*?)'.*?<td class='fecha'>.*?<td>(.*?)</td>" \
              ".*?<span class=\"stats\d+\">(\d+)</span>.*?<span class=\"stats\d+\">(\d+)</span>"
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -205,7 +213,7 @@ def torrents(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data2 = data.replace("\n","")
     idiomas = scrapertools.find_single_match(data, 'Subtitulo:\s*(.*?) \[')
     idiomas = idiomas.replace("Español Latino", "Latino").replace("Español España", "Castellano")
@@ -240,7 +248,7 @@ def findvideos(item):
                 except:
                     pass
             itemlist.append(item.clone(title=title, action="play", url=enlace, server="onefichier"))
-    puyaenc = scrapertools.find_multiple_matches(data, '<a href="(%s/enc/[^"]+)"' % host)
+    puyaenc = scrapertools.find_multiple_matches(data, '<a href="(%senc/[^"]+)"' % host)
     if puyaenc:
         import base64, os, jscrypto
         action = "play"
@@ -319,7 +327,7 @@ def carpeta(item):
     logger.info()
     itemlist = list()
     if item.server == "onefichier":
-        data = httptools.downloadpage(item.url).data
+        data = httptools.downloadpage(item.url, canonical=canonical).data
         patron = '<tr>.*?<a href="([^"]+)".*?>(.*?)</a>.*?<td class="normal">(.*?)</td>'
         matches = scrapertools.find_multiple_matches(data, patron)
         for scrapedurl, scrapedtitle, size in matches:
@@ -328,7 +336,7 @@ def carpeta(item):
                                  server="onefichier", text_color=color1, thumbnail=item.thumbnail,
                                  infoLabels=item.infoLabels))
     elif item.server == "gvideo":
-        data = httptools.downloadpage(item.url, headers={"Referer": item.url}).data
+        data = httptools.downloadpage(item.url, headers={"Referer": item.url}, canonical=canonical).data
         patron = "'_DRIVE_ivd'] = '(.*?)'"
         matches = scrapertools.find_single_match(data, patron)
         if PY3:
@@ -399,7 +407,7 @@ def newest(categoria):
     logger.info()
     item = Item()
     try:
-        item.url = host + "/?cat=4"
+        item.url = host + "?cat=4"
         item.extra = "novedades"
         itemlist = listado(item)
 

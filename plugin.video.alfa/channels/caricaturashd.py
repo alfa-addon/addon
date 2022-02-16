@@ -32,7 +32,14 @@ list_servers = [
     'upstream'
     ]
 
-host = 'https://caricaturashd.net/'
+canonical = {
+             'channel': 'caricaturashd', 
+             'host': config.get_setting("current_host", 'caricaturashd', default=''), 
+             'host_alt': ["https://caricaturashd.net/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -75,9 +82,9 @@ def create_soup(url, post=None, unescape=False):
     logger.info()
 
     if post:
-        data = httptools.downloadpage(url, post=post, add_referer=True).data
+        data = httptools.downloadpage(url, post=post, add_referer=True, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

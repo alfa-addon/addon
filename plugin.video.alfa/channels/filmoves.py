@@ -32,7 +32,14 @@ list_servers = [
     'mixdrop'
     ]
 
-host = 'https://filmoves.com/'
+canonical = {
+             'channel': 'filmoves', 
+             'host': config.get_setting("current_host", 'filmoves', default=''), 
+             'host_alt': ["https://filmoves.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -64,9 +71,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -210,7 +217,7 @@ def findvideos(item):
 
     itemlist = list()
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     matches = re.compile("(?i)video\[(\d+)\]\s+?=\s+?'.*?src=\"([^\"]+)\"", re.DOTALL).findall(data)
 
     if not matches:
@@ -267,7 +274,7 @@ def search_results(item):
     logger.info()
 
     itemlist = list()
-    data = httptools.downloadpage(item.url, headers={"x-requested-with": "XMLHttpRequest"}, add_referer=True).json
+    data = httptools.downloadpage(item.url, headers={"x-requested-with": "XMLHttpRequest"}, add_referer=True, canonical=canonical).json
 
     for mit in data["data"]["m"]:
         url = mit["slug"]

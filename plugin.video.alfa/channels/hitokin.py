@@ -27,13 +27,22 @@ from channels import autoplay
 from channels import filtertools
 from channels import renumbertools
 
-host = "https://hitokin.net/"
-
 
 IDIOMAS = {'VOSE': 'VOSE'}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['directo', 'okru', 'fembed', 'yourupload', 'rapidvideo', 'streamango']
+
+canonical = {
+             'channel': 'hitokin', 
+             'host': config.get_setting("current_host", 'hitokin', default=''), 
+             'host_alt': ["https://hitokin.net/"], 
+             'host_black_list': [], 
+             'pattern': 'rel="?canonical"?\s*href="?([^"|>]+)["|>|\s*]', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
 
 
 def mainlist(item):
@@ -96,7 +105,7 @@ def mainlist(item):
 
 def get_source(url, post=None):
     logger.info()
-    data = httptools.downloadpage(url, post=post).data
+    data = httptools.downloadpage(url, post=post, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
@@ -221,7 +230,7 @@ def episodios(item):
     logger.info()
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
 
     list_episodes = eval(scrapertools.find_single_match(data, r'var episodios = (.*?),\s'))
 

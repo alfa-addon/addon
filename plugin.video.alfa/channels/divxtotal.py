@@ -19,7 +19,6 @@ import traceback
 import base64
 
 from channelselector import get_thumb
-from core import httptools
 from core import scrapertools
 from core import tmdb
 from core.item import Item
@@ -37,8 +36,9 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'divxtotal', 
              'host': config.get_setting("current_host", 'divxtotal', default=''), 
-             'host_alt': ['https://www.divxtotal.nl/'], 
+             'host_alt': ["https://www.divxtotal.pm/", "https://www.divxtotal.nl/"], 
              'host_black_list': [], 
+             'pattern': '<li>\s*<a\s*href="([^"]+)"\s*>\S*\/a><\/li>', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

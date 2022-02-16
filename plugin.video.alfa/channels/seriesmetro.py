@@ -18,18 +18,28 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'https://seriesmetro.net/'
 unify = config.get_setting('unify')
 
 list_quality = []
 list_servers = ['cinemaupload']
 
-full_title = config.get_setting('full_title', 'seriesmetro')
+canonical = {
+             'channel': 'seriesmetro', 
+             'host': config.get_setting("current_host", 'seriesmetro', default=''), 
+             'host_alt': ["https://seriesmetro.net/"], 
+             'host_black_list': [], 
+             'pattern': '<figure\s*class="logo">\s*<a\s*href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
+full_title = config.get_setting('full_title', canonical['channel'])
+
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
 
-    data = httptools.downloadpage(url, headers=referer).data
+    data = httptools.downloadpage(url, headers=referer, canonical=canonical).data
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
     if unescape:
         data = scrapertools.unescape(data)
@@ -172,7 +182,7 @@ def section(item):
         words = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         for w in words:
             title = w
-            url = '%s/ver/letter/%s' % (host, w.replace('#', '0-9'))
+            url = '%sver/letter/%s' % (host, w.replace('#', '0-9'))
             itemlist.append(Item(channel=item.channel, title=title,
                                  url=url, action='list_all'))
 
@@ -232,7 +242,7 @@ def episodesxseason(item):
 
     while not Stop:
         post = 'action=action_pagination_ep&page={}&object={}&season={}'.format(str(n), obj, season)
-        new_data = httptools.downloadpage(item.url, post=post, add_referer=True, ignore_response_code=True)
+        new_data = httptools.downloadpage(item.url, post=post, add_referer=True, ignore_response_code=True, canonical=canonical)
         if new_data.sucess:
             new_data = new_data.data
         else:

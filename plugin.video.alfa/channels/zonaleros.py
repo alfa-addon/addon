@@ -36,7 +36,14 @@ list_servers = [
     'fembed'
     ]
 
-host = 'https://www.zona-leros.net/'
+canonical = {
+             'channel': 'zonaleros', 
+             'host': config.get_setting("current_host", 'zonaleros', default=''), 
+             'host_alt': ["https://www.zona-leros.net/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -86,9 +93,9 @@ def create_soup(url, post=None, unescape=False):
     logger.info()
 
     if post:
-        data = httptools.downloadpage(url, post=post, add_referer=True).data
+        data = httptools.downloadpage(url, post=post, add_referer=True, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -254,7 +261,7 @@ def findvideos(item):
             data = httptools.downloadpage(base_url, post=post).data
             url_list = scrapertools.find_multiple_matches(data, r'\?hs=([^"]+)')
     else:
-        data = httptools.downloadpage(item.url).data
+        data = httptools.downloadpage(item.url, canonical=canonical).data
         data = data.replace("'", '"')
         url_list = scrapertools.find_multiple_matches(data, r'\?hs=([^"]+)')
 
