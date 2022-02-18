@@ -26,9 +26,17 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = list(SERVER.values())
 
-__channel__='pelisflix'
-
-host = 'https://pelisflix.li'   #  https://peliculasflix.co   https://seriesflix.nu/     https://pelisflix.li     https://mundokaos.net
+canonical = {
+             'channel': 'pelisflix', 
+             'host': config.get_setting("current_host", 'pelisflix', default=''), 
+             'host_alt': ["https://pelisflix.li/"], 
+             'host_black_list': [], 
+             'pattern': 'rel="?canonical"?\s*href="?([^"|>]+)["|>|\s*]', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
+__channel__ = canonical['channel']
 
 
 def mainlist(item):
@@ -36,10 +44,10 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "/ver-peliculas-online-gratis/", thumbnail=get_thumb("movies", auto=True)))
+    itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "ver-peliculas-online-gratis/", thumbnail=get_thumb("movies", auto=True)))
     itemlist.append(item.clone(title="Genero" , action="categorias", url= host, thumbnail=get_thumb('genres', auto=True)))
-    itemlist.append(item.clone(title="Series", action="lista", url= host + "/ver-series-online-gratis/", thumbnail=get_thumb("tvshows", auto=True)))
-    # itemlist.append(item.clone(title="Anime", action="lista", url= host + "/category/anime/", thumbnail=get_thumb("anime", auto=True)))
+    itemlist.append(item.clone(title="Series", action="lista", url= host + "ver-series-online-gratis/", thumbnail=get_thumb("tvshows", auto=True)))
+    # itemlist.append(item.clone(title="Anime", action="lista", url= host + "category/anime/", thumbnail=get_thumb("anime", auto=True)))
 
     itemlist.append(item.clone(title="Productora" , action="categorias", url= host))
     itemlist.append(item.clone(title="Año" , action="anno"))
@@ -61,7 +69,7 @@ def search(item, texto):
     logger.info()
     try:
         texto = texto.replace(" ", "+")
-        item.url = "%s/?s=%s" % (host, texto)
+        item.url = "%s?s=%s" % (host, texto)
         if texto != "":
             return lista(item)
         else:
@@ -80,7 +88,7 @@ def anno(item):
     now = datetime.now()
     year = int(now.year)
     while year >= 1940:
-        itemlist.append(item.clone(title="%s" %year, action="lista", url= "%s/release/%s" % (host,year)))
+        itemlist.append(item.clone(title="%s" %year, action="lista", url= "%srelease/%s" % (host,year)))
         year -= 1
     return itemlist
 
@@ -98,8 +106,8 @@ def categorias(item):
         title = elem.a.text
         itemlist.append(item.clone(action="lista", url=url, title=title))
     if "Genero" in item.title:
-        itemlist.append(item.clone(action="lista", url="%s/category/dc-comics/" %host, title="DC"))
-        itemlist.append(item.clone(action="lista", url="%s/category/marvel/" %host, title="MARVEL"))
+        itemlist.append(item.clone(action="lista", url="%scategory/dc-comics/" %host, title="DC"))
+        itemlist.append(item.clone(action="lista", url="%scategory/marvel/" %host, title="MARVEL"))
     return itemlist
 
 
@@ -160,11 +168,11 @@ def alpha_list(item):
 def create_soup(url, referer=None, post=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
-    if post:
-        data = httptools.downloadpage(url, post=post).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
+    elif post:
+        data = httptools.downloadpage(url, post=post, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -289,7 +297,7 @@ def findvideos(item):
         lang= prop[0]
         server = prop[-1]
         lang = IDIOMAS.get(lang, lang)
-        url = "%s/?trembed=%s&trid=%s&trtype=%s"  %  (host,num,id, type)
+        url = "%s?trembed=%s&trid=%s&trtype=%s"  %  (host,num,id, type)
         server = SERVER.get(server, server)
 
         if not config.get_setting('unify') and not channeltools.get_channel_parameters(__channel__)['force_unify']:
@@ -328,14 +336,14 @@ def play(item):
     if "pelisflix" in item.url:
         url = create_soup(item.url).find(class_='Video').iframe['src']
         id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
-        post_url= "https://pelisflix.li/stream/r.php"
+        post_url= "%sstream/r.php" % host
         post = {'h' : id}
         url = httptools.downloadpage(post_url, post=post, follow_redirects=False).headers['location']
     else:
         url = item.url
     if "byegoto" in url:
         id = scrapertools.find_single_match(url, '=([^"]+)')
-        url = "https://pelisflix.li/byegoto/rd.php"
+        url = "%sbyegoto/rd.php" % host
         post = {'url': id}
         url = httptools.downloadpage(url, post=post).url
     if "mega1080p" in url:

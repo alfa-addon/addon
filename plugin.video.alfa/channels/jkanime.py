@@ -13,9 +13,19 @@ from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
-from platformcode import logger
+from platformcode import logger, config
 
-host = "https://jkanime.net"
+canonical = {
+             'channel': 'jkanime', 
+             'host': config.get_setting("current_host", 'jkanime', default=''), 
+             'host_alt': ["https://jkanime.net/"], 
+             'host_black_list': [], 
+             'pattern': '<meta\s*property="og:url"\s*content="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
+
 
 def mainlist(item):
     logger.info()
@@ -31,7 +41,7 @@ def mainlist(item):
 def ultimas_series(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = scrapertools.find_single_match(data, '(?is)Últimos Animes agregados</h4>.*?<div class="col-lg-4 col-md-6 col-sm-8 trending_div">')
     patron  = '(?is)data-setbg="(.+?)".*?'
     patron += '<a  href="([^"]+)".*?'
@@ -48,7 +58,7 @@ def ultimas_series(item):
 def search(item, texto):
     logger.info()
     if item.url == "":
-        item.url = host + "/buscar/%s/"
+        item.url = host + "buscar/%s/"
     texto = texto.replace(" ", "+")
     item.url = item.url % texto
     try:
@@ -64,7 +74,7 @@ def search(item, texto):
 def ultimos_episodios(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<a href="([^"]+)" class="bloqq">.+?\n.+?\n.+?<img src="([^"]+)".+?title="([^"]+)"'
     patron += '.+?\n.+?\n.+?\n.+?\n.+?h6>.+?\n.+?(\d+).+?</'            # url
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -80,7 +90,7 @@ def ultimos_episodios(item):
 def p_tipo(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     if item.list_type == "letras":
         data = scrapertools.find_single_match(data, '<div class="letras-box addmenu">(.*?)</ul>')
         patron  = 'class="letra-link" href="([^"]+)".*?'
@@ -100,7 +110,7 @@ def p_tipo(item):
 def series(item):
     logger.info()
     # Descarga la pagina
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     # Extrae las entradas
     # patron  = '<a title="([^"]+)" href="([^"]+)" rel="nofollow">.*?'
     # patron += 'src="([^"]+)".*?'
@@ -146,7 +156,7 @@ def episodios(item):
     logger.info()
     itemlist = []
     # Descarga la pagina
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     scrapedplot = scrapertools.find_single_match(data, '<meta name="description" content="([^"]+)"/>')
     scrapedthumbnail = scrapertools.find_single_match(data, '<div class="separedescrip">.*?src="([^"]+)"')
     idserie = scrapertools.find_single_match(data, "ajax/pagination_episodes/(\d+)/")
@@ -161,8 +171,8 @@ def episodios(item):
     for num_pag in range(1, paginas + 1):
         numero_pagina = str(num_pag)
         headers = {"Referer": item.url}
-        data2 = httptools.downloadpage(host + "/ajax/pagination_episodes/%s/%s/" % (idserie, numero_pagina),
-                                        headers=headers).data
+        data2 = httptools.downloadpage(host + "ajax/pagination_episodes/%s/%s/" % (idserie, numero_pagina),
+                                        headers=headers, canonical=canonical).data
         patron = '"number"\:"(\d+)","title"\:"([^"]+)"'
         matches = scrapertools.find_multiple_matches(data2, patron)
         for numero, scrapedtitle in matches:
@@ -191,16 +201,16 @@ def findvideos(item):
     itemlist = []
     aux_url = []
     serv_dict = {'jkfembed': 'https://feurl.com/v/',
-                'jk': '%s/' % host,
+                'jk': '%s' % host,
                 'jkvmixdrop': 'https://mixdrop.co/e/',
                 'jkokru': 'https://ok.ru/videoembed/'
                 }
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     list_videos = scrapertools.find_multiple_matches(data, '\'<iframe.*? src="([^"]+)"')
     list_down = scrapertools.find_multiple_matches(data, "blank\" href='(.*?)'>Descargar")
     index = 1
     for e in list_videos:
-        if e.startswith(host + "/jk") or "um.php" in e:
+        if e.startswith(host + "jk") or "um.php" in e:
             
             if "um.php?" in e:
                 headers = {"Referer": item.url}

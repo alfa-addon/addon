@@ -20,10 +20,16 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['fembed', 'streamtape', 'gvideo', 'Jawcloud']
 
+canonical = {
+             'channel': 'allcalidad', 
+             'host': config.get_setting("current_host", 'allcalidad', default=''), 
+             'host_alt': ["https://allcalidad.ac"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+__channel__ = canonical['channel']
 
-__channel__='allcalidad'
-
-host = "https://allcalidad.ac"
 forced_proxy_opt = 'ProxyDirect'
 encoding = "utf-8"
 
@@ -83,7 +89,7 @@ def search(item, texto):
 def generos_years(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding=encoding, canonical=canonical).data
     patron = '(?s)%s(.*?)<\/ul>\s*<\/div>' %item.extra
     bloque = scrapertools.find_single_match(data, patron)
     patron  = 'href="([^"]+)'
@@ -102,7 +108,7 @@ def generos_years(item):
 def peliculas(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding=encoding, canonical=canonical).data
     matches = scrapertools.find_multiple_matches(data, '(?s)shortstory cf(.*?)(?:rate_post|ratebox)')
     for datos in matches:
         url = scrapertools.find_single_match(datos, 'href="([^"]+)')
@@ -136,7 +142,7 @@ def findvideos(item):
     itemlist = []
     encontrado = []
     
-    data = httptools.downloadpage(item.url, encoding=encoding, forced_proxy_opt=forced_proxy_opt).data
+    data = httptools.downloadpage(item.url, encoding=encoding, forced_proxy_opt=forced_proxy_opt, canonical=canonical).data
     
     matches = scrapertools.find_multiple_matches(data, 'data-id="([^"]+)"')
     scrapertools.printMatches(matches)

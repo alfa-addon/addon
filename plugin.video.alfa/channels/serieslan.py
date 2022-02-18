@@ -32,16 +32,24 @@ list_language = list(IDIOMAS.values())
 list_servers = []
 list_quality = ['default']
 
+canonical = {
+             'channel': 'serieslan', 
+             'host': config.get_setting("current_host", 'serieslan', default=''), 
+             'host_alt': ["https://serieslan.com/"], 
+             'host_black_list': [], 
+             'status': 'SIN CANONICAL NI DOMINIO', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
-host = "https://serieslan.com"
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -63,12 +71,12 @@ def mainlist(item):
 
     itemlist.append(
         Item(channel=item.channel, action="letters", title="Listado alfabético",
-            url=host+"/lista.php?or=abc", thumbnail=get_thumb("alphabet", auto=True), page=0,
+            url=host+"lista.php?or=abc", thumbnail=get_thumb("alphabet", auto=True), page=0,
             plot="Tus series animadas de la infancia"))
 
     itemlist.append(
         Item(channel=item.channel, action="lista", title="Series Live Action",
-            url=host+"/liveaction", thumbnail=thumb_series, page=0, category="liveaction",
+            url=host+"liveaction", thumbnail=thumb_series, page=0, category="liveaction",
             plot="Series LiveAction de los 90s y 2000"))
     
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
@@ -95,7 +103,7 @@ def letters(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host +"/b.php"
+    item.url = host +"b.php"
     item.texto = texto
     if texto != '':
         return sub_search(item)
@@ -108,14 +116,14 @@ def sub_search(item):
     logger.info(item.url)
     post = "k=" + item.texto
     logger.info(post)
-    results = httptools.downloadpage(item.url, post=post).data#.json
+    results = httptools.downloadpage(item.url, post=post, canonical=canonical).data#.json
     results = json.loads(results)
     if not results:
         return itemlist
     for result in results["dt"]:
-        scrapedthumbnail = "{}/tb/{}.jpg".format(host,result[0])
+        scrapedthumbnail = "{}tb/{}.jpg".format(host,result[0])
         scrapedtitle = result[1]
-        scrapedurl = host + "/" + result[2]
+        scrapedurl = host + result[2]
 
         context = renumbertools.context(item)
         context2 = autoplay.context
@@ -171,7 +179,7 @@ def lista(item):
         itemlist.append(item.clone(title="[COLOR cyan]Página Siguiente >>[/COLOR]", page=f_page))
 
     elif next_page:
-        next_page = "{}/{}".format(host, next_page) 
+        next_page = "{}{}".format(host, next_page) 
         itemlist.append(
             Item(channel=item.channel, url=next_page, action="lista",
                 title="[COLOR cyan]Página Siguiente >>[/COLOR]",
@@ -196,7 +204,7 @@ def list_all(item):
             scrapedurl = elem.find("a")["href"]
             
             title = scrapedtitle.replace(" y "," & ") if " y " in scrapedtitle else scrapedtitle
-            url = host + "/" + scrapedurl
+            url = host + scrapedurl
             thumbnail = host + scrapedthumbnail
             
             context = renumbertools.context(item)
@@ -288,7 +296,7 @@ def episodios(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     _sa = scrapertools.find_single_match(data, 'var _sa = (true|false);')
     _sl = scrapertools.find_single_match(data, 'var _sl = ([^;]+);')
     sl = eval(_sl)
@@ -354,11 +362,11 @@ def golink (num, sa, sl):
     #for i in range(len(b)):
     #    d += sl[2][b[i]+num:b[i]+num+1]
 
-    SVR = "https://viteca.stream" if sa == 'true' else "http://serieslan.com"
+    SVR = "https://viteca.stream/" if sa == 'true' else host
     TT = "/" + urllib.quote_plus(sl[3].replace("/", "><")) if num == 0 else ""
     url_end = link(num,sl)
-    #return SVR + "/el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + d + TT
-    return SVR + "/el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + url_end + TT
+    #return SVR + "el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + d + TT
+    return SVR + "el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + url_end + TT
 
 def link(ida,sl):
     a=ida

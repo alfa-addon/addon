@@ -28,6 +28,7 @@ canonical = {
              'host': config.get_setting("current_host", 'cuevana2espanol', default=''), 
              'host_alt': ["https://cuevana2espanol.com/"], 
              'host_black_list': [], 
+             'pattern': '<link\s*rel="alternate"\s*type="[^"]+"\s*title="[^"]+"\s*href="([^"]+)"', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

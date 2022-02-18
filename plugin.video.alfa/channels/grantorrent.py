@@ -18,7 +18,6 @@ import time
 import traceback
 
 from channelselector import get_thumb
-from core import httptools
 from core import scrapertools
 from core import tmdb
 from core.item import Item
@@ -599,7 +598,7 @@ def findvideos(item):
     patron = '<td>\s*.*?<img\s*src="[^"]+icono_[^\.]+.png"\s*(?:title|alt)='
     patron += '"(?P<lang>[^"]+)"[^>]+>\s*(?:<\/noscript>)?[^<]*(?:<\/noscript>)?<\/td>'
     patron += '\s*<td>(?P<quality>[^>]*)(?:\s*\(Contraseña:[^>]*>(.*?)(?:<[^>]+>)?\))?\s*<\/td>'
-    patron += '\s*(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link"\s*(?:target="[^"]*"\s*)?'
+    patron += '\s*(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link[^"]*"\s*[^>]*(?:target="[^"]*"\s*)?'
     patron += '(?:onclick="[^"]*post\("[^"]+"\s*\,\s*\{u:\s*"|href=")(?P<url>[^"]+)'
 
     if not item.armagedon:
@@ -977,7 +976,7 @@ def episodios(item):
         patron = '<td>\s*.*?<img\s*src="[^"]+icono_[^\.]+.png"\s*(?:title|alt)='
         patron += '"(?P<lang>[^"]+)"[^>]+>\s*(?:<\/noscript>)?[^<]*(?:<\/noscript>)?<\/td>'
         patron += '\s*<td>(?P<quality>[^>]*)(?:\s*\(Contraseña:[^>]*>(.*?)(?:<[^>]+>)?\))?\s*<\/td>'
-        patron += '\s*(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link"\s*(?:target="[^"]*"\s*)?'
+        patron += '\s*(?:\s*<td>(?P<size>[^<]+)<\/td>)\s*<td>\s*<a\s*class="link[^"]*"\s*[^>]*(?:target="[^"]*"\s*)?'
         patron += '(?:onclick="[^"]*post\("[^"]+"\s*\,\s*\{u:\s*"|href=")(?P<url>[^"]+)'
         
         patron_epi = '(?i)(\d{1,2})(?:x|&#215;)(\d{1,2})(?:[-|\s*](?:al|-)?[-|\s*]?'

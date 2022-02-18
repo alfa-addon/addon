@@ -31,6 +31,7 @@ canonical = {
              'host': config.get_setting("current_host", 'doramedplay', default=''), 
              'host_alt': ["https://doramedplay.com/"], 
              'host_black_list': [], 
+             'pattern': '<link\s*rel="stylesheet"\s*id="[^"]*"\s*href="([^"]+)"', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

@@ -19,7 +19,15 @@ from channels import autoplay
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'https://cine24h.net/'
+canonical = {
+             'channel': 'cine24h', 
+             'host': config.get_setting("current_host", 'cine24h', default=''), 
+             'host_alt': ["https://cine24h.net/"], 
+             'host_black_list': [], 
+             'pattern': '<link\s*rel="icon"\s*href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 host_lang = config.get_setting('host_lang', channel='cine24h')
 
@@ -46,9 +54,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

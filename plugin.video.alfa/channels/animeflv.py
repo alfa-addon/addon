@@ -33,7 +33,8 @@ canonical = {
              'host': config.get_setting("current_host", 'animeflv', default=''), 
              'host_alt': ["https://www3.animeflv.net/", "https://ww3.animeflv.cc/"], 
              'host_black_list': [], 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'status': 'ERROR 403 - INACTIVO', 
+             'CF': True, 'CF_test': True, 'alfa_s': True
             }
 
 clone = config.get_setting("use_clone", channel="animeflv")

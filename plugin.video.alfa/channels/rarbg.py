@@ -5,8 +5,6 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
     import urllib.parse as urlparse                               # Es muy lento en PY2.  En PY3 es nativo
 else:
     import urlparse                                               # Usamos el nativo de PY2 que es más rápido
@@ -15,7 +13,6 @@ import re
 import time
 
 from channelselector import get_thumb
-from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -32,10 +29,20 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-#host = 'https://rarbgmirror.org/'
-host = 'https://proxyrarbg.org/'
-channel = 'rarbg'
+canonical = {
+             'channel': 'rarbg', 
+             'host': config.get_setting("current_host", 'rarbg', default=''), 
+             'host_alt': ["https://proxyrarbg.org/", "https://rarbgmirror.org/"], 
+             'host_black_list': [], 
+             'status': 'SIN CANONICAL NI DOMINIO', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+channel = canonical['channel']
 categoria = channel.capitalize()
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
+
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)        #Actualización sólo últ. Temporada?
 timeout = config.get_setting('timeout_downloadpage', channel)
@@ -61,7 +68,8 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]NOTA: Esta web puede considerar una intrusión[/COLOR]", folder=False, thumbnail=thumb_separador))
     itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]más de 1 usuario o 10 accesos por IP/Router.[/COLOR]", folder=False, thumbnail=thumb_separador))
-    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Si es bloqueado, renueve la IP en el Router[/COLOR]", folder=False, thumbnail=thumb_separador))
+    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Si es bloqueado, se reintentará automáticamente[/COLOR]", folder=False, thumbnail=thumb_separador))
+    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Si sigue bloqueado, renueve la IP en el Router[/COLOR]", folder=False, thumbnail=thumb_separador))
     
     itemlist.append(Item(channel=item.channel, title="Películas", action="listado", url=host + "torrents.php?category=movies&search=&order=data&by=DESC", thumbnail=thumb_pelis_VO, extra="peliculas"))
     itemlist.append(Item(channel=item.channel, title="    - Calidades", action="calidades", url=host + "torrents.php?category=movies&search=&order=data&by=DESC", thumbnail=thumb_pelis_hd, extra="peliculas"))
@@ -94,35 +102,16 @@ def calidades(item):
     itemlist = []
 
     data = ''
-    try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
-        if not PY3:
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
-    except:
-        pass
-        
     patron = '<div align="[^"]+"><div style="[^"]+" id="divadvsearch">(.*?)<\/a><\/div><\/div><\/form><\/div>'
-    #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not data or not scrapertools.find_single_match(data, patron):
-        status, itemlist = check_blocked_IP(data, itemlist)                     #Comprobamos si la IP ha sido bloqueada
-        if status:
-            return itemlist                                                     #IP bloqueada
-        
-        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
-        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
-            for clone_inter, autoridad in item.intervencion:
-                thumb_intervenido = get_thumb(autoridad)
-                itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
-            return itemlist                                                     #Salimos
-        
-        logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " + item.url + data)
-    
-    if not data:    #Si no ha logrado encontrar nada, salimos
-        itemlist.append(item.clone(action='', title=item.category + ': ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
-        return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
+                                                               patron=patron, item=item, itemlist=[], 
+                                                               quote_rep=False, check_blocked_IP=True)      # Descargamos la página
+    if not response.sucess or itemlist:                                         # Si ERROR o lista de errores lo reintentamos con otro Host
+        return itemlist                                                         # ... Salimos
 
     data = scrapertools.find_single_match(data, patron)                         #Seleccionamos el bloque
-    patron = '<div class="divadvscat"><input class="inputadvscat" type="checkbox" name="category\[.*?\]" value="[^"]+"\s*(?:.*?)?\/> <a href="([^"]+)">(.*?)<\/a>\s*<\/div>\s*'
+    patron = '<div class="divadvscat"><input class="inputadvscat" type="checkbox" '
+    patron += 'name="category\[.*?\]" value="[^"]+"\s*(?:.*?)?\/> <a href="([^"]+)">(.*?)<\/a>\s*<\/div>\s*'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     if not matches:
@@ -191,33 +180,43 @@ def listado(item):
     
         # Descarga la página
         data = ''
-        try:
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(next_page_url, timeout=timeout_search).data)
-            if not PY3:
-                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
-        except:
-            pass
+        data, response, item, itemlist = generictools.downloadpage(next_page_url, timeout=timeout_search, canonical=canonical, 
+                                                                   item=item, itemlist=itemlist, 
+                                                                   quote_rep=False, check_blocked_IP=True)      # Descargamos la página
+        data = re.sub(r"&nbsp;", "", data)
+        # Verificamos si ha cambiado el Host
+        if response.host:
+            next_page_url = response.url_new
         
-        curr_page += 1                                                          #Apunto ya a la página siguiente
+        curr_page += 1                                                          # Apunto ya a la página siguiente
         if not data and not item.extra2:                                        #Si la web está caída salimos sin dar error
-            logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
-            break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
-            
-        status, itemlist = check_blocked_IP(data, itemlist)                     #Comprobamos si la IP ha sido bloqueada
-        if status:
-            return itemlist                                                     #IP bloqueada
+            if len(itemlist) > 1:                                               # Si hay algo que pintar lo pintamos
+                last_page = 0
+                break
+            logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + next_page_url + " / DATA: " + data)
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + 
+                        ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL.' 
+                        + ' Si la Web está activa, reportar el error con el log'))
+            return itemlist                                                     # Si no hay nada más, salimos directamente
 
         #Patrón para todo, incluido búsquedas en cualquier caso
+        patron = '<tr class="lista2"><td align="(?:[^"]+)?"\s*class="(?:[^"]+)?"'
+        patron += '\s*width="(?:[^"]+)?"\s*style="(?:[^"]+)?"><a href="[^"]+">'
+        patron += '<img src="([^"]+)?"\s*border="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*\/>'
+        patron += '<\/a><\/td><td\s*align="(?:[^"]+)?"\s*class="(?:[^"]+)?"><a onmouseover="'
+        patron += '(?:[^"]+)?"\s*onmouseout="(?:[^"]+)?"\s*href="[^"]+" title="[^"]+"'
+        patron += '>([^<]+)<\/a>\s*<a href="([^"]+)"><img src="[^"]+"\s*border="'
+        patron += '(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*><\/a>\s*(?:<a href="([^"]+)">'
+        patron += '<img src="[^"]+"\s*border="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*><\/a>)?'
+        patron += '\s*<br><span.*?<\/span>\s*<\/td><td align="(?:[^"]+)?"\s*width="'
+        patron += '(?:[^"]+)?"\s*class="(?:[^"]+)?">.*?<\/td><td align="(?:[^"]+)?"\s*'
+        patron += 'width="(?:[^"]+)?"\s*class="(?:[^"]+)?">([^<]+)?<\/td><td align="'
+        patron += '(?:[^"]+)?"\s*width="(?:[^"]+)?"\s*class="(?:[^"]+)?">\s*'
+        patron += '<font color="(?:[^"]+)?">(\d+)?<\/font>'
         patron = '<tr class="lista2"><td align="(?:[^"]+)?"\s*class="(?:[^"]+)?"\s*width="(?:[^"]+)?"\s*style="(?:[^"]+)?"><a href="[^"]+"><img src="([^"]+)?"\s*border="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*\/><\/a><\/td><td\s*align="(?:[^"]+)?"\s*class="(?:[^"]+)?"><a onmouseover="(?:[^"]+)?"\s*onmouseout="(?:[^"]+)?"\s*href="[^"]+" title="[^"]+">([^<]+)<\/a>\s*<a href="([^"]+)"><img src="[^"]+"\s*border="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*><\/a>\s*(?:<a href="([^"]+)"><img src="[^"]+"\s*border="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*><\/a>)?\s*<br><span.*?<\/span>\s*<\/td><td align="(?:[^"]+)?"\s*width="(?:[^"]+)?"\s*class="(?:[^"]+)?">.*?<\/td><td align="(?:[^"]+)?"\s*width="(?:[^"]+)?"\s*class="(?:[^"]+)?">([^<]+)?<\/td><td align="(?:[^"]+)?"\s*width="(?:[^"]+)?"\s*class="(?:[^"]+)?">\s*<font color="(?:[^"]+)?">(\d+)?<\/font>'
             
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches and item.extra != 'search':                                  #error
-            item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
-            if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
-                item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
-                return itemlist                                                     #Salimos
-            
             logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
@@ -249,9 +248,9 @@ def listado(item):
                 last_page = 99
             try:
                 data_last = ''
-                data_last = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(item.url + '&page=%s' % last_page, timeout=timeout_search).data)
-                if not PY3:
-                    data_last = unicode(data_last, "utf-8", errors="replace").encode("utf-8")
+                data_last, response, item, itemlist = generictools.downloadpage(item.url + '&page=%s' % last_page, timeout=timeout_search, 
+                                                                                quote_rep=False, item=item, itemlist=itemlist)
+                data_last = re.sub(r"&nbsp;", "", data_last)
                 last_page = int(scrapertools.find_single_match(data_last, patron_last)) #lo cargamos como entero
             except:                                                                     #Si no lo encuentra, lo ponemos a 1
                 #logger.error('ERROR 03: LISTADO: Al obtener la paginación: ' + patron_next + ' / ' + patron_last + ' / ' + scrapertools.find_single_match(data, "<ul class=\"pagination\">.*?<\/span><\/a><\/li><\/ul><\/nav><\/div><\/div><\/div>"))
@@ -429,33 +428,29 @@ def findvideos(item):
 
     #Bajamos los datos de la página
     data = ''
-    patron = '<tr class="lista2">\s*<td align="(?:[^"]+)?"\s*class="(?:[^"]+)?"\s*width="(?:[^"]+)?"\s*style="(?:[^"]+)?">\s*<a href="[^"]+">\s*<img src="([^"]+)?"\s*border="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*\/><\/a><\/td>\s*<td\s*align="(?:[^"]+)?"(?:\s*width="[^"]+")?\s*class="(?:[^"]+)?">\s*<a onmouseover="(?:[^"]+)?"\s*onmouseout="(?:[^"]+)?"\s*href="([^"]+)" title="[^"]+">(.*?)<\/a>\s*<a href="[^"]+">\s*<img src="[^"]+"\s*border="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*><\/a>(?:\s*<a.*?<\/a>)?\s*<br><span.*?<\/span>\s*<\/td>\s*<td align="(?:[^"]+)?"\s*width="(?:[^"]+)?"\s*class="(?:[^"]+)?">.*?<\/td>\s*<td align="(?:[^"]+)?"\s*width="(?:[^"]+)?"\s*class="(?:[^"]+)?">(.*?)?<\/td>\s*<td align="(?:[^"]+)?"\s*width="(?:[^"]+)?"\s*class="(?:[^"]+)?">\s*<font color="(?:[^"]+)?">(\d+)?<\/font>'
+    patron = '<tr class="lista2">\s*<td align="(?:[^"]+)?"\s*class="(?:[^"]+)?'
+    patron += '"\s*width="(?:[^"]+)?"\s*style="(?:[^"]+)?">\s*<a href="[^"]+">\s*'
+    patron += '<img src="([^"]+)?"\s*border="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*\/><\/a><\/td>\s*'
+    patron += '<td\s*align="(?:[^"]+)?"(?:\s*width="[^"]+")?\s*class="(?:[^"]+)?">\s*'
+    patron += '<a onmouseover="(?:[^"]+)?"\s*onmouseout="(?:[^"]+)?"\s*href="([^"]+)"'
+    patron += ' title="[^"]+">(.*?)<\/a>\s*<a href="[^"]+">\s*<img src="[^"]+"\s*'
+    patron += 'border="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*><\/a>(?:\s*<a.*?<\/a>)?'
+    patron += '\s*<br><span.*?<\/span>\s*<\/td>\s*<td align="(?:[^"]+)?"\s*width="'
+    patron += '(?:[^"]+)?"\s*class="(?:[^"]+)?">.*?<\/td>\s*<td align="(?:[^"]+)?'
+    patron += '"\s*width="(?:[^"]+)?"\s*class="(?:[^"]+)?">(.*?)?<\/td>\s*<td align="(?:[^"]+)?'
+    patron += '"\s*width="(?:[^"]+)?"\s*class="(?:[^"]+)?">\s*<font color="(?:[^"]+)?">(\d+)?<\/font>'
         
-    try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
-        if not PY3:
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
-    except:
-        pass
-        
-    if not data:
-        logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log', folder=False))
-        return itemlist                             #si no hay más datos, algo no funciona, pintamos lo que tenemos
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
+                                                               patron=patron, item=item, itemlist=itemlist, 
+                                                               quote_rep=False, check_blocked_IP=True)
+    if not data or response.code in [999, 99]:                                  # Si ERROR o lista de errores lo reintentamos con otro Host
+        return itemlist                                                         # ... Salimos
 
-    status, itemlist = check_blocked_IP(data, itemlist)                         #Comprobamos si la IP ha sido bloqueada
-    if status:
-        return itemlist                                                         #IP bloqueada
-    
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                                             #error
-        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
-        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
-            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
-        else:
-            logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " + " / PATRON: " + patron + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log', folder=False))
-            return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " + " / PATRON: " + patron + data)
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log', folder=False))
+        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     #logger.debug("PATRON: " + patron)
     #logger.debug(matches)
@@ -557,20 +552,17 @@ def play(item):                                 #Permite preparar la descarga de
     from core import filetools
     
     #buscamos la url del .torrent
-    patron = '<tr><td align="(?:[^"]+)?"\s*class="(?:[^"]+)?"\s*width="(?:[^"]+)?">\s*Torrent:<\/td><td class="(?:[^"]+)?">\s*<img src="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*border="(?:[^"]+)?"\s*\/>\s*<a onmouseover="(?:[^"]+)?"\s*onmouseout="(?:[^"]+)?" href="([^"]+)".*?<\/a>'
-    try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
-        if not PY3:
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
-    except:
-        pass
-    status, itemlist = check_blocked_IP(data, itemlist)                 #Comprobamos si la IP ha sido bloqueada
-    if status:
-        return itemlist                                                 #IP bloqueada
-    if not scrapertools.find_single_match(data, patron):
-        logger.error('ERROR 02: PLAY: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log: PATRON: ' + patron + ' / DATA: ' + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: PLAY: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
-        return itemlist
+    patron = '<tr><td align="(?:[^"]+)?"\s*class="(?:[^"]+)?"\s*width="(?:[^"]+)?">'
+    patron += '\s*Torrent:<\/td><td class="(?:[^"]+)?">\s*<img src="(?:[^"]+)?"\s*'
+    patron += 'alt="(?:[^"]+)?"\s*border="(?:[^"]+)?"\s*\/>\s*<a onmouseover="'
+    patron += '(?:[^"]+)?"\s*onmouseout="(?:[^"]+)?" href="([^"]+)".*?<\/a>'
+    
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
+                                                               patron=patron, item=item, itemlist=[], 
+                                                               quote_rep=False, check_blocked_IP=True)
+    if not data or response.code in [999, 99]:                                  # Si ERROR o lista de errores lo reintentamos con otro Host
+        return itemlist                                                         # ... Salimos
+
     item.url = urlparse.urljoin(host, scrapertools.find_single_match(data, patron))
     
     #buscamos subtítulos en español
@@ -585,6 +577,7 @@ def play(item):                                 #Permite preparar la descarga de
             item.subtitle = urlparse.urljoin(host, subt)
     
     if item.subtitle:                                                   #Si hay urls de sub-títulos, se descargan
+        from core import httptools
         headers.append(["User-Agent", httptools.get_user_agent()])      #Se busca el User-Agent por defecto
         videolibrary_path = config.get_videolibrary_path()              #Calculamos el path absoluto a partir de la Videoteca
         if videolibrary_path.lower().startswith("smb://"):              #Si es una conexión SMB, usamos userdata local
@@ -685,36 +678,26 @@ def episodios(item):
         max_temp = max(y)
 
     # Descarga la página
+    patron_temp = '<h1\s*class="[^"]+">Season\s*(\d+)<\/h1><div class="tvcontent">'
+    patron_temp += '<div id="[^"]+"><\/div>(.*?<\/div><\/div>)(?:<script>.*?<\/script>)?<\/div>'
     data = ''                                                                   #Inserto en num de página en la url
-    try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(item.url, timeout=timeout).data)
-        if not PY3:
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
-    except:                                                                     #Algún error de proceso, salimos
-        pass
-        
-    if not data:
-        logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea" + item.url)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
-        return itemlist
-    
-    status, itemlist = check_blocked_IP(data, itemlist)                         #Comprobamos si la IP ha sido bloqueada
-    if status:
-        return itemlist                                                         #IP bloqueada
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
+                                                               patron=patron_temp, item=item, itemlist=[], 
+                                                               quote_rep=False, check_blocked_IP=True)
+    data = re.sub(r"&nbsp;", "", data)
+    if not data or response.code in [999, 99]:                                  # Si ERROR o lista de errores lo reintentamos con otro Host
+        return itemlist                                                         # ... Salimos
 
     #Capturamos las temporadas de episodios dentro de la serie
-    patron_temp = '<h1\s*class="[^"]+">Season\s*(\d+)<\/h1><div class="tvcontent"><div id="[^"]+"><\/div>(.*?<\/div><\/div>)(?:<script>.*?<\/script>)?<\/div>'
+    
     temp_serie = re.compile(patron_temp, re.DOTALL).findall(data)
     
     for season_num, temporada in temp_serie:
-        patron = '<div id="episode_(\d+)"><div class="[^"]+">\s*<a onclick="[^"]+"\s*class="[^"]+"><div class="[^"]+">.*?\s*(\d+)<\/div>\s*(.*?)\s*<'
+        
+        patron = '<div id="episode_(\d+)"><div class="[^"]+">\s*<a onclick="[^"]+"'
+        patron += '\s*class="[^"]+"><div class="[^"]+">.*?\s*(\d+)<\/div>\s*(.*?)\s*<'
         matches = re.compile(patron, re.DOTALL).findall(temporada)
         if not matches:                                                             #error
-            item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
-            if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
-                item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
-                return itemlist                                                     #Salimos
-            
             logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
@@ -813,21 +796,6 @@ def episodios(item):
     #logger.debug(item)
 
     return itemlist
-    
-    
-def check_blocked_IP(data, itemlist):
-    logger.info()
-    thumb_separador = get_thumb("next.png")
-    
-    if 'Please wait while we try to verify your browser...' in data:
-        logger.error("ERROR 99: La IP ha sido bloqueada por la Web" + " / DATA: " + data)
-        itemlist.append(Item(channel=channel, url=host, title="[COLOR yellow]La IP ha sido bloqueada por la Web.[/COLOR]", folder=False, thumbnail=thumb_separador))
-        itemlist.append(Item(channel=channel, url=host, title="[COLOR yellow]Fuerce la renovación de la IP en el Router[/COLOR]", folder=False, thumbnail=thumb_separador))
-        from platformcode import platformtools
-        platformtools.dialog_notification("IP bloqueada", "RARBG: Reiniciar ROUTER")
-    
-        return (True, itemlist)
-    return (False, itemlist)
     
     
 def actualizar_titulos(item):

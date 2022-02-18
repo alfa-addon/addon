@@ -19,12 +19,20 @@ from platformcode import config, logger
 from channels import autoplay
 from channels import filtertools
 
-host = 'http://legalmentegratis.com/'
-
 IDIOMAS = {'español':'CAST', 'VOSE': 'VOSE'}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['youtube']
+
+canonical = {
+             'channel': 'legalmentegratis', 
+             'host': config.get_setting("current_host", 'legalmentegratis', default=''), 
+             'host_alt': ["http://legalmentegratis.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
 
 
 def mainlist(item):
@@ -48,9 +56,9 @@ def mainlist(item):
 def get_source(url, referer=None):
     logger.info()
     if referer is None:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 

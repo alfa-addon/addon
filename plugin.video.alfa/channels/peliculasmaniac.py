@@ -25,7 +25,16 @@ list_language = list(IDIOMAS.values())
 list_quality = ['720p', 'HD 1080p', '480p', '360p', '270p']
 list_servers = ['directo']
 
-host = "http://peliculasmaniac.com/"
+canonical = {
+             'channel': 'peliculasmaniac', 
+             'host': config.get_setting("current_host", 'peliculasmaniac', default=''), 
+             'host_alt': ["http://peliculasmaniac.com/"], 
+             'host_black_list': [], 
+             'status': 'WEB DESACTIVADA', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
 
 
 def mainlist(item):
@@ -121,9 +130,9 @@ def sub_menu(item):
 def get_source(url, referer=None):
     logger.info()
     if referer is None:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 

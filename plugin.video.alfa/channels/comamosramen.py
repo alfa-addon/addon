@@ -19,16 +19,27 @@ from platformcode import config
 from platformcode import logger
 from platformcode import unify
 
-host = 'https://comamosramen.com'
-apihost = 'https://fapi.comamosramen.com/api'
 server_list = {'dood': 'doodstream', 'stream': 'streamtape', 'mixdrop(celular)': 'mixdrop', 'voe': 'voe', 'okru': 'okru', 'zplayer': 'zplayer'}
 server_urls = {'doodstream': 'https://dood.to/e/', 'streamtape': 'https://streamtape.com/e/', 'mixdrop': 'https://mixdrop.to/e/',
                'voe': 'https://voe.sx/e/', 'okru': 'https://ok.ru/videoembed/', 'zplayer': 'https://v2.zplayer.live/embed/'}
+
+canonical = {
+             'channel': 'comamosramen', 
+             'host': config.get_setting("current_host", 'comamosramen', default=''), 
+             'host_alt': ["https://comamosramen.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+domain = scrapertools.find_single_match(host, patron_domain)
+apihost = 'https://fapi.%s/api' % domain
 
 
 def get_source(url, soup=False, json=False, **opt):
     logger.info()
 
+    opt['canonical'] = canonical
     data = httptools.downloadpage(url, **opt)
 
     if json:
@@ -140,15 +151,15 @@ def mainlist(item):
 def newest(categoria):
     logger.info()
     item = Item()
-    item.channel = 'comamosramen'
+    item.channel = canonical['channel']
 
     if categoria in ['peliculas']:
         item.list_type = 'pelicula'
-        item.url = '{}/p/peliculas'.format(host)
+        item.url = '{}p/peliculas'.format(host)
 
     else:
         item.list_type = 'novedades'
-        item.url = '{}/p/dramas'.format(host)
+        item.url = '{}p/dramas'.format(host)
 
     return list_all(item)
 
@@ -280,8 +291,8 @@ def list_all(item):
             contentSerieName = title if contentType == 'tvshow' else None
             contentTitle = title
             status = j['estado']
-            thumb = 'https://img.comamosramen.com/{}-medium.webp'.format(j['img'])
-            url = '{}/v/{}/{}'.format(host, _id[0], _id[1].replace('-', ' '))
+            thumb = 'https://img.{}/{}-medium.webp'.format(domain, j['img'])
+            url = '{}v/{}/{}'.format(host, _id[0], _id[1].replace('-', ' '))
             viewType = 'episodes' if contentType == 'tvshow' else 'files'
 
             matches.append([action, contentSerieName, contentTitle, contentType, language, status, title, thumb, url, viewType])
@@ -299,8 +310,8 @@ def list_all(item):
             action = 'seasons' if contentType == 'tvshow' else 'findvideos'
             contentSerieName = title if contentType == 'tvshow' else None
             contentTitle = title
-            thumb = 'https://img.comamosramen.com/{}-medium.webp'.format(j['img']['vertical'])
-            url = '{}/v/{}/{}/'.format(host, j['_id'], j['title'])
+            thumb = 'https://img.{}/{}-medium.webp'.format(domain, j['img']['vertical'])
+            url = '{}v/{}/{}/'.format(host, j['_id'], j['title'])
             url = '{}{}'.format(url, j['lastEpisodeEdited']) if contentType == 'tvshow' else url
             viewType = 'episodes' if contentType == 'tvshow' else 'files'
 

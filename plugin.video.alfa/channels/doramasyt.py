@@ -25,20 +25,29 @@ from channels import autoplay
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'https://www.doramasyt.com/'
 IDIOMAS = {'la': 'LAT', 'sub': 'VOSE'}
 list_idiomas = list(IDIOMAS.values())
 list_servers = ['okru', 'streamtape', 'fembed', 'uqload', 'videobin']
 list_quality = []
+
+canonical = {
+             'channel': 'doramasyt', 
+             'host': config.get_setting("current_host", 'doramasyt', default=''), 
+             'host_alt': ["https://www.doramasyt.com/"], 
+             'host_black_list': [], 
+             'pattern': '<link\s*rel="shortcut\s*icon"\s*href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

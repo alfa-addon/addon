@@ -19,8 +19,16 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-
-host = 'http://locomotiontv.com/'
+canonical = {
+             'channel': 'locomotiontv', 
+             'host': config.get_setting("current_host", 'locomotiontv', default=''), 
+             'host_alt': ["http://locomotiontv.com/"], 
+             'host_black_list': [], 
+             'status': 'AVERIADO???', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
 
 
 def mainlist(item):

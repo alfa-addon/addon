@@ -21,9 +21,6 @@ from channels import filtertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 
-host = 'https://www.espapelis.com'     # https://www.movidy.mob
-api= host + "/wp-admin/admin-ajax.php"
-
 SERVER = {'uqload.com': 'Uqload' , 'uptobox.com': 'Uptobox',
           'streamsb.net': 'Streamsb', 'dood.so': 'Doodstream', 
           'fastplay.to': 'Fastplay', 'pelistop.co' : 'Streamsb'
@@ -36,7 +33,18 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = list(SERVER.values())
 
-__channel__='mobidy'
+canonical = {
+             'channel': 'mobidy', 
+             'host': config.get_setting("current_host", 'mobidy', default=''), 
+             'host_alt': ["https://www.espapelis.com/"], 
+             'host_black_list': [], 
+             'pattern': '<div\s*class="post-thumbnail">[^"]+img\s*src="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+api = host + "wp-admin/admin-ajax.php"
+host_save = host
+__channel__ = canonical['channel']
 
 parameters = channeltools.get_channel_parameters(__channel__)
 unif = parameters['force_unify']
@@ -49,7 +57,7 @@ def mainlist(item):
     
     itemlist.append(item.clone(title="Peliculas" , action="lista", type="movie", 
                                post="action=action_load_pagination_home&number=18&paged=1&postype=movie", thumbnail=get_thumb("movies", auto=True)))
-    itemlist.append(item.clone(title="Genero" , action="categorias", url= host +"/peliculas/", thumbnail=get_thumb('genres', auto=True)))
+    itemlist.append(item.clone(title="Genero" , action="categorias", url= host +"peliculas/", thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(item.clone(title="Buscar...", action="search", thumbnail=get_thumb("search", auto=True)))
     
     autoplay.show_option(item.channel, itemlist)
@@ -60,7 +68,7 @@ def search(item, texto):
     logger.info()
     try:
         texto = texto.replace(" ", "+")
-        item.url = "%s/?s=%s" % (host, texto)
+        item.url = "%s?s=%s" % (host, texto)
         if texto != "":
             return lista(item)
         else:
@@ -82,13 +90,18 @@ def categorias(item):
         # post = "action=action_filter&number=10&paged=1&genre[]=%s" %id
         title = elem.text.strip()
         name = scrapertools.slugify(title).lower()
-        url = "%s/category/%s" %(host, name.decode("utf8"))
+        if PY3:
+            url = "%s/category/%s" %(host, name)
+        else:
+            url = "%s/category/%s" %(host, name.decode("utf8"))
         itemlist.append(item.clone(action="lista", title=title, url=url, thumbnail=get_thumb("movies", auto=True)) )
     return itemlist
 
 
 def get_source(url, soup=False, json=False, unescape=False, **opt):
     logger.info()
+    
+    opt['canonical'] = canonical
     data = httptools.downloadpage(url, **opt)
     if json:
         data = data.json

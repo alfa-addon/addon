@@ -25,9 +25,16 @@ from core import tmdb
 from platformcode import config, logger
 from channelselector import get_thumb
 
-__channel__ = "pelisplay"
+canonical = {
+             'channel': 'pelisplay', 
+             'host': config.get_setting("current_host", 'pelisplay', default=''), 
+             'host_alt': ["https://www.pelisplay.co/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+__channel__ = canonical['channel']
 
-host = "https://www.pelisplay.co/"
 forced_proxy_opt = None
 
 try:
@@ -62,6 +69,7 @@ list_servers = ['rapidvideo', 'streamango', 'fastplay', 'openload']
 def get_source(url, soup=False, json=False, unescape=True, **opt):
     logger.info()
 
+    opt['canonical'] = canonical
     data = httptools.downloadpage(url, **opt)
 
     if json:

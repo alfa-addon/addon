@@ -20,12 +20,21 @@ from channels import filtertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 
-host = 'https://www.estrenoscinesaa.com'  
-
 list_language = []
 list_servers = ['Fembed', 'Uqload', 'Youtube']
 list_quality = []
-__channel__='estrenoscinesaa'
+
+canonical = {
+             'channel': 'estrenoscinesaa', 
+             'host': config.get_setting("current_host", 'estrenoscinesaa', default=''), 
+             'host_alt': ["https://www.estrenoscinesaa.com"], 
+             'host_black_list': [], 
+             'pattern': '', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
+__channel__= canonical['channel']
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', __channel__)
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', __channel__)
 try:
@@ -39,8 +48,8 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "/movies/", thumbnail=get_thumb("movies", auto=True)))
-    itemlist.append(item.clone(title="Series", action="lista", url= host + "/tvshows/", thumbnail=get_thumb("tvshows", auto=True)))
+    itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "movies/", thumbnail=get_thumb("movies", auto=True)))
+    itemlist.append(item.clone(title="Series", action="lista", url= host + "tvshows/", thumbnail=get_thumb("tvshows", auto=True)))
     itemlist.append(item.clone(title="Genero" , action="categorias", url= host, thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(item.clone(title="Buscar", action="search", thumbnail=get_thumb("search", auto=True)))
     
@@ -117,9 +126,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")

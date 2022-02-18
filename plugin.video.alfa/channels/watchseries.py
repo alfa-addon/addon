@@ -28,9 +28,15 @@ list_language = list(IDIOMAS.values())
 list_servers = ['directo', 'xstreamcdn']
 list_quality = ['default']
 
-
-host = "https://ww1.watchmovie.movie/"
-
+canonical = {
+             'channel': 'watchseries', 
+             'host': config.get_setting("current_host", 'watchseries', default=''), 
+             'host_alt': ["https://ww1.watchmovie.movie/"], 
+             'host_black_list': [], 
+             'status': 'WEB INACTIVA???', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -87,7 +93,7 @@ def search(item, texto):
 
 def section(item):
     logger.info()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     itemlist = []
     if 'Géneros' in item.title:
         patron = '<a href="([^"]+)" class="wpb_button  wpb_btn-primary wpb_btn-small ">(.*?)</a>'
@@ -122,7 +128,7 @@ def section(item):
 
 def novedades_episodios(item):
     logger.info()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     url_pagination = scrapertools.find_single_match(data, "<li class='next next page-numbers'><a href='(.*?)'")
     matches = re.compile('<div class="video_likes icon-tag"> (.*?)</div>[\s\S]+?<a href="(.*?)" class="view_more"></a>[\s\S]+?<img src="([^"]+)" alt="" class="imgHome" title="" alt="([^"]+)"[\s\S]+?</li>', re.DOTALL).findall(data)
     itemlist = []
@@ -152,7 +158,7 @@ def novedades_episodios(item):
 
 def novedades_cine(item):
     logger.info()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     url_pagination = scrapertools.find_single_match(data, "<li class='next next page-numbers'><a href='(.*?)'")
     matches = re.compile('<div class="video_likes icon-tag"> (.*?)</div>[\s\S]+?<a href="(.*?)" class="view_more"></a>[\s\S]+?<img src="([^"]+)" alt="" class="imgHome" title="" alt="([^"]+)"[\s\S]+?</li>', re.DOTALL).findall(data)
     itemlist = []
@@ -171,7 +177,7 @@ def novedades_cine(item):
 
 def popular(item):
     logger.info()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     url_pagination = scrapertools.find_single_match(data, "<li class='next next page-numbers'><a href='(.*?)'")
     matches = re.compile('<div class="video_image_container sdimg">[\s\S]+?<a href="(.*?)" class="view_more" title="([^"]+)"></a>[\s\S]+?<img src="([^"]+)" alt=""', re.DOTALL).findall(data)
     itemlist = []
@@ -204,7 +210,7 @@ def episodios(item):
     logger.info()
     itemlist = []
     infoLabels = item.infoLabels
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
     matches = re.compile('<div class="vid_info"><span><a href="(.*?)" title="(.*?)" class="videoHname"><b>Episode (\d+)', re.DOTALL).findall(data)
     for url, title, episode in matches:
@@ -230,7 +236,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     if "-episode-0" in item.url:
-        data1 = httptools.downloadpage(item.url).data
+        data1 = httptools.downloadpage(item.url, canonical=canonical).data
         if "Page not found</h1>" in data1:
             item.url = item.url.replace("-episode-0", "-episode-1")
     

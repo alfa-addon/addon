@@ -22,10 +22,20 @@ from core import servertools, tmdb
 from platformcode import config, logger
 from channels import autoplay
 
-host = "https://cuevana2.io/"
-domain = "cuevana2.io"
 list_quality = []
 list_servers = ['rapidvideo', 'streamango', 'directo', 'yourupload', 'openload', 'dostream']
+
+canonical = {
+             'channel': 'cuevana2', 
+             'host': config.get_setting("current_host", 'cuevana2', default=''), 
+             'host_alt': ["https://cuevana2.io/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+domain = scrapertools.find_single_match(host, patron_domain)
+
 
 ### MENUS ###
 
@@ -79,7 +89,7 @@ def inArray(arr, arr2):
     return True
 
 def load_data(url):
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
 
     return data

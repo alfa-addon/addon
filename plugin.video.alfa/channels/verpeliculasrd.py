@@ -19,7 +19,15 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = []
 
-host = "http://ver-peliculasrd.com/"
+canonical = {
+             'channel': 'verpeliculasrd', 
+             'host': config.get_setting("current_host", 'verpeliculasrd', default=''), 
+             'host_alt': ["http://ver-peliculasrd.com/"], 
+             'host_black_list': [], 
+             'status': 'WEB INACTIVA???', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -77,6 +85,7 @@ def mainlist(item):
 def get_source(url, soup=False, json=False, unescape=False, **opt):
     logger.info()
 
+    opt['canonical'] = canonical
     data = httptools.downloadpage(url, soup=soup, encoding="utf-8", **opt)
 
     if json:

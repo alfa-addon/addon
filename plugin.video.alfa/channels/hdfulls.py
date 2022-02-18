@@ -33,7 +33,16 @@ list_language = list(set(IDIOMAS.values()))
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP', 'RHDTV', 'DVDSCR']
 list_servers = ['flix555', 'clipwatching', 'gamovideo', 'powvideo', 'streamplay', 'vidoza', 'vidtodo', 'uptobox']
 
-host = "https://hdfull.fm"
+canonical = {
+             'channel': 'hdfulls', 
+             'host': config.get_setting("current_host", 'hdfulls', default=''), 
+             'host_alt': ["https://hdfull.fm/"], 
+             'host_black_list': [], 
+             'status': 'SIN CANONICAL NI DOMINIO', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
 
 
 def mainlist(item):
@@ -60,9 +69,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -74,9 +83,9 @@ def create_soup(url, referer=None, unescape=False):
 def get_source(url, referer=host, post=None):
     logger.info()
     if post:
-        data = httptools.downloadpage(url, post=post, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, post=post, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
 
     return data
 
@@ -86,18 +95,18 @@ def menupeliculas(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, action="list_all", title="Últimas Películas", url=host + "/movies",
+    itemlist.append(Item(channel=item.channel, action="list_all", title="Últimas Películas", url=host + "movies",
                          thumbnail=get_thumb('last', auto=True), first=1))
 
     itemlist.append(Item(channel=item.channel, action="list_all", title="Películas Estreno",
-                         url=host + "/new-movies",  thumbnail=get_thumb('premieres', auto=True), first=1))
+                         url=host + "new-movies",  thumbnail=get_thumb('premieres', auto=True), first=1))
 
     itemlist.append(Item(channel=item.channel, action="list_all", title="Películas Actualizadas",
-                         url=host + "/updated-movies", thumbnail=get_thumb('updated', auto=True),
+                         url=host + "updated-movies", thumbnail=get_thumb('updated', auto=True),
                          mode="movies", first=1))
 
     itemlist.append(Item(channel=item.channel, action="list_all", title="Rating IMDB",
-                         url=host + "/movies/imdb_rating", thumbnail=get_thumb('recomended', auto=True),
+                         url=host + "movies/imdb_rating", thumbnail=get_thumb('recomended', auto=True),
                          mode="movies", first=1))
 
     itemlist.append(Item(channel=item.channel, action="genres", title="Películas por Género",
@@ -111,18 +120,18 @@ def menuseries(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, action="list_all", title="Últimas series", url=host + "/tv-shows",
+    itemlist.append(Item(channel=item.channel, action="list_all", title="Últimas series", url=host + "tv-shows",
                          thumbnail=get_thumb('last', auto=True), first=1))
 
     itemlist.append(Item(channel=item.channel, action="list_all", title="Novelas Estreno",
-                         url=host + "/tv-tags/soap", first=1,
+                         url=host + "tv-tags/soap", first=1,
                          thumbnail=get_thumb('new episodes', auto=True)))
 
     itemlist.append(Item(channel=item.channel, action="list_all", title="Animes Estreno",
-                         url=host + "/tv-tags/anime", first=1,
+                         url=host + "tv-tags/anime", first=1,
                          thumbnail=get_thumb('anime', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, action="list_all", title="Rating IMDB", url=host + "/tv-shows/imdb_rating",
+    itemlist.append(Item(channel=item.channel, action="list_all", title="Rating IMDB", url=host + "tv-shows/imdb_rating",
                          thumbnail=get_thumb('recomended', auto=True), first=1))
 
     itemlist.append(Item(channel=item.channel, action="genres", title="Series por Género", url=host,
@@ -290,9 +299,9 @@ def findvideos(item):
 
     data = get_source(item.url)
 
-    js_data = get_source("%s/static/style/js/jquery.hdfull.view.min.js" % host)
+    js_data = get_source("%sstatic/style/js/jquery.hdfull.view.min.js" % host)
 
-    data_js = get_source("%s/static/js/providers.js" % host)
+    data_js = get_source("%sstatic/js/providers.js" % host)
 
     provs = alfaresolver.jhexdecode(data_js)
 
@@ -368,7 +377,7 @@ def search(item, texto):
     try:
         item.post = {"menu": "search", "query": texto}
         item.title = "Buscar..."
-        item.url = host + "/search"
+        item.url = host + "search"
         item.texto = texto
         item.first = 0
         return list_all(item)

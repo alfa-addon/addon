@@ -38,7 +38,14 @@ list_servers = ['gounlimited',
                 'torrent'
                 ]
 
-host = 'https://www.cinecalidad.lat/'
+canonical = {
+             'channel': 'cinecalidad', 
+             'host': config.get_setting("current_host", 'cinecalidad', default=''), 
+             'host_alt': ["https://www.cinecalidad.lat/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
@@ -46,9 +53,10 @@ thumbbr = 'http://flags.fmcdn.net/data/flags/normal/br.png'
 
 current_lang = ''
 
-site_list = ['', '%s' % host, '%s/espana/' % host, 'https://www.cinemaqualidade.im']
-site = config.get_setting('filter_site', channel='cinecalidad')
+site_list = ['', '%s' % host, '%sespana/' % host, 'https://www.cinemaqualidade.im']
+site = config.get_setting('filter_site', channel=canonical['channel'])
 site_lang = '%s' % site_list[site]
+
 
 def mainlist(item):
     logger.info()
@@ -73,7 +81,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Castellano",
                          action="submenu",
-                         host=host+'/espana/',
+                         host=host+'espana/',
                          thumbnail=thumbes))
 
     # itemlist.append(Item(channel=item.channel,
@@ -136,7 +144,7 @@ def submenu(item):
                          title="Buscar...",
                          action="search",
                          thumbnail=get_thumb('search', auto=True),
-                         url=host + '/?s=',
+                         url=host + '?s=',
                          host=item.host,
                          ))
     if site > 0:
@@ -160,9 +168,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -339,7 +347,7 @@ def get_urls(item, link):
     headers["Referer"] = item.url
     post = 'link=%s' % link
 
-    dict_data = httptools.downloadpage(url, post=post, headers=headers).json
+    dict_data = httptools.downloadpage(url, post=post, headers=headers, canonical=canonical).json
     return dict_data['link']
 
 

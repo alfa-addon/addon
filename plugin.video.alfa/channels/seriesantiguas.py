@@ -15,12 +15,26 @@ from platformcode import config
 from platformcode import logger
 from channelselector import get_thumb
 
-host = 'https://www.seriesantiguas.com'
-base_url_start = '/feeds/posts/default'
-base_url_end = '?alt=json-in-script&start-index=1&max-results=20&orderby=published'
 
 IDIOMAS = {"Latino": "LAT"}
 list_language = list(IDIOMAS.values())
+
+canonical = {
+             'channel': 'seriesantiguas', 
+             'host': config.get_setting("current_host", 'seriesantiguas', default=''), 
+             'host_alt': ["https://www.seriesantiguas.com/"], 
+             'host_black_list': [], 
+             'pattern': ['<meta\s*content="([^"]+)"\s*property="og:url"', 
+                         '"rel"\s*:\s*"alternate"\s*,\s*"type"[^}]*href"\s*:\s*"([^"]+)"'], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+domain = scrapertools.find_single_match(host, patron_domain)
+
+base_url_start = 'feeds/posts/default'
+base_url_end = '?alt=json-in-script&start-index=1&max-results=20&orderby=published'
+
 
 def mainlist(item):
     logger.info()
@@ -131,7 +145,7 @@ def check_item_for_exception(data):
 def newest(categoria):
     logger.info()
 
-    item = Item(channel = 'seriesantiguas')
+    item = Item(channel = canonical['channel'])
     item.url = '{}{}/-/ESTRENO{}'.format(host, base_url_start, base_url_end)
 
     return list_all(item)
@@ -140,7 +154,7 @@ def list_all(item):
     logger.info()
 
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     jsonptn = 'gdata.io.handleScriptLoaded\((.*?)\);'
     jsonmatch = scrapertools.find_single_match(data, jsonptn)
     json_list = jsontools.load(jsonmatch)
@@ -208,10 +222,10 @@ def seasons(item, get_episodes = False):
     logger.info()
 
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
 
     if item.url.startswith(host):
-        item.url = scrapertools.find_single_match(data, '\w+://[^(?:www)]\w+.seriesantiguas.com')
+        item.url = scrapertools.find_single_match(data, '\w+://[^(?:www)]\w+.%s' % domain)
         data = httptools.downloadpage(item.url).data
 
     listpattern = "(?s)class='topmenu1 megamenu' id='megamenuid'.*?class='megalist'.*?<a.*?(<ul.*?</ul>)"
@@ -264,7 +278,7 @@ def episodesxseason(item):
     logger.info()
 
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     pattern = '(?s)class=\'post hentry.*?a href="([^"]+).*?img alt=\'([^\']+).*?src=\'([^\']+)'
     matches = scrapertools.find_multiple_matches(data, pattern)
     infoLabels = item.infoLabels
@@ -299,7 +313,7 @@ def findvideos(item):
 
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     itemlist.extend(servertools.find_video_items(item = item, data = data))
     itemlist = servertools.get_servers_itemlist(itemlist, None, True)
 
@@ -323,7 +337,7 @@ def search(item, texto):
         try:
             texto = format_ascii(texto.replace(" ", "+"))
             item.url += texto
-            data = httptools.downloadpage(item.url).data
+            data = httptools.downloadpage(item.url, canonical=canonical).data
             pattern = '(?s)class=\'post hentry.*?a href="([^"]+).*?img alt=\'([^\']+).*?src=\'([^\']+)'
             matches = scrapertools.find_multiple_matches(data, pattern)
             infoLabels = item.infoLabels

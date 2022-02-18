@@ -20,10 +20,18 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['upstream', 'mixdrop']
 
+canonical = {
+             'channel': 'peliculasflv', 
+             'host': config.get_setting("current_host", 'peliculasflv', default=''), 
+             'host_alt': ["https://www.peliculasflv.io/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
+__channel__ = canonical['channel']
+#__channel__='allcalidad'
 
-__channel__='allcalidad'
-
-host = "https://www.peliculasflv.io/"
 encoding = None
 
 try:
@@ -36,10 +44,10 @@ def mainlist(item):
     logger.info()
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
-    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host + "/estrenos", thumbnail = get_thumb("newest", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host + "estrenos", thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos", url = host, thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
-    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "/buscar/", thumbnail = get_thumb("search", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "buscar/", thumbnail = get_thumb("search", auto = True)))
     autoplay.show_option(item.channel, itemlist)
     return itemlist
 
@@ -47,7 +55,7 @@ def mainlist(item):
 def peliculas(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding=encoding, canonical=canonical).data
     patron  = '(?is)<article>.*?href="([^"]+).*?'
     patron += 'img src="([^"]+).*?'
     patron += '"langs">(.*?)'
@@ -75,7 +83,7 @@ def peliculas(item):
 
 def findvideos(item):
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding=encoding, canonical=canonical).data
     bloques = scrapertools.find_multiple_matches(data, '(?is)<div class="opt">.*?</div>\s*</div>\s*</div>\s*</div>\s*</div>' )
     for scrapedblock in bloques:
         lang = scrapertools.find_single_match(scrapedblock, '"lang-name">([^<]+)')
@@ -115,7 +123,7 @@ def findvideos(item):
     
 def play(item):
     logger.info()
-    data = httptools.downloadpage(host + "/player.php?file=%s" %item.hash).data
+    data = httptools.downloadpage(host + "player.php?file=%s" %item.hash).data
     item.url = scrapertools.find_single_match(data, 'iframe src="([^"]+)')
     item.thumbnail = item.contentThumbnail
     itemlist = servertools.get_servers_itemlist([item])
@@ -130,9 +138,9 @@ def newest(categoria):
         if categoria in ['peliculas','latino']:
             item.url = host
         elif categoria == 'infantiles':
-            item.url = host + '/category/animacion/'
+            item.url = host + 'category/animacion/'
         elif categoria == 'terror':
-            item.url = host + '/category/torror/'
+            item.url = host + 'category/torror/'
         itemlist = peliculas(item)
         if "Pagina" in itemlist[-1].title:
             itemlist.pop()
@@ -159,7 +167,7 @@ def search(item, texto):
 def generos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding=encoding, canonical=canonical).data
     patron  = '(?is)<li>\s*<a href="([^"]+)"'
     patron += '>([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)

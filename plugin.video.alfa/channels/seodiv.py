@@ -25,14 +25,23 @@ list_idiomas = ["LAT"]
 list_servers = ['sendvid', 'okru']
 list_quality = list()
 
+canonical = {
+             'channel': 'seodiv', 
+             'host': config.get_setting("current_host", 'seodiv', default=''), 
+             'host_alt': ["https://areliux.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)

@@ -26,17 +26,27 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'https://www.dilo.nu/'
-forced_proxy_opt = 'ProxyCF'
-
 IDIOMAS = {'Español': 'CAST', 'Latino': 'LAT', 'Subtitulado': 'VOSE'}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['openload', 'streamango', 'powvideo', 'clipwatching', 'streamplay', 'streamcherry', 'gamovideo']
 
+canonical = {
+             'channel': 'dilo', 
+             'host': config.get_setting("current_host", 'dilo', default=''), 
+             'host_alt': ["https://www.dilo.nu/"], 
+             'host_black_list': [], 
+             'pattern': '<link\s*rel="stylesheet"\s*href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
+forced_proxy_opt = 'ProxyCF'
+
+
 def get_source(url):
     logger.info()
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
@@ -197,7 +207,7 @@ def seasons(item):
     post = urllib.urlencode(post)
     seasons_url = '%sapi/web/seasons.php' % host
     headers = {'Referer':item.url}
-    data = httptools.downloadpage(seasons_url, post=post, headers=headers, forced_proxy_opt=forced_proxy_opt).json
+    data = httptools.downloadpage(seasons_url, post=post, headers=headers, forced_proxy_opt=forced_proxy_opt, canonical=canonical).json
     infoLabels = item.infoLabels
     for dict in data:
         season = dict['number']
@@ -229,7 +239,7 @@ def episodesxseason(item):
 
     seasons_url = '%sapi/web/episodes.php' % host
     headers = {'Referer': item.url}
-    data = httptools.downloadpage(seasons_url, post=post, headers=headers, forced_proxy_opt=forced_proxy_opt).json
+    data = httptools.downloadpage(seasons_url, post=post, headers=headers, forced_proxy_opt=forced_proxy_opt, canonical=canonical).json
     infoLabels = item.infoLabels
     for dict in data:
         episode = dict['number']

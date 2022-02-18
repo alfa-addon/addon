@@ -20,10 +20,16 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['fembed', 'streamtape', 'fastplay', 'gvideo', 'netutv', 'Jawcloud']
 
-
-__channel__='genteclic'
-
-host = "https://www.genteclic.com"
+canonical = {
+             'channel': 'genteclic', 
+             'host': config.get_setting("current_host", 'genteclic', default=''), 
+             'host_alt': ["https://www.genteclic.com"], 
+             'host_black_list': [], 
+             'pattern': '<div\s*class=.?"jeg_thumb.?">[^<]+<a\s*href=.?"([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+__channel__= canonical['channel']
 forced_proxy_opt = 'ProxyDirect'
 encoding = None
 
@@ -48,7 +54,7 @@ def mainlist(item):
 def favorites(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding=encoding, canonical=canonical).data
     patron  = '(?s)short_overlay.*?<a href="([^"]+)'
     patron += '.*?img.*?src="([^"]+)'
     patron += '.*?title="([^"]+).*?'
@@ -110,7 +116,7 @@ def search(item, texto):
 def generos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding=encoding, canonical=canonical).data
     patron = '(?s)%s(.*?)<\/ul>\s*<\/div>' %item.extra
     bloque = scrapertools.find_single_match(data, patron)
     patron  = 'href="([^"]+)'
@@ -143,7 +149,7 @@ def peliculas(item):
             }
             #jnews_module_ajax_jnews_video_block4_view
             #jnews_ajax_live_search
-    uuu = "https://www.genteclic.com/?ajax-request=jnews"
+    uuu = "%s?ajax-request=jnews" % host
     headers = {"accept": "text/html, */*; q=0.01",
                 "accept-language": "es-ES,es;q=0.9",
                 "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -151,10 +157,10 @@ def peliculas(item):
                }
 
     if item.tipo_action == "jnews_module_ajax_jnews_video_block4_view":
-        data = httptools.downloadpage(uuu, post=post, headers = headers).json
+        data = httptools.downloadpage(uuu, post=post, headers = headers, canonical=canonical).json
         data = data["content"]
     else:
-        data = httptools.downloadpage(uuu, post=post, headers = headers).data
+        data = httptools.downloadpage(uuu, post=post, headers = headers, canonical=canonical).data
 
     patron  = '(?is)jeg_thumb.*?href="([^"]+)"'
     patron += '.*?data-src="([^"]+)"'
@@ -181,7 +187,7 @@ def peliculas(item):
 
 def findvideos(item):
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding=encoding).data
+    data = httptools.downloadpage(item.url, encoding=encoding, canonical=canonical).data
     matches = scrapertools.find_multiple_matches(data, 'jeg_video_container.*?src="([^"]+)' )
     for url in matches:
         itemlist.append(Item(

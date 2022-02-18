@@ -17,7 +17,6 @@ from core.item import Item
 from platformcode import config, logger, platformtools, unify
 from channelselector import get_thumb
 
-host = 'https://playdede.com'
 
 IDIOMAS = {'lat': 'LAT', 'esp': 'CAST', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
 SERVIDORES = {'11': 'clipwatching', '57': 'aparatcam', '12': 'gamovideo', '56': 'doodstream', '4': 'upstream', '5': 'cloudvideo', '55': 'okru', '12': 'powvideo', '2': 'streamplay', '50': 'fembed'}
@@ -26,7 +25,17 @@ list_language = list(IDIOMAS.values())
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP']
 list_servers = list(SERVIDORES.values())
 
-__channel__ = 'playdede'
+canonical = {
+             'channel': 'playdede', 
+             'host': config.get_setting("current_host", 'playdede', default=''), 
+             'host_alt': ["https://playdede.com/"], 
+             'host_black_list': [], 
+             'pattern': '<link\s*rel="shortcut\s*icon"[^>]+href="([^"]+)"', 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+__channel__ = canonical['channel']
+
 timeout = 30
 show_langs = config.get_setting('show_langs', channel=__channel__)
 account = None
@@ -35,6 +44,7 @@ account = None
 def get_source(url, json=False, soup=False, multipart_post=None, timeout=30, add_host=True, **opt):
     logger.info()
 
+    opt['canonical'] = canonical
     data = httptools.downloadpage(url, soup=soup, files=multipart_post, add_host=add_host, timeout=timeout, **opt)
 
     # Verificamos que tenemos una sesión válida, sino, no tiene caso devolver nada
@@ -74,15 +84,15 @@ def login():
         return False
 
     if not httptools.get_cookie(host, 'MoviesWebsite'):
-        httptools.downloadpage(host, timeout=timeout)
+        httptools.downloadpage(host, timeout=timeout, canonical=canonical)
 
     if httptools.get_cookie(host, 'utoken'):
         return True
 
     logger.info('Iniciando sesión...')
 
-    httptools.downloadpage('{}/ajax.php'.format(host), files=credentials, add_referer=True, add_host=True, timeout=timeout)
-    httptools.downloadpage(host, timeout=timeout)
+    httptools.downloadpage('{}ajax.php'.format(host), files=credentials, add_referer=True, add_host=True, timeout=timeout, canonical=canonical)
+    httptools.downloadpage(host, timeout=timeout, canonical=canonical)
     
     if httptools.get_cookie(host, 'utoken'):
         logger.info('¡Token de sesión conseguido!')
@@ -151,7 +161,7 @@ def mainlist(item):
                 list_type = 'movies',
                 thumbnail = get_thumb("movies", auto=True),
                 title = "Películas",
-                url = "{}/peliculas/".format(host),
+                url = "{}peliculas/".format(host),
                 viewType = 'movies'
             )
         )
@@ -163,7 +173,7 @@ def mainlist(item):
                 list_type = 'tvshows',
                 thumbnail = get_thumb("tvshows", auto=True),
                 title = "Series",
-                url = "{}/series/".format(host),
+                url = "{}series/".format(host),
                 viewType = 'tvshows'
             )
         )
@@ -175,7 +185,7 @@ def mainlist(item):
                 list_type = 'tvshows',
                 thumbnail = get_thumb("animacion", auto=True),
                 title = "Animación",
-                url = "{}/animes/".format(host),
+                url = "{}animes/".format(host),
                 viewType = 'tvshows'
             )
         )
@@ -186,7 +196,7 @@ def mainlist(item):
                 fanart = item.fanart,
                 thumbnail = get_thumb("colections", auto=True),
                 title = "Listas",
-                url = "{}/listas/".format(host),
+                url = "{}listas/".format(host),
                 viewType = 'videos'
             )
         )
@@ -197,7 +207,7 @@ def mainlist(item):
                 fanart = item.fanart,
                 thumbnail = get_thumb("search", auto=True),
                 title = "Buscar",
-                url = "{}/search/?s=".format(host),
+                url = "{}search/?s=".format(host),
                 viewType = "movies"
             )
         )
@@ -459,7 +469,7 @@ def findvideos(item):
             if data:
                 quality = data.p.span.text
                 server = data.find('h3').text
-                url = 'https://playdede.com/ajax.php'
+                url = '%sajax.php' % host
 
         title = item.title
 
@@ -500,7 +510,7 @@ def play(item):
     logger.info()
 
     if host in item.url and item.player:
-        data = get_source("{}/embed.php?id={}".format(host, item.player), post={})
+        data = get_source("{}embed.php?id={}".format(host, item.player), post={})
         realurl = scrapertools.find_single_match(data, """iframe src=["'](.+?)["']""")
 
         return [item.clone(url = realurl)]

@@ -20,10 +20,15 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['fembed', 'streamtape', 'fastplay', 'gvideo', 'netutv', 'Jawcloud']
 
-
-__channel__='cinelibreonline'
-
-host = "https://www.cinelibreonline.com"
+canonical = {
+             'channel': 'cinelibreonline', 
+             'host': config.get_setting("current_host", 'cinelibreonline', default=''), 
+             'host_alt': ["https://www.cinelibreonline.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+__channel__ = canonical['channel']
 encoding = None
 
 try:
@@ -37,7 +42,7 @@ def mainlist(item):
     logger.info()
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
-    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host + "/search?max-results=%s" %max_result, thumbnail = get_thumb("newest", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host + "search?max-results=%s" %max_result, thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos", url = host, extra = "Genero", thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host, thumbnail = get_thumb("search", auto = True)))
@@ -47,7 +52,7 @@ def mainlist(item):
 def peliculas(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding="utf-8").data
+    data = httptools.downloadpage(item.url, encoding="utf-8", canonical=canonical).data
     data = data.replace("&nbsp;","")
     patron  = "(?is)post-title entry.*?href='([^']+)'>"
     patron += "([^<]+)"
@@ -81,7 +86,7 @@ def peliculas(item):
 def findvideos(item):
     itemlist = []
     
-    data = httptools.downloadpage(item.url, encoding="utf-8").data.replace("í","i")
+    data = httptools.downloadpage(item.url, encoding="utf-8", canonical=canonical).data.replace("í","i")
     patron  = '(?is)>ver \w+ online:.*?href="([^"]+)'
     patron += '.*?/span>.*?\(([^\)]+)'
     matches = scrapertools.find_multiple_matches(data, patron )
@@ -121,7 +126,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas']:
-            item.url = host + "/search?max-results=%s" %max_result
+            item.url = host + "search?max-results=%s" %max_result
         itemlist = peliculas(item)
         if "Pagina" in itemlist[-1].title:
             itemlist.pop()
@@ -137,7 +142,7 @@ def newest(categoria):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/search?q=" + texto
+    item.url = host + "search?q=" + texto
     item.extra = "busca"
     try:
         if texto != '':
@@ -154,7 +159,7 @@ def search(item, texto):
 def generos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding="utf-8").data
+    data = httptools.downloadpage(item.url, encoding="utf-8", canonical=canonical).data
     patron = """(?is)data-version='1' id='HTML6'>.*?widget-content(.*?)widget-content"""
     bloque = scrapertools.find_single_match(data, patron)
     patron   = '(?is)href="([^"]+)'
@@ -175,7 +180,7 @@ def generos(item):
 def list_all(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, encoding="utf-8").data
+    data = httptools.downloadpage(item.url, encoding="utf-8", canonical=canonical).data
     patron = """(?is)id='post-body(.*?)clear: both;"""
     bloque = scrapertools.find_single_match(data, patron)
     patron   = 'href="([^"]+)'

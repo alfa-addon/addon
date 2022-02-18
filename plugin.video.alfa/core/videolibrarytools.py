@@ -1056,10 +1056,9 @@ def redirect_url(video, channel=''):
                 video.url_tvshow = redirect_url(video.url_tvshow, video.channel)
         
         elif channel and generictools.verify_channel(channel) != 'newpct1' and not video.startswith('magnet'):
-            obj = __import__('channels.%s' % channel, fromlist=["channels.%s" % channel])
-
             try:
                 channel_host = ''
+                obj = __import__('channels.%s' % channel, fromlist=["channels.%s" % channel])
                 if obj.host and isinstance(obj.host, str):
                     channel_host = obj.host
             except:

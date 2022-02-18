@@ -23,16 +23,24 @@ from core import httptools, scrapertools, tmdb
 from core.item import Item
 from platformcode import logger, config
 
-host = "https://beta.erai-raws.info"
-
 IDIOMAS = {'French': 'FRA', 'German': 'DEU', 'Italian': 'ITA', 'English': 'ENG', 'Portuguese(Brazil)': 'PTBR', 'Spanish': 'VOSE', 'Spanish(Latin_America)': 'VOSE'}
 language_list = ('French', 'German', 'Italian', 'English', 'Portuguese(Brazil)', 'Spanish')
 list_servers = ['torrent']
 quality_list = ['1080p', '720p', '540p', '480p']
-hide_unselected_subs = config.get_setting('filter_by', channel='erairaws')
-show_vo = config.get_setting('filter_vo', channel='erairaws')
-selected_sub = language_list[config.get_setting('filter_subs_lang', channel='erairaws')]
-if config.get_setting('play_direct', channel='erairaws'):
+
+canonical = {
+             'channel': 'erairaws', 
+             'host': config.get_setting("current_host", 'erairaws', default=''), 
+             'host_alt': ["https://www.erai-raws.info/", "https://beta.erai-raws.info/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
+hide_unselected_subs = config.get_setting('filter_by', channel=canonical['channel'])
+show_vo = config.get_setting('filter_vo', channel=canonical['channel'])
+selected_sub = language_list[config.get_setting('filter_subs_lang', channel=canonical['channel'])]
+if config.get_setting('play_direct', channel=canonical['channel']):
     play_direct_action = 'findvideos'
 else:
     play_direct_action = 'episodesxseason'
@@ -56,7 +64,7 @@ def mainlist(item):
             plot = 'Nuevos episodios' + p_main,
             title = 'Nuevos episodios',
             thumbnail = 'https://i.imgur.com/IexJg5R.png',
-            url = host + '/episodes/'
+            url = host + 'episodes/'
         )
     )
     itemlist.append(
@@ -67,7 +75,7 @@ def mainlist(item):
             plot = 'Ultimas temporadas o paquetes de episodios' + p_main,
             title = "Batch",
             thumbnail = 'https://i.imgur.com/CzAGve1.png',
-            url = host + '/batches/'
+            url = host + 'batches/'
         )
     )
     itemlist.append(
@@ -78,7 +86,7 @@ def mainlist(item):
             plot = 'Ultimas películas, especiales, OVAs, etc.' + p_main,
             title = "Películas",
             thumbnail = 'https://i.imgur.com/aYBo36W.png',
-            url = host + '/specials/'
+            url = host + 'specials/'
         )
     )
     # itemlist.append(
@@ -88,7 +96,7 @@ def mainlist(item):
             # plot = 'Raws (anime sin modificaciones a la versión original, lit. crudo)',
             # title = "Raws",
             # thumbnail = 'https://i.imgur.com/vIRCKQq.png',
-            # url = host + '/raws/'
+            # url = host + 'raws/'
         # )
     # )
     itemlist.append(
@@ -98,7 +106,7 @@ def mainlist(item):
             plot = 'Listado por orden alfabético',
             title = "A-Z",
             thumbnail = 'https://i.imgur.com/vIRCKQq.png',
-            url = host + '/anime-list/'
+            url = host + 'anime-list/'
         )
     )
     itemlist.append(
@@ -107,7 +115,7 @@ def mainlist(item):
             channel = item.channel,
             title = "Buscar...",
             plot = 'Buscar películas, animes, OVAs, especiales etc. en la página',
-            url = host + '/anime-list/',
+            url = host + 'anime-list/',
             thumbnail = 'https://i.imgur.com/ZVMl3NP.png'
         )
     )
@@ -135,12 +143,12 @@ def setting_channel(item):
 def create_soup(url, **kwargs):
     logger.info()
 
-    data = httptools.downloadpage(url, post=kwargs.get('post', None), headers=kwargs.get('headers', None)).data
+    data = httptools.downloadpage(url, post=kwargs.get('post', None), headers=kwargs.get('headers', None), canonical=canonical).data
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
     if kwargs.get('wp_pager') and kwargs.get('search_key'):
         search_key = kwargs.get('search_key')
         post = {'action': 'load_more_0', 'query': '{"anime-list":"' + search_key + '","error":"","m":"","p":0,"post_parent":"","subpost":"","subpost_id":"","attachment":"","attachment_id":0,"name":"","pagename":"","page_id":0,"second":"","minute":"","hour":"","day":0,"monthnum":0,"year":0,"w":0,"category_name":"","tag":"","cat":"","tag_id":"","author":"","author_name":"","feed":"","tb":"","paged":0,"meta_key":"","meta_value":"","preview":"","s":"","sentence":"","title":"","fields":"","menu_order":"","embed":"","category__in":[],"category__not_in":[],"category__and":[],"post__in":[],"post__not_in":[],"post_name__in":[],"tag__in":[],"tag__not_in":[],"tag__and":[],"tag_slug__in":[],"tag_slug__and":[],"post_parent__in":[],"post_parent__not_in":[],"author__in":[],"author__not_in":[],"ignore_sticky_posts":false,"suppress_filters":false,"cache_results":true,"update_post_term_cache":true,"lazy_load_term_meta":true,"update_post_meta_cache":true,"post_type":"","posts_per_page":99,"nopaging":false,"comments_per_page":"0","no_found_rows":false,"taxonomy":"anime-list","term":"' + search_key + '","order":"DESC"}', 'page': '0'}
-        data = httptools.downloadpage('{}/wp-admin/admin-ajax.php'.format(host), post=post, headers={'Referer': url}).data
+        data = httptools.downloadpage('{}wp-admin/admin-ajax.php'.format(host), post=post, headers={'Referer': url}, canonical=canonical).data
         soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
     return soup
@@ -388,9 +396,9 @@ def newest(category):
     if category == 'anime':
         item = Item(
             action = 'list_all',
-            channel = 'erairaws',
+            channel = canonical['channel'],
             list_what = 'episodes',
-            url = '{}/posts/'.format(host)
+            url = '{}posts/'.format(host)
         )
         return list_all(item)
     else:

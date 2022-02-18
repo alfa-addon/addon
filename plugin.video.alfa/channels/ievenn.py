@@ -20,13 +20,21 @@ from channels import autoplay
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'https://ievenn.com/'
-
 IDIOMAS = {'es': 'CAST', 'en': 'VO'}
 list_idiomas = list(set(IDIOMAS.values()))
 
 list_servers = ['okru', 'youtube']
 list_quality = []
+
+canonical = {
+             'channel': 'ievenn', 
+             'host': config.get_setting("current_host", 'ievenn', default=''), 
+             'host_alt': ["https://ievenn.com/"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+host_save = host
 
 
 def get_source(url, headers={}, post={}, soup=False, unescape=False):
@@ -34,14 +42,14 @@ def get_source(url, headers={}, post={}, soup=False, unescape=False):
 
     if post:
         if soup:
-            data = httptools.downloadpage(url, post=post, headers=headers, soup=True).soup
+            data = httptools.downloadpage(url, post=post, headers=headers, soup=True, canonical=canonical).soup
         else:
-            data = httptools.downloadpage(url, post=post, headers=headers).data
+            data = httptools.downloadpage(url, post=post, headers=headers, canonical=canonical).data
     else:
         if soup:
-            data = httptools.downloadpage(url, soup=True, headers=headers).soup
+            data = httptools.downloadpage(url, soup=True, headers=headers, canonical=canonical).soup
         else:
-            data = httptools.downloadpage(url, headers=headers).data
+            data = httptools.downloadpage(url, headers=headers, canonical=canonical).data
 
         if unescape:
             data = scrapertools.unescape(data)
