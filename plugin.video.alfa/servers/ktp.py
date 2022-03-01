@@ -54,7 +54,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 url = decode(url, license_code)
             elif url.startswith("/get_file/"):
                 url = urlparse.urljoin(page_url,url)
-            url += "|verifypeer=false"
+            # url = httptools.downloadpage(url).url
+            # url = httptools.downloadpage(url, follow_redirects=False).headers["location"]
+            # url += "|verifypeer=false"
             # logger.debug(quality + "  --  " + url)
             itemlist.append(['[ktplayer] %s' %quality, url])
         if "LQ" in quality:

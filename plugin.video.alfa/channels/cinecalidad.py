@@ -123,8 +123,9 @@ def submenu(item):
     if "/espana/" not in item.host:
         itemlist.append(Item(channel=item.channel,
                              title="Destacadas",
-                             action="featured",
-                             url=host,
+                             # action="featured",
+                             action="list_all",
+                             url=host + "/peliculas-populares/",
                              thumbnail=get_thumb('hot', auto=True),
                              ))
         itemlist.append(Item(channel=item.channel,
@@ -179,24 +180,24 @@ def create_soup(url, referer=None, unescape=False):
     return soup
 
 
-def featured(item):
-    logger.info()
-    itemlist = list()
-    soup = create_soup(item.url).find("div", class_="widget_movies")
-    matches = soup.find_all("a")
+# def featured(item):
+    # logger.info()
+    # itemlist = list()
+    # soup = create_soup(item.url).find("div", class_="widget_movies")
+    # matches = soup.find_all("a")
 
-    for elem in matches:
-        url = elem["href"]
-        if scrapertools.find_single_match(url, "\d+x\d+") or "episode" in url:
-            continue
-        title = elem["title"]
-        year = "-"
-        contentTitle = title.replace("(%s)" % year, "").strip()
+    # for elem in matches:
+        # url = elem["href"]
+        # if scrapertools.find_single_match(url, "\d+x\d+") or "episode" in url:
+            # continue
+        # title = elem["title"]
+        # year = "-"
+        # contentTitle = title.replace("(%s)" % year, "").strip()
         
-        itemlist.append(Item(channel=item.channel, title=contentTitle, contentTitle=contentTitle, url=url,
-                             action="findvideos", infoLabels={"year": year}))
-        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    return itemlist
+        # itemlist.append(Item(channel=item.channel, title=contentTitle, contentTitle=contentTitle, url=url,
+                             # action="findvideos", infoLabels={"year": year}))
+        # tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    # return itemlist
 
 
 def list_all(item):
@@ -211,14 +212,14 @@ def list_all(item):
     for elem in matches:
         #url = scrapertools.find_single_match(elem.img.get("extract", ""), "href='([^']+)'")
         url = elem.a.get("href", "")
-
+        
         if not url:
             continue
         try:
-            title, year = elem.img["title"].split(' (')
+            title, year = elem.find('img', class_='w-full')["title"].split(' (')
             year = re.sub(r"\)","", year)
         except:
-            title = elem.img["alt"]
+            title = elem.find('img', class_='w-full')["alt"]
             year = "-"
 
         thumb = re.sub(r'(-\d+x\d+.jpg)', '.jpg', elem.img["src"])
