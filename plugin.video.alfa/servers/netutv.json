@@ -20,6 +20,10 @@
         "url": "http://hqq.tv/player/hash.php?hash=\\1"
       },
       {
+        "pattern": "(?:hqq|waaw|netu|waaw1).(?:to|tv)",
+        "url": "http://hqq.tv/player/hash.php?hash=\\1"
+      },
+      {
         "pattern": "https://vidxhot.(?:com|net)/e/([A-z0-9]+)",
         "url": "http://hqq.tv/player/hash.php?hash=\\1"
       },
