@@ -483,13 +483,16 @@ def blocking_error(req, proxy_data, opt):
 
     code = str(req.status_code) or ''
     data = req.content or ''
+    url = opt.get('url', '')
     if PY3 and isinstance(data, bytes):
         data = "".join(chr(x) for x in bytes(data))
     resp = False
 
-    if '104' in code or '10054' in code or ('404' in code and 'Object not found' in data) \
+    if '104' in code or '10054' in code or ('404' in code and 'Object not found' in data \
+                     and '.torrent' not in url) \
                      or ('502' in code and 'Por causas ajenas' in data) \
                      or ('sslcertverificationerror') in code.lower() \
+                     or ('certificate verify failed') in code.lower() \
                      or (opt.get('check_blocked_IP', False) and 'Please wait while we try to verify your browser...' in data):
         resp = True
         
@@ -1020,6 +1023,7 @@ def downloadpage(url, **opt):
                     response['host'] = ''
                     response['url_new'] = ''
                     response['proxy__'] = ''
+                    response['time_elapsed'] = time.time() - inicio
                     info_dict.append(('Success', 'False'))
                     response['code'] = req.status_code
                     info_dict.append(('Response code', str(e)))
@@ -1040,6 +1044,7 @@ def downloadpage(url, **opt):
             response['canonical'] = ''
             response['host'] = ''
             response['url_new'] = ''
+            response['time_elapsed'] = time.time() - inicio
             return type('HTTPResponse', (), response)
         
         response_code = req.status_code
@@ -1052,6 +1057,7 @@ def downloadpage(url, **opt):
         response['host'] = ''
         response['url_new'] = ''
         response['proxy__'] = proxy_stat(opt['url_save'], opt, proxy_data)
+        response['time_elapsed'] = 0
 
         block = blocking_error(req, proxy_data, opt)
         # Retries blocked domain with proxy
@@ -1080,7 +1086,7 @@ def downloadpage(url, **opt):
             if domain not in CF_LIST:
                 CF_LIST += [domain]
                 opt["CF"] = True
-                opt['proxy_retries'] += 1 if PY3 and not TEST_ON_AIR else 0
+                opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0
                 save_CF_list(domain)
                 logger.debug("CF retry... for domain: %s" % domain)
                 return downloadpage(opt['url_save'], **opt)
@@ -1173,6 +1179,7 @@ def downloadpage(url, **opt):
                                   and opt.get('canonical', {}).get('channel', []):
             url, response = retry_alt(url, req, response, proxy_data, opt)
             if not isinstance(response, dict) and response.host:
+                response.time_elapsed = time.time() - inicio
                 return response
 
         if opt.get('cookies', True):
@@ -1188,7 +1195,8 @@ def downloadpage(url, **opt):
                     raise WebErrorException(urlparse.urlparse(url)[1])
 
         info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
-        if not 'api.themoviedb' in url and not 'api.trakt' in url and not opt.get('alfa_s', False) and not opt.get("hide_infobox"):
+        if not 'api.themoviedb' in url and not 'api.trakt' in url and not opt.get('alfa_s', False) \
+                    and (not opt.get("hide_infobox") or not response['sucess']):
             show_infobox(info_dict)
 
         # Si hay error del proxy, refresca la lista y reintenta el numero indicada en proxy_retries
@@ -1205,6 +1213,8 @@ def downloadpage(url, **opt):
                 import traceback
                 logger.error("Error creando sopa")
                 logger.error(traceback.format_exc())
+        
+        response['time_elapsed'] = time.time() - inicio
 
         # Si proxy ordena salir del loop, se sale
         if opt.get('out_break', False):

@@ -57,6 +57,16 @@ def findvideos(item):
 
     itemlist = []
     size = ''
+    torrent_params = {
+                      'url': item.url,
+                      'torrents_path': None, 
+                      'local_torr': item.torrents_path, 
+                      'lookup': False, 
+                      'force': True, 
+                      'data_torrent': True, 
+                      'subtitles': True, 
+                      'file_list': True
+                      }
     
     #logger.debug(item)
     
@@ -80,8 +90,13 @@ def findvideos(item):
             
             for link in item.emergency_urls[0]:
                 link_path = filetools.join(VIDEO_FOLDER, link)
+                
                 if filetools.isfile(link_path):
-                    size = generictools.get_torrent_size(link_path, local_torr=link_path)
+                    torrent_params['url'] = link_path
+                    torrent_params['local_torr'] = link_path
+                    torrent_params = generictools.get_torrent_size(link_path, torrent_params=torrent_params, item=item) # Tamaño en el .torrent
+                    size = torrent_params['size']
+                    if torrent_params['torrents_path'] and not item.torrents_path: item.torrents_path = torrent_params['torrents_path']
                     if size:
                         # Generamos una copia de Item para trabajar sobre ella
                         item_local = item.clone()
@@ -150,6 +165,7 @@ def menu_storage(item):
     TVSHOWS_PATH = filetools.join(VIDEOLIBRARY_PATH, FOLDER_TVSHOWS)
     VIDEO_FOLDER = filetools.join(VIDEOLIBRARY_PATH, FOLDER)
     TORRENT_PATHS = torrent_dirs()
+    MIS_TORRENT_FOLDER = filetools.join(config.get_setting('downloadpath', default=''), 'Mis_Torrents')
 
     itemlist = []
     
@@ -157,6 +173,10 @@ def menu_storage(item):
         itemlist.append(Item(channel=item.channel, action="", title="Videoteca Alfa"))
         itemlist.append(Item(channel=item.channel, action="list_storage", url=MOVIES_PATH, title="  - " + FOLDER_MOVIES))
         itemlist.append(Item(channel=item.channel, action="list_storage", url=TVSHOWS_PATH, title="  - " + FOLDER_TVSHOWS))
+        
+        itemlist.append(Item(channel=item.channel, action="", title="Almacenamiento general"))
+        itemlist.append(Item(channel=item.channel, action="list_storage", url=MIS_TORRENT_FOLDER, title="  - Mis Torrents"))
+        itemlist.append(Item(channel=item.channel, action="list_storage", url='', title="  - Almacenamiento"))
         
         if TORRENT_PATHS['TORREST_torrents'] or TORRENT_PATHS['QUASAR_torrents'] \
                           or TORRENT_PATHS['ELEMENTUM_torrents'] or TORRENT_PATHS['TORRENTER_torrents']:
@@ -170,9 +190,6 @@ def menu_storage(item):
                 itemlist.append(Item(channel=item.channel, action="list_storage", url=TORRENT_PATHS['ELEMENTUM_torrents'], title="  - Elementum"))
             if TORRENT_PATHS['TORRENTER_torrents']:
                 itemlist.append(Item(channel=item.channel, action="list_storage", url=TORRENT_PATHS['TORRENTER_torrents'], title="  - Torrenter"))
-            
-            itemlist.append(Item(channel=item.channel, action="", title="Almacenamiento general"))
-            itemlist.append(Item(channel=item.channel, action="list_storage", url='', title="  - Almacenamiento"))
 
             return itemlist
 
@@ -180,8 +197,20 @@ def menu_storage(item):
 def list_storage(item):
     logger.info()
     from core import filetools
+    from lib import generictools
     
     itemlist = []
+    
+    torrent_params = {
+                      'url': item.url,
+                      'torrents_path': None, 
+                      'local_torr': item.torrents_path, 
+                      'lookup': False, 
+                      'force': True, 
+                      'data_torrent': True, 
+                      'subtitles': True, 
+                      'file_list': True
+                      }
     
     #logger.debug(item)
     
@@ -207,22 +236,37 @@ def list_storage(item):
     MOVIES_PATH = filetools.join(VIDEOLIBRARY_PATH, FOLDER_MOVIES)
     TVSHOWS_PATH = filetools.join(VIDEOLIBRARY_PATH, FOLDER_TVSHOWS)
     VIDEO_FOLDER = filetools.join(VIDEOLIBRARY_PATH, FOLDER)
-    TEMP_TORRENT_FOLDER = filetools.join(VIDEOLIBRARY_PATH, 'temp_torrents_Alfa')
+    TEMP_TORRENT_FOLDER = filetools.join(config.get_setting('downloadpath', default=''), 'cached_torrents_Alfa')
     
     for file in path_list:
         if FOLDER and file.endswith('.json') and file.split('.')[0]+'_01.torrent' in str(path_list):
             json_video = Item().fromjson(filetools.read(filetools.join(path_out, file)))
             json_video.channel = 'url'
             json_video.action = 'findvideos'
+            json_video.torrents_path = json_video.url
             itemlist.append(json_video)
         
         elif FOLDER and filetools.isdir(filetools.join(path_out, file)):
             if '.torrent' in str(filetools.listdir(filetools.join(path_out, file))):
-                itemlist.append(Item(channel=item.channel, action="list_storage", url=filetools.join(path_out, file), title=file))
+                itemlist.append(Item(channel=item.channel, action="list_storage", url=filetools.join(path_out, file), 
+                                title=file.title(), contentTitle=file.title(), contentType="movie", unify=False))
+                if len(itemlist) > 1:
+                    itemlist = sorted(itemlist, key=lambda it: it.title)        #clasificamos
         
         elif not FOLDER and file.endswith('.torrent'):
             filetools.copy(filetools.join(path_out, file), filetools.join(TEMP_TORRENT_FOLDER, file))
+            
+            torrent_params['url'] = filetools.join(TEMP_TORRENT_FOLDER, file)
+            torrent_params['local_torr'] = filetools.join(TEMP_TORRENT_FOLDER, file)
+            torrent_params = generictools.get_torrent_size(filetools.join(TEMP_TORRENT_FOLDER, file), torrent_params=torrent_params)
+            size = torrent_params['size']
+
             itemlist.append(Item(channel=item.channel, action="play", url=filetools.join(TEMP_TORRENT_FOLDER, file), 
-                            server='torrent', title=filetools.join(filetools.basename(path_out.rstrip('/').rstrip('\\')), file)))
+                            server='torrent', title=filetools.join(filetools.basename(path_out.rstrip('/').rstrip('\\')), 
+                            file).title()+" [%s]" % size, contentTitle=filetools.join(filetools.basename(path_out.rstrip('/').rstrip('\\')), 
+                            file).title(), contentType="movie", unify=False, torrents_path=torrent_params['torrents_path'],
+                            infoLabels={"tmdb_id": "111"}))
+            if len(itemlist) > 1:
+                    itemlist = sorted(itemlist, key=lambda it: it.title)        #clasificamos
 
     return itemlist

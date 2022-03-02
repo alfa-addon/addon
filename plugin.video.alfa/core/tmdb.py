@@ -79,7 +79,7 @@ from platformcode import logger
 #
 # --------------------------------------------------------------------------------------------------------------
 
-otmdb_global = None
+#otmdb_global = None
 fname = filetools.join(config.get_data_path(), "alfa_db.sqlite")
 tmdb_langs = ['es', 'es-MX', 'en', 'it', 'pt', 'fr', 'de']
 langs = config.get_setting('tmdb_lang', default=0)
@@ -258,7 +258,7 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang
     return [ii[2] for ii in r_list]
 
 
-def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=None, **kwargs):
+def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=None, otmdb_global=None, **kwargs):
     """
     Obtiene y fija (item.infoLabels) los datos extras de una serie, capitulo o pelicula.
 
@@ -276,7 +276,7 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
     @rtype: int
     """
     include_adult = kwargs.get('include_adult', False)
-    global otmdb_global
+    #global otmdb_global
 
     def __leer_datos(otmdb_aux):
         item.infoLabels = otmdb_aux.get_infoLabels(item.infoLabels)
@@ -303,8 +303,8 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
                 lock.acquire()
 
             if not otmdb_global or (item.infoLabels['tmdb_id']
-                                    and str(otmdb_global.result.get("id")) != item.infoLabels['tmdb_id']) \
-                    or (otmdb_global.texto_buscado and otmdb_global.texto_buscado != item.infoLabels['tvshowtitle']):
+                                and str(otmdb_global.result.get("id")) != item.infoLabels['tmdb_id']) \
+                                or (otmdb_global.texto_buscado and otmdb_global.texto_buscado != item.infoLabels['tvshowtitle']):
                 if item.infoLabels['tmdb_id']:
                     otmdb_global = Tmdb(id_Tmdb=item.infoLabels['tmdb_id'], tipo=tipo_busqueda,
                                         idioma_busqueda=idioma_busqueda, include_adult=include_adult)
@@ -444,7 +444,8 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
 def find_and_set_infoLabels(item):
     logger.info()
 
-    global otmdb_global
+    #global otmdb_global
+    otmdb_global = None
     tmdb_result = None
 
     if item.contentType == "movie":
@@ -492,7 +493,7 @@ def find_and_set_infoLabels(item):
         if infoLabels['tvdb_id']:
             infoLabels['url_scraper'].append("https://thetvdb.com/index.php?tab=series&id=%s" % infoLabels['tvdb_id'])
         item.infoLabels = infoLabels
-        set_infoLabels_item(item)
+        set_infoLabels_item(item, otmdb_global=otmdb_global)
 
         return True
 

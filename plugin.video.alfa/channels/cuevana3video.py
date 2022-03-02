@@ -31,7 +31,7 @@ __channel__='allcalidad'
 canonical = {
              'channel': 'cuevana3video', 
              'host': config.get_setting("current_host", 'cuevana3video', default=''), 
-             'host_alt': ["https://cuevana3.cx"], 
+             'host_alt': ["https://www1.cuevana3.cx/"], 
              'host_black_list': [], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -63,7 +63,7 @@ def mainlist(item):
             channel = item.channel,
             action = "list_all",
             title = "     Estrenos",
-            url = host + "/estrenos",
+            url = host + "estrenos",
             thumbnail = get_thumb('newest', auto=True)
         )
     )
@@ -72,7 +72,7 @@ def mainlist(item):
             channel = item.channel,
             action = "list_all",
             title = "     Ultimas",
-            url = host + "/peliculas-mas-vistas",
+            url = host + "peliculas-mas-vistas",
             thumbnail = get_thumb('newest', auto=True)
         )
     )
@@ -81,7 +81,7 @@ def mainlist(item):
             channel = item.channel,
             action="list_all",
             title = "     Películas",
-            url = host + "/peliculas",
+            url = host + "peliculas",
             thumbnail = get_thumb('movie', auto=True)
         )
     )
@@ -106,7 +106,7 @@ def mainlist(item):
             channel = item.channel,
             action = "last_episodes",
             title = "     Ultimos episodios",
-            url = host + "/serie",
+            url = host + "serie",
             thumbnail = get_thumb('tvshow', auto=True)
         )
     )
@@ -115,7 +115,7 @@ def mainlist(item):
             channel = item.channel,
             action = "last_tvshows",
             title = "     Ultimas series",
-            url = host + "/serie",
+            url = host + "serie",
             type_tvshow = "tabserie-1",
             thumbnail = get_thumb('tvshow', auto=True)
         )
@@ -125,7 +125,7 @@ def mainlist(item):
             channel = item.channel,
             action = "last_tvshows",
             title = "     Mas vistas",
-            url = host + "/serie",
+            url = host + "serie",
             type_tvshow = "tabserie-4",
             thumbnail = get_thumb('tvshow', auto=True)
         )
@@ -321,7 +321,7 @@ def search(item, texto):
     logger.info()
 
     texto = texto.replace(" ", "+")
-    item.url = host + "/search.html?keyword=" + texto
+    item.url = host + "search.html?keyword=" + texto
     item.extra = "busca"
 
     if texto != '':
@@ -511,13 +511,13 @@ def newest(categoria):
 
     try:
         if categoria in ['peliculas','latino']:
-            item.url = host + "/estrenos"
+            item.url = host + "estrenos"
 
         elif categoria == 'infantiles':
-            item.url = host + '/category/animacion/'
+            item.url = host + 'category/animacion/'
 
         elif categoria == 'terror':
-            item.url = host + '/category/torror/'
+            item.url = host + 'category/torror/'
 
         itemlist = list_all(item)
 

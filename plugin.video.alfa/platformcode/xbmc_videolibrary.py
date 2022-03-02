@@ -962,7 +962,7 @@ def execute_sql_kodi(sql, silent=False, file_db=''):
                 nun_records = conn.total_changes
 
             conn.close()
-            if not silent: logger.info("Consulta ejecutada. Registros: %s" % nun_records)
+            if not silent or silent == 'found': logger.info("Consulta ejecutada. Registros: %s" % nun_records)
 
         except:
             logger.error("Error al ejecutar la consulta sql: " + str(sql))

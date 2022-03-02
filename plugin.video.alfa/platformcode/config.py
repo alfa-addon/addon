@@ -90,6 +90,7 @@ class CacheInit(xbmc.Monitor, threading.Thread):
             styles_path = os.path.join(get_runtime_path(), 'resources', 'color_styles.json')
             with open(styles_path, "r") as cf:
                 window.setProperty("alfa_colors_file", cf.read())
+        window.setProperty("CAPTURE_THRU_BROWSER_in_use", '')
 
 
     def run(self):

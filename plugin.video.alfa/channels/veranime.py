@@ -28,9 +28,8 @@ list_servers = ["aparatcam", "streamtape", "fembed", "mixdrop", "doodstream", "c
 canonical = {
              'channel': 'veranime', 
              'host': config.get_setting("current_host", 'veranime', default=''), 
-             'host_alt': ["https://animeonline1.ninja/"], 
+             'host_alt': ["https://www1.animeonline.ninja/"], 
              'host_black_list': [], 
-             'pattern': 'href="?([^"|\s*]+)["|\s*]\s*rel="?canonical"?', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

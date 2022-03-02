@@ -266,9 +266,10 @@ def listado(item):                                                              
             patron += '<\/a>\s*<\/div>\s*<div[^<]*<span[^<]*<\/span>\s*<span\s*'
             patron += 'class="year">\s*(?:(\d{4}))?\s*<\/span>'
         else:
-            patron = '<article\s*id="post[^>]+>.*?<img\s*src="([^"]+)".*?<span\s*'
-            patron += 'class="quality">\s*([^<]*)<\/span>.*?<h3>\s*<a\s*href="([^"]+)">'
-            patron += '\s*([^<]*)<\/a>\s*<\/h3>\s*<span>(?:.*?(\d{4}))?\s*<\/span>'
+            patron = '<article\s*id="post[^>]+>.*?<img\s*src="([^"]+)"[^>]+>\s*<[^>]+>'
+            patron += '\s*[^>]+>\s*[^<]+<\s*[^>]+>\s*[^>]+>\s*(?:<span\s*class="quality">'
+            patron += '\s*([^<]*)<\/span>)?.*?<h3>\s*<a\s*href="([^"]+)">\s*([^<]*)<\/a>'
+            patron += '\s*<\/h3>\s*<span>(?:.*?(\d{4}))?\s*<\/span>'
 
         if not item.matches:                                                    # De pasada anterior?
             matches = re.compile(patron, re.DOTALL).findall(data)
@@ -465,6 +466,17 @@ def findvideos(item):
                }
     response = type('HTTPResponse', (), response)
     
+    torrent_params = {
+                      'url': item.url,
+                      'torrents_path': None, 
+                      'local_torr': item.torrents_path, 
+                      'lookup': False, 
+                      'force': True, 
+                      'data_torrent': True, 
+                      'subtitles': True, 
+                      'file_list': True
+                      }
+    
     #logger.debug(item)
 
     #Bajamos los datos de la página
@@ -585,7 +597,12 @@ def findvideos(item):
                 size = ''
         if not size and not item.videolibray_emergency_urls and not item_local.url.startswith('magnet:'):
             if not item.armagedon:
-                size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)     #Buscamos el tamaño en el .torrent
+                torrent_params['url'] = item_local.url
+                torrent_params['local_torr'] = local_torr
+                torrent_params = generictools.get_torrent_size(item_local.url, torrent_params=torrent_params, item=item_local) # Tamaño en el .torrent
+                size = torrent_params['size']
+                if torrent_params['torrents_path']: item_local.torrents_path = torrent_params['torrents_path']
+                
                 if 'ERROR' in size and item.emergency_urls and not item.videolibray_emergency_urls:
                     item_local.armagedon = True
                     try:                                                        # Restauramos la url
@@ -598,7 +615,11 @@ def findvideos(item):
                     except:
                         item_local.torrent_alt = ''
                         item.emergency_urls[0] = []
-                    size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)
+                    torrent_params['url'] = item_local.url
+                    torrent_params['local_torr'] = local_torr
+                    torrent_params = generictools.get_torrent_size(item_local.url, torrent_params=torrent_params, item=item_local)
+                    size = torrent_params['size']
+                    if torrent_params['torrents_path']: item_local.torrents_path = torrent_params['torrents_path']
         if size:
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                         .replace('Mb', 'M·b').replace('.', ',')

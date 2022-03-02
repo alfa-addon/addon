@@ -240,7 +240,7 @@ def add_languages(title, languages):
     return title
 
 
-def add_info_plot(plot, languages, quality, vextend):
+def add_info_plot(plot, languages, quality, vextend, contentTitle):
     #logger.info()
     last = '[/I][/B]\n'
 
@@ -259,20 +259,26 @@ def add_info_plot(plot, languages, quality, vextend):
     if quality:
         q_part = '[COLOR yellowgreen][B][I]Calidad:[/COLOR] '
         p_quality = '%s%s%s' % (q_part, quality, last)
+    
+    if contentTitle:
+        c_part = '[COLOR blue][B][I]Serie:[/COLOR] '
+        c_content = '%s%s%s' % (c_part, contentTitle, last)
 
     if vextend:
         v_part = '[COLOR yellowgreen][B][I]Tipo:[/COLOR] '
         p_vextend = '%s%s%s' % (v_part, "[Versión Extendida]", last)
 
-    if languages and quality and vextend:
+    if languages and quality and contentTitle and vextend:
+        plot_ = '%s%s%s%s\n%s' % (p_lang, p_quality, c_content, p_vextend, plot)
+    elif languages and quality and vextend:
         plot_ = '%s%s%s\n%s' % (p_lang, p_quality, p_vextend, plot)
-    elif languages and quality:
-        plot_ = '%s%s\n%s' % (p_lang, p_quality, plot)
-    elif languages:
-        plot_ = '%s\n%s' % (p_lang, plot)
+    elif languages and quality and contentTitle:
+        plot_ = '%s%s%s\n%s' % (p_lang, p_quality, c_content, plot)
+    elif languages and contentTitle:
+        plot_ = '%s%s\n%s' % (p_lang, c_content, plot)
 
-    elif quality:
-        plot_ = '%s\n%s' % (p_quality, plot)
+    elif quality and contentTitle:
+        plot_ = '%s%s\n%s' % (p_quality, c_content, plot)
 
     elif vextend:
         plot_ = '%s\n%s' % (p_vextend, plot)
@@ -352,6 +358,7 @@ def title_format(item, c_file=colors_file, srv_lst={}):
 
     lang = False
     simple_language = ""
+    contentTitle = ""
 
     videolibrary = True if item.channel == "videolibrary" else False
     vextend = True if "extend" in item.title.lower() else False
@@ -434,6 +441,7 @@ def title_format(item, c_file=colors_file, srv_lst={}):
         season = info["season"]
         episode = info["episode"]
         epi_name = info["episodio_titulo"] if info["episodio_titulo"] else (info["title"] if info["title"] else "Episodio %s" % episode)
+        contentTitle = info["tvshowtitle"]
         if season and episode:
             title = "%sx%s - %s" % (season, episode, epi_name)
             item.title = set_color(title, "tvshow")
@@ -466,7 +474,7 @@ def title_format(item, c_file=colors_file, srv_lst={}):
             new_title.append(format_rating(info["rating"]))
         title = " ".join(new_title)
         item.title = title
-    item.plot = add_info_plot(item.plot, simple_language, item.quality, vextend)
+    item.plot = add_info_plot(item.plot, simple_language, item.quality, vextend, contentTitle)
 
     item = add_extra_info(item, checks)
     return item
