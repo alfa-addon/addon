@@ -1674,7 +1674,7 @@ def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[], p
     return list_temp
 
     
-def post_tmdb_findvideos(item, itemlist):
+def post_tmdb_findvideos(item, itemlist, headers={}):
     logger.info()
     
     """
@@ -1760,6 +1760,9 @@ def post_tmdb_findvideos(item, itemlist):
     if item.video_path and check_marks_in_videolibray(item):
         playcount = 1
     
+    # Guardamos la url del episodio/película para favorecer la recuperación en caso de errores
+    item.url_save_rec = ([item.url, headers])
+    
     if (not config.get_setting("pseudo_titulos", item.channel, default=False) and item.channel != 'url') or item.downloadFilename:
         if playcount:
             item.infoLabels["playcount"] = 1
@@ -1837,11 +1840,11 @@ def post_tmdb_findvideos(item, itemlist):
     except:
         logger.error(traceback.format_exc())
         
-    #Ajustamos el nombre de la categoría
-    if item.channel != channel_py:
+    # Ajustamos el nombre de la categoría
+    if item.channel != channel_py and item.channel != 'url':
         item.category = item.channel.capitalize()
-    
-    #Formateamos de forma especial el título para un episodio
+
+    # Formateamos de forma especial el título para un episodio
     title = ''
     title_gen = ''
     if item.contentType == "episode":                                                           #Series
@@ -1888,6 +1891,8 @@ def post_tmdb_findvideos(item, itemlist):
     if item.channel_alt:
         title_gen = '[COLOR yellow]%s [/COLOR][ALT]: %s' % (item.category.capitalize(), title_gen)
     #elif (config.get_setting("quit_channel_name", "videolibrary") == 1 or item.channel == channel_py) and item.contentChannel == "videolibrary":
+    elif item.channel == 'url':
+        title_gen = '[COLOR yellow]%s (Url) [/COLOR][ALT]: %s' % (item.category.capitalize(), title_gen)
     else:
         title_gen = '[COLOR white]%s: %s' % (item.category.capitalize(), title_gen)
 
@@ -1933,7 +1938,6 @@ def post_tmdb_findvideos(item, itemlist):
     
     #Si es ventana damos la opción de descarga, ya que no hay menú contextual
     if not Window_IsMedia:
-        if item.contentChannel: del item.contentChannel
         if item.contentType == 'movie': contentType = 'Película'
         if item.contentType == 'episode': contentType = 'Episodio'
         itemlist.append(item.clone(title="-Descargar %s-" % contentType, channel="downloads", server='torrent', 
@@ -2194,14 +2198,11 @@ def find_rar_password(item):
     return item
 
 
-def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, \
-                        timeout=5, file_list=False, lookup=True, local_torr=None, headers=None, \
-                        force=False, short_pad=False, subtitles=False):
+def get_torrent_size(url, **kwargs):
     logger.info()
-    from servers import torrent
+    from servers.torrent import caching_torrents
     
     """
-    
     Módulo extraido del antiguo canal ZenTorrent
     
     Calcula el tamaño de los archivos que contienen un .torrent.  Descarga el archivo .torrent en una carpeta,
@@ -2211,11 +2212,25 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     Entrada: url:       url del archivo .torrent
     Entrada: referer:   url de referer en caso de llamada con post
     Entrada: post:      contenido del post en caso de llamada con post
-    Entrada: data_torrent:  Flag por si se quiere el contenido del .torretn de vuelta
-    Salida: size:       str con el tamaño y tipo de medida ( MB, GB, etc)
-    Salida: torrent_f:  dict() con el contenido del .torrent (opcional)
-    Salida: files:      dict() con los nombres de los archivos del torrent y su tamaño (opcional)
-    
+    torrent_params = {
+                      'url': url,               url del archivo .torrent
+                      'torrents_path': None,    Retorna el path the .torrent cacheado
+                      'local_torr' = None,      Informa de la carpeta y archivo donde cachear el .torrent
+                      'lookup', True,           en torrent.capture_thru_browser indica si solo da el aviso (False) o descarga (True)
+                      'force': False,           Forzar cacheo del .torrent
+                      'data_torrent': True,     Flag por si se quiere el contenido del .torretn de vuelta
+                      'subtitles': True,        Se quieren subtitles_list de vuelta
+                      'file_list': True,        Se quieren files de vuelta
+                      'size': '',               str con el tamaño y tipo de medida ( MB, GB, etc)
+                      'torrent_f': {},          dict() con el contenido del .torrent
+                      'files': {},              dict() con los nombres de los archivos del torrent y su tamaño
+                      'subtitles_list': [],     lista con archivos .str de subtítulos que acompañaban al .torrent
+                      'cached': False,          True si el tarrent ha sido cacheado
+                      'size_lista': [],         Lista de (.torrent, path)
+                      'size_amount': [],        Lista de sizes si hay varios .torrents
+                      'torrent_cached_list': [] Lista de torrents cacheados durante la sesión de Kodi
+                      'time_elapsed':           Tiempo utilizado en la descarga del torrent.  0 si estaba cacheado
+                      }
     """
     
     def convert_size(size):
@@ -2233,9 +2248,9 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         try:
             src = tokenize(text)
             if not PY3:
-                data = decode_item(src.next, src.next())                        #Py2
+                data = decode_item(src.next, src.next())                        # Py2
             else:
-                data = decode_item(src.__next__, next(src))                     #Py3
+                data = decode_item(src.__next__, next(src))                     # Py3
             for token in src:                                                   # look for more tokens
                 raise SyntaxError("trailing junk")
         except (AttributeError, ValueError, StopIteration):
@@ -2281,142 +2296,158 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         else:
             raise ValueError
         return data
-        
+
+    # Móludo principal: iniciamos diccionario de variables
+    torrent_params = kwargs.pop('torrent_params', {})
+    torrent_params['url'] = url or torrent_params.get('url', '')
+    torrent_params['torrents_path'] = torrent_params.get('torrents_path', None)
+    torrent_params['local_torr'] = torrent_params.get('local_torr', None)
+    torrent_params['lookup'] = torrent_params.get('lookup', True)
+    torrent_params['force'] = torrent_params.get('force', False)
+    torrent_params['data_torrent'] = torrent_params.get('data_torrent', False)
+    torrent_params['subtitles'] = torrent_params.get('subtitles', False)
+    torrent_params['file_list'] = torrent_params.get('file_list', False)
+    torrent_params['channel'] = torrent_params.get('channel', '')
+    torrent_params['torrent_alt'] = torrent_params.get('torrent_alt', '')
+    torrent_params['size'] = ''
+    torrent_params['torrent_f'] = {}
+    torrent_params['files'] = {}
+    torrent_params['subtitles_list'] = []
+    torrent_params['cached'] = False
+    torrent_params['size_lista'] = []
+    torrent_params['size_amount'] = []
+    torrent_params['torrent_cached_list'] = []
+    torrent_params['time_elapsed'] = 0
     
-    #Móludo principal
-    size = ''
-    size_lista = []
-    size_amount = []
-    torrent_f = ''
+    
     torrent_file = ''
-    files = {}
+    DOWNLOAD_PATH = config.get_setting('downloadpath', default='')
+    
     if PY3 and isinstance(url, bytes):
-        url = "".join(chr(x) for x in bytes(url))
-    if PY3 and isinstance(torrents_path, bytes):
-        torrents_path = "".join(chr(x) for x in bytes(torrents_path))
-    if PY3 and isinstance(referer, bytes):
-        referer = "".join(chr(x) for x in bytes(referer))
-    if PY3 and isinstance(post, bytes):
-        post = "".join(chr(x) for x in bytes(post))
-    if PY3 and isinstance(headers, bytes):
-        headers = "".join(chr(x) for x in bytes(headers))
+        torrent_params['url'] = "".join(chr(x) for x in bytes(torrent_params['url']))
+    if PY3 and isinstance(torrent_params['torrents_path'], bytes):
+        torrent_params['torrents_path'] = "".join(chr(x) for x in bytes(torrent_params['torrents_path']))
+    if PY3 and isinstance(torrent_params['local_torr'], bytes):
+        torrent_params['local_torr'] = "".join(chr(x) for x in bytes(torrent_params['local_torr']))
 
-    try:
-        #torrents_path = config.get_videolibrary_path() + '/torrents'            #path para dejar el .torrent
+    # Si queremos cachear el torrent se debe especificar el nombre del archivo de salida, con o sin path absoluto
+    # Si se había cacheado previamente, se usa el archivo especificado
+    if torrent_params['local_torr'] and not torrent_params['local_torr'].startswith('http') \
+                       and not torrent_params['local_torr'].startswith('magnet'):
+        torrent_params['cached'] = True
+        if not filetools.isfile(torrent_params['local_torr']):
+            if DOWNLOAD_PATH and DOWNLOAD_PATH not in torrent_params['local_torr'] \
+                             and not scrapertools.find_single_match(torrent_params['local_torr'], 
+                            '(?:\d+x\d+)?\s+\[.*?\]_\d+'):
+                torrent_params['local_torr'] = filetools.join(DOWNLOAD_PATH, 
+                          'cached_torrents_Alfa', torrent_params['local_torr'])
+            if not filetools.isfile(torrent_params['local_torr']):
+                torrent_params['cached'] = False
 
-        #if not os.path.exists(torrents_path):
-        #    os.mkdir(torrents_path)                                             #si no está la carpeta la creamos
-        
-        #urllib.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
-        #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
-        #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
-        
+    try:        
         # Si es lookup, verifica si el canal tiene activado el Autoplay.  Si es así, retorna sin hacer el lookup
-        if lookup and not force and not local_torr:
+        if torrent_params['lookup'] and not torrent_params['force'] and not torrent_params['cached']:
             is_channel = inspect.getmodule(inspect.currentframe().f_back)
             is_channel = scrapertools.find_single_match(str(is_channel), "<module\s*'channels\.(.*?)'")
             if is_channel:
                 from channels import autoplay
                 res = autoplay.is_active(is_channel)
                 if res:
-                    return 'autoplay'
+                    torrent_params['url'] = 'autoplay'
+                    return torrent_params
         
-        if not lookup: timeout = timeout * 3
-        if (url and not local_torr) or url.startswith("magnet"):
-            torrents_path, torrent_file, subtitles_list = torrent.caching_torrents(url, \
-                        referer=referer, post=post, torrents_path=torrents_path, \
-                        timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
-        elif local_torr:
-            torrent_file = filetools.read(local_torr, mode='rb')
-            torrents_path = local_torr
+        if not torrent_params['lookup']: kwargs['timeout'] = kwargs.get('timeout', 5) * 3
+        if (torrent_params['url'] and not torrent_params['cached']) or torrent_params['url'].startswith("magnet"):
+            
+            torrent_file, torrent_params = caching_torrents(torrent_params['url'], torrent_params, **kwargs)
         
-        if isinstance(torrents_path, list):
-            torrents_path_list = torrents_path[:]
+        elif torrent_params['cached']:
+            torrent_file = filetools.read(torrent_params['local_torr'], mode='rb')
+            torrent_params['torrents_path'] = torrent_params['local_torr']
+        
+        if isinstance(torrent_params['torrents_path'], list):
+            torrents_path_list = torrent_params['torrents_path'][:]
             torrent_lista = True
         else:
-            torrents_path_list = [(torrents_path, torrent_file)]
+            torrents_path_list = [(torrent_params['torrents_path'], torrent_file)]
             torrent_lista = False
         
-        for torrents_path, torrent_file in torrents_path_list:
-            size = ''
-            if not torrents_path or torrents_path == 'CF_BLOCKED' or (PY3 and isinstance(torrent_file, bytes) \
-                        and torrent_file.startswith(b"magnet")) or (not PY3 and torrent_file.startswith("magnet")):
-                size = 'ERROR'
+        for torrent_params['torrents_path'], torrent_file in torrents_path_list:
+            torrent_params['size'] = ''
+            if not torrent_params['torrents_path'] or 'CF_BLOCKED' in torrent_params['torrents_path'] \
+                        or (PY3 and isinstance(torrent_file, bytes) and torrent_file.startswith(b"magnet")) \
+                        or (isinstance(torrent_file, str) and torrent_file.startswith("magnet")):
+                torrent_params['size'] = 'ERROR'
                 
                 # si el archivo .torrent está bloqueado con CF, se intentará descargarlo a través de un browser externo
-                if torrent_file and torrents_path == 'CF_BLOCKED':
-                    size += ' [COLOR hotpink][B]BLOQUEO[/B][/COLOR]'
+                if torrent_params['torrents_path'] == 'CF_BLOCKED':
+                    torrent_params['size'] += ' [COLOR hotpink][B]BLOQUEO[/B][/COLOR]'
                     browser, res = call_browser('', lookup=True, strict=True)
                     if not browser:
                         browser, res = call_browser('', lookup=True)
                     if not browser:
-                        size += ': [COLOR magenta][B]Instala un browser externo para usar este enlace[/B][/COLOR] (Chrome, Firefox, Opera)'
+                        torrent_params['size'] += ': [COLOR magenta][B]Instala un browser externo para usar este enlace[/B][/COLOR] (Chrome, Firefox, Opera)'
                     elif res is None and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
-                        size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
+                        torrent_params['size'] += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
                     elif res is None and config.get_setting("capture_thru_browser_path", server="torrent", default=""):
-                        size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
+                        torrent_params['size'] += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
                     elif res or config.get_setting("capture_thru_browser_path", server="torrent", default=""):
                         if res and res is not True:
                             config.set_setting("capture_thru_browser_path", res, server="torrent")
-                            size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
+                            torrent_params['size'] += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
                         elif res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
-                            size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
+                            torrent_params['size'] += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
                         else:
-                            size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
+                            torrent_params['size'] += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
                     else:
-                        size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
+                        torrent_params['size'] += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
                 
-                if not lookup and subtitles:
-                    return (size, torrents_path, torrent_f, files, subtitles_list)
-                elif not lookup:
-                    return (size, torrents_path, torrent_f, files)
-                elif file_list and data_torrent:
-                    return (size, torrent_f, files)
-                elif file_list:
-                    return (size, files)
-                elif data_torrent:
-                    return (size, torrent_f)
-                return size                                                     #Si hay un error, devolvemos el "size" y "torrent" vacíos
+                logger.info('Torrent SIZE: %s-%s - %s' % (str(torrent_params['size']), torrent_params['torrents_path'], 
+                             torrent_params['time_elapsed'] or torrent_params['cached']), force=True)
+                return torrent_params
 
             if PY3 and isinstance(torrent_file, bytes):                         # Convertimos a String para poder hacer el decode
                 torrent_file = "".join(chr(x) for x in torrent_file)
-            torrent_f = decode(torrent_file)                                    #decodificamos el .torrent
+            torrent_params['torrent_f'] = decode(torrent_file)                  # Decodificamos el .torrent
 
             #si sólo tiene un archivo, tomamos la longitud y la convertimos a una unidad legible, si no dará error
             try:
-                sizet = torrent_f["info"]['length']
-                size = convert_size(sizet)
+                sizet = torrent_params['torrent_f']["info"]['length']
+                torrent_params['size'] = convert_size(sizet)
                 
-                files = torrent_f["info"].copy()
-                if 'path' not in files: files.update({'path': ['']})
-                if 'piece length' in files: del files['piece length']
-                if 'pieces' in files: del files['pieces']
-                if 'name' in files: del files['name']
-                files = [files]
-                files.append({"__name": torrent_f["info"]["name"], 'length': 0})
+                torrent_params['files'] = torrent_params['torrent_f']["info"].copy()
+                if 'path' not in torrent_params['files']: torrent_params['files'].update({'path': ['']})
+                if 'piece length' in torrent_params['files']: del torrent_params['files']['piece length']
+                if 'pieces' in torrent_params['files']: del torrent_params['files']['pieces']
+                if 'name' in torrent_params['files']: del torrent_params['files']['name']
+                torrent_params['files'] = [torrent_params['files']]
+                torrent_params['files'].append({"__name": torrent_params['torrent_f']["info"]["name"], 'length': 0})
+                torrent_params['size_lista'] += [(torrent_params['size'], torrent_params['torrents_path'], 
+                            torrent_params['torrent_f'], torrent_params['files'])]
             except:
                 pass
                 
             #si tiene múltiples archivos sumamos la longitud de todos
-            if not size:
+            if not torrent_params['size']:
                 try:
-                    check_video = scrapertools.find_multiple_matches(str(torrent_f["info"]["files"]), "'length': (\d+).*?}")
+                    check_video = scrapertools.find_multiple_matches(str(torrent_params['torrent_f']["info"]["files"]), "'length': (\d+).*?}")
                     sizet = sum([int(i) for i in check_video])
-                    size = convert_size(sizet)
+                    torrent_params['size'] = convert_size(sizet)
                     
-                    files = torrent_f["info"]["files"][:]
-                    files.append({"__name": torrent_f["info"]["name"], 'length': 0})
+                    torrent_params['files'] = torrent_params['torrent_f']["info"]["files"][:]
+                    torrent_params['files'].append({"__name": torrent_params['torrent_f']["info"]["name"], 'length': 0})
                     
                 except:
-                    size = 'ERROR'
+                    torrent_params['size'] = 'ERROR'
+                    logger.error(traceback.format_exc())
             
             # Marcamos si es hay archivos RAR
-            if '.rar' in str(files):
-                size = '[COLOR magenta][B]RAR-[/B][/COLOR]%s' % size
+            if '.rar' in str(torrent_params['files']):
+                torrent_params['size'] = '[COLOR magenta][B]RAR-[/B][/COLOR]%s' % torrent_params['size']
                 
             # Puede haber errores de decode en los paths.  Se intentan arreglar
             try:
-                for entry in files:
+                for entry in torrent_params['files']:
                     for file, path in list(entry.items()):
                         if file == 'path':
                             for x, file_r in enumerate(path):
@@ -2426,35 +2457,28 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
             except:
                 logger.error(traceback.format_exc())
             
-            files = sorted(files, reverse=True, key=lambda k: k['length'])
-            size_lista += [(size, torrents_path, torrent_f, files)]
-            size_amount += [size]
+            torrent_params['files'] = sorted(torrent_params['files'], reverse=True, key=lambda k: k['length'])
+            torrent_params['size_lista'] += [(torrent_params['size'], torrent_params['torrents_path'], 
+                            torrent_params['torrent_f'], torrent_params['files'])]
+            torrent_params['size_amount'] += [torrent_params['size']]
         
-        if len(size_amount) > 1:
-            size = str(size_amount)
+        if len(torrent_params['size_amount']) > 1:
+            torrent_params['size'] = str(torrent_params['size_amount'])
 
     except:
-        size = 'ERROR'
+        torrent_params['size'] = 'ERROR'
+        torrent_params['torrent_f'] = {}
+        torrent_params['files'] = {}
+        torrent_params['torrents_path'] = ''
+        torrent_params['subtitles_list'] = []
         torrent_lista = False
-        logger.error('ERROR al buscar el tamaño de un .Torrent: ' + str(url))
+        logger.error('ERROR al buscar el tamaño de un .Torrent: ' + str(torrent_params['url']))
         logger.error(traceback.format_exc())
 
-    #logger.debug(str(url))
-    logger.info('Torrent SIZE: %s' % str(size), force=True)
-    
-    if torrent_lista and size_lista:
-        return size_lista
-    elif not lookup and subtitles:
-        return (size, torrents_path, torrent_f, files, subtitles_list)
-    elif not lookup:
-        return (size, torrents_path, torrent_f, files)
-    elif file_list and data_torrent:
-        return (size, torrent_f, files)
-    elif file_list:
-        return (size, files)
-    elif data_torrent:
-        return (size, torrent_f)
-    return size 
+    logger.info('Torrent SIZE: %s - %s' % (str(torrent_params['size']), 
+                 torrent_params['time_elapsed'] or torrent_params['cached']), force=True)
+
+    return torrent_params
 
     
 def get_field_from_kodi_DB(item, from_fields='*', files='file'):
@@ -2781,7 +2805,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
     return (item, data)
 
     
-def verify_channel(channel):
+def verify_channel(channel, clones_list=False):
     
     #Lista con los datos de los canales alternativos
     #Cargamos en .json del canal para ver las listas de valores en settings
@@ -2794,6 +2818,11 @@ def verify_channel(channel):
                 channel = channel_py
             break
 
+    if clones_list:
+        import ast
+        clones = ast.literal_eval(clones)
+        return channel, clones
+        
     return channel
     
 

@@ -84,6 +84,7 @@ def start(itemlist, item):
     :return: intenta autoreproducir, en caso de fallar devuelve el itemlist que recibio en un principio
     '''
     logger.info()
+    from servers.torrent import check_torrent_is_buffering
 
     global PLAYED
     global autoplay_node
@@ -116,7 +117,7 @@ def start(itemlist, item):
 
     # Obtiene el nodo del canal desde autoplay_node
     channel_node = autoplay_node.get(channel_id, {})
-    # Obtiene los ajustes des autoplay para este canal
+    # Obtiene los ajustes de autoplay para este canal
     settings_node = channel_node.get('settings', {})
 
     if get_setting('autoplay') or settings_node['active']:
@@ -348,7 +349,15 @@ def start(itemlist, item):
                             platformtools.play_video(videoitem, autoplay=True)
                     except:
                         pass
+                    
+                    if autoplay_elem.get('videoitem', {}) and autoplay_elem['videoitem'].server == 'torrent':
+                        ret = check_torrent_is_buffering(autoplay_elem.get('videoitem', {}), 
+                                                         magnet_retries=60, torrent_retries=30)
+                        if ret == 'RAR':
+                            PLAYED = True
+                            break
                     sleep(3)
+                       
                     try:
                         if platformtools.is_playing():
                             PLAYED = True

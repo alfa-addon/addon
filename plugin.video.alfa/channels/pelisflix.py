@@ -31,7 +31,6 @@ canonical = {
              'host': config.get_setting("current_host", 'pelisflix', default=''), 
              'host_alt': ["https://pelisflix.li/"], 
              'host_black_list': [], 
-             'pattern': 'rel="?canonical"?\s*href="?([^"|>]+)["|>|\s*]', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

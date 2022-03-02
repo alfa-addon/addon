@@ -51,7 +51,7 @@ def get_source(url, json=False, soup=False, multipart_post=None, timeout=30, add
     if "Iniciar sesión" in data.data:
         # Si no tenemos sesión válida, mejor cerramos definitivamente la sesión
         global account
-        if account: logout()
+        if account: logout({})
         platformtools.dialog_notification("No se ha inciado sesión", "Inicia sesión en el canal {} para poder usarlo".format(__channel__))
         return None
 

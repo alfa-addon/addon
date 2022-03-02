@@ -657,10 +657,10 @@ def seasons(item):
             itemlist.append(Item(channel=item.channel, action="set_status__", title=title, url=url_targets,
                                  thumbnail=item.thumbnail, contentSerieName=item.contentSerieName, folder=True))
         
-    sid = scrapertools.find_single_match(data, "<script>var sid = '(\d+)'")
+    sid = scrapertools.find_single_match(data, "<\s*script\s*>var\s*sid\s*=\s*'\s*(\d+)\s*'")
     
-    patron = 'itemprop="season".*?<a href=\'.*?/temporada-(\d+).*?'
-    patron += 'alt="([^"]+)" src="([^"]+)"'
+    patron = 'itemprop="season".*?<a\s*href=\'.*?/temporada-(\d+).*?'
+    patron += 'alt="([^"]+)"\s*src="([^"]+)"'
     
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -710,6 +710,7 @@ def episodesxseason(item):
     infoLabels = item.infoLabels
     sid = item.sid
     ssid = item.contentSeasonNumber
+    title = ''
 
     #si hay cuenta
     status = check_status()
@@ -750,7 +751,7 @@ def episodesxseason(item):
             if not title:
                 title = episode['title'].get('en', '')
 
-        if len(title) == 0: title = "Episodio " + episodio
+        if not title: title = "Episodio " + episodio
         
         serie = item.contentSerieName
         
@@ -832,13 +833,15 @@ def novedades_episodios(item):
         if account:
             str = get_status(status, 'episodes', episode['id'])
             if str != "": title += str
-        
+
         url = urlparse.urljoin(host, 'serie/' + episode[
             'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + episode['id'] + ";3"
         itemlist.append(
-            Item(channel=item.channel, action="findvideos", title=title,
-                 contentSerieName=contentSerieName, url=url, thumbnail=thumbnail,
-                 contentType="episode", language=langs, text_bold=True))
+            Item(channel=item.channel, action="findvideos", title=title, 
+                 infoLabels={'season': temporada, 'episode': episodio, 'playcount': 1 if 'Visto' in str else 0}, 
+                 contentSerieName=contentSerieName, url=url, thumbnail=thumbnail, 
+                 contentType="episode", language=langs, text_bold=True,
+                 ))
     
     if len(itemlist) == 24:
         itemlist.append(
