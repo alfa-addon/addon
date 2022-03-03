@@ -120,6 +120,7 @@ download_sufix = 'descargar/torrent/'
 download_pre_url_torr = '/t_download/'
 download_post_url_torr = '/download-link/'
 download_post_url_torr_tail = '/dom-t/%s'
+host_torrent = 'https://atomtt.com'
 
 #Carga de opciones del canal        
 __modo_grafico__ = config.get_setting('modo_grafico', channel_py)               #TMDB?
@@ -369,18 +370,18 @@ def submenu(item):
 
 def submenu_novedades(item):
     logger.info()
-    
+
     itemlist = []
     itemlist_alt = []
     item.extra2 = ''
     timeout_search=timeout * 2                                                  #Más tiempo para Novedades, que es una búsqueda
-    headers = {'referer': item.url}
-    
+
     thumb_buscar = get_thumb("search.png")
     thumb_settings = get_thumb("setting_0.png")
-    
+
     global host
     item, host = verify_host(item, host, category=category)        # Actualizamos la url del host
+    headers = {'referer': host}
     
     data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, s2=False, 
                                                                headers=headers, decode_code=decode_code, canonical=canonical, 
@@ -493,10 +494,10 @@ def submenu_novedades(item):
 def alfabeto(item):
     logger.info()
     itemlist = []
-    headers = {'referer': item.url}
-    
+
     global host
     item, host = verify_host(item, host)                                        # Actualizamos la url del host
+    headers = {'referer': host}
     
     data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, headers=headers, 
                                                                decode_code=decode_code, quote_rep=True, 
@@ -606,12 +607,13 @@ def listado(item):                                                              
         title_lista.extend(item.title_lista)                                    # Se usa la lista de páginas anteriores en Item
         del item.title_lista                                                    # ... limpiamos
     matches = []
+    last_match = ''
         
     if not item.extra2:                                                         # Si viene de Catálogo o de Alfabeto
         item.extra2 = ''
         
     post = None
-    headers = {'referer': item.url}
+    headers = {'referer': host}
     forced_proxy_opt = None
     if item.post:
         forced_proxy_opt = None
@@ -775,6 +777,9 @@ def listado(item):                                                              
         #logger.debug(len(matches))
         #logger.debug(matches)
         #logger.debug(fichas)
+        
+        if last_match == str(matches[0]):
+            break                                                               # No hay más resultados.  Salimos
 
         if not matches and not search1 in fichas and not scrapertools.find_single_match(data, search2) \
                         and not search3 in fichas and 'letter/' not in item.url:    #error
@@ -877,6 +882,8 @@ def listado(item):                                                              
             title = scrapertools.decode_utf8_error(title)
 
             #logger.debug(title)
+            
+            last_match = str(matches[-1])
 
             if ("juego/" in scrapedurl or "xbox" in scrapedurl.lower()) and not "/serie" \
                     in scrapedurl or "xbox" in scrapedtitle.lower() or "windows" in \
@@ -1209,11 +1216,23 @@ def findvideos(item):
     if not item.language:
         item.language = ['CAST']                                                #Castellano por defecto
     
+    torrent_params = {
+                      'url': item.url,
+                      'torrents_path': None, 
+                      'local_torr': item.torrents_path, 
+                      'torrent_alt': '', 
+                      'lookup': True, 
+                      'force': False, 
+                      'data_torrent': True, 
+                      'subtitles': True, 
+                      'file_list': True, 
+                      'size': ''
+                      }
+    
     #logger.debug(item)
     
     global host, sufix
     item, host = verify_host(item, host)                                        # Actualizamos la url del host
-    host_torrent = host[:-1]
     sufix_save = sufix
     if channel_clone_name == "*** DOWN ***":                                    #Ningún clones activo !!!
         itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
@@ -1331,7 +1350,8 @@ def findvideos(item):
     category_servidores = item.category
     data_servidores_stat = False
     size = ''
-    headers = {'referer': item.url}
+    headers = {'referer': host}
+    printed_CF = False
     
     if not item.matches:
         data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, quote_rep=True, 
@@ -1346,7 +1366,7 @@ def findvideos(item):
             sufix = scrapertools.find_single_match(response.host, '\.\w+\/*$')
             domain = scrapertools.find_single_match(response.host, patron_domain)
             url_servidores = item.url
-            headers = {'referer': item.url}
+            headers = {'referer': host}
             clone_list[0][2] = host
             return findvideos(item)
 
@@ -1374,12 +1394,15 @@ def findvideos(item):
     url_torr = scrapertools.find_single_match(data, patron).replace('javascript:;', '').strip()
     if url_torr:
         url_torr = urlparse.urljoin(torrent_tag, scrapertools.find_single_match(data, patron))
-        url_torr, headers = find_torrent_link(url_torr)
-        size = generictools.get_torrent_size(url_torr, timeout=timeout, headers=headers, force=True)    #Buscamos si hay .torrent y el tamaño
+        torrent_params['force'] = True
+        url_torr, headers = find_torrent_link(url_torr, item=item, headers=headers, torrent_params=torrent_params)
+        size = torrent_params['size']
+        if torrent_params['torrent_alt']:
+            item.armagedon = True                                               # Forzamos el uso de los torrents cacheados en la videoteca
     
     # Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if (not data and not item.matches) or not scrapertools.find_single_match(data, patron) \
-                    or not size or 'ERROR' in size or response.code == 999 or 'javascript:;' in url_torr:    # Si no hay datos o url, error
+                     or response.code == 999 or 'javascript:;' in url_torr:     # Si no hay datos o url, error
         size = ''
         if 'Archivo torrent no Existe' in data:
             logger.error("ERROR 09: FINDVIDEOS: Archivo torrent no Existe ")
@@ -1421,8 +1444,11 @@ def findvideos(item):
                 logger.error("ERROR 02: FINDVIDEOS: Ha cambiado la estructura de la Web " 
                         + " / PATRON: " + patron + " / DATA: ")                 # + str(data)
             if url_torr:
-                url_torr, headers = find_torrent_link(url_torr)
-                size = generictools.get_torrent_size(url_torr, headers=headers, timeout=timeout)    #Buscamos si hay .torrent y el tamaño
+                torrent_params['force'] = False
+                torrent_params['torrent_alt'] = ''
+                url_torr, headers = find_torrent_link(url_torr, item=item, headers=headers, torrent_params=torrent_params)
+                size = torrent_params['size']
+                if torrent_params['torrents_path']: item.torrents_path = torrent_params['torrents_path']
 
     #Si no ha logrado encontrar nada, verificamos si hay servidores
     if not data and not matches:
@@ -1480,15 +1506,15 @@ def findvideos(item):
     
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     if not item.videolibray_emergency_urls:
-        item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
+        item, itemlist = generictools.post_tmdb_findvideos(item, itemlist, headers=headers)
 
     """ Tratamos los enlaces .torrent de calidades alternativas """
-    matches_torent = []
-    if item.armagedon and item.url_quality_alt:
+    matches_torrent = []
+    if item.armagedon:
         for url in item.emergency_urls[0]:
-            matches_torent.append((url, item.quality, '', ''))
+            matches_torrent.append((url, url, item.quality, '', ''))
     elif url_torr:
-        matches_torent.append((url_torr, item.quality, size, data))
+        matches_torrent.append((url_torr, torrent_params['torrents_path'], item.quality, size, data))
 
     if not item.armagedon and item.url_quality_alt:
         for url, quality in item.url_quality_alt:
@@ -1525,18 +1551,29 @@ def findvideos(item):
                     url_torr = urlparse.urljoin(torrent_tag, url_torr)
                 else:
                     continue
-                url_torr, headers = find_torrent_link(url_torr)
-                size = generictools.get_torrent_size(url_torr, headers=headers, timeout=timeout)    #Buscamos si hay .torrent y el tamaño
+                torrent_params['force'] = False
+                url_torr, headers = find_torrent_link(url_torr, item=item, headers=headers, torrent_params=torrent_params)
+                size = torrent_params['size']
             
-            matches_torent.append((url_torr, quality, size, data_alt))
+            matches_torrent.append((url_torr, torrent_params['torrents_path'], quality, size, data_alt))
+    
+    if matches_torrent:
+        item.matches_torrent = []
+        for url, torrents_path, quality, _size, _data in matches_torrent:
+            item.matches_torrent += [url]
+        from servers.torrent import videolibray_populate_cached_torrents
+        cached_torrents = videolibray_populate_cached_torrents(item.matches_torrent[0], find=True, item=item)
+        if cached_torrents['updated']:
+            del item.matches_torrent
+            return findvideos(item)
     
     """ Ahora tratamos los enlaces .torrent """
-    for x, (url, quality, _size, _data) in enumerate(matches_torent):
+    for x, (url, torrents_path, quality, _size, _data) in enumerate(matches_torrent):
         url_torr = url
         size = _size
         data = _data
         
-        if url_torr.startswith('http') or url_torr.startswith('//'):
+        if (url_torr.startswith('http') or url_torr.startswith('//')) and torrent_params['torrents_path'] != 'CF_BLOCKED':
             url_torr = generictools.convert_url_base64(url_torr, host_torrent)
         else:
             url_torr = generictools.convert_url_base64(url_torr)
@@ -1545,15 +1582,22 @@ def findvideos(item):
         item_local = item.clone()
 
         item_local.url = url_torr
+        if torrents_path: 
+            item_local.torrents_path = torrents_path
+        else:
+            item_local.torrents_path = ''
+        if item.armagedon and x > 0:
+            item_local.torrent_alt = ''
+            torrent_params['torrent_alt'] = ''
 
         # Restauramos urls de emergencia si es necesario
-        local_torr = ''
-        if item.emergency_urls and not item.videolibray_emergency_urls:
+        local_torr = 'NewPct1_torrent_file'
+        if item.emergency_urls and len(item.emergency_urls) > x and not item.videolibray_emergency_urls:
             try:                                                                # Guardamos la url ALTERNATIVA
-                if item.emergency_urls[0][0].startswith('http') or item.emergency_urls[0][0].startswith('//'):
-                    item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0], host_torrent)
+                if item.emergency_urls[0][x].startswith('http') or item.emergency_urls[0][x].startswith('//'):
+                    item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][x], host_torrent)
                 else:
-                    item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0])
+                    item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][x])
             except:
                 item_local.torrent_alt = ''
                 item.emergency_urls[0] = []
@@ -1564,10 +1608,8 @@ def findvideos(item):
                 FOLDER = config.get_setting("folder_tvshows")
             if item.armagedon and item_local.torrent_alt:
                 item_local.url = item_local.torrent_alt                         # Restauramos la url
-                if not item.torrent_alt.startswith('http'):
+                if not item_local.torrent_alt.startswith('http'):
                     local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
-            if len(item.emergency_urls[0]) > 1:
-                del item.emergency_urls[0][0]
         
         #Buscamos tamaño en el archivo .torrent
         if not size:
@@ -1580,20 +1622,38 @@ def findvideos(item):
         if not size:
             size = scrapertools.find_single_match(quality, '\s?\[(\d+.?\d*?\s?\w\s?[b|B])\]')
         if not size and item.armagedon and not item.videolibray_emergency_urls:
-            size = generictools.get_torrent_size(item_local.url, headers=headers, local_torr=local_torr)    #Buscamos el tamaño en el .torrent
+            torrent_params['url'] = item_local.url
+            torrent_params['torrents_path'] = None
+            torrent_params['local_torr'] = local_torr
+            torrent_params['force'] = False
+            torrent_params['torrent_f'] = ''
+            torrent_params = generictools.get_torrent_size(item_local.url, torrent_params=torrent_params, 
+                                                           timeout=timeout, headers=headers, item=item_local)   # Tamaño en el .torrent
+            size = torrent_params['size']
+            if torrent_params['torrents_path'] and not item_local.torrents_path: item_local.torrents_path = torrent_params['torrents_path']
+
             if 'ERROR' in size and item.emergency_urls and not item.videolibray_emergency_urls:
+                local_torr = 'NewPct1_torrent_file'
                 item_local.armagedon = True
                 try:                                                        # Restauramos la url
-                    if item.emergency_urls[0][0].startswith('http') or item.emergency_urls[0][0].startswith('//'):
-                        item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0], host_torrent)
+                    if item.emergency_urls[0][x].startswith('http') or item.emergency_urls[0][x].startswith('//'):
+                        item_local.url = generictools.convert_url_base64(item.emergency_urls[0][x], host_torrent)
                     else:
-                        item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0])
+                        item_local.url = generictools.convert_url_base64(item.emergency_urls[0][x])
                         if not item.url.startswith('http'):
                             local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
                 except:
                     item_local.torrent_alt = ''
                     item.emergency_urls[0] = []
-                size = generictools.get_torrent_size(item_local.url, headers=headers, local_torr=local_torr)
+                torrent_params['url'] = item_local.url
+                torrent_params['torrents_path'] = None
+                torrent_params['local_torr'] = local_torr
+                torrent_params['force'] = False
+                torrent_params['torrent_f'] = ''
+                torrent_params = generictools.get_torrent_size(item_local.url, torrent_params=torrent_params, 
+                                                               timeout=timeout, headers=headers, item=item_local)   # Tamaño en el .torrent
+                size = torrent_params['size']
+                if torrent_params['torrents_path'] and not item_local.torrents_path: item_local.torrents_path = torrent_params['torrents_path']
 
         if size:
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
@@ -1629,6 +1689,16 @@ def findvideos(item):
             item_local.quality = quality
             if item.armagedon:
                 item_local.quality = '[COLOR hotpink][E][/COLOR] [COLOR limegreen]%s[/COLOR]' % item_local.quality
+            
+            if not printed_CF and ("CF_BLOCKED" in item_local.torrents_path or "[B]BLOQUEO[/B]" in item_local.torrent_info):
+                browser, res = generictools.call_browser('', lookup=True)
+                if browser:
+                    printed_CF = True
+                    itemlist.append(item.clone(action="", title="[COLOR blue] Saldrán anuncios desde la web %s[/COLOR]" \
+                                    % item_local.category, unify=False))
+                    itemlist.append(item.clone(action="call_browser", channel="setting", 
+                                    title="[COLOR blue][B]**- Pinche [COLOR yellow]aquí[/COLOR] para instrucciones de uso -**[/B][/COLOR]", 
+                                    url="https://alfa-addon.com/threads/bloqueos-en-la-descarga-de-torrents.3646/", unify=False))
             
             #Ahora pintamos el link del Torrent
             item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
@@ -2471,7 +2541,8 @@ def verify_host(item, host_call, force=False, category='', post=None):
     return (item, host)
 
 
-def find_torrent_link(url_torr, headers={}, item={}, itemlist=[]):
+def find_torrent_link(url_torr, retry_404=1, headers={}, item={}, itemlist=[], torrent_params={}):
+    from core import filetools
     
     patron_torrent_inter = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+\/.*?\/(.*?)\/'
     torrent_token = scrapertools.find_single_match(url_torr, patron_torrent_inter)
@@ -2480,23 +2551,54 @@ def find_torrent_link(url_torr, headers={}, item={}, itemlist=[]):
     torrent_prefix = ''
     #sufix = '.torrent'
     sufix = ''
+    torrent_params['torrents_path'] = ''
+    torrent_params['local_torr'] = 'NewPct1_torrent_file'
+    torrent_params['torrent_f'] = ''
+    item.torrents_path = ''
+    
+    if item.emergency_urls:
+        if item.contentType == 'movie':
+            folder = config.get_setting("folder_movies")  # películas
+        else:
+            folder = config.get_setting("folder_tvshows")  # o series
+        PATH_videos = filetools.join(config.get_videolibrary_path(), folder)
+        try:
+            torrent_params['torrent_alt'] = filetools.join(PATH_videos, item.emergency_urls[0][0])
+            retry_404 = 0
+        except:
+            pass
 
     if url_torr:
-        url_torr = url_torr.replace(" ", "%20")                                 #sustituimos espacios por %20, por si acaso
-        if not url_torr.startswith("http"):                                     #Si le falta el http.: lo ponemos
+        url_torr = url_torr.replace(" ", "%20")                                 # Sustituimos espacios por %20, por si acaso
+        if not url_torr.startswith("http"):                                     # Si le falta el http.: lo ponemos
             url_torr = scrapertools.find_single_match(host, '(\w+:)//') + url_torr
         host_torrent = scrapertools.find_single_match(url_torr, patron_host)
         headers['referer'] = host_torrent if host_torrent.endswith('/') else host_torrent + '/'
         torrent_link = urlparse.urljoin(host_torrent, 'to.php')
         torrent_post = 't=%s' % torrent_token
         headers_link = {'Content-Type': 'application/x-www-form-urlencoded', 'Referer': url_torr, 'X-Requested-With': 'XMLHttpRequest'}
-        data, response, item, itemlist = generictools.downloadpage(torrent_link, timeout=timeout, headers=headers_link, 
-                                                                   decode_code=decode_code, quote_rep=True, alfa_s=True, 
-                                                                   post=torrent_post, item=item, itemlist=[])       # Descargamos el enlace
         
-        if data and len(data) > 20 and len(data) < 250:
-            url_torr = '%s%s' % (urlparse.urljoin(host+torrent_prefix, data), sufix)
-
+        for x in range(retry_404+2):
+            data, response, item, itemlist = generictools.downloadpage(torrent_link, timeout=timeout, headers=headers_link, 
+                                                                       decode_code=decode_code, quote_rep=True, alfa_s=True, 
+                                                                       post=torrent_post, item=item, itemlist=[])       # Descargamos el enlace
+            
+            if response.sucess and data and len(data) > 20 and len(data) < 250:
+                url_torr = '%s%s' % (urlparse.urljoin(host+torrent_prefix, data), sufix)
+                torrent_params['local_torr'] = filetools.basename(data.split('?')[0])
+            
+            if torrent_params:
+                torrent_params['url'] = url_torr
+                torrent_params['torrents_path'] = None
+                torrent_params['force'] = True
+                torrent_params = generictools.get_torrent_size(url_torr, torrent_params=torrent_params, 
+                                                               timeout=timeout, headers=headers, 
+                                                               retry_404=retry_404, item=item)
+                if torrent_params.get('code', 200) != 404:
+                    break
+            time.sleep(2)
+        if torrent_params['torrents_path'] and not item.torrents_path: item.torrents_path = torrent_params['torrents_path']
+            
     return url_torr, headers
 
 
@@ -2519,7 +2621,7 @@ def search(item, texto):
         item.post = "categoryIDR=&categoryID=&idioma=&calidad=&ordenar=Fecha&inon=Descendente&s=%s&pg=1" % texto
         item.pattern = "buscar-list"
         item.extra = "search"
-        item.headers = {'Referer': host+'buscar'}
+        item.headers = {'Referer': host}
         itemlist = listado(item)
         
         return itemlist

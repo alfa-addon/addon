@@ -131,7 +131,7 @@ def peliculas(item):
                                    language = idioma
                                    ))
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-    url_pagina = scrapertools.find_single_match(data, 'next" href="([^"]+)')
+    url_pagina = scrapertools.find_single_match(data, 'next page-numbers" href="([^"]+)')
     if url_pagina != "":
         pagina = "Pagina: " + scrapertools.find_single_match(url_pagina, "page/([0-9]+)")
         itemlist.append(Item(channel = item.channel, action = "peliculas", title = pagina, url = url_pagina))

@@ -26,7 +26,7 @@ server_urls = {'doodstream': 'https://dood.to/e/', 'streamtape': 'https://stream
 canonical = {
              'channel': 'comamosramen', 
              'host': config.get_setting("current_host", 'comamosramen', default=''), 
-             'host_alt': ["https://comamosramen.com"], 
+             'host_alt': ["https://comamosramen.com/"], 
              'host_black_list': [], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

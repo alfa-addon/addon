@@ -27,9 +27,9 @@ list_quality = []
 canonical = {
              'channel': 'estrenoscinesaa', 
              'host': config.get_setting("current_host", 'estrenoscinesaa', default=''), 
-             'host_alt': ["https://www.estrenoscinesaa.com"], 
+             'host_alt': ["https://www.estrenoscinesaa.com/"], 
              'host_black_list': [], 
-             'pattern': '', 
+             'pattern': '<link\s*rel="shortcut\s*icon"\s*href="([^"]+)"', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

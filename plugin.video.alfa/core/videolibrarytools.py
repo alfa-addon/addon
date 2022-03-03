@@ -1144,7 +1144,7 @@ def add_tvshow(item, channel=None):
     import xbmc
     
     logger.info("show=#" + item.show + "#")
-    logger.debug("item en videolibrary add tvshow: %s" % item)
+    #logger.debug("item en videolibrary add tvshow: %s" % item)
     item.title = re.sub('^(V)-', '', item.title)
     if item.channel == "downloads":
         itemlist = [item.clone()]
@@ -1234,7 +1234,7 @@ def add_tvshow(item, channel=None):
 
 def emergency_urls(item, channel=None, path=None, headers={}):
     logger.info()
-    from servers import torrent
+    from servers.torrent import caching_torrents
     try:
         magnet_caching_e = magnet_caching
     except:
@@ -1303,18 +1303,31 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                 i = 1
                 if item_res.referer: referer = item_res.referer
                 if item_res.post: post = item_res.post
-                for url in item_res.emergency_urls[0]:                          #Recorremos las urls de emergencia...
+                emergency_urls = item_res.emergency_urls[0]
+                for x, url in enumerate(emergency_urls):                        #Recorremos las urls de emergencia...
                     torrents_path = re.sub(r'(?:\.\w+$)', '_%s.torrent' % str(i).zfill(2), path)
                     path_real = ''
-                    if (filetools.isfile(url) or filetools.isdir(url)) and filetools.exists(url):
+                    if not url.startswith('http') and (filetools.isfile(url) or filetools.isdir(url)) and filetools.exists(url):
                         filetools.copy(url, torrents_path, silent=True)
                         path_real = torrents_path
                     elif magnet_caching_e or not url.startswith('magnet'):
-                        path_real, subtitles_list = torrent.caching_torrents(url, referer, post, \
-                                torrents_path=torrents_path, headers=headers or item_res.headers)   #...  para descargar los .torrents
+                        torrent_params = {
+                                          'url': url,
+                                          'torrents_path': torrents_path,
+                                          'local_torr': item_res.torrents_path,
+                                          'lookup': True
+                                         }
+                        torrent_file, torrent_params = caching_torrents(url, torrent_params=torrent_params, referer=referer, 
+                                                                        post=post, headers=headers or item_res.headers)
+                        if torrents_path == 'CF_BLOCKED' or url == 'CF_BLOCKED' or torrent_params['torrents_path'] == 'CF_BLOCKED':
+                            torrents_path = ''
+                            torrent_params['torrents_path'] = ''
+                        path_real = torrent_params.get('torrents_path', '')
+                        subtitles_list = torrent_params.get('subtitles_list', [])
+
                     if path_real:                                               #Si ha tenido éxito...
                         item_res.emergency_urls[0][i-1] = path_real.replace(videolibrary_path, '')  #se guarda el "path" relativo
-                        if (filetools.isfile(url) or filetools.isdir(url)) and filetools.exists(url):
+                        if not url.startswith('http') and (filetools.isfile(url) or filetools.isdir(url)) and filetools.exists(url):
                             item_res.url = item_res.emergency_urls[0][i-1]
                         if 'ERROR' in item.torrent_info: item.torrent_info = ''
                     if subtitles_list and not item_res.subtitle:
@@ -1331,6 +1344,10 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             if post_save and not item_res.post:
                 item_res.post = post_save
             item_res.url = item.url
+            if item.torrents_path:
+                del item.torrents_path
+            if item_res.torrents_path:
+                del item_res.torrents_path
 
         except:
             logger.error('ERROR al cachear el .torrent de: ' + item.channel + ' / ' + item.title)
@@ -1351,6 +1368,7 @@ def emergency_urls(item, channel=None, path=None, headers={}):
 
 
 def videolibrary_backup_exec(item, videolibrary_backup):
+    import datetime
     try: 
         if item.strm_path:
             contentType = FOLDER_MOVIES
@@ -1407,15 +1425,37 @@ def videolibrary_backup_exec(item, videolibrary_backup):
             if not filetools.exists(backup_path) and backup_path.startswith('ftp'):
                 backup_path_alt = backup_path.replace('ftp://', 'smb://')
                 filetools.mkdir(backup_path_alt)
+            
             if filetools.exists(backup_path):
-                list_video = filetools.listdir(video_path)
-                list_backup = filetools.listdir(backup_path)
+                list_video_alt = []
+                list_backup_alt = []
+                patron_ls = '[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})\s+([^$]+)'
+                list_video = filetools.listdir(video_path, file_inf=True)
+                for file in list_video:
+                    list_video_alt.append(scrapertools.find_single_match(file, patron_ls))
+                list_backup = filetools.listdir(backup_path, file_inf=True)
+                for file in list_backup:
+                    list_backup_alt.append(scrapertools.find_single_match(file, patron_ls))
                 addr_alt = backup_path
                 if scrapertools.find_single_match(addr_alt, '^\w+:\/\/') and '@' in addr_alt:
                     addr_alt = re.sub(':\/\/.*?\:.*?\@', '://USERNAME:PASSWORD@', addr_alt)
                     logger.info('Haciendo backup en %s' % addr_alt)
-                for file in list_video:
-                    if file not in str(list_backup) or file == 'tvshow.nfo':
+                
+                for date_time, file in list_video_alt:
+                    copy_stat = False
+                    if file not in str(list_backup_alt):
+                        copy_stat = True
+                    if file in str(list_backup_alt):
+                        for date_time_b, file_b in list_backup_alt:
+                            if file == file_b:
+                                if date_time != date_time_b:
+                                    video_time = datetime.datetime.strptime(date_time, '%Y-%m-%d %H:%M')
+                                    backup_time = datetime.datetime.strptime(date_time_b, '%Y-%m-%d %H:%M')
+                                    if video_time > backup_time:
+                                        copy_stat = True
+                                break
+                            
+                    if copy_stat:
                         res = filetools.copy(filetools.join(video_path, file), filetools.join(backup_path, file), silent=True)
                         if not res and backup_path.startswith('ftp'):
                             backup_path = backup_path.replace('ftp://', 'smb://')

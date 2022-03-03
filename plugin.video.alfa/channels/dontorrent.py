@@ -31,7 +31,7 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.sk/', 'https://dontorrent.si/', 
+             'host_alt': ['https://dontorrent.eu/', 'https://dontorrent.sk/', 'https://dontorrent.si/', 
                           'https://dontorrent.nu/', 'https://dontorrent.red/', 'https://dontorrent.li/'], 
              'host_black_list': ['https://dontorrent.it/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -657,6 +657,17 @@ def findvideos(item):
     data = ''
     code = 0
     
+    torrent_params = {
+                      'url': item.url,
+                      'torrents_path': None, 
+                      'local_torr': item.torrents_path, 
+                      'lookup': False, 
+                      'force': True, 
+                      'data_torrent': True, 
+                      'subtitles': True, 
+                      'file_list': True
+                      }
+    
     #logger.debug(item)
 
     #Bajamos los datos de las páginas
@@ -748,7 +759,7 @@ def findvideos(item):
         item_local.url = urlparse.urljoin(host, scrapedurl)
 
         # Restauramos urls de emergencia si es necesario
-        local_torr = ''
+        local_torr = 'Dontorrent_torrent_file'
         if item.emergency_urls and not item.videolibray_emergency_urls:
             try:                                                                # Guardamos la url ALTERNATIVA
                 if item.emergency_urls[0][0].startswith('http') or item.emergency_urls[0][0].startswith('//'):
@@ -777,7 +788,12 @@ def findvideos(item):
             size = ''
         if not size and not item.videolibray_emergency_urls:
             if not item.armagedon:
-                size = generictools.get_torrent_size(item_local.url, local_torr=local_torr) #Buscamos el tamaño en el .torrent desde la web
+                torrent_params['url'] = item_local.url
+                torrent_params['local_torr'] = local_torr
+                torrent_params = generictools.get_torrent_size(item_local.url, torrent_params=torrent_params, item=item_local) # Tamaño en el .torrent
+                size = torrent_params['size']
+                if torrent_params['torrents_path']: item_local.torrents_path = torrent_params['torrents_path']
+                
                 if 'ERROR' in size and item.emergency_urls and not item.videolibray_emergency_urls:
                     item_local.armagedon = True
                     try:                                                        # Restauramos la url
@@ -790,7 +806,12 @@ def findvideos(item):
                     except:
                         item_local.torrent_alt = ''
                         item.emergency_urls[0] = []
-                    size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)
+                    torrent_params['url'] = item_local.url
+                    torrent_params['local_torr'] = local_torr
+                    torrent_params = generictools.get_torrent_size(item_local.url, torrent_params=torrent_params, item=item_local)
+                    size = torrent_params['size']
+                    if torrent_params['torrents_path']: item_local.torrents_path = torrent_params['torrents_path']
+        
         if size:
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                         .replace('Mb', 'M·b').replace('.', ',')

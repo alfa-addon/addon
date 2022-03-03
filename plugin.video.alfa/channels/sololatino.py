@@ -39,7 +39,6 @@ canonical = {
              'host': config.get_setting("current_host", 'sololatino', default=''), 
              'host_alt': ["https://sololatino.net/"], 
              'host_black_list': [], 
-             'pattern': 'href="?([^"|\s*]+)["|\s*]\s*rel="?canonical"?', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
