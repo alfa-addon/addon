@@ -124,15 +124,20 @@ def update(path, p_dialog, i, t, serie, overwrite, redir=True):
                 logger.error(traceback.format_exc())
                 continue
                 
-            #Si el canal lo permite, se comienza el proceso de descarga de los nuevos episodios descargados
-            serie.channel = generictools.verify_channel(serie.channel)
-            if insertados > 0 and config.get_setting('auto_download_new', serie.channel, default=False) and int(overwrite_back) != 3:
+            # Si el canal lo permite, se comienza el proceso de descarga de los nuevos episodios descargados
+            serie_d = serie.clone()
+            serie_d.channel = generictools.verify_channel(serie_d.channel)
+            if insertados > 0 and config.get_setting('auto_download_new', serie_d.channel, default=False) and int(overwrite_back) != 3:
                 config.set_setting("search_new_content", 1, "videolibrary")     # Escaneamos a final todas la series
-                serie.sub_action = 'auto'
-                serie.category = itemlist[0].category
+                serie_d.sub_action = 'auto'
+                serie_d.category = itemlist[0].category
                 from channels import downloads
-                downloads.save_download(serie, silent=True)
-                if serie.sub_action: del serie.sub_action
+                downloads.save_download(serie_d, silent=True)
+            
+            # Limpiamos restos del canal anterior
+            if serie.category_alt: del serie.category_alt
+            if serie.channel_host: del serie.channel_host
+            if serie.channel_redir: del serie.channel_redir
 
         else:
             logger.debug("Canal %s no activo no se actualiza" % serie.channel)

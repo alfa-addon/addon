@@ -1372,7 +1372,7 @@ def findvideos(item):
 
     """ Procesamos los datos de las páginas """
     #Patron para .torrent
-    patron = 'class="btn-torrent">.*?window.location.href = (?:parseURL\()?"(.*?)"\)?;'
+    patron = 'class[^=]*="btn-torrent".*?window.location.href = (?:parseURL\()?"(.*?)"\)?;'
     patron_mult = 'torrent:check:status|' + patron + '|<a href="([^"]+)"\s?title='
     patron_mult += '"[^"]+"\s?class="btn-torrent"'
     # Patrón para Servidores
@@ -1978,14 +1978,12 @@ def episodios(item):
     itemlist = []
     matches_old = []
     
-    json_category = item.category.lower()                                       # Salvamos la categoría que viene de la videoteca
     global host
     item, host = verify_host(item, host)                                        # Actualizamos la url del host
     if channel_clone_name == "*** DOWN ***":                                    # Ningún clones activo !!!
         itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
         return itemlist 
-    if not json_category:
-        json_category = item.category.lower()
+    json_category = item.channel_redir.lower() or item.category.lower()         # Salvamos la categoría que viene de la videoteca
     
     #logger.debug(item)
 
@@ -2108,13 +2106,15 @@ def episodios(item):
                 #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el vídeo
                 item, data = generictools.fail_over_newpct1(item, patron, timeout=timeout)
 
-        if not data:                                                            #No se ha encontrado ningún canal activo para este vídeo
+        if not data and not item.library_playcounts:                            #No se ha encontrado ningún canal activo para este vídeo
             itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.channel.capitalize() 
                         + '[/COLOR]: Ningún canal NewPct1 activo'))    
             itemlist.append(item.clone(action='', title=item.category + 
                         ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. ' 
                         + 'Si la Web está activa, reportar el error con el log'))
             return itemlist
+        elif not data and item.library_playcounts:                              # Si es una actualización de la videoteca salimos sin meter basura
+            return []
         
         matches = re.compile(patron, re.DOTALL).findall(data)
         if matches_old == matches:
@@ -2443,7 +2443,7 @@ def find_language(item, json_category=''):
             epi_json_path = ''
             epi_json_file = ''
             if not json_category:
-                json_category = item.category.lower()
+                json_category = item.channel_redir.lower() or item.category.lower()
 
             # Localizamos un número de episodio válido
             for key, value in list(item.library_playcounts.items()):
@@ -2451,8 +2451,19 @@ def find_language(item, json_category=''):
                     break
             
             # Creamos el path al episodio y verificamos que existe
+            if config.get_setting("original_title_folder", "videolibrary") == 1 and item.infoLabels['originaltitle']:
+                base_name = item.infoLabels['originaltitle']
+            elif item.infoLabels['tvshowtitle']:
+                base_name = item.infoLabels['tvshowtitle']
+            elif item.infoLabels['title']:
+                base_name = item.infoLabels['title']
+            else:
+                base_name = item.contentSerieName
+            base_name = filetools.validate_path(base_name.replace('/', '-'))
+            if config.get_setting("lowerize_title", "videolibrary") == 0:
+                base_name = base_name.lower()
             epi_json_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
-            epi_json_path = filetools.join(epi_json_path, '%s [%s]' % (item.contentSerieName, item.infoLabels['IMDBNumber']))
+            epi_json_path = filetools.join(epi_json_path, '%s [%s]' % (base_name, item.infoLabels['IMDBNumber']))
             epi_json_file = filetools.join(epi_json_path, '%s [%s].json' % (key, json_category))
             if not filetools.exists(epi_json_file):
                 logger.info('MISSING epi_json_file %s' % epi_json_file)

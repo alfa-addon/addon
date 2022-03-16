@@ -223,7 +223,7 @@ def change_host_newpct1(host, host_old):
         filetools.write(channel_path, json.dumps(channel_json, sort_keys=True, indent=2, ensure_ascii=True))
 
 
-def convert_url_base64(url, host='', rep_blanks=True):
+def convert_url_base64(url, host='', referer=None, rep_blanks=True):
     logger.info('URL: ' + url + ', HOST: ' + host)
     host_whitelist = ['mediafire.com']
     domain = scrapertools.find_single_match(url, patron_domain)
@@ -231,16 +231,19 @@ def convert_url_base64(url, host='', rep_blanks=True):
     url_base64 = url
     if '=http' in url_base64 and not 'magnet:' in url_base64:
         url_base64 = scrapertools.find_single_match(url_base64, '=(http.*?$)')
-    
+
     if len(url_base64) > 1 and not 'magnet:' in url_base64 and not '.torrent' in url_base64:
         patron_php = 'php(?:#|\?\w=)(.*?$)'
-        if scrapertools.find_single_match(url_base64, patron_php):
-            url_base64 = scrapertools.find_single_match(url_base64, patron_php)
+        if not scrapertools.find_single_match(url_base64, patron_php):
+            patron_php = '\?type=(?:anonym&)?(?:urlb64)?=(.*?$)'
+
+        url_base64 = scrapertools.find_single_match(url_base64, patron_php)
         try:
             # Da hasta 20 pasadas o hasta que de error
             for x in range(20):
                 url_base64 = base64.b64decode(url_base64).decode('utf-8')
             logger.info('Url base64 después de 20 pasadas (incompleta): %s' % url_base64)
+            url_base64 = url
         except:
             if url_base64 and url_base64 != url:
                 logger.info('Url base64 convertida: %s' % url_base64)
@@ -253,9 +256,9 @@ def convert_url_base64(url, host='', rep_blanks=True):
             
             from lib.unshortenit import sortened_urls
             if domain and domain in str(host_whitelist):
-                url_base64_bis = sortened_urls(url_base64, url_base64, host)
+                url_base64_bis = sortened_urls(url_base64, url_base64, host, referer=referer)
             else:
-                url_base64_bis = sortened_urls(url, url_base64, host)
+                url_base64_bis = sortened_urls(url, url_base64, host, referer=referer)
             domain_bis = scrapertools.find_single_match(url_base64_bis, patron_domain)
             if domain_bis: domain = domain_bis
             if url_base64_bis != url_base64:
@@ -651,7 +654,8 @@ def post_tmdb_listado(item, itemlist):
     #logger.debug(video_list)
     
     # Pasada por TMDB a Serie, para datos adicionales, y mejorar la experiencia en Novedades
-    if len(itemlist) > 0 and (itemlist[-1].contentType != 'movie' or item.action == 'search' or item.extra == 'novedades'):
+    if len(itemlist) > 0 and (not itemlist[-1].infoLabels['temporada_nombre'] or not itemlist[-1].infoLabels['number_of_seasons']) \
+                         and (itemlist[-1].contentType != 'movie' or item.action == 'search' or item.extra == 'novedades'):
         idioma = idioma_busqueda
         if 'VO' in str(itemlist[-1].language):
             idioma = idioma_busqueda_VO
@@ -778,11 +782,15 @@ def post_tmdb_listado(item, itemlist):
         if item_local.contentType in ['season', 'tvshow', 'episode']:
             
             # Pasada por TMDB a Serie, para datos adicionales, y mejorar la experiencia en Novedades
-            if scrapertools.find_single_match(title_add, r'Episodio\s*(\d+)x(\d+)'):
+            if scrapertools.find_single_match(title_add, r'Episodio\s*(\d+)x(\d+)') or ' (MAX_EPISODIOS)' in title_add:
                 # Salva los datos de la Serie y lo transforma temporalmente en Season o Episode
                 contentPlot = item_local.contentPlot
                 contentType = item_local.contentType
-                season, episode = scrapertools.find_single_match(title_add, r'Episodio\s*(\d+)x(\d+)')
+                if scrapertools.find_single_match(title_add, r'Episodio\s*(\d+)x(\d+)'):
+                    season, episode = scrapertools.find_single_match(title_add, r'Episodio\s*(\d+)x(\d+)')
+                else:
+                    season = item_local.infoLabels['season']
+                    episode = item_local.infoLabels['episode']
                 episode_max = int(episode)
                 item_local.infoLabels['season'] = season
                 if '-al-' not in title_add:
@@ -793,7 +801,8 @@ def post_tmdb_listado(item, itemlist):
                     episode_max = int(scrapertools.find_single_match(title_add, r'Episodio\s*\d+x\d+-al-(\d+)'))
 
                 try:
-                    if item_local.infoLabels['tmdb_id']:
+                    if (not item_local.infoLabels['temporada_nombre'] or not item_local.infoLabels['number_of_seasons']) \
+                                                                        and item_local.infoLabels['tmdb_id']:
                         tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma)  #TMDB de la serie
                 except:
                     logger.error(traceback.format_exc())
@@ -874,18 +883,31 @@ def post_tmdb_listado(item, itemlist):
             if item_local.from_channel == "news":
                 title_add += " -Varios-"
         
+        base_name = ''
+        season_episode = ''
         if item_local.contentType != 'movie' and item_local.infoLabels['tmdb_id'] \
                         and ((item_local.infoLabels['imdb_id'] \
                         and item_local.infoLabels['imdb_id'] in str(video_list)) \
                         or 'tmdb_'+item_local.infoLabels['tmdb_id'] in str(video_list) \
-                    or item_local.contentTitle.lower()+' [' in str(video_list)):
+                        or item_local.contentTitle.lower()+' [' in str(video_list)):
             id_tmdb = item_local.infoLabels['imdb_id']
             if not id_tmdb:
                 id_tmdb = "tmdb_%s" % item_local.infoLabels['tmdb_id']
-            item_local.video_path = "%s [%s]" % (item_local.contentSerieName, id_tmdb)
+            if config.get_setting("original_title_folder", "videolibrary") == 1 and item_local.infoLabels['originaltitle']:
+                base_name = item_local.infoLabels['originaltitle']
+            elif item_local.infoLabels['tvshowtitle']:
+                base_name = item_local.infoLabels['tvshowtitle']
+            elif item_local.infoLabels['title']:
+                base_name = item_local.infoLabels['title']
+            else:
+                base_name = item_local.contentSerieName
+            base_name = filetools.validate_path(base_name.replace('/', '-'))
+            if config.get_setting("lowerize_title", "videolibrary") == 0:
+                base_name = base_name.lower()
+            
+            item_local.video_path = "%s [%s]" % (base_name, id_tmdb)
             item_local.url_tvshow = item_local.url
             item_local.unify_extended = True
-            season_episode = ''
             if season and episode:
                 season_episode = '%sx%s.strm' % (str(season), str(episode).zfill(2))
             if check_marks_in_videolibray(item_local, strm=season_episode):
@@ -906,9 +928,10 @@ def post_tmdb_listado(item, itemlist):
         if title_add and item_local.contentType == 'movie':
             item_local.contentTitle += title_add.replace(' (MAX_EPISODIOS)', '')
 
-        #Ahora maquillamos un poco los titulos dependiendo de si se han seleccionado títulos inteleigentes o no
+        #Ahora maquillamos un poco los titulos dependiendo de si se han seleccionado títulos inteligentes o no
         if not config.get_setting("unify"):                                     #Si Titulos Inteligentes NO seleccionados:
-            title = '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (title, str(item_local.infoLabels['year']), rating, item_local.quality, str(item_local.language))
+            title = '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' \
+                         % (title, str(item_local.infoLabels['year']), rating, item_local.quality, str(item_local.language))
 
         elif item_local.action:                                                 #Si Titulos Inteligentes SÍ seleccionados:
             title = title.replace("[", "-").replace("]", "-").replace(".", ",").replace("GB", "G B")\
@@ -1596,11 +1619,12 @@ def post_tmdb_episodios(item, itemlist):
     return (item, itemlist)
 
 
-def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[], patron_season='', patron_quality=''):
+def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, patron_season='', patron_quality=''):
     logger.info()
     
     # Si hay varias temporadas, buscamos todas las ocurrencias y las filtrados por TMDB, calidad e idioma
     list_temp = []
+    list_temps = []
     itemlist = []
 
     if not patron_quality:
@@ -1609,7 +1633,7 @@ def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[], p
         item_search = item.clone()
         item_search.extra = 'search'
         item_search.extra2 = 'episodios'
-        title = scrapertools.find_single_match(item_search.contentSerieName, '(^.*?)\s*(?:$|\(|\[)')    # Limpiamos un poco el título
+        title = scrapertools.find_single_match(item_search.contentTitle or item_search.contentSerieName, '(^.*?)\s*(?:$|\(|\[)')    # Limpiamos
         item_search.title = title
         item_search.infoLabels = {}                                             # Limpiamos infoLabels
         
@@ -1625,6 +1649,7 @@ def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, list_temps=[], p
             #logger.debug(str(item_found.language) + ' / ' + str(item.language))
             #logger.debug(str(item_found.quality) + ' / ' + str(item.quality))
             #logger.debug(str(item_found.url) + ' / ' + str(item.url))
+            #logger.debug(str(item_found.title) + ' / ' + str(item.title))
             if item_found.url in str(list_temps):                               # Si ya está la url, pasamos a la siguiente
                 continue
             if not item_found.infoLabels['tmdb_id']:                            # tiene TMDB?
@@ -2300,8 +2325,8 @@ def get_torrent_size(url, **kwargs):
     # Móludo principal: iniciamos diccionario de variables
     torrent_params = kwargs.pop('torrent_params', {})
     torrent_params['url'] = url or torrent_params.get('url', '')
-    torrent_params['torrents_path'] = torrent_params.get('torrents_path', None)
-    torrent_params['local_torr'] = torrent_params.get('local_torr', None)
+    torrent_params['torrents_path'] = torrent_params.get('torrents_path', '')
+    torrent_params['local_torr'] = torrent_params.get('local_torr', '')
     torrent_params['lookup'] = torrent_params.get('lookup', True)
     torrent_params['force'] = torrent_params.get('force', False)
     torrent_params['data_torrent'] = torrent_params.get('data_torrent', False)
@@ -2318,7 +2343,9 @@ def get_torrent_size(url, **kwargs):
     torrent_params['size_amount'] = []
     torrent_params['torrent_cached_list'] = []
     torrent_params['time_elapsed'] = 0
-    
+    if not url:
+        torrent_params['size'] = 'ERROR'
+        return torrent_params
     
     torrent_file = ''
     DOWNLOAD_PATH = config.get_setting('downloadpath', default='')
@@ -3341,12 +3368,13 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 
                 # Si es el canal Newpct1, se analiza la url de la serie para quitarle códigos específicos de los clones
                 if item.channel == channel_py or channel in fail_over_list:
-                    #if item.contentType == "tvshow" and ow_force != 'no':       # Parece que con el título encuentra.., ### VIGILAR
-                    if item.contentType in ["tvshow", "season"] and canal_org not in canal_des:     # Parece que con el título sólo, encuentra..,
-                        url_total = re.sub(r'\/\d{4,20}\/*$', '', url_total)    # mejor la serie, a menos que sea una redir del mismo canal
+                    if canal_org not in canal_des:
                         item.channel_redir = item.category_alt or item.category
-                        if item.category_alt: del item.category_alt
-                
+                        #if item.category_alt: del item.category_alt
+                        #if item.contentType == "tvshow" and ow_force != 'no':      # Parece que con el título encuentra.., ### VIGILAR
+                        if item.contentType in ["tvshow", "season"]:                # Parece que con el título sólo, encuentra..,
+                            url_total = re.sub(r'\/\d{4,20}\/*$', '', url_total)    # mejor la serie, a menos que sea una redir del mismo canal
+
                 """ SALVAMOS el resultado para su proceso """
                 update_stat += 1                                                #Ya hemos actualizado algo
                 canal_org_des_list += [(canal_org, canal_des, url_total, opt, ow_force)]

@@ -243,6 +243,7 @@ def add_languages(title, languages):
 def add_info_plot(plot, languages, quality, vextend, contentTitle):
     #logger.info()
     last = '[/I][/B]\n'
+    c_content = ''
 
     if languages:
         l_part = '[COLOR yellowgreen][B][I]Idiomas:[/COLOR] '
@@ -268,23 +269,21 @@ def add_info_plot(plot, languages, quality, vextend, contentTitle):
         v_part = '[COLOR yellowgreen][B][I]Tipo:[/COLOR] '
         p_vextend = '%s%s%s' % (v_part, "[Versión Extendida]", last)
 
-    if languages and quality and contentTitle and vextend:
+    if languages and quality and vextend:
         plot_ = '%s%s%s%s\n%s' % (p_lang, p_quality, c_content, p_vextend, plot)
-    elif languages and quality and vextend:
-        plot_ = '%s%s%s\n%s' % (p_lang, p_quality, p_vextend, plot)
-    elif languages and quality and contentTitle:
+    elif languages and quality:
         plot_ = '%s%s%s\n%s' % (p_lang, p_quality, c_content, plot)
-    elif languages and contentTitle:
+    elif languages:
         plot_ = '%s%s\n%s' % (p_lang, c_content, plot)
 
-    elif quality and contentTitle:
+    elif quality:
         plot_ = '%s%s\n%s' % (p_quality, c_content, plot)
 
     elif vextend:
-        plot_ = '%s\n%s' % (p_vextend, plot)
+        plot_ = '%s%s\n%s' % (p_vextend, c_content, plot)
 
     else:
-        plot_ = plot
+        plot_ = '%s\n%s' % (c_content, plot)
 
     return plot_
 
@@ -440,7 +439,9 @@ def title_format(item, c_file=colors_file, srv_lst={}):
     elif c_type == "episode":
         season = info["season"]
         episode = info["episode"]
+        sufix = scrapertools.find_single_match(item.title, '(-\s*\([^-]+-(?:\s*\[TERM\])?)')
         epi_name = info["episodio_titulo"] if info["episodio_titulo"] else (info["title"] if info["title"] else "Episodio %s" % episode)
+        if sufix: epi_name += sufix
         contentTitle = info["tvshowtitle"]
         if season and episode:
             title = "%sx%s - %s" % (season, episode, epi_name)

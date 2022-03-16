@@ -658,7 +658,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         season_episode = "%sx%s" % (e.contentSeason, str(e.contentEpisodeNumber).zfill(2))
         strm_path = filetools.join(path, "%s.strm" % season_episode)
         nfo_path = filetools.join(path, "%s.nfo" % season_episode)
-        json_path = filetools.join(path, ("%s [%s].json" % (season_episode, e.channel)).lower())
+        json_path = filetools.join(path, ("%s [%s].json" % (season_episode, e.channel_redir.lower() or e.channel)).lower())
 
         if season_episode in nostrm_episodelist:
             logger.error('Error en la estructura de la Videoteca: Serie ' + serie.contentSerieName + ' ' + season_episode)
@@ -1318,7 +1318,7 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                                           'lookup': True
                                          }
                         torrent_file, torrent_params = caching_torrents(url, torrent_params=torrent_params, referer=referer, 
-                                                                        post=post, headers=headers or item_res.headers)
+                                                                        post=post, headers=headers or item_res.headers, item=item_res)
                         if torrents_path == 'CF_BLOCKED' or url == 'CF_BLOCKED' or torrent_params['torrents_path'] == 'CF_BLOCKED':
                             torrents_path = ''
                             torrent_params['torrents_path'] = ''
