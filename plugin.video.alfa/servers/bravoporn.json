@@ -44,8 +44,8 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:pornone|xbabe).com/embed/[0-9-]+)",
-        "url": "\\1"
+        "pattern": "((?:pornone|xbabe|cumlouder).com/embed/[0-9-]+)",
+        "url": "https://\\1"
       },
       {
         "pattern": "(https://sex3.com/[0-9-]+/)",

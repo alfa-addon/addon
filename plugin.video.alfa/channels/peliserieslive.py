@@ -28,7 +28,7 @@ canonical = {
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-url1 = "%s/?v=Opciones" % host
+# url1 = "%s/?v=Opciones" % host
 
 
 SERVER = {'www.fembed.com': 'Fembed','www.myurlshort.live': 'Fembed', 'feurl.com': 'Fembed', '1fichier.com': 'onefichier', 'www.mediafire.com': 'mediafire' ,
@@ -57,12 +57,12 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "/Peliculas.html?page=1", thumbnail=get_thumb("movies", auto=True)))
-    itemlist.append(item.clone(title="      Mas Vistas" , action="lista", url= host + "/Seccion.html?ver=PelisMasVistos", thumbnail=get_thumb("movies", auto=True)))
+    # itemlist.append(item.clone(title="      Mas Vistas" , action="lista", url= host + "/Seccion.html?ver=PelisMasVistos", thumbnail=get_thumb("movies", auto=True)))
     itemlist.append(item.clone(title="Series", action="lista", url= host + "/Series.html?page=1", thumbnail=get_thumb("tvshows", auto=True)))
-    itemlist.append(item.clone(title="      Mas Vistas" , action="lista", url= host + "/Seccion.html?ver=MasVistos", thumbnail=get_thumb("movies", auto=True)))
+    # itemlist.append(item.clone(title="      Mas Vistas" , action="lista", url= host + "/Seccion.html?ver=MasVistos", thumbnail=get_thumb("movies", auto=True)))
     itemlist.append(item.clone(title="Anime", action="lista", url= host + "/Anime.html?page=1", thumbnail=get_thumb("anime", auto=True)))
     itemlist.append(item.clone(title="Novela", action="lista", url= host + "/Novelas.html?page=1", thumbnail=get_thumb("tvshows", auto=True)))
-    itemlist.append(item.clone(title="Genero" , action="categorias", url= host, thumbnail=get_thumb('genres', auto=True)))
+    # itemlist.append(item.clone(title="Genero" , action="categorias", url= host, thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(item.clone(title="Buscar...", action="search", thumbnail=get_thumb("search", auto=True)))
     
     autoplay.show_option(item.channel, itemlist)
@@ -118,20 +118,20 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url, referer=host)
-    matches = soup.find_all("div", class_=re.compile(r"^pitem\d+"))
+    matches = soup.find_all("div", class_="item lazybg")
     for elem in matches:
         tipo = ""
-        ref = "%s%s" % (host, elem.find("a", class_="item lazybg")["href"])
+        url = elem.a["href"]
         lg = elem.find_all(class_="idioma-icons")
         language = []
         for l in lg:
             lang = l['class'][1]
             language.append(IDIOMAS.get(lang, lang))
-        pid = elem['pid']
+        # pid = elem['pid']
         thumbnail = elem['data-bg-img']
-        title = elem.find('div', class_='def-title').text.strip()
+        title = elem.find('div', class_='title').text.strip()
         contentTitle = title
-        info = elem.find('div', class_='post_info')
+        info = elem.find('div', class_='desc')
         ajo = info.text.strip()
         if "Serie" in ajo: tipo="Serie"
         if "Anime" in ajo: tipo="Anime"
@@ -149,14 +149,18 @@ def lista(item):
                 title = "%s [COLOR darkgrey]%s[/COLOR]" % (title, language)
         else:
             title = title
-        new_item = Item(channel=item.channel, pid=pid, title=title, thumbnail=thumbnail, language=language,
+        url = urlparse.urljoin(item.url,url)
+        url += "#1"
+        logger.debug(url)
+        new_item = Item(channel=item.channel, url = url, title=title, thumbnail=thumbnail, language=language,
                         infoLabels={"year": year})
         if tipo:
-            new_item.url= "pid=%s&tipo=%s&temp=-1&cap=-1" %(pid,tipo)
+            # new_item.url= "pid=%s&tipo=%s&temp=-1&cap=-1" %(pid,tipo)
+            new_item.tipo = tipo
             new_item.action = "seasons"
             new_item.contentSerieName = contentTitle
         else:
-            new_item.url = "pid=%s&tipo=Pelicula&temp=-1&cap=-1" %pid
+            # new_item.url = "tipo=Pelicula&temp=-1&cap=-1" 
             new_item.action = "findvideos"
             new_item.contentTitle = contentTitle
         itemlist.append(new_item)
@@ -166,20 +170,63 @@ def lista(item):
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
 
-    next_page = soup.find('li', class_='num active')
-    if next_page:
-        next_page = next_page.find_next_sibling("li").a['href']
+    next_page = soup.find('a', class_='btn pager active')
+    if next_page and next_page.find_next_sibling("a"):
+        next_page = next_page.find_next_sibling("a")['href']
+    # if next_page:
+        # next_page = next_page.find_next_sibling("li").a['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
+
+
+# <div class="row">
+  # <div class="col s12">
+    # <div class="" style="overflow: hidden">
+      # <!-- a href="/Options?pid=1520&token1=2e3ef1aa19f507ba4e01f9e2fad63b53" target="_blank">Ver</a -->
+    # </div>
+  # </div>
+# </div>
+
+# https://peliculasyserieslatino.me/Options?pid=1520&token1=2e3ef1aa19f507ba4e01f9e2fad63b53
+
+# post_url= "https://peliculasyserieslatino.me/LoadTempCap"
+# referer: https://peliculasyserieslatino.me/ver-descargar-vikings-valhalla.html
+# <script>
+# var pdata={
+ # 'pid':4810,
+ # 'token':'0c939c0be9eeaf5ddf70e4711540ea83'
+# };
+# </script>
+# https://peliculasyserieslatino.me/Options?pid=4810&token1=0c939c0be9eeaf5ddf70e4711540ea83&tmp=1
+
+
+# https://peliculasyserieslatino.me/Options?pid=4810&token1=d75af815417dc16a133107f19bca9821&tmp=1&cap=1
+# onclick="get_link(4810,2139773,'e5ec01ad45c30a40795ee6631c38c3cf',1,'fe.peliseries.live')"
+# https://peliculasyserieslatino.me/Player?pid=4810&lid=2139773&tk=e5ec01ad45c30a40795ee6631c38c3cf&h=fe.peliseries.live
+
+
+def pdata(url,tipo):
+    logger.info()
+    itemlist = list()
+    data = httptools.downloadpage(url, canonical=canonical).data
+    logger.debug(data)
+    if tipo:
+        pdata = scrapertools.find_single_match(data,'.*var pdata=(^<]+)')
+    else:
+        pdata = scrapertools.find_single_match(data,'.*href="(/Options?pid=[^"]+)"')
+    logger.debug(pdata)
+    return pdata
 
 
 def seasons(item):
     logger.info()
     itemlist = list()
     infoLabels = item.infoLabels
-    soup = create_soup(url1, post=item.url)
-    matches = soup.find_all('div', class_='temp')
+    # post = pdata(item.url,item.tipo)
+    post_url= "https://peliculasyserieslatino.me/LoadTempCap"
+    soup = create_soup(post_url, post=post)
+    matches = soup.find_all('div', class_='post_url')
     for elem in matches:
         title= elem.a.text.strip()
         season = re.sub("\D", "", title)
@@ -239,7 +286,8 @@ def episodios(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(url1, post=item.url)
+    post = datos(item.url)
+    soup = create_soup(url, post=item.url)
     matches = soup.find_all('div', class_='lOpcion')
     serv=[]
     for elem in matches:

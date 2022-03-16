@@ -18,6 +18,7 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from core import httptools
+from bs4 import BeautifulSoup
 
 host = 'http://sexofilm.com'
 
@@ -63,25 +64,38 @@ def categorias(item):
     return itemlist
 
 
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
+
+
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<article id="post-\d+".*?'
-    patron += '<a href="([^"]+)".*?'
-    patron += 'data-src="([^"]+)".*?'
-    patron += '<h2 class="post-title.*?title="([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
+    soup = create_soup(item.url)
+    matches = soup.find_all("article", class_=re.compile(r"^post-\d+"))
+    for elem in matches:
+        logger.debug(elem)
+        url = elem.a['href']
+        title = elem.h2.text.strip()
+        thumbnail = elem.img['data-src']
+        title = title.replace(" Porn DVD", "").replace("Permalink to ", "").replace(" Porn Movie", "")
         plot = ""
-        title = scrapedtitle.replace(" Porn DVD", "").replace("Permalink to ", "").replace(" Porn Movie", "")
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=scrapedurl,
-                                   fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=plot) )
-    next_page = scrapertools.find_single_match(data,'<a class="nextpostslink".*?href="([^"]+)">')
-    if next_page!="":
+        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=url,
+                                   fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
+    next_page = soup.find('a', class_='nextpostslink')
+    if next_page:
+        next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -115,5 +129,5 @@ def play(item):
     if not url:
         itemlist = servertools.find_video_items(item.clone(url = item.url))
     if url:
-        itemlist.append(item.clone(action="play", title= url, url=url, contentTitle = item.title, timeout=40))
+        itemlist.append(item.clone(action="play", title= url, url=url, contentTitle = item.title, timeout=45))
     return itemlist

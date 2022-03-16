@@ -28,7 +28,7 @@ list_servers = list(SERVER.values())
 
 __channel__='peliculasflix'
 
-host = 'https://peliculasflix.co'   #  https://peliculasflix.co   https://seriesflix.nu/     https://pelisflix.li     https://mundokaos.net
+host = "https://peliculasflix.co"   #  https://peliculasflix.co   https://seriesflix.nu/     https://pelisflix.li     https://mundokaos.net
 
 url1 = "%s/?v=Opciones" %host
 
@@ -38,8 +38,8 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
     
-    # itemlist.append(item.clone(title="1" , action="prueba", url= host + "/ver-peliculas-online/", thumbnail=get_thumb("movies", auto=True)))
-    itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "/ver-peliculas-online/", thumbnail=get_thumb("movies", auto=True)))
+    # itemlist.append(item.clone(title="1" , action="prueba", url= host + "/peliculas", thumbnail=get_thumb("movies", auto=True)))
+    itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "/peliculas", thumbnail=get_thumb("movies", auto=True)))
     itemlist.append(item.clone(title="Genero" , action="categorias", url= host, thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(item.clone(title="Productora" , action="categorias", url= host))
     itemlist.append(item.clone(title="Alfabetico", action="section", url=host, thumbnail=get_thumb("alphabet", auto=True)))
@@ -155,11 +155,10 @@ def create_soup(url, referer=None, post=None, unescape=False):
 def prueba(item):
     logger.info()
     itemlist = []
-    post_url= "https://sv2.fluxcedene.net/api/gql"
-    post = {"operationName": "listMovies", "variables": {"perPage": 32, "sort": "CREATEDAT_DESC", "filter": {}, "page": 1},
-            "query": "query listMovies($page: Int, $perPage: Int, $sort: SortFindManyFilmInput, $filter: FilterFindManyFilmInput) {\n  paginationFilm(page: $page, perPage: $perPage, sort: $sort, filter: $filter) {\n    count\n    pageInfo {\n      currentPage\n      hasNextPage\n      hasPreviousPage\n      __typename\n    }\n    items {\n      _id\n      title\n      name\n      overview\n      runtime\n      slug\n      name_es\n      poster_path\n      poster\n      languages\n      release_date\n      __typename\n    }\n    __typename\n  }\n}\n"
-           }
-    headers={'Content-Type': 'application/json', 'x-access-platform': 'jjVhE1riBt_0wmi6vk811uG_OTmaSMTYzODQxODg1MQ==', 'Referer': 'https://peliculasflix.co/'}
+    post_url= "https://fluxcedene.net/api/gql"
+    post = {"operationName":"listMovies",
+            "variables":{"perPage":32,"sort":"CREATEDAT_DESC","filter":{"isPublish":"true"},"page":1},"query":"query listMovies($page: Int, $perPage: Int, $sort: SortFindManyFilmInput, $filter: FilterFindManyFilmInput) {\n  paginationFilm(page: $page, perPage: $perPage, sort: $sort, filter: $filter) {\n    count\n    pageInfo {\n      currentPage\n      hasNextPage\n      hasPreviousPage\n      __typename\n    }\n    items {\n      _id\n      title\n      name\n      overview\n      runtime\n      slug\n      name_es\n      poster_path\n      poster\n      languages\n      release_date\n      __typename\n    }\n    __typename\n  }\n}\n"}
+    headers={'accept': '*/*','Content-Type': 'application/json', 'x-access-platform': 'hoYk4lCRj2_aRqiVsyBiIMa_Eie6KMTY0NzM3NTc3OQ==', 'Referer': 'https://peliculasflix.co/'}
     # data = httptools.downloadpage(post_url, post={}, headers=headers, follow_redirects=False).headers["location"]
     data = httptools.downloadpage(post_url, post=post, headers=headers).json
     logger.debug(data)

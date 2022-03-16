@@ -46,7 +46,8 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "peliculas/", thumbnail=get_thumb("movies", auto=True)))
+    # itemlist.append(item.clone(title="1" , action="prueba", url= host + "pelicula/", thumbnail=get_thumb("movies", auto=True)))
+    itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "pelicula/", thumbnail=get_thumb("movies", auto=True)))
     itemlist.append(item.clone(title="Genero" , action="categorias", url= host, thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(item.clone(title="Series", action="lista", url= host + "series/", thumbnail=get_thumb("tvshows", auto=True)))
     itemlist.append(item.clone(title="Anime", action="lista", url= host + "category/anime/", thumbnail=get_thumb("anime", auto=True)))
@@ -116,6 +117,23 @@ def section(item):
         itemlist.append(item.clone(action="alpha_list", url=url, title=title))
 
     return itemlist
+
+
+
+# action	"action_search"
+# vars	"{\"_wpsearch\":\"8dcd81ec42\",\"taxonomy\":\"none\",\"search\":\"none\",\"term\":\"none\",\"type\":\"movies\",\"genres\":[],\"years\":[],\"sort\":\"1\",\"page\":2}"
+
+def prueba(item):
+    logger.info()
+    itemlist = []
+    post_url= "https://mundokaos.net/wp-admin/admin-ajax.php"
+    post = {'action':'action_search', 'vars': '(\'_wpsearch\': \'8dcd81ec42\', \'taxonomy\': \'none\',\'search\': \'none\',\'term\': \'none\',\'type\': \'movies\',\'genres\': [],\'years\': [],\'sort\': \'1\',\'page\': \'1\')'}
+    headers={'Content-Type': 'application/x-www-form-urlencoded', 'Referer': item.url}
+    # data = httptools.downloadpage(post_url, post={}, headers=headers, follow_redirects=False).headers["location"]
+    data = httptools.downloadpage(post_url, post=post, headers=headers).data
+    logger.debug(data)
+    return itemlist
+
 
 
 def alpha_list(item):

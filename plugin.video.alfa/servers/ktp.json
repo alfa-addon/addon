@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:tittykings|shooshtime|love4porn|submityourflicks|freehardcore|moviesand|interracial|feetporno|chubbyporn|cartoonporn|trannylime|gotgayporn|myporntape|bigtitslust|amateur8).com/videos/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:tittykings|shooshtime|love4porn|submityourflicks|freehardcore|moviesand|interracial|feetporno|chubbyporn|cartoonporn|trannylime|gotgayporn|myporntape|bigtitslust|amateur8|thepornarea).com/videos/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
@@ -56,6 +56,9 @@
         "url": "https://www.\\1.com/videos/a-\\2/"
       },
       {
+        "pattern": "https://www.porntrex.com/embed/([0-9]+)",
+        "url": "https://www.porntrex.com/video/\\1/a"
+      },      {
         "pattern": "https://fapster.xxx/embed/([0-9]+)",
         "url": "https://fapster.xxx/videos/\\1/a/"
       },

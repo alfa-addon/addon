@@ -43,9 +43,9 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "ver-peliculas-online-gratis/", thumbnail=get_thumb("movies", auto=True)))
+    itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "ver-peliculas-online-gratis-fullhd-b3g4d4c2/", thumbnail=get_thumb("movies", auto=True)))
     itemlist.append(item.clone(title="Genero" , action="categorias", url= host, thumbnail=get_thumb('genres', auto=True)))
-    itemlist.append(item.clone(title="Series", action="lista", url= host + "ver-series-online-gratis/", thumbnail=get_thumb("tvshows", auto=True)))
+    itemlist.append(item.clone(title="Series", action="lista", url= host + "ver-series-online-gratis-h2e3r4t5/", thumbnail=get_thumb("tvshows", auto=True)))
     # itemlist.append(item.clone(title="Anime", action="lista", url= host + "category/anime/", thumbnail=get_thumb("anime", auto=True)))
 
     itemlist.append(item.clone(title="Productora" , action="categorias", url= host))
@@ -104,9 +104,9 @@ def categorias(item):
         url = elem.a["href"]
         title = elem.a.text
         itemlist.append(item.clone(action="lista", url=url, title=title))
-    if "Genero" in item.title:
-        itemlist.append(item.clone(action="lista", url="%scategory/dc-comics/" %host, title="DC"))
-        itemlist.append(item.clone(action="lista", url="%scategory/marvel/" %host, title="MARVEL"))
+    if not "Genero" in item.title:
+        itemlist.append(item.clone(action="lista", url="%sgenero/dc-comics-hd-1a2b/" %host, title="DC"))
+        itemlist.append(item.clone(action="lista", url="%sgenero/marvel-2-hd-b2e3r4a/" %host, title="MARVEL"))
     return itemlist
 
 
@@ -125,7 +125,7 @@ def alpha_list(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find("tbody")
+    matches = soup.find("section")
     if not matches:
         return itemlist
     for elem in matches.find_all("tr"):
@@ -212,7 +212,8 @@ def lista(item):
         else:
             new_item.action = "findvideos"
             new_item.contentTitle = title
-            new_item.language = language
+            # if language:
+                # new_item.language = language
         itemlist.append(new_item)
 
     tmdb.set_infoLabels(itemlist, True)
