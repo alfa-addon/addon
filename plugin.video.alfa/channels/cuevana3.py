@@ -38,14 +38,14 @@ list_servers = ['fastplay', 'directo', 'streamplay', 'flashx', 'streamito', 'str
 canonical = {
              'channel': 'cuevana3', 
              'host': config.get_setting("current_host", 'cuevana3', default=''), 
-             'host_alt': ["https://cuevana3.io/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://cuevana3.me/"], 
+             'host_black_list': ["https://cuevana3.io/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
 domain = scrapertools.find_single_match(host, patron_domain)
-domain_fix = 'cuevana3.io'
+domain_fix = domain
 
 forced_proxy_opt = 'ProxyDirect'
 
