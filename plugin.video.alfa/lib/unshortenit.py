@@ -488,13 +488,14 @@ def unshorten(uri, type=None, timeout=10):
     return uri, status
 
 
-def sortened_urls(url, url_base64, host):
+def sortened_urls(url, url_base64, host, referer=None):
     # https://unicode-table.com/es/#basic-latin
     # https://www.ionos.es/digitalguide/servidores/know-how/ascii-american-standard-code-for-information-interchange/
 
     sortened_domains = {'acortalink.me': ['linkser=uggcf%3A%2F%2Flrfgbeerag.arg', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
                         'acortaenlace.com': ['linkser=uggcf%3A%2F%2Fzntargcryvf.pbz', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
                         'short-link.one': ['linkser=uggcf%3A%2F%2Fpvargbeerag.pb', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
+                        'acorta-link.com': ['linkser=uggcf%3A%2F%2Fgbqbgbeeragf.arg', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
                         'mediafire.com': [None, '(?i)=\s*"Download file"\s*href="([^"]+)"\s*id\s*=\s*"downloadButton"', 0, 0, False], 
                         'sub-short.link': [None, [64, 123 ,77, 91, 96, 109, 13, 13], 0, 0, False], 
                         'divxto.site': [None, [64, 123 ,77, 91, 96, 109, 13, 13], 0, 0, False] , 
@@ -541,8 +542,9 @@ def sortened_urls(url, url_base64, host):
         host_name = scrapertools.find_single_match(url, patron_host)
         if host_name and not host_name.endswith('/'): host_name += '/'
 
-        data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(url, proxy_retries=0, 
-                    timeout=10, referer=host, ignore_response_code=True, alfa_s=True).data)
+        data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(url, proxy_retries=0, timeout=10, 
+                                                                  referer=referer or host, ignore_response_code=True, 
+                                                                  alfa_s=True).data)
 
         if sortened_domains[domain][1] and scrapertools.find_single_match(data_new, sortened_domains[domain][1]):       # mediafire???
             url_base64 = scrapertools.find_single_match(data_new, sortened_domains[domain][1])
@@ -553,26 +555,33 @@ def sortened_urls(url, url_base64, host):
             sortened_domains[domain][0] = 'linkser=%s' % quote_plus(scrapertools.find_single_match(data_new, patron_linkser))
         post = sortened_domains[domain][0]
         headers = {'Content-type': 'application/x-www-form-urlencoded'}
-        data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(host_name, proxy_retries=0, 
-                    timeout=10, referer=url, post=post, headers=headers, ignore_response_code=True, alfa_s=True).data)
-
-        if data_new :
+        data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(host_name, proxy_retries=0, timeout=10, 
+                                                                  referer=url, post=post, headers=headers, 
+                                                                  ignore_response_code=True, alfa_s=True).data)
+        if data_new:
             key = scrapertools.find_single_match(data_new, sortened_domains[domain][1])
             if not key or not sortened_domains[domain][1]:
                 return url_base64
     
-    try:
-        url_base64_bis = None
-        url_base64_bis = GibberishAES(string=url_base64, pass_=key, 
-                         Nr=sortened_domains[domain][2], Nk=sortened_domains[domain][3], 
-                         Decrypt=sortened_domains[domain][4])
-        if url_base64_bis.result and (url_base64_bis.result.startswith('magnet') or url_base64_bis.result.startswith('http')):
-            url_base64 = url_base64_bis.result
-        else:
-            logger.error('ERROR en GibberishAES: Result: %s' % url_base64_bis.result)
-    except:
-        logger.error('ERROR en GibberishAES: Key: %s' % key)
-        logger.error(traceback.format_exc())
+    if not key:
+        logger.error('ERROR: NO Key')
+    else:
+        try:
+            url_base64_bis = None
+            url_base64_bis = GibberishAES(string=url_base64, pass_=key, 
+                             Nr=sortened_domains[domain][2], Nk=sortened_domains[domain][3], 
+                             Decrypt=sortened_domains[domain][4])
+            if url_base64_bis.result and (url_base64_bis.result.startswith('magnet') or url_base64_bis.result.startswith('http') \
+                                          or url_base64_bis.result.startswith('//')):
+                if url_base64_bis.result.startswith('//'):
+                    url_base64 = 'https:%s' % url_base64_bis.result
+                else:
+                    url_base64 = url_base64_bis.result
+            else:
+                logger.error('ERROR en GibberishAES: Result: %s' % url_base64_bis.result)
+        except:
+            logger.error('ERROR en GibberishAES: Key: %s' % key)
+            logger.error(traceback.format_exc())
 
     if not (url_base64.startswith('magnet') or url_base64.startswith('http')):
         key = ''

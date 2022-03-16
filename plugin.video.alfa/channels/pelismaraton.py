@@ -35,8 +35,8 @@ list_servers = [
 canonical = {
              'channel': 'pelismaraton', 
              'host': config.get_setting("current_host", 'pelismaraton', default=''), 
-             'host_alt': ["https://pelismaraton.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://pelismaraton.me/"], 
+             'host_black_list': ["https://pelismaraton.com/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

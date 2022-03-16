@@ -556,6 +556,14 @@ def canonical_check(url, response, req, opt):
     data = response['data']
     canonical = opt.get('canonical', {})
     canonical_new = False
+    canonical_new_alt = []
+    
+    if canonical.get('host', '') and canonical.get('channel', '') and ('hideproxy' in canonical['host'] \
+                                 or 'webproxy' in canonical['host'] or 'hidester' in canonical['host'] \
+                                 or 'hide' in canonical['host'] or 'croxyproxy' in canonical['host'] \
+                                 or '__cpo=' in canonical['host']):
+        config.set_setting("current_host", '', channel=canonical['channel'])
+        canonical['host'] = ''
     
     if PY3 and isinstance(data, bytes):
         data = "".join(chr(x) for x in bytes(data))
@@ -581,6 +589,12 @@ def canonical_check(url, response, req, opt):
             canonical_host = canonical_host.replace('\\', '')
             if canonical_host and not canonical_host.startswith('http') and canonical_host.startswith('//'):
                 canonical_host = 'https:%s' % canonical_host
+            if canonical_host and ('hideproxy' in canonical_host \
+                              or 'webproxy' in canonical_host or 'hidester' in canonical_host \
+                              or 'hide' in canonical_host or 'croxyproxy' in canonical_host \
+                              or '__cpo=' in canonical_host):
+                canonical_host = ''
+                continue
             canonical_host = scrapertools.find_single_match(canonical_host, patron_host)
             if canonical_host:
                 break
@@ -591,6 +605,11 @@ def canonical_check(url, response, req, opt):
         if not canonical_host.endswith('/'):
             canonical_host += '/'
         response['canonical'] = canonical_host
+    if canonical.get('host', '') and canonical.get('host_black_list', []) and canonical.get('host_alt', []) \
+                                 and canonical['host'] in canonical['host_black_list']:
+        if not canonical_host or canonical_host in canonical['host_black_list']:
+            canonical_host = canonical['host_alt'][0]
+            response['canonical'] = canonical_host
 
     if response['sucess'] and response['canonical'] and canonical.get('channel', '') \
                           and (canonical.get('host', '') or canonical.get('host_alt', [])):
@@ -600,7 +619,8 @@ def canonical_check(url, response, req, opt):
                 canonical_new = response['canonical']
             else:
                 host_list = [str(response['canonical'])]
-                if canonical.get('host', '') and canonical.get('host', '') not in host_list:
+                if canonical.get('host', '') and canonical['host'] not in canonical.get('host_black_list', []) \
+                                             and canonical['host'] not in host_list:
                     if not isinstance(canonical['host'], list):
                         host_list += [str(canonical['host'])]
                     else:
@@ -622,11 +642,18 @@ def canonical_check(url, response, req, opt):
                                         CF_test=canonical.get('CF_test', False),
                                         alfa_s=canonical.get('alfa_s', True))
                     if page.sucess:
-                        if page.proxy__ and not response['proxy__']: continue
+                        if page.proxy__ and not response['proxy__']:
+                            canonical_new_alt += [url_alt]
+                            continue
                         canonical_new = url_alt
                         break
+                else:
+                    if canonical_new_alt and canonical.get('host', '') and canonical['host'] in canonical.get('host_black_list', []):
+                        canonical_new = canonical_new_alt[0]
+                    else:
+                        canonical_new = ''
             
-            if canonical_new:
+            if canonical_new and canonical_new != canonical.get('host', ''):
                 logger.info('Canal: %s: Host "%s" cambiado a CANONICAL: %s - %s' % \
                     (canonical['channel'].capitalize(), canonical.get('host', ''), \
                     response['canonical'], canonical_new if canonical_new != response['canonical'] else ""), force=True)
@@ -910,13 +937,13 @@ def downloadpage(url, **opt):
         if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True):    # Está en la lista de CF o viene en la llamada
             from lib.cloudscraper import create_scraper
             session = create_scraper()                                                  # El dominio necesita CloudScraper
-            session.verify = True
+            session.verify = opt.get('session_verify', True)
             CS_stat = True
             if cf_ua and cf_ua != 'Default' and get_cookie(url, 'cf_clearance'):
                 req_headers['User-Agent'] = cf_ua
         else:
             session = requests.session()
-            session.verify = False
+            session.verify = opt.get('session_verify', False)
             CS_stat = False
 
         if opt.get('cookies', True):
@@ -1012,13 +1039,16 @@ def downloadpage(url, **opt):
                         url, response = retry_alt(url, req, {}, proxy_data, opt)
                         if not isinstance(response, dict) and response.host:
                             return response
-                    
+
                     response = {}
                     response['data'] = ''
                     response['sucess'] = False
                     response['code'] = ''
                     response['soup'] = None
                     response['json'] = dict()
+                    if opt.get('canonical', {}).get('channel', ''):
+                        config.set_setting("current_host", '', channel=opt['canonical']['channel'])
+                        opt['canonical']['host'] = ''
                     response['canonical'] = ''
                     response['host'] = ''
                     response['url_new'] = ''
@@ -1192,6 +1222,7 @@ def downloadpage(url, **opt):
                 if response_code > 399:
                     info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
                     show_infobox(info_dict)
+                    response = canonical_check(opt['url_save'], response, req, opt)
                     raise WebErrorException(urlparse.urlparse(url)[1])
 
         info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)

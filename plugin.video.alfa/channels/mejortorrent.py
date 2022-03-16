@@ -745,7 +745,7 @@ def findvideos(item):
 
         scrapedtitle = ''
         scrapedpassword = ''
-        referer = None
+        referer = item.url
         post= None
         headers = None
         

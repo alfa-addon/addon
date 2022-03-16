@@ -1954,15 +1954,17 @@ def get_episodes(item):
             serie_listdir = sorted(filetools.listdir(serie_path))
             episodes = []
             episode_local = True
-            
+
             for file in serie_listdir:
                 if not file.endswith('.json'):
                     continue
-                if item.channel not in file and item.category.lower() not in file and item.category_alt.lower() not in file:
+                file_channel = scrapertools.find_single_match(file, '\[(.*?)\]')
+                if file_channel not in [item.channel, item.category.lower(), item.category_alt.lower()]:
                     continue
                 if item.sub_action == "season" and scrapertools.find_single_match(file, '^(\d+)x\d+') \
                                 != str(item.infoLabels['season']):
                     continue
+                
                 episode = Item().fromjson(filetools.read(filetools.join(serie_path, file)))
                 if remote:                                                      # Quitamos las referencias locales
                     if episode.emergency_urls: del episode.emergency_urls
@@ -2030,8 +2032,13 @@ def get_episodes(item):
                 del episode.emergency_urls
             elif episode_local:
                 episode.torrent_alt = episode.url
-                if episode_sort: episode.emergency_urls[0] = sort_torrents(episode.emergency_urls[0], 
-                                 emergency_urls=True, channel=verify_channel(episode.channel))
+                if episode_sort: 
+                    emergency_urls_alt = sort_torrents(episode.emergency_urls[0], emergency_urls=True, 
+                                                       channel=verify_channel(episode.channel))
+                    if 'ERROR_CF_BLOCKED' in torrent_params['size']:
+                        episode.downloadStatus = 3
+                    else:
+                        episode.emergency_urls[0] = emergency_urls_alt
                 if episode.emergency_urls[0]:
                     episode.url = episode.emergency_urls[0][0]
 
