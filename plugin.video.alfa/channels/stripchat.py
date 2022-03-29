@@ -27,8 +27,8 @@ list_servers = []
 host = 'https://stripchat.com'
 hosta = 'https://stripchat.com/api/front/models?limit=40&offset=0&sortBy=stripRanking&primaryTag=%s&filterGroupTags=[["%s"]]'
     # 'https://stripchat.com/api/external/v4/widget/?limit=100&modelsCountry=&modelsLanguage=&modelsList=&tag=%s'
-cat = 'https://es.stripchat.com/api/front/models?limit=40&primaryTag=girls&filterGroupTags=[[%22BigTits%22]]&sortBy=stripRanking'
-
+cat = 'https://es.stripchat.com/api/front/models/liveTags?limit=40&primaryTag=girls&filterGroupTags=[[%22BigTits%22]]&sortBy=stripRanking'
+       # https://es.stripchat.com/api/front/models/liveTags?primaryTag=girls&uniq=go3bmp2lfs6zi18a
 
 def mainlist(item):
     logger.info()
