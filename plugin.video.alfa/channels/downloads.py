@@ -1256,7 +1256,7 @@ def sort_method(item):
     return value
 
 
-def sort_torrents(play_items, emergency_urls=False, channel=''):
+def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[]):
     logger.info('Enlaces: %s' % len(play_items))
     global torrent_params
     
@@ -1277,8 +1277,14 @@ def sort_torrents(play_items, emergency_urls=False, channel=''):
                     size = str(x)
                     logger.info('torrent_file: %s' % play_item)
                     torrent_file = filetools.join(SERIES, play_item)
-                    if play_item.startswith('magnet'):
+                    if play_item.startswith('magnet') and not torrent_info:
                         return play_items
+                    elif play_item.startswith('magnet') and torrent_info:
+                        if len(torrent_info) >= x+1:
+                            size = scrapertools.find_single_match(torrent_info[x], patron).replace(',', '.')
+                            if scrapertools.find_single_match(torrent_info[x], '\d+.M'): magnitude = 0.001
+                        else:
+                            size = 'ERROR'
                     elif filetools.isfile(torrent_file):
                         torrent_params['url'] = torrent_file
                         torrent_params['local_torr'] = torrent_file
@@ -1292,7 +1298,7 @@ def sort_torrents(play_items, emergency_urls=False, channel=''):
                         logger.error('Size ERROR : %s' % play_item)
                         continue
                     else:
-                        if ' M' in size: magnitude = 0.001
+                        if scrapertools.find_single_match(size, '\d+.M'): magnitude = 0.001
                         if scrapertools.find_single_match(size, patron).replace(',', '.'): 
                             size = scrapertools.find_single_match(size, patron).replace(',', '.')
                     try:
@@ -1327,9 +1333,12 @@ def sort_torrents(play_items, emergency_urls=False, channel=''):
                         logger.info('torrent_info: %s, %s' % (play_item.quality, play_item.torrent_info))
                         if play_item.torrent_info and scrapertools.find_single_match(play_item.torrent_info, patron):
                             size = scrapertools.find_single_match(play_item.torrent_info, patron).replace(',', '.')
-                            if ' M' in play_item.torrent_info: magnitude = 0.001
+                            if scrapertools.find_single_match(play_item.torrent_info, '\d+.M'): magnitude = 0.001
                             if play_item.contentChannel in blocked_channels:
                                 play_item.infoLabels['quality'] = play_item.infoLabels['quality'].replace('720', ' 720')
+                                if 'Digg' in play_item.torrent_info: play_item.infoLabels['quality'] = 'b%s' % play_item.infoLabels['quality']
+                                if 'CF_BLOCKED' in play_item.torrent_info or 'BLOQUEO' in play_item.torrent_info: 
+                                    play_item.infoLabels['quality'] = 'a%s' % play_item.infoLabels['quality']
                         elif play_item.url.startswith('magnet'):
                             return play_items
                         else:
@@ -1345,6 +1354,9 @@ def sort_torrents(play_items, emergency_urls=False, channel=''):
                                 torrent_params = get_torrent_size(torrent_params['url'], torrent_params=torrent_params, item=play_item)
                             else:
                                 play_item.infoLabels['quality'] = play_item.infoLabels['quality'].replace('720', ' 720')
+                                if 'Digg' in play_item.torrent_info: play_item.infoLabels['quality'] = 'b%s' % play_item.infoLabels['quality']
+                                if 'CF_BLOCKED' in play_item.torrent_info or 'BLOQUEO' in play_item.torrent_info: 
+                                    play_item.infoLabels['quality'] = 'a%s' % play_item.infoLabels['quality']
                             size = torrent_params['size']
                             if filetools.isfile(torrent_params['torrents_path']):
                                 play_item.torrents_path = torrent_params['torrents_path']
@@ -1355,12 +1367,13 @@ def sort_torrents(play_items, emergency_urls=False, channel=''):
                                 logger.error('Size ERROR : %s' % play_item.url)
                                 continue
                             else:
-                                if ' M' in size: magnitude = 0.001
+                                if scrapertools.find_single_match(play_item.torrent_info, '\d+.M'): magnitude = 0.001
                                 size = scrapertools.find_single_match(size, patron).replace(',', '.')
                         try:
                             if play_item.contentChannel not in blocked_channels:
                                 if 'Seeds: 0' in play_item.torrent_info: magnitude = 0.0
                                 play_item.size_torr = float(size) * magnitude
+                                logger.error(play_item.size_torr)
                         except:
                             logger.error('Size ERROR : %s: %s' % (play_item.url, size))
                             continue
@@ -1398,7 +1411,7 @@ def sort_torrents(play_items, emergency_urls=False, channel=''):
                 
         for play_item in play_items:
             try:
-                logger.info('Qualitiy, Size FINAL: %s, %s' % (play_item.quality, play_item.torrent_info))
+                logger.info('Qualitiy, Size FINAL: %s, %s' % (play_item.quality, play_item.size_torr))
             except:
                 logger.info('Size FINAL : %s' % play_item)
     except:
@@ -1764,7 +1777,7 @@ def start_download(item):
         DOWNLOAD_PATH = item.downloadAt
 
     # Antes de descargar verificamos si el .torrent es accesible
-    if item.contentAction == "play" and item.server == 'torrent' \
+    if item.contentAction == "play" and item.server == 'torrent' and not item.url.startswith('magnet') \
                                     and (item.contentChannel not in blocked_channels or not torrent_params['lookup']):
         from lib.generictools import get_torrent_size
         headers = {}
@@ -2017,6 +2030,8 @@ def get_episodes(item):
             
         if episode.emergency_urls and not remote:
             for x, emergency_urls in enumerate(episode.emergency_urls[0]):
+                if episode.emergency_urls[0][x].startswith('magnet') and len(episode.emergency_urls) > 3:
+                    continue
                 if not episode_local:
                     episode.emergency_urls[0][x] = re.sub(r'x\d{2,}\s*\[', 'x%s [' \
                             % str(episode.contentEpisodeNumber).zfill(2), emergency_urls)
@@ -2033,8 +2048,11 @@ def get_episodes(item):
             elif episode_local:
                 episode.torrent_alt = episode.url
                 if episode_sort: 
+                    torrent_info = []
+                    if len(episode.emergency_urls) > 3:
+                        torrent_info = episode.emergency_urls[3]
                     emergency_urls_alt = sort_torrents(episode.emergency_urls[0], emergency_urls=True, 
-                                                       channel=verify_channel(episode.channel))
+                                                       channel=verify_channel(episode.channel), torrent_info=torrent_info)
                     if 'ERROR_CF_BLOCKED' in torrent_params['size']:
                         episode.downloadStatus = 3
                     else:

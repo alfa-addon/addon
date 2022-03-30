@@ -187,17 +187,18 @@ def get_urls_by_page_finished(url=None, timeout=None, jsCode=None, jsDirectCodeN
 #       debug = true
 #
 def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, jsDirectCode2NoReturn=None, extraPostDelay=None, userAgent=None, debug=None, headers=None, malwareWhiteList=None, disableCache = None, closeAfter = None, getData = None, postData = None, getCookies = None, update = None, alfa_s = False, version = None, clearWebCache = False, removeAllCookies = False, hardResetWebView = False, keep_alive = False, returnWhenCookieNameFound = None, retryIfTimeout = False):
+    if debug: alfa_s = False
     if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit']:
         res = open_alfa_assistant(closeAfter)
-        logger.info('##Assistant Endpoint: %s, Status: %s' % (endpoint, str(res)))
+        if not alfa_s: logger.info('##Assistant Endpoint: %s, Status: %s' % (endpoint, str(res)))
         if not res:
             return False
     if url:
-        logger.info('##Assistant URL: %s' % url)
+        if not alfa_s: logger.info('##Assistant URL: %s' % url)
     else:
         url = 'about:blank'
     if timeout and endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit']:
-        logger.info('##Assistant delay-after-html-load: %s' % str(timeout*1000))
+        if not alfa_s: logger.info('##Assistant delay-after-html-load: %s' % str(timeout*1000))
     elif not timeout:
         timeout = 0
     if endpoint in ['ping', 'getWebViewInfo', 'quit']:
@@ -215,62 +216,62 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
     
     if jsCode:
         serverCall += '&jsCode=%s' % base64.b64encode(jsCode.encode('utf8')).decode('utf8')
-        logger.info('##Assistant js-to-run-directly-with-return: %s' % jsCode)
+        if not alfa_s: logger.info('##Assistant js-to-run-directly-with-return: %s' % jsCode)
     if jsDirectCodeNoReturn:
         serverCall += '&jsDirectCodeNoReturn=%s' % base64.b64encode(jsDirectCodeNoReturn.encode('utf8')).decode('utf8')
-        logger.info('##Assistant js-to-run-directly-with-no-return(type I): %s' % jsDirectCodeNoReturn)
+        if not alfa_s: logger.info('##Assistant js-to-run-directly-with-no-return(type I): %s' % jsDirectCodeNoReturn)
     if jsDirectCode2NoReturn:
         serverCall += '&jsDirectCode2NoReturn=%s' % base64.b64encode(jsDirectCode2NoReturn.encode('utf8')).decode('utf8')
-        logger.info('##Assistant js-to-run-directly-with-no-return(type II): %s' % jsDirectCode2NoReturn)
+        if not alfa_s: logger.info('##Assistant js-to-run-directly-with-no-return(type II): %s' % jsDirectCode2NoReturn)
     if extraPostDelay:
         timeout += extraPostDelay
         serverCall += '&extraPostDelay=%s' % (extraPostDelay*1000)
-        logger.info('##Assistant delay-after-js-load: %s' % str(extraPostDelay*1000))
+        if not alfa_s: logger.info('##Assistant delay-after-js-load: %s' % str(extraPostDelay*1000))
     if userAgent:
         serverCall += '&userAgent=%s' % base64.b64encode(userAgent.encode('utf8')).decode('utf8')
-        logger.info('##Assistant user-agent: %s' % userAgent)
+        if not alfa_s: logger.info('##Assistant user-agent: %s' % userAgent)
     ## Por defecto "debug" es False y debe serlo siempre en Producción
     if debug:
         serverCall += '&debug=%s' % debug
-        logger.info('##Assistant debug-mode: %s' % str(debug))
+        if not alfa_s: logger.info('##Assistant debug-mode: %s' % str(debug))
     ## Por defecto "getCookies" es False
     if getCookies:
         serverCall += '&getCookies=%s' % getCookies
-        logger.info('##Assistant get-cookies: %s' % str(getCookies)      )  
+        if not alfa_s: logger.info('##Assistant get-cookies: %s' % str(getCookies)      )  
     ## Por defecto "cache" es True pero en casos como mixdrop es mejor no usarla
     if disableCache:
         serverCall += '&cache=False'
-        logger.info('##Assistant disableCache: %s' % str(disableCache))
+        if not alfa_s: logger.info('##Assistant disableCache: %s' % str(disableCache))
     if headers:
         serverCall += '&headers=%s' % base64.b64encode(headers.encode('utf8')).decode('utf8')
-        logger.info('##Assistant headers: %s' % headers)
+        if not alfa_s: logger.info('##Assistant headers: %s' % headers)
     if malwareWhiteList:
         serverCall += '&malwareWhiteList=%s' % base64.b64encode(malwareWhiteList.encode('utf8')).decode('utf8')
-        logger.info('##Assistant malware-white-list: %s' % malwareWhiteList)
+        if not alfa_s: logger.info('##Assistant malware-white-list: %s' % malwareWhiteList)
     if getData:
         serverCall += '&getData=%s' % base64.b64encode(getData.encode('utf8')).decode('utf8')
-        logger.info('##Assistant get-data: %s' % getData)
+        if not alfa_s: logger.info('##Assistant get-data: %s' % getData)
     if postData:
         serverCall += '&postData=%s' % base64.b64encode(postData.encode('utf8')).decode('utf8')
-        logger.info('##Assistant post-data: %s' % postData)
+        if not alfa_s: logger.info('##Assistant post-data: %s' % postData)
     if clearWebCache:
         serverCall += '&clearWebCache=%s' % clearWebCache
-        logger.info('##Assistant clearWebCache: %s' % str(clearWebCache))
+        if not alfa_s: logger.info('##Assistant clearWebCache: %s' % str(clearWebCache))
     if removeAllCookies:
         serverCall += '&removeAllCookies=%s' % removeAllCookies
-        logger.info('##Assistant removeAllCookies: %s' % str(removeAllCookies))
+        if not alfa_s: logger.info('##Assistant removeAllCookies: %s' % str(removeAllCookies))
     if hardResetWebView:
         serverCall += '&hardResetWebView=%s' % hardResetWebView
-        logger.info('##Assistant hardResetWebView: %s' % str(hardResetWebView))
+        if not alfa_s: logger.info('##Assistant hardResetWebView: %s' % str(hardResetWebView))
     if returnWhenCookieNameFound:
         serverCall += '&returnWhenCookieNameFound=%s' % base64.b64encode(returnWhenCookieNameFound.encode('utf8')).decode('utf8')
-        logger.info('##Assistant returnWhenCookieNameFound: %s' % str(returnWhenCookieNameFound))
+        if not alfa_s: logger.info('##Assistant returnWhenCookieNameFound: %s' % str(returnWhenCookieNameFound))
 
     if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit']:
-        logger.info('##Assistant URL: ' + serverCall)
+        if not alfa_s: logger.info('##Assistant URL: ' + serverCall)
     response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT, alfa_s=alfa_s, ignore_response_code=True, keep_alive=keep_alive)
     if not response.sucess and endpoint in ['ping', 'getWebViewInfo']:
-        logger.info('##Assistant "%s" FALSE, timeout %s: %s' % (endpoint, timeout+EXTRA_TIMEOUT, serverCall), force=True)
+        if not alfa_s: logger.info('##Assistant "%s" FALSE, timeout %s: %s' % (endpoint, timeout+EXTRA_TIMEOUT, serverCall), force=True)
     if not (response.sucess or response.data) and endpoint not in ['ping', 'getWebViewInfo', 'quit']:
         if retryIfTimeout: retryIfTimeout = response
         close_alfa_assistant(retryIfTimeout=retryIfTimeout)
@@ -279,7 +280,7 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
             res = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
         if res:
             serverCall = serverCall.replace('&cache=True', '&cache=False').replace('&clearWebCache=True', '&clearWebCache=False')
-            logger.info('##Assistant retrying URL: ' + serverCall)
+            if not alfa_s: logger.info('##Assistant retrying URL: ' + serverCall)
             response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT, alfa_s=alfa_s, ignore_response_code=True, keep_alive=keep_alive)
         else:
             platformtools.dialog_notification("ACTIVE Alfa Assistant en ", "%s" % ASSISTANT_SERVER)
@@ -299,7 +300,7 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
                 else:
                     if isinstance(isAlfaAssistantOpen, dict) and isAlfaAssistantOpen.get('assistantLatestVersion'):
                         data_ret['assistantLatestVersion'] = isAlfaAssistantOpen['assistantLatestVersion']
-                logger.info('##Assistant "%s" TRUE, timeout %s: %s' % (endpoint, timeout+EXTRA_TIMEOUT, str(data_ret)))
+                if not alfa_s: logger.info('##Assistant "%s" TRUE, timeout %s: %s' % (endpoint, timeout+EXTRA_TIMEOUT, str(data_ret)))
         except:
             data_ret = data
             logger.error('##Assistant "%s" ERROR, timeout %s: %s' % (endpoint, timeout+EXTRA_TIMEOUT, str(data_ret)))

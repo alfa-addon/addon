@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
 
 from core import httptools
@@ -7,6 +11,10 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import config, logger, platformtools
+
+context = [{"title": config.get_localized_string(70221),
+            "action": "delete_file",
+            "channel": "url"}]
 
 
 def mainlist(item):
@@ -176,6 +184,8 @@ def menu_storage(item):
         
         itemlist.append(Item(channel=item.channel, action="", title="Almacenamiento general"))
         itemlist.append(Item(channel=item.channel, action="list_storage", url=MIS_TORRENT_FOLDER, title="  - Mis Torrents"))
+        itemlist.append(Item(channel=item.channel, action="btdigg", url="", 
+                        title="  - Buscar Mis Torrents en [B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B]"))
         itemlist.append(Item(channel=item.channel, action="list_storage", url='', title="  - Almacenamiento"))
         
         if TORRENT_PATHS['TORREST_torrents'] or TORRENT_PATHS['QUASAR_torrents'] \
@@ -203,7 +213,7 @@ def list_storage(item):
     
     torrent_params = {
                       'url': item.url,
-                      'torrents_path': None, 
+                      'torrents_path': '', 
                       'local_torr': item.torrents_path, 
                       'lookup': False, 
                       'force': True, 
@@ -237,6 +247,7 @@ def list_storage(item):
     TVSHOWS_PATH = filetools.join(VIDEOLIBRARY_PATH, FOLDER_TVSHOWS)
     VIDEO_FOLDER = filetools.join(VIDEOLIBRARY_PATH, FOLDER)
     TEMP_TORRENT_FOLDER = filetools.join(config.get_setting('downloadpath', default=''), 'cached_torrents_Alfa')
+    MIS_TORRENT_FOLDER = filetools.join(config.get_setting('downloadpath', default=''), 'Mis_Torrents')
     
     for file in path_list:
         if FOLDER and file.endswith('.json') and file.split('.')[0]+'_01.torrent' in str(path_list):
@@ -247,26 +258,133 @@ def list_storage(item):
             itemlist.append(json_video)
         
         elif FOLDER and filetools.isdir(filetools.join(path_out, file)):
-            if '.torrent' in str(filetools.listdir(filetools.join(path_out, file))):
+            if '.torrent' in str(filetools.listdir(filetools.join(path_out, file))) \
+                                 or '.magnet' in str(filetools.listdir(filetools.join(path_out, file))):
                 itemlist.append(Item(channel=item.channel, action="list_storage", url=filetools.join(path_out, file), 
-                                title=file.title(), contentTitle=file.title(), contentType="movie", unify=False))
+                                title=file.title(), contentTitle=file.title(), contentType="list", unify=False, context=context))
                 if len(itemlist) > 1:
                     itemlist = sorted(itemlist, key=lambda it: it.title)        #clasificamos
         
-        elif not FOLDER and file.endswith('.torrent'):
-            filetools.copy(filetools.join(path_out, file), filetools.join(TEMP_TORRENT_FOLDER, file))
+        elif not FOLDER and filetools.isdir(filetools.join(path_out, file)):
+            if MIS_TORRENT_FOLDER in path_out:
+                title = file.title()
+                if 'BTDigg' in file:
+                    title = title.replace('Btdigg', '[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B]')
+                itemlist.append(Item(channel=item.channel, action="list_storage", url=filetools.join(path_out, file), 
+                                title=title, contentTitle=title, contentType="list", unify=False, 
+                                url_org=filetools.join(path_out, file), context=context))
+                if len(itemlist) > 1:
+                    itemlist = sorted(itemlist, key=lambda it: it.title)        #clasificamos
+        
+        elif not FOLDER and ('.torrent' in file or '.magnet' in file):
+            if '.torrent' in file:
+                url = filetools.join(TEMP_TORRENT_FOLDER, file)
+                filetools.copy(filetools.join(path_out, file), url, silent=True)
+                if not filetools.exists(url): continue
+            else:
+                url = filetools.read(filetools.join(path_out, file), silent=True)
+                size = 'MAGNET'
+                if not url: continue
             
-            torrent_params['url'] = filetools.join(TEMP_TORRENT_FOLDER, file)
+            torrent_params['url'] = url
+            torrent_params['torrents_path'] = ''
             torrent_params['local_torr'] = filetools.join(TEMP_TORRENT_FOLDER, file)
-            torrent_params = generictools.get_torrent_size(filetools.join(TEMP_TORRENT_FOLDER, file), torrent_params=torrent_params)
-            size = torrent_params['size']
+            if file.endswith('.torrent'):
+                torrent_params = generictools.get_torrent_size(url, torrent_params=torrent_params)
+                size = torrent_params['size']
 
-            itemlist.append(Item(channel=item.channel, action="play", url=filetools.join(TEMP_TORRENT_FOLDER, file), 
-                            server='torrent', title=filetools.join(filetools.basename(path_out.rstrip('/').rstrip('\\')), 
-                            file).title()+" [%s]" % size, contentTitle=filetools.join(filetools.basename(path_out.rstrip('/').rstrip('\\')), 
-                            file).title(), contentType="movie", unify=False, torrents_path=torrent_params['torrents_path'],
-                            infoLabels={"tmdb_id": "111"}))
+            itemlist.append(Item(channel=item.channel, action="play", url=url, url_org=filetools.join(path_out, file), server='torrent', 
+                            title=filetools.join(filetools.basename(path_out.rstrip('/').rstrip('\\')), file).title()+" [%s]" % size, 
+                            contentTitle=filetools.join(filetools.basename(path_out.rstrip('/').rstrip('\\')), file).title(), 
+                            contentType="movie", unify=False, torrents_path=torrent_params['torrents_path'],
+                            infoLabels={"tmdb_id": "111"}, context=context))
             if len(itemlist) > 1:
                     itemlist = sorted(itemlist, key=lambda it: it.title)        #clasificamos
 
     return itemlist
+
+
+def btdigg(item):
+    if not PY3: from lib.alfaresolver import find_alternative_link
+    else: from lib.alfaresolver_py3 import find_alternative_link
+    
+    context = [{"title": "Copiar a Mis Torrents",
+                "action": "copy_file",
+                "channel": "url"}]
+    if item.torrent_params:
+        torrent_params = item.torrent_params
+        del item.torrent_params
+    else:
+        torrent_params = {
+                          'find_alt_link_next': 0
+                          }
+    itemlist = []
+    find_alt_link_result = []
+    
+    if not item.btdigg:
+        item.btdigg = platformtools.dialog_input(heading='Introduce criterios de búsqueda (ej: all american 720p Cap.102 atomixhq)')
+    
+    if item.btdigg:
+        torrent_params = find_alternative_link(item, torrent_params)
+        find_alt_link_result = torrent_params['find_alt_link_result']
+        
+    for scrapedurl, _scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet in find_alt_link_result:
+        item_local = item.clone()
+        scrapedtitle = config.decode_var(_scrapedtitle)
+        
+        item_local.url = scrapedmagnet
+        item_local.server = 'torrent'
+        item_local.contentType = 'movie'
+        item_local.action = 'play'
+        item_local.quality = scrapedquality
+        item_local.language = torrent_params['find_alt_link_language']
+        item_local.torrent_info = '%s [MAGNET]: %s' % (scrapedsize, 
+                                   scrapedtitle.replace('[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B] ', ''))
+        item_local.title = scrapedtitle.replace('[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B] ', '')
+        item_local.copytitle = item_local.title
+        item_local.contentTitle = '%s / %s' % (item.btdigg, item_local.title)
+        item_local.torrents_path = ''
+        item_local.infoLabels["tmdb_id"] = "111"
+        item_local.context=context
+        
+        itemlist.append(item_local)
+        
+    if torrent_params['find_alt_link_next'] > 0:
+        itemlist.append(item.clone(action='btdigg', title=">> Página siguiente " 
+                        + str(torrent_params['find_alt_link_next']+1) + ' de ' + str(int(torrent_params['find_alt_link_found']/10)+1), 
+                        torrent_params=torrent_params)) 
+    return itemlist
+
+
+def delete_file(item):
+    logger.info()
+    from core import filetools
+    
+    msg = config.get_localized_string(60044) % item.url_org or item.url
+    if platformtools.dialog_yesno(config.get_localized_string(70221), msg):
+
+        for file in [item.url, item.url_org]:
+            if filetools.isdir(file):
+                filetools.rmdirtree(file, silent=True)
+                logger.info('Deleting folder: %s' % file)
+            elif filetools.isfile(file):
+                filetools.remove(file, silent=True)
+                logger.info('Deleting file: %s' % file)
+            
+        platformtools.itemlist_refresh()
+
+
+def copy_file(item):
+    logger.info()
+    from core import filetools
+    
+    MIS_TORRENT_FOLDER = filetools.join(config.get_setting('downloadpath', default=''), 'Mis_Torrents')
+    MIS_TORRENT_BTDIGG_FOLDER = filetools.join(MIS_TORRENT_FOLDER, 'BTDigg - resultados')
+
+    if not filetools.exists(MIS_TORRENT_BTDIGG_FOLDER):
+        filetools.mkdir(MIS_TORRENT_BTDIGG_FOLDER)
+        
+    path = filetools.join(MIS_TORRENT_BTDIGG_FOLDER, filetools.validate_path(item.copytitle)+'.magnet')
+    filetools.write(path, item.url, silent=True)
+    
+    platformtools.dialog_notification('Copiando MAGNET', filetools.validate_path(item.copytitle)+'.magnet')

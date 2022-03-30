@@ -44,11 +44,13 @@ list_servers = [
 canonical = {
              'channel': 'pelisplushd', 
              'host': config.get_setting("current_host", 'pelisplushd', default=''), 
-             'host_alt': ["https://pelisplushd.net/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://pelisplushd.to/"], 
+             'host_black_list': ["https://pelisplushd.net/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+domain = scrapertools.find_single_match(host, patron_domain)
 
 
 def mainlist(item):
@@ -128,7 +130,7 @@ def list_all(item):
     matches = soup.find("div", class_="Posters")
 
     for elem in matches.find_all("a"):
-        url = elem["href"]
+        url = urlparse.urljoin(host, elem["href"])
         thumb = elem.img["src"]
         title = scrapertools.find_single_match(elem.p.text, r"(.*?) \(")
         year = scrapertools.find_single_match(elem.p.text, r"(\d{4})")
@@ -209,7 +211,7 @@ def episodesxseasons(item):
         return itemlist
 
     for elem in matches:
-        url = elem["href"]
+        url = urlparse.urljoin(host, elem["href"])
         epi_num = scrapertools.find_single_match(elem.text, "E(\d+)")
         epi_name = scrapertools.find_single_match(elem.text, ":([^$]+)")
         infoLabels['episode'] = epi_num
@@ -254,8 +256,8 @@ def findvideos(item):
     for url in matches:
         if "https://pelisplushd.me" in url:
             url = url.replace("pelisplushd.me", "feurl.com")
-        if "https://pelisplushd.net/fembed.php" in url:
-            url= url.replace("pelisplushd.net/fembed.php?url=", "https://feurl.com/v/")
+        if host + "fembed.php" in url:
+            url = url.replace(host + "fembed.php?url=", "https://feurl.com/v/")
         itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language="LAT",
         infoLabels=item.infoLabels))
 

@@ -169,19 +169,32 @@ def new_episodes(item):
         if not item.post:
             info = elem.find("div", class_="preopacidad")
             action = "findvideos"
+            contentType = 'episode'
         else:
             info = elem.find("div", class_="capitulo-info")
             action = "seasons"
+            contentType = 'tvshow'
 
         img_info = elem.find("div", class_="capitulo-imagen").get("style", "")
         title = re.sub(r'[\ \n]{2,}|\(.*\)', "", info.text).replace('"', " ").strip()
+        if scrapertools.find_single_match(title, r"(\d+)x(\d+)"):
+            season, episode = scrapertools.find_single_match(title, r"(\d+)x(\d+)")
+        else:
+            season = 1
+            episode = 1
         c_title = scrapertools.find_single_match(title, r"\d+x\d+ ([^$]+)")
         if not c_title:
             c_title = title
         thumb = host + scrapertools.find_single_match(img_info, "url\('([^']+)")
-
-        new_item = Item(channel=item.channel, action=action, title=title, url=url,
-                        thumbnail=thumb, language=language, contentSerieName=c_title)
+        
+        if action == "findvideos":
+            new_item = Item(channel=item.channel, action=action, title=title, url=url,
+                            thumbnail=thumb, language=language, contentSerieName=c_title, 
+                            contentType=contentType, infoLabels={'season': season, 'episode': episode})
+        else:
+            new_item = Item(channel=item.channel, action=action, title=title, url=url,
+                            thumbnail=thumb, language=language, contentSerieName=c_title, 
+                            contentType=contentType)
 
         if item.post:
             new_item.context = filtertools.context(item, list_idiomas, list_quality)
@@ -249,7 +262,8 @@ def episodios(item):
     templist = seasons(item)
 
     for tempitem in templist:
-        itemlist += episodesxseason(tempitem)
+        if 'Añadir esta serie a la videoteca' not in tempitem.title:
+            itemlist += episodesxseason(tempitem)
 
     return itemlist
 
@@ -257,7 +271,7 @@ def episodios(item):
 def episodesxseason(item):
     logger.info()
     itemlist = list()
-
+    
     infoLabels = item.infoLabels
     season = infoLabels["season"]
     matches = create_soup(item.url).find("div", id="hoh%s" % season).find_all("div", class_=("ucapname"))

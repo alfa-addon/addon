@@ -226,6 +226,21 @@ def getmainlist(view="thumb_"):
             viewmode = "list"
         )
     )
+    
+    itemlist.append(
+        Item(
+            channel = "setting",
+            action = browser_dict['action'],
+            url = 'https://alfa-addon.com/threads/el-almacen-de-mis-torrents.4774/', 
+            title = "-     [COLOR yellow]El almacén de Mis Torrents[/COLOR]   " + 
+                    "https://alfa-addon.com/threads/el-almacen-de-mis-torrents.4774/",
+            thumbnail = get_thumb("help.png", view),
+            unify = False,
+            folder = False,
+            category = get_string(30104),
+            viewmode = "list"
+        )
+    )
 
     itemlist.append(
         Item(

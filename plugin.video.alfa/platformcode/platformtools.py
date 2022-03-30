@@ -1991,7 +1991,7 @@ def play_torrent(item, xlistitem, mediaurl):
                     config.set_setting("LIBTORRENT_in_use", False,
                                        server="torrent")  # Marcamos Libtorrent como disponible
                     config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
-                    if item.downloadStatus not in [4, 5]: itemlist_refresh()
+                    if item.downloadStatus not in [3, 4, 5]: itemlist_refresh()
 
             # Reproductor propio MCT (libtorrent)
             elif seleccion == 1:
@@ -2006,7 +2006,7 @@ def play_torrent(item, xlistitem, mediaurl):
                     config.set_setting("LIBTORRENT_in_use", False,
                                        server="torrent")  # Marcamos Libtorrent como disponible
                     config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
-                    if item.downloadStatus not in [4, 5]: itemlist_refresh()
+                    if item.downloadStatus not in [3, 4, 5]: itemlist_refresh()
 
             # Plugins externos
             else:
@@ -2037,9 +2037,9 @@ def play_torrent(item, xlistitem, mediaurl):
                                                                   filetools.basename(item.url)), silent=True)
 
                 if (torr_client in ['quasar', 'elementum', 'torrest'] and item.downloadFilename \
-                    and (item.downloadStatus not in [5] or item.downloadProgress == -1)) \
+                    and (item.downloadStatus not in [5] or item.downloadProgress == -1 or item.url.startswith('magnet:'))) \
                         or (torr_client in ['quasar', 'elementum', 'torrest'] \
-                            and 'RAR-' in size and BACKGROUND_DOWNLOAD):
+                            and ('RAR-' in size or 'RAR-' in item.torrent_info) and BACKGROUND_DOWNLOAD):
 
                     if item.downloadProgress == -1:  # Si estaba pausado se resume
                         torr_folder = scrapertools.find_single_match(item.downloadFilename,
@@ -2067,7 +2067,7 @@ def play_torrent(item, xlistitem, mediaurl):
                     else:
                         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
                 update_control(item, function='play_torrent_externos_start')
-                if item.downloadStatus not in [4, 5]: itemlist_refresh()
+                if item.downloadStatus not in [3, 4, 5]: itemlist_refresh()
 
                 # Si es un archivo RAR, monitorizamos el cliente Torrent hasta que haya descargado el archivo,
                 # y después lo extraemos, incluso con RAR's anidados y con contraseña
@@ -2172,6 +2172,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
         else:
             item_down = item.clone()
             path = ''
+        if not save_path_videos and item_down.downloadStatus > 0: item_down.downloadStatus = 3      # Descarga en error
 
         if item_down.downloadProgress == -1:
             item.downloadProgress = -1
@@ -2191,7 +2192,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
         item.downloadQueued = 0
         update_control(item, function='rar_control_mng')
         config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
-        if item.downloadStatus not in [4, 5]: itemlist_refresh()
+        if item.downloadStatus not in [3, 4, 5]: itemlist_refresh()
 
         # Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan
         if not item.downloadFilename or item.downloadStatus == 5:

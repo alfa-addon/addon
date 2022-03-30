@@ -21,6 +21,7 @@ from platformcode import config, logger, platformtools
 
 from core import jsontools
 from core import filetools
+from core import scrapertools
 from core.item import Item
 from lib.alfa_assistant import execute_binary_from_alfa_assistant
 
@@ -100,8 +101,11 @@ def init():
         verify_script_alfa_update_helper()
         
         #Borrar contenido de carpeta de Torrents y de Subtitles
-        filetools.rmdirtree(filetools.join(config.get_videolibrary_path(), 'temp_torrents_arch'), silent=True)
-        filetools.rmdirtree(filetools.join(config.get_videolibrary_path(), 'temp_torrents_Alfa'), silent=True)
+        videolibrary_path = config.get_videolibrary_path()
+        if scrapertools.find_single_match(videolibrary_path, '(^\w+:\/\/)'):    # Si es una conexión REMOTA, usamos userdata local
+            videolibrary_path = config.get_data_path()
+        filetools.rmdirtree(filetools.join(videolibrary_path, 'temp_torrents_arch'), silent=True)
+        filetools.rmdirtree(filetools.join(videolibrary_path, 'temp_torrents_Alfa'), silent=True)
         subtitle_path = config.get_kodi_setting("subtitles.custompath")
         if subtitle_path and filetools.exists(subtitle_path):
             for file in filetools.listdir(subtitle_path):
@@ -1072,7 +1076,6 @@ def clean_videolibrary_unused_channels():
 
         logger.info('Limpiando los canales: %s' % channels_list, force=True)
         from core import videolibrarytools
-        from core import scrapertools
         from lib.generictools import verify_channel
 
         # SERIES y PELIS
