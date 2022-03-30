@@ -936,7 +936,7 @@ def downloadpage(url, **opt):
         global CS_stat
         if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True):    # Está en la lista de CF o viene en la llamada
             from lib.cloudscraper import create_scraper
-            session = create_scraper()                                                  # El dominio necesita CloudScraper
+            session = create_scraper(user_url=url, user_opt=opt)                # El dominio necesita CloudScraper
             session.verify = opt.get('session_verify', True)
             CS_stat = True
             if cf_ua and cf_ua != 'Default' and get_cookie(url, 'cf_clearance'):

@@ -6,9 +6,11 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
-    import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urllib
 else:
-    import urllib                                                               # Usamos el nativo de PY2 que es más rápido
+    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
+    import urllib
 
 import re
 import string
@@ -103,7 +105,7 @@ def letters(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host +"b.php"
+    item.url = urlparse.urljoin(host, "b.php")
     item.texto = texto
     if texto != '':
         return sub_search(item)
@@ -123,7 +125,7 @@ def sub_search(item):
     for result in results["dt"]:
         scrapedthumbnail = "{}tb/{}.jpg".format(host,result[0])
         scrapedtitle = result[1]
-        scrapedurl = host + result[2]
+        scrapedurl = urlparse.urljoin(host, result[2])
 
         context = renumbertools.context(item)
         context2 = autoplay.context
@@ -165,8 +167,8 @@ def lista(item):
         scrapedtitle = elem.find("h3").text if item.category == "series" else elem.find("div").text
         
         title = scrapedtitle.replace(" y "," & ") if " y " in scrapedtitle else scrapedtitle
-        url = host + scrapedurl
-        thumbnail = host + scrapedthumbnail
+        url = urlparse.urljoin(host, scrapedurl)
+        thumbnail = urlparse.urljoin(host, scrapedthumbnail)
 
         context = renumbertools.context(item)
         context2 = autoplay.context
@@ -204,8 +206,8 @@ def list_all(item):
             scrapedurl = elem.find("a")["href"]
             
             title = scrapedtitle.replace(" y "," & ") if " y " in scrapedtitle else scrapedtitle
-            url = host + scrapedurl
-            thumbnail = host + scrapedthumbnail
+            url = urlparse.urljoin(host, scrapedurl)
+            thumbnail = urlparse.urljoin(host, scrapedthumbnail)
             
             context = renumbertools.context(item)
             context2 = autoplay.context
@@ -278,7 +280,7 @@ def episodesxseason(item):
         title = "{} - {}".format(title,scrapedtitle.split(" -")[1])
 
         itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.title,
-                url=host + scrapedurl, plot=item.plot, thumbnail=item.thumbnail,
+                url=urlparse.urljoin(host, scrapedurl), plot=item.plot, thumbnail=item.thumbnail,
                 action="findvideos", context=item.context, infoLabels=infoLabels))
     
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -300,7 +302,9 @@ def findvideos(item):
     _sa = scrapertools.find_single_match(data, 'var _sa = (true|false);')
     _sl = scrapertools.find_single_match(data, 'var _sl = ([^;]+);')
     sl = eval(_sl)
+
     buttons = scrapertools.find_multiple_matches(data, '<button.*?class="selop" sl="([^"]+)">')
+    
     if not buttons:
         buttons = [0,1,2]
     for id in buttons:

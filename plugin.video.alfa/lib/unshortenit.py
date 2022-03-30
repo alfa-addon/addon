@@ -488,32 +488,43 @@ def unshorten(uri, type=None, timeout=10):
     return uri, status
 
 
-def sortened_urls(url, url_base64, host, referer=None):
+def sortened_urls(url, url_base64, host, referer=None, alfa_s=True):
     # https://unicode-table.com/es/#basic-latin
     # https://www.ionos.es/digitalguide/servidores/know-how/ascii-american-standard-code-for-information-interchange/
 
     sortened_domains = {'acortalink.me': ['linkser=uggcf%3A%2F%2Flrfgbeerag.arg', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
                         'acortaenlace.com': ['linkser=uggcf%3A%2F%2Fzntargcryvf.pbz', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
+                        'acorta-enlace.com': ['linkser=ngbzgg.pbz', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
                         'short-link.one': ['linkser=uggcf%3A%2F%2Fpvargbeerag.pb', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
                         'acorta-link.com': ['linkser=uggcf%3A%2F%2Fgbqbgbeeragf.arg', "TTTOzBmk\s*=\s*'(.*?)'", 14, 8, False], 
                         'mediafire.com': [None, '(?i)=\s*"Download file"\s*href="([^"]+)"\s*id\s*=\s*"downloadButton"', 0, 0, False], 
                         'sub-short.link': [None, [64, 123 ,77, 91, 96, 109, 13, 13], 0, 0, False], 
                         'divxto.site': [None, [64, 123 ,77, 91, 96, 109, 13, 13], 0, 0, False] , 
-                        'ddtorrent.live': [None, [64, 123 ,77, 91, 96, 109, 13, 13], 0, 0, False]
+                        'ddtorrent.live': [None, [64, 123 ,77, 91, 96, 109, 13, 13], 0, 0, False], 
+                        'short-info.link': [None, [64, 123 ,77, 91, 96, 109, 13, 13], 0, 0, False], 
                         }
 
     patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
     patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
     patron_linkser = 'name="linkser"\s*value="([^"]*)"'
+    key_safe = 'fee631d2cffda38a78b96ee6d2dfb43a'
+    
+    if not url_base64 or url_base64.startswith('magnet'):
+        return url_base64
     
     domain = scrapertools.find_single_match(url, patron_domain)
-    if sortened_domains.get(domain, False) == False or not url_base64 or url_base64.startswith('magnet'):
-        return url_base64
+    domain_save = domain
+    key = config.get_setting(domain, server='torrent', default='')
+    if not key and not sortened_domains.get(domain, False):
+        if '//' in url_base64 and not (url_base64.startswith('magnet') or url_base64.startswith('http')):
+            domain = 'sub-short.link'
+        else:
+            domain = 'acortalink.me'
+        key = config.get_setting(domain, server='torrent', default='')
 
     from lib.pyberishaes import GibberishAES
-    key = config.get_setting(domain, server='torrent', default='')
     key_saved = key
-    if not key and '://' in url_base64 and not (url_base64.startswith('magnet') or url_base64.startswith('http')):
+    if not key and '//' in url_base64 and not (url_base64.startswith('magnet') or url_base64.startswith('http')):
         try:
             chars = GibberishAES.s2a(GibberishAES(), url_base64)
             chers = []
@@ -535,16 +546,17 @@ def sortened_urls(url, url_base64, host, referer=None):
             url_base64 = "".join([chr(x) for x in chers])
         except:
             logger.error('ERROR en GibberishAES: translación: %s' % url_base64)
-            logger.error(traceback.format_exc())
+            logger.error(traceback.format_exc(1))
         return url_base64
     
     if not key:
+        key = key_safe
         host_name = scrapertools.find_single_match(url, patron_host)
         if host_name and not host_name.endswith('/'): host_name += '/'
 
         data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(url, proxy_retries=0, timeout=10, 
                                                                   referer=referer or host, ignore_response_code=True, 
-                                                                  alfa_s=True).data)
+                                                                  alfa_s=alfa_s).data)
 
         if sortened_domains[domain][1] and scrapertools.find_single_match(data_new, sortened_domains[domain][1]):       # mediafire???
             url_base64 = scrapertools.find_single_match(data_new, sortened_domains[domain][1])
@@ -553,15 +565,21 @@ def sortened_urls(url, url_base64, host, referer=None):
 
         if scrapertools.find_single_match(data_new, patron_linkser):
             sortened_domains[domain][0] = 'linkser=%s' % quote_plus(scrapertools.find_single_match(data_new, patron_linkser))
+        else:
+            if not alfa_s: logger.debug('DATA post: %s' % data_new)
         post = sortened_domains[domain][0]
+        if not alfa_s: logger.debug('post: %s' % post)
         headers = {'Content-type': 'application/x-www-form-urlencoded'}
         data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(host_name, proxy_retries=0, timeout=10, 
                                                                   referer=url, post=post, headers=headers, 
-                                                                  ignore_response_code=True, alfa_s=True).data)
+                                                                  ignore_response_code=True, alfa_s=alfa_s).data)
         if data_new:
             key = scrapertools.find_single_match(data_new, sortened_domains[domain][1])
+            if not alfa_s: logger.debug('key: %s' % key)
             if not key or not sortened_domains[domain][1]:
-                return url_base64
+                logger.error('ERROR: NO Key: default: %s' % key_safe)
+                if not alfa_s: logger.debug('DATA key: %s' % data_new)
+                key = key_safe
     
     if not key:
         logger.error('ERROR: NO Key')
@@ -581,12 +599,12 @@ def sortened_urls(url, url_base64, host, referer=None):
                 logger.error('ERROR en GibberishAES: Result: %s' % url_base64_bis.result)
         except:
             logger.error('ERROR en GibberishAES: Key: %s' % key)
-            logger.error(traceback.format_exc())
+            logger.error(traceback.format_exc(1))
 
     if not (url_base64.startswith('magnet') or url_base64.startswith('http')):
         key = ''
     if key != key_saved:
-        config.set_setting(domain, key, server='torrent')
+        config.set_setting(domain_save, key, server='torrent')
     if key_saved and not key:
         return sortened_urls(url, url_base64, host)
 

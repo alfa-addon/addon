@@ -1324,6 +1324,8 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                             torrent_params['torrents_path'] = ''
                         path_real = torrent_params.get('torrents_path', '')
                         subtitles_list = torrent_params.get('subtitles_list', [])
+                    elif url.startswith('magnet'):
+                        path_real = url
 
                     if path_real:                                               #Si ha tenido éxito...
                         item_res.emergency_urls[0][i-1] = path_real.replace(videolibrary_path, '')  #se guarda el "path" relativo
@@ -1368,7 +1370,7 @@ def emergency_urls(item, channel=None, path=None, headers={}):
 
 
 def videolibrary_backup_exec(item, videolibrary_backup):
-    import datetime
+    from datetime import datetime
     try: 
         if item.strm_path:
             contentType = FOLDER_MOVIES
@@ -1441,16 +1443,22 @@ def videolibrary_backup_exec(item, videolibrary_backup):
                     addr_alt = re.sub(':\/\/.*?\:.*?\@', '://USERNAME:PASSWORD@', addr_alt)
                     logger.info('Haciendo backup en %s' % addr_alt)
                 
-                for date_time, file in list_video_alt:
+                for date_time_a, file in list_video_alt:
                     copy_stat = False
                     if file not in str(list_backup_alt):
                         copy_stat = True
                     if file in str(list_backup_alt):
                         for date_time_b, file_b in list_backup_alt:
                             if file == file_b:
-                                if date_time != date_time_b:
-                                    video_time = datetime.datetime.strptime(date_time, '%Y-%m-%d %H:%M')
-                                    backup_time = datetime.datetime.strptime(date_time_b, '%Y-%m-%d %H:%M')
+                                if date_time_a != date_time_b:
+                                    try:
+                                        video_time = datetime.strptime(date_time_a, '%Y-%m-%d %H:%M')
+                                    except TypeError:
+                                        video_time = datetime(*(time.strptime(date_time_a, '%Y-%m-%d %H:%M')[0:6]))
+                                    try:
+                                        backup_time = datetime.strptime(date_time_b, '%Y-%m-%d %H:%M')
+                                    except TypeError:
+                                        backup_time = datetime(*(time.strptime(date_time_b, '%Y-%m-%d %H:%M')[0:6]))
                                     if video_time > backup_time:
                                         copy_stat = True
                                 break
