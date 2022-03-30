@@ -62,19 +62,20 @@ def categorias(item):
 
 def naiadsystems(url, post=None):
     logger.info()
-    UA = 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.1 ' + \
-         '(KHTML, like Gecko) Chrome/13.0.782.99 Safari/535.1'
+    # UA = 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.1 ' + \
+         # '(KHTML, like Gecko) Chrome/13.0.782.99 Safari/535.1'
     headers = {"platform": "SCP",
-               "smtid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000",
+               "Accept": "application/json, text/plain, */*",
                "smeid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000",
-               "smvid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000",
-               "User-Agent": UA}
+               "smtid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000",
+               "smvid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000"}
     if post:
         data = httptools.downloadpage(url, post=post,  headers=headers).json
     else:
         data = httptools.downloadpage(url, headers=headers).json
-
+    # logger.debug(data)
     return data
+
 
 
 def lista(item):
