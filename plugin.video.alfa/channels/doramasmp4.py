@@ -31,8 +31,8 @@ list_servers = ['viwol', 'voe', 'mixdrop', 'doodstream']
 canonical = {
              'channel': 'doramasmp4', 
              'host': config.get_setting("current_host", 'doramasmp4', default=''), 
-             'host_alt': ["https://www34.doramasmp4.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www35.doramasmp4.com/"], 
+             'host_black_list': ["https://www34.doramasmp4.com/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

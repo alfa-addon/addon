@@ -31,9 +31,8 @@ list_quality = ['default']
 canonical = {
              'channel': 'watchseries', 
              'host': config.get_setting("current_host", 'watchseries', default=''), 
-             'host_alt': ["https://ww1.watchmovie.movie/"], 
+             'host_alt': ["https://watchmovie.cc/"], 
              'host_black_list': [], 
-             'status': 'WEB INACTIVA???', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -246,7 +245,7 @@ def findvideos(item):
     urlsub = ''
     urlsub = scrapertools.find_single_match(data, "&sub=(.*?)&cover")
     if urlsub != '':
-        urlsub =  base64.b64decode(urlsub)
+        urlsub =  base64.b64decode(urlsub).decode('utf-8')
         urlsub = 'https://sub.movie-series.net' + urlsub   
     for source in matches:
         if '/streaming.php' in source:

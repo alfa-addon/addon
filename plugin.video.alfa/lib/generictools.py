@@ -31,6 +31,7 @@ import traceback
 import inspect
 import json
 import base64
+import random
 
 from channelselector import get_thumb
 from core import scrapertools
@@ -81,6 +82,8 @@ def downloadpage(url, **kwargs):
     if not item: item = Item()
     itemlist = kwargs.pop('itemlist', [])
     json = kwargs.pop('json', False)
+    retry_CF = kwargs.pop('retry_CF', 2)
+    if retry_CF < 1: retry_CF = 1
     
     soup = kwargs.get('soup', None)
     retry_alt_status = kwargs.get('retry_alt', True)
@@ -115,7 +118,12 @@ def downloadpage(url, **kwargs):
 
     # Descargamos la página y procesamos el resultado
     try:
-        response = httptools.downloadpage(url, **kwargs)
+        for x in range(retry_CF):
+            response = httptools.downloadpage(url, **kwargs)
+            if response.code not in [403]:
+                break
+            time.sleep(random.uniform(1, 2))
+        
         if response:
             if check_blocked_IP_status and not status and response.data:
                 status, itemlist = check_blocked_IP(response.data, itemlist, url, kwargs.get('canonical', {}))
@@ -256,9 +264,9 @@ def convert_url_base64(url, host='', referer=None, rep_blanks=True):
             
             from lib.unshortenit import sortened_urls
             if domain and domain in str(host_whitelist):
-                url_base64_bis = sortened_urls(url_base64, url_base64, host, referer=referer)
+                url_base64_bis = sortened_urls(url_base64, url_base64, host, referer=referer, alfa_s=True)
             else:
-                url_base64_bis = sortened_urls(url, url_base64, host, referer=referer)
+                url_base64_bis = sortened_urls(url, url_base64, host, referer=referer, alfa_s=True)
             domain_bis = scrapertools.find_single_match(url_base64_bis, patron_domain)
             if domain_bis: domain = domain_bis
             if url_base64_bis != url_base64:
@@ -1110,6 +1118,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
             item_season = item.clone()
             item_season.contentSeason = item_local.contentSeason                #Se pone el núm de Temporada para obtener mejores datos de TMDB
             item_season.contentType = 'season'
+            item_season.quality = item_local.quality
             item_season.title = 'Temporada %s' % item_season.contentSeason
             if item_season.video_path:
                 item_season = context_for_videolibray(item_season)
@@ -1206,7 +1215,118 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
     
     return (item, itemlist_temporadas)
     
+
+def find_btdigg_episodios(item, itemlist, url= '', epis_done=[]):
+    logger.info()
+    if not PY3: from lib.alfaresolver import find_alternative_link
+    else: from lib.alfaresolver_py3 import find_alternative_link
     
+    torrent_params = {
+                      'quality_alt': '720p 1080p 4kwebrip 4k' if '720' in item.quality else '[HDTV]', 
+                      'find_alt_link_season': item.infoLabels['number_of_seasons'], 
+                      'find_alt_link_next': 0, 
+                      'domain_alt': 'atomixhq'
+                      }
+    find_alt_link_result = []
+    if item.find_alt_link_result:
+        find_alt_link_result = item.find_alt_link_result
+        del item.find_alt_link_result
+    itemlist_t = []
+    limit_pages = 5
+    patron_cap = 'Cap.(\d+\d{2})'
+    patron_seaepi = 'Cap.(\d+)(\d{2})'
+    
+    if not find_alt_link_result:
+        for x in range(limit_pages):
+            torrent_params = find_alternative_link(item, torrent_params)
+            if not torrent_params['find_alt_link_result']: break
+            find_alt_link_result.extend(torrent_params['find_alt_link_result'])
+            if not torrent_params['find_alt_link_next']: break
+        if find_alt_link_result and not item.add_videolibrary:
+            item.find_alt_link_result = find_alt_link_result
+
+    for scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet in find_alt_link_result:
+        if not scrapertools.find_single_match(scrapedtitle, patron_seaepi): continue
+        contentSeason, contentEpisodeNumber = scrapertools.find_single_match(scrapedtitle, patron_seaepi)
+        if item.from_num_season_colapse and int(item.from_num_season_colapse) != int(contentSeason): continue
+        if scrapertools.find_single_match(scrapedtitle, patron_cap) in epis_done:
+            contentSeason = int(contentSeason)
+            contentEpisodeNumber = int(contentEpisodeNumber)
+            for item_local in itemlist:
+                if item_local.contentSeason == contentSeason and item_local.contentEpisodeNumber == contentEpisodeNumber:
+                    quality_local = scrapertools.find_single_match(item_local.quality, '\d+\w').lower()
+                    if not quality_local in scrapedquality.lower():
+                        if not item_local.matches:
+                            item_local.matches = [(scrapedtitle, scrapedmagnet, scrapedsize, scrapedquality)]
+                        else:
+                            item_local.matches.append((scrapedtitle, scrapedmagnet, scrapedsize, scrapedquality))
+            continue
+        
+        item_local = item.clone()
+        
+        item_local.action = "findvideos"
+        item_local.contentType = "episode"
+        item_local.extra = "episodios"
+        if item_local.library_playcounts:
+            del item_local.library_playcounts
+        if item_local.library_urls:
+            del item_local.library_urls
+        if item_local.path:
+            del item_local.path
+        if item_local.update_last:
+            del item_local.update_last
+        if item_local.update_next:
+            del item_local.update_next
+        if item_local.channel_host:
+            del item_local.channel_host
+        if item_local.active:
+            del item_local.active
+        if item_local.contentTitle:
+            del item_local.infoLabels['title']
+        if item_local.season_colapse:
+            del item_local.season_colapse
+        if item_local.find_alt_link_result:
+            del item_local.find_alt_link_result
+        if item_local.matches:
+            del item_local.matches
+        if item_local.list_temp:
+            del item_local.list_temp
+        
+        item_local.url = url                                                    # Usamos las url de la temporada, no hay de episodio
+        item_local.url_tvshow = url
+        item_local.context = "['buscar_trailer']"
+        if not item_local.infoLabels['poster_path']:
+            item_local.thumbnail = item_local.infoLabels['thumbnail']
+        item_local.matches = []
+        
+        item_local.quality = '%s [B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR]' % scrapedquality
+        item_local.contentSeason, item_local.contentEpisodeNumber = scrapertools.find_single_match(scrapedtitle, patron_seaepi)
+        item_local.title = '%sx%s' % (item_local.contentSeason, str(item_local.contentEpisodeNumber).zfill(2))
+        item_local.torrents_path = ''
+        item_local.matches.append((scrapedtitle, scrapedmagnet, scrapedsize, scrapedquality))
+        
+        itemlist_t.append(item_local)
+        #logger.debug(item_local)
+        
+    if len(itemlist_t) > 1:
+        itemlist_t = sorted(itemlist_t, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber), it.quality))   #clasificamos
+    
+    # Si es el mismo episodio, pero con diferente calidad, se acumula a item anterior
+    for x, item_local in enumerate(itemlist_t):
+        if x > 0 and item_local.contentSeason == itemlist_t[x-1].contentSeason \
+                 and item_local.contentEpisodeNumber == itemlist_t[x-1].contentEpisodeNumber \
+                 and itemlist_t[x-1].contentEpisodeNumber != 0:    #solo guardamos un episodio ...
+            itemlist_t[x-1].matches.extend(item_local.matches)
+            continue                                                            #ignoramos el episodio duplicado
+        itemlist.append(item_local)
+        #logger.debug(item_local)
+        
+    if itemlist_t and len(itemlist) > 1:
+        itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))   #clasificamos
+        
+    return item, itemlist
+
+
 def post_tmdb_episodios(item, itemlist):
     logger.info()
     itemlist_fo = []
@@ -2334,6 +2454,7 @@ def get_torrent_size(url, **kwargs):
     torrent_params['file_list'] = torrent_params.get('file_list', False)
     torrent_params['channel'] = torrent_params.get('channel', '')
     torrent_params['torrent_alt'] = torrent_params.get('torrent_alt', '')
+    torrent_params['find_alt_link_option'] = torrent_params.get('find_alt_link_option', False)
     torrent_params['size'] = ''
     torrent_params['torrent_f'] = {}
     torrent_params['files'] = {}
@@ -2343,10 +2464,15 @@ def get_torrent_size(url, **kwargs):
     torrent_params['size_amount'] = []
     torrent_params['torrent_cached_list'] = []
     torrent_params['time_elapsed'] = 0
+    torrent_params['find_alt_link_result'] = []
+    torrent_params['find_alt_link_found'] = 0
+    torrent_params['find_alt_link_next'] = 0
     if not url:
         torrent_params['size'] = 'ERROR'
         return torrent_params
     
+    retry_CF = kwargs.get('retry_CF', 2)
+    if retry_CF < 0: torrent_params['torrents_path'] = 'CF_BLOCKED'
     torrent_file = ''
     DOWNLOAD_PATH = config.get_setting('downloadpath', default='')
     
@@ -2384,7 +2510,8 @@ def get_torrent_size(url, **kwargs):
                     return torrent_params
         
         if not torrent_params['lookup']: kwargs['timeout'] = kwargs.get('timeout', 5) * 3
-        if (torrent_params['url'] and not torrent_params['cached']) or torrent_params['url'].startswith("magnet"):
+        if (torrent_params['url'] and not torrent_params['cached'] and retry_CF > 0 \
+                                  and 'DUMMY' not in torrent_params['url']) or torrent_params['url'].startswith("magnet"):
             
             torrent_file, torrent_params = caching_torrents(torrent_params['url'], torrent_params, **kwargs)
         
@@ -2428,6 +2555,11 @@ def get_torrent_size(url, **kwargs):
                             torrent_params['size'] += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
                     else:
                         torrent_params['size'] += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
+                    
+                    if torrent_params['find_alt_link_option'] and kwargs.get('item', {}):
+                        if not PY3: from lib.alfaresolver import find_alternative_link
+                        else: from lib.alfaresolver_py3 import find_alternative_link
+                        torrent_params = find_alternative_link(kwargs['item'], torrent_params)
                 
                 logger.info('Torrent SIZE: %s-%s - %s' % (str(torrent_params['size']), torrent_params['torrents_path'], 
                              torrent_params['time_elapsed'] or torrent_params['cached']), force=True)

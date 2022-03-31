@@ -31,8 +31,9 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.re/', 'https://todotorrents.net/', 'https://dontorrent.in/'], 
-             'host_black_list': ['https://dontorrent.pm/', 'https://dontorrent.top/'], 
+             'host_alt': ['https://dontorrent.wf/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+                          'https://verdetorrent.com/', 'https://tomadivx.net/'], 
+             'host_black_list': ['https://dontorrent.pm/', 'https://dontorrent.top/', 'https://dontorrent.re/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -51,6 +52,7 @@ modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', chann
 timeout = config.get_setting('timeout_downloadpage', channel)
 season_colapse = config.get_setting('season_colapse', channel)                  # Season colapse?
 filter_languages = config.get_setting('filter_languages', channel)              # Filtrado de idiomas?
+find_alt_link_option = config.get_setting('find_alt_link_option', channel, default=False)   # Buscamos enlaces alternativos en buscador externo
 
 
 def mainlist(item):
@@ -468,11 +470,11 @@ def listado(item):                                                              
         for scrapedurl, scrapedtitle, scrapedquality in matches:
             cnt_match += 1
 
-            title = scrapertools.remove_htmltags(scrapedtitle)                  # Removemos Tags del título
-            title = re.sub('\d{3,7}[-|_|\/]+\d{3,10}[-|\/]', '', title.split('/')[-1])
-            title = re.sub('--[^\.|$]*|.jpg|.png|$', '', title)
-            title = re.sub('-\d{6,10}-mmed(?:.jpg|.png|$)', '', title)
-            title = re.sub('\d+.\s*[t|T]emporada\s*(?:\[.*?\])?', '', title).strip('.')
+            title = scrapertools.remove_htmltags(scrapedtitle).strip().strip('.').strip()       # Removemos Tags del título
+            title = re.sub('\d{3,7}[-|_|\/]+\d{3,10}[-|\/]', '', title.split('/')[-1]).strip()
+            title = re.sub('--[^\.|$]*|.jpg|.png|$', '', title).strip()
+            title = re.sub('-\d{6,10}-mmed(?:.jpg|.png|$)', '', title).strip()
+            title = re.sub('\d+[^$]*\s*[t|T]emporada\s*(?:\[.*?\])?', '', title).strip('.').strip()
             title = title.replace('-', ' ').replace('_', ' ').strip()
 
             #Adaptamos la parte de listado desde menú para que guarde la coherencia con el resto
@@ -602,7 +604,7 @@ def listado(item):                                                              
                 if item_local.contentType == "tvshow":
                     title = scrapertools.find_single_match(scrapedtitle, '(^.*?)\s*(?:$|\(|\[|-)')
                     title = title.replace(scrapertools.find_single_match(scrapedtitle, patron), '').rstrip(':').rstrip()
-                
+
             title = re.sub(r'(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|documental|completo', '', title).strip()
             item_local.quality = re.sub(r'(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', 
                         '', item_local.quality).strip()
@@ -707,8 +709,24 @@ def findvideos(item):
                       'force': True, 
                       'data_torrent': True, 
                       'subtitles': True, 
-                      'file_list': True
+                      'file_list': True, 
+                      'find_alt_link_option': find_alt_link_option, 
+                      'quality_alt': '', 
+                      'domain_alt': 'atomixhq'
                       }
+    if item.contentType == 'movie':
+        torrent_params['quality_alt'] = '720p 1080p 4kwebrip 4k'
+    elif '720' in item.quality:
+        torrent_params['quality_alt'] = '1080p 4kwebrip 4k'
+    find_alt_link_result = []
+    find_alt = False
+    
+    response = {
+                'data': data, 
+                'sucess': False, 
+                'code': 0
+               }
+    response = type('HTTPResponse', (), response)
     
     #logger.debug(item)
 
@@ -717,19 +735,19 @@ def findvideos(item):
         patron = '(?i)(?:<p><b\s*class="bold">Clave:\s*<\/b><a\s*data-toggle='
         patron += '"popover"\s*title="[^>]*contraseña[^\/]*data-clave="([^"]+)">.*?)?'
         patron += '<a[^>]*class="text-white[^"]+"\s*style="font-size[^"]+"\s*'
-        patron += 'href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>()'
+        patron += 'href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>()()'
     else:
         patron = '(?i)<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a[^>]*'
         patron += 'class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"[^>]*>'
         patron += '\s*Descargar\s*<\/a>\s*(?:<\/td>\s*<td\s*style=[^<]+<\/td>\s*'
         patron += '<td\s*style=[^>]+>\s*<a\s*data-toggle="popover"\s*title="[^>]*'
-        patron += 'contraseña[^\/]*data-clave="([^"]+)">)?'
-    
-    if not item.matches:
+        patron += 'contraseña[^\/]*data-clave="([^"]+)">)?()'
+
+    if not item.matches or item.contentChannel == 'videolibrary':
         if item.emergency_urls and item.url_tvshow: item.url = item.url_tvshow  #### Parche para rodear videoteca corrupta de SERIES
         data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
                                                                    post=post, referer=referer, forced_proxy_opt=forced_proxy_opt, 
-                                                                   s2=False, patron=patron, item=item, itemlist=[])     # Descargamos la página)
+                                                                   s2=False, item=item, itemlist=[])        # Descargamos la página)
     
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if (not data and not item.matches) or response.code == 999:
@@ -744,12 +762,30 @@ def findvideos(item):
                 return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     if not item.armagedon:
-        if not item.matches:
-            matches = re.compile(patron, re.DOTALL).findall(data)
-        else:
+        matches = re.compile(patron, re.DOTALL).findall(data)
+        try:
+            season = int(scrapertools.find_single_match(item.url, '(\d+)-.emporada'))
+        except:
+            season = 0
+        if item.matches and (item.contentChannel != 'videolibrary' or season != item.contentSeason):
+            matches.extend(item.matches)
+        if not item.matches or not 'magnet' in str(item.matches) or (item.contentChannel == 'videolibrary' and season == item.contentSeason):
+            # Buscamos enlace alternativos de calidades superiores
+            if find_alt_link_option and torrent_params['quality_alt']:
+                if not PY3: from lib.alfaresolver import find_alternative_link
+                else: from lib.alfaresolver_py3 import find_alternative_link
+                torrent_params = find_alternative_link(item, torrent_params)
+                find_alt_link_result = torrent_params['find_alt_link_result']
+                for scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet in find_alt_link_result:
+                    matches.append((scrapedtitle, scrapedmagnet, scrapedsize, scrapedquality))
+                    find_alt = True
+            if item.matches and item.contentChannel == 'videolibrary' and not find_alt_link_result:
+                if 'magnet' in str(item.matches):
+                    find_alt = True
+                matches.extend(item.matches)
+        elif item.matches:
             matches = item.matches
-            del item.matches
-    
+
     #logger.debug("PATRON: " + patron)
     #logger.debug(matches)
     #logger.debug(data)
@@ -767,16 +803,23 @@ def findvideos(item):
                 tupla = list(tupla)
                 tupla[1] = 'https:%s' % tupla[1]
             matches_list.append(list(tupla))
-        item.emergency_urls.append(matches_list)                                # Salvamnos matches de los vídeos...  
+        item.emergency_urls.append(matches_list)                                # Salvamnos matches de los vídeos...
+        item.emergency_urls.append([])                                          # Reservada para uso futuro
+        item.emergency_urls.append([])                                          # Reservamos el espacio para los tamaños de los .torrents/magnets
 
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     if not item.videolibray_emergency_urls:
         item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent con las diferentes calidades
-    for x, (scrapedtitle, _scrapedurl, scrapedpassword) in enumerate(matches):
+    for x, (scrapedtitle, _scrapedurl, _scrapedpassword, scrapedquality) in enumerate(matches):
+        size = ''
+        scrapedpassword = _scrapedpassword
+        if _scrapedurl.startswith('magnet'):
+            size = _scrapedpassword
+            scrapedpassword = ''
         # Si es una Serie o Documental, buscamos el episodio deseado
-        if item.contentType == 'episode':
+        if item.contentType == 'episode' and not _scrapedurl.startswith('magnet'):
             patron_temp = '^(\d+)[x|X](\d+)\s*'
             patron_epi = '^(\d+)'
             if scrapertools.find_single_match(scrapedtitle, patron_temp):       # Formato estándar AAxBB
@@ -799,7 +842,21 @@ def findvideos(item):
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
 
+        # Ponemos la calidad, si la hay
         item_local.url = urlparse.urljoin(host, scrapedurl)
+        if scrapedquality: item_local.quality = scrapedquality
+            
+        # Ponemos el idioma
+        item_local.language = []
+        if 'dual' in scrapedtitle.lower() or ('cast' in scrapedtitle.lower() \
+                  and ('eng' in scrapedtitle.lower() or 'ing' in scrapedtitle.lower())):
+            item_local.language += ['DUAL']                                     # añadimos DUAL
+        if 'eng' in scrapedtitle.lower() or 'ing' in scrapedtitle.lower():
+            item_local.language += ['VOS']                                      # añadimos VOS
+        if 'lat' in scrapedtitle.lower():
+            item_local.language += ['LAT']                                      # añadimos LAT
+        if not item_local.language:
+            item_local.language = ['CAST']                                      # [CAST] por defecto
 
         # Restauramos urls de emergencia si es necesario
         local_torr = 'Dontorrent_torrent_file'
@@ -827,11 +884,10 @@ def findvideos(item):
         #Buscamos tamaño en el archivo .torrent
         if item_local.torrent_info:
             size = item_local.torrent_info
-        else:
-            size = ''
         if not size and not item.videolibray_emergency_urls:
             if not item.armagedon:
                 torrent_params['url'] = item_local.url
+                torrent_params['torrents_path'] = ''
                 torrent_params['local_torr'] = local_torr
                 torrent_params = generictools.get_torrent_size(item_local.url, torrent_params=torrent_params, 
                                                                referer=host, item=item_local)   # Tamaño en el .torrent
@@ -865,13 +921,13 @@ def findvideos(item):
             item_local.torrent_info += ' Magnet'
         if item_local.torrent_info:
             item_local.torrent_info = item_local.torrent_info.strip().strip(',')
-            item.torrent_info = item_local.torrent_info
+            #item.torrent_info = item_local.torrent_info
             if not item.unify:
                 item_local.torrent_info = '[%s]' % item_local.torrent_info
    
         # Guadamos la password del RAR
         password = scrapedpassword
-        if item.contentType == 'movie':
+        if item.contentType == 'movie' and not _scrapedurl.startswith('magnet'):
             password = scrapedtitle
         # Si tiene contraseña, la guardamos y la pintamos
         if password or item.password:
@@ -882,7 +938,8 @@ def findvideos(item):
         
         # Guardamos urls de emergencia si se viene desde un Lookup de creación de Videoteca
         if item.videolibray_emergency_urls:
-            item.emergency_urls[0].append(item_local.url)                       # guardamos la url y nos vamos
+            item.emergency_urls[0].append(item_local.url)                       # guardamos la url
+            item.emergency_urls[3].append(item_local.torrent_info)              # guardamos el torrent_info y nos vamos
             continue
             
         if item_local.armagedon:
@@ -938,7 +995,9 @@ def findvideos(item):
     #Si es un lookup para cargar las urls de emergencia en la Videoteca...
     if item.videolibray_emergency_urls:
         return item                                                             # ... nos vamos
-    
+
+    if find_alt:
+        itemlist.append(item.clone(action="", title="[COLOR blue] Enlaces (imprecisos) buscados en [B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/COLOR]"))
     if len(itemlist_f) > 0:                                                     # Si hay entradas filtradas...
         itemlist.extend(itemlist_f)                                             # Pintamos pantalla filtrada
     else:                                                                       
@@ -965,6 +1024,7 @@ def episodios(item):
     itemlist = []
     search_seasons = True
     item.category = categoria
+    epis_done = []
     
     post = None
     forced_proxy_opt = None
@@ -1025,43 +1085,52 @@ def episodios(item):
         max_nfo = max(y)
 
     # Si la series tiene solo una temporada, o se lista solo una temporada, guardamos la url y seguimos normalmente
+    matches_acum = []
     list_temps = []
     list_temp = []
-    if season_display > 0 or max_temp == 1:
-        list_temps.append(item.url)
-        
-    # Obtenemos todas las Temporada de la Serie desde Search
-    # Si no hay TMDB o es sólo una temporada, listamos lo que tenemos
-    if search_seasons and season_display == 0 and item.infoLabels['tmdb_id'] and max_temp > 1:
-        # Si hay varias temporadas, buscamos todas las ocurrencias y las filtraos por TMDB y calidad
-        list_temp = generictools.find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo)
-
+    if item.list_temp: list_temp = item.list_temp
     if not list_temp:
-        list_temp = list_temps[:]                                               # Lista final de Temporadas a procesar
+        if season_display > 0 or max_temp == 1:
+            list_temps.append(item.url)
+            
+        # Obtenemos todas las Temporada de la Serie desde Search
+        # Si no hay TMDB o es sólo una temporada, listamos lo que tenemos
+        if search_seasons and season_display == 0 and item.infoLabels['tmdb_id'] and max_temp > 1:
+            # Si hay varias temporadas, buscamos todas las ocurrencias y las filtraos por TMDB y calidad
+            list_temp = generictools.find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo)
+
+        if not list_temp:
+            list_temp = list_temps[:]                                           # Lista final de Temporadas a procesar
+        item.list_temp = list_temp
 
     patron = '(?i)<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a[^>]*'
     patron += 'class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"[^>]*>'
     patron += '\s*Descargar\s*<\/a>\s*(?:<\/td>\s*<td\s*style=[^<]+<\/td>\s*'
     patron += '<td\s*style=[^>]+>\s*<a\s*data-toggle="popover"\s*title="[^>]*'
-    patron += 'contraseña[^\/]*data-clave="([^"]+)">)?'
+    patron += 'contraseña[^\/]*data-clave="([^"]+)">)?()'
     
     # Descarga las páginas
     for _url in list_temp:                                                      # Recorre todas las temporadas encontradas
         url = _url
-        data, response, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, canonical=canonical, 
-                                                                   post=post, referer=referer, forced_proxy_opt=forced_proxy_opt, 
-                                                                   patron=patron, item=item, itemlist=itemlist)     # Descargamos la página
-        # Verificamos si ha cambiado el Host
-        if response.host:
-            for x, u in enumerate(list_temp):
-                list_temp[x] = list_temp[x].replace(scrapertools.find_single_match(url, patron_host), response.host.rstrip('/'))
-            url = response.url_new
-        
-        #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-        if not response.sucess:                                                 # Si ERROR o lista de errores ...
-            return itemlist                                                     # ... Salimos
+        if not item.matches:
+            data, response, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, canonical=canonical, 
+                                                                       post=post, referer=referer, forced_proxy_opt=forced_proxy_opt, 
+                                                                       patron=patron, item=item, itemlist=itemlist)     # Descargamos la página
+            # Verificamos si ha cambiado el Host
+            if response.host:
+                for x, u in enumerate(list_temp):
+                    list_temp[x] = list_temp[x].replace(scrapertools.find_single_match(url, patron_host), response.host.rstrip('/'))
+                url = response.url_new
+            
+            #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
+            if not response.sucess:                                             # Si ERROR o lista de errores ...
+                return itemlist                                                 # ... Salimos
 
-        matches = re.compile(patron, re.DOTALL).findall(data)
+            matches = re.compile(patron, re.DOTALL).findall(data)
+            if matches and not item.add_videolibrary: matches_acum.extend(matches)
+        else:
+            matches = item.matches
+            matches_acum = matches
 
         #logger.debug("PATRON: " + patron)
         #logger.debug(matches)
@@ -1069,7 +1138,7 @@ def episodios(item):
 
         # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
         x = 0
-        for episode_num, epi_url, scrapedpassword in matches:
+        for episode_num, epi_url, scrapedpassword, quality in matches:
             item_local = item.clone()
             item_local.action = "findvideos"
             item_local.contentType = "episode"
@@ -1092,11 +1161,16 @@ def episodios(item):
                 del item_local.infoLabels['title']
             if item_local.season_colapse:
                 del item_local.season_colapse
+            if item_local.find_alt_link_result:
+                del item_local.find_alt_link_result
+            if item_local.matches:
+                del item_local.matches
+            if item_local.list_temp:
+                del item_local.list_temp
 
             item_local.url = url                                                # Usamos las url de la temporada, no hay de episodio
             item_local.url_tvshow = url
             item_local.title = ''
-            #item.matches = [matches[x]]                                         # Salvado Matches de cada episodio
             x += 1
             item_local.context = "['buscar_trailer']"
             title = episode_num
@@ -1148,17 +1222,26 @@ def episodios(item):
                     break
                 elif item_local.contentSeason < season_display:
                     continue
-            
+
+            epis_done += ['%s%s' % (item_local.contentSeason, str(item_local.contentEpisodeNumber).zfill(2))]
+            item_local.matches = [(item_local.title, epi_url, scrapedpassword, item_local.quality)]
             itemlist.append(item_local.clone())
 
             #logger.debug(item_local)
-            
+        
+        if item.matches: break
+
+    if matches_acum and not item.add_videolibrary: item.matches = matches_acum
+    
     if len(itemlist) > 1:
         itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))       #clasificamos
-        
+
+    if find_alt_link_option:
+        item, itemlist = generictools.find_btdigg_episodios(item, itemlist, url=url, epis_done=epis_done)
+
     if item.season_colapse and not item.add_videolibrary:                       # Si viene de listado, mostramos solo Temporadas
         item, itemlist = generictools.post_tmdb_seasons(item, itemlist, url='season')
-
+    
     if not item.season_colapse:                                                 # Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
         tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma)
