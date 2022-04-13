@@ -131,10 +131,12 @@ def list_all(item):
 
     for elem in matches.find_all("a"):
         url = urlparse.urljoin(host, elem["href"])
-        thumb = elem.img["src"]
+        thumb = urlparse.urljoin(host, elem.img["src"])
         title = scrapertools.find_single_match(elem.p.text, r"(.*?) \(")
         year = scrapertools.find_single_match(elem.p.text, r"(\d{4})")
-
+        if not year:
+            year = "-"
+            title = elem.p.text
         if item.type and item.type.lower() not in url:
             continue
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
@@ -249,8 +251,8 @@ def findvideos(item):
 
     if data.sucess or data.code == 302:
         data = data.data
-
-    pattern = "video\[\d+\]\s*=\s*'([^']+)'"
+    pattern = '<span lid="\d+" url="([^"]+)"'
+    # pattern = "video\[\d+\]\s*=\s*'([^']+)'"
     matches = re.compile(pattern, re.DOTALL).findall(data)
 
     for url in matches:

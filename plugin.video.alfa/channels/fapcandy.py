@@ -22,7 +22,7 @@ list_language = list(IDIOMAS.values())
 list_quality = ['default']
 list_servers = []
 
-host = 'https://www.fapcandy.com'  # 'https://www.streamate.com
+host = "https://www.fapcandy.com"  # 'https://www.streamate.com
 cat = "https://member.naiadsystems.com/search/v3/categories?domain=fapcandy.com&shouldIncludeTransOnStraightSkins=false"
 api = "https://member.naiadsystems.com/search/v3/performers?domain=fapcandy.com&from=0&size=100&filters=gender:f,ff,mf,tm2f,g;online:true&genderSetting=f"
 
@@ -62,20 +62,23 @@ def categorias(item):
 
 def naiadsystems(url, post=None):
     logger.info()
-    # UA = 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.1 ' + \
-         # '(KHTML, like Gecko) Chrome/13.0.782.99 Safari/535.1'
+    UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36'
     headers = {"platform": "SCP",
                "Accept": "application/json, text/plain, */*",
                "smeid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000",
                "smtid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000",
-               "smvid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000"}
+               "smvid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000",
+               "User-Agent": UA,
+               "Referer": host}
     if post:
-        data = httptools.downloadpage(url, post=post,  headers=headers).json
+        data = httptools.downloadpage(url, post=post,  headers=headers)
     else:
-        data = httptools.downloadpage(url, headers=headers).json
+        data = httptools.downloadpage(url, headers=headers)
+    if data.code == 204:
+        data = httptools.downloadpage(url, headers=headers)
+    data = data.json
     # logger.debug(data)
     return data
-
 
 
 def lista(item):

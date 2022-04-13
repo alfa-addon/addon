@@ -34,12 +34,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         page_url, referer = page_url.split("|", 1)
     global data
 
-    packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
-    unpacked = jsunpack.unpack(packed)
-    data = scrapertools.find_single_match(unpacked, "(?is)var player\s?=.+?sources.+?\[(.+?)\]")
+    # packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
+    # unpacked = jsunpack.unpack(packed)
+    # data = scrapertools.find_single_match(unpacked, "(?is)var player\s?=.+?sources.+?\[(.+?)\]")
 
     video_urls = []
-    pattern = "src:\s?[\"'](.+?)[\"']"
+    # pattern = "src:\s?[\"'](.+?)[\"']"
+    pattern = 'sources: \[\{file:"([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, pattern)
     for url in matches:
         if 'referer' in locals():

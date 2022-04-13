@@ -16,8 +16,10 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+from bs4 import BeautifulSoup
 
-host = 'https://www.youjizz.com'
+
+host = "https://www.youjizz.com"
 
 
 def mainlist(item):
@@ -47,50 +49,60 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, '>Trending <(.*?)</ul>')
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<li><a href="([^"]+)">([^"]+)</a>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle in matches:
-        scrapedplot = ""
-        scrapedthumbnail = ""
-        scrapedurl = urlparse.urljoin(item.url, scrapedurl)
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, plot=scrapedplot))
+    soup = create_soup(item.url) 
+    matches = soup.find('ul', class_='footer-menu-links').find_all('li')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.a.text.strip()
+        plot = ""
+        thumbnail = ""
+        url = urlparse.urljoin(item.url, url)
+        itemlist.append(item.clone(action="lista", title=title, url=url,
+                             thumbnail=thumbnail, plot=plot))
+    itemlist.sort(key=lambda x: x.title)
     return itemlist
+
+
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<div class="video-item">.*?'
-    patron += 'href="([^"]+)".*?'
-    patron += 'data-original="([^"]+)"(.*?)'
-    patron += '<div class="video-title">.*?'
-    patron += '>([^<]+)</a>.*?'
-    patron += '<span class="time">([^<]+)<'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedthumbnail, quality, scrapedtitle, duracion in matches:
-        url = urlparse.urljoin(item.url, scrapedurl)
-        if 'HD' in quality:
-            title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (duracion, scrapedtitle)
+    soup = create_soup(item.url) 
+    matches = soup.find_all('div', class_='video-thumb')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.find('div', class_='video-title').text.strip()
+        thumbnail = elem.img['data-original']
+        time = elem.find('span', class_='time').text.strip()
+        quality = elem.find('span', class_='i-hd')
+        if quality:
+            title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time,title)
         else:
-            title = "[COLOR yellow]%s[/COLOR] %s" % (duracion, scrapedtitle)
-        contentTitle = title
-        if not scrapedthumbnail.startswith("https"):
-            scrapedthumbnail = "http:%s" % scrapedthumbnail
+            title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
+        url = urlparse.urljoin(item.url,url)
+        if not thumbnail.startswith("https"):
+            thumbnail = "https:%s" % thumbnail
         plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=scrapedthumbnail,
-                             plot=plot, quality=quality, contentTitle=contentTitle))
-    next_page = scrapertools.find_single_match(data, '<li><a class="pagination-next" href="([^"]+)">Next &raquo;</a>')
-    if next_page != "":
-        next_page = urlparse.urljoin(item.url, next_page)
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+                             plot=plot, contentTitle=title))
+    next_page = soup.find('a', class_='pagination-next')
+    if next_page:
+        next_page = next_page['href']
+        next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page))
     return itemlist
 

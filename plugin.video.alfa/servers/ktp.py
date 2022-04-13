@@ -38,7 +38,7 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info()
-    itemlist = []
+    video_urls = []
     invert = ""
     url = ""
     if "video_url_text" in data:
@@ -58,13 +58,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             # url = httptools.downloadpage(url, follow_redirects=False).headers["location"]
             # url += "|verifypeer=false"
             # logger.debug(quality + "  --  " + url)
-            itemlist.append(['[ktplayer] %s' %quality, url])
+            video_urls.append(['[ktplayer] %s' %quality, url])
         if "LQ" in quality:
             invert= "true"
     if invert:
-        itemlist.reverse()
+        video_urls.reverse()
     if not url:
         url = scrapertools.find_single_match(data, '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?')
-        itemlist.append(['[ktplayer]', url])
-    return itemlist
+        video_urls.append(['[ktplayer]', url])
+    return video_urls
 

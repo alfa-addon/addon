@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://zbporn.com'
+host = "https://zbporn.com"
 
 
 def mainlist(item):
@@ -55,7 +55,9 @@ def categorias(item):
     for elem in matches:
         url = elem['href']
         title = elem['title']
-        thumbnail = elem.img['data-src']
+        thumbnail = elem.img['src']
+        if "gif" in thumbnail:
+            thumbnail = elem.img['data-src']
         cantidad = elem.find_all('div', class_='item')
         if cantidad:
             title = "%s (%s)" % (title,cantidad[0].text.strip())
@@ -68,6 +70,7 @@ def categorias(item):
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
+
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
@@ -89,8 +92,10 @@ def lista(item):
     for elem in matches:
         url = elem['href']
         stitle = elem['title']
-        thumbnail = elem.img['data-src']
-        thumbnail = re.sub("/\d+x\d+/", "/240x180/", thumbnail)
+        thumbnail = elem.img['src']
+        if "gif" in thumbnail:
+            thumbnail = elem.img['data-src']
+        # thumbnail = re.sub("/\d+x\d+/", "/240x180/", thumbnail)
         stime = elem.find('span', class_='th-duration').text.strip()
         if stime:
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)

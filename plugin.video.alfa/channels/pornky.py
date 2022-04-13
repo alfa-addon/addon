@@ -18,16 +18,15 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.pornky.com'   #   'https://www.tubxxporn.com'  https://www.pornktube.porn  'https://www.joysporn.com/'
+host = "https://www.pornky.com"   #   https://www.tubxporn.xxx  https://www.pornktube.tv  https://www.joysporn.sex
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/1/"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/month/1/"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/month/1/"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
@@ -58,12 +57,8 @@ def categorias(item):
         plot = ""
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
-    next_page = soup.find('li', class_='next')
-    if next_page:
-        next_page = next_page.a['href']
-        next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
+
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
@@ -96,7 +91,7 @@ def lista(item):
         itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('div', class_='pages')
-    if next_page:
+    if next_page and next_page.find('span').find_next_sibling('a'):
         next_page = next_page.find('span').find_next_sibling('a')['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
@@ -106,38 +101,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    matches = soup.find('div', id='player')
-    id= matches["data-id"]
-    server = matches["data-n"]
-    data = matches['data-q']
-    for elem in data.split(","):
-        elem = elem.split(";")
-        quality = elem[0]
-        pal = elem[-1]
-        num = elem[-2]
-        vid = int(int(id)/1000)*1000
-        # /cqlvid/  /wqlvid/
-        url = "https://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, num, pal,vid, id,id, quality)
-        itemlist.append(item.clone(action="play", title=quality, url=url) )
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    matches = soup.find('div', id='player')
-    id= matches["data-id"]
-    server = matches["data-n"]
-    data = matches['data-q']
-    for elem in data.split(","):
-        elem = elem.split(";")
-        quality = elem[0]
-        pal = elem[-1]
-        num = elem[-2]
-        vid = int(int(id)/1000)*1000
-        # /cqlvid/  /wqlvid/
-        url = "https://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, num, pal,vid, id,id, quality)
-        itemlist.append([quality, url])
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

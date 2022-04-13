@@ -16,16 +16,17 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+from bs4 import BeautifulSoup
 
-host = 'https://pornktube.vip'     # https://www.pornktu.be/videos/ https://www.tubxxporn.com   'https://www.pornky.com'  'https://www.joysporn.com/'
+host = "https://pornktube.tv"     # https://www.pornktu.be/videos/  https://www.tubxporn.xxx  https://tubxporn.xxx/   https://www.pornky.com  https://www.joysporn.com
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/"))
-    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/most-popular/"))
-    itemlist.append(item.clone(title="Mejor valorada" , action="lista", url=host + "/top-rated/"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/1/"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/month/1/"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/month/1/"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
@@ -47,43 +48,51 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<div class="cat">.*?'
-    patron += '<a href="([^"]+)".*?'
-    patron += 'src="([^"]+)".*?'
-    patron += '>([^<]+)</a>'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,thumbnail,scrapedtitle in matches:
-        title = scrapedtitle
-        url = scrapedurl
-        thumbnail += "|Referer=%s" % host
+    soup = create_soup(item.url) 
+    matches = soup.find_all('div', class_='cat')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.find('h2').text
+        thumbnail = elem.img['src']
+        # thumbnail += "|Referer=%s" % host
         plot = ""
         itemlist.append(item.clone(action="lista", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail, plot=plot) )
     return sorted(itemlist, key=lambda i: i.title)
 
 
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
+
+
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<div class="vid_info">.*?'
-    patron += '<a href="([^"]+)".*?'
-    patron += 'src="([^"]+)" alt="([^"]+)".*?'
-    patron += '<div class="vlength">([^<]+)<'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime in matches:
-        title = '[COLOR yellow] %s [/COLOR] %s' % (scrapedtime , scrapedtitle)
-        thumbnail = scrapedthumbnail
-        url = urlparse.urljoin(item.url,scrapedurl)
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', class_='pornkvideos')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.find('h2').text.strip()
+        thumbnail = elem.img['src']
+        time = elem.find('div', class_='vlength').text.strip()
+        if time:
+            title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
-    next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="mpages">Next')
-    if next_page:
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+                               plot=plot, fanart=thumbnail, contentTitle=title ))
+    next_page = soup.find('div', class_='pagination')
+    if next_page and next_page.find('span').find_next_sibling('a'):
+        next_page = next_page.find('span').find_next_sibling('a')['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -92,34 +101,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    id,s,data,t,server = scrapertools.find_single_match(data, '<div id="player" data-id="(\d+)" data-s="(\d+)" data-q="([^"]+)" data-t="(\d+)" data-n="(\d+)"')
-    # s= 113 t=224 fapmedia.com/whpvid/         anterior 
-    patron = '&nbsp;([A-z0-9]+);\d+;(\d+);([^,"]+)'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for quality,number,key in matches:
-        nt = int(int(id)/1000)
-        n = str(nt*1000)
-        url = "http://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, number, key,n, id, id, quality)
-        # url = "http://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
-        url= url.replace("_720p", "")
-        itemlist.append(item.clone(action="play", title=quality, url=url) )
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    id,s,data,t,server = scrapertools.find_single_match(data, '<div id="player" data-id="(\d+)" data-s="(\d+)" data-q="([^"]+)" data-t="(\d+)" data-n="(\d+)"')
-    # s= 113 t=224 fapmedia.com/whpvid/         anterior 
-    patron = '&nbsp;([A-z0-9]+);\d+;(\d+);([^,"]+)'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for quality,number,key in matches:
-        nt = int(int(id)/1000)
-        n = str(nt*1000)
-        url = "http://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, number, key,n, id, id, quality)
-        # url = "http://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
-        url= url.replace("_720p", "")
-        itemlist.append(['%s' %quality, url])
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
