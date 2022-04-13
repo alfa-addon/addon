@@ -112,6 +112,7 @@ def setting_torrent(item):
     if not DOWNLOAD_PATH_BT: DOWNLOAD_PATH_BT = filetools.join(config.get_data_path(), 'downloads')
     MAGNET2TORRENT = config.get_setting("magnet2torrent", server="torrent", default=False)
     CAPTURE_THRU_ROWSER_PATH = config.get_setting("capture_thru_browser_path", server="torrent", default="")
+    ALLOW_SEEDING = config.get_setting('allow_seeding', server='torrent', default=True)
 
     torrent_options = [config.get_localized_string(30006), config.get_localized_string(70254), config.get_localized_string(70255)]
     torrent_options.extend(platformtools.torrent_client_installed())
@@ -215,6 +216,14 @@ def setting_torrent(item):
             "default": CAPTURE_THRU_ROWSER_PATH,
             "enabled": True,
             "visible": True
+        },
+        {
+            "id": "allow_seeding",
+            "type": "bool",
+            "label": "¿Quiere permitir el semillado de los torrents descargados?",
+            "default": ALLOW_SEEDING,
+            "enabled": True,
+            "visible": True
         }
     ]
 
@@ -247,6 +256,8 @@ def save_setting_torrent(item, dict_data_saved):
         config.set_setting("magnet2torrent", dict_data_saved["magnet2torrent"], server="torrent")
     if dict_data_saved and "capture_thru_browser_path" in dict_data_saved:
         config.set_setting("capture_thru_browser_path", dict_data_saved["capture_thru_browser_path"], server="torrent")
+    if dict_data_saved and "allow_seeding" in dict_data_saved:
+        config.set_setting("allow_seeding", dict_data_saved["allow_seeding"], server="torrent")
 
 
 def menu_servers(item):

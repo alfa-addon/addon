@@ -75,16 +75,40 @@ JS_CODE_CLICK_ON_JWPLAYER = """
 #
 # Recupera el código fuente de los recursos visitados y las URLS
 #
-def get_source_by_page_finished(url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, jsDirectCode2NoReturn=None, extraPostDelay=None, userAgent=None, debug=None, headers=None, malwareWhiteList=None, disableCache = None, closeAfter = None, getData = None, postData = None, getCookies = None, update = None, alfa_s=False, version=None, clearWebCache = False, removeAllCookies = False, hardResetWebView = False, keep_alive = False, returnWhenCookieNameFound = None, retryIfTimeout = False):
-    return get_generic_call('getSourceByPageFinished', url, timeout, jsCode, jsDirectCodeNoReturn, jsDirectCode2NoReturn, extraPostDelay, userAgent, debug, headers, malwareWhiteList, disableCache, closeAfter, getData, postData, getCookies, update, alfa_s, version, clearWebCache, removeAllCookies, hardResetWebView, keep_alive, returnWhenCookieNameFound, retryIfTimeout)
+def get_source_by_page_finished(url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, 
+                                jsDirectCode2NoReturn=None, extraPostDelay=0, userAgent=None, 
+                                debug=None, headers=None, malwareWhiteList=None, disableCache = None, 
+                                closeAfter = None, getData = None, postData = None, getCookies = None, 
+                                update = None, alfa_s=False, version=None, clearWebCache = False, 
+                                removeAllCookies = False, hardResetWebView = False, keep_alive = False, 
+                                returnWhenCookieNameFound = None, retryIfTimeout = False, mute = True, 
+                                urlParamRemoveAllCookies=False, useAdvancedWebView=False):
+    return get_generic_call('getSourceByPageFinished', url, timeout, jsCode, jsDirectCodeNoReturn, 
+                             jsDirectCode2NoReturn, extraPostDelay, userAgent, debug, headers, 
+                             malwareWhiteList, disableCache, closeAfter, getData, postData, getCookies, 
+                             update, alfa_s, version, clearWebCache, removeAllCookies, hardResetWebView, 
+                             keep_alive, returnWhenCookieNameFound, retryIfTimeout, mute, urlParamRemoveAllCookies, 
+                             useAdvancedWebView)
 ##############################################################################################################################################################################
 
 ## Comunica con el navegador Alfa Assistant ##################################################################################################################################
 #
 # Recupera las URLS de los recursos visitados
 #
-def get_urls_by_page_finished(url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, jsDirectCode2NoReturn=None, extraPostDelay=None, userAgent=None, debug=None, headers=None, malwareWhiteList=None, disableCache = None, closeAfter = None, getData = None, postData = None, getCookies = None, update = None, alfa_s=False, version=None, clearWebCache = False, removeAllCookies = False, hardResetWebView = False, keep_alive = False, returnWhenCookieNameFound = None, retryIfTimeout = False):
-    return get_generic_call('getUrlsByPageFinished', url, timeout, jsCode, jsDirectCodeNoReturn, jsDirectCode2NoReturn, extraPostDelay, userAgent, debug, headers, malwareWhiteList, disableCache, closeAfter, getData, postData, getCookies, update, alfa_s, version, clearWebCache, removeAllCookies, hardResetWebView, keep_alive, returnWhenCookieNameFound, retryIfTimeout)
+def get_urls_by_page_finished(url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, 
+                              jsDirectCode2NoReturn=None, extraPostDelay=0, userAgent=None, 
+                              debug=None, headers=None, malwareWhiteList=None, disableCache = None, 
+                              closeAfter = None, getData = None, postData = None, getCookies = None, 
+                              update = None, alfa_s=False, version=None, clearWebCache = False, 
+                              removeAllCookies = False, hardResetWebView = False, keep_alive = False, 
+                              returnWhenCookieNameFound = None, retryIfTimeout = False, mute = True, 
+                              urlParamRemoveAllCookies=False, useAdvancedWebView=False):
+    return get_generic_call('getUrlsByPageFinished', url, timeout, jsCode, jsDirectCodeNoReturn, 
+                             jsDirectCode2NoReturn, extraPostDelay, userAgent, debug, headers, 
+                             malwareWhiteList, disableCache, closeAfter, getData, postData, 
+                             getCookies, update, alfa_s, version, clearWebCache, removeAllCookies, 
+                             hardResetWebView, keep_alive, returnWhenCookieNameFound, retryIfTimeout, 
+                             mute, urlParamRemoveAllCookies, useAdvancedWebView)
 ##############################################################################################################################################################################
 
 ## Comunica con el navegador Alfa Assistant ##################################################################################################################################
@@ -117,13 +141,13 @@ def get_urls_by_page_finished(url=None, timeout=None, jsCode=None, jsDirectCodeN
 #   Ejemplo 1:
 #       headers = '''[
 #       {"name": "referer", "value": "https://www.myWebsite.com/"},
-#       {"name": "otherKey", "value": "otherValue"},
+#       {"name": "otherKey", "value": "otherValue"}
 #       ]'''
 #
 #   Ejemplo 2:
 #       headers = '''[
 #       {"name": "referer", "value": "{0}"},
-#       {"name": "otherKey", "value": "{1}"},
+#       {"name": "otherKey", "value": "{1}"}
 #       ]'''
 #       print(headers.format("value0", "value1"))
 #
@@ -186,10 +210,16 @@ def get_urls_by_page_finished(url=None, timeout=None, jsCode=None, jsDirectCodeN
 #   Ejemplo de activación de depuración:
 #       debug = true
 #
-def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, jsDirectCode2NoReturn=None, extraPostDelay=None, userAgent=None, debug=None, headers=None, malwareWhiteList=None, disableCache = None, closeAfter = None, getData = None, postData = None, getCookies = None, update = None, alfa_s = False, version = None, clearWebCache = False, removeAllCookies = False, hardResetWebView = False, keep_alive = False, returnWhenCookieNameFound = None, retryIfTimeout = False):
+def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, 
+                     jsDirectCode2NoReturn=None, extraPostDelay=0, userAgent=None, debug=None, 
+                     headers=None, malwareWhiteList=None, disableCache = None, closeAfter = None, 
+                     getData = None, postData = None, getCookies = None, update = None, alfa_s = False, 
+                     version = None, clearWebCache = False, removeAllCookies = False, hardResetWebView = False, 
+                     keep_alive = False, returnWhenCookieNameFound = None, retryIfTimeout = False, mute = True, 
+                     urlParamRemoveAllCookies = False, useAdvancedWebView = False):
     if debug: alfa_s = False
     if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit']:
-        res = open_alfa_assistant(closeAfter)
+        res = open_alfa_assistant(closeAfter, alfa_s=alfa_s)
         if not alfa_s: logger.info('##Assistant Endpoint: %s, Status: %s' % (endpoint, str(res)))
         if not res:
             return False
@@ -223,10 +253,6 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
     if jsDirectCode2NoReturn:
         serverCall += '&jsDirectCode2NoReturn=%s' % base64.b64encode(jsDirectCode2NoReturn.encode('utf8')).decode('utf8')
         if not alfa_s: logger.info('##Assistant js-to-run-directly-with-no-return(type II): %s' % jsDirectCode2NoReturn)
-    if extraPostDelay:
-        timeout += extraPostDelay
-        serverCall += '&extraPostDelay=%s' % (extraPostDelay*1000)
-        if not alfa_s: logger.info('##Assistant delay-after-js-load: %s' % str(extraPostDelay*1000))
     if userAgent:
         serverCall += '&userAgent=%s' % base64.b64encode(userAgent.encode('utf8')).decode('utf8')
         if not alfa_s: logger.info('##Assistant user-agent: %s' % userAgent)
@@ -242,9 +268,6 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
     if disableCache:
         serverCall += '&cache=False'
         if not alfa_s: logger.info('##Assistant disableCache: %s' % str(disableCache))
-    if headers:
-        serverCall += '&headers=%s' % base64.b64encode(headers.encode('utf8')).decode('utf8')
-        if not alfa_s: logger.info('##Assistant headers: %s' % headers)
     if malwareWhiteList:
         serverCall += '&malwareWhiteList=%s' % base64.b64encode(malwareWhiteList.encode('utf8')).decode('utf8')
         if not alfa_s: logger.info('##Assistant malware-white-list: %s' % malwareWhiteList)
@@ -254,22 +277,39 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
     if postData:
         serverCall += '&postData=%s' % base64.b64encode(postData.encode('utf8')).decode('utf8')
         if not alfa_s: logger.info('##Assistant post-data: %s' % postData)
-    if clearWebCache:
-        serverCall += '&clearWebCache=%s' % clearWebCache
-        if not alfa_s: logger.info('##Assistant clearWebCache: %s' % str(clearWebCache))
-    if removeAllCookies:
-        serverCall += '&removeAllCookies=%s' % removeAllCookies
-        if not alfa_s: logger.info('##Assistant removeAllCookies: %s' % str(removeAllCookies))
-    if hardResetWebView:
-        serverCall += '&hardResetWebView=%s' % hardResetWebView
-        if not alfa_s: logger.info('##Assistant hardResetWebView: %s' % str(hardResetWebView))
     if returnWhenCookieNameFound:
         serverCall += '&returnWhenCookieNameFound=%s' % base64.b64encode(returnWhenCookieNameFound.encode('utf8')).decode('utf8')
         if not alfa_s: logger.info('##Assistant returnWhenCookieNameFound: %s' % str(returnWhenCookieNameFound))
+    if clearWebCache:
+        serverCall += '&clearWebCache=%s' % clearWebCache
+        if not alfa_s: logger.info('##Assistant clearWebCache: %s' % str(clearWebCache))
+    if headers:
+        if isinstance(headers, dict):
+            headers_out = []
+            for key, value in list(headers.items()):
+                headers_out += [{"name": key.lower(), "value": value}]
+            headers = str(headers_out).replace("'", '"')
+        serverCall += '&headers=%s' % base64.b64encode(headers.encode('utf8')).decode('utf8')
+        if not alfa_s: logger.info('##Assistant headers: %s' % headers)
+
+    timeout += extraPostDelay
+    serverCall += '&extraPostDelay=%s' % (extraPostDelay*1000)
+    if not alfa_s: logger.info('##Assistant delay-after-js-load: %s' % str(extraPostDelay*1000))
+    serverCall += '&removeAllCookies=%s' % removeAllCookies
+    if not alfa_s: logger.info('##Assistant removeAllCookies: %s' % str(removeAllCookies))
+    serverCall += '&hardResetWebView=%s' % hardResetWebView
+    if not alfa_s: logger.info('##Assistant hardResetWebView: %s' % str(hardResetWebView))
+    serverCall += '&mute=%s' % mute
+    if not alfa_s: logger.info('##Assistant mute: %s' % str(mute))
+    serverCall += '&urlParamRemoveAllCookies=%s' % urlParamRemoveAllCookies
+    if not alfa_s: logger.info('##Assistant urlParamRemoveAllCookies: %s' % str(urlParamRemoveAllCookies))
+    serverCall += '&useAdvancedWebView=%s' % useAdvancedWebView
+    if not alfa_s: logger.info('##Assistant useAdvancedWebView: %s' % str(useAdvancedWebView))
 
     if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit']:
-        if not alfa_s: logger.info('##Assistant URL: ' + serverCall)
-    response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT, alfa_s=alfa_s, ignore_response_code=True, keep_alive=keep_alive)
+        logger.info('##Assistant URL: %s - TIMEOUT: %s' % (serverCall, str(timeout+EXTRA_TIMEOUT)))
+    response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT, alfa_s=alfa_s, 
+                                      ignore_response_code=True, keep_alive=keep_alive)
     if not response.sucess and endpoint in ['ping', 'getWebViewInfo']:
         if not alfa_s: logger.info('##Assistant "%s" FALSE, timeout %s: %s' % (endpoint, timeout+EXTRA_TIMEOUT, serverCall), force=True)
     if not (response.sucess or response.data) and endpoint not in ['ping', 'getWebViewInfo', 'quit']:
@@ -281,7 +321,8 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
         if res:
             serverCall = serverCall.replace('&cache=True', '&cache=False').replace('&clearWebCache=True', '&clearWebCache=False')
             if not alfa_s: logger.info('##Assistant retrying URL: ' + serverCall)
-            response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT, alfa_s=alfa_s, ignore_response_code=True, keep_alive=keep_alive)
+            response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT, alfa_s=alfa_s, 
+                                              ignore_response_code=True, keep_alive=keep_alive)
         else:
             platformtools.dialog_notification("ACTIVE Alfa Assistant en ", "%s" % ASSISTANT_SERVER)
     data = response.data
@@ -371,15 +412,25 @@ def getInlineRequestedHeaders(requestHeaders, namesExceptionList = None):
 #
 ## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
 #
-def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False):
+def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assistantLatestVersion=True, alfa_s=False):
     global isAlfaAssistantOpen
     version = 'alfa-mobile-assistant.version'
     
     if not isAlfaAssistantOpen:
-        res = False
         try:
-            if ASSISTANT_MODE == 'este':
-                logger.info('##Assistant Open at ' + ASSISTANT_SERVER)
+            res = get_generic_call('getWebViewInfo', timeout=1-EXTRA_TIMEOUT, alfa_s=True)
+            if res:
+                if isinstance(res, dict):
+                    check_webview_version(res.get('wvbVersion', ''))
+                    if not getWebViewInfo:
+                        res = res.get('assistantVersion', '')
+                    isAlfaAssistantOpen = res
+                else:
+                    isAlfaAssistantOpen = res
+                if not alfa_s: logger.info('##Assistant Already was Opened (after test): %s' % str(isAlfaAssistantOpen))
+            
+            elif ASSISTANT_MODE == 'este':
+                if not alfa_s: logger.info('##Assistant Open at ' + ASSISTANT_SERVER)
                 
                 if not is_alfa_installed():
                     logger.error('##Assistant not installed or not available')
@@ -396,8 +447,8 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False):
                                 and not xbmc.Player().isPlaying())):
                     res = execute_in_alfa_assistant_with_cmd(cmd)
 
-                for x in range(7):
-                    time.sleep(2)
+                for x in range(14):
+                    time.sleep(1)
                     res = get_generic_call('getWebViewInfo', timeout=1-EXTRA_TIMEOUT, alfa_s=True)
                     if res:
                         if isinstance(res, dict):
@@ -427,7 +478,7 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False):
                                     "o Instale manualmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]")
                     return False
 
-            if isinstance(res, dict) and getWebViewInfo:
+            if isinstance(res, dict) and getWebViewInfo and assistantLatestVersion:
                 for url in assistant_urls:
                     response = httptools.downloadpage(url+version, timeout=2, alfa_s=True, ignore_response_code=True)
                     if response.sucess:
@@ -443,7 +494,7 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False):
         return res
     
     else:
-        logger.info('##Assistant Already was Opened: %s' % str(isAlfaAssistantOpen))
+        if not alfa_s: logger.info('##Assistant Already was Opened: %s' % str(isAlfaAssistantOpen))
         return isAlfaAssistantOpen
 
 #

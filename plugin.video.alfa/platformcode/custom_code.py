@@ -74,33 +74,33 @@ def init():
     """
 
     try:
-        #Limpiamos los mensajes de ayuda obsoletos y restauramos los que tienen "version": True.  Por cada nueva versión
+        # Limpiamos los mensajes de ayuda obsoletos y restauramos los que tienen "version": True.  Por cada nueva versión
         if not filetools.exists(ADDON_CUSTOMCODE_JSON):
             from platformcode import help_window
             help_window.clean_watched_new_version()
         
-        #Se realizan algunas funciones con cada nueva versión de Alfa
+        # Se realizan algunas funciones con cada nueva versión de Alfa
         if not filetools.exists(ADDON_CUSTOMCODE_JSON):
             config.set_setting('cf_assistant_ua', '')                           # Se limpia CF_UA. Mejora de rendimiento en httptools CF
             config.set_setting("current_host", '', channel='dontorrent')        # Se resetea el host de algunos canales que tienen alternativas
             config.set_setting("current_host", '', channel='mejortorrent')      # Se resetea el host de algunos canales que tienen alternativas
             
-        #Se verifica si están bien las rutas a la videoteca
+        # Se verifica si están bien las rutas a la videoteca
         config.verify_directories_created()
         
-        #Comprime la BD de cache de TMDB para evitar que crezca demasiado
+        # Comprime la BD de cache de TMDB para evitar que crezca demasiado
         bd_tmdb_maintenance()
         if config.get_setting('tmdb_cache_expire', default=4) == 4:
             config.set_setting('tmdb_cache_expire', 2)
 
-        #Borra el .zip de instalación de Alfa de la carpeta Packages, por si está corrupto, y que así se pueda descargar de nuevo
-        #version = 'plugin.video.alfa-%s.zip' % ADDON_VERSION
-        #filetools.remove(filetools.join('special://home', 'addons', 'packages', version), True)
+        # Borra el .zip de instalación de Alfa de la carpeta Packages, por si está corrupto, y que así se pueda descargar de nuevo
+        # version = 'plugin.video.alfa-%s.zip' % ADDON_VERSION
+        # filetools.remove(filetools.join('special://home', 'addons', 'packages', version), True)
 
-        #Verifica si es necesario instalar script.alfa-update-helper
+        # Verifica si es necesario instalar script.alfa-update-helper
         verify_script_alfa_update_helper()
         
-        #Borrar contenido de carpeta de Torrents y de Subtitles
+        # Borrar contenido de carpeta de Torrents y de Subtitles
         videolibrary_path = config.get_videolibrary_path()
         if scrapertools.find_single_match(videolibrary_path, '(^\w+:\/\/)'):    # Si es una conexión REMOTA, usamos userdata local
             videolibrary_path = config.get_data_path()
@@ -114,20 +114,20 @@ def init():
                 ret = filetools.remove(file_path, silent=True)
                 if not ret: logger.error('ERROR on REMOVING subtitle: ' + file_path)
 
-        #Verifica si Kodi tiene algún achivo de Base de Datos de Vídeo de versiones anteriores, entonces los borra
+        # Verifica si Kodi tiene algún achivo de Base de Datos de Vídeo de versiones anteriores, entonces los borra
         verify_Kodi_video_DB()
         
-        #Verifica si la Base de Datos de Vídeo tiene la fuente de CINE con useFolderNames=1
+        # Verifica si la Base de Datos de Vídeo tiene la fuente de CINE con useFolderNames=1
         try:
             threading.Thread(target=set_Kodi_video_DB_useFolderNames).start()   # Creamos un Thread independiente por si la DB está Scanning
             time.sleep(1)                                                       # Dejamos terminar la inicialización...
         except:                                                                 # Si hay problemas de threading, nos vamos
             logger.error(traceback.format_exc())
         
-        #LIBTORRENT: se descarga el binario de Libtorrent cada vez que se actualiza Alfa
+        # LIBTORRENT: se descarga el binario de Libtorrent cada vez que se actualiza Alfa
         update_libtorrent()
         
-        #TORREST: Modificaciones temporales
+        # TORREST: Modificaciones temporales
         if xbmc.getCondVisibility('System.HasAddon("plugin.video.torrest")'):
             try:
                 __settings__ = xbmcaddon.Addon(id="plugin.video.torrest")
@@ -139,34 +139,37 @@ def init():
             except:
                 pass
 
-        #QUASAR: Preguntamos si se hacen modificaciones a Quasar
+        # QUASAR: Preguntamos si se hacen modificaciones a Quasar
         if not filetools.exists(filetools.join(config.get_data_path(), "quasar.json")) \
                     and not config.get_setting('addon_quasar_update', default=False):
             question_update_external_addon("quasar")
         
-        #QUASAR: Hacemos las modificaciones a Quasar, si está permitido, y si está instalado
+        # QUASAR: Hacemos las modificaciones a Quasar, si está permitido, y si está instalado
         if config.get_setting('addon_quasar_update', default=False) or \
                     (filetools.exists(filetools.join(config.get_data_path(), \
                     "quasar.json")) and xbmc.getCondVisibility('System.HasAddon("plugin.video.quasar")')):
             if not update_external_addon("quasar"):
                 platformtools.dialog_notification("Actualización Quasar", "Ha fallado. Consulte el log")
         
-        #Existe carpeta "custom_code" ? Si no existe se crea y se sale
+        # Comprueba estado de BTDigg
+        btdigg_status()
+        
+        # Existe carpeta "custom_code" ? Si no existe se crea y se sale
         custom_code_dir = filetools.join(ADDON_USERDATA_PATH, 'custom_code')
         custom_code_json_path = ADDON_PATH
         custom_code_json = ADDON_CUSTOMCODE_JSON
         if not filetools.exists(custom_code_dir):
             create_folder_structure(custom_code_dir)
-        #Existe "custom_code.json" ? Si no existe se crea
+        # Existe "custom_code.json" ? Si no existe se crea
         if not filetools.exists(custom_code_json):
             create_json(custom_code_json_path)
-        #Se verifica si la versión del .json y del add-on son iguales.  Si es así se sale.  Si no se copia "custom_code" al add-on
+        # Se verifica si la versión del .json y del add-on son iguales.  Si es así se sale.  Si no se copia "custom_code" al add-on
         verify_copy_folders(custom_code_dir, custom_code_json_path)
         
-        #Si se han quedado "colgadas" descargas con archivos .RAR, se intenta identificarlos y reactivar el UnRar
+        # Si se han quedado "colgadas" descargas con archivos .RAR, se intenta identificarlos y reactivar el UnRar
         reactivate_unrar(init=True, mute=True)
         
-        #Inicia un rastreo de vídeos decargados desde .torrent: marca los VISTOS y elimina los controles de los BORRADOS
+        # Inicia un rastreo de vídeos decargados desde .torrent: marca los VISTOS y elimina los controles de los BORRADOS
         from servers.torrent import mark_torrent_as_watched
         try:
             threading.Thread(target=mark_torrent_as_watched).start()            # Creamos un Thread independiente, hasta el fin de Kodi
@@ -174,7 +177,7 @@ def init():
         except:                                                                 # Si hay problemas de threading, nos vamos
             logger.error(traceback.format_exc())
 
-        #Ejecuta la sobrescritura de la videoteca para los canales seleccionados
+        # Ejecuta la sobrescritura de la videoteca para los canales seleccionados
         reset_videolibrary_by_channel()
         clean_videolibrary_unused_channels()
 
@@ -1107,3 +1110,15 @@ def clean_videolibrary_unused_channels():
                         break
     except:
         logger.error(traceback.format_exc())
+
+
+def btdigg_status():
+    import requests
+    
+    url = 'https://btdig.com/'
+    
+    try:
+        resp = requests.get(url, timeout=5)
+        config.set_setting('btdigg_status', resp.status_code, server='torrent')
+    except:
+        config.set_setting('btdigg_status', False, server='torrent')

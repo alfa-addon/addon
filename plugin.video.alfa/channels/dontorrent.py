@@ -31,9 +31,10 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.wf/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.pl/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/'], 
-             'host_black_list': ['https://dontorrent.pm/', 'https://dontorrent.top/', 'https://dontorrent.re/'], 
+             'host_black_list': ['https://dontorrent.cat/', 'https://dontorrent.run/', 'https://dontorrent.wf/', 
+                                 'https://dontorrent.pm/', 'https://dontorrent.top/', 'https://dontorrent.re/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -41,7 +42,7 @@ channel = canonical['channel']
 categoria = channel.capitalize()
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
-host_torrent = 'https://blazing.network' if 'dontorrent' in host else ''
+host_torrent = 'https://blazing.network' if 'dontorrent' in host and not '.in/' in host else ''
 host_torrent_referer = 'https://blazing.network' if 'dontorrent' in host else host
 
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
@@ -52,7 +53,11 @@ modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', chann
 timeout = config.get_setting('timeout_downloadpage', channel)
 season_colapse = config.get_setting('season_colapse', channel)                  # Season colapse?
 filter_languages = config.get_setting('filter_languages', channel)              # Filtrado de idiomas?
-find_alt_link_option = config.get_setting('find_alt_link_option', channel, default=False)   # Buscamos enlaces alternativos en buscador externo
+find_alt_link_option = config.get_setting('find_alt_link_option', channel)      # Buscamos enlaces alternativos en buscador externo
+find_alt_search = config.get_setting('find_alt_search', channel)                # Buscamos enlaces alternativos
+find_alt_domains = 'atomixhq'       
+btdigg_url = 'https://btdig.com/'                                               # Dominios para el buscador externo
+btdigg_label = ' [COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR]'
 
 
 def mainlist(item):
@@ -89,7 +94,7 @@ def mainlist(item):
     
     
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
-                url=host, thumbnail=thumb_buscar, extra="search"))
+                url=host, thumbnail=thumb_buscar, extra="search", btdigg=find_alt_search))
 
     itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", 
                 folder=False, thumbnail=thumb_separador))
@@ -291,6 +296,9 @@ def novedades(item):
             continue
         matches_fin.append((scrapedurl, scrapedtitle, scrapedquality))          # Guardamos las urls de la categoría
 
+    if find_alt_link_option and find_alt_search:
+        matches_fin = generictools.find_btdigg_news(item, matches=matches_fin, channel_alt='')
+    
     item.matches = matches_fin
     item.referer = item.url
     return listado(item)
@@ -493,7 +501,7 @@ def listado(item):                                                              
             url = scrapedurl
             if '/aviso-legal' in url:                                           # Ignoramos estas entradas
                 continue
-            if not ('pelicula' in url or 'serie' in url or'documental' in url):   # Ignoramos estas entradas
+            if not ('pelicula' in url or 'serie' in url or 'documental' in url): # Ignoramos estas entradas
                 continue
 
             title_subs = []                                                     # Creamos una lista para guardar info importante
@@ -544,7 +552,7 @@ def listado(item):                                                              
                     item_local.extra = 'series'                                 # Serie búsqueda
                 else:
                     item_local.extra = 'documentales'                           # Documental búsqueda
-                
+
             # Procesamos idiomas
             item_local.language = []                                            # creamos lista para los idiomas
             if '[Subs. integrados]' in title or '(Sub Forzados)' in title \
@@ -563,14 +571,18 @@ def listado(item):                                                              
             if scrapedquality:
                 item_local.quality = scrapertools.remove_htmltags(scrapedquality)   # iniciamos calidad
             if item_local.extra == 'series' or item_local.extra == 'documentales':
-                if '[720p]' in title or '720p' in title or '[720p]' in scrapedtitle or '720p' in scrapedtitle:
+                if '[720p]' in scrapedtitle or '720p' in scrapedtitle or '[720p]' in scrapedurl or '720p' in scrapedurl:
                     title = title.replace('[720p]', '').replace('720p', '')
                     item_local.quality = 'HDTV-720p'
-                elif '[1080p]' in title or '1080p' in title or '[1080p]' in scrapedtitle or '1080p' in scrapedtitle:
+                    if 'digg' in scrapedquality.lower(): item_local.quality += scrapedquality
+                elif '[1080p]' in scrapedtitle or '1080p' in scrapedtitle or '[1080p]' in scrapedurl or '1080p' in scrapedurl:
                     title = title.replace('[1080p]', '').replace('1080p', '')
                     item_local.quality = '1080p'
+                    if 'digg' in scrapedquality.lower(): item_local.quality += scrapedquality
                 else:
+                    title = title.replace('[HDTV]', '').replace('HDTV', '')
                     item_local.quality = 'HDTV'
+                    if 'digg' in scrapedquality.lower(): item_local.quality += scrapedquality
             if ('hd' in item.url.lower() or '4k' in item.url.lower() or '3d' in item.url.lower()) \
                                         and not 'hd' in item_local.quality.lower():
                 item_local.quality = 'HD'
@@ -605,6 +617,11 @@ def listado(item):                                                              
                     title = scrapertools.find_single_match(scrapedtitle, '(^.*?)\s*(?:$|\(|\[|-)')
                     title = title.replace(scrapertools.find_single_match(scrapedtitle, patron), '').rstrip(':').rstrip()
 
+            year = '-'
+            if item_local.contentType == "movie":
+                if scrapertools.find_single_match(title, '\((\d{4})\)'):
+                    year = scrapertools.find_single_match(title, '\((\d{4})\)')
+                    title = re.sub('\s*\(\d{4}\)', '', title).rstrip()
             title = re.sub(r'(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|documental|completo', '', title).strip()
             item_local.quality = re.sub(r'(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', 
                         '', item_local.quality).strip()
@@ -619,7 +636,7 @@ def listado(item):                                                              
 
             #Salvamos el título según el tipo de contenido
             if item_local.contentType == "movie":
-                item_local.contentTitle = title
+                item_local.contentTitle = title.strip().lower().title()
             else:
                 item_local.contentSerieName = title.strip().lower().title()
 
@@ -700,6 +717,12 @@ def findvideos(item):
         post = item.post
     if item.referer:
         referer = item.referer
+    btdigg = False
+    if btdigg_label in item.quality and not item.matches:
+        btdigg = True
+    if item.btdigg:
+        btdigg = True
+        del item.btdigg
     
     torrent_params = {
                       'url': item.url,
@@ -712,12 +735,14 @@ def findvideos(item):
                       'file_list': True, 
                       'find_alt_link_option': find_alt_link_option, 
                       'quality_alt': '', 
-                      'domain_alt': 'atomixhq'
+                      'domain_alt': find_alt_domains
                       }
     if item.contentType == 'movie':
         torrent_params['quality_alt'] = '720p 1080p 4kwebrip 4k'
-    elif '720' in item.quality:
+        if btdigg: torrent_params['quality_alt'] += ' rip'
+    elif item.quality != 'HDTV':
         torrent_params['quality_alt'] = '1080p 4kwebrip 4k'
+        if btdigg: torrent_params['quality_alt'] += ' 720p'
     find_alt_link_result = []
     find_alt = False
     
@@ -727,7 +752,7 @@ def findvideos(item):
                 'code': 0
                }
     response = type('HTTPResponse', (), response)
-    
+
     #logger.debug(item)
 
     #Bajamos los datos de las páginas
@@ -743,14 +768,15 @@ def findvideos(item):
         patron += '<td\s*style=[^>]+>\s*<a\s*data-toggle="popover"\s*title="[^>]*'
         patron += 'contraseña[^\/]*data-clave="([^"]+)">)?()'
 
-    if not item.matches or item.contentChannel == 'videolibrary':
+    if (not item.matches or item.contentChannel == 'videolibrary') and not btdigg and btdigg_label not in item.quality \
+                                                                   and btdigg_url not in item.url and item.url != host:
         if item.emergency_urls and item.url_tvshow: item.url = item.url_tvshow  #### Parche para rodear videoteca corrupta de SERIES
         data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
                                                                    post=post, referer=referer, forced_proxy_opt=forced_proxy_opt, 
                                                                    s2=False, item=item, itemlist=[])        # Descargamos la página)
     
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if (not data and not item.matches) or response.code == 999:
+    if (not data and not item.matches and not btdigg) or response.code == 999:
         if item.emergency_urls and not item.videolibray_emergency_urls:         # Hay urls de emergencia?
             if len(item.emergency_urls) > 1:
                 matches = item.emergency_urls[1]                                # Restauramos matches de vídeos
@@ -762,27 +788,62 @@ def findvideos(item):
                 return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     if not item.armagedon:
-        matches = re.compile(patron, re.DOTALL).findall(data)
+        matches_ini = re.compile(patron, re.DOTALL).findall(data)
+        if item.contentType == 'episode':
+            for scrapedtitle, scrapedurl, scrapedpassword, scrapedquality in matches_ini:
+                # Si es una Serie o Documental, buscamos el episodio deseado
+                if not scrapedurl.startswith('magnet'):
+                    patron_temp = '^(\d+)[x|X](\d+)\s*'
+                    patron_epi = '^(\d+)'
+                    if scrapertools.find_single_match(scrapedtitle, patron_temp):       # Formato estándar AAxBB
+                        temp, epi = scrapertools.find_single_match(scrapedtitle, patron_temp)
+                    elif scrapertools.find_single_match(scrapedtitle, patron_epi):      # Formato sólo de episodio, Temporada 1
+                        epi = scrapertools.find_single_match(scrapedtitle, patron_epi)
+                        temp = 1
+                    try:
+                        if item.contentSeason != int(temp) or item.contentEpisodeNumber != int(epi):    # Si no es el episodio buscado, pasamos
+                            continue
+                    except:                                                             # Hay error?
+                        continue
+                    matches.append((scrapedtitle, scrapedurl, scrapedpassword, scrapedquality))
+        else:
+            for scrapedtitle, scrapedurl, scrapedpassword, scrapedquality in matches_ini:
+                matches.append((scrapedtitle or item.title.replace('(V)-', ''), scrapedurl, scrapedpassword, scrapedquality or item.quality))
         try:
             season = int(scrapertools.find_single_match(item.url, '(\d+)-.emporada'))
         except:
             season = 0
-        if item.matches and (item.contentChannel != 'videolibrary' or season != item.contentSeason):
-            matches.extend(item.matches)
-        if not item.matches or not 'magnet' in str(item.matches) or (item.contentChannel == 'videolibrary' and season == item.contentSeason):
+        contentSeason = 0
+        cache = True if item.contentChannel == 'videolibrary' else False
+        if item.contentSeason: contentSeason = int(item.contentSeason)
+
+        if item.matches and (item.contentChannel != 'videolibrary' or season != contentSeason):
+            if matches:
+                for scrapedtitle, scrapedurl, scrapedpassword, scrapedquality in item.matches:
+                    if scrapedurl in str(matches): continue
+                    matches.append((scrapedtitle, scrapedurl, scrapedpassword, scrapedquality))
+            if not season: season = item.contentSeason
+            if 'magnet' in str(matches): find_alt = True
+        
+        if (matches and (not item.matches or not 'magnet' in str(item.matches) \
+                        or (item.contentChannel == 'videolibrary' and season == contentSeason))) or btdigg:
             # Buscamos enlace alternativos de calidades superiores
             if find_alt_link_option and torrent_params['quality_alt']:
                 if not PY3: from lib.alfaresolver import find_alternative_link
                 else: from lib.alfaresolver_py3 import find_alternative_link
-                torrent_params = find_alternative_link(item, torrent_params)
+                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=cache)
                 find_alt_link_result = torrent_params['find_alt_link_result']
                 for scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet in find_alt_link_result:
+                    if scrapedmagnet in str(matches): continue
                     matches.append((scrapedtitle, scrapedmagnet, scrapedsize, scrapedquality))
                     find_alt = True
             if item.matches and item.contentChannel == 'videolibrary' and not find_alt_link_result:
-                if 'magnet' in str(item.matches):
-                    find_alt = True
-                matches.extend(item.matches)
+                if matches:
+                    for scrapedtitle, scrapedurl, scrapedpassword, scrapedquality in item.matches:
+                        if scrapedurl in str(matches): continue
+                        matches.append((scrapedtitle, scrapedurl, scrapedpassword, scrapedquality))
+                if 'magnet' in str(matches): find_alt = True
+        
         elif item.matches:
             matches = item.matches
 
@@ -813,28 +874,17 @@ def findvideos(item):
 
     #Ahora tratamos los enlaces .torrent con las diferentes calidades
     for x, (scrapedtitle, _scrapedurl, _scrapedpassword, scrapedquality) in enumerate(matches):
+        scrapedurl = _scrapedurl
         size = ''
         scrapedpassword = _scrapedpassword
         if _scrapedurl.startswith('magnet'):
             size = _scrapedpassword
             scrapedpassword = ''
-        # Si es una Serie o Documental, buscamos el episodio deseado
-        if item.contentType == 'episode' and not _scrapedurl.startswith('magnet'):
-            patron_temp = '^(\d+)[x|X](\d+)\s*'
-            patron_epi = '^(\d+)'
-            if scrapertools.find_single_match(scrapedtitle, patron_temp):       # Formato estándar AAxBB
-                temp, epi = scrapertools.find_single_match(scrapedtitle, patron_temp)
-            elif scrapertools.find_single_match(scrapedtitle, patron_epi):      # Formato sólo de episodio, Temporada 1
-                epi = scrapertools.find_single_match(scrapedtitle, patron_epi)
-                temp = 1
-            try:
-                if item.contentSeason != int(temp) or item.contentEpisodeNumber != int(epi):    # Si no es el episodio buscado, pasamos
-                    continue
-            except:                                                             # Hay error?
-                if item.extra == 'series':                                      # Si es Serie ignoramos la entrada
-                    continue
         
-        scrapedurl = generictools.convert_url_base64(_scrapedurl, host_torrent, referer=host_torrent_referer)
+        host_torrent_out = host_torrent
+        if scrapedurl.startswith('//'):
+            scrapedurl = 'https:%s' % scrapedurl
+        scrapedurl = generictools.convert_url_base64(scrapedurl, host_torrent_out, referer=host_torrent_referer)
         # Si ha habido un cambio en la url, actualizados matches para emergency_urls
         if item.videolibray_emergency_urls and scrapedurl != _scrapedurl:
             item.emergency_urls[1][x][1] = scrapedurl
@@ -863,7 +913,8 @@ def findvideos(item):
         if item.emergency_urls and not item.videolibray_emergency_urls:
             try:                                                                # Guardamos la url ALTERNATIVA
                 if item.emergency_urls[0][0].startswith('http') or item.emergency_urls[0][0].startswith('//'):
-                    item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0], host_torrent, referer=host_torrent_referer)
+                    item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0], host_torrent_out, 
+                                                                             referer=host_torrent_referer)
                 else:
                     item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][0])
             except:
@@ -876,7 +927,7 @@ def findvideos(item):
                 FOLDER = config.get_setting("folder_tvshows")
             if item.armagedon and item_local.torrent_alt:
                 item_local.url = item_local.torrent_alt                         # Restauramos la url
-                if not item.torrent_alt.startswith('http'):
+                if not item_local.torrent_alt.startswith('http') and not item_local.torrent_alt.startswith('magnet'):
                     local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
             if len(item.emergency_urls[0]) > 1:
                 del item.emergency_urls[0][0]
@@ -898,7 +949,8 @@ def findvideos(item):
                     item_local.armagedon = True
                     try:                                                        # Restauramos la url
                         if item.emergency_urls[0][0].startswith('http') or item.emergency_urls[0][0].startswith('//'):
-                            item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0], host_torrent, referer=host_torrent_referer)
+                            item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0], host_torrent_out, 
+                                                                             referer=host_torrent_referer)
                         else:
                             item_local.url = generictools.convert_url_base64(item.emergency_urls[0][0])
                             if not item.url.startswith('http'):
@@ -921,25 +973,23 @@ def findvideos(item):
             item_local.torrent_info += ' Magnet'
         if item_local.torrent_info:
             item_local.torrent_info = item_local.torrent_info.strip().strip(',')
-            #item.torrent_info = item_local.torrent_info
             if not item.unify:
                 item_local.torrent_info = '[%s]' % item_local.torrent_info
    
         # Guadamos la password del RAR
         password = scrapedpassword
-        if item.contentType == 'movie' and not _scrapedurl.startswith('magnet'):
-            password = scrapedtitle
         # Si tiene contraseña, la guardamos y la pintamos
         if password or item.password:
-            if not item.password: item.password = password
-            item_local.password = item.password
+            #if not item.password: item.password = password
+            item_local.password = password
             itemlist.append(item.clone(action="", title="[COLOR magenta] Contraseña: [/COLOR]'" 
                         + item_local.password + "'", folder=False))
         
         # Guardamos urls de emergencia si se viene desde un Lookup de creación de Videoteca
         if item.videolibray_emergency_urls:
             item.emergency_urls[0].append(item_local.url)                       # guardamos la url
-            item.emergency_urls[3].append(item_local.torrent_info)              # guardamos el torrent_info y nos vamos
+            item.emergency_urls[2].append(item_local.url)                       # guardamos la url o magnet inicial
+            item.emergency_urls[3].append('#%s#%s' % (item_local.quality, item_local.torrent_info))     # Guardamos el torrent_info del .magnet
             continue
             
         if item_local.armagedon:
@@ -997,7 +1047,7 @@ def findvideos(item):
         return item                                                             # ... nos vamos
 
     if find_alt:
-        itemlist.append(item.clone(action="", title="[COLOR blue] Enlaces (imprecisos) buscados en [B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/COLOR]"))
+        itemlist.append(item.clone(action="", title="[COLOR blue] Enlaces (imprecisos) buscados en %s" % btdigg_label))
     if len(itemlist_f) > 0:                                                     # Si hay entradas filtradas...
         itemlist.extend(itemlist_f)                                             # Pintamos pantalla filtrada
     else:                                                                       
@@ -1038,6 +1088,18 @@ def episodios(item):
 
     if item.from_title:
         item.title = item.from_title
+    if not item.language:
+        item.language = ['CAST']
+    btdigg = False
+    logger.error(item.quality)
+    if btdigg_label in item.quality:
+        logger.error(item.quality)
+        btdigg =  True
+    if item.btdigg:
+        btdigg =  True
+        del item.btdigg
+    if item.quality:
+        item.quality = item.quality.replace(btdigg_label, '')
     
     #Limpiamos num. Temporada y Episodio que ha podido quedar por Novedades
     season_display = 0
@@ -1088,20 +1150,26 @@ def episodios(item):
     matches_acum = []
     list_temps = []
     list_temp = []
+    url = item.url
     if item.list_temp: list_temp = item.list_temp
     if not list_temp:
         if season_display > 0 or max_temp == 1:
-            list_temps.append(item.url)
-            
+            if not btdigg: list_temps.append(item.url)
+
         # Obtenemos todas las Temporada de la Serie desde Search
         # Si no hay TMDB o es sólo una temporada, listamos lo que tenemos
-        if search_seasons and season_display == 0 and item.infoLabels['tmdb_id'] and max_temp > 1:
+        if search_seasons and season_display == 0 and item.infoLabels['tmdb_id'] and (max_temp > 1 or btdigg):
             # Si hay varias temporadas, buscamos todas las ocurrencias y las filtraos por TMDB y calidad
             list_temp = generictools.find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo)
 
         if not list_temp:
             list_temp = list_temps[:]                                           # Lista final de Temporadas a procesar
-        item.list_temp = list_temp
+    if not list_temp and btdigg:
+        list_temp.append(item.url)
+    elif list_temp and btdigg:
+        if btdigg_url not in str(list_temp): btdigg = False
+        item.url = list_temp[0]
+    item.list_temp = list_temp
 
     patron = '(?i)<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a[^>]*'
     patron += 'class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"[^>]*>'
@@ -1112,7 +1180,7 @@ def episodios(item):
     # Descarga las páginas
     for _url in list_temp:                                                      # Recorre todas las temporadas encontradas
         url = _url
-        if not item.matches:
+        if not item.matches and not btdigg and btdigg_url not in url:
             data, response, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, canonical=canonical, 
                                                                        post=post, referer=referer, forced_proxy_opt=forced_proxy_opt, 
                                                                        patron=patron, item=item, itemlist=itemlist)     # Descargamos la página
@@ -1223,13 +1291,15 @@ def episodios(item):
                 elif item_local.contentSeason < season_display:
                     continue
 
+            if item_local.contentEpisodeNumber > item.infoLabels['number_of_episodes']:
+                item.infoLabels['number_of_episodes'] = item_local.contentEpisodeNumber
             epis_done += ['%s%s' % (item_local.contentSeason, str(item_local.contentEpisodeNumber).zfill(2))]
             item_local.matches = [(item_local.title, epi_url, scrapedpassword, item_local.quality)]
             itemlist.append(item_local.clone())
 
             #logger.debug(item_local)
         
-        if item.matches: break
+        if item.matches or btdigg: break
 
     if matches_acum and not item.add_videolibrary: item.matches = matches_acum
     
@@ -1237,7 +1307,7 @@ def episodios(item):
         itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))       #clasificamos
 
     if find_alt_link_option:
-        item, itemlist = generictools.find_btdigg_episodios(item, itemlist, url=url, epis_done=epis_done)
+        item, itemlist = generictools.find_btdigg_episodios(item, itemlist, url=url, epis_done=epis_done, domain_alt=find_alt_domains)
 
     if item.season_colapse and not item.add_videolibrary:                       # Si viene de listado, mostramos solo Temporadas
         item, itemlist = generictools.post_tmdb_seasons(item, itemlist, url='season')
@@ -1245,6 +1315,15 @@ def episodios(item):
     if not item.season_colapse:                                                 # Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
         tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma)
+        
+        itemlist_t = []
+        episodes = 0
+        for item_local in itemlist:
+            if item_local.infoLabels['temporada_num_episodios']: episodes = int(item_local.infoLabels['temporada_num_episodios'])
+            if episodes and btdigg_label in item_local.quality and int(item_local.contentEpisodeNumber) > episodes:
+                continue
+            itemlist_t.append(item_local)
+        if itemlist_t: itemlist = itemlist_t
 
         #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
         item, itemlist = generictools.post_tmdb_episodios(item, itemlist)
@@ -1266,17 +1345,28 @@ def actualizar_titulos(item):
     
 def search(item, texto):
     logger.info()
+
+    if not texto: return []
     texto = texto.replace(" ", "%20")
     
     try:
+        btdigg = False
+        if item.btdigg:
+            btdigg = True
+            del item.btdigg
         item.url = host + 'buscar/' + texto + '/page/1'
         item.extra = 'search'
         item.referer = host
+        itemlist = listado(item)
 
-        if texto:
-            return listado(item)
-        else:
-            return []
+        if find_alt_link_option and btdigg:
+            try:
+                itemlist.extend(generictools.find_btdigg_search(texto, channel, itemlist=itemlist))
+            except:
+                logger.error(traceback.format_exc())
+
+        return itemlist
+
     except:
         for line in sys.exc_info():
             logger.error("{0}".format(line))

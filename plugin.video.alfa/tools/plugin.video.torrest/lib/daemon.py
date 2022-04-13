@@ -484,14 +484,10 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                     #if USER_ADDON_SETTING.getSetting('is_rooted_device') == 'rooted':
                     #    USER_ADDON_SETTING.setSetting('is_rooted_device', 'check')
                     #    logging.info('## Assistant checking "is_rooted_device": SET to "check"')
-                    if USER_ADDON_SETTING.getSetting('assistant_mode') == 'este' and \
-                            os.path.exists(os.path.join(USER_APP_PATH, user_params['USER_APP'])):
+                    if os.path.exists(os.path.join(USER_APP_PATH, user_params['USER_APP'])):
                         USER_APP = user_params['USER_APP']
                         USER_APP_STATUS = True
-                        if USER_ADDON_SETTING.getSetting('assistant_custom_address'):
-                            USER_APP_URL_base = "http://%s" % USER_ADDON_SETTING.getSetting('assistant_custom_address')
-                        else:
-                            USER_APP_URL_base = user_params['USER_APP_URL']
+                        USER_APP_URL_base = user_params['USER_APP_URL']
                         USER_APP_URL = "%s:%s" % (USER_APP_URL_base, user_params['USER_APP_PORT'])
                         USER_APP_URL_ALT = "%s:%s" % (USER_APP_URL_base, user_params['USER_APP_PORT_ALT'])
                 except:

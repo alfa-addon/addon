@@ -41,8 +41,8 @@ list_servers = ['gounlimited',
 canonical = {
              'channel': 'cinecalidad', 
              'host': config.get_setting("current_host", 'cinecalidad', default=''), 
-             'host_alt': ["https://cinecalidad3.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www5.cine-calidad.com/"], 
+             'host_black_list': ["https://cinecalidad3.com/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
