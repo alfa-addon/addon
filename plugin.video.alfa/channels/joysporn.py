@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.joysporn.vip'    #   'https://www.tubxxporn.com' 'https://www.pornky.com/'  https://www.pornktube.porn
+host = "https://joysporn.sex"    #   https://tubxporn.xxx https://www.pornky.com  https://www.pornktube.porn
 
 
 def mainlist(item):
@@ -35,7 +35,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/?do=search&subaction=search&story=%s&search_start=1" % (host,texto)
+    item.url = "%s/index.php?do=search&subaction=search&story=%s&search_start=1" % (host,texto)
     try:
         return lista(item)
     except:
@@ -78,11 +78,11 @@ def lista(item):
     matches = soup.find_all('div', class_='video_c')
     for elem in matches:
         url = elem.a['href']
-        stitle = elem.find('h2').text.strip()
+        title = elem.find('h2').text.strip()
         thumbnail = elem.img['src']
-        stime = elem.find('div', class_='vidduration').text.strip()
-        if stime:
-            title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
+        time = elem.find('div', class_='vidduration').text.strip()
+        if time:
+            title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         plot = ""
         action = "play"
         if logger.info() == False:
@@ -95,58 +95,24 @@ def lista(item):
         if pagination.span.find_next_sibling("a"):
             next_page = pagination.span.find_next_sibling("a")['href']
         if "#" in next_page:
-            prev_page = scrapertools.find_single_match(item.url, "(.*?&search_start=)")
-            page = pagination.span.find_next_sibling("a").text
-            next_page = "%s%s" % (prev_page, page)
+            next_page = pagination.span.find_next_sibling("a").text
+            next_page = re.sub(r"&search_start=\d+", "&search_start={0}".format(next_page), item.url)
     if next_page:
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
-
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    matches = soup.find_all('div', id='player')
-    for elem in matches:
-        url = elem['data-q']
-        id = elem['data-id']
-        id1 = int(id) // 1000 *1000
-        server = elem['data-n']
-        url = url.split(",")
-        a = len(url)-1
-        for elem in url:
-            elem = elem.split(";")
-            quality = elem[0]
-            s1= elem[-2]
-            s2 = elem[-1]
-            url = "https://s%s.fapmedia.com/cqpvid/%s/%s/%s/%s/%s_%s.mp4" %(server,s1,s2,id1,id,id,quality)
-            url = url.replace("_720p", "") 
-            itemlist.append(item.clone(action="play", title= ".mp4 %s" %quality, contentTitle = item.title, url=url))
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
 def play(item):
     logger.info()
-    video_urls = []
-    soup = create_soup(item.url)
-    matches = soup.find_all('div', id='player')
-    for elem in matches:
-        url = elem['data-q']
-        id = elem['data-id']
-        id1 = int(id) // 1000 *1000
-        server = elem['data-n']
-        url = url.split(",")
-        a = len(url)-1
-        for elem in url:
-            elem = elem.split(";")
-            quality = elem[0]
-            s1= elem[-2]
-            s2 = elem[-1]
-            url = "http://s%s.stormedia.info/whpvid/%s/%s/%s/%s/%s_%s.mp4"   % (server, s1, s2,id1, id,id, quality)
-            # url = "https://s%s.fapmedia.com/wqpvid/%s/%s/%s/%s/%s_%s.mp4" %(server,s1,s2,id1,id,id,quality)
-            url = url.replace("_720p", "")
-            video_urls.append(['%s' %quality, url])
-    video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
-    return video_urls
+    itemlist = []
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
 

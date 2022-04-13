@@ -4,11 +4,12 @@
   "active": true,
   "adult": false,
   "language": ["lat"],
-  "thumbnail": "http://newpelis.nl/wp-content/uploads/2018/06/35227842_1998485733529574_5906247779155443712_n.png",
+  "thumbnail": "https://newpelis.org/wp-content/themes/allcalidad/assets/images/logoss.png",
   "banner": "",
   "fanart": "",
   "categories": [
-    "movie"
+    "movie",
+    "tvshow"
   ],
   "settings": [
     {

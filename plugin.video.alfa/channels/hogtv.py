@@ -117,11 +117,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    url = soup.find(id='fluidplayer-container').a['href']
-    if not url.startswith("https"):
-        url = "https:%s" % url
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -129,10 +125,6 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    url = soup.find(id='fluidplayer-container').a['href']
-    if not url.startswith("https"):
-        url = "https:%s" % url
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

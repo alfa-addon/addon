@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://viralxvideos.es'     #  https://www.xmoviesforyou.tv   https://www.xvideospanish.net
+host = "https://viralxvideos.es"     #  https://www.xmoviesforyou.tv   https://www.xvideospanish.net
 
 
 def mainlist(item):
@@ -74,7 +74,7 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('article', id=re.compile(r"^post-\d+"))
+    matches = soup.find_all('article')
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']

@@ -12,6 +12,10 @@
         "url": "https://xhamster.com/embed/\\1"
       },
       {
+        "pattern": "xhgeo.com/embed/([A-z0-9-]+)",
+        "url": "https://xhamster.com/embed/\\1"
+      },
+      {
         "pattern": "https://xh.video/v/([A-z0-9]+)",
         "url": "https://xhamster.com/embed/\\1"
       }
