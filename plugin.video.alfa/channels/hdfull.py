@@ -32,8 +32,8 @@ from channelselector import get_thumb
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             'host_alt': ['https://hdfull.lol/', 'https://hdfull.link/', 'https://hdfull.click/', 'https://hdfull.stream/'], 
-             'host_black_list': ['https://hdfull.one/', 'https://hdfull.vip/', 'https://hd-full.cc/'], 
+             'host_alt': ['https://hdfull.fun/'], 
+             'host_black_list': ['https://hdfull.lol/', 'https://hdfull.one/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

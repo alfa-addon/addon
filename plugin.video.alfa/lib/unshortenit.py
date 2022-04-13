@@ -509,7 +509,7 @@ def sortened_urls(url, url_base64, host, referer=None, alfa_s=True):
     patron_linkser = 'name="linkser"\s*value="([^"]*)"'
     key_safe = 'fee631d2cffda38a78b96ee6d2dfb43a'
     
-    if not url_base64 or url_base64.startswith('magnet'):
+    if not url_base64 or url_base64.startswith('magnet') or url_base64.endswith('.torrent'):
         return url_base64
     
     domain = scrapertools.find_single_match(url, patron_domain)
@@ -519,7 +519,7 @@ def sortened_urls(url, url_base64, host, referer=None, alfa_s=True):
         if '//' in url_base64 and not (url_base64.startswith('magnet') or url_base64.startswith('http')):
             domain = 'sub-short.link'
         else:
-            domain = 'acortalink.me'
+            domain = 'acorta-link.com'
         key = config.get_setting(domain, server='torrent', default='')
 
     from lib.pyberishaes import GibberishAES
@@ -554,6 +554,11 @@ def sortened_urls(url, url_base64, host, referer=None, alfa_s=True):
         host_name = scrapertools.find_single_match(url, patron_host)
         if host_name and not host_name.endswith('/'): host_name += '/'
 
+        response =  httptools.downloadpage(url_base64, proxy_retries=0, timeout=10, 
+                                           only_headers=True, ignore_response_code=True, alfa_s=alfa_s)
+        if response.sucess:
+            return url_base64
+        
         data_new = re.sub(r"\n|\r|\t", "", httptools.downloadpage(url, proxy_retries=0, timeout=10, 
                                                                   referer=referer or host, ignore_response_code=True, 
                                                                   alfa_s=alfa_s).data)

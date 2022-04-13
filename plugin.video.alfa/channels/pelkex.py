@@ -29,8 +29,8 @@ list_servers = ['zplayer', 'streamtape', 'mega', 'torrent']
 canonical = {
              'channel': 'pelkex', 
              'host': config.get_setting("current_host", 'pelkex', default=''), 
-             'host_alt': ["https://newpelis.nl/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://newpelis.org/"], 
+             'host_black_list': ["https://newpelis.nl/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

@@ -90,6 +90,9 @@ trackers = [
         "http://www.todotorrents.com:2710/announce",
            ]
 
+magnet_trackets = '&tr=http://tracker.gbitt.info:80/announce&tr=udp://tracker.openbittorrent.com:6969/announce'
+magnet_trackets += '&tr=udp://tracker.torrent.eu.org:451/announce'
+
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_canal = '(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
@@ -683,35 +686,15 @@ def caching_torrents(url, torrent_params={}, **kwargs):
     # Descargamos el .torrent
     try:
         capture_path = config.get_setting("capture_thru_browser_path", server="torrent", default="")
-        if url.startswith("magnet"):
-            if not config.get_setting("magnet2torrent", server="torrent", default=False) \
-                                       and item.downloadStatus and item.downloadStatus not in [5]:
-                return url, torrent_params
+        torrent_params['torrent_cached_list'] = config.get_setting('torrent_cached_list', server='torrent', default=[])
+        torrent_cached_list = torrent_params['torrent_cached_list']
+        if 'cliente_torrent_Alfa.torrent' not in url:
+            if url.startswith("magnet"):
+                key = scrapertools.find_single_match(url, 'urn:btih:([\w\d]+)\&').upper()
             else:
-                torrent_file = magnet2torrent(url, headers=headers)             #Convierte el Magnet en un archivo Torrent
-                if not torrent_file:
-                    logger.error('No es un archivo Torrent: %s' % url)
-                    torrent_params['torrents_path'] = ''
-                    return url, torrent_params                                  #Si hay un error, devolvemos el "path" vacío
-        
-        elif (torrent_params.get('local_torr', None) and filetools.exists(torrent_params['local_torr'])) or not url.startswith("http"):
-            if filetools.exists(torrent_params['local_torr']):
-                torrent_file = filetools.read(torrent_params.get('local_torr', None) or url, silent=True, mode='rb', vfs=VFS)
-            else:
-                torrent_file = filetools.read(url, silent=True, mode='rb', vfs=VFS)
-            if not torrent_file:
-                logger.error('1.- No es un archivo Torrent: %s' % torrent_params.get('local_torr', None) or url)
-                if not url.startswith("http"):
-                    torrent_params['torrents_path'] = ''
-                    return torrent_file, torrent_params                         # Si hay un error, devolvemos el "path" vacío
-            else:
-                torrent_params['cached'] = True
-        
-        elif 'cliente_torrent_Alfa.torrent' not in url:
-            torrent_params['torrent_cached_list'] = config.get_setting('torrent_cached_list', server='torrent', default=[])
-            torrent_cached_list = torrent_params['torrent_cached_list']
+                key = url.split('?')[0]
             for link, path_torrent in torrent_cached_list:                      # Si ya estaba cacheado lo usamos
-                if filetools.encode(url.split('?')[0]) != link:
+                if filetools.encode(key) != link:
                     continue
                 torrent_file = filetools.read(path_torrent, silent=True, mode='rb', vfs=VFS)
                 if torrent_file:
@@ -719,93 +702,118 @@ def caching_torrents(url, torrent_params={}, **kwargs):
                     if not scrapertools.find_single_match(torrent_params['torrents_path'], '(?:\d+x\d+)?\s+\[.*?\]_\d+'):
                         torrent_params['torrents_path'] = path_torrent
                         cached_torrent = True
-
-        if not torrent_file and url.startswith("http"):
-            from core import httptools
-            if torrent_params.get('lookup', False):
-                proxy_retries = 0
-            follow_redirects = True
-            if post:
-                follow_redirects = False
-            if timeout < 20 and httptools.channel_proxy_list(url):              # Si usa proxy, duplicamos el timeout
-                timeout *= 3
-            
-            for x in range(retry_CF):
-                response = httptools.downloadpage(url, headers=headers, post=post, 
-                                                  follow_redirects=follow_redirects, 
-                                                  timeout=timeout, 
-                                                  proxy_retries=proxy_retries,
-                                                  hide_infobox=True)
-                if response.code not in [403, 404]:
-                    break
-                time.sleep(random.uniform(1, 2))
-
-            torrent_params['code'] = response.code
-            torrent_params['time_elapsed'] = response.time_elapsed
-            
-            if not response.sucess or (torrent_params['torrents_path'] == 'CF_BLOCKED' \
-                                       and not scrapertools.find_single_match(response.data, patron)) \
-                                       or (isinstance(response.data, str) and 'recaptcha' in response.data \
-                                       and not scrapertools.find_single_match(response.data, patron)):
-                # Si hay un bloqueo de CloudFlare, intenta descargarlo directamente desde el Browser y lo recoge de descargas
-                cf_error = ''
-                for cf_error in CF_BLOCKING_ERRORS:
-                    if cf_error in str(response.code):
-                        cf_error = 'CF_BLOCKED'
-                        if torrent_params['torrents_path'] == 'CF_BLOCKED':
-                            torrent_params['lookup'] = False
-                        break
+        
+        if not torrent_file:
+            if url.startswith("magnet"):
+                if not config.get_setting("magnet2torrent", server="torrent", default=False) \
+                                           and item.downloadStatus and item.downloadStatus not in [5]:
+                    return url, torrent_params
                 else:
-                    if torrent_params['torrents_path'] == 'CF_BLOCKED':
-                        cf_error = 'CF_BLOCKED'
-                        torrent_params['lookup'] = False
-                    else:
-                        cf_error = ''
-                
-                if cf_error:
-                    cached_torrents = videolibray_populate_cached_torrents(url, item=item, find=True)
-                    if cached_torrents['cached_torrent_path'] and cached_torrents['torrent_file']:
-                        torrent_params['torrents_path'] = cached_torrents['cached_torrent_path']
-                        torrent_file = cached_torrents['torrent_file']
-                        torrent_params['local_torr'] = torrent_params['local_torr'].replace('CF_BLOCKED', '')
-                        torrent_cached_list = config.get_setting('torrent_cached_list', server='torrent', default=[])
-                        torrent_cached_list.append([filetools.encode(url.split('?')[0]), torrent_params['torrents_path']])
-                        if torrent_params.get('url_index', ''):
-                            torrent_cached_list.append([filetools.encode(torrent_params['url_index'].split('?')[0]), 
-                                                        torrent_params['torrents_path']])
-                        config.set_setting('torrent_cached_list', torrent_cached_list, server='torrent')
-                        torrent_params['torrent_cached_list'] = torrent_cached_list
-                        return torrent_file, torrent_params
-
-                if not torrent_params.get('lookup', False) and cf_error:
-                    torrent_params['torrents_path'] = ''
-                    
-                    url_save, torrent_file = capture_thru_browser(url, capture_path, item, response, VFS)
-                    
-                    if 'ERROR_CF_BLOCKED' in url_save:
-                        torrent_params['torrents_path'] = url_save
-                        return '', torrent_params                               # Si hay un error, devolvemos el "path" con ERROR definitivo
-                    elif not url_save or not torrent_file:
+                    torrent_file = magnet2torrent(url, headers=headers)         # Convierte el Magnet en un archivo Torrent
+                    if not torrent_file:
+                        logger.error('No es un archivo Torrent: %s' % url)
                         torrent_params['torrents_path'] = ''
-                        return '', torrent_params                               # Si hay un error, devolvemos el "path" vacío
-                    if torrent_params.get('local_torr', None):
-                        torrent_params['local_torr'] = torrent_params['local_torr'].replace('CF_BLOCKED', '')
-                    if item:
-                        cached_torrents = videolibray_populate_cached_torrents(url, torrent_file=torrent_file, item=item)
-                else:
-                    torrent_params['torrents_path'] = cf_error
-                    return torrent_file, torrent_params                         # Si hay un error, devolvemos el "path" vacío
+                        return url, torrent_params                              # Si hay un error, devolvemos el "path" vacío
             
-            else:
-                # En caso de que sea necesaria la conversión js2py
-                from lib.generictools import js2py_conversion
-                torrent_file = response.data
+            elif (torrent_params.get('local_torr', None) and filetools.exists(torrent_params['local_torr'])) or not url.startswith("http"):
+                if filetools.exists(torrent_params['local_torr']):
+                    torrent_file = filetools.read(torrent_params.get('local_torr', None) or url, silent=True, mode='rb', vfs=VFS)
+                else:
+                    torrent_file = filetools.read(url, silent=True, mode='rb', vfs=VFS)
+                if not torrent_file:
+                    logger.error('1.- No es un archivo Torrent: %s' % torrent_params.get('local_torr', None) or url)
+                    if not url.startswith("http"):
+                        torrent_params['torrents_path'] = ''
+                        return torrent_file, torrent_params                     # Si hay un error, devolvemos el "path" vacío
+                else:
+                    torrent_params['cached'] = True
+
+            if not torrent_file and url.startswith("http"):
+                from core import httptools
+                if torrent_params.get('lookup', False):
+                    proxy_retries = 0
+                follow_redirects = True
+                if post:
+                    follow_redirects = False
+                if timeout < 20 and httptools.channel_proxy_list(url):          # Si usa proxy, duplicamos el timeout
+                    timeout *= 3
                 
-                torrent_file = js2py_conversion(torrent_file, url, timeout=(timeout, timeout), 
-                                                headers=headers, referer=referer, post=post, 
-                                                follow_redirects=follow_redirects, 
-                                                proxy_retries=proxy_retries, 
-                                                channel=torrent_params.get('channel', None))
+                for x in range(retry_CF):
+                    response = httptools.downloadpage(url, headers=headers, post=post, 
+                                                      follow_redirects=follow_redirects, 
+                                                      timeout=timeout, 
+                                                      proxy_retries=proxy_retries,
+                                                      hide_infobox=True)
+                    if response.code not in [403, 404]:
+                        break
+                    time.sleep(random.uniform(1, 2))
+
+                torrent_params['code'] = response.code
+                torrent_params['time_elapsed'] = response.time_elapsed
+                
+                if not response.sucess or (torrent_params['torrents_path'] == 'CF_BLOCKED' \
+                                           and not scrapertools.find_single_match(response.data, patron)) \
+                                           or (isinstance(response.data, str) and 'recaptcha' in response.data \
+                                           and not scrapertools.find_single_match(response.data, patron)):
+                    # Si hay un bloqueo de CloudFlare, intenta descargarlo directamente desde el Browser y lo recoge de descargas
+                    cf_error = ''
+                    for cf_error in CF_BLOCKING_ERRORS:
+                        if cf_error in str(response.code):
+                            cf_error = 'CF_BLOCKED'
+                            if torrent_params['torrents_path'] == 'CF_BLOCKED':
+                                torrent_params['lookup'] = False
+                            break
+                    else:
+                        if torrent_params['torrents_path'] == 'CF_BLOCKED':
+                            cf_error = 'CF_BLOCKED'
+                            torrent_params['lookup'] = False
+                        else:
+                            cf_error = ''
+                    
+                    if cf_error:
+                        cached_torrents = videolibray_populate_cached_torrents(url, item=item, find=True)
+                        if cached_torrents['cached_torrent_path'] and cached_torrents['torrent_file']:
+                            torrent_params['torrents_path'] = cached_torrents['cached_torrent_path']
+                            torrent_file = cached_torrents['torrent_file']
+                            torrent_params['local_torr'] = torrent_params['local_torr'].replace('CF_BLOCKED', '')
+                            torrent_cached_list = config.get_setting('torrent_cached_list', server='torrent', default=[])
+                            torrent_cached_list.append([filetools.encode(url.split('?')[0]), torrent_params['torrents_path']])
+                            if torrent_params.get('url_index', ''):
+                                torrent_cached_list.append([filetools.encode(torrent_params['url_index'].split('?')[0]), 
+                                                            torrent_params['torrents_path']])
+                            config.set_setting('torrent_cached_list', torrent_cached_list, server='torrent')
+                            torrent_params['torrent_cached_list'] = torrent_cached_list
+                            return torrent_file, torrent_params
+
+                    if not torrent_params.get('lookup', False) and cf_error:
+                        torrent_params['torrents_path'] = ''
+                        
+                        url_save, torrent_file = capture_thru_browser(url, capture_path, item, response, VFS)
+                        
+                        if 'ERROR_CF_BLOCKED' in url_save:
+                            torrent_params['torrents_path'] = url_save
+                            return '', torrent_params                           # Si hay un error, devolvemos el "path" con ERROR definitivo
+                        elif not url_save or not torrent_file:
+                            torrent_params['torrents_path'] = ''
+                            return '', torrent_params                           # Si hay un error, devolvemos el "path" vacío
+                        if torrent_params.get('local_torr', None):
+                            torrent_params['local_torr'] = torrent_params['local_torr'].replace('CF_BLOCKED', '')
+                        if item:
+                            cached_torrents = videolibray_populate_cached_torrents(url, torrent_file=torrent_file, item=item)
+                    else:
+                        torrent_params['torrents_path'] = cf_error
+                        return torrent_file, torrent_params                     # Si hay un error, devolvemos el "path" vacío
+                
+                else:
+                    # En caso de que sea necesaria la conversión js2py
+                    from lib.generictools import js2py_conversion
+                    torrent_file = response.data
+                    
+                    torrent_file = js2py_conversion(torrent_file, url, timeout=(timeout, timeout), 
+                                                    headers=headers, referer=referer, post=post, 
+                                                    follow_redirects=follow_redirects, 
+                                                    proxy_retries=proxy_retries, 
+                                                    channel=torrent_params.get('channel', None))
 
         # Si no hay datos o son incosistentes, salimos
         if not torrent_file or not isinstance(torrent_file, (str, bytes)):
@@ -893,9 +901,10 @@ def caching_torrents(url, torrent_params={}, **kwargs):
                 t_hash = hashlib.sha1(bencode.bencode(decodedDict[b"info"])).hexdigest()
             else:
                 t_hash = hashlib.sha1(bencode.bencode(decodedDict["info"])).hexdigest()
+            t_hash_upper = t_hash.upper()
         except:
             logger.error(traceback.format_exc(1))
-        
+
         if t_hash and not scrapertools.find_single_match(torrent_params['torrents_path'], '(?:\d+x\d+)?\s+\[.*?\]_\d+'):
             torrent_params['torrents_path'] = filetools.encode(filetools.join(filetools.dirname(torrent_params.get('local_torr', None) \
                                                                or torrent_params['torrents_path']), t_hash + '.torrent'))
@@ -905,14 +914,24 @@ def caching_torrents(url, torrent_params={}, **kwargs):
                 ret = filetools.write(torrents_path_encode, torrent_file, silent=True, vfs=VFS)
                 torrent_params['torrent_cached_list'] = config.get_setting('torrent_cached_list', server='torrent', default=[])
                 torrent_cached_list = torrent_params['torrent_cached_list']
-                if ret and not url.startswith("magnet") and filetools.encode(url.split('?')[0]).lower() != torrent_params['torrents_path'].lower() \
-                                                        and filetools.encode(url.split('?')[0]) not in torrent_cached_list:
-                    torrent_cached_list.append([filetools.encode(url.split('?')[0]), torrent_params['torrents_path']])
+                if ret and (not url.startswith("magnet") and filetools.encode(url.split('?')[0]).lower() != torrent_params['torrents_path'].lower() \
+                                                         and filetools.encode(url.split('?')[0]) not in torrent_cached_list) \
+                                                         or (url.startswith("magnet") and t_hash_upper not in str(torrent_cached_list)):
+                    if url.startswith("magnet"):
+                        torrent_cached_list.append([t_hash_upper, torrent_params['torrents_path']])
+                    else:
+                        torrent_cached_list.append([filetools.encode(url.split('?')[0]), torrent_params['torrents_path']])
                     if torrent_params.get('url_index', ''):
                         torrent_cached_list.append([filetools.encode(torrent_params['url_index'].split('?')[0]), torrent_params['torrents_path']])
                     config.set_setting('torrent_cached_list', torrent_cached_list, server='torrent')
                     torrent_params['torrent_cached_list'] = torrent_cached_list
                     cached_torrent = True
+        elif t_hash and scrapertools.find_single_match(torrent_params['torrents_path'], '(?:\d+x\d+)?\s+\[.*?\]_\d+'):
+            torrent_params['torrent_cached_list'] = config.get_setting('torrent_cached_list', server='torrent', default=[])
+            torrent_cached_list = torrent_params['torrent_cached_list']
+            if t_hash_upper not in str(torrent_cached_list):
+                torrent_cached_list.append([t_hash_upper, torrent_params['torrents_path']])
+                config.set_setting('torrent_cached_list', torrent_cached_list, server='torrent')
         
         #Salvamos el .torrent
         if not cached_torrent and (not torrent_params.get('lookup', False) or torrent_params.get('local_torr', None)):
@@ -1137,7 +1156,7 @@ def magnet2torrent(magnet, headers={}):
 
         # Tratamos de convertir el magnet on-line (opción más rápida, pero no se puede convertir más de un magnet a la vez)
         url_list = [
-                    ('https://itorrents.org/torrent/', 3, '', '.torrent')
+                    ('https://itorrents.org/torrent/', 2, '', '.torrent')
                    ]                                                            # Lista de servicios on-line testeados
         for url, timeout, id, sufix in url_list:
             if id:
@@ -1145,7 +1164,7 @@ def magnet2torrent(magnet, headers={}):
             else:
                 url = '%s%s%s' % (url, btih, sufix)
 
-            response = httptools.downloadpage(url, timeout=timeout, headers=headers, post=post, 
+            response = httptools.downloadpage(url, timeout=timeout, headers=headers, post=post, retry_alt=False, 
                                               proxy_retries=0, proxy__test=False, alfa_s=True)
             if not response.sucess:
                 logger.debug('ERROR: %s: Elapsed: %s' % (response.code, response.time_elapsed))
@@ -1157,6 +1176,8 @@ def magnet2torrent(magnet, headers={}):
                 continue
             torrent_file = response.data
             break
+        
+        return torrent_file
 
         #Usamos Libtorrent para la conversión del magnet como alternativa (es lento)
         if not torrent_file:
@@ -1192,7 +1213,7 @@ def magnet2torrent(magnet, headers={}):
                     ses.remove_torrent(h)                                       # Desactiva Libtorrent
                     filetools.rmdirtree(LIBTORRENT_MAGNET_PATH)                 # Elimina la carpeta temporal
     
-    return torrent_file    
+    return torrent_file
 
 
 def verify_url_torrent(url, timeout=5):
@@ -1220,10 +1241,16 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
                        'emergency_urls': [],
                        'updated': False
                        }
-    
+
     # Cuando se descarga un torrent vía "capture_thru_browser", se trata de almacenar en la videoteca
     if not item or not url or not config.is_xbmc(): return cached_torrents
     if not item.infoLabels['tmdb_id'] and not item.infoLabels['imdb_id']: return cached_torrents
+
+    size = ''
+    if torrent_file:
+        from lib.generictools import get_torrent_size
+        torrent_params = get_torrent_size(url, torrent_params={'torrent_file': torrent_file}, item=item)
+        size = torrent_params.get('size', '')
     
     try:
         # Obtenemos el nombre base de la serie/película
@@ -1234,7 +1261,7 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
         elif item.contentSerieName:
             base_name = item.contentSerieName
         else:
-            base_name = item.contentTitle
+            base_name = item.infoLabels['title']
 
         if not PY3:
             base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
@@ -1246,15 +1273,18 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
 
         if item.contentType == 'movie':
             episode = ''
+            strFileName = '%s.strm' % base_name
+            filename = base_name
         else:
             episode = '%sx%s' % (item.contentSeason, str(item.contentEpisodeNumber).zfill(2))
+            strFileName = '%s.strm' % episode
+            filename = episode
         channel_name = item.category_alt.lower() or item.category.lower() or item.channel
         logger.info('Canal: %s; Vídeo: %s; Tipo: %s; Episodio: %s; Url: %s; Find: %s' % 
                    (channel_name, base_name, item.contentType, episode, url, find))
 
         # Construimos la SQL sobre la vidoeteca Kodi para que nos apunte al episodio/película específico
         table = 'movie_view' if item.contentType == 'movie' else 'episode_view'
-        strFileName = '%s.strm' % episode or base_name
         imdb_id = '%[' + item.infoLabels['imdb_id'] + ']%'
         tmdb_id = '%[' + item.infoLabels['tmdb_id'] + ']%'
         sql = 'select strPath from %s where strFileName = "%s" and (strPath like "%s" or strPath like "%s")' \
@@ -1282,7 +1312,7 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
             channels_alt = [channel_name]
         for json_name in filetools.listdir(records[0][0]):
             if not json_name.endswith('.json'): continue
-            if not episode or base_name in json_name: continue
+            if not filename in json_name: continue
             json_channel = scrapertools.find_single_match(json_name, '\[([^\]]+)\]')
             if json_channel in channels_alt or json_channel == channel_name:
                 channel_name = json_channel.lower()
@@ -1290,31 +1320,47 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
         else:
             return cached_torrents                                              # No se ha encontrado el canal en la carpeta, muy raro...
         
-        torrent_name = '%s [%s]' % (episode or base_name, channel_name)
+        torrent_name = '%s [%s]' % (filename, channel_name)
         torrent_path = filetools.join(records[0][0], torrent_name)
         json_name = '%s.json' % torrent_name
         json_path = filetools.join(records[0][0], json_name)
         json_file = Item().fromjson(filetools.read(json_path))
-        if json_file.infoLabels['quality'] and item.infoLabels['quality'] \
+        if item.contentType != 'movie' and json_file.infoLabels['quality'] and item.infoLabels['quality'] \
                                  and json_file.infoLabels['quality'] !=item.infoLabels['quality']:
             return cached_torrents                                              # No se ha encontrado el vídeo de la misma calidad
         
         emergency_urls = []
-        if len(json_file.emergency_urls) == 2:
-            if json_file.emergency_urls[0] and json_file.emergency_urls[0][0].startswith('http'):
-                emergency_urls = json_file.emergency_urls[0].copy()
-            elif item.matches_torrent:
-                emergency_urls = item.matches_torrent.copy()
-                if len(emergency_urls) > len(json_file.emergency_urls[0]):
-                    for x, e_url in enumerate(emergency_urls):
-                        if x+1 > len(json_file.emergency_urls[0]):
-                            json_file.emergency_urls[0].extend([e_url])
-            if emergency_urls:
-                json_file.emergency_urls.append(emergency_urls)                 # Salvamos las urls iniciales como índices para futuras búsquedas
+        if len(json_file.emergency_urls) >= 2:
+            if item.matches_torrent and len(item.matches_torrent) > len(json_file.emergency_urls[0]):
+                for x, e_url in enumerate(item.matches_torrent):
+                    if e_url in json_file.emergency_urls[0]: continue
+                    if x+1 > len(json_file.emergency_urls[0]):
+                        json_file.emergency_urls[0].extend([e_url])
+                    else:
+                        json_file.emergency_urls[0][x] = e_url
+                    if len(json_file.emergency_urls) >= 2: 
+                        if x+1 > len(json_file.emergency_urls[2]):
+                            json_file.emergency_urls[2].extend([e_url])
+                        else:
+                            json_file.emergency_urls[2][x] = e_url
+                    if len(json_file.emergency_urls) >= 3:
+                        if x+1 > len(json_file.emergency_urls[3]):
+                            json_file.emergency_urls[3].extend([size or item.torrent_info])
+                        else:
+                            json_file.emergency_urls[3][x] = size or item.torrent_info
+                    cached_torrents['updated'] = True
+            if cached_torrents['updated'] or len(json_file.emergency_urls) <= 2 \
+                                          or (len(json_file.emergency_urls) > 2 \
+                                          and not json_file.emergency_urls[2]):
+                if len(json_file.emergency_urls) <= 2:
+                    json_file.emergency_urls.append(emergency_urls)             # Salvamos las urls iniciales como índices para futuras búsquedas
+                elif not json_file.emergency_urls[2]:
+                    json_file.emergency_urls[2] = emergency_urls.copy()
                 filetools.write(json_path, json_file.tojson())
                 cached_torrents['updated'] = True
-        if len(json_file.emergency_urls) == 3:
-            if item.matches_torrent and item.matches_torrent != json_file.emergency_urls[2]:
+        if len(json_file.emergency_urls) >= 3:
+            if item.matches_torrent and item.matches_torrent != json_file.emergency_urls[2] \
+                                    and len(item.matches_torrent) > len(json_file.emergency_urls[2]):
                 emergency_urls = json_file.emergency_urls[2] = item.matches_torrent.copy()
                 filetools.write(json_path, json_file.tojson())
                 cached_torrents['updated'] = True
@@ -1325,13 +1371,17 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
         res = False
 
         if json_file.emergency_urls:
-            if find and len(json_file.emergency_urls) == 3:
+            if find and len(json_file.emergency_urls) > 2:
                 for x, emergency_url in enumerate(json_file.emergency_urls[2]): # Buscar si ya está cacheado en la videoteca
                     if url in emergency_url and not json_file.emergency_urls[0][x].startswith('http'):
                         cached_torrents['cached_torrent_path'] = filetools.join(filetools.dirname(records[0][0].rstrip('/').rstrip('\\')), 
                                                                  json_file.emergency_urls[0][x])
                         cached_torrents['torrent_file'] = filetools.read(cached_torrents['cached_torrent_path'], mode='rb', silent=True)
-                        if not cached_torrents['torrent_file']: cached_torrents['cached_torrent_path'] = cached_torrents['torrent_file'] = ''
+                        if cached_torrents['torrent_file']: 
+                            logger.info('Canal: %s; Vídeo: %s; Tipo: %s; Episodio: %s; Url: %s; Find: %s: ENCONTRADO' % 
+                                       (channel_name, base_name, item.contentType, episode, url, find))
+                        else:
+                            cached_torrents['cached_torrent_path'] = cached_torrents['torrent_file'] = ''
                         return cached_torrents
                 else:
                     return cached_torrents
@@ -1342,6 +1392,11 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
                         cached_torrents['cached_torrent_path'] = json_file.emergency_urls[0][x]
                         json_file.emergency_urls[0][x] = filetools.join(' ', filetools.basename(records[0][0].rstrip('/').rstrip('\\')), 
                                                          torrent_name + '_%s.torrent' % str(x+1).zfill(2)).strip()
+                        if len(json_file.emergency_urls) >= 3 and (size or item.torrent_info):
+                            if x+1 > len(json_file.emergency_urls[3]):
+                                json_file.emergency_urls[3].extend([size or item.torrent_info])
+                            else:
+                                json_file.emergency_urls[3][x] = size or item.torrent_info
                         if cached_torrents['cached_torrent_path'] != json_file.emergency_urls[0][x]:
                             res = True
                             cached_torrents['cached_torrent_path'] = json_file.emergency_urls[0][x]
@@ -1382,6 +1437,8 @@ def call_torrent_via_web(mediaurl, torr_client, torrent_action='add',oper=2, alf
     
     post = None
     files = {}
+    if mediaurl.startswith('magnet'):
+        mediaurl = urllib.unquote_plus(mediaurl).replace('&amp;', '&') + magnet_trackets
     torrent_type = 'torrent'
     if torr_client == "torrest":
         if mediaurl.startswith('magnet'): torrent_type = 'magnet'
@@ -1391,7 +1448,7 @@ def call_torrent_via_web(mediaurl, torr_client, torrent_action='add',oper=2, alf
     local_host = {"quasar": ["http://localhost:65251/torrents/", "%s?uri" % torrent_action], \
                   "elementum": ["%storrents/" % torrent_paths['ELEMENTUM_web'], torrent_action], \
                   "torrest": ["%s" % torrent_paths['TORREST_web'], torrent_action]}
-    
+
     if torr_client == "quasar":
         uri = '%s%s=%s' % (local_host[torr_client][0], local_host[torr_client][1], mediaurl)
     elif torr_client == "elementum":
@@ -2138,6 +2195,7 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
 
         download_path = config.get_setting('downloadpath', default='')
         videolibrary_path = config.get_videolibrary_path()
+        videolibrary_path_local = videolibrary_path
         if item.contentType == 'movie':
             folder = config.get_setting("folder_movies")                        # películas
         else:
@@ -2483,13 +2541,15 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
     video_names = []
     folder = ''
     size = item.torrent_info
-    videolibrary_path = config.get_videolibrary_path()
-    if scrapertools.find_single_match(videolibrary_path, '(^\w+:\/\/)'):        # Si es una conexión REMOTA, usamos userdata local
-        videolibrary_path = config.get_data_path()
-    temp_torrents_Alfa = filetools.join(videolibrary_path, 'temp_torrents_Alfa') 
+    download_path = config.get_setting('downloadpath', default='')
+    if scrapertools.find_single_match(download_path, '(^\w+:\/\/)'):            # Si es una conexión REMOTA, usamos userdata local
+        download_path = config.get_data_path()
+    cached_torrents_Alfa = filetools.join(download_path, 'cached_torrents_Alfa')
+    if not filetools.isdir(cached_torrents_Alfa):
+        filetools.mkdir(cached_torrents_Alfa)
     if not torrent_paths: torrent_paths = torrent_dirs()
     torr_client = torrent_paths['TORR_client']
-    if item.downloadStatus == 4: magnet_retries = 30
+    if item.downloadStatus in [2, 4]: magnet_retries = 30
     if isinstance(item.downloadServer, dict):
         downloadServer = item.downloadServer.get('url', '')
     else:
@@ -2523,7 +2583,7 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
                 logger.debug('magnet_retries: %s' % x)
                 if (filetools.isfile(downloadServer) or filetools.isdir(downloadServer)) \
                             and filetools.exists(downloadServer):
-                    found =  True
+                    found = True
                     break
                 if monitor and monitor.waitForAbort(1):
                     return torrent_analysis                                     # ... abortando
@@ -2534,7 +2594,7 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
                 torr_data, deamon_url, index = get_tclient_data(info_hash, torr_client, action='delete', 
                                                                 port=torrent_paths.get(torr_client.upper()+'_port', 0), 
                                                                 web=torrent_paths.get(torr_client.upper()+'_web', ''))
-                if not found and item.downloadStatus == 4:
+                if not found and item.downloadStatus in [2, 4]:
                     elapsed = random.uniform(10, 60)
                     if monitor and monitor.waitForAbort(elapsed):
                         return torrent_analysis                                 # ... abortando
@@ -2566,14 +2626,26 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
                 url = torrent_params['url']
                 rar_files = torrent_params['files']
                 if 'ERROR' not in size:
-                    filetools.copy(torrent_params['torrents_path'], filetools.join(temp_torrents_Alfa, 
+                    filetools.copy(torrent_params['torrents_path'], filetools.join(cached_torrents_Alfa, 
                                    filetools.basename(torrent_params['torrents_path'])), silent=True)
-                    torrent_params['torrents_path'] = filetools.join(temp_torrents_Alfa, 
+                    torrent_params['torrents_path'] = filetools.join(cached_torrents_Alfa, 
                                    filetools.basename(torrent_params['torrents_path']))
                     if not item.torrents_path: item.torrents_path = torrent_params['torrents_path']
                     if rar_control:
                         rar_control['size'] = size
+                    
+                    torrent_params['torrent_cached_list'] = config.get_setting('torrent_cached_list', server='torrent', default=[])
+                    torrent_cached_list = torrent_params['torrent_cached_list']
+                    t_hash = scrapertools.find_single_match(item.url, 'urn:btih:([\w\d]+)\&').upper()
+                    if t_hash not in torrent_cached_list:
+                        torrent_cached_list.append([t_hash, torrent_params['torrents_path']])
+                        if torrent_params.get('url_index', ''):
+                            torrent_cached_list.append([filetools.encode(torrent_params['url_index'].split('?')[0]), 
+                                                        torrent_params['torrents_path']])
+                        config.set_setting('torrent_cached_list', torrent_cached_list, server='torrent')
+                        torrent_params['torrent_cached_list'] = torrent_cached_list
                     break
+                
                 if monitor and monitor.waitForAbort(1):
                     return torrent_analysis                                     # ... abortando
                 elif not monitor and not xbmc.abortRequested: 
@@ -2854,11 +2926,14 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                 log("##### Torrent FINALIZADO: %s" % str(folder))
                 # Se para la actividad para que libere los archivos descargados
                 if torr_client in ['quasar', 'elementum', 'torrest'] and torr_data and deamon_url:
-                    action_f = 'stop'
-                    if item.downloadStatus == 5: action_f = 'pause'
-                    torr_data, deamon_url, index = get_tclient_data(folder, torr_client, \
-                                port=torrent_paths.get(torr_client.upper()+'_port', 0), action=action_f, \
-                                web=torrent_paths.get(torr_client.upper()+'_web', ''))
+                    seeding = config.get_setting('allow_seeding', server='torrent', default=True)
+                    if not seeding or (item.downloadProgress == 99 and PLATFORM in ['windows', 'xbox'] \
+                                   and len(torrent_paths[torr_client.upper()])+len(rar_file) >= 240):
+                        action_f = 'stop'
+                        if item.downloadStatus == 5: action_f = 'pause'
+                        torr_data, deamon_url, index = get_tclient_data(folder, torr_client, \
+                                    port=torrent_paths.get(torr_client.upper()+'_port', 0), action=action_f, \
+                                    web=torrent_paths.get(torr_client.upper()+'_web', ''))
             try:
                 progreso.close()
             except:
@@ -3335,11 +3410,12 @@ def rename_rar_dir(item, rar_file, save_path_videos, video_path, torr_client):
     logger.info()
 
     rename_status = False
+    torrent_paths = torrent_dirs()
     
     if PLATFORM not in ['windows', 'xbox']:                                     # Si no es Windows, no hay problema de longitud del path
         return rename_status, rar_file, item
-
-    torrent_paths = torrent_dirs()
+    if len(torrent_paths[torr_client.upper()])+len(rar_file) <= 240:
+        return rename_status, rar_file, item
 
     folders = rar_file.split("/")
     if filetools.exists(filetools.join(save_path_videos, folders[0])) and video_path not in folders[0]:

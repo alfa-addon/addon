@@ -484,6 +484,7 @@ def blocking_error(req, proxy_data, opt):
     code = str(req.status_code) or ''
     data = req.content or ''
     url = opt.get('url', '')
+    canonical = opt.get('canonical', {})
     if PY3 and isinstance(data, bytes):
         data = "".join(chr(x) for x in bytes(data))
     resp = False
@@ -495,7 +496,7 @@ def blocking_error(req, proxy_data, opt):
                      or ('certificate verify failed') in code.lower() \
                      or (opt.get('check_blocked_IP', False) and 'Please wait while we try to verify your browser...' in data):
         resp = True
-        
+
         if opt.get('check_blocked_IP', False):
             opt['proxy'] = True
             opt['forced_proxy'] = 'ProxyCF'
@@ -521,10 +522,10 @@ def blocking_error(req, proxy_data, opt):
                     pCFl = []
                 pCFl = []
                 if not pCFl:
-                    if opt.get('canonical', {}).get('host_alt', []):
+                    if canonical.get('host_alt', []):
                         if not PY3: from . import proxytools
                         else: from . import proxytools_py3 as proxytools
-                        for domain in [opt['canonical']['host']]+opt['canonical']['host_alt']:
+                        for domain in [canonical['host']]+canonical['host_alt']:
                             if not domain: continue
                             domains += [scrapertools.find_single_match(domain, patron_domain)]
                         proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 'ProxyCF'), delete=True)
@@ -538,7 +539,7 @@ def blocking_error(req, proxy_data, opt):
                 else: from . import proxytools_py3 as proxytools
                 
                 if not proxy_data.get('stat', ''):
-                    for host in opt.get('canonical', {}).get('host_alt', []):
+                    for host in canonical.get('host_alt', []):
                         domains += [scrapertools.find_single_match(host, patron_domain)]
                 proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 'ProxyCF'))
             
@@ -672,6 +673,8 @@ def retry_alt(url, req, response_call, proxy_data, opt):
         return url, response_call
     
     host_a = scrapertools.find_single_match(url, patron_host)
+    if not host_a:
+        return url, response_call
     
     logger.error('ERROR 98: Web "%s" caída, reintentando...' % host_a)
     config.set_setting('current_host', '', channel=canonical['channel'])        # Reseteamos el dominio
@@ -1029,9 +1032,24 @@ def downloadpage(url, **opt):
 
             except Exception as e:
                 req = requests.Response()
-                req.status_code = str(e)
+                req.status_code = response_code = str(e)
+                block = blocking_error(req, proxy_data, opt)
+                
+                if block and opt.get('retry_alt', retry_alt_default) and opt.get('proxy__test', '') != 'retry' \
+                                                                     and not proxy_data.get('stat', ''):
+                    url_host = scrapertools.find_single_match(url, patron_host)
+                    url_host = url_host  + '/' if url_host and not url_host.endswith('/') else ''
+                    canonical = opt.get('canonical', {})
+                    if canonical.get('host_alt', []) and canonical.get('host_black_list', []) \
+                                                     and url_host != canonical['host_alt'][0] \
+                                                     and url_host in canonical['host_black_list']:
+                        url_alt = url.replace(url_host, canonical['host_alt'][0])
+                        if not opt.get('alfa_s', False): logger.error('Error: %s in url: %s - Reintentando con %s' \
+                                                                       % (response_code, url, url_alt))
+                        opt['proxy__test'] = 'retry'
+                        return downloadpage(url_alt, **opt)
 
-                if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', '') and not blocking_error(req, proxy_data, opt):
+                if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', '') and not block:
                     
                     if opt.get('retry_alt', retry_alt_default) and opt.get('canonical', {}).get('host_alt', []) \
                                 and len(opt['canonical']['host_alt']) > 1 \
@@ -1090,8 +1108,22 @@ def downloadpage(url, **opt):
         response['time_elapsed'] = 0
 
         block = blocking_error(req, proxy_data, opt)
+        # Retries if host changed but old host in error
+        if block and opt.get('retry_alt', retry_alt_default) and opt.get('proxy__test', '') != 'retry' and not proxy_data.get('stat', ''):
+            url_host = scrapertools.find_single_match(url, patron_host)
+            url_host = url_host  + '/' if url_host and not url_host.endswith('/') else ''
+            canonical = opt.get('canonical', {})
+            if canonical.get('host_alt', []) and canonical.get('host_black_list', []) \
+                                             and url_host != canonical['host_alt'][0] \
+                                             and url_host in canonical['host_black_list']:
+                url_alt = url.replace(url_host, canonical['host_alt'][0])
+                if not opt.get('alfa_s', False): logger.error('Error: %s in url: %s - Reintentando con %s' % (response_code, url, url_alt))
+                opt['proxy__test'] = 'retry'
+                return downloadpage(url_alt, **opt)
+        
         # Retries blocked domain with proxy
-        if block and opt.get('proxy__test', True) and not proxy_data.get('stat', ''):
+        if block and opt.get('retry_alt', retry_alt_default) and opt.get('proxy__test', '') != 'retry' \
+                 and not proxy_data.get('stat', '') and opt.get('proxy_retries', 1):
             if not opt.get('alfa_s', False): logger.error('Error: %s in url: %s - Reintentando' % (response_code, url))
             opt['proxy'] = opt.get('proxy', False) or False
             if not opt['proxy']: opt['proxy_web'] = opt.get('proxy_web', False) or True
@@ -1101,8 +1133,8 @@ def downloadpage(url, **opt):
             return downloadpage(url, **opt)
         
         # Retries blocked proxied IPs with more proxy
-        if block and opt.get('check_blocked_IP', False) \
-                        and opt.get('proxy__test', True) and proxy_data.get('stat', ''):
+        if block and opt.get('check_blocked_IP', False) and opt.get('proxy__test', '') != 'retry' \
+                 and not proxy_data.get('stat', '') and opt.get('proxy_retries', 1):
             if not opt.get('alfa_s', False): logger.error('Error: %s en IP bloqueada: %s - Reintentando' % (response_code, url))
             opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0
             opt['proxy__test'] = 'retry'

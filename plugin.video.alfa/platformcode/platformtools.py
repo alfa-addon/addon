@@ -1710,7 +1710,6 @@ def play_torrent(item, xlistitem, mediaurl):
                                  and torrent_paths[torr_client.upper() + '_torrents'] \
                                  not in item.url and not item.url.startswith("magnet:"):
                 item.url = filetools.join(videolibrary_path, folder, item.url)
-                logger.error('VIDEO %s' % item.url)
             if item.url.startswith("magnet:"):
                 url_local = True
             else:

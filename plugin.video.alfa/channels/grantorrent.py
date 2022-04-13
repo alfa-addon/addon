@@ -601,6 +601,8 @@ def findvideos(item):
                 return itemlist                                     # si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     patron = '()()<div\s*class\s*=\s*"mt-3"\s*>\s*<div\s*class\s*=\s*"flex[^>]*>\s*<a\s*href\s*=\s*"([^"]+)"'
+    if not scrapertools.find_single_match(data, patron):
+        patron = '()()<td class="px-6[^>]*>\s*<a\s*href\s*=\s*"([^"]+)"'
 
     if not item.armagedon:
         if not item.matches:
