@@ -325,7 +325,7 @@ def btdigg(item):
         item.btdigg = platformtools.dialog_input(heading='Introduce criterios de búsqueda (ej: all american 720p Cap.102 atomixhq)')
     
     if item.btdigg:
-        torrent_params = find_alternative_link(item, torrent_params)
+        torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=True)
         find_alt_link_result = torrent_params['find_alt_link_result']
         
     for scrapedurl, _scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet in find_alt_link_result:

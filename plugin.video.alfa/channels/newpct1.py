@@ -146,6 +146,8 @@ episodio_serie = config.get_setting('clonenewpct1_serie_episodio_novedades', cha
 headers = {'referer': None}
 retry_CF = 5
 DUMMY = 'DUMMY'
+btdigg_label = ' [COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR]'
+find_alt_link_result_save = []
 
 #Temporal, sólo para actualizar newpct1_data.json con otro valor por defecto
 #channel_banned = config.get_setting('clonenewpct1_excluir1_enlaces_veronline', channel_py)  #1eer Canal baneado
@@ -182,11 +184,11 @@ def mainlist(item):
         return itemlist                                     # si no hay más datos, algo no funciona, pintamos lo que tenemos y salimos
 
     autoplay.init(item.channel, list_servers, list_quality)
-    """    
+
     itemlist.append(Item(channel=item.channel, action="submenu_novedades", title="Novedades", 
                     url=item.channel_host + "ultimas-descargas/", extra="novedades", 
                     thumbnail=thumb_cartelera, category=item.category, channel_host=item.channel_host))
-    """
+
     itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", 
                     url=item.channel_host, extra="peliculas", thumbnail=thumb_pelis, 
                     category=item.category, channel_host=item.channel_host))
@@ -615,7 +617,7 @@ def alfabeto(item):
     return itemlist
 
 
-def listado(item):                                                              # Listado principal y de búsquedas
+def listado(item, alfa_s=False):                                                              # Listado principal y de búsquedas
     logger.info()
     
     itemlist = []
@@ -703,7 +705,7 @@ def listado(item):                                                              
                                                                        s2=True, headers=headers, decode_code=decode_code, 
                                                                        quote_rep=True, no_comments=False, canonical=canonical, 
                                                                        forced_proxy_opt=forced_proxy_opt, retry_CF=retry_CF, 
-                                                                       item=item, itemlist=itemlist)
+                                                                       item=item, itemlist=itemlist, alfa_s=alfa_s)
             curr_page += 1                                                      #Apunto ya a la página siguiente
             
             # Verificamos si ha cambiado el Host
@@ -1024,7 +1026,7 @@ def listado(item):                                                              
                 data_serie, response, item, itemlist = generictools.downloadpage(item_local.url, timeout=timeout, post=post, 
                                                                                  s2=True, headers=headers, no_comments=False, 
                                                                                  decode_code=decode_code, quote_rep=True, retry_CF=retry_CF, 
-                                                                                 item=item, itemlist=itemlist)
+                                                                                 item=item, itemlist=itemlist, alfa_s=alfa_s)
 
                 if not data_serie or (not scrapertools.find_single_match(data_serie, pattern) \
                                 and not search3 in data):
@@ -1268,7 +1270,7 @@ def listado(item):                                                              
     return itemlist
 
     
-def findvideos(item):
+def findvideos(item, retry=False):
     logger.info()
     
     itemlist = []
@@ -1578,7 +1580,7 @@ def findvideos(item):
         item.emergency_urls = []                                                # Iniciamos emergency_urls
         item.emergency_urls.append([])                                          # Reservamos el espacio para los .torrents locales
         item.emergency_urls.append([])                                          # Reservamos el espacio para los enlaces directos
-        item.emergency_urls.append([])                                          # Reservamos para uso futuro
+        item.emergency_urls.append([])                                          # Reservamos para uso urls y magnets punteros a los torrents locales
         item.emergency_urls.append([])                                          # Reservamos para uso los torrent_info de los magnets
         
     item.quality = re.sub(r'(?i)\s*\d+(?:.\d+)?\s*(?:gb|mb)', '', item.quality)    # Quitamos el tamaño que viene de Search
@@ -1590,8 +1592,16 @@ def findvideos(item):
     """ Tratamos los enlaces .torrent de calidades alternativas """
     matches_torrent = []
     if item.armagedon:
-        for url in item.emergency_urls[0]:
-            matches_torrent.append((url, url, url, [], item.quality, '', ''))
+        for x, url in enumerate(item.emergency_urls[0]):
+            sz = ''
+            qt = item.quality
+            if x > 0 and len(item.emergency_urls) >= 3 and len(item.emergency_urls[3]) >= x+1:
+                info = item.emergency_urls[3][x]
+                qt = scrapertools.find_single_match(info, '^#([^#]+)#')
+                if not qt: qt = item.quality
+                sz = re.sub('^#[^#]+#', '', info)
+            matches_torrent.append((url, url, url, [], qt, sz, ''))
+                
     elif url_torr:
         matches_torrent.append((url_torr, url_torr_save, torrent_params['torrents_path'], 
                         torrent_params['find_alt_link_result'], item.quality, size, data))
@@ -1634,7 +1644,7 @@ def findvideos(item):
 
                 url_torr_save = url_torr
                 torrent_params['force'] = False
-                torrent_params['quality_alt'] = quality
+                torrent_params['quality_alt'] = quality if item.contentType != 'movie' else 'rip 720p 1080p 4kwebrip 4k'
                 url_torr, headers = find_torrent_link(url_torr, x+1, item=item, headers=headers, torrent_params=torrent_params)
                 size = torrent_params['size']
                 if find_alt_id in size: find_alt = True
@@ -1650,8 +1660,8 @@ def findvideos(item):
         cached_torrents = videolibray_populate_cached_torrents(item.matches_torrent[0], find=True, item=item)
         if cached_torrents['updated']:
             del item.matches_torrent
-            if item.armagedon:
-                return findvideos(item)
+            if item.armagedon and not retry:
+                return findvideos(item, retry=True)
     
     """ Ahora tratamos los enlaces .torrent """
     for x, (url, url_save, torrents_path, find_alt_link_result, quality, _size, _data) in enumerate(matches_torrent):
@@ -1678,7 +1688,7 @@ def findvideos(item):
 
         # Restauramos urls de emergencia si es necesario
         local_torr = 'NewPct1_torrent_file'
-        if item.emergency_urls and len(item.emergency_urls) > x and not item.videolibray_emergency_urls:
+        if item.emergency_urls and len(item.emergency_urls[0]) > x and not item.videolibray_emergency_urls:
             try:                                                                # Guardamos la url ALTERNATIVA
                 if item.emergency_urls[0][x].startswith('http') or item.emergency_urls[0][x].startswith('//'):
                     item_local.torrent_alt = generictools.convert_url_base64(item.emergency_urls[0][x], host_torrent)
@@ -1694,7 +1704,7 @@ def findvideos(item):
                 FOLDER = config.get_setting("folder_tvshows")
             if item.armagedon and item_local.torrent_alt:
                 item_local.url = item_local.torrent_alt                         # Restauramos la url
-                if not item_local.torrent_alt.startswith('http'):
+                if not item_local.torrent_alt.startswith('http') and not item_local.torrent_alt.startswith('magnet'):
                     local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
         
         #Buscamos tamaño en el archivo .torrent
@@ -1766,10 +1776,13 @@ def findvideos(item):
 
         #Si es un lookup para cargar las urls de emergencia en la Videoteca, guardarmos los enlaces
         if item.videolibray_emergency_urls:
-            item.emergency_urls[0].append(url_torr)                             #Guardamos el enlace del .torrent
+            item.emergency_urls[0].append(url_torr)                             # Guardamos el enlace del .torrent
+            item.emergency_urls[2].append(url_torr)                             # Guardamos el enlace del .torrent
+            item.emergency_urls[3].append(item_local.torrent_info)              # Guardamos el torrent_info del .torrent
             for scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet in find_alt_link_result:
-                item.emergency_urls[0].append(scrapedmagnet)                    #Guardamos el enlace del .magnet
-                item.emergency_urls[3].append(scrapedsize)                      #Guardamos el torrent_info del .magnet
+                item.emergency_urls[0].append(scrapedmagnet)                    # Guardamos el enlace del .magnet
+                item.emergency_urls[2].append(scrapedmagnet)                    # Guardamos el enlace del .magnet
+                item.emergency_urls[3].append('#%s#%s' % (scrapedquality, scrapedsize))     # Guardamos el torrent_info del .magnet
             item.headers = headers
         
         #... ejecutamos el proceso normal
@@ -1827,15 +1840,22 @@ def findvideos(item):
                 item_local.server = "torrent"                                   #Seridor Torrent
             
             itemlist_t.append(item_local.clone())                               #Pintar pantalla, si no se filtran idiomas
-            if 'CF_BLOCKED' in item_local.torrents_path and find_alt_link_result:
+            quality = item_local.quality
+            for scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet in find_alt_link_result:
+                item_btdigg = item_local.clone()
+                item_btdigg.url = scrapedmagnet
+                item_btdigg.torrent_info = scrapedsize
+                item_btdigg.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
+                                     + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
+                                     (scrapedquality, str(item_btdigg.language), \
+                                     item_btdigg.torrent_info)
+                if item_btdigg.contentType == 'movie': 
+                    item_btdigg.quality = scrapedquality
+                else:
+                    item_btdigg.quality = quality
+                item_btdigg.torrents_path = ''
+                itemlist_t.append(item_btdigg)
                 find_alt = True
-                for scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet in find_alt_link_result:
-                    item_local.url = scrapedmagnet
-                    item_local.torrent_info = scrapedsize
-                    item_local.title = scrapedtitle
-                    item_local.torrents_path = ''
-                    itemlist_t.append(item_local)
-                    break
             
             # Requerido para FilterTools
             if config.get_setting('filter_languages', channel_py) > 0:          #Si hay idioma seleccionado, se filtra
@@ -1846,7 +1866,7 @@ def findvideos(item):
         
     if not item.videolibray_emergency_urls:
         if find_alt:
-            itemlist.append(item.clone(action="", title="[COLOR blue] Enlaces (imprecisos) buscados en [B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/COLOR]"))
+            itemlist.append(item.clone(action="", title="[COLOR blue] Enlaces (imprecisos) buscados en%s" % btdigg_label))
         if len(itemlist_f) > 0:                                                 #Si hay entradas filtradas...
             itemlist.extend(itemlist_f)                                         #Pintamos pantalla filtrada
         else:                                                                       
@@ -1888,7 +1908,7 @@ def findvideos(item):
             if "ver" in title.lower():
                 emergency_urls_directos.append(enlaces_ver[i])
             i += 1
-        item.emergency_urls[2] = emergency_urls_directos
+        item.emergency_urls[1] = emergency_urls_directos
         return item
 
     if not enlaces_ver:
@@ -2653,21 +2673,25 @@ def verify_host(item, host_call, force=False, category='', post=None):
 
 
 def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlist=[], torrent_params={}):
+    global find_alt_link_result_save
     from core import filetools
     
     patron_torrent = '(https:\/\/[^"]+\.php(?:#|\?\w=)[^"]+)"'
+    patron_quality = '(?i)(?:\d{0,4}p|HDTV$|\dKWebrip)'
     torrent_prefix = ''
     sufix = ''
     torrent_params['torrents_path'] = ''
     torrent_params['local_torr'] = 'NewPct1_torrent_file'
     torrent_params['torrent_f'] = ''
+    torrent_params['find_alt_link_result_save'] = find_alt_link_result_save or []
+    if not item: item = Item()
     item.torrents_path = ''
     headers_save = headers
     url_torr_save = url_torr
     cached = False
     short_link = ''
     retry_CF_own = 1 if not DUMMY in url_torr else -1
-    
+
     torrent_cached_list = config.get_setting('torrent_cached_list', server='torrent', default=[])
     for link, path_torrent in torrent_cached_list:                              # Si ya estaba cacheado lo usamos
         if filetools.encode(url_torr.split('?')[0]) != link:
@@ -2676,6 +2700,8 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
         torrent_params['local_torr'] = url_torr
         cached = True
         break
+    else:
+        torrent_params['local_torr'] = 'NewPct1_torrent_file'
     
     if item.emergency_urls and len(item.emergency_urls[0]) >= emergency_urls_pos and \
                            not item.emergency_urls[0][emergency_urls_pos].startswith('http') and \
@@ -2698,8 +2724,8 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
                 url_torr = scrapertools.find_single_match(host, '(\w+:)//') + url_torr
 
             data, response, item, itemlist_alt = generictools.downloadpage(url_torr, timeout=timeout, referer=host, retry_CF=retry_CF_own, 
-                                                                       decode_code=decode_code, quote_rep=True, alfa_s=False, 
-                                                                       item=item, itemlist=[])       # Descargamos el enlace
+                                                                           decode_code=decode_code, quote_rep=True, alfa_s=False, 
+                                                                           item=item, itemlist=[])       # Descargamos el enlace
 
             short_link = scrapertools.find_single_match(data, patron_torrent)
             if not short_link:
@@ -2719,17 +2745,30 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
         torrent_params['url_index'] = url_torr_save
         torrent_params['torrents_path'] = None
         torrent_params['force'] = True
+        quality = scrapertools.find_single_match(torrent_params.get('quality_alt', '') or item.quality, patron_quality).lower()
+        if not torrent_params.get('quality_alt', ''):
+            torrent_params['quality_alt'] = 'rip 720p 1080p 4kwebrip 4k' if '720' in item.quality or item.contentType == 'movie' else '[HDTV]'
         torrent_params = generictools.get_torrent_size(url_torr, torrent_params=torrent_params, 
                                                        timeout=timeout, headers=headers, 
                                                        retry_CF=retry_CF_own, item=item)
-        
+
         if torrent_params['torrents_path'] and not item.torrents_path: item.torrents_path = torrent_params['torrents_path']
+        if item.contentType != 'movie':
+            if torrent_params['find_alt_link_result'] and not find_alt_link_result_save:
+                find_alt_link_result_save = torrent_params['find_alt_link_result'].copy()
+            torrent_params['find_alt_link_result'] = []
+        
+            for scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet in find_alt_link_result_save:
+                if quality not in scrapedquality.lower(): continue
+                torrent_params['find_alt_link_result'].append([scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet])
+        
         if DUMMY in url_torr and torrent_params['find_alt_link_result']:
             torrent_params['size'] = torrent_params['find_alt_link_result'][0][2]
             url_torr = torrent_params['find_alt_link_result'][0][4]
             torrent_params['url'] = url_torr
             torrent_params['torrents_path'] = None
-            torrent_params['find_alt_link_result'] = []
+            item.quality = torrent_params['find_alt_link_result'][0][3]
+            del torrent_params['find_alt_link_result'][0]
             
     return url_torr, headers_save
 
@@ -2805,7 +2844,7 @@ def actualizar_titulos(item):
     return item
 
     
-def search(item, texto):
+def search(item, texto, alfa_s=False):
     logger.info("search:" + texto)
     # texto = texto.replace(" ", "+")
 
@@ -2815,7 +2854,7 @@ def search(item, texto):
         item.pattern = "buscar-list"
         item.extra = "search"
         item.headers = {'Referer': host}
-        itemlist = listado(item)
+        itemlist = listado(item, alfa_s=alfa_s)
         
         return itemlist
 

@@ -29,10 +29,19 @@ PATH_BL = filetools.join(config.get_runtime_path(), 'resources', 'cf_assistant_b
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 
 
-def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blacklist=True, retryIfTimeout=True, **kwargs):
+def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blacklist=True, headers=None, 
+           retryIfTimeout=True, cache=True, clearWebCache=False, mute=True, alfa_s=True, elapsed=0, **kwargs):
     blacklist_clear = True
+    if not elapsed: elapsed = time.time()
+        
+    if not resp:
+        resp = {
+                'status_code': 503, 
+                'headers': {}
+               }
+        resp = type('HTTPResponse', (), resp)
     
-    logger.debug("ERROR de descarga: %s" % resp.status_code)
+    if not alfa_s: logger.debug("ERROR de descarga: %s" % resp.status_code)
     
     url = self.cloudscraper.user_url
     opt = self.cloudscraper.user_opt
@@ -58,13 +67,10 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
         freequent_data = [domain, 'CF2,0.0.0,0,%s0,NoApp' % host]
         
         check_assistant = alfa_assistant.open_alfa_assistant(getWebViewInfo=True, retry=retry)
-        if not isinstance(check_assistant, dict) and retry:
+        if not isinstance(check_assistant, dict) and not retry:
             alfa_assistant.close_alfa_assistant()
             time.sleep(2)
             check_assistant = alfa_assistant.open_alfa_assistant(getWebViewInfo=True, retry=True)
-            if not check_assistant:
-                time.sleep(10)
-                check_assistant = alfa_assistant.get_generic_call('getWebViewInfo', timeout=2, alfa_s=True)
             
         if check_assistant and isinstance(check_assistant, dict):
 
@@ -99,19 +105,21 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
             else:
                 ua = httptools.get_user_agent()
 
-            logger.debug("UserAgent: %s || Android Vrs: %s" % (ua, vers))
+            if not alfa_s: logger.debug("UserAgent: %s || Android Vrs: %s" % (ua, vers))
 
             jscode = get_jscode(1, 'KEYCODE_ENTER', 1)
 
             url_cf = scrapertools.find_single_match(url, '(http.*\:\/\/(?:www\S*.)?\w+\.\w+(?:\.\w+)?)(?:\/)?') + '|cf_clearance'
 
             data_assistant = alfa_assistant.get_urls_by_page_finished(url, timeout=timeout, getCookies=True, userAgent=ua,
-                                                                      disableCache=True, debug=debug, jsCode=jscode,
-                                                                      extraPostDelay=extraPostDelay, clearWebCache=True, 
+                                                                      disableCache=cache, debug=debug, jsCode=jscode,
+                                                                      extraPostDelay=extraPostDelay, clearWebCache=clearWebCache, 
                                                                       removeAllCookies=True, returnWhenCookieNameFound=url_cf,
-                                                                      retryIfTimeout=retryIfTimeout
+                                                                      retryIfTimeout=retryIfTimeout, useAdvancedWebView=True, 
+                                                                      headers=headers, mute=mute, alfa_s=alfa_s
                                                                      )
-            logger.debug("data assistant: %s" % data_assistant)
+            if not alfa_s or "cookies" not in str(data_assistant): 
+                logger.debug("data assistant: %s" % data_assistant)
 
             domain_ = domain
             split_lst = domain.split(".")
@@ -126,7 +134,7 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
 
             if isinstance(data_assistant, dict) and data_assistant.get("cookies", None):
 
-                logger.debug("Lista cookies: %s" % data_assistant.get("cookies", []))
+                logger.debug("Lista cookies: %s - %s" % (data_assistant.get("cookies", []), time.time() - elapsed))
                 for cookie in data_assistant["cookies"]:
                     cookieslist = cookie.get("cookiesList", None)
                     val = scrapertools.find_single_match(cookieslist, 'cf_clearance=([A-z0-9_\-\.]+)')
@@ -160,13 +168,15 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
                     freequent_data[1] += 'NO-CFC'
             else:
                 freequent_data[1] += 'ERR'
-                logger.error("No Cookies o Error en conexión con Alfa Assistant")
+                logger.error("No Cookies o Error en conexión con Alfa Assistant %s" % time.time() - elapsed)
 
             if not retry:
                 config.set_setting('cf_assistant_ua', '')
                 logger.debug("No se obtuvieron resultados, reintentando...")
-                return get_cl(self, resp, timeout=timeout-5, extraPostDelay=extraPostDelay, \
-                            retry=True, blacklist=True, retryIfTimeout=False, **kwargs)
+                return get_cl(self, resp, timeout=timeout-5, extraPostDelay=extraPostDelay, 
+                            retry=True, blacklist=True, retryIfTimeout=False, 
+                            cache=cache, clearWebCache=clearWebCache, 
+                            elapsed=elapsed, headers=headers, mute=mute, alfa_s=False, **kwargs)
         elif host == 'a':
             help_window.show_info('cf_2_01')
         
@@ -186,11 +196,23 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
     raise CloudflareChallengeError(msg)
 
 
-def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False, blacklist=True, 
-               retryIfTimeout=True, cache=False, alfa_s=False, **kwargs):
+def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False, blacklist=True, headers=None, 
+               retryIfTimeout=True, cache=False, clearWebCache=False, mute=True, alfa_s=False, elapsed=0, **kwargs):
     blacklist_clear = True
     data = ''
     source = False
+    if not elapsed: elapsed = time.time()
+    elapsed_max = 40
+    expiration = config.get_setting('cf_assistant_bl_expiration', default=30) * 60
+    expiration_final = 0
+    security_error_blackout = (5 * 60) - expiration
+    
+    if not resp:
+        resp = {
+                'status_code': 429, 
+                'headers': {}
+               }
+        resp = type('HTTPResponse', (), resp)
     
     if not alfa_s: logger.debug("ERROR de descarga: %s" % resp.status_code)
     
@@ -209,19 +231,22 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
     if blacklist and not retry: 
         blacklist_clear = check_blacklist(domain_full)
     
+    host = config.get_system_platform()[:1]
+    freequent_data = [domain, 'Cha,0.0.0,0,%s0,BlakL' % host]
     if blacklist_clear:
-        host = config.get_system_platform()[:1]
+        freequent_data = [domain, 'Cha,0.0.0,0,%s0,App' % host]
+        if not retry:
+            freequent_data[1] += 'KO'
+        else:
+            freequent_data[1] += 'KO_R'
         
-        freequent_data = [domain, 'Cha,0.0.0,0,%s0,NoApp' % host]
-        
-        check_assistant = alfa_assistant.open_alfa_assistant(getWebViewInfo=True, retry=retry)
-        if not isinstance(check_assistant, dict) and retry:
+        check_assistant = alfa_assistant.open_alfa_assistant(getWebViewInfo=True, retry=True, assistantLatestVersion=False)
+        if not isinstance(check_assistant, dict) and not retry:
             alfa_assistant.close_alfa_assistant()
             time.sleep(2)
-            check_assistant = alfa_assistant.open_alfa_assistant(getWebViewInfo=True, retry=True)
-            if not check_assistant:
-                time.sleep(10)
-                check_assistant = alfa_assistant.get_generic_call('getWebViewInfo', timeout=2, alfa_s=True)
+            check_assistant = alfa_assistant.open_alfa_assistant(getWebViewInfo=True, retry=True, assistantLatestVersion=False)
+            logger.debug("Reintento en acceder al Assistant: %s - %s" \
+                         % ('OK' if isinstance(check_assistant, dict) else 'ERROR', time.time() - elapsed))
             
         if check_assistant and isinstance(check_assistant, dict):
 
@@ -248,6 +273,10 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
             wvbVersion = check_assistant.get('wvbVersion', '0.0.0').split('.')[0]
             if len(wvbVersion) > 3: wvbVersion = wvbVersion[:2]
             freequent_data[1] = 'Cha,%s,%s,%s%s,' % (check_assistant.get('assistantVersion', '0.0.0'), wvbVersion, host, vers)
+            if not retry:
+                freequent_data[1] += 'Src'
+            else:
+                freequent_data[1] += 'Src_R'
 
             if vers:
                 dan = {'User-Agent': ua}
@@ -264,12 +293,13 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
             
             data_assistant = alfa_assistant.get_source_by_page_finished(url, timeout=timeout, getCookies=True, userAgent=ua,
                                                                         disableCache=cache, debug=debug, jsCode=jscode,
-                                                                        extraPostDelay=extraPostDelay, clearWebCache=cache, 
+                                                                        extraPostDelay=extraPostDelay, clearWebCache=clearWebCache, 
                                                                         removeAllCookies=True, returnWhenCookieNameFound=url_cf,
-                                                                        retryIfTimeout=retryIfTimeout, alfa_s=alfa_s)
+                                                                        retryIfTimeout=retryIfTimeout, useAdvancedWebView=True, 
+                                                                        headers=headers, mute=mute, alfa_s=alfa_s)
             if not alfa_s: logger.debug("data assistant: %s" % data_assistant)
             
-            if isinstance(data_assistant, dict) and data_assistant.get('htmlSources', [])[0].get('source', '') \
+            if isinstance(data_assistant, dict) and data_assistant.get('htmlSources', []) \
                                                 and data_assistant['htmlSources'][0].get('source', ''):
                 try:
                     data = base64.b64decode(data_assistant['htmlSources'][0]['source']).decode('utf-8')
@@ -277,7 +307,16 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
                 except:
                     pass
                     
+                if source and 'accessing a cross-origin frame' in data:
+                    source = False
+                    retry = True
+                    expiration_final = security_error_blackout
+                    freequent_data[1] = 'Cha,%s,%s,%s%s,' % (check_assistant.get('assistantVersion', '0.0.0'), wvbVersion, host, vers)
+                    freequent_data[1] += 'KO_SecE'
+                    logger.error('Error SEGURIDAD: %s - %s' % (expiration_final, data[:100]))
+                
                 if source:
+                    freequent_data[1] = 'Cha,%s,%s,%s%s,' % (check_assistant.get('assistantVersion', '0.0.0'), wvbVersion, host, vers)
                     if not retry:
                         freequent_data[1] += 'OK'
                     else:
@@ -288,8 +327,10 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
                 logger.debug("No se obtuvieron resultados, reintentando...")
                 timeout = -1 if timeout < 0 else timeout * 2
                 extraPostDelay = -1 if extraPostDelay < 0 else extraPostDelay * 2
-                return get_source(url, resp, timeout=timeout, debug=debug, extraPostDelay=extraPostDelay, retry=True, 
-                                  blacklist=blacklist, retryIfTimeout=retryIfTimeout, cache=cache, alfa_s=alfa_s, **kwargs)
+                return get_source(url, resp, timeout=timeout, debug=debug, extraPostDelay=extraPostDelay, 
+                                  retry=True, blacklist=blacklist, retryIfTimeout=retryIfTimeout, 
+                                  cache=cache, clearWebCache=clearWebCache, alfa_s=False, 
+                                  headers=headers, mute=mute, elapsed=elapsed, **kwargs)
 
             domain_ = domain
             split_lst = domain.split(".")
@@ -322,21 +363,26 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
                             rin = {'Server': 'Alfa'}
 
                             resp.headers.update(dict(rin))
+                            freequent_data[1] += 'C'
                             if not alfa_s: logger.debug("cf_clearence=%s" % val)
 
         elif host == 'a':
             help_window.show_info('cf_2_01')
         
-        freequency(freequent_data)
+    freequency(freequent_data)
 
-    if not source:
-        resp.status_code = 429
+    if blacklist_clear and (not source or time.time() - elapsed > elapsed_max):
         if filetools.exists(PATH_BL):
             bl_data = jsontools.load(filetools.read(PATH_BL))
         else:
             bl_data = {}
-        bl_data[domain_full] = time.time()
+        if time.time() - elapsed > elapsed_max:
+            bl_data[domain_full] = time.time() + elapsed_max * 10 * 60
+        else:
+            bl_data[domain_full] = time.time() + expiration_final
         if not debug and not httptools.TEST_ON_AIR: filetools.write(PATH_BL, jsontools.dump(bl_data))
+    if not source:
+        resp.status_code = 429
     else:
         resp.status_code = 200
     
@@ -416,18 +462,21 @@ def freequency(freequent_data):
         logger.error(traceback.format_exc())
 
 
-def check_blacklist(domain):
+def check_blacklist(domain, expiration=0):
     res = True
     if not filetools.exists(PATH_BL):
         return res
     
     try:
+        expiration_default = 30
         bl_data = jsontools.load(filetools.read(PATH_BL))
         bl_data_clean = bl_data.copy()
-        expiration = config.get_setting('cf_assistant_bl_expiration', default=30) * 60
         if not expiration:
-            config.set_setting('cf_assistant_bl_expiration', 30)
-            expiration = 30 * 60
+            expiration = config.get_setting('cf_assistant_bl_expiration', default=expiration_default) * 60
+            config.set_setting('cf_assistant_bl_expiration', expiration_default)
+            expiration = expiration_default * 60
+        else:
+            expiration = expiration * 60
         time_today = time.time()
         
         if bl_data:

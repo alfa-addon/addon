@@ -36,6 +36,8 @@ adult_mal = config.get_setting('adult_mal', "tvmoviedb")
 mal_ck = "MzE1MDQ2cGQ5N2llYTY4Z2xwbGVzZjFzbTY="
 images_predef = "https://raw.githubusercontent.com/master-1970/resources/master/images/genres/"
 default_fan = filetools.join(config.get_runtime_path(), "fanart1_2.jpg")
+unify_config = config.get_setting('unify', default=True)
+unify = False
 
 
 def mainlist(item):
@@ -130,6 +132,7 @@ def busqueda(item):
 
 def tmdb(item):
     item.contentType = item.extra.replace("tv", "tvshow")
+    item.unify = unify
 
     itemlist = []
     itemlist.append(item.clone(title=config.get_localized_string(70028), action="listado_tmdb",
@@ -166,11 +169,17 @@ def tmdb(item):
     itemlist.append(item.clone(title=config.get_localized_string(70038), action="filtro", text_color=color4))
     itemlist.append(item.clone(title=config.get_localized_string(70039), action="filtro", text_color=color4))
 
+    if unify_config:
+        item.unify = unify_config
+    else:
+        del item.unify
+    
     return itemlist
 
 
 def imdb(item):
     item.contentType = item.extra.replace("tv", "tvshow")
+    item.unify = unify
 
     itemlist = []
     itemlist.append(item.clone(title=config.get_localized_string(70028), action="listado_imdb"))
@@ -200,12 +209,18 @@ def imdb(item):
 
     itemlist.append(item.clone(title=config.get_localized_string(70038), action="filtro_imdb", text_color=color4))
 
+    if unify_config:
+        item.unify = unify_config
+    else:
+        del item.unify
+    
     return itemlist
 
 
 def filmaf(item):
     item.contentType = item.extra.replace("tv", "tvshow")
     login, message = login_fa()
+    item.unify = unify
 
     itemlist = []
     if item.extra == "movie":
@@ -244,10 +259,16 @@ def filmaf(item):
     itemlist.append(item.clone(title=config.get_localized_string(70038), action="filtro_fa", text_color=color4, extra="top"))
     itemlist.append(item.clone(title=config.get_localized_string(70048), action="cuenta_fa", text_color=color3))
 
+    if unify_config:
+        item.unify = unify_config
+    else:
+        del item.unify
+    
     return itemlist
 
 
 def trakt(item):
+    item.unify = unify
     itemlist = []
     item.text_color = color1
     token_auth = config.get_setting("token_trakt", "trakt")
@@ -309,10 +330,16 @@ def trakt(item):
             itemlist.append(
                 item.clone(title=config.get_localized_string(70057), action="acciones_trakt", url="users/me/lists", text_color=color2))
 
+    if unify_config:
+        item.unify = unify_config
+    else:
+        del item.unify
+    
     return itemlist
 
 
 def mal(item):
+    item.unify = unify
     itemlist = []
     item.text_color = color1
     login, message, user = login_mal()
@@ -342,6 +369,11 @@ def mal(item):
 
     itemlist.append(item.clone(title=config.get_localized_string(70057), action="cuenta_mal", text_color=color3))
 
+    if unify_config:
+        item.unify = unify_config
+    else:
+        del item.unify
+    
     return itemlist
 
 
@@ -480,6 +512,7 @@ def detalles(item):
     itemlist = []
     images = {}
     data = ""
+
     # Si viene de seccion imdb
     if not item.infoLabels["tmdb_id"]:
         headers = [['Accept-Language', langi]]
@@ -624,7 +657,7 @@ def detalles(item):
             item.clone(title=config.get_localized_string(70315), action="listado_tmdb", infoLabels={'mediatype': item.contentType},
                        search={'url': '%s/%s/recommendations' % (item.extra, item.infoLabels['tmdb_id']),
                                'language': langt, 'page': 1}, text_color=color2))
-
+    
     return itemlist
 
 
@@ -1978,7 +2011,7 @@ def imagenes(item):
 
     if item.images:
         from channels import infoplus
-        for key, value in item.images.iteritems():
+        for key, value in list(item.images.items()):
             if key == "tmdb" and "Tmdb" in item.title:
                 if item.folder:
                     for tipo, child in value.iteritems():
@@ -3137,7 +3170,7 @@ def login_mal(from_list=False):
             else:
                 return False, config.get_localized_string(70381), user
         data = httptools.downloadpage("https://myanimelist.net/login.php?from=%2F").data
-        if re.search(r'(?i)' + user, data) and not generic:
+        if re.search(r'(?i)' + str(user), data) and not generic:
             return True, "", user
         token = scrapertools.find_single_match(data, "name='csrf_token' content='([^']+)'")
         response = httptools.downloadpage("https://myanimelist.net/logout.php", post="csrf_token=%s" % token)
