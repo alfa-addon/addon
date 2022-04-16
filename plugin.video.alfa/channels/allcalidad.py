@@ -149,8 +149,9 @@ def findvideos(item):
     for url in matches:
         url1 = base64.b64decode(url)
         url1 = clear_url(url1)
-        if url1 in encontrado or "youtube.com" in url1 or "search" in url1 or 'salaload.com' in url1 or not url1.startswith("http"):
+        if url1 in encontrado or "youtube.com" in url1 or "search" in url1 or 'salaload.com' in url1:
             continue
+        if not url1.startswith("http"): url1 = "http://" + url1
         encontrado.append(url1)
         itemlist.append(Item(
                         channel=item.channel,
