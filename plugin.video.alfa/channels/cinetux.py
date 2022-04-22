@@ -64,43 +64,42 @@ def mainlist(item):
     titulo = "Peliculas (%s)" %total
     #titulo peliculas
     itemlist.append(Item(channel=item.channel, title=titulo, text_color=color2, action="",
-                         text_bold=True, plot=item.plot, thumbnail=item.thumbnail, folder=False))
+                         text_bold=True, thumbnail=item.thumbnail, folder=False))
     
     itemlist.append(Item(channel=item.channel, action="peliculas", title="      Novedades",
                          url=host + "pelicula", thumbnail=get_thumb('newest', auto=True),
-                         text_color=color1, plot=item.plot))
+                         text_color=color1))
     
     itemlist.append(Item(channel=item.channel, action="destacadas", title="      Destacadas",
                          url=host + "mas-vistos/", thumbnail=get_thumb('hot', auto=True),
-                         text_color=color1, plot=item.plot))
+                         text_color=color1))
     
     itemlist.append(Item(channel=item.channel, action="idioma", title="      Por idioma",
-                         text_color=color1, thumbnail=get_thumb('language', auto=True),
-                         plot=item.plot))
+                         text_color=color1, thumbnail=get_thumb('language', auto=True)))
     
     itemlist.append(Item(channel=item.channel, action="generos", title="      Por géneros",
                          url=host, thumbnail=get_thumb('genres', auto=True),
-                         text_color=color1, plot=item.plot))
+                         text_color=color1))
     #titulo documentales
     itemlist.append(Item(channel=item.channel, title="Documentales", text_bold=True, folder=False, 
-                         text_color=color2, plot=item.plot, action="", thumbnail=item.thumbnail))
+                         text_color=color2, action="", thumbnail=item.thumbnail))
     
     itemlist.append(Item(channel=item.channel, action="peliculas", title="      Novedades",
                          url=host + "genero/documental/", text_color=color1,
-                         thumbnail=get_thumb('newest', auto=True), plot=item.plot))
+                         thumbnail=get_thumb('newest', auto=True)))
     
     itemlist.append(Item(channel=item.channel, action="peliculas", title="      Por orden alfabético",
                          url=host + "genero/documental/?orderby=title&order=asc&gdsr_order=asc",
-                         text_color=color1, plot=item.plot, thumbnail=get_thumb('alphabet', auto=True)))
+                         text_color=color1, thumbnail=get_thumb('alphabet', auto=True)))
     
     itemlist.append(Item(channel=item.channel, title="", action="", folder=False,
-                         plot=item.plot, thumbnail=item.thumbnail))
+                         thumbnail=item.thumbnail))
     
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar...", text_color=color3,
-                         thumbnail=get_thumb('search', auto=True), plot=item.plot))
+                         thumbnail=get_thumb('search', auto=True)))
     
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal...",
-                         text_color="gold", folder=False, plot=item.plot,
+                         text_color="gold", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
     
     autoplay.show_option(item.channel, itemlist)
@@ -178,7 +177,7 @@ def peliculas(item):
     itemlist = []
     item.text_color = color2
     data = httptools.downloadpage(item.url).data
-    buscar = "data-lazy-src"
+    buscar = "data-src"
     if item.extra:
         buscar = "img src"
     patron = '(?s)class="(?:result-item|item movies)">.*?%s="([^"]+)' %buscar
