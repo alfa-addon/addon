@@ -57,15 +57,15 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="En Emisión", action="list_all", url=host + "category/emision/",
+    itemlist.append(Item(channel=item.channel, title="En Emisión", action="list_all", url=host + "ver/category/emision/",
                          thumbnail=get_thumb("on air", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Anime", action="list_all",
-                         url=host + "category/categorias/?tr_post_type=2",
+                         url=host + "ver/category/categorias/?tr_post_type=2",
                          thumbnail=get_thumb("anime", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all",
-                         url=host + "category/categorias/?tr_post_type=1",
+                         url=host + "ver/category/categorias/?tr_post_type=1",
                          thumbnail=get_thumb("movies", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + "?s=",
