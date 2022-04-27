@@ -56,6 +56,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "https://www.pornheed.com/(?:video|embed)/([0-9]+)",
+        "url": "https://www.pornheed.com/embed/\\1"
+      },
+      {
         "pattern": "(https://anysex.com/[0-9]+/)",
         "url": "\\1"
       }

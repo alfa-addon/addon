@@ -16,6 +16,7 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+from bs4 import BeautifulSoup
 
 host = 'https://www.camwhoresbay.com'
 
@@ -23,9 +24,9 @@ host = 'https://www.camwhoresbay.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/"))
-    itemlist.append(item.clone(title="Mejor valorados" , action="lista", url=host + "/top-rated/"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/?sort_by=post_date&from=01"))
+    itemlist.append(item.clone(title="Mejor valorados" , action="lista", url=host + "/top-rated/?sort_by=rating_month&from=01"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/?sort_by=video_viewed_month&from=01"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
@@ -34,7 +35,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace("+", "-")
-    item.url = "%s/search/%s/" % (host, texto)
+    item.url = "%s/search/%s/?sort_by=post_date&from_videos=01" % (host, texto)
     try:
         return lista(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -48,51 +49,67 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = '<a class="item" href="([^"]+)" title="([^"]+)">.*?'
-    patron  += '<img class="thumb" src="([^"]+)".*?'
-    patron  += '<div class="videos">([^"]+)</div>'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
-    for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad  in matches:
-        scrapedtitle = "%s (%s)" % (scrapedtitle, cantidad)
-        if not scrapedthumbnail.startswith("https"):
-            scrapedthumbnail = "http:%s" % scrapedthumbnail
-        scrapedthumbnail += "|Referer=%s" % item.url
-        scrapedplot = ""
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
-                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
+    soup = create_soup(item.url)
+    matches = soup.find_all('a', class_='item')
+    for elem in matches:
+        url = elem['href']
+        title = elem['title']
+        thumbnail = elem.img['src']
+        time = elem.find('div', class_='videos').text.strip()
+        if not thumbnail.startswith("https"):
+            thumbnail = "http:%s" % thumbnail
+        url += "?sort_by=post_date&from=01"
+        plot = ""
+        itemlist.append(item.clone(action="lista", title=title, url=url,
+                              fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
     return sorted(itemlist, key=lambda i: i.title)
+
+
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<div class="video-item\s+">.*?'
-    patron += '<a href="([^"]+)" title="([^"]+)"  class="thumb">.*?'
-    patron += 'data-original="([^"]+)".*?'
-    patron += '<i class="fa fa-clock-o"></i>(.*?)</div>'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail,scrapedtime in matches:
-        url = urlparse.urljoin(item.url,scrapedurl)
-        title = "[COLOR yellow]%s[/COLOR] %s" % (scrapedtime, scrapedtitle)
-        if not scrapedthumbnail.startswith("https"):
-            scrapedthumbnail = "http:%s" % scrapedthumbnail
-        scrapedthumbnail += "|Referer=%s" % item.url
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', class_='video-item')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.a['title']
+        thumbnail = elem.img['data-original']
+        time = elem.find('div', class_='durations').text.strip()
+        private = elem.find('span', class_='line-private')
+        if private:
+            title = "[COLOR red]%s[/COLOR]" % title
+        quality = elem.find('div', class_='hd-text-icon')
+        if quality:
+            title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time,title)
+        else:
+            title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
+        if not thumbnail.startswith("https"):
+            thumbnail = "http:%s" % thumbnail
         plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=scrapedthumbnail,
-                              fanart=scrapedthumbnail, contentTitle=title, plot=plot))
-    next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
-    if "#" in next_page:
-        next_page = scrapertools.find_single_match(data, 'data-parameters="([^"]+)">Next')
-        next_page = next_page.replace(":", "=").replace(";", "&").replace("+from_albums", "")
-        next_page = "?%s" % next_page
+        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+                               plot=plot, fanart=thumbnail, contentTitle=title ))
+    next_page = soup.find('li', class_='next')
     if next_page:
-        next_page = urlparse.urljoin(item.url,next_page)
+        next_page = next_page.a['data-parameters'].split(":")[-1]
+        if "from_videos" in item.url:
+            next_page = re.sub(r"&from_videos=\d+", "&from_videos={0}".format(next_page), item.url)
+        else:
+            next_page = re.sub(r"&from=\d+", "&from={0}".format(next_page), item.url)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
@@ -108,9 +125,6 @@ def findvideos(item):
 def play(item):
     logger.info(item)
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    if "kt_player" in data:
-        url = item.url
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
