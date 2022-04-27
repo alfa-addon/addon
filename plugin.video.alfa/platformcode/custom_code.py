@@ -23,7 +23,7 @@ from core import jsontools
 from core import filetools
 from core import scrapertools
 from core.item import Item
-from lib.alfa_assistant import execute_binary_from_alfa_assistant
+from lib.alfa_assistant import execute_binary_from_alfa_assistant, open_alfa_assistant
 
 json_data_file_name = 'custom_code.json'
 ADDON_NAME = 'plugin.video.alfa'
@@ -743,6 +743,11 @@ def update_libtorrent():
             config.set_setting("unrar_path", "", server="torrent")
             config.set_setting("unrar_device", "", server="torrent")
 
+    # Si está instalado el servicio de Desktop Assistant, se lanza
+    if filetools.exists(filetools.join(config.get_data_path(), 'alfa-desktop-assistant.version')) \
+                        and config.get_setting("assistant_mode") == "este":
+        version_dict = open_alfa_assistant(getWebViewInfo=True, assistantLatestVersion=False, retry=True)
+    
     # Ahora descargamos la última versión disponible de Libtorrent para esta plataforma
     try:
         # Saltamos plataformas no soportadas

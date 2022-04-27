@@ -1355,13 +1355,13 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
                 if len(json_file.emergency_urls) <= 2:
                     json_file.emergency_urls.append(emergency_urls)             # Salvamos las urls iniciales como índices para futuras búsquedas
                 elif not json_file.emergency_urls[2]:
-                    json_file.emergency_urls[2] = emergency_urls.copy()
+                    json_file.emergency_urls[2] = emergency_urls[:]
                 filetools.write(json_path, json_file.tojson())
                 cached_torrents['updated'] = True
         if len(json_file.emergency_urls) >= 3:
             if item.matches_torrent and item.matches_torrent != json_file.emergency_urls[2] \
                                     and len(item.matches_torrent) > len(json_file.emergency_urls[2]):
-                emergency_urls = json_file.emergency_urls[2] = item.matches_torrent.copy()
+                emergency_urls = json_file.emergency_urls[2] = item.matches_torrent[:]
                 filetools.write(json_path, json_file.tojson())
                 cached_torrents['updated'] = True
         if json_file.emergency_urls:

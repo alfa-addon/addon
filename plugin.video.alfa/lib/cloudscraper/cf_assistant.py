@@ -207,6 +207,8 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
     expiration_final = 0
     security_error_blackout = (5 * 60) - expiration
     
+    if debug: alfa_s = False
+    
     if not resp:
         resp = {
                 'status_code': 429, 

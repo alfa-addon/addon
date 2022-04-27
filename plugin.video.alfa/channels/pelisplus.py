@@ -45,7 +45,7 @@ canonical = {
              'channel': 'pelisplushd', 
              'host': config.get_setting("current_host", 'pelisplushd', default=''), 
              'host_alt': ["https://www.pelisplus.lat/"], 
-             'host_black_list': ["https://pelisplushd.net/"], 
+             'host_black_list': ["https://www.pelisplus.me/", "https://pelisplushd.net/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

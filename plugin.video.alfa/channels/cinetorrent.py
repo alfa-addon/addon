@@ -35,8 +35,8 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'cinetorrent', 
              'host': config.get_setting("current_host", 'cinetorrent', default=''), 
-             'host_alt': ['https://cinetorrent.co/'], 
-             'host_black_list': [], 
+             'host_alt': ['https://cinetorrent.eu/'], 
+             'host_black_list': ['https://cinetorrent.co/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

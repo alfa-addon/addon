@@ -493,7 +493,7 @@ def list_all(item):
             conType = ''
             infoLabels = {}
             title, contentTitle, langs = process_title(scptitle.strip(), getWithTags = True, get_contentTitle = True, get_lang = True)
-            if scpepnum is not '':
+            if scpepnum:
                 infoLabels['episode'] = int(scpepnum)
                 conType = 'tvshow'
             else:
@@ -596,7 +596,7 @@ def list_all(item):
             i.contentTitle = ''
         if i.infoLabels['episode']:
             pretext = ''
-            if i.infoLabels['season'] is not '':
+            if i.infoLabels['season']:
                 pretext += 'S' + str(i.infoLabels['season'])
             pretext += 'E' + str(i.infoLabels['episode'])
             i.title = pretext + ': ' + i.title

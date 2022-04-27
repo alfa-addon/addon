@@ -627,7 +627,6 @@ def seasons(item):
     
     id = "0"
     itemlist = []
-    infoLabels = item.infoLabels
     
     ## Carga estados
     status = check_status()
@@ -663,19 +662,18 @@ def seasons(item):
     patron += 'alt="([^"]+)"\s*src="([^"]+)"'
     
     matches = re.compile(patron, re.DOTALL).findall(data)
+    logger.error(matches)
 
     for ssid, scrapedtitle, scrapedthumbnail in matches:
         if ssid == '0':
             scrapedtitle = "Especiales"
-        infoLabels['season'] = ssid
         thumbnail = scrapedthumbnail.replace('tthumb/130x190', 'thumbs')
         thumbnail += '|User-Agent=%s' % httptools.get_user_agent()
         
         itemlist.append(
                 Item(channel=item.channel, action="episodesxseason", title=scrapedtitle,
                      url=item.url, thumbnail=thumbnail, sid=sid, text_bold=True,
-                     contentSerieName=item.contentSerieName,
-                     contentSeasonNumber=ssid, infoLabels=infoLabels))
+                     contentSerieName=item.contentSerieName, contentSeason=ssid))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="[COLOR greenyellow]Añadir esta serie a la videoteca[/COLOR]",
@@ -709,7 +707,7 @@ def episodesxseason(item):
     url = urlparse.urljoin(host, "a/episodes")
     infoLabels = item.infoLabels
     sid = item.sid
-    ssid = item.contentSeasonNumber
+    ssid = item.contentSeason
     title = ''
 
     #si hay cuenta

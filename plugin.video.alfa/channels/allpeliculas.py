@@ -30,8 +30,8 @@ list_servers = ["streampe", "fembed", "jawcloud"]
 canonical = {
              'channel': 'allpeliculas', 
              'host': config.get_setting("current_host", 'allpeliculas', default=''), 
-             'host_alt': ["https://allpeliculas.ac/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://allpeliculas.se/"], 
+             'host_black_list': ["https://allpeliculas.ac/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
