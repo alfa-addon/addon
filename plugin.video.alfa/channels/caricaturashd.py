@@ -220,6 +220,7 @@ def episodesxseasons(item):
         epi_num = scrapertools.find_single_match(elem.find("span", class_="year").text, "x(\d+)")
         title = "%sx%s - %s" % (season, epi_num, epi_name)
         url = elem.a["href"]
+        infoLabels["episode"] = epi_num
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
                              infoLabels=infoLabels))
 
@@ -233,27 +234,20 @@ def findvideos(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url)
-    matches = soup.find("div", class_="choose-options aa-drp").find_all("a")
-
+    data = httptools.downloadpage(item.url).data
+    
+    patron  = 'href="#options-(\d+).*?'
+    patron += 'option">\w+ - (\w+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
     if not matches:
         return itemlist
-
-    for elem in matches:
-        lang = elem.find("span", class_="option").text.split(" - ")[1]
-        opt = elem["href"][1:]
-        enc_url = soup.find("div", id=opt)
-        if enc_url.iframe.has_attr("data-src"):
-            if host in enc_url.iframe["data-src"]:
-                url = create_soup(enc_url.iframe["data-src"]).find("div", class_="Video").iframe["src"]
-            elif "IFRAME SRC" in enc_url.iframe["data-src"]:
-                url = scrapertools.find_single_match(enc_url.iframe["data-src"], 'IFRAME SRC="([^"]+)"')
-        else:
-            if host in enc_url.iframe["src"]:
-                url = create_soup(enc_url.iframe["src"]).find("div", class_="Video").iframe["src"]
-            else:
-                url = enc_url.iframe["src"]
-
+    for option, lang in matches:
+        patron = 'div id="options-%s.*?fitvidscompatible" data-lazy-src="([^"]+)' %option
+        url = scrapertools.find_single_match(data, patron)
+        url = url.replace("#038;","")
+        data_url = httptools.downloadpage(url).data
+        url = scrapertools.find_single_match(data_url, '(?is)IFRAME SRC="([^"]+)')
+        if not url: continue
         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                              language=IDIOMAS.get(lang.lower(), "VOSE"), infoLabels=item.infoLabels))
 
