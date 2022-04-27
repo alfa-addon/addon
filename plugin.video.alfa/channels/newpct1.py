@@ -1294,6 +1294,7 @@ def findvideos(item, retry=False):
                       'subtitles': True, 
                       'file_list': True, 
                       'find_alt_link_option': find_alt_link_option, 
+                      'find_alt_link_result': [], 
                       'size': ''
                       }
     
@@ -1595,7 +1596,7 @@ def findvideos(item, retry=False):
         for x, url in enumerate(item.emergency_urls[0]):
             sz = ''
             qt = item.quality
-            if x > 0 and len(item.emergency_urls) >= 3 and len(item.emergency_urls[3]) >= x+1:
+            if x > 0 and len(item.emergency_urls) > 3 and len(item.emergency_urls[3]) >= x+1:
                 info = item.emergency_urls[3][x]
                 qt = scrapertools.find_single_match(info, '^#([^#]+)#')
                 if not qt: qt = item.quality
@@ -1854,6 +1855,7 @@ def findvideos(item, retry=False):
                 else:
                     item_btdigg.quality = quality
                 item_btdigg.torrents_path = ''
+                if not item.videolibray_emergency_urls: item_btdigg.btdigg = True
                 itemlist_t.append(item_btdigg)
                 find_alt = True
             
@@ -2615,11 +2617,12 @@ def find_language(item, json_category=''):
 
 def verify_host(item, host_call, force=False, category='', post=None):
     clone_list_alt = []
+    host_call_save = host_call
     
     item.url = urlparse.urljoin(host_call, item.url)
     
     if channel_clone_name == "*** DOWN ***":                                    #Ningún clone activo !!!
-        return (item, host_call)
+        return (item, host_call_save)
     
     if item.channel_alt:
         category = item.category.lower()
@@ -2651,6 +2654,7 @@ def verify_host(item, host_call, force=False, category='', post=None):
         item.channel_host = host_call
         dom_sufix_org = scrapertools.find_single_match(item.url, ':\/\/(.*?)[\/|?]').replace('.', '-')
         dom_sufix_clone = scrapertools.find_single_match(host_call, ':\/\/(.*?)\/*$').replace('.', '-')
+        if not dom_sufix_org or not dom_sufix_clone: continue
         #if 'pctreload' in dom_sufix_clone:
         #    dom_sufix_clone = 'pctnew-org'
         if 'descargas2020' not in dom_sufix_clone and 'descargas2020' not in dom_sufix_clone \
@@ -2659,8 +2663,9 @@ def verify_host(item, host_call, force=False, category='', post=None):
         dom_sufix_clone = dom_sufix_clone.replace('pctmix-com', 'pctreload-com')
         item.url = item.url.replace(dom_sufix_org, dom_sufix_clone)
         item.category = channel_clone.capitalize()
-        
         break                                                                   # Terminado
+    else:
+        return (item, host_call_save)
         
     item = generictools.verify_channel_regex(item, clone_list_alt)              # Procesamos los regex de url que tenga el clone
         
@@ -2755,7 +2760,7 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
         if torrent_params['torrents_path'] and not item.torrents_path: item.torrents_path = torrent_params['torrents_path']
         if item.contentType != 'movie':
             if torrent_params['find_alt_link_result'] and not find_alt_link_result_save:
-                find_alt_link_result_save = torrent_params['find_alt_link_result'].copy()
+                find_alt_link_result_save = torrent_params['find_alt_link_result'][:]
             torrent_params['find_alt_link_result'] = []
         
             for scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet in find_alt_link_result_save:

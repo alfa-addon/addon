@@ -15,6 +15,7 @@ from platformcode import config, logger, platformtools
 context = [{"title": config.get_localized_string(70221),
             "action": "delete_file",
             "channel": "url"}]
+btdigg_magnet = '&amp;tr=udp://tracker.openbittorrent.com:80'
 
 
 def mainlist(item):
@@ -96,23 +97,37 @@ def findvideos(item):
             item.channel_recovery = 'url'
             item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
             
-            for link in item.emergency_urls[0]:
-                link_path = filetools.join(VIDEO_FOLDER, link)
+            for x, link in enumerate(item.emergency_urls[0]):
+                quality = item.quality
+                if link.startswith('magnet'):
+                    link_path = link
+                    item.torrents_path = ''
+                else:
+                    link_path = filetools.join(VIDEO_FOLDER, link)
                 
-                if filetools.isfile(link_path):
-                    torrent_params['url'] = link_path
-                    torrent_params['local_torr'] = link_path
-                    torrent_params = generictools.get_torrent_size(link_path, torrent_params=torrent_params, item=item) # Tamaño en el .torrent
-                    size = torrent_params['size']
-                    if torrent_params['torrents_path'] and not item.torrents_path: item.torrents_path = torrent_params['torrents_path']
+                if link_path.startswith('magnet') or filetools.isfile(link_path):
+                    if btdigg_magnet in link_path and len(item.emergency_urls) > 3 and len(item.emergency_urls[3]) >= x+1:
+                        try:
+                            z, quality, size = item.emergency_urls[3][x].split('#')
+                        except:
+                            pass
+                    else:
+                        torrent_params['url'] = link_path
+                        torrent_params['torrents_path'] = link_path
+                        torrent_params['local_torr'] = link_path
+                        torrent_params = generictools.get_torrent_size(link_path, torrent_params=torrent_params, item=item) # Tamaño en el .torrent
+                        size = torrent_params['size']
+                        item.torrents_path = torrent_params['torrents_path']
                     if size:
                         # Generamos una copia de Item para trabajar sobre ella
                         item_local = item.clone()
                         
                         item_local.channel = 'url'
                         item_local.url = link_path
+                        if btdigg_magnet in item_local.url: item_local.btdigg = True
                         item_local.torrent_info = size
                         
+                        item_local.quality = quality
                         # Si viene de la Videoteca de Kodi, mostramos que son URLs de Emergencia
                         if item_local.contentChannel == 'videolibrary':
                             item_local.quality = '[COLOR hotpink][E][/COLOR] [COLOR limegreen]%s[/COLOR]' % item_local.quality
@@ -156,6 +171,7 @@ def findvideos(item):
                         item_local.server = "torrent"                           #Seridor Torrent
                         
                         itemlist.append(item_local)                             #Pintar pantalla
+                        #logger.debug(item_local)
 
         return itemlist
 
@@ -272,32 +288,35 @@ def list_storage(item):
                     title = title.replace('Btdigg', '[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B]')
                 itemlist.append(Item(channel=item.channel, action="list_storage", url=filetools.join(path_out, file), 
                                 title=title, contentTitle=title, contentType="list", unify=False, 
+                                btdigg=True if 'BTDigg' in file else False, 
                                 url_org=filetools.join(path_out, file), context=context))
                 if len(itemlist) > 1:
                     itemlist = sorted(itemlist, key=lambda it: it.title)        #clasificamos
         
         elif not FOLDER and ('.torrent' in file or '.magnet' in file):
+            btdigg = False
             if '.torrent' in file:
                 url = filetools.join(TEMP_TORRENT_FOLDER, file)
                 filetools.copy(filetools.join(path_out, file), url, silent=True)
                 if not filetools.exists(url): continue
             else:
                 url = filetools.read(filetools.join(path_out, file), silent=True)
+                if btdigg_magnet in url: btdigg = True
                 size = 'MAGNET'
                 if not url: continue
             
             torrent_params['url'] = url
             torrent_params['torrents_path'] = ''
             torrent_params['local_torr'] = filetools.join(TEMP_TORRENT_FOLDER, file)
-            if file.endswith('.torrent'):
-                torrent_params = generictools.get_torrent_size(url, torrent_params=torrent_params)
-                size = torrent_params['size']
+            torrent_params = generictools.get_torrent_size(url, torrent_params=torrent_params)
+            if '.magnet' in file and 'ERROR' in torrent_params['size']: torrent_params['size'] = 'MAGNET'
+            size = torrent_params['size']
 
             itemlist.append(Item(channel=item.channel, action="play", url=url, url_org=filetools.join(path_out, file), server='torrent', 
                             title=filetools.join(filetools.basename(path_out.rstrip('/').rstrip('\\')), file).title()+" [%s]" % size, 
                             contentTitle=filetools.join(filetools.basename(path_out.rstrip('/').rstrip('\\')), file).title(), 
                             contentType="movie", unify=False, torrents_path=torrent_params['torrents_path'],
-                            infoLabels={"tmdb_id": "111"}, context=context))
+                            infoLabels={"tmdb_id": "111"}, context=context, btdigg=btdigg))
             if len(itemlist) > 1:
                     itemlist = sorted(itemlist, key=lambda it: it.title)        #clasificamos
 
@@ -346,6 +365,7 @@ def btdigg(item):
         item_local.torrents_path = ''
         item_local.infoLabels["tmdb_id"] = "111"
         item_local.context=context
+        item_local.btdigg = True
         
         itemlist.append(item_local)
         

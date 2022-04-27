@@ -36,8 +36,8 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'divxtotal', 
              'host': config.get_setting("current_host", 'divxtotal', default=''), 
-             'host_alt': ["https://divxtotál.com"], 
-             'host_black_list': ["https://www.divxtotal.re/", "https://www.divxtotal.pm/", "https://www.divxtotal.nl/"], 
+             'host_alt': ["https://www.divxtotal.re/"], 
+             'host_black_list': ["https://www.divxtotal.pm/", "https://www.divxtotal.nl/"], 
              'pattern': '<li>\s*<a\s*href="([^"]+)"\s*>\S*\/a><\/li>', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

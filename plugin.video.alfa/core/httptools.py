@@ -479,11 +479,11 @@ def proxy_stat(url, opt, proxy_data):
     return ''
 
 
-def blocking_error(req, proxy_data, opt):
+def blocking_error(url, req, proxy_data, opt):
 
     code = str(req.status_code) or ''
-    data = req.content or ''
-    url = opt.get('url', '')
+    data = ''
+    if req.content: data = req.content[:5000]
     canonical = opt.get('canonical', {})
     if PY3 and isinstance(data, bytes):
         data = "".join(chr(x) for x in bytes(data))
@@ -545,16 +545,24 @@ def blocking_error(req, proxy_data, opt):
             
     elif data and '200' not in code:
         if len(data) > 200: data = data[:200]
-        logger.debug('Error: %s, Datos: %s' % (code, data))
+        logger.debug('Error: %s, Url: %s, Datos: %s' % (code, url, data))
     
     return resp
 
 
 def canonical_check(url, response, req, opt):
-    if not opt.get('canonical', {}).get('alfa_s', True): logger.info(url, force=True)
+    
+    if not response['data']: return response
+    if isinstance(response['data'], dict): return response
+    if '//127.0.0.1' in url or '//192.168.' in url or '//10.' in url or '//176.' in url or '//localhost' in url: return response
+    
+    alfa_s = True
+    if not opt.get('canonical', {}).get('alfa_s', alfa_s): logger.info(url, force=True)
     
     canonical_host = ''
-    data = response['data']
+    data = ''
+    if response['data']: data = response['data'][:250000]
+    
     canonical = opt.get('canonical', {})
     canonical_new = False
     canonical_new_alt = []
@@ -569,6 +577,7 @@ def canonical_check(url, response, req, opt):
     if PY3 and isinstance(data, bytes):
         data = "".join(chr(x) for x in bytes(data))
     data = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", data).replace("'", '"')
+    if data.startswith('{'): return response
     
     patterns = ['href="?([^"|\s*]+)["|\s*]\s*rel="?canonical"?', 
                 'rel="?canonical"?\s*href="?([^"|>]+)["|>|\s*]']
@@ -633,7 +642,7 @@ def canonical_check(url, response, req, opt):
                                 host_list += [str(host_elem)]
                     elif canonical['host_alt'] not in host_list:
                         host_list += [str(canonical['host_alt'])]
-                
+
                 for url_alt in host_list:
                     page = downloadpage(url_alt, ignore_response_code=True, timeout=5, 
                                         CF=canonical.get('CF', False), retry_alt=False, 
@@ -641,7 +650,7 @@ def canonical_check(url, response, req, opt):
                                         referer=canonical.get('referer', None), 
                                         headers=canonical.get('headers', None), 
                                         CF_test=canonical.get('CF_test', False),
-                                        alfa_s=canonical.get('alfa_s', True))
+                                        alfa_s=canonical.get('alfa_s', alfa_s))
                     if page.sucess:
                         if page.proxy__ and not response['proxy__']:
                             canonical_new_alt += [url_alt]
@@ -745,6 +754,8 @@ def reset_canonical(canonical_new, url, response, opt):
 
 def proxy_post_processing(url, proxy_data, response, opt):
     opt['out_break'] = False
+    data = ''
+    if response['data']: data = response['data'][:500]
     try:
         if response["code"] not in [200, 302] and opt.get('forced_proxy_opt', '') == 'ProxyJSON':
             opt['forced_proxy_opt'] = 'ProxyCF'
@@ -761,7 +772,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
                         or 'image' in response['headers'].get('Content-Type', '')):
                 response = proxytools.restore_after_proxy_web(response,
                                                               proxy_data, opt['url_save'])
-            if response["data"] == 'ERROR' or response["code"] == 302:
+            if data.startswith('ERROR') or response["code"] == 302:
                 if response["code"] == 200: 
                     response["code"] = 666
                     if not opt.get('post_cookie', False):
@@ -776,7 +787,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
                             return response, url, opt
                 elif response["code"] == 302 and response['headers'].get('location', ''):
                     response['sucess'] = True
-                if response["data"] == 'ERROR' or (response["code"] == 302 and not response['sucess']):
+                if data.startswith('ERROR') or (response["code"] == 302 and not response['sucess']):
                     proxy_data['stat'] = ', Proxy Direct'
                     opt['forced_proxy'] = 'ProxyDirect'
                     url = opt['url_save']
@@ -1033,7 +1044,7 @@ def downloadpage(url, **opt):
             except Exception as e:
                 req = requests.Response()
                 req.status_code = response_code = str(e)
-                block = blocking_error(req, proxy_data, opt)
+                block = blocking_error(url, req, proxy_data, opt)
                 
                 if block and opt.get('retry_alt', retry_alt_default) and opt.get('proxy__test', '') != 'retry' \
                                                                      and not proxy_data.get('stat', ''):
@@ -1107,7 +1118,7 @@ def downloadpage(url, **opt):
         response['proxy__'] = proxy_stat(opt['url_save'], opt, proxy_data)
         response['time_elapsed'] = 0
 
-        block = blocking_error(req, proxy_data, opt)
+        block = blocking_error(url, req, proxy_data, opt)
         # Retries if host changed but old host in error
         if block and opt.get('retry_alt', retry_alt_default) and opt.get('proxy__test', '') != 'retry' and not proxy_data.get('stat', ''):
             url_host = scrapertools.find_single_match(url, patron_host)

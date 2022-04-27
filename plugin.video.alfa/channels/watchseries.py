@@ -31,8 +31,8 @@ list_quality = ['default']
 canonical = {
              'channel': 'watchseries', 
              'host': config.get_setting("current_host", 'watchseries', default=''), 
-             'host_alt': ["https://watchmovie.cc/"], 
-             'host_black_list': [], 
+             'host_alt': ["http://watchmovie.ac/"], 
+             'host_black_list': ["https://watchmovie.cc/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

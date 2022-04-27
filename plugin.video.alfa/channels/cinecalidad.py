@@ -41,8 +41,8 @@ list_servers = ['gounlimited',
 canonical = {
              'channel': 'cinecalidad', 
              'host': config.get_setting("current_host", 'cinecalidad', default=''), 
-             'host_alt': ["https://www5.cine-calidad.com/"], 
-             'host_black_list': ["https://cinecalidad3.com/"], 
+             'host_alt': ["https://v3.cine-calidad.com/"], 
+             'host_black_list': ["https://www5.cine-calidad.com/", "https://cinecalidad3.com/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -212,6 +212,7 @@ def list_all(item):
     for elem in matches:
         #url = scrapertools.find_single_match(elem.img.get("extract", ""), "href='([^']+)'")
         url = elem.a.get("href", "")
+        if '/serie' in url: continue
         
         if not url:
             continue

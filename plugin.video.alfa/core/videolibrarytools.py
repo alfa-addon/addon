@@ -1054,6 +1054,8 @@ def redirect_url(video, channel=''):
                 video.show = video.library_filter_show.get(video.channel, video.contentTitle)
             if video.url_tvshow:
                 video.url_tvshow = redirect_url(video.url_tvshow, video.channel)
+            if video.referer:
+                video.referer = redirect_url(video.referer, video.channel)
         
         elif channel and generictools.verify_channel(channel) != 'newpct1' and not video.startswith('magnet'):
             try:

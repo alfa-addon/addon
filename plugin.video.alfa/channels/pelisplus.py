@@ -12,7 +12,7 @@ if PY3:
 else:
     import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
 
-import re
+import re, base64
 
 from channels import autoplay
 from channels import filtertools
@@ -44,8 +44,8 @@ list_servers = [
 canonical = {
              'channel': 'pelisplushd', 
              'host': config.get_setting("current_host", 'pelisplushd', default=''), 
-             'host_alt': ["https://pelisplushd.to/"], 
-             'host_black_list': ["https://pelisplushd.net/"], 
+             'host_alt': ["https://www.pelisplus.lat/"], 
+             'host_black_list': ["https://www.pelisplus.me/", "https://pelisplushd.net/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -55,24 +55,24 @@ domain = scrapertools.find_single_match(host, patron_domain)
 
 def mainlist(item):
     logger.info()
-
+    
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu",
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url_todas = "peliculas", url_populares = "peliculas-polulares",
                          thumbnail=get_thumb('movies', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Series", action="sub_menu",
+    itemlist.append(Item(channel=item.channel, title="Series", action="sub_menu", url_todas = "ver-series",
                          thumbnail=get_thumb('tvshows', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Anime", action="sub_menu",
+    itemlist.append(Item(channel=item.channel, title="Anime", action="sub_menu", url_todas ="ver-animes",
                          thumbnail=get_thumb('anime', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Doramas", action="list_all", url=host + "generos/dorama",
+    itemlist.append(Item(channel=item.channel, title="Doramas", action="list_all", url=host + "doramas",
                          content="serie", thumbnail=get_thumb('doramas', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + 'search/?s=',
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + '/?s=',
                          thumbnail=get_thumb('search', auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
@@ -90,19 +90,23 @@ def sub_menu(item):
     else:
         content = item.title.lower()[:-1]
 
-    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + '%s' % item.title.lower(),
+    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + '%s' % item.url_todas,
                          thumbnail=get_thumb('all', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="list_all",
-                         url=host + '%s/populares' % item.title.lower(),
-                         thumbnail=get_thumb('more watched', auto=True), type=content))
-
     if item.title.lower() == "peliculas":
+        itemlist.append(Item(channel=item.channel, title="Ultimos polulares", action="list_all",
+                            url=host + 'peliculas-populares',
+                            thumbnail=get_thumb('more watched', auto=True), type=content))
+        itemlist.append(Item(channel=item.channel, title="Peliculas estreno", action="list_all",
+                            url=host + '/estrenos',
+                            thumbnail=get_thumb('more watched', auto=True), type=content))
         itemlist.append(Item(channel=item.channel, title="Generos", action="section",
                              thumbnail=get_thumb('genres', auto=True), type=content))
     elif item.title.lower() == "series":
+        itemlist.append(Item(channel=item.channel, title="Ultimos estrenos", action="list_all",
+                             url=host + 'series-en-estreno', thumbnail=get_thumb('more watched', auto=True), type=content))
         itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="list_all",
-                             url=host + 'series/populares', thumbnail=get_thumb('more watched', auto=True), type=content))
+                             url=host + 'series-populares', thumbnail=get_thumb('more watched', auto=True), type=content))
     return itemlist
 
 
@@ -201,21 +205,20 @@ def episodios(item):
 def episodesxseasons(item):
     logger.info()
 
+    data = httptools.downloadpage(item.url).data
     itemlist = list()
     infoLabels = item.infoLabels
     season = infoLabels["season"]
-    try:
-        matches = create_soup(item.url).find("div", id="pills-vertical-%s" % season).find_all("a")
-    except:
-        matches = ""
-
+    bloque = scrapertools.find_single_match(data, '(?is)role="tabpanel" class=".*id="%s".*?</div' %item.contentSeason)
+    patron  = 'href="([^"]+).*?'
+    patron += 'btn-block">([^<]+)'
+    matches = scrapertools.find_multiple_matches(bloque, patron)
     if not matches:
         return itemlist
 
-    for elem in matches:
-        url = urlparse.urljoin(host, elem["href"])
-        epi_num = scrapertools.find_single_match(elem.text, "E(\d+)")
-        epi_name = scrapertools.find_single_match(elem.text, ":([^$]+)")
+    for url, episodio in matches:
+        epi_num = scrapertools.find_single_match(episodio, "E(\d+)")
+        epi_name = scrapertools.find_single_match(episodio, ":([^$]+)")
         infoLabels['episode'] = epi_num
         title = '%sx%s - %s' % (season, epi_num, epi_name.strip())
 
@@ -229,13 +232,11 @@ def episodesxseasons(item):
 def section(item):
     logger.info()
     itemlist = list()
-
-    soup = create_soup(host).find("aside", class_="side-nav expand-lg")
-    matches = soup.find_all("ul", class_="dropdown-menu")[3]
-    for elem in matches.find_all("li"):
-        title = elem.a.text
-        #url = '%s/%s' % (host, elem.a["href"])
-        url = urlparse.urljoin(host, elem.a["href"])
+    data = httptools.downloadpage(host).data
+    patron  = '(%sgenero/[^"]+)' %host
+    patron += '">([^<]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url, title in matches:
         itemlist.append(Item(channel=item.channel, url=url, title=title, action='list_all', type=item.type))
 
     return itemlist
@@ -246,20 +247,25 @@ def findvideos(item):
 
     itemlist = list()
 
-
     data = httptools.downloadpage(item.url, forced_proxy_opt='ProxyCF', canonical=canonical)
 
     if data.sucess or data.code == 302:
         data = data.data
-    pattern = '<span lid="\d+" url="([^"]+)"'
-    # pattern = "video\[\d+\]\s*=\s*'([^']+)'"
-    matches = re.compile(pattern, re.DOTALL).findall(data)
-
+    pattern = 'data-tr="([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, pattern)
+    encontrados = []
     for url in matches:
-        if "https://pelisplushd.me" in url:
-            url = url.replace("pelisplushd.me", "feurl.com")
-        if host + "fembed.php" in url:
-            url = url.replace(host + "fembed.php?url=", "https://feurl.com/v/")
+        url = base64.b64decode(url)
+        if PY3 and isinstance(url, bytes):
+            url = "".join(chr(x) for x in bytes(url))
+        if not "http" in url:
+            url = "https://www.pelisplus.lat" + url
+        if "pelisplus.lat" in url:
+            prueba = httptools.downloadpage(url).data
+            url = scrapertools.find_single_match(prueba, "(?is)window.location.href = '([^']+)")
+        if "plusto.link" in url: url = url.replace("plusto.link","fembed.com")
+        if url in encontrados: continue
+        encontrados.append(url)
         itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language="LAT",
         infoLabels=item.infoLabels))
 

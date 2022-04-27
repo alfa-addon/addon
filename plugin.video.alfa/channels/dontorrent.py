@@ -31,9 +31,10 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.pl/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.nl/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/'], 
-             'host_black_list': ['https://dontorrent.cat/', 'https://dontorrent.run/', 'https://dontorrent.wf/', 
+             'host_black_list': ['https://dontorrent.tel/', 'https://dontorrent.pl/', 
+                                 'https://dontorrent.cat/', 'https://dontorrent.run/', 'https://dontorrent.wf/', 
                                  'https://dontorrent.pm/', 'https://dontorrent.top/', 'https://dontorrent.re/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -670,7 +671,7 @@ def listado(item):                                                              
     
     #Pasamos a TMDB la lista completa Itemlist
     tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda=idioma_busqueda)
-    if title_subs:
+    if item.extra == 'series' and item.extra2 == 'novedades':                   # Otra pasada a TMDB si son novedades/series
         tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda=idioma_busqueda)
         for item_local in itemlist:
             if item_local.infoLabels['season']: del item_local.infoLabels['season']
@@ -718,7 +719,8 @@ def findvideos(item):
     if item.referer:
         referer = item.referer
     btdigg = False
-    if btdigg_label in item.quality and not item.matches:
+    if (btdigg_label in item.quality and not item.matches) or (('btdig' in item.url or '/series' in item.url) \
+                                     and item.contentChannel == 'videolibrary'):
         btdigg = True
     if item.btdigg:
         btdigg = True
@@ -814,7 +816,7 @@ def findvideos(item):
         except:
             season = 0
         contentSeason = 0
-        cache = True if item.contentChannel == 'videolibrary' else False
+        cache = True if item.contentChannel == 'videolibrary' or not item.matches else False
         if item.contentSeason: contentSeason = int(item.contentSeason)
 
         if item.matches and (item.contentChannel != 'videolibrary' or season != contentSeason):
@@ -894,6 +896,7 @@ def findvideos(item):
 
         # Ponemos la calidad, si la hay
         item_local.url = urlparse.urljoin(host, scrapedurl)
+        if scrapedurl.startswith('magnet') and not item.videolibray_emergency_urls: item_local.btdigg = True
         if scrapedquality: item_local.quality = scrapedquality
             
         # Ponemos el idioma
@@ -1088,19 +1091,19 @@ def episodios(item):
 
     if item.from_title:
         item.title = item.from_title
+    elif item.contentSerieName:
+        item.title = item.contentSerieName
     if not item.language:
         item.language = ['CAST']
     btdigg = False
-    logger.error(item.quality)
-    if btdigg_label in item.quality:
-        logger.error(item.quality)
+    if btdigg_label in item.quality or 'btdig' in item.url or '/series' in item.url:
         btdigg =  True
     if item.btdigg:
         btdigg =  True
         del item.btdigg
     if item.quality:
         item.quality = item.quality.replace(btdigg_label, '')
-    
+
     #Limpiamos num. Temporada y Episodio que ha podido quedar por Novedades
     season_display = 0
     if item.contentSeason:
@@ -1158,7 +1161,7 @@ def episodios(item):
 
         # Obtenemos todas las Temporada de la Serie desde Search
         # Si no hay TMDB o es sólo una temporada, listamos lo que tenemos
-        if search_seasons and season_display == 0 and item.infoLabels['tmdb_id'] and (max_temp > 1 or btdigg):
+        if search_seasons and season_display == 0 and item.infoLabels['tmdb_id'] and (max_temp > 1 or btdigg or item.url == host):
             # Si hay varias temporadas, buscamos todas las ocurrencias y las filtraos por TMDB y calidad
             list_temp = generictools.find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo)
 
@@ -1167,7 +1170,7 @@ def episodios(item):
     if not list_temp and btdigg:
         list_temp.append(item.url)
     elif list_temp and btdigg:
-        if btdigg_url not in str(list_temp): btdigg = False
+        if btdigg_url not in str(list_temp) and 'btdig' not in str(list_temp) and '/series' not in str(list_temp): btdigg = False
         item.url = list_temp[0]
     item.list_temp = list_temp
 
@@ -1291,7 +1294,7 @@ def episodios(item):
                 elif item_local.contentSeason < season_display:
                     continue
 
-            if item_local.contentEpisodeNumber > item.infoLabels['number_of_episodes']:
+            if item.infoLabels['number_of_episodes'] and item_local.contentEpisodeNumber > item.infoLabels['number_of_episodes']:
                 item.infoLabels['number_of_episodes'] = item_local.contentEpisodeNumber
             epis_done += ['%s%s' % (item_local.contentSeason, str(item_local.contentEpisodeNumber).zfill(2))]
             item_local.matches = [(item_local.title, epi_url, scrapedpassword, item_local.quality)]
