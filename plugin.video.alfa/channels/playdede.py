@@ -3,7 +3,6 @@
 # Created for Alfa addon
 # By the Alfa Development Group
 # Maintained by SistemaRayoXP
-
 import sys
 import re
 import datetime
@@ -264,6 +263,7 @@ def genres(item):
         title = data.find("h2").text
         plot = "[COLOR=green]Creado por:[/COLOR] {}\n[COLOR=red]Corazones:[/COLOR] {}".format(article.find(class_="kcdirs").span.text, article.find("div", class_="createdbyT").span.text)
         url = data['href']
+        url = "{}%s".format(host) % url
 
         it = item.clone(
                 action = "list_all",
@@ -301,14 +301,19 @@ def list_all(item):
         platformtools.dialog_notification("Cambio de estructura", "Reporta el error desde el menú principal", sound=False)
         return itemlist
 
-    items = soup.find('div', id='archive-content').find_all('article')
+    items = soup.find_all('article', id=re.compile(r"^post-(?:\d+|)"))
+    # items = soup.find('div', id=' archive-content').find_all('article')
 
     for article in items:
         data = article.find('div', class_='data')
-        infoLabels = {'year': data.find('p').text, 'genres': data.find('span').text}
+        year = data.find('p').text
+        year = scrapertools.find_single_match(year, '(\d{4})')
+        infoLabels = {'year': year, 'genres': data.find('span').text}
         thumbnail = article.find('img')['src']
         title = data.find('h3').text
-
+        url = article.find('a')['href']
+        url = "{}%s".format(host) % url
+        
         if 'tmdb.org' in thumbnail:
             infoLabels['filtro'] = scrapertools.find_single_match(thumbnail, "/(\w+)\.\w+$")
 
@@ -319,7 +324,7 @@ def list_all(item):
                 infoLabels = infoLabels,
                 thumbnail = thumbnail,
                 title = title,
-                url = article.find('a')['href']
+                url = url
             )
 
         if item.list_type and item.list_type in ['movies', 'tvshows']:
@@ -351,6 +356,15 @@ def list_all(item):
     if not isinstance(item.tmdb, bool) or item.tmdb != False:
         tmdb.set_infoLabels(itemlist, True)
 
+    btnnext = soup.find("div", class_="pagPlaydede")
+    
+    if btnnext:
+        itemlist.append(
+            item.clone(
+                title = "Siguiente >",
+                url = btnnext.find("a")['href']
+            )
+        )
     return itemlist
 
 
@@ -424,6 +438,8 @@ def episodesxseason(item):
         infoLabels = item.infoLabels
         infoLabels['episode'] = episode
         title = '{}x{} - {}'.format(item.contentSeason, episode, li.find('div', class_='epst').text)
+        url = li.find('a')['href']
+        url = "{}%s".format(host) % url
 
         itemlist.append(
             Item(
@@ -433,7 +449,7 @@ def episodesxseason(item):
                 infoLabels = infoLabels,
                 thumbnail = li.find('img')['src'],
                 title = title,
-                url = li.find('a')['href']
+                url = url
             )
         )
 
