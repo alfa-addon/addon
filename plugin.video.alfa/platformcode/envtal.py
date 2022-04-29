@@ -385,7 +385,11 @@ def get_environment():
                                 str(config.get_setting("addon_update_timer", default=12)).replace('0', 'No'))
 
         environment['assistant_version'] = str(None)
-        if filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
+        if filetools.exists(filetools.join(config.get_data_path(), 'alfa-desktop-assistant.version')) \
+                            and config.get_setting("assistant_mode") == "este":
+            environment['assistant_version'] = filetools.read(filetools.join(config.get_data_path(), 'alfa-desktop-assistant.version'))
+            environment['assistant_path'] = str(filetools.file_info(filetools.join(config.get_data_path(), 'assistant')))
+        elif filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
             environment['assistant_version'] = filetools.read(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version'))
         environment['assistant_version'] += '; Req: %s' % str(config.get_setting('assistant_binary', default=False))
         environment['assistant_cf_ua'] = str(config.get_setting('cf_assistant_ua', default=None))

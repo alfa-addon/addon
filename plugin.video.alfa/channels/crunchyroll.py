@@ -19,8 +19,8 @@ from platformcode import config, logger
 canonical = {
              'channel': 'crunchyroll', 
              'host': config.get_setting("current_host", 'crunchyroll', default=''), 
-             'host_alt': ["http://www.crunchyroll.com"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www.crunchyroll.com"], 
+             'host_black_list': ["https://www.crunchyroll.com"], 
              'pattern': '', 
              'status': 'ERROR 403 - INACTIVO', 
              'CF': True, 'CF_test': True, 'alfa_s': True

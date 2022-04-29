@@ -33,8 +33,8 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'mejortorrent', 
              'host': config.get_setting("current_host", 'mejortorrent', default=''), 
-             'host_alt': ['https://www.mejortorrentes.org/', 'https://mejortorrent.one/'], 
-             'host_black_list': [], 
+             'host_alt': ['https://mejortorrent.nz', 'https://mejortorrent.one/'], 
+             'host_black_list': ['https://www.mejortorrentes.org/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

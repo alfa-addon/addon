@@ -231,42 +231,12 @@ def getmainlist(view="thumb_"):
         Item(
             channel = "setting",
             action = browser_dict['action'],
-            url = 'https://alfa-addon.com/threads/el-almacen-de-mis-torrents.4774/', 
-            title = "-     [COLOR yellow]El almacén de Mis Torrents[/COLOR]   " + 
-                    "https://alfa-addon.com/threads/el-almacen-de-mis-torrents.4774/",
-            thumbnail = get_thumb("help.png", view),
+            url = 'https://alfa-addon.com/threads/dontorrent-potenciado-con-busquedas-en-btdigg.4798/', 
+            title = "-     [COLOR yellow]Dontorrent potenciado con búsquedas en [COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/COLOR]   " + 
+                    "https://alfa-addon.com/threads/dontorrent-potenciado-con-busquedas-en-btdigg.4798/",
+            thumbnail = get_thumb("on_the_air.png", view),
             unify = False,
             folder = False,
-            category = get_string(30104),
-            viewmode = "list"
-        )
-    )
-
-    itemlist.append(
-        Item(
-            channel = "setting",
-            action = browser_dict['action'],
-            url = 'https://alfa-addon.com/threads/si-tienes-android-10-y-kodi-19-vas-a-tener-problemas-con-los-torrents.4211/', 
-            title = "-     [COLOR yellow]Si tienes Android 10+ y Kodi 19+ vas a tener problemas con los torrents[/COLOR]   " + 
-                    "https://alfa-addon.com/threads/si-tienes-android-10-y-kodi-19-vas-a-tener-problemas-con-los-torrents.4211/",
-            thumbnail = get_thumb("help.png", view),
-            unify = False,
-            folder = False,
-            category = get_string(30104),
-            viewmode = "list"
-        )
-    )
-
-    itemlist.append(
-        Item(
-            channel = "setting",
-            action = browser_dict['action'],
-            url = 'https://alfa-addon.com/threads/torrest-el-gestor-de-torrents-definitivo.4085/', 
-            title = "-     [COLOR yellow]Torrest: el gestor de torrents definitivo[/COLOR]   " + 
-                    "https://alfa-addon.com/threads/torrest-el-gestor-de-torrents-definitivo.4085/", 
-            thumbnail = get_thumb("help.png", view),
-            unify = False,
-            folder = False, 
             category = get_string(30104),
             viewmode = "list"
         )

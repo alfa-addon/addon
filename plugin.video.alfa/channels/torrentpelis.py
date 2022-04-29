@@ -546,8 +546,11 @@ def findvideos(item):
         if not item_local.url.startswith('magnet'):
             patron = '<a\s*id="link"[^>]*href="([^"]+)"'
             data, response, item, itemlist = generictools.downloadpage(item_local.url, timeout=timeout, canonical=canonical, 
-                                                                       s2=False, patron=patron, item=item, itemlist=itemlist)
-            item_local.url = scrapertools.find_single_match(data, patron)
+                                                                       s2=False, follow_redirects=False, item=item, itemlist=itemlist)
+            if response.headers.get('location', '') and response.headers['location'].startswith('magnet'):
+                item_local.url = response.headers['location']
+            else:
+                item_local.url = scrapertools.find_single_match(data, patron)
             if not item_local.url: continue
         
         # Restauramos urls de emergencia si es necesario
