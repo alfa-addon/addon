@@ -113,7 +113,7 @@ def peliculas(item):
     for datos in matches:
         url = scrapertools.find_single_match(datos, 'href="([^"]+)')
         titulo = scrapertools.htmlclean(scrapertools.find_single_match(datos, 'short_header">([^<]+)').strip())
-        if "Netflix Premium" in titulo or "Disney Premium" in titulo or "Spotify Premium" in titulo:
+        if "Premium" in titulo or "Premium" in titulo or "Premium" in titulo:
             continue
         datapostid = scrapertools.find_single_match(datos, 'data-postid="([^"]+)')
         thumbnail = scrapertools.find_single_match(datos, 'data-src="([^"]+)')
