@@ -26,8 +26,7 @@ canonical = {
              'channel': 'salynpm', 
              'host': config.get_setting("current_host", 'salynpm', default=''), 
              'host_alt': ["https://salyn-pm.blogspot.com/"], 
-             'host_black_list': [], 
-             'status': 'WEB INACTIVA???', 
+             'host_black_list': ["https://salynpm-links.blogspot.com/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

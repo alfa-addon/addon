@@ -36,8 +36,8 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'divxtotal', 
              'host': config.get_setting("current_host", 'divxtotal', default=''), 
-             'host_alt': ["https://www.divxtotal.re/"], 
-             'host_black_list': ["https://www.divxtotal.pm/", "https://www.divxtotal.nl/"], 
+             'host_alt': ["https://www.divxtotal.ac/"], 
+             'host_black_list': ["https://www.divxtotal.re/", "https://www.divxtotal.pm/", "https://www.divxtotal.nl/"], 
              'pattern': '<li>\s*<a\s*href="([^"]+)"\s*>\S*\/a><\/li>', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -167,25 +167,29 @@ def submenu(item):
     
     if url != 'None' and item.extra == 'peliculas':
         itemlist.append(item.clone(action="", title="Géneros", thumbnail=thumb_generos))                    #Lista de Géneros
-        itemlist = generos(item, itemlist, data)
+        itemlist = generos(item, itemlist, url)
     
     return itemlist
     
     
-def generos(item, itemlist=[], data=''):
+def generos(item, itemlist=[], url=''):
     logger.info()
     
-    if not data:
-        return itemlist                                                         # Algo no funciona, nos vamos
-    
     # Obtenemos el bloque a tratar
-    patron = '<li>\s*<a\s*class="alist"\s*href="%s">\s*[^<]+<\/a>\s*<\/li>(.*?)<\/ul>' % item.url
+    patron = '<div\s*id="bloque_cat"(.*?)<\/div>\s*<\/div>\s*<\/div>'
+    data, response, item, itemlist = generictools.downloadpage(url, timeout=timeout, canonical=canonical, 
+                                                               patron=patron, item=item, itemlist=itemlist)     # Descargamos la página
     data = scrapertools.find_single_match(data, patron)
     
     # Buscamos los géneros
-    patron = '<li>\s*<a\s*class="alist"\s*href="([^"]+)">\s*([^<]+)<\/a>\s*<\/li>'
+    patron = '<a\s*class="href_peliculas"\s*href="([^"]+)">\s*<button\s*class="categorias_peliculas">([^<]+)<\/button>'
     matches = re.compile(patron, re.DOTALL).findall(data)
+    #logger.debug(patron)
+    #logger.debug(matches)
+    #logger.debug(data)
     if not matches:                                                             # Si no hay matches...
+        logger.error("ERROR 02: GENEROS: Ha cambiado la estructura de la Web " + 
+                        " / PATRON: " + patron + " / DATA: " + data)
         return itemlist                                                         # Salimos
 
     for scrapedurl, scrapedtitle in matches:
@@ -735,9 +739,9 @@ def findvideos(item):
     if not scrapertools.find_single_match(data, patron):                        # Buscar con patrón alternativo
         patron = '<a\s*class="linktorrent[^"]*"\s*(?:target="[^"]*"\s*)?href="([^"]+)"'
         if not scrapertools.find_single_match(data, patron):                    # Buscar con patrón alternativo
-            patron = '<td\s*class="opcion2[^>]*>\s*<a\s*href="([^"]+)"'
+            patron = '<td\s*class="opcion2[^>]*>\s*<a\s*[^>]*href="([^"]+)"'
             if not scrapertools.find_single_match(data, patron):                # Buscar con patrón alternativo
-                patron += 'onclick="post\("(?P<url>[^"]+",\s*{u:\s*"[^"]+)"}\);'
+                patron = 'onclick="post\("(?P<url>[^"]+",\s*{u:\s*"[^"]+)"}\);'
 
     if not item.armagedon:
         if not item.matches:

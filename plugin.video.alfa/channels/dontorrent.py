@@ -31,9 +31,10 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.nl/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.bet/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/'], 
-             'host_black_list': ['https://dontorrent.tel/', 'https://dontorrent.pl/', 
+             'host_black_list': ['https://dontorrent.cx/', 
+                                 'https://dontorrent.nl/', 'https://dontorrent.tel/', 'https://dontorrent.pl/', 
                                  'https://dontorrent.cat/', 'https://dontorrent.run/', 'https://dontorrent.wf/', 
                                  'https://dontorrent.pm/', 'https://dontorrent.top/', 'https://dontorrent.re/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -247,9 +248,14 @@ def genero(item):
 def novedades_menu(item):
     logger.info()
     itemlist = []
+    
+    thumb_buscar = get_thumb("search.png")
 
     for novedad in ['Peliculas', 'Series', 'Documentales']:
         itemlist.append(item.clone(action="novedades", title=novedad, extra=novedad.lower(), url=host + "ultimos"))
+
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
+                    url=host, thumbnail=thumb_buscar, extra="search", btdigg=find_alt_search))
 
     return itemlist
     
@@ -1161,7 +1167,7 @@ def episodios(item):
 
         # Obtenemos todas las Temporada de la Serie desde Search
         # Si no hay TMDB o es sólo una temporada, listamos lo que tenemos
-        if search_seasons and season_display == 0 and item.infoLabels['tmdb_id'] and (max_temp > 1 or btdigg or item.url == host):
+        if search_seasons and season_display == 0 and item.infoLabels['tmdb_id'] and (max_temp > 0 or btdigg or item.url == host):
             # Si hay varias temporadas, buscamos todas las ocurrencias y las filtraos por TMDB y calidad
             list_temp = generictools.find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo)
 

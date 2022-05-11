@@ -24,8 +24,7 @@ canonical = {
              'host': config.get_setting("current_host", 'seriesantiguas', default=''), 
              'host_alt': ["https://www.seriesantiguas.com/"], 
              'host_black_list': [], 
-             'pattern': ['<meta\s*content="([^"]+)"\s*property="og:url"', 
-                         '"rel"\s*:\s*"alternate"\s*,\s*"type"[^}]*href"\s*:\s*"([^"]+)"'], 
+             'pattern': ['<a\s*href="([^"]+)"[^>]*>\s*(?:Principal|M.s\s*vistas)\s*<\/a>'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
