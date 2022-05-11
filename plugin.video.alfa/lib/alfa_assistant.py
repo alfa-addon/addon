@@ -32,13 +32,36 @@ from platformcode import platformtools
 
 EXTRA_TIMEOUT = 10
 
+PLATFORM = config.get_system_platform()
+
 ASSISTANT_APP = 'com.alfa.alfamobileassistant'
+ASSISTANT_DESKTOP = 'alfa-desktop-assistant'
 ASSISTANT_SERVER = "http://127.0.0.1"
 ASSISTANT_SERVER_PORT = 48884
 ASSISTANT_SERVER_PORT_PING = 48886
 ASSISTANT_MODE = config.get_setting("assistant_mode")
+
 assistant_urls = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/', \
                   'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/']
+assistant_desktop_urls = {
+                          'windows': [
+                                      'https://drive.google.com/uc?id=1cjh3JsLaBRYoNrH53H4KrWmEYNf3mAbu&export=download&confirm=t',
+                                      'https://drive.google.com/uc?id=1UA46a36O0cw378jKoO0S2J1KPKRNB62V&export=download&confirm=t'
+                                     ],
+                          'linux':   [
+                                      'https://drive.google.com/uc?id=1tBnA4TZxTL0PXuRS3iJVnqkIfopAZO4M&export=download&confirm=t',
+                                      'https://drive.google.com/uc?id=1Kr4YX2t5CZyGs5C0qhgnPCkYhaOgprE4&export=download&confirm=t'
+                                     ],
+                          'osx':     [
+                                      'https://drive.google.com/uc?id=1wsftzeV_mhj6xUlmZgPma-tXA_YLAFR6&export=download&confirm=t',
+                                      'https://drive.google.com/uc?id=1vSmMNOYQr57B_3DTh4WEaz_61slhUuvF&export=download&confirm=t'
+                                     ]
+                         }
+if PLATFORM not in ['android', 'atv2'] and ASSISTANT_MODE == "este":
+    if assistant_desktop_urls.get(PLATFORM, []):
+        assistant_urls = assistant_desktop_urls[PLATFORM]
+    else:
+        assistant_urls = []
 
 isAlfaAssistantOpen = False
 
@@ -47,9 +70,6 @@ if ASSISTANT_MODE == "otro":
         ASSISTANT_SERVER = "http://%s" % config.get_setting("assistant_custom_address")
 URL_CALL = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT)
 URL_PING = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT_PING)
-
-PLATFORM = config.get_system_platform()
-
 
 JS_CODE_CLICK_ON_VJS_BIG_PLAY_BUTTON = """
 ((() => { 
@@ -217,8 +237,9 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
                      version = None, clearWebCache = False, removeAllCookies = False, hardResetWebView = False, 
                      keep_alive = False, returnWhenCookieNameFound = None, retryIfTimeout = False, mute = True, 
                      urlParamRemoveAllCookies = False, useAdvancedWebView = False):
+    EXTRA_TIMEOUT_PLUS = 0
     if debug: alfa_s = False
-    if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit']:
+    if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit', 'terminate']:
         res = open_alfa_assistant(closeAfter, alfa_s=alfa_s)
         if not alfa_s: logger.info('##Assistant Endpoint: %s, Status: %s' % (endpoint, str(res)))
         if not res:
@@ -227,11 +248,11 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
         if not alfa_s: logger.info('##Assistant URL: %s' % url)
     else:
         url = 'about:blank'
-    if timeout and endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit']:
+    if timeout and endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit', 'terminate']:
         if not alfa_s: logger.info('##Assistant delay-after-html-load: %s' % str(timeout*1000))
     elif not timeout:
         timeout = 0
-    if endpoint in ['ping', 'getWebViewInfo', 'quit']:
+    if endpoint in ['ping', 'getWebViewInfo', 'quit', 'terminate']:
         serverCall = URL_PING
     else:
         serverCall = URL_CALL
@@ -241,7 +262,7 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
         serverCall = '%s/%s' % (serverCall, endpoint)
     if endpoint == 'update':
         serverCall += '?version=%s' % version
-    if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit']:
+    if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit', 'terminate']:
         serverCall += '?url=%s&time=%s' % (base64.b64encode(url.encode('utf8')).decode('utf8'), str(timeout*1000))
     
     if jsCode:
@@ -306,23 +327,24 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
     serverCall += '&useAdvancedWebView=%s' % useAdvancedWebView
     if not alfa_s: logger.info('##Assistant useAdvancedWebView: %s' % str(useAdvancedWebView))
 
-    if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit']:
-        logger.info('##Assistant URL: %s - TIMEOUT: %s' % (serverCall, str(timeout+EXTRA_TIMEOUT)))
-    response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT, alfa_s=alfa_s, 
-                                      ignore_response_code=True, keep_alive=keep_alive)
+    if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit', 'terminate']:
+        EXTRA_TIMEOUT_PLUS = 10 if timeout+EXTRA_TIMEOUT < 10 else 0
+        if not alfa_s: logger.info('##Assistant URL: %s - TIMEOUT: %s' % (serverCall, str(timeout+EXTRA_TIMEOUT)))
+    response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT+EXTRA_TIMEOUT_PLUS, alfa_s=alfa_s, 
+                                      ignore_response_code=True, keep_alive=keep_alive, retry_alt=False, proxy_retries=0)
     if not response.sucess and endpoint in ['ping', 'getWebViewInfo']:
         if not alfa_s: logger.info('##Assistant "%s" FALSE, timeout %s: %s' % (endpoint, timeout+EXTRA_TIMEOUT, serverCall), force=True)
-    if not (response.sucess or response.data) and endpoint not in ['ping', 'getWebViewInfo', 'quit']:
+    if not (response.sucess or response.data) and endpoint not in ['ping', 'getWebViewInfo', 'quit', 'terminate']:
         if retryIfTimeout: retryIfTimeout = response
-        close_alfa_assistant(retryIfTimeout=retryIfTimeout)
+        res = close_alfa_assistant(retryIfTimeout=retryIfTimeout)
         time.sleep(2)
         if not res:
             res = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
         if res:
             serverCall = serverCall.replace('&cache=True', '&cache=False').replace('&clearWebCache=True', '&clearWebCache=False')
             if not alfa_s: logger.info('##Assistant retrying URL: ' + serverCall)
-            response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT, alfa_s=alfa_s, 
-                                              ignore_response_code=True, keep_alive=keep_alive)
+            response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT+EXTRA_TIMEOUT_PLUS, alfa_s=alfa_s, 
+                                              ignore_response_code=True, keep_alive=keep_alive, retry_alt=False, proxy_retries=0)
         else:
             platformtools.dialog_notification("ACTIVE Alfa Assistant en ", "%s" % ASSISTANT_SERVER)
     data = response.data
@@ -335,6 +357,12 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
             return data
         try:
             data_ret = jsontools.load(data)
+            if data_ret.get('assistantVersion', '') and '?' in data_ret['assistantVersion']: 
+                data_ret['assistantVersion'] = '0.0.01'
+            if data_ret.get('assistantLatestVersion', '') and '?' in data_ret['assistantLatestVersion']: 
+                data_ret['assistantLatestVersion'] = '0.0.01'
+            if data_ret.get('wvbVersion', '') and '?' in data_ret['wvbVersion']: 
+                data_ret['wvbVersion'] = '0.0.0'
             if endpoint in ['ping', 'getWebViewInfo']:
                 if endpoint in ['ping']:
                     data_ret = data_ret.get('assistantVersion', '')
@@ -415,27 +443,20 @@ def getInlineRequestedHeaders(requestHeaders, namesExceptionList = None):
 def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assistantLatestVersion=True, alfa_s=False):
     global isAlfaAssistantOpen
     version = 'alfa-mobile-assistant.version'
+    if PLATFORM not in ['android', 'atv2']:
+        version = ''
+    res = False
     
     if not isAlfaAssistantOpen:
         try:
-            res = get_generic_call('getWebViewInfo', timeout=1-EXTRA_TIMEOUT, alfa_s=True)
-            if res:
-                if isinstance(res, dict):
-                    check_webview_version(res.get('wvbVersion', ''))
-                    if not getWebViewInfo:
-                        res = res.get('assistantVersion', '')
-                    isAlfaAssistantOpen = res
-                else:
-                    isAlfaAssistantOpen = res
-                if not alfa_s: logger.info('##Assistant Already was Opened (after test): %s' % str(isAlfaAssistantOpen))
-            
-            elif ASSISTANT_MODE == 'este':
-                if not alfa_s: logger.info('##Assistant Open at ' + ASSISTANT_SERVER)
-                
+            if ASSISTANT_MODE == 'este':
+
                 if not is_alfa_installed():
                     logger.error('##Assistant not installed or not available')
                     return False
 
+                logger.info('##Assistant Opening at %s' % ASSISTANT_SERVER)
+                
                 ver_upd = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
                 if closeAfter:
                     cmd = 'openAndQuit'
@@ -458,6 +479,7 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assi
                             isAlfaAssistantOpen = res
                         else:
                             isAlfaAssistantOpen = res
+                        logger.info('##Assistant Opened. getWebViewInfo: %s' % res)
                         break
                 else:
                     return False
@@ -478,11 +500,16 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assi
                                     "o Instale manualmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]")
                     return False
 
-            if isinstance(res, dict) and getWebViewInfo and assistantLatestVersion:
+            if isinstance(res, dict) and getWebViewInfo and assistantLatestVersion and PLATFORM in ['android', 'atv2']:
                 for url in assistant_urls:
-                    response = httptools.downloadpage(url+version, timeout=2, alfa_s=True, ignore_response_code=True)
+                    response = httptools.downloadpage(url+version, timeout=2, alfa_s=True, ignore_response_code=True, 
+                                                      retry_alt=False, proxy_retries=0)
                     if response.sucess:
-                        res['assistantLatestVersion'] = response.data
+                        data = response.data
+                        if PY3 and isinstance(data, bytes):
+                            data = "".join(chr(x) for x in bytes(data))
+                        if '?' in data: data = '0.0.01'
+                        res['assistantLatestVersion'] = data
                         isAlfaAssistantOpen = res
                         break
             
@@ -490,7 +517,7 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assi
         
         except:
             logger.error('##Assistant Error opening it')
-            logger.error(traceback.format_exc(1))
+            logger.error(traceback.format_exc())
         return res
     
     else:
@@ -516,7 +543,8 @@ def close_alfa_assistant(retryIfTimeout=False):
                         retryIfTimeout = False
                 if retryIfTimeout:
                     logger.info('##Assistant Reset at ' + URL_PING)
-                    response = httptools.downloadpage(URL_PING+'/terminate', timeout=2, alfa_s=True, ignore_response_code=True)
+                    response = httptools.downloadpage(URL_PING+'/terminate', timeout=2, alfa_s=True, ignore_response_code=True, 
+                                                      retry_alt=False, proxy_retries=0)
                     if ASSISTANT_MODE != 'este' or config.get_setting('assistant_binary', default='') == 'AstOK':
                         time.sleep(10)
                     time.sleep(5)
@@ -530,6 +558,9 @@ def close_alfa_assistant(retryIfTimeout=False):
 ## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
 #
 def check_webview_version(wvbVersion):
+    
+    if PLATFORM not in ['android', 'atv2']:
+        return
 
     if not wvbVersion:
         logger.info('##Assistant wvbVersion NO DETECTADA', force=True)
@@ -562,7 +593,6 @@ def check_webview_version(wvbVersion):
 ## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
 #
 def is_alfa_installed(remote='', verbose=False):
-    global isAlfaAssistantOpen
     version = True
     if not isAlfaAssistantOpen:
         version, app_name = install_alfa_assistant(update=False, remote=remote, verbose=verbose)
@@ -585,6 +615,7 @@ def check_permissions_alfa_assistant():
 ## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
 #
 def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank', wait=False):
+    global isAlfaAssistantOpen
     if PLATFORM in ['android', 'atv2']:
         try:
             app = ASSISTANT_APP
@@ -597,6 +628,51 @@ def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank', wait=False):
         except:
             logger.error(traceback.format_exc(1))
             return False
+    
+    elif ASSISTANT_MODE == 'este':
+        creationflags = 0
+        sufix = ''
+        arquitecture = 'amd64'
+        java_version = 11
+        if PLATFORM in ['windows', 'xbox']:
+            creationflags = 0x08000000
+            sufix = '.exe'
+        assistant_path = filetools.join(config.get_data_path(), 'assistant')
+        binary_path = ASSISTANT_DESKTOP+'.exe'
+        java_path = filetools.join(assistant_path, 'runtime', 'so', PLATFORM, 
+                                   'java-%s-openjdk-%s' % (java_version, arquitecture), 'bin', 'java%s' % sufix)
+        
+        command = {'windows':
+                              [
+                               'set', 'MY_JAVA_PATH=%s' % java_path, '&&',
+                               'set', 'PATH=%MY_JAVA_PATH%;%PATH%', '&&',
+                               'cd', assistant_path, '&&',
+                               java_path, '-cp', binary_path, 'com.alfa.alfadesktopassistant.App', '%s' % cmd
+                              ], 
+                   'linux':
+                              [
+                               'MY_JAVA_PATH=' + java_path + '; ' + 
+                               'PATH=$MY_JAVA_PATH:$PATH; ' + 
+                               'cd ' + assistant_path + '; ' + 
+                               java_path + ' -cp ' + binary_path + ' com.alfa.alfadesktopassistant.App ' + cmd
+                              ]
+                  }
+        cmdexe = command.get(PLATFORM, [])
+        
+        try:
+            p = subprocess.Popen(cmdexe, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+                                 stdin=subprocess.PIPE, creationflags=creationflags, shell=True)
+            if wait:
+                output_cmd, error_cmd = p.communicate()
+                if error_cmd: p = False
+            logger.info('##Assistant executing CMD: %s, wait=%s' % (cmdexe, wait))
+            return p
+        except Exception as e:
+            if not PY3:
+                e = unicode(str(e), "utf8", errors="replace").encode("utf8")
+            elif PY3 and isinstance(e, bytes):
+                e = e.decode("utf8")
+            logger.error('## ERROR Popen CMD: %s, wait=%s - error: %s' % (cmdexe, wait, e))
     
     return False
 
@@ -786,7 +862,7 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
                 # We assume that no wait implies only one version of the binary can be active, so cancel all existing Binary sessions
                 url = url_killall
                 logger.info('## Killing from Assistant App: %s' % url)
-                resp = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=True)
+                resp = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=True, retry_alt=False, proxy_retries=0)
                 time.sleep(1)
                 if function == 'killBinary':
                     try:
@@ -795,7 +871,7 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
                             return 999
                         time.sleep(1)
                         url_stat = USER_APP_URL + '/getBinaryStatus?pid=%s&flushAfterRead=true' % p
-                        resp = httptools.downloadpage(url_stat, timeout=5, ignore_response_code=True, alfa_s=True)
+                        resp = httptools.downloadpage(url_stat, timeout=5, ignore_response_code=True, alfa_s=True, retry_alt=False, proxy_retries=0)
                         status_code = resp.code
                         if status_code != 200:
                             return 999
@@ -812,7 +888,7 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
             # Now lets launch the Binary
             logger.info('## Calling binary from Assistant App: %s - Retry = %s' % (cmd, retry), force=True)
             url = url_open + command_base64
-            resp = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=True)
+            resp = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=True, retry_alt=False, proxy_retries=0)
             status_code = resp.code
             if status_code != 200 and not retry:
                 logger.error("## Calling %s: Invalid app requests response: %s" % (cmd[0], status_code))
@@ -923,7 +999,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
         msg = ''
         while not finished:
             if not app_response:
-                resp = httptools.downloadpage(url+str(p.pid), timeout=5, ignore_response_code=True, alfa_s=True)
+                resp = httptools.downloadpage(url+str(p.pid), timeout=5, ignore_response_code=True, alfa_s=True, retry_alt=False, proxy_retries=0)
                 if resp.code != 200 and not retry_req:
                     if action == 'killBinary' or p.monitor.abortRequested():
                         app_response = {'pid': p.pid, 'retCode': 998}
@@ -1055,6 +1131,9 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
 ## Instala o actualiza la app de Assitant ##################################################################################################################################
 #
 def install_alfa_assistant(update=False, remote='', verbose=False):
+    if PLATFORM not in ['android', 'atv2'] and ASSISTANT_MODE == "este":
+        return install_alfa_desktop_assistant(update=update, remote=remote, verbose=verbose)
+    
     if update:
         logger.info('update=%s' % str(update))
     # Si ya está instalada, devolvemos el control
@@ -1133,11 +1212,15 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
                 version_app = version_dict
                 android_version = 8
     version_actual = filetools.read(version_path, silent=True)
+    version_dif = False
     if (not version_actual and version_app) or (version_actual and version_app and version_actual != version_app):
+        version_dif = True
         version_actual = version_app
         filetools.write(version_path, version_actual, mode='wb', silent=True)
     elif not version_actual:
         version_actual = '0.0.0'
+    elif version_actual and version_app and version_actual == version_app:
+        config.set_setting('assistant_flag_install', True)
 
     if ASSISTANT_MODE != 'este':
         if not version_app:
@@ -1220,7 +1303,8 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
     
     # Comprobamos si hay acceso a Github o GitLab
     for assistant_rar in assistant_urls:
-        response = httptools.downloadpage(assistant_rar+version, timeout=5, ignore_response_code=True, alfa_s=alfa_s, json_to_utf8=False)
+        response = httptools.downloadpage(assistant_rar+version, timeout=5, ignore_response_code=True, 
+                                          alfa_s=alfa_s, json_to_utf8=False, retry_alt=False, proxy_retries=0)
         if response.sucess:
             break
     
@@ -1273,11 +1357,12 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             logger.error("Error en la escritura de control de versión. Seguimos...: %s" % assistant_rar)
 
     # Descargamos y guardamos el .APK
-    assistant_rar = assistant_rar.replace(version, download)                    # Sustituir en la url la versión por el apk
+    #assistant_rar = assistant_rar.replace(version, download)                    # Sustituir en la url la versión por el apk
     res = False
     if not update: platformtools.dialog_notification("Instalación Alfa Assistant", "Descargando APK")
     logger.info('Descargando de_ %s' % assistant_rar)
-    response = httptools.downloadpage(assistant_rar, timeout=5, ignore_response_code=True, alfa_s=alfa_s, json_to_utf8=False)
+    response = httptools.downloadpage(assistant_rar+download, timeout=10, ignore_response_code=True, 
+                                      alfa_s=alfa_s, json_to_utf8=False, retry_alt=False)
     if not response.sucess:
         if not update or verbose: platformtools.dialog_notification("Instalación Alfa Assistant", "Error en la descarga del .apk")
         response.data = ''
@@ -1368,6 +1453,8 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
                                 logger.info(command, force=True)
                                 p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                                 output_cmd, error_cmd = p.communicate()
+                                if PY3 and isinstance(output_cmd, bytes): output_cmd = output_cmd.decode('utf-8')
+                                if PY3 and isinstance(error_cmd, bytes): error_cmd = error_cmd.decode('utf-8')
                                 if error_cmd:
                                     if error_cmd.startswith('su:'): continue
                                     if update:
@@ -1401,7 +1488,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
                                 continue
       
     # Ùltimo resorte: instalación manual desde GitHub o actualización desde la app
-    if not respuesta and update:
+    if not respuesta and update and not version_dif:
         
         # Si hay que actualizar se verifica el vehículo de instalación
         logger.info("Instalación Alfa Assistant. Actualización desde la app de %s a %s" % (version_old, version_actual))
@@ -1411,6 +1498,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         if ASSISTANT_MODE == "este":
             if android_version >= 10:
                 app_active = False
+                res = open_alfa_assistant(getWebViewInfo=True, assistantLatestVersion=False, retry=True)
                 respuesta = execute_in_alfa_assistant_with_cmd(cmd, dataURI=dataURI % version_mod)
             else:
                 if not app_active:
@@ -1444,7 +1532,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             
             if ASSISTANT_MODE == "este":
                 from lib import generictools
-                assistant_rar = assistant_rar.replace('/raw/', '/tree/')            # Apuntar a la web de descargas
+                assistant_rar = assistant_rar.replace('/raw/', '/tree/') + download     # Apuntar a la web de descargas
                 browser, res = generictools.call_browser(assistant_rar, lookup=True)
                 if browser:
                     filetools.remove(apk_install_SD, silent=True)
@@ -1491,3 +1579,191 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             execute_in_alfa_assistant_with_cmd('open')                          # re-activamos la app para dejarla como estaba
         
     return respuesta, app_name
+
+#
+## Instala o actualiza el DESKTOP de Assitant ##################################################################################################################################
+#
+def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
+    
+    platform = PLATFORM
+    if update:
+        logger.info('update=%s' % str(update))
+
+    app_name = ASSISTANT_DESKTOP
+    version_name = '%s.version' % app_name
+    assistant_flag_install = config.get_setting('assistant_flag_install')
+    if not verbose: verbose = config.get_setting('addon_update_message')        # Verbose en la actualización/instalación
+    alfa_s = True
+    force_install = False                                                       # Instalación bajo demanda ?
+    addons_path = config.get_runtime_path()
+    if filetools.exists(filetools.join(addons_path, 'channels', 'custom.py')):
+        alfa_s = False
+    respuesta = False
+    assistant_url = ''
+
+    install_path = filetools.join(addons_path, 'lib', 'assistant', platform, version_name)
+    version_inst = filetools.read(install_path)
+    zip_path = filetools.join(addons_path, 'resources', app_name+'.zip')
+    if update and filetools.exists(zip_path): filetools.remove(zip_path, silent=True)
+    binary_path = filetools.join(config.get_data_path(), 'assistant')
+    binary_exec = filetools.join(binary_path, app_name+'.exe')
+    version_actual_path = filetools.join(config.get_data_path(), version_name)
+    version_act = filetools.read(version_actual_path, silent=True)
+    if not version_act: version_act = ''
+    version_app = version_act
+
+    # Si no se quiere instalar, se borra
+    if not assistant_flag_install and str(update) != 'auto':
+        if filetools.exists(binary_path):
+            res = get_generic_call('quit', timeout=1-EXTRA_TIMEOUT, alfa_s=True)    # desactivamos la app si estaba iniciada
+            res = filetools.rmdirtree(binary_path, silent=False)
+            if res: filetools.remove(version_actual_path, silent=False)
+            logger.info("Alfa Assistant eliminado con éxito, versión: %s" % version_app)
+        return respuesta, app_name
+
+    # Si ya está instalada, devolvemos el control
+    if not update and version_act and filetools.exists(binary_exec):
+        return version_act, app_name
+    
+    # Si no está instalada y es update normal, devolvemos el control
+    if not version_act and update == True and not force_install:
+        logger.info("Alfa Assistant no instalado.  No se actualiza")
+        return respuesta, app_name
+
+    # Actualizamos la versión del Assistant
+    if version_act == version_inst and update == True and filetools.exists(binary_exec):
+        logger.info("Alfa Assistant está actualizado, versión: %s" % version_act)
+        return version_act, app_name
+        
+    # Mirarmos si la app está activa y obtenemos el nº de versión
+    if not version_act: version_act = '0.0.01'
+    config.set_setting('assistant_flag_install', True)
+    if filetools.exists(binary_exec):
+        version_dict = get_generic_call('getWebViewInfo', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
+        if isinstance(version_dict, dict):
+            version_app = version_dict.get('assistantVersion', '')
+        else:
+            version_app = version_dict
+    if not version_app:
+        version_app = version_act
+    
+    # Comprobamos si hay acceso a Github o GitLab o Dropbox
+    if not assistant_urls:
+        logger.error("Error en la descarga de la VERSIÓN: %s" % str(platform))
+        return respuesta, app_name
+    for _assistant_url in assistant_urls:
+        #assistant_url = '%s%s/%s' % (_assistant_url, platform, version_name)
+        assistant_url = _assistant_url
+        response = httptools.downloadpage(assistant_url, timeout=5, ignore_response_code=True, 
+                                          alfa_s=alfa_s, json_to_utf8=False, retry_alt=False, proxy_retries=0)
+        if response.sucess:
+            break
+    
+    # Si hay error terminamos
+    if not response.sucess:
+        platformtools.dialog_notification("Instalación Alfa Assistant", "Error en la descarga de control de versión")
+        logger.error("Error en la descarga de control de versión. No se puede actualizar: %s" % str(response.code))
+        return respuesta, app_name
+        
+    #Si es una actualización programada, comprobamos las versiones de Github y de lo instalado
+    data = response.data
+    if PY3 and isinstance(data, bytes):
+        data = "".join(chr(x) for x in bytes(data))
+    if update and isinstance(update, bool):
+        try:
+            newer = False
+            installed_version_list = version_app.split('.')
+            web_version_list = data.split('.')
+            for i, ver in enumerate(web_version_list):
+                if int(ver) > int(installed_version_list[i]):
+                    newer = True
+                    break
+                if int(ver) < int(installed_version_list[i]):
+                    newer = False
+                    break
+        except:
+            pass
+
+        if not newer:
+            if verbose: platformtools.dialog_notification("Instalación Alfa Assistant", "Ya está actualizado a version %s" % version_app)
+            logger.info("Alfa Assistant ya actualizado a versión: %s" % version_app)
+            return version_app, app_name
+
+    # Guardamos el número de versión descargada
+    if version_actual_path:
+        version_act = version_app = data
+        res = filetools.write(version_actual_path, version_act, mode='wb', silent=True)
+        if not res:
+            if not update: platformtools.dialog_notification("Instalación Alfa Assistant", \
+                            "Error en la escritura de control de versión. Seguimos...")
+            logger.error("Error en la escritura de control de versión. Seguimos...: %s" % version_actual_path)
+        res = filetools.write(install_path, version_act, mode='wb', silent=True)
+        if not res:
+            logger.error("Error en la escritura de control de versión. Seguimos...: %s" % install_path)
+
+    # Descargamos y guardamos el BINARIO
+    res = get_generic_call('terminate', timeout=1-EXTRA_TIMEOUT, alfa_s=True)   # desactivamos la app si estaba iniciada
+    if update != True: platformtools.dialog_notification("Instalación Alfa Assistant", "Descargando BINARIO")
+    #assistant_url = '%s%s/%s.zip' % (_assistant_url, platform, app_name)
+    if assistant_desktop_urls.get(platform, []):
+        assistant_url = assistant_desktop_urls[platform][1]
+    else:
+        logger.error("Error en la descarga del BINARIO: %s" % str(platform))
+        return respuesta, app_name
+    logger.info('Descargando de_ %s' % assistant_url)
+    response = httptools.downloadpage(assistant_url, timeout=30, ignore_response_code=True, 
+                                      alfa_s=alfa_s, json_to_utf8=False, retry_alt=False, proxy_retries=0)
+    if not response.sucess:
+        if not update or verbose: platformtools.dialog_notification("Instalación Alfa Assistant", "Error en la descarga del BINARIO")
+        logger.error("Error en la descarga del BINARIO: %s" % str(response.code))
+        return respuesta, app_name
+    else:
+        global isAlfaAssistantOpen
+        isAlfaAssistantOpen = False
+        # Guardamos archivo descargado .zip
+        res = filetools.write(zip_path, response.data, mode='wb', silent=True)
+        if not res:
+            if not update or verbose: platformtools.dialog_notification("Instalación Alfa Assistant", "Error en la escritura del BINARIO")
+            logger.error("Error en la escritura del BINARIO: %s" % zip_path)
+            return respuesta, app_name
+        else:
+            # Empezando la extracción del .zip del DESKTOP
+            if filetools.exists(binary_path):
+                res = filetools.rmdirtree(binary_path, silent=False)
+            try:
+                import ziptools
+                archive = ziptools.ziptools()
+                archive.extract(zip_path, binary_path)
+            except:
+                xbmc.executebuiltin('Extract("%s","%s")' % (zip_path, binary_path))
+            for x in range(30):
+                if filetools.exists(binary_exec): break
+                time.sleep(1)
+            else:
+                filetools.remove(version_actual_path, silent=False)
+                logger.error("Error en la instalación del BINARIO: %s" % zip_path)
+                if not update or verbose: platformtools.dialog_notification("Instalación Alfa Assistant", 
+                                                                            "Error en la instalación del BINARIO, versión: %s" % version_app)
+                return respuesta, app_name
+
+    if assistant_flag_install:
+        execute_in_alfa_assistant_with_cmd('open')                              # re-activamos la app para dejarla como estaba
+        time.sleep(2)
+        version_dict = get_generic_call('getWebViewInfo', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
+        logger.info('getWebViewInfo: %s' % version_dict)
+        if version_dict: 
+            isAlfaAssistantOpen = True
+            if isinstance(version_dict, dict):
+                version_app = version_dict.get('assistantVersion', '')
+            else:
+                version_app = version_dict
+            if not version_app: version_app = '0.0.01'
+            if version_app != version_act:
+                version_act = version_app
+                res = filetools.write(version_actual_path, version_act, mode='wb', silent=True)
+
+    logger.info("Alfa Assistant instalado con éxito, versión: %s" % version_app)
+    if not update or verbose:
+        platformtools.dialog_notification("Instalación Alfa Assistant", "Instalación terminada con éxito, versión: %s" % version_app)
+
+    return version_act, app_name

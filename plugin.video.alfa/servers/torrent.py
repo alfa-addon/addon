@@ -626,6 +626,11 @@ def caching_torrents(url, torrent_params={}, **kwargs):
     torrent_file_list = []                                                      # Creamos una lista por si el zip/rar tiene más de un .torrent
     t_hash = ''
     url_save = url
+    url_set = filetools.encode(url.split('?')[0])
+    if '.php?' in url: 
+        url_set = filetools.encode(url.split('?')[1])
+    else:
+        url_set = filetools.encode(url.split('?')[0])
     subtitle_path = ''
     PK = 'PK'
     if PY3: PK = bytes(PK, 'utf-8')
@@ -692,7 +697,7 @@ def caching_torrents(url, torrent_params={}, **kwargs):
             if url.startswith("magnet"):
                 key = scrapertools.find_single_match(url, 'urn:btih:([\w\d]+)\&').upper()
             else:
-                key = url.split('?')[0]
+                key = url_set
             for link, path_torrent in torrent_cached_list:                      # Si ya estaba cacheado lo usamos
                 if filetools.encode(key) != link:
                     continue
@@ -777,7 +782,7 @@ def caching_torrents(url, torrent_params={}, **kwargs):
                             torrent_file = cached_torrents['torrent_file']
                             torrent_params['local_torr'] = torrent_params['local_torr'].replace('CF_BLOCKED', '')
                             torrent_cached_list = config.get_setting('torrent_cached_list', server='torrent', default=[])
-                            torrent_cached_list.append([filetools.encode(url.split('?')[0]), torrent_params['torrents_path']])
+                            torrent_cached_list.append([url_set, torrent_params['torrents_path']])
                             if torrent_params.get('url_index', ''):
                                 torrent_cached_list.append([filetools.encode(torrent_params['url_index'].split('?')[0]), 
                                                             torrent_params['torrents_path']])
@@ -914,13 +919,13 @@ def caching_torrents(url, torrent_params={}, **kwargs):
                 ret = filetools.write(torrents_path_encode, torrent_file, silent=True, vfs=VFS)
                 torrent_params['torrent_cached_list'] = config.get_setting('torrent_cached_list', server='torrent', default=[])
                 torrent_cached_list = torrent_params['torrent_cached_list']
-                if ret and (not url.startswith("magnet") and filetools.encode(url.split('?')[0]).lower() != torrent_params['torrents_path'].lower() \
-                                                         and filetools.encode(url.split('?')[0]) not in torrent_cached_list) \
+                if ret and (not url.startswith("magnet") and url_set.lower() != torrent_params['torrents_path'].lower() \
+                                                         and url_set not in torrent_cached_list) \
                                                          or (url.startswith("magnet") and t_hash_upper not in str(torrent_cached_list)):
                     if url.startswith("magnet"):
                         torrent_cached_list.append([t_hash_upper, torrent_params['torrents_path']])
                     else:
-                        torrent_cached_list.append([filetools.encode(url.split('?')[0]), torrent_params['torrents_path']])
+                        torrent_cached_list.append([url_set, torrent_params['torrents_path']])
                     if torrent_params.get('url_index', ''):
                         torrent_cached_list.append([filetools.encode(torrent_params['url_index'].split('?')[0]), torrent_params['torrents_path']])
                     config.set_setting('torrent_cached_list', torrent_cached_list, server='torrent')

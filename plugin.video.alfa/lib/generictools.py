@@ -43,6 +43,7 @@ from core.item import Item
 from platformcode import config, logger
 
 channel_py = "newpct1"
+channel_py_domain = "nucleohd.com"
 intervenido_judicial = 'Dominio intervenido por la Autoridad Judicial'
 intervenido_policia = 'Judicial_Policia_Nacional'
 intervenido_guardia = 'Judicial_Guardia_Civil'
@@ -218,7 +219,7 @@ def change_host_newpct1(host, host_old):
     if not channel_json or not channel_json.get('settings', []): return
 
     domain_old = scrapertools.find_single_match(host_old, patron_domain)
-    label = ", ('1', 'atomixhq', 'atomixhq', '%s', '%s', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no')" \
+    label = ", ('1', 'channel_py_domain.split('.')[0]', 'channel_py_domain.split('.')[0]', '%s', '%s', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no')" \
                 % (domain_old, host)
     update = False
     
@@ -1438,7 +1439,8 @@ def find_btdigg_episodios(item, itemlist, url= '', epis_done=[], domain_alt='', 
             del item.find_alt_link_result
         itemlist_t = []
         limit_pages = 3
-        limit_items_found = 5 * 10
+        interface = str(config.get_setting('btdigg_status', server='torrent'))
+        limit_items_found = 5 * 10 if interface != '200' else 10 * 10
         patron_cap = 'Cap.(\d+\d{2})'
         patron_seaepi = 'Cap.(\d+)(\d{2})'
         
@@ -2511,7 +2513,7 @@ def find_rar_password(item):
     
     # Si no hay, buscamos en páginas alternativas
     rar_search = [
-                 ['1', 'https://atomixhq.art', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                 ['1', 'https://%s' % channel_py_domain, [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
                  ['2', 'https://www.grantorrent.ch/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
@@ -2520,10 +2522,6 @@ def find_rar_password(item):
                  ['2', 'https://www.mejortorrentes.org/', [[]], [['^((?!temporada).)*$', 'None'], \
                                 ['.net\/', '.net/descargar/peliculas-castellano/'], ['-microhd-1080p\/$', '']]]
     ]
-    
-    #             ['1', 'http://planetatorrent.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
-    #                            'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-0', 'capitulo-'], \
-    #                            ['capitulos-0', 'capitulos-']]], 
     
     url_host = scrapertools.find_single_match(item.url, patron_host)
     dom_sufix_org = scrapertools.find_single_match(item.url, ':\/\/(.*?)[\/|?]').replace('.', '-')

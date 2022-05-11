@@ -34,6 +34,7 @@ canonical = {
              'host': config.get_setting("current_host", 'ennovelas', default=''), 
              'host_alt': ["https://www.ennovelas.com/"], 
              'host_black_list': [], 
+             'pattern': ['href="?([^"|\s*]+)["|\s*]\s*rel="?stylesheet"?'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

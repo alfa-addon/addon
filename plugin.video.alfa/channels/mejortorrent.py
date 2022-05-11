@@ -33,8 +33,8 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'mejortorrent', 
              'host': config.get_setting("current_host", 'mejortorrent', default=''), 
-             'host_alt': ['https://mejortorrent.nz', 'https://mejortorrent.one/'], 
-             'host_black_list': ['https://www.mejortorrentes.org/'], 
+             'host_alt': ['https://mejortorrent.cc', 'https://mejortorrent.one/'], 
+             'host_black_list': ['https://mejortorrent.nz', 'https://www.mejortorrentes.org/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -752,9 +752,12 @@ def findvideos(item):
         # Puede ser necesario baja otro nivel para encontrar la página
         if not 'magnet:' in scrapedurl and not '.torrent' in scrapedurl:
             patron_torrent = '(?i)>\s*Pincha[^<]*<a\s*href="([^"]+)"'
+            if _scrapedurl in scrapedurl:
+                scrapedurl = urlparse.urljoin(host, 'torrent_dmbk.php?u='+_scrapedurl)
+                referer = urlparse.urljoin(host, 'download_torrent.php')
             data_torrent, response, item, itemlist = generictools.downloadpage(scrapedurl, timeout=timeout, canonical=canonical, 
                                                                                referer=referer, post=post, headers=headers, 
-                                                                               s2=False, patron=patron_torrent, 
+                                                                               s2=False, 
                                                                                item=item, itemlist=itemlist)        # Descargamos la página)        
             #logger.debug("PATRON: " + patron_torrent)
             #logger.debug(data_torrent)
@@ -774,7 +777,10 @@ def findvideos(item):
                         return itemlist                                 # si no hay más datos, algo no funciona, pintamos lo que tenemos
             
             # Obtenemos el enlace final
-            scrapedurl = generictools.convert_url_base64(scrapertools.find_single_match(data_torrent, patron_torrent), host_torrent)
+            if response.headers.get('Location', ''):
+                scrapedurl = response.headers['location']
+            elif 'application' not in response.headers.get('Content-Type', ''):
+                scrapedurl = generictools.convert_url_base64(scrapertools.find_single_match(data_torrent, patron_torrent), host_torrent)
 
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
@@ -788,7 +794,7 @@ def findvideos(item):
         item_local.url = scrapedurl
 
         # Restauramos urls de emergencia si es necesario
-        local_torr = ''
+        local_torr = 'Mejortorrent descargas'
         if item.emergency_urls and not item.videolibray_emergency_urls:
             try:                                                                # Guardamos la url ALTERNATIVA
                 if item.emergency_urls[0][0].startswith('http'):
