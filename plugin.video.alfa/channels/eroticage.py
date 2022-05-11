@@ -25,18 +25,26 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['pornhub']
 
-host = 'https://www.erogarga.com'       # http://www.eroticage.net
+# https://www.erogarga.com  http://www.eroticage.net
+canonical = {
+             'channel': 'eroticage', 
+             'host': config.get_setting("current_host", 'eroticage', default=''), 
+             'host_alt': ["https://www.erogarga.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Novedades" , action="lista", url=host + "/?filter=latest"))
-    itemlist.append(item.clone(title="Mas Popular" , action="lista", url=host + "/?filter=popular"))
-    itemlist.append(item.clone(title="Mas Visto" , action="lista", url=host + "/?filter=most-viewed"))
-    itemlist.append(item.clone(title="Mas Largo" , action="lista", url=host + "/?filter=longest"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Novedades" , action="lista", url=host + "/?filter=latest"))
+    itemlist.append(Item(channel=item.channel, title="Mas Popular" , action="lista", url=host + "/?filter=popular"))
+    itemlist.append(Item(channel=item.channel, title="Mas Visto" , action="lista", url=host + "/?filter=most-viewed"))
+    itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="lista", url=host + "/?filter=longest"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -61,7 +69,7 @@ def categorias(item):
     for elem in matches:
         url = elem['href']
         title = elem.text
-        itemlist.append(item.clone(action="lista", title=title, url=url, thumbnail="", plot="") )
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail="", plot="") )
     return itemlist
 
 
@@ -90,13 +98,13 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', class_='current')
     if next_page:
         next_page = next_page.parent.find_next_sibling("li").a['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -107,28 +115,15 @@ def findvideos(item):
     matches = soup.find_all('div', class_='responsive-player')
     for elem in matches:
         url = elem.iframe['src']
-        if "cine-matik.com" in url:
-            n = "yandex"
-            m = url.replace("https://cine-matik.com/player/play.php?", "")
-            post = "%s&alternative=%s" %(m,n)
-            headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
-            data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
-            if data1=="":
-                n = "blogger"
-                m = url.replace("https://cine-matik.com/player/play.php?", "")
-                post = "%s&alternative=%s" %(m,n)
-                headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
-                data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
-            url = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
-            if not url:
-                n = scrapertools.find_single_match(data1,'"alternative":"([^"]+)"')
-                post = "%s&alternative=%s" %(m,n)
-                headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
-                data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
-                url = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
-            url = url.replace("\/", "/")
+        if "play.php" in url:
+            vid = url.split('?vid=')[-1]
+            post_url = url.split('play.php')[0]
+            post_url += "ajax_sources.php"
+            post = {'vid': vid, 'alternative': 'spankbang', 'ord': '0'}
+            data = httptools.downloadpage(post_url, post=post).json
+            url = data['source'][0]['file']
         if not "meta" in url:
-            itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -140,27 +135,14 @@ def play(item):
     matches = soup.find_all('div', class_='responsive-player')
     for elem in matches:
         url = elem.iframe['src']
-        if "cine-matik.com" in url:
-            n = "yandex"
-            m = url.replace("https://cine-matik.com/player/play.php?", "")
-            post = "%s&alternative=%s" %(m,n)
-            headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
-            data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
-            if data1=="":
-                n = "blogger"
-                m = url.replace("https://cine-matik.com/player/play.php?", "")
-                post = "%s&alternative=%s" %(m,n)
-                headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
-                data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
-            url = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
-            if not url:
-                n = scrapertools.find_single_match(data1,'"alternative":"([^"]+)"')
-                post = "%s&alternative=%s" %(m,n)
-                headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
-                data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
-                url = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
-            url = url.replace("\/", "/")
+        if "play.php" in url:
+            vid = url.split('?vid=')[-1]
+            post_url = url.split('play.php')[0]
+            post_url += "ajax_sources.php"
+            post = {'vid': vid, 'alternative': 'spankbang', 'ord': '0'}
+            data = httptools.downloadpage(post_url, post=post).json
+            url = data['source'][0]['file']
         if not "meta" in url:
-            itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

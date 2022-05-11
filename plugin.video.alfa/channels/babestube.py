@@ -18,21 +18,30 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.babestube.com'    #  https://www.momvids.com  https://www.porndictator.com  #  https://www.pornomovies.com         https://www.deviants.com
+# https://www.babestube.com  https://www.momvids.com  https://www.porndictator.com  #  https://www.pornomovies.com 
+# https://www.deviants.com
+canonical = {
+             'channel': 'babestube', 
+             'host': config.get_setting("current_host", 'babestube', default=''), 
+             'host_alt': ["https://www.babestube.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
                                              
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/?is_hd=&sort_by=post_date&from=01"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/?is_hd=&sort_by=video_viewed_month&from=01"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/?is_hd=&sort_by=rating_month&from=01"))
-    itemlist.append(item.clone(title="Mas metraje" , action="lista", url=host + "/longest/?is_hd=&sort_by=duration&from=01"))
-    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/models/?is_hd=&sort_by=model_viewed&from=01"))
+    itemlist.append(Item(channel = item.channel, title="Nuevos" , action="lista", url=host + "/latest-updates/?is_hd=&sort_by=post_date&from=01"))
+    itemlist.append(Item(channel = item.channel, title="Mas vistos" , action="lista", url=host + "/most-popular/?is_hd=&sort_by=video_viewed_month&from=01"))
+    itemlist.append(Item(channel = item.channel, title="Mejor valorado" , action="lista", url=host + "/top-rated/?is_hd=&sort_by=rating_month&from=01"))
+    itemlist.append(Item(channel = item.channel, title="Mas metraje" , action="lista", url=host + "/longest/?is_hd=&sort_by=duration&from=01"))
+    itemlist.append(Item(channel = item.channel, title="PornStar" , action="categorias", url=host + "/models/?is_hd=&sort_by=model_viewed&from=01"))
 
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel = item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(Item(channel = item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -68,14 +77,14 @@ def categorias(item):
         url += "?is_hd=&sort_by=post_date&from=01"
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel = item.channel, action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('li', class_='item active')
     if next_page and next_page.find_next_sibling("li"):
         next_page = next_page.find_next_sibling("li").a['data-parameters'].replace(":", "=").replace(";", "&").replace("+from_albums", "")
         next_page = "?%s" % next_page
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel = item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 def create_soup(url, referer=None, unescape=False):
@@ -109,21 +118,21 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel = item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('li', class_='item active')
     if next_page.find_next_sibling("li"):
         next_page = next_page.find_next_sibling("li").a['data-parameters'].replace(":", "=").replace(";", "&").replace("+from_albums", "")
         next_page = "?%s" % next_page
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel = item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel = item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -131,6 +140,6 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel = item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

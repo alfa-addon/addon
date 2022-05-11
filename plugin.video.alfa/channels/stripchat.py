@@ -18,26 +18,34 @@ from core import servertools
 from core import httptools
 
 
-IDIOMAS = {'vo': 'VO'}
-list_language = list(IDIOMAS.values())
-list_quality = ['default']
-list_servers = []
+# IDIOMAS = {'vo': 'VO'}
+# list_language = list(IDIOMAS.values())
+# list_quality = ['default']
+# list_servers = []
 
 
-host = 'https://stripchat.com'
-hosta = 'https://stripchat.com/api/front/models?limit=40&offset=0&sortBy=stripRanking&primaryTag=%s&filterGroupTags=[["%s"]]'
+canonical = {
+             'channel': 'stripchat', 
+             'host': config.get_setting("current_host", 'stripchat', default=''), 
+             'host_alt': ["https://stripchat.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
+hosta = "%s/api/front/models?limit=40&offset=0&sortBy=stripRanking&primaryTag=%s&filterGroupTags=[[\"%s\"]]"
     # 'https://stripchat.com/api/external/v4/widget/?limit=100&modelsCountry=&modelsLanguage=&modelsList=&tag=%s'
-cat = 'https://es.stripchat.com/api/front/models/liveTags?limit=40&primaryTag=girls&filterGroupTags=[[%22BigTits%22]]&sortBy=stripRanking'
+cat = "%s/api/front/models/liveTags?limit=40&primaryTag=girls&filterGroupTags=[[]]&sortBy=stripRanking" % host
        # https://es.stripchat.com/api/front/models/liveTags?primaryTag=girls&uniq=go3bmp2lfs6zi18a
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Female" , action="lista", url=hosta %("girls", "")))
-    itemlist.append(item.clone(title="Couples" , action="lista", url=hosta % ("couples", "")))
-    itemlist.append(item.clone(title="Male" , action="lista", url=hosta % ("men", "")))
-    itemlist.append(item.clone(title="Transexual" , action="lista", url=hosta % ("trans", "")))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=cat))
+    itemlist.append(Item(channel = item.channel, title="Female" , action="lista", url=hosta %(host,"girls", "")))
+    itemlist.append(Item(channel = item.channel, title="Couples" , action="lista", url=hosta % (host,"couples", "")))
+    itemlist.append(Item(channel = item.channel, title="Male" , action="lista", url=hosta % (host,"men", "")))
+    itemlist.append(Item(channel = item.channel, title="Transexual" , action="lista", url=hosta % (host,"trans", "")))
+    itemlist.append(Item(channel = item.channel, title="Categorias" , action="categorias", url=cat))
     return itemlist
 
 
@@ -63,10 +71,10 @@ def categorias(item):
         for list in elem['tags']:
             title = re.sub(r"tagLanguage|autoTag|age|ethnicity|privatePrice|specifics|specific|^do|subculture", "", list) # |bodyType|hairColor
             title = title.capitalize()
-            url = hosta %("girls", list)
+            url = hosta %(host,"girls", list)
             thumbnail = ""
             plot = ""
-            itemlist.append(item.clone(action="lista", title=title, url=url,
+            itemlist.append(Item(channel = item.channel, action="lista", title=title, url=url,
                                   thumbnail=thumbnail , plot=plot) )
     return sorted(itemlist, key=lambda i: i.title)
 
@@ -75,19 +83,21 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).json
-    # logger.debug(data)
     for elem in data['models']:
-        logger.debug(elem)
-        # url = elem['stream']['url']
+        url = elem['hlsPlaylist']
         id = elem['id']
         thumbnail = elem['snapshotUrl']
         title = elem['username']
-        url = "https://b-hls-03.strpst.com/hls/%s/%s.m3u8" %(id, id)
+        pais = elem['country']
+        if pais:
+            title += " (%s)" %pais
+        if not url:
+            url = "https://b-hls-03.strpst.com/hls/%s/%s.m3u8" %(id, id)
         plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, thumbnail=thumbnail, url = url,
+        itemlist.append(Item(channel = item.channel, action=action, title=title, thumbnail=thumbnail, url = url,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
                                
     count= data['filteredCount']
@@ -96,7 +106,7 @@ def lista(item):
     if current_page <= int(count) and (int(count) - current_page) > 40:
         current_page += 40
         next_page = re.sub(r"&offset=\d+", "&offset={0}".format(current_page), item.url)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel = item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -104,7 +114,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     # item.url += "|verifypeer=false"
-    itemlist.append(item.clone(action="play", title="Directo", url=item.url ))
+    itemlist.append(Item(channel = item.channel, action="play", title="Directo", url=item.url ))
     return itemlist
 
 
@@ -112,5 +122,5 @@ def play(item):
     logger.info()
     itemlist = []
     # item.url += "|verifypeer=false"
-    itemlist.append(item.clone(action="play", title=item.url, contentTitle = item.title, url=item.url, server="Directo" ))
+    itemlist.append(Item(channel = item.channel, action="play", title=item.url, contentTitle = item.title, url=item.url, server="Directo" ))
     return itemlist

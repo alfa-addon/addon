@@ -77,11 +77,11 @@ def lista(item):
         stuff = Video["file"]["stuff"]
         if stuff.get("sf_name", ""):
             title = stuff["sf_name"]
+        else:
+            title = id
         plot = ""
         if stuff.get("sf_story", ""):
             plot = stuff["sf_story"]
-        else:
-            title = id
         horas=int(old_div(segundos,3600))
         segundos-=horas*3600
         minutos=int(old_div(segundos,60))
@@ -104,8 +104,8 @@ def lista(item):
                              fanart=thumbnail, plot=plot,contentTitle=title, contentType="movie"))
     # Paginador
     page = int(scrapertools.find_single_match(item.url, '&offset=([0-9]+)'))
-    next_page = (page+ 48)
-    if next_page:
+    if len(itemlist) >= 48:
+        next_page = (page+ 48)
         next_page = re.sub(r"&offset=\d+", "&offset={0}".format(next_page), item.url)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page))
     return itemlist

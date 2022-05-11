@@ -18,21 +18,26 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.mrsexe.com'
+canonical = {
+             'channel': 'mrsexe', 
+             'host': config.get_setting("current_host", 'mrsexe', default=''), 
+             'host_alt': ["https://www.mrsexe.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/videos/most-viewed/"))
-    itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/videos/longues/"))
-    itemlist.append(item.clone(title="PornStar" , action="catalogo", url=host + "/filles/"))
-    itemlist.append(item.clone(title="Series" , action="catalogo", url=host + "/series.html"))
-
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/videos/most-viewed/"))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "/videos/longues/"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "/filles/"))
+    itemlist.append(Item(channel=item.channel, title="Series" , action="catalogo", url=host + "/series.html"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -61,7 +66,7 @@ def categorias(item):
         thumbnail = ""
         plot = ""
         if not "Catégories" in title:
-            itemlist.append(item.clone(action="lista", title=title, url=url,
+            itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                                   thumbnail=thumbnail , plot=plot) )
     return itemlist
 
@@ -88,13 +93,13 @@ def catalogo(item):
             thumbnail = "https:%s" % thumbnail
         plot = ""
         if not "Catégories" in title:
-            itemlist.append(item.clone(action="lista", title=title, url=url,
+            itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                                   thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('a', string="suivant")
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -136,20 +141,14 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', string="suivant")
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
-
-
-# https://www.mrsexe.com/classiques/streaming/une-metisse-blonde-se-fait-taper-dans-la-chatte-en-foret-1972.html
-# <script type='text/javascript' language='javascript' src='/inc/clic.php?video=12654_3_1500&cat=mrsexe&site=lfapc'></script>
-# https://www.mrsexe.com/inc/clic.php?video=12654_3_1500&cat=mrsexe&site=lfapc
-# V1972.src("https://dlms1.mrsexe.com/64026dff5e132678486f070f9d8a7b77.mp4");
 
 
 def findvideos(item):
@@ -160,7 +159,7 @@ def findvideos(item):
     url = urlparse.urljoin(host,url)
     data = httptools.downloadpage(url).data
     url = scrapertools.find_single_match(data, '.src\("([^"]+)"')
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -173,6 +172,6 @@ def play(item):
     url = urlparse.urljoin(host,url)
     data = httptools.downloadpage(url).data
     url = scrapertools.find_single_match(data, '.src\("([^"]+)"')
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

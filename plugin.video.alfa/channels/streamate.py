@@ -22,7 +22,16 @@ list_language = list(IDIOMAS.values())
 list_quality = ['default']
 list_servers = []
 
-host = 'https://www.streamate.com'    # 'https://www.fapcandy.com'
+#  https://www.fapcandy.com    https://www.streamate.com
+canonical = {
+             'channel': 'streamate', 
+             'host': config.get_setting("current_host", 'streamate', default=''), 
+             'host_alt': ["https://www.streamate.com"], 
+             'host_black_list': [], 
+             'pattern': ['href="?([^"|\s*]+)["|\s*]\s*hrefLang="?en"?'], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 cat = "https://member.naiadsystems.com/search/v3/categories?domain=streamate.com&shouldIncludeTransOnStraightSkins=false"
 api = "https://member.naiadsystems.com/search/v3/performers?domain=streamate.com&from=0&size=100&filters=gender:f,ff,mf,tm2f,g;online:true&genderSetting=f"
 
@@ -30,8 +39,8 @@ api = "https://member.naiadsystems.com/search/v3/performers?domain=streamate.com
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Chicas" , action="categorias", url=cat, chicas = True))
-    itemlist.append(item.clone(title="Chicos" , action="categorias", url=cat))
+    itemlist.append(Item(channel=item.channel, title="Chicas" , action="categorias", url=cat, chicas = True))
+    itemlist.append(Item(channel=item.channel, title="Chicos" , action="categorias", url=cat))
     return itemlist
 
 
@@ -56,7 +65,7 @@ def categorias(item):
         else:
             cat = "category:%s;%s" % (name, filter)
         url = "https://member.naiadsystems.com/search/v3/performers?domain=streamate.com&from=0&size=40&filters=%s;online:true&genderSetting=f" % cat
-        itemlist.append(item.clone(action="lista", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail ))
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail ))
     return itemlist
 
 
@@ -93,14 +102,14 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                    fanart=thumbnail, contentTitle=title ))
     page = scrapertools.find_single_match(item.url, '&from=(\d+)')
     page = int(page)
     if total > page  and (total - page) > 40:
         page += 40
         next_page = re.sub(r"&from=\d+", "&from={0}".format(page), item.url)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -112,7 +121,7 @@ def findvideos(item):
     for elem in data["encodings"]:
         quality = elem["videoHeight"]
         url = elem["location"]
-        itemlist.append(item.clone(action="play", title=quality, url=url) )
+        itemlist.append(Item(channel=item.channel, action="play", title=quality, url=url) )
     return itemlist[::-1]
 
 

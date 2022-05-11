@@ -18,30 +18,39 @@ from core import servertools
 from core import httptools
 from core import jsontools as json
 
-host = 'https://www.cam4.com'
+canonical = {
+             'channel': 'cam4', 
+             'host': config.get_setting("current_host", 'cam4', default=''), 
+             'host_alt': ["https://www.cam4.com"], 
+             'host_black_list': [], 
+             'pattern': ['hreflang="x-default"\s*href="([^"]+)"'], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    all = "https://www.cam4.es/directoryCams?directoryJson=true&online=true&url=true&page=1"
-    url1= "https://www.cam4.es/directoryCams?directoryJson=true&online=true&url=true&gender=female&broadcastType=female_group&broadcastType=solo&broadcastType=male_female_group&page=1"
-    url2= "https://www.cam4.es/directoryCams?directoryJson=true&online=true&url=true&broadcastType=female_group&broadcastType=male_female_group&page=1"
-    url3= "https://www.cam4.es/directoryCams?directoryJson=true&online=true&url=true&gender=male&broadcastType=male_group&broadcastType=solo&page=1"
-    url4= "https://www.cam4.es/directoryCams?directoryJson=true&online=true&url=true&gender=shemale&page=1"
+    all = "%s/directoryCams?directoryJson=true&online=true&url=true&page=1" %host
+    url1= "%s/directoryCams?directoryJson=true&online=true&url=true&gender=female&broadcastType=female_group&broadcastType=solo&broadcastType=male_female_group&page=1" %host
+    url2= "%s/directoryCams?directoryJson=true&online=true&url=true&broadcastType=female_group&broadcastType=male_female_group&page=1" %host
+    url3= "%s/directoryCams?directoryJson=true&online=true&url=true&gender=male&broadcastType=male_group&broadcastType=solo&page=1" %host
+    url4= "%s/directoryCams?directoryJson=true&online=true&url=true&gender=shemale&page=1" %host
 
-    itemlist.append(item.clone(title="Trending Cams" , action="lista", url=all))
-    itemlist.append(item.clone(title="Females" , action="lista", url=url1))
-    itemlist.append(item.clone(title="Couples" , action="lista", url=url2))
-    itemlist.append(item.clone(title="Males" , action="lista", url=url3))
-    itemlist.append(item.clone(title="Trans" , action="lista", url=url4)) 
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel = item.channel, title="Trending Cams" , action="lista", url=all))
+    itemlist.append(Item(channel = item.channel, title="Females" , action="lista", url=url1))
+    itemlist.append(Item(channel = item.channel, title="Couples" , action="lista", url=url2))
+    itemlist.append(Item(channel = item.channel, title="Males" , action="lista", url=url3))
+    itemlist.append(Item(channel = item.channel, title="Trans" , action="lista", url=url4)) 
+    itemlist.append(Item(channel = item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "")
-    item.url = "https://www.cam4.es/directoryCams?directoryJson=true&online=true&url=true&showTag=%s&page=1" % texto
+    item.url = "%s/directoryCams?directoryJson=true&online=true&url=true&showTag=%s&page=1" % (host,texto)
     try:
         return lista(item)
     except:
@@ -62,12 +71,17 @@ def lista(item):
         pais = Video["countryCode"]
         thumbnail = Video["snapshotImageLink"]
         video_url = Video["hlsPreviewUrl"]
-        title =  "%s (%s)" % (title,pais)
-        plot = ""
+        age = Video["age"]
+        quality = Video['resolution'] 
+        quality = quality.split(":")[-1]
+        title =  "%s %s (%s)" % (title,age,pais)
+        title += " [COLOR red]%s[/COLOR]" %quality
+        if Video.get("statusMessage", ""):
+            plot= Video['statusMessage'] 
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=video_url,
+        itemlist.append(Item(channel = item.channel, action=action, title=title, url=video_url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     last_page= scrapertools.find_single_match(data,'<a href=".*?/latest/(\d+)"><div style="display:inline">Last<')
     page = scrapertools.find_single_match(item.url, "(.*?=)\d+")
@@ -76,19 +90,19 @@ def lista(item):
         current_page = int(current_page)
         current_page += 1
         next_page = "%s%s" %(page,current_page)
-    itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    itemlist.append(Item(channel = item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def findvideos(item):
     logger.info(item)
     itemlist = []
-    itemlist = servertools.find_video_items(item.clone(action="play", url = item.url))
+    itemlist = servertools.find_video_items(Item(channel = item.channel, action="play", url = item.url))
     return itemlist
 
 
 def play(item):
     logger.info(item)
     itemlist = []
-    itemlist.append(item.clone(action="play", url=item.url))
+    itemlist.append(Item(channel = item.channel, action="play", url=item.url, contentTitle = item.contentTitle))
     return itemlist

@@ -13,22 +13,29 @@ import re
 from core import httptools
 from core import scrapertools
 from core.item import Item
-from platformcode import logger
+from platformcode import config, logger
 
-host = "https://www.serviporno.com"
+canonical = {
+             'channel': 'serviporno', 
+             'host': config.get_setting("current_host", 'serviporno', default=''), 
+             'host_alt': ["https://www.serviporno.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="videos", title="Útimos videos", url=host))
-    itemlist.append(item.clone(action="videos", title="Más vistos", url=host + "/mas-vistos/"))
-    itemlist.append(item.clone(action="videos", title="Más votados", url=host + "/mas-votados/"))
-    itemlist.append(item.clone(action="chicas", title="Chicas", url=host + "/pornstars/"))
-    itemlist.append(item.clone(action="categorias", title="Canal", url=host + "/sitios/"))
-    itemlist.append(item.clone(action="categorias", title="Categorias", url= host + "/categorias/"))
+    itemlist.append(Item(channel=item.channel, action="videos", title="Útimos videos", url=host))
+    itemlist.append(Item(channel=item.channel, action="videos", title="Más vistos", url=host + "/mas-vistos/"))
+    itemlist.append(Item(channel=item.channel, action="videos", title="Más votados", url=host + "/mas-votados/"))
+    itemlist.append(Item(channel=item.channel, action="chicas", title="Chicas", url=host + "/pornstars/"))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Canal", url=host + "/sitios/"))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", url= host + "/categorias/"))
 
-    itemlist.append(item.clone(action="search", title="Buscar", last=""))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", last=""))
     return itemlist
 
 
@@ -56,12 +63,12 @@ def categorias(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     for thumbnail, url, title in matches:
         url = urlparse.urljoin(item.url, url)
-        itemlist.append(item.clone(action='videos', title=title, url=url, thumbnail=thumbnail, plot=""))
+        itemlist.append(Item(channel=item.channel, action='videos', title=title, url=url, thumbnail=thumbnail, plot=""))
     # Paginador   "Página Siguiente >>"
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="btn-pagination">Siguiente')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -78,12 +85,12 @@ def chicas(item):
     for url, thumbnail, title, videos in matches:
         url = urlparse.urljoin(item.url, url)
         title = "%s (%s)" % (title, videos)
-        itemlist.append(item.clone(action='videos', title=title, url=url, thumbnail=thumbnail, fanart=thumbnail))
+        itemlist.append(Item(channel=item.channel, action='videos', title=title, url=url, thumbnail=thumbnail, fanart=thumbnail))
     # Paginador 
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="btn-pagination">Siguiente')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="chicas", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="chicas", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -104,13 +111,13 @@ def videos(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=url, 
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle = title, url=url, 
                              thumbnail=thumbnail, fanart=thumbnail))
     # Paginador
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="btn-pagination">Siguiente')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="videos", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="videos", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -120,7 +127,7 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, "sendCdnInfo.'([^']+)")
     url = url.replace("&amp;", "&")
-    itemlist.append(item.clone(action="play", title="Directo", url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title="Directo", url=url, contentTitle=item.contentTitle))
     return itemlist
 
 
@@ -130,5 +137,5 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, "sendCdnInfo.'([^']+)")
     url = url.replace("&amp;", "&")
-    itemlist.append(item.clone(action="play", url=url))
+    itemlist.append(Item(channel=item.channel, action="play", url=url, contentTitle=item.contentTitle))
     return itemlist

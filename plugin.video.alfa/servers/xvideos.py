@@ -14,7 +14,7 @@ def test_video_exists(page_url):
     global data, m3u
     data = httptools.downloadpage(page_url).data
     m3u = scrapertools.find_single_match(data, 'html5player.setVideoHLS\(\'([^\']+)\'')
-    if "Lo sentimos" in data or "File not found" in data or 'og:video">' in data:
+    if "Lo sentimos" in data or "has been deleted" in data or "File not found" in data or 'og:video">' in data:
         return False, "[Xvideos] El archivo no existe o ha sido borrado"
 
     return True, ""

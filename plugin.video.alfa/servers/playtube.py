@@ -12,10 +12,11 @@ from platformcode import logger
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    global data
+    global data, server
+    server = scrapertools.find_single_match(page_url, '//(?:www.|es.|)([A-z0-9-]+).(?:to|ws)')
     data = httptools.downloadpage(page_url)
     if data.code == 404 or "File is no longer available" in data.data:
-        return False, "[playtube] El archivo no existe o ha sido borrado"
+        return False, "[%s] El archivo no existe o ha sido borrado" %server
     return True, ""
 
 
@@ -25,5 +26,5 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     pack = scrapertools.find_single_match(data.data, 'p,a,c,k,e,d.*?</script>')
     unpacked = jsunpack.unpack(pack)
     url = scrapertools.find_single_match(unpacked, 'file:"([^"]+)') + "|referer=%s" %(page_url)
-    video_urls.append(['m3u8 [playtube]', url] )
+    video_urls.append(['m3u8 [%s]' %server, url] )
     return video_urls

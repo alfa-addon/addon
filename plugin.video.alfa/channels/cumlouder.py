@@ -15,8 +15,15 @@ from core import scrapertools
 from core.item import Item
 from platformcode import config, logger
 
+canonical = {
+             'channel': 'cumlouder', 
+             'host': config.get_setting("current_host", 'cumlouder', default=''), 
+             'host_alt': ["https://www.cumlouder.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
-host = 'https://www.cumlouder.com'
 
 def mainlist(item):
     logger.info()

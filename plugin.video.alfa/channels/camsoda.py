@@ -18,7 +18,14 @@ list_language = list(IDIOMAS.values())
 list_quality = ['default']
 list_servers = []
 
-host = 'https://es.camsoda.com'
+canonical = {
+             'channel': 'camsoda', 
+             'host': config.get_setting("current_host", 'camsoda', default=''), 
+             'host_alt': ["https://camsoda.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -51,7 +58,7 @@ def categorias(item):
         cantidad = elem['tag_count']
         title = "%s (%s)" %(name, cantidad)
         thumbnail = ""
-        url = "https://es.camsoda.com/api/v1/browse/react/tag/%s-cams?p=1" % name
+        url = "%s/api/v1/browse/react/tag/%s-cams?p=1" % (host,name)
         plot = "[COLOR yellow]%s[/COLOR]" %name
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
@@ -74,7 +81,7 @@ def lista(item):
         is_on = elem['status']
         thumbnail = elem['thumbUrl']
         username = "guest_22596"
-        url = "https://es.camsoda.com/api/v1/video/vtoken/%s?username=%s" % (title,username)
+        url = "%s/api/v1/video/vtoken/%s?username=%s" % (host,title,username)
         if not "online" in is_on:
             title = "[COLOR red]%s[/COLOR]" % title
         if not thumbnail.startswith("https"):
@@ -106,8 +113,8 @@ def findvideos(item):
     if "vide" in server[0]:
         url = "https://%s/cam/mp4:%s_h264_aac_480p/chunklist_w206153776.m3u8?token=%s"  %(server[0],dir,token)
     else:
-        url = "https://%s/%s_h264_aac_720p/tracks-v1a1/mono.m3u8?token=%s" %(server[0],dir,token)
-    url += "|verifypeer=false"
+        url = "https://%s/%s_v1/tracks-v4a2/mono.m3u8?token=%s" %(server[0],dir,token)
+    # url += "|verifypeer=false"
     itemlist.append(item.clone(action="play", url=url, server="Directo" ))
     return itemlist
 
@@ -124,7 +131,7 @@ def play(item):
     if "vide" in server[0]:
         url = "https://%s/cam/mp4:%s_h264_aac_480p/chunklist_w206153776.m3u8?token=%s"  %(server[0],dir,token)
     else:
-        url = "https://%s/%s_h264_aac_720p/tracks-v1a1/mono.m3u8?token=%s" %(server[0],dir,token)
-    url += "|verifypeer=false"
+        url = "https://%s/%s_v1/tracks-v4a2/mono.m3u8?token=%s" %(server[0],dir,token)
+    # url += "|verifypeer=false"
     itemlist.append(item.clone(action="play", title=url, contentTitle = item.title, url=url, server="Directo" ))
     return itemlist

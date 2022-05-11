@@ -17,17 +17,22 @@ from core import servertools
 from core.item import Item
 from core import httptools
 from bs4 import BeautifulSoup
-from channels import filtertools
 from channels import autoplay
 from lib import alfa_assistant
 import ssl
 
-IDIOMAS = {'vo': 'VO'}
-list_language = list(IDIOMAS.values())
 list_quality = ['default']
 list_servers = ['gounlimited']
 
-host = 'https://www.porndish.com/'
+canonical = {
+             'channel': 'porndish', 
+             'host': config.get_setting("current_host", 'porndish', default=''), 
+             'host_alt': ["https://www.porndish.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def mainlist(item):
     if ssl.OPENSSL_VERSION_INFO < (1, 1, 1):
@@ -38,9 +43,9 @@ def mainlist(item):
     itemlist = []
     
     autoplay.init(item.channel, list_servers, list_quality)
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host))
-    itemlist.append(item.clone(title="Canal" , action="sub_menu", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -50,7 +55,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/%s" % (host,texto)
+    item.url = "%s/?s=%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -60,36 +65,32 @@ def search(item, texto):
         return []
 
 
-def sub_menu(item):
+def categorias(item):
     logger.info()
-
-    itemlist = list()
-    itemlist.append(item.clone(title="Bangbros" , action="categorias", url=host, id="menu-item-62819"))
-    itemlist.append(item.clone(title="Brazzers" , action="categorias", url=host, id="menu-item-817"))
-    itemlist.append(item.clone(title="Mofos" , action="categorias", url=host, id="menu-item-1707"))
-    itemlist.append(item.clone(title="Pornpros" , action="categorias", url=host, id="menu-item-3774"))
-    itemlist.append(item.clone(title="Realitykings" , action="categorias", url=host, id="menu-item-844"))
-    itemlist.append(item.clone(title="Sis Loves Me" , action="lista", url=host + "videos4/sislovesme/"))
-    itemlist.append(item.clone(title="Teamskeet" , action="categorias", url=host, id="menu-item-1713"))
-    itemlist.append(item.clone(title="Networks" , action="categorias", url=host, id="menu-item-23036"))
+    itemlist = []
+    soup = create_soup(item.url).find('nav', class_='g1-primary-nav')
+    matches = soup.find_all('li', class_='menu-item-g1-standard')
+    for elem in matches:
+        title = elem.a.text.strip()
+        id = elem['id']
+        if not "Home" in title:
+            itemlist.append(Item(channel=item.channel, action="canal", url=host, title=title, id=id))
     return itemlist
 
 
-def categorias(item):
+def canal(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('li', id=item.id)
     matches = soup.find_all('a')
-    # matches = soup.find_all('li', class_='menu-item-object-category')
     for elem in matches:
         url = elem['href']
         title = elem.text
         plot = ""
         thumbnail = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     return itemlist
-
 
 
 def create_soup(url):
@@ -116,31 +117,32 @@ def create_soup(url):
         return soup
     
     return False
-    
 
 
 def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('article', class_='entry-tpl-grid')
+    matches = soup.find('div', id='primary').find_all('article')
     for elem in matches:
+        elem = elem.find('div', class_='entry-featured-media')
         url = elem.a['href']
         title = elem.img['alt']
         thumbnail = elem.img['src']
+        if "svg" in thumbnail:
+            thumbnail = elem.img['data-src']
         plot = ""
-        itemlist.append(item.clone(action="findvideos", title=title, contentTitle=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))
     try:
-        if "search" in item.url:
-            next_page = soup.find('a', class_='next')['href']
+        if "/?s=" in item.url:
+            next_page = soup.find('div', class_='g1-collection-more-inner').a['data-g1-next-page-url']
         else:
             next_page = soup.find('link', rel='next')['href']
-            # next_page = soup.find('a', class_='g1-load-more')['data-g1-next-page-url']
     except:
         next_page = None
     if next_page:
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page.strip()))
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page.strip()))
     return itemlist
 
 
@@ -151,15 +153,11 @@ def findvideos(item):
     if not soup:
         return itemlist
     soup = soup.find('div', class_='entry-content')
-    matches = soup.find_all('p')
+    matches = soup.find_all('iframe')
     for elem in matches:
-        url = elem.find('iframe')
-        if url:
-            url= url['src']
-            itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 
+        url = elem['src']
+        itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
-    # Requerido para FilterTools
-    itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
     return itemlist

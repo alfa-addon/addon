@@ -6,8 +6,12 @@
       {
         "pattern": "(https://player.tnaflix.com/video/[0-9]+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "tnaflix.com/[A-z-]+/[A-z-]+/video([0-9]+)?",
+        "url": "https://player.tnaflix.com/video/\\1"
       }
-      ]
+    ]
   },
   "free": true,
   "id": "tnaflix",

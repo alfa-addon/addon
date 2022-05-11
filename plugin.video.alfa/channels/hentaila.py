@@ -18,7 +18,15 @@ from channelselector import get_thumb
 from channels import autoplay
 from lib import strptime_fix
 
-host = 'https://hentaila.com'
+canonical = {
+             'channel': 'hentaila', 
+             'host': config.get_setting("current_host", 'hentaila', default=''), 
+             'host_alt': ["https://hentaila.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 IDIOMAS = {'VOSE': 'VOSE'}
 SEEK_TMDB = config.get_setting('seek_tmdb', channel='hentaila')

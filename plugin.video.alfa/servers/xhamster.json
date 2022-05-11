@@ -12,7 +12,7 @@
         "url": "https://xhamster.com/embed/\\1"
       },
       {
-        "pattern": "xhgeo.com/embed/([A-z0-9-]+)",
+        "pattern": "(?:xhgeo|xhwide).com/embed/([A-z0-9-]+)",
         "url": "https://xhamster.com/embed/\\1"
       },
       {

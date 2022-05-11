@@ -17,16 +17,23 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'http://www.perfectgirls.net'
+canonical = {
+             'channel': 'perfectgirls', 
+             'host': config.get_setting("current_host", 'perfectgirls', default=''), 
+             'host_alt': ["https://www.perfectgirls.net"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Ultimos" , action="lista", url=host))
-    itemlist.append(item.clone(title="Top" , action="lista", url=host + "/top/3days/"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Ultimos" , action="lista", url=host))
+    itemlist.append(Item(channel=item.channel, title="Top" , action="lista", url=host + "/top/3days/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -54,7 +61,7 @@ def categorias(item):
         scrapedplot = ""
         scrapedthumbnail = ""
         url = urlparse.urljoin(item.url,scrapedurl) + "/1"
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=url,
                                thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
@@ -83,12 +90,12 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=scrapedthumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=scrapedthumbnail,
                               fanart=scrapedthumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<a class="btn_wrapper__btn" href="([^"]+)">Next</a></li>')
     if next_page:
         next_page = urlparse.urljoin(item.url, next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page ))
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page ))
     return itemlist
 
 
@@ -101,7 +108,7 @@ def findvideos(item):
     for url,quality in matches:
         if not url.startswith("https"):
             url = "http:%s" % url
-        itemlist.append(item.clone(action="play", title=quality, url=url) )
+        itemlist.append(Item(channel=item.channel, action="play", title=quality, url=url) )
     return itemlist
 
 

@@ -14,30 +14,37 @@ from core import httptools
 from core import servertools
 from core import scrapertools
 from core.item import Item
-from platformcode import logger
+from platformcode import config, logger
 from bs4 import BeautifulSoup
 
-host = 'https://pornhub.com'
+canonical = {
+             'channel': 'pornhub', 
+             'host': config.get_setting("current_host", 'pornhub', default=''), 
+             'host_alt': ["https://pornhub.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="lista", title="Novedades", fanart=item.fanart,
+    itemlist.append(Item(channel=item.channel, action="lista", title="Novedades", fanart=item.fanart,
                          url="%s/video?o=cm" %host))
-    itemlist.append(item.clone(action="lista", title="Mas visto", fanart=item.fanart,
+    itemlist.append(Item(channel=item.channel, action="lista", title="Mas visto", fanart=item.fanart,
                          url="%s/video?o=mv" %host))
-    itemlist.append(item.clone(action="lista", title="Mejor valorado", fanart=item.fanart,
+    itemlist.append(Item(channel=item.channel, action="lista", title="Mejor valorado", fanart=item.fanart,
                          url="%s/video?o=tr" %host))
-    itemlist.append(item.clone(action="lista", title="Mas largo", fanart=item.fanart,
+    itemlist.append(Item(channel=item.channel, action="lista", title="Mas largo", fanart=item.fanart,
                          url="%s/video?o=lg" %host))
-    itemlist.append(item.clone(action="catalogo", title="Canal", fanart=item.fanart,
+    itemlist.append(Item(channel=item.channel, action="catalogo", title="Canal", fanart=item.fanart,
                          url= "%s/channels?o=tr" % host))
-    itemlist.append(item.clone(action="catalogo", title="PornStar", fanart=item.fanart,
+    itemlist.append(Item(channel=item.channel, action="catalogo", title="PornStar", fanart=item.fanart,
                          url= "%s/pornstars?o=t" % host))
-    itemlist.append(item.clone(action="categorias", title="Categorias", fanart=item.fanart,
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", fanart=item.fanart,
                          url= "%s/categories" % host))
-    itemlist.append(item.clone(action="search", title="Buscar", fanart=item.fanart))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", fanart=item.fanart))
     return itemlist
 
 
@@ -75,14 +82,14 @@ def catalogo(item):
             cantidad = elem.find('span', class_='videosNumber').text.split(' Videos')[0]
             url = urlparse.urljoin(item.url, url + "/videos?o=cm")
         title = "%s (%s)" % (stitle,cantidad)
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail))
         # Paginador
     next_page = soup.find('li', class_='page_next')
     if next_page:
         next_page = next_page.a['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -101,7 +108,7 @@ def categorias(item):
         else:
             url = urlparse.urljoin(item.url, url + "?o=cm")
         title = "%s %s" % (stitle,cantidad)
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail))
     return itemlist
 
@@ -125,7 +132,7 @@ def lista(item):
     if "/pornstar/" in item.url:
         matches = soup.find('ul', id='mostRecentVideosSection').find_all('div', class_='phimage')
     elif "channels" in item.url:
-        matches = soup.find('ul', id='showAllChanelVideos').find_all('div', class_='phimage')
+        matches = soup.find_all('li', class_='pcVideoListItem')
     else:
         matches = soup.find('div', class_='gridWrapper').find_all('div', class_='phimage')
     for elem in matches:
@@ -145,20 +152,20 @@ def lista(item):
         if logger.info() == False:
             action = "findvideos"
         if not premium and not elem.find('div', class_='thumbTextPlaceholder'):
-            itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=url,
+            itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle = title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail))
     next_page = soup.find('li', class_='page_next')
     if next_page:
         next_page = next_page.a['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def findvideos(item):
     logger.info(item)
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=item.url)) 
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=item.url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
@@ -166,7 +173,7 @@ def findvideos(item):
 def play(item):
     logger.info(item)
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=item.url)) 
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=item.url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 

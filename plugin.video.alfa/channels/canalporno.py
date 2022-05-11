@@ -14,19 +14,26 @@ from core import httptools
 from core.item import Item
 from core import servertools
 from core import scrapertools
-from platformcode import logger
+from platformcode import config, logger
 
-host = "https://www.canalporno.com"
+canonical = {
+             'channel': 'canalporno', 
+             'host': config.get_setting("current_host", 'canalporno', default=''), 
+             'host_alt': ["https://www.canalporno.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="lista", title="Útimos videos", url=host + "/ajax/homepage/?page=1"))
-    itemlist.append(item.clone(action="categorias", title="Canal", url=host + "/ajax/list_producers/?page=1"))
-    itemlist.append(item.clone(action="categorias", title="PornStar", url=host + "/ajax/list_pornstars/?page=1"))
-    itemlist.append(item.clone(action="categorias", title="Categorias", url=host + "/categorias"))
-    itemlist.append(item.clone(action="search", title="Buscar"))
+    itemlist.append(Item(channel = item.channel, action="lista", title="Útimos videos", url=host + "/ajax/homepage/?page=1"))
+    itemlist.append(Item(channel = item.channel, action="categorias", title="Canal", url=host + "/ajax/list_producers/?page=1"))
+    itemlist.append(Item(channel = item.channel, action="categorias", title="PornStar", url=host + "/ajax/list_pornstars/?page=1"))
+    itemlist.append(Item(channel = item.channel, action="categorias", title="Categorias", url=host + "/categorias"))
+    itemlist.append(Item(channel = item.channel, action="search", title="Buscar"))
     return itemlist
 
 
@@ -61,7 +68,7 @@ def categorias(item):
         title= "%s (%s)" % (scrapedtitle, cantidad) 
         url= url.replace("/videos-porno/", "/ajax/show_category/").replace("/sitio/", "/ajax/show_producer/").replace("/pornstar/", "/ajax/show_pornstar/")
         url = "%s%s?page=1" % (host, url)
-        itemlist.append(item.clone(action="lista", title=title, url=url, thumbnail=scrapedthumbnail))
+        itemlist.append(Item(channel = item.channel, action="lista", title=title, url=url, thumbnail=scrapedthumbnail))
     if "/?page=" in item.url:
         next_page=item.url
         num= int(scrapertools.find_single_match(item.url,".*?/?page=(\d+)"))
@@ -69,7 +76,7 @@ def categorias(item):
         next_page = "?page=%s" % str(num)
         if next_page!="":
             next_page = urlparse.urljoin(item.url,next_page)
-            itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+            itemlist.append(Item(channel = item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -89,7 +96,7 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, contentTitle=title,
+        itemlist.append(Item(channel = item.channel, action=action, title=title, url=url, contentTitle=title,
                                    fanart=scrapedthumbnail, thumbnail=scrapedthumbnail))
     last=scrapertools.find_single_match(item.url,'(.*?)page=\d+')
     num= int(scrapertools.find_single_match(item.url,".*?/?page=(\d+)"))
@@ -97,7 +104,7 @@ def lista(item):
     next_page = "page=%s" % str(num)
     if next_page!="":
         next_page = last + next_page
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel = item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -106,7 +113,7 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
-    itemlist.append(item.clone(action="play", url=url, server="directo"))
+    itemlist.append(Item(channel = item.channel, action="play", url=url, contentTitle=item.contentTitle, server="directo"))
     return itemlist
 
 
@@ -115,5 +122,5 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
-    itemlist.append(item.clone(action="play", url=url, server="directo"))
+    itemlist.append(Item(channel = item.channel, action="play", url=url, contentTitle=item.contentTitle, server="directo"))
     return itemlist

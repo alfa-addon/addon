@@ -18,18 +18,27 @@ from core import servertools
 from core import httptools
 from core import jsontools as json
 
-host = 'https://sexu.com'
+
+canonical = {
+             'channel': 'sexu', 
+             'host': config.get_setting("current_host", 'sexu', default=''), 
+             'host_alt': ["https://sexu.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/new"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/engaging"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/all"))
-    itemlist.append(item.clone(title="Mas comentados" , action="lista", url=host + "/trending")) 
-    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/pornstars"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/new"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/engaging"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/all"))
+    itemlist.append(Item(channel=item.channel, title="Mas comentados" , action="lista", url=host + "/trending")) 
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/pornstars"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -61,12 +70,12 @@ def categorias(item):
             thumbnail = "http:%s" % scrapedthumbnail
         url = urlparse.urljoin(host,scrapedurl)
         url +="?st=upload"
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     next_page = scrapertools.find_single_match(data, '<a class="pagination__arrow pagination__arrow--next" href="([^"]+)">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 def lista(item):
@@ -87,19 +96,19 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<a class="pagination__arrow pagination__arrow--next" href="([^"]+)">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def findvideos(item):
     logger.info()
     itemlist = []
-    url = 'https://sexu.com/api/video-info'
+    url = '%s/api/video-info' %host
     headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
     data = httptools.downloadpage(url, post=item.url, headers=headers).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
@@ -109,14 +118,14 @@ def findvideos(item):
         quality = cat["quality"]
         if not url.startswith("https"):
             url = "https:%s" % url
-        itemlist.append(item.clone(action="play", title=quality, url=url) )
+        itemlist.append(Item(channel=item.channel, action="play", title=quality, url=url) )
     return itemlist[::-1]
 
 
 def play(item):
     logger.info()
     itemlist = []
-    url = 'https://sexu.com/api/video-info'
+    url = '%s/api/video-info' %host
     headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
     data = httptools.downloadpage(url, post=item.url, headers=headers).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
