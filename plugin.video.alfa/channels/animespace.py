@@ -28,8 +28,8 @@ from channels import renumbertools
 canonical = {
              'channel': 'animespace', 
              'host': config.get_setting("current_host", 'animespace', default=''), 
-             'host_alt': ["https://animespace.tv/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://animespace.club/"], 
+             'host_black_list': ["https://animespace.tv/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

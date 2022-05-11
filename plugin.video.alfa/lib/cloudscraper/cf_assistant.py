@@ -32,6 +32,7 @@ patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.
 def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blacklist=True, headers=None, 
            retryIfTimeout=True, cache=True, clearWebCache=False, mute=True, alfa_s=True, elapsed=0, **kwargs):
     blacklist_clear = True
+    ua_headers = False
     if not elapsed: elapsed = time.time()
         
     if not resp:
@@ -87,7 +88,11 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
                 if newer:
                     help_window.show_info('cf_2_02', wait=False)
 
-            ua = get_ua(check_assistant)
+            if headers and isinstance(headers, dict) and headers.get('User-Agent', ''):
+                ua = headers.pop('User-Agent', '')
+                ua_headers = True
+            else:
+                ua = get_ua(check_assistant)
             
             try:
                 vers = int(scrapertools.find_single_match(ua, r"Android\s*(\d+)"))
@@ -98,12 +103,13 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
             if len(wvbVersion) > 3: wvbVersion = wvbVersion[:2]
             freequent_data[1] = 'CF2,%s,%s,%s%s,' % (check_assistant.get('assistantVersion', '0.0.0'), wvbVersion, host, vers)
 
-            if vers:
-                dan = {'User-Agent': ua}
-                resp.headers.update(dict(dan))
-                ua = None
-            else:
-                ua = httptools.get_user_agent()
+            if not ua_headers:
+                if vers:
+                    dan = {'User-Agent': ua}
+                    resp.headers.update(dict(dan))
+                    ua = None
+                else:
+                    ua = httptools.get_user_agent()
 
             if not alfa_s: logger.debug("UserAgent: %s || Android Vrs: %s" % (ua, vers))
 
@@ -136,10 +142,10 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
 
                 logger.debug("Lista cookies: %s - %s" % (data_assistant.get("cookies", []), time.time() - elapsed))
                 for cookie in data_assistant["cookies"]:
-                    cookieslist = cookie.get("cookiesList", None)
+                    cookieslist = cookie.get("cookiesList", '')
                     val = scrapertools.find_single_match(cookieslist, 'cf_clearance=([A-z0-9_\-\.]+)')
                     #val = scrapertools.find_single_match(cookieslist, 'cf_clearance=([^;]+)')
-                    dom = cookie.get("urls", None)
+                    dom = cookie.get("urls", [])
                     logger.debug("dominios: %s" % dom[0])
 
                     if 'cf_clearance' in cookieslist and val:
@@ -206,7 +212,9 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
     expiration = config.get_setting('cf_assistant_bl_expiration', default=30) * 60
     expiration_final = 0
     security_error_blackout = (5 * 60) - expiration
+    ua_headers = False
     
+    #debug = True
     if debug: alfa_s = False
     
     if not resp:
@@ -217,6 +225,7 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
         resp = type('HTTPResponse', (), resp)
     
     if not alfa_s: logger.debug("ERROR de descarga: %s" % resp.status_code)
+    resp.status_code = 429
     
     opt = kwargs.get('opt', {})
     
@@ -265,7 +274,11 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
                 if newer:
                     help_window.show_info('cf_2_02', wait=False)
 
-            ua = get_ua(check_assistant)
+            if headers and isinstance(headers, dict) and headers.get('User-Agent', ''):
+                ua = headers.pop('User-Agent', '')
+                ua_headers = True
+            else:
+                ua = get_ua(check_assistant)
             
             try:
                 vers = int(scrapertools.find_single_match(ua, r"Android\s*(\d+)"))
@@ -280,12 +293,13 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
             else:
                 freequent_data[1] += 'Src_R'
 
-            if vers:
-                dan = {'User-Agent': ua}
-                resp.headers.update(dict(dan))
-                ua = None
-            else:
-                ua = httptools.get_user_agent()
+            if not ua_headers:
+                if vers:
+                    dan = {'User-Agent': ua}
+                    resp.headers.update(dict(dan))
+                    ua = None
+                else:
+                    ua = httptools.get_user_agent()
 
             if not alfa_s: logger.debug("UserAgent: %s || Android Vrs: %s" % (ua, vers))
 
@@ -302,27 +316,37 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
             if not alfa_s: logger.debug("data assistant: %s" % data_assistant)
             
             if isinstance(data_assistant, dict) and data_assistant.get('htmlSources', []) \
-                                                and data_assistant['htmlSources'][0].get('source', ''):
-                try:
-                    data = base64.b64decode(data_assistant['htmlSources'][0]['source']).decode('utf-8')
-                    source = True
-                except:
-                    pass
+                                                and data_assistant['htmlSources'][0].get('url', ''):
+                for html_source in data_assistant['htmlSources']:
+                    if html_source.get('url', '') != url:
+                        if not alfa_s: logger.debug('Url ignored: %s' % html_source.get('url', ''))
+                        continue
+                    if not alfa_s: logger.debug('Url accepted: %s' % html_source.get('url', ''))
+                    try:
+                        data = base64.b64decode(html_source.get('source', ''))
+                        if PY3 and isinstance(data, bytes):
+                            data = "".join(chr(x) for x in bytes(data))
+                        source = True
+                    except:
+                        logger.error(traceback.format_exc(1))
+                        continue
+                        
+                    if source and 'accessing a cross-origin frame' in data:
+                        source = False
+                        retry = True
+                        expiration_final = security_error_blackout
+                        freequent_data[1] = 'Cha,%s,%s,%s%s,' % (check_assistant.get('assistantVersion', '0.0.0'), wvbVersion, host, vers)
+                        freequent_data[1] += 'KO_SecE'
+                        logger.error('Error SEGURIDAD: %s - %s' % (expiration_final, data[:100]))
                     
-                if source and 'accessing a cross-origin frame' in data:
-                    source = False
-                    retry = True
-                    expiration_final = security_error_blackout
-                    freequent_data[1] = 'Cha,%s,%s,%s%s,' % (check_assistant.get('assistantVersion', '0.0.0'), wvbVersion, host, vers)
-                    freequent_data[1] += 'KO_SecE'
-                    logger.error('Error SEGURIDAD: %s - %s' % (expiration_final, data[:100]))
-                
-                if source:
-                    freequent_data[1] = 'Cha,%s,%s,%s%s,' % (check_assistant.get('assistantVersion', '0.0.0'), wvbVersion, host, vers)
-                    if not retry:
-                        freequent_data[1] += 'OK'
-                    else:
-                        freequent_data[1] += 'OK_R'
+                    elif source:
+                        resp.status_code = 200
+                        freequent_data[1] = 'Cha,%s,%s,%s%s,' % (check_assistant.get('assistantVersion', '0.0.0'), wvbVersion, host, vers)
+                        if not retry:
+                            freequent_data[1] += 'OK'
+                        else:
+                            freequent_data[1] += 'OK_R'
+                        break
                     
             if not source and not retry:
                 config.set_setting('cf_assistant_ua', '')
@@ -349,10 +373,10 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
 
                 if not alfa_s: logger.debug("Lista cookies: %s" % data_assistant.get("cookies", []))
                 for cookie in data_assistant["cookies"]:
-                    cookieslist = cookie.get("cookiesList", None)
+                    cookieslist = cookie.get("cookiesList", '')
                     val = scrapertools.find_single_match(cookieslist, 'cf_clearance=([A-z0-9_\-\.]+)')
                     #val = scrapertools.find_single_match(cookieslist, 'cf_clearance=([^;]+)')
-                    dom = cookie.get("urls", None)
+                    dom = cookie.get("urls", [])
                     if not alfa_s: logger.debug("dominios: %s" % dom[0])
 
                     if 'cf_clearance' in cookieslist and val:
@@ -366,6 +390,7 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
 
                             resp.headers.update(dict(rin))
                             freequent_data[1] += 'C'
+                            resp.status_code = 201
                             if not alfa_s: logger.debug("cf_clearence=%s" % val)
 
         elif host == 'a':
@@ -383,10 +408,6 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
         else:
             bl_data[domain_full] = time.time() + expiration_final
         if not debug and not httptools.TEST_ON_AIR: filetools.write(PATH_BL, jsontools.dump(bl_data))
-    if not source:
-        resp.status_code = 429
-    else:
-        resp.status_code = 200
     
     return data, resp
 

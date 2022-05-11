@@ -187,47 +187,12 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data.replace("&quot;",'"').replace("amp;","").replace("#038;","")
-    matches = scrapertools.find_multiple_matches(data, 'TPlayerTb.*?id="([^"]+)".*?src="([^"]+)"')
-    matches_del = scrapertools.find_multiple_matches(data, '(?is)<!--<td>.*?-->')
-    # Borra los comentarios - que contienen enlaces duplicados
-    for del_m in matches_del:
-        data = data.replace(del_m, "")
-    # Primer grupo de enlaces
-    for id, url1 in matches:
-        language = scrapertools.find_single_match(data, '(?is)data-tplayernv="%s".*?span><span>([^<]+)' %id)
-        data1 = httptools.downloadpage(url1).data
-        url = scrapertools.find_single_match(data1, 'src="([^"]+)')
-        if "a-x" in url:
-            data1 = httptools.downloadpage(url, headers={"Referer":url1}).data
-            url = scrapertools.find_single_match(data1, 'src: "([^"]+)"')
-        if "embed.php" not in url:
-            if url:
-                itemlist.append(item.clone(action = "play", title = "Ver en %s (" + language + ")", language = language, url = url))
-            continue
-        data1 = httptools.downloadpage(url).data
-        packed = scrapertools.find_single_match(data1, "(?is)eval\(function\(p,a,c,k,e.*?</script>")
-        unpack = jsunpack.unpack(packed)
-        urls = scrapertools.find_multiple_matches(unpack, '"file":"([^"]+).*?label":"([^"]+)')
-        for url2, quality in urls:
-            if url2:
-                itemlist.append(item.clone(action = "play", title = "Ver en %s (" + quality + ") (" + language + ")", language = language, url = url2))
-    # Segundo grupo de enlaces
-    matches = scrapertools.find_multiple_matches(data, '<span><a rel="nofollow" target="_blank" href="([^"]+)"')
+    url = scrapertools.find_single_match(data, '<span><a rel="nofollow" target="_blank" href="([^"]+)"')
+    data = httptools.downloadpage(url).data
+    bloque = scrapertools.find_single_match(data, 'videosJap = \[(.*)\];')
+    matches  = scrapertools.find_multiple_matches(bloque, "(http.*?)'")
     for url in matches:
-        data1 = httptools.downloadpage(url).data
-        matches1 = scrapertools.find_multiple_matches(data1, '"ser".*?</tr>')
-        for ser in matches1:
-            ser = ser.replace("&#215;","x")
-            aud = scrapertools.find_single_match(ser, 'aud"><i class="([^"]+)')
-            sub = scrapertools.find_single_match(ser, 'sub"><i class="([^"]+)')
-            quality = scrapertools.find_single_match(ser, 'res">.*?x([^<]+)')
-            language = "Versión RAW"
-            if aud == "jp" and sub == "si":
-                language = "Sub. Español"
-            matches2 = scrapertools.find_multiple_matches(ser, 'href="([^"]+)')
-            for url2 in matches2:
-                if url2:
-                    itemlist.append(item.clone(action = "play", title = "Ver en %s (" + quality + ") (" + language + ")", language = language, url = url2))
+        itemlist.append(item.clone(action = "play", title = "%s", url = url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
      # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)

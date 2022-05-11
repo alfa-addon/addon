@@ -85,6 +85,11 @@ def init():
             config.set_setting("current_host", '', channel='dontorrent')        # Se resetea el host de algunos canales que tienen alternativas
             config.set_setting("current_host", '', channel='mejortorrent')      # Se resetea el host de algunos canales que tienen alternativas
             
+        # Periodicamente se resetean los valores de "current_host" de los canales para eliminar asignaciones antiguas
+        round_level = 1
+        if config.get_setting('current_host', default=0) < round_level:
+            reset_current_host(round_level)
+        
         # Se verifica si están bien las rutas a la videoteca
         config.verify_directories_created()
         
@@ -1118,12 +1123,29 @@ def clean_videolibrary_unused_channels():
 
 
 def btdigg_status():
-    import requests
-    
-    url = 'https://btdig.com/'
+
+    config.set_setting('btdigg_status', False, server='torrent')
+
+
+def reset_current_host(round_level):
     
     try:
-        resp = requests.get(url, timeout=5)
-        config.set_setting('btdigg_status', resp.status_code, server='torrent')
+        for channel_json in sorted(filetools.listdir(filetools.join(ADDON_USERDATA_PATH, 'settings_channels'))):
+            if not channel_json.endswith('.json'): continue
+            channel_name = channel_json.replace('_data.json', '')
+            
+            try:
+                channel = __import__('channels.%s' % channel_name, None,
+                             None, ["channels.%s" % channel_name])
+                host = channel.host
+                new_host = channel.canonical['host_alt'][0]
+                if host != new_host:
+                    config.set_setting('current_host', new_host, channel=channel_name)
+                    logger.info('%s: current_host reseteado desde "%s" a "%s"' % (channel_name.capitalize(), host, new_host))
+                continue
+            except:
+                continue
     except:
-        config.set_setting('btdigg_status', False, server='torrent')
+        return
+    
+    config.set_setting('current_host', round_level)

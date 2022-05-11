@@ -31,12 +31,10 @@ canonical = {
              'channel': 'fullseriehd', 
              'host': config.get_setting("current_host", 'fullseriehd', default=''), 
              'host_alt': ["https://megaxserie.me/"], 
-             'host_black_list': [], 
-             'status': 'WEB DESACTIVADA', 
+             'host_black_list': ["https://megaserie.net/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
-# host = canonical['host'] or canonical['host_alt'][0]
-host = canonical['host_alt'][0]
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def create_soup(url, referer=None, post=None, unescape=False):

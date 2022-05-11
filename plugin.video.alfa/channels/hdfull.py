@@ -32,8 +32,8 @@ from channelselector import get_thumb
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             'host_alt': ['https://hdfull.fun/'], 
-             'host_black_list': ['https://hdfull.lol/', 'https://hdfull.one/'], 
+             'host_alt': ['https://hdfull.top/'], 
+             'host_black_list': ['https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -662,7 +662,7 @@ def seasons(item):
     patron += 'alt="([^"]+)"\s*src="([^"]+)"'
     
     matches = re.compile(patron, re.DOTALL).findall(data)
-    logger.error(matches)
+    matches = find_hidden_seasons(item, matches, sid)
 
     for ssid, scrapedtitle, scrapedthumbnail in matches:
         if ssid == '0':
@@ -1105,3 +1105,55 @@ def get_page_num(item):
     item.url = re.sub(r'\d+$', page_num, item.url)
     if page_num:
         return fichas(item)
+
+def find_hidden_seasons(item, matches, sid):
+    try:
+        web = int(matches[-1][0])
+        try:
+            tmdb.set_infoLabels(item, True)
+            tmdb_season = int(item.infoLabels['number_of_seasons'])
+        except:
+            tmdb_season = web
+        high_season = 0
+
+        season_name = scrapertools.find_single_match(matches[-1][1], '([^$]+\s+)\d+')
+        thumb = matches[-1][2]
+        
+        url = urlparse.urljoin(host, "a/episodes")
+        post = "action=lastest&start=0&limit=1&elang=ALL&show=%s" % sid
+        data = agrupa_datos(url, post=post, json=True, force_check=False, force_login=False, alfa_s=True)
+        if data and isinstance(data, list):
+            try:
+                high_season = int(data[0].get('season', 0))
+            except:
+                high_season = 0
+        logger.info('Web: %s, Latest: %s, Tmdb: %s' % (web, high_season, tmdb_season))
+        
+        if not high_season:
+            try:
+                if matches and item.infoLabels['tmdb_id'] and item.infoLabels['number_of_seasons'] \
+                           and int(item.infoLabels['number_of_seasons']) > int(matches[-1][0]):
+
+                    for high_season in reversed(range(tmdb_season+1)):
+                        if high_season <= web:
+                            return matches
+                        
+                        post = "action=season&start=0&limit=0&show=%s&season=%s" % (sid, high_season)
+                        data = agrupa_datos(url, post=post, json=True, force_check=False, force_login=False, alfa_s=True)
+                        if data and isinstance(data, list):
+                            break
+                else:
+                    return matches
+            except:
+                import traceback
+                logger.error(traceback.format_exc())
+                return matches
+
+        for i in range(web+1, high_season+1):
+            matches.append((str(i), season_name+str(i), thumb))
+    except:
+        import traceback
+        logger.error(traceback.format_exc())
+    
+    return matches
+        

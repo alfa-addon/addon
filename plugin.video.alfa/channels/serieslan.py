@@ -16,6 +16,8 @@ import re
 import string
 import json
 
+from rJs import runJavascript
+
 from channels import renumbertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
@@ -216,9 +218,6 @@ def list_all(item):
             itemlist.append(Item(channel=item.channel, title=title, url=url,
                 action="seasons", thumbnail=thumbnail, contentSerieName=title, context=context))
     
-    #if f_page < len(matches) and len(itemlist)>30:
-    #    itemlist.append(item.clone(title="[COLOR cyan]Página Siguiente >>[/COLOR]", page=f_page))
-
     return itemlist
 
 def seasons(item, add_to_videolibrary = False):
@@ -315,33 +314,21 @@ def findvideos(item):
         js = ""
         for part in matches:
             js += part
-        #logger.info("test before:" + js)
 
         try: 
             matches = scrapertools.find_multiple_matches(data_new, '" id="(.*?)" val="(.*?)"')
             for zanga, val in matches:
                 js = js.replace('var %s = document.getElementById("%s");' % (zanga, zanga), "")
                 js = js.replace('%s.getAttribute("val")' % zanga, '"%s"' % val)
-            #logger.info("test1 after:" +js)
         except:
             pass
         
-        #v1
         js = re.sub('(document\[.*?)=', 'prem=', js)
         
-        #Parcheando a lo bruto v2
         video = scrapertools.find_single_match(js, "sources: \[\{src:(.*?), type")
         js = re.sub(' videojs\((.*?)\);', video+";", js)
         
-        from lib import js2py
-        js2py.disable_pyimport()
-        context = js2py.EvalJs({'atob': atob})
-        
-        try:
-            result = context.eval(js)
-        except:
-            logger.error("Js2Py no puede desofuscar el codigo, ¿cambió?")
-            continue
+        result = runJavascript.runJs().runJsString(js, True)
 
         url = scrapertools.find_single_match(result, 'src="(.*?)"')
         #v2
@@ -425,6 +412,3 @@ def _nEgqhkiRub():
 def _lTjZxWGNnE():
     return 57
 '''
-def atob(s):
-    import base64
-    return base64.b64decode(s.to_string().value)

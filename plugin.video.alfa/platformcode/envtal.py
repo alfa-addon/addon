@@ -397,6 +397,12 @@ def get_environment():
         if PLATFORM in ['android', 'atv2'] and filetools.exists(assistant_path):
             environment['assistant_path'] = str(filetools.file_info(assistant_path))
     
+        try:
+            import ssl
+            environment['ssl_version'] = str(ssl.OPENSSL_VERSION)
+        except:
+            environment['ssl_version'] = ''
+
     except:
         logger.error(traceback.format_exc())
         environment = {}
@@ -441,6 +447,7 @@ def get_environment():
         environment['torrent_error'] = ''
         environment['assistant_version'] = ''
         environment['assistant_cf_ua'] = ''
+        environment['ssl_version'] = ''
         
     return environment
 
@@ -508,6 +515,8 @@ def list_env(environment={}):
                             .replace('\\\\', '\\')))
     
     logger.info('Proxy: ' + environment['proxy_active'])
+    
+    logger.info('SSL version: ' + environment['ssl_version'])
     
     logger.info('Assistant ver.: ' + environment['assistant_version'] + \
                             ' - Assistant UA: ' + environment['assistant_cf_ua'] + \
@@ -611,6 +620,9 @@ def paint_env(item, environment={}):
     proxy = """\
     Muestra las direcciones de canales o servidores que necesitan [COLOR yellow]Proxy[/COLOR]
     """
+    SSL = """\
+    Muestra la versión instalada de SSL [COLOR yellow]Proxy[/COLOR]
+    """
     assistant = """\
     Muestra la versión del [COLOR yellow]Assistant[/COLOR] instalado y el [COLOR yellow]User Agent[/COLOR] usado
     """
@@ -687,6 +699,10 @@ def paint_env(item, environment={}):
     
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Proxy: [/COLOR]' + 
                     environment['proxy_active'], action="", plot=proxy, thumbnail=thumb, 
+                    folder=False))
+                    
+    itemlist.append(Item(channel=item.channel, title='[COLOR yellow]SSL: [/COLOR]' + 
+                    environment['ssl_version'], action="", plot=SSL, thumbnail=thumb, 
                     folder=False))
     
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Assistant ver.: [/COLOR]' + 
