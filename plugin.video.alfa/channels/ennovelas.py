@@ -46,6 +46,11 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
 
+    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + "?op=categories_all&per_page=60&page=1",
+                         thumbnail=get_thumb("all", auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Nuevos Episodios" , action="new_episodes", url= host + "just_added.html",
+                          thumbnail=get_thumb('new_episodes', auto=True), infoLabels={"year": "-", "season" : 1}))
+
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + "?op=categories_all&name=",
                          thumbnail=get_thumb("search", auto=True)))
 
@@ -77,7 +82,33 @@ def list_all(item):
                         contentSerieName=scrapedtitle, infoLabels={"year": "-", "season" : 1}))
     #tmdb
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
+    next_page = scrapertools.find_single_match(data, "<b>\d+</b><a href='([^']+)'")
+    if next_page:
+        itemlist.append( Item(channel=item.channel, action="list_all", title="Siguiente>>", url=next_page) )
     return itemlist
+
+
+def new_episodes(item):
+    logger.info()
+    itemlist = list()
+    infoLabels = item.infoLabels
+    data = httptools.downloadpage(item.url).data
+    patron  = "videobox.*?url\('(.*?)'\).*?"
+    patron += 'href="([^"]+).*?'
+    patron += 'center">([^<]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
+        contentSerieName = scrapedtitle.split("-")[0]
+        episode = scrapertools.find_single_match(scrapedtitle, 'Capitulo (\d+)')
+        if not episode: episode = 1
+        infoLabels["episode"] = episode
+        itemlist.append(Item(channel=item.channel, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, action="findvideos",
+                        contentSerieName=contentSerieName, infoLabels=infoLabels, contentType="episode"))
+    # tmdb
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    return itemlist
+
 
 
 def episodios(item):
