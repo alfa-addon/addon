@@ -14,19 +14,27 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import logger
+from platformcode import config, logger
 
-host = "https://www.vipporns.com" 
+canonical = {
+             'channel': 'erotik', 
+             'host': config.get_setting("current_host", 'erotik', default=''), 
+             'host_alt': ["https://www.vipporns.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="lista", title="Útimos videos", url= host + "/latest-updates/?sort_by=post_date&from=1"))
-    itemlist.append(item.clone(action="lista", title="Populares", url=host + "/most-popular/?sort_by=video_viewed_month&from=1"))
-    itemlist.append(item.clone(action="lista", title="Mejor valorado", url=host + "/top-rated/?sort_by=rating_month&from=1"))
-    itemlist.append(item.clone(action="categorias", title="Canal", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Útimos videos", url= host + "/latest-updates/?sort_by=post_date&from=1"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Populares", url=host + "/most-popular/?sort_by=video_viewed_month&from=1"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Mejor valorado", url=host + "/top-rated/?sort_by=rating_month&from=1"))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Canal", url=host + "/categories/"))
 
-    itemlist.append(item.clone(action="search", title="Buscar"))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar"))
     return itemlist
 
 
@@ -56,7 +64,7 @@ def categorias(item):
     for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
         title= "%s (%s)" %(scrapedtitle,cantidad)
         thumbnail =scrapedthumbnail
-        itemlist.append(item.clone(action="lista", title=title, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
                              thumbnail=thumbnail, fanart=thumbnail))
     return itemlist
 
@@ -79,21 +87,21 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, thumbnail=thumbnail, fanart=thumbnail, title=title,
+        itemlist.append(Item(channel=item.channel, action=action, thumbnail=thumbnail, fanart=thumbnail, title=title,
                              url=url, viewmode="movie", folder=True))
     next_page = scrapertools.find_single_match(data, 'data-parameters="([^"]+)">Next')
     if next_page:
         next_page = next_page.replace(":", "=").replace(";", "&").replace("+from_albums", "")
         next_page = "?%s" % next_page
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -101,6 +109,6 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

@@ -18,7 +18,14 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://collectionofbestporn.com'
+canonical = {
+             'channel': 'collectionofbestporn', 
+             'host': config.get_setting("current_host", 'collectionofbestporn', default=''), 
+             'host_alt': ["https://collectionofbestporn.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):

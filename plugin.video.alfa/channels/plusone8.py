@@ -18,20 +18,27 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://plusone8.com'
+canonical = {
+             'channel': 'plusone8', 
+             'host': config.get_setting("current_host", 'plusone8', default=''), 
+             'host_alt': ["https://plusone8.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/?filter=date"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/?filter=popular"))
-    itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/?orderby=likes"))
-    # itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/pornstars"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?filter=date"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/?filter=popular"))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "/?orderby=likes"))
+    # itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/pornstars"))
 
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/porn-categories"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/porn-categories"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -61,13 +68,13 @@ def categorias(item):
             thumbnail = elem.img['data-lazy-src']
         # url = url.replace("?actors=","/star/")
         plot = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('a', class_='current')
     if next_page:
         next_page = next_page.parent.find_next_siblings("li")[0].a['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -114,13 +121,13 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', class_='current')
     if next_page:
         next_page = next_page.parent.find_next_siblings("li")[0].a['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -129,7 +136,7 @@ def findvideos(item):
     itemlist = []
     url = create_soup(item.url).find('div', id='video-download').a['href']
     url = url.replace(" ", "%20")
-    itemlist.append(item.clone(action="play", contentTitle = item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", contentTitle = item.title, url=url))
     return itemlist
 
 
@@ -138,5 +145,5 @@ def play(item):
     itemlist = []
     url = create_soup(item.url).find('div', id='video-download').a['href']
     url = url.replace(" ", "%20")
-    itemlist.append(item.clone(action="play", contentTitle = item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", contentTitle = item.title, url=url))
     return itemlist

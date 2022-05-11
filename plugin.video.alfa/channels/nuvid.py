@@ -14,23 +14,30 @@ from core.item import Item
 from core import httptools
 from core import servertools
 from core import scrapertools
-from platformcode import logger
+from platformcode import config, logger
 import base64
 import hashlib
 
 
-host = "https://www.nuvid.com"
+canonical = {
+             'channel': 'nuvid', 
+             'host': config.get_setting("current_host", 'nuvid', default=''), 
+             'host_alt': ["https://www.nuvid.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(action="lista", title="Nuevos Vídeos", url="https://www.nuvid.com/search/videos/_empty_/"))
-    itemlist.append(item.clone(action="lista", title="Mejor Valorados", url="https://www.nuvid.com/search/videos/_empty_/", extra="rt"))
-    itemlist.append(item.clone(action="lista", title="Solo HD", url="https://www.nuvid.com/search/videos/hd", calidad="1"))
-    itemlist.append(item.clone(action="categorias", title="Categorías", url=host))
-    itemlist.append(item.clone(title="Buscar...", action="search"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Nuevos Vídeos", url="https://www.nuvid.com/search/videos/_empty_/"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Mejor Valorados", url="https://www.nuvid.com/search/videos/_empty_/", extra="rt"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Solo HD", url="https://www.nuvid.com/search/videos/hd", calidad="1"))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=host))
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search"))
     return itemlist
 
 
@@ -49,12 +56,12 @@ def categorias(item):
     bloques = scrapertools.find_multiple_matches(data, '<h2 class="c-mt-output title2">.*?>([^<]+)</h2>(.*?)</div>')
     for cat, b in bloques:
         cat = cat.replace("Straight", "Hetero")
-        itemlist.append(item.clone(action="", title=cat, text_color="gold"))
+        itemlist.append(Item(channel=item.channel, action="", title=cat, text_color="gold"))
         matches = scrapertools.find_multiple_matches(b, '<li>.*?href="([^"]+)" >(.*?)</span>')
         for scrapedurl, scrapedtitle in matches:
             scrapedtitle = "   %s" % scrapedtitle.replace("<span>", "")
             scrapedurl = urlparse.urljoin(host, scrapedurl)
-            itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl))
+            itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl))
     return itemlist
 
 
@@ -86,12 +93,12 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle = title, url=scrapedurl,
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail))
     next_page = scrapertools.find_single_match(data, '<li class="next1">.*?href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(host, next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page))
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page))
     return itemlist
 
 
@@ -100,7 +107,7 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
-    itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
@@ -110,6 +117,6 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
-    itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

@@ -17,16 +17,22 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://www.shameless.com'
+canonical = {
+             'channel': 'shameless', 
+             'host': config.get_setting("current_host", 'shameless', default=''), 
+             'host_alt': ["https://www.shameless.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/videos/1/"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/videos/1/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -48,14 +54,14 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<a href="(https://www.shameless.com/categories/[^"]+)".*?'
+    patron = '<a href="(%s/categories/[^"]+)".*?' %host
     patron += '<span itemprop="name">(.*?)</span> <sup>(.*?)</sup>.*?'
     patron += 'src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,cantidad,scrapedthumbnail in matches:
         scrapedplot = ""
         title = "%s %s " % (scrapedtitle,cantidad)
-        itemlist.append(item.clone(action="lista", title=title, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
     return itemlist
 
@@ -72,17 +78,17 @@ def lista(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" %(scrapedtime, scrapedtitle)
-        thumbnail = scrapedthumbnail + "|Referer=https://www.shameless.com/"
+        thumbnail = scrapedthumbnail + "|Referer=%s" %host
         plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=scrapedurl,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, 'class="active">.*?<a href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -98,7 +104,7 @@ def findvideos(item):
         headers = {'Referer': item.url}
         url = httptools.downloadpage(url, headers=headers , follow_redirects=False, only_headers=True).headers.get("location", "")
         url += "|Referer=%s" % item.url
-        itemlist.append(item.clone(action="play", title=quality, url=url) )
+        itemlist.append(Item(channel=item.channel, action="play", title=quality, url=url) )
     return itemlist[::-1]
 
 

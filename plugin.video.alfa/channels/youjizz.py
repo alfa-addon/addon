@@ -18,18 +18,25 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-
-host = "https://www.youjizz.com"
+canonical = {
+             'channel': 'youjizz', 
+             'host': config.get_setting("current_host", 'youjizz', default=''), 
+             'host_alt': ["https://www.youjizz.com"], 
+             'host_black_list': [], 
+             'pattern': ['property="?og:url"?\s*content="?([^"|\s*]+)["|\s*]'], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevas", action="lista", url=host + "/newest-clips/1.html"))
-    itemlist.append(item.clone(title="Popular", action="lista", url=host + "/most-popular/1.html"))
-    itemlist.append(item.clone(title="Mejor valorada", action="lista", url=host + "/top-rated-week/1.html"))
-    itemlist.append(item.clone(title="Categorias", action="categorias", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas", action="lista", url=host + "/newest-clips/1.html"))
+    itemlist.append(Item(channel=item.channel, title="Popular", action="lista", url=host + "/most-popular/1.html"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada", action="lista", url=host + "/top-rated-week/1.html"))
+    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -57,7 +64,7 @@ def categorias(item):
         plot = ""
         thumbnail = ""
         url = urlparse.urljoin(item.url, url)
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                              thumbnail=thumbnail, plot=plot))
     itemlist.sort(key=lambda x: x.title)
     return itemlist
@@ -90,6 +97,7 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time,title)
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
+        url = urlparse.unquote(url)
         url = urlparse.urljoin(item.url,url)
         if not thumbnail.startswith("https"):
             thumbnail = "https:%s" % thumbnail
@@ -97,43 +105,27 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                              plot=plot, contentTitle=title))
     next_page = soup.find('a', class_='pagination-next')
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page))
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page))
     return itemlist
 
 
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, 'var dataEncodings(.*?)var')
-    patron = '"quality":"(\d+)","filename":"([^"]+)",'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for quality,url in matches:
-        if ".mp4?" in url: serv= "mp4"
-        else: serv="m3u8"
-        if not url.startswith("https"):
-            url = "https:%s" % url.replace("\\", "")
-        itemlist.append(item.clone(action="play", title=quality, url=url) )
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, 'var dataEncodings(.*?)var')
-    patron = '"quality":"(\d+)","filename":"([^"]+)",'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for quality,url in matches:
-        if ".mp4?" in url: serv= "mp4"
-        else: serv="m3u8"
-        if not url.startswith("https"):
-            url = "https:%s" % url.replace("\\", "")
-        itemlist.append(['%sp [%s]' %(quality,serv), url])
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

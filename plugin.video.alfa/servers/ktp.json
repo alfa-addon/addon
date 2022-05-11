@@ -123,6 +123,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "https://mangovideoTTTT.(?:pw|club)/(?:embed|videos)/(\\d+)",
+        "url": "https://mangovideo.pw/embed/\\1"
+      },
+      {
         "pattern": "(https://watch-my-gf.com/view(?:_|-)video.php\\?v\\=[0-9]+)",
         "url": "\\1"
       },

@@ -16,20 +16,27 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'http://www.absoluporn.com/en'
+canonical = {
+             'channel': 'absoluporn', 
+             'host': config.get_setting("current_host", 'absoluporn', default=''), 
+             'host_alt': ["http://www.absoluporn.com/en"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/wall-date-1.html"))
-    itemlist.append(item.clone(title="Mas valorados" , action="lista", url=host + "/wall-note-1.html"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/wall-main-1.html"))
-    itemlist.append(item.clone(title="Mas largos" , action="lista", url=host + "/wall-time-1.html"))
+    itemlist.append(Item(channel = item.channel, title="Nuevos" , action="lista", url=host + "/wall-date-1.html"))
+    itemlist.append(Item(channel = item.channel, title="Mas valorados" , action="lista", url=host + "/wall-note-1.html"))
+    itemlist.append(Item(channel = item.channel, title="Mas vistos" , action="lista", url=host + "/wall-main-1.html"))
+    itemlist.append(Item(channel = item.channel, title="Mas largos" , action="lista", url=host + "/wall-time-1.html"))
 
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel = item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append(Item(channel = item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -58,7 +65,7 @@ def categorias(item):
         title = "%s %s" %(scrapedtitle,cantidad)
         scrapedurl = scrapedurl.replace(".html", "_date.html")
         scrapedurl = "%s/%s" % (host, scrapedurl)
-        itemlist.append(item.clone(action="lista", title=title, url=scrapedurl,
+        itemlist.append(Item(channel = item.channel, action="lista", title=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
     return itemlist
 
@@ -81,12 +88,12 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail, plot=plot,
+        itemlist.append(Item(channel = item.channel, action=action, title=title, url=url, thumbnail=thumbnail, plot=plot,
                               fanart=thumbnail, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<span class="text16">\d+</span> <a href="..([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", 
+        itemlist.append(Item(channel = item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
                               url=next_page) )
     return itemlist
 
@@ -101,7 +108,7 @@ def findvideos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for servervideo,path,filee  in matches:
         scrapedurl = "%s%s56ea912c4df934c216c352fa8d623af3%s" % (servervideo, path, filee)
-        itemlist.append(item.clone(action="play", title= item.title, url=scrapedurl))
+        itemlist.append(Item(channel = item.channel, action="play", title= item.title, url=scrapedurl))
     return itemlist
 
 
@@ -115,6 +122,6 @@ def play(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for servervideo,path,filee  in matches:
         scrapedurl = "%s%s56ea912c4df934c216c352fa8d623af3%s" % (servervideo, path, filee)
-        itemlist.append(item.clone(action="play", title= item.title, url=scrapedurl))
+        itemlist.append(Item(channel = item.channel, action="play", title= item.title, url=scrapedurl))
     return itemlist
 

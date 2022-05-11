@@ -16,18 +16,25 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from core import httptools
-from channels import filtertools
+# from channels import filtertools
 from channels import autoplay
 
-IDIOMAS = {'vo': 'VO'}
-list_language = list(IDIOMAS.values())
+# IDIOMAS = {'vo': 'VO'}
+# list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['gounlimited']
 
-host = 'http://siska.video/'
+canonical = {
+             'channel': 'siska', 
+             'host': config.get_setting("current_host", 'siska', default=''), 
+             'host_alt': ["http://siska.video/"], 
+             'host_black_list': [], 
+             'pattern': ['itemprop="?url"?\s*content="?([^"|\s*]+)["|\s*]'], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 ##### MUCHO NETU
-
 
 def mainlist(item):
     logger.info()
@@ -35,10 +42,10 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "best_xvideos.php?views=month"))
-    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "chanells.php"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "category.php"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "best_xvideos.php?views=month"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "chanells.php"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "category.php"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -69,7 +76,7 @@ def catalogo(item):
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         url = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=url,
                               thumbnail="" , plot=scrapedplot) )
     return sorted(itemlist, key=lambda i: i.title)
 
@@ -89,7 +96,7 @@ def categorias(item):
         scrapedtitle = scrapedtitle.replace("Watch Channel ", "")
         url = urlparse.urljoin(item.url,scrapedurl)
         thumbnail = urlparse.urljoin(item.url,scrapedthumbnail)
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=url,
                               thumbnail=thumbnail , plot=scrapedplot) )
     return sorted(itemlist, key=lambda i: i.title)
 
@@ -111,7 +118,7 @@ def lista(item):
         title = "[COLOR yellow]%s[/COLOR] %s" % (scrapedtime, scrapedtitle)
         thumbnail = urlparse.urljoin(item.url,scrapedthumbnail)
         plot = ""
-        itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumbnail, plot=plot,
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail, plot=plot,
                               fanart=thumbnail, contentTitle = title))
                               
                               
@@ -120,7 +127,7 @@ def lista(item):
         next_page = scrapertools.find_single_match(data, '<a href=\'([^\']+)\' title=\'Next Page\'>')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -136,7 +143,7 @@ def findvideos(item):
             itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', contentTitle = item.contentTitle))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
     # Requerido para FilterTools
-    itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
+    # itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
     return itemlist

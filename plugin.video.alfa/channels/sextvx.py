@@ -18,17 +18,23 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.sextvx.com'
+canonical = {
+             'channel': 'sextvx', 
+             'host': config.get_setting("current_host", 'sextvx', default=''), 
+             'host_alt': ["https://www.sextvx.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/es/recent/"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/es/popular/"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/es/categories/"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/es/recent/"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/es/popular/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/es/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -56,7 +62,7 @@ def categorias(item):
         thumbnail = elem.img['data-src']
         url = urlparse.urljoin(item.url,url)
         plot = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     return itemlist
 
@@ -96,13 +102,13 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('li', class_='next')
     if next_page:
         next_page = next_page.a['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -114,7 +120,7 @@ def findvideos(item):
     for elem in matches:
         url = elem['src']
         quality = elem['title']
-        itemlist.append(item.clone(action="play", title= quality, url=url))
+        itemlist.append(Item(channel=item.channel, action="play", title= quality, url=url))
     return itemlist[::-1]
 
 def play(item):

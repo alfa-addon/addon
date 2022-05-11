@@ -13,18 +13,25 @@ from core import httptools
 from core import scrapertools
 from platformcode import config, logger
 
-host = "https://www.javbangers.com"
+canonical = {
+             'channel': 'javtasty', 
+             'host': config.get_setting("current_host", 'javtasty', default=''), 
+             'host_alt': ["https://www.javbangers.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="lista", title="Nuevos Vídeos", url=host + "/latest-updates/"))
-    itemlist.append(item.clone(action="lista", title="Mejor Valorados", url=host + "/top-rated/"))
-    itemlist.append(item.clone(action="lista", title="Más Vistos", url=host + "/most-popular/"))
-    itemlist.append(item.clone(action="categorias", title="Categorías", url=host + "/categories/"))
-    itemlist.append(item.clone(title="Buscar...", action="search"))
-    itemlist.append(item.clone(action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Nuevos Vídeos", url=host + "/latest-updates/"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Mejor Valorados", url=host + "/top-rated/"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Más Vistos", url=host + "/most-popular/"))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search"))
+    itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
     return itemlist
 
 
@@ -60,7 +67,7 @@ def categorias(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         scrapedurl = urlparse.urljoin(host, scrapedurl)
         scrapedthumbnail = urlparse.urljoin(host, scrapedthumbnail)
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
+        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
                                    fanart=scrapedthumbnail))
     return sorted(itemlist, key=lambda i: i.title)
 
@@ -86,7 +93,7 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (duration.strip(), scrapedtitle)
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle = title, url=scrapedurl,
                                    fanart=scrapedthumbnail, thumbnail=scrapedthumbnail))
     # Extrae la marca de siguiente página
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
@@ -96,7 +103,7 @@ def lista(item):
         next_page = "?%s" % next_page
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page ) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page ) )
     return itemlist
 
 
@@ -112,7 +119,7 @@ def findvideos(item):
         patron += 'postfix:\s*\'([^\']+)\''
     matches = scrapertools.find_multiple_matches(data, patron)
     for url,quality in matches:
-        itemlist.append(item.clone(action="play", title=quality, url=url) )
+        itemlist.append(Item(channel=item.channel, action="play", title=quality, url=url) )
     if item.extra == "play_menu":
         return itemlist, data
     return itemlist
@@ -139,13 +146,13 @@ def play(item):
 def menu_info(item):
     logger.info()
     itemlist = []
-    video_urls, data = play(item.clone(extra="play_menu"))
-    itemlist.append(item.clone(action="play", title="Ver -- %s" % item.title, video_urls=video_urls))
+    video_urls, data = play(Item(channel=item.channel, extra="play_menu"))
+    itemlist.append(Item(channel=item.channel, action="play", title="Ver -- %s" % item.title, video_urls=video_urls))
     matches = scrapertools.find_multiple_matches(data, '<a href="([^"]+)" class="item" rel="screenshots"')
     for i, img in enumerate(matches):
         if i == 0:
             continue
         title = "Imagen %s" % (str(i))
-        itemlist.append(item.clone(action="", title=title, thumbnail=img, fanart=img))
+        itemlist.append(Item(channel=item.channel, action="", title=title, thumbnail=img, fanart=img))
     return itemlist
 

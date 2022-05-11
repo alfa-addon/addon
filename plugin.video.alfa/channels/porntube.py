@@ -14,39 +14,48 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://www.porntube.com'      #  https://www.porntube.com    https://www.pornerbros.com   https://www.4tube.com  https://www.fux.com
+#  https://www.porntube.com    https://www.pornerbros.com   https://www.4tube.com  https://www.fux.com
+canonical = {
+             'channel': 'porntube', 
+             'host': config.get_setting("current_host", 'porntube', default=''), 
+             'host_alt': ["https://www.porntube.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 url_api = "%s/api/video/list?order=%s&orientation=%s&p=1&ssr=false"
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=url_api % (host, "date", "straight")))
-    itemlist.append(item.clone(title="Popular" , action="lista", url=url_api %  (host, "views", "straight")))
-    itemlist.append(item.clone(title="Mas Valorada" , action="lista", url=url_api %  (host, "rating", "straight")))
-    itemlist.append(item.clone(title="Longitud" , action="lista", url=url_api %  (host, "duration", "straight")))
-    itemlist.append(item.clone(title="Pornstars" , action="canal", url=host + "/api/pornstar/list?order=videos&orientation=straight&p=1&ssr=false"))
-    itemlist.append(item.clone(title="Canal" , action="canal", url=host + "/api/channel/list?order=rating&orientation=straight&p=1&ssr=false"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/api/tag/list?orientation=straight&ssr=false"))
-    itemlist.append(item.clone(title="Buscar", action="search", orientation= "straight"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=url_api % (host, "date", "straight")))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=url_api %  (host, "views", "straight")))
+    itemlist.append(Item(channel=item.channel, title="Mas Valorada" , action="lista", url=url_api %  (host, "rating", "straight")))
+    itemlist.append(Item(channel=item.channel, title="Longitud" , action="lista", url=url_api %  (host, "duration", "straight")))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="canal", url=host + "/api/pornstar/list?order=videos&orientation=straight&p=1&ssr=false"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host + "/api/channel/list?order=rating&orientation=straight&p=1&ssr=false"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/api/tag/list?orientation=straight&ssr=false"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", orientation= "straight"))
 
-    itemlist.append(Item(channel = item.channel, title = ""))
-    itemlist.append(item.clone(title="Trans", action="submenu", orientation="shemale"))
-    itemlist.append(item.clone(title="Gay", action="submenu", orientation="gay"))
+    itemlist.append(Item(channel=item.channel, title="", action="", folder=False))
+
+    itemlist.append(Item(channel=item.channel, title="Trans", action="submenu", orientation="shemale"))
+    itemlist.append(Item(channel=item.channel, title="Gay", action="submenu", orientation="gay"))
     return itemlist
 
 
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=url_api % (host, "date", item.orientation)))
-    itemlist.append(item.clone(title="Popular" , action="lista", url=url_api %  (host, "views", item.orientation)))
-    itemlist.append(item.clone(title="Mas Valorada" , action="lista", url=url_api %  (host, "rating", item.orientation)))
-    itemlist.append(item.clone(title="Longitud" , action="lista", url=url_api %  (host, "duration", item.orientation)))
-    itemlist.append(item.clone(title="Pornstars" , action="canal", url=host + "/api/pornstar/list?order=videos&orientation=%s&p=1&ssr=false" % item.orientation))
-    itemlist.append(item.clone(title="Canal" , action="canal", url=host + "/api/channel/list?order=rating&orientation=%s&p=1&ssr=false" % item.orientation))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/api/tag/list?orientation=%s&ssr=false" % item.orientation))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=url_api % (host, "date", item.orientation), orientation=item.orientation))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=url_api %  (host, "views", item.orientation), orientation=item.orientation))
+    itemlist.append(Item(channel=item.channel, title="Mas Valorada" , action="lista", url=url_api %  (host, "rating", item.orientation), orientation=item.orientation))
+    itemlist.append(Item(channel=item.channel, title="Longitud" , action="lista", url=url_api %  (host, "duration", item.orientation), orientation=item.orientation))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="canal", url=host + "/api/pornstar/list?order=videos&orientation=%s&p=1&ssr=false" % item.orientation, orientation=item.orientation))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host + "/api/channel/list?order=rating&orientation=%s&p=1&ssr=false" % item.orientation, orientation=item.orientation))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/api/tag/list?orientation=%s&ssr=false" % item.orientation, orientation=item.orientation))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", orientation=item.orientation))
     
     return itemlist
 
@@ -78,7 +87,7 @@ def categorias(item):
         url = "%s/api/tags/%s?order=%s&orientation=%s&p=1&ssr=false" %(host, dir, "date", item.orientation)
         plot = ""
         # title = "%s (%s)" % (title, vidnum)
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                                thumbnail=thumbnail, plot=plot) )
     return itemlist
 
@@ -108,12 +117,12 @@ def canal(item):
         url = "%s/api/%s/%s?order=date&orientation=%s&p=1&ssr=false" % (host,c,dir,item.orientation)
         plot = ""
         title = "%s (%s)" % (title, vidnum)
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                                thumbnail=thumbnail, plot=plot) )
     next_page = (page+ 1)
     if next_page < total:
         next_page = re.sub(r"&p=\d+", "&p={0}".format(next_page), item.url)
-        itemlist.append(item.clone(action="canal", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="canal", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -148,12 +157,12 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url,
                               thumbnail=thumbnail, plot=plot, contentTitle = contentTitle))
     next_page = (page+ 1)
     if next_page < total:
         next_page = re.sub(r"&p=\d+", "&p={0}".format(next_page), item.url)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -176,7 +185,7 @@ def timer(segundos):
 def findvideos(item):
     logger.info(item)
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -184,6 +193,6 @@ def findvideos(item):
 def play(item):
     logger.info(item)
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

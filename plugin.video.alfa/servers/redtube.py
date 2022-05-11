@@ -30,5 +30,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     matches = scrapertools.find_multiple_matches(data2, patron)
     for quality,scrapedurl  in matches:
         url =  scrapedurl.replace("\/", "/")
+        # url += "|Referer=%s" % page_url
         video_urls.append(["[redtube] %sp" %quality, url])
     return video_urls[::-1]

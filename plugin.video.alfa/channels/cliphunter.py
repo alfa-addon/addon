@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 
 
-host = 'https://www.cliphunter.com'
+host = "https://www.cliphunter.com"
 
 
 def mainlist(item):

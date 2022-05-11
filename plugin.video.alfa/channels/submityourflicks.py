@@ -18,39 +18,37 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-# host = 'https://www.submityourflicks.com'
-
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="submityourflicks" , action="submenu", host= "https://www.submityourflicks.com", thumbnail= "https://www.submityourflicks.com/images/logo.png"))
-    itemlist.append(item.clone(title="freehardcore" , action="submenu", host= "https://www.freehardcore.com", thumbnail= "https://www.freehardcore.com/images/logo.png"))
-    itemlist.append(item.clone(title="moviesand" , action="submenu", host= "https://www.moviesand.com", thumbnail = "https://www.moviesand.com/images/logo.png"))
-    itemlist.append(item.clone(title="interracial" , action="submenu", host= "https://www.interracial.com", thumbnail = "https://www.interracial.com/images/logo.png"))
-    itemlist.append(item.clone(title="feetporno" , action="submenu", host= "https://www.feetporno.com", thumbnail = "https://www.feetporno.com/images/logo.png"))
-    itemlist.append(item.clone(title="chubbyporn" , action="submenu", host= "https://www.chubbyporn.com", thumbnail = "https://www.chubbyporn.com/images/logo.png"))
-    itemlist.append(item.clone(title="cartoonporn" , action="submenu", host= "https://www.cartoonporn.com", thumbnail = "https://www.cartoonporn.com/images/logo.png"))
-    itemlist.append(item.clone(title="trannylime" , action="submenu", host= "https://www.trannylime.com", thumbnail = "https://www.trannylime.com/images/logo.png"))
-    itemlist.append(item.clone(title="gotgayporn" , action="submenu", host= "https://www.gotgayporn.com", thumbnail = "https://www.gotgayporn.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="submityourflicks" , action="submenu", host= "https://www.submityourflicks.com", thumbnail= "https://www.submityourflicks.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="freehardcore" , action="submenu", host= "https://www.freehardcore.com", thumbnail= "https://www.freehardcore.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="moviesand" , action="submenu", host= "https://www.moviesand.com", thumbnail = "https://www.moviesand.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="interracial" , action="submenu", host= "https://www.interracial.com", thumbnail = "https://www.interracial.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="feetporno" , action="submenu", host= "https://www.feetporno.com", thumbnail = "https://www.feetporno.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="chubbyporn" , action="submenu", host= "https://www.chubbyporn.com", thumbnail = "https://www.chubbyporn.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="cartoonporn" , action="submenu", host= "https://www.cartoonporn.com", thumbnail = "https://www.cartoonporn.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="trannylime" , action="submenu", host= "https://www.trannylime.com", thumbnail = "https://www.trannylime.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="gotgayporn" , action="submenu", host= "https://www.gotgayporn.com", thumbnail = "https://www.gotgayporn.com/images/logo.png"))
     return itemlist
 
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=item.host + "/latest-updates/?sort_by=post_date&from=1"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=item.host + "/most-popular/?sort_by=video_viewed_month&from=1"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=item.host + "/top-rated/?sort_by=rating_month&from=1"))
-    itemlist.append(item.clone(title="Mas largo" , action="lista", url=item.host + "/longest/?sort_by=duration&from=1"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=item.host + "/categories/?sort_by=title"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=item.host + "/latest-updates/?sort_by=post_date&from=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=item.host + "/most-popular/?sort_by=video_viewed_month&from=1"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=item.host + "/top-rated/?sort_by=rating_month&from=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=item.host + "/longest/?sort_by=duration&from=1"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=item.host + "/categories/?sort_by=title"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.host))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/search/%s/?sort_by=post_date&from_videos=1" % (item.host,texto)
+    item.url = "%s/search/%s/?sort_by=post_date&from_videos=1" % (item.url,texto)
     try:
         return lista(item)
     except:
@@ -78,7 +76,7 @@ def categorias(item):
         url += "?sort_by=post_date&from=1"
         title = title.replace("Hardcore ", "")
         plot = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     return itemlist
 
@@ -117,7 +115,7 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('li', class_='item active')
     if next_page and next_page.find_next_sibling("li"):
@@ -126,20 +124,20 @@ def lista(item):
             next_page = re.sub(r"&from_videos=\d+", "&from_videos={0}".format(next_page), item.url)
         else:
             next_page = re.sub(r"&from=\d+", "&from={0}".format(next_page), item.url)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

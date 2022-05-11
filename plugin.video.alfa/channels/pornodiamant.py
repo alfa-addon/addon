@@ -18,17 +18,25 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://www.pornodiamant.com'
+host = ''
+canonical = {
+             'channel': 'pornodiamant', 
+             'host': config.get_setting("current_host", 'pornodiamant', default=''), 
+             'host_alt': ["https://www.pornodiamant.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/filme/"))
-    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "/channels/"))
-    itemlist.append(item.clone(title="PornStar" , action="catalogo", url=host + "/pornostars/"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/filme/"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "/channels/"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "/pornostars/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -58,12 +66,12 @@ def catalogo(item):
         title = "%s (%s)" %(scrapedtitle,cantidad.strip())
         thumbnail = scrapedthumbnail
         url = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     next_page = scrapertools.find_single_match(data, 'itemprop="url" href="([^"]+)" title="Nächste">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -80,12 +88,12 @@ def categorias(item):
         title = "%s (%s)" %(scrapedtitle,cantidad.strip())
         thumbnail = scrapedthumbnail
         url = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     next_page = scrapertools.find_single_match(data, 'itemprop="url" href="([^"]+)" title="Nächste">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -107,12 +115,12 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, 'itemprop="url" href="([^"]+)" title="Nächste">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -125,7 +133,7 @@ def findvideos(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url in matches:
         url = url.replace("&amp;", "&")
-        itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+        itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -139,7 +147,7 @@ def play(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url in matches:
         url = url.replace("&amp;", "&")
-        itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+        itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

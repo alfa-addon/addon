@@ -18,76 +18,56 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-__channel__ = "thumbzilla"
-
-
-host = 'https://thumbzilla.com'
-try:
-    __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
-    __perfil__ = int(config.get_setting('perfil', __channel__))
-except:
-    __modo_grafico__ = True
-    __perfil__ = 0
-
-# Fijar perfil de color
-perfil = [['0xFF6E2802', '0xFFFAA171', '0xFFE9D7940'],
-          ['0xFFA5F6AF', '0xFF5FDA6D', '0xFF11811E'],
-          ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']]
-
-if __perfil__ - 1 >= 0:
-    color1, color2, color3 = perfil[__perfil__ - 1]
-else:
-    color1 = color2 = color3 = ""
-
-headers = [['User-Agent', 'Mozilla/50.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0'],
-           ['Referer', host]]
-
-parameters = channeltools.get_channel_parameters(__channel__)
-fanart_host = parameters['fanart']
-thumbnail_host = parameters['thumbnail']
-thumbnail = 'https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/%s.png'
+canonical = {
+             'channel': 'thumbzilla', 
+             'host': config.get_setting("current_host", 'thumbzilla', default=''), 
+             'host_alt': ["https://thumbzilla.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="videos", title="Más Calientes", url=host,
+    itemlist.append(Item(channel=item.channel, action="videos", title="Más Calientes", url=host,
                          viewmode="movie", thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(item.clone(title="Nuevas", url=host + '/newest',
+    itemlist.append(Item(channel=item.channel, title="Nuevas", url=host + '/newest',
                          action="videos", viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(item.clone(title="Tendencias", url=host + '/trending',
+    itemlist.append(Item(channel=item.channel, title="Tendencias", url=host + '/trending',
                          action="videos", viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(item.clone(title="Mejores Videos", url=host + '/top',
+    itemlist.append(Item(channel=item.channel, title="Mejores Videos", url=host + '/top',
                          action="videos", viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(item.clone(title="Populares", url=host + '/popular',
+    itemlist.append(Item(channel=item.channel, title="Populares", url=host + '/popular',
                          action="videos", viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(item.clone(title="Videos en HD", url=host + '/hd',
+    itemlist.append(Item(channel=item.channel, title="Videos en HD", url=host + '/hd',
                          action="videos", viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(item.clone(title="Caseros", url=host + '/hd',
+    itemlist.append(Item(channel=item.channel, title="Caseros", url=host + '/hd',
                          action="videos", viewmode="movie_with_plot", viewcontent='homemade',
                          thumbnail=get_thumb("channels_adult.png")))
  
-    itemlist.append(item.clone(title="PornStar", action="catalogo",
+    itemlist.append(Item(channel=item.channel, title="PornStar", action="catalogo",
                          url=host + '/pornstars/', viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
  
-    itemlist.append(item.clone(title="Categorías", action="categorias",
+    itemlist.append(Item(channel=item.channel, title="Categorías", action="categorias",
                          url=host, viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(item.clone(title="Buscar", action="search", url=host,
-                         thumbnail=get_thumb("channels_adult.png"), extra="buscar"))
+    # itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host,
+                         # thumbnail=get_thumb("channels_adult.png"), extra="buscar"))
     return itemlist
 
 
@@ -127,11 +107,11 @@ def videos(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, thumbnail=scrapedthumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, thumbnail=scrapedthumbnail,
                              url=host + scrapedurl, contentTitle=title, fanart=scrapedthumbnail))
     paginacion = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />').replace('amp;', '')
     if paginacion:
-        itemlist.append(item.clone(action="videos", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=paginacion))
+        itemlist.append(Item(channel=item.channel, action="videos", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=paginacion))
     return itemlist
 
 
@@ -145,11 +125,11 @@ def catalogo(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         url = urlparse.urljoin(item.url, scrapedurl)
-        itemlist.append(item.clone(action="videos", url=url, title=scrapedtitle, fanart=scrapedthumbnail,
+        itemlist.append(Item(channel=item.channel, action="videos", url=url, title=scrapedtitle, fanart=scrapedthumbnail,
                              thumbnail=scrapedthumbnail, viewmode="movie_with_plot"))
     paginacion = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />').replace('amp;', '')
     if paginacion:
-        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=paginacion))
+        itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=paginacion))
     return itemlist
 
 
@@ -166,7 +146,7 @@ def categorias(item):
         title = "%s (%s)" % (title, vids)
         thumbnail = item.thumbnail
         url = urlparse.urljoin(item.url, scrapedurl)
-        itemlist.append(item.clone(action="videos", title=title, url=url, contentTile = title, 
+        itemlist.append(Item(channel=item.channel, action="videos", title=title, url=url, contentTile = title, 
                                   fanart=thumbnail, thumbnail=thumbnail, viewmode="movie_with_plot"))
     return itemlist
 
@@ -176,11 +156,10 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = 'data-quality="([^"]+)">([^<]+)<'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for url,quality in matches:
-        url = url.replace("\/", "/")
-        itemlist.append(item.clone(action="play", title=quality, url=url) )
+    url = scrapertools.find_single_match(data,'"link_url":"([^"]+)"')
+    url = url.replace("\\", "")
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
@@ -189,9 +168,8 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = 'data-quality="([^"]+)">([^<]+)<'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for url,quality in matches:
-        url = url.replace("\/", "/")
-        itemlist.append(['.mp4 %s' %quality, url])
+    url = scrapertools.find_single_match(data,'"link_url":"([^"]+)"')
+    url = url.replace("\\", "")
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

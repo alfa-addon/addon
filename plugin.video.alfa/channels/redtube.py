@@ -15,20 +15,29 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import logger
+from platformcode import config, logger
 
-host = 'https://es.redtube.com'
+canonical = {
+             'channel': 'redtube', 
+             'host': config.get_setting("current_host", 'redtube', default=''), 
+             'host_alt': ["https://es.redtube.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
+#  FALLA 1080
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "/newest"))
-    itemlist.append(item.clone(title="Mas Vistas" , action="lista", url=host + "/mostviewed"))
-    itemlist.append(item.clone(title="Mejor valorada" , action="lista", url=host + "/top"))
-    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "/channel/top-rated"))
-    itemlist.append(item.clone(title="Pornstars" , action="categorias", url=host + "/pornstar"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/popular"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "/newest"))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="lista", url=host + "/mostviewed"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/top"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "/channel/top-rated"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=host + "/pornstar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/popular"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -60,12 +69,12 @@ def catalogo(item):
         scrapedplot = ""
         scrapedtitle = "%s (%s)" %(scrapedtitle, cantidad)
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     next_page_url = scrapertools.find_single_match(data,'<a id="wp_navNext".*?href="([^"]+)">')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page_url) )
+        itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page_url) )
     return itemlist
 
 
@@ -88,12 +97,12 @@ def categorias(item):
         cantidad = cantidad.strip()
         scrapedtitle = "%s (%s)" %(scrapedtitle, cantidad)
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     next_page_url = scrapertools.find_single_match(data,'<a id="wp_navNext".*?href="([^"]+)">')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page_url) )
+        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page_url) )
     return itemlist
 
 
@@ -119,12 +128,12 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title , url=url,
+        itemlist.append(Item(channel=item.channel, action=action, title=title , url=url,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=plot, contentTitle = title) )
     next_page_url = scrapertools.find_single_match(data,'<a id="wp_navNext".*?href="([^"]+)">').replace("amp;", "")
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page_url) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page_url) )
     return itemlist
 
 
@@ -132,7 +141,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     url = item.url
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -141,6 +150,6 @@ def play(item):
     logger.info()
     itemlist = []
     url = item.url
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

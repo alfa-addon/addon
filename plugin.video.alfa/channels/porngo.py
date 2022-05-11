@@ -18,18 +18,26 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.porngo.com'
+canonical = {
+             'channel': 'porngo', 
+             'host': config.get_setting("current_host", 'porngo', default=''), 
+             'host_alt': ["https://www.porngo.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/month/"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/month/"))
-    itemlist.append(item.clone(title="PornStar" , action="pornstar", url=host + "/models/"))
-    itemlist.append(item.clone(title="Canal" , action="canal", url=host))
-    itemlist.append(item.clone(title="Categoria" , action="categoria", url=host + "/categories/"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/latest-updates/"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/most-popular/month/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/top-rated/month/"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="pornstar", url=host + "/models/"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host))
+    itemlist.append(Item(channel=item.channel, title="Categoria" , action="categoria", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -55,7 +63,7 @@ def categoria(item):
         url = elem.a['href']
         title = elem.a.text.strip()
         thumbnail = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     return itemlist
 
@@ -65,19 +73,18 @@ def canal(item):
     itemlist = []
     soup = create_soup(item.url).find('ul', class_='nav-menu underline')
     matches = soup.find_all('a', class_='nav-menu__link')
-    logger.debug(matches)
     for elem in matches:
         url = elem['href']
         title = elem.text.strip()
         thumbnail = ""
         if not "/sites/" in url:
             url = urlparse.urljoin(item.url,url)
-            itemlist.append(item.clone(action="lista", title=title, url=url,
+            itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                                   fanart=thumbnail, thumbnail=thumbnail, plot="") )
     
-    itemlist.append(item.clone(title="SEXMEX" , action="lista", url=host + "/categories/sexmex/"))
-    itemlist.append(item.clone(title="FTV Girls" , action="lista", url=host + "/categories/ftvgirls.com/"))
-    itemlist.append(item.clone(title="[COLOR blue]TODOS >>[/COLOR]" , action="catalogo", url=host + "/sites/"))
+    itemlist.append(Item(channel=item.channel, title="SEXMEX" , action="lista", url=host + "/categories/sexmex/"))
+    itemlist.append(Item(channel=item.channel, title="FTV Girls" , action="lista", url=host + "/categories/ftvgirls.com/"))
+    itemlist.append(Item(channel=item.channel, title="[COLOR blue]TODOS >>[/COLOR]" , action="catalogo", url=host + "/sites/"))
     return itemlist
 
 
@@ -94,13 +101,13 @@ def catalogo(item):
         if cantidad:
             title = "%s (%s)" % (title,cantidad)
         thumbnail = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     next_page = soup.find('a', class_='pagination__link', string='Next')
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -116,13 +123,13 @@ def pornstar(item):
         cantidad = elem.find('span', class_='thumb__duration').text.strip()
         if cantidad:
             title = "%s (%s)" % (title,cantidad)
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     next_page = soup.find('a', class_='pagination__link', string='Next')
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="pornstar", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="pornstar", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -166,13 +173,13 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                    fanart=thumbnail, contentTitle=title, plot=plot))
     next_page = soup.find('a', class_='pagination__link', string='Next')
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -188,7 +195,7 @@ def findvideos(item):
         else:  # Si unica resolucion
             quality= scrapertools.find_single_match(url, '.*?_(\d+)m.mp4/')
             quality += "p"
-        itemlist.append(item.clone(action="play", title= quality, quality= quality, url=url))
+        itemlist.append(Item(channel=item.channel, action="play", title= quality, quality= quality, url=url))
         # itemlist.append(['%s' % quality, url])
     return itemlist[::-1]
 

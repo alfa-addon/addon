@@ -20,7 +20,15 @@ from platformcode import config, logger
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'http://sexofilm.com'
+host = ''
+canonical = {
+             'channel': 'sexofilm', 
+             'host': config.get_setting("current_host", 'sexofilm', default=''), 
+             'host_alt': ["http://sexofilm.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 # SOLOS LOS LINKS DE 2020, todo lo anterior sin videos
 # TIMELIG
@@ -28,10 +36,10 @@ host = 'http://sexofilm.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Peliculas" , action="lista", url=host + "/xtreme-adult-wing/adult-dvds/"))
-    itemlist.append(item.clone(title="Parody" , action="lista", url=host + "/keywords/parodies/"))
-    itemlist.append(item.clone(title="Canal" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/xtreme-adult-wing/adult-dvds/"))
+    itemlist.append(Item(channel=item.channel, title="Parody" , action="lista", url=host + "/keywords/parodies/"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -56,11 +64,11 @@ def categorias(item):
         data = scrapertools.find_single_match(data,'>Best Porn Studios</a>(.*?)</ul>')
     else:
         data = scrapertools.find_single_match(data,'<div class="nav-wrap">(.*?)<ul class="sub-menu">')
-        itemlist.append(item.clone(action="lista", title="Big tit", url="https://sexofilm.com/?s=big+tits"))
+        itemlist.append(Item(channel=item.channel, action="lista", title="Big tit", url="%s/?s=big+tits" %host))
     patron  = '<a href="([^<]+)">([^<]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle  in matches:
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl) )
+        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl) )
     return itemlist
 
 
@@ -82,7 +90,6 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all("article", class_=re.compile(r"^post-\d+"))
     for elem in matches:
-        logger.debug(elem)
         url = elem.a['href']
         title = elem.h2.text.strip()
         thumbnail = elem.img['data-src']
@@ -91,13 +98,13 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=url,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle = title, url=url,
                                    fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
     next_page = soup.find('a', class_='nextpostslink')
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -111,9 +118,9 @@ def findvideos(item):
     if not url:
         url = scrapertools.find_single_match(data,'<source src="([^"]+)"')
     if not url:
-        itemlist = servertools.find_video_items(item.clone(url = item.url))
+        itemlist = servertools.find_video_items(Item(channel=item.channel, url = item.url))
     if url:
-        itemlist.append(item.clone(action="play", title= "Directo", url=url, contentTitle = item.title, timeout=40))
+        itemlist.append(Item(channel=item.channel, action="play", title= "Directo", url=url, contentTitle = item.title, timeout=40))
     return itemlist
 
 
@@ -127,7 +134,7 @@ def play(item):
     if not url:
         url = scrapertools.find_single_match(data,'<source src="([^"]+)"')
     if not url:
-        itemlist = servertools.find_video_items(item.clone(url = item.url))
+        itemlist = servertools.find_video_items(Item(channel=item.channel, url = item.url))
     if url:
-        itemlist.append(item.clone(action="play", title= url, url=url, contentTitle = item.title, timeout=45))
+        itemlist.append(Item(channel=item.channel, action="play", title= url, url=url, contentTitle = item.title, timeout=45))
     return itemlist

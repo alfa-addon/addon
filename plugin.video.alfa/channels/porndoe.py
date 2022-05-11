@@ -18,21 +18,28 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://porndoe.com'
+canonical = {
+             'channel': 'porndoe', 
+             'host': config.get_setting("current_host", 'porndoe', default=''), 
+             'host_alt': ["https://porndoe.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host +"/videos"))
-    itemlist.append(item.clone(title="Exclusivos" , action="lista", url=host + "/category/74/premium-hd"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/videos?sort=views-down"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/videos?sort=likes-down"))
-    itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/videos?sort=duration-down"))
-    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/pornstars"))
-    itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/channels?sort=ranking"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host +"/videos"))
+    itemlist.append(Item(channel=item.channel, title="Exclusivos" , action="lista", url=host + "/category/74/premium-hd"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/videos?sort=views-down"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/videos?sort=likes-down"))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "/videos?sort=duration-down"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/pornstars"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/channels?sort=ranking"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories?sort=name"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -52,18 +59,17 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|amp;", "", data)
+    data1 = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|amp;", "", data1)
+    if "channels" in item.url:
+        data = scrapertools.find_single_match(data, '<div class="channels-list">(.*?)</section>')
+        patron  = '<div>(.*?)</div>'
+    else:
+        patron  = 'class="ctl-item">(.*?)</div>'
     if "pornstars" in item.url:
         patron  = 'class="actors-list-item">(.*?)</div>'
-    else:
-        patron  = 'class="item">(.*?)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for match in matches:
-        # if "channels" in item.url:
-            # action = "lista"
-        # else:
-            # action = "lista"
         scrapedurl = scrapertools.find_single_match(match,'href="([^"]+)"')
         if "channel-profile" in scrapedurl:
             scrapedurl = scrapedurl.replace("channel-profile", "channel-profile-videos")
@@ -75,7 +81,7 @@ def categorias(item):
             scrapedtitle = scrapertools.find_single_match(match,'class="item-title">([^<]+)<').strip()
         cantidad = ""
         if "/category" in scrapedurl:
-            cantidad = scrapertools.find_single_match(match,'<span class="count">([^<]+)<')
+            cantidad = scrapertools.find_single_match(match,'<span class="ctl-count">([^<]+)<')
         if "/pornstars-profile" in scrapedurl:
             thumbnail = scrapertools.find_single_match(match,';(https://p.cdn.porndoe.com/image/porn_star/.*?.jpg)')
             cantidad = scrapertools.find_single_match(match,'<span class="-grow">([^<]+)<')
@@ -83,12 +89,13 @@ def categorias(item):
         title = "%s %s" % (scrapedtitle, cantidad)
         scrapedurl = scrapedurl.replace("https://letsdoeit.com", "")
         url = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
-    next_page = scrapertools.find_single_match(data, '<li class="page next page-hide-mobile">.*?href="([^"]+)"')
+    next_page = scrapertools.find_single_match(data1, '<a class="pager-item pager-next"([^>]+)')
     if next_page:
+        next_page = scrapertools.find_single_match(next_page, 'href="([^"]+)"')
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -126,20 +133,20 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                 fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', class_='pager-next')
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(host,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -147,6 +154,6 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

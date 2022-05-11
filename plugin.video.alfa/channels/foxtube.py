@@ -16,21 +16,28 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-from channels import cumlouder
 
-host = 'https://www.foxtube.com' #https://www.muyzorras.com
+#  https://www.foxtube.com   https://www.muyzorras.com
+canonical = {
+             'channel': 'foxtube', 
+             'host': config.get_setting("current_host", 'foxtube', default=''), 
+             'host_alt': ["https://www.foxtube.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Ultimos" , action="lista", url=host))
-    itemlist.append(item.clone(title="PornStar" , action="catalogo", url=host + '/pornstars/'))
-    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + '/channels/'))
+    itemlist.append(Item(channel=item.channel, title="Ultimos" , action="lista", url=host))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + '/pornstars/'))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + '/channels/'))
     
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -61,14 +68,14 @@ def catalogo(item):
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         thumbnail = scrapedthumbnail.replace("https","http") + "|Referer=%s/pornstars/" %host
         plot = ""
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, plot=plot) )
     next_page = scrapertools.find_single_match(data,'<a rel="next" href="([^"]+)">&gt')
     if not next_page:
         next_page = scrapertools.find_single_match(data,'<span class="">.*?href="([^"]+)"')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -83,7 +90,7 @@ def categorias(item):
         scrapedplot = ""
         scrapedthumbnail = ""
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
@@ -127,7 +134,7 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=scrapedurl, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=scrapedurl, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data,'<a rel="next" href="([^"]+)">&gt')
     if "pornstars" in item.url or "tags" in item.url:
@@ -137,10 +144,10 @@ def lista(item):
         next_page = scrapertools.find_single_match(data, '<li class="selected">.*?data-pag="(\d+)"')
         if next_page:
             next_page = "%s/%s/" %(page,next_page)
-            itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page, canal= canal) )
+            itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page, canal= canal) )
     else:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -151,10 +158,11 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data,'<iframe title="[^"]+" class="lz" data-src="([^"]+)"')
     if "cumlouder" in url:
-        item1 = item.clone(url=url)
+        from channels import cumlouder
+        item1 = Item(channel=item.channel, url=url, contentTitle = item.contentTitle)
         itemlist = cumlouder.play(item1)
         return itemlist
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -166,9 +174,10 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data,'<iframe title="[^"]+" class="lz" data-src="([^"]+)"')
     if "cumlouder" in url:
-        item1 = item.clone(url=url)
+        from channels import cumlouder
+        item1 = Item(channel=item.channel, url=url, contentTitle = item.contentTitle)
         itemlist = cumlouder.play(item1)
         return itemlist
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

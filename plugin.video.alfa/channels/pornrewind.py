@@ -19,18 +19,25 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://www.pornrewind.com'
+canonical = {
+             'channel': 'pornrewind', 
+             'host': config.get_setting("current_host", 'pornrewind', default=''), 
+             'host_alt': ["https://www.pornrewind.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 # Pagina en grogui
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/videos/?sort_by=post_date"))
-    itemlist.append(item.clone(title="Mejor valorados" , action="lista", url=host + "/videos/?sort_by=rating"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/videos/?sort_by=video_viewed"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/videos/?sort_by=post_date"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorados" , action="lista", url=host + "/videos/?sort_by=rating"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/videos/?sort_by=video_viewed"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -59,7 +66,7 @@ def categorias(item):
     scrapertools.printMatches(matches)
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         scrapedplot = ""
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
@@ -80,12 +87,12 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<li class="direction"><a href="([^"]+)" data-ajax="pagination">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page ) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page ) )
     return itemlist
 
 
@@ -100,7 +107,7 @@ def findvideos(item):
         url=scrapedurl
     if "kt_player" in data:
         url = item.url
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -116,6 +123,6 @@ def play(item):
         url=scrapedurl
     if "kt_player" in data:
         url = item.url
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

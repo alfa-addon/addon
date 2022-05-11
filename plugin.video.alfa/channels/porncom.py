@@ -19,16 +19,23 @@ from core import httptools
 from bs4 import BeautifulSoup
 import base64
 
-host = 'https://www.porn.com'
+canonical = {
+             'channel': 'porncom', 
+             'host': config.get_setting("current_host", 'porncom', default=''), 
+             'host_alt': ["https://www.porn.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/pornstars"))
-    itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/channels"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/pornstars"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/channels"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -61,17 +68,15 @@ def categorias(item):
         if cantidad:
             title = "%s (%s)" % (title,cantidad.text.strip())
         plot = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     if "Categorias" in item.title:
         itemlist.sort(key=lambda x: x.title)
     next_page = soup.find('a', class_='next')
     if next_page:
         next_page = next_page['href']
-    # next_page = scrapertools.find_single_match(data, '<a class="next pagination__number" href="([^"]+)" rel="nofollow">Next')
-    # if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -107,13 +112,13 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, contentTitle = title, url=url,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle = title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot))
     next_page = soup.find('a', class_='next')
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -143,7 +148,7 @@ def findvideos(item):
         url = "https:/%s" % url
     if "vid.com/v/" in url:
         url = httptools.downloadpage(url).url
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -160,7 +165,7 @@ def play(item):
         url = url.replace("video", "embed")
         data =  httptools.downloadpage(url).data
         url = scrapertools.find_single_match(data, '<link href="([^"]+)"')
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
