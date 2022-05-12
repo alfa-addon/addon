@@ -42,10 +42,10 @@ list_servers = [
     ]
 
 canonical = {
-             'channel': 'pelisplushd', 
-             'host': config.get_setting("current_host", 'pelisplushd', default=''), 
+             'channel': 'pelisplus', 
+             'host': config.get_setting("current_host", 'pelisplus', default=''), 
              'host_alt': ["https://www.pelisplus.lat/"], 
-             'host_black_list': ["https://www.pelisplus.me/", "https://pelisplushd.net/"], 
+             'host_black_list': ["https://www.pelisplus.me/", "https://pelisplushd.net/","https://pelisplushd.to/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -72,7 +72,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Doramas", action="list_all", url=host + "doramas",
                          content="serie", thumbnail=get_thumb('doramas', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + '/?s=',
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + '?s=',
                          thumbnail=get_thumb('search', auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
