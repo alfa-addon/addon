@@ -263,6 +263,7 @@ def findvideos(item):
         if "pelisplus.lat" in url:
             prueba = httptools.downloadpage(url).data
             url = scrapertools.find_single_match(prueba, "(?is)window.location.href = '([^']+)")
+            if not url.startswith("http"):  url = "https:" + url
         if "plusto.link" in url: url = url.replace("plusto.link","fembed.com")
         if url in encontrados: continue
         encontrados.append(url)
@@ -288,6 +289,27 @@ def findvideos(item):
                                  extra="findvideos",
                                  contentTitle=item.contentTitle))
     return itemlist
+
+
+def play(item):
+    logger.info()
+    if "apialfa.tomatomatela.com" in item.url:
+        data = httptools.downloadpage(item.url).data
+        hostx = "https://apialfa.tomatomatela.com/ir/"
+        item.url = hostx + scrapertools.find_single_match(data, 'id="link" href="([^"]+)')
+        data = httptools.downloadpage(item.url).data
+        xvalue = scrapertools.find_single_match(data, 'name="url" value="([^"]+)')
+        post = {"url" : xvalue}
+        item.url = httptools.downloadpage(hostx + "rd.php", follow_redirects=False, post=post).headers.get("location", "")
+        data = httptools.downloadpage("https:" + item.url).data
+        xvalue = scrapertools.find_single_match(data, 'name="url" value="([^"]+)')
+        post = {"url" : xvalue}
+        item.url = httptools.downloadpage(hostx + "redirect_ddh.php", follow_redirects=False, post=post).headers.get("location", "")
+        hash = scrapertools.find_single_match(item.url,"#(\w+)")
+        file = httptools.downloadpage("https://tomatomatela.com/details.php?v=%s" %hash).json
+        item.url = file["file"]
+        dd = httptools.downloadpage(item.url, only_headers=True).data
+    return [item]
 
 
 def search(item, texto):
