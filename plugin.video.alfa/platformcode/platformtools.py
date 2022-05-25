@@ -301,7 +301,8 @@ def render_items(itemlist, parent_item):
         # Creamos el listitem
         if config.get_platform(True)['num_version'] >= 18.0:
             listitem = xbmcgui.ListItem(item.title, offscreen=True)
-
+            if config.get_platform(True)['num_version'] >= 20.0:
+                infotagvideo = xbmc.InfoTagVideo(offscreen=True)
         else:
             listitem = xbmcgui.ListItem(item.title)
 
@@ -648,6 +649,8 @@ def set_infolabels(listitem, item, player=False):
             logger.error(item.infoLabels)
     """
     infoLabels_kodi = {}
+    if config.get_platform(True)['num_version'] >= 20.0:
+        infotagvideo = xbmc.InfoTagVideo(offscreen=True)
 
     if item.infoLabels:
         try:
@@ -659,10 +662,10 @@ def set_infolabels(listitem, item, player=False):
                 listitem.setUniqueIDs({"tmdb": item.infoLabels.get("tmdb_id", 0),
                                   "imdb": item.infoLabels.get("imdb_id", 0),
                                   "tvdb": item.infoLabels.get("tvdb_id", 0)}, "imdb")
-            else:
-                InfoTagVideo.setUniqueIDs({"tmdb": item.infoLabels.get("tmdb_id", 0),
+            else:                                                                               ### VERIFY
+                infotagvideo.setUniqueIDs(str({"tmdb": item.infoLabels.get("tmdb_id", 0),
                                   "imdb": item.infoLabels.get("imdb_id", 0),
-                                  "tvdb": item.infoLabels.get("tvdb_id", 0)}, "imdb")
+                                  "tvdb": item.infoLabels.get("tvdb_id", 0)}), "imdb")
         except:
             import traceback
             logger.error(traceback.format_exc())
@@ -683,18 +686,30 @@ def set_infolabels(listitem, item, player=False):
             if infoLabels_kodi['mediatype'] == 'list':
                 infoLabels_kodi['mediatype'] = 'video'
 
-            listitem.setInfo("video", infoLabels_kodi)
+            if config.get_platform(True)['num_version'] >= 20.0:
+                listitem.setInfo("video", infoLabels_kodi)                      ### TEMPORAL
+            else:
+                listitem.setInfo("video", infoLabels_kodi)
 
         except:
-            listitem.setInfo("video", item.infoLabels)
+            if config.get_platform(True)['num_version'] >= 20.0:
+                listitem.setInfo("video", item.infoLabels)                      ### TEMPORAL
+            else:
+                listitem.setInfo("video", item.infoLabels)
             logger.error(item.infoLabels)
             logger.error(infoLabels_kodi)
 
     if player and not item.contentTitle:
-        listitem.setInfo("video", {"Title": item.title})
+        if config.get_platform(True)['num_version'] >= 20.0:
+            listitem.setInfo("video", {"Title": item.title})                    ### TEMPORAL
+        else:
+            listitem.setInfo("video", {"Title": item.title})
 
     elif not player:
-        listitem.setInfo("video", {"Title": item.title})
+        if config.get_platform(True)['num_version'] >= 20.0:
+            listitem.setInfo("video", {"Title": item.title})                    ### TEMPORAL
+        else:
+            listitem.setInfo("video", {"Title": item.title})
 
 
 def set_context_commands(item, item_url, parent_item, categories_channel=[], **kwargs):

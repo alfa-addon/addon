@@ -35,8 +35,8 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'grantorrent', 
              'host': config.get_setting("current_host", 'grantorrent', default=''), 
-             'host_alt': ['https://grantorrent.re/'], 
-             'host_black_list': ['https://grantorrent.ac/', 'https://grantorrent.ch/'], 
+             'host_alt': ['https://grantorrent.si/'], 
+             'host_black_list': ['https://grantorrent.re/', 'https://grantorrent.ac/', 'https://grantorrent.ch/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

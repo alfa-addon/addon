@@ -439,6 +439,7 @@ def save_tvshow(item, episodelist, silent=False, overwrite=True):
         item_tvshow.library_playcounts = {}
         item_tvshow.library_urls = {item.channel: item.url}
         if item.serie_info: item_tvshow.serie_info = item.serie_info
+        if item.season_search: item_tvshow.season_search = item.season_search
 
     # FILTERTOOLS
     # si el canal tiene filtro de idiomas, añadimos el canal y el show
