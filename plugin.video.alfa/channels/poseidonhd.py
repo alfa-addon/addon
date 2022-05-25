@@ -40,6 +40,7 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 AlfaChannel = ToroFilm(host, tv_path="/series", canonical=canonical)
+forced_proxy_opt = 'ProxyCF'
 
 
 def mainlist(item):
@@ -172,15 +173,15 @@ def play(item):
 
     itemlist = list()
     try:
-        data = AlfaChannel.create_soup(item.url).find("input")["value"]
+        data = AlfaChannel.create_soup(item.url, forced_proxy_opt=forced_proxy_opt).find("input")["value"]
         base_url = "%sr.php" % host
         post = {"data": data}
-        url = httptools.downloadpage(base_url, post=post).url
+        url = httptools.downloadpage(base_url, post=post, forced_proxy_opt=forced_proxy_opt).url
         if "fs.%s" % host.replace("https://", "") in url:
             api_url = "%sr.php" % host.replace("https://", "https://fs.")
             v_id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
             post = {"h": v_id}
-            url = httptools.downloadpage(api_url, post=post).url
+            url = httptools.downloadpage(api_url, post=post, forced_proxy_opt=forced_proxy_opt).url
         itemlist.append(item.clone(url=url, server=""))
         itemlist = servertools.get_servers_itemlist(itemlist)
     except:

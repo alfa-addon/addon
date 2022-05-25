@@ -40,7 +40,7 @@ def get_platform():
     machine = platform.machine().lower()
     is_arch64 = "64" in machine and arch == Arch.x64
 
-    logging.debug("Resolving platform - system=%s, version=%s, arch=%s, machine=%s", system, version, arch, machine)
+    logging.warning("## Resolving platform - system=%s, version=%s, arch=%s, machine=%s", system, version, arch, machine)
 
     if "ANDROID_STORAGE" in os.environ:
         system = System.android
@@ -58,6 +58,8 @@ def get_platform():
             arch = Arch.x64
     elif system == System.darwin:
         arch = Arch.x64
+    
+    logging.warning("## Resolved platform - system=%s, arch=%s", system, arch)
 
     if system not in System.values() or arch not in Arch.values():
         logging.warning("Unknown system (%s) and/or arch (%s) values", system, arch)

@@ -417,7 +417,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
                                           0, textColor=c["color"],
                                           font=self.font, isPassword=c["hidden"], window=self)
 
-        elif xbmcgui.__version__ in ["3.0", "3.0.0"]:
+        elif xbmcgui.__version__.startswith('3.'):
             control = xbmcgui.ControlEdit(0, -100, self.controls_width, self.height_control,
                                           c["label"], self.font, c["color"], '', 4)
         else:

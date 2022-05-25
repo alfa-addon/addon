@@ -77,12 +77,15 @@ def list_movies(item, silent=False):
 
                 ## verifica la existencia de los canales, en caso de no existir el canal se pregunta si se quieren
                 ## eliminar los enlaces de dicho canal
-
+                zombie = False
                 for canal_org in new_item.library_urls:
                     canal = generictools.verify_channel(canal_org)
                     try:
                         channel_verify = __import__('channels.%s' % canal, fromlist=["channels.%s" % canal])
                         logger.debug('El canal %s parece correcto' % channel_verify)
+                        if new_item.zombie and not zombie:
+                            del new_item.zombie
+                            res = videolibrarytools.write_nfo(nfo_path, head_nfo, new_item)
                     except:
                         dead_item = Item(multicanal=multicanal,
                                          contentType='movie',
@@ -92,7 +95,11 @@ def list_movies(item, silent=False):
                                          library_urls=new_item.library_urls,
                                          infoLabels={'title': new_item.contentTitle})
                         if canal not in dead_list and canal not in zombie_list and not new_item.zombie:
-                            confirm = platformtools.dialog_yesno('Videoteca',
+                            if new_item.emergency_urls and isinstance(new_item.emergency_urls, dict) \
+                                                       and new_item.emergency_urls.get(canal_org, False):
+                                confirm = False
+                            else:
+                                confirm = platformtools.dialog_yesno('Videoteca',
                                                                  'Parece que el canal [COLOR red]{}[/COLOR] ya no existe.'.format(canal.upper()),
                                                                  '¿Deseas eliminar los enlaces de este canal?')
 
@@ -100,7 +107,8 @@ def list_movies(item, silent=False):
                             confirm = False
                             if not new_item.zombie:
                                 nfo_path = filetools.join(raiz, f)
-                                zombie_item = new_item.clone(zombie=True)
+                                zombie = True
+                                zombie_item = new_item.clone(zombie=zombie)
                                 res = videolibrarytools.write_nfo(nfo_path, head_nfo, zombie_item)
                         else:
                             confirm = True
@@ -114,7 +122,8 @@ def list_movies(item, silent=False):
                             if canal not in zombie_list:
                                 zombie_list.append(canal)
                                 nfo_path = filetools.join(raiz, f)
-                                zombie_item = new_item.clone(zombie=True)
+                                zombie = True
+                                zombie_item = new_item.clone(zombie=zombie)
                                 res = videolibrarytools.write_nfo(nfo_path, head_nfo, zombie_item)
 
                 if len(dead_list) > 0:
@@ -234,12 +243,16 @@ def list_tvshows(item):
 
                 ## verifica la existencia de los canales, en caso de no existir el canal se pregunta si se quieren
                 ## eliminar los enlaces de dicho canal
-
-                for canal in item_tvshow.library_urls:
-                    canal = generictools.verify_channel(canal)
+                zombie = False
+                for canal_org in item_tvshow.library_urls:
+                    canal = generictools.verify_channel(canal_org)
                     try:
                         channel_verify = __import__('channels.%s' % canal, fromlist=["channels.%s" % canal])
                         logger.debug('El canal %s parece correcto' % channel_verify)
+                        if item_tvshow.zombie and not zombie:
+                            del item_tvshow.zombie
+                            item_tvshow.active = 1
+                            res = videolibrarytools.write_nfo(tvshow_path, head_nfo, item_tvshow)
                     except:
                         dead_item = Item(multicanal=multicanal,
                                          contentType='tvshow',
@@ -249,7 +262,8 @@ def list_tvshows(item):
                                          library_urls=item_tvshow.library_urls,
                                          infoLabels={'title': item_tvshow.contentTitle})
                         if canal not in dead_list and canal not in zombie_list and not item_tvshow.zombie:
-                            if item_tvshow.emergency_urls.get(canal, False):
+                            if item_tvshow.emergency_urls and isinstance(item_tvshow.emergency_urls, dict) \
+                                                          and item_tvshow.emergency_urls.get(canal_org, False):
                                 confirm = False
                                 item_tvshow.active = 0
                             else:
@@ -261,7 +275,8 @@ def list_tvshows(item):
                             confirm = False
                             if not item_tvshow.zombie:
                                 tvshow_path = filetools.join(raiz, f)
-                                zombie_item = item_tvshow.clone(zombie=True)
+                                zombie = True
+                                zombie_item = item_tvshow.clone(zombie=zombie)
                                 res = videolibrarytools.write_nfo(tvshow_path, head_nfo, zombie_item)
                         else:
                             confirm = True
@@ -275,7 +290,8 @@ def list_tvshows(item):
                             if canal not in zombie_list:
                                 zombie_list.append(canal)
                                 tvshow_path = filetools.join(raiz, f)
-                                zombie_item = item_tvshow.clone(zombie=True)
+                                zombie = True
+                                zombie_item = item_tvshow.clone(zombie=zombie)
                                 res = videolibrarytools.write_nfo(tvshow_path, head_nfo, zombie_item)
 
                 if len(dead_list) > 0:
