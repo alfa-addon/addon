@@ -23,7 +23,7 @@ host = 'http://www.wildclassic.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/vintage/newest-videos/"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/vintage/newest-videos/", page=host + "/vintage/newest-videos/" ))
     itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/vintage/"))
     itemlist.append(item.clone(title="Mas largos" , action="lista", url=host + "/vintage/longest-videos/"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
@@ -63,7 +63,8 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    Accept= "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+    data = httptools.downloadpage(item.url, headers={'Referer': item.page, 'Accept': Accept}).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<li>.*?'
     patron += '<a class=thumba href="([^"]+)".*?'
@@ -83,7 +84,8 @@ def lista(item):
     if next_page =="":
         next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)"')
     if next_page:
-        next_page = urlparse.urljoin(item.url,next_page)+"/"
+        item.page = item.url
+        next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 

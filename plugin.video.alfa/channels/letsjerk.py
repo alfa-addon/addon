@@ -17,11 +17,11 @@ from core.item import Item
 from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
-
+# https://letsjerk.tv https://letsjerk.to
 canonical = {
              'channel': 'letsjerk', 
              'host': config.get_setting("current_host", 'letsjerk', default=''), 
-             'host_alt': ["https://letsjerk.to"], 
+             'host_alt': ["https://letsjerk.tv"], 
              'host_black_list': [], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

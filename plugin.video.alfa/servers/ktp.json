@@ -40,6 +40,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "((?:http|https)://(?:www.|)datoporn.(?:co|com)/embed-[A-z0-9]+.html)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)(?:porn00|xmegadrive|uiporn|pornhat|familyporn).(?:org|tv|com)/video(?:s|)/[A-z0-9-]+/)",
         "url": "\\1"
       },
@@ -135,7 +139,11 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://pornwild.to(?:/es|)/videos/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(https://www.tabootube.xxx/[A-z0-9-]+)(?:/|)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://pornwild.(?:to|com)(?:/es|)/videos/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       }
       ]
