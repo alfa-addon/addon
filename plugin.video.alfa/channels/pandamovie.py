@@ -139,14 +139,26 @@ def findvideos(item):
     logger.info()
     itemlist = []
     video_urls = []
-    soup = create_soup(item.url).find('div', id='pettabs')
-    matches = soup.find_all('a')
+    soup = create_soup(item.url)
+    pornstars = soup.find('div', class_='mvic-info').find_all('a', href=re.compile("/actor/"))
+    for x , value in enumerate(pornstars):
+        pornstars[x] = value.text.strip()
+    pornstar = ' & '.join(pornstars)
+    if not "N/A" in pornstar:
+        pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+    else:
+        pornstar = ""
+    plot = pornstar
+    # lista = item.contentTitle.split()
+    # lista.insert (0, pornstar)
+    # item.contentTitle = ' '.join(lista)    
+    matches = soup.find('div', id='pettabs').find_all('a')
     for elem in matches:
         url = elem['href']
         url = url.split("?link=")[-1]
         if not url in video_urls:
             video_urls += url
-            itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
+            itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', plot=plot, language='VO',contentTitle = item.contentTitle))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)

@@ -16,39 +16,37 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-from channels import filtertools
-from channels import autoplay
+from bs4 import BeautifulSoup
 
-IDIOMAS = {'vo': 'VO'}
-list_language = list(IDIOMAS.values())
-list_quality = []
-list_servers = ['gounlimited']
 
-host = 'http://www.veporno.net'  #  https://www.fxporn.net      http://www.veporns.com    
+# gameofporn  veporns  https://www.veporno.net  https://www.fxporn.net      http://www.veporns.com    
+canonical = {
+             'channel': 'veporns', 
+             'host': config.get_setting("current_host", 'veporns', default=''), 
+             'host_alt': ["https://www.veporno.net"], 
+             'host_black_list': [], 
+             'pattern': ['href="?([^"|\s*]+)["|\s*]\s*type="?application/rss+xml"?'], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    autoplay.init(item.channel, list_servers, list_quality)
-
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/month"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-videos"))
-    itemlist.append(item.clone(title="PornStar" , action="catalogo", url=host + "/pornstars"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
-
-    autoplay.show_option(item.channel, itemlist)
-
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/videos/1"))
+    itemlist.append(Item(channel=item.channel, title="Top" , action="lista", url=host + "/top-videos"))
+    itemlist.append(Item(channel=item.channel, title="New PornStar" , action="catalogo", url=host + "/pornstars"))
+    itemlist.append(Item(channel=item.channel, title="Top PornStar" , action="catalogo", url=host + "/pornstars?sort=rank"))
+    itemlist.append(Item(channel=item.channel, title="Sitios" , action="categorias", url=host + "/categories"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/porn/%s/" % (host, texto)
+    item.url = "%s/porn/%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -61,105 +59,94 @@ def search(item, texto):
 def catalogo(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<li><a href="([^"]+)" class="thumb" title="([^"]+)".*?'
-    patron += 'image:url\(([^\)]+)\).*?'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
-        title=scrapedtitle
-        thumbnail = scrapedthumbnail
-        url = scrapedurl
-        itemlist.append(item.clone(action="lista2", title=title, url=url,
-                              fanart=thumbnail, thumbnail=thumbnail, plot="") )
-    next_page = scrapertools.find_single_match(data, '<a class="active".*?<a class="" href="([^"]+)">')
+    soup = create_soup(item.url).find('div', class_='box')
+    matches = soup.find_all('li')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.a['title']
+        thumbnail = elem.a['style']
+        thumbnail = scrapertools.find_single_match(thumbnail, 'url\(([^\)]+)')
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, fanart=thumbnail, thumbnail=thumbnail ))
+    next_page = soup.find('p', class_='sayfalama').find('a', class_='active')
     if next_page:
+        next_page = next_page.find_next_sibling("a")['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<ul style="margin-top:-10px;"><li><a href="([^"]+)" title="([^"]+) Porn Videos"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle in matches:
-        title = scrapedtitle
+    soup = create_soup(item.url).find('div', class_='content')
+    matches = soup.find_all('li')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.text
+        url = urlparse.urljoin(host,url)
         thumbnail = ""
-        url = urlparse.urljoin(host,scrapedurl)
-        itemlist.append(item.clone(action="lista", title=title, url=url,
-                              fanart=thumbnail, thumbnail=thumbnail, plot="") )
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, fanart=thumbnail, thumbnail=thumbnail ))
     return sorted(itemlist, key=lambda i: i.title)
 
-def lista2(item):
+
+def create_soup(url, referer=None, unescape=False):
     logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<li><img class="small_video_img" src="([^"]+)".*?'
-    patron += '<a href="([^"]+)" class="thumb" title="([^"]+)">.*?'
-    patron += '>([^<]+)<'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedthumbnail,scrapedurl,scrapedtitle,time in matches:
-        title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
-        thumbnail = scrapedthumbnail
-        url = urlparse.urljoin(item.url,scrapedurl)
-        plot = ""
-        itemlist.append(item.clone(action="findvideos", title=title, url=url,
-                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
-    next_page = scrapertools.find_single_match(data, '<a class="active".*?<a class="" href="([^"]+)">')
-    if next_page:
-        next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista2", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
-    return itemlist
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+        data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<li class="dvd-new".*?<a href="([^"]+)".*?'
-    patron += 'title="([^"]+)".*?image:url\(([^")]+)\)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
-        title = scrapedtitle.strip()
-        thumbnail = scrapedthumbnail
-        url = urlparse.urljoin(item.url,scrapedurl)
-        plot = ""
-        itemlist.append(item.clone(action="findvideos", title=title, url=url,
-                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
-                              # porstar paginacion
-    next_page = scrapertools.find_single_match(data, '<a class="active".*?<a class="" href="([^"]+)">')
+    soup = create_soup(item.url)
+    if "/star/" in item.url:
+        matches = soup.find('div', class_='videos').find_all('li')
+    else:
+        matches = soup.find('div', class_='box').find_all('li', class_='dvd-new')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.a['title']
+        if elem.find('img'):
+            thumbnail = elem.img['src']
+        else:
+            thumbnail = elem.a['style']
+            thumbnail = scrapertools.find_single_match(thumbnail, 'url\(([^\)]+)')
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, contentTitle=title, fanart=thumbnail, thumbnail=thumbnail ))
+    next_page = soup.find('p', class_='sayfalama').find('a', class_='active')
     if next_page:
-        next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        next_page = next_page.find_next_sibling("a")
+        if next_page:
+            next_page = next_page['href']
+            next_page = urlparse.urljoin(item.url,next_page)
+            itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = 'onClick="toplay\((.*?)\).*?>Mirror'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for url in matches:
-        url = url.replace("'", "").split(",")
-        url = "%s/ajax.php?page=video_play&thumb=%s&theme=%s&video=%s&id=%s&catid=%s&tip=%s&server=%s" %(host,url[0],url[1],url[2],url[3],url[4],url[5],str(url[6]))
-        headers = {"X-Requested-With":"XMLHttpRequest"}
-        data = httptools.downloadpage(url, headers=headers).data
-        url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
-        if not url:
-            url = scrapertools.find_single_match(data, "<iframe src='([^']+)'")
-        itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    soup = create_soup(item.url).find('div', class_='player')
+    url = soup.iframe['src']
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    # Requerido para FilterTools
-    itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
-    # Requerido para AutoPlay
-    autoplay.start(itemlist, item)
     return itemlist
 
+
+def play(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url).find('div', class_='player')
+    url = soup.iframe['src']
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
