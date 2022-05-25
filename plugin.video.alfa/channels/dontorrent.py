@@ -31,12 +31,13 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.bet/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.wtf/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/'], 
-             'host_black_list': ['https://dontorrent.cx/', 
+             'host_black_list': ['https://dontorrent.cab/', 'https://dontorrent.bet/', 'https://dontorrent.cx/', 
                                  'https://dontorrent.nl/', 'https://dontorrent.tel/', 'https://dontorrent.pl/', 
                                  'https://dontorrent.cat/', 'https://dontorrent.run/', 'https://dontorrent.wf/', 
                                  'https://dontorrent.pm/', 'https://dontorrent.top/', 'https://dontorrent.re/'], 
+             'pattern_proxy': '<a[^>]*class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -627,14 +628,17 @@ def listado(item):                                                              
             year = '-'
             if item_local.contentType == "movie":
                 if scrapertools.find_single_match(title, '\((\d{4})\)'):
-                    year = scrapertools.find_single_match(title, '\((\d{4})\)')
-                    title = re.sub('\s*\(\d{4}\)', '', title).rstrip()
+                    try:
+                        year = int(scrapertools.find_single_match(title, '\((\d{4})\)'))
+                        title = re.sub('\s*\(\d{4}\)', '', title).rstrip()
+                    except:
+                        year = '-'
             title = re.sub(r'(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|documental|completo', '', title).strip()
             item_local.quality = re.sub(r'(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', 
                         '', item_local.quality).strip()
 
             #Analizamos el año.  Si no está claro ponemos '-'
-            item_local.infoLabels["year"] = '-'
+            item_local.infoLabels["year"] = year
             
             #Terminamos de limpiar el título
             title = re.sub(r'[\(|\[]\s+[\)|\]]', '', title)
@@ -646,6 +650,7 @@ def listado(item):                                                              
                 item_local.contentTitle = title.strip().lower().title()
             else:
                 item_local.contentSerieName = title.strip().lower().title()
+                item_local.season_search = item_local.contentSerieName
 
             item_local.title = title.strip().lower().title()
                 
@@ -748,6 +753,7 @@ def findvideos(item):
     if item.contentType == 'movie':
         torrent_params['quality_alt'] = '720p 1080p 4kwebrip 4k'
         if btdigg: torrent_params['quality_alt'] += ' rip'
+        if btdigg and 'screener' in item.quality.lower(): torrent_params['quality_alt'] += ' screener'
     elif item.quality != 'HDTV':
         torrent_params['quality_alt'] = '1080p 4kwebrip 4k'
         if btdigg: torrent_params['quality_alt'] += ' 720p'
@@ -769,6 +775,7 @@ def findvideos(item):
         patron += '"popover"\s*title="[^>]*contraseña[^\/]*data-clave="([^"]+)">.*?)?'
         patron += '<a[^>]*class="text-white[^"]+"\s*style="font-size[^"]+"\s*'
         patron += 'href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>()()'
+        # actualizar 'pattern_proxy' si hay cambios
     else:
         patron = '(?i)<tr>\s*<td\s*style=[^>]+>([^<]+)<\/td>\s*<td>\s*<a[^>]*'
         patron += 'class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"[^>]*>'

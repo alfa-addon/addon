@@ -65,7 +65,6 @@ blocked_channels = [
 def mainlist(item):
     logger.info()
     
-    
     itemlist = []
     pausar = False
     resetear = False
@@ -83,7 +82,15 @@ def mainlist(item):
         file = filetools.join(DOWNLOAD_LIST_PATH, file)
         try:
             i = Item(path=file).fromjson(filetools.read(file))
-            if 'downloadStatus' not in i: continue
+            if not i.action or 'downloadStatus' not in i or 'downloadCompleted' not in i \
+                            or 'downloadProgress' not in i or 'downloadQueued' not in i \
+                            or not isinstance(i.downloadStatus, (int, float)) \
+                            or not isinstance(i.downloadCompleted, (int, float)) \
+                            or not isinstance(i.downloadProgress, (int, float)) \
+                            or not isinstance(i.downloadQueued, (int, float)):
+                filetools.remove(file, silent=True)
+                logger.error('Deleting corrupted .json file: %s' % filetools.basename(file))
+                continue
         except:
             continue
         i.thumbnail = i.contentThumbnail

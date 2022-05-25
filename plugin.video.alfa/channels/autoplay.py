@@ -366,7 +366,10 @@ def start(itemlist, item):
                         logger.debug(str(len(autoplay_list)))
 
                     # Si hemos llegado hasta aqui es por q no se ha podido reproducir
-                    max_intentos_servers[videoitem.server.lower()] -= 1
+                    if max_intentos_servers.get(videoitem.server.lower(), 0):
+                        max_intentos_servers[videoitem.server.lower()] -= 1
+                    else:
+                        max_intentos_servers[videoitem.server.lower()] = 0
 
                     # Si se han alcanzado el numero maximo de intentos de este servidor
                     # preguntar si queremos seguir probando o lo ignoramos

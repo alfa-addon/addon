@@ -277,6 +277,10 @@ class Item(object):
             else:
                 return self.__dict__["infoLabels"][name]
 
+        elif name in ['downloadCompleted', 'downloadProgress', 'downloadQueued', 'downloadSize', 'downloadStatus']:
+            # Etiquetas de Downloads
+            return 0
+        
         # valor por defecto para el resto de atributos
         else:
             return ""

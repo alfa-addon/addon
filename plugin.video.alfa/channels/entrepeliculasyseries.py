@@ -28,8 +28,8 @@ list_servers = ['mega', 'fembed', 'vidtodo', 'gvideo']
 canonical = {
              'channel': 'entrepeliculasyseries', 
              'host': config.get_setting("current_host", 'entrepeliculasyseries', default=''), 
-             'host_alt': ['https://entrepeliculasyseries.nu/'], 
-             'host_black_list': [], 
+             'host_alt': ['https://entrepeliculasyseries.nz/'], 
+             'host_black_list': ['https://entrepeliculasyseries.nu/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -234,6 +234,13 @@ def findvideos(item):
 
     for elem in matches:
         lang = elem.h3.text.lower().strip()
+        try:
+            lang, quality = scrapertools.find_single_match(lang, '(^\w+)[^$]*\s+(\w+$)')
+        except:
+            lang = scrapertools.find_single_match(lang, '(^\w+)')
+            quality = ''
+        logger.error(lang)
+        logger.error(quality)
 
         if lang == "descargar":
             continue
@@ -243,7 +250,7 @@ def findvideos(item):
             url = opt["data-link"]
 
             itemlist.append(Item(channel=item.channel, title=server.capitalize(), url=url, server=server, action="play",
-                                 language=IDIOMAS.get(lang, 'LAT'), infoLabels=item.infoLabels))
+                                 language=IDIOMAS.get(lang, 'LAT'), quality=quality.capitalize(), infoLabels=item.infoLabels))
 
     itemlist = sorted(itemlist, key=lambda it: it.language)
 

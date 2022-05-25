@@ -1603,7 +1603,7 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
 
     install_path = filetools.join(addons_path, 'lib', 'assistant', platform, version_name)
     version_inst = filetools.read(install_path)
-    zip_path = filetools.join(addons_path, 'resources', app_name+'.zip')
+    zip_path = filetools.join(addons_path, 'tools', app_name+'.zip')
     if update and filetools.exists(zip_path): filetools.remove(zip_path, silent=True)
     binary_path = filetools.join(config.get_data_path(), 'assistant')
     binary_exec = filetools.join(binary_path, app_name+'.exe')
@@ -1702,7 +1702,6 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
             logger.error("Error en la escritura de control de versión. Seguimos...: %s" % install_path)
 
     # Descargamos y guardamos el BINARIO
-    res = get_generic_call('terminate', timeout=1-EXTRA_TIMEOUT, alfa_s=True)   # desactivamos la app si estaba iniciada
     if update != True: platformtools.dialog_notification("Instalación Alfa Assistant", "Descargando BINARIO")
     #assistant_url = '%s%s/%s.zip' % (_assistant_url, platform, app_name)
     if assistant_desktop_urls.get(platform, []):
@@ -1718,8 +1717,6 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
         logger.error("Error en la descarga del BINARIO: %s" % str(response.code))
         return respuesta, app_name
     else:
-        global isAlfaAssistantOpen
-        isAlfaAssistantOpen = False
         # Guardamos archivo descargado .zip
         res = filetools.write(zip_path, response.data, mode='wb', silent=True)
         if not res:
@@ -1727,9 +1724,13 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
             logger.error("Error en la escritura del BINARIO: %s" % zip_path)
             return respuesta, app_name
         else:
+            global isAlfaAssistantOpen
+            isAlfaAssistantOpen = False
+            res = get_generic_call('terminate', timeout=1-EXTRA_TIMEOUT, alfa_s=True)   # desactivamos la app si estaba iniciada
             # Empezando la extracción del .zip del DESKTOP
             if filetools.exists(binary_path):
                 res = filetools.rmdirtree(binary_path, silent=False)
+                time.sleep(2)
             try:
                 import ziptools
                 archive = ziptools.ziptools()
@@ -1746,6 +1747,31 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
                                                                             "Error en la instalación del BINARIO, versión: %s" % version_app)
                 return respuesta, app_name
 
+    # Procesamos instalaciones adicionales que vengan con el .zip
+    for install in sorted(filetools.listdir(binary_path)):
+        if not install.startswith('install'): continue
+        ins_path = filetools.join(binary_path, install)
+        if not filetools.isfile(ins_path): continue
+        filetools.chmod(ins_path, '777', silent=True)
+        creationflags = 0
+        if PLATFORM in ['windows', 'xbox']:
+            creationflags = 0x08000000
+        try:
+            logger.info('Instalando software adicional: %s' % ins_path)
+            p = subprocess.Popen(ins_path, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+                                 stdin=subprocess.PIPE, cwd=binary_path, creationflags=creationflags, shell=True)
+            output_cmd, error_cmd = p.communicate(timeout=15)
+            if not error_cmd:
+                filetools.remove(ins_path, silent=True)
+            else:
+                logger.error('## ERROR Apt_Install CMD: %s, error: %s' % (ins_path, str(error_cmd)))
+        except Exception as e:
+            if not PY3:
+                e = unicode(str(e), "utf8", errors="replace").encode("utf8")
+            elif PY3 and isinstance(e, bytes):
+                e = e.decode("utf8")
+            logger.error('## ERROR Apt_Install CMD: %s, error: %s' % (ins_path, e))
+    
     if assistant_flag_install:
         execute_in_alfa_assistant_with_cmd('open')                              # re-activamos la app para dejarla como estaba
         time.sleep(2)

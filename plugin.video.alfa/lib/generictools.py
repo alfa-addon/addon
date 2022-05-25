@@ -219,8 +219,9 @@ def change_host_newpct1(host, host_old):
     if not channel_json or not channel_json.get('settings', []): return
 
     domain_old = scrapertools.find_single_match(host_old, patron_domain)
-    label = ", ('1', 'channel_py_domain.split('.')[0]', 'channel_py_domain.split('.')[0]', '%s', '%s', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no')" \
-                % (domain_old, host)
+    domain_host = scrapertools.find_single_match(host, patron_domain)
+    label = ", ('1', '%s', '%s', '%s', '%s', '\u0028http\\S+\u0029\\/\\w+-\u0028?:org|com\u0029', '', '', '', '', '*', '', 'no')" \
+                % (domain_old.split('.')[0], domain_host.split('.')[0], domain_old, host)
     update = False
     
     for settings in channel_json['settings']:                                   # Se recorren todos los settings
@@ -1399,7 +1400,58 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
                 matches_btdigg.extend(matches)
                 break
         matches = matches_btdigg[:]
+        
+        url_tails = [[host_alt + 'peliculas/', 'pelicula'], [host_alt + 'estrenos-de-cine/', 'pelicula']]
+        y = 40
+        for url_base, extra in url_tails:
+            if extra not in item.extra: continue
+            matches_str = str(matches).lower()
+            data, response, item, itemlist = downloadpage(url_base, timeout=channel.timeout, s2=False, retry_CF=retry_CF, 
+                                                          headers=headers, quote_rep=True, CF_test=False, retry_alt=False, 
+                                                          alfa_s=True, item=item, itemlist=itemlist)
+            if not response.sucess:
+                return matches
+            
+            patron = '<a href="([^"]+)"\s*'                                     # la url
+            patron += 'title="([^"]+)"[^>]*>\s*'                                # el titulo
+            patron += '<img.*?src="[^"]+"[^>]*>\s*<h2.*?>[^<]*<\/h2>\s*'
+            patron += '<span>([^<].*?)?<'                                       # la calidad
+            matches_btdigg = re.compile(patron, re.DOTALL).findall(data)
+        
+            x = 0
+            for _url, _title, _quality in matches_btdigg:
+                url = _url
+                quality = _quality
+                
+                title = _title.strip()
+                title = re.sub(r'(?i)castellano|español|ingl.s\s*|english\s*|calidad|de\s*la\s*serie|spanish|Descarga\w*\s*\w+\-\w+', '', title)
+                title = re.sub(r'(?i)ver\s*online\s*(?:serie\s*)|descarga.*\s*Serie\s*(?:hd\s*)?|ver\s*en\s*linea\s*|v.o.\s*|cvcd\s*', '', title)
+                title = re.sub(r'(?i)en\s*(?:Full\s*)?HD\s*|microhd\s*|hdtv\s*|\(proper\)\s*|ratdvd\s*|dvdrip\s*|dvd.*\s*|dvbrip\s*', '', title)
+                title = re.sub(r'(?i)ESDLA\s*|dvb\s*|descarga\w*\s*|torrent\s*|gratis\s*|estreno\w*\s*', '', title)
+                title = re.sub(r'(?i)(?:la\s*)?pelicula\w*\s*en\s*latino\s*|(?:la\s*)?pelicula\w*\s*|descarga\w*\s*todas\s*', '', title)
+                title = re.sub(r'(?i)bajar\s*|hdrip\s*|rip\s*|xvid\s*|ac3\s*5\.1\s*|ac3\s*|1080p\s*|720p\s*|dvd-screener\s*', '', title)
+                title = re.sub(r'(?i)ts-screener\s*|screener\s*|bdremux\s*|4k\s*uhdrip\s*|full\s*uhd4k\s*|4kultra\s*|2cd\s*', '', title)
+                title = re.sub(r'(?i)fullbluray\s*|en\s*bluray\s*|bluray\s*en\s*|bluray\s*|bonus\s*disc\s*|de\s*cine\s*', '', title)
+                title = re.sub(r'(?i)telecine\s*|argentina\s*|\+\+sub\w+\s*|\+-\+sub\w+\s*|directors\s*cut\s*|\s*en\s*hd', '', title)
+                title = re.sub(r'(?i)subs.\s*integrados\s*|subtitulos\s*|blurayrip(?:\])?|descarga\w*\s*otras\s*|\(comple.*?\)', '', title).strip()
+                title = re.sub(r'(?i)resubida|montaje\s*del\s*director|-*v.cine\s*|x264\s*|mkv\s*|sub\w*\s*|remaste\w+', '', title).strip()
+                title = re.sub(r'(?:-\s*)?ES\s*|\(4k\)\s*|\[4k\]\s*|\[|\]|BR\s*|[\(|\[]\s+[\)|\]]|\(\)\s*|\[\]\s*|\+\s*', '', title)
+                title = re.sub(r'(?i)spam|proper|porper|v\d+|sin$|line$|\(line\)|SIN', '', title)
+                title = re.sub(r'\(\s*\)', '', title)
+                title = title.replace("a?o", 'año').replace("a?O", 'año').replace("A?o", 'Año').replace("A?O", 'Año').replace("  ", ' ').strip()
+                if "en espa" in title: title = title[:-11]
 
+                url_final = '%s%s_btdig/%s' % (url_final_base, item.extra, title.strip())
+                quality = '%s%s' % (quality, btdigg_label)
+                
+                if url_final in matches_str: continue
+                if x >= y: break
+                x += 1
+
+                matches.append((url_final, title, quality))
+            
+            y = int(y*0.75)
+    
     except:
         logger.error(traceback.format_exc())
     
@@ -1680,6 +1732,8 @@ def post_tmdb_episodios(item, itemlist):
             del item_local.video_path
         if item_local.unify_extended:
             del item_local.unify_extended
+        if item_local.season_search:
+            del item_local.season_search
         item_local.wanted = 'xyz'
         del item_local.wanted
         item_local.text_color = 'xyz'
@@ -1979,7 +2033,8 @@ def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, patron_season=''
         item_search = item.clone()
         item_search.extra = 'search'
         item_search.extra2 = 'episodios'
-        title = scrapertools.find_single_match(item_search.contentTitle or item_search.contentSerieName, '(^.*?)\s*(?:$|\(|\[)')    # Limpiamos
+        title = scrapertools.find_single_match(item_search.season_search or item_search.contentSerieName \
+                                               or item_search.contentTitle, '(^.*?)\s*(?:$|\(|\[)')     # Limpiamos
         item_search.title = title
         item_search.infoLabels = {}                                             # Limpiamos infoLabels
         
