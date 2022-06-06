@@ -21,25 +21,32 @@ import requests
 from lib import servop
 import os
 
-host = 'https://ultrahorny.com'
+canonical = {
+             'channel': 'ultrahorny', 
+             'host': config.get_setting("current_host", 'ultrahorny', default=''), 
+             'host_alt': ["https://ultrahorny.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/?filter=latest"))
-    itemlist.append(item.clone(title="Mas visto" , action="lista", url=host + "/?filter=most-viewed"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/?filter=popular"))
-    itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/?filter=longest"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?filter=latest"))
+    itemlist.append(Item(channel=item.channel, title="Mas visto" , action="lista", url=host + "/?filter=most-viewed"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/?filter=popular"))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "/?filter=longest"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/?s=%s" % (host,texto)
+    item.url = "%s/?s=%s&filter=latest" % (host,texto)
     try:
         return lista(item)
     except:
@@ -53,15 +60,19 @@ def categorias(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find('div', class_='tagcloud').find_all('a')
+    matches = soup.find('div', class_='videos-list').find_all('article')
     for elem in matches:
-        url = elem['href']
-        title = elem.text.strip()
-        thumbnail = ""
+        url = elem.a['href']
+        title = elem.a['title']
+        thumbnail = elem.img['src']
         plot = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
-    itemlist.sort(key=lambda x: x.title)
+    next_page = soup.find('a', class_='current')
+    if next_page and next_page.parent.find_next_sibling("li"):
+        next_page = next_page.parent.find_next_sibling('li').a['href']
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -81,25 +92,28 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('article', class_='vdeo')
+    if "/?s=" in item.url:
+        matches = soup.find('section', id='primary').find_all('article')
+    else:
+        matches = soup.find('div', class_='videos-list').find_all('article')
     for elem in matches:
         url = elem.a['href']
-        title = elem.find('h2').text.strip()
-        thumbnail = elem.img['src']
-        time = elem.find('i', class_='fa-clock')
+        title = elem.a['title']
+        thumbnail = elem.img['data-src']
+        time = elem.find('i', class_='fa-clock-o')
         if time:
-            title = "[COLOR yellow]%s[/COLOR] %s" % (time.parent.text, title)
+            title = "[COLOR yellow]%s[/COLOR] %s" % (time.parent.text.strip(), title)
         plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('a', class_='next')
-    if next_page:
-        next_page = next_page['href']
+    next_page = soup.find('a', class_='current')
+    if next_page and next_page.parent.find_next_sibling("li"):
+        next_page = next_page.parent.find_next_sibling('li').a['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -107,7 +121,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    url = soup.find('div', id='player-torotube').iframe['src']
+    url = soup.find('div', class_='responsive-player').iframe['src']
     soup = create_soup(url)
     url = soup.find('iframe', class_='iframe')['src']
     itemlist.append(Item(channel=item.channel, title='%s', contentTitle = item.contentTitle, url=url, action='play'))
@@ -119,7 +133,7 @@ def play(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    url = soup.find('div', id='player-torotube').iframe['src']
+    url = soup.find('div', class_='responsive-player').iframe['src']
     soup = create_soup(url)
     url = soup.find('iframe', class_='iframe')['src']
     itemlist.append(Item(channel=item.channel, title='%s', contentTitle = item.contentTitle, url=url, action='play'))

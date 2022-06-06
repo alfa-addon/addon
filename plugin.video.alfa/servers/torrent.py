@@ -1141,8 +1141,6 @@ def capture_thru_browser(url, capture_path, item, response, VFS):
 
 
 def magnet2torrent(magnet, headers={}):
-    logger.info()
-    
     torrent_file = ''
     info = ''
     post = None
@@ -1155,6 +1153,7 @@ def magnet2torrent(magnet, headers={}):
     LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default="")
     LIBTORRENT_MAGNET_PATH = filetools.join(config.get_setting("downloadpath"), 'magnet')
     btih = scrapertools.find_single_match(magnet, 'urn:btih:([\w\d]+)\&').upper()
+    logger.info(btih)
 
     if magnet.startswith('magnet'):
         from core import httptools
@@ -2038,6 +2037,16 @@ def restart_unfinished_downloads():
                     if fichero.endswith(".json") and filetools.exists(filetools.join(DOWNLOAD_LIST_PATH, fichero)):
                         item = Item(path=filetools.join(DOWNLOAD_LIST_PATH, fichero)).fromjson(
                             filetools.read(filetools.join(DOWNLOAD_LIST_PATH, fichero)))
+                        if not item.action or 'downloadStatus' not in item or 'downloadCompleted' not in item \
+                                           or 'downloadProgress' not in item or 'downloadQueued' not in item \
+                                           or not isinstance(item.downloadStatus, (int, float)) \
+                                           or not isinstance(item.downloadCompleted, (int, float)) \
+                                           or not isinstance(item.downloadProgress, (int, float)) \
+                                           or not isinstance(item.downloadQueued, (int, float)):
+                            filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, fichero), silent=True)
+                            logger.error('Deleting corrupted .json file: %s' % fichero)
+                            continue
+                        
                         torr_client = torrent_paths['TORR_client'].upper()
                         if not torr_client and item.downloadFilename:
                             torr_client = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:')

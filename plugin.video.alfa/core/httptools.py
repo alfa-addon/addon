@@ -491,7 +491,7 @@ def blocking_error(url, req, proxy_data, opt):
 
     if '104' in code or '10054' in code or ('404' in code and 'Object not found' in data \
                      and '.torrent' not in url) \
-                     or ('502' in code and 'Por causas ajenas' in data) \
+                     or ('502' in code and ('Por causas ajenas' in data or 'Contenido bloqueado' in data)) \
                      or ('sslcertverificationerror') in code.lower() \
                      or ('certificate verify failed') in code.lower() \
                      or (opt.get('check_blocked_IP', False) and 'Please wait while we try to verify your browser...' in data):
@@ -544,8 +544,8 @@ def blocking_error(url, req, proxy_data, opt):
                 proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 'ProxyCF'))
             
     elif data and '200' not in code:
-        if len(data) > 200: data = data[:200]
-        logger.debug('Error: %s, Url: %s, Datos: %s' % (code, url, data))
+        if len(data) > 300: data = data[:300]
+        logger.error('Error: %s, Url: %s, Datos: %s' % (code, url, data))
     
     return resp
 
@@ -755,7 +755,10 @@ def reset_canonical(canonical_new, url, response, opt):
 def proxy_post_processing(url, proxy_data, response, opt):
     opt['out_break'] = False
     data = ''
-    if response['data']: data = response['data'][:500]
+    if response['data']:
+        data = response['data'][:500]
+        if PY3 and isinstance(data, bytes):
+            data = "".join(chr(x) for x in bytes(data))
     try:
         if response["code"] not in [200, 302] and opt.get('forced_proxy_opt', '') == 'ProxyJSON':
             opt['forced_proxy_opt'] = 'ProxyCF'

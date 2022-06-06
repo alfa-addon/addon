@@ -12,7 +12,9 @@ def test_video_exists(page_url):
 
     exists = True if page_url else False
     reason = invaid_url if not exists else ""
-    page_url, ignore_response_code = page_url.split("|")[0], True if "|ignore_response_code=True" in page_url else page_url, False
+    ignore_response_code = False
+    if "|ignore_response_code=True" in page_url:
+        page_url, ignore_response_code = page_url.split("|")[0], True 
 
     if page_url:
         pattern = r'(?:^[A-Za-z]+://|^/|^[A-Za-z]+:[\\/]+)\S+'

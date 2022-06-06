@@ -254,11 +254,11 @@ def verify_script_alfa_update_helper(silent=True):
     
     addons_path = filetools.translatePath("special://home/addons")
     repos_dir = 'downloads/repos/'
-    alfa_repo = ['repository.alfa-addon', '1.0.6', '*']
-    alfa_helper = ['script.alfa-update-helper', '0.0.6', '*']
-    torrest_repo = ['repository.github', '0.0.6', '*']
-    torrest_addon = 'plugin.video.torrest'
-    futures_script = ['%sscript.module.futures' % repos_dir, '2.2.1', 'PY2']
+    alfa_repo = ['repository.alfa-addon', '1.0.7', '*', '']
+    alfa_helper = ['script.alfa-update-helper', '0.0.6', '*', '']
+    torrest_repo = ['repository.github', '0.0.6', '*', 'F']
+    torrest_addon = ['plugin.video.torrest', '0.0.12', '*', '']
+    futures_script = ['%sscript.module.futures' % repos_dir, '2.2.1', 'PY2', '']
     
     try:
         versiones = config.get_versions_from_repo()
@@ -273,7 +273,7 @@ def verify_script_alfa_update_helper(silent=True):
     if not 'github' in versiones.get('url', '') or bool(xbmc.getCondVisibility("System.HasAddon(%s)" % alfa_helper[0])):
         repos += [alfa_helper]
 
-    for addon_name, version, py in repos:
+    for addon_name, version, py, forced in repos:
         if py != '*':
             if py == 'PY2' and PY3:
                 continue
@@ -292,11 +292,22 @@ def verify_script_alfa_update_helper(silent=True):
         filetools.remove(filetools.join('special://home', 'addons', 'packages', package), silent=silent)
         updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
         if updated:
-            installed_version = xbmc.getInfoLabel('System.AddonVersion(%s)' % addonid)
-            if installed_version != new_version:
+            try:
+                installed_version = xbmc.getInfoLabel('System.AddonVersion(%s)' % addonid)
+                if installed_version != new_version:
+                    installed_version_list = installed_version.split('.')
+                    web_version_list = new_version.split('.')
+                    for i, ver in enumerate(web_version_list):
+                        if int(ver) > int(installed_version_list[i]):
+                            updated = False
+                            break
+                        if int(ver) < int(installed_version_list[i]):
+                            break
+            except:
+                logger.error(traceback.format_exc())
                 updated = False
             
-        if not updated:
+        if not updated or (forced and not filetools.exists(ADDON_CUSTOMCODE_JSON)):
             url_repo = '%s%s/%s' % (versiones.get('url', ''), path_folder, package)
             response = httptools.downloadpage(url_repo, ignore_response_code=True, alfa_s=True, json_to_utf8=False)
             if response.code == 200:
@@ -326,7 +337,7 @@ def verify_script_alfa_update_helper(silent=True):
     if versiones.get('addons_db', ''):
         
         repos = [(alfa_repo[0], alfa_repo[0]), (alfa_repo[0], ADDON_NAME), (alfa_repo[0], alfa_helper[0]), \
-                    (torrest_repo[0], torrest_repo[0]), (torrest_repo[0], torrest_addon), \
+                    (torrest_repo[0], torrest_repo[0]), (torrest_repo[0], torrest_addon[0]), \
                     ('repository.xbmc.org', futures_script[0].replace(repos_dir, ''))]
         try:
             for repo, addon in repos:

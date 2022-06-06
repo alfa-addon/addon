@@ -14,18 +14,28 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import logger
+from platformcode import config, logger
+from bs4 import BeautifulSoup
 
-host = 'http://tubehentai.com'
+canonical = {
+             'channel': 'tubehentai', 
+             'host': config.get_setting("current_host", 'tubehentai', default=''), 
+             'host_alt': ["https://tubehentai.com"], 
+             'host_black_list': [], 
+             'pattern': ['class="?active"?\s*href="?([^"|\s*]+)["|\s*]'], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Novedades", action="lista", url=host + "/most-recent/"))
-    itemlist.append(item.clone(title="Mas visto", action="lista", url=host + "/most-viewed/"))
-    itemlist.append(item.clone(title="Mejor valorado", action="lista", url=host + "/top-rated/"))
+    itemlist.append(Item(channel=item.channel, title="Novedades", action="lista", url=host + "/most-recent/"))
+    itemlist.append(Item(channel=item.channel, title="Mas visto", action="lista", url=host + "/most-viewed/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado", action="lista", url=host + "/top-rated/"))
 
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -43,37 +53,49 @@ def search(item, texto):
         return []
 
 
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
+
+
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<a href="((?:http|https)://tubehentai.com/video/[^"]+)" title="([^"]+)".*?'
-    patron += '<span>([^<]+)</span>.*?'
-    patron += '<img src="([^"]+)"'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,duration,scrapedthumbnail in matches:
-        title = "[COLOR yellow]%s[/COLOR] %s" % (duration, scrapedtitle)
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', class_='videobox')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.a['title']
+        thumbnail = elem.img['data-src']
+        time = elem.find('div', class_='border-pink').text.strip()
+        title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
+        url = urlparse.urljoin(item.url,url)
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=scrapedurl, 
-                             fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, contentTitle = title))
-    next_page = scrapertools.find_single_match(data,'<a href=\'([^\']+)\' class="next"')
-    if next_page!="":
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, 
+                             fanart=thumbnail, thumbnail=thumbnail, contentTitle = title))
+    next_page = soup.find('div', class_='pagination').span
+    if next_page and next_page.find_next_sibling("a"):
+        next_page = next_page.find_next_sibling("a")['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def findvideos(item):
     logger.info()
     itemlist = []
-    url = ""
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<source src="([^"]+\.mp4)"')
-    if not url:
-        url = scrapertools.find_single_match(data, '<div class="videohere".*?src="([^"]+)"')
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    soup = create_soup(item.url)
+    url = soup.find('source', type='video/mp4')['src']
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -81,11 +103,8 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    url = ""
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<source src="([^"]+\.mp4)"')
-    if not url:
-        url = scrapertools.find_single_match(data, '<div class="videohere".*?src="([^"]+)"')
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    soup = create_soup(item.url)
+    url = soup.find('source', type='video/mp4')['src']
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

@@ -349,7 +349,7 @@ def play(item):
     data = httptools.downloadpage(item.url, headers={'Referer': item.url}).data
 
     item.server = ''
-    item.url = scrapertools.find_single_match(data, "location.href='([^']+)'")
+    item.url = scrapertools.find_single_match(data, "(?i)location\.href='([^']+)'")
     itemlist.append(item.clone())
     itemlist = servertools.get_servers_itemlist(itemlist)
 

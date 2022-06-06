@@ -15,17 +15,23 @@ from platformcode import config, logger
 from core import httptools, scrapertools, tmdb
 from core import servertools
 from core.item import Item
-from channels import filtertools
 from channels import autoplay
 from bs4 import BeautifulSoup
 
-IDIOMAS = {'vo': 'VO'}
-list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['mangovideo']
 
-host = 'https://xxxparodyhd.net'   #  https://pandamovies.pw  'https://watchpornfree.info'   'https://xxxparodyhd.net'  
-                                   #  https://www.netflixporno.net  https://xxxscenes.net  playpornx
+#  https://pandamovies.pw  'https://watchpornfree.info'   'https://xxxparodyhd.net'  
+#  https://www.netflixporno.net  https://xxxscenes.net  playpornx
+canonical = {
+             'channel': 'xxxparodyhd', 
+             'host': config.get_setting("current_host", 'xxxparodyhd', default=''), 
+             'host_alt': ["https://xxxparodyhd.net"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def mainlist(item):
     logger.info()
@@ -33,13 +39,13 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "/movies/"))
-    itemlist.append(item.clone(title="Mas Vistas" , action="lista", url=host + "/most-viewed/"))
-    itemlist.append(item.clone(title="Mejor Valoradas" , action="lista", url=host + "/most-rating/"))
-    itemlist.append(item.clone(title="Año" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Canal" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "/movies/"))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="lista", url=host + "/most-viewed/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valoradas" , action="lista", url=host + "/most-rating/"))
+    itemlist.append(Item(channel=item.channel, title="Year" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -76,7 +82,7 @@ def categorias(item):
         thumbnail = ""
         if not url.startswith("https"):
             url = "https:%s" % url
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                              thumbnail=thumbnail, plot=plot))
     if "Year" in item.title:
         itemlist.reverse()
@@ -108,13 +114,13 @@ def lista(item):
             year = elem.find('div', class_='jtip-top').a.text.strip()
         else:
             year = ""
-        itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
                              fanart=thumbnail, contentTitle=title, infoLabels={"year": year} ))
     next_page = soup.find('li', class_='active')
     if next_page and next_page.find_next_sibling("li"):
         next_page = next_page.find_next_sibling("li").a['href']
         next_page = urlparse.urljoin(item.url, next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -122,16 +128,14 @@ def findvideos(item):
     logger.info()
     itemlist = []
     video_urls = []
-    soup = create_soup(item.url).find('div', id='pettabs')
-    matches = soup.find_all('a')
+    soup = create_soup(item.url)
+    matches = soup.find('div', id='pettabs').find_all('a')
     for elem in matches:
         url = elem['href']
         if not url in video_urls:
             video_urls += url
-            itemlist.append(item.clone(title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
+            itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
-    # Requerido para FilterTools
-    itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
     return itemlist

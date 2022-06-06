@@ -19,12 +19,19 @@ from core import httptools
 from bs4 import BeautifulSoup
 from channels import autoplay
 
-host = 'http://www.viralvideosporno.com'
-
-IDIOMAS = {'vo': 'VO'}
-list_language = list(IDIOMAS.values())
+# IDIOMAS = {'vo': 'VO'}
+# list_language = list(IDIOMAS.values())
 list_quality = ['default']
 list_servers = ['aparatcam']
+
+canonical = {
+             'channel': 'viralvideosporno', 
+             'host': config.get_setting("current_host", 'viralvideosporno', default=''), 
+             'host_alt': ["http://www.viralvideosporno.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
@@ -33,11 +40,11 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    # itemlist.append(item.clone(title="Peliculas" , action="submenu", url=host + "/peliculas/all"))
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/escenas-ultimos-videos/"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/escenas-mas-visitados/"))
-    itemlist.append(item.clone(title="Canal" , action="categorias", url=host))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    # itemlist.append(Item(channel=item.channel, title="Peliculas" , action="submenu", url=host + "/peliculas/all"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/escenas-ultimos-videos/"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/escenas-mas-visitados/"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -47,7 +54,7 @@ def mainlist(item):
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="All" , action="lista", url=host + "/peliculas/all"))
+    itemlist.append(Item(channel=item.channel, title="All" , action="lista", url=host + "/peliculas/all"))
     soup = create_soup(item.url)
     matches = soup.find('div', id='movies').find_all('a')
     for elem in matches:
@@ -56,7 +63,7 @@ def submenu(item):
         url = urlparse.urljoin(item.url,url)
         thumbnail =  ""
         plot = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     return itemlist
 
@@ -85,7 +92,7 @@ def categorias(item):
         url = urlparse.urljoin(item.url,url)
         thumbnail =  ""
         plot = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     return itemlist
 
@@ -117,13 +124,13 @@ def lista(item):
         url = urlparse.urljoin(item.url,url)
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
-        itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, language="VO", fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('a', class_='current').parent.find_next_sibling("li")
-    if next_page:
-        next_page = next_page.a['href']
+    next_page = soup.find('a', class_='current')
+    if next_page and next_page.parent.find_next_sibling("li"):
+        next_page = next_page.parent.find_next_sibling("li").a['href']
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -139,13 +146,13 @@ def findvideos(item):
             if "<iframe" in url:
                 url = elem.a['src']
             if url:
-                itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+                itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         else:
             downlinks = elem.find_all('a', class_='Enlaces')
             for i in downlinks:
                 url = i.text
                 if not "ddownload" in url:
-                    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+                    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
