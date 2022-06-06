@@ -211,12 +211,12 @@ def findvideos(item):
     index = 1
     for e in list_videos:
         if e.startswith(host + "jk") or "um.php" in e:
-            
-            if "um.php?" in e:
+            if "um.php?" in e or "jk.php" in e or "jkokru.php" in e or "jkfembed.php" in e:
                 headers = {"Referer": item.url}
                 data = httptools.downloadpage(e, headers=headers).data
                 url = scrapertools.find_single_match(data, "url: '([^']+)',")
-            
+                if not url:
+                    url = scrapertools.find_single_match(data, 'src="([^"]+)')
             else:
                 serv, hash_ = scrapertools.find_single_match(e, r'%s/(\w+).php\?u=(.*)' % host)
                 serv = serv_dict.get(serv, serv)
