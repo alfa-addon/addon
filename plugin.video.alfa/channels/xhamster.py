@@ -28,13 +28,13 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="lista", title="Útimos videos", url=HOST + "newest"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Útimos videos", url=host + "newest"))
     itemlist.append(Item(channel=item.channel, action="votados", title="Lo mejor"))
     itemlist.append(Item(channel=item.channel, action="vistos", title="Los mas vistos"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Recomendados", url=HOST + "videos/recommended"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=HOST + "pornstars"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=HOST + "channels"))
-    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=HOST))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Recomendados", url=host + "videos/recommended"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "pornstars"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "channels"))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=host))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar"))
     return itemlist
 
@@ -42,7 +42,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/%s" % (HOST, texto)
+    item.url = "%s/search/%s" % (host, texto)
     item.extra = "buscar"
     try:
         return lista(item)
@@ -144,13 +144,13 @@ def votados(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, action="lista", title="Día", url=urlparse.urljoin(HOST, "/best/daily"),
+    itemlist.append(Item(channel=item.channel, action="lista", title="Día", url=urlparse.urljoin(host, "/best/daily"),
                          viewmode="movie"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Semana", url=urlparse.urljoin(HOST, "/best/weekly"),
+    itemlist.append(Item(channel=item.channel, action="lista", title="Semana", url=urlparse.urljoin(host, "/best/weekly"),
              viewmode="movie"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Mes", url=urlparse.urljoin(HOST, "/best/monthly"),
+    itemlist.append(Item(channel=item.channel, action="lista", title="Mes", url=urlparse.urljoin(host, "/best/monthly"),
              viewmode="movie"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="De siempre", url=urlparse.urljoin(HOST, "/best/"),
+    itemlist.append(Item(channel=item.channel, action="lista", title="De siempre", url=urlparse.urljoin(host, "/best/"),
              viewmode="movie"))
     return itemlist
 
@@ -158,13 +158,13 @@ def votados(item):
 def vistos(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="lista", title="Día", url=urlparse.urljoin(HOST, "/most-viewed/daily"),
+    itemlist.append(Item(channel=item.channel, action="lista", title="Día", url=urlparse.urljoin(host, "/most-viewed/daily"),
              viewmode="movie"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Semana", url=urlparse.urljoin(HOST, "/most-viewed/weekly"),
+    itemlist.append(Item(channel=item.channel, action="lista", title="Semana", url=urlparse.urljoin(host, "/most-viewed/weekly"),
              viewmode="movie"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Mes", url=urlparse.urljoin(HOST, "/most-viewed/monthly"),
+    itemlist.append(Item(channel=item.channel, action="lista", title="Mes", url=urlparse.urljoin(host, "/most-viewed/monthly"),
              viewmode="movie"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="De siempre", url=urlparse.urljoin(HOST, "/most-viewed/"),
+    itemlist.append(Item(channel=item.channel, action="lista", title="De siempre", url=urlparse.urljoin(host, "/most-viewed/"),
              viewmode="movie"))
     return itemlist
 
