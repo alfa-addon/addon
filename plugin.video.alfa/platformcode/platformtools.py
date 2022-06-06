@@ -1908,7 +1908,7 @@ def play_torrent(item, xlistitem, mediaurl):
                     scrapertools.find_single_match(item.url, '(?:\&|&amp;)dn=([^\&]+)\&'))
                 if t_hash:
                     item.downloadServer = {"url": filetools.join(torrent_paths[torr_client.upper() + '_torrents'], \
-                                                                 t_hash.upper() + '.torrent'), "server": item.server}
+                                                                 t_hash + '.torrent'), "server": item.server}
                     if torr_client in ['BT', 'MCT']:
                         filetools.write(item.downloadServer['url'], ' ')
                 if video_name:

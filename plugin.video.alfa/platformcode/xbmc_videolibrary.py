@@ -420,8 +420,13 @@ def get_videos_watched_on_kodi(item, value=1, list_videos=False):
     if item_path1[:-1] != "\\":
         item_path1 += "\\"
     item_path2 = item_path1.replace("\\", "/")
+    item_path3 = scrapertools.find_single_match(item_path1, '\s+(\[.*?\])')
+    if not item_path3:
+        item_path3 = scrapertools.slugify(item_path1, strict=False, convert=['.=', '-= ', ':=', '&= ', '  = '])
+    item_path3 = '%' + item_path3 + '%'
 
-    sql = 'select strFileName, playCount from %s_view where (strPath like "%s" or strPath like "%s")' % (view, item_path1, item_path2)
+    sql = 'select strFileName, playCount from %s_view where (strPath like "%s" or strPath like "%s" or strPath like "%s")' \
+                                                             % (view, item_path1, item_path2, item_path3)
 
     nun_records, records = execute_sql_kodi(sql, silent=True)
 

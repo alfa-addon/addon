@@ -202,6 +202,7 @@ def bd_tmdb_maintenance():
             conn.close()
             logger.info('TMDB DB compacted')
     except:
+        filetools.remove(filetools.join(config.get_data_path(), "alfa_db.sqlite"))
         logger.error(traceback.format_exc(1))
 
 
@@ -256,8 +257,8 @@ def verify_script_alfa_update_helper(silent=True):
     repos_dir = 'downloads/repos/'
     alfa_repo = ['repository.alfa-addon', '1.0.7', '*', '']
     alfa_helper = ['script.alfa-update-helper', '0.0.6', '*', '']
-    torrest_repo = ['repository.github', '0.0.6', '*', 'F']
-    torrest_addon = ['plugin.video.torrest', '0.0.12', '*', '']
+    torrest_repo = ['repository.github', '0.0.7', '*', 'V']
+    torrest_addon = ['plugin.video.torrest', '0.0.14', '*', '']
     futures_script = ['%sscript.module.futures' % repos_dir, '2.2.1', 'PY2', '']
     
     try:
@@ -307,7 +308,7 @@ def verify_script_alfa_update_helper(silent=True):
                 logger.error(traceback.format_exc())
                 updated = False
             
-        if not updated or (forced and not filetools.exists(ADDON_CUSTOMCODE_JSON)):
+        if not updated or (forced == 'V' and not filetools.exists(ADDON_CUSTOMCODE_JSON)) or forced == 'F':
             url_repo = '%s%s/%s' % (versiones.get('url', ''), path_folder, package)
             response = httptools.downloadpage(url_repo, ignore_response_code=True, alfa_s=True, json_to_utf8=False)
             if response.code == 200:

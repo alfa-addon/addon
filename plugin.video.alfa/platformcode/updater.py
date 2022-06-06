@@ -359,12 +359,10 @@ def check_dependencies(in_folder):
                     continue
                 elif dep_json['patch_version_high'].split('.')[x] > ver and dep_json.get('patch_version_low', []):
                     break
-                elif dep_json['patch_version_high'].split('.')[x] > ver:
+                elif dep_json['patch_version_high'].split('.')[x] > ver and not dep_json.get('patch_version_low', []):
                     return False
-                elif not dep_json.get('patch_version_low', []):
-                    return res
-                elif dep_json.get('patch_version_low', []):
-                    break
+                elif dep_json['patch_version_high'].split('.')[x] < ver:
+                    return False
             else:
                 return res
 
@@ -375,6 +373,7 @@ def check_dependencies(in_folder):
                         continue
                     elif dep_json['patch_version_low'].split('.')[x] > ver:
                         return False
+                else:
                     return res
 
     except:

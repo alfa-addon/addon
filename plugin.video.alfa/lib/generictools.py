@@ -814,9 +814,12 @@ def post_tmdb_listado(item, itemlist):
                     season = item_local.infoLabels['season']
                     episode = item_local.infoLabels['episode']
                 episode_max = int(episode)
-                item_local.infoLabels['season'] = season
-                if '-al-' not in title_add:
-                    item_local.infoLabels['episode'] = episode
+                if int(season):
+                    item_local.infoLabels['season'] = int(season)
+                if not int(season):
+                    title_add = re.sub(r'Episodio\s*(\d+)x(\d+)', '', title_add)
+                elif '-al-' not in title_add:
+                    item_local.infoLabels['episode'] = int(episode)
                     item_local.contentType = "episode"
                 else:
                     item_local.contentType = "season"
@@ -824,7 +827,8 @@ def post_tmdb_listado(item, itemlist):
 
                 try:
                     if (not item_local.infoLabels['temporada_nombre'] or not item_local.infoLabels['number_of_seasons']) \
-                                                                        and item_local.infoLabels['tmdb_id']:
+                                                                        and item_local.infoLabels['tmdb_id'] \
+                                                                        and item_local.infoLabels['season']:
                         tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma)  #TMDB de la serie
                 except:
                     logger.error(traceback.format_exc())
@@ -832,11 +836,16 @@ def post_tmdb_listado(item, itemlist):
                 # Restaura los datos de infoLabels a su estado original, menos plot y año
                 item_local.infoLabels['year'] = scrapertools.find_single_match(item_local.infoLabels['aired'], r'\d{4}')
                 if item_local.infoLabels.get('temporada_num_episodios', 0) >= episode_max:
-                    tot_epis = ' (de %s' % str(item_local.infoLabels['temporada_num_episodios'])
-                    if item_local.infoLabels.get('number_of_seasons', 0) > 1 \
-                            and item_local.infoLabels.get('number_of_episodes', 0) > 0:
-                        tot_epis += ', de %sx%s' % (str(item_local.infoLabels['number_of_seasons']), \
-                            str(item_local.infoLabels['number_of_episodes']))
+                    tot_epis = ''
+                    if item_local.infoLabels.get('temporada_num_episodios', 0):
+                        tot_epis = ' (de %s' % str(item_local.infoLabels['temporada_num_episodios'])
+                    if (item_local.infoLabels.get('number_of_seasons', 0) > 1 \
+                            and item_local.infoLabels.get('number_of_episodes', 0) > 0) \
+                            or (item_local.infoLabels.get('number_of_seasons', 0) \
+                            and not item_local.infoLabels.get('temporada_num_episodios', 0)):
+                        tot_epis += ' (' if not tot_epis else ', '
+                        tot_epis += 'de %sx%s' % (str(item_local.infoLabels['number_of_seasons']), \
+                                                  str(item_local.infoLabels['number_of_episodes']))
                     tot_epis += ')'
                     title_add = title_add.replace(' (MAX_EPISODIOS)', tot_epis)
                 else:
@@ -844,14 +853,14 @@ def post_tmdb_listado(item, itemlist):
                 if contentPlot[10:] != item_local.contentPlot[10:]:
                     item_local.contentPlot += '\n\n%s' % contentPlot
                 item_local.contentType = contentType
-                if item_local.contentType in ['tvshow']: del item_local.infoLabels['season']
+                if item_local.contentType in ['tvshow'] and item_local.infoLabels['season']: del item_local.infoLabels['season']
                 if item_local.contentType in ['season', 'tvshow'] and item_local.contentEpisodeNumber: del item_local.infoLabels['episode']
 
             # Exploramos los diferentes formatos
             if item_local.contentType == "episode":
                 #Si no está el título del episodio, pero sí está en "title", lo rescatamos
                 if not item_local.infoLabels['episodio_titulo'] and item_local.infoLabels['title'].lower() \
-                            != item_local.infoLabels['tvshowtitle'].lower():
+                                                                != item_local.infoLabels['tvshowtitle'].lower():
                     item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['title']
 
                 if "Temporada" in title:                    #Compatibilizamos "Temporada" con Unify
@@ -860,7 +869,8 @@ def post_tmdb_listado(item, itemlist):
                     if " al 99" in title.lower():           #Temporada completa.  Buscamos num total de episodios
                         title = title.replace("99", str(item_local.infoLabels['temporada_num_episodios']))
                     title = '%s %s' % (title, item_local.contentSerieName)
-                    item_local.infoLabels['episodio_titulo'] = '%s - %s [%s] [%s]' % (scrapertools.find_single_match(title, r'(al \d+)'), item_local.contentSerieName, item_local.infoLabels['year'], rating)
+                    item_local.infoLabels['episodio_titulo'] = '%s - %s [%s] [%s]' % (scrapertools.find_single_match(title, r'(al \d+)'), 
+                                                               item_local.contentSerieName, item_local.infoLabels['year'], rating)
         
                 elif item_local.infoLabels['episodio_titulo']:
                     title = '%s %s, %s' % (title, item_local.infoLabels['episodio_titulo'], item_local.contentSerieName)
@@ -907,11 +917,13 @@ def post_tmdb_listado(item, itemlist):
         
         base_name = ''
         season_episode = ''
+        convert = ['.=', '-= ', ':=', '&= ', '  = ']
+        video_list_str = scrapertools.slugify(str(video_list), strict=False, convert=convert)
         if item_local.contentType != 'movie' and item_local.infoLabels['tmdb_id'] \
                         and ((item_local.infoLabels['imdb_id'] \
-                        and item_local.infoLabels['imdb_id'] in str(video_list)) \
-                        or 'tmdb_'+item_local.infoLabels['tmdb_id'] in str(video_list) \
-                        or item_local.contentSerieName.lower()+' [' in str(video_list).lower()):
+                        and item_local.infoLabels['imdb_id'] in video_list_str) \
+                        or 'tmdb_'+item_local.infoLabels['tmdb_id'] in video_list_str \
+                        or scrapertools.slugify(item_local.contentSerieName, strict=False, convert=convert)+' [' in video_list_str):
             id_tmdb = item_local.infoLabels['imdb_id']
             if not id_tmdb:
                 id_tmdb = "tmdb_%s" % item_local.infoLabels['tmdb_id']
@@ -940,9 +952,9 @@ def post_tmdb_listado(item, itemlist):
         
         if item_local.contentType == 'movie' and item_local.infoLabels['tmdb_id'] \
                         and ((item_local.infoLabels['imdb_id'] \
-                        and item_local.infoLabels['imdb_id'] in str(video_list)) \
-                        or 'tmdb_'+item_local.infoLabels['tmdb_id'] in str(video_list) \
-                    or item_local.contentTitle.lower()+' [' in str(video_list)):
+                        and item_local.infoLabels['imdb_id'] in video_list_str) \
+                        or 'tmdb_'+item_local.infoLabels['tmdb_id'] in video_list_str \
+                        or scrapertools.slugify(item_local.contentTitle, strict=False, convert=convert)+' [' in video_list_str):
             item_local.unify_extended = True
             en_videoteca = '(V)-'
 
@@ -1321,11 +1333,23 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
         
         url_base = host_alt + 'ultimas-descargas/'
         retry_CF = 2
-        btdigg_entries = 20
+        btdigg_entries = 30
         headers = {'referer': channel.host}
         matches_inter = []
         urls = []
         url_final_base = btdigg_url
+        convert = ['.=', '-= ', ':=', '&= ', '  = ']
+        
+        for _url, _title, _quality in matches:
+            if 'pelicula' in item.extra:
+                title = scrapertools.slugify(re.sub('\s*\[.*?\]', '', _title).strip(), strict=False, convert=convert)
+                if title in urls: continue
+                urls += [title]
+            else:
+                title = scrapertools.slugify(re.sub('\s+-\s+\d+.+?$', '', _title).strip(), strict=False, convert=convert)
+                if title in urls: continue
+                quality = scrapertools.find_single_match(_title, '\[(.*?)\]') or 'HDTV'
+                urls += ['%s [%s]' % (title, quality.strip())]
 
         data, response, item, itemlist = downloadpage(url_base, timeout=channel.timeout, s2=False, retry_CF=retry_CF, 
                                                       headers=headers, quote_rep=True, CF_test=False, retry_alt=False, 
@@ -1352,24 +1376,24 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
             if 'serie' in item.extra and not 'serie' in _url: continue
             if 'pelicula' in item.extra and not 'pelicula' in _url: continue
             if 'documental' in item.extra and not 'documental' in _url: continue
-            if x > btdigg_entries * 10: break
-            if y > btdigg_entries * 5: break
+            if x > btdigg_entries * 7: break
+            if y > btdigg_entries: break
             
             url = _url
             url_final_extra = '%s%s_btdig/' % (url_final_base, item.extra)
             title = _title.strip()
-            quality = _quality
-            
-            if 'serie' in url or 'documental' in url:
+            quality = _quality.strip()
+            url_save = scrapertools.slugify(re.sub('(?:\s+\(+\d{4}\)+$|\s*-\s*Temp.*?$|\s+-\s+\d+.*?$)', '', title), 
+                                            strict=False, convert=convert)
+            if 'pelicula' not in item.extra:
                 if '1080p' in url or '4k' in url: continue
                 if not scrapertools.find_single_match(url, patron_serie): continue
+                url_save += ' [%s]' % quality if quality == 'HDTV' else ' [720p]'
+            if url_save in urls: continue
+            urls += [url_save]
+            
+            if 'serie' in url or 'documental' in url:
                 season, episode = scrapertools.find_single_match(url, patron_serie)
-                url_save = re.sub('\/capitulo-\d+.*?\/$', '/capitulo-/', url) + quality
-                if url_save not in urls:
-                    urls += [url_save]
-                else:
-                    continue
-                
                 quality = ' [720p]' if '720p' in quality else ' [HDTV]'
                 title = scrapertools.find_single_match(title, patron_serie_title).strip()
                 url_final = '%s%s-%s-Temporada%s' % (url_final_extra, title.replace(' ', '-'), season, '-720p' if '720p' in quality else '')
@@ -1377,20 +1401,17 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
                 quality = btdigg_label
                 
             elif 'pelicula' in url:
-                url_final = '%s%s_btdig/%s' % (url_final_base, item.extra, title.strip())
+                url_final = '%s%s_btdig/%s' % (url_final_base, item.extra, title.replace(' ', '-').strip())
                 quality = '%s%s' % (quality, btdigg_label)
             
             matches_inter.append((url_final, title, quality))
             y += 1
-        
+
         matches_btdigg = []
-        matches_str = str(matches).lower()
         x = 1
         while x < len(matches_inter):
-            if x > 1: btdigg_entries = len(matches_inter) + 2
+            if x > 1: btdigg_entries = len(matches_inter)
             for url_final, title, quality in matches_inter:
-                url_save = url_final.replace(url_final_extra, '').lower()
-                if url_save in matches_str: continue
                 matches_btdigg.append((url_final, title, quality))
                 x += 1
                 if x > btdigg_entries:
@@ -1401,11 +1422,11 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
                 break
         matches = matches_btdigg[:]
         
-        url_tails = [[host_alt + 'peliculas/', 'pelicula'], [host_alt + 'estrenos-de-cine/', 'pelicula']]
-        y = 40
+        url_tails = [[host_alt + 'peliculas/', 'pelicula'], [host_alt + 'estrenos-de-cine/', 'pelicula'], 
+                     [host_alt + 'series/', 'serie']]
+        y = 40 if 'pelicula' in item.extra else 60
         for url_base, extra in url_tails:
             if extra not in item.extra: continue
-            matches_str = str(matches).lower()
             data, response, item, itemlist = downloadpage(url_base, timeout=channel.timeout, s2=False, retry_CF=retry_CF, 
                                                           headers=headers, quote_rep=True, CF_test=False, retry_alt=False, 
                                                           alfa_s=True, item=item, itemlist=itemlist)
@@ -1441,20 +1462,34 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
                 title = title.replace("a?o", 'año').replace("a?O", 'año').replace("A?o", 'Año').replace("A?O", 'Año').replace("  ", ' ').strip()
                 if "en espa" in title: title = title[:-11]
 
-                url_final = '%s%s_btdig/%s' % (url_final_base, item.extra, title.strip())
+                url_final = '%s%s_btdig/%s' % (url_final_base, item.extra, title.replace(' ', '-').strip())
                 quality = '%s%s' % (quality, btdigg_label)
-                
-                if url_final in matches_str: continue
-                if x >= y: break
-                x += 1
+                url_save = scrapertools.slugify(re.sub('(?:\s+\(+\d{4}\)+$|\s*-\s*Temp.*?$|\s+-\s+\d+.*?$)', '', title), 
+                                                strict=False, convert=convert)
 
-                matches.append((url_final, title, quality))
-            
+                if 'pelicula' in url:
+                    if url_save in urls: continue
+                    urls += [url_save]
+                    matches.append((url_final, title, quality))
+                    x += 1
+                elif 'serie' in url or 'documental' in url:
+                    for q in ['HDTV', '720p']:
+                        title_temp = '%s [%s]' % (url_save, q)
+                        if title_temp in urls: continue
+                        urls += [title_temp]
+                        url_final_save = '%s%s' % (url_final, '-720p' if '720p' in q else '')
+                        quality_save = btdigg_label
+                        title_save = '%s - 0ª Temporada [%s]: 0x00' % (title, q)
+                        matches.append((url_final_save, title_save, quality_save))
+                        x += 1
+
+                if x >= y: break
+
             y = int(y*0.75)
     
     except:
         logger.error(traceback.format_exc())
-    
+
     return matches
 
 

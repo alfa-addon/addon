@@ -271,7 +271,7 @@ def htmlclean(cadena):
     return cadena
 
 
-def slugify(title, strict=True):
+def slugify(title, strict=True, convert=[]):
     # print title
 
     # Sustituye acentos y eñes
@@ -327,6 +327,14 @@ def slugify(title, strict=True):
 
     if title == "":
         title = "-" + str(time.time())
+    
+    try:
+        for change in convert:
+            change_from = change.split('=')[0]
+            change_to = change.split('=')[1]
+            title = title.replace(change_from, change_to)
+    except:
+        pass
 
     return title
 

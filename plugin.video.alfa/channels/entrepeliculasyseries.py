@@ -239,8 +239,6 @@ def findvideos(item):
         except:
             lang = scrapertools.find_single_match(lang, '(^\w+)')
             quality = ''
-        logger.error(lang)
-        logger.error(quality)
 
         if lang == "descargar":
             continue

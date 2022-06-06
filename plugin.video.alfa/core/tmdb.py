@@ -416,9 +416,7 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
                     # Busqueda de pelicula por titulo...
                     if item.infoLabels['year'] or item.infoLabels['filtro'] or kwargs.get('force_no_year', False):
                         # # ...y año o filtro
-                        if item.contentTitle:
-                            titulo_buscado = item.contentTitle
-                        otmdb = Tmdb(texto_buscado=titulo_buscado, tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda,
+                        otmdb = Tmdb(texto_buscado=item.contentTitle or item.title, tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda,
                                      filtro=item.infoLabels.get('filtro', {}), year=item.infoLabels.get('year', ''),
                                      include_adult=include_adult)
                 if otmdb is not None:

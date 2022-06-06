@@ -37,6 +37,7 @@ canonical = {
              'host': config.get_setting("current_host", 'grantorrent', default=''), 
              'host_alt': ['https://grantorrent.si/'], 
              'host_black_list': ['https://grantorrent.re/', 'https://grantorrent.ac/', 'https://grantorrent.ch/'], 
+             'pattern': '<div\s*class="flex[^>]*>\s*<a\s*href="([^"]+)"[^>]*>\s*.nicio\s*<', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
