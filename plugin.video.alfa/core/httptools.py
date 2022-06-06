@@ -544,10 +544,26 @@ def blocking_error(url, req, proxy_data, opt):
                 proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 'ProxyCF'))
             
     elif data and '200' not in code:
-        if len(data) > 300: data = data[:300]
-        logger.error('Error: %s, Url: %s, Datos: %s' % (code, url, data))
+        data = re.sub(r"\n|\r|\t|\s{2,}", "", data)
+        logger.error('Error: %s, Url: %s, Datos: %s' % (code, url, data[:500]))
     
     return resp
+
+
+def canonical_quick_check(url, opt):
+    if not opt.get('canonical', {}) or '//127.0.0.1' in url or '//192.168.' in url or '//10.' in url \
+                                    or '//176.' in url or '//localhost' in url:
+        return url
+    canonical = opt.get('canonical', {})
+    
+    alfa_s = True
+    if not canonical.get('alfa_s', alfa_s): logger.info(url, force=True)
+
+    url_host = scrapertools.find_single_match(url, patron_host).rstrip('/') + '/'
+    if url_host and url_host in canonical.get('host_black_list', []) and canonical.get('host_alt', []):
+        url = url.replace(url_host, canonical['host_alt'][0])
+
+    return url
 
 
 def canonical_check(url, response, req, opt):
@@ -902,6 +918,7 @@ def downloadpage(url, **opt):
 
     cf_ua = config.get_setting('cf_assistant_ua', None)
     url = url.strip()
+    url = canonical_quick_check(url, opt)
 
     # Headers por defecto, si no se especifica nada
     req_headers = OrderedDict()

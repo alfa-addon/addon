@@ -90,8 +90,6 @@ def start(itemlist, item):
     global autoplay_node
     PLAYED = False
 
-    base_item = item
-
     if not config.is_xbmc():
         # platformtools.dialog_notification('AutoPlay ERROR', 'Sólo disponible para XBMC/Kodi')
         return itemlist
@@ -178,81 +176,81 @@ def start(itemlist, item):
             favorite_quality.append(channel_node['quality'][settings_node['quality_%s' % num]])
 
         # Se filtran los enlaces de itemlist y que se correspondan con los valores de autoplay
-        for n, item in enumerate(itemlist):
+        for n, item_local in enumerate(itemlist):
             autoplay_elem = dict()
             b_dict = dict()
 
-            # Comprobamos q se trata de un item de video
-            if 'server' not in item:
+            # Comprobamos q se trata de un item_local de video
+            if 'server' not in item_local:
                 continue
             # 2nd lang lista idiomas
-            if item.language not in favorite_langs:
-                favorite_langs.append(item.language)
+            if item_local.language not in favorite_langs:
+                favorite_langs.append(item_local.language)
 
             # Agrega la opcion configurar AutoPlay al menu contextual
-            if 'context' not in item:
-                item.context = list()
+            if 'context' not in item_local:
+                item_local.context = list()
             if not filter(lambda x: x['action'] == 'autoplay_config', context):
-                item.context.append({"title": config.get_localized_string(60071),
-                                     "action": "autoplay_config",
-                                     "channel": "autoplay",
-                                     "from_channel": channel_id})
+                item_local.context.append({"title": config.get_localized_string(60071),
+                                           "action": "autoplay_config",
+                                           "channel": "autoplay",
+                                           "from_channel": channel_id})
 
             # Si no tiene calidad definida le asigna calidad 'default'
-            if item.quality == '':
-                item.quality = 'default'
+            if item_local.quality == '':
+                item_local.quality = 'default'
 
             # Se crea la lista para configuracion personalizada
             if priority < 2:  # 0: Servidores y calidades o 1: Calidades y servidores
 
                 # si el servidor y la calidad no se encuentran en las listas de favoritos o la url esta repetida,
-                # descartamos el item
-                if item.server.lower() not in favorite_servers or item.quality not in favorite_quality \
-                        or item.url in url_list_valid:
-                    item.type_b = True
-                    b_dict['videoitem'] = item
+                # descartamos el item_local
+                if item_local.server.lower() not in favorite_servers or item_local.quality not in favorite_quality \
+                                             or item_local.url in url_list_valid:
+                    item_local.type_b = True
+                    b_dict['videoitem'] = item_local
                     autoplay_b.append(b_dict)
                     continue
-                autoplay_elem["indice_lang"] = favorite_langs.index(item.language)
-                autoplay_elem["indice_server"] = favorite_servers.index(item.server.lower())
-                autoplay_elem["indice_quality"] = favorite_quality.index(item.quality)
+                autoplay_elem["indice_lang"] = favorite_langs.index(item_local.language)
+                autoplay_elem["indice_server"] = favorite_servers.index(item_local.server.lower())
+                autoplay_elem["indice_quality"] = favorite_quality.index(item_local.quality)
 
             elif priority == 2:  # Solo servidores
 
                 # si el servidor no se encuentra en la lista de favoritos o la url esta repetida,
-                # descartamos el item
-                if item.server.lower() not in favorite_servers or item.url in url_list_valid:
-                    item.type_b = True
-                    b_dict['videoitem'] = item
+                # descartamos el item_local
+                if item_local.server.lower() not in favorite_servers or item_local.url in url_list_valid:
+                    item_local.type_b = True
+                    b_dict['videoitem'] = item_local
                     autoplay_b.append(b_dict)
                     continue
-                autoplay_elem["indice_lang"] = favorite_langs.index(item.language)
-                autoplay_elem["indice_server"] = favorite_servers.index(item.server.lower())
+                autoplay_elem["indice_lang"] = favorite_langs.index(item_local.language)
+                autoplay_elem["indice_server"] = favorite_servers.index(item_local.server.lower())
 
             elif priority == 3:  # Solo calidades
 
                 # si la calidad no se encuentra en la lista de favoritos o la url esta repetida,
-                # descartamos el item
-                if item.quality not in favorite_quality or item.url in url_list_valid:
-                    item.type_b = True
-                    b_dict['videoitem'] = item
+                # descartamos el item_local
+                if item_local.quality not in favorite_quality or item_local.url in url_list_valid:
+                    item_local.type_b = True
+                    b_dict['videoitem'] = item_local
                     autoplay_b.append(b_dict)
                     continue
-                autoplay_elem["indice_lang"] = favorite_langs.index(item.language)
-                autoplay_elem["indice_quality"] = favorite_quality.index(item.quality)
+                autoplay_elem["indice_lang"] = favorite_langs.index(item_local.language)
+                autoplay_elem["indice_quality"] = favorite_quality.index(item_local.quality)
 
             # else:  # No ordenar
             #
-            #     # si la url esta repetida, descartamos el item
-            #     if item.url in url_list_valid:
+            #     # si la url esta repetida, descartamos el item_local
+            #     if item_local.url in url_list_valid:
             #         continue
 
-            # Si el item llega hasta aqui lo añadimos al listado de urls validas y a autoplay_list
-            url_list_valid.append(item.url)
-            item.plan_b = True
-            autoplay_elem['videoitem'] = item
-            # autoplay_elem['server'] = item.server
-            # autoplay_elem['quality'] = item.quality
+            # Si el item_local llega hasta aqui lo añadimos al listado de urls validas y a autoplay_list
+            url_list_valid.append(item_local.url)
+            item_local.plan_b = True
+            autoplay_elem['videoitem'] = item_local
+            # autoplay_elem['server'] = item_local.server
+            # autoplay_elem['quality'] = item_local.quality
             autoplay_list.append(autoplay_elem)
 
         # Ordenamos segun la prioridad
@@ -292,8 +290,7 @@ def start(itemlist, item):
                 platformtools.stop_video()
             tried = list()
             for autoplay_elem in autoplay_list:
-                play_item = Item
-
+                
                 # Si no es un elemento favorito si agrega el texto plan b
                 if autoplay_elem['videoitem'].type_b:
                     text_b = '(Plan B)'
@@ -337,12 +334,12 @@ def start(itemlist, item):
 
                     # Verifica si el item viene de la videoteca
                     try:
-                        if base_item.contentChannel == 'videolibrary':
+                        if item.contentChannel == 'videolibrary' or item.channel == 'videolibrary':
                             # Marca como visto
                             from platformcode import xbmc_videolibrary
-                            xbmc_videolibrary.mark_auto_as_watched(base_item)
+                            xbmc_videolibrary.mark_auto_as_watched(item)
                             # Rellena el video con los datos del item principal y reproduce
-                            play_item = base_item.clone(url=videoitem)
+                            play_item = item.clone(url=videoitem)
                             platformtools.play_video(play_item.url, autoplay=True)
                         else:
                             # Si no viene de la videoteca solo reproduce
@@ -745,15 +742,14 @@ def play_multi_channel(item, itemlist):
     for video_item in itemlist:
         if video_item.contentChannel != actual_channel:
             actual_channel = video_item.contentChannel
-            if is_active(actual_channel):
-                channel_videos.append(video_item)
-        elif is_active(actual_channel):
+        if is_active(actual_channel):
             channel_videos.append(video_item)
-        video_dict[actual_channel] = channel_videos
+            video_dict[actual_channel] = channel_videos
 
     for channel, videos in video_dict.items():
-        item.contentChannel = channel
+        item_local = item.clone()
+        item_local.contentChannel = channel
         if not PLAYED:
-            start(videos, item)
+            start(videos, item_local)
         else:
             break

@@ -21,13 +21,20 @@ from core.item import Item
 from lib import jsunpack
 from platformcode import config, logger
 
-
-host = "https://asialiveaction.com"
+canonical = {
+             'channel': 'asialiveaction', 
+             'host': config.get_setting("current_host", 'asialiveaction', default=''), 
+             'host_alt': ["https://asialiveaction.com"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 IDIOMAS = {'Japones': 'Japones'}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['gvideo', 'openload','streamango']
+
 
 def mainlist(item):
     logger.info()
@@ -49,7 +56,7 @@ def mainlist(item):
 def category(item):
     logger.info()
     itemlist = list()
-    data = httptools.downloadpage(host).data
+    data = httptools.downloadpage(host, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     action = "lista"
     if item.cat == 'abc':
@@ -73,7 +80,7 @@ def category(item):
 def search_results(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<span class=.post-labels.>([^<]+)</span>.*?class="poster-bg" src="([^"]+)"/>.*?<h4>.*?'
     patron +=">(\d{4})</a>.*?<h6>([^<]+)<a href='([^']+)"
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -109,7 +116,7 @@ def search(item, texto):
 def episodios(item):
     logger.info()
     itemlist = list()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = data.replace('"ep0','"epp"')
     patron  = '(?is)MvTbImg B.*?href="([^"]+)".*?'
     patron += 'src="([^"]+)".*?'
@@ -130,7 +137,7 @@ def episodios(item):
 def lista_a(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '(?is)Num">.*?href="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?>.*?'
     patron += '<strong>([^<]+)<.*?'
@@ -151,7 +158,7 @@ def lista(item):
     logger.info()
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
         
     patron  = '(?is)class="TPost C">.*?href="([^"]+)".*?' #scrapedurl
@@ -186,7 +193,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data.replace("&quot;",'"').replace("amp;","").replace("#038;","")
+    data = httptools.downloadpage(item.url, canonical=canonical).data.replace("&quot;",'"').replace("amp;","").replace("#038;","")
     url = scrapertools.find_single_match(data, '<span><a rel="nofollow" target="_blank" href="([^"]+)"')
     data = httptools.downloadpage(url).data
     bloque = scrapertools.find_single_match(data, 'videosJap = \[(.*)\];')

@@ -1052,7 +1052,8 @@ def redirect_url(video, channel=''):
                     if not url.startswith('magnet'):
                         video.library_urls[channel] = redirect_url(url, channel)
             if video.library_filter_show and video.channel and video.channel != 'videolibrary':
-                video.show = video.library_filter_show.get(video.channel, video.contentTitle)
+                title = video.contentTitle if video.contentType == 'movie' else video.contentSerieName
+                video.show = video.library_filter_show.get(video.channel, title)
             if video.url_tvshow:
                 video.url_tvshow = redirect_url(video.url_tvshow, video.channel)
             if video.referer:
@@ -1064,6 +1065,9 @@ def redirect_url(video, channel=''):
                 obj = __import__('channels.%s' % channel, fromlist=["channels.%s" % channel])
                 if obj.host and isinstance(obj.host, str):
                     channel_host = obj.host
+                    if obj.canonical and isinstance(obj.canonical, dict):
+                        if channel_host in canonical.get('host_black_list', []) and canonical.get('host_alt', []):
+                            channel_host = canonical['host_alt'][0]
             except:
                 pass
             
