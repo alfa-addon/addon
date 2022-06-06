@@ -27,8 +27,8 @@ list_servers = list(SERVIDORES.values())
 canonical = {
              'channel': 'playdede', 
              'host': config.get_setting("current_host", 'playdede', default=''), 
-             'host_alt': ["https://playdede.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://playdede.nu/"], 
+             'host_black_list': ["https://playdede.com/"], 
              'pattern': '<link\s*rel="shortcut\s*icon"[^>]+href="([^"]+)"', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

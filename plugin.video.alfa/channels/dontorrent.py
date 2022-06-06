@@ -31,9 +31,10 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.wtf/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.fi/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/'], 
-             'host_black_list': ['https://dontorrent.cab/', 'https://dontorrent.bet/', 'https://dontorrent.cx/', 
+             'host_black_list': ['https://dontorrent.wtf/', 
+                                 'https://dontorrent.cab/', 'https://dontorrent.bet/', 'https://dontorrent.cx/', 
                                  'https://dontorrent.nl/', 'https://dontorrent.tel/', 'https://dontorrent.pl/', 
                                  'https://dontorrent.cat/', 'https://dontorrent.run/', 'https://dontorrent.wf/', 
                                  'https://dontorrent.pm/', 'https://dontorrent.top/', 'https://dontorrent.re/'], 
@@ -45,8 +46,9 @@ channel = canonical['channel']
 categoria = channel.capitalize()
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
-host_torrent = 'https://blazing.network' if 'dontorrent' in host and not '.in/' in host else ''
-host_torrent_referer = 'https://blazing.network' if 'dontorrent' in host else host
+domain_torrent = 'blazing.network'
+host_torrent = 'https://%s' % domain_torrent if 'dontorrent' in host and not '.in/' in host else ''
+host_torrent_referer = 'https://%s' % domain_torrent if 'dontorrent' in host else host
 
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 IDIOMAS_TMDB = {0: 'es', 1: 'en', 2: 'es,en'}
@@ -309,7 +311,11 @@ def novedades(item):
     
     item.matches = matches_fin
     item.referer = item.url
-    return listado(item)
+    try:
+        return listado(item)
+    except:
+        logger.error(item)
+        logger.error(traceback.format_exc())
 
 
 def listado(item):                                                              # Listado principal y de búsquedas
@@ -490,7 +496,7 @@ def listado(item):                                                              
             title = re.sub('\d{3,7}[-|_|\/]+\d{3,10}[-|\/]', '', title.split('/')[-1]).strip()
             title = re.sub('--[^\.|$]*|.jpg|.png|$', '', title).strip()
             title = re.sub('-\d{6,10}-mmed(?:.jpg|.png|$)', '', title).strip()
-            title = re.sub('\d+[^$]*\s*[t|T]emporada\s*(?:\[.*?\])?', '', title).strip('.').strip()
+            title = re.sub('\s*-\s*\d{1,2}.\s*[t|T]emporada\s*(?:\[.*?\])?', '', title).strip('.').strip()
             title = title.replace('-', ' ').replace('_', ' ').strip()
 
             #Adaptamos la parte de listado desde menú para que guarde la coherencia con el resto
@@ -620,9 +626,10 @@ def listado(item):                                                              
             if (item.extra == 'series' or item.extra == 'documentales') and item.extra2 == 'novedades': # Series, Docs desde Novedades
                 if scrapertools.find_single_match(scrapedtitle, patron):
                     title_subs += ['Episodio %s' % scrapertools.find_single_match(scrapedtitle, patron).replace('&', 'al')]
-                    if item.extra == 'series': item_local.contentSeason = scrapertools.find_single_match(title_subs[-1], 'Episodio (\d+)x')
+                    if item.extra == 'series' and scrapertools.find_single_match(title_subs[-1], 'Episodio (\d+)x') not in ['', '0']:
+                        item_local.contentSeason = scrapertools.find_single_match(title_subs[-1], 'Episodio (\d+)x')
                 if item_local.contentType == "tvshow":
-                    title = scrapertools.find_single_match(scrapedtitle, '(^.*?)\s*(?:$|\(|\[|-)')
+                    title = scrapertools.find_single_match(scrapedtitle, '(^.*?)\s*(?:$|\(|\[|\s+-)')
                     title = title.replace(scrapertools.find_single_match(scrapedtitle, patron), '').rstrip(':').rstrip()
 
             year = '-'
@@ -756,7 +763,7 @@ def findvideos(item):
         if btdigg and 'screener' in item.quality.lower(): torrent_params['quality_alt'] += ' screener'
     elif item.quality != 'HDTV':
         torrent_params['quality_alt'] = '1080p 4kwebrip 4k'
-        if btdigg: torrent_params['quality_alt'] += ' 720p'
+        if btdigg or (item.matches and not domain_torrent in str(item.matches)): torrent_params['quality_alt'] += ' 720p'
     find_alt_link_result = []
     find_alt = False
     
@@ -783,8 +790,8 @@ def findvideos(item):
         patron += '<td\s*style=[^>]+>\s*<a\s*data-toggle="popover"\s*title="[^>]*'
         patron += 'contraseña[^\/]*data-clave="([^"]+)">)?()'
 
-    if (not item.matches or item.contentChannel == 'videolibrary') and not btdigg and btdigg_label not in item.quality \
-                                                                   and btdigg_url not in item.url and item.url != host:
+    if (not item.matches or (item.matches and domain_torrent not in item.matches) or item.contentChannel == 'videolibrary') \
+                            and not btdigg and btdigg_url not in item.url and item.url != host:
         if item.emergency_urls and item.url_tvshow: item.url = item.url_tvshow  #### Parche para rodear videoteca corrupta de SERIES
         data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
                                                                    post=post, referer=referer, forced_proxy_opt=forced_proxy_opt, 
@@ -805,7 +812,7 @@ def findvideos(item):
     if not item.armagedon:
         matches_ini = re.compile(patron, re.DOTALL).findall(data)
         if item.contentType == 'episode':
-            for scrapedtitle, scrapedurl, scrapedpassword, scrapedquality in matches_ini:
+            for scrapedtitle, scrapedurl, scrapedpassword, _scrapedquality in matches_ini:
                 # Si es una Serie o Documental, buscamos el episodio deseado
                 if not scrapedurl.startswith('magnet'):
                     patron_temp = '^(\d+)[x|X](\d+)\s*'
@@ -820,10 +827,14 @@ def findvideos(item):
                             continue
                     except:                                                             # Hay error?
                         continue
+                    scrapedquality = _scrapedquality or item.quality.replace(btdigg_label, '')
+                    if '1080p' in scrapedquality: scrapedquality = 'HDVT-720p'
                     matches.append((scrapedtitle, scrapedurl, scrapedpassword, scrapedquality))
+                    if '720p' in scrapedquality: torrent_params['quality_alt'] = torrent_params['quality_alt'].replace(' 720p', '')
         else:
             for scrapedtitle, scrapedurl, scrapedpassword, scrapedquality in matches_ini:
-                matches.append((scrapedtitle or item.title.replace('(V)-', ''), scrapedurl, scrapedpassword, scrapedquality or item.quality))
+                matches.append((scrapedtitle or item.title.replace('(V)-', ''), scrapedurl, scrapedpassword, 
+                                scrapedquality or item.quality.replace(btdigg_label, '')))
         try:
             season = int(scrapertools.find_single_match(item.url, '(\d+)-.emporada'))
         except:
@@ -836,12 +847,13 @@ def findvideos(item):
             if matches:
                 for scrapedtitle, scrapedurl, scrapedpassword, scrapedquality in item.matches:
                     if scrapedurl in str(matches): continue
+                    if item.contentType != 'movie' and item.quality != 'HDTV' and '720p' in scrapedquality and '720p' in str(matches): continue
                     matches.append((scrapedtitle, scrapedurl, scrapedpassword, scrapedquality))
             if not season: season = item.contentSeason
             if 'magnet' in str(matches): find_alt = True
         
-        if (matches and (not item.matches or not 'magnet' in str(item.matches) \
-                        or (item.contentChannel == 'videolibrary' and season == contentSeason))) or btdigg:
+        if (matches and (not item.matches or not 'magnet' in str(item.matches))) \
+                                          or btdigg or item.contentChannel == 'videolibrary':
             # Buscamos enlace alternativos de calidades superiores
             if find_alt_link_option and torrent_params['quality_alt']:
                 if not PY3: from lib.alfaresolver import find_alternative_link
@@ -853,10 +865,10 @@ def findvideos(item):
                     matches.append((scrapedtitle, scrapedmagnet, scrapedsize, scrapedquality))
                     find_alt = True
             if item.matches and item.contentChannel == 'videolibrary' and not find_alt_link_result:
-                if matches:
-                    for scrapedtitle, scrapedurl, scrapedpassword, scrapedquality in item.matches:
-                        if scrapedurl in str(matches): continue
-                        matches.append((scrapedtitle, scrapedurl, scrapedpassword, scrapedquality))
+                for scrapedtitle, scrapedurl, scrapedpassword, scrapedquality in item.matches:
+                    if scrapedurl in str(matches): continue
+                    if item.contentType != 'movie' and item.quality != 'HDTV' and '720p' in scrapedquality and '720p' in str(matches): continue
+                    matches.append((scrapedtitle, scrapedurl, scrapedpassword, scrapedquality))
                 if 'magnet' in str(matches): find_alt = True
         
         elif item.matches:
