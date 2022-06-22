@@ -22,6 +22,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     id = scrapertools.find_single_match(page_url,'/e/(\w+)')
     post = {"id": id}
     data = httptools.downloadpage("https://streamlare.com/api/video/stream/get", post=post).json
-    media_url = data["result"]["file"]
+    media_url = data["result"]["Original"]["file"]
     video_urls.append(["M3U", media_url])
     return video_urls

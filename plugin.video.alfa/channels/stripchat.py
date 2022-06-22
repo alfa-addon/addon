@@ -86,13 +86,15 @@ def lista(item):
     for elem in data['models']:
         url = elem['hlsPlaylist']
         id = elem['id']
-        thumbnail = elem['snapshotUrl']
+        thumbnail = elem['popularSnapshotTimestamp']
+        server = elem['snapshotServer']
         title = elem['username']
         pais = elem['country']
         if pais:
             title += " (%s)" %pais
-        if not url:
-            url = "https://b-hls-03.strpst.com/hls/%s/%s.m3u8" %(id, id)
+        thumbnail = "https://img.strpst.com/%s/thumbs/%s/%s_webp" %(server, thumbnail, id)
+        if not url or "_240p" in url:
+            url = "https://b-hls-03.doppiocdn.com/hls/%s/%s.m3u8" %(id, id)
         plot = ""
         action = "play"
         if logger.info() == False:

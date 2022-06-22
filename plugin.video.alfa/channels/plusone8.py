@@ -59,7 +59,7 @@ def categorias(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('main', id='main')
-    matches = soup.find_all('div', id=re.compile(r"^post-\d+"))
+    matches = soup.find_all('article', id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
@@ -94,15 +94,15 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('main', id='main')
-    matches = soup.find_all('div', id=re.compile(r"^post-\d+"))
+    matches = soup.find_all('article', id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         if "test" in url:
             continue
         title = elem.a['title']
         thumbnail = elem.img['src']
-        if "svg" in thumbnail:
-            thumbnail = elem.img['data-lazy-src']
+        if ".gif" in thumbnail:
+            thumbnail = elem.img['data-src']
         thumbnail += "|verifypeer=false"
         time = elem.find('span', class_='length')
         actors = elem['class']
@@ -134,7 +134,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    url = create_soup(item.url).find('div', id='video-download').a['href']
+    url = create_soup(item.url).find('a', id='tracking-url')['href']
     url = url.replace(" ", "%20")
     itemlist.append(Item(channel=item.channel, action="play", contentTitle = item.title, url=url))
     return itemlist
@@ -143,7 +143,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    url = create_soup(item.url).find('div', id='video-download').a['href']
+    url = create_soup(item.url).find('a', id='tracking-url')['href']
     url = url.replace(" ", "%20")
     itemlist.append(Item(channel=item.channel, action="play", contentTitle = item.title, url=url))
     return itemlist
