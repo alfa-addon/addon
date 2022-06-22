@@ -101,12 +101,16 @@ for clone in clone_list:
     clone_list_inter += [list(clone)]
 clone_list = clone_list_inter[:]
 
+forced_proxy_opt = 'ProxyWeb:hide.me'
+CF_test = False
+
 canonical = {
              'channel': channel_py, 
              'host': host, 
              'host_alt': [], 
              'host_black_list': [], 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             'CF': False, 'CF_test': CF_test, 'alfa_s': True, 
+             'forced_proxy_opt': forced_proxy_opt
             }
 
 if not channel_clone_post: channel_clone_post = channel_clone_post
@@ -303,7 +307,7 @@ def submenu_OLD(item):
     
     data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, headers=headers, 
                                                                decode_code=decode_code, canonical=canonical, retry_CF=retry_CF, 
-                                                               quote_rep=True, CF_test=False, item=item, itemlist=[])   # Descargamos la página
+                                                               quote_rep=True, CF_test=CF_test, item=item, itemlist=[])   # Descargamos la página
     # Verificamos si ha cambiado el Host
     if response.host:
         global sufix, domain, clone_list
@@ -453,7 +457,7 @@ def submenu_novedades(item):
     
     data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, s2=False, retry_CF=retry_CF, 
                                                                headers=headers, decode_code=decode_code, canonical=canonical, 
-                                                               quote_rep=True, CF_test=False, item=item, itemlist=[])     # Descargamos la página
+                                                               quote_rep=True, CF_test=CF_test, item=item, itemlist=[])     # Descargamos la página
     # Verificamos si ha cambiado el Host
     if response.host:
         global sufix, domain, clone_list
@@ -567,7 +571,7 @@ def alfabeto(item):
     item, host = verify_host(item, host)                                        # Actualizamos la url del host
     headers = {'referer': host}
     
-    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, headers=headers, 
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, headers=headers, CF_test=CF_test, 
                                                                decode_code=decode_code, quote_rep=True, retry_CF=retry_CF, 
                                                                item=item, itemlist=[])          # Descargamos la página
 
@@ -681,10 +685,13 @@ def listado(item, alfa_s=False):                                                
         item.extra2 = ''
         
     post = None
+    forced_proxy_opt_loc = forced_proxy_opt
+    retry_CF_loc = retry_CF
     headers = {'referer': host}
-    forced_proxy_opt = None
     if item.post:
-        forced_proxy_opt = None
+        forced_proxy_opt_loc = 'Proxydirect'
+        canonical['forced_proxy_opt'] = forced_proxy_opt_loc
+        retry_CF_loc = 0
     if item.post or item.post is None:                                          # Rescatamos el Post, si lo hay
         post = item.post
         del item.post
@@ -702,10 +709,10 @@ def listado(item, alfa_s=False):                                                
         cnt_match = 0                                                           # Contador de líneas procesadas de matches
 
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
-            data, response, item, itemlist = generictools.downloadpage(next_page_url, timeout=timeout_search, post=post, 
+            data, response, item, itemlist = generictools.downloadpage(next_page_url, timeout=timeout_search, post=post, CF_test=CF_test, 
                                                                        s2=True, headers=headers, decode_code=decode_code, 
                                                                        quote_rep=True, no_comments=False, canonical=canonical, 
-                                                                       forced_proxy_opt=forced_proxy_opt, retry_CF=retry_CF, 
+                                                                       forced_proxy_opt=forced_proxy_opt_loc, retry_CF=retry_CF_loc, 
                                                                        item=item, itemlist=itemlist, alfa_s=alfa_s)
             curr_page += 1                                                      #Apunto ya a la página siguiente
             
@@ -1024,7 +1031,7 @@ def listado(item, alfa_s=False):                                                
                 item_local.extra2 = 'serie_episodios'                           #Creamos acción temporal excluyente para otros clones
                 headers = {'referer': item.url}
 
-                data_serie, response, item, itemlist = generictools.downloadpage(item_local.url, timeout=timeout, post=post, 
+                data_serie, response, item, itemlist = generictools.downloadpage(item_local.url, timeout=timeout, post=post, CF_test=CF_test, 
                                                                                  s2=True, headers=headers, no_comments=False, 
                                                                                  decode_code=decode_code, quote_rep=True, retry_CF=retry_CF, 
                                                                                  item=item, itemlist=itemlist, alfa_s=alfa_s)
@@ -1428,9 +1435,9 @@ def findvideos(item, retry=False):
     retry_CF_own = 1
     
     if not item.matches:
-        data, response, item, itemlist_alt = generictools.downloadpage(item.url, timeout=timeout_search, quote_rep=True, 
-                                                                   decode_code=decode_code, canonical=canonical, retry_CF=retry_CF_own, 
-                                                                   headers=headers, item=item, itemlist=[])     # Descargamos la página)
+        data, response, item, itemlist_alt = generictools.downloadpage(item.url, timeout=timeout_search, quote_rep=True, CF_test=CF_test, 
+                                                                       decode_code=decode_code, canonical=canonical, retry_CF=retry_CF_own, 
+                                                                       headers=headers, item=item, itemlist=[])     # Descargamos la página)
         data = data.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
         data_servidores = data                                                  #salvamos data para verificar servidores, si es necesario
 
@@ -1620,8 +1627,8 @@ def findvideos(item, retry=False):
                     url_torr = urlparse.urljoin(torrent_tag, url_torr)
                 
                 data_alt, response, item, itemlist_alt = generictools.downloadpage(url_torr, timeout=timeout_search, quote_rep=True, 
-                                                                               decode_code=decode_code, headers=headers, retry_CF=retry_CF_own, 
-                                                                               item=item, itemlist=[])            # Descargamos la página)
+                                                                                   decode_code=decode_code, headers=headers, retry_CF=retry_CF_own, 
+                                                                                   item=item, itemlist=[], CF_test=CF_test)
                 data_alt = data_alt.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
                 
                 #Volvemos a buscar el .torrent, repitiendo todo como al principio
@@ -2193,7 +2200,7 @@ def episodios(item):
         if not data:
             data, response, item, itemlist = generictools.downloadpage(list_pages[0], timeout=timeout, headers=headers, 
                                                                        decode_code=decode_code, canonical=canonical, retry_CF=retry_CF, 
-                                                                       quote_rep=True, no_comments=False, 
+                                                                       quote_rep=True, no_comments=False, CF_test=CF_test, 
                                                                        item=item, itemlist=itemlist)        # Descargamos la página
             # Verificamos si ha cambiado el Host
             if response.host:
@@ -2218,7 +2225,7 @@ def episodios(item):
                 url_serie_nocode = scrapertools.find_single_match(data, patron_series)
                 if url_serie_nocode:
                     url_serie_nocode = '%s/%s/pg/1' % (item.url, url_serie_nocode)
-                    data, response, item, itemlist = generictools.downloadpage(url_serie_nocode, timeout=timeout, 
+                    data, response, item, itemlist = generictools.downloadpage(url_serie_nocode, timeout=timeout, CF_test=CF_test, 
                                                                                decode_code=decode_code, quote_rep=True, 
                                                                                no_comments=False, headers=headers, retry_CF=retry_CF, 
                                                                                item=item, itemlist=itemlist)        # Descargamos la página
@@ -2731,7 +2738,7 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
 
             data, response, item, itemlist_alt = generictools.downloadpage(url_torr, timeout=timeout, referer=host, retry_CF=retry_CF_own, 
                                                                            decode_code=decode_code, quote_rep=True, alfa_s=False, 
-                                                                           item=item, itemlist=[])       # Descargamos el enlace
+                                                                           item=item, itemlist=[], CF_test=CF_test)     # Descargamos el enlace
 
             short_link = scrapertools.find_single_match(data, patron_torrent)
             if not short_link:
@@ -2818,7 +2825,7 @@ def find_torrent_link_OLD(url_torr, headers={}, item={}, itemlist=[], torrent_pa
         
         for x in range(retry_CF+2):
             data, response, item, itemlist = generictools.downloadpage(torrent_link, timeout=timeout, headers=headers_link, retry_CF=retry_CF, 
-                                                                       decode_code=decode_code, quote_rep=True, alfa_s=True, 
+                                                                       decode_code=decode_code, quote_rep=True, alfa_s=True, CF_test=CF_test, 
                                                                        post=torrent_post, item=item, itemlist=[])       # Descargamos el enlace
             
             if response.sucess and data and len(data) > 20 and len(data) < 250:

@@ -32,8 +32,9 @@ from channelselector import get_thumb
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             'host_alt': ['https://hdfull.top/'], 
-             'host_black_list': ['https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/'], 
+             'host_alt': ['https://hdfull.wtf/'], 
+             'host_black_list': ['https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
+                                 'https://hdfull.top/'],
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -148,8 +149,9 @@ def logout(item):
 
 
 def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_proxy=None, 
-                 proxy_retries=1, force_check=False, force_login=True, alfa_s=False):
+                 proxy_retries=1, force_check=False, force_login=True, alfa_s=False, timeout=3):
     global account
+    forced_proxy_retry = 'ProxyWeb:hide.me'
 
     if force_check or force_login:
         verify_login(force_check=force_check, force_login=force_login)
@@ -166,9 +168,9 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
     if isinstance(referer, str):
         headers.update({'Referer': referer})
 
-    page = httptools.downloadpage(url, post=post, headers=headers, ignore_response_code=True, 
+    page = httptools.downloadpage(url, post=post, headers=headers, ignore_response_code=True, timeout=timeout, 
                                   CF=CF, canonical=canonical, proxy=proxy, forced_proxy=forced_proxy, 
-                                  proxy_retries=proxy_retries, alfa_s=alfa_s)
+                                  proxy_retries=proxy_retries, alfa_s=alfa_s, forced_proxy_retry=forced_proxy_retry)
 
     if page.sucess and page.host and page.host != host_save:
         account = False

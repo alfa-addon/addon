@@ -99,6 +99,9 @@ def downloadpage(url, **kwargs):
         kwargs['ignore_response_code'] = True
     if kwargs.get('timeout', None) and kwargs['timeout'] < 20 and httptools.channel_proxy_list(url):    # Si usa proxy, triplicamos el timeout
         kwargs['timeout'] *= 3
+    forced_proxy_retry_channels = [channel_py, 'elitetorrent', 'moviesdvdr', 'rarbg']
+    if item.channel in forced_proxy_retry_channels:
+        kwargs['forced_proxy_retry'] = 'ProxyWeb:hide.me'
 
     # Variables locales
     if s2 is None and funcion == 'findvideos':                                  # Si es "findvideos" no sustituye los \s{2,}
@@ -1327,6 +1330,12 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
         channel = __import__('channels.%s' % channel_alt, None,
                              None, ["channels.%s" % channel_alt])
         host_alt = channel.host
+        try:
+            canonical_alt = channel.canonical
+            forced_proxy_opt = channel.forced_proxy_opt
+        except:
+            canonical_alt = {}
+            forced_proxy_opt = 'ProxyWeb:hide.me'
 
         if not item or item.extra not in news_allowed.get(item.channel, []):
             return matches
@@ -1336,6 +1345,7 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
         btdigg_entries = 30
         headers = {'referer': channel.host}
         matches_inter = []
+        matches_btdigg = []
         urls = []
         url_final_base = btdigg_url
         convert = ['.=', '-= ', ':=', '&= ', '  = ']
@@ -1351,23 +1361,30 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
                 quality = scrapertools.find_single_match(_title, '\[(.*?)\]') or 'HDTV'
                 urls += ['%s [%s]' % (title, quality.strip())]
 
-        data, response, item, itemlist = downloadpage(url_base, timeout=channel.timeout, s2=False, retry_CF=retry_CF, 
-                                                      headers=headers, quote_rep=True, CF_test=False, retry_alt=False, 
-                                                      alfa_s=True, item=item, itemlist=[])
-        if not response.sucess:
-            return matches
+        while not matches_btdigg:
+            data, response, item, itemlist = downloadpage(url_base, timeout=channel.timeout, s2=False, retry_CF=retry_CF, 
+                                                          headers=headers, quote_rep=True, CF_test=False, retry_alt=False, 
+                                                          alfa_s=True, item=item, itemlist=[], canonical=canonical_alt, 
+                                                          forced_proxy_opt=forced_proxy_opt)
+            if not response.sucess:
+                return matches
+            if response.host:
+                url_base = url_base.replace(host_alt, response.host)
+                host_alt = response.host
 
-        patron = '<div class="content">.*?$'
-        if not scrapertools.find_single_match(data, patron):
-            patron = '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->'
-        data = scrapertools.find_single_match(data, patron)
-        
-        patron = '<li><a\s*href="(?P<scrapedurl>[^"]+)"\s*'                         # url
-        patron += '(?:style="[^"]+"\s*)?title="(?P<scrapedtitle>[^"]+)"[^>]*>\s*'   # título
-        patron += '.*?<\/h2>\s*<\/a>\s*<span[^>]+>\s*([^<]*)<'                      # calidad
-        patron_serie = '\/temporada-(\d+)\/capitulo-[^\/]*(\d{2})\/'
-        patron_serie_title = '(.*?)\s*-\s*Temp'
-        matches_btdigg = re.compile(patron, re.DOTALL).findall(data)
+            patron = '<div class="content">.*?$'
+            if not scrapertools.find_single_match(data, patron):
+                patron = '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->'
+            data = scrapertools.find_single_match(data, patron)
+            
+            patron = '<li><a\s*href="(?P<scrapedurl>[^"]+)"\s*'                         # url
+            patron += '(?:style="[^"]+"\s*)?title="(?P<scrapedtitle>[^"]+)"[^>]*>\s*'   # título
+            patron += '.*?<\/h2>\s*<\/a>\s*<span[^>]+>\s*([^<]*)<'                      # calidad
+            patron_serie = '\/temporada-(\d+)\/capitulo-[^\/]*(\d{2})\/'
+            patron_serie_title = '(.*?)\s*-\s*Temp'
+            matches_btdigg = re.compile(patron, re.DOTALL).findall(data)
+            if not response.host or matches_btdigg:
+                break
         
         x = 0
         y = 0
@@ -1420,7 +1437,7 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
             else:
                 matches_btdigg.extend(matches)
                 break
-        matches = matches_btdigg[:]
+        if matches_btdigg: matches = matches_btdigg[:]
         
         url_tails = [[host_alt + 'peliculas/', 'pelicula'], [host_alt + 'estrenos-de-cine/', 'pelicula'], 
                      [host_alt + 'series/', 'serie']]
@@ -1429,7 +1446,7 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
             if extra not in item.extra: continue
             data, response, item, itemlist = downloadpage(url_base, timeout=channel.timeout, s2=False, retry_CF=retry_CF, 
                                                           headers=headers, quote_rep=True, CF_test=False, retry_alt=False, 
-                                                          alfa_s=True, item=item, itemlist=itemlist)
+                                                          alfa_s=True, item=item, itemlist=itemlist, forced_proxy_opt=forced_proxy_opt)
             if not response.sucess:
                 return matches
             
@@ -2069,7 +2086,8 @@ def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, patron_season=''
         item_search.extra = 'search'
         item_search.extra2 = 'episodios'
         title = scrapertools.find_single_match(item_search.season_search or item_search.contentSerieName \
-                                               or item_search.contentTitle, '(^.*?)\s*(?:$|\(|\[)')     # Limpiamos
+                                               or item_search.contentTitle, '(^.*?)\s*(?:$|\(|\[)').lower()                     # Limpiamos
+        title_org = scrapertools.find_single_match(item_search.infoLabels['originaltitle'], '(^.*?)\s*(?:$|\(|\[)').lower()     # Limpiamos
         item_search.title = title
         item_search.infoLabels = {}                                             # Limpiamos infoLabels
         
@@ -2077,6 +2095,9 @@ def find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo, patron_season=''
         channel = __import__('channels.%s' % item_search.channel, None, None, ["channels.%s" % item_search.channel])
         item_search.url = channel.host
         itemlist = getattr(channel, "search")(item_search, title.lower())
+        if not itemlist and title_org and title_org != title:
+            item_search.title = title_org
+            itemlist = getattr(channel, "search")(item_search, title_org.lower())
 
         if len(itemlist) == 0:
             list_temps.append(item.url)
