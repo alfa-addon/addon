@@ -481,6 +481,7 @@ def proxy_stat(url, opt, proxy_data):
 
 def blocking_error(url, req, proxy_data, opt):
 
+    if opt.get('canonical_check', False): return False
     code = str(req.status_code) or ''
     data = ''
     if req.content: data = req.content[:5000]
@@ -528,7 +529,8 @@ def blocking_error(url, req, proxy_data, opt):
                         for domain in [canonical['host']]+canonical['host_alt']:
                             if not domain: continue
                             domains += [scrapertools.find_single_match(domain, patron_domain)]
-                        proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 'ProxyCF'), delete=True)
+                        proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 
+                                                      opt.get('forced_proxy_retry', '') or 'ProxyCF'), delete=True)
                     resp = False
                 elif pCFa in pCFl: 
                     pCFl.remove(pCFa)
@@ -541,7 +543,8 @@ def blocking_error(url, req, proxy_data, opt):
                 if not proxy_data.get('stat', ''):
                     for host in canonical.get('host_alt', []):
                         domains += [scrapertools.find_single_match(host, patron_domain)]
-                proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 'ProxyCF'))
+                proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 
+                                              opt.get('forced_proxy_retry', '') or 'ProxyCF'), delete=True)
             
     elif data and '200' not in code:
         data = re.sub(r"\n|\r|\t|\s{2,}", "", data)
@@ -568,6 +571,7 @@ def canonical_quick_check(url, opt):
 
 def canonical_check(url, response, req, opt):
     
+    if opt.get('canonical_check', False): return response
     if not response['data']: return response
     if isinstance(response['data'], dict): return response
     if '//127.0.0.1' in url or '//192.168.' in url or '//10.' in url or '//176.' in url or '//localhost' in url: return response
@@ -666,7 +670,9 @@ def canonical_check(url, response, req, opt):
                                         referer=canonical.get('referer', None), 
                                         headers=canonical.get('headers', None), 
                                         CF_test=canonical.get('CF_test', False),
-                                        alfa_s=canonical.get('alfa_s', alfa_s))
+                                        alfa_s=canonical.get('alfa_s', alfa_s),
+                                        forced_proxy_opt=canonical.get('forced_proxy_opt', ''), 
+                                        canonical_check=True, url_save=opt.get('url_save', ''))
                     if page.sucess:
                         if page.proxy__ and not response['proxy__']:
                             canonical_new_alt += [url_alt]
@@ -775,6 +781,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
         data = response['data'][:500]
         if PY3 and isinstance(data, bytes):
             data = "".join(chr(x) for x in bytes(data))
+
     try:
         if response["code"] not in [200, 302] and opt.get('forced_proxy_opt', '') == 'ProxyJSON':
             opt['forced_proxy_opt'] = 'ProxyCF'
@@ -789,16 +796,18 @@ def proxy_post_processing(url, proxy_data, response, opt):
             if not ('application' in response['headers'].get('Content-Type', '') \
                         or 'javascript' in response['headers'].get('Content-Type', '') \
                         or 'image' in response['headers'].get('Content-Type', '')):
-                response = proxytools.restore_after_proxy_web(response,
-                                                              proxy_data, opt['url_save'])
+                response = proxytools.restore_after_proxy_web(response, proxy_data, opt['url_save'])
+                data = response['data'][:500]
+            
             if data.startswith('ERROR') or response["code"] == 302:
-                if response["code"] == 200: 
+                if response["code"] in [200, 666]: 
                     response["code"] = 666
                     if not opt.get('post_cookie', False):
                         url_domain = '%s://%s' % (urlparse.urlparse(opt['url_save']).scheme, urlparse.urlparse(opt['url_save']).netloc)
                         forced_proxy_temp = 'ProxyWeb:' + proxy_data['web_name']
-                        data_domain = downloadpage(url_domain, alfa_s=True, ignore_response_code=True, \
-                                    post_cookie=True, forced_proxy=forced_proxy_temp, proxy_retries_counter=0)
+                        data_domain = downloadpage(url_domain, alfa_s=True, ignore_response_code=True, headers=opt.get('headers', {}), 
+                                                   CF_test=opt.get('CF_test', False), post_cookie=True, forced_proxy=forced_proxy_temp, 
+                                                   proxy_retries_counter=0)
                         if data_domain.code == 200:
                             url = opt['url_save']
                             opt['post'] = opt['post_save']
@@ -947,7 +956,7 @@ def downloadpage(url, **opt):
         url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
 
     opt['proxy_retries_counter'] = 0
-    opt['url_save'] = url
+    opt['url_save'] = opt.get('url_save', '') or url
     opt['post_save'] = opt.get('post', None)
     if opt.get('forced_proxy_opt', None) and channel_proxy_list(url):
         if opt['forced_proxy_opt'] in ['ProxyCF', 'ProxyDirect']:
@@ -1158,7 +1167,9 @@ def downloadpage(url, **opt):
             if not opt.get('alfa_s', False): logger.error('Error: %s in url: %s - Reintentando' % (response_code, url))
             opt['proxy'] = opt.get('proxy', False) or False
             if not opt['proxy']: opt['proxy_web'] = opt.get('proxy_web', False) or True
-            opt['forced_proxy'] = opt.get('forced_proxy', '') or 'ProxyWeb:croxyproxy.com'
+            forced_proxy_web = 'ProxyWeb:croxyproxy.com' if not opt.get('CF', False) else 'ProxyWeb:hidester.com'
+            opt['forced_proxy'] = opt.get('forced_proxy', '') or opt.get('forced_proxy_retry', '') or forced_proxy_web
+            opt['CF_test'] = False
             opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0
             opt['proxy__test'] = 'retry'
             return downloadpage(url, **opt)
@@ -1320,7 +1331,8 @@ def downloadpage(url, **opt):
                     for domain in [opt['canonical']['host']]+opt['canonical']['host_alt']:
                         if not domain: continue
                         domains += [scrapertools.find_single_match(domain, patron_domain)]
-                    proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 'ProxyCF'), delete=True)
+                    proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 
+                                                  opt.get('forced_proxy_retry', '') or 'ProxyCF'), delete=True)
                 if opt.get('check_blocked_IP_save', {}):
                     response['data'] = opt['check_blocked_IP_save']['data']
                     if PY3 and isinstance(response['data'], bytes):
