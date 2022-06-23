@@ -45,16 +45,16 @@ assistant_urls = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/
                   'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/']
 assistant_desktop_urls = {
                           'windows': [
-                                      'https://drive.google.com/uc?id=1cjh3JsLaBRYoNrH53H4KrWmEYNf3mAbu&export=download&confirm=t',
-                                      'https://drive.google.com/uc?id=1UA46a36O0cw378jKoO0S2J1KPKRNB62V&export=download&confirm=t'
+                                      'https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/',
+                                      'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/'
                                      ],
                           'linux':   [
-                                      'https://drive.google.com/uc?id=1tBnA4TZxTL0PXuRS3iJVnqkIfopAZO4M&export=download&confirm=t',
-                                      'https://drive.google.com/uc?id=1Kr4YX2t5CZyGs5C0qhgnPCkYhaOgprE4&export=download&confirm=t'
+                                      'https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/',
+                                      'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/'
                                      ],
                           'osx':     [
-                                      'https://drive.google.com/uc?id=1wsftzeV_mhj6xUlmZgPma-tXA_YLAFR6&export=download&confirm=t',
-                                      'https://drive.google.com/uc?id=1vSmMNOYQr57B_3DTh4WEaz_61slhUuvF&export=download&confirm=t'
+                                      'https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/',
+                                      'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/'
                                      ]
                          }
 if PLATFORM not in ['android', 'atv2'] and ASSISTANT_MODE == "este":
@@ -657,6 +657,7 @@ def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank', wait=False):
                                java_path + ' -cp ' + binary_path + ' com.alfa.alfadesktopassistant.App ' + cmd
                               ]
                   }
+        #'>', '%s\\temp\\logs\start.log' % assistant_path
         cmdexe = command.get(PLATFORM, [])
         
         try:
@@ -1590,7 +1591,7 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
         logger.info('update=%s' % str(update))
 
     app_name = ASSISTANT_DESKTOP
-    version_name = '%s.version' % app_name
+    version_name = '%s.version' % (app_name)
     assistant_flag_install = config.get_setting('assistant_flag_install')
     if not verbose: verbose = config.get_setting('addon_update_message')        # Verbose en la actualización/instalación
     alfa_s = True
@@ -1608,7 +1609,11 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
     binary_path = filetools.join(config.get_data_path(), 'assistant')
     binary_exec = filetools.join(binary_path, app_name+'.exe')
     version_actual_path = filetools.join(config.get_data_path(), version_name)
-    version_act = filetools.read(version_actual_path, silent=True)
+    if filetools.exists(version_actual_path) and not filetools.exists(binary_path):
+        version_act = ''
+        filetools.remove(version_actual_path, silent=False)
+    else:
+        version_act = filetools.read(version_actual_path, silent=True)
     if not version_act: version_act = ''
     version_app = version_act
 
@@ -1626,7 +1631,7 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
         return version_act, app_name
     
     # Si no está instalada y es update normal, devolvemos el control
-    if not version_act and update == True and not force_install:
+    if not version_act and str(update) != 'auto' and not force_install:
         logger.info("Alfa Assistant no instalado.  No se actualiza")
         return respuesta, app_name
 
@@ -1652,8 +1657,8 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
         logger.error("Error en la descarga de la VERSIÓN: %s" % str(platform))
         return respuesta, app_name
     for _assistant_url in assistant_urls:
-        #assistant_url = '%s%s/%s' % (_assistant_url, platform, version_name)
-        assistant_url = _assistant_url
+        assistant_url = '%s%s/%s' % (_assistant_url, platform, version_name)
+        #assistant_url = _assistant_url
         response = httptools.downloadpage(assistant_url, timeout=5, ignore_response_code=True, 
                                           alfa_s=alfa_s, json_to_utf8=False, retry_alt=False, proxy_retries=0)
         if response.sucess:
@@ -1703,12 +1708,12 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
 
     # Descargamos y guardamos el BINARIO
     if update != True: platformtools.dialog_notification("Instalación Alfa Assistant", "Descargando BINARIO")
-    #assistant_url = '%s%s/%s.zip' % (_assistant_url, platform, app_name)
-    if assistant_desktop_urls.get(platform, []):
-        assistant_url = assistant_desktop_urls[platform][1]
-    else:
-        logger.error("Error en la descarga del BINARIO: %s" % str(platform))
-        return respuesta, app_name
+    assistant_url = '%s%s/%s-%s.zip' % (_assistant_url, platform, app_name, platform)
+    #if assistant_desktop_urls.get(platform, []):
+    #    assistant_url = assistant_desktop_urls[platform][1]
+    #else:
+    #    logger.error("Error en la descarga del BINARIO: %s" % str(platform))
+    #    return respuesta, app_name
     logger.info('Descargando de_ %s' % assistant_url)
     response = httptools.downloadpage(assistant_url, timeout=30, ignore_response_code=True, 
                                       alfa_s=alfa_s, json_to_utf8=False, retry_alt=False, proxy_retries=0)
@@ -1751,14 +1756,16 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
     for install in sorted(filetools.listdir(binary_path)):
         if not install.startswith('install'): continue
         ins_path = filetools.join(binary_path, install)
+        ins_path_cmd = ins_path if ' ' not in ins_path else '"%s"' % ins_path
+        ins_path_cmd = '%s %s%s %s' % (ins_path_cmd, _assistant_url, platform, binary_path if ' ' not in binary_path else '"%s"' % binary_path)
         if not filetools.isfile(ins_path): continue
         filetools.chmod(ins_path, '777', silent=True)
         creationflags = 0
         if PLATFORM in ['windows', 'xbox']:
             creationflags = 0x08000000
         try:
-            logger.info('Instalando software adicional: %s' % ins_path)
-            p = subprocess.Popen(ins_path, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+            logger.info('Instalando software adicional: %s' % ins_path_cmd)
+            p = subprocess.Popen(ins_path_cmd, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
                                  stdin=subprocess.PIPE, cwd=binary_path, creationflags=creationflags, shell=True)
             output_cmd, error_cmd = p.communicate(timeout=15)
             if not error_cmd:

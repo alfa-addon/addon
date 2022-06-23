@@ -36,13 +36,14 @@ list_servers = ['flix555', 'clipwatching', 'gamovideo', 'powvideo', 'streamplay'
 canonical = {
              'channel': 'hdfulls', 
              'host': config.get_setting("current_host", 'hdfulls', default=''), 
-             'host_alt': ["https://hdfull.fm/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://hdfull.be/"], 
+             'host_black_list': ["https://hdfull.fm/"], 
              'status': 'SIN CANONICAL NI DOMINIO', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 host_save = host
+forced_proxy_opt = 'ProxyDirect'
 
 
 def mainlist(item):
@@ -65,13 +66,13 @@ def mainlist(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False):
+def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical, forced_proxy_opt=forced_proxy_opt).data
     else:
-        data = httptools.downloadpage(url, canonical=canonical).data
+        data = httptools.downloadpage(url, canonical=canonical, forced_proxy_opt=forced_proxy_opt).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -80,12 +81,12 @@ def create_soup(url, referer=None, unescape=False):
     return soup
 
 
-def get_source(url, referer=host, post=None):
+def get_source(url, referer=host, post=None, forced_proxy_opt=None):
     logger.info()
     if post:
-        data = httptools.downloadpage(url, post=post, headers={'Referer': referer}, canonical=canonical).data
+        data = httptools.downloadpage(url, post=post, headers={'Referer': referer}, canonical=canonical, forced_proxy_opt=forced_proxy_opt).data
     else:
-        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
+        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical, forced_proxy_opt=forced_proxy_opt).data
 
     return data
 
@@ -297,7 +298,7 @@ def findvideos(item):
 
     itemlist = list()
 
-    data = get_source(item.url)
+    data = get_source(item.url, forced_proxy_opt=forced_proxy_opt)
 
     js_data = get_source("%sstatic/style/js/jquery.hdfull.view.min.js" % host)
 

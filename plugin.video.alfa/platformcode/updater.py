@@ -46,6 +46,7 @@ def check_addon_init():
                     config.set_setting('addon_update_timer', 12)  # Si es usuario se fuerza a 12 horas
                     timer = 12
                 else:
+                    check_date_real()       # Obtiene la fecha real de un sistema externo
                     return  # 0.  No se quieren actualizaciones
             verbose = config.get_setting('addon_update_message', default=False)
         except:
@@ -57,14 +58,16 @@ def check_addon_init():
         if config.get_platform(True)['num_version'] >= 14:  # Si es Kodi, lanzamos el monitor
             monitor = xbmc.Monitor()
         else:  # Lanzamos solo una actualización y salimos
-            check_addon_updates(verbose)  # Lanza la actualización
+            check_addon_updates(verbose)    # Lanza la actualización
+            check_date_real()               # Obtiene la fecha real de un sistema externo
             return
 
-        while not monitor.abortRequested():  # Loop infinito hasta cancelar Kodi
+        while not monitor.abortRequested(): # Loop infinito hasta cancelar Kodi
 
-            check_addon_updates(verbose)  # Lanza la actualización
+            check_addon_updates(verbose)    # Lanza la actualización
+            check_date_real()               # Obtiene la fecha real de un sistema externo
 
-            if monitor.waitForAbort(timer):  # Espera el tiempo programado o hasta que cancele Kodi
+            if monitor.waitForAbort(timer): # Espera el tiempo programado o hasta que cancele Kodi
                 break  # Cancelación de Kodi, salimos
 
         check_update_to_others(verbose=False,
@@ -524,3 +527,14 @@ def show_update_info(new_fix_json):
         text += "[I]Si no deseas ver esta ventana desactívala desde:[/I]\nConfiguración > Preferencias > General > Mostrar informe de correcciones"
         if not platformtools.is_playing() and config.get_setting("show_fixes", default=True):
             help_window.show_info(0, wait=False, title="Alfa - Correcciones (%s)" % fix_number, text=text)
+
+
+def check_date_real():
+    
+    try:
+        resp = httptools.downloadpage('http://worldclockapi.com/api/json/cet/now', timeout=60, alfa_s=True, ignore_response_code=True)
+        fecha_int = resp.json.get('currentDateTime', '')[:10]
+        config.set_setting('date_real', fecha_int)
+        logger.info('Fecha REAL: %s' % fecha_int, force=True)
+    except:
+        logger.error('ERROR al obtener la Fecha REAL: %s' % str(resp.code), force=True)

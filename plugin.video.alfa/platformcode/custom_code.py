@@ -17,13 +17,8 @@ import subprocess
 import time
 import os
 
-from platformcode import config, logger, platformtools
-
-from core import jsontools
+from platformcode import config, logger
 from core import filetools
-from core import scrapertools
-from core.item import Item
-from lib.alfa_assistant import execute_binary_from_alfa_assistant, open_alfa_assistant
 
 json_data_file_name = 'custom_code.json'
 ADDON_NAME = 'plugin.video.alfa'
@@ -33,6 +28,15 @@ ADDON_USERDATA_BIN_PATH = filetools.join(ADDON_USERDATA_PATH, 'bin')
 ADDON_VERSION = config.get_addon_version(with_fix=False, from_xml=True)
 ADDON_CUSTOMCODE_JSON = filetools.join(ADDON_PATH, json_data_file_name)
 ADDON_PLATFORM = config.get_system_platform()
+
+if not filetools.exists(ADDON_CUSTOMCODE_JSON):
+    filetools.remove(filetools.join(ADDON_USERDATA_PATH, 'cookies.dat'), silent=True)
+
+from platformcode import platformtools
+from core import jsontools
+from core import scrapertools
+from core.item import Item
+from lib.alfa_assistant import execute_binary_from_alfa_assistant, open_alfa_assistant
 
 
 def init():
@@ -138,6 +142,9 @@ def init():
                 __settings__ = xbmcaddon.Addon(id="plugin.video.torrest")
                 if __settings__.getSetting("s:check_available_space") == 'true':
                     __settings__.setSetting("s:check_available_space", "false") # No comprobar espacio disponible hasta que lo arreglen
+                #__settings__.setSetting("s:service_log_level", "2")             # TEMPORAL
+                #__settings__.setSetting("s:alerts_log_level", "5")              # TEMPORAL
+                #__settings__.setSetting("s:api_log_level", "4")                 # TEMPORAL
                 #if not filetools.exists(filetools.join(config.get_data_path(), "quasar.json")) \
                 #    and not config.get_setting('addon_quasar_update', default=False):
                 #    question_update_external_addon("torrest")
@@ -265,6 +272,7 @@ def verify_script_alfa_update_helper(silent=True):
         versiones = config.get_versions_from_repo()
     except:
         versiones = {}
+        logger.info("ERROR en VERSIONES", force=True)
         logger.error(traceback.format_exc())
     if not versiones:
         return
@@ -324,7 +332,7 @@ def verify_script_alfa_update_helper(silent=True):
                     xbmc.executebuiltin('Extract("%s", "%s")' % (pkg_updated, addons_path))
                     time.sleep(1)
 
-                logger.info("Installing %s" % package)
+                logger.info("Installing %s" % package, force=True)
                 try:
                     xbmc.executebuiltin('UpdateLocalAddons')
                     time.sleep(2)
@@ -354,7 +362,7 @@ def verify_script_alfa_update_helper(silent=True):
     if updated:
         if ADDON_VERSION != new_version:
             def check_alfa_version():
-                logger.info(new_version)
+                logger.info(new_version, force=True)
                 xbmc.executebuiltin('UpdateAddonRepos')
                 for x in range(40):
                     addon_version = config.get_addon_version(with_fix=False, from_xml=True)
