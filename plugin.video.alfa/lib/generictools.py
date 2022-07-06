@@ -43,7 +43,6 @@ from core.item import Item
 from platformcode import config, logger
 
 channel_py = "newpct1"
-channel_py_domain = "nucleohd.com"
 intervenido_judicial = 'Dominio intervenido por la Autoridad Judicial'
 intervenido_policia = 'Judicial_Policia_Nacional'
 intervenido_guardia = 'Judicial_Guardia_Civil'
@@ -56,7 +55,7 @@ list_nfos = []
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_canal = '(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
-find_alt_domains = 'atomixhq'   # Solo poner uno.  Alternativas: pctmix, pctmix1, pctreload, pctreload1, maxitorrent, descargas2020, pctnew
+find_alt_domains = 'atomohd'   # Solo poner uno.  Alternativas: pctmix, pctmix1, pctreload, pctreload1, maxitorrent, descargas2020, pctnew
 btdigg_url = 'https://btdig.com/'
 btdigg_label = ' [COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR]'
 
@@ -100,7 +99,8 @@ def downloadpage(url, **kwargs):
     if kwargs.get('timeout', None) and kwargs['timeout'] < 20 and httptools.channel_proxy_list(url):    # Si usa proxy, triplicamos el timeout
         kwargs['timeout'] *= 3
     forced_proxy_retry_channels = [channel_py, 'elitetorrent', 'moviesdvdr', 'rarbg']
-    if item.channel in forced_proxy_retry_channels:
+    if item.channel in forced_proxy_retry_channels or (kwargs.get('canonical', {}).get('channel', '') \
+                    and kwargs.get('canonical', {}).get('channel', '') in forced_proxy_retry_channels):
         kwargs['forced_proxy_retry'] = 'ProxyWeb:hide.me'
 
     # Variables locales
@@ -1332,7 +1332,7 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
         host_alt = channel.host
         try:
             canonical_alt = channel.canonical
-            forced_proxy_opt = channel.forced_proxy_opt
+            forced_proxy_opt = channel.forced_proxy_opt or canonical_alt.get('forced_proxy_opt', '')
         except:
             canonical_alt = {}
             forced_proxy_opt = 'ProxyWeb:hide.me'
@@ -1363,7 +1363,7 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
 
         while not matches_btdigg:
             data, response, item, itemlist = downloadpage(url_base, timeout=channel.timeout, s2=False, retry_CF=retry_CF, 
-                                                          headers=headers, quote_rep=True, CF_test=False, retry_alt=False, 
+                                                          headers=headers, quote_rep=True, CF_test=False, 
                                                           alfa_s=True, item=item, itemlist=[], canonical=canonical_alt, 
                                                           forced_proxy_opt=forced_proxy_opt)
             if not response.sucess:
@@ -1445,7 +1445,7 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
         for url_base, extra in url_tails:
             if extra not in item.extra: continue
             data, response, item, itemlist = downloadpage(url_base, timeout=channel.timeout, s2=False, retry_CF=retry_CF, 
-                                                          headers=headers, quote_rep=True, CF_test=False, retry_alt=False, 
+                                                          headers=headers, quote_rep=True, CF_test=False, canonical=canonical_alt, 
                                                           alfa_s=True, item=item, itemlist=itemlist, forced_proxy_opt=forced_proxy_opt)
             if not response.sucess:
                 return matches
@@ -2622,15 +2622,25 @@ def find_rar_password(item):
     logger.info()
     from core import httptools
     
+    try:
+        channel_names = ['newpct1', 'grantorrent', 'mejortorrent']
+        host_alt = []
+        for channel_name in channel_names:
+            channel = __import__('channels.%s' % channel_name, None,
+                                     None, ["channels.%s" % channel_name])
+            host_alt += [channel.host]
+    except:
+        return item
+    
     # Si no hay, buscamos en páginas alternativas
     rar_search = [
-                 ['1', 'https://%s' % channel_py_domain, [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                 ['1', host_alt[0], [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
-                 ['2', 'https://www.grantorrent.ch/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
+                 ['2', host_alt[1], [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
                                 ['-temporada', '/temporada'], ['^((?!serie).)*$', 'None'], \
                                 ['.net\/', '.net/descargar/peliculas-castellano/'], ['\/$', '/blurayrip-ac3-5-1/']]], 
-                 ['2', 'https://www.mejortorrentes.org/', [[]], [['^((?!temporada).)*$', 'None'], \
+                 ['2', host_alt[2], [[]], [['^((?!temporada).)*$', 'None'], \
                                 ['.net\/', '.net/descargar/peliculas-castellano/'], ['-microhd-1080p\/$', '']]]
     ]
     
