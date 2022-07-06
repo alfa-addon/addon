@@ -1,7 +1,7 @@
 {
   "id": "pelisplusco",
   "name": "PelisPlus.co",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://s26.postimg.cc/jov1pmbh5/pelisplusco.png",

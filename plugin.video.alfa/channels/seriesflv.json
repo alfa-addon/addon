@@ -1,7 +1,7 @@
 {
   "id": "seriesflv",
   "name": "SeriesFLV",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.postimg.cc/qMyN4YMJ/seriesflv.png",

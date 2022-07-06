@@ -27,9 +27,8 @@ list_servers = ['mangovideo']
 canonical = {
              'channel': 'pandamovie', 
              'host': config.get_setting("current_host", 'pandamovie', default=''), 
-             'host_alt': ["https://pandamovies.pw"], 
+             'host_alt': ["https://pandamovies.org"], 
              'host_black_list': [], 
-             'pattern': ['href="?([^"|\s*]+)["|\s*]\s*rel="?stylesheet"?'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -37,12 +36,12 @@ host = canonical['host'] or canonical['host_alt'][0]
 
 def mainlist(item):
     logger.info()
+    itemlist = []
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist = []
     itemlist.append(Item(channel=item.channel, title="Peliculas", action="lista", url=host + "/movies"))
-    itemlist.append(Item(channel=item.channel, title="Year", action="categorias", url=host + "/movies", id="menu-item-23"))
+    itemlist.append(Item(channel=item.channel, title="Year", action="categorias", url=host + "/movies", id="menu-item-24"))
     itemlist.append(Item(channel=item.channel, title="Canal", action="categorias", url=host + "/movies", id="menu-item-23"))
     itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host + "/movies", id="menu-item-25"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + "/movies"))
@@ -58,8 +57,9 @@ def submenu(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Ultimos", action="lista", url=item.url + "/movies"))
-    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", id="menu-item-38760"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Canal", action="categorias", url=item.url , id="menu-item-38820"))
+    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=item.url,  id="menu-item-38760"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url))
     return itemlist
 
 
@@ -79,13 +79,8 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('ul', class_='top-menu')
-    if "Categorias" in item.title:
-        matches = soup.find_all(href=re.compile("/genre/"))
-    elif "Year" in item.title:
-        matches = soup.find_all(href=re.compile("/release-year/"))
-    else:
-        matches = soup.find_all(href=re.compile("/director/"))
+    soup = create_soup(item.url).find('ul', class_='top-menu').find('li', id=item.id)
+    matches = soup.find_all('a')
     for elem in matches:
         url = elem['href']
         title = elem.text.strip()
@@ -93,10 +88,13 @@ def categorias(item):
         thumbnail = ""
         if not url.startswith("https"):
             url = "https:%s" % url
-        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
-                             thumbnail=thumbnail, plot=plot))
+        if not "#" in url:
+            itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
+                                 thumbnail=thumbnail, plot=plot))
     if "Year" in item.title:
         itemlist.reverse()
+    else:
+        itemlist.sort(key=lambda x: x.title)
     return itemlist
 
 
@@ -118,13 +116,16 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='ml-item')
     for elem in matches:
+        year = ""
         url = elem.a['href']
         title = elem.a['oldtitle']
         thumbnail = elem.img['src']
+        if "svg" in thumbnail:
+            thumbnail = elem.img['data-lazy-src']
         if not "xxxscenes" in item.url:
-            year = elem.find('div', class_='jtip-top').a.text.strip()
-        else:
-            year = ""
+            year = elem.find('div', class_='jtip-top').a
+            if year:
+                year = year.text.strip()
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
                              fanart=thumbnail, contentTitle=title, infoLabels={"year": year} ))
     next_page = soup.find('li', class_='active')

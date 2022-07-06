@@ -146,7 +146,7 @@ def create_soup(url, referer=None, unescape=False):
     if referer:
         data = httptools.downloadpage(url, headers={'Referer': referer}).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, timeout=30).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")

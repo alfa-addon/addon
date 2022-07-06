@@ -1,7 +1,7 @@
 {
   "id": "clubdecine",
   "name": "Club De Cine",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail":"https://i.postimg.cc/05JfQNw9/clubdecine.png",

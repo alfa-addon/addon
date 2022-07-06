@@ -115,6 +115,8 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='thumb-list__item')
     for elem in matches:
+        if "thumb-plug" in elem['class']:
+            continue
         url = elem.a['href']
         title = elem.find('a', class_='video-thumb-info__name role-pop').text.strip() 
         thumbnail = elem.img['src']

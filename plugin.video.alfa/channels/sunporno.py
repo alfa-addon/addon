@@ -60,8 +60,13 @@ def categorias(item):
     soup = create_soup(item.url)
     matches = soup.find_all('a', class_='pp')
     for elem in matches:
+        if "Category: " in elem.text: 
+            continue
         url = elem['href']
-        title = elem.find('p', class_='video-title').text.strip()
+        if not "/channels/" in url:
+            title = elem.find('p', class_='video-title').text.strip()
+        else:
+            title = elem.img['alt']
         if elem.img.get("src", ""):
             thumbnail = elem.img['src']
         else:
@@ -69,6 +74,7 @@ def categorias(item):
         cantidad = elem.find('p', class_='videos')
         if cantidad:
             title = "%s (%s)" % (title,cantidad.text.strip())
+
         if not "/pornstars/" in url:
             url += "most-recent/?pageId=1"
         else:
@@ -116,7 +122,7 @@ def lista(item):
         if "/pornstars/" in item.url:
             time = elem.find('span', class_='dur').text.strip()
         else:
-            time = elem.find('p', class_='btime').text.strip()
+            time = elem.find('span', class_='btime').text.strip()
         quality = elem.find('i', class_='icon-hd')
         if quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time,title)

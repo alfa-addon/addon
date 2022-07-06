@@ -1,7 +1,7 @@
 {
   "id": "pelis24",
   "name": "Pelis24",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://www.pelis24.in/wp-content/uploads/2018/05/44.png",

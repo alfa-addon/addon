@@ -91,7 +91,7 @@ def catalogo(item):
     for cat in  JSONData["channels"]:
         scrapedtitle = cat["title"]
         dir = cat["dir"]
-        scrapedthumbnail =  cat["scr1"]
+        scrapedthumbnail =  cat["cf3"]
         num = cat["statistics"]
         n = 'videos'
         num = num.get(n,n)
