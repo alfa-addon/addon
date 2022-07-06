@@ -32,7 +32,8 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'rarbg', 
              'host': config.get_setting("current_host", 'rarbg', default=''), 
-             'host_alt': ["https://proxyrarbg.org/", "https://rarbgmirror.org/"], 
+             'host_alt': ["https://rarbgaccessed.org/", "https://rarbgget.org/", "https://proxyrarbg.org/"], 
+             'host_black_list': ["https://rarbgmirror.org/"], 
              'host_black_list': [], 
              'status': 'SIN CANONICAL NI DOMINIO', 
              'CF': False, 'CF_test': False, 'alfa_s': True

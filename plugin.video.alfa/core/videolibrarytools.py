@@ -583,6 +583,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             if emergency_urls_stat == 1 and not e.emergency_urls and e.contentType == 'episode':     #Guardamos urls de emergencia?
                 if not silent:
                     p_dialog.update(0, 'Cacheando enlaces y archivos .torrent...' + '\n' + e.title + '\n' + ' ' + '\n' + ' ')     #progress dialog
+                    if p_dialog.iscanceled(): p_dialog.close(); return 0, 0, 0
                 if json_path in ficheros:                                   #Si existe el .json sacamos de ahí las urls
                     if overwrite:                                           #pero solo si se se sobrescriben los .json
                         json_epi = Item().fromjson(filetools.read(json_path))                   #Leemos el .json
@@ -600,6 +601,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             elif emergency_urls_stat == 3 and e.contentType == 'episode':   #Actualizamos urls de emergencia?
                 if not silent:
                     p_dialog.update(0, 'Cacheando enlaces y archivos .torrent...' + '\n' + e.title + '\n' + ' ' + '\n' + ' ')     #progress dialog
+                    if p_dialog.iscanceled(): p_dialog.close(); return 0, 0, 0
                 e = emergency_urls(e, channel, json_path, headers=headers)  #generamos las urls
                 if e.emergency_urls:                                        #Si ya tenemos urls...
                     emergency_urls_succ = True                              #... es un éxito y vamos a marcar el .nfo

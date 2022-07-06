@@ -213,9 +213,10 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
     expiration_final = 0
     security_error_blackout = (5 * 60) - expiration
     ua_headers = False
-    
-    #debug = True
+
+    if timeout < 0: timeout = 0.001
     if debug: alfa_s = False
+    #debug = False
     
     if not resp:
         resp = {
@@ -351,7 +352,7 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
             if not source and not retry:
                 config.set_setting('cf_assistant_ua', '')
                 logger.debug("No se obtuvieron resultados, reintentando...")
-                timeout = -1 if timeout < 0 else timeout * 2
+                timeout = 1 if timeout < 5 else timeout * 2
                 extraPostDelay = -1 if extraPostDelay < 0 else extraPostDelay * 2
                 return get_source(url, resp, timeout=timeout, debug=debug, extraPostDelay=extraPostDelay, 
                                   retry=True, blacklist=blacklist, retryIfTimeout=retryIfTimeout, 

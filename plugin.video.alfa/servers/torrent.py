@@ -97,6 +97,8 @@ patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_canal = '(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
 
+domain_CF_blacklist = ['atomohd', 'atomixhq', 'atomtt']                         ############# TEMPORAL
+
 
 # Returns an array of possible video url's from the page_url
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
@@ -608,6 +610,10 @@ def caching_torrents(url, torrent_params={}, **kwargs):
     item = kwargs.pop('item', Item())
     retry_CF = kwargs.pop('retry_CF', 2)
     if retry_CF < 1: retry_CF = 1
+    url_domain = False
+    if scrapertools.find_single_match(url, patron_domain):
+        url_domain = scrapertools.find_single_match(url, patron_domain).split('.')[0]
+    CF_test = True if url_domain not in domain_CF_blacklist else False
     headers = kwargs.pop('headers', {})
     if not headers: headers = {}
     post = kwargs.pop('post', None)
@@ -746,7 +752,7 @@ def caching_torrents(url, torrent_params={}, **kwargs):
                 for x in range(retry_CF):
                     response = httptools.downloadpage(url, headers=headers, post=post, 
                                                       follow_redirects=follow_redirects, 
-                                                      timeout=timeout, 
+                                                      timeout=timeout, CF_test=CF_test, 
                                                       proxy_retries=proxy_retries,
                                                       hide_infobox=True)
                     if response.code not in [403, 404]:
@@ -2022,7 +2028,6 @@ def restart_unfinished_downloads():
         init = True
         torrent_temp = filetools.join(config.get_setting('downloadpath', default=''), 'cached_torrents_Alfa')
         TORRENT_TEMP = filetools.listdir(torrent_temp)
-        domain_CF_blacklist = ['atomixhq', 'atomtt']                            ############# TEMPORAL
 
         # Si hay una descarga de BT o MCT inacabada, se reinicia la descarga.  También gestiona las colas de todos los gestores torrent
         if monitor:

@@ -32,8 +32,9 @@ from channelselector import get_thumb
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             'host_alt': ['https://hdfull.wtf/'], 
-             'host_black_list': ['https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
+             'host_alt': ['https://hdfull.cloud/'], 
+             'host_black_list': ['https://hdfull.wtf/', 
+                                 'https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
                                  'https://hdfull.top/'],
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -429,29 +430,28 @@ def items_usuario(item):
     if host_save != host: next_page = next_page.replace(host_save, host)
     for ficha in fichas_usuario:
         try:
-            title = ficha['title']['es'].strip()
+            title = ficha.get('title', {}).get('es', '').strip() or ficha.get('title', {}).get('en', '').strip()
         except:
-            title = ficha['title']['en'].strip()
+            title = 'Error en FICHA de usuario, Title'
+            logger.error('%s: %s en %s' % (title, str(ficha), str(fichas_usuario)))
+            itemlist.append(Item(channel=item.channel, action='', title=title + ' - Enviar LOG'))
+            return itemlist
         try:
             if not PY3: title = title.encode('utf-8')
         except:
             pass
         show = title
-        try:
-            thumbnail = urlparse.urljoin(host, "thumbs/" + ficha['thumbnail'])
-        except:
-            thumbnail = urlparse.urljoin(host,  "thumbs/" + ficha['thumb'])
+        thumbnail = urlparse.urljoin(host, "thumbs/" + (ficha.get('thumbnail', '') or ficha.get('thumb', '')))
         thumbnail += '|User-Agent=%s' % httptools.get_user_agent()
         try:
             url = urlparse.urljoin(host, 'serie/' + ficha['permalink']) + "###" + ficha['id'] + ";1"
             action = "seasons"
-            str = get_status(status, 'shows', ficha['id'])
+            str_ = get_status(status, 'shows', ficha['id'])
+            infoLabels = item.infoLabels
             if "show_title" in ficha:
                 action = "findvideos"
-                try:
-                    serie = ficha['show_title']['es'].strip()
-                except:
-                    serie = ficha['show_title']['en'].strip()
+                serie = ficha.get('show_title', {}).get('es', '').strip() or ficha.get('show_title', {}).get('en', '').strip()
+                if serie: show = serie
                 temporada = ficha['season']
                 episodio = ficha['episode']
                 serie = "[COLOR whitesmoke]" + serie + "[/COLOR]"
@@ -463,15 +463,17 @@ def items_usuario(item):
                         'iso-8859-1')
                 url = urlparse.urljoin(host, 'serie/' + ficha[
                     'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + ficha['id'] + ";3"
-                if str != "": title += str
+                if str_ != "": title += str_
+                infoLabels = {'season': temporada, 'episode': episodio, 'playcount': 1 if 'Visto' in str_ else 0}
             itemlist.append(
                     Item(channel=item.channel, action=action, title=title,
                         url=url, thumbnail=thumbnail,
+                        infoLabels=infoLabels, 
                         contentSerieName=show, text_bold=True))
         except:
-            url = urlparse.urljoin(host, 'pelicula/' + ficha['perma']) + "###" + ficha['id'] + ";2"
-            str = get_status(status, 'movies', ficha['id'])
-            if str != "": title += str
+            url = urlparse.urljoin(host, 'pelicula/' + ficha.get('perma', '')) + "###" + ficha.get('id', 0) + ";2"
+            str_ = get_status(status, 'movies', ficha.get('id', 0))
+            if str_ != "": title += str_
             itemlist.append(
                 Item(channel=item.channel, action="findvideos", title=title, 
                      contentTitle=show, url=url, thumbnail=thumbnail,
@@ -580,8 +582,8 @@ def fichas(item):
             infoLabels['year']= '-'
         #items usuario en titulo (visto, pendiente, etc)
         if account:
-            str = get_status(status, type, scrapedid)
-            if str != "": title += str
+            str_ = get_status(status, type, scrapedid)
+            if str_ != "": title += str_
         #Muesta tipo contenido tras busqueda
         if item.title == "Buscar...":
             bus = host[-4:]
@@ -645,11 +647,11 @@ def seasons(item):
         url_targets= url_targets.replace(host_save, host)
     
     if account:
-        str = get_status(status, "shows", id)
+        str_ = get_status(status, "shows", id)
         #TODO desenredar todo el lio este
-        if str != "" and item.category != "Series" and "XBMC" not in item.title:
+        if str_ != "" and item.category != "Series" and "XBMC" not in item.title:
             platformtools.itemlist_refresh()
-            title = str.replace('steelblue', 'darkgrey').replace('Siguiendo', 'Abandonar')
+            title = str_.replace('steelblue', 'darkgrey').replace('Siguiendo', 'Abandonar')
             itemlist.append(Item(channel=item.channel, action="set_status__", title=title, url=url_targets,
                                  thumbnail=item.thumbnail, contentSerieName=item.contentSerieName, folder=True))
         elif item.category != "Series" and "XBMC" not in item.title:
@@ -757,8 +759,8 @@ def episodesxseason(item):
         
         title = '%sx%s: [COLOR greenyellow]%s[/COLOR] %s' % (temporada, episodio, title.strip(), idiomas)
         if account:
-            str = get_status(status, 'episodes', episode['id'])
-            if str != "": title += str
+            str_ = get_status(status, 'episodes', episode['id'])
+            if str_ != "": title += str_
         
         url = urlparse.urljoin(host, 'serie/' + episode[
             'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + episode['id'] + ";3"
@@ -831,14 +833,14 @@ def novedades_episodios(item):
                  temporada, episodio, title, idiomas)
 
         if account:
-            str = get_status(status, 'episodes', episode['id'])
-            if str != "": title += str
+            str_ = get_status(status, 'episodes', episode['id'])
+            if str_ != "": title += str_
 
         url = urlparse.urljoin(host, 'serie/' + episode[
             'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + episode['id'] + ";3"
         itemlist.append(
             Item(channel=item.channel, action="findvideos", title=title, 
-                 infoLabels={'season': temporada, 'episode': episodio, 'playcount': 1 if 'Visto' in str else 0}, 
+                 infoLabels={'season': temporada, 'episode': episodio, 'playcount': 1 if 'Visto' in str_ else 0}, 
                  contentSerieName=contentSerieName, url=url, thumbnail=thumbnail, 
                  contentType="episode", language=langs, text_bold=True,
                  ))
@@ -1082,7 +1084,7 @@ def get_status(status, type, id):
         state = {'0': '', '1': 'Finalizada', '2': 'Pendiente', '3': 'Siguiendo'}
     else:
         state = {'0': '', '1': 'Visto', '2': 'Pendiente'}
-    str = "";
+    str_ = "";
     str1 = "";
     str2 = ""
     try:
@@ -1097,8 +1099,8 @@ def get_status(status, type, id):
     except:
         str2 = ""
     if str1 != "" or str2 != "":
-        str = ' '+ str1 + str2
-    return str
+        str_ = ' '+ str1 + str2
+    return str_
 
 def get_page_num(item):
     from platformcode import platformtools

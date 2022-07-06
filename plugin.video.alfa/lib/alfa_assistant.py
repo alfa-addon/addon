@@ -64,6 +64,7 @@ if PLATFORM not in ['android', 'atv2'] and ASSISTANT_MODE == "este":
         assistant_urls = []
 
 isAlfaAssistantOpen = False
+debugGlobal = False
 
 if ASSISTANT_MODE == "otro":
     if config.get_setting("assistant_custom_address"):
@@ -238,7 +239,9 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
                      keep_alive = False, returnWhenCookieNameFound = None, retryIfTimeout = False, mute = True, 
                      urlParamRemoveAllCookies = False, useAdvancedWebView = False):
     EXTRA_TIMEOUT_PLUS = 0
+    debug = debug or debugGlobal
     if debug: alfa_s = False
+
     if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit', 'terminate']:
         res = open_alfa_assistant(closeAfter, alfa_s=alfa_s)
         if not alfa_s: logger.info('##Assistant Endpoint: %s, Status: %s' % (endpoint, str(res)))
@@ -249,7 +252,7 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
     else:
         url = 'about:blank'
     if timeout and endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit', 'terminate']:
-        if not alfa_s: logger.info('##Assistant delay-after-html-load: %s' % str(timeout*1000))
+        if not alfa_s: logger.info('##Assistant delay-after-html-load: %s' % str(int(timeout*1000)))
     elif not timeout:
         timeout = 0
     if endpoint in ['ping', 'getWebViewInfo', 'quit', 'terminate']:
@@ -263,7 +266,7 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
     if endpoint == 'update':
         serverCall += '?version=%s' % version
     if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit', 'terminate']:
-        serverCall += '?url=%s&time=%s' % (base64.b64encode(url.encode('utf8')).decode('utf8'), str(timeout*1000))
+        serverCall += '?url=%s&time=%s' % (base64.b64encode(url.encode('utf8')).decode('utf8'), str(int(timeout*1000)))
     
     if jsCode:
         serverCall += '&jsCode=%s' % base64.b64encode(jsCode.encode('utf8')).decode('utf8')
@@ -313,7 +316,7 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
         serverCall += '&headers=%s' % base64.b64encode(headers.encode('utf8')).decode('utf8')
         if not alfa_s: logger.info('##Assistant headers: %s' % headers)
 
-    timeout += extraPostDelay
+    timeout = int(timeout) + extraPostDelay
     serverCall += '&extraPostDelay=%s' % (extraPostDelay*1000)
     if not alfa_s: logger.info('##Assistant delay-after-js-load: %s' % str(extraPostDelay*1000))
     serverCall += '&removeAllCookies=%s' % removeAllCookies
@@ -328,7 +331,7 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
     if not alfa_s: logger.info('##Assistant useAdvancedWebView: %s' % str(useAdvancedWebView))
 
     if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit', 'terminate']:
-        EXTRA_TIMEOUT_PLUS = 10 if timeout+EXTRA_TIMEOUT < 10 else 0
+        EXTRA_TIMEOUT_PLUS = 10 if timeout+EXTRA_TIMEOUT <= 10 else 0
         if not alfa_s: logger.info('##Assistant URL: %s - TIMEOUT: %s' % (serverCall, str(timeout+EXTRA_TIMEOUT)))
     response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT+EXTRA_TIMEOUT_PLUS, alfa_s=alfa_s, 
                                       ignore_response_code=True, keep_alive=keep_alive, retry_alt=False, proxy_retries=0)
@@ -614,7 +617,7 @@ def check_permissions_alfa_assistant():
 #
 ## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
 #
-def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank', wait=False):
+def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank', wait=False, debug=debugGlobal):
     global isAlfaAssistantOpen
     if PLATFORM in ['android', 'atv2']:
         try:
@@ -638,31 +641,37 @@ def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank', wait=False):
             creationflags = 0x08000000
             sufix = '.exe'
         assistant_path = filetools.join(config.get_data_path(), 'assistant')
+        logs_path = filetools.join(assistant_path, 'temp', 'logs', ' ').strip()
         binary_path = ASSISTANT_DESKTOP+'.exe'
-        java_path = filetools.join(assistant_path, 'runtime', 'so', PLATFORM, 
-                                   'java-%s-openjdk-%s' % (java_version, arquitecture), 'bin', 'java%s' % sufix)
-        
-        command = {'windows':
-                              [
-                               'set', 'MY_JAVA_PATH=%s' % java_path, '&&',
-                               'set', 'PATH=%MY_JAVA_PATH%;%PATH%', '&&',
-                               'cd', assistant_path, '&&',
-                               java_path, '-cp', binary_path, 'com.alfa.alfadesktopassistant.App', '%s' % cmd
+        command_path = filetools.join(assistant_path, 'runtime', 'so', PLATFORM, ' ').strip()
+        command = {
+                   'windows': [
+                               '%sstart.cmd' % command_path
                               ], 
-                   'linux':
-                              [
-                               'MY_JAVA_PATH=' + java_path + '; ' + 
-                               'PATH=$MY_JAVA_PATH:$PATH; ' + 
-                               'cd ' + assistant_path + '; ' + 
-                               java_path + ' -cp ' + binary_path + ' com.alfa.alfadesktopassistant.App ' + cmd
-                              ]
+                   'windows_debug': ['>', '%sstart.log' % logs_path, '2>', '%serror.log' % logs_path], 
+                   'linux':   [
+                               '%sstart.cmd' % command_path
+                              ], 
+                   'linux_debug':   ' > %sstart.log' % logs_path + '2> %serror.log' % logs_path, 
+                   'osx':     [
+                               '%sstart.cmd' % command_path
+                              ], 
+                   'osx_debug':     ' > %sstart.log' % logs_path + '2> %serror.log' % logs_path
                   }
-        #'>', '%s\\temp\\logs\start.log' % assistant_path
         cmdexe = command.get(PLATFORM, [])
+        if debug:
+            res = True
+            if not filetools.exists(logs_path):
+                res = filetools.mkdir(logs_path, silent=True)
+            if res:
+                if PLATFORM in ['windows', 'xbox']: 
+                    cmdexe += command.get('%s_debug' % PLATFORM, [])
+                else:
+                    cmdexe[0] += command.get('%s_debug' % PLATFORM, '')
         
         try:
             p = subprocess.Popen(cmdexe, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
-                                 stdin=subprocess.PIPE, creationflags=creationflags, shell=True)
+                                 stdin=subprocess.PIPE, creationflags=creationflags, cwd=assistant_path, shell=True)
             if wait:
                 output_cmd, error_cmd = p.communicate()
                 if error_cmd: p = False

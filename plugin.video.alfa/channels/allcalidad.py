@@ -23,8 +23,8 @@ list_servers = ['fembed', 'streamtape', 'gvideo', 'Jawcloud']
 canonical = {
              'channel': 'allcalidad', 
              'host': config.get_setting("current_host", 'allcalidad', default=''), 
-             'host_alt': ["https://ww3.allcalidad.is"], 
-             'host_black_list': ["https://allcalidad.is", "https://allcalidad.ac"], 
+             'host_alt': ["https://allcalidad.si"], 
+             'host_black_list': ["https://ww3.allcalidad.is", "https://allcalidad.is", "https://allcalidad.ac"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
