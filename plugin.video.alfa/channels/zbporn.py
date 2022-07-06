@@ -57,10 +57,10 @@ def categorias(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('div', class_='main')
-    matches = soup.find_all('a', class_='th')
+    matches = soup.find_all('div', class_='th')
     for elem in matches:
-        url = elem['href']
-        title = elem['title']
+        url = elem.a['href']
+        title = elem.a['title']
         thumbnail = elem.img['src']
         if "gif" in thumbnail:
             thumbnail = elem.img['data-src']
@@ -94,10 +94,10 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('div', class_='main')
-    matches = soup.find('div', class_='thumbs').find_all('a', class_='th')
+    matches = soup.find('div', class_='thumbs').find_all('div', class_='th')
     for elem in matches:
-        url = elem['href']
-        stitle = elem['title']
+        url = elem.a['href']
+        stitle = elem.a['title']
         thumbnail = elem.img['src']
         if "gif" in thumbnail:
             thumbnail = elem.img['data-src']

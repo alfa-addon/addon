@@ -102,7 +102,6 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    logger.debug(soup)
     matches = soup.find_all('article',id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']

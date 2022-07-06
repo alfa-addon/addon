@@ -1,7 +1,7 @@
 {
   "id": "danimados",
   "name": "Danimados",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://www.d-animados.com/wp-content/uploads/2022/01/Daniamdos-3.png",

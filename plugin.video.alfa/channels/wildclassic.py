@@ -77,7 +77,10 @@ def lista(item):
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(item.clone(action="play", title=title, url=scrapedurl,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(item.clone(action=action, title=title, url=scrapedurl,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
                               # "Página Siguiente >>"  headers cookie
     next_page = scrapertools.find_single_match(data, '<li class="next visible"><a href="([^"]+)"')
@@ -89,6 +92,22 @@ def lista(item):
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    url = scrapertools.find_single_match(data, '<iframe src=\'([^\']+)\'')
+    url = urlparse.urljoin(item.url,url)
+    data = httptools.downloadpage(url).data
+    url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
+    if not url:
+        url = scrapertools.find_single_match(data, 'src="([^"]+)"')
+    url = urlparse.urljoin(item.url, url)
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
 
 
 def play(item):

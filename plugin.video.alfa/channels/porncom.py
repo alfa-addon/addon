@@ -95,7 +95,7 @@ def create_soup(url, referer=None, unescape=False):
 def lista(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
+    soup = create_soup(item.url).find('main', class_='container-fluid')
     matches = soup.find_all('div', class_='list-global__item')
     for elem in matches:
         if elem.has_attr('data-adch'):
