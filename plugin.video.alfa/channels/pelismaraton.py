@@ -247,14 +247,14 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
-    soup = create_soup(item.url)
-    matches = soup.find("div", class_="player").find("ul", class_="bx-lst")
+    data = httptools.downloadpage(item.url).data
+    patron  = "go_to_player\('([^']+).*?"
+    patron += 'CGXRw">([^ ]+) '
+    patron += '- ([^<]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
     if not matches:
         return itemlist
-    for elem in matches.find_all("li"):
-        srv, lang = elem.find("span", class_="option").text.split(" - ")
-        lang = lang.replace("Español ", "")
-        url = elem.a["data"]
+    for url, srv, lang in matches:
         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, server=srv,
                              language=IDIOMAS.get(lang.lower(), "VOSE"), infoLabels=item.infoLabels))
 
@@ -277,8 +277,9 @@ def findvideos(item):
 def play(item):
     logger.info()
 
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, 'location.href = "([^"]+)')
+    #data = httptools.downloadpage(item.url).data
+    url = httptools.downloadpage(item.url, follow_redirects=False).headers.get("location", "")
+    #url = scrapertools.find_single_match(data, 'location.href = "([^"]+)')
     if not url.startswith("http"):
         url = "https:" + url
     itemlist = servertools.get_servers_itemlist([item.clone(url=url, server="")])
