@@ -60,7 +60,7 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url_todas = "peliculas", url_populares = "peliculas-polulares",
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url_todas = "listado-peliculas", url_populares = "peliculas-polulares",
                          thumbnail=get_thumb('movies', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Series", action="sub_menu", url_todas = "ver-series",
@@ -90,7 +90,7 @@ def sub_menu(item):
     else:
         content = item.title.lower()[:-1]
 
-    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + '%s' % item.url_todas,
+    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + item.url_todas,
                          thumbnail=get_thumb('all', auto=True)))
 
     if item.title.lower() == "peliculas":
@@ -129,18 +129,17 @@ def list_all(item):
     logger.info()
     itemlist = list()
 
-    soup = create_soup(item.url)
+    data = httptools.downloadpage(item.url).data
+    bloque = scrapertools.find_single_match(data, 'card-body.*?Page navigation example')
+    patron  = '(?is)href="([^"]+).*?'
+    patron += 'data-src="([^"]+).*?'
+    patron += '<p>([^<]+)</p>'
+    matches = scrapertools.find_multiple_matches(bloque, patron)
 
-    matches = soup.find("div", class_="Posters")
-
-    for elem in matches.find_all("a"):
-        url = urlparse.urljoin(host, elem["href"])
-        thumb = urlparse.urljoin(host, elem.img["src"])
-        title = scrapertools.find_single_match(elem.p.text, r"(.*?) \(")
-        year = scrapertools.find_single_match(elem.p.text, r"(\d{4})")
+    for url, thumb, title in matches:
+        year = scrapertools.find_single_match(title, r"(\d{4})")
         if not year:
             year = "-"
-            title = elem.p.text
         if item.type and item.type.lower() not in url:
             continue
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
@@ -157,7 +156,7 @@ def list_all(item):
     #  Paginación
 
     try:
-        next_page = soup.find("a", class_="page-link", rel="next")["href"]
+        next_page = scrapertools.find_single_match(data, 'href="([^"]+)"><i class="ic-chevron-right"></i>')
 
         if next_page:
             if not next_page.startswith(host):
@@ -233,7 +232,7 @@ def section(item):
     logger.info()
     itemlist = list()
     data = httptools.downloadpage(host).data
-    patron  = '(%sgenero/[^"]+)' %host
+    patron  = '(%scategory/[^"]+)' %host
     patron += '">([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, title in matches:
