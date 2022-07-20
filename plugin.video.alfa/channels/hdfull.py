@@ -435,7 +435,7 @@ def items_usuario(item):
             title = 'Error en FICHA de usuario, Title'
             logger.error('%s: %s en %s' % (title, str(ficha), str(fichas_usuario)))
             itemlist.append(Item(channel=item.channel, action='', title=title + ' - Enviar LOG'))
-            return itemlist
+            continue
         try:
             if not PY3: title = title.encode('utf-8')
         except:
@@ -478,7 +478,7 @@ def items_usuario(item):
                 Item(channel=item.channel, action="findvideos", title=title, 
                      contentTitle=show, url=url, thumbnail=thumbnail,
                      text_bold=True, infoLabels={'year': '-'}))
-    if len(itemlist) == int(limit):
+    if len(itemlist) >= int(limit):
         itemlist.append(
             Item(channel=item.channel, action="items_usuario", title=">> Página siguiente", url=next_page, text_bold=True))
 

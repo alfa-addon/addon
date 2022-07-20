@@ -2,7 +2,6 @@
 # --------------------------------------------------------
 # Conector streamlare By Alfa development Group
 # --------------------------------------------------------
-
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -21,7 +20,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     id = scrapertools.find_single_match(page_url,'/e/(\w+)')
     post = {"id": id}
-    data = httptools.downloadpage("https://streamlare.com/api/video/stream/get", post=post).json
-    media_url = data["result"]["Original"]["file"]
-    video_urls.append(["M3U", media_url])
+    data = httptools.downloadpage("https://streamlare.com/api/video/stream/get", post=post).data.replace("\\","")
+    matches = scrapertools.find_multiple_matches(data, 'label":"([^"]+).*?file":"([^"]+)')
+    for res, media_url in matches:
+        media_url += "|User-Agent=%s" %(httptools.get_user_agent())
+        video_urls.append([res, media_url])
     return video_urls
