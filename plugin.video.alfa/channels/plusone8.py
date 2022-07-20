@@ -32,9 +32,9 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?filter=date"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?filter=latest"))
     itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/?filter=popular"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "/?orderby=likes"))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "/?orderby=longest"))
     # itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/pornstars"))
 
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/porn-categories"))
@@ -94,13 +94,13 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('main', id='main')
-    matches = soup.find_all('article', id=re.compile(r"^post-\d+"))
+    matches = soup.find_all('article', class_=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         if "test" in url:
             continue
         title = elem.a['title']
-        thumbnail = elem.img['src']
+        thumbnail = elem.img['data-src']
         if ".gif" in thumbnail:
             thumbnail = elem.img['data-src']
         thumbnail += "|verifypeer=false"
