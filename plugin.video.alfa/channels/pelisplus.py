@@ -94,7 +94,7 @@ def sub_menu(item):
                          thumbnail=get_thumb('all', auto=True)))
 
     if item.title.lower() == "peliculas":
-        itemlist.append(Item(channel=item.channel, title="Ultimos polulares", action="list_all",
+        itemlist.append(Item(channel=item.channel, title="Ultimos populares", action="list_all",
                             url=host + 'peliculas-populares',
                             thumbnail=get_thumb('more watched', auto=True), type=content))
         itemlist.append(Item(channel=item.channel, title="Peliculas estreno", action="list_all",
@@ -130,9 +130,9 @@ def list_all(item):
     itemlist = list()
 
     data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.find_single_match(data, 'card-body.*?Page navigation example')
+    bloque = scrapertools.find_single_match(data, '(?is)card-body.*?Page navigation example')
     patron  = '(?is)href="([^"]+).*?'
-    patron += 'data-src="([^"]+).*?'
+    patron += 'src="([^"]+).*?'
     patron += '<p>([^<]+)</p>'
     matches = scrapertools.find_multiple_matches(bloque, patron)
 
