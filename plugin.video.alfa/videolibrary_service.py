@@ -156,7 +156,7 @@ def update(path, p_dialog, i, t, serie, overwrite, redir=True):
 def check_for_update(overwrite=True):
     logger.info("Actualizando series...")
     
-    from core import filetools
+    from core import filetools, httptools
     from core import channeltools, videolibrarytools
     from platformcode import platformtools
     from channels import videolibrary
@@ -169,6 +169,7 @@ def check_for_update(overwrite=True):
     update_when_finished = False
     hoy = datetime.date.today()
     estado_verify_playcount_series = False
+    httptools.VIDEOLIBRARY_UPDATE = True
     
     try:
         if config.get_setting("update", "videolibrary") != 0 or overwrite:
@@ -351,6 +352,8 @@ def check_for_update(overwrite=True):
 
         if p_dialog:
             p_dialog.close()
+    
+    httptools.VIDEOLIBRARY_UPDATE = False
     
     # Sincroniza los "vistos" de la Videoteca de Películas    
     from core.item import Item

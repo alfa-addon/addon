@@ -91,7 +91,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="ONAs",
                               action="list_all",
                               thumbnail='',
-                              url=host + 'categoria/ona'))
+                              url=host + 'animes?categoria=ona'))
 
     itemlist.append(Item(channel=item.channel, title="Especiales",
                               action="list_all",
@@ -157,15 +157,15 @@ def new_episodes(item):
 
     for elem in matches:
         url = elem.a["href"]
-        lang, c_title = clear_title(elem.p.text)
+        lang, c_title = clear_title(elem.a["title"])
 
-        title = "1x%s - %s" % (elem.h5.text, c_title)
+        title = "1x%s - %s" % (elem.p.text, c_title)
 
         thumb = elem.img["src"]
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
                              thumbnail=thumb, contentSerieName=c_title, language=lang,
-                             contentEpisodeNumber=elem.h5.text))
+                             contentEpisodeNumber=elem.p.text))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
     return itemlist
@@ -181,7 +181,7 @@ def list_all(item):
 
     for elem in matches:
         url = elem.a["href"]
-        lang, title = clear_title(elem.h5.text)
+        lang, title = clear_title(elem.a.get("title", '') or elem.find("h3", class_="seristitles").text)
         thumb = elem.img["src"]
 
         context = renumbertools.context(item)
