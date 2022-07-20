@@ -17,6 +17,7 @@ import copy
 import re
 import sqlite3
 import time
+import traceback
 
 from core import filetools
 from core import httptools
@@ -84,6 +85,7 @@ fname = filetools.join(config.get_data_path(), "alfa_db.sqlite")
 tmdb_langs = ['es', 'es-MX', 'en', 'it', 'pt', 'fr', 'de']
 langs = config.get_setting('tmdb_lang', default=0)
 tmdb_lang = tmdb_langs[langs]
+timeout = 5
 
 
 def drop_bd():
@@ -235,21 +237,28 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang
     l_hilo = list()
 
     def sub_thread(_item, _i, _seekTmdb):
-        semaforo.acquire()
-        ret = set_infoLabels_item(_item, _seekTmdb, idioma_busqueda, lock, include_adult=include_adult, force_no_year=force_no_year)
-        # logger.debug(str(ret) + "item: " + _item.tostring())
-        semaforo.release()
-        r_list.append((_i, _item, ret))
+        with semaforo:
+            ret = set_infoLabels_item(_item, _seekTmdb, idioma_busqueda, lock, include_adult=include_adult, force_no_year=force_no_year)
+            # logger.debug(str(ret) + "item: " + _item.tostring())
+            r_list.append((_i, _item, ret))
 
-    for item in item_list:
-        t = threading.Thread(target=sub_thread, args=(item, i, seekTmdb))
-        t.start()
-        i += 1
-        l_hilo.append(t)
+    try:
+        for item in item_list:
+            t = threading.Thread(target=sub_thread, args=(item, i, seekTmdb))
+            t.start()
+            i += 1
+            l_hilo.append(t)
+    except Exception as ex:
+        logger.error('Number of active/used Threads: %s/%s' % (threading.active_count(), len(threading.enumerate())))
+        if "start new thread" in str(ex):
+            logger.error('ERROR: %s' % str(ex))
+            time.sleep(5)
+        else:
+            logger.error(traceback.format_exc())
 
     # esperar q todos los hilos terminen
     for x in l_hilo:
-        x.join()
+        x.join(timeout=float(timeout)+0.1)
 
     # Ordenar lista de resultados por orden de llamada para mantener el mismo orden q item_list
     r_list.sort(key=lambda i: i[0])
@@ -305,15 +314,18 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
             if not otmdb_global or (item.infoLabels['tmdb_id']
                                 and str(otmdb_global.result.get("id")) != item.infoLabels['tmdb_id']) \
                                 or (otmdb_global.texto_buscado and otmdb_global.texto_buscado != item.infoLabels['tvshowtitle']):
-                if item.infoLabels['tmdb_id']:
-                    otmdb_global = Tmdb(id_Tmdb=item.infoLabels['tmdb_id'], tipo=tipo_busqueda,
-                                        idioma_busqueda=idioma_busqueda, include_adult=include_adult)
-                else:
-                    otmdb_global = Tmdb(texto_buscado=item.infoLabels['tvshowtitle'], tipo=tipo_busqueda,
-                                        idioma_busqueda=idioma_busqueda, year=item.infoLabels['year'],
-                                        include_adult=include_adult)
+                try:
+                    if item.infoLabels['tmdb_id']:
+                        otmdb_global = Tmdb(id_Tmdb=item.infoLabels['tmdb_id'], tipo=tipo_busqueda,
+                                            idioma_busqueda=idioma_busqueda, include_adult=include_adult)
+                    else:
+                        otmdb_global = Tmdb(texto_buscado=item.infoLabels['tvshowtitle'], tipo=tipo_busqueda,
+                                            idioma_busqueda=idioma_busqueda, year=item.infoLabels['year'],
+                                            include_adult=include_adult)
 
-                __leer_datos(otmdb_global)
+                    __leer_datos(otmdb_global)
+                except:
+                    logger.debug(traceback.format_exc(1))
 
             if lock and lock.locked():
                 lock.release()
@@ -371,61 +383,64 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
 
         # Buscar...
         else:
-            otmdb = copy.copy(otmdb_global)
-            # Busquedas por ID...
-            if item.infoLabels['tmdb_id']:
-                # ...Busqueda por tmdb_id
-                otmdb = Tmdb(id_Tmdb=item.infoLabels['tmdb_id'], tipo=tipo_busqueda,
-                             idioma_busqueda=idioma_busqueda, include_adult=include_adult)
-
-            elif item.infoLabels['imdb_id']:
-                # ...Busqueda por imdb code
-                otmdb = Tmdb(external_id=item.infoLabels['imdb_id'], external_source="imdb_id",
-                             tipo=tipo_busqueda,
-                             idioma_busqueda=idioma_busqueda,
-                             include_adult=include_adult)
-
-            elif tipo_busqueda == 'tv':  # buscar con otros codigos
-                if item.infoLabels['tvdb_id']:
-                    # ...Busqueda por tvdb_id
-                    otmdb = Tmdb(external_id=item.infoLabels['tvdb_id'], external_source="tvdb_id", tipo=tipo_busqueda,
+            try:
+                otmdb = copy.copy(otmdb_global)
+                # Busquedas por ID...
+                if item.infoLabels['tmdb_id']:
+                    # ...Busqueda por tmdb_id
+                    otmdb = Tmdb(id_Tmdb=item.infoLabels['tmdb_id'], tipo=tipo_busqueda,
                                  idioma_busqueda=idioma_busqueda, include_adult=include_adult)
-                elif item.infoLabels['freebase_mid']:
-                    # ...Busqueda por freebase_mid
-                    otmdb = Tmdb(external_id=item.infoLabels['freebase_mid'], external_source="freebase_mid",
-                                 tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda, include_adult=include_adult)
-                elif item.infoLabels['freebase_id']:
-                    # ...Busqueda por freebase_id
-                    otmdb = Tmdb(external_id=item.infoLabels['freebase_id'], external_source="freebase_id",
-                                 tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda, include_adult=include_adult)
-                elif item.infoLabels['tvrage_id']:
-                    # ...Busqueda por tvrage_id
-                    otmdb = Tmdb(external_id=item.infoLabels['tvrage_id'], external_source="tvrage_id",
-                                 tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda, include_adult=include_adult)
 
-            #if otmdb is None:
-            if not item.infoLabels['tmdb_id'] and not item.infoLabels['imdb_id'] and not item.infoLabels['tvdb_id'] and not item.infoLabels['freebase_mid'] and not item.infoLabels['freebase_id'] and not item.infoLabels['tvrage_id']:
-                # No se ha podido buscar por ID...
-                # hacerlo por titulo
-                if tipo_busqueda == 'tv':
-                    # Busqueda de serie por titulo y filtrando sus resultados si es necesario
-                    otmdb = Tmdb(texto_buscado=item.infoLabels['tvshowtitle'], tipo=tipo_busqueda,
-                                 idioma_busqueda=idioma_busqueda, filtro=item.infoLabels.get('filtro', {}),
-                                 year=item.infoLabels['year'], include_adult=include_adult)
-                else:
-                    # Busqueda de pelicula por titulo...
-                    if item.infoLabels['year'] or item.infoLabels['filtro'] or kwargs.get('force_no_year', False):
-                        # # ...y año o filtro
-                        otmdb = Tmdb(texto_buscado=item.contentTitle or item.title, tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda,
-                                     filtro=item.infoLabels.get('filtro', {}), year=item.infoLabels.get('year', ''),
-                                     include_adult=include_adult)
-                if otmdb is not None:
-                    if otmdb.get_id() and config.get_setting("tmdb_plus_info", default=False):
-                        # Si la busqueda ha dado resultado y no se esta buscando una lista de items,
-                        # realizar otra busqueda para ampliar la informacion
-                        otmdb = Tmdb(id_Tmdb=otmdb.result.get("id"), tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda,
-                                     include_adult=include_adult)
+                elif item.infoLabels['imdb_id']:
+                    # ...Busqueda por imdb code
+                    otmdb = Tmdb(external_id=item.infoLabels['imdb_id'], external_source="imdb_id",
+                                 tipo=tipo_busqueda,
+                                 idioma_busqueda=idioma_busqueda,
+                                 include_adult=include_adult)
 
+                elif tipo_busqueda == 'tv':  # buscar con otros codigos
+                    if item.infoLabels['tvdb_id']:
+                        # ...Busqueda por tvdb_id
+                        otmdb = Tmdb(external_id=item.infoLabels['tvdb_id'], external_source="tvdb_id", tipo=tipo_busqueda,
+                                     idioma_busqueda=idioma_busqueda, include_adult=include_adult)
+                    elif item.infoLabels['freebase_mid']:
+                        # ...Busqueda por freebase_mid
+                        otmdb = Tmdb(external_id=item.infoLabels['freebase_mid'], external_source="freebase_mid",
+                                     tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda, include_adult=include_adult)
+                    elif item.infoLabels['freebase_id']:
+                        # ...Busqueda por freebase_id
+                        otmdb = Tmdb(external_id=item.infoLabels['freebase_id'], external_source="freebase_id",
+                                     tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda, include_adult=include_adult)
+                    elif item.infoLabels['tvrage_id']:
+                        # ...Busqueda por tvrage_id
+                        otmdb = Tmdb(external_id=item.infoLabels['tvrage_id'], external_source="tvrage_id",
+                                     tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda, include_adult=include_adult)
+
+                #if otmdb is None:
+                if not item.infoLabels['tmdb_id'] and not item.infoLabels['imdb_id'] and not item.infoLabels['tvdb_id'] and not item.infoLabels['freebase_mid'] and not item.infoLabels['freebase_id'] and not item.infoLabels['tvrage_id']:
+                    # No se ha podido buscar por ID...
+                    # hacerlo por titulo
+                    if tipo_busqueda == 'tv':
+                        # Busqueda de serie por titulo y filtrando sus resultados si es necesario
+                        otmdb = Tmdb(texto_buscado=item.infoLabels['tvshowtitle'], tipo=tipo_busqueda,
+                                     idioma_busqueda=idioma_busqueda, filtro=item.infoLabels.get('filtro', {}),
+                                     year=item.infoLabels['year'], include_adult=include_adult)
+                    else:
+                        # Busqueda de pelicula por titulo...
+                        if item.infoLabels['year'] or item.infoLabels['filtro'] or kwargs.get('force_no_year', False):
+                            # # ...y año o filtro
+                            otmdb = Tmdb(texto_buscado=item.contentTitle or item.title, tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda,
+                                         filtro=item.infoLabels.get('filtro', {}), year=item.infoLabels.get('year', ''),
+                                         include_adult=include_adult)
+                    if otmdb is not None:
+                        if otmdb.get_id() and config.get_setting("tmdb_plus_info", default=False):
+                            # Si la busqueda ha dado resultado y no se esta buscando una lista de items,
+                            # realizar otra busqueda para ampliar la informacion
+                            otmdb = Tmdb(id_Tmdb=otmdb.result.get("id"), tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda,
+                                         include_adult=include_adult)
+            except:
+                logger.debug(traceback.format_exc(1))
+            
             if lock and lock.locked():
                 lock.release()
 
@@ -827,7 +842,7 @@ class Tmdb(object):
     def get_json(url):
 
         try:
-            result = httptools.downloadpage(url, cookies=False, ignore_response_code=True)
+            result = httptools.downloadpage(url, cookies=False, ignore_response_code=True, timeout=timeout)
 
             res_headers = result.headers
             dict_data = jsontools.load(result.data)
@@ -842,7 +857,7 @@ class Tmdb(object):
                         #logger.error("Limite alcanzado, esperamos para volver a llamar en ...%s" % wait)
                         time.sleep(wait)
                         # logger.debug("RE Llamada #%s" % d)
-                        result = httptools.downloadpage(url, cookies=False)
+                        result = httptools.downloadpage(url, cookies=False, timeout=timeout)
 
                         res_headers = result.headers
                         # logger.debug("res_headers es %s" % res_headers)
@@ -868,7 +883,8 @@ class Tmdb(object):
             url = ('https://api.themoviedb.org/3/genre/%s/list?api_key=a1ab8b8669da03637a4b98fa39c39228&language=%s'
                    % (tipo, idioma))
             try:
-                logger.info("[Tmdb.py] Rellenando dicionario de generos")
+                if not httptools.VIDEOLIBRARY_UPDATE and not httptools.TEST_ON_AIR:
+                    logger.info("[Tmdb.py] Rellenando dicionario de generos")
 
                 resultado = cls.get_json(url)
                 if not isinstance(resultado, dict):
@@ -900,7 +916,8 @@ class Tmdb(object):
                        '&language=%s' % (self.busqueda_id, source, self.busqueda_idioma))
                 buscando = "%s: %s" % (source.capitalize(), self.busqueda_id)
 
-            logger.info("[Tmdb.py] Buscando %s:\n%s" % (buscando, url))
+            if not httptools.VIDEOLIBRARY_UPDATE and not httptools.TEST_ON_AIR:
+                logger.info("[Tmdb.py] Buscando %s:\n%s" % (buscando, url))
             resultado = self.get_json(url)
             if not isinstance(resultado, dict):
                 resultado = ast.literal_eval(resultado.decode('utf-8'))
@@ -944,7 +961,8 @@ class Tmdb(object):
                 url += '&first_air_date_year=%s' % self.busqueda_year
 
             buscando = self.busqueda_texto.capitalize()
-            logger.info("[Tmdb.py] Buscando %s en pagina %s:\n%s" % (buscando, page, url))
+            if not httptools.VIDEOLIBRARY_UPDATE and not httptools.TEST_ON_AIR:
+                logger.info("[Tmdb.py] Buscando %s en pagina %s:\n%s" % (buscando, page, url))
             resultado = self.get_json(url)
             if not isinstance(resultado, dict):
                 resultado = ast.literal_eval(resultado.decode('utf-8'))
@@ -1005,7 +1023,8 @@ class Tmdb(object):
             url = ('https://api.themoviedb.org/3/%s?api_key=a1ab8b8669da03637a4b98fa39c39228&%s'
                    % (type_search, "&".join(params)))
 
-            logger.info("[Tmdb.py] Buscando %s:\n%s" % (type_search, url))
+            if not httptools.VIDEOLIBRARY_UPDATE and not httptools.TEST_ON_AIR:
+                logger.info("[Tmdb.py] Buscando %s:\n%s" % (type_search, url))
             resultado = self.get_json(url)
             if not isinstance(resultado, dict):
                 resultado = ast.literal_eval(resultado.decode('utf-8'))
@@ -1305,7 +1324,8 @@ class Tmdb(object):
                   "&append_to_response=credits" % (self.result["id"], numtemporada, self.busqueda_idioma)
 
             buscando = "id_Tmdb: " + str(self.result["id"]) + " temporada: " + str(numtemporada) + "\nURL: " + url
-            logger.info("[Tmdb.py] Buscando " + buscando)
+            if not httptools.VIDEOLIBRARY_UPDATE and not httptools.TEST_ON_AIR:
+                logger.info("[Tmdb.py] Buscando " + buscando)
             try:
                 self.temporada[numtemporada] = self.get_json(url)
                 if not isinstance(self.temporada[numtemporada], dict):

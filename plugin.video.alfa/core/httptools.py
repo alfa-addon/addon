@@ -66,6 +66,9 @@ HTTPTOOLS_DEFAULT_RANDOM_HEADERS = False
 # Se activa desde Test
 TEST_ON_AIR = False
 
+# Se activa cuando se actualiza la Videoteca
+VIDEOLIBRARY_UPDATE = False
+
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?[\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 
@@ -920,6 +923,10 @@ def downloadpage(url, **opt):
     if not opt.get('alfa_s', False):
         logger.info()
 
+    # Evitamos escribir en el log si es un actualización de Videoteca, a menos que se fuerce con opt['hide_infobox'] = False
+    if VIDEOLIBRARY_UPDATE and opt.get('hide_infobox', True):
+        opt['hide_infobox'] = True
+    
     # Dominios que necesitan Cloudscraper
     CF_LIST = load_CF_list()
 
