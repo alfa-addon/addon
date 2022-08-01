@@ -135,49 +135,31 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
-    srv_list = {"fembed": "fembed", "playstp": "streamtape", "stream": "mystream", "goplay": "gounlimited",
-                "drive": "gvideo", "meplay": "netutv", "evoplay": "netutv", "uqload": "uqload",
-                "playsb": "streamsb"}
+    data = httptools.downloadpage(item.url).data
+    post = scrapertools.find_single_match(data, 'data-post=(\d+)')
+    url = host + "wp-json/dooplayer/v2/%s/movie/meplayembed" %post
+    data = httptools.downloadpage(url).json
+    url = data["embed_url"].replace("s/tmdb", "/gen")
+    data = httptools.downloadpage(url).data
+    patron  = "go_to_player\('([^']+).*?"
+    patron += 'serverx">([^<]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
 
-    soup, matches = AlfaChannel.get_video_options(item.url)
+    srv_list = {"fembed": "fembed", "stp": "streamtape", "stream": "mystream", "goplay": "gounlimited",
+                "drive": "gvideo", "meplay": "netutv", "evoplay": "netutv", "uqload": "uqload",
+                "playsb": "streamsb", "str" : "doodstream", "voe": "voe"}
+
 
     if not matches:
         return itemlist
 
-    for elem in matches:
-        if elem["data-nume"].lower() == "trailer":
-            continue
-        data = AlfaChannel.get_data_by_post(elem, custom_url="%s%s" % (host, "security-scanner-cf")).data
+    for url, srv in matches:
+        if srv == "Descargar": continue
+        lang = ""
+        #language=IDIOMAS.get(lang.lower(), "VOSE")
 
-        try:
-            lang = elem.find("img", class_=re.compile(r"lazyload"))["data-src"]
-            lang = scrapertools.find_single_match(lang, r"flags/([^\.]+)\.svg")
-        except:
-            lang = ""
-
-        new_url = scrapertools.find_single_match(data, "src='([^']+)'")
-        soup = AlfaChannel.create_soup(new_url, add_referer=True)
-        players = soup.find_all("div", class_=re.compile(r"Player\d+"))
-        if not players:
-            players = [soup]
-        for player in players:
-            sources = player.find_all(id="servers")
-
-            for src in sources:
-                if src.find("span", class_="serverx") and not src.has_attr("onclick"):
-                    v_id = src["data-embed"]
-                    post = {"streaming": v_id}
-                    url = "https://players.%sedge-data/" % host.replace("https://", "")
-                else:
-                    lang = scrapertools.find_single_match(player.find("a", id="report")["onclick"], "audio=([^']+)'")
-                    post = {}
-                    url = scrapertools.find_single_match(src["onclick"], "go_to_player\('([^']+)'")
-
-                    if "download" in url:
-                        continue
-                server = srv_list.get(src.find("span", class_="serverx").text.lower(), "directo")
-                itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, server=server,
-                                 language=IDIOMAS.get(lang.lower(), "VOSE"), post=post,
+        server = srv_list.get(srv.lower(), "directo")
+        itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, server=server,
                                      infoLabels=item.infoLabels))
 
     # Requerido para FilterTools
@@ -199,6 +181,11 @@ def findvideos(item):
 def play(item):
     logger.info()
 
+    if "gcs.megaplay" in item.url:
+        api_url = "https://gcs.megaplay.cc/r.php"
+        v_id = scrapertools.find_single_match(item.url, r"\?h=([A-z0-9]+)")
+        post = {"h": v_id}
+        url = httptools.downloadpage(api_url, post=post, ignore_response_code=True).url
     if item.post:
         v_id = httptools.downloadpage(item.url, post=item.post).data
         base_url = "https://players.%s" % host.replace("https://", "")
@@ -209,11 +196,6 @@ def play(item):
     elif item.url.startswith("/playerdir/"):
         url = "%s%s" % (host.replace("https://", "https://play."), item.url.replace("/playerdir", "playdir"))
         url = httptools.downloadpage(url, add_referer=True).url
-    else:
-        api_url = "%sr.php" % "https://go.megaplay.cc/"
-        v_id = scrapertools.find_single_match(item.url, r"\?h=([A-z0-9]+)")
-        post = {"h": v_id}
-        url = httptools.downloadpage(api_url, post=post).url
 
     itemlist = servertools.get_servers_itemlist([item.clone(url=url, server="")])
     return itemlist
