@@ -12,7 +12,7 @@
         "url": "https://www.fembed.com/api/source/\\1"
       },
       {
-        "pattern": "(?:fcdn.stream|gotovideo.kiev.ua)/(?:f|v)/([A-z0-9_-]+)",
+        "pattern": "(?:embedsito.com|fcdn.stream|gotovideo.kiev.ua)/(?:f|v)/([A-z0-9_-]+)",
         "url": "https://www.fembed.com/api/source/\\1"
       },
       {
