@@ -141,40 +141,34 @@ def findvideos(item):
     data = httptools.downloadpage(url).json
     url = data["embed_url"].replace("s/tmdb", "/gen")
     data = httptools.downloadpage(url).data
-    patron  = "go_to_player\('([^']+).*?"
-    patron += 'serverx">([^<]+)'
-    matches = scrapertools.find_multiple_matches(data, patron)
-
+    matches_languages = scrapertools.find_multiple_matches(data, "this, '(\d+).*?src.*?>([^<]+)")
     srv_list = {"fembed": "fembed", "stp": "streamtape", "stream": "mystream", "goplay": "gounlimited",
                 "drive": "gvideo", "meplay": "netutv", "evoplay": "netutv", "uqload": "uqload",
                 "playsb": "streamsb", "str" : "doodstream", "voe": "voe"}
+    
+    for n_lang, idioma in matches_languages:
+        bloque = scrapertools.find_single_match(data, '(?is)class="Player%s.*?audio=' %n_lang)
+        patron  = """go_to_player\('([^']+).*?"""
+        patron += """serverx">([^<]+)"""
+        matches = scrapertools.find_multiple_matches(bloque, patron)
 
+        for url, srv in matches:
+            if srv == "Descargar": continue
+            language=IDIOMAS.get(idioma.lower(), "VOSE")
 
-    if not matches:
-        return itemlist
-
-    for url, srv in matches:
-        if srv == "Descargar": continue
-        lang = ""
-        #language=IDIOMAS.get(lang.lower(), "VOSE")
-
-        server = srv_list.get(srv.lower(), "directo")
-        itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, server=server,
-                                     infoLabels=item.infoLabels))
+            server = srv_list.get(srv.lower(), "directo")
+            itemlist.append(Item(channel=item.channel, title='%s [' + language + "]", action='play', url=url, server=server,
+                                         language=language, infoLabels=item.infoLabels))
 
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
     # Requerido para AutoPlay
-
     autoplay.start(itemlist, item)
-
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
                              url=item.url, action="add_pelicula_to_library", extra="findvideos",
                              contentTitle=item.contentTitle))
-
     return itemlist
 
 
