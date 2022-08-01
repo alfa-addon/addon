@@ -38,9 +38,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     domain = match.group(1)
     patron = 'getElementById\(\'dlbutton\'\).href\s*=\s*"(.*?)";'
     media_url = scrapertools.find_single_match(data, patron)
-    cadena = scrapertools.find_single_match(media_url, '" \+.*?\+ "')
-    intermediate = scrapertools.find_single_match(media_url, '(\(.*?\) )')
-    numbers = eval( intermediate )
+    cadena = scrapertools.find_single_match(media_url, '("\+.*?\+")')
+    a = 1
+    b = a + 1
+    c = b + 1
+    d = 4
+    intermediate = scrapertools.find_single_match(media_url, '"\+(.*?)\+"')
+    numbers = int(eval( intermediate.replace("a()", str(a)).replace("b()", str(b)).replace("c()", str(c)).replace("d()", str(d)) ))
     url = media_url.replace(cadena, '%s' %(numbers))
     mediaurl = '%s%s' % (domain, url)
     extension = "." + mediaurl.split('.')[-1]
