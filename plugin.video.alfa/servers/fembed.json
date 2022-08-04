@@ -5,15 +5,15 @@
     "patterns": [
       {
         "pattern": "(?:vanfem|ilovefembed|fembed|fembad|feurl|youtvgratis|myurlshort|videobb|femax20|cloudyport|mrdhan).\\w{2,4}/(?:f|v)/([A-z0-9_-]+)",
-        "url": "https://www.fembed.com/api/source/\\1"
+        "url": "https://vanfem.com/api/source/\\1"
       },
       {
         "pattern": "(?:animekao|sypl|xstreamcdn|hlshd|dutrag|diasfem).\\w{2,4}/(?:f|v)/([A-z0-9_-]+)",
-        "url": "https://www.fembed.com/api/source/\\1"
+        "url": "https://vanfem.com/api/source/\\1"
       },
       {
-        "pattern": "(?:embedsito.com|fcdn.stream|gotovideo.kiev.ua)/(?:f|v)/([A-z0-9_-]+)",
-        "url": "https://www.fembed.com/api/source/\\1"
+        "pattern": "(?:owodeuwu.xyz|embedsito.com|fcdn.stream|gotovideo.kiev.ua)/(?:f|v)/([A-z0-9_-]+)",
+        "url": "https://vanfem.com/api/source/\\1"
       },
       {
         "pattern": "((?:serieskao|sololatino|fembed-hd|fplayer|suzihaza).\\w{2,4})/(?:f|v)/([A-z0-9_-]+)",
