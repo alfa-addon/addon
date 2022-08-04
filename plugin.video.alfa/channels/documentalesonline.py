@@ -101,14 +101,13 @@ def videos(item):
         data = httptools.downloadpage(item.url + "page/%s" %item.page, canonical=canonical).data
     else:
         data = httptools.downloadpage(item.url, canonical=canonical).data
-    patron = 'Populares</a>(.*?)</div></article></div></div>'
-    data = scrapertools.find_single_match(data, patron)
-    patron  = 'wp-post-image-link.*?href="([^"]+).*?'
+    patron  = '(?is)headline"><a href="([^"]+).*?'
+    patron += 'bookmark">([^<]+).*?'
     patron += 'src="([^"]+).*?'
-    patron += 'bookmark">([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for url, thumb, title in matches:
+    for url, title, thumb in matches:
         title = title.replace("&#8211;","-")
+        title = title.replace("&#8230;","...")
         itemlist.append(item.clone(title=title, url=url, action="findvideos", contentTitle=title, thumbnail=thumb))
     if item.page:
         itemlist.append(item.clone(title=">> Página siguiente", url=host, page=item.page + 1))
