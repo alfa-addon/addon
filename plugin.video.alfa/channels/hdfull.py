@@ -430,7 +430,12 @@ def items_usuario(item):
     if host_save != host: next_page = next_page.replace(host_save, host)
     for ficha in fichas_usuario:
         try:
-            title = ficha.get('title', {}).get('es', '').strip() or ficha.get('title', {}).get('en', '').strip()
+            if ficha.get('title', {}) and isinstance(ficha.get('title', {}), dict):
+                title = ficha.get('title', {}).get('es', '').strip() or ficha.get('title', {}).get('en', '').strip()
+            elif ficha.get('show_title', {}) and isinstance(ficha.get('show_title', {}), dict):
+                title = ficha.get('show_title', {}).get('es', '').strip() or ficha.get('show_title', {}).get('en', '').strip()
+            else:
+                title = ''
         except:
             title = 'Error en FICHA de usuario, Title'
             logger.error('%s: %s en %s' % (title, str(ficha), str(fichas_usuario)))
@@ -450,7 +455,9 @@ def items_usuario(item):
             infoLabels = item.infoLabels
             if "show_title" in ficha:
                 action = "findvideos"
-                serie = ficha.get('show_title', {}).get('es', '').strip() or ficha.get('show_title', {}).get('en', '').strip()
+                serie = ''
+                if ficha.get('show_title', {}) and isinstance(ficha.get('show_title', {}), dict):
+                    serie = ficha.get('show_title', {}).get('es', '').strip() or ficha.get('show_title', {}).get('en', '').strip()
                 if serie: show = serie
                 temporada = ficha['season']
                 episodio = ficha['episode']
@@ -723,9 +730,9 @@ def episodesxseason(item):
     
     for episode in episodes:
 
-        language = episode['languages']
-        temporada = episode['season']
-        episodio = episode['episode']
+        language = episode.get('languages', '')
+        temporada = episode.get('season', '1')
+        episodio = episode.get('episode', '0')
 
         #Fix para thumbs
         thumb = episode.get('thumbnail', '')
@@ -747,11 +754,9 @@ def episodesxseason(item):
         else:
             idiomas = ""
         
-        if episode['title']:
+        if episode.get('title', {}) and isinstance(episode.get('title', {}), dict):
             
-            title = episode['title'].get('es', '')
-            if not title:
-                title = episode['title'].get('en', '')
+            title = episode['title'].get('es', '') or episode['title'].get('en', '')
 
         if not title: title = "Episodio " + episodio
         

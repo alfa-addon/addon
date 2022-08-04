@@ -59,7 +59,7 @@ except:
 
 class CacheInit(xbmc.Monitor, threading.Thread):
     def __init__(self, *args, **kwargs):
-        global alfa_caching, alfa_system_platform, alfa_kodi_platform, alfa_settings, alfa_channels, alfa_servers
+        global window, __settings__, alfa_caching, alfa_system_platform, alfa_kodi_platform, alfa_settings, alfa_channels, alfa_servers
         xbmc.Monitor.__init__(self)
         threading.Thread.__init__(self)
 
@@ -103,11 +103,16 @@ class CacheInit(xbmc.Monitor, threading.Thread):
                 break  # Cancelación de Kodi, salimos
 
     def onSettingsChanged(self):  # Si se modifican los ajuste de Alfa, se activa esta función
-        global alfa_settings
-        alfa_settings = {}
-        window.setProperty("alfa_settings", json.dumps(alfa_settings))
-        alfa_caching = True
-        window.setProperty("alfa_caching", str(alfa_caching))
+        global window, __settings__, alfa_settings, alfa_caching
+        settings_pre = alfa_settings.copy() or None
+        alfa_caching = __settings__.getSetting('caching')
+        if alfa_caching == 'true' or alfa_caching == None:
+            alfa_caching = True
+            window.setProperty("alfa_caching", str(alfa_caching))
+        else:
+            alfa_caching = False
+            window.setProperty("alfa_caching", "")
+        open_settings(settings_pre=settings_pre)
 
 
 def cache_init():
@@ -540,10 +545,13 @@ def get_all_settings_addon(caching_var=True):
     return ret
 
 
-def open_settings():
-    settings_pre = get_all_settings_addon()
-    __settings__.openSettings()
+def open_settings(settings_pre={}):
+    if isinstance(settings_pre, dict) and not settings_pre:
+        settings_pre = get_all_settings_addon()
+        __settings__.openSettings()
     settings_post = get_all_settings_addon(caching_var=False)
+    if not settings_pre:
+        settings_pre = settings_post.copy()
 
     # cb_validate_config (util para validar cambios realizados en el cuadro de dialogo)
     if settings_post.get('adult_aux_intro_password', None):
@@ -556,11 +564,14 @@ def open_settings():
 
         if settings_post['adult_aux_intro_password'] == adult_password:
             # La contraseña de acceso es correcta
+            set_setting("adult_mode", settings_post.get("adult_mode", 1))
+            set_setting("adult_request_password", settings_post.get("adult_request_password", True))
 
             # Cambio de contraseña
-            if settings_post['adult_aux_new_password1']:
-                if settings_post['adult_aux_new_password1'] == settings_post['adult_aux_new_password2']:
+            if settings_post.get('adult_aux_new_password1', ''):
+                if settings_post['adult_aux_new_password1'] == settings_post.get('adult_aux_new_password2', ''):
                     set_setting('adult_password', settings_post['adult_aux_new_password1'])
+
                 else:
                     platformtools.dialog_ok(get_localized_string(60305),
                                             get_localized_string(60306),
