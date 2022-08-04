@@ -84,7 +84,9 @@ def lista(item):
     for elem in matches.find_all('article'):
         url = elem.a['href']
         title = elem.a['title']
-        thumbnail = elem.img['data-src']
+        thumbnail = ""
+        if not elem.find('div', class_='no-thumb'):
+            thumbnail = elem.img['data-src']
         plot = ""
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))

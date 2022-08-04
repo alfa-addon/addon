@@ -26,7 +26,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
     video_urls = []
     server = scrapertools.find_single_match(data, 'file:\s?"([^"]+)"')
-    v_id = scrapertools.find_single_match(data, 'var session\s?=\s?"([^"]+)"')
+    v_id = scrapertools.find_single_match(data, 'var (?:session|sesz)\s?=\s?"([^"]+)"')
     media_url = server + v_id
 
     video_urls.append(['[nupload]', media_url])
