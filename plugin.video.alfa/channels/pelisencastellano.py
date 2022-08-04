@@ -29,8 +29,8 @@ list_servers = ['fembed']
 canonical = {
              'channel': 'pelisencastellano', 
              'host': config.get_setting("current_host", 'pelisencastellano', default=''), 
-             'host_alt': ["https://pelisencastellano.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://pelisencastellano.net/"], 
+             'host_black_list': ["https://pelisencastellano.com/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
