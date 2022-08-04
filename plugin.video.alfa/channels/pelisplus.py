@@ -24,7 +24,6 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 from lib import generictools
-from bs4 import BeautifulSoup
 
 list_language = ['LAT']
 
@@ -110,28 +109,13 @@ def sub_menu(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False):
-    logger.info()
-
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
-    else:
-        data = httptools.downloadpage(url, canonical=canonical).data
-
-    if unescape:
-        data = scrapertools.unescape(data)
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-
-    return soup
-
-
 def list_all(item):
     logger.info()
     itemlist = list()
 
     data = httptools.downloadpage(item.url).data
     bloque = scrapertools.find_single_match(data, '(?is)card-body.*?Page navigation example')
-    patron  = '(?is)href="([^"]+).*?'
+    patron  = '(?is)a href="([^"]+).*?'
     patron += 'src="([^"]+).*?'
     patron += '<p>([^<]+)</p>'
     matches = scrapertools.find_multiple_matches(bloque, patron)
@@ -172,12 +156,13 @@ def seasons(item):
     logger.info()
 
     itemlist = list()
-    soup = create_soup(item.url).find("ul", class_="TbVideoNv nav nav-tabs")
-    matches = soup.find_all("li")
+    data = httptools.downloadpage(item.url).data
+    patron  = 'data-toggle="tab">([^<]+)'
     infoLabels = item.infoLabels
-
-    for elem in matches:
-        title = " ".join(elem.a.text.split()).capitalize()
+    matches = scrapertools.find_multiple_matches(data, patron)
+    
+    for title in matches:
+        title = title.capitalize()
         infoLabels["season"] = scrapertools.find_single_match(title, "Temporada (\d+)")
         itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseasons',
                              infoLabels=infoLabels))
@@ -208,10 +193,9 @@ def episodesxseasons(item):
     itemlist = list()
     infoLabels = item.infoLabels
     season = infoLabels["season"]
-    bloque = scrapertools.find_single_match(data, '(?is)role="tabpanel" class=".*id="%s".*?</div' %item.contentSeason)
-    patron  = 'href="([^"]+).*?'
+    patron  = '(%sepisodio.*?temporada-%s[^"]+).*?' %(host, item.contentSeason)
     patron += 'btn-block">([^<]+)'
-    matches = scrapertools.find_multiple_matches(bloque, patron)
+    matches = scrapertools.find_multiple_matches(data, patron)
     if not matches:
         return itemlist
 
