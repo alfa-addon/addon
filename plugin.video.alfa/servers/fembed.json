@@ -8,7 +8,7 @@
         "url": "https://vanfem.com/api/source/\\1"
       },
       {
-        "pattern": "(?:animekao|sypl|xstreamcdn|hlshd|dutrag|diasfem).\\w{2,4}/(?:f|v)/([A-z0-9_-]+)",
+        "pattern": "(?:animejl|animekao|sypl|xstreamcdn|hlshd|dutrag|diasfem).\\w{2,4}/(?:f|v)/([A-z0-9_-]+)",
         "url": "https://vanfem.com/api/source/\\1"
       },
       {
