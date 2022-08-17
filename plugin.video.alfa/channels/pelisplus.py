@@ -25,7 +25,8 @@ from platformcode import config, logger
 from channelselector import get_thumb
 from lib import generictools
 
-list_language = ['LAT']
+IDIOMAS = {'latino': 'LAT', 'castellano': 'CAST', 'subtitulado': 'VOSE'}
+list_language = list(IDIOMAS.values())
 
 list_quality = []
 
@@ -234,24 +235,30 @@ def findvideos(item):
 
     if data.sucess or data.code == 302:
         data = data.data
-    pattern = 'data-tr="([^"]+)"'
-    matches = scrapertools.find_multiple_matches(data, pattern)
-    encontrados = []
-    for url in matches:
-        url = base64.b64decode(url)
-        if PY3 and isinstance(url, bytes):
-            url = "".join(chr(x) for x in bytes(url))
-        if not "http" in url:
-            url = "https://www.pelisplus.lat" + url
-        if "pelisplus.lat" in url:
-            prueba = httptools.downloadpage(url).data
-            url = scrapertools.find_single_match(prueba, "(?is)window.location.href = '([^']+)")
-            if not url.startswith("http"):  url = "https:" + url
-        if "plusto.link" in url: url = url.replace("plusto.link","fembed.com")
-        if url in encontrados: continue
-        encontrados.append(url)
-        itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language="LAT",
-        infoLabels=item.infoLabels))
+    patron  = 'data-lang="#([^"]+).*?'
+    patron += 'lngopt"><a>([^<]+)'
+    languages = scrapertools.find_multiple_matches(data, patron)
+    for language, idioma in languages:
+        bloque = scrapertools.find_single_match(data, '"%s.*?</a></li></ul></div>' %language)
+        language=IDIOMAS.get(idioma.lower(), "VOSE")
+        pattern = 'data-tr="([^"]+)"'
+        matches = scrapertools.find_multiple_matches(bloque, pattern)
+        encontrados = []
+        for url in matches:
+            url = base64.b64decode(url)
+            if PY3 and isinstance(url, bytes):
+                url = "".join(chr(x) for x in bytes(url))
+            if not "http" in url:
+                url = "https://www.pelisplus.lat" + url
+            if "pelisplus.lat" in url:
+                prueba = httptools.downloadpage(url).data
+                url = scrapertools.find_single_match(prueba, "(?is)window.location.href = '([^']+)")
+                if not url.startswith("http"):  url = "https:" + url
+            if "plusto.link" in url: url = url.replace("plusto.link","fembed.com")
+            if url in encontrados: continue
+            encontrados.append(url)
+            itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language=language,
+            infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % (i.server.capitalize(), i.language))
 
