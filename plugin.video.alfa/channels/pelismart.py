@@ -28,8 +28,8 @@ list_servers = ['fembed', 'streamtape', 'doodstream']
 canonical = {
              'channel': 'pelismart', 
              'host': config.get_setting("current_host", 'pelismart', default=''), 
-             'host_alt': ["https://pelismart.tv/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://smartpeli.com/"], 
+             'host_black_list': ["https://pelismart.tv/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

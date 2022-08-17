@@ -36,8 +36,8 @@ list_servers = ['flix555', 'clipwatching', 'gamovideo', 'powvideo', 'streamplay'
 canonical = {
              'channel': 'hdfulls', 
              'host': config.get_setting("current_host", 'hdfulls', default=''), 
-             'host_alt': ["https://www.hdfull.app"], 
-             'host_black_list': ["https://hdfull.be/", "https://hdfull.fm/"], 
+             'host_alt': ["https://www.hdfull.tw/"], 
+             'host_black_list': ["https://www.hdfull.app/", "https://hdfull.be/", "https://hdfull.fm/"], 
              'status': 'SIN CANONICAL NI DOMINIO', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
