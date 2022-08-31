@@ -28,8 +28,8 @@ list_quality = []
 canonical = {
              'channel': 'henaojara', 
              'host': config.get_setting("current_host", 'henaojara', default=''), 
-             'host_alt': ["https://henaojara.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://henaojara2.com/"], 
+             'host_black_list': ["https://henaojara.com/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

@@ -31,8 +31,8 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'mitorrent', 
              'host': config.get_setting("current_host", 'mitorrent', default=''), 
-             'host_alt': ['https://mitorrent.eu/'], 
-             'host_black_list': ['https://mitorrent.org/'], 
+             'host_alt': ['https://mitorrent.me/'], 
+             'host_black_list': ['https://mitorrent.eu/', 'https://mitorrent.org/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
