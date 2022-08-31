@@ -78,6 +78,26 @@ def init():
     """
 
     try:
+        # Verificamos si la versión de Python es compatible con Alfa ### TEMPORAL: error en Linux 3.10.[0-4] ###
+        import platform
+        if ADDON_PLATFORM in ["linux"] and '3.10.' in str(platform.python_version()):
+            try:
+                articulo = 'https://alfa-addon.com/threads/kodi-aborta-con-alfa-en- linux-mint-21-y-ubuntu-22-04-lts.4893/'
+                python_version = str(platform.python_version()).split('.')
+                try:
+                    python_version[2] = int(python_version[2])
+                except:
+                    python_version[2] = 0
+                if python_version[2] < 5:
+                    title = "[COLOR gold]Versión Python [COLOR hotpink]%s[/COLOR] incompatible con ALFA[/COLOR]" % str(platform.python_version())
+                    line1 = "[COLOR hotpink][B]Cancelación de Kodi inminente.[/B][/COLOR] Para usar Alfa en este "
+                    line2 = "dispositivo realiza las operaciones de este artículo:\r\n[COLOR yellow][B]%s[/B][/COLOR]" % articulo
+                    if platformtools.dialog_yesno(title, line1 + line2, nolabel="Seguir", yeslabel="Artículo"):
+                        from lib.generictools import call_browser
+                        browser, res = call_browser(articulo.replace(' ' , ''))
+            except:
+                logger.error(traceback.format_exc())
+        
         # Limpiamos los mensajes de ayuda obsoletos y restauramos los que tienen "version": True.  Por cada nueva versión
         if not filetools.exists(ADDON_CUSTOMCODE_JSON):
             from platformcode import help_window
@@ -109,7 +129,7 @@ def init():
         # Verifica si es necesario instalar script.alfa-update-helper
         verify_script_alfa_update_helper()
         
-        # Borrar contenido de carpeta de Torrents y de Subtitles
+        # Borrar contenido de carpeta de Torents y de Subtitles
         videolibrary_path = config.get_videolibrary_path()
         if scrapertools.find_single_match(videolibrary_path, '(^\w+:\/\/)'):    # Si es una conexión REMOTA, usamos userdata local
             videolibrary_path = config.get_data_path()
