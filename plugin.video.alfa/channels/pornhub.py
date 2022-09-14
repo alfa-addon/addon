@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'pornhub', 
              'host': config.get_setting("current_host", 'pornhub', default=''), 
-             'host_alt': ["https://pornhub.com"], 
+             'host_alt': ["https://es.pornhub.com"], 
              'host_black_list': [], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

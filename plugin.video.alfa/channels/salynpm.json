@@ -1,7 +1,7 @@
 {
   "id": "salynpm",
   "name": "SalynPM",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["VOSE","LAT"],
   "thumbnail": "https://i.postimg.cc/jCyhs6VF/SalynPM.png",
