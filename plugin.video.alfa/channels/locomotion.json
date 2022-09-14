@@ -1,7 +1,7 @@
 {
   "id": "locomotion",
   "name": "Locomotion (vivo)",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "http://locomotiontv.com/imgs/loco/logo_white.png",

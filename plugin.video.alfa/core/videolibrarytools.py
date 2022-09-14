@@ -610,6 +610,13 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 e.infoLabels = serie.infoLabels                             #... del canal actual y no el del original
             if not (isinstance(e.contentSeason, int) and isinstance(e.contentSeason, int)):
                 e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
+            try:
+                e.contentSeason = int(e.contentSeason)
+                e.contentEpisodeNumber = int(e.contentEpisodeNumber)
+            except:
+                logger.error('### No se ha podido guardar el episodio "%sx%s" de %s:%s' % 
+                             (str(e.contentSeason), str(e.contentEpisodeNumber), e.channel, str(e.contentSerieName)))
+                continue
             if e.videolibray_emergency_urls:
                 del e.videolibray_emergency_urls
             e.library_playcounts = {}

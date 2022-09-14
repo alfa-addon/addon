@@ -31,15 +31,16 @@ list_quality = ['default']
 canonical = {
              'channel': 'animeflv', 
              'host': config.get_setting("current_host", 'animeflv', default=''), 
-             'host_alt': ["https://www3.animeflv.net/", "https://ww3.animeflv.cc/"], 
+             'host_alt': ["https://www3.animeflv.net/"], 
+             'host_clone': ["https://ww3.animeflv.cc/"], 
              'host_black_list': [], 
-             'status': 'ERROR 403 - INACTIVO', 
+             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 
              'CF': True, 'CF_test': True, 'alfa_s': True
             }
 
 clone = config.get_setting("use_clone", channel="animeflv")
 OGHOST = canonical['host_alt'][0]
-CLONEHOST = canonical['host_alt'][1]
+CLONEHOST = canonical['host_clone'][0]
 if clone:
     host = CLONEHOST
 else:
@@ -103,7 +104,7 @@ def setting_channel(item):
 
 def get_source(url, patron=None):
 
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
     
     if patron:
@@ -126,7 +127,7 @@ def search(item, texto):
 
     try:
         if clone:
-            response = httptools.downloadpage(item.url).data
+            response = httptools.downloadpage(item.url, canonical=canonical).data
             response = scrapertools.find_single_match(response, 'class="ListAnimes.+?</ul>')
             patron = '(?is)article class.+?a href="(.+?)".+?img src="(.+?)".+?class="type.+?>(.+?)<.+?class="Title".*?>(.+?)<.+?class="des".*?>(.+?)</p'
             matches = scrapertools.find_multiple_matches(response, patron)
@@ -150,7 +151,7 @@ def search(item, texto):
                     it.context = renumbertools.context(item)
                 itemlist.append(it)
         else:
-            dict_data = httptools.downloadpage(item.url, post=post).json
+            dict_data = httptools.downloadpage(item.url, post=post, canonical=canonical).json
             for e in dict_data:
                 if e["id"] != e["last_id"]:
                     _id = e["last_id"]
@@ -392,7 +393,7 @@ def episodios(item):
         infoLabels = item.infoLabels
 
         for episode in episodes:
-            url = '{}/ver/{}/{}-{}'.format(host, episode[1], info[2], episode[0])
+            url = '{}ver/{}/{}-{}'.format(host, episode[1], info[2], episode[0])
             season = 1
             season, episodeRenumber = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, season, int(episode[0]))
 
@@ -462,11 +463,11 @@ def findvideos(item):
                 
                 url = source
                 if 'redirector' in source:
-                    new_data = httptools.downloadpage(source).data
+                    new_data = httptools.downloadpage(source, canonical=canonical).data
                     url = scrapertools.find_single_match(new_data, 'window.location.href = "([^"]+)"')
                 elif 'animeflv.net/embed' in source or 'gocdn.html' in source:
                     source = source.replace('embed', 'check').replace('gocdn.html#', 'gocdn.php?v=')
-                    json_data = httptools.downloadpage(source).json
+                    json_data = httptools.downloadpage(source, canonical=canonical).json
                     url = json_data.get('file', '')
                 
                 url = url.replace('embedsito', 'fembed')

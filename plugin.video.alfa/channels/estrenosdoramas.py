@@ -38,8 +38,8 @@ list_servers = ['openload', 'streamango', 'netutv', 'okru', 'mp4upload']
 canonical = {
              'channel': 'estrenosdoramas', 
              'host': config.get_setting("current_host", 'estrenosdoramas', default=''), 
-             'host_alt': ["https://www23.estrenosdoramas.net/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www24.estrenosdoramas.net/"], 
+             'host_black_list': ["https://www23.estrenosdoramas.net/"], 
              'pattern': '<link\s*rel="shortcut\s*icon"\s*href="([^"]+)"', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

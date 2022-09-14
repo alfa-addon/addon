@@ -78,6 +78,9 @@ def init():
     """
 
     try:
+        # Se verifica si están bien las rutas a la videoteca
+        config.verify_directories_created()
+
         # Verificamos si la versión de Python es compatible con Alfa ### TEMPORAL: error en Linux 3.10.[0-4] ###
         import platform
         if ADDON_PLATFORM in ["linux"] and '3.10.' in str(platform.python_version()):
@@ -113,9 +116,6 @@ def init():
         round_level = 1
         if config.get_setting('current_host', default=0) < round_level:
             reset_current_host(round_level)
-        
-        # Se verifica si están bien las rutas a la videoteca
-        config.verify_directories_created()
         
         # Comprime la BD de cache de TMDB para evitar que crezca demasiado
         bd_tmdb_maintenance()

@@ -17,8 +17,8 @@ def test_video_exists(page_url):
     global data
     page_url = page_url.replace('/d/', '/e/')
     logger.info("(page_url='%s')" % page_url)
-    #response = httptools.downloadpage(page_url, headers={"referer": host})
-    response = httptools.downloadpage(page_url)
+    #response = httptools.downloadpage(page_url, headers={"referer": host}, set_tls=True, set_tls_min=True, retries_cloudflare=1)
+    response = httptools.downloadpage(page_url, set_tls=True, set_tls_min=False, retries_cloudflare=1)
 
     if response.code == 404 or "Video not found" in response.data:
         return False, "[Doodstream] El archivo no existe o ha sido borrado"
@@ -42,7 +42,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     base_url = scrapertools.find_single_match(data, r"\$.get\('(/pass[^']+)'")
 
-    new_data = httptools.downloadpage("%s%s" % (host, base_url), add_referer=True).data
+    new_data = httptools.downloadpage("%s%s" % (host, base_url), add_referer=True, set_tls=True, set_tls_min=False, retries_cloudflare=1).data
     retries = 0
     while ("We are checking your browser" in new_data or "5xx-error-landing" in new_data) and retries < 3:
         new_data = httptools.downloadpage("%s%s" % (host, base_url), add_referer=True).data
