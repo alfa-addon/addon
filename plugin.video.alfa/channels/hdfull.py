@@ -32,10 +32,11 @@ from channelselector import get_thumb
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             'host_alt': ['https://hdfull.cloud/'], 
-             'host_black_list': ['https://hdfull.wtf/', 
+             'host_alt': ['https://hdfull.video/'], 
+             'host_black_list': ['https://hdfull.cloud/', 'https://hdfull.wtf/', 
                                  'https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
                                  'https://hdfull.top/'],
+             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

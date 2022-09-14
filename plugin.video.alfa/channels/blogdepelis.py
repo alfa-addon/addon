@@ -23,8 +23,8 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'blogdepelis', 
              'host': config.get_setting("current_host", 'blogdepelis', default=''), 
-             'host_alt': ["https://www.blogdepelis.org/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www.blogdepelis.com/"], 
+             'host_black_list': ["https://www.blogdepelis.org/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

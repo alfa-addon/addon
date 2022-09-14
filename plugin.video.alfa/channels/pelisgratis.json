@@ -1,7 +1,7 @@
 {
   "id": "pelisgratis",
   "name": "PelisGratis",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://s30.postimg.cc/kilh4lr4x/pelisgratis.png",

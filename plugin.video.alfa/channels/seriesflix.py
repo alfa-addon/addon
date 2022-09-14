@@ -30,6 +30,7 @@ canonical = {
              'host': config.get_setting("current_host", 'seriesflix', default=''), 
              'host_alt': ["https://seriesflix.video/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -157,7 +158,8 @@ def play(item):
         api_url = "%sstreamcheck/r.php" % host
         v_id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
         post = {"h": v_id}
-        url = httptools.downloadpage(api_url, post=post).url
+        url = httptools.downloadpage(api_url, post=post, ignore_response_code=True, proxy_retries=-0, 
+                                     count_retries_tot=0, canonical=canonical).url
 
     itemlist.append(item.clone(url=url, server=""))
     itemlist = servertools.get_servers_itemlist(itemlist)

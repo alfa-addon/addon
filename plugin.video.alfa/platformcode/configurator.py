@@ -269,4 +269,6 @@ class Main(xbmcgui.WindowXMLDialog):
 
         elif control == "continuar":
             config.set_setting("show_once", True)
+            from platformcode import envtal
+            envtal.list_env()
             self.close()

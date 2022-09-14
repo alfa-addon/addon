@@ -1,7 +1,7 @@
 {
   "id": "comamosramen",
   "name": "Comamos Ramen",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["vos", "lat"],
   "thumbnail": "https://comamosramen.com/manifest/icon-512x512.png",

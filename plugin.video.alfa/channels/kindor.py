@@ -37,8 +37,8 @@ list_servers = [
 canonical = {
              'channel': 'kindor', 
              'host': config.get_setting("current_host", 'kindor', default=''), 
-             'host_alt': ["https://kindor.me/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://kindor.vip/"], 
+             'host_black_list': ["https://kindor.me/"], 
              'pattern': '<a\s*href="([^"]+)"\s*class="healog"\s*aria-label="[^"]+">', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

@@ -25,7 +25,7 @@ except:
 import traceback
 
 from core import filetools, scrapertools
-from platformcode import logger, config, platformtools
+from platformcode import logger, config, platformtools, xbmc_videolibrary
 from servers.torrent import torrent_dirs
 
 if PY3:
@@ -221,6 +221,35 @@ def get_environment():
                                 config.get_setting("second_language", default="").upper())
 
         try:
+            try:
+                environment['videolab_pelis_scraper'] = 'TMDB' 
+                environment['videolab_series_scraper'] = 'TMDB' if config.get_setting('scraper_tvshows', 'videolibrary', default=0) == 0 else 'TVDB'
+                folder_movies = config.get_setting("folder_movies")
+                folder_tvshows = config.get_setting("folder_tvshows")
+                folders = [folder_movies, folder_tvshows]
+                vlab_path = config.get_videolibrary_config_path()
+                for i, folder in enumerate(folders):
+                    if vlab_path.startswith("special://"): 
+                        path = '%s/%s/' % (vlab_path, folder)
+                    else:
+                        path = filetools.join(vlab_path, folder, ' ').rstrip()
+                    sql = 'SELECT strScraper FROM path where strPath LIKE "%s"' % path
+                    nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql, silent=True)
+                    if nun_records > 0:
+                        if i == 0:
+                            if 'themoviedb' in records[0][0]: environment['videolab_pelis_scraper'] = 'TMDB,OK'
+                            elif 'universal' in records[0][0]: environment['videolab_pelis_scraper'] = 'UNIV,OK'
+                            else: environment['videolab_pelis_scraper'] = str(records[0][0]).upper()
+                        else:
+                            if 'themoviedb' in records[0][0]: environment['videolab_series_scraper'] = 'TMDB,OK'
+                            elif 'tvdb' in records[0][0]: environment['videolab_series_scraper'] = 'TVDB,OK'
+                            else: environment['videolab_series_scraper'] = str(records[0][0]).upper()
+                    else:
+                        if i == 0: environment['videolab_pelis_scraper'] += ',NOP'
+                        else: environment['videolab_series_scraper'] += ',NOP'
+            except:
+                pass
+
             environment['videolab_series'] = '?'
             environment['videolab_episodios'] = '?'
             environment['videolab_pelis'] = '?'
@@ -431,6 +460,8 @@ def get_environment():
         environment['kodi_buffer'] = ''
         environment['kodi_bmode'] = ''
         environment['kodi_rfactor'] = ''
+        environment['videolab_pelis_scraper'] = ''
+        environment['videolab_series_scraper'] = ''
         environment['videolab_series'] = ''
         environment['videolab_episodios'] = ''
         environment['videolab_pelis'] = ''
@@ -487,8 +518,9 @@ def list_env(environment={}):
                 environment['userdata_free'].replace('.', ',') +  ' GB' + 
                 ' - Idioma: ' + environment['torrent_lang'])
     
-    logger.info('Videoteca: Series/Epis: ' + environment['videolab_series'] + '/' + 
-                    environment['videolab_episodios'] + ' - Pelis: ' + 
+    logger.info('Videoteca: Series/Epis (%s): ' % environment['videolab_series_scraper'] + 
+                    environment['videolab_series'] + '/' + 
+                    environment['videolab_episodios'] + ' - Pelis (%s): ' % environment['videolab_pelis_scraper'] + 
                     environment['videolab_pelis'] + ' - Upd: ' + 
                     environment['videolab_update'] + ' - Path: ' + 
                     environment['videolab_path_perm'] + ' - Libre: ' + 
@@ -591,8 +623,8 @@ def paint_env(item, environment={}):
     """
     videoteca = """\
     Muestra los datos de la [COLOR yellow]Videoteca[/COLOR]:
-        - Nº de Series y Episodios
-        - Nº de Películas
+        - Nº de Series y Episodios (Scraper)
+        - Nº de Películas (Scraper)
         - Tipo de actulización
         - Path
         - Espacio disponible
@@ -667,9 +699,11 @@ def paint_env(item, environment={}):
                     environment['userdata_path'] + ' - Free: ' + environment['userdata_free'].replace('.', ',') + 
                     ' GB' + ' - Idioma: ' + environment['torrent_lang'], action="", plot=userdata, thumbnail=thumb, folder=False))
     
-    itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Videoteca: [/COLOR]Series/Epis: ' + 
+    itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Videoteca: [/COLOR]Series/Epis (%s): ' 
+                    % environment['videolab_series_scraper'] + 
                     environment['videolab_series'] + '/' + environment['videolab_episodios'] + 
-                    ' - Pelis: ' + environment['videolab_pelis'] + ' - Upd: ' + 
+                    ' - Pelis (%s): ' % environment['videolab_pelis_scraper'] + 
+                    environment['videolab_pelis'] + ' - Upd: ' + 
                     environment['videolab_update'] + ' - Path: ' + 
                     environment['videolab_path'] + ' - Free: ' + environment['videolab_free'].replace('.', ',') +  
                     ' GB', action="", plot=videoteca, thumbnail=thumb, folder=False))
