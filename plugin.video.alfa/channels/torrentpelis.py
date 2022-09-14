@@ -68,12 +68,12 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="Películas", action="submenu", 
-                url=host, thumbnail=thumb_pelis, extra="peliculas", extra2="PELICULA"))
+    itemlist.append(Item(channel=item.channel, title="Películas", action="listado", 
+                url=host + 'peliculas', thumbnail=thumb_pelis, extra="peliculas", extra2="PELICULA"))
     itemlist.append(Item(channel=item.channel, title="    - por Género", action="genero", 
                 url=host, thumbnail=thumb_genero, extra="peliculas", extra2="GENERO"))
-    itemlist.append(Item(channel=item.channel, title="    - por Netflix", action="submenu", 
-                url=host, thumbnail=thumb_pelis, extra="peliculas", extra2="NETFLIX"))
+    #itemlist.append(Item(channel=item.channel, title="    - por Netflix", action="submenu", 
+    #            url=host, thumbnail=thumb_pelis, extra="peliculas", extra2="NETFLIX"))
     itemlist.append(Item(channel=item.channel, title="    - por Tendencias", action="submenu", 
                 url=host, thumbnail=thumb_calidad, extra="peliculas", extra2="TENDENCIAS"))
     

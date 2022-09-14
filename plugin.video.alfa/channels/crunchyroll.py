@@ -20,9 +20,8 @@ canonical = {
              'channel': 'crunchyroll', 
              'host': config.get_setting("current_host", 'crunchyroll', default=''), 
              'host_alt': ["https://www.crunchyroll.com"], 
-             'host_black_list': ["https://www.crunchyroll.com"], 
-             'pattern': '', 
-             'status': 'ERROR 403 - INACTIVO', 
+             'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 3, 
              'CF': True, 'CF_test': True, 'alfa_s': True
             }           # No funciona en este canal
 host = canonical['host'] or canonical['host_alt'][0]
@@ -461,10 +460,10 @@ def get_source(url, post=None):
     proxy_usa = config.get_setting("proxy_usa", canonical['channel'])
     if proxy_usa and not proxy_i in url:
         url = proxy % url
-    data = httptools.downloadpage(url, post=post)
+    data = httptools.downloadpage(url, post=post, canonical=canonical)
     if 'div id="error">Hotlinking' in data.data:
-        httptools.downloadpage(proxy_i)
-        data = httptools.downloadpage(url, post=post)
+        httptools.downloadpage(proxy_i, canonical=canonical)
+        data = httptools.downloadpage(url, post=post, canonical=canonical)
     return data
 
 def play(item):
@@ -472,5 +471,5 @@ def play(item):
     if item.login and not "[V]" in item.title:
         post = "cbelapsed=60&h=&media_id=%s" % item.media_id + "&req=RpcApiVideo_VideoView&cbcallcount=1&ht=0" \
                                                                "&media_type=1&video_encode_id=0&playhead=10000"
-        httptools.downloadpage(host + "/ajax/", post)
+        httptools.downloadpage(host + "/ajax/", post, canonical=canonical)
     return [item]

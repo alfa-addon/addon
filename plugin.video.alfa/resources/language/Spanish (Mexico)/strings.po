@@ -3086,6 +3086,18 @@ msgctxt "#70093"
 msgid "The Movie Database"
 msgstr "The Movie Database"
 
+msgctxt "#90001"
+msgid "TMDb TVShows Database"
+msgstr "TMDb TVShows Database"
+
+msgctxt "#90002"
+msgid "TMDb TVShows Database not present.\nInstall it now?"
+msgstr "TMDb TVShows Database\nNo se ha encontrado el scraper de series de TheMovieDB.\n¿Deseas instalarlo ahora?"
+
+msgctxt "#90003"
+msgid "TMDb TVShows Database is not installed."
+msgstr "TMDb TVShows Database no instalado."
+
 msgctxt "#70094"
 msgid "Select scraper for movies"
 msgstr "Selecciona el proveedor de información para las películas"

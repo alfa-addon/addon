@@ -120,7 +120,7 @@ patron_canal = '(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
 patron_torrent = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+(\/.*?\/)'
 domain = scrapertools.find_single_match(host, patron_domain)
 sufix = scrapertools.find_single_match(host, '\.\w+\/*$')
-download_sufix = 'descargar/torrent/'
+download_sufix = 'descargar/'
 download_pre_url_torr = '/t_download/'
 download_post_url_torr = '/download-link/'
 download_post_url_torr_tail = '/dom-t/%s'
@@ -1143,11 +1143,11 @@ def listado(item, alfa_s=False):                                                
                 if calidad3D:
                     item_local.quality = item_local.quality.replace("3D", calidad3D)
                 title = re.sub(r'(?i)3d\s*(?:h-*\s*sbs\s|sbs\s|hou\s*|aa\s*|ou\s*)?\s*', '', title)
-                if "imax" in title.lower():
-                    item_local.quality = item_local.quality + " IMAX"
-                    title = re.sub(r'(?i)(?:version)?\s*imax\s*', '', title)
+            if "imax" in title.lower():
+                item_local.quality = item_local.quality + " IMAX"
+                title = re.sub(r'(?i)(?:version)?\s*imax', '', title)
             if "2d" in title.lower():
-                title = re.sub(r'(?i)\s*.2d.\s*', '', title)
+                title = re.sub(r'(?i)\s*.2d.', '', title)
                 title_subs += ["[2D]"]
             if "HDR" in title:
                 title = title.replace(" HDR", "")
@@ -1173,9 +1173,9 @@ def listado(item, alfa_s=False):                                                
             if "duolog" in title.lower() or "trilog" in title.lower() or "saga" in title.lower():
                 title_subs += ["[Saga]"]
                 title = re.sub(r'(?i)duolog\w*|trilog\w*|\s*saga\s*.ompleta|\s*saga', '', title)
-            if scrapertools.find_single_match(title, r'(?i)version\s*ext\w*|\(version\s*ext\w*\)|v\.\s*ext\w*|V\.E\.'):
+            if scrapertools.find_single_match(title, r'(?i)version\s*ext\w*|\(version\s*ext\w*\)|v.\s*ext\w*|V\.E\.'):
                 title_subs += ["[V. Extendida]"]
-                title = re.sub(r'(?i)version\s*ext\w*|\(version\s*ext\w*\)|v\.\s*ext\w*|V\.E\.', '', title)
+                title = re.sub(r'(?i)version\s*ext\w*|\(version\s*ext\w*\)|v.\s*ext\w*|V\.E\.', '', title)
             if "colecc" in title.lower() or "completa" in title.lower():
                 title = re.sub(r'(?i)\s*colecci..|\s*completa', '', title)
             if scrapertools.find_single_match(title, r'(- [m|M].*?serie ?\w+)'):
@@ -1453,7 +1453,7 @@ def findvideos(item, retry=False):
 
     """ Procesamos los datos de las páginas """
     #Patron para .torrent
-    patron = 'class[^=]*="btn-torrent".*?window.location.href = (?:parseURL\()?"(.*?)"\)?;'
+    patron = 'window.location.href = (?:parseURL\()?"(.*?)"\)?;'
     patron_mult = 'torrent:check:status|' + patron + '|<a href="([^"]+)"\s?title='
     patron_mult += '"[^"]+"\s?class="btn-torrent"'
     # Patrón para Servidores
@@ -1480,7 +1480,7 @@ def findvideos(item, retry=False):
         data = DUMMY
     url_torr_save = url_torr
     torrent_params['force'] = True
-    url_torr, headers = find_torrent_link(url_torr, 0, item=item, headers=headers, torrent_params=torrent_params)
+    url_torr, headers = find_torrent_link(url_torr, 0, item=item, headers=headers, torrent_params=torrent_params, patron=patron)
     if url_torr_save == DUMMY and url_torr and url_torr != DUMMY: url_torr_save = url_torr
     size = torrent_params['size']
     if find_alt_id in size: find_alt = True
@@ -1508,7 +1508,7 @@ def findvideos(item, retry=False):
             data = data.replace("$!", "#!").replace("'", '"').replace("Ã±", "ñ").replace("//pictures", "/pictures")
             
             #Volvemos a buscar el .torrent, repitiendo todo como al principio
-            patron = 'class[^=]*="btn-torrent".*?window.location.href = (?:parseURL\()?"(.*?)"\)?;'
+            patron = 'window.location.href = (?:parseURL\()?"(.*?)"\)?;'
             if not scrapertools.find_single_match(data, patron):
                 patron = '<\s*script\s*type="text\/javascript"\s*>\s*var\s*[lt\s*=\s*"[^"]*"'       #Patron .torrent
                 patron += '(?:,\s*idlt\s*=\s*"[^"]*")?,\s*nalt\s*=\s*"([^"]+)"'                     #descargas2020
@@ -1532,7 +1532,7 @@ def findvideos(item, retry=False):
             if url_torr:
                 torrent_params['force'] = False
                 torrent_params['torrent_alt'] = ''
-                url_torr, headers = find_torrent_link(url_torr, 0, item=item, headers=headers, torrent_params=torrent_params)
+                url_torr, headers = find_torrent_link(url_torr, 0, item=item, headers=headers, torrent_params=torrent_params, patron=patron)
                 size = torrent_params['size']
                 if find_alt_id in size: find_alt = True
                 if torrent_params['torrents_path']: item.torrents_path = torrent_params['torrents_path']
@@ -1632,7 +1632,7 @@ def findvideos(item, retry=False):
                 data_alt = data_alt.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
                 
                 #Volvemos a buscar el .torrent, repitiendo todo como al principio
-                patron = 'class[^=]*="btn-torrent".*?window.location.href = (?:parseURL\()?"(.*?)"\)?;'
+                patron = 'window.location.href = (?:parseURL\()?"(.*?)"\)?;'
                 if not scrapertools.find_single_match(data_alt, patron):
                     patron = '<\s*script\s*type="text\/javascript"\s*>\s*var\s*[lt\s*=\s*"[^"]*"'       #Patron .torrent
                     patron += '(?:,\s*idlt\s*=\s*"[^"]*")?,\s*nalt\s*=\s*"([^"]+)"'                     #descargas2020
@@ -1654,7 +1654,7 @@ def findvideos(item, retry=False):
                 url_torr_save = url_torr
                 torrent_params['force'] = False
                 torrent_params['quality_alt'] = quality if item.contentType != 'movie' else 'rip 720p 1080p 4kwebrip 4k'
-                url_torr, headers = find_torrent_link(url_torr, x+1, item=item, headers=headers, torrent_params=torrent_params)
+                url_torr, headers = find_torrent_link(url_torr, x+1, item=item, headers=headers, torrent_params=torrent_params, patron=patron)
                 size = torrent_params['size']
                 if find_alt_id in size: find_alt = True
             
@@ -2685,7 +2685,7 @@ def verify_host(item, host_call, force=False, category='', post=None):
     return (item, host)
 
 
-def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlist=[], torrent_params={}):
+def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlist=[], torrent_params={}, patron=''):
     global find_alt_link_result_save
     from core import filetools
     
@@ -2728,9 +2728,9 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
             cached = True
 
     if url_torr:
-        host_torrent = scrapertools.find_single_match(url_torr_save, patron_host)
-        host_torrent = host_torrent if host_torrent.endswith('/') else host_torrent + '/'
-        headers['referer'] = host_torrent
+        host_torrent_loc = scrapertools.find_single_match(url_torr_save, patron_host)
+        host_torrent_loc = host_torrent_loc if host_torrent_loc.endswith('/') else host_torrent_loc + '/'
+        headers['referer'] = host_torrent_loc
         if not cached and not DUMMY in url_torr:
             url_torr = url_torr.replace(" ", "%20")                             # Sustituimos espacios por %20, por si acaso
             if not url_torr.startswith("http"):                                 # Si le falta el http.: lo ponemos
@@ -2739,6 +2739,19 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
             data, response, item, itemlist_alt = generictools.downloadpage(url_torr, timeout=timeout, referer=host, retry_CF=retry_CF_own, 
                                                                            decode_code=decode_code, quote_rep=True, alfa_s=False, 
                                                                            item=item, itemlist=[], CF_test=CF_test)     # Descargamos el enlace
+            if not host_torrent in url_torr and scrapertools.find_single_match(data, patron):
+                url_torr = scrapertools.find_single_match(data, patron)
+                url_torr = url_torr.replace(" ", "%20")                         # Sustituimos espacios por %20, por si acaso
+                if not url_torr.startswith("http"):                             # Si le falta el http.: lo ponemos
+                    url_torr = scrapertools.find_single_match(host, '(\w+:)//') + url_torr
+                data, response, item, itemlist_alt = generictools.downloadpage(url_torr, timeout=timeout, referer=host, retry_CF=retry_CF_own, 
+                                                                               decode_code=decode_code, quote_rep=True, alfa_s=False, 
+                                                                               item=item, itemlist=[], CF_test=CF_test)     # Descargamos el enlace
+                if scrapertools.find_single_match(data, patron):
+                    url_torr = scrapertools.find_single_match(data, patron)
+                    url_torr = url_torr.replace(" ", "%20")                     # Sustituimos espacios por %20, por si acaso
+                    if not url_torr.startswith("http"):                         # Si le falta el http.: lo ponemos
+                        url_torr = scrapertools.find_single_match(host, '(\w+:)//') + url_torr
 
             short_link = scrapertools.find_single_match(data, patron_torrent)
             if not short_link:
@@ -2747,7 +2760,7 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
             elif not short_link.startswith("http"):                                     # Si le falta el http.: lo ponemos
                 short_link = scrapertools.find_single_match(host, '(\w+:)//') + short_link
             if short_link:
-                url_torr = generictools.convert_url_base64(short_link, referer=host_torrent)
+                url_torr = generictools.convert_url_base64(short_link, referer=host_torrent_loc)
                 if not url_torr.startswith('http') and not url_torr.startswith('magnet'):
                     url_torr = url_torr_save
                     retry_CF_own = -1

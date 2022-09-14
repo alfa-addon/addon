@@ -625,10 +625,10 @@ def findvideos(item):
         # Seleccionamos el bloque y buscamos los apartados
         data = scrapertools.find_single_match(data, patron)
 
-    patron = '<tr>(?:\s*<td>(\d+)<\/td>)?(?:\s*<td>([^<]*)<\/td>)?\s*<td>([^<]+)<\/td>'
-    patron += '\s*<td>([^<]*)<\/td>\s*<td\s*class=[^<]+<\/td>(?:\s*<td>([^<]+)<\/td>)?'
-    patron += '(?:\s*<td\s*class=[^<]+<\/td>)?\s*<td\s*class=[^<]+<\/td>\s*<td>\s*'
-    patron += '<a\s*class="[^>]+href="([^"]+)"'
+    patron = '<tr>(?:\s*<td[^>]*>(\d+)<\/td>)?(?:\s*<td[^>]*>([^<]*)<\/td>)?\s*'
+    patron += '<td[^>]*>([^<]+)<\/td>\s*<td[^>]*>([^<]*)<\/td>\s*<td\s*class=[^<]+<\/td>'
+    patron += '(?:\s*<td[^>]*>([^<]+)<\/td>)?(?:\s*<td\s*class=[^<]+<\/td>)?\s*'
+    patron += '<td\s*class=[^<]+<\/td>\s*<td[^>]*>\s*<a\s*class="[^>]+href="([^"]+)"'
 
     if not item.armagedon:
         if not item.matches:
@@ -937,10 +937,10 @@ def episodios(item):
         #logger.debug(matches_temp)
         #logger.debug(data)
         
-        patron = '<tr>(?:\s*<td>(\d+)<\/td>)?(?:\s*<td>([^<]*)<\/td>)?\s*<td>([^<]+)<\/td>'
-        patron += '\s*<td>([^<]*)<\/td>\s*<td\s*class=[^<]+<\/td>(?:\s*<td>([^<]+)<\/td>)?'
-        patron += '(?:\s*<td\s*class=[^<]+<\/td>)?\s*<td\s*class=[^<]+<\/td>\s*<td>\s*'
-        patron += '<a\s*class="[^>]+href="([^"]+)"'
+        patron = '<tr>(?:\s*<td[^>]*>(\d+)<\/td>)?(?:\s*<td[^>]*>([^<]*)<\/td>)?\s*'
+        patron += '<td[^>]*>([^<]+)<\/td>\s*<td[^>]*>([^<]*)<\/td>\s*<td\s*class=[^<]+<\/td>'
+        patron += '(?:\s*<td[^>]*>([^<]+)<\/td>)?(?:\s*<td\s*class=[^<]+<\/td>)?\s*'
+        patron += '<td\s*class=[^<]+<\/td>\s*<td[^>]*>\s*<a\s*class="[^>]+href="([^"]+)"'
         
         for season_num, episodes in matches_temp:
 

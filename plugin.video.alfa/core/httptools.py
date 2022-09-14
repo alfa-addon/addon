@@ -90,6 +90,41 @@ except:
     import traceback
     logger.error(traceback.format_exc())
 
+""" Setting SSL TLS version for those webs that require it.  Set 'set_tls' = True in downloadpage call or SET_TLS = True for all webs
+    For SSL versions older than "1.1.1", you may use 'set_tls_min' = True in downloadpage call to avoid SSl_TLS set """
+try:
+    SET_TLS = False
+    ssl_version = ''
+    ssl_version_min = ''
+    import ssl
+    
+    ssl_ver = str(ssl.OPENSSL_VERSION)
+    ssl_ver_list = scrapertools.find_single_match(ssl_ver, '(\d+\.\d+\.\d+)').split('.')
+    min_ssl_ver = [1, 1, 1]
+    if int(ssl_ver_list[0]) > int(min_ssl_ver[0]):
+        ssl_version = ssl_version_min = ssl.PROTOCOL_TLSv1_2
+    elif len(ssl_ver_list) >= 3:
+        for i, ver in enumerate(ssl_ver_list):
+            if int(ver) < min_ssl_ver[i]:
+                ssl_version = ssl.PROTOCOL_TLSv1_1
+                break
+        else:
+            ssl_version = ssl_version_min = ssl.PROTOCOL_TLSv1_2
+    else:
+        ssl_version = ssl.PROTOCOL_TLSv1_1
+
+    class TLSHttpAdapter(requests.adapters.HTTPAdapter):
+        def init_poolmanager(self, connections, maxsize, block=False):
+            self.poolmanager = requests.packages.urllib3.poolmanager.PoolManager(num_pools=connections,
+                                                                                 maxsize=maxsize,
+                                                                                 block=block,
+                                                                                 assert_hostname=False,
+                                                                                 ssl_version=ssl_version)
+except:
+    ssl_version = ''
+    import traceback
+    logger.error(traceback.format_exc())
+
 
 def get_user_agent():
     # Devuelve el user agent global para ser utilizado cuando es necesario para la url.
@@ -414,6 +449,8 @@ def check_proxy(url, **opt):
             if proxy_web and proxy_data['web_name']:
                 if proxy_data['web_name'] in ['hidester.com']:
                     opt['timeout'] = 40                                         ##### TEMPORAL
+                if proxy_data['web_name'] in ['croxyproxy.com']:
+                    opt['cloudscraper_active'] = False
                 if opt.get('post', None): proxy_data['log'] = '(POST) ' + proxy_data['log']
                 url, opt['post'], headers_proxy, proxy_data['web_name'] = \
                     proxytools.set_proxy_web(url, proxy_data, **opt)
@@ -974,6 +1011,10 @@ def downloadpage(url, **opt):
         else:
             opt['forced_proxy'] = opt['forced_proxy_opt']
 
+    # Reintentos para errores 403, 503
+    opt['retries_cloudflare'] = opt.get('retries_cloudflare', 0) or opt.get('canonical', {}).get('retries_cloudflare', 0)
+    response = {}
+    
     while opt['proxy_retries_counter'] <= opt.get('proxy_retries', 1):
         response = {}
         info_dict = []
@@ -984,7 +1025,8 @@ def downloadpage(url, **opt):
 
         domain = urlparse.urlparse(url)[1]
         global CS_stat
-        if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True):    # Está en la lista de CF o viene en la llamada
+        if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True) \
+                              and opt.get('cloudscraper_active', True):         # Está en la lista de CF o viene en la llamada
             from lib.cloudscraper import create_scraper
             session = create_scraper(user_url=url, user_opt=opt)                # El dominio necesita CloudScraper
             session.verify = opt.get('session_verify', True)
@@ -995,6 +1037,14 @@ def downloadpage(url, **opt):
             session = requests.session()
             session.verify = opt.get('session_verify', False)
             CS_stat = False
+        
+        # Conectar la versión de SSL TLS con la sesión
+        if (opt.get('set_tls', False) or opt.get('canonical', {}).get('set_tls', False) or SET_TLS) and ssl_version:
+            if not opt.get('set_tls_min', False) and not opt.get('canonical', {}).get('set_tls_min', False) \
+                                                  or ((opt.get('set_tls_min', False) or opt.get('canonical', {}).get('set_tls_min', False)) \
+                                                  and ssl_version_min):
+                session.mount(url.rstrip('/'), TLSHttpAdapter())
+                opt['set_tls_OK'] = True
 
         if opt.get('cookies', True):
             session.cookies = cj
@@ -1194,12 +1244,15 @@ def downloadpage(url, **opt):
                         and not opt.get('CF', False) and opt.get('CF_test', True) \
                         and not opt.get('check_blocked_IP_save', {}):
             domain = urlparse.urlparse(opt['url_save'])[1]
-            if domain not in CF_LIST:
-                CF_LIST += [domain]
-                opt["CF"] = True
+            if domain not in CF_LIST or opt['retries_cloudflare'] > 0:
+                if not '__cpo=' in url:
+                    CF_LIST += [domain]
+                    save_CF_list(domain)
                 opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0
-                save_CF_list(domain)
-                logger.debug("CF retry... for domain: %s" % domain)
+                logger.debug("CF retry... for domain: %s, Retry: %s" % (domain, opt['retries_cloudflare']))
+                if opt['retries_cloudflare'] > 0: time.sleep(1)
+                opt['retries_cloudflare'] -= 1
+                opt["CF"] = False if opt['retries_cloudflare'] > 0 else True
                 return downloadpage(opt['url_save'], **opt)
         
         if req.headers.get('Server', '') == 'Alfa' and response_code in [429, 503, 403] \
@@ -1348,6 +1401,17 @@ def downloadpage(url, **opt):
                     response['sucess'] = True
             break
 
+    if not response:
+        response['data'] = ''
+        response['sucess'] = False
+        response['code'] = ''
+        response['soup'] = None
+        response['json'] = dict()
+        response['proxy__'] = ''
+        response['canonical'] = ''
+        response['host'] = ''
+        response['url_new'] = ''
+        response['time_elapsed'] = 0
     return type('HTTPResponse', (), response)
 
 
@@ -1379,6 +1443,7 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
         elif file_name: 
             info_dict.append(('Fichero para Upload', file_name))
         if opt.get('params', {}): info_dict.append(('Params', opt.get('params', {})))
+        if opt.get('set_tls_OK', False): info_dict.append(('SSL_TLS_version:', ssl_version))
         info_dict.append(('Usar cookies', opt.get('cookies', True)))
         info_dict.append(('Fichero de cookies', ficherocookies))
 

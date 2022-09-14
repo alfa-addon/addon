@@ -31,9 +31,10 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.moe/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.tf/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/'], 
-             'host_black_list': ['https://dontorrent.soy/', 'https://dontorrent.pet/', 
+             'host_black_list': ['https://dontorrent.pub/', 
+                                 'https://dontorrent.moe/', 'https://dontorrent.soy/', 'https://dontorrent.pet/', 
                                  'https://dontorrent.bid/', 'https://dontorrent.dev/', 'https://dontorrent.dog/', 
                                  'https://dontorrent.vet/', 'https://dontorrent.ch/', 'https://dontorrent.vg/', 
                                  'https://dontorrent.yt/', 'https://dontorrent.tw/', 'https://dontorrent.kim/', 
@@ -43,6 +44,7 @@ canonical = {
                                  'https://dontorrent.cat/', 'https://dontorrent.run/', 'https://dontorrent.wf/', 
                                  'https://dontorrent.pm/', 'https://dontorrent.top/', 'https://dontorrent.re/'], 
              'pattern_proxy': '<a[^>]*class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>', 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
