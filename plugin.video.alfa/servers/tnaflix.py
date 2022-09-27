@@ -29,8 +29,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = httptools.downloadpage(page_url).data
     url = scrapertools.find_single_match(data, 'config = "([^"]+)"')
     if not url.startswith("https"):
-        url = "https:%s" % url
-    logger.debug(url)
+        host = "https://www.tnaflix.com"
+        url = "%s%s" % (host,url)
     headers = {'Referer': page_url}
     data = httptools.downloadpage(url, headers=headers).data
     patron = '<res>(.*?)</res>.*?'
