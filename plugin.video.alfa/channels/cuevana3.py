@@ -39,7 +39,8 @@ canonical = {
              'channel': 'cuevana3', 
              'host': config.get_setting("current_host", 'cuevana3', default=''), 
              'host_alt': ["https://ww1.cuevana3.me/"], 
-             'host_black_list': ["https://ww3.cuevana3.me/", "https://cuevana3.me/", "https://cuevana3.io/"], 
+             'host_black_list': ["https://ww4.cuevana3.me/", 
+                                 "https://ww3.cuevana3.me/", "https://cuevana3.me/", "https://cuevana3.io/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

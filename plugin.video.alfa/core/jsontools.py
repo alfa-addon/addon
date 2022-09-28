@@ -75,7 +75,7 @@ def to_utf8(dct):
         return dct
 
 
-def get_node_from_file(name_file, node, path=None, display=True):
+def get_node_from_file(name_file, node, path=None, display=True, debug=False):
     """
     Obtiene el nodo de un fichero JSON
 
@@ -91,25 +91,66 @@ def get_node_from_file(name_file, node, path=None, display=True):
     if display: logger.info()
     from platformcode import config
     from core import filetools
+    
+    """ CACHING Channel or Server NODE """
+    alfa_caching = False
+    if config.get_setting('caching'):
+        try:
+            import xbmcgui
+            window = xbmcgui.Window(10000)  # Home
+            alfa_caching = bool(window.getProperty("alfa_caching"))
+            debug = debug or config.DEBUG_JSON
+        except:
+            alfa_caching = False
+            logger.error(traceback.format_exc())
+
+    module = ''
+    if debug:
+        import inspect
+        module = inspect.getmodule(inspect.currentframe().f_back.f_back)
+        if module == None:
+            module = "None"
+        else:
+            module = module.__name__
+        function = inspect.currentframe().f_back.f_back.f_code.co_name
+        module = ' [%s.%s]' % (module, function)
 
     dict_node = {}
+    dict_data = {}
 
     if not name_file.endswith(".json"):
         name_file += "_data.json"
-
+    
+    chanver = name_file.replace("_data.json", "")
+    contentType = ''
     if not path:
         path = filetools.join(config.get_data_path(), "settings_channels")
+        contentType = 'alfa_channels'
+    else:
+        if config.get_data_path() in path and "settings_servers" in path :
+            contentType = 'alfa_servers'
 
     fname = filetools.join(path, name_file)
 
-    if filetools.isfile(fname):
+    if contentType and alfa_caching:
+        dict_data = json.loads(window.getProperty(contentType)).get(chanver, {}).copy()
+        if debug: logger.error('READ Cache JSON: %s%s: %s:' % (chanver.upper(), module, dict_data))
+    if not dict_data:
         data = filetools.read(fname)
         dict_data = load(data)
+        if debug and contentType: logger.error('READ File (Cache: %s) JSON: %s%s: %s:' \
+                                                % (str(alfa_caching).upper(), chanver.upper(), module, dict_data))
 
         check_to_backup(data, fname, dict_data, display=display)
+    
+        if contentType and alfa_caching:
+            alfa_cached_data = {}
+            alfa_cached_data.update({chanver: dict_data.copy()})
+            if debug: logger.error('SAVE Cache JSON: %s%s: %s:' % (chanver.upper(), module, alfa_cached_data[chanver]))
+            window.setProperty(contentType, json.dumps(alfa_cached_data))
 
-        if node in dict_data:
-            dict_node = dict_data[node]
+    if node in dict_data:
+        dict_node = dict_data[node]
 
     #logger.debug("dict_node: %s" % dict_node)
 
@@ -145,7 +186,7 @@ def check_to_backup(data, fname, dict_data, display=True):
             logger.debug("Está vacío el fichero: %s" % fname)
 
 
-def update_node(dict_node, name_file, node, path=None, display=True):
+def update_node(dict_node, name_file, node, path=None, display=True, debug=False):
     """
     actualiza el json_data de un fichero con el diccionario pasado
 
@@ -165,20 +206,57 @@ def update_node(dict_node, name_file, node, path=None, display=True):
 
     from platformcode import config
     from core import filetools
+    
+    """ CACHING Channel or Server NODE """
+    alfa_caching = False
+    if config.get_setting('caching'):
+        try:
+            import xbmcgui
+            window = xbmcgui.Window(10000)  # Home
+            alfa_caching = bool(window.getProperty("alfa_caching"))
+            debug = debug or config.DEBUG_JSON
+        except:
+            alfa_caching = False
+            logger.error(traceback.format_exc())
+
+    module = ''
+    if debug:
+        import inspect
+        module = inspect.getmodule(inspect.currentframe().f_back.f_back)
+        if module == None:
+            module = "None"
+        else:
+            module = module.__name__
+        function = inspect.currentframe().f_back.f_back.f_code.co_name
+        module = ' [%s.%s]' % (module, function)
+
+    dict_data = {}
     json_data = {}
     result = False
 
     if not name_file.endswith(".json"):
         name_file += "_data.json"
 
+    chanver = name_file.replace("_data.json", "")
+    contentType = ''
     if not path:
         path = filetools.join(config.get_data_path(), "settings_channels")
+        contentType = 'alfa_channels'
+    else:
+        if config.get_data_path() in path and "settings_servers" in path:
+            contentType = 'alfa_servers'
 
     fname = filetools.join(path, name_file)
 
     try:
-        data = filetools.read(fname)
-        dict_data = load(data)
+        if contentType and alfa_caching:
+            dict_data = json.loads(window.getProperty(contentType)).get(chanver, {}).copy()
+            if debug: logger.error('READ Cache JSON: %s%s: %s:' % (chanver.upper(), module, dict_data))
+        if not dict_data:
+            data = filetools.read(fname)
+            dict_data = load(data)
+            if debug and contentType: logger.error('READ File (Cache: %s) JSON: %s%s: %s:' \
+                                                    % (str(alfa_caching).upper(), chanver.upper(), module, dict_data))
         # es un dict
         if dict_data:
             if node in dict_data:
@@ -191,9 +269,22 @@ def update_node(dict_node, name_file, node, path=None, display=True):
         else:
             logger.debug("   NO es un dict")
             dict_data = {node: dict_node}
+        
         json_data = dump(dict_data)
         result = filetools.write(fname, json_data)
+        if result and contentType and alfa_caching:
+            alfa_cached_data = json.loads(window.getProperty(contentType))
+            alfa_cached_data.update({chanver: dict_data.copy()})
+            if debug: logger.error('WRITE File and SAVE Cache JSON: %s%s: %s:' % (chanver.upper(), module, alfa_cached_data[chanver]))
+            window.setProperty(contentType, json.dumps(alfa_cached_data))
+        if not result:
+            logger.error("No se ha podido actualizar %s" % fname)
+            if contentType and alfa_caching:
+                alfa_cached_data = {}
+                if debug: logger.error('DROP Cache JSON: %s%s: %s:' % (chanver.upper(), module, alfa_cached_data))
+                window.setProperty(contentType, json.dumps(alfa_cached_data))
     except:
         logger.error("No se ha podido actualizar %s" % fname)
+        logger.error(traceback.format_exc())
 
     return result, json_data

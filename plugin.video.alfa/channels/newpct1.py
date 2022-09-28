@@ -109,6 +109,7 @@ canonical = {
              'host': host, 
              'host_alt': [], 
              'host_black_list': [], 
+             'retries_cloudflare': 5, 
              'CF': False, 'CF_test': CF_test, 'alfa_s': True, 
              'forced_proxy_opt': forced_proxy_opt
             }
@@ -148,7 +149,6 @@ elif fecha_rango == 4: fecha_rango = 'Siempre'
 episodio_serie = config.get_setting('clonenewpct1_serie_episodio_novedades', channel_py)    #Episodio o serie para Novedades
 
 headers = {'referer': None}
-retry_CF = 5
 DUMMY = 'DUMMY'
 btdigg_label = ' [COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR]'
 find_alt_link_result_save = []
@@ -306,7 +306,7 @@ def submenu_OLD(item):
     item, host = verify_host(item, host)                                        # Actualizamos la url del host
     
     data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, headers=headers, 
-                                                               decode_code=decode_code, canonical=canonical, retry_CF=retry_CF, 
+                                                               decode_code=decode_code, canonical=canonical, 
                                                                quote_rep=True, CF_test=CF_test, item=item, itemlist=[])   # Descargamos la página
     # Verificamos si ha cambiado el Host
     if response.host:
@@ -455,7 +455,7 @@ def submenu_novedades(item):
     item, host = verify_host(item, host, category=category)        # Actualizamos la url del host
     headers = {'referer': host}
     
-    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, s2=False, retry_CF=retry_CF, 
+    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout_search, s2=False, 
                                                                headers=headers, decode_code=decode_code, canonical=canonical, 
                                                                quote_rep=True, CF_test=CF_test, item=item, itemlist=[])     # Descargamos la página
     # Verificamos si ha cambiado el Host
@@ -572,7 +572,7 @@ def alfabeto(item):
     headers = {'referer': host}
     
     data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, headers=headers, CF_test=CF_test, 
-                                                               decode_code=decode_code, quote_rep=True, retry_CF=retry_CF, 
+                                                               decode_code=decode_code, quote_rep=True, 
                                                                item=item, itemlist=[])          # Descargamos la página
 
     #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
@@ -686,12 +686,11 @@ def listado(item, alfa_s=False):                                                
         
     post = None
     forced_proxy_opt_loc = forced_proxy_opt
-    retry_CF_loc = retry_CF
     headers = {'referer': host}
     if item.post:
         forced_proxy_opt_loc = 'Proxydirect'
         canonical['forced_proxy_opt'] = forced_proxy_opt_loc
-        retry_CF_loc = 0
+        canonical['retries_cloudflare'] = 0
     if item.post or item.post is None:                                          # Rescatamos el Post, si lo hay
         post = item.post
         del item.post
@@ -712,7 +711,7 @@ def listado(item, alfa_s=False):                                                
             data, response, item, itemlist = generictools.downloadpage(next_page_url, timeout=timeout_search, post=post, CF_test=CF_test, 
                                                                        s2=True, headers=headers, decode_code=decode_code, 
                                                                        quote_rep=True, no_comments=False, canonical=canonical, 
-                                                                       forced_proxy_opt=forced_proxy_opt_loc, retry_CF=retry_CF_loc, 
+                                                                       forced_proxy_opt=forced_proxy_opt_loc, 
                                                                        item=item, itemlist=itemlist, alfa_s=alfa_s)
             curr_page += 1                                                      #Apunto ya a la página siguiente
             
@@ -1033,7 +1032,7 @@ def listado(item, alfa_s=False):                                                
 
                 data_serie, response, item, itemlist = generictools.downloadpage(item_local.url, timeout=timeout, post=post, CF_test=CF_test, 
                                                                                  s2=True, headers=headers, no_comments=False, 
-                                                                                 decode_code=decode_code, quote_rep=True, retry_CF=retry_CF, 
+                                                                                 decode_code=decode_code, quote_rep=True, 
                                                                                  item=item, itemlist=itemlist, alfa_s=alfa_s)
 
                 if not data_serie or (not scrapertools.find_single_match(data_serie, pattern) \
@@ -1193,7 +1192,7 @@ def listado(item, alfa_s=False):                                                
             title = re.sub(r'(?i)fullbluray\s*|en\s*bluray\s*|bluray\s*en\s*|bluray\s*|bonus\s*disc\s*|de\s*cine\s*', '', title)
             title = re.sub(r'(?i)telecine\s*|argentina\s*|\+\+sub\w+\s*|\+-\+sub\w+\s*|directors\s*cut\s*|\s*en\s*hd', '', title)
             title = re.sub(r'(?i)subs.\s*integrados\s*|subtitulos\s*|blurayrip(?:\])?|descarga\w*\s*otras\s*|\(comple.*?\)', '', title).strip()
-            title = re.sub(r'(?i)resubida|montaje\s*del\s*director|-*v.cine\s*|x264\s*|mkv\s*|sub\w*\s*|remaste\w+', '', title).strip()
+            title = re.sub(r'(?i)resubida|montaje\s*del\s*director|-*v.cine\s*|x264\s*|mkv\s*|sub\w*\s*|remaste\w+|sw\s*', '', title).strip()
             title = title.replace("a?o", 'año').replace("a?O", 'año').replace("A?o", 'Año')\
                     .replace("A?O", 'Año').strip()
             title = title.replace("(", "-").replace(")", "-").replace(".", " ").strip()
@@ -1432,11 +1431,11 @@ def findvideos(item, retry=False):
     printed_CF = False
     find_alt = False
     find_alt_id = 'Digg'
-    retry_CF_own = 1
+    canonical['retries_cloudflare'] = 1
     
     if not item.matches:
         data, response, item, itemlist_alt = generictools.downloadpage(item.url, timeout=timeout_search, quote_rep=True, CF_test=CF_test, 
-                                                                       decode_code=decode_code, canonical=canonical, retry_CF=retry_CF_own, 
+                                                                       decode_code=decode_code, canonical=canonical, 
                                                                        headers=headers, item=item, itemlist=[])     # Descargamos la página)
         data = data.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
         data_servidores = data                                                  #salvamos data para verificar servidores, si es necesario
@@ -1627,7 +1626,7 @@ def findvideos(item, retry=False):
                     url_torr = urlparse.urljoin(torrent_tag, url_torr)
                 
                 data_alt, response, item, itemlist_alt = generictools.downloadpage(url_torr, timeout=timeout_search, quote_rep=True, 
-                                                                                   decode_code=decode_code, headers=headers, retry_CF=retry_CF_own, 
+                                                                                   decode_code=decode_code, headers=headers, 
                                                                                    item=item, itemlist=[], CF_test=CF_test)
                 data_alt = data_alt.replace("$!", "#!").replace("Ã±", "ñ").replace("//pictures", "/pictures")
                 
@@ -2199,7 +2198,7 @@ def episodios(item):
 
         if not data:
             data, response, item, itemlist = generictools.downloadpage(list_pages[0], timeout=timeout, headers=headers, 
-                                                                       decode_code=decode_code, canonical=canonical, retry_CF=retry_CF, 
+                                                                       decode_code=decode_code, canonical=canonical, 
                                                                        quote_rep=True, no_comments=False, CF_test=CF_test, 
                                                                        item=item, itemlist=itemlist)        # Descargamos la página
             # Verificamos si ha cambiado el Host
@@ -2227,7 +2226,7 @@ def episodios(item):
                     url_serie_nocode = '%s/%s/pg/1' % (item.url, url_serie_nocode)
                     data, response, item, itemlist = generictools.downloadpage(url_serie_nocode, timeout=timeout, CF_test=CF_test, 
                                                                                decode_code=decode_code, quote_rep=True, 
-                                                                               no_comments=False, headers=headers, retry_CF=retry_CF, 
+                                                                               no_comments=False, headers=headers, 
                                                                                item=item, itemlist=itemlist)        # Descargamos la página
                 else:
                     data = ''
@@ -2728,6 +2727,7 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
             cached = True
 
     if url_torr:
+        
         host_torrent_loc = scrapertools.find_single_match(url_torr_save, patron_host)
         host_torrent_loc = host_torrent_loc if host_torrent_loc.endswith('/') else host_torrent_loc + '/'
         headers['referer'] = host_torrent_loc
@@ -2735,8 +2735,9 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
             url_torr = url_torr.replace(" ", "%20")                             # Sustituimos espacios por %20, por si acaso
             if not url_torr.startswith("http"):                                 # Si le falta el http.: lo ponemos
                 url_torr = scrapertools.find_single_match(host, '(\w+:)//') + url_torr
-
-            data, response, item, itemlist_alt = generictools.downloadpage(url_torr, timeout=timeout, referer=host, retry_CF=retry_CF_own, 
+            set_tls = False if host_torrent in url_torr else True
+            data, response, item, itemlist_alt = generictools.downloadpage(url_torr, timeout=timeout, referer=host, 
+                                                                           set_tls=set_tls, retries_cloudflare=retry_CF_own, 
                                                                            decode_code=decode_code, quote_rep=True, alfa_s=False, 
                                                                            item=item, itemlist=[], CF_test=CF_test)     # Descargamos el enlace
             if not host_torrent in url_torr and scrapertools.find_single_match(data, patron):
@@ -2744,7 +2745,9 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
                 url_torr = url_torr.replace(" ", "%20")                         # Sustituimos espacios por %20, por si acaso
                 if not url_torr.startswith("http"):                             # Si le falta el http.: lo ponemos
                     url_torr = scrapertools.find_single_match(host, '(\w+:)//') + url_torr
-                data, response, item, itemlist_alt = generictools.downloadpage(url_torr, timeout=timeout, referer=host, retry_CF=retry_CF_own, 
+                set_tls = False if host_torrent in url_torr else True
+                data, response, item, itemlist_alt = generictools.downloadpage(url_torr, timeout=timeout, referer=host, 
+                                                                               set_tls=set_tls, retries_cloudflare=retry_CF_own, 
                                                                                decode_code=decode_code, quote_rep=True, alfa_s=False, 
                                                                                item=item, itemlist=[], CF_test=CF_test)     # Descargamos el enlace
                 if scrapertools.find_single_match(data, patron):
@@ -2774,9 +2777,10 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
         quality = scrapertools.find_single_match(torrent_params.get('quality_alt', '') or item.quality, patron_quality).lower()
         if not torrent_params.get('quality_alt', ''):
             torrent_params['quality_alt'] = 'rip 720p 1080p 4kwebrip 4k' if '720' in item.quality or item.contentType == 'movie' else '[HDTV]'
+        set_tls = False if host_torrent in url_torr else True
         torrent_params = generictools.get_torrent_size(url_torr, torrent_params=torrent_params, 
                                                        timeout=timeout, headers=headers, 
-                                                       retry_CF=retry_CF_own, item=item)
+                                                       set_tls=set_tls, retries_cloudflare=retry_CF_own, item=item)
 
         if torrent_params['torrents_path'] and not item.torrents_path: item.torrents_path = torrent_params['torrents_path']
         if item.contentType != 'movie':
@@ -2835,9 +2839,11 @@ def find_torrent_link_OLD(url_torr, headers={}, item={}, itemlist=[], torrent_pa
         torrent_link = urlparse.urljoin(host_torrent, 'to.php')
         torrent_post = 't=%s' % torrent_token
         headers_link = {'Content-Type': 'application/x-www-form-urlencoded', 'Referer': url_torr, 'X-Requested-With': 'XMLHttpRequest'}
+        retry_CF = canonical.get('retries_cloudflare', 0)
         
         for x in range(retry_CF+2):
-            data, response, item, itemlist = generictools.downloadpage(torrent_link, timeout=timeout, headers=headers_link, retry_CF=retry_CF, 
+            data, response, item, itemlist = generictools.downloadpage(torrent_link, timeout=timeout, headers=headers_link, 
+                                                                       retries_cloudflare=retry_CF, 
                                                                        decode_code=decode_code, quote_rep=True, alfa_s=True, CF_test=CF_test, 
                                                                        post=torrent_post, item=item, itemlist=[])       # Descargamos el enlace
             
@@ -2851,7 +2857,7 @@ def find_torrent_link_OLD(url_torr, headers={}, item={}, itemlist=[], torrent_pa
                 torrent_params['force'] = True
                 torrent_params = generictools.get_torrent_size(url_torr, torrent_params=torrent_params, 
                                                                timeout=timeout, headers=headers, 
-                                                               retry_CF=retry_CF, item=item)
+                                                               retries_cloudflare=retry_CF, item=item)
                 if torrent_params.get('code', 200) != 404:
                     break
             time.sleep(2)
