@@ -39,8 +39,10 @@ try:
     import xbmcgui
     import json
     window = xbmcgui.Window(10000)                                              # Home
+    DEBUG = config.DEBUG_JSON
 except:
     kodi = False
+    DEBUG = False
 
 
 def find_video_items(item=None, data=None):
@@ -601,7 +603,7 @@ def get_server_controls_settings(server_name):
     return list_controls, dict_settings
 
 
-def get_server_setting(name, server, default=None, caching_var=True):
+def get_server_setting(name, server, default=None, caching_var=True, debug=DEBUG):
     global alfa_caching, alfa_servers
     """
         Retorna el valor de configuracion del parametro solicitado.
@@ -624,7 +626,19 @@ def get_server_setting(name, server, default=None, caching_var=True):
         @return: El valor del parametro 'name'
         @rtype: any
 
-        """
+    """
+    module = ''
+    if debug:
+        import inspect
+        module = inspect.getmodule(inspect.currentframe().f_back.f_back)
+        if module == None:
+            module = "None"
+        else:
+            module = module.__name__
+        function = inspect.currentframe().f_back.f_back.f_code.co_name
+        if '<module>' in function: function = 'mainlist'
+        module = ' [%s.%s]' % (module, function)
+    
     # Creamos la carpeta si no existe
     if not filetools.exists(filetools.join(config.get_data_path(), "settings_servers")):
         filetools.mkdir(filetools.join(config.get_data_path(), "settings_servers"))
@@ -636,23 +650,29 @@ def get_server_setting(name, server, default=None, caching_var=True):
     if kodi and caching_var:
         alfa_caching = bool(window.getProperty("alfa_caching"))
         alfa_servers = json.loads(window.getProperty("alfa_servers"))
-    if alfa_caching and caching_var and alfa_servers.get(server):
-        dict_settings = alfa_servers[server].copy()
+        dict_file = alfa_servers.get(server, {}).copy()
+        if debug: logger.error('READ Cache SERVER: %s%s, NAME: %s: %s:' % (server.upper(), module, str(name).upper(), dict_file))
+    if alfa_caching and caching_var and dict_file:
+        dict_settings = alfa_servers[server].get('settings', {}).copy()
         if dict_settings.get(name, ''):
             dict_settings[name] = config.decode_var(dict_settings[name])
             #logger.error('%s, %s: A: %s - D: %s' % (name, server, [alfa_servers[server][name]], [config.decode_var(dict_settings[name])]))
     
-    elif filetools.exists(file_settings):
-        # Obtenemos configuracion guardada de ../settings/channel_data.json
+    if not dict_file and filetools.exists(file_settings):
+        # Obtenemos configuracion guardada de ../settings/server_data.json
         try:
             dict_file = jsontools.load(filetools.read(file_settings))
+            if debug: logger.error('READ File (Cache: %s) SERVER: %s%s, NAME: %s: %s:' \
+                                    % (str(caching_var and alfa_caching).upper(), server.upper(), module, str(name).upper(), dict_file))
             if isinstance(dict_file, dict) and 'settings' in dict_file:
                 dict_settings = dict_file['settings']
-                if alfa_caching and caching_var:
-                    alfa_servers[server] = dict_settings.copy()
+                if alfa_caching:
+                    alfa_servers.update({server: dict_file.copy()})
+                    if debug: logger.error('SAVE Cache SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
                     window.setProperty("alfa_servers", json.dumps(alfa_servers))
         except EnvironmentError:
-            logger.info("ERROR al leer el archivo: %s" % file_settings)
+            logger.error("ERROR al leer el archivo: %s, parámetro: %s" % (file_settings, name))
+            logger.error(filetools.file_info(file_settings))
 
     if not dict_settings or name not in dict_settings:
         # Obtenemos controles del archivo ../servers/server.json
@@ -660,65 +680,102 @@ def get_server_setting(name, server, default=None, caching_var=True):
             list_controls, default_settings = get_server_controls_settings(server)
         except:
             default_settings = {}
-        if name in default_settings:  # Si el parametro existe en el server.json creamos el server_data.json
-            default_settings.update(dict_settings)
-            dict_settings = default_settings
-            if alfa_caching and caching_var:
-                alfa_servers[server] = dict_settings.copy()
-                window.setProperty("alfa_servers", json.dumps(alfa_servers))
-            dict_file['settings'] = dict_settings
-            # Creamos el archivo ../settings/channel_data.json
-            if not filetools.write(file_settings, jsontools.dump(dict_file)):
-                logger.info("ERROR al salvar el archivo: %s" % file_settings)
+        #if name in default_settings:  # Si el parametro existe en el server.json creamos el server_data.json
+        default_settings.update(dict_settings)
+        dict_settings = default_settings.copy()
+        if name not in dict_settings:
+            dict_settings[name] = default
+        dict_file['settings'] = dict_settings.copy()
+        
+        if alfa_caching:
+            alfa_servers.update({server: dict_file.copy()})
+            if debug: logger.error('SAVE Cache from Default SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
+            window.setProperty("alfa_servers", json.dumps(alfa_servers))
+        dict_file['settings'] = dict_settings
+        
+        # Creamos el archivo ../settings/cserver_data.json
+        json_data = jsontools.dump(dict_file)
+        if debug: logger.error('WRITE File SERVER: %s%s: %s:' % (server.upper(), module, json_data))
+        if not filetools.write(file_settings, json_data, silent=True):
+            logger.error("ERROR al salvar el parámetro: %s en el archivo: %s" % (name, file_settings))
+            logger.error(filetools.file_info(file_settings))
 
     # Devolvemos el valor del parametro local 'name' si existe, si no se devuelve default
     return dict_settings.get(name, default)
 
 
-def set_server_setting(name, value, server):
+def set_server_setting(name, value, server, retry=False, debug=DEBUG):
     global alfa_caching, alfa_servers
+    
+    module = ''
+    if debug:
+        import inspect
+        module = inspect.getmodule(inspect.currentframe().f_back.f_back)
+        if module == None:
+            module = "None"
+        else:
+            module = module.__name__
+        function = inspect.currentframe().f_back.f_back.f_code.co_name
+        module = ' [%s.%s]' % (module, function)
+    
     # Creamos la carpeta si no existe
     if not filetools.exists(filetools.join(config.get_data_path(), "settings_servers")):
         filetools.mkdir(filetools.join(config.get_data_path(), "settings_servers"))
 
     file_settings = filetools.join(config.get_data_path(), "settings_servers", server + "_data.json")
     dict_settings = {}
-
-    dict_file = None
+    dict_file = {}
 
     if kodi:
         alfa_caching = bool(window.getProperty("alfa_caching"))
+    if alfa_caching:
         alfa_servers = json.loads(window.getProperty("alfa_servers"))
-    if alfa_caching and alfa_servers.get(server):
-        dict_settings = alfa_servers[server].copy()
+        dict_file = alfa_servers.get(server, {}).copy()
+        if debug: logger.error('READ Cache SERVER: %s%s, NAME: %s: %s:' % (server.upper(), module, str(name).upper(), dict_file))
+        if dict_file: dict_settings = alfa_servers[server].get('settings', {}).copy()
 
-    elif filetools.exists(file_settings):
-        # Obtenemos configuracion guardada de ../settings/channel_data.json
+    if not dict_file and filetools.exists(file_settings):
+        # Obtenemos configuracion guardada de ../settings/server_data.json
         try:
             dict_file = jsontools.load(filetools.read(file_settings))
-            dict_settings = dict_file.get('settings', {})
+            if debug: logger.error('READ File (Cache: %s) SERVER: %s%s, NAME: %s: %s:' \
+                                    % (str(alfa_caching).upper(), server.upper(), module, str(name).upper(), dict_file))
+            if dict_file: dict_settings = dict_file.get('settings', {})
         except EnvironmentError:
-            logger.info("ERROR al leer el archivo: %s" % file_settings)
+            logger.error("ERROR al leer el archivo: %s, parámetro: %s" % (file_settings, name))
+            logger.error(filetools.file_info(file_settings))
 
-    dict_settings[name] = value
+    if 'settings' in dict_file and isinstance(dict_file, dict):
+        dict_settings[name] = value
+        dict_file['settings'] = dict_settings.copy()
+    else:
+        get_server_setting(name, server, caching_var=False, debug=debug)
+        if not retry: return set_server_setting(name, value, server, retry=True, debug=debug)
+
     if alfa_caching:
         alfa_caching = bool(window.getProperty("alfa_caching"))
         if alfa_caching:
-            alfa_servers[server] = dict_settings.copy()
+            alfa_servers.update({server: dict_file.copy()})
+            if debug: logger.error('SAVE Cache SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
             window.setProperty("alfa_servers", json.dumps(alfa_servers))
         else:
             alfa_servers = {}
+            if debug: logger.error('DROP Cache SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers))
             window.setProperty("alfa_servers", json.dumps(alfa_servers))
 
     # comprobamos si existe dict_file y es un diccionario, sino lo creamos
-    if dict_file is None or not dict_file:
+    if not dict_file:
         dict_file = {}
 
-    dict_file['settings'] = dict_settings
-
-    # Creamos el archivo ../settings/channel_data.json
-    if not filetools.write(file_settings, jsontools.dump(dict_file)):
-        logger.info("ERROR al salvar el archivo: %s" % file_settings)
+    # Creamos el archivo ../settings/server_data.json
+    json_data = jsontools.dump(dict_file)
+    if debug: logger.error('WRITE File SERVER: %s%s: %s:' % (server.upper(), module, json_data))
+    if not filetools.write(file_settings, json_data, silent=True):
+        logger.error("ERROR al salvar el parámetro: %s en el archivo: %s" % (name, file_settings))
+        logger.error(filetools.file_info(file_settings))
+        alfa_servers = {}
+        if debug: logger.error('DROP Cache SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers))
+        window.setProperty("alfa_servers", json.dumps(alfa_servers))
         return None
 
     return value

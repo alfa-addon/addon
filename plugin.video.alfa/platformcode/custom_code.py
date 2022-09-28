@@ -101,6 +101,9 @@ def init():
             except:
                 logger.error(traceback.format_exc())
         
+        # Analizamos la estructura de los _data-json con cada nueva versión de Alfa
+        verify_data_jsons()
+        
         # Limpiamos los mensajes de ayuda obsoletos y restauramos los que tienen "version": True.  Por cada nueva versión
         if not filetools.exists(ADDON_CUSTOMCODE_JSON):
             from platformcode import help_window
@@ -1159,6 +1162,101 @@ def clean_videolibrary_unused_channels():
                                     filetools.remove(filetools.join(path, ff))
                         break
     except:
+        logger.error(traceback.format_exc())
+
+
+def verify_data_jsons():
+    logger.info()
+    
+    ###### LISTA DE CARPETAS DE CANALES Y SERVIDORES PARA VERFICAR
+    excluded_jsons = ['autoplay_data.json', 'menu_settings_data.json', 'menu_cache_data.json']
+    nodes = ['settings', 'TVSHOW_FILTER', 'TRAKT']
+    data_jsons_list = []
+    node_settings = nodes[0]
+    counter = 0
+    counter_nodes = 0
+    counter_jsons = 0
+
+    try:
+        # Vemos si ya se ha limpiado, si no marcamos
+        if filetools.exists(ADDON_CUSTOMCODE_JSON):
+            json_data = jsontools.load(filetools.read(ADDON_CUSTOMCODE_JSON))
+        else:
+            json_data = {}
+        if json_data.get('verify_data_jsons', ''): return
+
+        data_jsons_list += [filetools.join(ADDON_USERDATA_PATH, 'settings_channels')]   # CANALES
+        data_jsons_list += [filetools.join(ADDON_USERDATA_PATH, 'settings_servers')]    # SERVIDORES
+        logger.info('VERIFICANDO _data.json de las carpetas: %s' % data_jsons_list, force=True)
+        
+        for data_jsons_folder in data_jsons_list:
+            if filetools.exists(data_jsons_folder):
+                json_folder_list = filetools.listdir(data_jsons_folder)
+                json_folder_type = filetools.basename(data_jsons_folder)
+                
+                for data_json_name in json_folder_list:
+                    if not data_json_name.endswith('_data.json'): continue
+                    if data_json_name in excluded_jsons: continue
+                    counter_jsons += 1
+                    try:
+                        data_json_path = filetools.join(data_jsons_folder, data_json_name)
+                        data_json = jsontools.load(filetools.read(data_json_path))
+                        #logger.debug('PROCESANDO: %s/%s, NODES: %s, SETTINGS: %s' \
+                        #             % (json_folder_type, data_json_name, len(data_json), node_settings in data_json))
+                        
+                        # Si el json es irreparable lo borramos para que lo regenere Alfa
+                        if not isinstance(data_json, dict) or not data_json:
+                            counter += 1
+                            filetools.remove(data_json_path, silent=True)
+                            logger.info('BORRADO: no se puede actualizar: %s/%s, DATOS: %s' \
+                                        % (json_folder_type, data_json_name, str(data_json)), force=True)
+                            continue
+                        
+                        # Si el json está bien lo dejamos y pasamos al siguiente
+                        counter_nodes = 0
+                        for key, data in list(data_json.items()):
+                            if key not in nodes: continue
+                            counter_nodes += 1
+                        if isinstance(data_json, dict) and len(data_json) > 0 and len(data_json) == counter_nodes and node_settings in data_json:
+                            continue
+                        
+                        # Comienza la reparación
+                        new_data_json = {}
+                        # Primero copiamos enteros los nodos "legales"
+                        for node in nodes:
+                            if data_json.get(node) or node == node_settings:
+                                if node in data_json:
+                                    new_data_json.update({node: data_json[node].copy()})
+                                else:
+                                    new_data_json.update({node: {}})
+                        
+                        # Ahora copiamos el resto de etiquetas dentro del nodo "settings", salvo que sea otro nodo nuevo, que lo copiamos entero
+                        for key, data in list(data_json.items()):
+                            if isinstance(data, dict) and key in nodes: continue
+                            if isinstance(data, dict):
+                                new_data_json.update({key: data})
+                            else:
+                                new_data_json[node_settings].update({key: data})
+                        
+                        counter += 1
+                        logger.info('REPARADO [%s] %s/%s, NODES: %s/%s, SETTINGS: %s, DATOS Antes: %s' \
+                                    % (counter, json_folder_type, data_json_name, len(data_json), \
+                                       counter_nodes, node_settings in data_json, jsontools.dump(data_json)))
+                        if not filetools.write(data_json_path, jsontools.dump(new_data_json)):
+                            filetools.remove(data_json_path, silent=True)
+                            logger.error('BORRADO: no se puede actualizar: %s/%s' % (json_folder_type, data_json_name))
+                    except:
+                        logger.error('CORRUPCIÓN DESCONOCIDA en %s/%s' % (json_folder_type, data_json_name))
+                        filetools.remove(data_json_path, silent=True)
+                        logger.error(traceback.format_exc())
+    
+        json_data['verify_data_jsons'] = 'OK'
+        filetools.write(ADDON_CUSTOMCODE_JSON, jsontools.dump(json_data))
+        logger.info('VERIFICACION TERMINADA: REPARADOS/BORRADOS %s/%s de _data.json en las carpetas: %s' \
+                    % (counter, counter_jsons, data_jsons_list), force=True)
+        
+    except:
+        logger.error('ERROR masivo procesando %s' % data_jsons_list)
         logger.error(traceback.format_exc())
 
 

@@ -26,7 +26,7 @@ try:
     import xbmcgui
     import xbmcaddon
 except:
-    pass
+    xbmc = None
 
 from core import filetools
 from core import scrapertools
@@ -48,8 +48,16 @@ CF_BLOCKING_ERRORS = [
                      ]
 
 VFS = True
+DEBUG = None
 
-if config.get_platform(True)['num_version'] >= 14:
+set_tls_VALUES = {
+                  'set_tls': True, 
+                  'set_tls_min': True, 
+                  'retries_cloudflare': 2
+                 }
+set_tls_VALUES_BKP = set_tls_VALUES.copy()
+
+if config.is_xbmc() and config.get_platform(True)['num_version'] >= 14:
     monitor = xbmc.Monitor()                                                    # For Kodi >= 14
 else:
     monitor = False                                                             # For Kodi < 14
@@ -220,7 +228,9 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
             continue
         if monitor and monitor.waitForAbort(5):
             return
-        elif not monitor and not xbmc.abortRequested: 
+        elif not monitor and xbmc:
+            if xbmc.abortRequested: 
+                return
             xbmc.sleep(5*1000)
         if (filetools.isfile(item.downloadServer['url']) or filetools.isdir(item.downloadServer['url'])) \
                         and filetools.exists(item.downloadServer['url']):
@@ -235,7 +245,9 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
                     break
                 if monitor and monitor.waitForAbort(5):
                     return
-                elif not monitor and not xbmc.abortRequested: 
+                elif not monitor and xbmc:
+                    if xbmc.abortRequested: 
+                        return
                     xbmc.sleep(5*1000)
             else:
                 torrent_stop =  True
@@ -293,7 +305,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
 
     # Si hay varios archivos en el torrent, se espera a que usuario seleccione las descargas
     while not c.closed and not torrent_stop and not ((monitor and monitor.abortRequested()) \
-                                    or (not monitor and xbmc.abortRequested)):
+                                    or (not monitor and xbmc and not xbmc.abortRequested)):
         s = c.status
         if s.seleccion < -10:
             time.sleep(1)
@@ -319,7 +331,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     try:
         while not c.closed and not torrent_stop and not \
                                     ((monitor and monitor.abortRequested()) \
-                                    or (not monitor and xbmc.abortRequested)):
+                                    or (not monitor and xbmc and not xbmc.abortRequested)):
             # Obtenemos el estado del torrent
             x += 1
             s = c.status
@@ -447,7 +459,9 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
                 while xbmc_player.isPlaying():
                     if monitor and monitor.waitForAbort(3):
                         return
-                    elif not monitor and not xbmc.abortRequested: 
+                    elif not monitor and xbmc:
+                        if xbmc.abortRequested: 
+                            return
                         xbmc.sleep(3*1000)
                 
                 # Obtenemos el playlist del torrent
@@ -587,7 +601,9 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
                 filetools.remove(erase_file_path)
             if monitor and monitor.waitForAbort(5):
                 break
-            elif not monitor and not xbmc.abortRequested: 
+            elif not monitor and xbmc:
+                if xbmc.abortRequested: 
+                    break
                 xbmc.sleep(5*1000)
             if not filetools.exists(erase_file_path):
                 break
@@ -607,9 +623,11 @@ def caching_torrents(url, torrent_params={}, **kwargs):
                  torrent_params.get('local_torr', None) if torrent_params.get('local_torr', None) \
                  != torrent_params.get('torrents_path', None) else ''))
 
+    if (monitor and monitor.abortRequested()) or (not monitor and xbmc and xbmc.abortRequested):
+        torrent_params['torrents_path'] = ''
+        return '', torrent_params
+        
     item = kwargs.pop('item', Item())
-    retry_CF = kwargs.pop('retry_CF', 2)
-    if retry_CF < 1: retry_CF = 1
     url_domain = False
     if scrapertools.find_single_match(url, patron_domain):
         url_domain = scrapertools.find_single_match(url, patron_domain).split('.')[0]
@@ -749,16 +767,20 @@ def caching_torrents(url, torrent_params={}, **kwargs):
                 if timeout < 20 and httptools.channel_proxy_list(url):          # Si usa proxy, duplicamos el timeout
                     timeout *= 3
                 
-                for x in range(retry_CF):
-                    response = httptools.downloadpage(url, headers=headers, post=post, 
-                                                      follow_redirects=follow_redirects, 
-                                                      timeout=timeout, CF_test=CF_test, 
-                                                      proxy_retries=proxy_retries,
-                                                      hide_infobox=True)
-                    if response.code not in [403, 404]:
-                        break
-                    time.sleep(random.uniform(1, 2))
+                global set_tls_VALUES
+                if 'set_tls' in str(kwargs): set_tls_VALUES['set_tls'] = kwargs['set_tls']
+                if 'set_tls' not in str(kwargs) and url_domain in domain_CF_blacklist: set_tls_VALUES['set_tls'] = False
+                if 'set_tls_min' in str(kwargs): set_tls_VALUES['set_tls_min'] = kwargs['set_tls_min']
+                if 'retries_cloudflare' in str(kwargs): set_tls_VALUES['retries_cloudflare'] = kwargs['retries_cloudflare']
+                response = httptools.downloadpage(url, headers=headers, post=post, 
+                                                  follow_redirects=follow_redirects, 
+                                                  timeout=timeout, CF_test=CF_test, 
+                                                  proxy_retries=proxy_retries,
+                                                  hide_infobox=True, set_tls=set_tls_VALUES['set_tls'], 
+                                                  set_tls_min=set_tls_VALUES['set_tls_min'], 
+                                                  retries_cloudflare=set_tls_VALUES['retries_cloudflare'])
 
+                set_tls_VALUES = set_tls_VALUES_BKP.copy()
                 torrent_params['code'] = response.code
                 torrent_params['time_elapsed'] = response.time_elapsed
                 
@@ -985,7 +1007,7 @@ def capture_thru_browser(url, capture_path, item, response, VFS):
         torrent_file = ''
         salida = False
         file = ''
-        loop = 60
+        loop = 90
         CAPTURE_THRU_BROWSER_in_use = []
         id_file = ''
         if item.path: id_file = filetools.join(config.get_setting('downloadlistpath', ''), item.path)
@@ -1016,7 +1038,9 @@ def capture_thru_browser(url, capture_path, item, response, VFS):
             elapsed = random.uniform(0.5, 1)
             if monitor and monitor.waitForAbort(elapsed):
                 return ('', '')
-            elif not monitor and not xbmc.abortRequested: 
+            elif not monitor and xbmc:
+                if xbmc.abortRequested: 
+                    return ('', '')
                 xbmc.sleep(elapsed*1000)
 
         i = 0
@@ -1024,7 +1048,9 @@ def capture_thru_browser(url, capture_path, item, response, VFS):
             elapsed = random.uniform(1, 3)
             if monitor and monitor.waitForAbort(elapsed):
                 return ('', '')
-            elif not monitor and not xbmc.abortRequested: 
+            elif not monitor and xbmc:
+                if xbmc.abortRequested: 
+                    return ('', '')
                 xbmc.sleep(elapsed*1000)
             
             i += 1
@@ -1082,7 +1108,9 @@ def capture_thru_browser(url, capture_path, item, response, VFS):
             
             if monitor and monitor.waitForAbort(2):
                 return ('', '')
-            elif not monitor and not xbmc.abortRequested: 
+            elif not monitor and xbmc:
+                if xbmc.abortRequested: 
+                    return ('', '')
                 xbmc.sleep(2*1000)
             if id_file and not filetools.exists(id_file): raise
 
@@ -1101,7 +1129,9 @@ def capture_thru_browser(url, capture_path, item, response, VFS):
                 dialog_notification('Archivo .Torrent no Encontrado', 'Inténtelo de nuevo')
                 if monitor and monitor.waitForAbort(2):
                     return ('', '')
-                elif not monitor and not xbmc.abortRequested: 
+                elif not monitor and xbmc:
+                    if xbmc.abortRequested: 
+                        return ('', '')
                     xbmc.sleep(2*1000)
 
         if file:
@@ -1131,7 +1161,9 @@ def capture_thru_browser(url, capture_path, item, response, VFS):
             elapsed = random.uniform(0.5, 1)
             if monitor and monitor.waitForAbort(elapsed):
                 return ('', '')
-            elif not monitor and not xbmc.abortRequested: 
+            elif not monitor and xbmc:
+                if xbmc.abortRequested: 
+                    return ('', '')
                 xbmc.sleep(elapsed*1000)
 
     except:
@@ -1175,7 +1207,9 @@ def magnet2torrent(magnet, headers={}):
                 url = '%s%s%s' % (url, btih, sufix)
 
             response = httptools.downloadpage(url, timeout=timeout, headers=headers, post=post, retry_alt=False, 
-                                              proxy_retries=0, proxy__test=False, alfa_s=True)
+                                              proxy_retries=0, proxy__test=False, alfa_s=True, set_tls=set_tls_VALUES['set_tls'], 
+                                                  set_tls_min=set_tls_VALUES['set_tls_min'], 
+                                                  retries_cloudflare=set_tls_VALUES['retries_cloudflare'])
             if not response.sucess:
                 logger.debug('ERROR: %s: Elapsed: %s' % (response.code, response.time_elapsed))
                 continue
@@ -1208,7 +1242,7 @@ def magnet2torrent(magnet, headers={}):
                     h = lt.add_magnet_uri(ses, magnet, params)                  # Abrimos la sesión
                     i = 0
                     while not h.has_metadata() and not ((monitor and monitor.abortRequested()) \
-                                    or (not monitor and xbmc.abortRequested)):  # Esperamos mientras Libtorrent abre la sesión
+                                    or (not monitor and xbmc and not xbmc.abortRequested)):  # Esperamos mientras Libtorrent abre la sesión
                         h.force_dht_announce()
                         time.sleep(1)
                         i += 1
@@ -1445,6 +1479,9 @@ def call_torrent_via_web(mediaurl, torr_client, torrent_action='add',oper=2, alf
     logger.info()
     from core import httptools
     
+    if (monitor and monitor.abortRequested()) or (not monitor and xbmc and xbmc.abortRequested):
+        sys.exit()
+    
     post = None
     files = {}
     if mediaurl.startswith('magnet'):
@@ -1494,8 +1531,8 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
     x = 0
     y = ''
 
-    if torr_client not in str(local_host):
-        log('##### Servicio para %s no disponible' % (torr_client))
+    if not torr_client or torr_client not in str(local_host):
+        log('##### Servicio para Cliente Torrent "%s" no disponible' % (torr_client))
         return '', '', 0
         
     if not folder:
@@ -1516,8 +1553,12 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
                 log('##### Servicio de %s TEMPORALMENTE no disponible: %s - ERROR Code: %s' % \
                                     (torr_client, local_host[torr_client], str(res.code)))
                 if monitor and monitor.waitForAbort(2):
-                    return {'shutdown': True}, local_host[torr_client], 0
-                elif not monitor and not xbmc.abortRequested: 
+                    logger.debug('shutdown')
+                    sys.exit()
+                elif not monitor and xbmc:
+                    if xbmc.abortRequested: 
+                        logger.debug('shutdown')
+                        sys.exit()
                     xbmc.sleep(2*1000)
                 continue
             break
@@ -1525,8 +1566,11 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
             log('##### Servicio de %s DEFINITIVAMENTE no disponible: %s - ERROR Code: %s' % \
                                     (torr_client, local_host[torr_client], str(res.code)))
             return '', local_host[torr_client], 0
-
         
+        if (monitor and monitor.abortRequested()) or (not monitor and xbmc and xbmc.abortRequested):
+            logger.debug('shutdown')
+            sys.exit()
+
         data = jsontools.load(res.data)
 
         total_wanted = 0.01
@@ -1721,18 +1765,18 @@ def torrent_dirs():
                      'TORREST_web': 'http://%s:'
                     }
     
-    torrent_paths['TORR_opt'] = config.get_setting("torrent_client", server="torrent", default=0)
+    torrent_paths['TORR_opt'] = config.get_setting("torrent_client", server="torrent", default=0, debug=DEBUG)
     if torrent_paths['TORR_opt'] > len(torrent_options): torrent_paths['TORR_opt'] = 0
     if torrent_paths['TORR_opt'] > 0:
         torrent_paths['TORR_client'] = scrapertools.find_single_match(torrent_options[torrent_paths['TORR_opt']-1][0], ':\s*(\w+)').lower()
     if torrent_paths['TORR_opt'] == 1: torrent_paths['TORR_client'] = 'BT'
     if torrent_paths['TORR_opt'] == 2: torrent_paths['TORR_client'] = 'MCT'
-    torrent_paths['TORR_libtorrent_path'] = config.get_setting("libtorrent_path", server="torrent", default='')
-    torrent_paths['TORR_unrar_path'] = config.get_setting("unrar_path", server="torrent", default='')
-    torrent_paths['TORR_background_download'] = config.get_setting("mct_background_download", server="torrent", default=True)
-    torrent_paths['TORR_rar_unpack'] = config.get_setting("mct_rar_unpack", server="torrent", default=True)
+    torrent_paths['TORR_libtorrent_path'] = config.get_setting("libtorrent_path", server="torrent", default='', debug=DEBUG)
+    torrent_paths['TORR_unrar_path'] = config.get_setting("unrar_path", server="torrent", default='', debug=DEBUG)
+    torrent_paths['TORR_background_download'] = config.get_setting("mct_background_download", server="torrent", default=True, debug=DEBUG)
+    torrent_paths['TORR_rar_unpack'] = config.get_setting("mct_rar_unpack", server="torrent", default=True, debug=DEBUG)
     torr_client = ''
-    downloadpath = config.get_setting("downloadpath", default='')
+    downloadpath = config.get_setting("downloadpath", default='', debug=DEBUG)
     
     for torr_client_g, torr_client_url in torrent_options:
         # Localizamos el path de descarga del .torrent y la carpeta de almacenamiento de los archivos .torrent
@@ -1751,20 +1795,20 @@ def torrent_dirs():
             except:
                 continue
         if torr_client == 'BT':
-            if not config.get_setting("bt_download_path", server="torrent", default='') and downloadpath:
-                config.set_setting("bt_download_path", downloadpath, server="torrent")
+            if not config.get_setting("bt_download_path", server="torrent", default='', debug=DEBUG) and downloadpath:
+                config.set_setting("bt_download_path", downloadpath, server="torrent", debug=DEBUG)
             torrent_paths['BT'] = filetools.join(str(config.get_setting("bt_download_path", \
-                        server="torrent", default='')), 'BT-torrents')
+                        server="torrent", default='', debug=DEBUG)), 'BT-torrents')
             torrent_paths['BT_torrents'] = filetools.join(torrent_paths['BT'], '.cache')
-            torrent_paths['BT_buffer'] = config.get_setting("bt_buffer", server="torrent", default=50)
+            torrent_paths['BT_buffer'] = config.get_setting("bt_buffer", server="torrent", default=50, debug=DEBUG)
         elif torr_client == 'MCT':
-            if not config.get_setting("mct_download_path", server="torrent", default='') and downloadpath:
-                config.set_setting("mct_download_path", downloadpath, server="torrent")
+            if not config.get_setting("mct_download_path", server="torrent", default='', debug=DEBUG) and downloadpath:
+                config.set_setting("mct_download_path", downloadpath, server="torrent", debug=DEBUG)
             torrent_paths['MCT'] = filetools.join(str(config.get_setting("mct_download_path", \
-                        server="torrent", default='')), 'MCT-torrent-videos')
+                        server="torrent", default='', debug=DEBUG)), 'MCT-torrent-videos')
             torrent_paths['MCT_torrents'] = filetools.join(str(config.get_setting("mct_download_path", \
-                        server="torrent", default='')), 'MCT-torrents')
-            torrent_paths['MCT_buffer'] = config.get_setting("mct_buffer", server="torrent", default=50)
+                        server="torrent", default='', debug=DEBUG)), 'MCT-torrents')
+            torrent_paths['MCT_buffer'] = config.get_setting("mct_buffer", server="torrent", default=50, debug=DEBUG)
         elif 'torrenter' in torr_client.lower():
             torrent_paths[torr_client.upper()] = str(filetools.join(filetools.translatePath(__settings__.getSetting('storage')),  "Torrenter"))
             if not torrent_paths[torr_client.upper()] or torrent_paths[torr_client.upper()] == "Torrenter":
@@ -1935,7 +1979,11 @@ def update_control(item, function=''):
             if item.headers or item.headers is None or item.headers_back: item_control.headers_back = item.headers_back
 
     if file:
-        ret = filetools.write(filetools.join(config.get_setting("downloadlistpath"), item.path), item_control.tojson())
+        if (monitor and monitor.abortRequested()) or (not monitor and xbmc and xbmc.abortRequested):
+            logger.debug('shutdown')
+            ret = True
+        else:
+            ret = filetools.write(filetools.join(config.get_setting("downloadlistpath"), item.path), item_control.tojson())
     else:
         item_control = item.clone()
     
@@ -1974,7 +2022,9 @@ def mark_torrent_as_watched():
         threading.Thread(target=downloads.download_auto, args=(item_dummy, True)).start()   # Encolamos las descargas automáticas
         if monitor and monitor.waitForAbort(5):
             return
-        elif not monitor and not xbmc.abortRequested: 
+        elif not monitor and xbmc:
+            if xbmc.abortRequested: 
+                return
             xbmc.sleep(5*1000)                                                  # Dejamos terminar la inicialización...
     except:                                                                     # Si hay problemas de threading, salimos
         logger.error(traceback.format_exc())
@@ -1984,7 +2034,9 @@ def mark_torrent_as_watched():
         threading.Thread(target=restart_unfinished_downloads).start()           # Creamos un Thread independiente
         if monitor and monitor.waitForAbort(3):
             return
-        elif not monitor and not xbmc.abortRequested: 
+        elif not monitor and xbmc:
+            if xbmc.abortRequested: 
+                return
             xbmc.sleep(3*1000)                                                  # Dejamos terminar la inicialización...
     except:                                                                     # Si hay problemas de threading, salimos
         logger.error(traceback.format_exc())
@@ -2034,7 +2086,7 @@ def restart_unfinished_downloads():
             while not monitor.abortRequested():
 
                 torrent_paths = torrent_dirs()
-                DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath")
+                DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath", debug=DEBUG)
                 LISTDIR = sorted(filetools.listdir(DOWNLOAD_LIST_PATH))
 
                 for fichero in LISTDIR:
@@ -2055,6 +2107,11 @@ def restart_unfinished_downloads():
                         torr_client = torrent_paths['TORR_client'].upper()
                         if not torr_client and item.downloadFilename:
                             torr_client = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:')
+                        if item.downloadStatus not in [0] and (not torr_client or (not item.downloadFilename and 'downloadFilename' in item)):
+                            if item.downloadFilename or (not item.downloadFilename and 'downloadFilename' in item):
+                                filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, fichero), silent=True)
+                                logger.error('Deleting corrupted .json file with NO Torrent Client "%s" in %s' % (item.downloadFilename, fichero))
+                            continue
                         
                         if init and TORRENT_TEMP:
                             if item.torrents_path and filetools.basename(item.torrents_path) in TORRENT_TEMP:
@@ -2082,7 +2139,7 @@ def restart_unfinished_downloads():
                         
                         if item.downloadStatus in [1, 3]:
                             continue
-                        if item.server != 'torrent' and config.get_setting("DOWNLOADER_in_use", "downloads"):
+                        if item.server != 'torrent' and config.get_setting("DOWNLOADER_in_use", "downloads", debug=DEBUG):
                             continue
                         if torr_client not in ['BT', 'MCT', 'TORRENTER', 'QUASAR', 'ELEMENTUM', 'TORREST'] and item.downloadProgress != 0:
                             continue
@@ -2110,7 +2167,7 @@ def restart_unfinished_downloads():
                                     item.downloadServer['url'] = new_torrent_url
                                     item.url = new_torrent_url
 
-                            if not config.get_setting("LIBTORRENT_in_use", server="torrent", default=False) or item.server != 'torrent':
+                            if not config.get_setting("LIBTORRENT_in_use", server="torrent", default=False, debug=DEBUG) or item.server != 'torrent':
                                 try:
                                     if isinstance(item.downloadProgress, (int, float)):
                                         item.downloadProgress += 1
@@ -2128,7 +2185,9 @@ def restart_unfinished_downloads():
                                     threading.Thread(target=downloads.start_download, args=(item,)).start()     # Creamos un Thread independiente
                                     if monitor and monitor.waitForAbort(5):
                                         return
-                                    elif not monitor and not xbmc.abortRequested: 
+                                    elif not monitor and xbmc:
+                                        if xbmc.abortRequested: 
+                                            return
                                         xbmc.sleep(5*1000)                      # Dejamos terminar la inicialización...
                                 except:
                                     logger.error(item)
@@ -2136,7 +2195,9 @@ def restart_unfinished_downloads():
                                 
                                 if monitor and monitor.waitForAbort(5):
                                     return
-                                elif not monitor and not xbmc.abortRequested: 
+                                elif not monitor and xbmc:
+                                    if xbmc.abortRequested: 
+                                        return
                                     xbmc.sleep(5*1000)
 
                 if init and TORRENT_TEMP:
@@ -2147,11 +2208,13 @@ def restart_unfinished_downloads():
                 for x in range(24):                                             # ... cada 2' se reactiva
                     if monitor and monitor.waitForAbort(5):
                         return
-                    elif not monitor and not xbmc.abortRequested: 
+                    elif not monitor and xbmc:
+                        if xbmc.abortRequested: 
+                            return
                         xbmc.sleep(5*1000)
-                    if config.get_setting("RESTART_DOWNLOADS", "downloads", default=False):     # ... a menos que se active externamente
+                    if config.get_setting("RESTART_DOWNLOADS", "downloads", default=False, debug=DEBUG):    # ... a menos que se active externamente
                         logger.info('RESTART_DOWNLOADS Activado externamente')
-                        config.set_setting("RESTART_DOWNLOADS", False, "downloads") 
+                        config.set_setting("RESTART_DOWNLOADS", False, "downloads", debug=DEBUG) 
                         break
     except:
         logger.error(traceback.format_exc())
@@ -2167,6 +2230,10 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
             torrent_paths = torrent_dirs()
         if not torr_client:
             torr_client = torrent_paths['TORR_client'].upper()
+            if not torr_client and item.downloadFilename:
+                torr_client = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:')
+            if not torr_client:
+                return False
 
         try:                                                                    # Preguntamos por el estado de la descarga
             if not item.torr_folder and item.downloadFilename:
@@ -2212,13 +2279,13 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
         if item.referer: referer = item.referer
         if item.post: post = item.post
 
-        download_path = config.get_setting('downloadpath', default='')
+        download_path = config.get_setting('downloadpath', default='', debug=DEBUG)
         videolibrary_path = config.get_videolibrary_path()
         videolibrary_path_local = videolibrary_path
         if item.contentType == 'movie':
-            folder = config.get_setting("folder_movies")                        # películas
+            folder = config.get_setting("folder_movies", debug=DEBUG)           # películas
         else:
-            folder = config.get_setting("folder_tvshows")                       # o series
+            folder = config.get_setting("folder_tvshows", debug=DEBUG)          # o series
         
         if scrapertools.find_single_match(videolibrary_path,'(^\w+:\/\/)'):     # Si es una conexión REMOTA, usamos userdata local
             videolibrary_path_local = config.get_data_path()
@@ -2256,8 +2323,10 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
         threading.Thread(target=rar_control_mng, args=(item, xlistitem, url, \
                          rar_files, torr_client.lower(), item.password, size, {})).start()
         if monitor and monitor.waitForAbort(3):
-            return True
-        elif not monitor and not xbmc.abortRequested: 
+            return False
+        elif not monitor and xbmc:
+            if xbmc.abortRequested: 
+                return False
             xbmc.sleep(3*1000)                                                  # Dejamos terminar la inicialización...
     except:
         logger.error(traceback.format_exc())
@@ -2272,10 +2341,10 @@ def check_seen_torrents():
         from platformcode import xbmc_videolibrary
         
         torrent_paths = torrent_dirs()
-        DOWNLOAD_PATH_ALFA = config.get_setting("downloadpath")
-        DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath")
-        MOVIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
-        SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
+        DOWNLOAD_PATH_ALFA = config.get_setting("downloadpath", debug=DEBUG)
+        DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath", debug=DEBUG)
+        MOVIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies", debug=DEBUG))
+        SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows", debug=DEBUG))
         LISTDIR = sorted(filetools.listdir(DOWNLOAD_LIST_PATH))
         nun_records = 0
         
@@ -2299,7 +2368,7 @@ def check_seen_torrents():
                 
                 # Si no viene de videoteca que crean item.strm_path y item.nfo
                 if not item.strm_path and filename and item.infoLabels['IMDBNumber']:
-                    if config.get_setting("original_title_folder", "videolibrary") == 1 and item.infoLabels['originaltitle']:
+                    if config.get_setting("original_title_folder", "videolibrary", debug=DEBUG) == 1 and item.infoLabels['originaltitle']:
                         base_name = item.infoLabels['originaltitle']
                     else:
                         if item.infoLabels['mediatype'] == 'movie':
@@ -2310,7 +2379,7 @@ def check_seen_torrents():
                         base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
                     else:
                         base_name = filetools.validate_path(base_name.replace('/', '-'))
-                    if config.get_setting("lowerize_title", "videolibrary") == 0:
+                    if config.get_setting("lowerize_title", "videolibrary", debug=DEBUG) == 0:
                         base_name = base_name.lower()
                     path = ("%s [%s]" % (base_name, item.infoLabels['IMDBNumber'])).strip()
                     if item.infoLabels['mediatype'] == 'movie':
@@ -2606,7 +2675,9 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
                     break
                 if monitor and monitor.waitForAbort(1):
                     return torrent_analysis                                     # ... abortando
-                elif not monitor and not xbmc.abortRequested: 
+                elif not monitor and xbmc:
+                    if xbmc.abortRequested: 
+                        return torrent_analysis                                 # ... abortando
                     xbmc.sleep(1*1000)
                 continue
             else:
@@ -2617,7 +2688,9 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
                     elapsed = random.uniform(10, 60)
                     if monitor and monitor.waitForAbort(elapsed):
                         return torrent_analysis                                 # ... abortando
-                    elif not monitor and not xbmc.abortRequested: 
+                    elif not monitor and xbmc:
+                        if xbmc.abortRequested: 
+                            return torrent_analysis                             # ... abortando
                         xbmc.sleep(elapsed*1000)
                     torrent_file = magnet2torrent(item.url)
                     if torrent_file:
@@ -2633,7 +2706,9 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
         
         if monitor and monitor.waitForAbort(1):
             return torrent_analysis                                             # ... abortando
-        elif not monitor and not xbmc.abortRequested: 
+        elif not monitor and xbmc:
+            if xbmc.abortRequested: 
+                return torrent_analysis                                         # ... abortando
             xbmc.sleep(1*1000)
         
         if (filetools.isfile(downloadServer) or filetools.isdir(downloadServer)) \
@@ -2667,7 +2742,9 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
                 
                 if monitor and monitor.waitForAbort(1):
                     return torrent_analysis                                     # ... abortando
-                elif not monitor and not xbmc.abortRequested: 
+                elif not monitor and xbmc:
+                    if xbmc.abortRequested: 
+                        return torrent_analysis                                 # ... abortando
                     xbmc.sleep(1*1000)
             item.torrent_info = size
 
@@ -2700,7 +2777,9 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
         elapsed = 1
         if monitor and monitor.waitForAbort(elapsed):
             return torrent_analysis                                             # ... abortando
-        elif not monitor and not xbmc.abortRequested: 
+        elif not monitor and xbmc:
+            if xbmc.abortRequested: 
+                return torrent_analysis                                         # ... abortando
             xbmc.sleep(elapsed*1000)
         
         for x in range(20):
@@ -2712,13 +2791,17 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
                 break
             if monitor and monitor.waitForAbort(0.5):
                 return torrent_analysis                                         # ... abortando
-            elif not monitor and not xbmc.abortRequested: 
+            elif not monitor and xbmc:
+                if xbmc.abortRequested: 
+                    return torrent_analysis                                     # ... abortando
                 xbmc.sleep(0.5*1000)
         
         elapsed = 1 if torr_client == 'torrest' else 5
         if monitor and monitor.waitForAbort(elapsed):
             return torrent_analysis                                             # ... abortando
-        elif not monitor and not xbmc.abortRequested: 
+        elif not monitor and xbmc:
+            if xbmc.abortRequested: 
+                return torrent_analysis                                         # ... abortando
             xbmc.sleep(elapsed*1000)
         if torr_client == 'torrest':
             play_type = 'path'
@@ -2826,28 +2909,31 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
         loop = 3600                                                             # Loop de 20 horas hasta crear archivo
         wait_time = 60
         if monitor and monitor.waitForAbort(wait_time/6):
-            return ('', '', '', rar_control)                                        # ... no podemos hacer nada
-        elif not monitor and not xbmc.abortRequested: 
+            sys.exit()                                                          # ... no podemos hacer nada
+        elif not monitor and xbmc:
+            if xbmc.abortRequested: 
+                sys.exit()                                                      # ... no podemos hacer nada
             xbmc.sleep((wait_time/6)*1000)
         fast = False
         totals = {}
         path = filetools.join(config.get_setting("downloadlistpath"), item.path)
 
         for x in range(loop):
-            if (monitor and monitor.abortRequested()) or (not monitor and xbmc.abortRequested):
+            if (monitor and monitor.abortRequested()) or (not monitor and xbmc and xbmc.abortRequested):
                 logger.error('ABORTING...')
                 try:
                     progreso.close()
                 except:
                     pass
-                return ('', '', folder, rar_control)
+                sys.exit()
 
             torr_data, deamon_url, index = get_tclient_data(folder, torr_client, \
                             port=torrent_paths.get(torr_client.upper()+'_port', 0), \
                             web=torrent_paths.get(torr_client.upper()+'_web', ''))
             if torr_data:
                 if isinstance(torr_data, dict) and torr_data.get('shutdown', False):
-                    return ('', '', folder, rar_control)                        # Abortando
+                    logger.error('ABORTING...')
+                    sys.exit()                                                  # Abortando
                 totals = torr_data.get('totals', {})
                 if torr_client.upper() in ['TORREST']:
                     status = torr_data.get('status', {})
@@ -2920,7 +3006,11 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                                     totals.get('download_rate', ''), totals.get('num_torrents', ''), 
                                     totals.get('progress', ''), totals.get('total_wanted', '')))
                 if monitor.waitForAbort(wait_time):                             # Esperamos un poco y volvemos a empezar
-                    return ('', '', folder, rar_control)
+                    sys.exit()
+                elif not monitor and xbmc:
+                    if xbmc.abortRequested: 
+                        sys.exit()
+                    xbmc.sleep(wait_time*1000)
                 continue
 
             if len(video_names) > 1 and filetools.exists(filetools.join(torrent_paths[torr_client.upper()], folder)) \
@@ -2990,8 +3080,8 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
     fast = False
     while rar:
         for x in range(loop):                                                   # Loop corto (5 min.) o largo (10 h.)
-            if (monitor and monitor.abortRequested()) or (not monitor and xbmc.abortRequested):
-                return ('', '', folder, rar_control)
+            if (monitor and monitor.abortRequested()) or (not monitor and xbmc and xbmc.abortRequested):
+                sys.exit()
             if not rar or loop_change > 0:
                 loop = loop_change                                              # Paso de loop corto a largo
                 loop_change = 0
@@ -3054,7 +3144,11 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                     fast = False
                     break
                 if monitor.waitForAbort(wait_time):                             # Esperamos un poco y volvemos a empezar
-                    return ('', '', folder, rar_control)
+                    sys.exit()
+                elif not monitor and xbmc:
+                    if xbmc.abortRequested: 
+                        sys.exit()
+                    xbmc.sleep(wait_time*1000)
         else:
             rar = False
             break
@@ -3072,6 +3166,10 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                         torr_client=None, rar_control={}, size='RAR-', mediaurl=''):
     logger.info()
     config.set_setting("LIBTORRENT_in_use", False, server="torrent")            # Marcamos Libtorrent como disponible
+    
+    if (monitor and monitor.abortRequested()) or (not monitor and xbmc and xbmc.abortRequested):
+        logger.debug('ABORTING...')
+        sys.exit()
 
     from platformcode import custom_code
     from platformcode.platformtools import dialog_notification, dialog_input
@@ -3108,8 +3206,10 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
         logger.debug('Esperando por unRAR en USO')
         dp.update(99, "unRAR en cola", "Espera unos minutos....")
         if monitor and monitor.waitForAbort(random.choice(range(2, 6))):        # Esperamos a que termine la tarea activa
-            return rar_file, False, '', erase_file_path
-        elif not monitor and not xbmc.abortRequested: 
+            sys.exit()
+        elif not monitor and xbmc:
+            if xbmc.abortRequested: 
+                sys.exit()
             xbmc.sleep(random.choice(range(2, 6))*1000)
     config.set_setting("UNRAR_in_use", True, server="torrent")                  # Marcamos unRAR como en USO por esta tarea
     
@@ -3195,7 +3295,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
             if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
                 if monitor and monitor.waitForAbort(4):
                     pass
-                elif not monitor and not xbmc.abortRequested: 
+                elif not monitor and xbmc and not xbmc.abortRequested: 
                     xbmc.sleep(4*1000)                                          # Dejamos un tiempo para evitar colisiones (???)
                 return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
                         torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
@@ -3216,7 +3316,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                     if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
                         if monitor and monitor.waitForAbort(4):
                             pass
-                        elif not monitor and not xbmc.abortRequested: 
+                        elif not monitor and xbmc and not xbmc.abortRequested: 
                             xbmc.sleep(4*1000)                                  # Dejamos un tiempo para evitar colisiones (???)
                         return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
                                 torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
@@ -3248,7 +3348,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
             if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
                 if monitor and monitor.waitForAbort(4):
                     pass
-                elif not monitor and not xbmc.abortRequested: 
+                elif not monitor and xbmc and not xbmc.abortRequested: 
                     xbmc.sleep(4*1000)                                          # Dejamos un tiempo para evitar colisiones (???)
                 return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
                         torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
@@ -3304,7 +3404,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
                     if monitor and monitor.waitForAbort(4):
                         pass
-                    elif not monitor and not xbmc.abortRequested: 
+                    elif not monitor and xbmc and not xbmc.abortRequested: 
                         xbmc.sleep(4*1000)                                      # Dejamos un tiempo para evitar colisiones (???)
                     return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
                             torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
@@ -3320,7 +3420,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
                     if monitor and monitor.waitForAbort(4):
                         pass
-                    elif not monitor and not xbmc.abortRequested: 
+                    elif not monitor and xbmc and not xbmc.abortRequested: 
                         xbmc.sleep(4*1000)                                      # Dejamos un tiempo para evitar colisiones (???)
                     return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
                             torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
@@ -3336,7 +3436,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
                     if monitor and monitor.waitForAbort(4):
                         pass
-                    elif not monitor and not xbmc.abortRequested: 
+                    elif not monitor and xbmc and not xbmc.abortRequested: 
                         xbmc.sleep(4*1000)                                      # Dejamos un tiempo para evitar colisiones (???)
                     return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
                             torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
@@ -3392,7 +3492,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                     if check_rar_control(erase_file_path, error=False, torr_client=torr_client):
                         if monitor and monitor.waitForAbort(4):
                             pass
-                        elif not monitor and not xbmc.abortRequested: 
+                        elif not monitor and xbmc and not xbmc.abortRequested: 
                             xbmc.sleep(4*1000)                                  # Dejamos un tiempo para evitar colisiones (???)
                         return extract_files(rar_file, org_save_path_videos, password, dp, item=item, \
                                 torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
@@ -3452,10 +3552,12 @@ def rename_rar_dir(item, rar_file, save_path_videos, video_path, torr_client):
         
         if monitor and monitor.waitForAbort(5):
             return rename_status, rar_file, item
-        elif not monitor and not xbmc.abortRequested: 
+        elif not monitor and xbmc:
+            if xbmc.abortRequested: 
+                return rename_status, rar_file, item
             xbmc.sleep(5*1000)                                                  # Tiempo de seguridad para pausar el .torrent
         for x in range(20):
-            if (monitor and monitor.abortRequested()) or (not monitor and xbmc.abortRequested):
+            if (monitor and monitor.abortRequested()) or (not monitor and xbmc and xbmc.abortRequested):
                 return rename_status, rar_file, item
             time.sleep(1)
             
@@ -3513,7 +3615,9 @@ def last_password_search(pass_path, erase_file_path=''):
                 url = url.replace('descargas2020.org', 'pctreload.com').replace('descargas2020-org', 'pctnew-org')
                 url = url.replace('pctnew.org', 'pctreload.com')
                 if url:
-                    data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url).data)
+                    data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url, set_tls=set_tls_VALUES['set_tls'], 
+                                                  set_tls_min=set_tls_VALUES['set_tls_min'], 
+                                                  retries_cloudflare=set_tls_VALUES['retries_cloudflare']).data)
                     password = scrapertools.find_single_match(data, patron_pass)
             if password:
                 update_rar_control(erase_file_path, password=password, status='UnRARing: Password update')

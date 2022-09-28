@@ -23,17 +23,17 @@ from channels import filtertools
 from channels import autoplay
 
 
-IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
+IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO', 'Original subtitulado': 'VOS', "subtitulado en español": "VOSE"}
 list_language = list(IDIOMAS.values())
-list_quality = []
+list_quality = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['torrent']
 
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.tf/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.ist/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/'], 
-             'host_black_list': ['https://dontorrent.pub/', 
+             'host_black_list': ['https://dontorrent.vin/', 'https://dontorrent.tf/', 'https://dontorrent.pub/', 
                                  'https://dontorrent.moe/', 'https://dontorrent.soy/', 'https://dontorrent.pet/', 
                                  'https://dontorrent.bid/', 'https://dontorrent.dev/', 'https://dontorrent.dog/', 
                                  'https://dontorrent.vet/', 'https://dontorrent.ch/', 'https://dontorrent.vg/', 
@@ -111,6 +111,8 @@ def mainlist(item):
                 folder=False, thumbnail=thumb_separador))
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
                 thumbnail=thumb_settings))
+    
+    itemlist = filtertools.show_option(itemlist, channel, list_language, list_quality)
     
     autoplay.show_option(item.channel, itemlist)                                #Activamos Autoplay
 
@@ -627,6 +629,7 @@ def listado(item):                                                              
                 item_local.contentType = "tvshow"
                 item_local.action = "episodios"
                 item_local.season_colapse = season_colapse                      # Muestra las series agrupadas por temporadas?
+                item_local.context = filtertools.context(item_local, list_language, list_quality)
 
             #Limpiamos el título de la basura innecesaria
             if (item.extra == 'series' or item.extra == 'documentales') and item.extra2 == 'novedades': # Series, Docs desde Novedades
@@ -635,7 +638,7 @@ def listado(item):                                                              
                     if item.extra == 'series' and scrapertools.find_single_match(title_subs[-1], 'Episodio (\d+)x') not in ['', '0']:
                         item_local.contentSeason = scrapertools.find_single_match(title_subs[-1], 'Episodio (\d+)x')
                 if item_local.contentType == "tvshow":
-                    title = scrapertools.find_single_match(scrapedtitle, '(^.*?)\s*(?:$|\(|\[|\s+-)')
+                    title = scrapertools.find_single_match(scrapedtitle, '(^.*?)\s*(?:$|\(|\[|\s*-\s*\d+)')
                     title = title.replace(scrapertools.find_single_match(scrapedtitle, patron), '').rstrip(':').rstrip()
 
             year = '-'
@@ -796,7 +799,7 @@ def findvideos(item):
         patron += '<td\s*style=[^>]+>\s*<a\s*data-toggle="popover"\s*title="[^>]*'
         patron += 'contraseña[^\/]*data-clave="([^"]+)">)?()'
 
-    if (not item.matches or (item.matches and domain_torrent not in item.matches) or item.contentChannel == 'videolibrary') \
+    if (not item.matches or (item.matches and domain_torrent not in str(item.matches)) or item.contentChannel == 'videolibrary') \
                             and not btdigg and btdigg_url not in item.url and item.url != host:
         if item.emergency_urls and item.url_tvshow: item.url = item.url_tvshow  #### Parche para rodear videoteca corrupta de SERIES
         data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
@@ -878,6 +881,7 @@ def findvideos(item):
                 if 'magnet' in str(matches): find_alt = True
         
         elif item.matches:
+            if 'magnet' in str(item.matches): find_alt = True
             matches = item.matches
 
     #logger.debug("PATRON: " + patron)
@@ -928,7 +932,11 @@ def findvideos(item):
         # Ponemos la calidad, si la hay
         item_local.url = urlparse.urljoin(host, scrapedurl)
         if scrapedurl.startswith('magnet') and not item.videolibray_emergency_urls: item_local.btdigg = True
-        if scrapedquality: item_local.quality = scrapedquality
+
+        if scrapedquality:
+            item_local.quality = scrapedquality
+        if ',' in item_local.quality:
+            item_local.quality = item_local.quality.split(',')[0].strip()
             
         # Ponemos el idioma
         item_local.language = []
@@ -1096,6 +1104,9 @@ def findvideos(item):
                 return []
         itemlist.extend(itemlist_t)                                             # Pintar pantalla con todo si no hay filtrado
     
+    # Requerido para FilterTools
+    if item.contentType != 'movie': itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
+    
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)                                              # Lanzamos Autoplay
     
@@ -1109,6 +1120,7 @@ def episodios(item):
     search_seasons = True
     item.category = categoria
     epis_done = []
+    context = []
     
     post = None
     forced_proxy_opt = None
@@ -1325,9 +1337,12 @@ def episodios(item):
                 elif item_local.contentSeason < season_display:
                     continue
 
+            if not (item.add_videolibrary or item.library_playcounts):
+                item_local.context = context = filtertools.context(item_local, list_language, list_quality)
             if item.infoLabels['number_of_episodes'] and item_local.contentEpisodeNumber > item.infoLabels['number_of_episodes']:
                 item.infoLabels['number_of_episodes'] = item_local.contentEpisodeNumber
             epis_done += ['%s%s' % (item_local.contentSeason, str(item_local.contentEpisodeNumber).zfill(2))]
+            if ',' in item_local.quality: item_local.quality = item_local.quality.split(',')[0].strip()
             item_local.matches = [(item_local.title, epi_url, scrapedpassword, item_local.quality)]
             itemlist.append(item_local.clone())
 
@@ -1341,8 +1356,12 @@ def episodios(item):
         itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))       #clasificamos
 
     if find_alt_link_option:
-        item, itemlist = generictools.find_btdigg_episodios(item, itemlist, url=url, epis_done=epis_done, domain_alt=find_alt_domains)
+        item, itemlist = generictools.find_btdigg_episodios(item, itemlist, url=url, epis_done=epis_done, 
+                                                            domain_alt=find_alt_domains, context=context)
 
+    if (item.add_videolibrary or item.library_playcounts) and config.get_setting('auto_download_new', channel=channel):
+        itemlist = filtertools.get_links(itemlist, item, list_language, list_quality, replace_label=btdigg_label)
+    
     if item.season_colapse and not item.add_videolibrary:                       # Si viene de listado, mostramos solo Temporadas
         item, itemlist = generictools.post_tmdb_seasons(item, itemlist, url='season')
     
@@ -1395,7 +1414,12 @@ def search(item, texto):
 
         if find_alt_link_option and btdigg:
             try:
-                itemlist.extend(generictools.find_btdigg_search(texto, channel, itemlist=itemlist))
+                itemlist_search = generictools.find_btdigg_search(texto, channel, itemlist=itemlist)
+                for item_search in itemlist_search:
+                    if item_search.contentType != 'movie':
+                        item_search.quality = item_search.quality.replace('HDTV 720p', 'HDTV-720p')
+                        item_search.context = filtertools.context(item_search, list_language, list_quality)
+                itemlist.extend(itemlist_search)
             except:
                 logger.error(traceback.format_exc())
 

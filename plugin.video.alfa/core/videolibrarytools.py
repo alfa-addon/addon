@@ -32,6 +32,7 @@ if not FOLDER_MOVIES or not FOLDER_TVSHOWS or not VIDEOLIBRARY_PATH \
 
 addon_name = "plugin://plugin.video.%s/" % config.PLUGIN_NAME
 
+
 def get_content_channels(item):
     """
     Obtiene los canales de videolibrary asociados a un item y sus urls
@@ -333,7 +334,7 @@ def save_movie(item, silent=False):
     return 0, 0, -1
 
 
-def save_tvshow(item, episodelist, silent=False, overwrite=True):
+def save_tvshow(item, episodelist, silent=False, overwrite=True, monitor=None):
     """
     guarda en la libreria de series la serie con todos los capitulos incluidos en la lista episodelist
     @type item: item
@@ -352,6 +353,11 @@ def save_tvshow(item, episodelist, silent=False, overwrite=True):
     logger.info()
     # logger.debug(item.tostring('\n'))
     path = ""
+    
+    if not monitor and config.is_xbmc():
+        import xbmc
+        if config.get_platform(True)['num_version'] >= 14:
+            monitor = xbmc.Monitor()  # For Kodi >= 14
 
     # Si llegados a este punto no tenemos titulo o code, salimos
     if not (item.contentSerieName or item.infoLabels['code']) or not item.channel:
@@ -474,7 +480,7 @@ def save_tvshow(item, episodelist, silent=False, overwrite=True):
     # Guardar los episodios
     '''import time
     start_time = time.time()'''
-    insertados, sobreescritos, fallidos = save_episodes(path, episodelist, item, silent=silent, overwrite=overwrite)
+    insertados, sobreescritos, fallidos = save_episodes(path, episodelist, item, silent=silent, overwrite=overwrite, monitor=monitor)
     '''msg = "Insertados: %d | Sobreescritos: %d | Fallidos: %d | Tiempo: %2.2f segundos" % \
           (insertados, sobreescritos, fallidos, time.time() - start_time)
     logger.debug(msg)'''
@@ -482,7 +488,7 @@ def save_tvshow(item, episodelist, silent=False, overwrite=True):
     return insertados, sobreescritos, fallidos, path
 
 
-def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
+def save_episodes(path, episodelist, serie, silent=False, overwrite=True, monitor=None):
     """
     guarda en la ruta indicada todos los capitulos incluidos en la lista episodelist
     @type path: str
@@ -551,6 +557,9 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         tags = [x.strip() for x in config.get_setting("filters", "videolibrary").lower().split(",")]
 
     for e in episodelist:
+        if monitor and monitor.waitForAbort(0.1):
+            return 0, 0, -1
+        
         headers = {}
         if e.headers:
             headers = e.headers
@@ -1125,14 +1134,16 @@ def add_movie(item):
     new_item = item.clone(action="findvideos")
     new_item.contentTitle = re.sub('^(V)-', '', new_item.title)
     new_item.title = re.sub('^(V)-', '', new_item.title)
+    if '-Película-' in new_item.infoLabels.get('tagline', ''): del new_item.infoLabels['tagline']
+    generictools.format_tmdb_id(new_item)                                       # Normaliza el formato de los IDs
     insertados, sobreescritos, fallidos = save_movie(new_item)
 
     if fallidos == 0:
         platformtools.dialog_ok(config.get_localized_string(30131), new_item.contentTitle,
-                                config.get_localized_string(30135))  # 'se ha añadido a la videoteca'
+                                config.get_localized_string(30135))             # 'se ha añadido a la videoteca'
     else:
         platformtools.dialog_ok(config.get_localized_string(30131),
-                                config.get_localized_string(60066))  #"ERROR, la pelicula NO se ha añadido a la videoteca")
+                                config.get_localized_string(60066))             # "ERROR, la pelicula NO se ha añadido a la videoteca")
 
 
 def add_tvshow(item, channel=None):
@@ -1162,6 +1173,7 @@ def add_tvshow(item, channel=None):
     logger.info("show=#" + item.show + "#")
     #logger.debug("item en videolibrary add tvshow: %s" % item)
     item.title = re.sub('^(V)-', '', item.title)
+    if '-Serie-' in item.infoLabels.get('tagline', ''): del item.infoLabels['tagline']
     if item.channel == "downloads":
         itemlist = [item.clone()]
 
@@ -1193,12 +1205,14 @@ def add_tvshow(item, channel=None):
         #Si lo hace en "Completar Información", cambia parcialmente al nuevo título, pero no busca en TMDB.  Hay que hacerlo
         #Si se cancela la segunda pantalla, la variable "scraper_return" estará en False.  El usuario no quiere seguir
         
-        item = generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
+        item = generictools.update_title(item)      # Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
         #if item.tmdb_stat:
         #    del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
                 
         # Obtiene el listado de episodios
+        generictools.format_tmdb_id(item)                                       # Normaliza el formato de los IDs
         itemlist = getattr(channel, item.action)(item)
+        generictools.format_tmdb_id(itemlist)                                   # Normaliza el formato de los IDs
         
     global magnet_caching
     magnet_caching = False

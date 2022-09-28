@@ -58,12 +58,14 @@ def check_addon_init():
         if config.get_platform(True)['num_version'] >= 14:  # Si es Kodi, lanzamos el monitor
             monitor = xbmc.Monitor()
         else:  # Lanzamos solo una actualización y salimos
+
             check_addon_updates(verbose)    # Lanza la actualización
             check_date_real()               # Obtiene la fecha real de un sistema externo
+            
             return
 
         while not monitor.abortRequested(): # Loop infinito hasta cancelar Kodi
-
+           
             check_addon_updates(verbose)    # Lanza la actualización
             check_date_real()               # Obtiene la fecha real de un sistema externo
 
@@ -191,6 +193,11 @@ def check_addon_updates(verbose=False):
         if downloadtools.downloadfile(ADDON_UPDATES_ZIP, localfilename, silent=True) < 0:
             raise
 
+        try:
+            alfa_caching = config.cache_reset(action='OFF')         # Reseteamos e inactivamos las caches de settings
+        except:
+            alfa_caching = False
+        
         # Descomprimir zip dentro del addon
         # ---------------------------------
         try:
@@ -200,6 +207,12 @@ def check_addon_updates(verbose=False):
             xbmc.executebuiltin('Extract("%s", "%s")' % (localfilename, config.get_runtime_path()))
             time.sleep(1)
 
+        if alfa_caching:
+            try:
+                alfa_caching = config.cache_reset(action='ON')      # Reseteamos y activamos las caches de settings
+            except:
+                alfa_caching = False
+        
         # Borrar el zip descargado
         # ------------------------
         try:

@@ -1977,7 +1977,7 @@ def get_episodes(item):
         item.contentAction, item.sub_action, item.contentChannel, item.contentType, item.contentSeason, item.contentEpisodeNumber, ))
 
     import xbmc
-    from lib.generictools import verify_channel
+    from lib.generictools import verify_channel, format_tmdb_id
     
     sub_action = ["tvshow", "season", "unseen", "auto"]                         # Acciones especiales desde Findvideos
     SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
@@ -1997,12 +1997,17 @@ def get_episodes(item):
         item.nfo = filetools.join(SERIES, item.path.lower(), 'tvshow.nfo')
     if not item.nfo and item.video_path and not event:
         item.nfo = filetools.join(SERIES, item.video_path.lower(), 'tvshow.nfo')
-    if not item.nfo and item.infoLabels['imdb_id']:
-        if filetools.exists(filetools.join(SERIES, '%s [%s]' % (item.contentSerieName.lower(), item.infoLabels['imdb_id']), 'tvshow.nfo')):
-            item.nfo = filetools.join(SERIES, '%s [%s]' % (item.contentSerieName.lower(), item.infoLabels['imdb_id']), 'tvshow.nfo')
+    if not item.nfo:
+        if item.infoLabels['imdb_id']:
+            if filetools.exists(filetools.join(SERIES, '%s [%s]' % (item.contentSerieName.lower(), item.infoLabels['imdb_id']), 'tvshow.nfo')):
+                item.nfo = filetools.join(SERIES, '%s [%s]' % (item.contentSerieName.lower(), item.infoLabels['imdb_id']), 'tvshow.nfo')
+        elif item.infoLabels['tmdb_id']:
+            if filetools.exists(filetools.join(SERIES, '%s [tmdb_%s]' % (item.contentSerieName.lower(), item.infoLabels['tmdb_id']), 'tvshow.nfo')):
+                item.nfo = filetools.join(SERIES, '%s [tmdb_%s]' % (item.contentSerieName.lower(), item.infoLabels['tmdb_id']), 'tvshow.nfo')
     if item.nfo:
         if filetools.exists(item.nfo):
             head, nfo_json = videolibrarytools.read_nfo(item.nfo)               #... tratamos de recuperar la info de la Serie
+            format_tmdb_id(nfo_json)
         else:
             del item.nfo
 
@@ -2035,6 +2040,7 @@ def get_episodes(item):
                     time.sleep(1)
                 xbmc_videolibrary.mark_content_as_watched_on_alfa(item.nfo)     # Sincronizamos los Vistos de Kodi con Alfa ...
                 head, nfo_json = videolibrarytools.read_nfo(item.nfo)           #... refrescamos la info de la Serie
+                format_tmdb_id(nfo_json)
             if item.url_tvshow:
                 item.url = item.url_tvshow
             elif nfo_json:
@@ -2150,6 +2156,7 @@ def get_episodes(item):
     itemlist = []
 
     # Tenemos las lista, ahora vamos a comprobar
+    format_tmdb_id(episodes)
     for episode in episodes:
         
         if episode.action in ["add_serie_to_library", "actualizar_titulos"] or not episode.action:
@@ -2250,6 +2257,7 @@ def get_episodes(item):
             # Buscamos en tmdb
             if item.infoLabels["tmdb_id"] and item.infoLabels["tmdb_id"] != null:
                 scraper.find_and_set_infoLabels(episode)
+                format_tmdb_id(episode)
 
             # Episodio, Temporada y Titulo
             if not episode.contentTitle:
@@ -2274,6 +2282,7 @@ def get_episodes(item):
             if 'VO' in str(item.language):
                 idioma = 'es,en'
             tmdb.set_infoLabels(itemlist, True, idioma_busqueda=idioma)
+            format_tmdb_id(itemlist)
     except:
         logger.error(traceback.format_exc(1))
 
@@ -2323,6 +2332,9 @@ def save_download_en(item, silent=False):
     global DOWNLOAD_PATH
     logger.info()
     
+    from lib.generictools import format_tmdb_id
+    format_tmdb_id(item)
+    
     if item.server:
         browse_type = 0
     else:
@@ -2338,6 +2350,9 @@ def save_download_en(item, silent=False):
 def save_download(item, silent=False):
     global torrent_params
     logger.info()
+    
+    from lib.generictools import format_tmdb_id
+    format_tmdb_id(item)
     
     # Si viene de Videolibrary.Play, recomponemos contentAction y contentChannel
     if item.action == "save_download" and item.channel == "downloads" and \

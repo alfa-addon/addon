@@ -598,13 +598,16 @@ def listado(item):                                                              
                     item_local.infoLabels["year"] = int(item.extra2.replace('anno', ''))
                 elif scrapedyear:
                     item_local.infoLabels["year"] = int(scrapedyear)
+                if not item_local.infoLabels["year"]:
+                    item_local.infoLabels["year"] = int(scrapertools.find_single_match(title, '\((\d{4})\)'))
             except:
                 pass
             
             #Terminamos de limpiar el título
+            title = re.sub(r'\s*\(\d{4}\)', '', title)
             title = re.sub(r'[\(|\[]\s+[\)|\]]', '', title)
             title = title.replace('()', '').replace('[]', '').replace('[4K]', '').replace('(4K)', '').strip().lower().title()
-            item_local.from_title = title.strip().lower().title()           #Guardamos esta etiqueta para posible desambiguación de título
+            item_local.from_title = title.strip().lower().title()               #Guardamos esta etiqueta para posible desambiguación de título
 
             #Salvamos el título según el tipo de contenido
             if item_local.contentType == "movie":
