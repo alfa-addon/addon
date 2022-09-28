@@ -31,8 +31,9 @@ list_servers = list(SERVER.values())
 canonical = {
              'channel': 'pelisflix', 
              'host': config.get_setting("current_host", 'pelisflix', default=''), 
-             'host_alt': ["https://pelisflix2.one/"], 
-             'host_black_list': ["https://pelisflix.li/"], 
+             'host_alt': ["https://ww2.pelisflix2.one/"], 
+             'host_black_list': ["https://pelisflix2.one/", "https://pelisflix.li/", "https://ww3.pelisflix2.one/"], 
+             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -336,7 +337,7 @@ def play(item):
         id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
         post_url= "%sstream/r.php" % host
         post = {'h' : id}
-        url = httptools.downloadpage(post_url, post=post, follow_redirects=False).headers['location']
+        url = httptools.downloadpage(post_url, post=post, follow_redirects=False).headers.get('location', '')
     if "vip/?url=" in url:
         url = create_soup(url).iframe['src'].replace("embed.html#", "details.php?v=")
         data = httptools.downloadpage(url).json

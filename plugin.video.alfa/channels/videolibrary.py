@@ -676,6 +676,7 @@ def findvideos(item):
 
         # Obtener la información actualizada del vídeo.  En una segunda lectura de TMDB da más información que en la primera
         try:
+            generictools.format_tmdb_id(item_json)                              # Normaliza el formato de los IDs
             if item_json.infoLabels['tmdb_id']:
                 tmdb.set_infoLabels_item(item_json, seekTmdb=True)
                 

@@ -37,6 +37,7 @@ canonical = {
              'host': config.get_setting("current_host", 'inkapelis', default=''), 
              'host_alt': ["https://inkapelis.in/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -135,12 +136,12 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     post = scrapertools.find_single_match(data, 'data-post=(\d+)')
     url = host + "wp-json/dooplayer/v2/%s/movie/meplayembed" %post
-    data = httptools.downloadpage(url).json
+    data = httptools.downloadpage(url, canonical=canonical).json
     url = data["embed_url"].replace("s/tmdb", "/gen")
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, canonical=canonical).data
     matches_languages = scrapertools.find_multiple_matches(data, "this, '(\d+).*?src.*?>([^<]+)")
     srv_list = {"fembed": "fembed", "stp": "streamtape", "stream": "mystream", "goplay": "gounlimited",
                 "drive": "gvideo", "meplay": "netutv", "evoplay": "netutv", "uqload": "uqload",

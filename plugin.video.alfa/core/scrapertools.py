@@ -297,18 +297,28 @@ def slugify(title, strict=True, convert=[]):
     title = title.replace("ù", "u")
     title = title.replace("ç", "c")
     title = title.replace("Ç", "C")
-    title = title.replace("Ñ", "n")
-    title = title.replace("ñ", "n")
+    title = title.replace("Ñ", "ñ")
+    if strict: title = title.replace("ñ", "n")
     title = title.replace("/", "-")
     title = title.replace("&amp;", "&")
     title = title.replace("&#038;", "&")
 
     # Pasa a minúsculas
     title = title.lower().strip()
+    
+    # Covierte los caracteres sumisnistrados por el usuario y los añade a la lista de conversión
+    validchars = "abcdefghijklmnopqrstuvwxyz1234567890- "
+    if not strict: validchars += "()[].ñ"
+    try:
+        for change in convert:
+            change_from = change.split('=')[0]
+            change_to = change.split('=')[1]
+            title = title.replace(change_from, change_to)
+            if change_to and change_to not in validchars: validchars += change_to
+    except:
+        pass
 
     # Elimina caracteres no válidos
-    validchars = "abcdefghijklmnopqrstuvwxyz1234567890- "
-    if not strict: validchars += "()[]."
     title = ''.join(c for c in title if c in validchars)
 
     if strict:
@@ -327,14 +337,6 @@ def slugify(title, strict=True, convert=[]):
 
     if title == "":
         title = "-" + str(time.time())
-    
-    try:
-        for change in convert:
-            change_from = change.split('=')[0]
-            change_to = change.split('=')[1]
-            title = title.replace(change_from, change_to)
-    except:
-        pass
 
     return title
 

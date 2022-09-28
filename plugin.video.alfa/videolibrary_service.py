@@ -15,20 +15,23 @@ except:
     pass
 
 try:
+    import os, time
     from platformcode import config
-    import xbmc, os, time
     librerias = os.path.join(config.get_runtime_path(), 'lib')
     sys.path.append(librerias)
     for module in ['script.module.futures']:
         config.importer(module)
+    import xbmc
 except:
-    import os, time
-    try:
-        logger.error(traceback.format_exc())
-        librerias = os.path.join(config.get_runtime_path(), 'lib')
-        sys.path.append(librerias)
-    except:
-        pass
+    xbmc = None
+    logger.error(traceback.format_exc())
+    
+# Se activa el monitor
+if xbmc:
+    if config.get_platform(True)['num_version'] >= 14:
+        monitor = xbmc.Monitor()  # For Kodi >= 14
+    else:
+        monitor = None  # For Kodi < 14
 
 
 def update(path, p_dialog, i, t, serie, overwrite, redir=True):
@@ -91,17 +94,19 @@ def update(path, p_dialog, i, t, serie, overwrite, redir=True):
                 itemlist = getattr(obj, 'episodios')(serie)                     #... se procesa Episodios para ese canal
                 
                 try:
+                    if monitor and monitor.waitForAbort(0.1):
+                        return False
                     if int(overwrite_back) == 3:
                         # Sobrescribir todos los archivos (tvshow.nfo, 1x01.nfo, 1x01 [canal].json, 1x01.strm, etc...)
                         insertados, sobreescritos, fallidos, notusedpath = videolibrarytools.save_tvshow(serie, itemlist, 
-                                                                                              silent=True,
+                                                                                              silent=True, monitor=monitor, 
                                                                                               overwrite=overwrite_back)
                         #serie= videolibrary.check_season_playcount(serie, serie.contentSeason)
                         #if videolibrarytools.write_nfo(path + '/tvshow.nfo', head_nfo, it):
                         #    serie.infoLabels['playcount'] = serie.playcount
                     else:
                         insertados, sobreescritos, fallidos = videolibrarytools.save_episodes(path, itemlist, serie,
-                                                                                              silent=True,
+                                                                                              silent=True, monitor=monitor, 
                                                                                               overwrite=overwrite)
                         #it = videolibrary.check_season_playcount(it, it.contentSeason)
                         #if videolibrarytools.write_nfo(path + '/tvshow.nfo', head_nfo, it):
@@ -170,7 +175,7 @@ def check_for_update(overwrite=True):
     hoy = datetime.date.today()
     estado_verify_playcount_series = False
     httptools.VIDEOLIBRARY_UPDATE = True
-    
+
     try:
         if config.get_setting("update", "videolibrary") != 0 or overwrite:
             config.set_setting("updatelibrary_last_check", hoy.strftime('%Y-%m-%d'), "videolibrary")
@@ -188,6 +193,9 @@ def check_for_update(overwrite=True):
 
             for i, tvshow_file in enumerate(show_list):
                 try:
+                    if monitor and monitor.waitForAbort(0.1):
+                        return
+                    
                     head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)
                     if not serie:
                         logger.error('.nfo erroneo en ' + str(tvshow_file))
@@ -295,6 +303,9 @@ def check_for_update(overwrite=True):
                         update_last = hoy
                         update_next = hoy + datetime.timedelta(days=interval)
 
+                    if monitor and monitor.waitForAbort(0.1):
+                        return
+                    
                     head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)   #Vuelve a leer el.nfo, que ha sido modificado
                     if interval != int(serie.active) or update_next.strftime('%Y-%m-%d') != serie.update_next or update_last.strftime('%Y-%m-%d') != serie.update_last:
                         serie.update_last = update_last.strftime('%Y-%m-%d')
@@ -328,10 +339,22 @@ def check_for_update(overwrite=True):
             #if config.get_setting("search_new_content", "videolibrary") == 1 and update_when_finished:
             if config.is_xbmc() and config.get_setting('cleanlibrary', 'videolibrary', default=False):
                 while xbmc.getCondVisibility('Library.IsScanningVideo()'):      # Se espera a que acabe
-                    time.sleep(1)
+                    if monitor:
+                        if monitor.waitForAbort(1):
+                            break
+                    else:
+                        if xbmc.abortRequested:
+                            break
+                        xbmc.sleep(1000)
                 xbmc.executebuiltin('CleanLibrary(video)')
                 while xbmc.getCondVisibility('Library.IsScanningVideo()'):      # Se espera a que acabe
-                    time.sleep(1)
+                    if monitor:
+                        if monitor.waitForAbort(1):
+                            break
+                    else:
+                        if xbmc.abortRequested:
+                            break
+                        xbmc.sleep(1000)
                 update_when_finished = True
                 config.set_setting('cleanlibrary', False, 'videolibrary')
             if update_when_finished:
@@ -368,16 +391,21 @@ def check_for_update(overwrite=True):
 
 def start(thread=True):
     if thread:
-        t = threading.Thread(target=start, args=[False])
+        t = threading.Thread(target=start, args=[False,])
         t.setDaemon(True)
         t.start()
     else:
-        import time
 
         update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000]
         wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]
         if wait > 0:
-            time.sleep(wait)
+            if monitor:
+                if monitor.waitForAbort(wait/1000):
+                    return
+            else:
+                if xbmc.abortRequested:
+                    return
+                xbmc.sleep(wait)
 
         if config.get_setting("update", "videolibrary") not in [2, 4]:
             if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
@@ -389,9 +417,15 @@ def start(thread=True):
                 check_for_update(overwrite=False)
 
         # Se ejecuta ciclicamente
-        while True:
-            monitor_update()
-            time.sleep(3600)  # cada hora
+        if monitor:
+            while not monitor.abortRequested():
+                monitor_update()
+                if monitor.waitForAbort(3600):  # cada hora
+                    break
+        else:
+            while not xbmc.abortRequested:
+                monitor_update()
+                xbmc.sleep(3600*1000)
 
 
 def scan_after_remote_update(mode):
@@ -401,10 +435,16 @@ def scan_after_remote_update(mode):
         sleep = (60 - minute) * 60                                  # Esperamos hasta la siguiente hora + 15'
         delay = 60 * 15                                             # Esperamos 15'
 
-        if mode == 'start':
-            time.sleep(delay)
+        if mode != 'start':
+            delay += sleep
+            
+        if monitor:
+            if monitor.waitForAbort(delay):
+                return
         else:
-            time.sleep(sleep + delay)
+            if xbmc.abortRequested:
+                return
+            xbmc.sleep(delay*1000)
         
         from platformcode import xbmc_videolibrary
         xbmc_videolibrary.update()
@@ -446,8 +486,6 @@ def monitor_update():
 
 if __name__ == "__main__":
     # Se ejecuta en cada inicio
-    import xbmc
-    import time
 
     # modo adulto:
     # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
@@ -485,19 +523,29 @@ if __name__ == "__main__":
     config.cache_init()
 
     # Actualiza la videoteca de Alfa, con una espera inicial si se ha configurado
-    update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000]
-    wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]
-    if wait > 0:
-        xbmc.sleep(wait)
+    if config.get_setting("update", "videolibrary") not in [0, 2, 4]:
+        update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000]
+        wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]
+        if wait > 0:
+            if monitor:
+                if monitor.waitForAbort(wait/1000):
+                    sys.exit()
+            else:
+                if xbmc.abortRequested:
+                    sys.exit()
+                xbmc.sleep(wait)
 
-    if config.get_setting("update", "videolibrary") not in [2, 4]:
-        if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
-            try:
-                threading.Thread(target=scan_after_remote_update, args=('start',)).start()
-            except:
-                scan_after_remote_update('start')
-        else:
-            check_for_update(overwrite=False)
+        if config.get_setting("update", "videolibrary") not in [0, 2, 4]:
+            if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
+                try:
+                    threading.Thread(target=scan_after_remote_update, args=('start',)).start()
+                except:
+                    scan_after_remote_update('start')
+            else:
+                check_for_update(overwrite=False)
+    
+    if monitor and monitor.waitForAbort(0.1):
+        sys.exit()
     
     # Añade al LOG las variables de entorno necesarias para diagnóstico
     from platformcode import envtal
@@ -508,11 +556,6 @@ if __name__ == "__main__":
     info_popup.autoscan()
 
     # Se ejecuta ciclicamente
-    if config.get_platform(True)['num_version'] >= 14:
-        monitor = xbmc.Monitor()  # For Kodi >= 14
-    else:
-        monitor = None  # For Kodi < 14
-
     if monitor:
         while not monitor.abortRequested():
             monitor_update()
@@ -521,4 +564,4 @@ if __name__ == "__main__":
     else:
         while not xbmc.abortRequested:
             monitor_update()
-            xbmc.sleep(3600)
+            xbmc.sleep(3600*1000)

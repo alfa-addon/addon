@@ -256,17 +256,22 @@ def load_CF_list():
     global alfa_CF_list
     # Dominios que necesitan Cloudscraper
     CF_LIST = list()
-    if not alfa_CF_list or not alfa_caching:
+    try:
         CF_LIST_PATH = os.path.join(config.get_runtime_path(), "resources", "CF_Domains.txt")
-        if os.path.exists(CF_LIST_PATH):
-            with open(CF_LIST_PATH, "rb") as CF_File:
-               CF_LIST = config.decode_var(CF_File.read().splitlines())
-            if alfa_caching:
-               alfa_CF_list = CF_LIST
-               window.setProperty("alfa_CF_list", str(alfa_CF_list))
-    elif alfa_caching:
-        import ast
-        CF_LIST = ast.literal_eval(window.getProperty("alfa_CF_list"))
+        if not alfa_CF_list or not alfa_caching:
+            if os.path.exists(CF_LIST_PATH):
+                with open(CF_LIST_PATH, "rb") as CF_File:
+                   CF_LIST = config.decode_var(CF_File.read().splitlines())
+                if alfa_caching:
+                   alfa_CF_list = CF_LIST
+                   window.setProperty("alfa_CF_list", str(alfa_CF_list))
+        elif alfa_caching:
+            import ast
+            CF_LIST = ast.literal_eval(window.getProperty("alfa_CF_list"))
+    except:
+        if alfa_caching: window.setProperty("alfa_CF_list", "")
+        if os.path.exists(CF_LIST_PATH): os.remove(CF_LIST_PATH)
+        CF_LIST = list()
     
     return CF_LIST
 
@@ -588,6 +593,8 @@ def blocking_error(url, req, proxy_data, opt):
             
     elif data and '200' not in code:
         data = re.sub(r"\n|\r|\t|\s{2,}", "", data)
+        proxy = proxy_stat(opt.get('url_save', ''), opt, proxy_data)
+        if proxy and 'ProxyWeb' in proxy: url += ' / %s' % opt.get('url_save', '')
         logger.error('Error: %s, Url: %s, Datos: %s' % (code, url, data[:500]))
     
     return resp
@@ -606,6 +613,12 @@ def canonical_quick_check(url, opt):
     if url_host and url_host in canonical.get('host_black_list', []) and canonical.get('host_alt', []):
         url = url.replace(url_host, canonical['host_alt'][0])
 
+    if 'btdig' in canonical.get('host', '') and canonical.get('channel', ''):
+        if canonical['host'] in url and canonical.get('host_alt', []):
+            url = url.replace(canonical['host'], canonical['host_alt'][0])
+        canonical['host'] = ''
+        config.set_setting("current_host", canonical['host'], channel=canonical['channel'])
+    
     return url
 
 
@@ -630,9 +643,11 @@ def canonical_check(url, response, req, opt):
     if canonical.get('host', '') and canonical.get('channel', '') and ('hideproxy' in canonical['host'] \
                                  or 'webproxy' in canonical['host'] or 'hidester' in canonical['host'] \
                                  or 'hide' in canonical['host'] or 'croxyproxy' in canonical['host'] \
-                                 or '__cpo=' in canonical['host']):
+                                 or '__cpo=' in canonical['host'] or 'btdig' in canonical['host']):
         config.set_setting("current_host", '', channel=canonical['channel'])
         canonical['host'] = ''
+    
+    if 'btdig' in url: return response
     
     if PY3 and isinstance(data, bytes):
         data = "".join(chr(x) for x in bytes(data))
@@ -662,7 +677,7 @@ def canonical_check(url, response, req, opt):
             if canonical_host and ('hideproxy' in canonical_host \
                               or 'webproxy' in canonical_host or 'hidester' in canonical_host \
                               or 'hide' in canonical_host or 'croxyproxy' in canonical_host \
-                              or '__cpo=' in canonical_host):
+                              or '__cpo=' in canonical_host or 'btdig' in canonical_host):
                 canonical_host = ''
                 continue
             canonical_host = scrapertools.find_single_match(canonical_host, patron_host)
@@ -881,7 +896,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
                 if channel_proxy_list(opt['url_save'], forced_proxy=proxy_data['web_name']) \
                             or channel_proxy_list(opt['url_save'], forced_proxy='ProxyCF'):
                     opt['forced_proxy'] = 'ProxyCF'
-                    url =opt['url_save']
+                    url = opt['url_save']
                     opt['post'] = opt['post_save']
                     if opt.get('CF', True):
                         opt['CF'] = True
@@ -892,7 +907,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
                 else:
                     proxytools.get_proxy_list_method(proxy_init='ProxyWeb',
                                                      error_skip=proxy_data['web_name'])
-                    url =opt['url_save']
+                    url = opt['url_save']
                     opt['post'] = opt['post_save']
 
         else:

@@ -1,7 +1,7 @@
 {
   "id": "supergoku",
   "name": "SuperGoku",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://www.supergoku.com/wp-content/uploads/2017/01/Esfera.png",

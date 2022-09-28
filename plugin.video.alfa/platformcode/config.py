@@ -21,6 +21,8 @@ import xbmcvfs
 import xbmcgui
 
 PLUGIN_NAME = "alfa"
+DEBUG = False
+DEBUG_JSON = DEBUG or False
 
 __settings__ = xbmcaddon.Addon(id="plugin.video.{}".format(PLUGIN_NAME))
 __language__ = __settings__.getLocalizedString
@@ -33,6 +35,7 @@ alfa_settings = {}
 alfa_channels = {}
 alfa_servers = {}
 alfa_no_caching_vars = []
+window = None
 
 try:
     window = xbmcgui.Window(10000)  # Home
@@ -52,6 +55,7 @@ except:
     alfa_settings = {}
     alfa_channels = {}
     alfa_servers = {}
+    window = None
     import traceback
     from platformcode import logger
     logger.error(traceback.format_exc())
@@ -134,6 +138,32 @@ def cache_init():
             window.setProperty("alfa_settings", json.dumps(alfa_settings))
         except:
             pass
+
+
+def cache_reset(action='OFF'):
+    
+    alfa_caching = False
+    if not window: return alfa_caching
+    if not __settings__.getSetting('caching'): return alfa_caching
+    
+    alfa_caching = bool(window.getProperty("alfa_caching"))
+    
+    try:
+        if action == 'OFF': window.setProperty("alfa_caching", '')
+        window.setProperty("alfa_system_platform", '')
+        window.setProperty("alfa_settings", json.dumps({}))
+        window.setProperty("alfa_channels", json.dumps({}))
+        window.setProperty("alfa_servers", json.dumps({}))
+        window.setProperty("alfa_cookies", '')
+        window.setProperty("alfa_CF_list", '')
+        window.setProperty("alfa_colors_file", json.dumps({}))
+        window.setProperty("CAPTURE_THRU_BROWSER_in_use", '')
+        if action == 'ON': window.setProperty("alfa_caching", str(True))
+    except:
+        from platformcode import logger
+        logger.error(traceback.format_exc())
+    
+    return alfa_caching
 
 
 def translatePath(path):
@@ -470,6 +500,7 @@ def get_system_platform():
         alfa_system_platform = platform
         if alfa_caching:
             window.setProperty("alfa_system_platform", alfa_system_platform)
+            if DEBUG: from platformcode import logger; logger.error('SAVE Cache "alfa_system_platform": %s:' % (alfa_system_platform))
 
     return alfa_system_platform
 
@@ -477,7 +508,9 @@ def get_system_platform():
 def get_all_settings_addon(caching_var=True):
     global alfa_caching, alfa_settings
     # Si los settings ya están cacheados, se usan.  Si no, se cargan por el método tradicional
+    if DEBUG: from platformcode import logger
     if alfa_caching and caching_var and json.loads(window.getProperty("alfa_settings")):
+        if DEBUG: logger.error('READ ALL Cached Alfa SETTINGS')
         return json.loads(window.getProperty("alfa_settings")).copy()
 
     # Lee el archivo settings.xml y retorna un diccionario con {id: value}
@@ -526,6 +559,7 @@ def get_all_settings_addon(caching_var=True):
         # ret[_id] = get_setting(_id, caching_var=False)
         ret[_id] = get_setting_values(_id, value, decode_var_=False)
 
+    if DEBUG: logger.error('READ File ALL Alfa SETTINGS')
     alfa_settings = ret.copy()
     alfa_caching = False
     if alfa_settings: alfa_caching = alfa_settings.get('caching', True)
@@ -540,7 +574,9 @@ def get_all_settings_addon(caching_var=True):
         alfa_servers = {}
         window.setProperty("alfa_channels", json.dumps(alfa_channels))
         window.setProperty("alfa_servers", json.dumps(alfa_servers))
+        if DEBUG: logger.error('DROPING ALL Cached SETTINGS')
     window.setProperty("alfa_settings", json.dumps(alfa_settings))
+    if DEBUG: logger.error('SAVE ALL Cached Alfa SETTINGS')
 
     return ret
 
@@ -605,7 +641,7 @@ def open_settings(settings_pre={}):
             xbmc_videolibrary.ask_set_content(2, silent=True)
 
 
-def get_setting(name, channel="", server="", default=None, caching_var=True):
+def get_setting(name, channel="", server="", default=None, caching_var=True, debug=DEBUG):
     global alfa_settings
     """
     Retorna el valor de configuracion del parametro solicitado.
@@ -637,7 +673,8 @@ def get_setting(name, channel="", server="", default=None, caching_var=True):
     if channel:
         # logger.info("get_setting reading channel setting '"+name+"' from channel json")
         from core import channeltools
-        value = channeltools.get_channel_setting(name, channel, default, caching_var=caching_var)
+        debug = False if debug == None else DEBUG_JSON if not debug and DEBUG_JSON else debug
+        value = channeltools.get_channel_setting(name, channel, default, caching_var=caching_var, debug=debug)
         # logger.info("get_setting -> '"+repr(value)+"'")
         return value
 
@@ -645,15 +682,20 @@ def get_setting(name, channel="", server="", default=None, caching_var=True):
     elif server:
         # logger.info("get_setting reading server setting '"+name+"' from server json")
         from core import servertools
-        value = servertools.get_server_setting(name, server, default, caching_var=caching_var)
+        debug = False if debug == None else DEBUG_JSON if not debug and DEBUG_JSON else debug
+        value = servertools.get_server_setting(name, server, default, caching_var=caching_var, debug=debug)
         # logger.info("get_setting -> '"+repr(value)+"'")
         return value
 
     # Global setting
     else:
+        debug = False if debug == None else DEBUG if not debug and DEBUG else debug
+        if debug: from platformcode import logger
         alfa_caching = bool(window.getProperty("alfa_caching"))
         if alfa_caching and caching_var:
             alfa_settings = json.loads(window.getProperty("alfa_settings"))
+            if debug: logger.error('READ Cached SETTING NAME: %s: %s:' \
+                                                                    % (str(name).upper(), alfa_settings.get(name, default)))
             # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
             if not alfa_settings:
                 get_all_settings_addon()
@@ -664,6 +706,8 @@ def get_setting(name, channel="", server="", default=None, caching_var=True):
         else:
             # logger.info("get_setting reading main setting '"+name+"'")
             value = __settings__.getSetting(name)
+            if debug: logger.error('READ File (Cache: %s) SETTING NAME: %s: %s:' \
+                                                                    % (str(alfa_caching and caching_var), str(name).upper(), value))
             if not value:
                 return default
             return get_setting_values(name, value, decode_var_=False)
@@ -693,7 +737,7 @@ def get_setting_values(name, value, decode_var_=True):
             return decode_var(value, decode_var_)
 
 
-def set_setting(name, value, channel="", server=""):
+def set_setting(name, value, channel="", server="", debug=DEBUG):
     global alfa_settings
     """
     Fija el valor de configuracion del parametro indicado.
@@ -721,15 +765,20 @@ def set_setting(name, value, channel="", server=""):
     value_init = value
     if channel:
         from core import channeltools
-        return channeltools.set_channel_setting(name, value, channel)
+        debug = False if debug == None else DEBUG_JSON if not debug and DEBUG_JSON else debug
+        return channeltools.set_channel_setting(name, value, channel, debug=debug)
     elif server:
         from core import servertools
-        return servertools.set_server_setting(name, value, server)
+        debug = False if debug == None else DEBUG_JSON if not debug and DEBUG_JSON else debug
+        return servertools.set_server_setting(name, value, server, debug=debug)
     else:
         try:
+            debug = False if debug == None else DEBUG if not debug and DEBUG else debug
+            if debug: from platformcode import logger
             alfa_caching = bool(window.getProperty("alfa_caching"))
             if alfa_caching:
                 alfa_settings = json.loads(window.getProperty("alfa_settings"))
+                if debug: logger.error('READ Cached SETTING NAME: %s: %s:' % (str(name).upper(), alfa_settings.get(name, None)))
                 # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
                 if not alfa_settings:
                     get_all_settings_addon()
@@ -744,6 +793,7 @@ def set_setting(name, value, channel="", server=""):
                 value = str(value)
 
             __settings__.setSetting(name, value)
+            if debug: logger.error('WRITE File (Cache; %s) SETTING NAME: %s: %s:' % (str(alfa_caching), str(name).upper(), value))
 
             if name == 'caching':
                 if value_init:
@@ -755,13 +805,16 @@ def set_setting(name, value, channel="", server=""):
                 if not alfa_caching:
                     alfa_settings = {}
                     window.setProperty("alfa_settings", json.dumps(alfa_settings))
+                    if debug: logger.error('DROPING Cached SETTINGS: %s' % (str(name).upper(), value_init))
             if alfa_caching and alfa_settings and alfa_settings.get(name, '') != value_init:
                 alfa_settings[name] = value_init
                 window.setProperty("alfa_settings", json.dumps(alfa_settings))
+                if debug: logger.error('SAVE Cached SETTING NAME: %s: %s:' % (str(name).upper(), alfa_settings[name]))
 
         except Exception as ex:
             alfa_settings = {}
             window.setProperty("alfa_settings", json.dumps(alfa_settings))
+            if debug: logger.error('DROPING Cached SETTINGS: %s' % (str(name).upper(), value_init))
             from platformcode import logger
             logger.error("Error al convertir '%s' no se guarda el valor \n%s" % (name, ex))
             return None

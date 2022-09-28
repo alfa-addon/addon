@@ -759,6 +759,8 @@ def findvideos(item):
                                                                                referer=referer, post=post, headers=headers, 
                                                                                s2=False, 
                                                                                item=item, itemlist=itemlist)        # Descargamos la página)        
+
+            #logger.debug("LOCATION: " + (response.headers.get('Location', '') or response.headers.get('__cph', '')))
             #logger.debug("PATRON: " + patron_torrent)
             #logger.debug(data_torrent)
             
@@ -777,8 +779,8 @@ def findvideos(item):
                         return itemlist                                 # si no hay más datos, algo no funciona, pintamos lo que tenemos
             
             # Obtenemos el enlace final
-            if response.headers.get('Location', ''):
-                scrapedurl = response.headers['location']
+            if response.headers.get('Location', '') or response.headers.get('__cph', ''):
+                scrapedurl = response.headers.get('Location', '') or response.headers.get('__cph', '')
             elif 'application' not in response.headers.get('Content-Type', ''):
                 scrapedurl = generictools.convert_url_base64(scrapertools.find_single_match(data_torrent, patron_torrent), host_torrent)
 
