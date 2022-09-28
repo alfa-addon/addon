@@ -12,7 +12,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url)
     if data.code == 404:
-        return False, "[Cloud] El archivo no existe o  ha sido borrado"
+        return False, "[Filemoon] El archivo no existe o  ha sido borrado"
     return True, ""
 
 
@@ -22,9 +22,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = httptools.downloadpage(page_url).data
     enc_data = scrapertools.find_single_match(data, "type='text/javascript'>(eval.*?)?\s+</script>")
     dec_data = jsunpack.unpack(enc_data)
-    sources = 'file:"([^"]+)",label:"([^"]+)"'
+    # sources = 'file:"([^"]+)",label:"([^"]+)"'
+    sources = 'file:"([^"]+)"'
     matches = re.compile(sources, re.DOTALL).findall(dec_data)
-    for url, quality in matches:
-        video_url = url
-        video_urls.append(['tiwi.kiwi [%s]' % quality, video_url])
+    for url in matches:
+        video_urls.append(['[Filemoon] m3u' , url])
     return video_urls

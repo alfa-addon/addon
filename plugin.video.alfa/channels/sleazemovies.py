@@ -24,7 +24,7 @@ def mainlist(item):
     logger.info()
 
     itemlist = list()
-    itemlist.append(item.clone(title="Todas", action="list_all", url=host, thumbnail=get_thumb('all', auto=True)))
+    itemlist.append(item.clone(title="Todas", action="list_all", url=host +"page/2/", thumbnail=get_thumb('all', auto=True)))
     itemlist.append(item.clone(title="Generos", action="genero", url=host, thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(item.clone(title="Buscar", action="search", thumbnail=get_thumb('search', auto=True)))
 
@@ -63,10 +63,10 @@ def list_all(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)  # Eliminamos tabuladores, dobles espacios saltos de linea, etc...
-    patron = '<articleid="post-\d+".*?'
+    patron = '<article id="post-\d+".*?'
     patron += 'h2 class="entry-title"><a href="([^"]+)".*?>([^<]+).*?'
     patron += '<div class="twp-article-post-thumbnail">.*?'
-    patron += 'src="([^?]+).*?'
+    patron += 'data-src="([^"]+)".*?'
     patron += '<p>([^<]+)</p>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle, img, plot in matches:
@@ -99,9 +99,11 @@ def findvideos(item):
     url = "https://www.eroti.ga/player/ajax_sources.php"
     data = httptools.downloadpage(url, post=post).data
     url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace("\/", "/").replace(" ", "%20")
-    url += "|Referer=%s" % item.url
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    # url += "|Referer=%s" % item.url
+    itemlist.append(item.clone(action="play", contentTitle = item.title, url=url))
+    
+    # itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    # itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(item.clone(title = '[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',

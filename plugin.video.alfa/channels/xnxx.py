@@ -105,10 +105,9 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    logger.debug(data)
     patron = ' id="video_\d+".*?'
     patron += '<a href="([^"]+)".*?'
-    patron += '(?:data-src|src)="([^"]+)".*?'
+    patron += 'data-src="([^"]+)".*?'
     patron += 'title="([^"]+)".*?'
     patron += '>([^<]+)<span class="video-hd">.*?'
     patron += '</span>([^<]+)</span>'
@@ -150,7 +149,8 @@ def listados(item):
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (duration, title)
         thumbnail = thumbnail.replace("\/", "/")
-        url = urlparse.urljoin(item.url,url)
+        url = url.replace("\/", "/")
+        url = urlparse.urljoin(host,url)
         plot = ""
         quality = ""
         action = "play"
