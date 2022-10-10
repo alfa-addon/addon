@@ -38,6 +38,10 @@
       {
         "pattern": "https://player.moovies.in/f/([A-z0-9]+)",
         "url": "http://hqq.tv/player/hash.php?hash=\\1"
+      },
+      {
+        "pattern": "https://(?:richhioon|woffxxx|pornjustx).(?:eu|com)/e/([A-z0-9]+)",
+        "url": "http://hqq.tv/player/hash.php?hash=\\1"
       }
 
     ]

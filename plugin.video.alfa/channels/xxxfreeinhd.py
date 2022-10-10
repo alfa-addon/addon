@@ -24,9 +24,19 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['vidlox']
 
-host = 'https://watchxxxfree.xyz/'
+# https://watchxxxfree.xyz/    https://xxxfree.watch/    https://onlyfullporn.video/
 
-# vidlox y netu al primero le cuesta cargar
+host = "https://xxxfree.watch"
+canonical = {
+             'channel': 'xxxfreeinhd', 
+             'host': config.get_setting("current_host", 'xxxfreeinhd', default=''), 
+             'host_alt': ["https://xxxfree.watch"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
+# netu y vidlox
 
 
 def mainlist(item):
@@ -35,11 +45,11 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/?filter=latest"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/?filter=most-viewed"))
-    itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/?filter=longest"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
-    itemlist.append(item.clone(title="Buscar", action="search"))
+    itemlist.append(Item(channel = item.channel,title="Nuevos" , action="lista", url=host + "/?filter=latest"))
+    itemlist.append(Item(channel = item.channel,title="Mas vistos" , action="lista", url=host + "/?filter=most-viewed"))
+    itemlist.append(Item(channel = item.channel,title="Mas largo" , action="lista", url=host + "/?filter=longest"))
+    itemlist.append(Item(channel = item.channel,title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(Item(channel = item.channel,title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -71,7 +81,7 @@ def categorias(item):
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
         scrapedplot = ""
         title = scrapedtitle
-        itemlist.append(item.clone(action="lista", title=title, url=scrapedurl,
+        itemlist.append(Item(channel = item.channel,action="lista", title=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
     return itemlist
 
@@ -81,15 +91,15 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<article id="post-\d+".*?'
+    patron = '<article .*?'
     patron += '<a href="([^"]+)" title="([^"]+)">.*?'
-    patron += '<img data-src="([^"]+)"'
+    patron += 'data-src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail, in matches:
-        title = scrapedtitle
-        thumbnail = scrapedthumbnail + "|https://watchxxxfreeinhd.com/" 
+        title = scrapedtitle.replace("&#8217;", "'").replace("&#8211;", "- ")
+        thumbnail = scrapedthumbnail 
         plot = ""
-        itemlist.append(item.clone(action="findvideos", title=title, contentTitle = title, url=scrapedurl,
+        itemlist.append(Item(channel = item.channel,action="findvideos", title=title, contentTitle = title, url=scrapedurl,
                               thumbnail=thumbnail, plot=plot, fanart=scrapedthumbnail ))
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)">Next')
     if next_page:
@@ -97,7 +107,7 @@ def lista(item):
         if "?filtre=date&cat=0" in item.url: next_page += "?filtre=date&cat=0"
         elif "?display=tube&filtre=views" in item.url: next_page += "?display=tube&filtre=views"
         elif "?display=tube&filtre=rate" in item.url: next_page += "?display=tube&filtre=rate"
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel = item.channel,action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -107,7 +117,7 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     data = scrapertools.find_single_match(data,'<div class="responsive-player">(.*?)</div>')
-    patron = 'data-lazy-src="([^"]+)"'
+    patron = 'src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl in matches:
         if "strdef" in scrapedurl: 
@@ -117,7 +127,7 @@ def findvideos(item):
         if not url.startswith("https"):
             url = "https:%s" % url
         if not "xyz/" in url or not "vid=" in url: #netu
-            itemlist.append(item.clone(action="play", title = "%s", contentTitle= item.title, url=url ))
+            itemlist.append(Item(channel = item.channel,action="play", title = "%s", contentTitle= item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
@@ -135,9 +145,9 @@ def decode_url(txt):
     n = 2
     while n > 0:
         b64_url = scrapertools.find_single_match(data, '\(dhYas638H\("([^"]+)"\)')
-        b64_url = base64.b64decode(b64_url + "=").decode("utf8")
-        b64_url = base64.b64decode(b64_url + "==").decode("utf8")
-        data = b64_url
+        b64_url = base64.b64decode(b64_url)
+        b64_url = base64.b64decode(b64_url)
+        data = b64_url.decode("utf8")
         n -= 1
     url = scrapertools.find_single_match(b64_url, '<iframe src="([^"]+)"')
     url = httptools.downloadpage(url).url

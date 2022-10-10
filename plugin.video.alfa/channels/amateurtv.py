@@ -18,19 +18,19 @@ from core import servertools
 from core import httptools
 from core import jsontools as json
 
-host = 'https://www.amateur.tv'
-hosta = 'https://www.amateur.tv/v3/readmodel/cache/cams/%s/0/50/es'
+host = "https://www.amateur.tv"
+hosta = "%s/v3/readmodel/cache/cams/%s/0/50/es"
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=hosta %"a"))
-    itemlist.append(item.clone(title="Mujer" , action="lista", url=hosta %"w"))
-    itemlist.append(item.clone(title="Parejas" , action="lista", url=hosta %"c"))
-    itemlist.append(item.clone(title="Hombres" , action="lista", url=hosta %"m"))
-    itemlist.append(item.clone(title="Trans" , action="lista", url=hosta %"t"))
-    itemlist.append(item.clone(title="Privado" , action="lista", url=hosta %"p"))
+    itemlist.append(Item(channel = item.channel,title="Destacados" , action="lista", url=hosta % (host,"a")))
+    itemlist.append(Item(channel = item.channel,title="Mujer" , action="lista", url=hosta %(host, "w")))
+    itemlist.append(Item(channel = item.channel,title="Parejas" , action="lista", url=hosta %(host, "c")))
+    itemlist.append(Item(channel = item.channel,title="Hombres" , action="lista", url=hosta %(host, "m")))
+    itemlist.append(Item(channel = item.channel,title="Trans" , action="lista", url=hosta %(host, "t")))
+    itemlist.append(Item(channel = item.channel,title="Privado" , action="lista", url=hosta %(host, "p")))
     return itemlist
 
 
@@ -40,7 +40,6 @@ def lista(item):
     data = httptools.downloadpage(item.url).json
     data = data['cams']
     for elem in data['nodes']:
-        # logger.debug(elem)
         id = elem['id']
         is_on = elem['online']
         thumbnail = elem['imageURL']
@@ -51,14 +50,12 @@ def lista(item):
         title = "%s %s %s" %(name, age, country)
         if not is_on:
             title= "[COLOR red] %s[/COLOR]" % title
-        # if quality:
-            # title = "[COLOR red]HD[/COLOR] %s" % title
-        url = "https://www.amateur.tv/v3/readmodel/show/%s/es" %name
+        url = "%s/v3/readmodel/show/%s/es" %(host, name)
         plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel = item.channel,action=action, title=title, url=url, thumbnail=thumbnail,
                                    plot=plot, fanart=thumbnail, contentTitle=title ))
     count= data['totalCount']
     current_page = scrapertools.find_single_match(item.url, ".*?/(\d+)/50/")
@@ -66,7 +63,7 @@ def lista(item):
     if current_page <= int(count) and (int(count) - current_page) > 50:
         current_page += 50
         next_page = re.sub(r"\d+/50/", "{0}/50/".format(current_page), item.url)
-        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(Item(channel = item.channel,action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -75,8 +72,8 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).json
     url = data['videoTechnologies']['fmp4']
-    url += "|verifypeer=false"
-    itemlist.append(item.clone(action="play", contentTitle = item.title, url=url))
+    url += "|ignore_response_code=True"
+    itemlist.append(Item(channel = item.channel,action="play", contentTitle = item.title, url=url))
     return itemlist
 
 
@@ -85,7 +82,8 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).json
     url = data['videoTechnologies']['fmp4']
-    url += "|verifypeer=false"
-    itemlist.append(item.clone(action="play", contentTitle = item.title, url=url))
+    # url = httptools.downloadpage(url, follow_redirects=False).headers["location"]
+    url += "|ignore_response_code=True"
+    itemlist.append(Item(channel = item.channel,action="play", title= "Directo", contentTitle = item.title, url=url))
     return itemlist
 
