@@ -189,7 +189,6 @@ def episodios(item):
 
 def episodesxseasons(item):
     logger.info()
-
     data = httptools.downloadpage(item.url).data
     itemlist = list()
     infoLabels = item.infoLabels
@@ -197,6 +196,10 @@ def episodesxseasons(item):
     patron  = '(%sepisodio.*?temporada-%s[^"]+).*?' %(host, item.contentSeason)
     patron += 'btn-block">([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
+    if not matches:
+        patron  = '(%sepisodio/.*?%sx[^"]+).*?' %(host, item.contentSeason)
+        patron += 'btn-block">([^<]+)'
+        matches = scrapertools.find_multiple_matches(data, patron)
     if not matches:
         return itemlist
 
