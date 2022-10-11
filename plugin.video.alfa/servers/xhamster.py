@@ -23,5 +23,6 @@ def get_video_url(page_url, video_password):
         url =  url.replace("\/", "/")
         url += "|Referer=%s&verifypeer=false" %page_url
         video_urls.append(["[xhamster] %s" %quality, url])
+    video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls
 

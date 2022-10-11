@@ -54,7 +54,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('div', class_='margin-fix')
+    soup = create_soup(item.url).find('div', class_='box')
     matches = soup.find_all('a')
     for elem in matches:
         url = elem['href']
@@ -85,7 +85,7 @@ def lista(item):
     for elem in matches:
         url = elem['href']
         title = elem['title']
-        thumbnail = elem.img['data-original']
+        thumbnail = elem.img['src']
         time = elem.find('div', class_='duration').text.strip()
         quality = ""
         # quality = elem.find('span', class_='is-720')

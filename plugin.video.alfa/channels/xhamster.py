@@ -118,7 +118,8 @@ def lista(item):
         if "thumb-plug" in elem['class']:
             continue
         url = elem.a['href']
-        title = elem.find('a', class_='video-thumb-info__name role-pop').text.strip() 
+        title = elem.img['alt']
+        # title = elem.find('a', class_='video-thumb-info__name role-pop').text.strip() 
         thumbnail = elem.img['src']
         time = elem.find('div', class_='thumb-image-container__duration').text.strip()
         quality = ""
