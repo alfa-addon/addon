@@ -352,7 +352,7 @@ def findvideos(item):
                 source_result = httptools.downloadpage(source_url, post='key=' + source_key 
                                                     + '&token=' + str(token), headers=source_headers)
                 source_json = source_result.json
-                if source_json["link"]:
+                if source_json.get("link", ''):
                     video_url = base64.b64decode(source_json["link"])
                     # logger.info(video_url)
                     itemlist.append(Item(channel=item.channel, title=option, url=video_url, 
@@ -380,7 +380,7 @@ def findvideos(item):
                     source_result = httptools.downloadpage(source_url, post='key=' + source_key 
                                                         + '&token=' + str(token), headers=source_headers)
                     source_json = source_result.json
-                    if source_json["link"]:
+                    if source_json.get("link", ''):
                         video_url = base64.b64decode(source_json["link"])
                         # logger.info(video_url)
                         itemlist.append(Item(channel=item.channel, title=option, url=video_url, 
@@ -421,7 +421,7 @@ def findvideos(item):
                                                        videoidn + '&tk=' + tokensn, headers=source_headers)
                 if source_result.code == 200:
                     source_json = jsontools.load(source_result.data)
-                    if source_json['urlremoto']: 
+                    if source_json.get('urlremoto', ''): 
                         itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))
         else:
             logger.info("Caso nuevo")      

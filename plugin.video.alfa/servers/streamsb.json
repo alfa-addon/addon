@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:streamsb|sbembed|sbembed1|sbplay\\d+|sbplay|pelistop|tubesb|playersb|watchsb|sbfast|sbfull|viewsb|sbthe|watchmo|sblanh).\\w{2,4}/(?:embed-|d/|e/|play/)?([A-z0-9]+)",
+        "pattern": "(?:streamsb|sbembed|sbembed1|sbplay\\d+|sbplay|pelistop|tubesb|playersb|watchsb|sbfast|sbfull|viewsb|sbthe|watchmo|sblanh|sbanh).\\w{2,4}/(?:embed-|d/|e/|play/)?([A-z0-9]+)",
         "url": "https://streamsb.net/play/\\1"
       },
       {

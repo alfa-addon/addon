@@ -298,7 +298,7 @@ def slugify(title, strict=True, convert=[]):
     title = title.replace("ç", "c")
     title = title.replace("Ç", "C")
     title = title.replace("Ñ", "ñ")
-    if strict: title = title.replace("ñ", "n")
+    title = title.replace("ñ", "n")
     title = title.replace("/", "-")
     title = title.replace("&amp;", "&")
     title = title.replace("&#038;", "&")
@@ -308,7 +308,7 @@ def slugify(title, strict=True, convert=[]):
     
     # Covierte los caracteres sumisnistrados por el usuario y los añade a la lista de conversión
     validchars = "abcdefghijklmnopqrstuvwxyz1234567890- "
-    if not strict: validchars += "()[].ñ"
+    if not strict: validchars += "()[]."
     try:
         for change in convert:
             change_from = change.split('=')[0]

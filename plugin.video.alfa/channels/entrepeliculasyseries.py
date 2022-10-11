@@ -98,10 +98,10 @@ def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None, ignore
 
     if referer:
         response = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, ignore_response_code=ignore_response_code, 
-                                          headers={'Referer': referer}, canonical=canonical)
+                                          headers={'Referer': referer}, canonical=canonical, CF=False)
     else:
         response = httptools.downloadpage(url, forced_proxy_opt=forced_proxy_opt, ignore_response_code=ignore_response_code, 
-                                          canonical=canonical)
+                                          canonical=canonical, CF=False)
     
     data = response.data or ''
     if response.proxy__: under_proxy = True
@@ -313,7 +313,10 @@ def findvideos(item):
     soup = create_soup(item.url, forced_proxy_opt=forced_proxy_opt)
     if '-Película-' in item.infoLabels.get('tagline', ''): del item.infoLabels['tagline']
 
-    matches = soup.find_all("div", class_=re.compile(r"option-lang"))
+    try:
+        matches = soup.find_all("div", class_=re.compile(r"option-lang"))
+    except:
+        matches = []
 
     for elem in matches:
         lang = elem.h3.text.lower().strip()
@@ -333,7 +336,7 @@ def findvideos(item):
             itemlist.append(Item(channel=item.channel, title=server.capitalize(), url=url, server=server, action="play",
                                  language=IDIOMAS.get(lang, 'LAT'), quality=quality.capitalize(), infoLabels=item.infoLabels))
 
-    itemlist = sorted(itemlist, key=lambda it: it.language)
+    if itemlist: itemlist = sorted(itemlist, key=lambda it: it.language)
 
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
@@ -402,7 +405,7 @@ def play(item):
     base_url = "%sr.php" % host
     
     url = httptools.downloadpage(base_url, post=post, headers=headers, follow_redirects=False, 
-                                 forced_proxy_opt=forced_proxy_opt).headers.get("location", "")
+                                 forced_proxy_opt=forced_proxy_opt, CF=False).headers.get("location", "")
     
     if not url.startswith("http"):
         url = "https:" + url

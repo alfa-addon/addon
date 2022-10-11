@@ -29,24 +29,31 @@ PATH_BL = filetools.join(config.get_runtime_path(), 'resources', 'cf_assistant_b
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 
 
-def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, blacklist=True, headers=None, 
+def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDelay=15, retry=False, blacklist=True, headers=None, 
            retryIfTimeout=True, cache=True, clearWebCache=False, mute=True, alfa_s=True, elapsed=0, **kwargs):
-    blacklist_clear = True
-    ua_headers = False
-    if not elapsed: elapsed = time.time()
-        
-    if not resp:
-        resp = {
-                'status_code': 503, 
-                'headers': {}
-               }
-        resp = type('HTTPResponse', (), resp)
     
-    if not alfa_s: logger.debug("ERROR de descarga: %s" % resp.status_code)
     
     url = self.cloudscraper.user_url
     opt = self.cloudscraper.user_opt
+    if timeout < 15: timeout = 20
+    if timeout + extraPostDelay > 35: timeout = 20
+    blacklist_clear = True
+    ua_headers = False
+    if not elapsed: elapsed = time.time()
+    if debug or CF_testing or opt.get('CF_testing', False): alfa_s = False
+
+    if not alfa_s: logger.debug("ERROR de descarga: %s" % resp.status_code)
+    resp.status_code = 503
     
+    if CF_testing or opt.get('CF_testing', False):
+        CF_testing = debug = retry = True
+        timeout = extraPostDelay = 1
+        resp.status_code = 403 if not opt.get('cf_v2', False) else 403
+        resp.headers.update({'Server': 'Alfa'})
+
+    if not opt.get('CF_assistant', True) or opt.get('cf_v2', False):
+        return resp
+
     domain_full = urlparse.urlparse(url).netloc
     domain = domain_full
     pcb = base64.b64decode(config.get_setting('proxy_channel_bloqued')).decode('utf-8')
@@ -55,9 +62,6 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
                           or httptools.TEST_ON_AIR or domain in pcb:
         blacklist_clear = False
         blacklist = False
-    
-    if timeout < 15: timeout = 20
-    if timeout + extraPostDelay > 35: timeout = 20
 
     if blacklist and not retry: 
         blacklist_clear = check_blacklist(domain_full)
@@ -140,7 +144,7 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
 
             if isinstance(data_assistant, dict) and data_assistant.get("cookies", None):
 
-                logger.debug("Lista cookies: %s - %s" % (data_assistant.get("cookies", []), time.time() - elapsed))
+                logger.debug("Lista cookies: %s - %s" % (data_assistant.get("cookies", []), str(time.time() - elapsed)))
                 for cookie in data_assistant["cookies"]:
                     cookieslist = cookie.get("cookiesList", '')
                     val = scrapertools.find_single_match(cookieslist, 'cf_clearance=([A-z0-9_\-\.]+)')
@@ -166,6 +170,7 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
                                 freequent_data[1] += 'OK_R'
                             freequency(freequent_data)
 
+                            resp.status_code = 403
                             return resp
 
                     else:
@@ -174,13 +179,13 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
                     freequent_data[1] += 'NO-CFC'
             else:
                 freequent_data[1] += 'ERR'
-                logger.error("No Cookies o Error en conexión con Alfa Assistant %s" % time.time() - elapsed)
+                logger.error("No Cookies o Error en conexión con Alfa Assistant %s" % str(time.time() - elapsed))
 
             if not retry:
                 config.set_setting('cf_assistant_ua', '')
                 logger.debug("No se obtuvieron resultados, reintentando...")
                 return get_cl(self, resp, timeout=timeout-5, extraPostDelay=extraPostDelay, 
-                            retry=True, blacklist=True, retryIfTimeout=False, 
+                            debug=debug, CF_testing=CF_testing, retry=True, blacklist=True, retryIfTimeout=False, 
                             cache=cache, clearWebCache=clearWebCache, 
                             elapsed=elapsed, headers=headers, mute=mute, alfa_s=False, **kwargs)
         elif host == 'a':
@@ -195,15 +200,12 @@ def get_cl(self, resp, timeout=20, debug=False, extraPostDelay=15, retry=False, 
         bl_data[domain_full] = time.time()
         if not debug: filetools.write(PATH_BL, jsontools.dump(bl_data))
 
-    msg = 'Detected a Cloudflare version 2 Captcha challenge,\
-        This feature is not available in the opensource (free) version.'
-    resp.status_code = msg
-    
-    raise CloudflareChallengeError(msg)
+    return resp
 
 
 def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False, blacklist=True, headers=None, 
-               retryIfTimeout=True, cache=False, clearWebCache=False, mute=True, alfa_s=False, elapsed=0, **kwargs):
+               retryIfTimeout=True, cache=False, clearWebCache=False, mute=True, alfa_s=True, elapsed=0, **kwargs):
+    
     blacklist_clear = True
     data = ''
     source = False
@@ -229,6 +231,8 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
     resp.status_code = 429
     
     opt = kwargs.get('opt', {})
+    if not opt.get('CF_assistant', True):
+        return resp
     
     domain_full = urlparse.urlparse(url).netloc
     domain = domain_full
@@ -258,7 +262,7 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
             time.sleep(2)
             check_assistant = alfa_assistant.open_alfa_assistant(getWebViewInfo=True, retry=True, assistantLatestVersion=False)
             logger.debug("Reintento en acceder al Assistant: %s - %s" \
-                         % ('OK' if isinstance(check_assistant, dict) else 'ERROR', time.time() - elapsed))
+                         % ('OK' if isinstance(check_assistant, dict) else 'ERROR', str(time.time() - elapsed)))
             
         if check_assistant and isinstance(check_assistant, dict):
 

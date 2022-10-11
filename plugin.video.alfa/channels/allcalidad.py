@@ -113,7 +113,7 @@ def peliculas(item):
     for datos in matches:
         url = scrapertools.find_single_match(datos, 'href="([^"]+)')
         titulo = scrapertools.htmlclean(scrapertools.find_single_match(datos, 'short_header">([^<]+)').strip())
-        if "Premium" in titulo or "Premium" in titulo or "Premium" in titulo:
+        if "Premium" in titulo or "Suscripci" in titulo:
             continue
         datapostid = scrapertools.find_single_match(datos, 'data-postid="([^"]+)')
         thumbnail = scrapertools.find_single_match(datos, 'data-src="([^"]+)')
@@ -150,6 +150,14 @@ def findvideos(item):
         if url1 in encontrado or "youtube.com" in url1 or "search" in url1 or 'salaload.com' in url1 or not "//" in url1:
             continue
         if not url1.startswith("http"): url1 = "http://" + url1
+        if "hackplayer.org" in url1:
+            id = scrapertools.find_single_match(url1, "id=(\w+)")
+            token = scrapertools.find_single_match(url1, "token=(\w+)")
+            post = {"id" : id, "token" : token}
+            dd = httptools.downloadpage("https://hackplayer.org/r.php", post = post, allow_redirect=False).url
+            v = scrapertools.find_single_match(dd, "t=(\w+)")
+            dd = httptools.downloadpage("https://cinestart.net/vr.php?v=%s" %v).json
+            url1 = dd["file"]
         encontrado.append(url1)
         itemlist.append(Item(
                         channel=item.channel,
@@ -161,6 +169,7 @@ def findvideos(item):
                         url=url1
                        ))
 
+    
     patron = '<a href="([^"]+)" class="bits-download btn btn-xs.*?<span>([^<]+)</span>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, srv in matches:
@@ -180,7 +189,7 @@ def findvideos(item):
             if "torrent" in srv.lower():
                 new_item.server = "Torrent"
             itemlist.append(new_item)
-
+    
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 

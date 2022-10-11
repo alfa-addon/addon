@@ -49,7 +49,7 @@ class Filter(object):
     def __get_data(self, item, global_filter_lang_id):
 
         dict_filtered_shows = jsontools.get_node_from_file(item.channel, TAG_TVSHOW_FILTER)
-        tvshow = item.show.lower().strip()
+        tvshow = normalize(item.show)
 
         global_filter_language = config.get_setting(global_filter_lang_id, item.channel)
 
@@ -61,7 +61,6 @@ class Filter(object):
 
         # opcion general "no filtrar"
         elif global_filter_language != 0:
-            from core import channeltools
             list_controls, dict_settings = channeltools.get_channel_controls_settings(item.channel)
 
             for control in list_controls:
@@ -80,6 +79,14 @@ class Filter(object):
 
     def __str__(self):
         return "{'%s'}" % self.result
+
+
+def normalize(title):
+    from core.scrapertools import slugify
+
+    title = slugify(title, strict=False).strip()
+    
+    return title
 
 
 def access():
@@ -272,7 +279,7 @@ def get_link(list_item, item, list_language, list_quality=None, global_filter_la
 
     if not filter_global:
         filter_global = Filter(item, global_filter_lang_id).result
-    logger.debug("filter: '%s' datos: '%s'" % (item.show, filter_global))
+    logger.debug("filter: '%s' datos: '%s'" % (normalize(item.show).title(), filter_global))
 
     if filter_global and filter_global.active:
         list_item, quality_count, language_count = \
@@ -326,7 +333,7 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
     language_count = 0
 
     _filter = Filter(item, global_filter_lang_id).result
-    logger.debug("filter: '%s' datos: '%s'" % (item.show, _filter))
+    logger.debug("filter: '%s' datos: '%s'" % (normalize(item.show).title(), _filter))
 
 
     if _filter and _filter.active:
@@ -384,7 +391,7 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
                 msg_lang = 's %s ni %s' % (first_lang.upper(), second_lang.upper())
             
             new_itemlist.append(Item(channel=__channel__, action="no_filter", list_item_all=list_item_all,
-                                     show=item.show,
+                                     show=normalize(item.show).title(),
                                      title="[COLOR %s]No hay elementos con idioma%s%s, pulsa para mostrar "
                                            "sin filtro[/COLOR]"
                                            % (COLOR.get("error", "auto"), msg_lang, msg_quality_allowed),
@@ -492,11 +499,14 @@ def config_item(item):
                         item.list_language = context['list_language'] or []
                     if 'list_quality' in context:
                         item.list_quality = context['list_quality'] or []
+                    if item.from_channel in ['videolibrary']:
+                        item.from_channel = item.contentChannel
+                        context['from_channel'] = item.from_channel
     
     # OBTENEMOS LOS DATOS DEL JSON
     dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
 
-    tvshow = item.show.lower().strip()
+    tvshow = normalize(item.show)
     default_lang = ''
 
     channel_parameters = channeltools.get_channel_parameters(item.from_channel)
@@ -519,9 +529,9 @@ def config_item(item):
         active = True
         custom_button = {'visible': False}
         allow_option = False
-        if item.show.lower().strip() in dict_series:
+        if tvshow in dict_series:
             allow_option = True
-            active = dict_series.get(item.show.lower().strip(), {}).get(TAG_ACTIVE, False)
+            active = dict_series.get(tvshow, {}).get(TAG_ACTIVE, False)
             custom_button = {'label': 'Borrar', 'function': 'delete', 'visible': True, 'close': True}
 
         list_controls = []
@@ -576,7 +586,7 @@ def config_item(item):
             # concatenamos list_controls con list_controls_calidad
             list_controls.extend(list_controls_calidad)
 
-        title = "Filtrado de enlaces para: [COLOR %s]%s[/COLOR]" % (COLOR.get("selected", "auto"), item.show)
+        title = "Filtrado de enlaces para: [COLOR %s]%s[/COLOR]" % (COLOR.get("selected", "auto"), tvshow.title())
 
         platformtools.show_channel_settings(list_controls=list_controls, callback='save', item=item,
                                             caption=title, custom_button=custom_button)
@@ -587,11 +597,11 @@ def delete(item, dict_values):
 
     if item:
         dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
-        tvshow = item.show.strip().lower()
+        tvshow = normalize(item.show)
 
         heading = "¿Está seguro que desea eliminar el filtro?"
         line1 = "Pulse 'Si' para eliminar el filtro de [COLOR %s]%s[/COLOR], pulse 'No' o cierre la ventana para " \
-                "no hacer nada." % (COLOR.get("selected", "auto"), item.show.strip())
+                "no hacer nada." % (COLOR.get("selected", "auto"), tvshow.title())
 
         if platformtools.dialog_yesno(heading, line1) == 1:
             lang_selected = dict_series.get(tvshow, {}).get(TAG_LANGUAGE, "")
@@ -606,7 +616,7 @@ def delete(item, dict_values):
                 message = "Error al guardar en disco"
                 sound = True
 
-            heading = "%s [%s]" % (item.show.strip(), lang_selected)
+            heading = "%s [%s]" % (tvshow.title(), lang_selected)
             platformtools.dialog_notification(heading, message, sound=sound)
 
             if item.from_action in ["findvideos", "play", "no_filter"]:  # 'no_filter' es el mismo caso que L#601
@@ -630,9 +640,9 @@ def save(item, dict_data_saved):
         if item.from_channel == "videolibrary":
             item.from_channel = item.contentChannel
         dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
-        tvshow = item.show.strip().lower()
+        tvshow = normalize(item.show)
 
-        logger.info("Se actualiza los datos")
+        logger.info("Se actualiza los datos de: %s" % tvshow)
 
         list_quality = []
         for _id, value in list(dict_data_saved.items()):
@@ -640,7 +650,7 @@ def save(item, dict_data_saved):
                 list_quality.append(_id.lower())
 
         lang_selected = item.list_language[dict_data_saved[TAG_LANGUAGE]]
-        dict_filter = {TAG_NAME: item.show, TAG_ACTIVE: dict_data_saved.get(TAG_ACTIVE, True),
+        dict_filter = {TAG_NAME: tvshow.title(), TAG_ACTIVE: dict_data_saved.get(TAG_ACTIVE, True),
                        TAG_LANGUAGE: lang_selected, TAG_QUALITY_ALLOWED: list_quality}
         dict_series[tvshow] = dict_filter
 
@@ -653,7 +663,7 @@ def save(item, dict_data_saved):
             message = "Error al guardar en disco"
             sound = True
 
-        heading = "%s [%s]" % (item.show.strip(), lang_selected)
+        heading = "%s [%s]" % (tvshow.title(), lang_selected)
         platformtools.dialog_notification(heading, message, sound=sound)
 
         if item.from_action in ["findvideos", "play", "no_filter"]:  # 'no_filter' es el mismo caso que L#601
@@ -669,12 +679,14 @@ def save_from_context(item):
     """
     logger.info()
 
+    if item.from_channel == "videolibrary":
+        item.from_channel = item.contentChannel
     dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
-    tvshow = item.show.strip().lower()
+    tvshow = normalize(item.show)
 
     language = item.language[0] if isinstance(item.language, list) else item.language
     
-    dict_filter = {TAG_NAME: item.show, TAG_ACTIVE: True, TAG_LANGUAGE: language, TAG_QUALITY_ALLOWED: []}
+    dict_filter = {TAG_NAME: tvshow.title(), TAG_ACTIVE: True, TAG_LANGUAGE: language, TAG_QUALITY_ALLOWED: []}
     dict_series[tvshow] = dict_filter
 
     result, json_data = jsontools.update_node(dict_series, item.from_channel, TAG_TVSHOW_FILTER)
@@ -686,7 +698,7 @@ def save_from_context(item):
         message = "Error al guardar en disco"
         sound = True
 
-    heading = "%s [%s]" % (item.show.strip(), language)
+    heading = "%s [%s]" % (tvshow.title(), language)
     platformtools.dialog_notification(heading, message, sound=sound)
 
     if item.from_action in ["findvideos", "play", "no_filter"]:  # 'no_filter' es el mismo caso que L#601
@@ -703,11 +715,13 @@ def delete_from_context(item):
     logger.info()
 
     # venimos desde get_links y no se ha obtenido ningún resultado, en menu contextual y damos a borrar
-    if item.to_channel != "":
+    if item.to_channel:
         item.from_channel = item.to_channel
+    if item.from_channel == "videolibrary":
+        item.from_channel = item.contentChannel
 
     dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
-    tvshow = item.show.strip().lower()
+    tvshow = normalize(item.show)
 
     lang_selected = dict_series.get(tvshow, {}).get(TAG_LANGUAGE, "")
     dict_series.pop(tvshow, None)
@@ -721,7 +735,7 @@ def delete_from_context(item):
         message = "Error al guardar en disco"
         sound = True
 
-    heading = "%s [%s]" % (item.show.strip(), lang_selected)
+    heading = "%s [%s]" % (tvshow.title(), lang_selected)
     platformtools.dialog_notification(heading, message, sound=sound)
 
     if item.from_action in ["findvideos", "play", "no_filter"]:  # 'no_filter' es el mismo caso que L#601

@@ -17,7 +17,7 @@ media_path = os.path.join(config.get_runtime_path(), "resources/skins/Default/me
 menu_settings_path = os.path.join(config.get_data_path(), "settings_channels", 'menu_settings_data.json')
 
 if os.path.exists(menu_settings_path):
-    menu_node = jsontools.get_node_from_file('menu_setting_data.json', 'menu')
+    menu_node = jsontools.get_node_from_file('menu_settings_data.json', 'menu')
 else:
     menu_node = {'categoria actual':config.get_setting('category')}
     jsontools.update_node(menu_node, 'menu_settings_data.json', "menu")

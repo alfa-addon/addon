@@ -8,7 +8,8 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import re
-from core import httptools
+import traceback
+
 from core.item import Item
 from core import servertools
 from core import scrapertools
@@ -36,6 +37,7 @@ canonical = {
              'host': config.get_setting("current_host", 'poseidonhd', default=''), 
              'host_alt': ["https://tekilaz.co/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_stat': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -172,20 +174,26 @@ def play(item):
     logger.info()
 
     itemlist = list()
+    kwargs = {'soup': False, 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': -1, 
+              'CF': False, 'CF_assistant': False, 'canonical': {}}
+    
     try:
         data = AlfaChannel.create_soup(item.url, forced_proxy_opt=forced_proxy_opt).find("input")["value"]
         base_url = "%sr.php" % host
         post = {"data": data}
-        url = httptools.downloadpage(base_url, post=post, forced_proxy_opt=forced_proxy_opt).url
+        url = AlfaChannel.create_soup(base_url, post=post, forced_proxy_opt=forced_proxy_opt, **kwargs).url
+        if not url: return itemlist
+        
         if "fs.%s" % host.replace("https://", "") in url:
             api_url = "%sr.php" % host.replace("https://", "https://fs.")
             v_id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
             post = {"h": v_id}
-            url = httptools.downloadpage(api_url, post=post, forced_proxy_opt=forced_proxy_opt).url
+            url = AlfaChannel.create_soup(api_url, post=post, forced_proxy_opt=forced_proxy_opt, **kwargs).url
+        
         itemlist.append(item.clone(url=url, server=""))
         itemlist = servertools.get_servers_itemlist(itemlist)
     except:
-        pass
+        logger.error(traceback.format_exc())
 
     return itemlist
 

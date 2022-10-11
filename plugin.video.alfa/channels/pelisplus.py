@@ -189,7 +189,6 @@ def episodios(item):
 
 def episodesxseasons(item):
     logger.info()
-
     data = httptools.downloadpage(item.url).data
     itemlist = list()
     infoLabels = item.infoLabels
@@ -197,6 +196,10 @@ def episodesxseasons(item):
     patron  = '(%sepisodio.*?temporada-%s[^"]+).*?' %(host, item.contentSeason)
     patron += 'btn-block">([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
+    if not matches:
+        patron  = '(%sepisodio/.*?%sx[^"]+).*?' %(host, item.contentSeason)
+        patron += 'btn-block">([^<]+)'
+        matches = scrapertools.find_multiple_matches(data, patron)
     if not matches:
         return itemlist
 
@@ -283,6 +286,14 @@ def findvideos(item):
 
 def play(item):
     logger.info()
+    if "cinestart" in item.url:
+        id = scrapertools.find_single_match(item.url, "id=(\w+)")
+        token = scrapertools.find_single_match(item.url, "token=(\w+)")
+        post = {"id" : id, "token" : token}
+        dd = httptools.downloadpage("https://cinestart.streams3.com/r.php", post = post, allow_redirect=False).url
+        v = scrapertools.find_single_match(dd, "t=(\w+)")
+        dd = httptools.downloadpage("https://cinestart.net/vr.php?v=%s" %v).json
+        item.url = dd["file"]
     if "apialfa.tomatomatela.com" in item.url:
         data = httptools.downloadpage(item.url).data
         hostx = "https://apialfa.tomatomatela.com/ir/"
