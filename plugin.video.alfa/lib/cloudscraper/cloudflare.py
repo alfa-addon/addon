@@ -176,22 +176,22 @@ class Cloudflare():
             )
 
         if self.is_New_Captcha_Challenge(resp):
-            return cf_assistant.get_cl(self, resp)
-            """
+            resp = cf_assistant.get_cl(self, resp)
+            if resp.status_code <= 403: return False
+            
             self.cloudscraper.simpleException(
                 CloudflareChallengeError,
                 'Detected a Cloudflare version 2 Captcha challenge, This feature is not available in the opensource (free) version.'
             )
-            """
 
         if self.is_New_IUAM_Challenge(resp):
-            return cf_assistant.get_cl(self, resp)
-            """
+            resp = cf_assistant.get_cl(self, resp)
+            if resp.status_code <= 403: return False
+            
             self.cloudscraper.simpleException(
                 CloudflareChallengeError,
                 'Detected a Cloudflare version 2 challenge, This feature is not available in the opensource (free) version.'
             )
-            """
 
         if self.is_Captcha_Challenge(resp) or self.is_IUAM_Challenge(resp):
             if self.cloudscraper.debug:

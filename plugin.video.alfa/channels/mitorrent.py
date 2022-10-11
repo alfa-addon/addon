@@ -32,7 +32,8 @@ canonical = {
              'channel': 'mitorrent', 
              'host': config.get_setting("current_host", 'mitorrent', default=''), 
              'host_alt': ['https://mitorrent.me/'], 
-             'host_black_list': ['https://mitorrent.eu/', 'https://mitorrent.org/'], 
+             'host_black_list': ['https://startgaming.net/', 'https://mitorrent.eu/', 'https://mitorrent.org/'], 
+             
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -368,6 +369,7 @@ def listado(item):                                                              
 
     #logger.debug(item)
     
+    black_list = ['netflix', 'hbo']
     curr_page = 1                                                               # Página inicial
     last_page = 99999                                                           # Última página web
     last_page_print = 1                                                         # Última página inicial, para píe de página
@@ -497,12 +499,12 @@ def listado(item):                                                              
             cnt_match += 1
             
             title = scrapedtitle
-
+            if [black for black in black_list if black.lower() in title.lower()]: continue
             title = scrapertools.remove_htmltags(title).rstrip('.')             # Removemos Tags del título
             url = scrapedurl
-            
+
             title_subs = []                                                     #creamos una lista para guardar info importante
-            
+
             # Slugify, pero más light
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
                     .replace("ó", "o").replace("ú", "u").replace("ü", "u")\

@@ -717,7 +717,7 @@ def post_tmdb_listado(item, itemlist):
     convert = ['.=', '-= ', ':=', '&= ', '  = ', "'='"]
     video_list_str = scrapertools.slugify(str(video_list), strict=False, convert=convert)
     #logger.debug(video_list)
-    #logger.debug(video_list)
+    #logger.debug(video_list_str)
     
     # Pasada por TMDB a Serie, para datos adicionales, y mejorar la experiencia en Novedades
     if len(itemlist) > 0 and (not itemlist[-1].infoLabels['temporada_nombre'] or not itemlist[-1].infoLabels['number_of_seasons']) \
@@ -988,10 +988,12 @@ def post_tmdb_listado(item, itemlist):
             else:
                 base_name = item_local.contentSerieName
             base_name = filetools.validate_path(base_name.replace('/', '-').replace('  ', ' '))
+            base_name_slugify = scrapertools.slugify(base_name, strict=False, convert=convert)
             if config.get_setting("lowerize_title", "videolibrary") == 0:
                 base_name = base_name.lower()
 
-            item_local.video_path = "%s [%s]" % (base_name, id_tmdb) if "%s [%s]" % (base_name, id_tmdb) in video_list_str \
+            item_local.video_path = "%s [%s]" % (base_name, id_tmdb) if "'%s [%s]" % (base_name, id_tmdb) in video_list_str \
+                                    or "'%s [%s]" % (base_name_slugify, id_tmdb) in video_list_str \
                                     else "%s [tmdb_%s]" % (base_name, item_local.infoLabels['tmdb_id'])
             item_local.url_tvshow = item_local.url
             item_local.unify_extended = True
@@ -999,6 +1001,7 @@ def post_tmdb_listado(item, itemlist):
                 season_episode = '%sx%s.strm' % (str(season), str(episode).zfill(2))
             if check_marks_in_videolibray(item_local, strm=season_episode):
                 item_local.infoLabels["playcount"] = 1
+            
             if item_local.video_path:
                 item_local = context_for_videolibray(item_local)
                 en_videoteca = '(V)-'
@@ -1516,7 +1519,7 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
             x = 0
             for _url, _title, _quality in matches_btdigg:
                 url = _url
-                quality = _quality
+                quality = _quality.replace('creeener', 'creener')
                 
                 title = _title.strip()
                 title = re.sub(r'(?i)castellano|español|ingl.s\s*|english\s*|calidad|de\s*la\s*serie|spanish|\w*scarga\w*\s*\w+\-\w+', '', title)
@@ -2308,6 +2311,10 @@ def post_tmdb_findvideos(item, itemlist, headers={}):
     
     format_tmdb_id(item)
     format_tmdb_id(itemlist)
+    if item.contentType != 'movie' and item.nfo: 
+        item = context_for_videolibray(item)
+        if item.nfo and not item.video_path:
+            item.video_path = filetools.basename(filetools.dirname(item.nfo))
 
     #Restauramos la información de max num. de episodios por temporada despues de TMDB
     try:
@@ -2667,37 +2674,38 @@ def check_marks_in_videolibray(item, strm='', video_list_init=False):
 def context_for_videolibray(item):
     logger.info()
 
-    if not item.video_path:
-        return item
+    if item.video_path:
 
-    if item.contentType == 'tvshow':
-        poner_marca = config.get_localized_string(60021)
-        quitar_marca = config.get_localized_string(60020)
-    elif item.contentType == 'season':
-        poner_marca = config.get_localized_string(60029)
-        quitar_marca = config.get_localized_string(60028)
-    else:
-        poner_marca = config.get_localized_string(60033)
-        quitar_marca = config.get_localized_string(60032)
+        if item.contentType == 'tvshow':
+            poner_marca = config.get_localized_string(60021)
+            quitar_marca = config.get_localized_string(60020)
+        elif item.contentType == 'season':
+            poner_marca = config.get_localized_string(60029)
+            quitar_marca = config.get_localized_string(60028)
+        else:
+            poner_marca = config.get_localized_string(60033)
+            quitar_marca = config.get_localized_string(60032)
 
-    context = [{"title": quitar_marca,
-                "action": "mark_video_as_watched",
-                "channel": "videolibrary",
-                "playcount": 0},
-               {"title": poner_marca,
-                "action": "mark_video_as_watched",
-                "channel": "videolibrary",
-                "playcount": 1},
-               {"title": config.get_localized_string(70269),
-                "action": "update_tvshow",
-                "channel": "videolibrary"}]
+        context = [{"title": quitar_marca,
+                    "action": "mark_video_as_watched",
+                    "channel": "videolibrary",
+                    "playcount": 0},
+                   {"title": poner_marca,
+                    "action": "mark_video_as_watched",
+                    "channel": "videolibrary",
+                    "playcount": 1}]
     
-    if not item.context: item.context = []
-    if not isinstance(item.context, list):
-        item.context = item.context.replace('["', '').replace('"]', '').replace("['", "").replace("']", "").split("|")
-    for cont in context:
-        if cont['title'] in str(item.context): continue
-        item.context += [cont]
+    if item.video_path or (item.contentType in ['episode'] and item.nfo):
+        context = [{"title": config.get_localized_string(70269),
+                    "action": "update_tvshow",
+                    "channel": "videolibrary"}]
+    
+        if not item.context: item.context = []
+        if not isinstance(item.context, list):
+            item.context = item.context.replace('["', '').replace('"]', '').replace("['", "").replace("']", "").split("|")
+        for cont in context:
+            if cont['title'] in str(item.context): continue
+            item.context += [cont]
 
     return item
 

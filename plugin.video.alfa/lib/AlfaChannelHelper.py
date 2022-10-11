@@ -5,6 +5,7 @@
 # -*- By the Alfa Develop Group -*-
 
 import re
+import traceback
 
 from core import httptools
 from core import scrapertools
@@ -32,16 +33,19 @@ class AlfaChannelHelper:
         """
         :param url: url destino
         :param kwargs: parametros que se usan en donwloadpage
-        :return: objeto soup
+        :return: objeto soup o response sino soup
         """
 
-        kwargs["soup"] = True
-        kwargs["add_referer"] = True
-        kwargs["ignore_response_code"] = True
-        kwargs["canonical"] = self.canonical
+        if "soup" not in kwargs: kwargs["soup"] = True
+        if "add_referer" not in kwargs: kwargs["add_referer"] = True
+        if "ignore_response_code" not in kwargs: kwargs["ignore_response_code"] = True
+        if "canonical" not in kwargs: kwargs["canonical"] = self.canonical
         
         response = httptools.downloadpage(url, **kwargs)
-        soup = response.soup or {}
+        if kwargs.get("soup", {}):
+            soup = response.soup or {}
+        else:
+            soup = response
         if response.host:
             self.doo_url = self.doo_url.replace(self.host, response.host)
             self.host = response.host
@@ -118,13 +122,17 @@ class DooPlay(AlfaChannelHelper):
         itemlist = list()
         block = list()
 
-        soup = self.create_soup(item.url)
+        try:
+            soup = self.create_soup(item.url)
 
-        if soup.find("div", id="archive-content"):
-            block = soup.find("div", id="archive-content")
-        elif soup.find("div", class_="content"):
-            block = soup.find("div", class_="content")
-        matches = block.find_all("article", class_="item")
+            if soup.find("div", id="archive-content"):
+                block = soup.find("div", id="archive-content")
+            elif soup.find("div", class_="content"):
+                block = soup.find("div", class_="content")
+            matches = block.find_all("article", class_="item")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
 
         if not matches:
             return itemlist
@@ -193,14 +201,21 @@ class DooPlay(AlfaChannelHelper):
         itemlist = list()
         matches = list()
 
-        soup = self.create_soup(item.url)
+        try:
+            soup = self.create_soup(item.url)
 
-        if menu_id:
-            matches = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
-        elif section.lower() == "genres":
-            matches = soup.find("ul", class_="genres")
-        elif section.lower() == "year":
-            matches = soup.find("ul", class_="releases")
+            if menu_id:
+                matches = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
+            elif section.lower() == "genres":
+                matches = soup.find("ul", class_="genres")
+            elif section.lower() == "year":
+                matches = soup.find("ul", class_="releases")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
 
         for elem in matches.find_all("li"):
             url = elem.a["href"]
@@ -227,12 +242,19 @@ class DooPlay(AlfaChannelHelper):
     def seasons(self, item, action="episodesxseason", post=None, postprocess=None):
         itemlist = list()
 
-        if post:
-            soup = self.create_soup(self.doo_url, post=post)
-        else:
-            soup = self.create_soup(item.url)
+        try:
+            if post:
+                soup = self.create_soup(self.doo_url, post=post)
+            else:
+                soup = self.create_soup(item.url)
 
-        matches = soup.find("div", id="seasons").find_all("div", class_="se-c")
+            matches = soup.find("div", id="seasons").find_all("div", class_="se-c")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
 
         infolabels = item.infoLabels
 
@@ -263,12 +285,19 @@ class DooPlay(AlfaChannelHelper):
 
         itemlist = list()
 
-        if post:
-            soup = self.create_soup(self.doo_url, post=post)
-        else:
-            soup = self.create_soup(item.url)
+        try:
+            if post:
+                soup = self.create_soup(self.doo_url, post=post)
+            else:
+                soup = self.create_soup(item.url)
 
-        matches = soup.find("div", id="seasons").find_all("div", class_="se-c")
+            matches = soup.find("div", id="seasons").find_all("div", class_="se-c")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
 
         infolabels = item.infoLabels
 
@@ -311,14 +340,20 @@ class DooPlay(AlfaChannelHelper):
 
         itemlist = list()
 
-        soup = self.create_soup(item.url)
-        matches = soup.find_all("div", class_="result-item")
+        try:
+            soup = self.create_soup(item.url)
+            
+            matches = soup.find_all("div", class_="result-item")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
 
         if not matches:
             return itemlist
 
         for elem in matches:
-            url = elem.a["href"]
+            url = elem.a.get("href", '')
+            if not url: continue
             thumb = elem.img["src"]
             title = elem.img["alt"]
             try:
@@ -349,16 +384,18 @@ class DooPlay(AlfaChannelHelper):
 
         results = list()
 
-        soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
-        if soup.find("nav", class_="player"):
-            options = soup.find("ul", class_="options")
-        else:
-            options = soup.find(id=re.compile("playeroptions"))
-
         try:
+            soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
+            
+            if soup.find("nav", class_="player"):
+                options = soup.find("ul", class_="options")
+            else:
+                options = soup.find(id=re.compile("playeroptions"))
+
             matches = options.find_all("li")
         except:
-            matches = "No Options Found"
+            matches = []
+            logger.error(traceback.format_exc())
 
         results.append([soup, matches])
 
@@ -386,8 +423,13 @@ class ToroFilm(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
-        soup = self.create_soup(item.url)
-        matches = soup.find("ul", class_="post-lst").find_all("article", class_="post")
+        
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find("ul", class_="post-lst").find_all("article", class_="post")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
 
         if not matches:
             return itemlist
@@ -448,15 +490,23 @@ class ToroFilm(AlfaChannelHelper):
         matches = list()
 
         reverse = True if section == "year" else False
-        soup = self.create_soup(item.url)
+        
+        try:
+            soup = self.create_soup(item.url)
 
-        if menu_id:
-            matches = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
-        elif section:
-            if section == "alpha":
-                matches = soup.find("ul", class_="az-lst")
-            elif section == "year":
-                matches = soup.find("section", id=re.compile(r"torofilm_movies_annee-\d+"))
+            if menu_id:
+                matches = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
+            elif section:
+                if section == "alpha":
+                    matches = soup.find("ul", class_="az-lst")
+                elif section == "year":
+                    matches = soup.find("section", id=re.compile(r"torofilm_movies_annee-\d+"))
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
 
         for elem in matches.find_all("li"):
             url = elem.a["href"]
@@ -485,8 +535,15 @@ class ToroFilm(AlfaChannelHelper):
 
         itemlist = list()
 
-        soup = self.create_soup(item.url)
-        matches = soup.find_all("li", class_="sel-temp")
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find_all("li", class_="sel-temp")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
 
         infolabels = item.infoLabels
 
@@ -526,9 +583,17 @@ class ToroFilm(AlfaChannelHelper):
                 "season": season,
                 "post": item.post_id
                 }
-        soup = self.create_soup(self.doo_url, post=post)
+        
+        try:
+            soup = self.create_soup(self.doo_url, post=post)
 
-        matches = soup.find_all("li")
+            matches = soup.find_all("li")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
 
         for elem in matches:
             url = elem.a["href"]
@@ -557,13 +622,13 @@ class ToroFilm(AlfaChannelHelper):
         options = list()
         results = list()
 
-        soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
-
         try:
-            matches = soup.find_all("ul", class_="aa-tbs aa-tbs-video")
+            soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
 
+            matches = soup.find_all("ul", class_="aa-tbs aa-tbs-video")
         except:
-            matches = "No Options Found"
+            matches = []
+            logger.error(traceback.format_exc())
 
         for opt in matches:
             options.extend(opt.find_all("li"))
@@ -579,8 +644,13 @@ class ToroPlay(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
-        soup = self.create_soup(item.url)
-        matches = soup.find("ul", class_="MovieList").find_all("article", class_=re.compile("TPost C"))
+        
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find("ul", class_="MovieList").find_all("article", class_=re.compile("TPost C"))
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
 
         if not matches:
             return itemlist
@@ -640,20 +710,27 @@ class ToroPlay(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
-        block = list()
+        matches = list()
         reverse = True if section == "year" else False
 
-        soup = self.create_soup(item.url)
+        try:
+            soup = self.create_soup(item.url)
 
-        if menu_id:
-            block = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
-        elif section:
-            if section == "genres":
-                block = soup.find(id=re.compile(r"categories-\d+"))
-            elif section == "alpha":
-                block = soup.find("ul", class_="AZList")
+            if menu_id:
+                matches = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
+            elif section:
+                if section == "genres":
+                    matches = soup.find(id=re.compile(r"categories-\d+"))
+                elif section == "alpha":
+                    matches = soup.find("ul", class_="AZList")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
 
-        for elem in block.find_all("li"):
+        if not matches:
+            return itemlist
+
+        for elem in matches.find_all("li"):
             url = elem.a["href"]
             title = elem.a.text
 
@@ -681,12 +758,16 @@ class ToroPlay(AlfaChannelHelper):
 
         itemlist = list()
 
-        soup = self.create_soup(item.url)
-        matches = soup.find("tbody").find_all("tr")
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find("tbody").find_all("tr")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
 
         if not matches:
             return itemlist
-
+        
         matches, next_limit, next_page = self.limit_results(item, matches)
 
         if not next_page:
@@ -739,8 +820,15 @@ class ToroPlay(AlfaChannelHelper):
     def seasons(self, item, action="episodesxseason", postprocess=None):
         itemlist = list()
 
-        soup = self.create_soup(item.url)
-        matches = soup.find_all("div", class_="Wdgt AABox")
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find_all("div", class_="Wdgt AABox")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
 
         infolabels = item.infoLabels
         for elem in matches:
@@ -771,8 +859,15 @@ class ToroPlay(AlfaChannelHelper):
 
         itemlist = list()
 
-        soup = self.create_soup(item.url)
-        matches = soup.find_all("div", class_="Wdgt AABox")
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find_all("div", class_="Wdgt AABox")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
 
         infolabels = item.infoLabels
         season = infolabels["season"]
@@ -810,12 +905,13 @@ class ToroPlay(AlfaChannelHelper):
     def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
         results = list()
 
-        soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
-
         try:
+            soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
+
             matches = soup.find("ul", class_="TPlayerNv").find_all("li")
         except:
-            matches = "No Options Found"
+            matches = []
+            logger.error(traceback.format_exc())
 
         results.append([soup, matches])
 
@@ -828,8 +924,13 @@ class ToroFlix(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
-        soup = self.create_soup(item.url)
-        matches = soup.find("ul", class_="MovieList").find_all("article", class_=re.compile("TPost B"))
+        
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find("ul", class_="MovieList").find_all("article", class_=re.compile("TPost B"))
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
 
         if not matches:
             return itemlist
@@ -885,20 +986,27 @@ class ToroFlix(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
-        block = list()
+        matches = list()
         reverse = True if section == "year" else False
 
-        soup = self.create_soup(item.url)
+        try:
+            soup = self.create_soup(item.url)
 
-        if menu_id:
-            block = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
-        elif section:
-            if section == "genres":
-                block = soup.find(id=(r"toroflix_genres_widget-2"))
-            elif section == "alpha":
-                block = soup.find("ul", class_="AZList")
+            if menu_id:
+                matches = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
+            elif section:
+                if section == "genres":
+                    matches = soup.find(id=(r"toroflix_genres_widget-2"))
+                elif section == "alpha":
+                    matches = soup.find("ul", class_="AZList")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
 
-        for elem in block.find_all("li"):
+        if not matches:
+            return itemlist
+
+        for elem in matches.find_all("li"):
             url = elem.a["href"]
             title = elem.a.text
 
@@ -926,8 +1034,12 @@ class ToroFlix(AlfaChannelHelper):
 
         itemlist = list()
 
-        soup = self.create_soup(item.url)
-        matches = soup.find("tbody").find_all("tr")
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find("tbody").find_all("tr")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
 
         if not matches:
             return itemlist
@@ -983,8 +1095,15 @@ class ToroFlix(AlfaChannelHelper):
     def seasons(self, item, action="episodesxseason", postprocess=None):
         itemlist = list()
 
-        soup = self.create_soup(item.url)
-        matches = soup.find_all("section", class_="SeasonBx AACrdn")
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find_all("section", class_="SeasonBx AACrdn")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
 
         infolabels = item.infoLabels
 
@@ -1017,8 +1136,15 @@ class ToroFlix(AlfaChannelHelper):
 
         itemlist = list()
 
-        soup = self.create_soup(item.url)
-        matches = soup.find_all("tr", class_="Viewed")
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find_all("tr", class_="Viewed")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
 
         infolabels = item.infoLabels
         season = infolabels["season"]
@@ -1050,17 +1176,16 @@ class ToroFlix(AlfaChannelHelper):
     def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
         results = list()
 
-        soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
-        if soup.find("div", class_="optns-bx"):
-            try:
+        try:
+            soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
+            
+            if soup.find("div", class_="optns-bx"):
                 matches = soup.find_all("button")
-            except:
-                matches = "No Options Found"
-        else:
-            try:
+            else:
                 matches = soup.find("ul", class_="ListOptions").find_all("li")
-            except:
-                matches = "No Options Found"
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
 
         results.append([soup, matches])
 
@@ -1074,8 +1199,12 @@ class PsyPlay(AlfaChannelHelper):
 
         itemlist = list()
 
-        soup = self.create_soup(item.url)
-        matches = soup.find("div", class_="movies-list").find_all("div", class_="ml-item")
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find("div", class_="movies-list").find_all("div", class_="ml-item")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
 
         if not matches:
             return itemlist
@@ -1129,15 +1258,22 @@ class PsyPlay(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
-        block = list()
+        matches = list()
         reverse = True if section == "year" else False
 
-        soup = self.create_soup(item.url)
+        try:
+            soup = self.create_soup(item.url)
 
-        if menu_id:
-            block = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
+            if menu_id:
+                matches = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
 
-        for elem in block.find_all("li"):
+        if not matches:
+            return itemlist
+
+        for elem in matches.find_all("li"):
             url = elem.a["href"]
             title = elem.a.text
 
@@ -1164,8 +1300,15 @@ class PsyPlay(AlfaChannelHelper):
     def seasons(self, item, action="episodesxseason", postprocess=None):
         itemlist = list()
 
-        soup = self.create_soup(item.url)
-        matches = soup.find("div", id="seasons").find_all("div", recursive=False)
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find("div", id="seasons").find_all("div", recursive=False)
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
 
         infolabels = item.infoLabels
 
@@ -1198,12 +1341,19 @@ class PsyPlay(AlfaChannelHelper):
 
         itemlist = list()
 
-        soup = self.create_soup(item.url)
+        try:
+            soup = self.create_soup(item.url)
 
-        infolabels = item.infoLabels
-        season = infolabels["season"]
+            infolabels = item.infoLabels
+            season = infolabels["season"]
 
-        matches = soup.find("div", id="seasons").find_all("div", recursive=False)[int(season) - 1].find_all("a")
+            matches = soup.find("div", id="seasons").find_all("div", recursive=False)[int(season) - 1].find_all("a")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
 
         for elem in matches:
             url = elem["href"]
@@ -1230,11 +1380,13 @@ class PsyPlay(AlfaChannelHelper):
     def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
         results = list()
 
-        soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
         try:
+            soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
+        
             matches = soup.find("ul", class_="idTabs").find_all("li")
         except:
-            matches = "No Options Found"
+            matches = []
+            logger.error(traceback.format_exc())
 
         results.append([soup, matches])
 

@@ -928,13 +928,13 @@ def listado(item, alfa_s=False):                                                
             scrapedurl = _scrapedurl
             scrapedtitle = _scrapedtitle
             scrapedthumbnail = _scrapedthumbnail
-            calidad = _calidad
+            calidad = _calidad.replace('creeener', 'creener')
             year = _year
             size = _size
             
             if scrapertools.find_single_match(data, '"torrentName":') or 'pictures' in _calidad or 'images' in _calidad:
                 scrapedtitle = scrapertools.find_single_match(_scrapedurl, '^(.*?)\s*(?:-(?:\s*[T|t]emp)|\[|$)')
-                calidad = _scrapedtitle
+                calidad = _scrapedtitle.replace('creeener', 'creener')
                 size = _scrapedthumbnail
                 scrapedthumbnail = _calidad.replace('\\', '')
                 scrapedthumbnail = urlparse.urljoin(host, scrapedthumbnail)
@@ -2777,6 +2777,7 @@ def find_torrent_link(url_torr, emergency_urls_pos, headers={}, item={}, itemlis
         quality = scrapertools.find_single_match(torrent_params.get('quality_alt', '') or item.quality, patron_quality).lower()
         if not torrent_params.get('quality_alt', ''):
             torrent_params['quality_alt'] = 'rip 720p 1080p 4kwebrip 4k' if '720' in item.quality or item.contentType == 'movie' else '[HDTV]'
+            if 'screener' in item.quality.lower(): torrent_params['quality_alt'] += ' screener'
         set_tls = False if host_torrent in url_torr else True
         torrent_params = generictools.get_torrent_size(url_torr, torrent_params=torrent_params, 
                                                        timeout=timeout, headers=headers, 

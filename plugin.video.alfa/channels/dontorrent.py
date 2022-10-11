@@ -31,9 +31,10 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.ist/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.uno/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/'], 
-             'host_black_list': ['https://dontorrent.vin/', 'https://dontorrent.tf/', 'https://dontorrent.pub/', 
+             'host_black_list': ['https://dontorrent.ist/', 
+                                 'https://dontorrent.vin/', 'https://dontorrent.tf/', 'https://dontorrent.pub/', 
                                  'https://dontorrent.moe/', 'https://dontorrent.soy/', 'https://dontorrent.pet/', 
                                  'https://dontorrent.bid/', 'https://dontorrent.dev/', 'https://dontorrent.dog/', 
                                  'https://dontorrent.vet/', 'https://dontorrent.ch/', 'https://dontorrent.vg/', 
@@ -44,7 +45,7 @@ canonical = {
                                  'https://dontorrent.cat/', 'https://dontorrent.run/', 'https://dontorrent.wf/', 
                                  'https://dontorrent.pm/', 'https://dontorrent.top/', 'https://dontorrent.re/'], 
              'pattern_proxy': '<a[^>]*class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_stat': False, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -747,7 +748,8 @@ def findvideos(item):
         referer = item.referer
     btdigg = False
     if (btdigg_label in item.quality and not item.matches) or (('btdig' in item.url or '/series' in item.url) \
-                                     and item.contentChannel == 'videolibrary'):
+                                     and (item.contentChannel == 'videolibrary' or item.from_channel == 'videolibrary' \
+                                     or item.videolibray_emergency_urls)):
         btdigg = True
     if item.btdigg:
         btdigg = True
@@ -799,7 +801,8 @@ def findvideos(item):
         patron += '<td\s*style=[^>]+>\s*<a\s*data-toggle="popover"\s*title="[^>]*'
         patron += 'contraseña[^\/]*data-clave="([^"]+)">)?()'
 
-    if (not item.matches or (item.matches and domain_torrent not in str(item.matches)) or item.contentChannel == 'videolibrary') \
+    if (not item.matches or (item.matches and domain_torrent not in str(item.matches)) or item.contentChannel == 'videolibrary' \
+                            or item.from_channel == 'videolibrary') \
                             and not btdigg and btdigg_url not in item.url and item.url != host:
         if item.emergency_urls and item.url_tvshow: item.url = item.url_tvshow  #### Parche para rodear videoteca corrupta de SERIES
         data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
@@ -849,10 +852,10 @@ def findvideos(item):
         except:
             season = 0
         contentSeason = 0
-        cache = True if item.contentChannel == 'videolibrary' or not item.matches else False
+        cache = True if item.contentChannel == 'videolibrary' or item.from_channel == 'videolibrary' or not item.matches else False
         if item.contentSeason: contentSeason = int(item.contentSeason)
 
-        if item.matches and (item.contentChannel != 'videolibrary' or season != contentSeason):
+        if item.matches and (item.contentChannel != 'videolibrary' or item.from_channel == 'videolibrary' or season != contentSeason):
             if matches:
                 for scrapedtitle, scrapedurl, scrapedpassword, scrapedquality in item.matches:
                     if scrapedurl in str(matches): continue
@@ -862,7 +865,8 @@ def findvideos(item):
             if 'magnet' in str(matches): find_alt = True
         
         if (matches and (not item.matches or not 'magnet' in str(item.matches))) \
-                                          or btdigg or item.contentChannel == 'videolibrary':
+                                          or btdigg or item.contentChannel == 'videolibrary' \
+                                          or item.from_channel == 'videolibrary':
             # Buscamos enlace alternativos de calidades superiores
             if find_alt_link_option and torrent_params['quality_alt']:
                 if not PY3: from lib.alfaresolver import find_alternative_link
@@ -873,7 +877,7 @@ def findvideos(item):
                     if scrapedmagnet in str(matches): continue
                     matches.append((scrapedtitle, scrapedmagnet, scrapedsize, scrapedquality))
                     find_alt = True
-            if item.matches and item.contentChannel == 'videolibrary' and not find_alt_link_result:
+            if item.matches and (item.contentChannel == 'videolibrary' or item.from_channel == 'videolibrary') and not find_alt_link_result:
                 for scrapedtitle, scrapedurl, scrapedpassword, scrapedquality in item.matches:
                     if scrapedurl in str(matches): continue
                     if item.contentType != 'movie' and item.quality != 'HDTV' and '720p' in scrapedquality and '720p' in str(matches): continue
@@ -1120,7 +1124,7 @@ def episodios(item):
     search_seasons = True
     item.category = categoria
     epis_done = []
-    context = []
+    context = filtertools.context(item, list_language, list_quality)
     
     post = None
     forced_proxy_opt = None
@@ -1286,7 +1290,7 @@ def episodios(item):
             item_local.url_tvshow = url
             item_local.title = ''
             x += 1
-            item_local.context = "['buscar_trailer']"
+            item_local.context = context if not (item.add_videolibrary or item.library_playcounts) else "['buscar_trailer']"
             title = episode_num
             if not item_local.infoLabels['poster_path']:
                 item_local.thumbnail = item_local.infoLabels['thumbnail']
@@ -1337,8 +1341,6 @@ def episodios(item):
                 elif item_local.contentSeason < season_display:
                     continue
 
-            if not (item.add_videolibrary or item.library_playcounts):
-                item_local.context = context = filtertools.context(item_local, list_language, list_quality)
             if item.infoLabels['number_of_episodes'] and item_local.contentEpisodeNumber > item.infoLabels['number_of_episodes']:
                 item.infoLabels['number_of_episodes'] = item_local.contentEpisodeNumber
             epis_done += ['%s%s' % (item_local.contentSeason, str(item_local.contentEpisodeNumber).zfill(2))]

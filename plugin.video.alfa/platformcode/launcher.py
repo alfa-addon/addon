@@ -323,7 +323,21 @@ def run(item=None):
             # For all other actions
             else:
                 logger.info("Executing channel '%s' method" % item.action)
-                itemlist = getattr(channel, item.action)(item)
+                if hasattr(channel, item.action):
+                    itemlist = getattr(channel, item.action)(item)
+                else:
+                    channel_file = os.path.join(config.get_runtime_path(),
+                                                'channels', item.contentChannel + ".py")
+                    channel = None
+                    if os.path.exists(channel_file):
+                        try:
+                            channel = __import__('channels.%s' % item.contentChannel, None,
+                                                 None, ["channels.%s" % item.contentChannel])
+                        except ImportError:
+                            exec("import channels." + item.contentChannel + " as channel")
+
+                    logger.info("Running channel %s | %s" % (channel.__name__, channel.__file__))
+                    itemlist = getattr(channel, item.action)(item)
                 if config.get_setting('trakt_sync'):
                     from core import trakt_tools
                     token_auth = config.get_setting("token_trakt", "trakt")

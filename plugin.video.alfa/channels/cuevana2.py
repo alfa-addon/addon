@@ -28,8 +28,8 @@ list_servers = ['rapidvideo', 'streamango', 'directo', 'yourupload', 'openload',
 canonical = {
              'channel': 'cuevana2', 
              'host': config.get_setting("current_host", 'cuevana2', default=''), 
-             'host_alt': ["https://www.cuevana2.biz/"], 
-             'host_black_list': ["https://cuevana2.io/"], 
+             'host_alt': ["https://www.cuevana2.info/"], 
+             'host_black_list': ["https://www.cuevana2.biz/", "https://cuevana2.io/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

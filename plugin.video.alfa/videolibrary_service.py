@@ -20,6 +20,7 @@ try:
     librerias = os.path.join(config.get_runtime_path(), 'lib')
     sys.path.append(librerias)
     for module in ['script.module.futures']:
+        if PY3: continue
         config.importer(module)
     import xbmc
 except:
@@ -330,7 +331,7 @@ def check_for_update(overwrite=True):
                     template = "An exception of type %s occured. Arguments:\n%r"
                     message = template % (type(ex).__name__, ex.args)
                     logger.error(message)
-                    logger.error(traceback.format_exc(1))
+                    logger.error(traceback.format_exc())
                     
 
             if estado_verify_playcount_series:                                  #Si se ha cambiado algún playcount, ...
