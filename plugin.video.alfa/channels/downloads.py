@@ -2198,6 +2198,23 @@ def get_episodes(item):
                 del episode.emergency_urls
             elif episode_local:
                 episode.torrent_alt = episode.url
+                if len(episode.emergency_urls) > 3 and episode.emergency_urls[0] and episode.emergency_urls[3] \
+                                                   and (episode.list_language or episode.episode.list_quality):
+                    if len(episode.emergency_urls[0]) > 1:
+                        epis_filter = []
+                        for x, emergency_url in enumerate(episode.emergency_urls[0]):
+                            epis_filter.append(episode.clone(url=emergency_url, 
+                                               quality=scrapertools.find_single_match(episode.emergency_urls[3][x], '^#(.*?)#')))
+                        from channels import filtertools
+                        epis_filter = filtertools.get_links(epis_filter, episode, episode.list_language, episode.list_quality)
+                        if epis_filter:
+                            episode.emergency_urls[0] = []
+                            emergency_urls_3 = episode.emergency_urls[3]
+                            episode.emergency_urls[3] = []
+                            for x, epi_filter in enumerate(epis_filter):
+                                episode.emergency_urls[0].append(epi_filter.url)
+                                episode.emergency_urls[3].append(emergency_urls_3[x])
+
                 if episode_sort: 
                     torrent_info = []
                     if len(episode.emergency_urls) > 3:

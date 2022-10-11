@@ -74,6 +74,10 @@ patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.
 
 retry_alt_default = True
 
+# Lista de dominios que necesitan CloudScraper
+CF_LIST = list()
+CS_stat = False
+
 """ CACHING Cookies (save) and CF list"""
 alfa_caching = False
 alfa_cookies = ''
@@ -252,16 +256,17 @@ def save_cookies(alfa_s=False):
 load_cookies()
 
 
-def load_CF_list():
-    global alfa_CF_list
-    # Dominios que necesitan Cloudscraper
-    CF_LIST = list()
+def load_CF_list(domain='', **opt):
+    global alfa_CF_list, CF_LIST
+
     try:
         CF_LIST_PATH = os.path.join(config.get_runtime_path(), "resources", "CF_Domains.txt")
         if not alfa_CF_list or not alfa_caching:
             if os.path.exists(CF_LIST_PATH):
                 with open(CF_LIST_PATH, "rb") as CF_File:
-                   CF_LIST = config.decode_var(CF_File.read().splitlines())
+                   _CF_LIST = config.decode_var(CF_File.read().splitlines())
+                CF_LIST = list()
+                CF_LIST += [CF_domain for CF_domain in _CF_LIST if CF_domain]
                 if alfa_caching:
                    alfa_CF_list = CF_LIST
                    window.setProperty("alfa_CF_list", str(alfa_CF_list))
@@ -272,15 +277,34 @@ def load_CF_list():
         if alfa_caching: window.setProperty("alfa_CF_list", "")
         if os.path.exists(CF_LIST_PATH): os.remove(CF_LIST_PATH)
         CF_LIST = list()
-    
+
+    if domain in CF_LIST and 'CF' in opt and not opt['CF']:
+        save_CF_list(domain, **opt)
+
     return CF_LIST
 
 
-def save_CF_list(domain):
-    global alfa_CF_list
+def save_CF_list(domain, **opt):
+    global alfa_CF_list, CF_LIST
+    
+    CF_LIST_PATH = os.path.join(config.get_runtime_path(), "resources", "CF_Domains.txt")
+    
+    # Si el dominio está en CF_LIST y opt['CF']=False, se borra de la lista
+    if domain and domain in CF_LIST and 'CF' in opt and not opt['CF']:
+        CF_LIST.remove(domain)
+        if alfa_caching:
+           alfa_CF_list = CF_LIST
+           window.setProperty("alfa_CF_list", str(alfa_CF_list))
+        buffer = ''
+        for dom in CF_LIST:
+            if not dom: continue
+            buffer += "%s\n" % dom
+        with open(CF_LIST_PATH, "w") as CF_File:
+            CF_File.write(buffer)
+        domain = ''
+    
     # Dominios que necesitan Cloudscraper. AÑADIR dominios de canales sólo si es necesario
     if domain:
-        CF_LIST_PATH = os.path.join(config.get_runtime_path(), "resources", "CF_Domains.txt")
         with open(CF_LIST_PATH, "a") as CF_File:
             CF_File.write("%s\n" % domain)
         if alfa_caching:
@@ -492,7 +516,7 @@ def check_proxy(url, **opt):
         url = opt['url_save']
     try:
         if not PY3:
-            proxy_data['addr']['https'] = str('https://'+ proxy_data['addr']['https'])
+            proxy_data['addr']['https'] = str('http://'+ proxy_data['addr']['https'])
     except Exception:
         pass
     return url, proxy_data, opt
@@ -972,6 +996,8 @@ def downloadpage(url, **opt):
                 HTTPResponse.canonical:| str     | Dirección actual de la página descargada
                 HTTPResponse.proxy__: | str      | Si la página se descarga con proxy, datos del proxy usado: proxy-type:addr:estado
     """
+    global CF_LIST, CS_stat
+    
     if not opt.get('alfa_s', False):
         logger.info()
 
@@ -979,14 +1005,29 @@ def downloadpage(url, **opt):
     if VIDEOLIBRARY_UPDATE and opt.get('hide_infobox', True):
         opt['hide_infobox'] = True
     
-    # Dominios que necesitan Cloudscraper
-    CF_LIST = load_CF_list()
-
-    load_cookies(opt.get('alfa_s', False))
-
-    cf_ua = config.get_setting('cf_assistant_ua', None)
+    # Reintentos para errores 403, 503
+    if 'retries_cloudflare' not in opt: opt['retries_cloudflare'] = opt.get('canonical', {}).get('retries_cloudflare', 0)
+    if 'CF' not in opt and 'CF_stat' in opt.get('canonical', {}): opt['CF'] = opt['canonical']['CF_stat']
+    if 'cf_assistant' not in opt and 'cf_assistant' in opt.get('canonical', {}): opt['cf_assistant'] = opt['canonical']['cf_assistant']
+    if 'session_verify' not in opt and 'session_verify' in opt.get('canonical', {}): opt['session_verify'] = opt['canonical']['session_verify']
+    
+    # Preparando la url
+    if not PY3:
+        url = urllib.quote(url.encode('utf-8'), safe="%/:=&?~#+!$,;'@()*[]")
+    else:
+        url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
     url = url.strip()
     url = canonical_quick_check(url, opt)
+    domain = urlparse.urlparse(url)[1]
+
+    # Dominios que necesitan Cloudscraper
+    CF_LIST = load_CF_list(domain, **opt)
+
+    # Cargando Cookies
+    load_cookies(opt.get('alfa_s', False))
+
+    # Cargando UA
+    cf_ua = config.get_setting('cf_assistant_ua', None)
 
     # Headers por defecto, si no se especifica nada
     req_headers = OrderedDict()
@@ -1009,10 +1050,6 @@ def downloadpage(url, **opt):
 
     if opt.get('random_headers', False) or HTTPTOOLS_DEFAULT_RANDOM_HEADERS:
         req_headers['User-Agent'] = random_useragent()
-    if not PY3:
-        url = urllib.quote(url.encode('utf-8'), safe="%/:=&?~#+!$,;'@()*[]")
-    else:
-        url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
 
     opt['proxy_retries_counter'] = 0
     opt['url_save'] = opt.get('url_save', '') or url
@@ -1026,8 +1063,6 @@ def downloadpage(url, **opt):
         else:
             opt['forced_proxy'] = opt['forced_proxy_opt']
 
-    # Reintentos para errores 403, 503
-    opt['retries_cloudflare'] = opt.get('retries_cloudflare', 0) or opt.get('canonical', {}).get('retries_cloudflare', 0)
     response = {}
     
     while opt['proxy_retries_counter'] <= opt.get('proxy_retries', 1):
@@ -1039,7 +1074,6 @@ def downloadpage(url, **opt):
         opt['proxy_retries_counter'] += 1
 
         domain = urlparse.urlparse(url)[1]
-        global CS_stat
         if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True) \
                               and opt.get('cloudscraper_active', True):         # Está en la lista de CF o viene en la llamada
             from lib.cloudscraper import create_scraper
@@ -1256,24 +1290,26 @@ def downloadpage(url, **opt):
 
         # Retries Cloudflare errors
         if req.headers.get('Server', '').startswith('cloudflare') and response_code in [429, 503, 403] \
-                        and not opt.get('CF', False) and opt.get('CF_test', True) \
+                        and (not opt.get('CF', False) or opt['retries_cloudflare'] > 0) and opt.get('CF_test', True) \
                         and not opt.get('check_blocked_IP_save', {}):
             domain = urlparse.urlparse(opt['url_save'])[1]
-            if domain not in CF_LIST or opt['retries_cloudflare'] > 0:
+            if (domain not in CF_LIST and opt['retries_cloudflare'] >= 0) or opt['retries_cloudflare'] > 0:
                 if not '__cpo=' in url:
                     CF_LIST += [domain]
-                    save_CF_list(domain)
-                opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0
+                    save_CF_list(domain, **opt)
+                opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0 if opt['retries_cloudflare'] < 1 else 1
                 logger.debug("CF retry... for domain: %s, Retry: %s" % (domain, opt['retries_cloudflare']))
                 if opt['retries_cloudflare'] > 0: time.sleep(1)
                 opt['retries_cloudflare'] -= 1
-                opt["CF"] = False if opt['retries_cloudflare'] > 0 else True
+                if not "CF" in opt: opt["CF"] = False if opt['retries_cloudflare'] > 0 else True
                 return downloadpage(opt['url_save'], **opt)
         
         if req.headers.get('Server', '') == 'Alfa' and response_code in [429, 503, 403] \
                         and not opt.get('cf_v2', False) and opt.get('CF_test', True):
             opt["cf_v2"] = True
             if not PY3: opt['proxy_retries'] = 0
+            if opt['retries_cloudflare'] > 0: time.sleep(1)
+            opt['retries_cloudflare'] -= 1
             logger.debug("CF Assistant retry... for domain: %s" % urlparse.urlparse(url)[1])
             return downloadpage(url, **opt)
 
@@ -1369,12 +1405,12 @@ def downloadpage(url, **opt):
         if is_channel and isinstance(response_code, int):
             if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', ''):
                 if response_code > 399:
-                    info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
+                    info_dict, response = fill_fields_post(info_dict, opt, req, response, req_headers, inicio)
                     show_infobox(info_dict)
                     response = canonical_check(opt['url_save'], response, req, opt)
                     raise WebErrorException(urlparse.urlparse(url)[1])
 
-        info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
+        info_dict, response = fill_fields_post(info_dict, opt, req, response, req_headers, inicio)
         if not 'api.themoviedb' in url and not 'api.trakt' in url and not opt.get('alfa_s', False) \
                     and (not opt.get("hide_infobox") or not response['sucess']):
             show_infobox(info_dict)
@@ -1436,7 +1472,8 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
     try:
         info_dict.append(('Timeout', opt['timeout']))
         info_dict.append(('URL', url))
-        info_dict.append(('Dominio', urlparse.urlparse(url)[1]))
+        info_dict.append(('Dominio', '%s - Verify: %s' % (urlparse.urlparse(url)[1], 
+                           opt.get('session_verify', False) if not CS_stat else opt.get('session_verify', True))))
         if CS_stat:
             info_dict.append(('Dominio_CF', True))
         if not opt.get('CF_test', True):
@@ -1469,7 +1506,7 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
     return info_dict
     
     
-def fill_fields_post(info_dict, req, response, req_headers, inicio):
+def fill_fields_post(info_dict, opt, req, response, req_headers, inicio):
     try:
         if isinstance(response["data"], str) and \
                         ('Hotlinking directly to proxied pages is not permitted.' in response["data"] \
@@ -1496,6 +1533,13 @@ def fill_fields_post(info_dict, req, response, req_headers, inicio):
         info_dict.append(('Response Headers', ''))
         for header in response['headers']:
             info_dict.append(('- %s' % header, response['headers'][header]))
+        url_new = None
+        if not response['proxy__'] and opt.get('url_save', '') and opt['url_save'] != response['url']:
+            url_new = response['url']
+        if not response['proxy__'] and opt.get('url_save', '') and response['url_new'] and opt['url_save'] != response['url_new']:
+            url_new = response['url_new']
+        if url_new:
+            info_dict.append(('- New URL', url_new))
         info_dict.append(('Finalizado en', time.time() - inicio))
     except Exception:
         import traceback
