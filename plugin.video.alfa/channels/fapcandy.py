@@ -102,7 +102,7 @@ def lista(item):
         country = elem['country']
         quality = 'HD' if elem['highDefinition'] else ''
         title = "%s [%s] (%s)" %(name,age,country)
-        url = " https://manifest-server.naiadsystems.com/live/s:%s.json?last=load&format=mp4-hls" % name
+        url = "https://manifest-server.naiadsystems.com/live/s:%s.json?last=load&format=mp4-hls" % name
         action = "play"
         if logger.info() == False:
             action = "findvideos"
