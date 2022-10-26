@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 
 # CAM    https://www.asianpornmovies.com https://www.asspoint.com https://www.mobilepornmovies.com https://movieshark.com https://www.sexoasis.com    https://www.porngash.com 
 # https://www.cartoonpornvideos.com https://www.ghettotube.com 
-# https://www.lesbianpornvideos.com  https://www.porntv.com https://www.teenieporn.com https://www.youngpornvideos.com
+# https://www.lesbianpornvideos.com  https://www.porntv.com   https://www.pinflix.com  https://www.teenieporn.com  https://www.youngpornvideos.com
 # https://www.porntitan.com 
 canonical = {
              'channel': 'ghettotube', 
