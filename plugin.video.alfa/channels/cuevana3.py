@@ -38,8 +38,9 @@ list_servers = ['fastplay', 'directo', 'streamplay', 'flashx', 'streamito', 'str
 canonical = {
              'channel': 'cuevana3', 
              'host': config.get_setting("current_host", 'cuevana3', default=''), 
-             'host_alt': ["https://a2.cuevana3.me/"], 
-             'host_black_list': ["https://ww1.cuevana3.me/", "https://s3.cuevana3.me/", "https://ww4.cuevana3.me/", 
+             'host_alt': ["https://v3.cuevana3.me/"], 
+             'host_black_list': ["https://s2.cuevana3.me/", "https://z2.cuevana3.me/", "https://a2.cuevana3.me/", 
+                                 "https://ww1.cuevana3.me/", "https://s3.cuevana3.me/", "https://ww4.cuevana3.me/", 
                                  "https://ww3.cuevana3.me/", "https://cuevana3.me/", "https://cuevana3.io/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True

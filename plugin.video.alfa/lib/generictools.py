@@ -720,7 +720,7 @@ def post_tmdb_listado(item, itemlist):
     #logger.debug(video_list_str)
     
     # Pasada por TMDB a Serie, para datos adicionales, y mejorar la experiencia en Novedades
-    if len(itemlist) > 0 and (not itemlist[-1].infoLabels['temporada_nombre'] or not itemlist[-1].infoLabels['number_of_seasons']) \
+    if len(itemlist) > 0 and (not itemlist[-1].infoLabels['temporada_nombre'] and not itemlist[-1].infoLabels['number_of_seasons']) \
                          and (itemlist[-1].contentType != 'movie' or item.action == 'search' or item.extra == 'novedades'):
         idioma = idioma_busqueda
         if 'VO' in str(itemlist[-1].language):
@@ -2944,7 +2944,7 @@ def get_torrent_size(url, **kwargs):
                        and not torrent_params['local_torr'].startswith('magnet'):
         torrent_params['cached'] = True
         if not filetools.isfile(torrent_params['local_torr']):
-            if DOWNLOAD_PATH and DOWNLOAD_PATH not in torrent_params['local_torr'] \
+            if DOWNLOAD_PATH and filetools.dirname(DOWNLOAD_PATH.rstrip('/').rstrip('\\')) not in torrent_params['local_torr'] \
                              and not scrapertools.find_single_match(torrent_params['local_torr'], 
                             '(?:\d+x\d+)?\s+\[.*?\]_\d+'):
                 torrent_params['local_torr'] = filetools.join(DOWNLOAD_PATH, 

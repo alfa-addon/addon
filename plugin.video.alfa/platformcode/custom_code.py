@@ -78,6 +78,9 @@ def init():
     """
 
     try:
+        # Comprobando la integridad de la estructura de Settings.xml
+        config.verify_settings_integrity()
+        
         # Se verifica si están bien las rutas a la videoteca
         config.verify_directories_created()
 
@@ -698,19 +701,21 @@ def update_external_addon(addon_name):
 def update_libtorrent():
     logger.info()
     
-    if not config.get_setting("mct_buffer", server="torrent", default=""):
-        default = config.get_setting("torrent_client", server="torrent", default=0)
-        config.set_setting("torrent_client", default, server="torrent")
+    if not config.get_setting("mct_buffer", server="torrent", default="") \
+                               or isinstance(config.get_setting("mct_buffer", server="torrent"), int) \
+                               or isinstance(config.get_setting("bt_buffer", server="torrent"), int):
+        if not config.get_setting("torrent_client", server="torrent", default=0):
+            config.set_setting("torrent_client", 0, server="torrent")
         config.set_setting("mct_buffer", "50", server="torrent")
-        if config.get_setting("mct_download_path", server="torrent", default=config.get_setting("downloadpath")):
+        if not config.get_setting("mct_download_path", server="torrent", default=""):
             config.set_setting("mct_download_path", config.get_setting("downloadpath"), server="torrent")
-        config.set_setting("mct_background_download", True, server="torrent")
-        config.set_setting("mct_rar_unpack", True, server="torrent")
+        config.set_setting("mct_background_download", config.get_setting("mct_background_download", server="torrent", default=True), server="torrent")
+        config.set_setting("mct_rar_unpack", config.get_setting("mct_rar_unpack", server="torrent", default=True), server="torrent")
         config.set_setting("bt_buffer", "50", server="torrent")
-        if config.get_setting("bt_download_path", server="torrent", default=config.get_setting("downloadpath")):
+        if not config.get_setting("bt_download_path", server="torrent", default=""):
             config.set_setting("bt_download_path", config.get_setting("downloadpath"), server="torrent")
-        config.set_setting("mct_download_limit", "", server="torrent")
-        config.set_setting("magnet2torrent", False, server="torrent")
+        config.set_setting("mct_download_limit", config.get_setting("mct_download_limit", server="torrent", default=""), server="torrent")
+        config.set_setting("magnet2torrent", config.get_setting("magnet2torrent", server="torrent", default=False), server="torrent")
         
     if not filetools.exists(filetools.join(config.get_setting("bt_download_path", server="torrent"), 'BT-torrents')):
         filetools.mkdir(filetools.join(config.get_setting("bt_download_path", server="torrent"), 'BT-torrents'))
@@ -815,7 +820,7 @@ def update_libtorrent():
             current_version = ''
         elif config.get_setting("libtorrent_version", server="torrent", default="") \
                     and config.get_setting("libtorrent_path", server="torrent", default=""):
-            current_system, current_version = config.get_setting("libtorrent_version", server="torrent", default="").split('/')
+            current_system, current_version = config.get_setting("libtorrent_version", server="torrent", default="/").split('/')
         else:
             current_system = ''
             current_version = ''
@@ -1178,6 +1183,7 @@ def verify_data_jsons():
     counter_jsons = 0
 
     try:
+        from core.channeltools import IGNORE_NULL_LABELS
         # Vemos si ya se ha limpiado, si no marcamos
         if filetools.exists(ADDON_CUSTOMCODE_JSON):
             json_data = jsontools.load(filetools.read(ADDON_CUSTOMCODE_JSON))
@@ -1217,7 +1223,9 @@ def verify_data_jsons():
                         for key, data in list(data_json.items()):
                             if key not in nodes: continue
                             counter_nodes += 1
-                        if isinstance(data_json, dict) and len(data_json) > 0 and len(data_json) == counter_nodes and node_settings in data_json:
+                        if isinstance(data_json, dict) and len(data_json) > 0 and len(data_json) == counter_nodes \
+                                                       and node_settings in data_json and not [label for label in IGNORE_NULL_LABELS \
+                                                       if label in data_json["settings"] and data_json["settings"][label] == None]: 
                             continue
                         
                         # Comienza la reparación
@@ -1227,6 +1235,9 @@ def verify_data_jsons():
                             if data_json.get(node) or node == node_settings:
                                 if node in data_json:
                                     new_data_json.update({node: data_json[node].copy()})
+                                    for label in IGNORE_NULL_LABELS:
+                                        if label in new_data_json[node] and new_data_json[node][label] == None:
+                                            del new_data_json[node][label]
                                 else:
                                     new_data_json.update({node: {}})
                         

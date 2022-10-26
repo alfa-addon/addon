@@ -5,16 +5,20 @@
 
 from builtins import chr
 from builtins import range
+
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
+    import urllib.parse as urlparse
     from lib import alfaresolver_py3 as alfaresolver
 else:
+    import urlparse
     from lib import alfaresolver
 
 import re
+
 from core import tmdb
 from core import httptools
 from core.item import Item
@@ -149,7 +153,7 @@ def list_all(item):
     itemlist = list()
     next = True
     if not item.url.startswith(host):
-        item.url = host+item.url
+        item.url = urlparse.urljoin(host, item.url)
     if item.post:
         soup = BeautifulSoup(get_source(item.url, post=item.post), "html5lib", from_encoding="utf-8")
     else:
@@ -171,7 +175,7 @@ def list_all(item):
         title = re.sub(r"\..*", "", title)
         thumb = elem.img["src"]
 
-        new_item = Item(channel=item.channel, title=title, url=host+url, thumbnail=thumb, infoLabels={})
+        new_item = Item(channel=item.channel, title=title, url=urlparse.urljoin(host, url), thumbnail=thumb, infoLabels={})
 
         if '/show/' in url:
             new_item.contentSerieName = title
@@ -197,7 +201,7 @@ def list_all(item):
         first = last
     else:
         try:
-            url_next_page = host + soup.find("ul", id="filter").find("a", class_="current").next_sibling["href"]
+            url_next_page = urlparse.urljoin(host, soup.find("ul", id="filter").find("a", class_="current").next_sibling["href"])
         except:
           url_next_page = False
           pass
@@ -232,7 +236,7 @@ def seasons(item):
             season = "0"
         infoLabels["season"] = season
         title = 'Temporada %s' % season
-        url = host + elem.a["href"]
+        url = urlparse.urljoin(host, elem.a["href"])
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="episodesxseason", season=season,
                              infoLabels=infoLabels))
@@ -266,7 +270,7 @@ def episodesxseason(item):
     infoLabels = item.infoLabels
 
     for elem in matches:
-        url = host + elem.a["href"]
+        url = urlparse.urljoin(host, elem.a["href"])
         epi_num = scrapertools.find_single_match(url, "episode-(\d+)")
         infoLabels["episode"] = epi_num
         title = "%sx%s" % (infoLabels["season"], epi_num)

@@ -1313,10 +1313,14 @@ def get_match_list(data, match_list, order_list=None, only_ascii=False, ignoreca
     # Pasamos el diccionario a {"Cadena 1": "ID1", "Cadena 2", "ID1", "Cadena 4", "ID2"} y los pasamos a unicode
     for key in match_list:
         if order_list and not key in order_list:
-            raise Exception("key '%s' not in match_list" % key)
+            logger.error("key '%s' from match_list '%s' not in order_list: '%s'" % (key, match_list, order_list))
+            return type("Mtch_list", (), {"key": None, "index": None})
+            #raise Exception("key '%s' not in match_list" % key)
         for value in match_list[key]:
             if value in match_dict:
-                raise Exception("Duplicate word in list: '%s'" % value)
+                logger.error("Duplicate word '%s: %s' in match_dict: '%s'" % (key, value, match_dict))
+                continue
+                #raise Exception("Duplicate word in list: '%s'" % value)
             if not PY3:
                 match_dict[unicode(value, "utf8")] = key
             else:
@@ -1364,8 +1368,8 @@ def sort_method(item):
     lang_orders = {}
     lang_orders[0] = ["ES", "LAT", "SUB", "ENG", "VOSE"]
     lang_orders[1] = ["ES", "SUB", "LAT", "ENG", "VOSE"]
-    lang_orders[2] = ["ENG", "SUB", "VOSE", "ESP", "LAT"]
-    lang_orders[3] = ["VOSE", "ENG", "SUB", "ESP", "LAT"]
+    lang_orders[2] = ["ENG", "SUB", "VOSE", "ES", "LAT"]
+    lang_orders[3] = ["VOSE", "ENG", "SUB", "ES", "LAT"]
 
     quality_orders = {}
     quality_orders[0] = ["BLURAY", "FULLHD", "HD", "480P", "360P", "240P"]

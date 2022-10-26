@@ -371,7 +371,7 @@ def filterchannels(category, view="thumb_", alfa_s=True, settings=False):
                 channel_parameters["thumbnail"] = channel_parameters["banner"]
 
             # Se salta el canal si no está activo y no estamos activando/desactivando los canales
-            channel_status = config.get_setting("enabled", channel_parameters["channel"], caching_var=False)
+            channel_status = config.get_setting("enabled", channel_parameters["channel"])
 
             # si channel_status == None es que NO HAY valor en _data.json.
             # como hemos llegado hasta aquí (el canal está activo en channel.json), se valida como activado
@@ -433,7 +433,7 @@ def filterchannels(category, view="thumb_", alfa_s=True, settings=False):
             channel_info = set_channel_info(channel_parameters, alfa_s=alfa_s)
 
             # Si ha llegado hasta aquí, lo añade
-            frequency = channeltools.get_channel_setting("frequency", channel_parameters["channel"], 0, caching_var=False) \
+            frequency = channeltools.get_channel_setting("frequency", channel_parameters["channel"], 0) \
                         if config.get_setting('frequents') or freq else 0
 
             channelslist.append(

@@ -202,7 +202,7 @@ def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang, forced=Fals
     return ret
 
 
-def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang, forced=False, **kwargs):
+def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang, forced=False, extended_info=False, **kwargs):
     """
     De manera concurrente, obtiene los datos de los items incluidos en la lista item_list.
 
@@ -235,6 +235,7 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang
     r_list = list()
     i = 0
     l_hilo = list()
+    tvshow = False
 
     def sub_thread(_item, _i, _seekTmdb):
         with semaforo:
@@ -262,6 +263,18 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang
 
     # Ordenar lista de resultados por orden de llamada para mantener el mismo orden q item_list
     r_list.sort(key=lambda i: i[0])
+    
+    # Si son series o episodios y no tienen toda a información, le damos otra pasada
+    if not extended_info:
+        for item in item_list:
+            if not item.infoLabels.get('tmdb_id', ''): continue
+            if item.infoLabels.get('mediatype', 'movie') == 'movie': continue
+            tvshow = True
+            if item.infoLabels.get('status', ''): break
+        else:
+            if tvshow:
+                return set_infoLabels_itemlist(item_list, seekTmdb=seekTmdb, idioma_busqueda=idioma_busqueda, 
+                                               forced=forced, extended_info=True, **kwargs)
 
     # Reconstruir y devolver la lista solo con los resultados de las llamadas individuales
     return [ii[2] for ii in r_list]
@@ -1585,6 +1598,13 @@ class Tmdb(object):
                 ret_infoLabels['genre'] = self.get_generos(origen)
 
             elif k == 'name' or k == 'title':
+                if ret_infoLabels.get('mediatype', '') in ['tvshow', 'episode'] and not ret_infoLabels.get('title_alt', ''):
+                    v_alt = scrapertools.slugify(v, strict=False)
+                    for word in v_alt.split(' '):
+                        if word in ret_infoLabels['tvshowtitle'].lower():
+                            break
+                    else:
+                        ret_infoLabels['title_alt'] = v_alt
                 ret_infoLabels['title'] = v
 
             elif k == 'networks':

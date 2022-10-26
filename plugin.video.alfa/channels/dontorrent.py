@@ -31,9 +31,9 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.uno/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.ltd/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/'], 
-             'host_black_list': ['https://dontorrent.ist/', 
+             'host_black_list': ['https://dontorrent.fans/', 'https://dontorrent.uno/', 'https://dontorrent.ist/', 
                                  'https://dontorrent.vin/', 'https://dontorrent.tf/', 'https://dontorrent.pub/', 
                                  'https://dontorrent.moe/', 'https://dontorrent.soy/', 'https://dontorrent.pet/', 
                                  'https://dontorrent.bid/', 'https://dontorrent.dev/', 'https://dontorrent.dog/', 
@@ -700,7 +700,6 @@ def listado(item):                                                              
     #Pasamos a TMDB la lista completa Itemlist
     tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda=idioma_busqueda)
     if item.extra == 'series' and item.extra2 == 'novedades':                   # Otra pasada a TMDB si son novedades/series
-        tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda=idioma_busqueda)
         for item_local in itemlist:
             if item_local.infoLabels['season']: del item_local.infoLabels['season']
             if item_local.contentType == 'season': item_local.contentType = 'tvshow'

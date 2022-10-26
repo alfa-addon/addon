@@ -203,9 +203,11 @@ def list_all(item):
         if "online" in url and not "pelicula" in url:
             new_item.action = "seasons"
             new_item.contentSerieName = title
+            new_item.contentType = 'tvshow'
         else:
             new_item.action = "findvideos"
             new_item.contentTitle = title
+            new_item.contentType = 'movie'
 
         itemlist.append(new_item)
 
@@ -260,6 +262,7 @@ def latest(item):
                 action = "findvideos",
                 channel = item.channel,
                 contentSerieName = title,
+                contentType = 'episode', 
                 thumbnail = thumb, 
                 title = ftitle,
                 url = url
@@ -299,6 +302,7 @@ def seasons(item):
         season = elem.find("span", class_="se-t").text
         title = "Temporada %s %s" % (season, tags)
         infoLabels["season"] = season
+        infoLabels["mediatype"] = 'season'
 
         itemlist.append(
             Item(
@@ -367,6 +371,7 @@ def episodesxseasons(item):
             epi_name = info.a.text
             epi_num = epi.find("div", class_="numerando").text.split(" - ")[1]
             infoLabels["episode"] = epi_num
+            infoLabels["mediatype"] = 'episode'
             title = "%sx%s - %s" % (season, epi_num, epi_name)
 
             itemlist.append(
