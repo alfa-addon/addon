@@ -35,8 +35,9 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'grantorrent', 
              'host': config.get_setting("current_host", 'grantorrent', default=''), 
-             'host_alt': ['https://grantorrent.si/'], 
-             'host_black_list': ['https://grantorrent.re/', 'https://grantorrent.ac/', 'https://grantorrent.ch/'], 
+             'host_alt': ['https://grantorrent.fi/'], 
+             'host_black_list': ['https://grantorrent.si/', 
+                                 'https://grantorrent.re/', 'https://grantorrent.ac/', 'https://grantorrent.ch/'], 
              'pattern': '<div\s*class="flex[^>]*>\s*<a\s*href="([^"]+)"[^>]*>\s*.nicio\s*<', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

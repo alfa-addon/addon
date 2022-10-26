@@ -74,9 +74,11 @@ def run(item=None):
                     item.startpage = True
             else:
                 item = Item(channel="channelselector", action="getmainlist", viewmode="movie")
+        
         if not config.get_setting('show_once'):
-            from platformcode import configurator
-            configurator.show_window()
+            if config.verify_settings_integrity() and not config.get_setting('show_once'):
+                from platformcode import configurator
+                configurator.show_window()
 
     logger.info(item.tostring())
 

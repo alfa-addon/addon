@@ -415,6 +415,7 @@ def items_usuario(item):
     logger.info()
     
     itemlist = []
+    contentType = 'movie'
     ## Carga estados
     status = check_status()
     ## Fichas usuario
@@ -452,10 +453,12 @@ def items_usuario(item):
         try:
             url = urlparse.urljoin(host, 'serie/' + ficha['permalink']) + "###" + ficha['id'] + ";1"
             action = "seasons"
+            contentType = 'tvshow'
             str_ = get_status(status, 'shows', ficha['id'])
             infoLabels = item.infoLabels
             if "show_title" in ficha:
                 action = "findvideos"
+                contentType = 'episode'
                 serie = ''
                 if ficha.get('show_title', {}) and isinstance(ficha.get('show_title', {}), dict):
                     serie = ficha.get('show_title', {}).get('es', '').strip() or ficha.get('show_title', {}).get('en', '').strip()
@@ -472,10 +475,10 @@ def items_usuario(item):
                 url = urlparse.urljoin(host, 'serie/' + ficha[
                     'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + ficha['id'] + ";3"
                 if str_ != "": title += str_
-                infoLabels = {'season': temporada, 'episode': episodio, 'playcount': 1 if 'Visto' in str_ else 0}
+                infoLabels.update({'season': temporada, 'episode': episodio, 'playcount': 1 if 'Visto' in str_ else 0})
             itemlist.append(
                     Item(channel=item.channel, action=action, title=title,
-                        url=url, thumbnail=thumbnail,
+                        url=url, thumbnail=thumbnail, contentType=contentType, 
                         infoLabels=infoLabels, 
                         contentSerieName=show, text_bold=True))
         except:
@@ -484,7 +487,7 @@ def items_usuario(item):
             if str_ != "": title += str_
             itemlist.append(
                 Item(channel=item.channel, action="findvideos", title=title, 
-                     contentTitle=show, url=url, thumbnail=thumbnail,
+                     contentTitle=show, url=url, thumbnail=thumbnail, contentType=contentType, 
                      text_bold=True, infoLabels={'year': '-'}))
     if len(itemlist) >= int(limit):
         itemlist.append(
@@ -639,6 +642,7 @@ def seasons(item):
     
     id = "0"
     itemlist = []
+    infoLabels = item.infoLabels
     
     ## Carga estados
     status = check_status()
@@ -656,17 +660,20 @@ def seasons(item):
     
     if account:
         str_ = get_status(status, "shows", id)
+        infoLabels['mediatype'] = 'season'
         #TODO desenredar todo el lio este
         if str_ != "" and item.category != "Series" and "XBMC" not in item.title:
             platformtools.itemlist_refresh()
             title = str_.replace('steelblue', 'darkgrey').replace('Siguiendo', 'Abandonar')
             itemlist.append(Item(channel=item.channel, action="set_status__", title=title, url=url_targets,
-                                 thumbnail=item.thumbnail, contentSerieName=item.contentSerieName, folder=True))
+                                 thumbnail=item.thumbnail, contentSerieName=item.contentSerieName, 
+                                 infoLabels=infoLabels, folder=True))
         elif item.category != "Series" and "XBMC" not in item.title:
             
             title = " [COLOR steelblue][B]( Seguir )[/B][/COLOR]"
             itemlist.append(Item(channel=item.channel, action="set_status__", title=title, url=url_targets,
-                                 thumbnail=item.thumbnail, contentSerieName=item.contentSerieName, folder=True))
+                                 thumbnail=item.thumbnail, contentSerieName=item.contentSerieName, 
+                                 infoLabels=infoLabels, folder=True))
         
     sid = scrapertools.find_single_match(data, "<\s*script\s*>var\s*sid\s*=\s*'\s*(\d+)\s*'")
     
@@ -681,16 +688,19 @@ def seasons(item):
             scrapedtitle = "Especiales"
         thumbnail = scrapedthumbnail.replace('tthumb/130x190', 'thumbs')
         thumbnail += '|User-Agent=%s' % httptools.get_user_agent()
+        infoLabels['mediatype'] = 'season'
         
         itemlist.append(
                 Item(channel=item.channel, action="episodesxseason", title=scrapedtitle,
                      url=item.url, thumbnail=thumbnail, sid=sid, text_bold=True,
-                     contentSerieName=item.contentSerieName, contentSeason=ssid))
+                     contentSerieName=item.contentSerieName, contentSeason=ssid, 
+                     infoLabels=infoLabels))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
+        infoLabels['mediatype'] = 'tvshow'
         itemlist.append(Item(channel=item.channel, title="[COLOR greenyellow]Añadir esta serie a la videoteca[/COLOR]",
                              action="add_serie_to_library", url=item.url, text_bold=True, extra="episodios",
-                             contentSerieName=item.contentSerieName,
+                             contentSerieName=item.contentSerieName, infoLabels=infoLabels
                              ))
 
     return itemlist

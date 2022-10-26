@@ -41,6 +41,7 @@ canonical = {
              'host': config.get_setting("current_host", 'zonaleros', default=''), 
              'host_alt': ["https://www.zonaleros.org/"], 
              'host_black_list': ["https://www.zona-leros.net/"], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -267,7 +268,7 @@ def findvideos(item):
 
     for url in url_list:
         if not url.startswith("http"):
-            url = unquote(base64.b64decode(codecs.decode(url, "rot13")))
+            url = unquote(base64.b64decode(codecs.decode(url, "rot13")).decode('utf-8'))
         if "fembed" in url:
             srv = "Fembed"
         else:

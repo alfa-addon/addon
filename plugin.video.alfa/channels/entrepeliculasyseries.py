@@ -262,6 +262,7 @@ def seasons(item):
                              url=item.url,
                              action="add_serie_to_library",
                              extra="episodios",
+                             contentType='tvshow', 
                              contentSerieName=item.contentSerieName
                              ))
 
@@ -349,7 +350,7 @@ def findvideos(item):
             itemlist.append(
                 Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
                      url=item.url, action="add_pelicula_to_library", extra="findvideos",
-                     contentTitle=item.contentTitle))
+                     contentTitle=item.contentTitle, contentType='movie'))
 
     return itemlist
 

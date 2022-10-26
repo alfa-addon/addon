@@ -31,8 +31,8 @@ __channel__='allcalidad'
 canonical = {
              'channel': 'cuevana3video', 
              'host': config.get_setting("current_host", 'cuevana3video', default=''), 
-             'host_alt': ["https://cuevana3.ch/"], 
-             'host_black_list': ["https://www1.cuevana3.fm/", 
+             'host_alt': ["https://www1.cuevana3.ch/"], 
+             'host_black_list': ["https://cuevana3.ch/", "https://www1.cuevana3.fm/", 
                                  "https://cuevana3.fm/", "https://www1.cuevana3.vc/", "https://cuevana3.vc/", 
                                  "https://www2.cuevana3.pe/", "https://www1.cuevana3.pe/", "https://cuevana3.pe/", 
                                  "https://www2.cuevana3.cx/", "https://www1.cuevana3.cx/"], 
@@ -413,7 +413,7 @@ def findvideos(item):
 
         for scrapedurl, scrapedtitle in matches:
             #if  "peliscloud" in scrapedtitle.lower(): continue
-            if not scrapedurl.startswith("http"): scrapedurl = "http:" + scrapedurl
+            if not scrapedurl.startswith("http"): scrapedurl = "https:" + scrapedurl
 
             itemlist.append(
                 item.clone(
@@ -467,6 +467,10 @@ def play(item):
     item.thumbnail = item.contentThumbnail
     item.url = item.url.replace("embedsito.com","fembed.com").replace("pelispng.online","fembed.com")
 
+    if "pelisplay.cc" in item.url:
+        data = httptools.downloadpage(item.url, headers={"Referer" : item.url}).data
+        item.url = scrapertools.find_single_match(data, "file: '([^']+)")
+        
     if "hydrax.net" in item.url:
         data = httptools.downloadpage(item.url, headers={"Referer" : item.url}).data
         v = scrapertools.find_single_match(item.url, 'v=(\w+)')

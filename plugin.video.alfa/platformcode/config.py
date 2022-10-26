@@ -77,8 +77,6 @@ class CacheInit(xbmc.Monitor, threading.Thread):
             alfa_caching = False
             __settings__.setSetting('caching', 'false')
             window.setProperty("alfa_caching", '')
-        if not os.path.exists(os.path.join(get_data_path(), "settings.xml")):
-            verify_directories_created()
         if alfa_caching:
             alfa_system_platform = get_system_platform()
             alfa_kodi_platform = get_platform(full_version=True)
@@ -518,7 +516,7 @@ def get_all_settings_addon(caching_var=True):
     if not os.path.exists(inpath):
         # Si no existe el archivo settings.xml, llama a Kodi .setSetting para forzar la creación de un archivo con valores por defecto
         __settings__.setSetting('caching', 'true')
-        verify_directories_created()
+        time.sleep(1)
         if not os.path.exists(inpath):
             # Comprobamos si Kodi ha generado un archivo settings.xml accesible.  Si no es así, se cancela el cacheo y el menú de bienvenida (Apple TV)
             __settings__.setSetting('show_once', 'true')
@@ -530,6 +528,12 @@ def get_all_settings_addon(caching_var=True):
                 data = data.encode("utf-8", "ignore")
             elif PY3 and isinstance(data, (bytes, bytearray)):
                 data = "".join(chr(x) for x in data)
+        if data:
+            import xmltodict
+            if not xmltodict.parse(data):
+                raise
+        else:
+            raise
     except:
         data = ''
         alfa_caching = False
@@ -673,7 +677,7 @@ def get_setting(name, channel="", server="", default=None, caching_var=True, deb
     if channel:
         # logger.info("get_setting reading channel setting '"+name+"' from channel json")
         from core import channeltools
-        debug = False if debug == None else DEBUG_JSON if not debug and DEBUG_JSON else debug
+        debug = False if debug == None else DEBUG_JSON if debug == DEBUG else debug
         value = channeltools.get_channel_setting(name, channel, default, caching_var=caching_var, debug=debug)
         # logger.info("get_setting -> '"+repr(value)+"'")
         return value
@@ -682,7 +686,7 @@ def get_setting(name, channel="", server="", default=None, caching_var=True, deb
     elif server:
         # logger.info("get_setting reading server setting '"+name+"' from server json")
         from core import servertools
-        debug = False if debug == None else DEBUG_JSON if not debug and DEBUG_JSON else debug
+        debug = False if debug == None else DEBUG_JSON if debug == DEBUG else debug
         value = servertools.get_server_setting(name, server, default, caching_var=caching_var, debug=debug)
         # logger.info("get_setting -> '"+repr(value)+"'")
         return value
@@ -1039,6 +1043,179 @@ def verify_directories_created():
         import traceback
         logger.error("Al comprobar o crear la carpeta de resolución")
         logger.error(traceback.format_exc())
+
+
+def verify_settings_integrity():
+    # Comprobando la integridad de la estructura de Settings.xml
+    global alfa_caching, alfa_settings
+    
+    try:
+        import traceback
+        from platformcode import logger, platformtools
+        
+        inpath = os.path.join(get_data_path(), "settings.xml")
+        outpath = os.path.join(get_data_path(), "settings_bak.json")
+
+        # Leemos el settings.xml
+        try:
+            with open(inpath, "rb") as infile:
+                data = infile.read()
+                if not PY3:
+                    data = data.encode("utf-8", "ignore")
+                elif PY3 and isinstance(data, (bytes, bytearray)):
+                    data = "".join(chr(x) for x in data)
+        except:
+            data = ''
+        
+        if data:
+            try:
+                import xmltodict
+                if xmltodict.parse(data):
+                    # Si ya existe el settings_bak.json de una pasada anterior, lo restauramos
+                    if os.path.exists(outpath):
+                        return verify_settings_integrity_json(outpath)
+                    logger.info('ALFA Settings.xml CORRECTO', force=True)
+                    return True
+                raise
+            except:
+                pass
+
+        # Si ya existe el settings_bak.json de una pasada anterior, lo restauramos
+        if not data and os.path.exists(outpath):
+            return verify_settings_integrity_json(outpath)
+        
+        # Corrupción en Settings.xml: limpiamos y cancelamos la caché
+        logger.error('CORRUPCIÓN en ALFA Settings.xml, regenerando: %s' % str(data))
+        
+        # Limpiamos la caché
+        try:
+            alfa_caching = False
+            alfa_settings = {}
+            window.setProperty("alfa_caching", '')
+            window.setProperty("alfa_settings", json.dumps(alfa_settings))
+        except:
+            pass
+        
+        # Borramos el archivo Settings.xml de Alfa
+        try:
+            if os.path.exists(inpath):
+                os.remove(inpath)
+            if os.path.exists(outpath):
+                os.remove(outpath)
+        except:
+            logger.error(traceback.format_exc())
+            # Pedimos al usuario que reinstale Alfa
+            
+            platformtools.dialog_notification('Corrupción del archivo de Ajustes de Alfa', 
+                                              'No podemos repararlo.  Desinstale Alfa por completo y reintálelo de nuevo', time=10000)
+            return False
+        
+        # Salvamos para el nuevo settings.xml todas la estiquetas accesibles del anterior settings.xml corrupto
+        try:
+            matches = re.compile('<setting\s*id="([^"]*)"\s*value="([^"]*)"', re.DOTALL).findall(data)
+            if not matches:
+                matches = re.compile('<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/', re.DOTALL).findall(data)
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+        ret = {}
+        for _id, value in matches:
+            ret[_id] = decode_var(value)
+        try:
+            ret['xml_repaired'] = str(int(ret['xml_repaired']) + 1)
+        except:
+            ret['xml_repaired'] = '1'
+        try:
+            data = json.dumps(ret)
+            with open(outpath, "wb") as outfile:
+                if PY3 and isinstance(data, str):
+                    data = bytes(list(ord(x) for x in data))
+                outfile.write(data)
+        except:
+            logger.error(traceback.format_exc())
+            try:
+                if os.path.exists(outpath):
+                    os.remove(outpath)
+            except:
+                pass
+            
+            # Pedimos al usuario que revise los settings actuales
+            platformtools.dialog_notification('Corrupción del archivo de Ajustes de Alfa', 
+                                              'Introduzca de nuevo los ajustes de Alfa y reinicie Kodi', time=10000)
+            time.sleep(1)
+            __settings__.openSettings()
+    except:
+        logger.error(traceback.format_exc())
+    
+    return False
+
+
+def verify_settings_integrity_json(outpath=None):
+    # Migramos al nuevo settings.xml todas la estiquetas accesibles del anterior settings.xml corrupto
+    global alfa_caching, alfa_settings
+    
+    try:
+        import traceback
+        from platformcode import logger, platformtools
+
+        inpath = os.path.join(get_data_path(), "settings.xml")
+        if not outpath:
+            outpath = os.path.join(get_data_path(), "settings_bak.json")
+        logger.info(outpath, force=True)
+        if not os.path.exists(inpath):
+            # Provocamos que Kodi genere el default settings.xml
+            __settings__.setSetting('show_once', 'false')
+            time.sleep(1)
+            if not os.path.exists(inpath):
+                logger.error('Falta settings.xml')
+                return False
+        if not os.path.exists(outpath):
+            logger.error('Falta settings_bak.json')
+            return False
+        
+        # Leemos el settings_bak.json
+        try:
+            with open(outpath, "rb") as outfile:
+                data = outfile.read()
+                if not PY3:
+                    data = data.encode("utf-8", "ignore")
+                elif PY3 and isinstance(data, (bytes, bytearray)):
+                    data = "".join(chr(x) for x in data)
+            ret = json.loads(data)
+        except:
+            ret = {}
+            logger.error(traceback.format_exc())
+        try:
+            os.remove(outpath)
+        except:
+            logger.error(traceback.format_exc())
+
+        # Actualizamos el settings.xml por defecto con los parámetros anteriores accesibles
+        for _id, value in list(ret.items()):
+            try:
+                __settings__.setSetting(_id, str(value))
+                logger.info('Recuperando "%s": "%s"' % (_id, str(value)), force=True)
+            except:
+                logger.error('Parámetro no rescatado "%s": "%s"' % (_id, str(value)))
+        
+        # Limpiamos la caché
+        try:
+            alfa_caching = False
+            alfa_settings = {}
+            window.setProperty("alfa_caching", '')
+            window.setProperty("alfa_settings", json.dumps(alfa_settings))
+        except:
+            pass
+        
+        # Pedimos al usuario que revise los settings actuales
+        platformtools.dialog_notification('Corrupción del archivo de Ajustes de Alfa', 
+                                          'Verifique los ajustes de Alfa y reinicie Kodi', time=10000)
+        time.sleep(1)
+        __settings__.openSettings()
+    except:
+        logger.error(traceback.format_exc())
+    
+    return True
 
 
 def importer(module):

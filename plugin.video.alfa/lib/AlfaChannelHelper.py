@@ -90,9 +90,11 @@ class AlfaChannelHelper:
         if not is_tvshow and (self.movie_path in new_item.url or not self.tv_path in new_item.url):
             new_item.action = self.movie_action
             new_item.contentTitle = new_item.title
+            new_item.contentType = 'movie'
         else:
             new_item.action = self.tv_action
             new_item.contentSerieName = new_item.title
+            new_item.contentType = 'tvshow'
 
         return new_item
 
@@ -104,6 +106,7 @@ class AlfaChannelHelper:
                                  url=item.url,
                                  action="add_serie_to_library",
                                  extra="episodios",
+                                 contentType='tvshow', 
                                  contentSerieName=item.contentSerieName
                                  )
                             )
@@ -262,6 +265,7 @@ class DooPlay(AlfaChannelHelper):
             season = elem.find("span", class_="se-t").text
             title = "Temporada %s" % season
             infolabels["season"] = season
+            infolabels["mediatype"] = 'season'
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -318,6 +322,7 @@ class DooPlay(AlfaChannelHelper):
                 epi_name = info.a.text
                 epi_num = epi.find("div", class_="numerando").text.split(" - ")[1]
                 infolabels["episode"] = epi_num
+                infolabels["mediatype"] = 'episode'
                 title = "%sx%s - %s" % (season, epi_num, epi_name)
 
                 new_item = Item(channel=item.channel,
@@ -552,6 +557,7 @@ class ToroFilm(AlfaChannelHelper):
             post_id = elem.a["data-post"]
             title = "Temporada %s" % season
             infolabels["season"] = season
+            infolabels["mediatype"] = 'season'
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -600,6 +606,7 @@ class ToroFilm(AlfaChannelHelper):
             title = elem.find("span", class_="num-epi").text
             epi_num = title.split("x")[1]
             infolabels["episode"] = epi_num
+            infolabels["mediatype"] = 'episode'
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -835,6 +842,7 @@ class ToroPlay(AlfaChannelHelper):
             season = elem.find("div", class_="AA-Season")["data-tab"]
             title = "Temporada %s" % season
             infolabels["season"] = season
+            infolabels["mediatype"] = 'season'
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -881,6 +889,7 @@ class ToroPlay(AlfaChannelHelper):
                         epi_num = epi.find("span", class_="Num").text
                         epi_name = epi.find("td", class_="MvTbTtl").a.text
                         infolabels["episode"] = epi_num
+                        infolabels["mediatype"] = 'episode'
                         title = "%sx%s - %s" % (season, epi_num, epi_name)
 
                         new_item = Item(channel=item.channel,
@@ -1112,6 +1121,7 @@ class ToroFlix(AlfaChannelHelper):
             url = elem.a["href"]
             title = "Temporada %s" % season
             infolabels["season"] = season
+            infolabels["mediatype"] = 'season'
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -1155,6 +1165,7 @@ class ToroFlix(AlfaChannelHelper):
             epi_num = elem.find("span", class_="Num").text
             epi_name = elem.find("td", class_="MvTbTtl").a.text
             infolabels["episode"] = epi_num
+            infolabels["mediatype"] = 'episode'
             title = "%sx%s - %s" % (season, epi_num, epi_name)
 
             new_item = Item(channel=item.channel,
@@ -1317,6 +1328,7 @@ class PsyPlay(AlfaChannelHelper):
             season = scrapertools.find_single_match(elem.text, r"(\d+)")
             title = "Temporada %s" % season
             infolabels["season"] = season
+            infolabels["mediatype"] = 'season'
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -1359,6 +1371,7 @@ class PsyPlay(AlfaChannelHelper):
             url = elem["href"]
             epi_num = scrapertools.find_single_match(elem.text, r"(\d+)")
             infolabels["episode"] = epi_num
+            infolabels["mediatype"] = 'episode'
             title = "%sx%s" % (season, epi_num)
 
             new_item = Item(channel=item.channel,

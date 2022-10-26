@@ -241,6 +241,11 @@ def list_tvshows(item):
                 else:
                     multicanal = False
 
+                # Si hay una inconsistencia en "mediatype", se arregla.  Afecta al menú contextual
+                if item_tvshow.infoLabels.get('mediatype', '') != 'tvshow':
+                    item_tvshow.infoLabels['mediatype'] = 'tvshow'
+                    res = videolibrarytools.write_nfo(tvshow_path, head_nfo, item_tvshow)
+                
                 ## verifica la existencia de los canales, en caso de no existir el canal se pregunta si se quieren
                 ## eliminar los enlaces de dicho canal
                 zombie = False
@@ -267,6 +272,7 @@ def list_tvshows(item):
                                 confirm = False
                                 item_tvshow.active = 0
                             else:
+                                logger.error('Parece que el canal {} ya no existe.'.format(canal.upper()))
                                 confirm = platformtools.dialog_yesno('Videoteca',
                                                                  'Parece que el canal [COLOR red]{}[/COLOR] ya no existe.'.format(canal.upper()),
                                                                  '¿Deseas eliminar los enlaces de este canal?')

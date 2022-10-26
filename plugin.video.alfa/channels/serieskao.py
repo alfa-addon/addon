@@ -222,7 +222,7 @@ def findvideos(item):
     matches = scrapertools.find_multiple_matches(data, "go_to_player\('([^']+)")
     for url in matches:
         if not url.startswith("http"):
-            uu = "https://player.serieskao.org" + "/player/?id=%s" %url
+            uu = "https://api.mycdn.moe" + "/player/?id=%s" %url
             ddd = httptools.downloadpage(uu).data
             url = scrapertools.find_single_match(ddd, 'iframe src="([^"]+)')
         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
