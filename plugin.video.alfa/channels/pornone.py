@@ -116,7 +116,7 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('a', class_='portrait:relative')
+    matches = soup.find_all('a', class_='relative')
     for elem in matches:
         url = elem['href']
         if "/cam/" in url:
@@ -124,7 +124,7 @@ def lista(item):
         title = elem.find('img', class_='imgvideo')['alt']
         thumbnail = elem.find('img', class_='imgvideo')['src']
         time = elem.find('span', class_='md:hidden')
-        quality = time.find('svg', alt='HD Video')
+        quality = time.find('img', alt='HD Video')
         if quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time.text.strip(),title)
         else:

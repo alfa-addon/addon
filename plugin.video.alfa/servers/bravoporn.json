@@ -66,6 +66,10 @@
       {
         "pattern": "(https://anysex.com/[0-9]+/)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(https://xxxshake.com/videos/[0-9]+/[A-z0-9-]+)",
+        "url": "\\1"
       }
     ]
   },

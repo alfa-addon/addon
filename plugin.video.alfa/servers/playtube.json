@@ -10,6 +10,10 @@
       {
         "pattern": "(https://(?:vtube|clicknplay).to/embed-[A-z0-9]+.html)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(https://pornve.com/[A-z0-9/[A-z0-9_-]+.html)",
+        "url": "\\1"
       }
       ]
   },

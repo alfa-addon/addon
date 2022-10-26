@@ -18,9 +18,10 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-# https://www.asianpornmovies.com https://www.asspoint.com https://www.cartoonpornvideos.com https://www.ghettotube.com 
-# https://www.lesbianpornvideos.com https://www.porntitan.com https://www.porntv.com https://www.teenieporn.com 
-# https://www.sexoasis.com https://www.youngpornvideos.com
+# CAM    https://www.asianpornmovies.com https://www.asspoint.com https://www.mobilepornmovies.com https://movieshark.com https://www.sexoasis.com    https://www.porngash.com 
+# https://www.cartoonpornvideos.com https://www.ghettotube.com 
+# https://www.lesbianpornvideos.com  https://www.porntv.com   https://www.pinflix.com  https://www.teenieporn.com  https://www.youngpornvideos.com
+# https://www.porntitan.com 
 canonical = {
              'channel': 'ghettotube', 
              'host': config.get_setting("current_host", 'ghettotube', default=''), 
@@ -104,24 +105,26 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('div', class_="item")
+    matches = soup.find('div', class_="cards").find_all('div', class_="card")
     for elem in matches:
+        logger.debug(elem)
         url = elem.a['href']
         title = elem.img['alt']
         thumbnail = elem.img['src']
-        time = elem.find('span', class_='time').text.strip()
+        time = elem.find('span', class_='duration').text.strip()
         quality = elem.find('span', class_='flag-hd')
         if quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time,title)
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
+        url = urlparse.urljoin(item.url,url)
         plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
         itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                    plot=plot, fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('div', class_='pagination _767p').find('a', class_='next')
+    next_page = soup.find('a', title='next-page')
     if next_page:
         next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
@@ -149,6 +152,7 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    logger.debug(data)
     m3u = scrapertools.find_single_match(data, 'file: "([^"]+)"')
     data = httptools.downloadpage(m3u).data
     data = data.decode("utf8")
