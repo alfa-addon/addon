@@ -35,7 +35,7 @@ canonical = {
              'channel': 'dilo', 
              'host': config.get_setting("current_host", 'dilo', default=''), 
              'host_alt': ["https://www.dilo.nu/"], 
-             'host_black_list': [], 
+             'host_black_list': ["https://streamtape.com/", "https://upstream.to/", "https://vidoza.net/", "http://vidoza.net/"], 
              'pattern': '<link\s*rel="stylesheet"\s*href="([^"]+)"', 
              'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -180,8 +180,12 @@ def latest_episodes(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedcontent, scrapedep in matches[item.page:item.page + 30]:
         title = '%s' % (scrapertools.decode_utf8_error(scrapedtitle.replace(' Online sub español', '')))
         contentSerieName = scrapertools.decode_utf8_error(scrapedcontent)
+        season = episode = 1
+        if scrapertools.find_single_match(title, '(\d+)[x|X](\d+)'):
+            season, episode = scrapertools.find_single_match(title, '(\d+)[x|X](\d+)')
         itemlist.append(Item(channel=item.channel, action='findvideos', url=urlparse.urljoin(host, scrapedurl), thumbnail=scrapedthumbnail,
-                             title=title, contentSerieName=contentSerieName, contentType='episode'))
+                             title=title, contentSerieName=contentSerieName, contentType='episode', 
+                             contentSeason=season, contentEpisodeNumber=episode))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     
@@ -232,7 +236,7 @@ def seasons(item):
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
                 Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
-                     action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
+                     action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName, contentType='tvshow'))
 
     return itemlist
 
@@ -310,7 +314,7 @@ def decode_link(enc_url):
     url = ""
     try:
         #new_data = get_source(enc_url)
-        new_data = httptools.downloadpage(enc_url, canonical=canonical).data
+        new_data = httptools.downloadpage(enc_url).data
         if "gamovideo" in enc_url:
             url = scrapertools.find_single_match(new_data, '<a href="([^"]+)"')
         else:

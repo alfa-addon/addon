@@ -240,10 +240,11 @@ def add_languages(title, languages):
     return title
 
 
-def add_info_plot(plot, languages, quality, vextend, contentTitle):
+def add_info_plot(plot, languages, quality, vextend, contentTitle, infoLabels):
     #logger.info()
     last = '[/I][/B]\n'
     c_content = ''
+    s_studio = ''
 
     if languages:
         l_part = '[COLOR yellowgreen][B][I]Idiomas:[/COLOR] '
@@ -268,22 +269,36 @@ def add_info_plot(plot, languages, quality, vextend, contentTitle):
     if vextend:
         v_part = '[COLOR yellowgreen][B][I]Tipo:[/COLOR] '
         p_vextend = '%s%s%s' % (v_part, "[Versión Extendida]", last)
+    
+    if infoLabels.get('studio', '') or (infoLabels.get('status', '') and infoLabels['mediatype'] != 'movie'):
+        s_part = '[COLOR yellowgreen][B][I]Estudio: (Estado)[/COLOR] '
+        s_studio = '%s%s' % (s_part, infoLabels.get('studio', '-'))
+        if infoLabels['mediatype'] != 'movie':
+            sea_epi = ''
+            if infoLabels.get('number_of_seasons') and infoLabels.get('number_of_episodes'):
+                sea_epi = '%sx%s, ' % (str(infoLabels['number_of_seasons']), str(infoLabels['number_of_episodes']).zfill(2))
+            if infoLabels.get('status') and (infoLabels['status'].lower() == "ended" \
+                                        or infoLabels['status'].lower() == "canceled"):
+                s_studio = '%s; (%sTERM)' % (s_studio, sea_epi)
+            else:
+                s_studio = '%s; (%sActiva)' % (s_studio, sea_epi)
+        s_studio = '%s%s' % (s_studio, last)
 
     if languages and quality and vextend:
-        plot_ = '%s%s%s%s\n%s' % (p_lang, p_quality, c_content, p_vextend, plot)
+        plot_ = '%s%s%s%s%s\n%s' % (p_lang, p_quality, s_studio, c_content, p_vextend, plot)
     elif languages and quality:
-        plot_ = '%s%s%s\n%s' % (p_lang, p_quality, c_content, plot)
+        plot_ = '%s%s%s%s\n%s' % (p_lang, p_quality, s_studio, c_content, plot)
     elif languages:
-        plot_ = '%s%s\n%s' % (p_lang, c_content, plot)
+        plot_ = '%s%s%s\n%s' % (p_lang, s_studio, c_content, plot)
 
     elif quality:
-        plot_ = '%s%s\n%s' % (p_quality, c_content, plot)
+        plot_ = '%s%s%s\n%s' % (p_quality, s_studio, c_content, plot)
 
     elif vextend:
-        plot_ = '%s%s\n%s' % (p_vextend, c_content, plot)
+        plot_ = '%s%s%s\n%s' % (p_vextend, s_studio, c_content, plot)
 
     else:
-        plot_ = '%s\n%s' % (c_content, plot)
+        plot_ = '%s%s\n%s' % (s_studio, c_content, plot)
 
     return plot_
 
@@ -475,7 +490,7 @@ def title_format(item, c_file=colors_file, srv_lst={}):
             new_title.append(format_rating(info["rating"]))
         title = " ".join(new_title)
         item.title = title
-    item.plot = add_info_plot(item.plot, simple_language, item.quality, vextend, contentTitle)
+    item.plot = add_info_plot(item.plot, simple_language, item.quality, vextend, contentTitle, item.infoLabels)
 
     item = add_extra_info(item, checks)
     return item

@@ -29,6 +29,7 @@ from core import jsontools
 from core.item import Item
 from platformcode import config, logger
 
+IGNORE_NULL_LABELS = []
 dict_servers_parameters = {}
 
 """ CACHING SERVERS PARAMETERS """
@@ -651,7 +652,7 @@ def get_server_setting(name, server, default=None, caching_var=True, debug=DEBUG
         alfa_caching = bool(window.getProperty("alfa_caching"))
         alfa_servers = json.loads(window.getProperty("alfa_servers"))
         dict_file = alfa_servers.get(server, {}).copy()
-        if debug: logger.error('READ Cache SERVER: %s%s, NAME: %s: %s:' % (server.upper(), module, str(name).upper(), dict_file))
+        if debug: logger.error('READ Cached SERVER: %s%s, NAME: %s: %s:' % (server.upper(), module, str(name).upper(), dict_file))
     if alfa_caching and caching_var and dict_file:
         dict_settings = alfa_servers[server].get('settings', {}).copy()
         if dict_settings.get(name, ''):
@@ -668,7 +669,7 @@ def get_server_setting(name, server, default=None, caching_var=True, debug=DEBUG
                 dict_settings = dict_file['settings']
                 if alfa_caching:
                     alfa_servers.update({server: dict_file.copy()})
-                    if debug: logger.error('SAVE Cache SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
+                    if debug: logger.error('SAVE Cached SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
                     window.setProperty("alfa_servers", json.dumps(alfa_servers))
         except EnvironmentError:
             logger.error("ERROR al leer el archivo: %s, parámetro: %s" % (file_settings, name))
@@ -689,16 +690,19 @@ def get_server_setting(name, server, default=None, caching_var=True, debug=DEBUG
         
         if alfa_caching:
             alfa_servers.update({server: dict_file.copy()})
-            if debug: logger.error('SAVE Cache from Default SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
+            if debug: logger.error('SAVE Cached from Default SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
             window.setProperty("alfa_servers", json.dumps(alfa_servers))
         dict_file['settings'] = dict_settings
         
         # Creamos el archivo ../settings/cserver_data.json
-        json_data = jsontools.dump(dict_file)
-        if debug: logger.error('WRITE File SERVER: %s%s: %s:' % (server.upper(), module, json_data))
-        if not filetools.write(file_settings, json_data, silent=True):
-            logger.error("ERROR al salvar el parámetro: %s en el archivo: %s" % (name, file_settings))
-            logger.error(filetools.file_info(file_settings))
+        if name not in IGNORE_NULL_LABELS or (name in IGNORE_NULL_LABELS and dict_settings[name] != None):
+            for label in IGNORE_NULL_LABELS:
+                if label in dict_file['settings'] and dict_file['settings'][label] == None: del dict_file['settings'][label]
+            json_data = jsontools.dump(dict_file)
+            if debug: logger.error('WRITE File SERVER: %s%s: %s:' % (server.upper(), module, json_data))
+            if not filetools.write(file_settings, json_data, silent=True):
+                logger.error("ERROR al salvar el parámetro: %s en el archivo: %s" % (name, file_settings))
+                logger.error(filetools.file_info(file_settings))
 
     # Devolvemos el valor del parametro local 'name' si existe, si no se devuelve default
     return dict_settings.get(name, default)
@@ -731,7 +735,7 @@ def set_server_setting(name, value, server, retry=False, debug=DEBUG):
     if alfa_caching:
         alfa_servers = json.loads(window.getProperty("alfa_servers"))
         dict_file = alfa_servers.get(server, {}).copy()
-        if debug: logger.error('READ Cache SERVER: %s%s, NAME: %s: %s:' % (server.upper(), module, str(name).upper(), dict_file))
+        if debug: logger.error('READ Cached SERVER: %s%s, NAME: %s: %s:' % (server.upper(), module, str(name).upper(), dict_file))
         if dict_file: dict_settings = alfa_servers[server].get('settings', {}).copy()
 
     if not dict_file and filetools.exists(file_settings):
@@ -746,6 +750,8 @@ def set_server_setting(name, value, server, retry=False, debug=DEBUG):
             logger.error(filetools.file_info(file_settings))
 
     if 'settings' in dict_file and isinstance(dict_file, dict):
+        for label in IGNORE_NULL_LABELS:
+            if label in dict_settings and dict_settings[label] == None: del dict_settings[label]
         dict_settings[name] = value
         dict_file['settings'] = dict_settings.copy()
     else:
@@ -756,11 +762,11 @@ def set_server_setting(name, value, server, retry=False, debug=DEBUG):
         alfa_caching = bool(window.getProperty("alfa_caching"))
         if alfa_caching:
             alfa_servers.update({server: dict_file.copy()})
-            if debug: logger.error('SAVE Cache SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
+            if debug: logger.error('SAVE Cached SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
             window.setProperty("alfa_servers", json.dumps(alfa_servers))
         else:
             alfa_servers = {}
-            if debug: logger.error('DROP Cache SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers))
+            if debug: logger.error('DROP Cached SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers))
             window.setProperty("alfa_servers", json.dumps(alfa_servers))
 
     # comprobamos si existe dict_file y es un diccionario, sino lo creamos
@@ -774,7 +780,7 @@ def set_server_setting(name, value, server, retry=False, debug=DEBUG):
         logger.error("ERROR al salvar el parámetro: %s en el archivo: %s" % (name, file_settings))
         logger.error(filetools.file_info(file_settings))
         alfa_servers = {}
-        if debug: logger.error('DROP Cache SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers))
+        if debug: logger.error('DROP Cached SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers))
         window.setProperty("alfa_servers", json.dumps(alfa_servers))
         return None
 

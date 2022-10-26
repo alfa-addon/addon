@@ -167,6 +167,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
         BUFFER = int(config.get_setting("bt_buffer", server="torrent", default="50"))
     except:
         BUFFER = 50
+        config.set_setting("bt_buffer", "50", server="torrent")
     DOWNLOAD_LIMIT = config.get_setting("mct_download_limit", server="torrent", default="")
     if DOWNLOAD_LIMIT:
         try:
@@ -1728,13 +1729,15 @@ def torrent_dirs():
                      'BT': '',
                      'BT_url': '',
                      'BT_torrents': '',
-                     'BT_buffer': 0,
-                     'BT_version': config.get_setting("libtorrent_version", server="torrent", default='/').split('/')[1],
+                     'BT_buffer': '0',
+                     'BT_version': config.get_setting("libtorrent_version", server="torrent", default='/').split('/')[1] \
+                                                       if config.get_setting("libtorrent_version", server="torrent") else '',
                      'MCT': '',
                      'MCT_url': '',
                      'MCT_torrents': '',
-                     'MCT_buffer': 0,
-                     'MCT_version': config.get_setting("libtorrent_version", server="torrent", default='/').split('/')[1],
+                     'MCT_buffer': '0',
+                     'MCT_version': config.get_setting("libtorrent_version", server="torrent", default='/').split('/')[1] \
+                                                        if config.get_setting("libtorrent_version", server="torrent") else '',
                      'QUASAR': '',
                      'QUASAR_url': '',
                      'QUASAR_torrents': '',
@@ -1800,7 +1803,7 @@ def torrent_dirs():
             torrent_paths['BT'] = filetools.join(str(config.get_setting("bt_download_path", \
                         server="torrent", default='', debug=DEBUG)), 'BT-torrents')
             torrent_paths['BT_torrents'] = filetools.join(torrent_paths['BT'], '.cache')
-            torrent_paths['BT_buffer'] = config.get_setting("bt_buffer", server="torrent", default=50, debug=DEBUG)
+            torrent_paths['BT_buffer'] = config.get_setting("bt_buffer", server="torrent", default="50", debug=DEBUG)
         elif torr_client == 'MCT':
             if not config.get_setting("mct_download_path", server="torrent", default='', debug=DEBUG) and downloadpath:
                 config.set_setting("mct_download_path", downloadpath, server="torrent", debug=DEBUG)
@@ -1808,7 +1811,7 @@ def torrent_dirs():
                         server="torrent", default='', debug=DEBUG)), 'MCT-torrent-videos')
             torrent_paths['MCT_torrents'] = filetools.join(str(config.get_setting("mct_download_path", \
                         server="torrent", default='', debug=DEBUG)), 'MCT-torrents')
-            torrent_paths['MCT_buffer'] = config.get_setting("mct_buffer", server="torrent", default=50, debug=DEBUG)
+            torrent_paths['MCT_buffer'] = config.get_setting("mct_buffer", server="torrent", default="50", debug=DEBUG)
         elif 'torrenter' in torr_client.lower():
             torrent_paths[torr_client.upper()] = str(filetools.join(filetools.translatePath(__settings__.getSetting('storage')),  "Torrenter"))
             if not torrent_paths[torr_client.upper()] or torrent_paths[torr_client.upper()] == "Torrenter":
