@@ -65,13 +65,21 @@ def categorias(item):
         data = scrapertools.find_single_match(data, '<div class="channels-list">(.*?)</section>')
         patron  = '<div>(.*?)</div>'
     else:
-        patron  = 'class="ctl-item">(.*?)</div>'
+        patron  = 'class="ctl-item">(.*?)</p>'
     if "pornstars" in item.url:
-        patron  = 'class="actors-list-item">(.*?)</div>'
+        patron  = 'class="actors-list-item">(.*?)>Rank'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for match in matches:
+        cantidad = ""
         scrapedurl = scrapertools.find_single_match(match,'href="([^"]+)"')
-        if "channel-profile" in scrapedurl:
+        if "/pornstars-profile" in scrapedurl:
+            # thumbnail = scrapertools.find_single_match(match,';(https://p.cdn.porndoe.com/image/porn_star/.*?.jpg)')
+            cantidad = scrapertools.find_single_match(match,'<span class="-grow">([^<]+)<')
+            cantidad = "(%s)" % cantidad
+        else:
+            scrapedurl = scrapertools.find_single_match(match,'ng-follow="([^"]+)"')
+            import base64
+            scrapedurl = base64.b64decode(scrapedurl).decode('utf-8')
             scrapedurl = scrapedurl.replace("channel-profile", "channel-profile-videos")
             scrapedurl += "?sort=date-down"
         thumbnail = scrapertools.find_single_match(match,'data-src="([^"]+)"')
@@ -79,13 +87,8 @@ def categorias(item):
         scrapedtitle = scrapertools.find_single_match(match,'title="([^"]+)"')
         if not scrapedtitle:
             scrapedtitle = scrapertools.find_single_match(match,'class="item-title">([^<]+)<').strip()
-        cantidad = ""
-        if "/category" in scrapedurl:
+        if "/category/" in scrapedurl:
             cantidad = scrapertools.find_single_match(match,'<span class="ctl-count">([^<]+)<')
-        if "/pornstars-profile" in scrapedurl:
-            thumbnail = scrapertools.find_single_match(match,';(https://p.cdn.porndoe.com/image/porn_star/.*?.jpg)')
-            cantidad = scrapertools.find_single_match(match,'<span class="-grow">([^<]+)<')
-            cantidad = "(%s)" % cantidad
         title = "%s %s" % (scrapedtitle, cantidad)
         scrapedurl = scrapedurl.replace("https://letsdoeit.com", "")
         url = urlparse.urljoin(item.url,scrapedurl)
@@ -120,7 +123,7 @@ def lista(item):
         url = elem.a['href']
         if "redirect" in url:
             continue
-        title = elem.find('a', class_='video-item-title')['title']
+        title = elem.find('a', class_='video-item-link')['title']
         thumbnail = elem.svg['data-src']
         time = elem['data-duration']
         hd = elem['data-hd']

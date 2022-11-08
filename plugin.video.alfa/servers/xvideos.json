@@ -12,6 +12,10 @@
         "url": "https://\\1/a"
       },
       {
+        "pattern": "(https://www.xnxx.com/embedframe/[0-9]+)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://www.xnxx.com/video-\\w+)",
         "url": "\\1/a"
       }
