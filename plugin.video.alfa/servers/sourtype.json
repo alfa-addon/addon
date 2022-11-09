@@ -4,10 +4,6 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://hexupload.net/[A-z0-9]+)",
-        "url": "\\1"
-      },
-      {
         "pattern": "(https://www.nonktube.com/video/[0-9]+/[A-z0-9-]+)",
         "url": "\\1"
       }

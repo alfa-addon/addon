@@ -1,12 +1,11 @@
 {
   "id": "yespornplease",
   "name": "YesPornPlease",
-  "active": false,
+  "active": true,
   "adult": true,
   "language": ["*"],
   "thumbnail": "https://i.postimg.cc/Jt9ZBs8B/yespornplease.png",
-  "banner": "yespornplease.png",
-  "fanart": "",
+  "banner": "",
   "categories": [
     "adult"
   ],

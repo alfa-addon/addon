@@ -105,17 +105,19 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = ' id="video_\d+".*?'
+    patron = ' id="video_(\d+)".*?'
     patron += '<a href="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?'
     patron += 'title="([^"]+)".*?'
     patron += '>([^<]+)<span class="video-hd">.*?'
     patron += '</span>([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for url,scrapedthumbnail,scrapedtitle,scrapedtime,quality in matches:
+    for id,url,scrapedthumbnail,scrapedtitle,scrapedtime,quality in matches:
+        url = urlparse.urljoin(item.url,url)
+        if "/search-video/" in url:
+            url = "%s/embedframe/%s" %(host, id)
         title = '[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s' % (scrapedtime,quality,scrapedtitle)
         thumbnail = scrapedthumbnail.replace("THUMBNUM" , "10")
-        url = urlparse.urljoin(item.url,url)
         plot = ""
         action = "play"
         if logger.info() == False:

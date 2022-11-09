@@ -100,6 +100,7 @@ def catalogo(item):
         itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
+
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
@@ -119,6 +120,9 @@ def lista(item):
     matches = soup.find_all('div', id=re.compile(r"^video_\d+"))
     for elem in matches:
         url = elem.a['href']
+        id = elem['data-id']
+        if "/search-video/" in url:
+            url = "%s/video%s/a" %(host,id)
         if "/prof-video-click/" in url:
             url = scrapertools.find_single_match(str(url), '/(\d+/[A-z0-9_]+)')
             url = "/video%s" %url
