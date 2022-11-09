@@ -44,6 +44,7 @@ canonical = {
              'host_alt': ["https://cinecalidad.dev/"], 
              'host_black_list': ["https://www.cinecalidad.lat/", 
                                  "https://v3.cine-calidad.com/", "https://www5.cine-calidad.com/", "https://cinecalidad3.com/"], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -57,6 +58,7 @@ current_lang = ''
 site_list = ['', '%s' % host, '%sespana/' % host, 'https://www.cinemaqualidade.im']
 site = config.get_setting('filter_site', channel=canonical['channel'])
 site_lang = '%s' % site_list[site]
+sufix = ['', '', '?castellano=sp', '']
 
 
 def mainlist(item):
@@ -77,12 +79,14 @@ def mainlist(item):
                          title="CineCalidad Latino",
                          action="submenu",
                          host=host,
+                         site=1, 
                          thumbnail=thumbmx))
 
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Castellano",
                          action="submenu",
                          host=host+'espana/',
+                         site=2, 
                          thumbnail=thumbes))
 
     # itemlist.append(Item(channel=item.channel,
@@ -106,19 +110,24 @@ def mainlist(item):
 
 
 def submenu(item):
+    logger.info()
+    global site, host
+    
     idioma = 'peliculas'
     idioma2 = "destacada"
     host = item.host
+    if item.site: site = item.site
     # if item.host == "https://www.cinemaqualidade.im":
     #     idioma = "filmes"
     #     idioma2 = "destacado"
-    logger.info()
+    
     itemlist = []
 
     itemlist.append(Item(channel=item.channel,
                          title=idioma.capitalize(),
                          action="list_all",
                          url=host,
+                         site=site, 
                          thumbnail=get_thumb('movies', auto=True),
                          ))
     if "/espana/" not in item.host:
@@ -126,13 +135,15 @@ def submenu(item):
                              title="Destacadas",
                              # action="featured",
                              action="list_all",
-                             url=host + "/peliculas-populares/",
+                             url=host + "peliculas-populares/",
+                             site=site, 
                              thumbnail=get_thumb('hot', auto=True),
                              ))
         itemlist.append(Item(channel=item.channel,
                              title="Generos",
                              action="genres",
                              url=host,
+                             site=site, 
                              thumbnail=get_thumb('genres', auto=True),
 
                              ))
@@ -147,6 +158,7 @@ def submenu(item):
                          action="search",
                          thumbnail=get_thumb('search', auto=True),
                          url=host + '?s=',
+                         site=site, 
                          host=item.host,
                          ))
     if site > 0:
@@ -210,10 +222,13 @@ def list_all(item):
     #matches = soup.find_all("div", class_="home_post_cont")
     matches = soup.find_all("article")#, class_="relative group")
     #logger.debug(matches)
+    
     for elem in matches:
         #url = scrapertools.find_single_match(elem.img.get("extract", ""), "href='([^']+)'")
         url = elem.a.get("href", "")
         if '/serie' in url: continue
+        if sufix[item.site or 0] and sufix[item.site or 0] not in url:
+            url += sufix[item.site or 0]
         
         if not url:
             continue
@@ -305,27 +320,36 @@ def findvideos(item):
                "Latmax": "Fembed"}
 
     soup = create_soup(item.url)
-    strm_links = soup.find("ul", class_="options").find_all("a")
+    try:
+        strm_links = soup.find("ul", class_="options").find_all("a")
 
-    for lnk in strm_links:
-        url = base64.b64decode(lnk["data-src"])
-        srv = lnk.text.strip().capitalize()
-        if srv in ["Cineplay", "Netu", "Trailer"]:
-            continue
-        if srv in srv_ids:
-            srv = srv_ids[srv]
-        itemlist.append(Item(channel=item.channel, url=url, title=srv, action="play", infoLabels=item.infoLabels))
+        for lnk in strm_links:
+            try:
+                url = base64.b64decode(lnk["data-src"]).decode('utf-8')
+                srv = lnk.text.strip().capitalize()
+                if srv in ["Cineplay", "Netu", "Trailer"]:
+                    continue
+                if srv in srv_ids:
+                    srv = srv_ids[srv]
+                itemlist.append(Item(channel=item.channel, url=url, title=srv, action="play", infoLabels=item.infoLabels))
+            except:
+                pass
 
-    dl_links = soup.find("ul", class_="links").find_all("a")
-    for lnk in dl_links:
-        url = base64.b64decode(lnk["data-url"])
-        srv = lnk.text.strip().capitalize()
-        if srv in ["Cineplay", "Netu"]:
-            continue
-        if srv in srv_ids:
-            srv = srv_ids[srv]
-        itemlist.append(Item(channel=item.channel, url=url, title=srv, action="play", infoLabels=item.infoLabels,
-                             is_dl=True))
+        dl_links = soup.find("ul", class_="links").find_all("a")
+        for lnk in dl_links:
+            try:
+                url = base64.b64decode(lnk["data-url"]).decode('utf-8')
+                srv = lnk.text.strip().capitalize()
+                if srv in ["Cineplay", "Netu"]:
+                    continue
+                if srv in srv_ids:
+                    srv = srv_ids[srv]
+                itemlist.append(Item(channel=item.channel, url=url, title=srv, action="play", infoLabels=item.infoLabels,
+                                     is_dl=True))
+            except:
+                pass
+    except:
+        pass
 
     return itemlist
 

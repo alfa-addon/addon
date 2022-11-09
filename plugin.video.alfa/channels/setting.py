@@ -100,7 +100,7 @@ def setting_torrent(item):
 
     LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default="")
     LIBTORRENT_ERROR = config.get_setting("libtorrent_error", server="torrent", default="")
-    default = config.get_setting("torrent_client", server="torrent", default=0)
+    default = config.get_setting("torrent_client", server="torrent", default=0) or 0
     BUFFER = config.get_setting("mct_buffer", server="torrent", default="50")
     DOWNLOAD_PATH = config.get_setting("mct_download_path", server="torrent", default=config.get_setting("downloadpath"))
     if not DOWNLOAD_PATH: DOWNLOAD_PATH = filetools.join(config.get_data_path(), 'downloads')

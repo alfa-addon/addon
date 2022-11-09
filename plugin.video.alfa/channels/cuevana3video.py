@@ -31,11 +31,12 @@ __channel__='allcalidad'
 canonical = {
              'channel': 'cuevana3video', 
              'host': config.get_setting("current_host", 'cuevana3video', default=''), 
-             'host_alt': ["https://www1.cuevana3.ch/"], 
-             'host_black_list': ["https://cuevana3.ch/", "https://www1.cuevana3.fm/", 
+             'host_alt': ["https://www2.cuevana3.ch/"], 
+             'host_black_list': ["https://www1.cuevana3.ch/", "https://cuevana3.ch/", "https://www1.cuevana3.fm/", 
                                  "https://cuevana3.fm/", "https://www1.cuevana3.vc/", "https://cuevana3.vc/", 
                                  "https://www2.cuevana3.pe/", "https://www1.cuevana3.pe/", "https://cuevana3.pe/", 
                                  "https://www2.cuevana3.cx/", "https://www1.cuevana3.cx/"], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -152,7 +153,8 @@ def last_episodes(item):
     logger.info()
 
     itemlist = []
-    infoLabels = []
+    infoLabels = {}
+    
     data = httptools.downloadpage(item.url, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, 'Ultimos Episodios.*?</ul>')
     patron  = '(?is)<a href="([^"]+)'
@@ -163,14 +165,18 @@ def last_episodes(item):
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapeddate in matches:
         season, episode = scrapertools.get_season_and_episode(scrapedtitle).split("x")
-        infoLabels = {"episode":episode, "season":season}
-        contentSerieName = scrapertools.find_single_match(scrapedtitle, '(.*?) \d')
+        infoLabels = {"mediatype": "episode", "tvshowtitle": scrapertools.find_single_match(scrapedtitle, '(.*?) \d')}
+        try:
+            infoLabels["episode"] = int(episode)
+            infoLabels["season"] = int(season)
+        except:
+            infoLabels["episode"] = 1
+            infoLabels["season"] = 1
 
         itemlist.append(
             item.clone(
                 action = "findvideos",
                 channel = item.channel,
-                contentSerieName = contentSerieName,
                 infoLabels = infoLabels,
                 thumbnail = "https://" + scrapedthumbnail,
                 title = scrapedtitle + " %s" %scrapeddate,
@@ -203,6 +209,7 @@ def last_tvshows(item):
                 action = "seasons",
                 channel = item.channel,
                 contentSerieName = scrapedtitle,
+                contentType = 'tvshow', 
                 thumbnail = "https://" + scrapedthumbnail,
                 title = scrapedtitle,
                 url = urlparse.urljoin(host, scrapedurl)
@@ -298,8 +305,13 @@ def episodesxseasons(item):
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapeddate in matches:
         season, episode  = scrapertools.get_season_and_episode(scrapedtitle).split("x")
-        infoLabels = {"episode":episode, "season":season}
-        contentSerieName = scrapertools.find_single_match(scrapedtitle, '(.*?) \d')
+        infoLabels = {"mediatype": "episode", "tvshowtitle": scrapertools.find_single_match(scrapedtitle, '(.*?) \d')}
+        try:
+            infoLabels["episode"] = int(episode)
+            infoLabels["season"] = int(season)
+        except:
+            infoLabels["episode"] = 1
+            infoLabels["season"] = 1
 
         itemlist.append(
             item.clone(
@@ -307,7 +319,6 @@ def episodesxseasons(item):
                 action = "findvideos",
                 episode = episode,
                 infoLabels = infoLabels,
-                contentSerieName = contentSerieName,
                 title = scrapedtitle,
                 thumbnail = scrapedthumbnail,
                 url = urlparse.urljoin(host, scrapedurl)
@@ -362,6 +373,7 @@ def list_all(item):
                     action = "seasons",
                     channel = item.channel,
                     contentSerieName = scrapedtitle,
+                    contentType = 'tvshow', 
                     thumbnail = "https://" + scrapedthumbnail,
                     title = scrapedtitle,
                     url = urlparse.urljoin(host, scrapedurl),

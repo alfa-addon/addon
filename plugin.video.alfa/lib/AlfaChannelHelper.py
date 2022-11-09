@@ -55,14 +55,14 @@ class AlfaChannelHelper:
     def list_all(self, item, postprocess=None):
         pass
 
-    def limit_results(self, item, matches):
+    def limit_results(self, item, matches, lim_max=20):
 
         next_page = None
         next_limit = None
 
-        if len(matches) > 20 and not item.next_limit:
+        if len(matches) > lim_max and not item.next_limit:
             limit = int(len(matches) / 2)
-            next_limit = limit + 1
+            next_limit = limit
             next_page = item.url
             matches = matches[:limit]
         elif item.next_limit:
@@ -84,13 +84,18 @@ class AlfaChannelHelper:
 
     def define_content_type(self, new_item, is_tvshow=False):
 
-        if new_item.infoLabels["year"] in new_item.title:
+        if new_item.infoLabels.get("year", '') and new_item.infoLabels["year"] in new_item.title:
             new_item.title = re.sub("\(|\)|%s" % new_item.infoLabels["year"], "", new_item.title)
 
         if not is_tvshow and (self.movie_path in new_item.url or not self.tv_path in new_item.url):
             new_item.action = self.movie_action
-            new_item.contentTitle = new_item.title
-            new_item.contentType = 'movie'
+            if new_item.contentType == 'episode': 
+                new_item.contentSerieName = re.sub('\s*\d+x\d+\s*', '', new_item.title)
+            else:
+                new_item.contentTitle = new_item.title
+            if not new_item.contentType: new_item.contentType = 'movie'
+            if not new_item.infoLabels.get("year", ''):
+                new_item.infoLabels["year"] = '-'
         else:
             new_item.action = self.tv_action
             new_item.contentSerieName = new_item.title
@@ -119,7 +124,7 @@ class CustomChannel(AlfaChannelHelper):
 
 class DooPlay(AlfaChannelHelper):
 
-    def list_all(self, item, postprocess=None):
+    def list_all(self, item, postprocess=None, lim_max=20):
         logger.info()
 
         itemlist = list()
@@ -140,25 +145,28 @@ class DooPlay(AlfaChannelHelper):
         if not matches:
             return itemlist
 
-        matches, next_limit, next_page = self.limit_results(item, matches)
+        matches, next_limit, next_page = self.limit_results(item, matches, lim_max=lim_max)
 
         try:
             if not next_page:
                 next_page = soup.find("div", class_="pagination").find("span", class_="current").next_sibling["href"]
                 if not next_page.startswith("http"):
-                    next_page = item.url + next_page
+                    next_page = self.host + next_page.lstrip('/')
         except:
             pass
 
         for elem in matches:
-
-            poster = elem.find("div", class_="poster")
-            metadata = elem.find("div", class_="metadata")
-            data = elem.find("div", class_="data")
-            thumb = poster.img["src"]
-            title = poster.img["alt"]
-            url = poster.find_all("a")[-1]["href"]
-            url = url if url.startswith("http") else self.host + url
+            try:
+                poster = elem.find("div", class_="poster")
+                metadata = elem.find("div", class_="metadata")
+                data = elem.find("div", class_="data")
+                thumb = poster.img["src"]
+                title = poster.img["alt"]
+                url = poster.find_all("a")[-1]["href"]
+                url = url if url.startswith("http") else self.host + url
+            except:
+                logger.error(elem)
+                continue
             try:
                 year = metadata.find("span", text=re.compile(r"\d{4}")).text.strip()
             except:
@@ -424,7 +432,7 @@ class DooPlay(AlfaChannelHelper):
 
 class ToroFilm(AlfaChannelHelper):
 
-    def list_all(self, item, postprocess=None):
+    def list_all(self, item, postprocess=None, lim_max=20):
         logger.info()
 
         itemlist = list()
@@ -439,19 +447,23 @@ class ToroFilm(AlfaChannelHelper):
         if not matches:
             return itemlist
 
-        matches, next_limit, next_page = self.limit_results(item, matches)
+        matches, next_limit, next_page = self.limit_results(item, matches, lim_max=lim_max)
 
         if not next_page:
             try:
                 next_page = soup.find("div", class_="nav-links").find_all("a")[-1]["href"]
                 if not next_page.startswith("http"):
-                    next_page = item.url + next_page
+                    next_page = self.host + next_page.lstrip('/')
             except:
                 pass
 
         for elem in matches:
-            url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"]
-            title = elem.h2.text
+            try:
+                url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"].lstrip('/')
+                title = elem.h2.text
+            except:
+                logger.error(elem)
+                continue
             try:
                 thumb = elem.find("img")["data-src"]
             except:
@@ -645,9 +657,257 @@ class ToroFilm(AlfaChannelHelper):
         return results[0]
 
 
+class ToroPdon(AlfaChannelHelper):
+
+    def list_all(self, item, postprocess=None, lim_max=24):
+        logger.info()
+
+        itemlist = list()
+        
+        try:
+            soup = self.create_soup(item.url)
+            if item.c_type == 'episodios':
+                matches = soup.find("ul", class_="MovieList Rows episodes").find_all("li", class_="TPostMv")
+            else:
+                matches = soup.find("ul", class_="MovieList Rows").find_all("div", class_="TPost C hentry")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
+
+        matches, next_limit, next_page = self.limit_results(item, matches, lim_max=lim_max)
+
+        if not next_page:
+            try:
+                #next_page = soup.find("div", class_="nav-links").find_all("a")[-1]["href"]
+                next_page = soup.find("div", class_="nav-links").find("a", class_="next page-numbers")["href"]
+                if not next_page.startswith("http"):
+                    next_page = self.host + next_page.lstrip('/')
+            except:
+                pass
+
+        for elem in matches:
+            try:
+                url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"].lstrip('/')
+                title = elem.find("img")["alt"]
+            except:
+                logger.error(elem)
+                continue
+
+            try:
+                thumb = elem.find("img")["data-src"]
+            except:
+                thumb = elem.find("img")["src"]
+            thumb = thumb if thumb.startswith("http") else self.host + thumb.lstrip('/')
+
+            try:
+                if item.c_type == 'episodios':
+                    year = '-'
+                else:
+                    year = elem.find("span", class_="Year").text
+            except:
+                year = '-'
+
+            new_item = Item(channel=item.channel,
+                            title=title,
+                            url=url,
+                            thumbnail=thumb,
+                            infoLabels={"year": year}
+                            )
+
+            if item.c_type == 'episodios':
+                new_item.contentSeason, new_item.contentEpisodeNumber = elem.find("span", class_="Year").text.split('x')
+                new_item.contentType = 'episode'
+            
+            if postprocess:
+                new_item = postprocess(soup, elem, new_item, item)
+
+            new_item = self.define_content_type(new_item)
+
+            itemlist.append(new_item)
+
+        tmdb.set_infoLabels_itemlist(itemlist, True)
+
+        if next_page:
+            itemlist.append(Item(channel=item.channel,
+                                 title="Siguiente >>",
+                                 url=next_page,
+                                 action='list_all',
+                                 c_type=item.c_type, 
+                                 next_limit=next_limit
+                                 )
+                               )
+        return itemlist
+
+    def section(self, item, menu_id=None, section=None, action="list_all", postprocess=None):
+        logger.info()
+
+        itemlist = list()
+        matches = list()
+
+        reverse = True if section == "year" else False
+        
+        try:
+            soup = self.create_soup(item.url)
+
+            if menu_id:
+                matches = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
+            elif section:
+                if section == "alpha":
+                    matches = soup.find("ul", class_="az-lst")
+                elif section == "year":
+                    matches = soup.find("section", id=re.compile(r"torofilm_movies_annee-\d+"))
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
+
+        for elem in matches.find_all("li"):
+            url = elem.a["href"]
+            title = elem.a.text
+
+            if not url.startswith("http"):
+                url = self.host + url
+
+            new_item = Item(channel=item.channel,
+                            title=title.capitalize(),
+                            action=action,
+                            url=url,
+                            c_type=item.c_type
+                            )
+
+            if postprocess:
+                new_item = postprocess(soup, elem, new_item, item)
+
+            itemlist.append(new_item)
+        if reverse:
+            return itemlist[::-1]
+        return itemlist
+
+    def seasons(self, item, action="episodesxseason", postprocess=None):
+        logger.info()
+
+        itemlist = list()
+
+        try:
+            soup = self.create_soup(item.url)
+            matches = soup.find("select", id="select-season").find_all('option')
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
+
+        infolabels = item.infoLabels
+
+        for elem in matches:
+            try:
+                season = elem["value"]
+                title = "Temporada %s" % season
+                infolabels["season"] = season
+                infolabels["mediatype"] = 'season'
+            except:
+                logger.error(elem)
+                continue
+
+            new_item = Item(channel=item.channel,
+                            url=item.url, 
+                            title=title,
+                            action='episodesxseason',
+                            infoLabels=infolabels
+                            )
+
+            if postprocess:
+                new_item = postprocess(soup, elem, new_item, item)
+
+            itemlist.append(new_item)
+
+        tmdb.set_infoLabels_itemlist(itemlist, True)
+
+        itemlist = self.add_serie_to_videolibrary(item, itemlist)
+
+        return itemlist
+
+    def episodes(self, item, action="findvideos", postprocess=None):
+        logger.info()
+        from core import jsontools
+
+        itemlist = list()
+
+        infolabels = item.infoLabels
+        season = infolabels["season"]
+
+        try:
+            soup = jsontools.load(self.create_soup(item.url).find("script", id="__NEXT_DATA__").text)
+            matches = soup['props']['pageProps']['thisSerie']['seasons'][int(infolabels['season'])-1]['episodes']
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+
+        if not matches:
+            return itemlist
+
+        for elem in matches:
+            url = '%sepisodio/%s-temporada-%s-episodio-%s' % (self.host, elem['slug']['name'], infolabels['season'], elem['slug']['episode'])
+            title = elem['title']
+            infolabels["episode"] = elem['number']
+            infolabels["mediatype"] = 'episode'
+
+            new_item = Item(channel=item.channel,
+                            title=title,
+                            url=url,
+                            action=action,
+                            infoLabels=infolabels
+                            )
+
+            if postprocess:
+                new_item = postprocess(soup, elem, new_item, item)
+
+            itemlist.append(new_item)
+
+        tmdb.set_infoLabels_itemlist(itemlist, True)
+
+        return itemlist
+
+    def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
+
+        options = list()
+        results = list()
+
+        try:
+            soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
+            langs = soup.find_all("div", class_="_1R6bW_0")
+            matches = soup.find_all("ul", class_="sub-tab-lang _3eEG3_0 optm3 hide")
+        except:
+            matches = []
+            logger.error(traceback.format_exc())
+        
+        for x, _lang in enumerate(langs):
+            lang = _lang.find("span").text.lower()
+            if 'descargar' in lang: continue
+            if 'latino' in lang:
+                lang = 'latino'
+            elif 'español' in lang:
+                lang = 'castellano'
+            elif 'subtitulado' in lang:
+                lang = 'subtitulado'
+            
+            for opt in matches[x].find_all("li"):
+                options.append((lang, opt))
+
+        results.append([soup, options])
+
+        return results[0]
+
+
 class ToroPlay(AlfaChannelHelper):
 
-    def list_all(self, item, postprocess=None):
+    def list_all(self, item, postprocess=None, lim_max=20):
         logger.info()
 
         itemlist = list()
@@ -662,22 +922,26 @@ class ToroPlay(AlfaChannelHelper):
         if not matches:
             return itemlist
 
-        matches, next_limit, next_page = self.limit_results(item, matches)
+        matches, next_limit, next_page = self.limit_results(item, matches, lim_max=lim_max)
 
         if not next_page:
             try:
                 next_page = soup.find(class_="wp-pagenavi").find(class_="current").find_next_sibling()["href"]
                 if next_page and not next_page.startswith("http"):
-                    next_page = item.url + next_page
+                    next_page = self.host + next_page.lstrip('/')
             except:
                 pass
 
         for elem in matches:
-            url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"]
-            title = elem.a.h3.text
-            thumb = elem.find("img")
-            thumb = thumb["data-src"] if thumb.has_attr("data-src") else thumb["src"]
-            year = scrapertools.find_single_match(title, r'\((\d{4})\)')
+            try:
+                url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"]
+                title = elem.a.h3.text
+                thumb = elem.find("img")
+                thumb = thumb["data-src"] if thumb.has_attr("data-src") else thumb["src"]
+                year = scrapertools.find_single_match(title, r'\((\d{4})\)')
+            except:
+                logger.error(elem)
+                continue
             if not year:
                 try:
                     year = elem.find("span", class_="Year").text
@@ -781,7 +1045,7 @@ class ToroPlay(AlfaChannelHelper):
             try:
                 next_page = soup.find(class_="wp-pagenavi").find(class_="current").find_next_sibling()["href"]
                 if next_page and not next_page.startswith("http"):
-                    next_page = item.url + next_page
+                    next_page = self.host + next_page.lstrip('/')
             except:
                 pass
 
@@ -929,7 +1193,7 @@ class ToroPlay(AlfaChannelHelper):
 
 class ToroFlix(AlfaChannelHelper):
 
-    def list_all(self, item, postprocess=None):
+    def list_all(self, item, postprocess=None, lim_max=20):
         logger.info()
 
         itemlist = list()
@@ -944,22 +1208,25 @@ class ToroFlix(AlfaChannelHelper):
         if not matches:
             return itemlist
 
-        matches, next_limit, next_page = self.limit_results(item, matches)
+        matches, next_limit, next_page = self.limit_results(item, matches, lim_max=lim_max)
 
         if not next_page:
             try:
                 next_page = soup.find(class_="wp-pagenavi").find(class_="current").find_next_sibling()["href"]
                 if next_page and not next_page.startswith("http"):
-                    next_page = item.url + next_page
+                    next_page = self.host + next_page.lstrip('/')
             except:
                 pass
 
         for elem in matches:
-
-            url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"]
-            title = elem.find(class_="Title").text
-            thumb = elem.find("img")
-            thumb = thumb["data-src"] if thumb.has_attr("data-src") else thumb["src"]
+            try:
+                url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"]
+                title = elem.find(class_="Title").text
+                thumb = elem.find("img")
+                thumb = thumb["data-src"] if thumb.has_attr("data-src") else thumb["src"]
+            except:
+                logger.error(elem)
+                continue
             try:
                 year = elem.find("span", class_="Date").text
             except:
@@ -1059,7 +1326,7 @@ class ToroFlix(AlfaChannelHelper):
             try:
                 next_page = soup.find(class_="wp-pagenavi").find(class_="current").find_next_sibling()["href"]
                 if next_page and not next_page.startswith("http"):
-                    next_page = item.url + next_page
+                    next_page = self.host + next_page.lstrip('/')
             except:
                 pass
 
@@ -1205,7 +1472,7 @@ class ToroFlix(AlfaChannelHelper):
 
 class PsyPlay(AlfaChannelHelper):
 
-    def list_all(self, item, postprocess=None):
+    def list_all(self, item, postprocess=None, lim_max=20):
         logger.info()
 
         itemlist = list()
@@ -1220,21 +1487,25 @@ class PsyPlay(AlfaChannelHelper):
         if not matches:
             return itemlist
 
-        matches, next_limit, next_page = self.limit_results(item, matches)
+        matches, next_limit, next_page = self.limit_results(item, matches, lim_max=lim_max)
         if not next_page:
             try:
                 item.url = re.sub(r"page/\d+/", "", item.url)
                 next_page = soup.find("ul", class_="pagination").find("li", class_="active").next_sibling.a.text
-                next_page = "%s/page/%s/" % (item.url, next_page)
+                next_page = "%s/page/%s/" % (self.host, next_page)
                 if next_page and not next_page.startswith("http"):
-                    next_page = item.url + next_page
+                    next_page = self.host + next_page.lstrip('/')
             except:
                 pass
 
         for elem in matches:
-            thumb = self.host + elem.a.img["src"] if elem.a.img.has_attr("src") else elem.a.img["data-original"]
-            title = elem.a.find("span", class_="mli-info").h2.text
-            url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"]
+            try:
+                thumb = self.host + elem.a.img["src"] if elem.a.img.has_attr("src") else elem.a.img["data-original"]
+                title = elem.a.find("span", class_="mli-info").h2.text
+                url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"]
+            except:
+                logger.error(elem)
+                continue
             try:
                 year = elem.find("div", class_="jt-info", text=re.compile("\d{4}")).text
             except:

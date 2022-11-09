@@ -535,6 +535,30 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True, monito
                 continue
             nostrm_episodelist.append(season_episode)
     nostrm_episodelist = sorted(set(nostrm_episodelist))
+    
+    # Si solo se quiere al última temporada, averiguamos cuál es y la salvamos
+    if config.get_setting('last_season_only', 'videolibrary', default=False) or serie.infoLabels.get('last_season_only', False):
+        try:
+            #episodelist = sorted(episodelist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))         #clasificamos
+            season_last = 0
+            episodelist_alt = []
+            for e in reversed(episodelist):
+                if e.infoLabels.get('season', 0) and e.infoLabels.get('season', 0) >= season_last:
+                    season_last = e.infoLabels.get('season', 0)
+                    serie.infoLabels['last_season_only'] = True
+                    if 'last_season_only' in e.infoLabels:
+                        del e.infoLabels['last_season_only']
+                    episodelist_alt.append(e)
+                elif not e.infoLabels.get('season', 0):
+                    continue
+                else:
+                    break
+            if episodelist_alt:
+                episodelist = episodelist_alt.copy()
+                episodelist = sorted(episodelist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))     #clasificamos
+        except:
+            logger.error("Error al seleccionar la última temporada %s" % e.contentTitle)
+            logger.error(traceback.format_exc())
 
     # Silent es para no mostrar progreso (para videolibrary_service)
     if not silent:

@@ -1,7 +1,7 @@
 {
   "id": "seodiv",
   "name": "Seodiv",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://seodiv.com/templates/Ariana/images/logo.png",

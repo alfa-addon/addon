@@ -1302,10 +1302,15 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
     return (item, itemlist_temporadas)
     
 
-def find_btdigg_search(texto, channel_org, itemlist=[], channel_alt='', domain_alt=''):
+def find_btdigg_search(texto, channel_org, canonical={}, itemlist=[], channel_alt='', domain_alt=''):
     logger.info()
 
     try:
+        if canonical.get('global_search_cancelled', False) or (config.GLOBAL_SEARCH_CANCELLED \
+                                                           and canonical.get('global_search_active', False)):
+            logger.info('## Búsqueda global cancelada: %s: %s' % (channel_org, texto), force=True)
+            return itemlist
+        
         format_tmdb_id(itemlist)
         
         itemlist_alt = []
@@ -1316,8 +1321,11 @@ def find_btdigg_search(texto, channel_org, itemlist=[], channel_alt='', domain_a
         channel = __import__('channels.%s' % channel_alt, None,
                              None, ["channels.%s" % channel_alt])
         host_alt = channel.host
+        if canonical.get('global_search_active', False):
+            channel.canonical['global_search_active'] = True
 
         item = Item()
+        item.channel = channel_alt
         item.action = 'search'
         item.title = 'buscar'
         item.url = host_alt
@@ -1377,10 +1385,15 @@ def find_btdigg_search(texto, channel_org, itemlist=[], channel_alt='', domain_a
     return itemlist_alt
 
 
-def find_btdigg_news(item, matches=[], channel_alt=''):
+def find_btdigg_news(item, matches=[], canonical={}, channel_alt=''):
     logger.info()
 
     try:
+        if canonical.get('global_search_cancelled', False) or (config.GLOBAL_SEARCH_CANCELLED \
+                                                           and canonical.get('global_search_active', False)):
+            logger.info('## Búsqueda global cancelada: %s: %s' % (item.channel, item.title), force=True)
+            return matches
+        
         format_tmdb_id(item)
         
         news_allowed = {
@@ -1392,6 +1405,8 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
                              None, ["channels.%s" % channel_alt])
         host_alt = channel.host
         try:
+            if canonical.get('global_search_active', False):
+                channel.canonical['global_search_active'] = True
             canonical_alt = channel.canonical
             forced_proxy_opt = channel.forced_proxy_opt or canonical_alt.get('forced_proxy_opt', '')
         except:
@@ -1571,10 +1586,15 @@ def find_btdigg_news(item, matches=[], channel_alt=''):
     return matches
 
 
-def find_btdigg_episodios(item, itemlist, url= '', epis_done=[], domain_alt='', cache=True, context=[]):
+def find_btdigg_episodios(item, itemlist, url= '', epis_done=[], domain_alt='', cache=True, context=[], canonical={}):
     logger.info()
     
     try:
+        if canonical.get('global_search_cancelled', False) or (config.GLOBAL_SEARCH_CANCELLED \
+                                                           and canonical.get('global_search_active', False)):
+            logger.info('## Búsqueda global cancelada: %s: %s' % (item.channel, item.title), force=True)
+            return itemlist
+        
         format_tmdb_id(item)
         format_tmdb_id(itemlist)
 
@@ -2524,18 +2544,18 @@ def post_tmdb_findvideos(item, itemlist, headers={}):
         if item.contentType == 'movie': contentType = 'Película'
         if item.contentType == 'episode': contentType = 'Episodio'
         itemlist.append(item.clone(title="-Descargar %s-" % contentType, channel="downloads", server='torrent', 
-                        action="save_download", from_channel=item.channel, from_action='play', folder=False))
+                        quality='', action="save_download", from_channel=item.channel, from_action='play', folder=False))
         if item.contentType == 'episode' and not item.channel_recovery:
             itemlist.append(item.clone(title="-Descargar Epis NO Vistos-", channel="downloads", contentType="tvshow", 
                         action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
-                        sub_action="unseen"))
+                        quality='', sub_action="unseen"))
             item.quality = scrapertools.find_single_match(item.quality, '(.*?)\s\[')
             itemlist.append(item.clone(title="-Descargar Temporada-", channel="downloads", contentType="season", 
                         action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
-                        sub_action="season"))
+                        quality='', sub_action="season"))
             itemlist.append(item.clone(title="-Descargar Serie-", channel="downloads", contentType="tvshow", 
                         action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
-                        sub_action="tvshow"))
+                        quality='', sub_action="tvshow"))
 
     if playcount:
         item.infoLabels["playcount"] = 1

@@ -118,7 +118,15 @@
       "visible": true,
       "enabled": "eq(-1,true)"
     },
-    
+    {
+      "id": "last_season_only",
+      "type": "bool",
+      "label": "    ¿Quiere agregar la Serie completa (Off) o solo la última temporada (On)?",
+      "enabled": true,
+      "visible": true,
+      "default": false
+    },
+
     {
       "id": "window_type",
       "type": "list",

@@ -37,6 +37,7 @@ canonical = {
              'host': config.get_setting("current_host", 'filmoves', default=''), 
              'host_alt': ["https://filmoves.net/"], 
              'host_black_list': ["https://www.filmoves.net/", "https://filmoves.com/"], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -133,9 +134,11 @@ def list_all(item):
         if "serie/" in url:
             new_item.contentSerieName = title
             new_item.action = "seasons"
+            new_item.contentType = 'tvshow'
         else:
             new_item.contentTitle = title
             new_item.action = "findvideos"
+            new_item.contentType = 'movie'
 
         itemlist.append(new_item)
 
@@ -283,7 +286,7 @@ def search_results(item):
         year = mit["release_year"]
     
         itemlist.append(Item(channel=item.channel, title=title, url=url, thumbnail=thumb, contentTitle=title,
-                             action="findvideos", infoLabels={'year': year}))
+                             action="findvideos", contentType='movie', infoLabels={'year': year}))
 
     for sit in data["data"]["s"]:
         url = sit["slug"]
@@ -291,7 +294,7 @@ def search_results(item):
         title = sit["title"]
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, thumbnail=thumb, contentSerieName=title,
-                             action="seasons"))
+                             action="seasons", contentType='tvshow'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 

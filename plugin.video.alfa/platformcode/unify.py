@@ -279,9 +279,14 @@ def add_info_plot(plot, languages, quality, vextend, contentTitle, infoLabels):
                 sea_epi = '%sx%s, ' % (str(infoLabels['number_of_seasons']), str(infoLabels['number_of_episodes']).zfill(2))
             if infoLabels.get('status') and (infoLabels['status'].lower() == "ended" \
                                         or infoLabels['status'].lower() == "canceled"):
-                s_studio = '%s; (%sTERM)' % (s_studio, sea_epi)
+                s_studio = '%s; (%sTERM' % (s_studio, sea_epi)
             else:
-                s_studio = '%s; (%sActiva)' % (s_studio, sea_epi)
+                s_studio = '%s; (%sActiva' % (s_studio, sea_epi)
+            if infoLabels['mediatype'] == 'episode' and infoLabels.get('aired', ''):
+                s_studio = '%s, %s' % (s_studio, infoLabels['aired'])
+            elif infoLabels.get('last_air_date', ''):
+                s_studio = '%s, %s' % (s_studio, infoLabels['last_air_date'])
+            s_studio += ')'
         s_studio = '%s%s' % (s_studio, last)
 
     if languages and quality and vextend:

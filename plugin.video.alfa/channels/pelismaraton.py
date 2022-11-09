@@ -35,8 +35,9 @@ list_servers = [
 canonical = {
              'channel': 'pelismaraton', 
              'host': config.get_setting("current_host", 'pelismaraton', default=''), 
-             'host_alt': ["https://pelismaraton.me/"], 
-             'host_black_list': ["https://pelismaraton.com/"], 
+             'host_alt': ["https://pelismaraton.in/"], 
+             'host_black_list': ["https://pelismaraton.me/", "https://pelismaraton.com/"], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -107,10 +108,10 @@ def section(item):
 
     is_genre = False
     if item.title == "Generos":
-        matches = soup.find("ul", class_="categorias")
+        matches = soup.find("section", class_="widget_categories")
         is_genre = True
     else:
-        matches = soup.find_all("ul", class_="post-lst")[1]
+        matches = soup.find("section", class_="Torofilm_movies_annee")
 
     for elem in matches.find_all("li"):
         url = elem.a["href"]
@@ -118,8 +119,11 @@ def section(item):
         if is_genre:
             cant = elem.a.find("span").text
             title = re.sub(cant, "", elem.a.text)
+        else:
+            url = '%spelicula-año/%s/' % (host, url)
 
         itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url, first=0))
+
     if not is_genre:
         return itemlist[::-1]
     return itemlist
@@ -152,9 +156,11 @@ def list_all(item):
         if "serie/" in url:
             new_item.contentSerieName = title
             new_item.action = "seasons"
+            new_item.contentType = 'tvshow'
         else:
             new_item.contentTitle = title
             new_item.action = "findvideos"
+            new_item.contentType = 'movie'
 
         itemlist.append(new_item)
 
@@ -176,14 +182,14 @@ def seasons(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url).find("div", class_="season-content")
+    soup = create_soup(item.url).find("div", class_="seasons aa-crd")
 
-    matches = soup.find_all("div", class_="season")
+    matches = soup.find_all("div", class_="seasons-bx")
 
     infoLabels = item.infoLabels
 
     for elem in matches:
-        season = scrapertools.find_single_match(elem.h2.text, "Temporada (\d+)")
+        season = scrapertools.find_single_match(elem.p.text, "Temporada (\d+)")
         title = "Temporada %s" % season
         infoLabels["season"] = season
 
@@ -215,14 +221,14 @@ def episodesxseasons(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url).find("div", class_="season-content")
+    soup = create_soup(item.url).find("div", class_="seasons aa-crd")
 
-    matches = soup.find_all("div", class_="season")
+    matches = soup.find_all("div", class_="seasons-bx")
     infoLabels = item.infoLabels
     season = infoLabels["season"]
 
     for elem in matches:
-        if "temporada %s" % season not in elem.h2.text.lower():
+        if "temporada %s" % season not in elem.p.text.lower():
             continue
         epi_list = elem.find_all("li")
         for epi in epi_list:
@@ -247,7 +253,7 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = "go_to_player\('([^']+).*?"
     patron += 'CGXRw">([^ ]+) '
     patron += '- ([^<]+)'
@@ -278,7 +284,7 @@ def play(item):
     logger.info()
 
     #data = httptools.downloadpage(item.url).data
-    url = httptools.downloadpage(item.url, follow_redirects=False).headers.get("location", "")
+    url = httptools.downloadpage(item.url, follow_redirects=False, canonical=canonical).headers.get("location", "")
     #url = scrapertools.find_single_match(data, 'location.href = "([^"]+)')
     if not url.startswith("http"):
         url = "https:" + url
