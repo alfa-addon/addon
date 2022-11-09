@@ -32,6 +32,7 @@ canonical = {
              'host_alt': ["https://monoschinos2.com/"], 
              'host_black_list': [], 
              'pattern': '<meta\s*property="og:url"\s*content="([^"]+)"', 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -165,7 +166,7 @@ def new_episodes(item):
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
                              thumbnail=thumb, contentSerieName=c_title, language=lang,
-                             contentEpisodeNumber=elem.p.text))
+                             contentEpisodeNumber=elem.p.text, contentType='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
     return itemlist
@@ -186,8 +187,13 @@ def list_all(item):
 
         context = renumbertools.context(item)
 
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='folders', context=context,
-                             language=lang, thumbnail=thumb, contentSerieName=title))
+        if 'pelicula' in item.url:
+            itemlist.append(Item(channel=item.channel, title=title, url=url, action='folders', context=context,
+                                 language=lang, thumbnail=thumb, contentTitle=title, contentType='movie',
+                                 infoLabels={'year': '-'}))
+        else:
+            itemlist.append(Item(channel=item.channel, title=title, url=url, action='folders', context=context,
+                                 language=lang, thumbnail=thumb, contentSerieName=title, contentType='tvshow'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -369,7 +375,11 @@ def episodesxfolder(item):
         scrapedurl = elem.a["href"]
         episode = scrapertools.find_single_match(scrapedurl, '.*?episodio-(\d+)')
         lang = item.language
-        season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, int(episode))
+        try:
+            season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, int(episode))
+        except:
+            season = 1
+            episode = 1
         title = "%sx%s - %s" % (season, str(episode).zfill(2), item.contentSerieName)
         url = scrapedurl
         infoLabels['season'] = season

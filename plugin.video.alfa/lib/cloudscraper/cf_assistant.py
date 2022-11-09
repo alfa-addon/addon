@@ -28,6 +28,11 @@ from platformcode import logger, config, help_window
 PATH_BL = filetools.join(config.get_runtime_path(), 'resources', 'cf_assistant_bl.json')
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 
+if config.is_xbmc() and config.get_platform(True)['num_version'] >= 14:
+    monitor = xbmc.Monitor()                                                    # For Kodi >= 14
+else:
+    monitor = False                                                             # For Kodi < 14
+
 
 def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDelay=15, retry=False, blacklist=True, headers=None, 
            retryIfTimeout=True, cache=True, clearWebCache=False, mute=True, alfa_s=True, elapsed=0, **kwargs):
@@ -35,8 +40,14 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
     
     url = self.cloudscraper.user_url
     opt = self.cloudscraper.user_opt
+    if opt.get('canonical', {}).get('global_search_cancelled', False) or (config.GLOBAL_SEARCH_CANCELLED \
+                                and opt.get('canonical', {}).get('global_search_active', False)):
+        logger.info('## Búsqueda global cancelada: %s: %s' % (opt.get('canonical', {}).get('channel', ''), url), force=True)
+        return resp
+    
     if timeout < 15: timeout = 20
     if timeout + extraPostDelay > 35: timeout = 20
+    if opt.get('cf_no_blacklist', False): blacklist = False
     blacklist_clear = True
     ua_headers = False
     if not elapsed: elapsed = time.time()
@@ -48,10 +59,11 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
     if CF_testing or opt.get('CF_testing', False):
         CF_testing = debug = retry = True
         timeout = extraPostDelay = 1
-        resp.status_code = 403 if not opt.get('cf_v2', False) else 403
+        resp.status_code = 403 if not opt.get('cf_v2', False) else 503
         resp.headers.update({'Server': 'Alfa'})
 
-    if not opt.get('CF_assistant', True) or opt.get('cf_v2', False):
+    if not opt.get('cf_assistant', True) or not opt.get('canonical', {}).get('cf_assistant', True) or opt.get('cf_v2', False):
+        resp.status_code = 403
         return resp
 
     domain_full = urlparse.urlparse(url).netloc
@@ -65,7 +77,7 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
 
     if blacklist and not retry: 
         blacklist_clear = check_blacklist(domain_full)
-    
+
     if blacklist_clear:
         host = config.get_system_platform()[:1]
         
@@ -121,13 +133,18 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
 
             url_cf = scrapertools.find_single_match(url, '(http.*\:\/\/(?:www\S*.)?\w+\.\w+(?:\.\w+)?)(?:\/)?') + '|cf_clearance'
 
-            data_assistant = alfa_assistant.get_urls_by_page_finished(url, timeout=timeout, getCookies=True, userAgent=ua,
-                                                                      disableCache=cache, debug=debug, jsCode=jscode,
-                                                                      extraPostDelay=extraPostDelay, clearWebCache=clearWebCache, 
-                                                                      removeAllCookies=True, returnWhenCookieNameFound=url_cf,
-                                                                      retryIfTimeout=retryIfTimeout, useAdvancedWebView=True, 
-                                                                      headers=headers, mute=mute, alfa_s=alfa_s
-                                                                     )
+            try:
+                data_assistant = alfa_assistant.get_urls_by_page_finished(url, timeout=timeout, getCookies=True, userAgent=ua,
+                                                                          disableCache=cache, debug=debug, jsCode=jscode,
+                                                                          extraPostDelay=extraPostDelay, clearWebCache=clearWebCache, 
+                                                                          removeAllCookies=True, returnWhenCookieNameFound=url_cf,
+                                                                          retryIfTimeout=retryIfTimeout, useAdvancedWebView=True, 
+                                                                          headers=headers, mute=mute, alfa_s=alfa_s
+                                                                         )
+            except:
+                logger.error("Cancelado por el usuario")
+                return resp
+            
             if not alfa_s or "cookies" not in str(data_assistant): 
                 logger.debug("data assistant: %s" % data_assistant)
 
@@ -162,7 +179,7 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
                             rin = {'Server': 'Alfa'}
 
                             resp.headers.update(dict(rin))
-                            logger.debug("cf_clearence=%s" % val)
+                            logger.info("cf_clearence=%s" % val, force=True)
                             
                             if not retry:
                                 freequent_data[1] += 'OK'
@@ -181,6 +198,9 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
                 freequent_data[1] += 'ERR'
                 logger.error("No Cookies o Error en conexión con Alfa Assistant %s" % str(time.time() - elapsed))
 
+            if monitor and monitor.abortRequested():
+                logger.error("Cancelado por el usuario")
+                return resp
             if not retry:
                 config.set_setting('cf_assistant_ua', '')
                 logger.debug("No se obtuvieron resultados, reintentando...")
@@ -312,12 +332,17 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
 
             url_cf = scrapertools.find_single_match(url, '(http.*\:\/\/(?:www\S*.)?\w+\.\w+(?:\.\w+)?)(?:\/)?') + '|cf_clearance'
             
-            data_assistant = alfa_assistant.get_source_by_page_finished(url, timeout=timeout, getCookies=True, userAgent=ua,
-                                                                        disableCache=cache, debug=debug, jsCode=jscode,
-                                                                        extraPostDelay=extraPostDelay, clearWebCache=clearWebCache, 
-                                                                        removeAllCookies=True, returnWhenCookieNameFound=url_cf,
-                                                                        retryIfTimeout=retryIfTimeout, useAdvancedWebView=True, 
-                                                                        headers=headers, mute=mute, alfa_s=alfa_s)
+            try:
+                data_assistant = alfa_assistant.get_source_by_page_finished(url, timeout=timeout, getCookies=True, userAgent=ua,
+                                                                            disableCache=cache, debug=debug, jsCode=jscode,
+                                                                            extraPostDelay=extraPostDelay, clearWebCache=clearWebCache, 
+                                                                            removeAllCookies=True, returnWhenCookieNameFound=url_cf,
+                                                                            retryIfTimeout=retryIfTimeout, useAdvancedWebView=True, 
+                                                                            headers=headers, mute=mute, alfa_s=alfa_s)
+            except:
+                logger.error("Cancelado por el usuario")
+                return data, resp
+            
             if not alfa_s: logger.debug("data assistant: %s" % data_assistant)
             
             if isinstance(data_assistant, dict) and data_assistant.get('htmlSources', []) \
@@ -353,6 +378,9 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
                             freequent_data[1] += 'OK_R'
                         break
                     
+            if monitor and monitor.abortRequested():
+                logger.error("Cancelado por el usuario")
+                return data, resp
             if not source and not retry:
                 config.set_setting('cf_assistant_ua', '')
                 logger.debug("No se obtuvieron resultados, reintentando...")
@@ -490,28 +518,35 @@ def freequency(freequent_data):
         logger.error(traceback.format_exc())
 
 
-def check_blacklist(domain, expiration=0):
+def check_blacklist(domain, expiration=0, reset=False):
     res = True
     if not filetools.exists(PATH_BL):
         return res
     
     try:
-        expiration_default = 30
+        expiration_default = 5
         bl_data = jsontools.load(filetools.read(PATH_BL))
         bl_data_clean = bl_data.copy()
         if not expiration:
             expiration = config.get_setting('cf_assistant_bl_expiration', default=expiration_default) * 60
-            config.set_setting('cf_assistant_bl_expiration', expiration_default)
-            expiration = expiration_default * 60
+            if expiration / 60 != expiration_default and expiration / 60 in [30]:
+                config.set_setting('cf_assistant_bl_expiration', expiration_default)
+                expiration = expiration_default * 60
         else:
             expiration = expiration * 60
         time_today = time.time()
         
         if bl_data:
+            update = False
             for domain_reg, time_rec in list(bl_data_clean.items()):
                 if time_today > time_rec + expiration:
                     del bl_data[domain_reg]
-            filetools.write(PATH_BL, jsontools.dump(bl_data))
+                    update = True
+                if reset and time_rec != 9999999999.999998:
+                    del bl_data[domain_reg]
+                    update = True
+                    logger.info('Bloqueo liberado: %s: %s' % (domain_reg, time_rec), force=True)
+            if update: filetools.write(PATH_BL, jsontools.dump(bl_data))
             for domain_reg, time_rec in list(bl_data.items()):
                 if domain in domain_reg:
                     res = False

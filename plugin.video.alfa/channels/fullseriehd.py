@@ -31,7 +31,8 @@ canonical = {
              'channel': 'fullseriehd', 
              'host': config.get_setting("current_host", 'fullseriehd', default=''), 
              'host_alt': ["https://megaxserie.me/"], 
-             'host_black_list': ["https://megaserie.net/"], 
+             'host_black_list': ["https://megaserie.me/", "https://megaserie.net/"], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -143,9 +144,11 @@ def list_all(item):
         if "/series/" in url:
             new_item.contentSerieName = title
             new_item.action = "seasons"
+            new_item.contentType = 'tvshow'
         else:
             new_item.contentTitle = title
             new_item.action = "findvideos"
+            new_item.contentType = 'movie'
             new_item.quality = quality
             if language:
                 new_item.language = language
@@ -177,7 +180,7 @@ def year(item):
 
     for year in year_list:
         year = str(year)
-        url = '%s/release/%s/' % (host, year)
+        url = '%srelease/%s/' % (host, year)
             
         itemlist.append(Item(channel=item.channel, title=year, url=url,
                                  action="list_all"))
@@ -193,11 +196,14 @@ def section(item):
 
     if item.title == "Generos":
         soup = create_soup(item.url).find("li", id="menu-item-89")
-        for elem in soup.find_all("li"):
-            url = elem.a["href"]
-            title = elem.a.text
-            itemlist.append(Item(channel=item.channel, title=title, action="list_all",
-                                 url=url, type=item.type))
+        try:
+            for elem in soup.find_all("li"):
+                url = elem.a["href"]
+                title = elem.a.text
+                itemlist.append(Item(channel=item.channel, title=title, action="list_all",
+                                     url=url, type=item.type))
+        except:
+            logger.error(soup)
 
     elif item.title == "Alfabetico":
         url = '%sletter/0-9/?tr_post_type=%s' % (host, item.type)
@@ -332,19 +338,27 @@ def findvideos(item):
     logger.info()
     itemlist = list()
     data = create_soup(item.url)
-    video_urls = data.find("aside", class_="video-player").find_all('iframe')
-    info = data.find("aside", class_="video-options").find_all('li')
+    try:
+        video_urls = data.find("aside", class_="video-player").find_all('iframe')
+        info = data.find("aside", class_="video-options").find_all('li')
+    except:
+        logger.error(data)
+        return itemlist
     for url, info in zip(video_urls, info):
-        url = url['data-src']
-        info = info.find('span', class_='server').text.split('-')
-        srv = info[0].strip()
-        lang = info[1].strip()
-        infoLabels = item.infoLabels
-        lang = IDIOMAS.get(lang, lang)
-        # quality = info[1]
-        quality = ""
-        itemlist.append(Item(channel=item.channel, title=srv, url=url, action='play', server=srv, opt="1",
-                            infoLabels=infoLabels, language=lang, quality=quality))
+        try:
+            url = url['data-src']
+            info = info.find('span', class_='server').text.split('-')
+            srv = info[0].strip()
+            lang = info[1].strip()
+            infoLabels = item.infoLabels
+            lang = IDIOMAS.get(lang, lang)
+            # quality = info[1]
+            quality = ""
+            itemlist.append(Item(channel=item.channel, title=srv, url=url, action='play', server=srv, opt="1",
+                                infoLabels=infoLabels, language=lang, quality=quality))
+        except:
+            logger.error(url)
+            logger.error(info)
     
     # downlist = get_downlist(item, data)  #DESCARGAS ACORTADOR
     # itemlist.extend(downlist)

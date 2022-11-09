@@ -35,8 +35,9 @@ list_servers = [
 canonical = {
              'channel': 'inkapelis', 
              'host': config.get_setting("current_host", 'inkapelis', default=''), 
-             'host_alt': ["https://inkapelis.in/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www1.inkapelis.li/"], 
+             'host_black_list': ["http://ww1.inkapelis.in/", "https://inkapelis.in/", "https://inkapelis.me/", 
+                                 "https://ww1.inkapelis.de/"], 
              'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

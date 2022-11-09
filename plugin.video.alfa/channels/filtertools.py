@@ -226,7 +226,7 @@ def check_conditions(_filter, list_item, item, list_language, list_quality, qual
                 quality_list = [item.quality]
 
             for quality in quality_list:
-                if quality.lower() in _filter.quality_allowed:
+                if quality.lower() in _filter.quality_allowed or quality.lower().replace(' ', '-') in _filter.quality_allowed:
                     quality_count += 1
                     break
             else:

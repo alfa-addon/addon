@@ -218,6 +218,10 @@ def init():
         # Ejecuta la sobrescritura de la videoteca para los canales seleccionados
         reset_videolibrary_by_channel()
         clean_videolibrary_unused_channels()
+        
+        # Resetea dominios bloqueados emporalmente por cf_assistant
+        from lib.cloudscraper import cf_assistant
+        cf_assistant.check_blacklist('ALL', reset=True)
 
     except:
         logger.error(traceback.format_exc())
@@ -1170,7 +1174,7 @@ def clean_videolibrary_unused_channels():
         logger.error(traceback.format_exc())
 
 
-def verify_data_jsons():
+def verify_data_jsons(json_file=None):
     logger.info()
     
     ###### LISTA DE CARPETAS DE CANALES Y SERVIDORES PARA VERFICAR
@@ -1189,11 +1193,14 @@ def verify_data_jsons():
             json_data = jsontools.load(filetools.read(ADDON_CUSTOMCODE_JSON))
         else:
             json_data = {}
-        if json_data.get('verify_data_jsons', ''): return
+        if json_data.get('verify_data_jsons', '') and not json_file: return
 
         data_jsons_list += [filetools.join(ADDON_USERDATA_PATH, 'settings_channels')]   # CANALES
         data_jsons_list += [filetools.join(ADDON_USERDATA_PATH, 'settings_servers')]    # SERVIDORES
-        logger.info('VERIFICANDO _data.json de las carpetas: %s' % data_jsons_list, force=True)
+        if json_file:
+            logger.info('VERIFICANDO _data.json "%s" en las carpetas: %s' % (json_file, data_jsons_list), force=True)
+        else:
+            logger.info('VERIFICANDO _data.jsons en las carpetas: %s' % data_jsons_list, force=True)
         
         for data_jsons_folder in data_jsons_list:
             if filetools.exists(data_jsons_folder):
@@ -1203,6 +1210,7 @@ def verify_data_jsons():
                 for data_json_name in json_folder_list:
                     if not data_json_name.endswith('_data.json'): continue
                     if data_json_name in excluded_jsons: continue
+                    if json_file and json_file != data_json_name: continue
                     counter_jsons += 1
                     try:
                         data_json_path = filetools.join(data_jsons_folder, data_json_name)
@@ -1214,7 +1222,7 @@ def verify_data_jsons():
                         if not isinstance(data_json, dict) or not data_json:
                             counter += 1
                             filetools.remove(data_json_path, silent=True)
-                            logger.info('BORRADO: no se puede actualizar: %s/%s, DATOS: %s' \
+                            logger.info('BORRADO: contenido incorrecto: %s/%s, DATOS: %s' \
                                         % (json_folder_type, data_json_name, str(data_json)), force=True)
                             continue
                         
@@ -1257,8 +1265,8 @@ def verify_data_jsons():
                             filetools.remove(data_json_path, silent=True)
                             logger.error('BORRADO: no se puede actualizar: %s/%s' % (json_folder_type, data_json_name))
                     except:
-                        logger.error('CORRUPCIÓN DESCONOCIDA en %s/%s' % (json_folder_type, data_json_name))
                         filetools.remove(data_json_path, silent=True)
+                        logger.error('CORRUPCIÓN DESCONOCIDA, BORRADO en %s/%s/%s' % (json_folder_type, data_json_name, str(data_json)))
                         logger.error(traceback.format_exc())
     
         json_data['verify_data_jsons'] = 'OK'

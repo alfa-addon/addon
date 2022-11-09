@@ -543,11 +543,21 @@ def show_update_info(new_fix_json):
 
 
 def check_date_real():
+    pages = ['http://worldtimeapi.org/api/ip', 'https://timeapi.io/api/Time/current/zone?timeZone=Europe/Madrid']
+    kwargs = {'timeout': 5, 'alfa_s': True, 'ignore_response_code': True}
     
-    try:
-        resp = httptools.downloadpage('http://worldclockapi.com/api/json/cet/now', timeout=60, alfa_s=True, ignore_response_code=True)
-        fecha_int = resp.json.get('currentDateTime', '')[:10]
-        config.set_setting('date_real', fecha_int)
-        logger.info('Fecha REAL: %s' % fecha_int, force=True)
-    except:
-        logger.error('ERROR al obtener la Fecha REAL: %s' % str(resp.code), force=True)
+    for page in pages:
+        try:
+            resp = httptools.downloadpage(page, **kwargs)
+            if resp.sucess:
+                fecha_int = resp.json.get('datetime', '')[:10] or resp.json.get('dateTime', '')[:10] or resp.json.get('currentDateTime', '')[:10]
+                if not fecha_int: continue
+                config.set_setting('date_real', fecha_int)
+                logger.info('Fecha REAL: %s' % fecha_int, force=True)
+                break
+            else:
+                logger.debug('ERROR al obtener la Fecha REAL: %s: %s' % (page, str(resp.code)))
+        except:
+            logger.error('ERROR al obtener la Fecha REAL: %s' % page)
+    else:
+        logger.error('ERROR al obtener la Fecha REAL: %s' % pages)

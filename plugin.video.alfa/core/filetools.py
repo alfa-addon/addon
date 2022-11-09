@@ -313,6 +313,7 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, mode='r', silent=Fal
                 return data
 
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             f = samba.smb_open(path, "rb")
             mode = 'rbs'
         
@@ -383,6 +384,7 @@ def write(path, data, mode="wb", silent=False, vfs=True, ch_mod=''):
             return result
         
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             f = samba.smb_open(path, "wb")
         
         elif PY3 and mode in ['w', 'a']:
@@ -428,6 +430,7 @@ def file_open(path, mode="r", silent=False, vfs=True):
             return xbmcvfs.File(path, mode)
         
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             return samba.smb_open(path, mode)
         
         elif PY3 and 'b' not in mode:
@@ -606,6 +609,7 @@ def rename(path, new_name, silent=False, strict=False, vfs=True, ch_mod=''):
                 result = chmod(dest, ch_mod, silent=silent)
             return result
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             new_name = encode(new_name, True)
             samba.rename(path, join(dirname(path), new_name))
         else:
@@ -650,7 +654,8 @@ def move(path, dest, silent=False, strict=False, vfs=True, ch_mod=''):
             return result
         
         # samba/samba
-        elif path.lower().startswith("smb://") and dest.lower().startswith("smb://"):
+        elif path.lower().startswith("smb://") or dest.lower().startswith("smb://"):
+            if not samba: import_samba()
             dest = encode(dest, True)
             path = encode(path, True)
             samba.rename(path, dest)
@@ -780,6 +785,7 @@ def exists(path, silent=False, vfs=True):
                 result = bool(xbmcvfs.exists(join(path, ' ').rstrip()))
             return result    
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             return samba.exists(path)
         else:
             return os.path.exists(path)
@@ -812,6 +818,7 @@ def isfile(path, silent=False, vfs=True):
                     return True
             return False
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             return samba.isfile(path)
         else:
             return os.path.isfile(path)
@@ -844,6 +851,7 @@ def isdir(path, silent=False, vfs=True):
                     return True
             return False
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             return samba.isdir(path)
         else:
             return os.path.isdir(path)
@@ -871,6 +879,7 @@ def getsize(path, silent=False, vfs=True):
             f.close()
             return s
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             return long(samba.get_attributes(path).file_size)
         else:
             return os.path.getsize(path)
@@ -912,6 +921,7 @@ def remove(path, silent=False, vfs=True, su=False):
             return result
         
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             samba.remove(path)
         else:
             os.remove(path)
@@ -945,6 +955,7 @@ def rmdirtree(path, silent=False, vfs=True):
                     xbmcvfs.rmdir(join(raiz, s))
             xbmcvfs.rmdir(path)
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             for raiz, subcarpetas, ficheros in samba.walk(path, topdown=False):
                 for f in ficheros:
                     samba.remove(join(decode(raiz), decode(f)))
@@ -980,6 +991,7 @@ def rmdir(path, silent=False, vfs=True):
                 path = join(path, ' ').rstrip()
             return bool(xbmcvfs.rmdir(path))
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             samba.rmdir(path)
         else:
             os.rmdir(path)
@@ -1016,6 +1028,7 @@ def mkdir(path, silent=False, vfs=True, ch_mod=''):
                 result = chmod(path, ch_mod, silent=silent)
             return result
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             samba.mkdir(path)
         else:
             os.mkdir(path)
@@ -1042,12 +1055,18 @@ def walk(top, topdown=True, onerror=None, vfs=True):
     ***El parametro followlinks que por defecto es True, no se usa aqui, ya que en samba no discrimina los links
     """
     top = encode(top)
+    if top.lower().startswith("ftp://"):
+        top_alt = ftp_to_smb_credential(top, remove=False)
+        if exists(top_alt):
+            top = top_alt
+    
     if xbmc_vfs and vfs:
         for a, b, c in walk_vfs(top, topdown, onerror):
             # list(b) es para que haga una copia del listado de directorios
             # si no da error cuando tiene que entrar recursivamente en directorios con caracteres especiales
             yield a, list(b), c
     elif top.lower().startswith("smb://"):
+        if not samba: import_samba()
         for a, b, c in samba.walk(top, topdown, onerror):
             # list(b) es para que haga una copia del listado de directorios
             # si no da error cuando tiene que entrar recursivamente en directorios con caracteres especiales
@@ -1116,6 +1135,7 @@ def listdir(path, silent=False, vfs=True, file_inf=False):
             return decode(res)
         
         elif path.lower().startswith("smb://"):
+            if not samba: import_samba()
             return decode(samba.listdir(path))
         
         else:
@@ -1243,3 +1263,37 @@ def remove_smb_credential(path):
         return (protocol + path_without_credentials)
     else:
         return path
+
+
+def ftp_to_smb_credential(path, remove=False):
+    """
+    devuelve el path ftp convertido a SMB, sin puerto
+    @param path: ruta
+    @type path: str
+    @return: cadena formato SMB
+    @rtype: str
+    """
+    logger.info()
+    
+    if not find_single_match(path, '(^\w+:\/\/)'):
+        return path
+    
+    if path.lower().startswith("ftp://"):
+        path = path.replace("ftp://", "smb://")
+        path = re.sub("\:\d+(?:\/|$)", "/", path)
+        if remove:
+            path = remove_smb_credential(path)
+
+    return path
+
+
+def import_samba():
+    global samba
+    
+    if not samba:
+        if PY3:
+            from lib.sambatools_py3 import libsmb as samba
+        else:
+            from lib.sambatools_py2 import libsmb as samba
+            reload(sys)                                             ### Workoround Python 2
+            sys.setdefaultencoding('utf-8')                         # Samba degrada el valor de defaultencoding.  Se reestablece

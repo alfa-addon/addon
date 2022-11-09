@@ -11,13 +11,12 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-import os, json, time, inspect, channelselector
+import time
 
-from concurrent import futures
 from core.item import Item
-from core import tmdb, scrapertools, channeltools, filetools, jsontools
-from channelselector import get_thumb
-from platformcode import logger, config, platformtools, help_window
+from core import tmdb, scrapertools, channeltools
+from channelselector import get_thumb, filterchannels
+from platformcode import logger, config
 from platformcode.platformtools import dialog_input, dialog_progress, show_channel_settings, dialog_select, dialog_numeric, dialog_ok
 
 import gc
@@ -27,8 +26,13 @@ import xbmcaddon
 addon = xbmcaddon.Addon('metadata.themoviedb.org')
 def_lang = addon.getSetting('language')
 
+all_channels = []
+channel_parameters_list = {}
+
+
 def mainlist(item):
     logger.info()
+    from platformcode import help_window
 
     itemlist = [Item(channel=item.channel, title=config.get_localized_string(70741) % config.get_localized_string(30122), action='new_search', mode='movie', thumbnail=get_thumb("search.png")),
 
@@ -89,7 +93,6 @@ def saved_search(item):
     itemlist = list()
     saved_searches_list = get_saved_searches()
 
-
     for saved_search_text in saved_searches_list:
         
         if isinstance(saved_search_text, dict):
@@ -127,21 +130,14 @@ def new_search(item):
     logger.info()
 
     itemlist = []
-    if channeltools.get_channel_setting('last_search', 'search'):
-        last_search = channeltools.get_channel_setting('Last_searched', 'search', '')
-    else:
-        last_search = ''
+    last_search = channeltools.get_channel_setting('Last_searched', 'search', '')
 
-    if item.search_text:
-        searched_text = item.search_text
-    else:
-        searched_text = dialog_input(default=last_search, heading='')
-
+    searched_text = item.search_text or dialog_input(default=last_search, heading='')
     save_search(searched_text, item.tourl())
     if not searched_text:
         return
 
-    channeltools.set_channel_setting('Last_searched', searched_text, 'search')
+    if searched_text != item.search_text: channeltools.set_channel_setting('Last_searched', searched_text, 'search')
     searched_text = searched_text.replace("+", " ")
 
     if item.mode == 'person':
@@ -153,10 +149,11 @@ def new_search(item):
         results = tmdb_info.results
         for result in results:
             result = tmdb_info.get_infoLabels(result, origen=result)
-            if item.mode == 'movie':
-                title = result['title']
+            if item.mode == 'movie' or result.get('mediatype', '') == 'movie':
+                title = scrapertools.slugify(result['title'], strict=False)
+                item.mode = 'movie'
             else:
-                title = result['name']
+                title = scrapertools.slugify(result['name'], strict=False)
                 item.mode = 'tvshow'
 
             thumbnail = result.get('thumbnail', '')
@@ -172,9 +169,11 @@ def new_search(item):
                             infoLabels=result)
 
             if item.mode == 'movie':
-                new_item.contentTitle = result['title']
+                new_item.contentTitle = scrapertools.slugify(result['title'], strict=False)
+                new_item.contentType = 'movie'
             else:
-                new_item.contentSerieName = result['name']
+                new_item.contentSerieName = scrapertools.slugify(result['name'], strict=False)
+                new_item.contentType = 'tvshow'
 
             itemlist.append(new_item)
 
@@ -190,6 +189,7 @@ def new_search(item):
 
 def channel_search(item):
     logger.info(item)
+    from concurrent import futures
 
     start = time.time()
     searching = list()
@@ -199,8 +199,7 @@ def channel_search(item):
     ch_list = dict()
     mode = item.mode
     max_results = 10
-    if item.infoLabels['title']:
-        item.text = item.infoLabels['title']
+    item.text = item.contentSerieName or item.contentTitle or item.text
 
     searched_id = item.infoLabels['tmdb_id']
 
@@ -209,6 +208,7 @@ def channel_search(item):
     searching += channel_list
     searching_titles += channel_titles
     cnt = 0
+    tm = 20 + len(channel_titles)
 
     progress = dialog_progress(config.get_localized_string(30993) % item.title, config.get_localized_string(70744) % len(channel_list), 
                                str(searching_titles))
@@ -217,19 +217,30 @@ def channel_search(item):
     with futures.ThreadPoolExecutor(max_workers=set_workers()) as executor:
         c_results = [executor.submit(get_channel_results, ch, item) for ch in channel_list]
 
-        for res in futures.as_completed(c_results):
-            cnt += 1
-            finished = res.result()[0]
-            if res.result()[1]:
-                ch_list[res.result()[0]] = res.result()[1]
+        try:
+            for res in futures.as_completed(c_results, timeout=tm):
+                cnt += 1
+                finished = res.result()[0]
+                if res.result()[1]:
+                    ch_list[res.result()[0]] = res.result()[1]
 
-            if progress.iscanceled():
-                break
-            if finished in searching:
-                searching_titles.remove(searching_titles[searching.index(finished)])
-                searching.remove(finished)
-                progress.update(old_div((cnt * 100), len(channel_list)), config.get_localized_string(70744) % str(len(channel_list) - cnt)
-                                 + '\n' + str(searching_titles) + '\n' + ' ' + '\n' + ' ' + '\n' + ' ')
+                if progress.iscanceled():
+                    raise Exception('## Búsqueda global cancelada por el usuario')
+                if finished in searching:
+                    searching_titles.remove(searching_titles[searching.index(finished)])
+                    searching.remove(finished)
+                    progress.update(old_div((cnt * 100), len(channel_list)), config.get_localized_string(70744) % str(len(channel_list) - cnt)
+                                     + '\n' + str(searching_titles) + '\n' + ' ' + '\n' + ' ' + '\n' + ' ')
+        except Exception as err_msg:
+            logger.error('Error "%s"' % (err_msg))
+            executor.shutdown(wait=False)
+            config.GLOBAL_SEARCH_CANCELLED = True
+            for key, cha in list(channel_parameters_list.items()):
+                if cha.get('module'):
+                    try:
+                        cha['module'].canonical['global_search_cancelled'] = True
+                    except:
+                        pass
 
     progress.close()
 
@@ -299,9 +310,8 @@ def channel_search(item):
                 plot += it.title +'\n'
             ch_thumb = channeltools.get_channel_parameters(key)['thumbnail']
             results.append(Item(channel='search', title=title,
-                                action='get_from_temp', thumbnail=ch_thumb, itemlist=[ris.tourl() for ris in grouped], plot=plot, page=1, from_channel=key))
-
-
+                                action='get_from_temp', thumbnail=ch_thumb, itemlist=[ris.tourl() for ris in grouped], 
+                                plot=plot, page=1, from_channel=key))
 
     # send_to_temp(to_temp)
     if not config.get_setting('tmdb_active'): config.set_setting('tmdb_active', True)
@@ -312,24 +322,33 @@ def channel_search(item):
         results_statistic = config.get_localized_string(59972) % (item.title, res_count, time.time() - start)
         results.insert(0, Item(title = results_statistic))
     # logger.debug(results_statistic)
+    
     return valid + results
 
 
 def get_channel_results(ch, item):
+    global channel_parameters_list
+    
     max_results = 10
     results = list()
 
-    ch_params = channeltools.get_channel_parameters(ch)
+    if not channel_parameters_list.get(ch, {}):
+        channel_parameters_list[ch] = channeltools.get_channel_parameters(ch)
+    ch_params = channel_parameters_list.get(ch, {})
     
     try:
-    
         module = __import__('channels.%s' % ch_params["channel"], fromlist=["channels.%s" % ch_params["channel"]])
+        channel_parameters_list[ch]['module'] = module
+        try:
+            channel_parameters_list[ch]['module'].canonical['global_search_active'] = True
+        except:
+            channel_parameters_list[ch]['module'].canonical = {'global_search_active': True}
         mainlist = getattr(module, 'mainlist')(Item(channel=ch_params["channel"]))
 
-        search_action = [elem for elem in mainlist if elem.action == "search"]
+        search_actions = [elem for elem in mainlist if elem.action == "search"]
 
-        if search_action:
-            for search_ in search_action:
+        if search_actions:
+            for search_ in search_actions:
                 try:
                     results.extend(module.search(search_, item.text))
                 except:
@@ -340,7 +359,7 @@ def get_channel_results(ch, item):
             except:
                 pass
 
-        if len(results) < 0 and len(results) < max_results and item.mode != 'all':
+        if len(results) > 0 and len(results) <= max_results and item.mode != 'all':
 
             if len(results) == 1:
                 if not results[0].action or config.get_localized_string(30992).lower() in results[0].title.lower():
@@ -364,33 +383,31 @@ def get_info(itemlist):
 
 def get_channels(item):
     logger.info()
+    global all_channels, channel_parameters_list
 
     channels_list = list()
     title_list = list()
-    all_channels = channelselector.filterchannels('all')
+    if not all_channels: all_channels = filterchannels('all')
 
     for ch in all_channels:
         channel = ch.channel
-        ch_param = channeltools.get_channel_parameters(channel)
+        if not channel_parameters_list.get(channel, {}):
+            channel_parameters_list[channel] = channeltools.get_channel_parameters(channel)
+        ch_params = channel_parameters_list.get(channel, {})
 
-        if not ch_param.get("active", False):
+        if not ch_params.get("active", False):
             continue
 
-        if ch_param.get("login_required", False):
-            ch_user = config.get_setting("user", channel)
-            ch_pass = config.get_setting("pass", channel)
+        if ch_params.get("login_required", False):
+            ch_user = config.get_setting("user", channel, default='') or config.get_setting("hdfulluser", channel, default='')
+            ch_pass = config.get_setting("pass", channel, default='') or config.get_setting("hdfullpassword", channel, default='')
 
             if not ch_user or not ch_pass:
+                continue
 
-                ch_user = config.get_setting("hdfulluser", channel)
-                ch_pass = config.get_setting("hdfullpassword", channel)
+        list_cat = ch_params.get("categories", [])
 
-                if not ch_user or not ch_pass:
-                    continue
-
-        list_cat = ch_param.get("categories", [])
-
-        if not ch_param.get("include_in_global_search", False):
+        if not ch_params.get("include_in_global_search", False):
             continue
 
         if 'anime' in list_cat:
@@ -400,7 +417,7 @@ def get_channels(item):
         if item.mode == 'all' or (item.mode in list_cat):
             if config.get_setting("include_in_global_search", channel):
                 channels_list.append(channel)
-                title_list.append(ch_param.get('title', channel))
+                title_list.append(ch_params.get('title', channel))
 
     return channels_list, title_list
 
@@ -417,6 +434,7 @@ def set_workers():
     return list_mode[index]
 
 def setting_channel_new(item):
+    global all_channels, channel_parameters_list
     import xbmcgui
 
     # Load list of options (active user channels that allow global search)
@@ -424,12 +442,15 @@ def setting_channel_new(item):
     ids = []
     lista_lang = []
     lista_ctgs = []
-    channels_list = channelselector.filterchannels('all')
-    for channel in channels_list:
-        if channel.action == '':
+    if not all_channels: all_channels = filterchannels('all')
+    
+    for channel in all_channels:
+        if not channel.action:
             continue
 
-        channel_parameters = channeltools.get_channel_parameters(channel.channel)
+        if not channel_parameters_list.get(channel.channel, {}):
+            channel_parameters_list[channel.channel] = channeltools.get_channel_parameters(channel.channel)
+        channel_parameters = channel_parameters_list.get(channel.channel, {})
 
         # Do not include if "include_in_global_search" does not exist in the channel configuration
         if not channel_parameters.get('include_in_global_search', ''):
@@ -554,11 +575,11 @@ def years_menu(item):
     mode = item.mode.replace('show', '')
 
     par_year = 'primary_release_year'
-    thumb = channelselector.get_thumb('channels_movie_year.png')
+    thumb = get_thumb('channels_movie_year.png')
 
     if mode != 'movie':
         par_year = 'first_air_date_year'
-        thumb = channelselector.get_thumb('channels_tvshow_year.png')
+        thumb = get_thumb('channels_tvshow_year.png')
 
     c_year = datetime.datetime.now().year + 1
     l_year = c_year - 31
@@ -757,12 +778,10 @@ def get_from_temp(item):
         results.append(Item(channel='search', title='[COLOR yellow]' + config.get_localized_string(30992) + '[/COLOR]',
                             action='get_from_temp', itemlist=item.itemlist, page=item.page + 1))
 
-    tmdb.set_infoLabels_itemlist(results, True)
     for elem in results:
         if not elem.infoLabels.get('year', ""):
-            
             elem.infoLabels['year'] = '-'
-            tmdb.set_infoLabels_item(elem, True)
+    tmdb.set_infoLabels_itemlist(results, True)
 
     return results
 

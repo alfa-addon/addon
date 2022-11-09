@@ -1982,6 +1982,7 @@ def get_episodes(item):
 
     import xbmc
     from lib.generictools import verify_channel, format_tmdb_id
+    #logger.debug(item)
     
     sub_action = ["tvshow", "season", "unseen", "auto"]                         # Acciones especiales desde Findvideos
     SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
@@ -1994,6 +1995,8 @@ def get_episodes(item):
     season = item.infoLabels['season']
     sesxepi = []
     event = False
+    channel_json = {}
+    
     if item.infoLabels['tmdb_id'] and item.infoLabels['tmdb_id'] == null:
         event = True                                                            # Si viene de un canal de deportes o similar
     
@@ -2045,9 +2048,8 @@ def get_episodes(item):
                 xbmc_videolibrary.mark_content_as_watched_on_alfa(item.nfo)     # Sincronizamos los Vistos de Kodi con Alfa ...
                 head, nfo_json = videolibrarytools.read_nfo(item.nfo)           #... refrescamos la info de la Serie
                 format_tmdb_id(nfo_json)
-            if item.url_tvshow:
-                item.url = item.url_tvshow
-            elif nfo_json:
+            
+            if nfo_json:
                 if item.contentChannel != 'newpct1':
                     item.url = nfo_json.library_urls[item.contentChannel]
                 else:
@@ -2062,6 +2064,8 @@ def get_episodes(item):
                             break
                 if not item.url_tvshow:
                     item.url_tvshow = item.url
+            elif item.url_tvshow:
+                item.url = item.url_tvshow
             
             if item.sub_action in ["auto"] and not config.get_setting('auto_download_new_all', item.contentChannel, default=False):
                 if not nfo_json: return []
@@ -2093,6 +2097,9 @@ def get_episodes(item):
                 else:
                     return []
             
+            if item.sub_action in ["tvshow", "season", "unseen"]:
+                if item.strm_path: del item.strm_path
+                item.title = item.contentTitle = item.infoLabels['tvshowtitle']
             if item.sub_action in ["unseen"] and item.from_action != 'episodios':
                 item.from_action = 'episodios'
                 item.contentAction = item.from_action
@@ -2115,12 +2122,16 @@ def get_episodes(item):
             if item.torrent_info: del item.torrent_info
             if item.torrent_alt: del item.torrent_alt
 
-        if (item.strm_path or item.nfo) and not item.video_path:                # Si viene de Videoteca, usamos los .jsons
+        if item.strm_path or item.nfo or nfo_json:                              # Si viene de Videoteca, usamos los .jsons
             if item.strm_path: serie_path = filetools.dirname(item.strm_path)
             if not serie_path and item.nfo: serie_path = filetools.dirname(item.nfo)
+            if not serie_path and nfo_json: serie_path = filetools.join(SERIES, item.path.lower())
             serie_listdir = sorted(filetools.listdir(serie_path))
             episodes = []
             episode_local = True
+            channel_settings = filetools.join(config.get_data_path(), "settings_channels", item.contentChannel + "_data.json")
+            if filetools.exists(channel_settings):
+                channel_json = jsontools.load(filetools.read(channel_settings))
 
             for file in serie_listdir:
                 if not file.endswith('.json'):
@@ -2139,8 +2150,9 @@ def get_episodes(item):
                     if episode.server: del episode.server
                 if episode.emergency_urls and isinstance(episode.emergency_urls[0][0], str) \
                                           and ((not episode.emergency_urls[0][0].startswith('http') \
-                                          and episode.emergency_urls[0][0].endswith('.torrent')) \
-                                          or verify_channel(episode.channel) in blocked_channels):
+                                                and (episode.emergency_urls[0][0].endswith('.torrent') \
+                                                     or episode.emergency_urls[0][0].startswith('magnet'))) \
+                                               or verify_channel(episode.channel) in blocked_channels):
                     episode.server = 'torrent'
                     episode.action = 'play'
                 episode.strm_path = filetools.join(serie_path, '%sx%s.strm' % (str(episode.infoLabels['season']), \
@@ -2148,14 +2160,23 @@ def get_episodes(item):
                 episode.sub_action = item.sub_action
                 episode.channel = item.contentChannel
                 episode.downloadServer = {}
-                
+
                 #logger.debug(episode)
                 episodes.append(episode.clone())
-        
+
         else:
             if item.sub_action in ["unseen", "auto"] and not nfo_json:
                 return []
-            episodes = getattr(channel, item.contentAction)(item)               # Si no viene de Videoteca, descargamos desde la web
+            if item.action == 'play':
+                item.action = item.contentAction
+                if item.clean_plot: del item.clean_plot
+                if item.matches: del item.matches
+                if item.emergency_urls: del item.emergency_urls
+                if item.torrents_path: del item.torrents_path
+                if item.btdigg: del item.btdigg
+                if item.quality != 'HDTV': item.quality = 'HDTV-720p'
+                
+            episodes = getattr(channel, item.contentAction)(item)                      # Si no viene de Videoteca, descargamos desde la web
 
     itemlist = []
 
@@ -2203,20 +2224,32 @@ def get_episodes(item):
             elif episode_local:
                 episode.torrent_alt = episode.url
                 if len(episode.emergency_urls) > 3 and episode.emergency_urls[0] and episode.emergency_urls[3] \
-                                                   and (episode.list_language or episode.episode.list_quality):
+                                                   and channel_json.get('TVSHOW_FILTER'):
                     if len(episode.emergency_urls[0]) > 1:
                         epis_filter = []
-                        for x, emergency_url in enumerate(episode.emergency_urls[0]):
-                            epis_filter.append(episode.clone(url=emergency_url, 
-                                               quality=scrapertools.find_single_match(episode.emergency_urls[3][x], '^#(.*?)#')))
+                        list_language = []
+                        list_quality = []
+                        for x, emerg_url in enumerate(episode.emergency_urls[0]):
+                            epis_filter.append(episode.clone(url=emerg_url, emergency_urls=[], matches=[], 
+                                                             quality=scrapertools.find_single_match(episode.emergency_urls[3][x], '^#(.*?)#')))
                         from channels import filtertools
-                        epis_filter = filtertools.get_links(epis_filter, episode, episode.list_language, episode.list_quality)
+                        for filter_param in episode.context:
+                            if not isinstance(filter_param, dict): continue
+                            if 'list_language' in filter_param:
+                                list_language = filter_param.get('list_language', [])
+                            if 'list_quality' in filter_param:
+                                list_quality = filter_param.get('list_quality', [])
+                        
+                        epis_filter = filtertools.get_links(epis_filter, episode, list_language, list_quality)
                         if epis_filter:
                             episode.emergency_urls[0] = []
+                            emergency_urls_2 = episode.emergency_urls[2]
+                            episode.emergency_urls[2] = []
                             emergency_urls_3 = episode.emergency_urls[3]
                             episode.emergency_urls[3] = []
                             for x, epi_filter in enumerate(epis_filter):
                                 episode.emergency_urls[0].append(epi_filter.url)
+                                episode.emergency_urls[2].append(emergency_urls_2[x])
                                 episode.emergency_urls[3].append(emergency_urls_3[x])
 
                 if episode_sort: 

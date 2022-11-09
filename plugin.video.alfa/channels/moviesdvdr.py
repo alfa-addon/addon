@@ -303,7 +303,6 @@ def listado(item):                                                              
             if scrapedlang:
                 item_local.language = []
                 langs = scrapedlang.split('>')
-                logger.error(langs)
                 for lang in langs:
                     if not lang: continue
                     if 'espanol' in lang: 

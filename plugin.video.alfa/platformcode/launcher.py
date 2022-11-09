@@ -287,6 +287,13 @@ def run(item=None):
             elif item.action == "add_serie_to_library":
                 from core import videolibrarytools
                 videolibrarytools.add_tvshow(item, channel)
+            
+            # Special action for adding a season to the library
+            elif item.action == "add_season_to_library":
+                from core import videolibrarytools
+                item.action = "add_serie_to_library"
+                item.infoLabels['last_season_only'] = True
+                videolibrarytools.add_tvshow(item, channel)
 
             # Special action for downloading all episodes from a serie
             elif item.action == "download_all_episodes":

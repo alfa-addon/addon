@@ -180,6 +180,7 @@ def list_all(item):
         if '/show/' in url:
             new_item.contentSerieName = title
             new_item.action = 'seasons'
+            new_item.contentType = 'tvshow'
             new_item.context = filtertools.context(item, list_language, list_quality)
         else:
             lang_data = elem.find("div", class_="left").find_all("img")
@@ -192,6 +193,7 @@ def list_all(item):
             new_item.contentTitle = title
             new_item.infoLabels["year"] = "-"
             new_item.action = 'findvideos'
+            new_item.contentType = 'movie'
 
         itemlist.append(new_item)
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -266,7 +268,9 @@ def episodesxseason(item):
     itemlist = list()
 
     soup = create_soup(item.url, referer=host).find("div", id="season-episodes")
-    matches = soup.find_all("div", class_="show-view")
+    logger.error(soup)
+    matches = soup.find_all("div", class_="flickr item left home-thumb-item")
+    logger.error(matches)
     infoLabels = item.infoLabels
 
     for elem in matches:
@@ -278,6 +282,7 @@ def episodesxseason(item):
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
     itemlist = sorted(itemlist, key=lambda i: i.language)
+    
     return itemlist
 
 

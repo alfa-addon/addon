@@ -36,9 +36,10 @@ list_servers = list(SERVER.values())
 canonical = {
              'channel': 'mobidy', 
              'host': config.get_setting("current_host", 'mobidy', default=''), 
-             'host_alt': ["https://www.espapelis.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://espapelis.pro/"], 
+             'host_black_list': ["https://www.espapelis.com/"], 
              'pattern': '<div\s*class="post-thumbnail">[^"]+img\s*src="([^"]+)"', 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -52,7 +53,9 @@ unif = parameters['force_unify']
 
 def mainlist(item):
     logger.info()
+    
     itemlist = []
+    
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(item.clone(title="Peliculas" , action="lista", type="movie", 
@@ -61,11 +64,13 @@ def mainlist(item):
     itemlist.append(item.clone(title="Buscar...", action="search", thumbnail=get_thumb("search", auto=True)))
     
     autoplay.show_option(item.channel, itemlist)
+    
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    
     try:
         texto = texto.replace(" ", "+")
         item.url = "%s?s=%s" % (host, texto)
@@ -82,9 +87,12 @@ def search(item, texto):
 
 def categorias(item):
     logger.info()
+    
     itemlist = []
+    
     soup = get_source(item.url, soup=True).find('div', class_='filter-genres')
     matches= soup.find_all('li')
+    
     for elem in matches:
         # id = elem.input['value']
         # post = "action=action_filter&number=10&paged=1&genre[]=%s" %id
@@ -103,24 +111,29 @@ def get_source(url, soup=False, json=False, unescape=False, **opt):
     
     opt['canonical'] = canonical
     data = httptools.downloadpage(url, **opt)
+    
     if json:
         data = data.json
     else:
         data = data.data
         data = scrapertools.unescape(data) if unescape else data
         data = BeautifulSoup(data, "html5lib", from_encoding="utf-8") if soup else data
+    
     return data
 
 
 def lista(item):
     logger.info()
+    
     itemlist = []
+    
     if item.post:
         soup = get_source(api, soup=True, post=item.post)
         numitem = 0
     else:
         soup = get_source(item.url, soup=True)
     matches= soup.find_all('article')
+    
     for elem in matches:
         if item.post:
             numitem += 1
@@ -136,7 +149,9 @@ def lista(item):
             title = title
         itemlist.append( Item(channel=item.channel, action = "findvideos", url = url, title=title, contentTitle = contentTitle,
                         thumbnail=thumbnail, infoLabels={"year": year}))
+    
     tmdb.set_infoLabels(itemlist, True)
+    
     next_page = soup.find('a', class_='nextpostslink')
     if next_page:
         next_page = next_page['href']
@@ -147,14 +162,18 @@ def lista(item):
         next_page = int(next_page) + 1
         next_page = re.sub(r"&paged=\d+", "&paged={0}".format(next_page), item.post)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", post=next_page) )
+    
     return itemlist
 
 
 def findvideos(item):
     logger.info()
+    
     itemlist = []
+    
     soup = get_source(item.url, soup=True)
     matches=soup.find('div', class_='servers-options').find_all('li')
+    
     for elem in matches:
         url = elem['data-playerid']
         title = elem.text.strip()
@@ -166,8 +185,10 @@ def findvideos(item):
         server = scrapertools.find_single_match(url, "https://(.*?)/")
         server = SERVER.get(server,server)
         itemlist.append(item.clone(action="play", title=title, url=url, server=server, language=lang, quality=quality))
+    
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
+    
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra !='findvideos' and not "/episodios/" in item.url :
         itemlist.append(item.clone(action="add_pelicula_to_library", 
                              title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
@@ -177,8 +198,11 @@ def findvideos(item):
 
 def play(item):
     logger.info()
+    
     itemlist = []
+    
     logger.debug("ITEM: %s" % item)
     itemlist = servertools.get_servers_itemlist([item.clone(url=item.url, server="")])
     itemlist = servertools.get_servers_itemlist(itemlist)
+    
     return itemlist

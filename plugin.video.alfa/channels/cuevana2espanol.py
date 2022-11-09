@@ -29,6 +29,7 @@ canonical = {
              'host_alt': ["https://cuevana2espanol.com/"], 
              'host_black_list': [], 
              'pattern': '<link\s*rel="alternate"\s*type="[^"]+"\s*title="[^"]+"\s*href="([^"]+)"', 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -113,7 +114,7 @@ def findvideos(item):
         url = ""
         if not v_url:
             v_url = scrapertools.find_single_match(soup.find("div", id=opt).iframe["src"], 'url=([^"]+)').encode("utf-8")
-            url = base64.urlsafe_b64decode(v_url + "==")
+            url = base64.urlsafe_b64decode(v_url + b"==" if PY3 else "==")
 
         if srv in srv_dict.keys():
             srv = srv_dict[srv]

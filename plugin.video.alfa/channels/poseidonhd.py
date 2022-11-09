@@ -15,7 +15,7 @@ from core import servertools
 from core import scrapertools
 from channelselector import get_thumb
 from platformcode import config, logger
-from lib.AlfaChannelHelper import ToroFilm
+from lib.AlfaChannelHelper import ToroFilm, ToroPdon
 from channels import filtertools, autoplay
 
 
@@ -41,7 +41,7 @@ canonical = {
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-AlfaChannel = ToroFilm(host, tv_path="/series", canonical=canonical)
+AlfaChannel = ToroPdon(host, movie_path="/pelicula", tv_path="/serie", canonical=canonical)
 forced_proxy_opt = 'ProxyCF'
 
 
@@ -52,17 +52,17 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu',
-                         thumbnail=get_thumb('movies', auto=True)))
+    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=host+'peliculas/', 
+                         thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
-    itemlist.append(Item(channel=item.channel, title='Series',  action='sub_menu',
-                         thumbnail=get_thumb('tvshows', auto=True)))
+    itemlist.append(Item(channel=item.channel, title='Series',  action='sub_menu', url=host+'series/', 
+                         thumbnail=get_thumb('tvshows', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Por Año', action='section', url=host,
-                         thumbnail=get_thumb('year', auto=True)))
+    #itemlist.append(Item(channel=item.channel, title='Por Año', action='section', url=host,
+    #                     thumbnail=get_thumb('year', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
-                         thumbnail=get_thumb("search", auto=True),  extra='movie'))
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + 'search?q=',
+                         thumbnail=get_thumb("search", auto=True)))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
 
@@ -76,17 +76,24 @@ def sub_menu(item):
 
     itemlist = list()
 
-    c_type = "movies" if item.title == "Peliculas" else item.title.lower()
+    itemlist.append(Item(channel=item.channel, title='Todas', url=item.url, action='list_all',
+                         thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-    if c_type == "movies":
-        itemlist.append(Item(channel=item.channel, title='Destacadas', url='%scategory/destacadas/' % host,
-                             action='list_all', thumbnail=get_thumb('hot', auto=True), c_type=c_type))
+    itemlist.append(Item(channel=item.channel, title='Estrenos', url=item.url+'estrenos', action='list_all',
+                         thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-    itemlist.append(Item(channel=item.channel, title='Todas', url=host + c_type, action='list_all',
-                         thumbnail=get_thumb('all', auto=True), c_type=c_type))
+    itemlist.append(Item(channel=item.channel, title='Tendencias Semana', url=item.url+'tendencias/semana', action='list_all',
+                         thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-    itemlist.append(Item(channel=item.channel, title='Generos', action='section', url=host,
-                         thumbnail=get_thumb('genres', auto=True), c_type=c_type))
+    itemlist.append(Item(channel=item.channel, title='Tendencias Día', url=item.url+'tendencias/dia', action='list_all',
+                         thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
+    
+    if item.c_type == 'peliculas':
+        itemlist.append(Item(channel=item.channel, title='Generos', action='section', url=host,
+                             thumbnail=get_thumb('genres', auto=True), c_type=item.c_type))
+    else:
+        itemlist.append(Item(channel=item.channel, title='Nuevos Episodios', action='list_all', url=host+'episodios',
+                             thumbnail=get_thumb('genres', auto=True), c_type='episodios'))
 
     return itemlist
 
@@ -94,16 +101,16 @@ def sub_menu(item):
 def list_all(item):
     logger.info()
 
-    if item.c_type != "search" and not "?type=" in item.url:
-        item.url += "?type=%s" % item.c_type
-    return AlfaChannel.list_all(item, postprocess=get_language_and_set_filter)
+    #if item.c_type != "search" and not "?type=" in item.url:
+    #    item.url += "?type=%s" % item.c_type
+    return AlfaChannel.list_all(item, lim_max=24)
 
 
 def section(item):
     logger.info()
 
     if item.title == "Generos":
-        return AlfaChannel.section(item, menu_id="66646")[1:]
+        return AlfaChannel.section(item, menu_id="1953")[1:]
     else:
         return AlfaChannel.section(item, section="year")
 
@@ -138,12 +145,14 @@ def findvideos(item):
 
     soup, matches = AlfaChannel.get_video_options(item.url)
 
-    for elem in matches:
+    for lang, elem in matches:
 
-        srv, lang = re.sub(r"\s+", "", elem.find("span", class_="server").text).split("-")
-        opt = elem.a["href"].replace("#","")
+        #srv = re.sub(r"\s+", "", elem.find("span", class_="server"))
+        srv = scrapertools.find_single_match(str(elem), '<span>\d+<!--\s*-->.\s*<!--\s*-->\s*([^<]+)<')
+        
         try:
-            url = soup.find("div", id="%s" % opt).find("iframe")["data-src"]
+            #url = soup.find("div", id="%s" % opt).find("iframe")["data-src"]
+            url = scrapertools.find_single_match(str(elem), 'data-tr="([^"]+)"')
         except:
             continue
         if srv.lower() in ["waaw", "jetload"]:
@@ -174,21 +183,24 @@ def play(item):
     logger.info()
 
     itemlist = list()
-    kwargs = {'soup': False, 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': -1, 
+    kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': -1, 
               'CF': False, 'CF_assistant': False, 'canonical': {}}
     
     try:
-        data = AlfaChannel.create_soup(item.url, forced_proxy_opt=forced_proxy_opt).find("input")["value"]
-        base_url = "%sr.php" % host
-        post = {"data": data}
-        url = AlfaChannel.create_soup(base_url, post=post, forced_proxy_opt=forced_proxy_opt, **kwargs).url
-        if not url: return itemlist
+        #data = AlfaChannel.create_soup(item.url, forced_proxy_opt=forced_proxy_opt, **kwargs).find("input")["value"]
+        data = AlfaChannel.create_soup(item.url, forced_proxy_opt=forced_proxy_opt, **kwargs).find("script")
+        data = url = scrapertools.find_single_match(str(data), "url\s*=\s*'([^']+)'")
+        if not data.startswith('http'):
+            base_url = "%sr.php" % host
+            post = {"data": data}
+            url = AlfaChannel.create_soup(base_url, post=post, forced_proxy_opt=forced_proxy_opt, soup=False, **kwargs).url
+            if not url: return itemlist
         
         if "fs.%s" % host.replace("https://", "") in url:
             api_url = "%sr.php" % host.replace("https://", "https://fs.")
             v_id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
             post = {"h": v_id}
-            url = AlfaChannel.create_soup(api_url, post=post, forced_proxy_opt=forced_proxy_opt, **kwargs).url
+            url = AlfaChannel.create_soup(api_url, post=post, forced_proxy_opt=forced_proxy_opt, soup=False, **kwargs).url
         
         itemlist.append(item.clone(url=url, server=""))
         itemlist = servertools.get_servers_itemlist(itemlist)
