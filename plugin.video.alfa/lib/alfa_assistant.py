@@ -458,7 +458,7 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assi
                     logger.error('##Assistant not installed or not available')
                     return False
 
-                logger.info('##Assistant Opening at %s' % ASSISTANT_SERVER)
+                logger.info('##Assistant Opening at %s' % ASSISTANT_SERVER, force=True)
                 
                 ver_upd = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
                 if closeAfter:
@@ -482,7 +482,7 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assi
                             isAlfaAssistantOpen = res
                         else:
                             isAlfaAssistantOpen = res
-                        logger.info('##Assistant Opened. getWebViewInfo: %s' % res)
+                        logger.info('##Assistant Opened @ %s. getWebViewInfo: %s' % (ASSISTANT_SERVER, res), force=True)
                         break
                 else:
                     return False
@@ -497,6 +497,7 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assi
                         isAlfaAssistantOpen = res
                     else:
                         isAlfaAssistantOpen = res
+                    logger.info('##Assistant Opened @ %s. getWebViewInfo: %s' % (ASSISTANT_SERVER, res), force=True)
                 else:
                     if not retry:
                         platformtools.dialog_notification("ACTIVE Alfa Assistant en %s" % ASSISTANT_SERVER, 
@@ -524,7 +525,7 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assi
         return res
     
     else:
-        if not alfa_s: logger.info('##Assistant Already was Opened: %s' % str(isAlfaAssistantOpen))
+        if not alfa_s: logger.info('##Assistant Already was Opened @ %s: %s' % (ASSISTANT_SERVER, str(isAlfaAssistantOpen)), force=True)
         return isAlfaAssistantOpen
 
 #
@@ -536,7 +537,7 @@ def close_alfa_assistant(retryIfTimeout=False):
     res = False
 
     if is_alfa_installed():
-        logger.info('##Assistant Close at ' + URL_PING)
+        logger.info('##Assistant Close at ' + URL_PING, force=True)
         res = get_generic_call('quit', timeout=1-EXTRA_TIMEOUT, alfa_s=True)
         
         if retryIfTimeout:
@@ -545,7 +546,7 @@ def close_alfa_assistant(retryIfTimeout=False):
                     if not 'ead timed out' in retryIfTimeout.code:
                         retryIfTimeout = False
                 if retryIfTimeout:
-                    logger.info('##Assistant Reset at ' + URL_PING)
+                    logger.info('##Assistant Reset at ' + URL_PING, force=True)
                     response = httptools.downloadpage(URL_PING+'/terminate', timeout=2, alfa_s=True, ignore_response_code=True, 
                                                       retry_alt=False, proxy_retries=0)
                     if ASSISTANT_MODE != 'este' or config.get_setting('assistant_binary', default='') == 'AstOK':
@@ -590,6 +591,12 @@ def check_webview_version(wvbVersion):
                 config.set_setting('wvbVersion_msg', True)
                 platformtools.dialog_notification("Alfa Assistant WebView: versión obsoleta", \
                             "%s - Actualice a una versión actual" % str(wvbVersion), time=10000)
+    else:
+        logger.error('##Assistant wvbVersion INCOMPATIBLE: %s' % str(wvbVersion))
+        if not config.get_setting('wvbVersion_msg', False):
+            config.set_setting('wvbVersion_msg', True)
+            platformtools.dialog_notification("Alfa Assistant WebView: versión INCOMPATIBLE", \
+                        "%s - Actualice a una versión actual" % str(wvbVersion), time=10000)
     
     return
 #

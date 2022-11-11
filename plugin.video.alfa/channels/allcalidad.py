@@ -23,8 +23,10 @@ list_servers = ['fembed', 'streamtape', 'gvideo', 'Jawcloud']
 canonical = {
              'channel': 'allcalidad', 
              'host': config.get_setting("current_host", 'allcalidad', default=''), 
-             'host_alt': ["https://allcalidad.si"], 
-             'host_black_list': ["https://ww3.allcalidad.is", "https://allcalidad.is", "https://allcalidad.ac"], 
+             'host_alt': ["https://allcalidad.ms"], 
+             'host_black_list': ["https://allcalidad.si", 
+                                 "https://ww3.allcalidad.is", "https://allcalidad.is", "https://allcalidad.ac"], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -41,21 +43,28 @@ except:
 
 def mainlist(item):
     logger.info()
+    
     autoplay.init(item.channel, list_servers, list_quality)
+    
     itemlist = []
+    
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host, thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos_years", url = host, extra = "Genero", thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = "Por año", action = "generos_years", url = host, extra = ">Año<", thumbnail = get_thumb("year", auto = True)))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host, thumbnail = get_thumb("search", auto = True)))
+    
     autoplay.show_option(item.channel, itemlist)
+    
     return itemlist
 
 
 def newest(categoria):
     logger.info()
+    
     itemlist = []
     item = Item()
+    
     try:
         if categoria in ['peliculas','latino']:
             item.url = host
@@ -77,6 +86,7 @@ def newest(categoria):
 
 def search(item, texto):
     logger.info()
+    
     texto = texto.replace(" ", "+")
     item.url = host + "/?s=" + texto
     item.extra = "busca"
@@ -88,13 +98,16 @@ def search(item, texto):
 
 def generos_years(item):
     logger.info()
+    
     itemlist = []
+    
     data = httptools.downloadpage(item.url, encoding=encoding, canonical=canonical).data
     patron = '(?s)%s(.*?)<\/ul>\s*<\/div>' %item.extra
     bloque = scrapertools.find_single_match(data, patron)
     patron  = 'href="([^"]+)'
     patron += '">([^<]+)'
     matches = scrapertools.find_multiple_matches(bloque, patron)
+    
     for url, titulo in matches:
         if not url.startswith("http"): url = host + url
         itemlist.append(Item(channel = item.channel,
@@ -102,14 +115,17 @@ def generos_years(item):
                              title = titulo,
                              url = url
                              ))
-    return itemlist
+    return itemlist[::-1]
 
 
 def peliculas(item):
     logger.info()
+    
     itemlist = []
+    
     data = httptools.downloadpage(item.url, encoding=encoding, canonical=canonical).data
     matches = scrapertools.find_multiple_matches(data, '(?s)shortstory cf(.*?)(?:rate_post|ratebox)')
+    
     for datos in matches:
         url = scrapertools.find_single_match(datos, 'href="([^"]+)')
         titulo = scrapertools.htmlclean(scrapertools.find_single_match(datos, 'short_header">([^<]+)').strip())
@@ -130,20 +146,26 @@ def peliculas(item):
                                    contentType="movie",
                                    language = idioma
                                    ))
+    
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
+    
     url_pagina = scrapertools.find_single_match(data, 'next page-numbers" href="([^"]+)')
     if url_pagina != "":
         pagina = "Pagina: " + scrapertools.find_single_match(url_pagina, "page/([0-9]+)")
         itemlist.append(Item(channel = item.channel, action = "peliculas", title = pagina, url = url_pagina))
+    
     return itemlist
 
 
 def findvideos(item):
+    logger.info()
+    
     itemlist = []
     encontrado = []
     
     data = httptools.downloadpage(item.url, encoding=encoding, forced_proxy_opt=forced_proxy_opt, canonical=canonical).data
     matches = scrapertools.find_multiple_matches(data, 'data-id="([^"]+)"')
+    
     for url in matches:
         url1 = base64.b64decode(url)
         url1 = clear_url(url1)
@@ -172,6 +194,7 @@ def findvideos(item):
     
     patron = '<a href="([^"]+)" class="bits-download btn btn-xs.*?<span>([^<]+)</span>'
     matches = scrapertools.find_multiple_matches(data, patron)
+    
     for url, srv in matches:
         if '#aHR0' in url:
             b_url = scrapertools.find_single_match(url, '(aHR0.*)')
@@ -213,15 +236,20 @@ def findvideos(item):
                                  ))
     return itemlist
 
+
 def clear_url(url):
+    
     if PY3 and isinstance(url, bytes):
         url = "".join(chr(x) for x in bytes(url))
     url = url.replace("fembed.com/v","fembed.com/f").replace("mega.nz/embed/","mega.nz/file/").replace("streamtape.com/e/","streamtape.com/v/").replace("v2.zplayer.live/download","v2.zplayer.live/embed")
     if "streamtape" in url:
         url = scrapertools.find_single_match(url, '(https://streamtape.com/v/\w+)')
+    
     return url
 
 
 def play(item):
+    
     item.thumbnail = item.contentThumbnail
+    
     return [item]

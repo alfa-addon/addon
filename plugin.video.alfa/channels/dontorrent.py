@@ -31,9 +31,10 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.ltd/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.gy/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/'], 
-             'host_black_list': ['https://dontorrent.fans/', 'https://dontorrent.uno/', 'https://dontorrent.ist/', 
+             'host_black_list': ['https://dontorrent.gs/', 'https://dontorrent.me/', 'https://dontorrent.ltd/', 
+                                 'https://dontorrent.fans/', 'https://dontorrent.uno/', 'https://dontorrent.ist/', 
                                  'https://dontorrent.vin/', 'https://dontorrent.tf/', 'https://dontorrent.pub/', 
                                  'https://dontorrent.moe/', 'https://dontorrent.soy/', 'https://dontorrent.pet/', 
                                  'https://dontorrent.bid/', 'https://dontorrent.dev/', 'https://dontorrent.dog/', 
@@ -316,7 +317,7 @@ def novedades(item):
         matches_fin.append((scrapedurl, scrapedtitle, scrapedquality))          # Guardamos las urls de la categoría
 
     if find_alt_link_option and find_alt_search:
-        matches_fin = generictools.find_btdigg_news(item, matches=matches_fin, channel_alt='')
+        matches_fin = generictools.find_btdigg_news(item, matches=matches_fin, canonical=canonical, channel_alt='')
     
     item.matches = matches_fin
     item.referer = item.url
@@ -974,7 +975,7 @@ def findvideos(item):
                 item_local.url = item_local.torrent_alt                         # Restauramos la url
                 if not item_local.torrent_alt.startswith('http') and not item_local.torrent_alt.startswith('magnet'):
                     local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
-            if len(item.emergency_urls[0]) > 1:
+            if item.armagedon and len(item.emergency_urls[0]) > 1:
                 del item.emergency_urls[0][0]
         
         #Buscamos tamaño en el archivo .torrent
@@ -1207,7 +1208,8 @@ def episodios(item):
 
         # Obtenemos todas las Temporada de la Serie desde Search
         # Si no hay TMDB o es sólo una temporada, listamos lo que tenemos
-        if search_seasons and season_display == 0 and item.infoLabels['tmdb_id'] and (max_temp > 0 or btdigg or item.url == host):
+        if search_seasons and (season_display == 0 or season_display and not list_temps) \
+                          and item.infoLabels['tmdb_id'] and (max_temp > 0 or btdigg or item.url == host):
             # Si hay varias temporadas, buscamos todas las ocurrencias y las filtraos por TMDB y calidad
             list_temp = generictools.find_seasons(item, modo_ultima_temp_alt, max_temp, max_nfo)
 
@@ -1229,6 +1231,7 @@ def episodios(item):
     # Descarga las páginas
     for _url in list_temp:                                                      # Recorre todas las temporadas encontradas
         url = _url
+        data = ''
         if not item.matches and not btdigg and btdigg_url not in url:
             data, response, item, itemlist = generictools.downloadpage(url, timeout=timeout, s2=False, canonical=canonical, 
                                                                        post=post, referer=referer, forced_proxy_opt=forced_proxy_opt, 
@@ -1316,6 +1319,8 @@ def episodios(item):
                 elif scrapertools.find_single_match(title, '^(\d+)'):
                     item_local.contentSeason = 1
                     item_local.contentEpisodeNumber = scrapertools.find_single_match(title, '^(\d+)')
+                elif scrapertools.find_single_match(title, '\[[c|C]ap\.(\d)(\d{2})\]'):
+                    continue
                 else:
                     raise
                 item_local.contentSeason = int(item_local.contentSeason)
@@ -1358,7 +1363,8 @@ def episodios(item):
 
     if find_alt_link_option:
         item, itemlist = generictools.find_btdigg_episodios(item, itemlist, url=url, epis_done=epis_done, 
-                                                            domain_alt=find_alt_domains, context=context)
+                                                            domain_alt=find_alt_domains, context=context,
+                                                            canonical=canonical)
 
     if (item.add_videolibrary or item.library_playcounts) and config.get_setting('auto_download_new', channel=channel):
         itemlist = filtertools.get_links(itemlist, item, list_language, list_quality, replace_label=btdigg_label)
@@ -1415,7 +1421,7 @@ def search(item, texto):
 
         if find_alt_link_option and btdigg:
             try:
-                itemlist_search = generictools.find_btdigg_search(texto, channel, itemlist=itemlist)
+                itemlist_search = generictools.find_btdigg_search(texto, channel, canonical=canonical, itemlist=itemlist)
                 for item_search in itemlist_search:
                     if item_search.contentType != 'movie':
                         item_search.quality = item_search.quality.replace('HDTV 720p', 'HDTV-720p')
@@ -1429,7 +1435,7 @@ def search(item, texto):
     except:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
-        logger.error(traceback.format_exc(1))
+        logger.error(traceback.format_exc())
         return []
  
  

@@ -1,7 +1,7 @@
 {
   "id": "123pelis",
   "name": "123Pelis",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail":"https://123pelis.fun/wp-content/uploads/2019/11/123PELIS-LOGO-1.png",

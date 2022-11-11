@@ -1768,7 +1768,22 @@ def torrent_dirs():
                      'TORREST_web': 'http://%s:'
                     }
     
-    torrent_paths['TORR_opt'] = config.get_setting("torrent_client", server="torrent", default=0, debug=DEBUG)
+    try:
+        torrent_paths['TORR_opt'] = int(config.get_setting("torrent_client", server="torrent", default=0, debug=DEBUG))
+    except:
+        from platformcode import custom_code
+        custom_code.verify_data_jsons(json_file='torrent_data.json')
+        try:
+            if config.get_setting("torrent_client", server="torrent", default=0, debug=DEBUG) == None:
+                config.set_setting("torrent_client", 0, server="torrent", debug=DEBUG)
+            torrent_paths['TORR_opt'] = int(config.get_setting("torrent_client", server="torrent", default=0, debug=DEBUG))
+        except:
+            torrent_paths['TORR_opt'] = 0
+            torrent_json_path = filetools.join(config.get_data_path(), 'settings_servers', 'torrent_data.json')
+            torrent_json = jsontools.load(filetools.read(torrent_json_path))
+            filetools.remove(torrent_json_path, silent=True)
+            logger.error('Archivo TORRENT_DATA CORRUPTO: %s' % str(torrent_json))
+    
     if torrent_paths['TORR_opt'] > len(torrent_options): torrent_paths['TORR_opt'] = 0
     if torrent_paths['TORR_opt'] > 0:
         torrent_paths['TORR_client'] = scrapertools.find_single_match(torrent_options[torrent_paths['TORR_opt']-1][0], ':\s*(\w+)').lower()

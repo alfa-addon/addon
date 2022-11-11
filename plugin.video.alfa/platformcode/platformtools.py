@@ -315,8 +315,8 @@ def render_items(itemlist, parent_item):
         # xbmcplugin.setPluginFanart(PLUGIN_HANDLE, os.path.join(config.get_runtime_path(), "fanart.jpg"))
 
         # Esta opcion es para poder utilizar el xbmcplugin.setResolvedUrl()
-        # if item.isPlayable == True or (config.get_setting("player_mode") == 1 and item.action == "play"):
-        if config.get_setting("player_mode") == 1 and item.action == "play":
+        # if item.isPlayable == True or (config.get_setting("player_mode", default=0) == 1 and item.action == "play"):
+        if config.get_setting("player_mode", default=0) == 1 and item.action == "play":
             listitem.setProperty('IsPlayable', 'true')
 
         # Añadimos los infoLabels
@@ -796,7 +796,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
 
         # ExtendedInfo: Si está instalado el addon y se cumplen una serie de condiciones
         if kwargs.get('has_extendedinfo') \
-                and config.get_setting("extended_info") == True:
+                and config.get_setting("extended_info", default=False) == True:
             if item.contentType == "episode" and item.contentEpisodeNumber and item.contentSeason \
                     and (item.infoLabels['tmdb_id'] or item.contentSerieName):
                 param = "tvshow_id =%s, tvshow=%s, season=%s, episode=%s" \
@@ -908,6 +908,8 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                     action = item.action
                 context_commands.append((config.get_localized_string(60352), "RunPlugin(%s?%s&%s)" %
                                          (sys.argv[0], item_url, 'action=add_serie_to_library&from_action=' + action)))
+                context_commands.append(('Agregar temporada a videoteca', "RunPlugin(%s?%s&%s)" %
+                                         (sys.argv[0], item_url, 'action=add_season_to_library&from_action=' + action)))
             # Añadir Pelicula a videoteca
             elif item.action in ["detail", "findvideos"] and item.contentType == 'movie' and item.contentTitle:
                 context_commands.append((config.get_localized_string(60353), "RunPlugin(%s?%s&%s)" %
@@ -1043,7 +1045,7 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
         xbmc_player.play(item.url, xlistitem)
         return
 
-    default_action = config.get_setting("default_action")
+    default_action = config.get_setting("default_action", default=0)
     logger.info("default_action=%s" % default_action)
 
     # Abre el diálogo de selección para ver las opciones disponibles
@@ -1118,11 +1120,11 @@ def stop_video():
 def get_seleccion(default_action, opciones, seleccion, video_urls):
     fixpri = False
     # para conocer en que prioridad se trabaja
-    priority = int(config.get_setting("resolve_priority"))
+    priority = int(config.get_setting("resolve_priority", default=0))
     # se usara para comprobar si hay links premium o de debriders
     check = []
     # Comprueba si resolve stop esta desactivado
-    if config.get_setting("resolve_stop") == False:
+    if config.get_setting("resolve_stop", default=False) == False:
         fixpri = True
     # preguntar
     if default_action == 0:
@@ -1276,7 +1278,7 @@ def get_dialogo_opciones(item, default_action, strm, autoplay):
         item.server = "directo"
 
     # Si no es el modo normal, no muestra el diálogo porque cuelga XBMC
-    muestra_dialogo = (config.get_setting("player_mode") == 0 and not strm)
+    muestra_dialogo = (config.get_setting("player_mode", default=0) == 0 and not strm)
 
     # Extrae las URL de los vídeos, y si no puedes verlo te dice el motivo
     # Permitir varias calidades para server "directo"
@@ -1450,15 +1452,15 @@ def set_player(item, xlistitem, mediaurl, view, strm, autoplay):
             xbmc_player.setSubtitles(item.subtitle)
 
     else:
-        logger.info("player_mode=%s" % config.get_setting("player_mode"))
+        logger.info("player_mode=%s" % config.get_setting("player_mode", default=0))
         logger.info("mediaurl=" + mediaurl)
-        if config.get_setting("player_mode") == 3 or "megacrypter.com" in mediaurl:
+        if config.get_setting("player_mode", default=0) == 3 or "megacrypter.com" in mediaurl:
             from . import download_and_play
-            download_and_play.download_and_play(mediaurl, "download_and_play.tmp", config.get_setting("downloadpath"))
+            download_and_play.download_and_play(mediaurl, "download_and_play.tmp", config.get_setting("downloadpath", default=''))
             return
 
-        elif config.get_setting("player_mode") == 0 or \
-                (config.get_setting("player_mode") == 3 and mediaurl.startswith("rtmp")):
+        elif config.get_setting("player_mode", default=0) == 0 or \
+                (config.get_setting("player_mode", default=0) == 3 and mediaurl.startswith("rtmp")):
             # Añadimos el listitem a una lista de reproducción (playlist)
             playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
             playlist.clear()
@@ -1471,8 +1473,8 @@ def set_player(item, xlistitem, mediaurl, view, strm, autoplay):
                 from core import trakt_tools
                 trakt_tools.wait_for_update_trakt()
 
-        # elif config.get_setting("player_mode") == 1 or item.isPlayable:
-        elif config.get_setting("player_mode") == 1:
+        # elif config.get_setting("player_mode", default=0) == 1 or item.isPlayable:
+        elif config.get_setting("player_mode", default=0) == 1:
             logger.info("Tras setResolvedUrl")
             # si es un archivo de la videoteca enviar a marcar como visto
 
@@ -1484,7 +1486,7 @@ def set_player(item, xlistitem, mediaurl, view, strm, autoplay):
             xbmcplugin.setResolvedUrl(PLUGIN_HANDLE, True, xlistitem)
             xbmc.sleep(2500)
 
-        elif config.get_setting("player_mode") == 2:
+        elif config.get_setting("player_mode", default=0) == 2:
             xbmc.executebuiltin("PlayMedia(" + mediaurl + ")")
 
     # TODO MIRAR DE QUITAR VIEW
@@ -1552,7 +1554,7 @@ def play_torrent(item, xlistitem, mediaurl):
 
     torrent_options.extend(torrent_client_installed(show_tuple=True))
 
-    torrent_client = config.get_setting("torrent_client", server="torrent")
+    torrent_client = config.get_setting("torrent_client", server="torrent", default=0)
     if torrent_client > len(torrent_options): torrent_client = 0
 
     if torrent_client and torrent_client - 1 <= len(torrent_options):
@@ -1605,13 +1607,13 @@ def play_torrent(item, xlistitem, mediaurl):
     if item.password:
         size_rar = 3
     if item.contentType == 'movie':
-        folder = config.get_setting("folder_movies")  # películas
+        folder = config.get_setting("folder_movies", default='')  # películas
     else:
-        folder = config.get_setting("folder_tvshows")  # o series
+        folder = config.get_setting("folder_tvshows", default='')  # o series
     download_path = config.get_setting('downloadpath', default='')  # Obtenemos el path absoluto a partir de Downloads
     videolibrary_path = config.get_videolibrary_path()  # Obtenemos el path absoluto a partir de la Videoteca
     PATH_videos = filetools.join(videolibrary_path, folder)
-    DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath")
+    DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath", default='')
     timeout = 10
 
     torrent_params = {
@@ -2180,7 +2182,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
                 item.downloadFilename = filetools.join(item.downloadFilename, video_file)
                 item.downloadFilename = ':%s: %s' % (torr_client.upper(), item.downloadFilename)
 
-        path = filetools.join(config.get_setting("downloadlistpath"), item.path)
+        path = filetools.join(config.get_setting("downloadlistpath", default=''), item.path)
         if filetools.exists(path):
             item_down = Item().fromjson(filetools.read(path))
         else:

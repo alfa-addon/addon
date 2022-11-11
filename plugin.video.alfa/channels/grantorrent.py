@@ -82,7 +82,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="   -   por Calidad", action="calidades", 
                 url=host + movies_sufix + 'page/1/', thumbnail=thumb_calidades, extra="peliculas", category=categoria))
     itemlist.append(Item(channel=item.channel, title="   -   por Genero", action="generos", 
-                url=host, thumbnail=thumb_generos, extra="peliculas", category=categoria))
+                url=host + movies_sufix + 'page/1/', thumbnail=thumb_generos, extra="peliculas", category=categoria))
     #itemlist.append(Item(channel=item.channel, title="   -   por Año", action="annos", 
     #            url=host + movies_sufix + 'page/1/', thumbnail=thumb_years, extra="peliculas", category=categoria))
     # Buscar películas
@@ -123,7 +123,7 @@ def calidades(item):
                                                                patron=patron, item=item, itemlist=[])       # Descargamos la página
 
     data = scrapertools.find_single_match(data, patron)
-    patron = '<option\s*value="([^"]+)">([^<]+)<\/option>'
+    patron = '<option\s*value="([^"]+)"\s*>([^<]+)<\/option'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     #logger.debug(patron)
@@ -159,13 +159,13 @@ def generos(item):
     patron = '<select\s*id="genre"\s*name="genre"[^>]*>(.*?)<\/select><\/div>'
     data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, referer=host, 
                                                                patron=patron, item=item, itemlist=[])       # Descargamos la página
-    
+
     # Obtenemos el bloque a tratar
     patron = '<select\s*id="genre"\s*name="genre"[^>]*>(.*?)<\/select><\/div>'
     data = scrapertools.find_single_match(data, patron)
     
     # Buscamos los géneros
-    patron = '<option\s*value="([^"]+)">([^<]+)<\/option>'
+    patron = '<option\s*value="([^"]+)"\s*>([^<]+)<\/option'
     matches = re.compile(patron, re.DOTALL).findall(data)
     
     #logger.debug(patron)
@@ -1113,10 +1113,10 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     
     if "/series" in item.url:
-        item.url = "%spage/1/?s=%s" % (host + series_sufix, texto)
+        item.url = "%spage/1/?s=%s&filtro=series" % (host, texto)
         item.title = "Series"
     else:
-        item.url = "%spage/1/?s=%s" % (host, texto)
+        item.url = "%spage/1/?s=%s&filtro=" % (host, texto)
         item.title = "Películas"
     item.extra = "search"
     

@@ -34,7 +34,7 @@ canonical = {
              'host_alt': ["https://www3.animeflv.net/"], 
              'host_clone': ["https://ww3.animeflv.cc/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 
+             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 'cf_assistant': False,
              'CF': True, 'CF_test': True, 'alfa_s': True
             }
 
@@ -49,6 +49,7 @@ else:
 
 def mainlist(item):
     logger.info()
+    
     if clone:
         order = '3'
     else:
@@ -97,8 +98,10 @@ def mainlist(item):
 
 def setting_channel(item):
     from platformcode import platformtools
+    
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
+    
     return ret
 
 
@@ -115,6 +118,7 @@ def get_source(url, patron=None):
 
 def search(item, texto):
     logger.info()
+    
     itemlist = []
 
     texto = texto.replace(" ", "+")
@@ -185,7 +189,9 @@ def search(item, texto):
 
 def search_section(item):
     logger.info()
+    
     itemlist = []
+    
     data = get_source(item.url)
 
     if clone:
@@ -209,6 +215,7 @@ def search_section(item):
                 matches = scrapertools.find_multiple_matches(selections_list, 'value="([^"]+)".+?>\s+(.*?)</label>')
     else:
         patron = 'id="{}_select"[^>]+>(.*?)</select>'.format(item.extra)
+        data = scrapertools.find_single_match(data, patron)
         matches = re.compile('<option value="([^"]+)">(.*?)</option>', re.DOTALL).findall(data)
         order = 'title'
 
@@ -221,7 +228,9 @@ def search_section(item):
 
 
 def newest(categoria):
+    
     itemlist = []
+    
     if categoria == 'anime':
         itemlist = novedades_episodios(Item(url=host))
     return itemlist
@@ -229,6 +238,7 @@ def newest(categoria):
 
 def novedades_episodios(item):
     logger.info()
+    
     itemlist = []
 
     patr = '<h2>Últimos episodios</h2>.+?<ul class="ListEpisodios[^>]+>(.*?)</ul>'
@@ -253,7 +263,7 @@ def novedades_episodios(item):
         thumbnail = urlparse.urljoin(host, thumbnail)
 
         new_item = Item(channel=item.channel, action="findvideos", title=title, url=url,
-                        contentSerieName=show, thumbnail=thumbnail)
+                        contentSerieName=show, thumbnail=thumbnail, contentType='episode')
 
         itemlist.append(new_item)
     
@@ -264,11 +274,11 @@ def novedades_episodios(item):
 
 def novedades_anime(item):
     logger.info()
+    
     itemlist = []
     
     patr = '<ul class="ListAnimes[^>]+>(.*?)</ul>'
     data = get_source(item.url, patron=patr)
-    
 
     patron = 'href="([^"]+)".+?<img src="([^"]+)".+?'
     patron += '<span class=.+?>(.*?)</span>.+?<h3.+?>(.*?)</h3>.+?'
@@ -285,10 +295,11 @@ def novedades_anime(item):
         if _type != "Película":
             new_item.contentSerieName = title
             new_item.context = renumbertools.context(item)
-        
+            new_item.contentType = 'tvshow'
         else:
             new_item.contentType = "movie"
             new_item.contentTitle = title
+            new_item.contentType = 'movie'
         
         itemlist.append(new_item)
     
@@ -299,6 +310,7 @@ def novedades_anime(item):
 
 def listado(item):
     logger.info()
+    
     itemlist = []
     
     data = get_source(item.url)
@@ -307,7 +319,6 @@ def listado(item):
         url_pagination = scrapertools.find_single_match(data, "(?is)<li\s*?class=selected>.*?</li><li.*?><a href='([^']+)'")
     else:
         url_pagination = scrapertools.find_single_match(data, '<li class="active">.*?</li><li><a href="([^"]+)">')
-    logger.info(url_pagination)
 
     data = scrapertools.find_multiple_matches(data, '<ul class="ListAnimes[^>]+>(.*?)</ul>')
     data = "".join(data)
@@ -330,10 +341,11 @@ def listado(item):
         if _type == "Anime":
             new_item.contentSerieName = title
             new_item.context = renumbertools.context(item)
-        
+            new_item.contentType = 'tvshow'
         else:
             new_item.contentType = "movie"
             new_item.contentTitle = title
+            new_item.contentType = 'movie'
         
         itemlist.append(new_item)
     
@@ -353,6 +365,7 @@ def listado(item):
 
 def episodios(item):
     logger.info()
+    
     itemlist = []
     
     if clone and OGHOST in item.url:
@@ -386,7 +399,10 @@ def episodios(item):
             )
     else:
         info = scrapertools.find_single_match(data, "anime_info = \[(.*?)\];")
-        info = eval(info)
+        try:
+            info = eval(info)
+        except:
+            return itemlist
         
         episodes = eval(scrapertools.find_single_match(data, "var episodes = (.*?);"))
         
@@ -420,8 +436,8 @@ def episodios(item):
 
 def findvideos(item):
     logger.info()
-
     from core import jsontools
+    
     itemlist = []
 
     if clone and OGHOST in item.url:

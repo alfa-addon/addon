@@ -23,6 +23,7 @@ import xbmcgui
 PLUGIN_NAME = "alfa"
 DEBUG = False
 DEBUG_JSON = DEBUG or False
+GLOBAL_SEARCH_CANCELLED = False
 
 __settings__ = xbmcaddon.Addon(id="plugin.video.{}".format(PLUGIN_NAME))
 __language__ = __settings__.getLocalizedString

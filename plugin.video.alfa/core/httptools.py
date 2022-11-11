@@ -1005,6 +1005,11 @@ def downloadpage(url, **opt):
     if VIDEOLIBRARY_UPDATE and opt.get('hide_infobox', True):
         opt['hide_infobox'] = True
     
+    # Si es una petición de un módulo involucrado en una búsqueda global en cancelación, se devuelve el control sin más
+    if opt.get('canonical', {}).get('global_search_cancelled', False) or (config.GLOBAL_SEARCH_CANCELLED \
+                                and opt.get('canonical', {}).get('global_search_active', False)):
+        return global_search_canceled(url, **opt)
+    
     # Reintentos para errores 403, 503
     if 'retries_cloudflare' not in opt: opt['retries_cloudflare'] = opt.get('canonical', {}).get('retries_cloudflare', 0)
     if 'CF' not in opt and 'CF_stat' in opt.get('canonical', {}): opt['CF'] = opt['canonical']['CF_stat']
@@ -1206,6 +1211,7 @@ def downloadpage(url, **opt):
 
                     response = {}
                     response['data'] = ''
+                    response['encoding'] = None
                     response['sucess'] = False
                     response['code'] = ''
                     response['soup'] = None
@@ -1215,7 +1221,10 @@ def downloadpage(url, **opt):
                         opt['canonical']['host'] = ''
                     response['canonical'] = ''
                     response['host'] = ''
+                    response['url'] = ''
                     response['url_new'] = ''
+                    response['headers'] = {}
+                    response['cookies'] = ''
                     response['proxy__'] = ''
                     response['time_elapsed'] = time.time() - inicio
                     info_dict.append(('Success', 'False'))
@@ -1230,6 +1239,7 @@ def downloadpage(url, **opt):
         
         else:
             response['data'] = ''
+            response['encoding'] = None
             response['sucess'] = False
             response['code'] = ''
             response['soup'] = None
@@ -1237,7 +1247,10 @@ def downloadpage(url, **opt):
             response['proxy__'] = ''
             response['canonical'] = ''
             response['host'] = ''
+            response['url'] = ''
             response['url_new'] = ''
+            response['headers'] = {}
+            response['cookies'] = ''
             response['time_elapsed'] = time.time() - inicio
             return type('HTTPResponse', (), response)
         
@@ -1454,6 +1467,7 @@ def downloadpage(url, **opt):
 
     if not response:
         response['data'] = ''
+        response['encoding'] = None
         response['sucess'] = False
         response['code'] = ''
         response['soup'] = None
@@ -1461,7 +1475,10 @@ def downloadpage(url, **opt):
         response['proxy__'] = ''
         response['canonical'] = ''
         response['host'] = ''
+        response['url'] = ''
         response['url_new'] = ''
+        response['headers'] = {}
+        response['cookies'] = ''
         response['time_elapsed'] = 0
     return type('HTTPResponse', (), response)
 
@@ -1546,3 +1563,24 @@ def fill_fields_post(info_dict, opt, req, response, req_headers, inicio):
         logger.error(traceback.format_exc(1))
     
     return info_dict, response
+
+
+def global_search_canceled(url, **opt):
+    logger.info(url)
+    
+    response = {}
+    response['data'] = ''
+    response['encoding'] = None
+    response['sucess'] = False
+    response['code'] = 777
+    response['soup'] = None
+    response['json'] = dict()
+    response['proxy__'] = ''
+    response['canonical'] = ''
+    response['host'] = ''
+    response['url'] = ''
+    response['url_new'] = ''
+    response['headers'] = {}
+    response['cookies'] = ''
+    response['time_elapsed'] = 0
+    raise Exception(type('HTTPResponse', (), response))

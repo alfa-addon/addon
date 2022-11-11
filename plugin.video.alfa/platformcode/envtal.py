@@ -262,10 +262,13 @@ def get_environment():
                 environment['videolab_series'] = str(len(filetools.listdir(filetools.join(environment['videolab_path'], \
                                 config.get_setting("folder_tvshows")))))
                 counter = 0
-                for root, folders, files in filetools.walk(filetools.join(environment['videolab_path'], \
-                                    config.get_setting("folder_tvshows"))):
-                    for file in files:
-                        if file.endswith('.strm'): counter += 1
+                if environment['videolab_path'].startswith("ftp://") or environment['videolab_path'].startswith("smb://"):
+                    counter = '?'
+                else:
+                    for root, folders, files in filetools.walk(filetools.join(environment['videolab_path'], \
+                                        config.get_setting("folder_tvshows"))):
+                        for file in files:
+                            if file.endswith('.strm'): counter += 1
                 environment['videolab_episodios'] = str(counter)
             if filetools.exists(filetools.join(environment['videolab_path'], \
                                 config.get_setting("folder_movies"))):
@@ -417,9 +420,12 @@ def get_environment():
         if filetools.exists(filetools.join(config.get_data_path(), 'alfa-desktop-assistant.version')) \
                             and config.get_setting("assistant_mode") == "este":
             environment['assistant_version'] = filetools.read(filetools.join(config.get_data_path(), 'alfa-desktop-assistant.version'))
+            environment['assistant_version'] = '%s, %s' % (environment['assistant_version'], str(config.get_setting("assistant_mode")))
             environment['assistant_path'] = str(filetools.file_info(filetools.join(config.get_data_path(), 'assistant')))
         elif filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
             environment['assistant_version'] = filetools.read(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version'))
+            environment['assistant_version'] = '%s, %s, %s' % (environment['assistant_version'], str(config.get_setting("assistant_mode")), 
+                                                               str(config.get_setting("assistant_custom_address")))
         environment['assistant_version'] += '; Req: %s' % str(config.get_setting('assistant_binary', default=False))
         environment['assistant_cf_ua'] = str(config.get_setting('cf_assistant_ua', default=None))
         assistant_path = filetools.join(os.getenv('ANDROID_STORAGE'), 'emulated', '0', 'Android', 'data', 'com.alfa.alfamobileassistant')
