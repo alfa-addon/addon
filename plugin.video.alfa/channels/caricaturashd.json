@@ -1,7 +1,7 @@
 {
   "id": "caricaturashd",
   "name": "CaricaturasHD",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://caricaturashd.net/wp-content/uploads/2019/07/196x39.png",
