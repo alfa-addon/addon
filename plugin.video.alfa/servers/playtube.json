@@ -8,8 +8,12 @@
         "url": "https://playtube.ws/embed-\\1.html"
       },
       {
-        "pattern": "(https://(?:vtube|clicknplay).to/embed-[A-z0-9]+.html)",
+        "pattern": "(https://clicknplay.to/embed-[A-z0-9]+.html)",
         "url": "\\1"
+      },
+      {
+        "pattern": "https://vtube.to/embed-([A-z0-9]+).html",
+        "url": "https://vtube.to/\\1.html"
       },
       {
         "pattern": "(https://pornve.com/[A-z0-9/[A-z0-9_-]+.html)",

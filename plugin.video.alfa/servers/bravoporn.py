@@ -27,12 +27,8 @@ def get_video_url(page_url, video_password):
             quality = elem['title']
         else:
             quality = elem['label']
-    # patron  = '<source (?:id="video_source_\d+" |data-fluid-hd |)src=(?:\'|")((?:[^"]+|[^\']+))(?:\'|").*?(?:title|label)=(?:\'|")((?:\d+p|[^"]+))(?:\'|")'
-    # matches = scrapertools.find_multiple_matches(data, patron)
-    # logger.debug(matches)
-    # for url,quality in matches:
-        # url = url.replace("&amp;", "&")
-        # url += "|Referer=%s" % page_url
+        if "lq" in quality.lower(): quality = "360p"
+        if "hq" in quality.lower(): quality = "720p"
         if not url.startswith("http"):
             url = "http:%s" % url
         video_urls.append(["[%s] %s" %(server,quality), url])

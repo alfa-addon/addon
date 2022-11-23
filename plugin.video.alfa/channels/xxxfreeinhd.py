@@ -25,6 +25,8 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['vidlox']
 
+# vidlox y netu al primero le cuesta cargar
+
 
 canonical = {
              'channel': 'xxxfreeinhd', 
@@ -35,8 +37,6 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-# vidlox y netu al primero le cuesta cargar
-
 
 def mainlist(item):
     logger.info()
@@ -44,11 +44,12 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?filter=latest"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/?filter=most-viewed"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "/?filter=longest"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/page/1/?filter=latest"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/page/1/?filter=most-viewed"))
+    itemlist.append(item.clone(title="Mas popular" , action="lista", url=host + "/page/1/?filter=popular"))
+    itemlist.append(item.clone(title="Mas largo" , action="lista", url=host + "/page/1/?filter=longest"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -58,7 +59,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/?s=%s&filter=latest" % (host, texto)
+    item.url = "%s/?s=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -72,20 +73,20 @@ def categorias(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('article', id=re.compile(r"^post-\d+"))
+    matches = soup.find_all('article', class_=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
-        thumbnail = elem.img['src']
-        url += "/?filter=latest"
+        thumbnail = elem.img
+        if thumbnail:
+            thumbnail = thumbnail['src']
         plot = ""
-        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
-                              thumbnail=thumbnail , plot=plot) )
+        itemlist.append(item.clone(action="lista", title=title, url=url,
+                              thumbnail=thumbnail , plot=plot, fanart=thumbnail) )
     next_page = soup.find('a', class_='current')
     if next_page and next_page.parent.find_next_sibling("li"):
         next_page = next_page.parent.find_next_sibling("li").a['href']
-        next_page =  urlparse.urljoin(item.url,next_page)
-        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -105,22 +106,22 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find('div', class_='videos-list').find_all('article', attrs={"data-post-id": re.compile(r"^\d+")})
+    matches = soup.find_all('article', class_=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
         thumbnail = elem.img['data-src']
+        time = elem.find('div', class_='card-movie-duration')
+        if time:
+            time = time.text.strip()
+            title = "[COLOR yellow]%s[/COLOR] %s" % (time, title)
         plot = ""
-        itemlist.append(Item(channel = item.channel,action="findvideos", title=title, contentTitle = title, url=url,
+        itemlist.append(item.clone(action="findvideos", title=title, contentTitle = title, url=url,
                               thumbnail=thumbnail, plot=plot, fanart=thumbnail ))
     next_page = soup.find('a', class_='current')
     if next_page and next_page.parent.find_next_sibling("li"):
         next_page = next_page.parent.find_next_sibling("li").a['href']
-        next_page =  urlparse.urljoin(item.url,next_page)
-        if "?filtre=date&cat=0" in item.url: next_page += "?filtre=date&cat=0"
-        elif "?display=tube&filtre=views" in item.url: next_page += "?display=tube&filtre=views"
-        elif "?display=tube&filtre=rate" in item.url: next_page += "?display=tube&filtre=rate"
-        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -131,7 +132,7 @@ def findvideos(item):
     matches = soup.find('div', class_='responsive-player').find_all('iframe')
     for elem in matches:
         url = elem['src']
-        itemlist.append(Item(channel=item.channel, action="play", title = "%s", contentTitle= item.title, url=url ))
+        itemlist.append(item.clone(action="play", title = "%s", contentTitle= item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
