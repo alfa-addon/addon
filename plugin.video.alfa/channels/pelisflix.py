@@ -31,10 +31,10 @@ list_servers = list(SERVER.values())
 canonical = {
              'channel': 'pelisflix', 
              'host': config.get_setting("current_host", 'pelisflix', default=''), 
-             'host_alt': ["https://pelisflix.biz/"], 
-             'host_black_list': ["https://ww2.pelisflix2.one/", 
+             'host_alt': ["https://pelisflix.pw/"], 
+             'host_black_list': ["https://pelisflix.biz/", "https://ww2.pelisflix2.one/", 
                                  "https://pelisflix2.one/", "https://pelisflix.li/", "https://ww3.pelisflix2.one/"], 
-             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 3, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

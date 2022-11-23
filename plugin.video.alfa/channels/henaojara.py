@@ -30,6 +30,7 @@ canonical = {
              'host': config.get_setting("current_host", 'henaojara', default=''), 
              'host_alt': ["https://henaojara2.com/"], 
              'host_black_list': ["https://henaojara.com/"], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

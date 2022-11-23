@@ -1417,7 +1417,7 @@ class Tmdb(object):
             dic_aux = dict((i['id'], i) for i in ret_dic["temporada_crew"])
             for e in temporada["episodes"]:
                 for crew in e['crew']:
-                    if crew['id'] not in list(dic_aux.keys()):
+                    if crew.get('id', '') and crew['id'] not in list(dic_aux.keys()):
                         dic_aux[crew['id']] = crew
             ret_dic["temporada_crew"] = list(dic_aux.values())
 

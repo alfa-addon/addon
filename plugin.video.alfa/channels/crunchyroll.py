@@ -21,6 +21,7 @@ canonical = {
              'host': config.get_setting("current_host", 'crunchyroll', default=''), 
              'host_alt': ["https://www.crunchyroll.com"], 
              'host_black_list': [], 
+             'pattern': ['<link\s*data-react-helmet="true"\s*rel="alternate"\s*hrefLang="x-default"\s*href="([^"]+)"'], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 3, 
              'CF': True, 'CF_test': True, 'alfa_s': True
             }           # No funciona en este canal

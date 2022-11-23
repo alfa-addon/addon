@@ -107,8 +107,8 @@ def mainlist(item):
                 i.downloadProgress *= -1
         if i.downloadProgress != 0 or i.downloadCompleted != 0:
             resetear = True
-        if i.language or i.quality:
-            i.contentPlot = '[COLOR limegreen]Idiomas: [/COLOR]%s\n[COLOR limegreen]Calidad: [/COLOR]%s\n\n%s' \
+        if (i.language or i.quality) and i.contentType == 'movie':
+            i.contentPlot = '[B][I][COLOR yellowgreen]Idiomas: [/COLOR]%s\n[COLOR yellowgreen][B][I]Calidad: [/COLOR]%s[/B][/I]\n\n%s' \
                          % (i.language, i.quality, i.contentPlot)
         if i.infoLabels['mediatype'] == 'movie':
             year = i.infoLabels['year']
@@ -139,6 +139,8 @@ def mainlist(item):
                     if i_bis.infoLabels['title']: del i_bis.infoLabels['title']
                     i_bis.infoLabels['mediatype'] = 'tvshow'
                     itemlist.append(i_bis.clone(channel="downloads", action="mainlist", title=title, 
+                                                quality=i_bis.quality, 
+                                                plot=unify.add_info_plot(i_bis.plot, i_bis.language, i_bis.quality, '', '', i_bis.infoLabels), 
                                                 downloadProgress=[i_bis.downloadProgress], 
                                                 remote_download=remote_download))
 
@@ -183,7 +185,8 @@ def mainlist(item):
                                         unify.format_rating(i.infoLabels['rating']), 
                                         unify.set_color(i.contentChannel.capitalize(), 'channel'))
                 if remote_download: i.remote_download = remote_download
-                itemlist.append(i)
+                itemlist.append(i.clone(quality=i.quality, 
+                                        plot=unify.add_info_plot(i.plot, i.language, i.quality, '', i.contentSerieName, i.infoLabels)))
 
     estados = [i.downloadStatus for i in itemlist]
     itemlist = sorted(itemlist, key=lambda i: i.title)
@@ -1245,10 +1248,13 @@ def update_control(path, params, function=''):
         function = inspect.currentframe().f_back.f_back.f_code.co_name
     logger.info('function: %s, path: %s, params: %s' % (function, path, str(params)))
     if not path or not params: return
+    infoLabels = params.pop('infoLabels', {})
     path = filetools.join(DOWNLOAD_LIST_PATH, path)
     if filetools.exists(path):
         item = Item().fromjson(filetools.read(path))
         item.__dict__.update(params)
+        if infoLabels:
+            item.infoLabels.update(infoLabels)
         filetools.write(path, item.tojson())
 
 
@@ -1404,6 +1410,7 @@ def sort_method(item):
 
 def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[]):
     logger.info('Enlaces: %s' % len(play_items))
+    #logger.debug('Enlaces: %s; %s' % (str(play_items), str(torrent_info)))
     global torrent_params
     
     try:
@@ -1412,20 +1419,25 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
         play_items_direct = []
         size = ''
         torrent_params['size'] = size
+        patron = '(?i)(\d+[\.|\,]?\d*?)\s[G|M]'
+        magnitude = 1.0
 
-        if len(play_items) > 1:
-            from lib.generictools import get_torrent_size
-            patron = '(?i)(\d+[\.|\,]?\d*?)\s[G|M]'
-            if emergency_urls:
+        if emergency_urls:
+            # Viene de enlaces en la Videoteca
+            if len(play_items) > 1:
+                from lib.generictools import get_torrent_size
                 SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
                 for x, play_item in enumerate(play_items):
-                    magnitude = 1.0
                     size = str(x)
                     logger.info('torrent_file: %s' % play_item)
                     torrent_file = filetools.join(SERIES, play_item)
-                    if play_item.startswith('magnet') and not torrent_info:
-                        return play_items
-                    elif play_item.startswith('magnet') and torrent_info:
+                    quality = ''
+                    if torrent_info and len(torrent_info) >= x+1:
+                        quality = scrapertools.find_single_match(torrent_info[x], '^#([^#]+)#')
+                    if play_item.startswith('magnet') and not quality:
+                        logger.error('Size ERROR total: %s' % play_item)
+                        return []
+                    elif play_item.startswith('magnet') and quality:
                         if len(torrent_info) >= x+1:
                             size = scrapertools.find_single_match(torrent_info[x], patron).replace(',', '.')
                             if scrapertools.find_single_match(torrent_info[x], '\d+.M'): magnitude = 0.001
@@ -1441,7 +1453,7 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                         torrent_params = get_torrent_size(torrent_params['url'], torrent_params=torrent_params)
                         size = torrent_params['size']
                     if 'ERROR' in size:
-                        logger.error('Size ERROR : %s' % play_item)
+                        logger.error('Size ERROR: %s' % play_item)
                         continue
                     else:
                         if scrapertools.find_single_match(size, '\d+.M'): magnitude = 0.001
@@ -1450,9 +1462,9 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                     try:
                         size = float(size) * magnitude
                     except:
-                        logger.error('Size ERROR : %s: %s' % (play_item, size))
+                        logger.error('Size ERROR: %s: %s' % (play_item, size))
                         continue
-                    play_items_torrent.append([play_item, size])
+                    play_items_torrent.append([play_item, size, quality])
                 
                 if play_items_torrent:
                     size_order = config.get_setting('torrent_quality', channel='downloads', default=0)
@@ -1463,18 +1475,17 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                             play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it[1])))    # RE-clasificamos
                     else:
                         play_items_torrent = sorted(play_items_torrent, key=lambda it: (float(it[1])))                      # clasificamos
-                    
-                    play_items = []
-                    for play_item, size in play_items_torrent:
-                        play_items += [play_item]
-                
-                    logger.info('Size FINAL : %s' % play_items_torrent)
-                
+
+                logger.info('Size FINAL : %s' % play_items_torrent)
+                return play_items_torrent
+            else:
+                play_items = [[play_items[0], '', '']]
+                logger.info('Size FINAL : %s' % play_items)
                 return play_items
             
+        if len(play_items) > 1:
             if play_items[0].server == 'torrent' and play_items[1].server == 'torrent':
                 for x, play_item in enumerate(play_items):
-                    magnitude = 1.0
                     if play_item.server == 'torrent':
                         logger.info('torrent_info: %s, %s' % (play_item.quality, play_item.torrent_info))
                         if play_item.torrent_info and scrapertools.find_single_match(play_item.torrent_info, patron):
@@ -1486,6 +1497,7 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                                 if 'CF_BLOCKED' in play_item.torrent_info or 'BLOQUEO' in play_item.torrent_info: 
                                     play_item.infoLabels['quality'] = 'a%s' % play_item.infoLabels['quality']
                         elif play_item.url.startswith('magnet'):
+                            logger.error('Size ERROR total: %s' % play_item.url)
                             return play_items
                         else:
                             if play_item.url.startswith('/') or play_item.url.startswith('\\'):
@@ -1510,7 +1522,7 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                                     play_item.url = path = torrent_params['torrents_path']
                             play_item.torrent_info = torrent_params['size']
                             if 'ERROR' in size:
-                                logger.error('Size ERROR : %s' % play_item.url)
+                                logger.error('Size ERROR: %s' % play_item.url)
                                 continue
                             else:
                                 if scrapertools.find_single_match(play_item.torrent_info, '\d+.M'): magnitude = 0.001
@@ -1521,7 +1533,7 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                                 play_item.size_torr = float(size) * magnitude
                                 logger.error(play_item.size_torr)
                         except:
-                            logger.error('Size ERROR : %s: %s' % (play_item.url, size))
+                            logger.error('Size ERROR: %s: %s' % (play_item.url, size))
                             continue
                         play_items_torrent.append(play_item)
                     
@@ -1529,37 +1541,35 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                         logger.info('direct server: %s' % play_item.server)
                         play_items_direct.append(play_item)
 
-        # Si hay enlaces torrent para clasificar, los clasificamos
-        if play_items_torrent:
-            size_order = config.get_setting('torrent_quality', channel='downloads', default=0)
-            if play_item.contentChannel not in blocked_channels:
-                if size_order:
-                    play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it.size_torr)))         # clasificamos
-                    if size_order == 1 and len(play_items_torrent) > 2:             # Tomamos la segunda calidad
-                        play_items_torrent[0].size_torr = 0.0                       # Ponemos el de más calidad al final de la lista
-                        play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it.size_torr)))     # RE-clasificamos
+            # Si hay enlaces torrent para clasificar, los clasificamos
+            if play_items_torrent:
+                size_order = config.get_setting('torrent_quality', channel='downloads', default=0)
+                if play_item.contentChannel not in blocked_channels:
+                    if size_order:
+                        play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it.size_torr)))         # clasificamos
+                        if size_order == 1 and len(play_items_torrent) > 2:             # Tomamos la segunda calidad
+                            play_items_torrent[0].size_torr = 0.0                       # Ponemos el de más calidad al final de la lista
+                            play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it.size_torr)))     # RE-clasificamos
+                    else:
+                        play_items_torrent = sorted(play_items_torrent, key=lambda it: (float(it.size_torr)))                       # clasificamos
                 else:
-                    play_items_torrent = sorted(play_items_torrent, key=lambda it: (float(it.size_torr)))                       # clasificamos
-            else:
-                if size_order:
-                    play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: it.quality)                    # clasificamos
-                    if size_order == 1 and len(play_items_torrent) > 2:             # Tomamos la segunda calidad
-                        play_items_torrent[0].size_torr = 0.0                       # Ponemos el de más calidad al final de la lista
-                        play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: it.quality)                # RE-clasificamos
-                else:
-                    play_items_torrent = sorted(play_items_torrent, key=lambda it: it.quality)                                  # clasificamos
-            
-            play_items = []
-            play_items.extend(play_items_torrent)
-            
-            if play_items_direct:
-                play_items.extend(play_items_direct)
+                    if size_order:
+                        play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: it.quality)                    # clasificamos
+                        if size_order == 1 and len(play_items_torrent) > 2:             # Tomamos la segunda calidad
+                            play_items_torrent[0].size_torr = 0.0                       # Ponemos el de más calidad al final de la lista
+                            play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: it.quality)                # RE-clasificamos
+                    else:
+                        play_items_torrent = sorted(play_items_torrent, key=lambda it: it.quality)                                  # clasificamos
                 
+                play_items = []
+                play_items.extend(play_items_torrent)
+                
+                if play_items_direct:
+                    play_items.extend(play_items_direct)
+
         for play_item in play_items:
-            try:
-                logger.info('Qualitiy, Size FINAL: %s, %s' % (play_item.quality, play_item.size_torr))
-            except:
-                logger.info('Size FINAL : %s' % play_item)
+            logger.info('Qualitiy, Size FINAL: %s, %s' % (play_item.quality, play_item.size_torr))
+
     except:
         logger.error(traceback.format_exc())
 
@@ -1708,6 +1718,9 @@ def download_from_server(item, silent=False):
             item.downloadStatus = result["downloadStatus"]
             result["downloadCompleted"] = 0
             item.downloadCompleted = result["downloadCompleted"]
+            if item.quality: 
+                result["quality"] = item.quality
+                result["infoLabels"] = {"quality": item.quality}
             if item.torrents_path: result["torrents_path"] = item.torrents_path
             if item.url_save_rec: result["url_save_rec"] = item.url_save_rec
             if item.post or item.post is None or item.post_back: result["post"] = item.post
@@ -1748,7 +1761,9 @@ def download_from_server(item, silent=False):
         if item.contextual:
             item.downloadStatus = STATUS_CODES.auto
         item.downloadCompleted = 0
-        if item.quality: result["quality"] = item.quality
+        if item.quality: 
+            result["quality"] = item.quality
+            result["infoLabels"] = {"quality": item.quality}
         if item.language: result["language"] = item.language
         if item.torrents_path: result["torrents_path"] = item.torrents_path
         if item.url_save_rec: result["url_save_rec"] = item.url_save_rec
@@ -1857,15 +1872,6 @@ def download_from_best_server(item, silent=False):
         if not play_item.headers and item.headers:
             item.headers_back = item.headers
             item.headers = None
-        quality = play_item.quality
-        language = play_item.language
-        play_item = item.clone(**play_item.__dict__)
-        play_item.contentAction = play_item.action
-        play_item.infoLabels = item.infoLabels
-        if quality:
-            play_item.quality = quality
-        if language:
-            play_item.language = language
 
         result = download_from_server(play_item, silent=silent)
 
@@ -2230,7 +2236,7 @@ def get_episodes(item):
                         list_language = []
                         list_quality = []
                         for x, emerg_url in enumerate(episode.emergency_urls[0]):
-                            epis_filter.append(episode.clone(url=emerg_url, emergency_urls=[], matches=[], 
+                            epis_filter.append(episode.clone(url=emerg_url, emergency_urls=[], matches=[], order=x, 
                                                              quality=scrapertools.find_single_match(episode.emergency_urls[3][x], '^#(.*?)#')))
                         from channels import filtertools
                         for filter_param in episode.context:
@@ -2243,14 +2249,14 @@ def get_episodes(item):
                         epis_filter = filtertools.get_links(epis_filter, episode, list_language, list_quality)
                         if epis_filter:
                             episode.emergency_urls[0] = []
-                            emergency_urls_2 = episode.emergency_urls[2]
                             episode.emergency_urls[2] = []
-                            emergency_urls_3 = episode.emergency_urls[3]
+                            emergency_urls_3 = episode.emergency_urls[3].copy()
                             episode.emergency_urls[3] = []
+                            episode.quality = epis_filter[0].quality
                             for x, epi_filter in enumerate(epis_filter):
                                 episode.emergency_urls[0].append(epi_filter.url)
-                                episode.emergency_urls[2].append(emergency_urls_2[x])
-                                episode.emergency_urls[3].append(emergency_urls_3[x])
+                                episode.emergency_urls[2].append(epi_filter.url)
+                                episode.emergency_urls[3].append(emergency_urls_3[epi_filter.order])
 
                 if episode_sort: 
                     torrent_info = []
@@ -2260,9 +2266,13 @@ def get_episodes(item):
                                                        channel=verify_channel(episode.channel), torrent_info=torrent_info)
                     if 'ERROR_CF_BLOCKED' in torrent_params['size']:
                         episode.downloadStatus = 3
-                    else:
-                        episode.emergency_urls[0] = emergency_urls_alt
+                    elif emergency_urls_alt:
+                        episode.emergency_urls[0] = []
+                        for emer_url, emer_size, emer_quality in emergency_urls_alt:
+                            episode.emergency_urls[0].append(emer_url)
                         episode.url = episode.emergency_urls[0][0]
+                        if emergency_urls_alt[0][2]: episode.quality = emergency_urls_alt[0][2]
+
                 elif len(episode.emergency_urls) > 2 and episode.emergency_urls[0] and episode.emergency_urls[2]:
                     try:
                         for x, emergency_urls in enumerate(episode.emergency_urls[2]):

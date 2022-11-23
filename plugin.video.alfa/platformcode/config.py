@@ -14,6 +14,7 @@ import re
 import time
 import json
 import threading
+import traceback
 
 import xbmc
 import xbmcaddon
@@ -35,6 +36,7 @@ alfa_kodi_platform = {}
 alfa_settings = {}
 alfa_channels = {}
 alfa_servers = {}
+alfa_servers_jsons = {}
 alfa_no_caching_vars = []
 window = None
 
@@ -46,6 +48,7 @@ try:
         window.setProperty("alfa_settings", json.dumps(alfa_settings))
         window.setProperty("alfa_channels", json.dumps(alfa_channels))
         window.setProperty("alfa_servers", json.dumps(alfa_servers))
+        window.setProperty("alfa_servers_jsons", json.dumps(alfa_servers_jsons))
         window.setProperty("alfa_cookies", '')
         window.setProperty("alfa_CF_list", '')
         window.setProperty("alfa_colors_file", json.dumps({}))
@@ -56,8 +59,8 @@ except:
     alfa_settings = {}
     alfa_channels = {}
     alfa_servers = {}
+    alfa_servers_jsons = {}
     window = None
-    import traceback
     from platformcode import logger
     logger.error(traceback.format_exc())
 
@@ -84,10 +87,12 @@ class CacheInit(xbmc.Monitor, threading.Thread):
             alfa_settings = get_all_settings_addon()
             alfa_channels = {}
             alfa_servers = {}
+            alfa_servers_jsons = {}
             window.setProperty("alfa_system_platform", alfa_system_platform)
             window.setProperty("alfa_settings", json.dumps(alfa_settings))
             window.setProperty("alfa_channels", json.dumps(alfa_channels))
             window.setProperty("alfa_servers", json.dumps(alfa_servers))
+            window.setProperty("alfa_servers_jsons", json.dumps(alfa_servers_jsons))
             window.setProperty("alfa_cookies", '')
             window.setProperty("alfa_CF_list", '')
             styles_path = os.path.join(get_runtime_path(), 'resources', 'color_styles.json')
@@ -129,7 +134,6 @@ def cache_init():
     except:  # Si hay problemas de threading, nos vamos
         alfa_caching = False
         alfa_settings = {}
-        import traceback
         from platformcode import logger
         logger.error(traceback.format_exc())
         try:
@@ -153,6 +157,7 @@ def cache_reset(action='OFF'):
         window.setProperty("alfa_settings", json.dumps({}))
         window.setProperty("alfa_channels", json.dumps({}))
         window.setProperty("alfa_servers", json.dumps({}))
+        window.setProperty("alfa_servers_jsons", json.dumps({}))
         window.setProperty("alfa_cookies", '')
         window.setProperty("alfa_CF_list", '')
         window.setProperty("alfa_colors_file", json.dumps({}))
@@ -326,7 +331,6 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
             versiones = filetools.decode(versiones)
             break
         except:
-            import traceback
             from platformcode import logger
             logger.error("Unable to download repo xml: %s" % versiones)
             versiones = {}
@@ -542,7 +546,6 @@ def get_all_settings_addon(caching_var=True):
         try:
             window.setProperty("alfa_caching", '')
             window.setProperty("alfa_settings", json.dumps(alfa_settings))
-            import traceback
             from platformcode import logger
             logger.error(traceback.format_exc())
             # Verificar si hay problemas de permisos de acceso a userdata/alfa
@@ -698,7 +701,7 @@ def get_setting(name, channel="", server="", default=None, caching_var=True, deb
         if debug: from platformcode import logger
         alfa_caching = bool(window.getProperty("alfa_caching"))
         if alfa_caching and caching_var:
-            alfa_settings = json.loads(window.getProperty("alfa_settings"))
+            if not alfa_settings: alfa_settings = json.loads(window.getProperty("alfa_settings"))
             if debug: logger.error('READ Cached SETTING NAME: %s: %s:' \
                                                                     % (str(name).upper(), alfa_settings.get(name, default)))
             # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
@@ -782,7 +785,7 @@ def set_setting(name, value, channel="", server="", debug=DEBUG):
             if debug: from platformcode import logger
             alfa_caching = bool(window.getProperty("alfa_caching"))
             if alfa_caching:
-                alfa_settings = json.loads(window.getProperty("alfa_settings"))
+                if not alfa_settings: alfa_settings = json.loads(window.getProperty("alfa_settings"))
                 if debug: logger.error('READ Cached SETTING NAME: %s: %s:' % (str(name).upper(), alfa_settings.get(name, None)))
                 # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
                 if not alfa_settings:
@@ -855,7 +858,6 @@ def get_kodi_setting(name, total=False):
     except:
         data = ''
         try:
-            import traceback
             from platformcode import logger
             logger.error(traceback.format_exc())
             # Verificar si hay problemas de permisos de acceso a userdata
@@ -1041,7 +1043,6 @@ def verify_directories_created():
                                        filetools.join(default, folder, f),
                                        True)
     except:
-        import traceback
         logger.error("Al comprobar o crear la carpeta de resolución")
         logger.error(traceback.format_exc())
 
@@ -1051,7 +1052,6 @@ def verify_settings_integrity():
     global alfa_caching, alfa_settings
     
     try:
-        import traceback
         from platformcode import logger, platformtools
         
         inpath = os.path.join(get_data_path(), "settings.xml")
@@ -1156,7 +1156,6 @@ def verify_settings_integrity_json(outpath=None):
     global alfa_caching, alfa_settings
     
     try:
-        import traceback
         from platformcode import logger, platformtools
 
         inpath = os.path.join(get_data_path(), "settings.xml")

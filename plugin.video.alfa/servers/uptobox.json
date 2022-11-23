@@ -5,11 +5,11 @@
     "patterns": [
       {
         "pattern": "uptobox.com/([a-z0-9]+)",
-        "url": "http://uptostream.com/iframe/\\1"
+        "url": "https://uptostream.com/iframe/\\1"
       },
       {
         "pattern": "uptostream.com/(?:iframe/|)([a-z0-9]+)",
-        "url": "http://uptostream.com/iframe/\\1"
+        "url": "https://uptostream.com/iframe/\\1"
       }
     ]
   },

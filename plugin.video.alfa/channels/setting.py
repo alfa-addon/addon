@@ -592,7 +592,7 @@ def conf_tools(item):
                 default_settings = None
 
                 # Se comprueba si el canal esta en la lista de exclusiones
-                if channel.channel not in excluded_channels:
+                if channel.channel and channel.channel not in excluded_channels:
                     # Se comprueba que tenga "settings", sino se salta
                     list_controls, dict_settings = channeltools.get_channel_controls_settings(channel.channel)
 

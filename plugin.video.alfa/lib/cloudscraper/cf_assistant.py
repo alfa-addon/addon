@@ -8,10 +8,8 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
     import urllib.parse as urlparse
-    from lib import alfaresolver_py3 as alfaresolver
 else:
     import urlparse
-    from lib import alfaresolver
 
 import traceback
 import xbmc
@@ -20,8 +18,7 @@ import base64
 
 from .exceptions import CloudflareChallengeError
 
-from lib import alfa_assistant
-from core import httptools, scrapertools, filetools, jsontools
+from core import scrapertools, filetools, jsontools
 from core.item import Item
 from platformcode import logger, config, help_window
 
@@ -36,7 +33,8 @@ else:
 
 def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDelay=15, retry=False, blacklist=True, headers=None, 
            retryIfTimeout=True, cache=True, clearWebCache=False, mute=True, alfa_s=True, elapsed=0, **kwargs):
-    
+    from lib import alfa_assistant
+    from core import httptools
     
     url = self.cloudscraper.user_url
     opt = self.cloudscraper.user_opt
@@ -225,6 +223,8 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
 
 def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False, blacklist=True, headers=None, 
                retryIfTimeout=True, cache=False, clearWebCache=False, mute=True, alfa_s=True, elapsed=0, **kwargs):
+    from lib import alfa_assistant
+    from core import httptools
     
     blacklist_clear = True
     data = ''
@@ -446,6 +446,7 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
 
 
 def get_ua(data_assistant):
+    from core import httptools
     
     if not data_assistant or not isinstance(data_assistant, dict):
         return 'Default'
@@ -509,16 +510,22 @@ def get_jscode(count, key, n_iframe, timeout=3):
 
 
 def freequency(freequent_data):
+
     import threading
+    if PY3:
+        from lib.alfaresolver_py3 import frequency_count
+    else:
+        from lib.alfaresolver import frequency_count
 
     try:
-        threading.Thread(target=alfaresolver.frequency_count, args=(Item(), [], freequent_data)).start()
+        threading.Thread(target=frequency_count, args=(Item(), [], freequent_data)).start()
         ret = True
     except:
         logger.error(traceback.format_exc())
 
 
 def check_blacklist(domain, expiration=0, reset=False):
+    
     res = True
     if not filetools.exists(PATH_BL):
         return res
@@ -543,9 +550,10 @@ def check_blacklist(domain, expiration=0, reset=False):
                     del bl_data[domain_reg]
                     update = True
                 if reset and time_rec != 9999999999.999998:
-                    del bl_data[domain_reg]
-                    update = True
-                    logger.info('Bloqueo liberado: %s: %s' % (domain_reg, time_rec), force=True)
+                    if domain_reg in bl_data:
+                        del bl_data[domain_reg]
+                        update = True
+                        logger.info('Bloqueo liberado: %s: %s' % (domain_reg, time_rec), force=True)
             if update: filetools.write(PATH_BL, jsontools.dump(bl_data))
             for domain_reg, time_rec in list(bl_data.items()):
                 if domain in domain_reg:

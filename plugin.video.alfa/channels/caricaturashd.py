@@ -35,8 +35,9 @@ list_servers = [
 canonical = {
              'channel': 'caricaturashd', 
              'host': config.get_setting("current_host", 'caricaturashd', default=''), 
-             'host_alt': ["https://gnulaseries.net/"], 
-             'host_black_list': ["https://caricaturashd.net/"], 
+             'host_alt': ["https://homecine.io/"], 
+             'host_black_list': ["https://gnulaseries.net/", "https://caricaturashd.net/"], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

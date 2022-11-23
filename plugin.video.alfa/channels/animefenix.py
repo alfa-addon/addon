@@ -191,7 +191,7 @@ def new_episodes(item):
         title = elem.img["alt"]
         thumb = elem.img["src"]
         url = elem.a["href"]
-        
+
         season = 1
         episode = 1
         if scrapertools.find_single_match(title, '(?i)\s*\d{1,2}(?:st|nd|rd|th)\s*season\s+\d{1,3}\s*$'):
@@ -213,6 +213,12 @@ def new_episodes(item):
         else:
             # name = elem.find("div", class_="overtitle").text
             name = title
+        try:
+            season = int(season)
+            episode = int(episode)
+        except:
+            season = 1
+            episode = 1
         
         if scrapertools.find_single_match(name, '\s*\(?\[?\d{4}\]?\)?\s*'):
             name = re.sub('\s*\(?\[?\d{4}\]?\)?\s*', '', name)
@@ -265,7 +271,9 @@ def episodesxseason(item):
         infoLabels['season'] = sea_num or 1
         infoLabels['episode'] = epi_num
         title = '%sx%s - Episodio %s' % (sea_num, epi_num, epi_num)
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', infoLabels=infoLabels))
+        
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', 
+                             infoLabels=infoLabels, contentType='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -303,8 +311,6 @@ def findvideos(item):
 
         pl = soup.find("div", class_="player-container")
 
-
-
         script = pl.find("script").text
         urls = scrapertools.find_multiple_matches(script, "src='([^']+)'")
 
@@ -329,6 +335,7 @@ def findvideos(item):
             if not url:
                 continue
             url = urllib.unquote(url)
+            
             itemlist.append(
                 Item(
                     action = 'play',

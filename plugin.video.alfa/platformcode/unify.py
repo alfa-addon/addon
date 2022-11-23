@@ -282,7 +282,7 @@ def add_info_plot(plot, languages, quality, vextend, contentTitle, infoLabels):
                 s_studio = '%s; (%sTERM' % (s_studio, sea_epi)
             else:
                 s_studio = '%s; (%sActiva' % (s_studio, sea_epi)
-            if infoLabels['mediatype'] == 'episode' and infoLabels.get('aired', ''):
+            if infoLabels['mediatype'] in ['season', 'episode'] and infoLabels.get('aired', ''):
                 s_studio = '%s, %s' % (s_studio, infoLabels['aired'])
             elif infoLabels.get('last_air_date', ''):
                 s_studio = '%s, %s' % (s_studio, infoLabels['last_air_date'])
@@ -453,6 +453,7 @@ def title_format(item, c_file=colors_file, srv_lst={}):
 
     elif c_type == "season":
         item.title = set_color(item.title, "tvshow")
+        contentTitle = info["tvshowtitle"]
 
     # Episode format
 
@@ -625,16 +626,18 @@ def detect_content_type(item):
          return "library_action"
     elif item.action == "play":
         return "server"
-    elif item.contentEpisodeNumber:
+    elif item.contentEpisodeNumber or item.infoLabels['episode']:
         return "episode"
-    elif item.contentSeason:
+    elif item.contentSeason or item.infoLabels['season']:
         return "season"
-    elif item.contentSerieName:
+    elif item.contentSerieName or item.infoLabels['tvshowtitle']:
         return "tvshow"
-    elif item.contentTitle:
+    elif item.contentTitle or item.infoLabels['title']:
         return "movie"
     elif item.channel == "search":
         return "search"
+    elif item.infoLabels.get('mediatype', ''):
+        return item.infoLabels['mediatype']
     else:
         return ""
 
