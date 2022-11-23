@@ -8,6 +8,7 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import re
+
 from core.item import Item
 from core import scrapertools
 from channelselector import get_thumb
@@ -30,6 +31,7 @@ canonical = {
              'host': config.get_setting("current_host", 'pelisxd', default=''), 
              'host_alt': ["https://www.pelisxd.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': 'ProxyCF', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -202,8 +204,8 @@ def get_language_and_set_filter(*args):
     else:
         lang_list = args[1].find_all("span", class_="lang")
         for lang in lang_list:
-            lang = scrapertools.find_single_match(lang.img["data-lazy-src"], r'/\d{02}/([^.]+).png')
-            if lang not in language:
+            lang = scrapertools.find_single_match(lang.img.get("data-lazy-src", "") or lang.img.get("src", ""), r'/\d{02}/([^.]+).png')
+            if lang and lang not in language:
                 language.append(IDIOMAS[lang])
 
         args[2].language = lang

@@ -38,7 +38,7 @@ canonical = {
              'host_alt': ["https://www1.inkapelis.li/"], 
              'host_black_list': ["http://ww1.inkapelis.in/", "https://inkapelis.in/", "https://inkapelis.me/", 
                                  "https://ww1.inkapelis.de/"], 
-             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': 'ProxyWeb:hide.me', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

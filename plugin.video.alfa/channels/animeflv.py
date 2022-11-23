@@ -32,9 +32,9 @@ canonical = {
              'channel': 'animeflv', 
              'host': config.get_setting("current_host", 'animeflv', default=''), 
              'host_alt': ["https://www3.animeflv.net/"], 
-             'host_clone': ["https://ww3.animeflv.cc/"], 
+             'host_clone': ["https://www1.animeflv.bz/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 'cf_assistant': False,
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 3, 'cf_assistant': False,
              'CF': True, 'CF_test': True, 'alfa_s': True
             }
 
@@ -135,27 +135,32 @@ def search(item, texto):
             response = scrapertools.find_single_match(response, 'class="ListAnimes.+?</ul>')
             patron = '(?is)article class.+?a href="(.+?)".+?img src="(.+?)".+?class="type.+?>(.+?)<.+?class="Title".*?>(.+?)<.+?class="des".*?>(.+?)</p'
             matches = scrapertools.find_multiple_matches(response, patron)
+            
             for url, thumb, _type, title, plot in matches:
                 _type = _type.lower()
                 url = urlparse.urljoin(host, url)
                 it = Item(
                         action = "episodios",
                         contentType = "tvshow",
+                        infoLabels={'year': '-'}, 
                         channel = item.channel,
                         plot = plot,
                         thumbnail = thumb,
                         title = title,
                         url = url
                     )
+                
                 if "película" in _type:
                     it.contentType = "movie"
                     it.contentTitle = title
                 else:
                     it.contentSerieName = title
                     it.context = renumbertools.context(item)
+                
                 itemlist.append(it)
         else:
             dict_data = httptools.downloadpage(item.url, post=post, canonical=canonical).json
+            
             for e in dict_data:
                 if e["id"] != e["last_id"]:
                     _id = e["last_id"]
@@ -168,13 +173,17 @@ def search(item, texto):
                 #if "&deg;" in title:
                 #    title = title.replace("&deg;","")
                 thumbnail = "%suploads/animes/covers/%s.jpg" % (host, e["id"])
-                new_item = item.clone(action="episodios", title=title, url=url, thumbnail=thumbnail)
+                
+                new_item = item.clone(action="episodios", title=title, url=url, thumbnail=thumbnail, infoLabels={'year': '-'})
+                
                 if e["type"] != "movie":
                     new_item.contentSerieName = title
+                    new_item.contentType = 'tvshow'
                     new_item.context = renumbertools.context(item)
                 else:
                     new_item.contentType = "movie"
                     new_item.contentTitle = title
+                
                 itemlist.append(new_item)
     except:
         import sys
@@ -200,6 +209,7 @@ def search_section(item):
         patron = '<span class="mu.+?b>(.+?)</.+?dropdown-menu(.+?)</ul'
         data = scrapertools.find_multiple_matches(data, patron)
         order = '3'
+        
         for _type, selections_list in data:
             _type = _type.lower()
             logger.info('extra: {}, _type: {}'.format(item.extra, _type))
@@ -257,13 +267,20 @@ def novedades_episodios(item):
             episode = 1
         else:
             season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, episode)
+        infoLabels = {}
+        try:
+            infoLabels['season'] = int(season or 1)
+            infoLabels['episode'] = int(episode or 1)
+        except:
+            infoLabels['season'] = 1
+            infoLabels['episode'] = 1
 
         title = "%s: %sx%s" % (show, season, str(episode).zfill(2))
         url = urlparse.urljoin(host, url)
         thumbnail = urlparse.urljoin(host, thumbnail)
 
         new_item = Item(channel=item.channel, action="findvideos", title=title, url=url,
-                        contentSerieName=show, thumbnail=thumbnail, contentType='episode')
+                        contentSerieName=show, thumbnail=thumbnail, contentType='episode', infoLabels=infoLabels)
 
         itemlist.append(new_item)
     
@@ -285,12 +302,13 @@ def novedades_anime(item):
     patron += '(?:</p><p>(.*?)</p>.+?)?</article></li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     
-    for url, thumbnail, _type, title, plot in matches:
+    for url, thumbnail, _type, _title, plot in matches:
         url = urlparse.urljoin(host, url)
+        title = re.sub('(?i)\s*\d+\s*(?:st|nd|rd|th)\s+season', '', _title)
         thumbnail = urlparse.urljoin(host, thumbnail)
         
         new_item = Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
-                        plot=plot)
+                        plot=plot, infoLabels={'year': '-'})
         
         if _type != "Película":
             new_item.contentSerieName = title
@@ -330,13 +348,13 @@ def listado(item):
         matches = re.compile('<a href="([^"]+)">.+?<img src="([^"]+)".+?<span class=.+?>(.*?)</span>.+?<h3.*?>(.*?)</h3>'
                              '.*?</p><p>(.*?)</p>', re.DOTALL).findall(data)
 
-
-    for url, thumbnail, _type, title, plot in matches:
+    for url, thumbnail, _type, _title, plot in matches:
         url = urlparse.urljoin(host, url)
+        title = re.sub('(?i)\s*\d+\s*(?:st|nd|rd|th)\s+season', '', _title)
         thumbnail = urlparse.urljoin(host, thumbnail)
         
         new_item = Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
-                        plot=plot)
+                        plot=plot, infoLabels={'year': '-'})
         
         if _type == "Anime":
             new_item.contentSerieName = title
@@ -345,7 +363,6 @@ def listado(item):
         else:
             new_item.contentType = "movie"
             new_item.contentTitle = title
-            new_item.contentType = 'movie'
         
         itemlist.append(new_item)
     
@@ -384,12 +401,17 @@ def episodios(item):
             url = urlparse.urljoin(host, url)
 
             infoLabels = item.infoLabels
-            infoLabels['season'] = season
-            infoLabels['episode'] = episodeRenumber
+            try:
+                infoLabels['season'] = int(season)
+                infoLabels['episode'] = int(episodeRenumber)
+            except:
+                infoLabels['season'] = 1
+                infoLabels['episode'] = 1
 
             itemlist.append(
                 item.clone(
                     action = "findvideos",
+                    contentType = 'episode', 
                     channel = item.channel,
                     infoLabels = infoLabels,
                     thumbnail = thumb,
@@ -413,12 +435,16 @@ def episodios(item):
             season = 1
             season, episodeRenumber = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, season, int(episode[0]))
 
-            infoLabels['season'] = season
-            infoLabels['episode'] = episodeRenumber
+            try:
+                infoLabels['season'] = int(season)
+                infoLabels['episode'] = int(episodeRenumber)
+            except:
+                infoLabels['season'] = 1
+                infoLabels['episode'] = 1
             
             title = '{}x{} Episodio {}'.format(season, str(episodeRenumber).zfill(2), episodeRenumber)
             
-            itemlist.append(item.clone(title=title, url=url, action='findvideos', 
+            itemlist.append(item.clone(title=title, url=url, action='findvideos', contentType = 'episode', 
                                         contentSerieName=item.contentSerieName, infoLabels=infoLabels))
         
         if not item.extra:

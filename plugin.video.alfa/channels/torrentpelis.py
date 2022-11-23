@@ -32,8 +32,8 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'torrentpelis', 
              'host': config.get_setting("current_host", 'torrentpelis', default=''), 
-             'host_alt': ['https://www1.torrentpelis.com/'], 
-             'host_black_list': ['https://torrentpelis.com/'], 
+             'host_alt': ['https://www2.torrentpelis.com/'], 
+             'host_black_list': ['https://www1.torrentpelis.com/', 'https://torrentpelis.com/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -480,8 +480,8 @@ def findvideos(item):
     #logger.debug(item)
 
     #Bajamos los datos de la página
-    patron = '<div\s*id="torrent".*?href="([^"]+)".*?class="quality">\s*([^<]*)'
-    patron += '<\/strong>\s*<\/td>\s*<td>\s*([^<]*)<\/td>\s*<td>\s*([^<]*)<\/td>'
+    patron = '<div\s*id="torrent".*?class="quality">\s*([^<]*)<\/strong>\s*<\/td>'
+    patron += '\s*<td>\s*([^<]*)<\/td>\s*<td>\s*([^<]*)<\/td>.*?<a\s*href="([^"]+)"'
     
     if not item.matches:
         data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
@@ -532,7 +532,7 @@ def findvideos(item):
         item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent con las diferentes calidades
-    for x, (scrapedurl, scrapedquality, scrapedlanguage, scrapedsize) in enumerate(matches):
+    for x, (scrapedquality, scrapedlanguage, scrapedsize, scrapedurl) in enumerate(matches):
         scrapedpassword = ''
 
         #Generamos una copia de Item para trabajar sobre ella

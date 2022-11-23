@@ -530,7 +530,7 @@ def mark_content_as_watched_on_alfa(path):
         item.library_playcounts.update({title_plain: playCount_final})  #actualizamos el playCount del .nfo
 
     if item.infoLabels['mediatype'] == "tvshow":                        #Actualizamos los playCounts de temporadas y Serie
-        for season in item.library_playcounts:
+        for season in item.library_playcounts.copy():
             if "season" in season:                                      #buscamos las etiquetas "season" dentro de playCounts
                 season_num = int(scrapertools.find_single_match(season, 'season (\d+)'))    #salvamos el núm, de Temporada
                 item = videolibrary.check_season_playcount(item, season_num)    #llamamos al método que actualiza Temps. y Series

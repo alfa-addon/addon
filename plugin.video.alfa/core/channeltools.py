@@ -24,10 +24,9 @@ try:
     import xbmcgui
     import json
     window = xbmcgui.Window(10000)                                              # Home
-    DEBUG = config.DEBUG_JSON
 except:
     kodi = False
-    DEBUG = False
+DEBUG = config.DEBUG_JSON
 
 
 def has_attr(channel_name, attr):
@@ -201,7 +200,7 @@ def get_channel_json(channel_name):
         if filetools.isfile(channel_path):
             # logger.info("channel_data=" + channel_path)
             channel_json = jsontools.load(filetools.read(channel_path))
-            # logger.info("channel_json= %s" % channel_json)
+            if not channel_json: logger.error("channel_json= %s" % channel_json)
 
     except Exception as ex:
         template = "An exception of type %s occured. Arguments:\n%r"
@@ -271,9 +270,9 @@ def get_channel_setting(name, channel, default=None, caching_var=True, debug=DEB
     
     if kodi and caching_var:
         alfa_caching = bool(window.getProperty("alfa_caching"))
-        alfa_channels = json.loads(window.getProperty("alfa_channels"))
+        if not alfa_channels: alfa_channels = json.loads(window.getProperty("alfa_channels"))
         dict_file = alfa_channels.get(channel, {}).copy()
-        if debug: logger.error('READ Cached CHANNEL: %s%s, NAME: %s: %s:' % (channel.upper(), module, str(name).upper(), dict_file))
+        if debug and dict_file: logger.error('READ Cached CHANNEL: %s%s, NAME: %s: %s:' % (channel.upper(), module, str(name).upper(), dict_file))
     if alfa_caching and caching_var and dict_file:
         dict_settings = alfa_channels[channel].get('settings', {}).copy()
         if dict_settings.get(name, ''):
@@ -284,8 +283,9 @@ def get_channel_setting(name, channel, default=None, caching_var=True, debug=DEB
         # Obtenemos configuracion guardada de ../settings/channel_data.json
         try:
             dict_file = jsontools.load(filetools.read(file_settings))
-            if debug: logger.error('READ File (Cache: %s) CHANNEL: %s%s, NAME: %s: %s:' \
-                                    % (str(caching_var and alfa_caching).upper(), channel.upper(), module, str(name).upper(), dict_file))
+            if debug or not dict_file: logger.error('READ File (Cache: %s) CHANNEL: %s%s, NAME: %s: %s:' \
+                                                     % (str(caching_var and alfa_caching).upper(), channel.upper(), 
+                                                        module, str(name).upper(), dict_file))
             if isinstance(dict_file, dict) and 'settings' in dict_file:
                 dict_settings = dict_file['settings']
                 if alfa_caching:
@@ -376,17 +376,18 @@ def set_channel_setting(name, value, channel, retry=False, debug=DEBUG):
     if kodi:
         alfa_caching = bool(window.getProperty("alfa_caching"))
     if alfa_caching:
-        alfa_channels = json.loads(window.getProperty("alfa_channels"))
+        if not alfa_channels: alfa_channels = json.loads(window.getProperty("alfa_channels"))
         dict_file = alfa_channels.get(channel, {}).copy()
-        if debug: logger.error('READ Cached CHANNEL: %s%s, NAME: %s: %s:' % (channel.upper(), module, str(name).upper(), dict_file))
-        if dict_file: dict_settings = alfa_channels[channel].get('settings', {}).copy()
+        if dict_file:
+            dict_settings = alfa_channels[channel].get('settings', {}).copy()
+            if debug: logger.error('READ Cached CHANNEL: %s%s, NAME: %s: %s:' % (channel.upper(), module, str(name).upper(), dict_file))
     
     if not dict_file and filetools.exists(file_settings):
         # Obtenemos configuracion guardada de ../settings/channel_data.json
         try:
             dict_file = jsontools.load(filetools.read(file_settings))
-            if debug: logger.error('READ File (Cache: %s) CHANNEL: %s%s, NAME: %s: %s:' \
-                                    % (str(alfa_caching).upper(), channel.upper(), module, str(name).upper(), dict_file))
+            if debug or not dict_file: logger.error('READ File (Cache: %s) CHANNEL: %s%s, NAME: %s: %s:' \
+                                                     % (str(alfa_caching).upper(), channel.upper(), module, str(name).upper(), dict_file))
             if dict_file: dict_settings = dict_file.get('settings', {})
         except EnvironmentError:
             logger.error("ERROR al leer el archivo: %s, parámetro: %s" % (file_settings, name))

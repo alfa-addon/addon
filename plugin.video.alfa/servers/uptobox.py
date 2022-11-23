@@ -15,16 +15,21 @@ from core import httptools
 from core import scrapertools
 from platformcode import logger
 
+data = ''
+
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
+    global data
 
-    data = httptools.downloadpage(page_url).data
+    response = httptools.downloadpage(page_url)
+    if response.sucess:
+        data = response.data
 
     if "Streaming link:" in data:
         return True, ""
     elif "Unfortunately, the file you want is not available." in data or "Unfortunately, the video you want to see is not available" in data or "This stream doesn" in data\
-         or "Page not found" in data or "Archivo no encontrado" in data:
+         or "Page not found" in data or "Archivo no encontrado" in data or not data:
         return False, "[Uptobox] El archivo no existe o ha sido borrado"
     wait = scrapertools.find_single_match(data, "You have to wait ([0-9]+) (minute|second)")
     if len(wait) > 0:
@@ -36,9 +41,11 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
+    global data
+    
     # Si el enlace es directo de upstream
     if "uptobox" not in page_url:
-        data = httptools.downloadpage(page_url).data
+        if not data: data = httptools.downloadpage(page_url).data
         if "Video not found" in data:
             page_url = page_url.replace("uptostream.com/iframe/", "uptobox.com/")
             data = httptools.downloadpage(page_url).data
@@ -46,7 +53,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         else:
             video_urls = uptostream(data)
     else:
-        data = httptools.downloadpage(page_url).data
+        if not data: data = httptools.downloadpage(page_url).data
         # Si el archivo tiene enlace de streaming se redirige a upstream
         if "Streaming link:" in data:
             page_url = "http://uptostream.com/iframe/" + scrapertools.find_single_match(page_url,
@@ -63,12 +70,14 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
 
 def uptostream(data):
+    
     video_id = scrapertools.find_single_match(data,"var videoId\s*=\s*'([^']+)';")
     subtitle = scrapertools.find_single_match(data, "kind='subtitles' src='//([^']+)'")
     if subtitle:
         subtitle = "http://" + subtitle
     video_urls = []
     api_url = "https://uptostream.com/api/streaming/source/get?token=null&file_code=%s" % video_id
+    
     api_data = httptools.downloadpage(api_url).json
     js_code = api_data.get('data', '').get('sources', '')
     
@@ -95,11 +104,13 @@ def atob(s):
     return base64.b64decode('{}'.format(s)).decode('utf-8')
 
 def uptobox(url, data):
+    
     video_urls = []
     matches = scrapertools.find_multiple_matches(data, """input name=["']([^"']+)["'] value=["']([^"]+)["'] type=["']hidden["']""")
     matches = ["{}={}".format(name, value) for name, value in matches]
     post = "&".join(matches)
     base = scrapertools.find_single_match(url, "\w+://.+?[^/]")
+    
     data = httptools.downloadpage(url, post=post, headers={'origin': base}, referer=url, random_headers=True, hide_infobox=False).data
     media = scrapertools.find_multiple_matches(data, """<a href=["']([^"']+)["'] class=["']big-button-green.+?>""")
 

@@ -19,7 +19,6 @@ import base64
 import re
 import xbmcgui
 import json as json_fn
-import time
 
 from core import httptools
 from core import jsontools
@@ -40,7 +39,7 @@ canonical = {
                                  'https://hdfull.video/', 'https://hdfull.cloud/', 'https://hdfull.wtf/', 
                                  'https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
                                  'https://new.hdfull.one/', 'https://hdfull.top/', 'https://hdfull.bz/'],
-             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 
+             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 'expires': 365*24*60*60,
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -59,12 +58,30 @@ list_servers = ['clipwatching', 'gamovideo', 'vidoza', 'vidtodo', 'openload', 'u
 
 """ CACHING HDFULL PARAMETERS """
 account = config.get_setting("logged", channel=canonical['channel'])
-user_ = urllib.quote(config.get_setting('hdfulluser', channel=canonical['channel'], default=''))
-pass_ = urllib.quote(config.get_setting('hdfullpassword', channel=canonical['channel'], default=''))
+try:
+    user_ = urllib.quote_plus(config.get_setting('hdfulluser', channel=canonical['channel'], default=''))
+    pass_ = urllib.quote_plus(config.get_setting('hdfullpassword', channel=canonical['channel'], default=''))
+except:
+    from core import filetools
+    setting = filetools.read(filetools.join(config.get_data_path(), 'settings_channels', 'hdfull_data.json'), silent=True)
+    if setting:
+        setting = base64.b64encode(setting.encode('utf-8')).decode('utf-8')
+    else:
+        setting = 'VACIO'
+    logger.error('Type: User: %s; Password: %s; %s' % (str(type(config.get_setting('hdfulluser', 
+                                                       channel=canonical['channel'], default=''))), 
+                                                       str(type(config.get_setting('hdfullpassword', 
+                                                       channel=canonical['channel'], default=''))), setting))
+    user_ = ''
+    pass_ = ''
+    account = False
+    config.set_setting('hdfulluser', user_, channel=canonical['channel'])
+    config.set_setting('hdfullpassword', pass_, channel=canonical['channel'])
+    config.set_setting('logged', account, channel=canonical['channel'])
 credentials_req = True
 js_url = urlparse.urljoin(host, "templates/hdfull/js/jquery.hdfull.view.min.js")
 data_js_url = urlparse.urljoin(host, "js/providers.js")
-patron_sid = "<input\s*type='hidden'\s*name='__csrf_magic'\s*value=\"([^\"]+)\"\s*/>"
+patron_sid = "<input\s*type='hidden'\s*name='__csrf_magic'\s*value=\"([^\"]+)\"\s*\/>"
 window = None
 
 try:
@@ -129,10 +146,28 @@ def verify_credentials(force_login=True, force_check=True):
         if credentials_req and force_check:
             help_window.show_info('hdfull_login', wait=True)
             settingCanal(Item)
-            #time.sleep(1)
-            user_ = urllib.quote(config.get_setting('hdfulluser', channel=canonical['channel'], default=''))
-            pass_ = urllib.quote(config.get_setting('hdfullpassword', channel=canonical['channel'], default=''))
-            
+
+            try:
+                user_ = urllib.quote_plus(config.get_setting('hdfulluser', channel=canonical['channel'], default=''))
+                pass_ = urllib.quote_plus(config.get_setting('hdfullpassword', channel=canonical['channel'], default=''))
+            except:
+                from core import filetools
+                setting = filetools.read(filetools.join(config.get_data_path(), 'settings_channels', 'hdfull_data.json'), silent=True)
+                if setting:
+                    setting = base64.b64encode(setting.encode('utf-8')).decode('utf-8')
+                else:
+                    setting = 'VACIO'
+                logger.error('Type: User: %s; Password: %s; %s' % (str(type(config.get_setting('hdfulluser', 
+                                                                   channel=canonical['channel'], default=''))), 
+                                                                   str(type(config.get_setting('hdfullpassword', 
+                                                                   channel=canonical['channel'], default=''))), setting))
+                user_ = ''
+                pass_ = ''
+                account = False
+                config.set_setting('hdfulluser', user_, channel=canonical['channel'])
+                config.set_setting('hdfullpassword', pass_, channel=canonical['channel'])
+                config.set_setting('logged', account, channel=canonical['channel'])
+
             credentials = True if user_ and pass_ else False
             if credentials and force_login: login()
             
@@ -166,18 +201,22 @@ def check_user_status(reset=False, hide_infobox=True):
     
     return user_status
 
-def login(data='', alfa_s=False, force_check=True):
+def login(data='', alfa_s=False, force_check=True, retry=False):
     logger.info()
-    global sid
+    global sid, account
 
-    if not data or not sid:
-        data = agrupa_datos(host, referer=False, force_check=False, force_login=False, alfa_s=True, cf_no_blacklist=True)
-        if scrapertools.find_single_match(data, patron_sid):
-            sid = urllib.quote(scrapertools.find_single_match(data, patron_sid))
-            if window: window.setProperty("hdfull_sid", sid)
+    if data:
+        sid = urllib.quote(scrapertools.find_single_match(data, patron_sid))
+        if window: window.setProperty("hdfull_sid", sid)
+    if not data or not sid or not account:
+        data = agrupa_datos(urlparse.urljoin(host, 'login'), referer=False, force_check=False, 
+                            force_login=False, hide_infobox=True, cf_no_blacklist=True)
+        sid = urllib.quote(scrapertools.find_single_match(data, patron_sid))
+        if window: window.setProperty("hdfull_sid", sid)
 
     if check_login_status(data):
         check_user_status()
+        logger.info('LOGGED IN', force=True)
         return True
     elif not verify_credentials(force_login=False, force_check=force_check):
         return False
@@ -188,23 +227,38 @@ def login(data='', alfa_s=False, force_check=True):
             sid = urllib.quote(scrapertools.find_single_match(data, patron_sid))
             if window: window.setProperty("hdfull_sid", sid)
         if not sid:
-            logger.error('NO SID')
+            if not retry:
+                logout(Item())
+                logger.error('NO SID: RETRY: %s' % str(data))
+                return login(retry=True)
+            logger.error('NO SID: %s' % str(data))
             return False
         post = '__csrf_magic=%s&username=%s&password=%s&action=login' % (sid, user_, pass_)
         
-        new_data = agrupa_datos(host, post=post, referer=False, force_check=False, force_login=False, alfa_s=alfa_s, 
+        new_data = agrupa_datos(urlparse.urljoin(host, 'a/login'), post=post, referer=urlparse.urljoin(host, 'login'), 
+                                force_check=False, json=True, force_login=False, hide_infobox=alfa_s, 
                                 cf_no_blacklist=True if data else False, retries_cloudflare=1)
 
         if host not in host_alt:
             logger.info('Cambio de HOST: de %s a %s', (host, host_alt))
             return login(alfa_s=alfa_s, force_check=force_check)
+
+        if isinstance(new_data, dict) and new_data.get("status", "") == "OK":
+            sid = ''
+            if window: window.setProperty("hdfull_sid", sid)
+            new_data = agrupa_datos(urlparse.urljoin(host, 'login'), referer=False, force_check=False, 
+                                    force_login=False, hide_infobox=True, cf_no_blacklist=True)
+            if scrapertools.find_single_match(data, patron_sid):
+                sid = urllib.quote(scrapertools.find_single_match(data, patron_sid))
+                if window: window.setProperty("hdfull_sid", sid)
+                account = True
+                if not config.get_setting("logged", channel=canonical['channel']):
+                    config.set_setting("logged", account, channel=canonical['channel'])
+                logger.info('Just LOGGED', force=True)
+                check_user_status(reset=True)
+                return True
         
-        if check_login_status(new_data):
-            logger.info('Just LOGGED', force=True)
-            check_user_status(reset=True)
-            return True
-        
-        logger.info('Error on LOGIN', force=True)
+        logger.info('Error on LOGIN: %s' % str(new_data), force=True)
         if not _silence:
             platformtools.dialog_notification("No se pudo realizar el login",
                                              "Revise sus datos en la configuración del canal",
@@ -212,12 +266,18 @@ def login(data='', alfa_s=False, force_check=True):
         return False
 
 def logout(item):
-    global just_logout, account, user_status, sid, js_data, data_js
-    logger.info()
+    global just_logout, account, user_status, sid, js_data, data_js, user_, pass_
+    logger.info('LOGGED OFF', force=True)
+    
+    # Logoff en la web
+    data = agrupa_datos(urlparse.urljoin(host, 'logout'), referer=host, force_check=False, force_login=False, 
+                        hide_infobox=True, cf_no_blacklist=True, retries_cloudflare=1)
     
     # Borramos cookies de hdfull
     domain = urlparse.urlparse(host).netloc
     dict_cookie = {"domain": domain, 'expires': 0}
+    httptools.set_cookies(dict_cookie)
+    dict_cookie = {"domain": '.'+domain, 'expires': 0}
     httptools.set_cookies(dict_cookie)
 
     account = False
@@ -239,13 +299,13 @@ def logout(item):
         platformtools.dialog_notification("Deslogueo completo", 
                                           "Verifique su cuenta",
                                           sound=False,)
-    platformtools.itemlist_refresh()
+    if item.refresh: platformtools.itemlist_refresh()
 
     return item
 
 def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_proxy=None, 
                  proxy_retries=1, force_check=False, force_login=True, alfa_s=False, hide_infobox=False, 
-                 timeout=3, cf_no_blacklist=False, retries_cloudflare=canonical['retries_cloudflare']):
+                 timeout=10, cf_no_blacklist=False, retries_cloudflare=canonical['retries_cloudflare']):
     global account, sid, user_status
     forced_proxy_retry = 'ProxyWeb:hide.me'
 
@@ -277,7 +337,8 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
         url = page.url_new
         return agrupa_datos(url, post=post, referer=referer, proxy=proxy, forced_proxy=forced_proxy, 
                             proxy_retries=proxy_retries, json=json, force_check=force_check, 
-                            force_login=True, alfa_s=alfa_s, hide_infobox=hide_infobox)
+                            force_login=True, alfa_s=alfa_s, hide_infobox=hide_infobox, timeout=timeout, 
+                            retries_cloudflare=retries_cloudflare, cf_no_blacklist=cf_no_blacklist)
 
     if not page.sucess:
         account = False
@@ -292,16 +353,17 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
     if json:
         return page.json
     
-    if (page.data or (not page.data and not post)) and not check_login_status(page.data):
+    if (page.data or (not page.data and not post)) and not 'application' in page.headers['Content-Type'] and not check_login_status(page.data):
         res = False
-        if force_login:
+        if force_login and not 'login' in url:
             res = login(page.data)
         if not res:
             return {} if json else page.data
         else:
             return agrupa_datos(url, post=post, referer=referer, proxy=proxy, forced_proxy=forced_proxy, 
                                 proxy_retries=proxy_retries, json=json, force_check=force_check, 
-                                force_login=False, alfa_s=alfa_s, hide_infobox=hide_infobox)
+                                force_login=False, alfa_s=alfa_s, hide_infobox=hide_infobox, timeout=timeout, 
+                                retries_cloudflare=retries_cloudflare, cf_no_blacklist=cf_no_blacklist)
     
     data = page.data
     if PY3 and isinstance(data, bytes):
@@ -357,20 +419,23 @@ def mainlist(item):
                              title="[COLOR greenyellow][B]Configurar Canal[/B][/COLOR]",
                              thumbnail=get_thumb("setting_0.png"), folder=False))
 
-        itemlist.append(Item(channel=item.channel, action="logout", url="", folder=False,
+        itemlist.append(Item(channel=item.channel, action="logout", url="", folder=False, refresh=True, 
                              title="[COLOR steelblue][B]Desloguearse[/B][/COLOR]",
                              plot="Para cambiar de usuario", thumbnail=get_thumb("back.png")))
     return itemlist
 
 
 def settingCanal(item):
+    
     platformtools.show_channel_settings()
-    platformtools.itemlist_refresh()
+    if account: platformtools.itemlist_refresh()
+    
     return item
 
 
 def menupeliculas(item):
     logger.info()
+    
     itemlist = []
 
     itemlist.append(
@@ -427,9 +492,9 @@ def menupeliculas(item):
 
 def menuseries(item):
     logger.info()
+    
     itemlist = []
 
-    
     itemlist.append(
         Item(channel=item.channel, action="novedades_episodios", title="Episodios Estreno",
              url=urlparse.urljoin(host, "a/episodes?action=premiere&start=-24&limit=24&elang=ALL"), text_bold=True,
@@ -606,7 +671,11 @@ def items_usuario(item):
                 url = urlparse.urljoin(host, 'serie/' + ficha[
                     'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + ficha['id'] + ";3"
                 if str_ != "": title += str_
-                infoLabels.update({'season': temporada, 'episode': episodio, 'playcount': 1 if 'Visto' in str_ else 0})
+                try:
+                    infoLabels.update({'season': int(temporada), 'episode': int(episodio), 'playcount': 1 if 'Visto' in str_ else 0})
+                except:
+                    infoLabels.update({'season': 1, 'episode': 1, 'playcount': 1 if 'Visto' in str_ else 0})
+            
             itemlist.append(
                     Item(channel=item.channel, action=action, title=title,
                         url=url, thumbnail=thumbnail, contentType=contentType, 
@@ -831,7 +900,7 @@ def seasons(item):
                 Item(channel=item.channel, action="episodesxseason", title=scrapedtitle,
                      url=item.url, thumbnail=thumbnail, sid=sid, text_bold=True,
                      contentSerieName=item.contentSerieName, contentSeason=ssid, 
-                     infoLabels=infoLabels))
+                     infoLabels=infoLabels, contentType='season'))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         infoLabels['mediatype'] = 'tvshow'
@@ -840,6 +909,8 @@ def seasons(item):
                              contentSerieName=item.contentSerieName, infoLabels=infoLabels
                              ))
 
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
+    
     return itemlist
 
 
@@ -889,7 +960,12 @@ def episodesxseason(item):
         ua = httptools.get_user_agent()
         thumbnail = urlparse.urljoin(host, "thumbs/%s|User-Agent=%s" % (thumb, ua))
         
-        infoLabels['episode'] = episodio
+        try:
+            infoLabels['season'] = int(temporada)
+            infoLabels['episode'] = int(episodio)
+        except:
+            infoLabels['season'] = 1
+            infoLabels['episode'] = 1
         
         if len(episodio) == 1: episodio = '0' + episodio
         
@@ -917,6 +993,7 @@ def episodesxseason(item):
         
         url = urlparse.urljoin(host, 'serie/' + episode[
             'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + episode['id'] + ";3"
+        
         itemlist.append(item.clone(action="findvideos", title=title, url=url,
                              contentType="episode", language=langs, text_bold=True,
                              infoLabels=infoLabels, thumbnail=thumbnail))
@@ -992,6 +1069,13 @@ def novedades_episodios(item):
 
         url = urlparse.urljoin(host, 'serie/' + episode[
             'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + episode['id'] + ";3"
+        try:
+            temporada = int(temporada)
+            episodio = int(episodio)
+        except:
+            temporada = 1
+            episodio = 1
+        
         itemlist.append(
             Item(channel=item.channel, action="findvideos", title=title, 
                  infoLabels={'season': temporada, 'episode': episodio, 'playcount': 1 if 'Visto' in str_ else 0}, 
@@ -1034,6 +1118,7 @@ def generos(item):
                              url=url, text_bold=True, thumbnail=thumbnail))
     return itemlist
 
+
 def findvideos(item):
     logger.info()
     global js_data, data_js
@@ -1060,12 +1145,13 @@ def findvideos(item):
 
     if type == "2" and status and item.category != "Cine":
         str_ = get_status(status, "movies", id)
-        if not str_:
-            title = " [COLOR orange][B]( Agregar a Favoritos )[/B][/COLOR]"
-        elif "Favorito" in str_:
+
+        if "Favorito" in str_:
             title = " [COLOR darkgrey][B]( Quitar de Favoritos )[/B][/COLOR]"
         elif "Visto" in str_:
             title = str_
+        else:
+            title = " [COLOR orange][B]( Agregar a Favoritos )[/B][/COLOR]"
 
         it1.append(Item(channel=item.channel, action="set_status__", title=title, url=url_targets,
                         thumbnail=item.thumbnail, contentTitle=item.contentTitle, contentType='episode', 
@@ -1074,10 +1160,20 @@ def findvideos(item):
     if not js_data or not data_js:
         window.setProperty("hdfull_js_data", '')
         window.setProperty("hdfull_data_js", '')
-        js_data = agrupa_datos(js_url)
-        if js_data and window: window.setProperty("hdfull_js_data", js_data)
-        data_js = agrupa_datos(data_js_url)
-        if js_data and window: window.setProperty("hdfull_data_js", data_js)
+        
+        js_data = agrupa_datos(js_url, hide_infobox=True)
+        if js_data:
+            if window: window.setProperty("hdfull_js_data", js_data)
+            logger.info('Js_data DESCARGADO', force=True)
+        else:
+            logger.error('Js_data ERROR en DESCARGA')
+        
+        data_js = agrupa_datos(data_js_url, hide_infobox=True)
+        if data_js:
+            if window: window.setProperty("hdfull_data_js", data_js)
+            logger.info('Data_js DESCARGADO', force=True)
+        else:
+            logger.error('Data_js ERROR en DESCARGA')
     
     provs = alfaresolver.jhexdecode(data_js)
     
@@ -1164,7 +1260,7 @@ def play(item):
         type = item.url.split("###")[1].split(";")[1]
         item.url = item.url.split("###")[0]
         post = "target_id=%s&target_type=%s&target_status=1" % (id, type)
-        data = agrupa_datos(urlparse.urljoin(host, "a/status"), post=post)
+        data = agrupa_datos(urlparse.urljoin(host, "a/status"), post=post, hide_infobox=True)
         check_user_status(reset=True)
     
     devuelve = servertools.findvideosbyserver(item.url, item.server)
@@ -1239,7 +1335,7 @@ def set_status__(item):
         path = "/a/favorite"
         post = "like_id=" + id + "&like_type=" + type + "&like_comment=&vote=-1"
     
-    data = agrupa_datos(urlparse.urljoin(host, path), post=post)
+    data = agrupa_datos(urlparse.urljoin(host, path), post=post, hide_infobox=True)
     check_user_status(reset=True)
     title = title % item.contentTitle
     platformtools.dialog_ok(item.contentTitle, title)

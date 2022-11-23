@@ -171,7 +171,8 @@ def seasons(item):
         infoLabels["season"] = season
 
         itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseasons',
-                             context=filtertools.context(item, list_language, list_quality), infoLabels=infoLabels))
+                             context=filtertools.context(item, list_language, list_quality), infoLabels=infoLabels, 
+                             contentType='season'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -185,7 +186,9 @@ def seasons(item):
 
 def episodios(item):
     logger.info()
+    
     itemlist = []
+    
     templist = seasons(item)
     for tempitem in templist:
         itemlist += episodesxseasons(tempitem)
@@ -199,16 +202,20 @@ def episodesxseasons(item):
     itemlist = list()
     infoLabels = item.infoLabels
     season = infoLabels["season"]
+    
     soup = create_soup(item.url).find("ul", id=re.compile("season-%s"  % season))
     matches = soup.find_all("article")
+    
     for elem in matches:
         url = elem.a["href"]
-        epi_num = elem.div.span.text.split("x")[1]
-        infoLabels["episode"] = epi_num
-        title = "%sx%s" % (season, epi_num)
+        try:
+            infoLabels["episode"] = int(elem.div.span.text.split("x")[1])
+        except:
+            infoLabels["episode"] = 1
+        title = "%sx%s" % (season, infoLabels["episode"])
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
-                             infoLabels=infoLabels))
+                             infoLabels=infoLabels, contentType='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -259,6 +266,7 @@ def findvideos(item):
 
 def search(item, texto):
     logger.info()
+    
     try:
         texto = texto.replace(" ", "+")
         item.url += texto + "&_token=ghukxZv83wiTlOeWadvNcAwot6a77zvDSt26FPvm"
@@ -266,6 +274,7 @@ def search(item, texto):
             return search_results(item)
         else:
             return []
+    
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except:
         for line in sys.exc_info():

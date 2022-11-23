@@ -41,7 +41,7 @@ canonical = {
              'host': config.get_setting("current_host", 'zonaleros', default=''), 
              'host_alt': ["https://www.zonaleros.org/"], 
              'host_black_list': ["https://www.zona-leros.net/"], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': 'ProxyCF', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -151,17 +151,20 @@ def list_all(item):
             if not year:
                 try:
                     year = scrapertools.find_single_match(codecs.encode(info.text, "utf-8"), "\d+ de \w+ de (\d{4})")
+                    if not year: year = "-"
                 except:
                     year = "-"
             new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
 
             if "serie" in url:
-                new_item.contentSerieName = title
+                new_item.contentSerieName = title.strip()
                 new_item.action = "seasons"
+                new_item.contentType = 'tvshow'
                 new_item.context = filtertools.context(item, list_language, list_quality)
             else:
-                new_item.contentTitle = title
+                new_item.contentTitle = title.strip()
                 new_item.action = "findvideos"
+                new_item.contentType = 'movie'
 
             itemlist.append(new_item)
 
@@ -238,7 +241,7 @@ def episodesxseasons(item):
         infoLabels["episode"] = epi_num
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
-                             infoLabels=infoLabels))
+                             infoLabels=infoLabels, contentType = 'episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 

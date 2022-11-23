@@ -14,7 +14,7 @@ data = ""
 host = "https://dood.la"
 count = 3
 retries = count
-kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'CF': True, 'CF_assistant': False, 'ignore_response_code': True}
+kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'CF': True, 'cf_assistant': False, 'ignore_response_code': True}
 
 def test_video_exists(page_url):
     global data, retries

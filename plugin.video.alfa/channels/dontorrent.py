@@ -31,9 +31,10 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.gy/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.click/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/'], 
-             'host_black_list': ['https://dontorrent.gs/', 'https://dontorrent.me/', 'https://dontorrent.ltd/', 
+             'host_black_list': ['https://dontorrent.gy/',
+                                 'https://dontorrent.gs/', 'https://dontorrent.me/', 'https://dontorrent.ltd/', 
                                  'https://dontorrent.fans/', 'https://dontorrent.uno/', 'https://dontorrent.ist/', 
                                  'https://dontorrent.vin/', 'https://dontorrent.tf/', 'https://dontorrent.pub/', 
                                  'https://dontorrent.moe/', 'https://dontorrent.soy/', 'https://dontorrent.pet/', 
