@@ -3,7 +3,12 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
+
 from core import tmdb
 from core import httptools
 from core.item import Item
@@ -13,11 +18,6 @@ from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from platformcode import config, logger
 from channels import filtertools, autoplay
-import sys
-
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
 
 IDIOMAS = {'latino': 'LAT', 'castellano': 'CAST', 'subtitulado': 'VOSE'}
 list_language = list(IDIOMAS.values())
@@ -141,7 +141,7 @@ def list_all(item):
         url = elem.find("a", class_="lnk-blk")["href"]
         title = elem.h2.text
         try:
-            year = elem.find("span", class_="year").a.text
+            year = int(elem.find("span", class_="year").a.text)
         except:
             year = "-"
         if elem.img.has_attr("data-lazy-src"):
@@ -189,12 +189,16 @@ def seasons(item):
     infoLabels = item.infoLabels
 
     for elem in matches:
-        season = scrapertools.find_single_match(elem.p.text, "Temporada (\d+)")
+        try:
+            season = int(scrapertools.find_single_match(elem.p.text, "Temporada (\d+)"))
+        except:
+            season = 1
         title = "Temporada %s" % season
         infoLabels["season"] = season
 
         itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseasons',
-                             context=filtertools.context(item, list_language, list_quality), infoLabels=infoLabels))
+                             context=filtertools.context(item, list_language, list_quality), infoLabels=infoLabels, 
+                             contentType='season'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -208,8 +212,10 @@ def seasons(item):
 
 def episodios(item):
     logger.info()
+    
     itemlist = []
     templist = seasons(item)
+    
     for tempitem in templist:
         itemlist += episodesxseasons(tempitem)
 
@@ -237,12 +243,15 @@ def episodesxseasons(item):
             except:
                 continue
             epi_data = scrapertools.get_season_and_episode(url)
-            epi_num = epi_data.split("x")[1]
+            try:
+                epi_num = epi_data.split("x")[1]
+            except:
+                epi_num = 1
             infoLabels["episode"] = epi_num
             title = "%s" % (epi_data)
 
             itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
-                                 infoLabels=infoLabels))
+                                 infoLabels=infoLabels, contentType='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -253,13 +262,16 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
+    
     data = httptools.downloadpage(item.url, canonical=canonical).data
+    
     patron  = "go_to_player\('([^']+).*?"
     patron += 'CGXRw">([^ ]+) '
     patron += '- ([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     if not matches:
         return itemlist
+    
     for url, srv, lang in matches:
         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, server=srv,
                              language=IDIOMAS.get(lang.lower(), "VOSE"), infoLabels=item.infoLabels))
@@ -286,14 +298,17 @@ def play(item):
     #data = httptools.downloadpage(item.url).data
     url = httptools.downloadpage(item.url, follow_redirects=False, canonical=canonical).headers.get("location", "")
     #url = scrapertools.find_single_match(data, 'location.href = "([^"]+)')
+   
     if not url.startswith("http"):
         url = "https:" + url
     itemlist = servertools.get_servers_itemlist([item.clone(url=url, server="")])
+    
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    
     try:
         texto = texto.replace(" ", "+")
         item.url = item.url + texto

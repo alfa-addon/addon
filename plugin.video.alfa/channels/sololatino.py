@@ -39,9 +39,12 @@ canonical = {
              'host': config.get_setting("current_host", 'sololatino', default=''), 
              'host_alt': ["https://sololatino.net/"], 
              'host_black_list': [], 
+             'pattern': ['<meta\s*property="og:url"\s*content="([^"]+)"'], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
+patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
 
 
 def mainlist(item):
@@ -51,11 +54,11 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=host + "pelicula",
+    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=host + "peliculas/",
                          thumbnail=get_thumb('movies', auto=True), type="pelicula"))
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'series', action='sub_menu',
+    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'series/', action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
-    itemlist.append(Item(channel=item.channel, title='Anime', url=host + 'animes', action='sub_menu',
+    itemlist.append(Item(channel=item.channel, title='Anime', url=host + 'animes/', action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
                          thumbnail=get_thumb("search", auto=True)))
@@ -71,12 +74,16 @@ def sub_menu(item):
     logger.info()
 
     itemlist = list()
+    url = item.url.replace('peliculas', 'pelicula')
 
     if item.title == "Peliculas":
-        itemlist.append(Item(channel=item.channel, title='Ultimas', url=item.url + "/estrenos", action='list_all',
+        itemlist.append(Item(channel=item.channel, title='Ultimas', url=url + "estrenos/", action='list_all',
+                             thumbnail=get_thumb('last', auto=True)))
+    else:
+        itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=url + "novedades/", action='list_all',
                              thumbnail=get_thumb('last', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Recomendadas', url=item.url + "/mejor-valoradas",
+    itemlist.append(Item(channel=item.channel, title='Recomendadas', url=url + "mejor-valoradas/",
                          action='list_all', thumbnail=get_thumb('recomendadas', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title='Todas', url=item.url, action='list_all',
@@ -118,6 +125,7 @@ def get_language(lang_data):
             lang = 'vose'
         if lang not in language:
             language.append(lang)
+    
     return language
 
 
@@ -125,23 +133,24 @@ def section(item):
     logger.info()
 
     itemlist = list()
+    url = item.url.replace('peliculas', 'pelicula')
 
     soup = create_soup(item.url)
 
     if item.title == "Generos":
         matches = soup.find("ul",  class_="Ageneros")
-        base_url = "%s/filtro/?genre=%s"
+        base_url = "%sfiltro/?genre=%s&year="
     else:
         matches = soup.find("ul", class_="Ayears", id="tipo_cat_1")
-        base_url = "%s/filtro/?year=%s"
+        base_url = "%sfiltro/?genre=&year=%s"
 
     for elem in matches.find_all("li"):
         gendata = elem.get('data-value', '')
         title = elem.text
-        url = base_url % (item.url, gendata)
+        url_section = base_url % (url, gendata)
 
         if gendata:
-            itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url))
+            itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url_section))
 
     return itemlist
 
@@ -169,13 +178,29 @@ def list_all(item):
 
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
 
-        if not "peliculas/" in url:
+        if "novedades" in item.url:
+            try:
+                season, episode = scrapertools.find_single_match(title, '\:\s*(\d+).(\d+)')
+                new_item.contentSeason = int(season)
+                new_item.contentEpisodeNumber = int(episode)
+                title = re.sub('\:\s*\d+.\d+', '', title)
+                new_item.title = '%sx%s - %s' % (new_item.contentSeason, str(new_item.contentEpisodeNumber).zfill(2), title)
+            except:
+                new_item.contentSeason = 1
+                new_item.contentEpisodeNumber = 0
             new_item.contentSerieName = title
-            new_item.action = "seasons"
-            new_item.context = filtertools.context(item, list_language, list_quality)
-        else:
+            new_item.action = "findvideos"
+            new_item.contentType = 'episode'
+        elif "pelicula" in url:
             new_item.contentTitle = title
             new_item.action = "findvideos"
+            new_item.contentType = 'movie'
+        else:
+            new_item.contentSerieName = title
+            new_item.action = "seasons"
+            new_item.contentType = 'tvshow'
+            new_item.context = filtertools.context(item, list_language, list_quality)
+        
 
         itemlist.append(new_item)
 
@@ -204,7 +229,10 @@ def seasons(item):
     infoLabels = item.infoLabels
 
     for elem in matches:
-        season = elem["data-season"]
+        try:
+            season = int(elem["data-season"])
+        except:
+            season = 1
         title = "Temporada %s" % season
         infoLabels["season"] = season
 
@@ -223,8 +251,11 @@ def seasons(item):
 
 def episodios(item):
     logger.info()
+    
     itemlist = []
+    
     templist = seasons(item)
+    
     for tempitem in templist:
         itemlist += episodesxseasons(tempitem)
 
@@ -238,6 +269,7 @@ def episodesxseasons(item):
 
     soup = create_soup(item.url).find("div", id="seasons")
     matches = soup.find_all("div", class_="se-c")
+    
     infoLabels = item.infoLabels
     season = infoLabels["season"]
 
@@ -255,7 +287,7 @@ def episodesxseasons(item):
             title = "%sx%s - %s" % (season, epi_num, epi_name)
 
             itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
-                                 infoLabels=infoLabels))
+                                 infoLabels=infoLabels, contentType='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -267,6 +299,7 @@ def findvideos(item):
 
     itemlist = list()
     sub = ""
+    
     soup = create_soup(item.url)
     matches = soup.find("div", class_="navEP2")
     if not matches:
@@ -279,19 +312,22 @@ def findvideos(item):
         headers = {"Referer": item.url}
         doo_url = "%swp-admin/admin-ajax.php" % host
 
-        data = httptools.downloadpage(doo_url, post=post, headers=headers).data
+        data = httptools.downloadpage(doo_url, post=post, headers=headers, canonical=canonical).data
 
         if not data:
             continue
+        
         player_url = BeautifulSoup(data, "html5lib").find("iframe")["src"]
-
         player_url = player_url.replace("https://animekao.club/video/", "https://kaocentro.net/video/")
-        if not player_url.startswith("https://re.") and not player_url.startswith("https://kaocentro.net/video/"):
-            url = process_url(player_url)
-            if not url:
-                continue
-            itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
-                                 language="LAT", infoLabels=item.infoLabels, subtitle=sub))
+        
+        if not player_url.startswith("https://re.") and not player_url.startswith("https://kaocentro.net/video/") \
+                                                    and not player_url.startswith("https://embedsito."):
+            urls = process_url(player_url)
+            for url in urls:
+                if not url:
+                    continue
+                itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
+                                     language="LAT", infoLabels=item.infoLabels, subtitle=sub))
         else:
             player = httptools.downloadpage(player_url, headers={"referer": item.url}).data
             soup = BeautifulSoup(player, "html5lib")
@@ -312,19 +348,19 @@ def findvideos(item):
                     url = base64.b64decode(elem["data-r"]).decode('utf-8')
                 if not url or "short." in url:
                     continue
-                url = process_url(url)
-                if not url:
-                    continue
-                itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
-                                     language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels, subtitle=sub))
+                urls = process_url(url)
+                for url in urls:
+                    if not url:
+                        continue
+                    itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
+                                         language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels, subtitle=sub))
+    
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
     # Requerido para AutoPlay
-
     autoplay.start(itemlist, item)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
@@ -337,19 +373,24 @@ def findvideos(item):
 
 def process_url(url):
     logger.info()
+
     if "animekao.club/player.php" in url:
         url = url.replace("animekao.club/player.php?x", "player.premiumstream.live/player.php?id")
+
     elif "animekao.club/play.php" in url:
         url = url.replace("animekao.club/play.php?x", "hls.playerd.xyz/player.php?id")
+
     elif "https://animekao.club/playmp4" in url:
         file_id = scrapertools.find_single_match(url, "link=([A-z0-9]+)")
         post = {'link': file_id}
         hidden_url = 'https://animekao.club/playmp4/plugins/gkpluginsphp.php'
         dict_vip_url = httptools.downloadpage(hidden_url, post=post).json
         url = dict_vip_url['link']
+
     elif "animekao.club/reproductores" in url:
         v_id = scrapertools.find_single_match(url, "v=([A-z0-9_-]+)")
         url = "https://drive.google.com/file/d/%s/preview" % v_id
+
     elif "animekao.club/mf/" in url:
         unpacked = get_unpacked(url)
         url = scrapertools.find_single_match(unpacked, '"file":"([^"]+)"')
@@ -358,17 +399,30 @@ def process_url(url):
         new_data = httptools.downloadpage(url, add_referer=True).data
         v_id = scrapertools.find_single_match(new_data, 'var shareId = "([^"]+)"')
         url = "https://www.amazon.com/drive/v1/shares/%s" % v_id
+
     elif "playhydrax.com" in url:
-        return ""
-        # slug = scrapertools.find_single_match(url, 'v=(\w+)')
-        # post = "slug=%s&dataType=mp4" % slug
-        # try:
-        #     data = httptools.downloadpage("https://ping.iamcdn.net/", post=post).json
-        #     url = data.get("url", '')
-        # except:
-        #     url = None
-        #     url = "https://www.%s" % base64.b64decode(url[-1:] + url[:-1]).decode('utf-8')
-        #     url += '|Referer=https://playhydrax.com/?v=%s&verifypeer=false' % slug
+        url = ""
+        """
+        slug = scrapertools.find_single_match(url, 'v=(\w+)')
+        post = "slug=%s&dataType=mp4" % slug
+        try:
+            data = httptools.downloadpage("https://ping.iamcdn.net/", post=post).json
+            url = data.get("url", '')
+        except:
+            url = None
+            url = "https://www.%s" % base64.b64decode(url[-1:] + url[:-1]).decode('utf-8')
+            url += '|Referer=https://playhydrax.com/?v=%s&verifypeer=false' % slug
+        """
+
+    elif "sbembed2.com" in url:
+        url = ""
+
+    elif "voe.sx" in url:
+        url = ""
+
+    elif "disable." in url:
+        url = ""
+
     elif "kplayer" in url:
         unpacked = get_unpacked(url)
         if unpacked:
@@ -377,11 +431,34 @@ def process_url(url):
         if "animekao.club/http" in url:
             url = scrapertools.find_single_match(url, "https://kplayer.animekao.club/([^$]+)")
             url = url + "|ignore_response_code=True"
-    return url
+
+    elif "plusvip.net" in url:
+        url = ""
+
+    elif "embedsito.net/repro" in url:
+        url = ""
+
+    elif "api.mycdn.moe" in url:
+        url = ""
+
+    elif "sbspeed.com" in url:
+        url = ""
+
+    elif "re.sololatino" in url:
+        url_save = url
+        data = httptools.downloadpage(url, add_referer=True, follow_redirects=False).data
+        patron = '"*file"*\:\s*"([^"]+)"'
+        url = re.compile(patron, re.DOTALL).findall(data.replace("'", '"'))
+        for i, u in enumerate(url):
+            if not u.startswith("http"):
+                url[i] = '%s/%s' % (scrapertools.find_single_match(url_save, patron_host), u)
+
+    return [url] if isinstance(url, str) else url
 
 
 def get_unpacked(url):
     logger.info()
+    
     try:
         data = httptools.downloadpage(url, headers={"referer": host}, follow_redirects=False).data
     except:
@@ -395,6 +472,7 @@ def get_unpacked(url):
 
 def search(item, texto):
     logger.info()
+    
     try:
         texto = texto.replace(" ", "+")
         item.url = item.url + texto

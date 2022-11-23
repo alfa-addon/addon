@@ -31,7 +31,7 @@ canonical = {
              'host': config.get_setting("current_host", 'entrepeliculasyseries', default=''), 
              'host_alt': ['https://entrepeliculasyseries.nz/'], 
              'host_black_list': ['https://entrepeliculasyseries.nu/'], 
-             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -214,6 +214,7 @@ def producers(item):
             thumb = elem.img["src"]
         else:
             thumb = get_thumb('channels_anime.png')
+        
         itemlist.append(Item(channel=item.channel, title=title, url=url, action=action, 
                              section=item.section, mode=item.mode, thumbnail=thumb, contentPlot=plot))
 
@@ -231,6 +232,7 @@ def genres(item):
     for elem in matches:
         url = elem.a["href"]
         title = elem.a.text
+        
         itemlist.append(Item(channel=item.channel, title=title, url=url, action=action, 
                              section=item.section, mode=item.mode))
 
@@ -262,10 +264,12 @@ def seasons(item):
                              url=item.url,
                              action="add_serie_to_library",
                              extra="episodios",
-                             contentType='tvshow', 
+                             contentType='season', 
                              contentSerieName=item.contentSerieName
                              ))
-
+    
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+    
     return itemlist
 
 
@@ -274,6 +278,7 @@ def episodios(item):
 
     itemlist = list()
     templist = seasons(item)
+    
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
 
@@ -311,7 +316,7 @@ def findvideos(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url, forced_proxy_opt=forced_proxy_opt)
+    soup = create_soup(item.url)
     if '-Película-' in item.infoLabels.get('tagline', ''): del item.infoLabels['tagline']
 
     try:
@@ -333,6 +338,8 @@ def findvideos(item):
         for opt in elem.find_all("li", class_="option"):
             server = opt.text.lower().strip()
             url = opt["data-link"]
+            if host not in url:
+                url = host.rstrip('/') + url
 
             itemlist.append(Item(channel=item.channel, title=server.capitalize(), url=url, server=server, action="play",
                                  language=IDIOMAS.get(lang, 'LAT'), quality=quality.capitalize(), infoLabels=item.infoLabels))
@@ -416,4 +423,3 @@ def play(item):
     itemlist = servertools.get_servers_itemlist(itemlist)
     
     return itemlist
-

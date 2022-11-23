@@ -32,6 +32,7 @@ canonical = {
              'host': config.get_setting("current_host", 'allpeliculas', default=''), 
              'host_alt': ["https://allpeliculas.se/"], 
              'host_black_list': ["https://allpeliculas.ac/"], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -102,7 +103,7 @@ def list_all(item):
         thumb = elem.img["src"]
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos", thumbnail=thumb,
-                             contentTitle=title, infoLabels={"year": year}))
+                             contentTitle=title, infoLabels={"year": year}, contentType='movie'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -189,4 +190,5 @@ def newest(categoria):
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []
+    
     return itemlist

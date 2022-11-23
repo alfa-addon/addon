@@ -229,8 +229,10 @@ def seasons(item):
     infoLabels = item.infoLabels
 
     for elem in matches.find_all("li"):
-
-        season = elem.a.text.lower()
+        try:
+            season = elem.a.text.lower()
+        except:
+            season = 1
 
         if "todas" in season:
             continue
@@ -241,7 +243,7 @@ def seasons(item):
         url = urlparse.urljoin(host, elem.a["href"])
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="episodesxseason", season=season,
-                             infoLabels=infoLabels))
+                             infoLabels=infoLabels, contentType='season'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -255,11 +257,15 @@ def seasons(item):
 
 def episodios(item):
     logger.info()
+    
     itemlist = []
     item.videolibrary = True
+    
     templist = seasons(item)
+    
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
+    
     return itemlist
 
 
@@ -268,17 +274,18 @@ def episodesxseason(item):
     itemlist = list()
 
     soup = create_soup(item.url, referer=host).find("div", id="season-episodes")
-    logger.error(soup)
     matches = soup.find_all("div", class_="flickr item left home-thumb-item")
-    logger.error(matches)
     infoLabels = item.infoLabels
 
     for elem in matches:
         url = urlparse.urljoin(host, elem.a["href"])
-        epi_num = scrapertools.find_single_match(url, "episode-(\d+)")
-        infoLabels["episode"] = epi_num
-        title = "%sx%s" % (infoLabels["season"], epi_num)
-        itemlist.append(Item(channel=item.channel, url=url, action="findvideos", infoLabels=infoLabels))
+        try:
+            infoLabels["episode"] = int(scrapertools.find_single_match(url, "episode-(\d+)"))
+        except:
+            infoLabels["episode"] = 1
+        title = "%sx%s" % (infoLabels["season"], infoLabels["episode"])
+        
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos", infoLabels=infoLabels, contentType='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
     itemlist = sorted(itemlist, key=lambda i: i.language)
@@ -300,7 +307,9 @@ def genres(item):
     for elem in matches:
         url = elem.a["href"]
         title = elem.text.strip()
+        
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all", first=1))
+    
     return itemlist
 
 
@@ -312,16 +321,13 @@ def findvideos(item):
     data = get_source(item.url, forced_proxy_opt=forced_proxy_opt)
 
     js_data = get_source("%sstatic/style/js/jquery.hdfull.view.min.js" % host)
-
     data_js = get_source("%sstatic/js/providers.js" % host)
-
     provs = alfaresolver.jhexdecode(data_js)
-
     data_decrypt = jsontools.load(alfaresolver.obfs(data, js_data))
 
     infolabels = item.infoLabels
     year = scrapertools.find_single_match(data, '<span>A&ntilde;o:\s*</span>.*?(\d{4})')
-    infolabels["year"] = year
+    if year: infolabels["year"] = year 
 
     matches = []
 
@@ -340,8 +346,7 @@ def findvideos(item):
         title = "%s (" + calidad + ")(" + idioma + ")"
 
         itemlist.append(Item(channel=item.channel, action="play", title=title, url=url,
-                             infoLabels=item.infoLabels, language=idioma, contentType=item.contentType,
-                             quality=calidad))
+                             infoLabels=item.infoLabels, language=idioma, quality=calidad))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 
@@ -380,6 +385,7 @@ def lang_from_flag(lang_data, path, ext):
     else:
         for lang in lang_list:
             language.append(str(lang))
+    
     return language
 
 

@@ -24,6 +24,7 @@ import json
 import re
 import base64
 import ast
+import traceback
 
 from core.jsontools import to_utf8
 from core import scrapertools
@@ -91,7 +92,6 @@ except:
     alfa_caching = False
     alfa_cookies = ''
     alfa_CF_list = []
-    import traceback
     logger.error(traceback.format_exc())
 
 """ Setting SSL TLS version for those webs that require it.  Set 'set_tls' = True in downloadpage call or SET_TLS = True for all webs
@@ -101,21 +101,30 @@ try:
     ssl_version = ''
     ssl_version_min = ''
     import ssl
+    try:
+        if PY3:
+            ssl_high = ssl.PROTOCOL_TLSv1_2
+        else:
+            ssl_high = ssl.PROTOCOL_TLSv1_1
+    except:
+        ssl_high = ssl.PROTOCOL_TLS_CLIENT
     
     ssl_ver = str(ssl.OPENSSL_VERSION)
     ssl_ver_list = scrapertools.find_single_match(ssl_ver, '(\d+\.\d+\.\d+)').split('.')
     min_ssl_ver = [1, 1, 1]
     if int(ssl_ver_list[0]) > int(min_ssl_ver[0]):
-        ssl_version = ssl_version_min = ssl.PROTOCOL_TLSv1_2
+        ssl_version = ssl_version_min = ssl_high
     elif len(ssl_ver_list) >= 3:
         for i, ver in enumerate(ssl_ver_list):
             if int(ver) < min_ssl_ver[i]:
                 ssl_version = ssl.PROTOCOL_TLSv1_1
                 break
         else:
-            ssl_version = ssl_version_min = ssl.PROTOCOL_TLSv1_2
+            ssl_version = ssl_version_min = ssl_high
     else:
         ssl_version = ssl.PROTOCOL_TLSv1_1
+    if not PY3:
+        ssl_version_min = ''
 
     class TLSHttpAdapter(requests.adapters.HTTPAdapter):
         def init_poolmanager(self, connections, maxsize, block=False):
@@ -126,7 +135,6 @@ try:
                                                                                  ssl_version=ssl_version)
 except:
     ssl_version = ''
-    import traceback
     logger.error(traceback.format_exc())
 
 
@@ -502,7 +510,6 @@ def check_proxy(url, **opt):
                     proxy_data['stat'] = ', Proxy Direct ' + proxy_data['log']
 
     except Exception:
-        import traceback
         logger.error(traceback.format_exc())
         opt['proxy'] = ''
         opt['proxy_web'] = ''
@@ -537,7 +544,6 @@ def proxy_stat(url, opt, proxy_data):
                 retry = 'retry'
         except Exception:
             logger.debug('Proxytools no inicializado correctamente')
-            import traceback
             logger.error(traceback.format_exc())
             
     
@@ -793,7 +799,6 @@ def retry_alt(url, req, response_call, proxy_data, opt):
         channel = __import__('channels.%s' % canonical['channel'], None,
                              None, ["channels.%s" % canonical['channel']])
     except:
-        import traceback
         logger.error(traceback.format_exc())
     
     for host_b in canonical['host_alt']:
@@ -847,7 +852,6 @@ def reset_canonical(canonical_new, url, response, opt):
                              None, ["channels.%s" % canonical['channel']])
         channel.host = canonical_new
     except:
-        import traceback
         logger.error(traceback.format_exc())
         
     return url, response
@@ -937,7 +941,6 @@ def proxy_post_processing(url, proxy_data, response, opt):
         else:
             opt['out_break'] = True
     except Exception:
-        import traceback
         logger.error(traceback.format_exc())
         opt['out_break'] = True
 
@@ -1068,6 +1071,9 @@ def downloadpage(url, **opt):
         else:
             opt['forced_proxy'] = opt['forced_proxy_opt']
 
+    if opt.get('canonical', {}).get('forced_proxy_ifnot_assistant', '') or opt.get('forced_proxy_ifnot_assistant', ''):
+        opt['ignore_response_code'] = True
+
     response = {}
     
     while opt['proxy_retries_counter'] <= opt.get('proxy_retries', 1):
@@ -1185,12 +1191,12 @@ def downloadpage(url, **opt):
                 req = requests.Response()
                 req.status_code = response_code = str(e)
                 block = blocking_error(url, req, proxy_data, opt)
+                canonical = opt.get('canonical', {})
                 
                 if block and opt.get('retry_alt', retry_alt_default) and opt.get('proxy__test', '') != 'retry' \
                                                                      and not proxy_data.get('stat', ''):
                     url_host = scrapertools.find_single_match(url, patron_host)
                     url_host = url_host  + '/' if url_host and not url_host.endswith('/') else ''
-                    canonical = opt.get('canonical', {})
                     if canonical.get('host_alt', []) and canonical.get('host_black_list', []) \
                                                      and url_host != canonical['host_alt'][0] \
                                                      and url_host in canonical['host_black_list']:
@@ -1233,7 +1239,6 @@ def downloadpage(url, **opt):
                     info_dict.append(('Finalizado en', time.time() - inicio))
                     if not opt.get('alfa_s', False):
                         show_infobox(info_dict)
-                        import traceback
                         logger.error(traceback.format_exc(1))
                     return type('HTTPResponse', (), response)
         
@@ -1265,13 +1270,15 @@ def downloadpage(url, **opt):
         response['url_new'] = ''
         response['proxy__'] = proxy_stat(opt['url_save'], opt, proxy_data)
         response['time_elapsed'] = 0
-
+        canonical = opt.get('canonical', {})
         block = blocking_error(url, req, proxy_data, opt)
+
+
         # Retries if host changed but old host in error
         if block and opt.get('retry_alt', retry_alt_default) and opt.get('proxy__test', '') != 'retry' and not proxy_data.get('stat', ''):
             url_host = scrapertools.find_single_match(url, patron_host)
             url_host = url_host  + '/' if url_host and not url_host.endswith('/') else ''
-            canonical = opt.get('canonical', {})
+            
             if canonical.get('host_alt', []) and canonical.get('host_black_list', []) \
                                              and url_host != canonical['host_alt'][0] \
                                              and url_host in canonical['host_black_list']:
@@ -1326,6 +1333,19 @@ def downloadpage(url, **opt):
             logger.debug("CF Assistant retry... for domain: %s" % urlparse.urlparse(url)[1])
             return downloadpage(url, **opt)
 
+        # Si hay bloqueo "cf_v2" y no hay Alfa Assistant, se reintenta con Proxy
+        if (canonical.get('forced_proxy_ifnot_assistant', '') or opt.get('forced_proxy_ifnot_assistant', '')) \
+                           and ('Detected a Cloudflare version 2' in str(response_code) or response_code in [429, 503, 403]) \
+                           and opt.get('proxy__test', '') != 'retry':
+            opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0
+            opt['proxy__test'] = 'retry'
+            if not PY3: from . import proxytools
+            else: from . import proxytools_py3 as proxytools
+            domain = scrapertools.find_single_match(url, patron_domain)
+            opt['forced_proxy'] = canonical.get('forced_proxy_ifnot_assistant', '') or opt.get('forced_proxy_ifnot_assistant', '')
+            proxytools.add_domain_retried(domain, proxy__type=opt['forced_proxy'])
+            return downloadpage(url, **opt)
+
         try:
             response['encoding'] = str(req.encoding).lower() if req.encoding and req.encoding is not None else None
 
@@ -1344,7 +1364,6 @@ def downloadpage(url, **opt):
                 response['data'] = response['data'].decode(encoding)
 
         except Exception:
-            import traceback
             logger.error(traceback.format_exc(1))
 
         try:
@@ -1355,7 +1374,6 @@ def downloadpage(url, **opt):
                 response['data'] = "".join(chr(x) for x in bytes(response['data']))
 
         except Exception:
-            import traceback
             logger.error(traceback.format_exc(1))
 
         try:
@@ -1371,7 +1389,6 @@ def downloadpage(url, **opt):
                       .replace('&ordm;', 'º')
 
         except Exception:
-            import traceback
             logger.error(traceback.format_exc(1))
 
         response['url'] = req.url
@@ -1439,7 +1456,6 @@ def downloadpage(url, **opt):
                 response["soup"] = BeautifulSoup(response['data'], "html5lib", from_encoding=opt.get('encoding', response['encoding']))
 
             except Exception:
-                import traceback
                 logger.error("Error creando sopa")
                 logger.error(traceback.format_exc())
         
@@ -1517,7 +1533,6 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
         info_dict.append(('Fichero de cookies', ficherocookies))
 
     except Exception:
-        import traceback
         logger.error(traceback.format_exc(1))
     
     return info_dict
@@ -1559,7 +1574,6 @@ def fill_fields_post(info_dict, opt, req, response, req_headers, inicio):
             info_dict.append(('- New URL', url_new))
         info_dict.append(('Finalizado en', time.time() - inicio))
     except Exception:
-        import traceback
         logger.error(traceback.format_exc(1))
     
     return info_dict, response

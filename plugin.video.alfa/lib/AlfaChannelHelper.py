@@ -4,6 +4,15 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse
+else:
+    import urlparse
+
 import re
 import traceback
 
@@ -20,7 +29,7 @@ forced_proxy_def = 'ProxyCF'
 class AlfaChannelHelper:
 
     def __init__(self, host, movie_path="/movies", tv_path="/serie", movie_action="findvideos", 
-                 tv_action="seasons", canonical={}):
+                 tv_action="seasons", canonical={}, url_replace=[]):
         self.host = host
         self.movie_path = movie_path
         self.tv_path = tv_path
@@ -28,6 +37,7 @@ class AlfaChannelHelper:
         self.tv_action = tv_action
         self.doo_url = "%swp-admin/admin-ajax.php" % host
         self.canonical = canonical
+        self.url_replace = url_replace
 
     def create_soup(self, url, **kwargs):
         """
@@ -84,8 +94,8 @@ class AlfaChannelHelper:
 
     def define_content_type(self, new_item, is_tvshow=False):
 
-        if new_item.infoLabels.get("year", '') and new_item.infoLabels["year"] in new_item.title:
-            new_item.title = re.sub("\(|\)|%s" % new_item.infoLabels["year"], "", new_item.title)
+        if new_item.infoLabels.get("year", '') and str(new_item.infoLabels["year"]) in new_item.title:
+            new_item.title = re.sub("\(|\)|%s" % str(new_item.infoLabels["year"]), "", new_item.title)
 
         if not is_tvshow and (self.movie_path in new_item.url or not self.tv_path in new_item.url):
             new_item.action = self.movie_action
@@ -106,6 +116,8 @@ class AlfaChannelHelper:
     def add_serie_to_videolibrary(self, item, itemlist):
 
         if config.get_videolibrary_support() and len(itemlist) > 0:
+            item.url = self.do_url_replace(item.url)
+            
             itemlist.append(Item(channel=item.channel,
                                  title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
                                  url=item.url,
@@ -117,6 +129,16 @@ class AlfaChannelHelper:
                             )
         return itemlist
 
+    def do_url_replace(self, url):
+        
+        if not self.url_replace:
+            return
+        
+        for url_from, url_to in self.url_replace:
+            url = re.sub(url_from, url_to, url)
+
+        return url
+        
 
 class CustomChannel(AlfaChannelHelper):
     pass
@@ -150,8 +172,7 @@ class DooPlay(AlfaChannelHelper):
         try:
             if not next_page:
                 next_page = soup.find("div", class_="pagination").find("span", class_="current").next_sibling["href"]
-                if not next_page.startswith("http"):
-                    next_page = self.host + next_page.lstrip('/')
+                next_page = urlparse.urljoin(self.host, next_page)
         except:
             pass
 
@@ -163,19 +184,22 @@ class DooPlay(AlfaChannelHelper):
                 thumb = poster.img["src"]
                 title = poster.img["alt"]
                 url = poster.find_all("a")[-1]["href"]
-                url = url if url.startswith("http") else self.host + url
+                url = urlparse.urljoin(self.host, url)
             except:
                 logger.error(elem)
                 continue
             try:
-                year = metadata.find("span", text=re.compile(r"\d{4}")).text.strip()
+                year = int(metadata.find("span", text=re.compile(r"\d{4}")).text.strip())
             except:
                 try:
-                    year = data.find("span", text=re.compile(r"\d{4}")).text.strip()
+                    year = int(data.find("span", text=re.compile(r"\d{4}")).text.strip())
                 except:
                     year = "-"
-            if len(year) > 4:
-                year = scrapertools.find_single_match(year, r"(\d{4})")
+            if len(str(year)) > 4:
+                if scrapertools.find_single_match(str(year), r"(\d{4})"):
+                    year = int(scrapertools.find_single_match(str(year), r"(\d{4})"))
+                else:
+                    year = "-"
 
             is_tvshow = True if "tvshows" in elem["class"] else False
 
@@ -189,6 +213,8 @@ class DooPlay(AlfaChannelHelper):
                 new_item = postprocess(soup, elem, new_item, item)
 
             new_item = self.define_content_type(new_item, is_tvshow=is_tvshow)
+            
+            new_item.url = self.do_url_replace(new_item.url)
 
             itemlist.append(new_item)
 
@@ -234,8 +260,7 @@ class DooPlay(AlfaChannelHelper):
             if section == "genre":
                 title = re.sub(r"\d+(?!\w)|\.", "", elem.a.text)
 
-            if not url.startswith("http"):
-                url = self.host + url
+            url = urlparse.urljoin(self.host, url)
 
             new_item = Item(channel=item.channel,
                             title=title.capitalize(),
@@ -246,12 +271,16 @@ class DooPlay(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         return itemlist
 
     def seasons(self, item, action="episodesxseason", post=None, postprocess=None):
+        
         itemlist = list()
+        item.url = self.do_url_replace(item.url)
 
         try:
             if post:
@@ -270,9 +299,11 @@ class DooPlay(AlfaChannelHelper):
         infolabels = item.infoLabels
 
         for elem in matches:
-            season = elem.find("span", class_="se-t").text
-            title = "Temporada %s" % season
-            infolabels["season"] = season
+            try:
+                infolabels["season"] = int(elem.find("span", class_="se-t").text)
+            except:
+                infolabels["season"] = 1
+            title = "Temporada %s" % infolabels["season"]
             infolabels["mediatype"] = 'season'
 
             new_item = Item(channel=item.channel,
@@ -284,6 +315,8 @@ class DooPlay(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -296,6 +329,7 @@ class DooPlay(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
+        item.url = self.do_url_replace(item.url)
 
         try:
             if post:
@@ -328,10 +362,12 @@ class DooPlay(AlfaChannelHelper):
                 info = epi.find("div", class_="episodiotitle")
                 url = info.a["href"]
                 epi_name = info.a.text
-                epi_num = epi.find("div", class_="numerando").text.split(" - ")[1]
-                infolabels["episode"] = epi_num
+                try:
+                    infolabels["episode"] = int(epi.find("div", class_="numerando").text.split(" - ")[1])
+                except:
+                    infolabels["episode"] = 1
                 infolabels["mediatype"] = 'episode'
-                title = "%sx%s - %s" % (season, epi_num, epi_name)
+                title = "%sx%s - %s" % (season, infolabels["episode"], epi_name)
 
                 new_item = Item(channel=item.channel,
                                 title=title,
@@ -342,6 +378,8 @@ class DooPlay(AlfaChannelHelper):
                 if postprocess:
                     new_item = postprocess(soup, elem, new_item, item)
 
+                new_item.url = self.do_url_replace(new_item.url)
+                
                 itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -370,7 +408,7 @@ class DooPlay(AlfaChannelHelper):
             thumb = elem.img["src"]
             title = elem.img["alt"]
             try:
-                year = elem.find("span", class_="year").text
+                year = int(elem.find("span", class_="year").text)
             except:
                 year = "-"
 
@@ -386,6 +424,8 @@ class DooPlay(AlfaChannelHelper):
                 new_item = postprocess(soup, elem, new_item, item)
 
             new_item = self.define_content_type(new_item)
+            
+            new_item.url = self.do_url_replace(new_item.url)
 
             itemlist.append(new_item)
 
@@ -396,6 +436,7 @@ class DooPlay(AlfaChannelHelper):
     def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
 
         results = list()
+        url = self.do_url_replace(url)
 
         try:
             soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
@@ -415,6 +456,7 @@ class DooPlay(AlfaChannelHelper):
         return results[0]
 
     def get_data_by_post(self, elem=None, post=None, custom_url=""):
+        
         if not post:
             post = {"action": "doo_player_ajax",
                     "post": elem["data-post"],
@@ -423,7 +465,7 @@ class DooPlay(AlfaChannelHelper):
                     }
 
         if custom_url:
-            self.doo_url = custom_url
+            self.doo_url = self.do_url_replace(custom_url)
 
         data = httptools.downloadpage(self.doo_url, post=post, add_referer=True, soup=True, ignore_response_code=True)
 
@@ -452,14 +494,13 @@ class ToroFilm(AlfaChannelHelper):
         if not next_page:
             try:
                 next_page = soup.find("div", class_="nav-links").find_all("a")[-1]["href"]
-                if not next_page.startswith("http"):
-                    next_page = self.host + next_page.lstrip('/')
+                next_page = urlparse.urljoin(self.host, next_page)
             except:
                 pass
 
         for elem in matches:
             try:
-                url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"].lstrip('/')
+                url = urlparse.urljoin(self.host, elem.a["href"])
                 title = elem.h2.text
             except:
                 logger.error(elem)
@@ -470,7 +511,7 @@ class ToroFilm(AlfaChannelHelper):
                 thumb = elem.find("img")["src"]
 
             try:
-                year = elem.find("span", class_="year").text
+                year = int(elem.find("span", class_="year").text)
             except:
                 year = '-'
 
@@ -485,6 +526,8 @@ class ToroFilm(AlfaChannelHelper):
                 new_item = postprocess(soup, elem, new_item, item)
 
             new_item = self.define_content_type(new_item)
+            
+            new_item.url = self.do_url_replace(new_item.url)
 
             itemlist.append(new_item)
 
@@ -529,8 +572,7 @@ class ToroFilm(AlfaChannelHelper):
             url = elem.a["href"]
             title = elem.a.text
 
-            if not url.startswith("http"):
-                url = self.host + url
+            url = urlparse.urljoin(self.host, url)
 
             new_item = Item(channel=item.channel,
                             title=title.capitalize(),
@@ -542,7 +584,10 @@ class ToroFilm(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
+        
         if reverse:
             return itemlist[::-1]
         return itemlist
@@ -551,6 +596,7 @@ class ToroFilm(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
+        item.url = self.do_url_replace(item.url)
 
         try:
             soup = self.create_soup(item.url)
@@ -565,11 +611,13 @@ class ToroFilm(AlfaChannelHelper):
         infolabels = item.infoLabels
 
         for elem in matches:
-            season = elem.a["data-season"]
-            post_id = elem.a["data-post"]
-            title = "Temporada %s" % season
-            infolabels["season"] = season
+            try:
+                infolabels["season"] = int(elem.a["data-season"])
+            except:
+                infolabels["season"] = 1
+            title = "Temporada %s" % infolabels["season"]
             infolabels["mediatype"] = 'season'
+            post_id = elem.a["data-post"]
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -581,6 +629,8 @@ class ToroFilm(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -593,6 +643,7 @@ class ToroFilm(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
+        item.url = self.do_url_replace(item.url)
 
         infolabels = item.infoLabels
         season = infolabels["season"]
@@ -616,9 +667,12 @@ class ToroFilm(AlfaChannelHelper):
         for elem in matches:
             url = elem.a["href"]
             title = elem.find("span", class_="num-epi").text
-            epi_num = title.split("x")[1]
-            infolabels["episode"] = epi_num
+            try:
+                infolabels["episode"] = int(title.split("x")[1])
+            except:
+                infolabels["episode"] = 1
             infolabels["mediatype"] = 'episode'
+            title = "%sx%s - %s" % (season, infolabels["episode"], title)
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -630,6 +684,8 @@ class ToroFilm(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -640,6 +696,7 @@ class ToroFilm(AlfaChannelHelper):
 
         options = list()
         results = list()
+        url = self.do_url_replace(url)
 
         try:
             soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
@@ -683,14 +740,13 @@ class ToroPdon(AlfaChannelHelper):
             try:
                 #next_page = soup.find("div", class_="nav-links").find_all("a")[-1]["href"]
                 next_page = soup.find("div", class_="nav-links").find("a", class_="next page-numbers")["href"]
-                if not next_page.startswith("http"):
-                    next_page = self.host + next_page.lstrip('/')
+                next_page = urlparse.urljoin(self.host, next_page)
             except:
                 pass
 
         for elem in matches:
             try:
-                url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"].lstrip('/')
+                url = urlparse.urljoin(self.host, elem.a["href"])
                 title = elem.find("img")["alt"]
             except:
                 logger.error(elem)
@@ -700,13 +756,13 @@ class ToroPdon(AlfaChannelHelper):
                 thumb = elem.find("img")["data-src"]
             except:
                 thumb = elem.find("img")["src"]
-            thumb = thumb if thumb.startswith("http") else self.host + thumb.lstrip('/')
+            thumb = urlparse.urljoin(self.host, thumb)
 
             try:
                 if item.c_type == 'episodios':
                     year = '-'
                 else:
-                    year = elem.find("span", class_="Year").text
+                    year = int(elem.find("span", class_="Year").text)
             except:
                 year = '-'
 
@@ -725,6 +781,8 @@ class ToroPdon(AlfaChannelHelper):
                 new_item = postprocess(soup, elem, new_item, item)
 
             new_item = self.define_content_type(new_item)
+
+            new_item.url = self.do_url_replace(new_item.url)
 
             itemlist.append(new_item)
 
@@ -770,8 +828,7 @@ class ToroPdon(AlfaChannelHelper):
             url = elem.a["href"]
             title = elem.a.text
 
-            if not url.startswith("http"):
-                url = self.host + url
+            url = urlparse.urljoin(self.host, url)
 
             new_item = Item(channel=item.channel,
                             title=title.capitalize(),
@@ -783,7 +840,10 @@ class ToroPdon(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
+        
         if reverse:
             return itemlist[::-1]
         return itemlist
@@ -792,6 +852,7 @@ class ToroPdon(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
+        item.url = self.do_url_replace(item.url)
 
         try:
             soup = self.create_soup(item.url)
@@ -807,13 +868,11 @@ class ToroPdon(AlfaChannelHelper):
 
         for elem in matches:
             try:
-                season = elem["value"]
-                title = "Temporada %s" % season
-                infolabels["season"] = season
-                infolabels["mediatype"] = 'season'
+                infolabels["season"] = int(elem["value"])
             except:
-                logger.error(elem)
-                continue
+                infolabels["season"] = 1
+            title = "Temporada %s" % infolabels["season"]
+            infolabels["mediatype"] = 'season'
 
             new_item = Item(channel=item.channel,
                             url=item.url, 
@@ -825,6 +884,8 @@ class ToroPdon(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -838,6 +899,7 @@ class ToroPdon(AlfaChannelHelper):
         from core import jsontools
 
         itemlist = list()
+        item.url = self.do_url_replace(item.url)
 
         infolabels = item.infoLabels
         season = infolabels["season"]
@@ -855,8 +917,12 @@ class ToroPdon(AlfaChannelHelper):
         for elem in matches:
             url = '%sepisodio/%s-temporada-%s-episodio-%s' % (self.host, elem['slug']['name'], infolabels['season'], elem['slug']['episode'])
             title = elem['title']
-            infolabels["episode"] = elem['number']
+            try:
+                infolabels["episode"] = int(elem['number'])
+            except:
+                infolabels["episode"] = 1
             infolabels["mediatype"] = 'episode'
+            title = "%sx%s - %s" % (season, infolabels["episode"], title)
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -868,6 +934,8 @@ class ToroPdon(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -878,6 +946,7 @@ class ToroPdon(AlfaChannelHelper):
 
         options = list()
         results = list()
+        url = self.do_url_replace(url)
 
         try:
             soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
@@ -927,27 +996,26 @@ class ToroPlay(AlfaChannelHelper):
         if not next_page:
             try:
                 next_page = soup.find(class_="wp-pagenavi").find(class_="current").find_next_sibling()["href"]
-                if next_page and not next_page.startswith("http"):
-                    next_page = self.host + next_page.lstrip('/')
+                next_page = urlparse.urljoin(self.host, next_page)
             except:
                 pass
 
         for elem in matches:
             try:
-                url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"]
+                url = urlparse.urljoin(self.host, elem.a["href"])
                 title = elem.a.h3.text
                 thumb = elem.find("img")
                 thumb = thumb["data-src"] if thumb.has_attr("data-src") else thumb["src"]
-                year = scrapertools.find_single_match(title, r'\((\d{4})\)')
             except:
                 logger.error(elem)
                 continue
-            if not year:
-                try:
+            
+            try:
+                year = scrapertools.find_single_match(title, r'\((\d{4})\)')
+                if not year:
                     year = elem.find("span", class_="Year").text
-                except:
-                    pass
-            if not year:
+                year = int(year)
+            except:
                 year = "-"
 
             new_item = Item(channel=item.channel,
@@ -962,6 +1030,8 @@ class ToroPlay(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -1005,8 +1075,7 @@ class ToroPlay(AlfaChannelHelper):
             url = elem.a["href"]
             title = elem.a.text
 
-            if not url.startswith("http"):
-                url = self.host + url
+            url = urlparse.urljoin(self.host, url)
 
             new_item = Item(channel=item.channel,
                             title=title.capitalize(),
@@ -1018,6 +1087,8 @@ class ToroPlay(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         if reverse:
@@ -1044,8 +1115,7 @@ class ToroPlay(AlfaChannelHelper):
         if not next_page:
             try:
                 next_page = soup.find(class_="wp-pagenavi").find(class_="current").find_next_sibling()["href"]
-                if next_page and not next_page.startswith("http"):
-                    next_page = self.host + next_page.lstrip('/')
+                next_page = urlparse.urljoin(self.host, next_page)
             except:
                 pass
 
@@ -1054,11 +1124,10 @@ class ToroPlay(AlfaChannelHelper):
             thumb = elem.find("td", class_="MvTbImg").a.img["src"]
             url = info.a["href"]
             title = info.a.text.strip()
-            year = "-"
             try:
-                year = elem.find("td", text=re.compile(r"\d{4}")).string
+                year = int(elem.find("td", text=re.compile(r"\d{4}")).string)
             except:
-                pass
+                year = "-"
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -1073,6 +1142,8 @@ class ToroPlay(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -1089,7 +1160,9 @@ class ToroPlay(AlfaChannelHelper):
         return itemlist
 
     def seasons(self, item, action="episodesxseason", postprocess=None):
+        
         itemlist = list()
+        item.url = self.do_url_replace(item.url)
 
         try:
             soup = self.create_soup(item.url)
@@ -1103,9 +1176,11 @@ class ToroPlay(AlfaChannelHelper):
 
         infolabels = item.infoLabels
         for elem in matches:
-            season = elem.find("div", class_="AA-Season")["data-tab"]
-            title = "Temporada %s" % season
-            infolabels["season"] = season
+            try:
+                infolabels["season"] = int(elem.find("div", class_="AA-Season")["data-tab"])
+            except:
+                infolabels["season"] = 1
+            title = "Temporada %s" % infolabels["season"]
             infolabels["mediatype"] = 'season'
 
             new_item = Item(channel=item.channel,
@@ -1118,6 +1193,8 @@ class ToroPlay(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -1130,6 +1207,7 @@ class ToroPlay(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
+        item.url = self.do_url_replace(item.url)
 
         try:
             soup = self.create_soup(item.url)
@@ -1148,27 +1226,28 @@ class ToroPlay(AlfaChannelHelper):
             if elem.find("div", class_="AA-Season")["data-tab"] == str(season):
                 epi_list = elem.find_all("tr")
                 for epi in epi_list:
+                    url = epi.a["href"]
+                    epi_name = epi.find("td", class_="MvTbTtl").a.text
                     try:
-                        url = epi.a["href"]
-                        epi_num = epi.find("span", class_="Num").text
-                        epi_name = epi.find("td", class_="MvTbTtl").a.text
-                        infolabels["episode"] = epi_num
-                        infolabels["mediatype"] = 'episode'
-                        title = "%sx%s - %s" % (season, epi_num, epi_name)
-
-                        new_item = Item(channel=item.channel,
-                                        title=title,
-                                        url=url,
-                                        action=action,
-                                        infoLabels=infolabels
-                                        )
-
-                        if postprocess:
-                            new_item = postprocess(soup, elem, new_item, item)
-
-                        itemlist.append(new_item)
+                        infolabels["episode"] = int(epi.find("span", class_="Num").text)
                     except:
-                        pass
+                        infolabels["episode"] = 1
+                    infolabels["mediatype"] = 'episode'
+                    title = "%sx%s - %s" % (season, infolabels["episode"], epi_name)
+
+                    new_item = Item(channel=item.channel,
+                                    title=title,
+                                    url=url,
+                                    action=action,
+                                    infoLabels=infolabels
+                                    )
+
+                    if postprocess:
+                        new_item = postprocess(soup, elem, new_item, item)
+
+                    new_item.url = self.do_url_replace(new_item.url)
+                    
+                    itemlist.append(new_item)
                 break
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -1176,7 +1255,9 @@ class ToroPlay(AlfaChannelHelper):
         return itemlist
 
     def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
+        
         results = list()
+        url = self.do_url_replace(url)
 
         try:
             soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
@@ -1213,14 +1294,13 @@ class ToroFlix(AlfaChannelHelper):
         if not next_page:
             try:
                 next_page = soup.find(class_="wp-pagenavi").find(class_="current").find_next_sibling()["href"]
-                if next_page and not next_page.startswith("http"):
-                    next_page = self.host + next_page.lstrip('/')
+                next_page = urlparse.urljoin(self.host, next_page)
             except:
                 pass
 
         for elem in matches:
             try:
-                url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"]
+                url = urlparse.urljoin(self.host, elem.a["href"])
                 title = elem.find(class_="Title").text
                 thumb = elem.find("img")
                 thumb = thumb["data-src"] if thumb.has_attr("data-src") else thumb["src"]
@@ -1228,7 +1308,7 @@ class ToroFlix(AlfaChannelHelper):
                 logger.error(elem)
                 continue
             try:
-                year = elem.find("span", class_="Date").text
+                year = int(elem.find("span", class_="Date").text)
             except:
                 year = "-"
 
@@ -1244,6 +1324,8 @@ class ToroFlix(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -1286,8 +1368,7 @@ class ToroFlix(AlfaChannelHelper):
             url = elem.a["href"]
             title = elem.a.text
 
-            if not url.startswith("http"):
-                url = self.host + url
+            url = urlparse.urljoin(self.host, url)
 
             new_item = Item(channel=item.channel,
                             title=title.capitalize(),
@@ -1299,6 +1380,8 @@ class ToroFlix(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         if reverse:
@@ -1325,8 +1408,7 @@ class ToroFlix(AlfaChannelHelper):
         if not next_page:
             try:
                 next_page = soup.find(class_="wp-pagenavi").find(class_="current").find_next_sibling()["href"]
-                if next_page and not next_page.startswith("http"):
-                    next_page = self.host + next_page.lstrip('/')
+                next_page = urlparse.urljoin(self.host, next_page)
             except:
                 pass
 
@@ -1335,11 +1417,11 @@ class ToroFlix(AlfaChannelHelper):
             thumb = elem.find("td", class_="MvTbImg").a.img["src"]
             url = info.a["href"]
             title = info.a.text.strip()
-            year = "-"
             try:
-                year = elem.find("td", text=re.compile(r"\d{4}")).string
+                year = int(elem.find("td", text=re.compile(r"\d{4}")).string)
             except:
-                pass
+                year = "-"
+            
             new_item = Item(channel=item.channel,
                             title=title,
                             url=url,
@@ -1353,6 +1435,8 @@ class ToroFlix(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -1369,7 +1453,9 @@ class ToroFlix(AlfaChannelHelper):
         return itemlist
 
     def seasons(self, item, action="episodesxseason", postprocess=None):
+        
         itemlist = list()
+        item.url = self.do_url_replace(item.url)
 
         try:
             soup = self.create_soup(item.url)
@@ -1384,11 +1470,13 @@ class ToroFlix(AlfaChannelHelper):
         infolabels = item.infoLabels
 
         for elem in matches:
-            season = elem.a.span.text
-            url = elem.a["href"]
-            title = "Temporada %s" % season
-            infolabels["season"] = season
+            try:
+                infolabels["season"] = int(elem.a.span.text)
+            except:
+                infolabels["season"] = 1
+            title = "Temporada %s" % infolabels["season"]
             infolabels["mediatype"] = 'season'
+            url = elem.a["href"]
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -1400,6 +1488,8 @@ class ToroFlix(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -1412,6 +1502,7 @@ class ToroFlix(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
+        item.url = self.do_url_replace(item.url)
 
         try:
             soup = self.create_soup(item.url)
@@ -1427,13 +1518,14 @@ class ToroFlix(AlfaChannelHelper):
         season = infolabels["season"]
 
         for elem in matches:
-
             url = elem.find("td", class_="MvTbTtl").a["href"]
-            epi_num = elem.find("span", class_="Num").text
             epi_name = elem.find("td", class_="MvTbTtl").a.text
-            infolabels["episode"] = epi_num
+            try:
+                infolabels["episode"] = int(elem.find("span", class_="Num").text)
+            except:
+                infolabels["episode"] = 1
             infolabels["mediatype"] = 'episode'
-            title = "%sx%s - %s" % (season, epi_num, epi_name)
+            title = "%sx%s - %s" % (season, infolabels["episode"], epi_name)
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -1445,6 +1537,8 @@ class ToroFlix(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -1452,7 +1546,9 @@ class ToroFlix(AlfaChannelHelper):
         return itemlist
 
     def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
+        
         results = list()
+        url = self.do_url_replace(url)
 
         try:
             soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)
@@ -1492,22 +1588,21 @@ class PsyPlay(AlfaChannelHelper):
             try:
                 item.url = re.sub(r"page/\d+/", "", item.url)
                 next_page = soup.find("ul", class_="pagination").find("li", class_="active").next_sibling.a.text
-                next_page = "%s/page/%s/" % (self.host, next_page)
-                if next_page and not next_page.startswith("http"):
-                    next_page = self.host + next_page.lstrip('/')
+                next_page = urlparse.urljoin(self.host, "page/%s/" % next_page)
+                next_page = urlparse.urljoin(self.host, next_page)
             except:
                 pass
 
         for elem in matches:
             try:
-                thumb = self.host + elem.a.img["src"] if elem.a.img.has_attr("src") else elem.a.img["data-original"]
+                thumb = urlparse.urljoin(self.host, elem.a.img["src"])
                 title = elem.a.find("span", class_="mli-info").h2.text
-                url = elem.a["href"] if elem.a["href"].startswith("http") else self.host + elem.a["href"]
+                url = urlparse.urljoin(self.host, elem.a["href"])
             except:
                 logger.error(elem)
                 continue
             try:
-                year = elem.find("div", class_="jt-info", text=re.compile("\d{4}")).text
+                year = int(elem.find("div", class_="jt-info", text=re.compile("\d{4}")).text)
             except:
                 year = "-"
 
@@ -1522,6 +1617,8 @@ class PsyPlay(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -1559,8 +1656,7 @@ class PsyPlay(AlfaChannelHelper):
             url = elem.a["href"]
             title = elem.a.text
 
-            if not url.startswith("http"):
-                url = self.host + url
+            url = urlparse.urljoin(self.host, url)
 
             new_item = Item(channel=item.channel,
                             title=title.capitalize(),
@@ -1572,6 +1668,8 @@ class PsyPlay(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         if reverse:
@@ -1580,7 +1678,9 @@ class PsyPlay(AlfaChannelHelper):
         return itemlist
 
     def seasons(self, item, action="episodesxseason", postprocess=None):
+        
         itemlist = list()
+        item.url = self.do_url_replace(item.url)
 
         try:
             soup = self.create_soup(item.url)
@@ -1595,10 +1695,11 @@ class PsyPlay(AlfaChannelHelper):
         infolabels = item.infoLabels
 
         for elem in matches:
-
-            season = scrapertools.find_single_match(elem.text, r"(\d+)")
-            title = "Temporada %s" % season
-            infolabels["season"] = season
+            try:
+                infolabels["season"] = int(scrapertools.find_single_match(elem.text, r"(\d+)"))
+            except:
+                infolabels["season"] = 1
+            title = "Temporada %s" % infolabels["season"]
             infolabels["mediatype"] = 'season'
 
             new_item = Item(channel=item.channel,
@@ -1611,6 +1712,8 @@ class PsyPlay(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -1623,6 +1726,7 @@ class PsyPlay(AlfaChannelHelper):
         logger.info()
 
         itemlist = list()
+        item.url = self.do_url_replace(item.url)
 
         try:
             soup = self.create_soup(item.url)
@@ -1640,10 +1744,12 @@ class PsyPlay(AlfaChannelHelper):
 
         for elem in matches:
             url = elem["href"]
-            epi_num = scrapertools.find_single_match(elem.text, r"(\d+)")
-            infolabels["episode"] = epi_num
+            try:
+                infolabels["episode"] = int(scrapertools.find_single_match(elem.text, r"(\d+)"))
+            except:
+                infolabels["episode"] = 1
             infolabels["mediatype"] = 'episode'
-            title = "%sx%s" % (season, epi_num)
+            title = "%sx%s - " % (season, infolabels["episode"])
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -1655,6 +1761,8 @@ class PsyPlay(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            new_item.url = self.do_url_replace(new_item.url)
+            
             itemlist.append(new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -1662,7 +1770,9 @@ class PsyPlay(AlfaChannelHelper):
         return itemlist
 
     def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
+        
         results = list()
+        url = self.do_url_replace(url)
 
         try:
             soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt)

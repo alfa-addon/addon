@@ -40,9 +40,22 @@ def load(*args, **kwargs):
     try:
         value = json.loads(*args, **kwargs)
     except:
-        logger.error("**NO** se ha podido cargar el JSON")
+        try:
+            import inspect
+            module = inspect.getmodule(inspect.currentframe().f_back.f_back)
+            if module == None:
+                module = "None"
+            else:
+                module = module.__name__
+            function = inspect.currentframe().f_back.f_back.f_code.co_name
+            module = ' [%s.%s]' % (module, function)
+        except:
+            module = ''
+        
+        logger.error("**NO** se ha podido cargar el JSON: %s, args: %s, kwargs: %s" % (str(module), str(args), str(kwargs)))
         logger.error(traceback.format_exc())
         value = {}
+        module = ''
 
     return value
 
@@ -129,6 +142,8 @@ def get_node_from_file(name_file, node, path=None, display=True, debug=False):
     else:
         if config.get_data_path() in path and "settings_servers" in path :
             contentType = 'alfa_servers'
+        if config.get_runtime_path() in path and "servers" in path:
+            contentType = 'alfa_servers_jsons'
 
     fname = filetools.join(path, name_file)
 
@@ -245,6 +260,8 @@ def update_node(dict_node, name_file, node, path=None, display=True, debug=False
     else:
         if config.get_data_path() in path and "settings_servers" in path:
             contentType = 'alfa_servers'
+        if config.get_runtime_path() in path and "servers" in path:
+            contentType = 'alfa_servers_jsons'
 
     fname = filetools.join(path, name_file)
 

@@ -38,6 +38,8 @@ canonical = {
              'host': config.get_setting("current_host", 'serieskao', default=''), 
              'host_alt': ["https://serieskao.org/"], 
              'host_black_list': ["https://serieskao.net/"], 
+             'pattern': ['<link\s*rel="shortcut\s*icon"\s*href="(\w+\:\/\/[^\/]+\/)'], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

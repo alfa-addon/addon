@@ -14,6 +14,7 @@ if sys.version_info[0] >= 3:
 import re
 import base64
 from bs4 import BeautifulSoup
+
 from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
@@ -24,7 +25,6 @@ from channels import filtertools, autoplay
 from core import tmdb
 from channels import renumbertools
 from platformcode import platformtools
-
 
 canonical = {
              'channel': 'tvanime', 
@@ -159,16 +159,25 @@ def new_episodes(item):
     for elem in matches:
         url = elem.a["href"]
         lang, c_title = clear_title(elem.a["title"])
-
-        title = "1x%s - %s" % (elem.p.text, c_title)
-
+        c_title = re.sub('(?i)1080p|720p|movie', '', c_title).strip()
+        try:
+            season = int(scrapertools.find_single_match(c_title, '(?i)\s*(\d+)\s*(?:st|nd|rd|th)\s+season'))
+            c_title = re.sub('(?i)\s*\d+\s*(?:st|nd|rd|th)\s+season', '', c_title)
+        except:
+            season = 1
+        try:
+            epi = int(elem.p.text)
+        except:
+            epi = 1
+        title = "%sx%s - %s" % (season, epi, c_title)
         thumb = elem.img["src"]
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
                              thumbnail=thumb, contentSerieName=c_title, language=lang,
-                             contentEpisodeNumber=elem.p.text, contentType='episode'))
+                             contentSeason=season, contentEpisodeNumber=epi, contentType='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
+    
     return itemlist
 
 
@@ -183,6 +192,7 @@ def list_all(item):
     for elem in matches:
         url = elem.a["href"]
         lang, title = clear_title(elem.a.get("title", '') or elem.find("h3", class_="seristitles").text)
+        title = re.sub('(?i)1080p|720p|movie|ovas|ova|onas|ona|especiales|especial|specials|special', '', title).strip()
         thumb = elem.img["src"]
 
         context = renumbertools.context(item)
@@ -218,6 +228,7 @@ def section(item):
 
         url = host + "animes?categoris=anime&%s=%s" % (item.section, elem["value"])
         title = elem["value"].capitalize()
+        
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
 
     return itemlist
@@ -267,8 +278,10 @@ def findvideos(item):
 
 def search(item, texto):
     logger.info()
+    
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
+    
     try:
         if texto != '':
             return list_all(item)
@@ -282,11 +295,14 @@ def search(item, texto):
 
 
 def newest(categoria):
+    
     itemlist = []
     item = Item()
+    
     if categoria == 'anime':
         item.url = host
         itemlist = new_episodes(item)
+    
     return itemlist
 
 
@@ -298,6 +314,7 @@ def settingCanal(item):
 
 
 def clear_title(title):
+    
     if 'latino' in title.lower():
         lang = 'Latino'
     elif 'castellano' in title.lower():
@@ -342,8 +359,7 @@ def folders(item):
         init = inicial - 1
         itemlist.append(Item(channel=item.channel, title=title, url=item.url,
                              action='episodesxfolder', init=init, fin=final, type=item.type,
-                             thumbnail=item.thumbnail,
-                             foldereps=True))
+                             thumbnail=item.thumbnail, foldereps=True))
         count += 1
 
     if item.contentSerieName != '' and config.get_videolibrary_support() and len(
@@ -377,6 +393,8 @@ def episodesxfolder(item):
         lang = item.language
         try:
             season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, int(episode))
+            season = int(season)
+            episode = int(episode)
         except:
             season = 1
             episode = 1
@@ -386,7 +404,7 @@ def episodesxfolder(item):
         infoLabels['episode'] = episode
 
         itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.contentSerieName, url=url,
-                             action='findvideos', language=lang, infoLabels=infoLabels))
+                             action='findvideos', language=lang, infoLabels=infoLabels, contentType='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 

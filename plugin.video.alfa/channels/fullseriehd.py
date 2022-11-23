@@ -8,6 +8,7 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import re
+import traceback
 
 from channels import filtertools
 from bs4 import BeautifulSoup
@@ -203,6 +204,7 @@ def section(item):
                 itemlist.append(Item(channel=item.channel, title=title, action="list_all",
                                      url=url, type=item.type))
         except:
+            logger.error(traceback.format_exc())
             logger.error(soup)
 
     elif item.title == "Alfabetico":
@@ -250,9 +252,11 @@ def alpha_list(item):
             new_item.contentTitle = title
             new_item.action = "findvideos"
             new_item.quality = quality
+            new_item.contentType = 'movie'
         else:
             new_item.contentSerieName = title
             new_item.action = "seasons"
+            new_item.contentType = 'tvshow'
 
         itemlist.append(new_item)
 
@@ -269,16 +273,23 @@ def alpha_list(item):
 
 def seasons(item):
     logger.info()
+    
     itemlist = list()
     infoLabels = item.infoLabels
+    
     soup = create_soup(item.url).find_all("li", class_="sel-temp")
+    
     for elem in soup:
         season = elem.a["data-season"]
         id = elem.a["data-post"]
         title = "Temporada %s" % season
-        infoLabels["season"] = season
+        try:
+            infoLabels["season"] = int(season)
+        except:
+            infoLabels["season"] = 1
+        
         itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseason', id=id, 
-                             infoLabels=infoLabels))
+                             infoLabels=infoLabels, contentType='season'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -295,31 +306,42 @@ def seasons(item):
 
 def episodios(item):
     logger.info()
+    
     itemlist = list()
+    
     templist = seasons(item)
+    
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
+    
     return itemlist
 
 
 def episodesxseason(item):
     logger.info()
+    
     itemlist = list()
     infoLabels = item.infoLabels
     season = infoLabels["season"]
-    url= "%swp-admin/admin-ajax.php" %host
+    url= "%swp-admin/admin-ajax.php" % host
     post = {'action': 'action_select_season', 'season': season, 'post': item.id}
+    
     soup = create_soup(url, post=post).find_all('article')
+    
     for elem in soup:
         url = elem.a["href"]
-        cap = elem.find("span", class_="num-epi").text.split('x')[1]
-        if int(cap) < 10:
+        try:
+            cap = int(elem.find("span", class_="num-epi").text.split('x')[1])
+        except:
+            cap = 1
+        if cap < 10:
             cap = "0%s" % cap
         title = "%sx%s" % (season, cap)
         title = "%sx%s" % (season, cap)
         infoLabels["episode"] = cap
+        
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos",
-                             infoLabels=infoLabels))
+                             infoLabels=infoLabels, contentType='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -336,14 +358,29 @@ def episodesxseason(item):
 
 def findvideos(item):
     logger.info()
+    
     itemlist = list()
+    
     data = create_soup(item.url)
     try:
         video_urls = data.find("aside", class_="video-player").find_all('iframe')
         info = data.find("aside", class_="video-options").find_all('li')
     except:
-        logger.error(data)
-        return itemlist
+        try:
+            video_urls = data.find("tbody").find_all('a', class_="btn sm rnd blk")
+            for video_url in video_urls:
+                item.url = video_url['href']
+                break
+            else:
+                logger.error(video_urls)
+                return itemlist
+            return findvideos_acorta(item)
+        except:
+            logger.error(traceback.format_exc())
+            logger.error(item.url)
+            logger.error(data)
+            return itemlist
+    
     for url, info in zip(video_urls, info):
         try:
             url = url['data-src']
@@ -357,6 +394,7 @@ def findvideos(item):
             itemlist.append(Item(channel=item.channel, title=srv, url=url, action='play', server=srv, opt="1",
                                 infoLabels=infoLabels, language=lang, quality=quality))
         except:
+            logger.error(traceback.format_exc())
             logger.error(url)
             logger.error(info)
     
@@ -380,21 +418,65 @@ def findvideos(item):
     return itemlist
 
 
+def findvideos_acorta(item):
+    logger.info()
+    from lib.generictools import convert_url_base64
+    
+    itemlist = list()
+    infoLabels = item.infoLabels
+    
+    try:
+        url = convert_url_base64(item.url)
+        data = create_soup(url)
+        info = data.find("ul", class_="tabs").find_all('li')
+        video_urls = data.find_all("div", class_="tab_content")
+    except:
+        logger.error(traceback.format_exc())
+        logger.error(item.url)
+        logger.error(data)
+        return itemlist
+
+    for info_block, url_block in zip(info, video_urls):
+        info = info_block.div.text.replace('Espanol', 'Castellano')
+        lang = info.split(' ')[0]
+        quality = info.replace(lang, '').strip()
+        lang = IDIOMAS.get(lang, lang)
+
+        for url_acorta in url_block.find_all('a'):
+            try:
+                url = url_acorta.text
+
+                itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', 
+                                    infoLabels=infoLabels, language=lang, quality=quality))
+            except:
+                logger.error(traceback.format_exc())
+                logger.error(info_block)
+                logger.error(url_block)
+        
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
+    
+    return itemlist
+
+
 def play(item):
     logger.info()
+    
     itemlist = list()
+    
     if not item.opt:
         if host in item.url:
             item.url = httptools.downloadpage(item.url, ignore_response_code=True).url
         
-        itemlist.append(item.clone(url=item.url, server=""))
-        itemlist = servertools.get_servers_itemlist(itemlist)
+        itemlist.append(item.clone(url=item.url, server=item.server or ''))
+        if not item.server: itemlist = servertools.get_servers_itemlist(itemlist)
         
         return itemlist
+    
     url = create_soup(item.url).find("div", class_="Video").iframe["src"]
     if 'Gdri.php' in url:
         url = scrapertools.find_single_match(url, 'v=([A-z0-9-_=]+)')
         url = 'https://drive.google.com/file/d/%s/preview' % url
+    
     itemlist.append(item.clone(url=url, server=""))
     itemlist = servertools.get_servers_itemlist(itemlist)
 
@@ -415,17 +497,24 @@ def search(item, texto):
             logger.error("%s" % line)
         return []
 
+
 def fix_title(title):
+    
     title = re.sub(r'\((.*)', '', title)
     title = re.sub(r'\[(.*?)\]', '', title)
+    
     return title
+
 
 def get_downlist(item, data):
     import base64
     logger.info()
+    
     downlist = list()
     servers = {'drive': 'gvideo', '1fichier': 'onefichier'}
+    
     soup = data.find("tbody")
+    
     if soup:
         soup = soup.find_all("tr")
         infoLabels = item.infoLabels
@@ -443,6 +532,7 @@ def get_downlist(item, data):
             lang = info[1].text
             lang = IDIOMAS.get(lang, lang)
             quality = info[2].text
+            
             downlist.append(Item(channel=item.channel, title=srv, url=url, action='play', server=srv,
                                 infoLabels=infoLabels, language=lang, quality=quality))
     return downlist

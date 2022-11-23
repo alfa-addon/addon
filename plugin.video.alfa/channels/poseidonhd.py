@@ -41,7 +41,8 @@ canonical = {
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-AlfaChannel = ToroPdon(host, movie_path="/pelicula", tv_path="/serie", canonical=canonical)
+url_replace = [("/series/", "/serie/")]
+AlfaChannel = ToroPdon(host, movie_path="/pelicula", tv_path="/serie", canonical=canonical, url_replace=url_replace)
 forced_proxy_opt = 'ProxyCF'
 
 
@@ -184,7 +185,7 @@ def play(item):
 
     itemlist = list()
     kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': -1, 
-              'CF': False, 'CF_assistant': False, 'canonical': {}}
+              'CF': False, 'cf_assistant': False, 'canonical': {}}
     
     try:
         #data = AlfaChannel.create_soup(item.url, forced_proxy_opt=forced_proxy_opt, **kwargs).find("input")["value"]
