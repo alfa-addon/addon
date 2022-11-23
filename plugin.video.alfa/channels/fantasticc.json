@@ -1,7 +1,7 @@
 {
   "id": "fantasticc",
   "name": "fantasticc",
-  "active": true,
+  "active": false,
   "adult": true,
   "language": ["*"],
   "thumbnail": "https://fantasti.cc/static/images/logo.png",

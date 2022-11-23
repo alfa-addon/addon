@@ -92,7 +92,7 @@ def lista(item):
         pais = elem['country']
         if pais:
             title += " (%s)" %pais
-        thumbnail = "https://img.strpst.com/%s/thumbs/%s/%s_webp" %(server, thumbnail, id)
+        thumbnail = "https://img.strpst.com/thumbs/%s/%s_webp" %(thumbnail, id)
         if not url or "_240p" in url:
             url = "https://b-hls-03.doppiocdn.com/hls/%s/%s.m3u8" %(id, id)
         plot = ""

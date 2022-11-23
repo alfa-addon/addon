@@ -31,14 +31,9 @@ def get_video_url(page_url, user="", password="", video_password=""):
         url= ""
         for i in orden:
             url += scrapertools.find_single_match(data, '%s="([^"]+)"' %i)
-    data = httptools.downloadpage(url, headers=headers, set_tls=True, set_tls_min=True).json
-    for elem in data:
-        url = elem['videoUrl']
-        quality = elem['quality']
-        if url:
-            video_urls.append(["%s [pornhub]" % quality, url])
-
-    # video_urls.pop()
+        if "master.m3u8" in url and not "K," in url:
+            quality = scrapertools.find_single_match(url, '/(\d+P)_')
+            video_urls.append(["[pornhub] %s" % quality, url])
     video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls
 

@@ -84,7 +84,6 @@ def catalogo(item):
         title = "%s (%s)" % (stitle,cantidad)
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail))
-        # Paginador
     next_page = soup.find('li', class_='page_next')
     if next_page:
         next_page = next_page.a['href']
@@ -103,13 +102,11 @@ def categorias(item):
         stitle = elem.a['data-mxptext']
         thumbnail = elem.img['data-thumb_url']
         cantidad = elem.find('span', class_='videoCount').text.strip()
-        if "?" in url:
-            url = urlparse.urljoin(item.url, url + "&o=cm")
-        else:
-            url = urlparse.urljoin(item.url, url + "?o=cm")
+        url = urlparse.urljoin(item.url, url)
         title = "%s %s" % (stitle,cantidad)
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail))
+    itemlist.sort(key=lambda x: x.title)
     return itemlist
 
 
@@ -131,20 +128,19 @@ def lista(item):
     soup = create_soup(item.url)
     if "/pornstar/" in item.url:
         matches = soup.find('ul', id='mostRecentVideosSection').find_all('div', class_='phimage')
-    elif "channels" in item.url:
-        matches = soup.find_all('li', class_='pcVideoListItem')
     else:
-        matches = soup.find('div', class_='gridWrapper').find_all('div', class_='phimage')
+        matches = soup.find('ul', class_='search-video-thumbs').find_all('li', class_='pcVideoListItem')
     for elem in matches:
         url = elem.a['href']
         stitle = elem.a['title']
         if not elem.find('div', class_='thumbTextPlaceholder'):
-            thumbnail = elem.img['data-thumb_url']
+            thumbnail = elem.img['src']
+        canal = elem.find('div', class_='usernameWrap')
         stime = elem.find('var', class_='duration').text
         quality = elem.find('span', class_='hd-thumbnail')
         premium = elem.find('i', class_='premiumIcon')
-        if quality:
-            title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s"% (stime,quality.text,stitle)
+        if canal:
+            title = "[COLOR yellow]%s[/COLOR] [COLOR cyan][%s][/COLOR] %s"% (stime,canal.text.strip(),stitle)
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
         url = urlparse.urljoin(item.url, url)

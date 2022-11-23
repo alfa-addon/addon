@@ -110,6 +110,8 @@ def lista(item):
         url = elem.a['href']
         title = elem.a['oldtitle']
         thumbnail = elem.img['src']
+        if "svg+" in thumbnail:
+            thumbnail = elem.img['data-lazy-src']
         if not "xxxscenes" in item.url:
             year = elem.find('div', class_='jtip-top').a.text.strip()
         else:

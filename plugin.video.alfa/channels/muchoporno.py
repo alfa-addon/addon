@@ -16,13 +16,24 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+from bs4 import BeautifulSoup
 
-host = 'https://pornburst.xxx'
+#        
+
+canonical = {
+             'channel': 'muchoporno', 
+             'host': config.get_setting("current_host", 'muchoporno', default=''), 
+             'host_alt': ["https://www.pornburst.xxx","https://www.muchoporno.xxx"], 
+             'host_black_list': [], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "/page3.html"))
+    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host))
     itemlist.append(item.clone(title="Pornstars" , action="categorias", url=host + "/pornstars/"))
     itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/sites/"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
@@ -46,62 +57,65 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    if not "/categories/" in item.url:
-        patron = 'class="muestra-escena.*?'
-        patron += 'href="([^"]+)".*?'
-        patron += 'data-src="([^"]+)".*?'
-        patron += 'alt="([^"]+)".*?'
-        patron += '</span>([^<]+)</span>'
-    else:
-        patron  = 'class="muestra-escena.*?'
-        patron += 'href="([^"]+)".*?'
-        patron += 'data-src="([^"]+)".*?'
-        patron += 'alt="([^"]+)".*?'
-        patron += '<span class="ico.*?></span>([^<]+)</h2>'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
-        scrapedplot = ""
-        if "videos" in cantidad:
-            scrapedtitle ="%s (%s)" % (scrapedtitle, cantidad)
-        scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
-                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail , plot=scrapedplot) )
-    next_page = scrapertools.find_single_match(data,'<link rel="next" href="([^"]+)"')
-    if next_page!="":
-        next_page = urlparse.urljoin(item.url,next_page)
+    soup = create_soup(item.url)
+    matches = soup.find('div', class_='contenido').find_all(attrs={"class": "muestra-escena"})
+    for elem in matches:
+        if "/sites/" in item.url:
+            url = elem.a['href']
+        else:
+            url = elem['href']
+        title = elem.h2.text.strip()
+        thumbnail = elem.img['data-src']
+        thumbnail = thumbnail.replace("/model2-", "/model")
+        cantidad = elem.find('span', class_='videos')
+        if cantidad:
+            title = "%s (%s)" %(title, cantidad.text.strip())
+        url = urlparse.urljoin(item.url,url)
+        itemlist.append(item.clone(action="lista", title=title, url=url,
+                              fanart=thumbnail, thumbnail=thumbnail ) )
+    next_page = soup.find('link', rel='next')
+    if next_page:
+        next_page = next_page['href']
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
+
+
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<a class="muestra-escena"\s*href="([^"]+)".*?'
-    patron += 'data-stats-video-name="([^"]+)".*?'
-    patron += 'data-src="([^"]+)".*?'
-    patron += '<span class="ico-minutos sprite" title="Length"></span>([^"]+)</span>'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail,duracion  in matches:
-        url = urlparse.urljoin(item.url,scrapedurl)
-        title = "[COLOR yellow]%s[/COLOR] %s" % (duracion,scrapedtitle)
-        contentTitle = title
-        thumbnail = scrapedthumbnail
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', class_='box-link-productora')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.a['data-stats-video-name']
+        thumbnail = elem.img['data-src']
+        time = elem.find('spam', class_='minutos')
+        if time:
+            time = time.text.strip()
+            title = "[COLOR yellow]%s[/COLOR] %s" % (time, title)
+        url = urlparse.urljoin(item.url,url)
         plot = ""
-        year = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumbnail,
-                              fanart=thumbnail, plot=plot, contentTitle = contentTitle))
-    next_page = scrapertools.find_single_match(data,'<link rel="next" href="([^"]+)"')
-    if not next_page:
-        next_page = scrapertools.find_single_match(data,'next "><a href="([^"]+)"')
-        next_page = urlparse.urljoin(host,next_page)
-    if next_page!="":
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
+                               plot=plot, fanart=thumbnail, contentTitle=title ))
+    next_page = soup.find('li', class_='pagination_item--next')
+    if next_page:
+        next_page = next_page.a['href']
+        next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
@@ -109,22 +123,16 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = '<source src="([^"]+)" type="video/mp4"'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl  in matches:
-        title = scrapedurl
-    itemlist.append(item.clone(action="play", title="Directo", url=scrapedurl))
+    soup = create_soup(item.url)
+    url = soup.find('video').source['src']
+    itemlist.append(item.clone(action="play", title="Directo", contentTitle=item.contentTitle, url=url))
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = '<source src="([^"]+)" type="video/mp4"'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl  in matches:
-        title = scrapedurl
-    itemlist.append(item.clone(action="play", title=title, url=scrapedurl))
+    soup = create_soup(item.url)
+    url = soup.find('video').source['src']
+    itemlist.append(item.clone(action="play", contentTitle=item.contentTitle, url=url))
     return itemlist
