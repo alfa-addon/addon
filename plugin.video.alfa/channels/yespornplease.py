@@ -23,8 +23,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'yespornplease', 
              'host': config.get_setting("current_host", 'yespornplease', default=''), 
-             'host_alt': ["https://yespornpleasexxx.com"], 
+             'host_alt': ["https://yespornpleasexxx.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -34,9 +35,9 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/pornstars/"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars/"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host ))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/tags/" ))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags/" ))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -44,7 +45,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/?s=%s" % (host,texto)
+    item.url = "%s?s=%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -75,9 +76,9 @@ def categorias(item):
 def canal(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="BangBros" , action="lista", url=host + "/bangbros/"))
-    itemlist.append(Item(channel=item.channel, title="Brazzers" , action="lista", url=host + "/brazzers/"))
-    itemlist.append(Item(channel=item.channel, title="Reality Kings" , action="lista", url=host + "/reality-kings/"))
+    itemlist.append(Item(channel=item.channel, title="BangBros" , action="lista", url=host + "bangbros/"))
+    itemlist.append(Item(channel=item.channel, title="Brazzers" , action="lista", url=host + "brazzers/"))
+    itemlist.append(Item(channel=item.channel, title="Reality Kings" , action="lista", url=host + "reality-kings/"))
     soup = create_soup(item.url)
     matches = soup.find('div', class_='text-center').find_all('a', href=re.compile(r"^https://yespornpleasexxx.com/")) #.select('a[href^="https://yespornpleasexxx.com/"]')
     for elem in matches:
@@ -94,9 +95,9 @@ def canal(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -141,18 +142,6 @@ def findvideos(item):
     return itemlist
 
 
-# def play(item):
-    # logger.info()
-    # itemlist = []
-    # soup = create_soup(item.url).find('div', class_='wp-video')
-    # url = soup.iframe['src']
-    # matches = create_soup(url).find_all('source', type='video/mp4')
-    # for elem in matches:
-        # url = elem['src']
-        # url += "|ignore_response_code=True"
-        # itemlist.append(Item(channel=item.channel, action="play", title= "Directo", url=url))
-    # return itemlist
-
 def play(item):
     logger.info()
     itemlist = []
@@ -161,10 +150,7 @@ def play(item):
     matches = create_soup(url).find_all('source', type='video/mp4')
     for elem in matches:
         url = elem['src']
-    url += "|Referer=%s" % item.url
-    listitem = xbmcgui.ListItem(item.title)
-    listitem.setArt({'thumb': item.thumbnail, 'icon': "DefaultVideo.png", 'poster': item.thumbnail})
-    listitem.setInfo('video', {'Title': item.title, 'Genre': 'Porn', 'plot': '', 'plotoutline': ''})
-    listitem.setMimeType('application/vnd.apple.mpegurl')
-    listitem.setContentLookup(False)
-    return xbmc.Player().play(url, listitem)
+        url += "|Referer=%s" % item.url
+        itemlist.append(Item(channel=item.channel, action="play", title= "Directo", url=url))
+    return itemlist
+

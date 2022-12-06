@@ -8,8 +8,8 @@
         "url": "\\1"
       },
       {
-        "pattern": "http://tv.fakings.com/embed/([A-z0-9]+)/",
-        "url": "http://tv.fakings.com/embed/\\1/"
+        "pattern": "(https://tv.fakings.com/(?:embed|video)/[A-z0-9-]+)",
+        "url": "\\1"
       }
       ]
   },

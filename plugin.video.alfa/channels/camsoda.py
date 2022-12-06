@@ -21,25 +21,27 @@ list_servers = []
 canonical = {
              'channel': 'camsoda', 
              'host': config.get_setting("current_host", 'camsoda', default=''), 
-             'host_alt': ["https://camsoda.com"], 
+             'host_alt': ["https://camsoda.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
+httptools.downloadpage(host, canonical=canonical).data
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/api/v1/browse/react/?p=1"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/api/v1/tags/index?page=1"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "api/v1/browse/react/?p=1"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "api/v1/tags/index?page=1"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "%20")
-    item.url = "%s/api/v1/browse/react/search/%s?p=1" % (host, texto)
+    item.url = "%sapi/v1/browse/react/search/%s?p=1" % (host, texto)
     try:
         return lista(item)
     except:
@@ -52,13 +54,13 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     for elem in data['tag_list']:
         name = elem['tag_slug']
         cantidad = elem['tag_count']
         title = "%s (%s)" %(name, cantidad)
         thumbnail = ""
-        url = "%s/api/v1/browse/react/tag/%s-cams?p=1" % (host,name)
+        url = "%sapi/v1/browse/react/tag/%s-cams?p=1" % (host,name)
         plot = "[COLOR yellow]%s[/COLOR]" %name
         itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
@@ -75,13 +77,13 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     for elem in data['userList']:
         title = elem['username']
         is_on = elem['status']
         thumbnail = elem['thumbUrl']
         username = "guest_22596"
-        url = "%s/api/v1/video/vtoken/%s?username=%s" % (host,title,username)
+        url = "%sapi/v1/video/vtoken/%s?username=%s" % (host,title,username)
         if not "online" in is_on:
             title = "[COLOR red]%s[/COLOR]" % title
         if not thumbnail.startswith("https"):
@@ -104,7 +106,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     server = data['edge_servers']
     token = data['token']
     dir = data['stream_name']
@@ -122,7 +124,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     server = data['edge_servers']
     token = data['token']
     dir = data['stream_name']

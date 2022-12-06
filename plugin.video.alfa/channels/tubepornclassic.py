@@ -18,33 +18,42 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
+#  https://hclips.com    https://hdzog.com  https://hotmovs.com   https://txxx.com 
+#  https://tubepornclassic.com  https://upornia.com    https://vjav.com   https://voyeurhit.com  
+#  https://desiporn.tube/   https://manysex.com/  https://porntop.com/   https://shemalez.com/  https://thegay.com/ 
+#  https://pornzog.com/   https://tporn.xxx/  https://see.xxx/ 
+
 canonical = {
              'channel': 'tubepornclassic', 
              'host': config.get_setting("current_host", 'tubepornclassic', default=''), 
-             'host_alt': ["https://tubepornclassic.com"], 
+             'host_alt': ["https://tubepornclassic.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-url_api = host + "/api/json/videos/14400"
+url_api = host + "api/json/videos/%s/%s/%s/60/%s.%s.1.all..%s.json"
+httptools.downloadpage(host, canonical=canonical).data
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=url_api + "/str/latest-updates/60/..1.all...json"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=url_api + "/str/most-viewed/60/..1.all..day.json"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=url_api + "/str/top-rated/60/..1.all..day.json"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "/api/json/models/86400/str/filt........../most-popular/65/1.json"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categoria", url=host + "/api/json/categories/14400/str.all.en.json"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Ultimas" , action="lista", url=url_api % ("14400", "str", "latest-updates", "", "", "")))
+    itemlist.append(Item(channel=item.channel, title="Mejor valoradas" , action="lista", url=url_api % ("14400", "str", "top-rated", "", "", "month")))
+    itemlist.append(Item(channel=item.channel, title="Mas popular" , action="lista", url=url_api % ("14400", "str", "most-popular", "", "", "month")))
+    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="lista",  url=url_api % ("14400", "str", "most-commented", "", "", "month") ))
+    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="pornstar", url=host + "api/json/models/86400/%s/filt........../most-popular/48/1.json" %"str"))
+    # itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "api/json/channels/14400/%s/most-viewed/80/..1.json" %"str"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "api/json/categories/14400/%s.all.json" %"str"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", orientation="str"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = "%s/api/videos.php?params=259200/str/relevance/60/search..1.all..&s=%s&sort=latest-updates" % (host, texto)
+    texto = texto.replace(" ", "%20")
+    item.url = "%sapi/videos.php?params=259200/%s/relevance/60/search..1.all..&s=%s&sort=latest-updates&date=all&type=all&duration=all" % (host,item.orientation,texto)
     try:
         return lista(item)
     except:
@@ -54,104 +63,131 @@ def search(item, texto):
         return []
 
 
+def pornstar(item):
+    logger.info()
+    itemlist = []
+    if not item.orientation:
+        item.orientation = "str"
+    headers = {'Referer': "%s" % host}
+    data = httptools.downloadpage(item.url, headers=headers, canonical=canonical).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    JSONData = json.load(data)
+    for cat in  JSONData["models"]:
+        scrapedtitle = cat["title"]
+        dir = cat["dir"]
+        scrapedthumbnail =  cat["img"]
+        num = cat["statistics"]
+        n = 'videos'
+        num = num.get(n,n)
+        thumbnail = scrapedthumbnail.replace("\/", "/")
+        scrapedplot = ""
+        url = url_api % ("14400", item.orientation, "latest-updates", "model", dir, "")
+        title = "%s (%s)" %(scrapedtitle,num)
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail=thumbnail , plot=scrapedplot) )
+    total= int(JSONData["total_count"])
+    page = int(scrapertools.find_single_match(item.url,'.*?(\d+).json'))
+    url_page = scrapertools.find_single_match(item.url,'(.*?)\d+.json')
+    next_page = (page+ 1)
+    if (page*60) < total:
+        next_page = "%s%s.json" %(url_page,next_page)
+        itemlist.append(Item(channel=item.channel, action="pornstar", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    return itemlist
+
+
+
 def catalogo(item):
     logger.info()
     itemlist = []
-    headers = {'Referer': host }
-    data = httptools.downloadpage(item.url, headers=headers).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
+    if not item.orientation:
+        item.orientation = "str"
+    headers = {'Referer': "%s" % host}
+    data = httptools.downloadpage(item.url, headers=headers, canonical=canonical).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     JSONData = json.load(data)
-    for Video in  JSONData["models"]:
-        dir =  Video["dir"]
-        title = Video["title"]
-        thumbnail = Video["img"]
-        id = dir[:2]
-        url = host + "/api/json/model/3600/%s/%s.json" %(id,dir)
-        itemlist.append(Item(channel=item.channel, action="actriz", title=title, url=url,
-                              fanart=thumbnail, thumbnail=thumbnail, plot="") )
-    pages = JSONData["total_count"]
-    pages = round(int(pages)/65.0)
-    Actual = int(scrapertools.find_single_match(item.url, '65/(\d+)'))
-    if pages > Actual:
-        url = item.url.replace("%s.json" % str(Actual), "%s.json" % str(Actual + 1))
-        itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=url))
+    for cat in  JSONData["channels"]:
+        scrapedtitle = cat["title"]
+        dir = cat["dir"]
+        scrapedthumbnail =  cat["cf3"]
+        num = cat["statistics"]
+        n = 'videos'
+        num = num.get(n,n)
+        thumbnail = scrapedthumbnail.replace("\/", "/")
+        plot = ""
+        url = url_api % ("7200", item.orientation, "latest-updates", "channel", dir, "")
+        title = "%s (%s)" %(scrapedtitle,num)
+        itemlist.append(Item(channel=item.channel, action="lista", title=title , url=url , 
+                        thumbnail=thumbnail , plot=plot) )
+    total= int(JSONData["total_count"])
+    page = int(scrapertools.find_single_match(item.url,'.*?.(\d+).json'))
+    url_page = scrapertools.find_single_match(item.url,'(.*?).\d+.json')
+    next_page = (page+ 1)
+    if (page*60) < total:
+        next_page = "%s.%s.json" %(url_page,next_page)
+        itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
-def actriz(item):
+def categorias(item):
     logger.info()
     itemlist = []
-    headers = {'Referer': host }
-    data = httptools.downloadpage(item.url, headers=headers).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    id = scrapertools.find_single_match(data, '"model_id":"(\d+)"')
-    url = url_api + "/str/latest-updates/42/model.%s.1.all...json" %id
-    actress_item =(Item(channel=item.channel, action="", url=url))
-    itemlist = lista(actress_item)
-    return itemlist
-
-
-def categoria(item):
-    logger.info()
-    itemlist = []
-    headers = {'Referer': host }
-    data = httptools.downloadpage(item.url, headers=headers).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
+    if not item.orientation:
+        item.orientation = "str"
+    headers = {'Referer': "%s" % host}
+    data = httptools.downloadpage(item.url, headers=headers, canonical=canonical).data
     JSONData = json.load(data)
-    for Video in  JSONData["categories"]:
-        dir =  Video["dir"]
-        title = Video["title"]
-        cantidad =  Video["total_videos"]
-        title = "%s (%s)" %(title, cantidad)
-        url = url_api + "/str/latest-updates/60/categories.%s.1.all..day.json" %dir
+    for cat in  JSONData["categories"]:
+        scrapedtitle = cat["title"]
+        dir = cat["dir"]
+        num = cat["total_videos"]
+        url = url_api % ("14400", item.orientation, "latest-updates", "categories", dir, "day")
         thumbnail = ""
-        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
-                              fanart=thumbnail, thumbnail=thumbnail, plot="") )
-    return itemlist
+        scrapedplot = ""
+        title = "%s (%s)" %(scrapedtitle,num)
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail=thumbnail, plot=scrapedplot) )
+    return  sorted(itemlist, key=lambda i: i.title)
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    headers = {'Referer': host }
-    data = httptools.downloadpage(item.url, headers=headers).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
+    headers = {'Referer': "%s" % host}
+    data = httptools.downloadpage(item.url, headers=headers, canonical=canonical).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     JSONData = json.load(data)
     for Video in  JSONData["videos"]:
-        id = Video["video_id"]
-        dir =  Video["dir"]
-        title = Video["title"]
-        thumbnail = Video["scr"]
-        time =  Video["duration"]
-        quality =  Video["props"]
-        if quality:
-            quality ="HD"
+        video_id = Video["video_id"]
+        dir = Video["dir"]
+        scrapedtitle = Video["title"]
+        duration = Video["duration"]
+        scrapedthumbnail =  Video["scr"]
+        scrapedhd =  Video["props"]
+        scrapedurl = "%sembed/%s" %(host,video_id)
+        if scrapedhd:
+            title = "[COLOR yellow]%s[/COLOR] [COLOR tomato]HD[/COLOR] %s" % (duration, scrapedtitle)
         else:
-            quality = ""
-        url = "%s/videos/%s/%s/" %(host, id,dir)
-        title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time, quality, title)
+            title = "[COLOR yellow]%s[/COLOR] %s" % (duration, scrapedtitle)
+        thumbnail = scrapedthumbnail.replace("\/", "/")
         plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url,
-                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
-    pages = JSONData["total_count"]
-    if "model" in item.url:
-        pages = round(int(pages)/40.0)
-    else:
-        pages = round(int(pages)/60.0)
-    Actual = int(scrapertools.find_single_match(item.url, '\.(\d+)\.all'))
-    if pages > Actual:
-        url = item.url.replace(".%s.all" % str(Actual), ".%s.all" % str(Actual + 1))
-        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=url))
+        itemlist.append(Item(channel=item.channel, action=action, title=title , url=scrapedurl, thumbnail=thumbnail, 
+                        fanart=thumbnail, plot=plot, contentTitle=title) )
+    total= int(JSONData["total_count"])
+    page = int(scrapertools.find_single_match(item.url,'(\d+).all..'))
+    url_page = scrapertools.find_single_match(item.url,'(.*?).\d+.all..')
+    post = scrapertools.find_single_match(item.url,'all..(.*)')
+    next_page = (page+ 1)
+    if (page*60) < total:
+        next_page = "%s.%s.all..%s" %(url_page,next_page,post)
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -159,6 +195,7 @@ def play(item):
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
+

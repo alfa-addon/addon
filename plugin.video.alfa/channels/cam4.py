@@ -21,22 +21,23 @@ from core import jsontools as json
 canonical = {
              'channel': 'cam4', 
              'host': config.get_setting("current_host", 'cam4', default=''), 
-             'host_alt': ["https://www.cam4.com"], 
+             'host_alt': ["https://www.cam4.com/"], 
              'host_black_list': [], 
-             'pattern': ['hreflang="x-default"\s*href="([^"]+)"'], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
+             'pattern': ['hreflang="x-default" href="([^"]+)"'],
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-
+httptools.downloadpage(host, canonical=canonical).data
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    all = "%s/directoryCams?directoryJson=true&online=true&url=true&page=1" %host
-    url1= "%s/directoryCams?directoryJson=true&online=true&url=true&gender=female&broadcastType=female_group&broadcastType=solo&broadcastType=male_female_group&page=1" %host
-    url2= "%s/directoryCams?directoryJson=true&online=true&url=true&broadcastType=female_group&broadcastType=male_female_group&page=1" %host
-    url3= "%s/directoryCams?directoryJson=true&online=true&url=true&gender=male&broadcastType=male_group&broadcastType=solo&page=1" %host
-    url4= "%s/directoryCams?directoryJson=true&online=true&url=true&gender=shemale&page=1" %host
+    all = "%sdirectoryCams?directoryJson=true&online=true&url=true&page=1" %host
+    url1= "%sdirectoryCams?directoryJson=true&online=true&url=true&gender=female&broadcastType=female_group&broadcastType=solo&broadcastType=male_female_group&page=1" %host
+    url2= "%sdirectoryCams?directoryJson=true&online=true&url=true&broadcastType=female_group&broadcastType=male_female_group&page=1" %host
+    url3= "%sdirectoryCams?directoryJson=true&online=true&url=true&gender=male&broadcastType=male_group&broadcastType=solo&page=1" %host
+    url4= "%sdirectoryCams?directoryJson=true&online=true&url=true&gender=shemale&page=1" %host
 
     itemlist.append(Item(channel = item.channel, title="Trending Cams" , action="lista", url=all))
     itemlist.append(Item(channel = item.channel, title="Females" , action="lista", url=url1))
@@ -50,7 +51,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "")
-    item.url = "%s/directoryCams?directoryJson=true&online=true&url=true&showTag=%s&page=1" % (host,texto)
+    item.url = "%sdirectoryCams?directoryJson=true&online=true&url=true&showTag=%s&page=1" % (host,texto)
     try:
         return lista(item)
     except:
@@ -63,7 +64,7 @@ def search(item, texto):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|#038;", "", data)
     JSONData = json.load(data)
     for Video in  JSONData["users"]:
@@ -76,6 +77,7 @@ def lista(item):
         quality = quality.split(":")[-1]
         title =  "%s %s (%s)" % (title,age,pais)
         title += " [COLOR red]%s[/COLOR]" %quality
+        plot = ""
         if Video.get("statusMessage", ""):
             plot= Video['statusMessage'] 
         action = "play"

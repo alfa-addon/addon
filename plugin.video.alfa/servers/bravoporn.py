@@ -27,10 +27,13 @@ def get_video_url(page_url, video_password):
             quality = elem['title']
         else:
             quality = elem['label']
+        if "sd" in quality.lower(): quality = "480p"
+        if "hd" in quality.lower(): quality = "720p"
         if "lq" in quality.lower(): quality = "360p"
         if "hq" in quality.lower(): quality = "720p"
         if not url.startswith("http"):
             url = "http:%s" % url
+        url += "|Referer=%s" % page_url
         video_urls.append(["[%s] %s" %(server,quality), url])
     video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls

@@ -21,8 +21,9 @@ from core import httptools
 canonical = {
              'channel': 'fuckamouth', 
              'host': config.get_setting("current_host", 'fuckamouth', default=''), 
-             'host_alt': ["https://fuckamouth.com"], 
+             'host_alt': ["https://fuckamouth.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -32,8 +33,8 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/pornstars"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -41,7 +42,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/porn/search?search=%s" % (host, texto)
+    item.url = "%sporn/search?search=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -54,7 +55,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="post thumb-border">.*?'
     patron += '<a href="([^"]+)".*?'
@@ -67,6 +68,8 @@ def categorias(item):
         url = scrapedurl
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
+    if "categories" in item.url:
+        itemlist.sort(key=lambda x: x.title)
     next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)" rel="next"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
@@ -77,7 +80,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="item large-3.*?'
     patron += '<a href="([^"]+)".*?'
@@ -94,12 +97,13 @@ def lista(item):
         if not thumbnail.startswith("https"):
             thumbnail = "%s/%s" %(host,thumbnail)
         url = scrapedurl.replace("http://hd-porn.co", host)
+        url = urlparse.urljoin(item.url,url)
         plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url,
-                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
+                              fanart=thumbnail, thumbnail=thumbnail, plot=plot))
     next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)" rel="next"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
@@ -110,7 +114,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle=item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -118,16 +122,16 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     pornstars = scrapertools.find_multiple_matches(data, '<h3 class="hireq">([^<]+)<')
     pornstar = ' & '.join(pornstars)
     pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
-    lista = item.title.split()
-    if "HD" in item.title:
+    lista = item.contentTitle.split()
+    if "HD" in item.contentTitle:
         lista.insert (5, pornstar)
     else:
         lista.insert (3, pornstar)
-    item.title = ' '.join(lista)
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=item.url))
+    item.contentTitle = ' '.join(lista)
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle=item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

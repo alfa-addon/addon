@@ -22,8 +22,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'chaturbate', 
              'host': config.get_setting("current_host", 'chaturbate', default=''), 
-             'host_alt': ["https://es.chaturbate.com"], 
+             'host_alt': ["https://chaturbate.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,27 +32,27 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel = item.channel, title="Mujeres" , action="lista", url=host + "/female-cams/"))
-    itemlist.append(Item(channel = item.channel, title="Hombres" , action="lista", url=host + "/male-cams/"))
-    itemlist.append(Item(channel = item.channel, title="Parejas" , action="lista", url=host + "/couple-cams/"))
-    itemlist.append(Item(channel = item.channel, title="Trans" , action="lista", url=host + "/trans-cams/"))
+    itemlist.append(Item(channel = item.channel, title="Mujeres" , action="lista", url=host + "female-cams/"))
+    itemlist.append(Item(channel = item.channel, title="Hombres" , action="lista", url=host + "male-cams/"))
+    itemlist.append(Item(channel = item.channel, title="Parejas" , action="lista", url=host + "couple-cams/"))
+    itemlist.append(Item(channel = item.channel, title="Trans" , action="lista", url=host + "trans-cams/"))
     itemlist.append(Item(channel = item.channel, title="Categorias" , action="submenu"))
     return itemlist
 
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel = item.channel, title="Mujeres" , action="categorias", url=host + "/tags/f/"))
-    itemlist.append(Item(channel = item.channel, title="Hombres" , action="categorias", url=host + "/tags/m/"))
-    itemlist.append(Item(channel = item.channel, title="Parejas" , action="categorias", url=host + "/tags/c/"))
-    itemlist.append(Item(channel = item.channel, title="Trans" , action="categorias", url=host + "/tags/s/"))
+    itemlist.append(Item(channel = item.channel, title="Mujeres" , action="categorias", url=host + "tags/f/"))
+    itemlist.append(Item(channel = item.channel, title="Hombres" , action="categorias", url=host + "tags/m/"))
+    itemlist.append(Item(channel = item.channel, title="Parejas" , action="categorias", url=host + "tags/c/"))
+    itemlist.append(Item(channel = item.channel, title="Trans" , action="categorias", url=host + "tags/s/"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/search/%s/" % (host,texto)
+    item.url = "%ssearch/%s/" % (host,texto)
     try:
         return lista(item)
     except:
@@ -90,9 +91,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -130,7 +131,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = data.replace("\\u0022" , '"').replace("\\u002D", "-")
     url = scrapertools.find_single_match(data, '"hls_source"\: "([^"]+)"')
     itemlist.append(Item(channel = item.channel, action="play", url=url))
@@ -140,7 +141,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = data.replace("\\u0022" , '"').replace("\\u002D", "-")
     url = scrapertools.find_single_match(data, '"hls_source"\: "([^"]+)"')
     itemlist.append(Item(channel = item.channel, action="play", url=url, contentTitle=item.contentTitle))

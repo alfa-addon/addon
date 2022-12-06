@@ -18,7 +18,17 @@ from core import servertools
 from core import httptools
 import base64
 
-host = "https://daftsex.com"
+#                   https://dsex.to/
+canonical = {
+             'channel': 'daftsex', 
+             'host': config.get_setting("current_host", 'daftsex', default=''), 
+             'host_alt': ["https://daft.sex/"], 
+             'host_black_list': [], 
+             'pattern': ['href="?([^"|\s*]+)["|\s*]\s*target="_blank" title="Start'], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 # Categoria bigtits las url que no recoge funcionan despues de refrescar la pagina
 
@@ -26,9 +36,9 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel = item.channel, title="Nuevos" , action="lista", url=host, page=0))
-    itemlist.append(Item(channel = item.channel, title="Hot" , action="lista", url=host + "/hottest")) 
-    itemlist.append(Item(channel = item.channel, title="PornStar" , action="categorias", url=host + "/pornstars"))
-    itemlist.append(Item(channel = item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
+    itemlist.append(Item(channel = item.channel, title="Hot" , action="lista", url=host + "hottest")) 
+    itemlist.append(Item(channel = item.channel, title="PornStar" , action="categorias", url=host + "pornstars"))
+    itemlist.append(Item(channel = item.channel, title="Categorias" , action="categorias", url=host + "categories"))
     itemlist.append(Item(channel = item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -36,7 +46,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "%20")
-    item.url = "%s/video/%s" % (host, texto)
+    item.url = "%svideo/%s" % (host, texto)
     item.page=0
     try:
         return lista(item)
@@ -50,7 +60,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     if "pornstar" in item.url:
         patron = '<div class="pornstar">.*?'
@@ -85,9 +95,9 @@ def lista(item):
         page += 1
         post = "page=%s" %page
         logger.info("Intel33 %s" %post)
-        data = httptools.downloadpage(item.url, post=post).data
+        data = httptools.downloadpage(item.url, post=post, canonical=canonical).data
     else:
-        data = httptools.downloadpage(item.url).data
+        data = httptools.downloadpage(item.url, canonical=canonical).data
     logger.info("Intel22 %s" %page)
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="video-item video(-[^"]+)".*?'
@@ -98,7 +108,7 @@ def lista(item):
     for scrapedurl,scrapedthumbnail,time,scrapedtitle in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
         thumbnail = scrapedthumbnail.replace("amp;", "")
-        url = "%s/watch/%s" %(host, scrapedurl)
+        url = "%swatch/%s" %(host, scrapedurl)
         plot = ""
         action = "play"
         if logger.info() == False:
@@ -125,7 +135,7 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     hash = scrapertools.find_single_match(data, 'hash:\s*"([^"]+)"')
     color = scrapertools.find_single_match(data, 'color:\s*"([^"]+)"')
-    url = "https://daxab.com/player/%s?color=%s"  % (hash, color)
+    url = "https://dxb.to/player/%s?color=%s"  % (hash, color)
     headers = {'Referer': item.url}
     data = httptools.downloadpage(url, headers=headers).data
     id = scrapertools.find_single_match(data, 'id:\s*"([^"]+)"')
@@ -137,7 +147,7 @@ def findvideos(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for quality,url in matches:
         url = "%s/videos/%s/%s/%s.mp4?extra=%s" %(server,id1,id2,quality,url)
-        itemlist.append(Item(channel = item.channel, action="play", title=quality, url=url) )
+        itemlist.append(['.mp4 %s' %quality, url])
     return itemlist
 
 
@@ -147,7 +157,7 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     hash = scrapertools.find_single_match(data, 'hash:\s*"([^"]+)"')
     color = scrapertools.find_single_match(data, 'color:\s*"([^"]+)"')
-    url = "https://daxab.com/player/%s?color=%s"  % (hash, color)
+    url = "https://dxb.to/player/%s?color=%s"  % (hash, color)
     headers = {'Referer': item.url}
     data = httptools.downloadpage(url, headers=headers).data
     id = scrapertools.find_single_match(data, 'id:\s*"([^"]+)"')

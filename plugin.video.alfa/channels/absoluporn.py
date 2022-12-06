@@ -19,8 +19,9 @@ from core import httptools
 canonical = {
              'channel': 'absoluporn', 
              'host': config.get_setting("current_host", 'absoluporn', default=''), 
-             'host_alt': ["http://www.absoluporn.com/en"], 
+             'host_alt': ["http://www.absoluporn.com/"], 
              'host_black_list': [], 
+             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 1, 'cf_assistant': False,
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -30,10 +31,10 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(Item(channel = item.channel, title="Nuevos" , action="lista", url=host + "/wall-date-1.html"))
-    itemlist.append(Item(channel = item.channel, title="Mas valorados" , action="lista", url=host + "/wall-note-1.html"))
-    itemlist.append(Item(channel = item.channel, title="Mas vistos" , action="lista", url=host + "/wall-main-1.html"))
-    itemlist.append(Item(channel = item.channel, title="Mas largos" , action="lista", url=host + "/wall-time-1.html"))
+    itemlist.append(Item(channel = item.channel, title="Nuevos" , action="lista", url=host + "en/wall-date-1.html"))
+    itemlist.append(Item(channel = item.channel, title="Mas valorados" , action="lista", url=host + "en/wall-note-1.html"))
+    itemlist.append(Item(channel = item.channel, title="Mas vistos" , action="lista", url=host + "en/wall-main-1.html"))
+    itemlist.append(Item(channel = item.channel, title="Mas largos" , action="lista", url=host + "en/wall-time-1.html"))
 
     itemlist.append(Item(channel = item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append(Item(channel = item.channel, title="Buscar", action="search"))
@@ -43,7 +44,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search-%s-1.html" % (host, texto)
+    item.url = "%sen/search-%s-1.html" % (host, texto)
     try:
         return lista(item)
     except:
@@ -56,7 +57,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '&nbsp;<a href="([^"]+)" class="link1b">([^"]+)</a>&nbsp;<span class="text23">([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,cantidad in matches:
@@ -73,7 +74,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="thumb-main-titre"><a href="([^"]+)".*?'
     patron += 'title="([^"]+)".*?'
@@ -101,27 +102,29 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = 'servervideo = \'([^\']+)\'.*?'
     patron += 'path = \'([^\']+)\'.*?'
     patron += 'filee = \'([^\']+)\'.*?'
     matches = scrapertools.find_multiple_matches(data, patron)
     for servervideo,path,filee  in matches:
-        scrapedurl = "%s%s56ea912c4df934c216c352fa8d623af3%s" % (servervideo, path, filee)
-        itemlist.append(Item(channel = item.channel, action="play", title= item.title, url=scrapedurl))
+        url = "%s%s56ea912c4df934c216c352fa8d623af3%s" % (servervideo, path, filee)
+        url += "|ignore_response_code=True"
+        itemlist.append(Item(channel = item.channel, action="play", title= item.title, url=url))
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = 'servervideo = \'([^\']+)\'.*?'
     patron += 'path = \'([^\']+)\'.*?'
     patron += 'filee = \'([^\']+)\'.*?'
     matches = scrapertools.find_multiple_matches(data, patron)
     for servervideo,path,filee  in matches:
-        scrapedurl = "%s%s56ea912c4df934c216c352fa8d623af3%s" % (servervideo, path, filee)
-        itemlist.append(Item(channel = item.channel, action="play", title= item.title, url=scrapedurl))
+        url = "%s%s56ea912c4df934c216c352fa8d623af3%s" % (servervideo, path, filee)
+        url += "|ignore_response_code=True"
+        itemlist.append(Item(channel = item.channel, action="play", contentTitle= item.contentTitle, url=url))
     return itemlist
 

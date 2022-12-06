@@ -30,6 +30,7 @@ canonical = {
              'host': config.get_setting("current_host", 'hentaisd', default=''), 
              'host_alt': ["http://hentaisd.tv"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -68,7 +69,7 @@ def search(item, texto):
 def generos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<h3 class="media-heading"><a href="([^"]+)" alt="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -80,7 +81,7 @@ def generos(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="col-sm-6 col-md-2 central">.*?'
     patron += '<a href="([^"]+)".*?'
@@ -102,7 +103,7 @@ def lista(item):
 def series(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="media">.*?'
     patron += '<a href="([^"]+)".*?'
@@ -126,7 +127,7 @@ def series(item):
 def episodios(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<li><a href="([^"]+)".*?'
     patron += 'Capitulo (\d+)'
@@ -144,7 +145,7 @@ def episodios(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>||<br/>', "", data)
     data = scrapertools.find_single_match(data, 'var videos =(.*?)\}')
     patron = 'src="([^"]+)"'
@@ -152,7 +153,7 @@ def findvideos(item):
     for url in matches:
         url = url.replace("cloud/index.php", "cloud/query.php")
         if "/player.php" in url:
-            data = httptools.downloadpage(url).data
+            data = httptools.downloadpage(url, canonical=canonical).data
             phantom = scrapertools.find_single_match(data, 'Phantom.Start\("(.*?)"\)')
             phantom = phantom.replace('"+"', '')
             import base64

@@ -25,8 +25,9 @@ list_servers = ['mixdrop']
 canonical = {
              'channel': 'hentaiid', 
              'host': config.get_setting("current_host", 'hentaiid', default=''), 
-             'host_alt': ["http://hentai-id.tv/"], 
+             'host_alt': ["https://hentai-id.tv/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -57,7 +58,7 @@ def generos(item):
     logger.info()
 
     itemlist = []
-    data = re.sub(r"\n|\r|\t|\s{2}", "", httptools.downloadpage(item.url).data)
+    data = re.sub(r"\n|\r|\t|\s{2}", "", httptools.downloadpage(item.url, canonical=canonical).data)
 
     pattern = 'id="hentai2"><div[^>]+>(.*?)</div></div>'
     data = scrapertools.find_single_match(data, pattern)
@@ -76,9 +77,9 @@ def series(item):
     logger.info()
     itemlist = []
 
-    data = re.sub(r"\n|\r|\t|\s{2}", "", httptools.downloadpage(item.url).data)
+    data = re.sub(r"\n|\r|\t|\s{2}", "", httptools.downloadpage(item.url, canonical=canonical).data)
 
-    pattern = "<div class='wp-pagenavi'>(.*?)</div>"
+    pattern = "<div class='wp-pagenavi'(.*?)</div>"
     pagination = scrapertools.find_single_match(data, pattern)
 
     pattern = '<div class="col-xs-12 col-md-12 col-lg-9px-3"><ul>(.*?)</ul><div class="clearfix">'
@@ -113,7 +114,7 @@ def episodios(item):
     logger.info()
     itemlist = []
 
-    data = re.sub(r"\n|\r|\t|\s{2}", "", httptools.downloadpage(item.url).data)
+    data = re.sub(r"\n|\r|\t|\s{2}", "", httptools.downloadpage(item.url, canonical=canonical).data)
     pattern = '<div class="box-entry-title text-center">Lista de Capítulos</div>(.*?)</div></div>'
 
     data = scrapertools.find_single_match(data, pattern)
@@ -137,7 +138,7 @@ def episodios(item):
 def findvideos(item):
     logger.info()
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     video_urls = []
     down_urls = []
     patron = '<(?:iframe)?(?:IFRAME)?\s*(?:src)?(?:SRC)?="([^"]+)"'

@@ -17,10 +17,19 @@ from core.item import Item
 from core import servertools
 from core import httptools
 from core import jsontools as json
+canonical = {
+             'channel': 'amateurtv', 
+             'host': config.get_setting("current_host", 'amateurtv', default=''), 
+             'host_alt': ["https://www.amateur.tv/"], 
+             'host_black_list': [], 
+             'pattern': ['property="og:url" content="?([^"|\s*]+)["|\s*]"?'], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+hosta = "%sv3/readmodel/cache/cams/%s/0/50/es"
 
-host = "https://www.amateur.tv"
-hosta = "%s/v3/readmodel/cache/cams/%s/0/50/es"
-
+httptools.downloadpage(host, canonical=canonical).data
 
 def mainlist(item):
     logger.info()
@@ -37,7 +46,7 @@ def mainlist(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     data = data['cams']
     for elem in data['nodes']:
         id = elem['id']
@@ -50,7 +59,7 @@ def lista(item):
         title = "%s %s %s" %(name, age, country)
         if not is_on:
             title= "[COLOR red] %s[/COLOR]" % title
-        url = "%s/v3/readmodel/show/%s/es" %(host, name)
+        url = "%sv3/readmodel/show/%s/es" %(host, name)
         plot = ""
         action = "play"
         if logger.info() == False:
@@ -70,7 +79,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     url = data['videoTechnologies']['fmp4']
     url += "|ignore_response_code=True"
     itemlist.append(Item(channel = item.channel,action="play", contentTitle = item.title, url=url))
@@ -80,7 +89,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     url = data['videoTechnologies']['fmp4']
     # url = httptools.downloadpage(url, follow_redirects=False).headers["location"]
     url += "|ignore_response_code=True"

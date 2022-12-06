@@ -23,8 +23,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': '4tube', 
              'host': config.get_setting("current_host", '4tube', default=''), 
-             'host_alt': ["https://www.4tube.com"], 
+             'host_alt': ["https://www.4tube.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -33,19 +34,19 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/videos?sort=date"))
-    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/videos?time=month"))
-    itemlist.append(item.clone(title="Mas Visto" , action="lista", url=host + "/videos?sort=views&time=month"))
-    itemlist.append(item.clone(title="Mas Valorada" , action="lista", url=host + "/videos?sort=rating&time=month"))
-    itemlist.append(item.clone(title="Longitud" , action="lista", url=host + "/videos?sort=duration&time=month"))
-    itemlist.append(item.clone(title="Pornstars" , action="categorias", url=host + "/pornstars"))
-    itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/channels"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/tags"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "videos?sort=date"))
+    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "videos?time=month"))
+    itemlist.append(item.clone(title="Mas Visto" , action="lista", url=host + "videos?sort=views&time=month"))
+    itemlist.append(item.clone(title="Mas Valorada" , action="lista", url=host + "videos?sort=rating&time=month"))
+    itemlist.append(item.clone(title="Longitud" , action="lista", url=host + "videos?sort=duration&time=month"))
+    itemlist.append(item.clone(title="Pornstars" , action="categorias", url=host + "pornstars"))
+    itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "channels"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "tags"))
     itemlist.append(item.clone(title="Buscar", action="search", url= host))
 
     itemlist.append(Item(channel = item.channel, title = ""))
-    itemlist.append(item.clone(title="Trans", action="submenu", orientation="/shemale"))
-    itemlist.append(item.clone(title="Gay", action="submenu", orientation="/gay"))
+    itemlist.append(item.clone(title="Trans", action="submenu", orientation="shemale/"))
+    itemlist.append(item.clone(title="Gay", action="submenu", orientation="gay/"))
     return itemlist
 
 
@@ -53,14 +54,14 @@ def submenu(item):
     logger.info()
     itemlist = []
     url = host + item.orientation
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=url + "/videos?sort=date"))
-    itemlist.append(item.clone(title="Popular" , action="lista", url=url + "/videos?time=month"))
-    itemlist.append(item.clone(title="Mas Visto" , action="lista", url=url + "/videos?sort=views&time=month"))
-    itemlist.append(item.clone(title="Mas Valorada" , action="lista", url=url + "/videos?sort=rating&time=month"))
-    itemlist.append(item.clone(title="Longitud" , action="lista", url=url + "/videos?sort=duration&time=month"))
-    itemlist.append(item.clone(title="Pornstars" , action="categorias", url=url + "/pornstars"))
-    itemlist.append(item.clone(title="Canal" , action="categorias", url=url + "/channels"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=url + "/tags"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=url + "videos?sort=date"))
+    itemlist.append(item.clone(title="Popular" , action="lista", url=url + "videos?time=month"))
+    itemlist.append(item.clone(title="Mas Visto" , action="lista", url=url + "videos?sort=views&time=month"))
+    itemlist.append(item.clone(title="Mas Valorada" , action="lista", url=url + "videos?sort=rating&time=month"))
+    itemlist.append(item.clone(title="Longitud" , action="lista", url=url + "videos?sort=duration&time=month"))
+    itemlist.append(item.clone(title="Pornstars" , action="categorias", url=url + "pornstars"))
+    itemlist.append(item.clone(title="Canal" , action="categorias", url=url + "channels"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=url + "tags"))
     itemlist.append(item.clone(title="Buscar", action="search", url=url))
     
     return itemlist
@@ -69,7 +70,7 @@ def submenu(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search?sort=date&q=%s" % (item.url, texto)
+    item.url = "%ssearch?sort=date&q=%s" % (item.url, texto)
     try:
         return lista(item)
     except:
@@ -106,9 +107,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -118,8 +119,8 @@ def create_soup(url, referer=None, unescape=False):
 def lista(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('div', class_='colspan4-content')
-    matches = soup.find_all('div', class_='thumb_video')
+    soup = create_soup(item.url)
+    matches = soup.find('div', id='video_list_column').find_all('div', class_='thumb_video')
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']

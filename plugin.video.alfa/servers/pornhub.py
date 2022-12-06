@@ -14,6 +14,8 @@ def test_video_exists(page_url):
     data = response.data
     if not response.sucess or "Not Found" in data or "flagged for  " in data or "Video Disabled" in data or "<div class=\"removed\">" in data or "is unavailable" in data:
         return False, "[pornhub] El fichero no existe o ha sido borrado"
+    if "premiumLocked" in data:
+        return False, "[pornhub] Cuenta premium"
     return True, ""
 
 
@@ -31,8 +33,8 @@ def get_video_url(page_url, user="", password="", video_password=""):
         url= ""
         for i in orden:
             url += scrapertools.find_single_match(data, '%s="([^"]+)"' %i)
-        if "master.m3u8" in url and not "K," in url:
-            quality = scrapertools.find_single_match(url, '/(\d+P)_')
+        if "master.m3u8" in url and not "K," in url and not "get_media" in url:
+            quality = scrapertools.find_single_match(url, '(\d+P)_')
             video_urls.append(["[pornhub] %s" % quality, url])
     video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls
