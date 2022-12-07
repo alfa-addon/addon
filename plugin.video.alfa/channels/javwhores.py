@@ -21,8 +21,9 @@ from core import httptools
 canonical = {
              'channel': 'javwhores', 
              'host': config.get_setting("current_host", 'javwhores', default=''), 
-             'host_alt': ["https://www.javbangers.com"], 
+             'host_alt': ["https://www.javbangers.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,10 +32,10 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/?sort_by=post_date&from=1"))
-    itemlist.append(item.clone(title="Mejor valorados" , action="lista", url=host + "/top-rated/?sort_by=rating_month&from=1"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/?sort_by=video_viewed_month&from=1"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "latest-updates/?sort_by=post_date&from=1"))
+    itemlist.append(item.clone(title="Mejor valorados" , action="lista", url=host + "top-rated/?sort_by=rating_month&from=1"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "most-popular/?sort_by=video_viewed_month&from=1"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -42,7 +43,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/%s/?sort_by=post_date" % (host, texto)
+    item.url = "%ssearch/%s/?sort_by=post_date" % (host, texto)
     try:
         return lista(item)
     except:
@@ -55,7 +56,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '<a class="item" href="([^"]+)" title="([^"]+)">.*?'
     patron  += '<img class="thumb" src="([^"]+)".*?'
     patron  += '<div class="videos">([^"]+)</div>'
@@ -72,7 +73,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     # PURGA los PRIVATE 
     patron  = 'div class="video-item\s+".*?href="([^"]+)".*?'
     patron += 'data-original="([^"]+)" '
@@ -104,20 +105,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    if "kt_player" in data:
-        url = item.url
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    if "kt_player" in data:
-        url = item.url
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

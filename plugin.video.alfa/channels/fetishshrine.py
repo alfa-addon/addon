@@ -20,8 +20,9 @@ from core import httptools
 canonical = {
              'channel': 'fetishshrine', 
              'host': config.get_setting("current_host", 'fetishshrine', default=''), 
-             'host_alt': ["https://www.fetishshrine.com"], 
+             'host_alt': ["https://www.fetishshrine.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -30,10 +31,10 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "/latest-updates/"))
-    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=host + "/most-popular/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor Valorado" , action="lista", url=host + "/top-rated/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "latest-updates/"))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=host + "most-popular/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valorado" , action="lista", url=host + "top-rated/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -41,7 +42,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/?q=%s" % (host, texto)
+    item.url = "%ssearch/?q=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -54,7 +55,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a href="([^"]+)" title="([^"]+)">.*?'
     patron += '<img src="([^"]+)".*?'
@@ -65,13 +66,14 @@ def categorias(item):
         scrapedtitle = "%s (%s)" % (scrapedtitle,cantidad)
         itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
+    itemlist.sort(key=lambda x: x.title)
     return itemlist
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a href="([^"]+)" itemprop="url">.*?'
     patron += 'contentUrl="([^"]+)" alt="([^"]+)">.*?'
@@ -90,7 +92,7 @@ def lista(item):
             action = "findvideos"
         itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=scrapedthumbnail, contentTitle = title ))
-    next_page = scrapertools.find_single_match(data,'<li><a data=\'\d+\' href="([^"]+)" title="Next">')
+    next_page = scrapertools.find_single_match(data,'href="([^"]+)" title="Next">')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )

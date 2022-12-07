@@ -27,16 +27,17 @@ from core import httptools
 canonical = {
              'channel': 'stripchat', 
              'host': config.get_setting("current_host", 'stripchat', default=''), 
-             'host_alt': ["https://stripchat.com"], 
+             'host_alt': ["https://stripchat.com/"], 
              'host_black_list': [], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-
-hosta = "%s/api/front/models?limit=40&offset=0&sortBy=stripRanking&primaryTag=%s&filterGroupTags=[[\"%s\"]]"
+hosta = "%sapi/front/models?limit=40&offset=0&sortBy=stripRanking&primaryTag=%s&filterGroupTags=[[\"%s\"]]"
     # 'https://stripchat.com/api/external/v4/widget/?limit=100&modelsCountry=&modelsLanguage=&modelsList=&tag=%s'
-cat = "%s/api/front/models/liveTags?limit=40&primaryTag=girls&filterGroupTags=[[]]&sortBy=stripRanking" % host
+cat = "%sapi/front/models/liveTags?limit=40&primaryTag=girls&filterGroupTags=[[]]&sortBy=stripRanking" % host
        # https://es.stripchat.com/api/front/models/liveTags?primaryTag=girls&uniq=go3bmp2lfs6zi18a
+httptools.downloadpage(host, canonical=canonical).data
+
 
 def mainlist(item):
     logger.info()
@@ -65,7 +66,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     for elem in data['liveTagGroups']:
         logger.debug(elem['tags'])
         for list in elem['tags']:
@@ -82,7 +83,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     for elem in data['models']:
         url = elem['hlsPlaylist']
         id = elem['id']
@@ -115,7 +116,6 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    # item.url += "|verifypeer=false"
     itemlist.append(Item(channel = item.channel, action="play", title="Directo", url=item.url ))
     return itemlist
 
@@ -123,6 +123,5 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    # item.url += "|verifypeer=false"
     itemlist.append(Item(channel = item.channel, action="play", title=item.url, contentTitle = item.title, url=item.url, server="Directo" ))
     return itemlist

@@ -21,12 +21,14 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'bongacams', 
              'host': config.get_setting("current_host", 'bongacams', default=''), 
-             'host_alt': ["https://bongacams.com"], 
+             'host_alt': ["https://bongacams.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-hosta = "%s/tools/listing_v3.php?livetab=%s&online_only=true&offset=0&can_pin_models=true&limit=40"  
+hosta = "%stools/listing_v3.php?livetab=%s&online_only=true&offset=0&can_pin_models=true&limit=40"  
+# httptools.downloadpage(host, canonical=canonical).data ### Esta en categorias
 
 
 def mainlist(item):
@@ -43,7 +45,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/search/%s/" % (host,texto)
+    item.url = "%ssearch/%s/" % (host,texto)
     try:
         return lista(item)
     except:
@@ -63,7 +65,7 @@ def categorias(item):
         cantidad = elem.find('span', class_='hbd_s_live')
         if cantidad:
             title = "%s %s" % (cat,cantidad.text.strip())
-        url = "%s/tools/listing_v3.php?livetab=%s&online_only=true&offset=0&can_pin_models=true&category=%s&limit=40" %(host,"female", cat)
+        url = "%stools/listing_v3.php?livetab=%s&online_only=true&offset=0&can_pin_models=true&category=%s&limit=40" %(host,"female", cat)
         thumbnail = ""
         plot = ""
         itemlist.append(Item(channel = item.channel, action="lista", title=title, url=url,
@@ -74,9 +76,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -87,16 +89,17 @@ def lista(item):
     logger.info()
     itemlist = []
     headers={'X-Requested-With' : 'XMLHttpRequest'}
-    data = httptools.downloadpage(item.url, headers=headers).json
+    data = httptools.downloadpage(item.url, headers=headers, canonical=canonical).json
     for elem in data['models']:
         thumbnail = elem['thumb_image'].replace("{ext}", "webp")
         title = elem['username']
         name = elem['display_name']
-        # name = title
+        name = title
         thumbnail = "https:%s" % thumbnail
         quality = elem['vq']
         quality = quality.split("x")[-1]
-        title += " [COLOR red]%s[/COLOR]" %quality
+        if "960" in quality: quality = "720"
+        title += " [COLOR red]%sp[/COLOR]" %quality
         plot = elem['topic']
         if elem.get("about_me", ""):
             plot += "\n" + elem['about_me']
@@ -136,7 +139,7 @@ def play(item):
     logger.info()
     itemlist = []
     url="http://bongacams.com/tools/amf.php"
-    post = {'method' : 'getRoomData', 'args[]' : 'false', 'args[]' : item.name}
+    post = {'method' : 'getRoomData', 'args[]' : item.name}
     headers={'X-Requested-With' : 'XMLHttpRequest'}
     data = httptools.downloadpage(url, post=post, headers=headers).json
     url = data['localData']['videoServerUrl']

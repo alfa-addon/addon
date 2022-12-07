@@ -126,7 +126,7 @@ def play(item):
     patron  = '"url"\:"(.*?)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:
-        scrapedurl = scrapedurl.replace("\/", "/")
-        title = scrapedurl
-    itemlist.append(item.clone(action="play", title=item.title, url=scrapedurl))
+        url = scrapedurl.replace("\/", "/")
+        title = url
+    itemlist.append(item.clone(action="play", title="mp4", url=url))
     return itemlist

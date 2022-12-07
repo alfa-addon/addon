@@ -20,8 +20,9 @@ from core import httptools
 canonical = {
              'channel': 'errrotica', 
              'host': config.get_setting("current_host", 'errrotica', default=''), 
-             'host_alt': ['http://www.errrotica.com'], 
+             'host_alt': ["https://www.errrotica.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,7 +32,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "/sites/"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "sites/"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -40,7 +41,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/?q=%s" % (host, texto)
+    item.url = "%ssearch/?q=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -53,7 +54,7 @@ def search(item, texto):
 def catalogo(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<li><a href="([^"]+)">.*?'
     patron += '<img src="([^"]+)".*?'
@@ -76,7 +77,7 @@ def catalogo(item):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     data = scrapertools.find_single_match(data, '<p>CATEGORIES(.*?)<p>')
     patron = '<li><a href="([^"]+)">([^<]+)<'
@@ -93,7 +94,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<li><a href="([^"]+)" data-id.*?'
     patron += '<img src="([^"]+)" alt="([^"]+)".*?'
@@ -101,13 +102,20 @@ def lista(item):
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         title = scrapedtitle
         thumbnail = scrapedthumbnail
+        pornstar = scrapertools.find_single_match(scrapedurl, '/([A-z0-9-]+)/[0-9]+/')
+        lista = pornstar.split("-")
+        for x , value in enumerate(lista):
+            lista[x] = value.capitalize()
+        pornstar = ' '.join(lista)
+        if pornstar:
+            title = "[COLOR cyan]%s[/COLOR] %s" % (pornstar,title)
         url = urlparse.urljoin(item.url,scrapedurl)
         plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url,
-                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle = title, url=url,
+                              thumbnail=thumbnail, fanart=thumbnail, plot=plot))
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
@@ -118,24 +126,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<source src="([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for url in matches:
-        url = url + "|verifypeer=false"
-        itemlist.append(Item(channel=item.channel, action="play", title="mp4", url=url) )
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<source src="([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for url in matches:
-        url = url + "|verifypeer=false"
-        itemlist.append(['.mp4', url])
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

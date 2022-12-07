@@ -8,20 +8,29 @@ from core import httptools
 from core import scrapertools
 from platformcode import logger, config
 
-
+# .\\w{2,4}
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    if ".tube/" in page_url:
-        page_url = page_url.replace(".tube/", ".com/")
-    global server, vid
-    server = scrapertools.find_single_match(page_url, '([A-z0-9-]+).com')
-    vid = scrapertools.find_single_match(page_url, r'(?:embed/|videos/|video-|video/)([0-9]+)')
+    global server,vid,dom
+    if "tporn.xxx" in page_url or "pornzog" in page_url:
+        data = httptools.downloadpage(page_url).data
+        page_url = scrapertools.find_single_match(data, '="(https://[A-z-]+.[A-z]+/embed/[0-9]+/)')
+        logger.debug(page_url)
+    server = scrapertools.find_single_match(page_url, '([A-z0-9-]+).(?:com|tube|xxx)')
+    dom = scrapertools.find_single_match(page_url, '.((?:com|tube|xxx))/')
+    vid = scrapertools.find_single_match(page_url, '(?:embed/|videos/|video-|video/)([0-9]+)')
+    if "vid-xm" in server: server = "xmilf"
+    if "videohclips" in server: server = "hclips"
+    if "videotxxx" in server: server = "txxx"
+    if "desi-porntube" in server: 
+        server = "desiporn" 
+        dom="tube"
     vid2 = vid[:-3] +"000"
     if len(vid) <= 6:
         vid1= "0"
     else:
         vid1 = vid[:-6] + "000000"
-    url = "https://%s.com/api/json/video/86400/%s/%s/%s.json" %(server,vid1,vid2,vid)
+    url = "https://%s.%s/api/json/video/86400/%s/%s/%s.json" %(server,dom,vid1,vid2,vid)
     headers = {'Referer': page_url}
     data = httptools.downloadpage(url, headers=headers).json
     if data['video']['status_id'] == "5":
@@ -32,9 +41,8 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
-    if ".tube/" in page_url:
-        page_url = page_url.replace(".tube/", ".com/")
-    url = "https://%s.com/api/videofile.php?video_id=%s&lifetime=8640000" % (server, vid)
+    page_url = "https://%s.%s" % (server,dom)
+    url = "%s/api/videofile.php?video_id=%s&lifetime=8640000" % (page_url,vid)
     headers = {'Referer': page_url}
     data = httptools.downloadpage(url, headers=headers).json
     for elem in data:
@@ -43,7 +51,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         quality = scrapertools.find_single_match(quality, '_([A-z]+).mp4')
         url = dec_url(url)
         if not url.startswith("http"):
-            url = "https://%s.com/%s" % (server, url)
+            url = "https://%s.%s%s" % (server,dom,url)
         media_url = httptools.downloadpage(url, only_headers=True).url
         video_urls.append(["[%s] %s" %(server,quality), media_url])
     return video_urls

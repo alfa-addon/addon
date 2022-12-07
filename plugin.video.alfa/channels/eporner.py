@@ -20,8 +20,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'eporner', 
              'host': config.get_setting("current_host", 'eporner', default=''), 
-             'host_alt': ["https://www.eporner.com"], 
+             'host_alt': ["https://www.eporner.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -30,11 +31,11 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Últimos videos", action="lista", url=host + "/0/"))
-    itemlist.append(Item(channel=item.channel, title="Más visto", action="lista", url=host + "/most-viewed/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado", action="lista", url=host + "/top-rated/"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars", action="pornstars_list", url=host + "/pornstar-list/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host + "/cats/"))
+    itemlist.append(Item(channel=item.channel, title="Últimos videos", action="lista", url=host + "0/"))
+    itemlist.append(Item(channel=item.channel, title="Más visto", action="lista", url=host + "most-viewed/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado", action="lista", url=host + "top-rated/"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars", action="pornstars_list", url=host + "pornstar-list/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host + "cats/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -42,7 +43,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/search/%s/" % (host, texto)
+    item.url = "%ssearch/%s/" % (host, texto)
     try:
         return lista(item)
     except:
@@ -78,6 +79,8 @@ def categorias(item):
             cantidad = cantidad.text.replace("Videos: ", "")
             title = "%s (%s)" %(title, cantidad)
         url = urlparse.urljoin(host,url)
+        if "/pornstar/" in url:
+            url += "recent/"
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="lista", thumbnail=thumbnail, fanart=thumbnail))
     next_page = soup.find('a', class_='nmnext')
     if next_page:
@@ -90,13 +93,14 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
     return soup
+
 
 
 def lista(item):

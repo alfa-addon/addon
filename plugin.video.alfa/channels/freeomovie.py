@@ -27,8 +27,9 @@ list_servers = ['gounlimited']
 canonical = {
              'channel': 'freeomovie', 
              'host': config.get_setting("current_host", 'freeomovie', default=''), 
-             'host_alt': ["https://freeomovie.to"], 
+             'host_alt': ["https://freeomovie.to/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -40,8 +41,8 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/category/full-movie/"))
-    itemlist.append(Item(channel=item.channel, title="Videos" , action="lista", url=host + "/category/clips/"))
+    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "category/full-movie/"))
+    itemlist.append(Item(channel=item.channel, title="Videos" , action="lista", url=host + "category/clips/"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
@@ -53,7 +54,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url ="%s/?s=%s" % ( host, texto)
+    item.url ="%s?s=%s" % ( host, texto)
     try:
         return lista(item)
     except:
@@ -66,7 +67,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<li class="cat-item cat-item-\d+"><a href="([^"]+)" title="[^"]+">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -82,7 +83,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<h2><a href="([^"]+)" rel="bookmark" title="([^"]+)".*?'
     patron += 'src="([^"]+)"'
@@ -104,7 +105,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<li><a href="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)

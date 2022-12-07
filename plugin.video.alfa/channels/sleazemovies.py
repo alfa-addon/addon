@@ -7,6 +7,11 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+
 import re
 
 from channelselector import get_thumb
@@ -16,18 +21,28 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from bs4 import BeautifulSoup
 
-host = 'http://www.eroti.ga/'   #'http://www.eroti.ga/'  'https://www.sleazemovies.com/'
+# http://www.eroti.ga/  https://www.sleazemovies.com/
+
+canonical = {
+             'channel': 'sleazemovies', 
+             'host': config.get_setting("current_host", 'sleazemovies', default=''), 
+             'host_alt': ["http://www.eroti.ga/"], 
+             'host_black_list': [], 
+             'pattern': ['<h1 class="site-title"><a href="?([^"|\s*]+)["|\s*]\s*rel="?home"?'], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
-
     itemlist = list()
-    itemlist.append(item.clone(title="Todas", action="list_all", url=host +"page/2/", thumbnail=get_thumb('all', auto=True)))
+    itemlist.append(item.clone(title="Todas", action="lista", url=host +"page/2/", thumbnail=get_thumb('all', auto=True)))
     itemlist.append(item.clone(title="Generos", action="genero", url=host, thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(item.clone(title="Buscar", action="search", thumbnail=get_thumb('search', auto=True)))
-
     return itemlist
 
 
@@ -38,7 +53,7 @@ def search(item, texto):
     item.url = "%s?s=%s" % (host, texto)
     item.extra = "busqueda"
     try:
-        return list_all(item)
+        return lista(item)
     except:
         import sys
         for line in sys.exc_info():
@@ -49,62 +64,73 @@ def search(item, texto):
 def genero(item):
     logger.info()
     itemlist = list()
-    data = httptools.downloadpage(host).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron = '<li class="cat-item.*?<a href="([^"]+)".*?>([^<]+)</a>'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedtitle in matches:
-        itemlist.append(item.clone(action='list_all', title=scrapedtitle, url=scrapedurl))
+    soup = create_soup(item.url, referer=host)
+    matches = soup.find_all('li', class_='cat-item')
+    for elem in matches:
+        url = elem.a['href']
+        title = elem.a.text.strip()
+        itemlist.append(Item(channel=item.channel, action='lista', title=title, url=url))
     return itemlist
 
 
-def list_all(item):
+def create_soup(url, referer=None, post=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
+    if post:
+        data = httptools.downloadpage(url, post=post, canonical=canonical).data
+    else:
+        data = httptools.downloadpage(url, canonical=canonical).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
+
+
+def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)  # Eliminamos tabuladores, dobles espacios saltos de linea, etc...
-    patron = '<article id="post-\d+".*?'
-    patron += 'h2 class="entry-title"><a href="([^"]+)".*?>([^<]+).*?'
-    patron += '<div class="twp-article-post-thumbnail">.*?'
-    patron += 'data-src="([^"]+)".*?'
-    patron += '<p>([^<]+)</p>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle, img, plot in matches:
-        scrapedtitle = scrapedtitle.replace("&#8217;", "'")
-        contentTitle = scrapertools.find_single_match(scrapedtitle, '([^\(]+)')
-        year = scrapertools.find_single_match(scrapedtitle, '(\d{4})')
+    soup = create_soup(item.url, referer=host)
+    matches = soup.find_all("article", class_=re.compile(r"^post-\d+"))
+    for elem in matches:
+        url = elem.h2.a['href']
+        title = elem.h2.text.strip()
+        title = title.replace("&#8217;", "'")
+        thumbnail = elem.find('div', class_='twp-article-post-thumbnail').img['src']
+        contentTitle = scrapertools.find_single_match(title, '([^\(]+)')
+        year = scrapertools.find_single_match(title, '(\d{4})')
         if not year:
-            year = scrapertools.find_single_match(scrapedtitle, '\((\d{4})\)')
-        title = "%s %s" %(contentTitle, year)
+            year = scrapertools.find_single_match(title, '\((\d{4})\)')
+        title = "%s (%s)" %(contentTitle, year)
         if not year:
             year = "-"
-        itemlist.append(item.clone(action = "findvideos", title = title, contentTitle = contentTitle, url = scrapedurl,
-                             thumbnail = img, plot=plot, contentType = "movie", infoLabels = {'year': year}))
+        plot = elem.p.text.strip()
+        itemlist.append(Item(channel=item.channel, action = "findvideos", title = title, contentTitle = contentTitle, url = url,
+                             thumbnail = thumbnail, plot=plot, contentType = "movie", infoLabels = {'year': year}))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True)
 
-    # Extrae la marca de siguiente página
-    next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)"')
-    if next_page != "":
-	    itemlist.append(item.clone(action="list_all", title=">> Página siguiente", url=next_page, folder=True))
+    next_page = soup.find('a', class_='next')
+    if next_page:
+        next_page = next_page['href']
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def findvideos(item): 
     logger.info() 
     itemlist = [] 
-    data = httptools.downloadpage(item.url).data 
+    data = httptools.downloadpage(item.url, canonical=canonical).data 
     id = scrapertools.find_single_match(data, 'src=".*?vid=([^"]+)"').replace("amp;", "")
+    logger.debug(data)
     post = "vid=%s&alternative=sleazyvids&ord=0" % id
-    url = "https://www.eroti.ga/player/ajax_sources.php"
-    data = httptools.downloadpage(url, post=post).data
+    url = "%splayer/ajax_sources.php" %host
+    data = httptools.downloadpage(url, post=post, canonical=canonical).data
     url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace("\/", "/").replace(" ", "%20")
-    # url += "|Referer=%s" % item.url
-    itemlist.append(item.clone(action="play", contentTitle = item.title, url=url))
+    title = scrapertools.find_single_match(data, '"label":"([^"]+)"').replace("\/", "/").replace(" ", "%20")
+    itemlist.append(Item(channel=item.channel, action="play", title=title, contentTitle = item.title, url=url))
     
-    # itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
-    # itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(item.clone(title = '[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
                              url = item.url,

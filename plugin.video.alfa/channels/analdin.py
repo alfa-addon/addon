@@ -16,18 +16,25 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-
-host = 'https://www.analdin.com/es'
+canonical = {
+             'channel': 'analdin', 
+             'host': config.get_setting("current_host", 'analdin', default=''), 
+             'host_alt': ["https://www.analdin.com/"], 
+             'host_black_list': [], 
+             'pattern': ['href="?([^"|\s*]+)["|\s*]\s* id="item1"?'], 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "/más-reciente/?mode=async&function=get_block&block_id=list_videos_latest_videos_list&sort_by=post_date&from=1"))
-    itemlist.append(item.clone(title="Mas Vistas" , action="lista", url=host + "/más-visto/?mode=async&function=get_block&block_id=list_videos_common_videos_list&sort_by=video_viewed_month&from=1"))
-    itemlist.append(item.clone(title="Mejor valorada" , action="lista", url=host + "/mejor-valorado/?mode=async&function=get_block&block_id=list_videos_common_videos_list&sort_by=rating_month&from=1"))
+    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "más-reciente/?mode=async&function=get_block&block_id=list_videos_latest_videos_list&sort_by=post_date&from=1"))
+    itemlist.append(item.clone(title="Mas Vistas" , action="lista", url=host + "más-visto/?mode=async&function=get_block&block_id=list_videos_common_videos_list&sort_by=video_viewed_month&from=1"))
+    itemlist.append(item.clone(title="Mejor valorada" , action="lista", url=host + "mejor-valorado/?mode=async&function=get_block&block_id=list_videos_common_videos_list&sort_by=rating_month&from=1"))
     itemlist.append(item.clone(title="Canal" , action="catalogo", url=host))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categorías/"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "categorías/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -35,7 +42,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/buscar/%s/?mode=async&function=get_block&block_id=list_videos_videos_list_search_result&q=%s&category_ids=&sort_by=post_date&from_videos=1" % (host, texto, texto)
+    item.url = "%sbuscar/%s/?mode=async&function=get_block&block_id=list_videos_videos_list_search_result&q=%s&category_ids=&sort_by=post_date&from_videos=1" % (host, texto, texto)
     try:
         return lista(item)
     except:
@@ -48,7 +55,7 @@ def search(item, texto):
 def catalogo(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = scrapertools.find_single_match(data,'<strong class="popup-title">Sponsors</strong>(.*?)</div>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<li><a class="item" href="([^"]+)" title="([^"]+)">'
@@ -69,7 +76,7 @@ def catalogo(item):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a class="item" href="([^"]+)" title="([^"]+)">.*?'
     patron += 'src="([^"]+)".*?'
@@ -78,7 +85,7 @@ def categorias(item):
     for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
         scrapedplot = ""
         scrapedtitle = "%s (%s)" % (scrapedtitle, cantidad)
-        scrapedurl = urlparse.urljoin(item.url,scrapedurl)
+        # scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         scrapedurl = "%s?mode=async&function=get_block&block_id=list_videos_common_videos_list&sort_by=post_date&from=1" %scrapedurl
         itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
                               fanart=scrapedthumbnail,  thumbnail=scrapedthumbnail, plot=scrapedplot) )
@@ -88,7 +95,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a class="popup-video-link" href="([^"]+)".*?'
     patron += 'thumb="([^"]+)".*?'
@@ -130,7 +137,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     if "kt_player" in data:
         url = item.url
     itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))

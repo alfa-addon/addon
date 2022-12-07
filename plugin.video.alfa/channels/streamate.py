@@ -26,14 +26,16 @@ list_servers = []
 canonical = {
              'channel': 'streamate', 
              'host': config.get_setting("current_host", 'streamate', default=''), 
-             'host_alt': ["https://www.streamate.com"], 
+             'host_alt': ["https://www.streamate.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'pattern': ['href="?([^"|\s*]+)["|\s*]\s*hrefLang="?en"?'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 cat = "https://member.naiadsystems.com/search/v3/categories?domain=streamate.com&shouldIncludeTransOnStraightSkins=false"
 api = "https://member.naiadsystems.com/search/v3/performers?domain=streamate.com&from=0&size=100&filters=gender:f,ff,mf,tm2f,g;online:true&genderSetting=f"
+httptools.downloadpage(host, canonical=canonical).data
 
 
 def mainlist(item):
@@ -71,18 +73,21 @@ def categorias(item):
 
 def naiadsystems(url, post=None):
     logger.info()
-    UA = 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.1 ' + \
-         '(KHTML, like Gecko) Chrome/13.0.782.99 Safari/535.1'
+    UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36'
     headers = {"platform": "SCP",
-               "smtid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000",
+               "Accept": "application/json, text/plain, */*",
                "smeid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000",
+               "smtid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000",
                "smvid": "ffffffff-ffff-ffff-ffff-ffffffffffffG0000000000000",
-               "User-Agent": UA}
+               "User-Agent": UA,
+               "Referer": host}
     if post:
-        data = httptools.downloadpage(url, post=post,  headers=headers).json
+        data = httptools.downloadpage(url, post=post,  headers=headers, canonical=canonical)
     else:
-        data = httptools.downloadpage(url, headers=headers).json
-
+        data = httptools.downloadpage(url, headers=headers, canonical=canonical)
+    if data.code == 204:
+        data = httptools.downloadpage(url, headers=headers, canonical=canonical)
+    data = data.json
     return data
 
 
@@ -98,7 +103,7 @@ def lista(item):
         country = elem['country']
         quality = 'HD' if elem['highDefinition'] else ''
         title = "%s [%s] (%s)" %(name,age,country)
-        url = " https://manifest-server.naiadsystems.com/live/s:%s.json?last=load&format=mp4-hls" % name
+        url = "https://manifest-server.naiadsystems.com/live/s:%s.json?last=load&format=mp4-hls" % name
         action = "play"
         if logger.info() == False:
             action = "findvideos"
@@ -116,7 +121,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     data = data["formats"]["mp4-hls"]
     for elem in data["encodings"]:
         quality = elem["videoHeight"]
@@ -128,7 +133,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     data = data["formats"]["mp4-hls"]
     for elem in data["encodings"]:
         quality = elem["videoHeight"]

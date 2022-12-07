@@ -26,15 +26,16 @@ list_servers = []
 canonical = {
              'channel': 'fapcandy', 
              'host': config.get_setting("current_host", 'fapcandy', default=''), 
-             'host_alt': ["https://www.fapcandy.com"], 
+             'host_alt': ["https://www.fapcandy.com/"], 
              'host_black_list': [], 
              'pattern': ['href="?([^"|\s*]+)["|\s*]\s*hrefLang="?en"?'], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 cat = "https://member.naiadsystems.com/search/v3/categories?domain=fapcandy.com&shouldIncludeTransOnStraightSkins=false"
 api = "https://member.naiadsystems.com/search/v3/performers?domain=fapcandy.com&from=0&size=100&filters=gender:f,ff,mf,tm2f,g;online:true&genderSetting=f"
-
+httptools.downloadpage(host, canonical=canonical).data
 
 def mainlist(item):
     logger.info()
@@ -80,13 +81,12 @@ def naiadsystems(url, post=None):
                "User-Agent": UA,
                "Referer": host}
     if post:
-        data = httptools.downloadpage(url, post=post,  headers=headers)
+        data = httptools.downloadpage(url, post=post,  headers=headers, canonical=canonical)
     else:
-        data = httptools.downloadpage(url, headers=headers)
+        data = httptools.downloadpage(url, headers=headers, canonical=canonical)
     if data.code == 204:
-        data = httptools.downloadpage(url, headers=headers)
+        data = httptools.downloadpage(url, headers=headers, canonical=canonical)
     data = data.json
-    # logger.debug(data)
     return data
 
 
@@ -120,7 +120,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     data = data["formats"]["mp4-hls"]
     for elem in data["encodings"]:
         quality = elem["videoHeight"]
@@ -132,7 +132,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).json
+    data = httptools.downloadpage(item.url, canonical=canonical).json
     data = data["formats"]["mp4-hls"]
     for elem in data["encodings"]:
         quality = elem["videoHeight"]

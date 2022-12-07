@@ -23,6 +23,7 @@ canonical = {
              'host': config.get_setting("current_host", 'hentaila', default=''), 
              'host_alt': ["https://hentaila.com"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -212,7 +213,7 @@ def categories(item):
 def create_soup(url, post=None, headers=None):
     logger.info()
 
-    data = httptools.downloadpage(url, post=post, headers=headers).data
+    data = httptools.downloadpage(url, post=post, headers=headers, canonical=canonical).data
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
     return soup
@@ -261,7 +262,7 @@ def labeler(item, seekTmdb=False):
 def filter_by_selection(item, clearUrl=False):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(host + "/directorio").data
+    data = httptools.downloadpage(host + "/directorio", canonical=canonical).data
     if item.param == 'genre':
         pattern = '(?s)a href="([^"]+)" class="">([^<]+)'
         matches = scrapertools.find_multiple_matches(data, pattern)
@@ -383,7 +384,7 @@ def set_adv_filter(item):
 def premieres(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     infoLabels = item.infoLabels
     sectionptn = '(?s)<section class="section section-premier-slider".+?'
     sectionptn += 'section-title[^>]+.([^<]+)'
@@ -642,7 +643,7 @@ def findvideos(item):
     itemlist = []
     data =  jsontools.load(
                 scrapertools.find_single_match
-                    (httptools.downloadpage(item.url).data,
+                    (httptools.downloadpage(item.url, canonical=canonical).data,
                     '(?s)var (?:videos|video) = (.+?);'
                 )
             )

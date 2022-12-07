@@ -21,8 +21,9 @@ from core import httptools
 canonical = {
              'channel': 'hellporno', 
              'host': config.get_setting("current_host", 'hellporno', default=''), 
-             'host_alt': ["http://hellporno.com"], 
+             'host_alt': ["https://hellporno.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -30,21 +31,22 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/1/", t=""))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "1/", t=""))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
-    itemlist.append(Item(channel=item.channel, title="      Lesbian" , action="new_menu", url=host, t="lesbian"))
-    itemlist.append(Item(channel=item.channel, title="      Bisexual" , action="new_menu", url=host, t="bisexual"))
-    itemlist.append(Item(channel=item.channel, title="      Shemale" , action="new_menu", url=host, t="shemale"))
-    itemlist.append(Item(channel=item.channel, title="      Gay" , action="new_menu", url=host, t="gay"))
+    itemlist.append(Item(channel = item.channel, title = ""))
+    itemlist.append(Item(channel=item.channel, title="Lesbian" , action="new_menu", url=host, t="lesbian"))
+    itemlist.append(Item(channel=item.channel, title="Bisexual" , action="new_menu", url=host, t="bisexual"))
+    itemlist.append(Item(channel=item.channel, title="Shemale" , action="new_menu", url=host, t="shemale"))
+    itemlist.append(Item(channel=item.channel, title="Gay" , action="new_menu", url=host, t="gay"))
 
     return itemlist
 
 def new_menu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/1/?t=" + item.t))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "1/?t=" + item.t))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/?t="+ item.t))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", t=item.t))
     return itemlist
@@ -53,7 +55,7 @@ def new_menu(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/?q=%s&t=%s" % (host, texto,item.t )
+    item.url = "%ssearch/?q=%s&t=%s" % (host, texto,item.t )
     try:
         return lista(item)
     except:
@@ -66,7 +68,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     data = scrapertools.find_single_match(data,'<div class="container">(.*?)<div id="aside">')
     patron  = '<a href="([^"]+)">.*?'
@@ -82,13 +84,13 @@ def categorias(item):
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(Item(channel=item.channel, action="categorias" , title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
-    return itemlist
+    return sorted(itemlist, key=lambda i: i.title)
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="video-thumb"><a href="([^"]+)" class="title".*?>([^"]+)</a>.*?'
     patron += '<span class="time">([^<]+)</span>.*?'
@@ -115,20 +117,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data,'<source data-fluid-hd src="([^"]+)/?br=\d+"')
-    if url=="":
-        url = scrapertools.find_single_match(data,'<source src="([^"]+)/?br=\d+"')
-    itemlist.append(Item(channel=item.channel, action="play", url=url, contentTitle=item.contentTitle))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data,'<source data-fluid-hd src="([^"]+)/?br=\d+"')
-    if url=="":
-        url = scrapertools.find_single_match(data,'<source src="([^"]+)/?br=\d+"')
-    itemlist.append(Item(channel=item.channel, action="play", url=url, contentTitle=item.contentTitle))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

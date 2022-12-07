@@ -19,8 +19,9 @@ from platformcode import config, logger
 canonical = {
              'channel': 'canalporno', 
              'host': config.get_setting("current_host", 'canalporno', default=''), 
-             'host_alt': ["https://www.canalporno.com"], 
+             'host_alt': ["https://www.canalporno.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -29,10 +30,10 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel = item.channel, action="lista", title="Útimos videos", url=host + "/ajax/homepage/?page=1"))
-    itemlist.append(Item(channel = item.channel, action="categorias", title="Canal", url=host + "/ajax/list_producers/?page=1"))
-    itemlist.append(Item(channel = item.channel, action="categorias", title="PornStar", url=host + "/ajax/list_pornstars/?page=1"))
-    itemlist.append(Item(channel = item.channel, action="categorias", title="Categorias", url=host + "/categorias"))
+    itemlist.append(Item(channel = item.channel, action="lista", title="Útimos videos", url=host + "ajax/homepage/?page=1"))
+    itemlist.append(Item(channel = item.channel, action="categorias", title="Canal", url=host + "ajax/list_producers/?page=1"))
+    itemlist.append(Item(channel = item.channel, action="categorias", title="PornStar", url=host + "ajax/list_pornstars/?page=1"))
+    itemlist.append(Item(channel = item.channel, action="categorias", title="Categorias", url=host + "categorias"))
     itemlist.append(Item(channel = item.channel, action="search", title="Buscar"))
     return itemlist
 
@@ -40,7 +41,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/ajax/new_search/?q=%s&page=1" % (host, texto)
+    item.url = "%sajax/new_search/?q=%s&page=1" % (host, texto)
     try:
         return lista(item)
     except:
@@ -53,7 +54,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     if "pornstars" in item.url:
         patron = '<div class="muestra.*?href="([^"]+)".*?src=\'([^\']+)\'.*?alt="([^"]+)".*?'
     else:
@@ -67,8 +68,10 @@ def categorias(item):
         cantidad = cantidad.replace("(", "").replace(")", "")
         title= "%s (%s)" % (scrapedtitle, cantidad) 
         url= url.replace("/videos-porno/", "/ajax/show_category/").replace("/sitio/", "/ajax/show_producer/").replace("/pornstar/", "/ajax/show_pornstar/")
-        url = "%s%s?page=1" % (host, url)
-        itemlist.append(Item(channel = item.channel, action="lista", title=title, url=url, thumbnail=scrapedthumbnail))
+        url = urlparse.urljoin(item.url,url)
+        url += "?page=1"
+        itemlist.append(Item(channel = item.channel, action="lista", title=title, url=url,
+                             fanart=scrapedthumbnail, thumbnail=scrapedthumbnail))
     if "/?page=" in item.url:
         next_page=item.url
         num= int(scrapertools.find_single_match(item.url,".*?/?page=(\d+)"))
@@ -83,7 +86,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<div class="muestra-canal">.*?'
     patron += 'href="([^"]+)".*?'
     patron += 'data-stats-video-name="([^"]+)".*?'
@@ -92,7 +95,7 @@ def lista(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail, duration in matches:
         title = "[COLOR yellow] %s  [/COLOR] %s" % (duration, scrapedtitle)
-        url = host + scrapedurl
+        url = urlparse.urljoin(item.url,scrapedurl)
         action = "play"
         if logger.info() == False:
             action = "findvideos"
@@ -111,16 +114,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
-    itemlist.append(Item(channel = item.channel, action="play", url=url, contentTitle=item.contentTitle, server="directo"))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
-    itemlist.append(Item(channel = item.channel, action="play", url=url, contentTitle=item.contentTitle, server="directo"))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
