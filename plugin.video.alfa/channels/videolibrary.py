@@ -135,7 +135,8 @@ def list_movies(item, silent=False):
                 new_item.nfo = nfo_path
                 new_item.path = raiz
                 new_item.thumbnail = new_item.contentThumbnail
-                new_item.text_color = "blue"
+                new_item.unify_extended = True
+                new_item.text_color = get_color_from_settings('movie')
                 strm_path = new_item.strm_path.replace("\\", "/").rstrip("/")
                 if '/' in new_item.path:
                     new_item.strm_path = strm_path
@@ -334,14 +335,15 @@ def list_tvshows(item):
                     continue
 
                 # Menu contextual: Buscar automáticamente nuevos episodios o no
+                item_tvshow.unify_extended = True
                 if item_tvshow.active and int(item_tvshow.active) > 0:
                     texto_update = config.get_localized_string(60022)
                     value = 0
-                    item_tvshow.text_color = "green"
+                    item_tvshow.text_color = get_color_from_settings('tvshow_color')
                 else:
                     texto_update = config.get_localized_string(60023)
                     value = 1
-                    item_tvshow.text_color = "0xFFDF7401"
+                    item_tvshow.text_color = get_color_from_settings('no_update_color')
 
                 # Menu contextual: Eliminar serie/canal
                 num_canales = len(item_tvshow.library_urls)
@@ -1250,3 +1252,14 @@ def check_tvshow_playcount(item, season):
         item.library_playcounts.update({item.title: playcount})
 
     return item
+
+
+def get_color_from_settings(label, default='white'):
+    
+    color = config.get_setting(label)
+    if not color:
+        return default
+    
+    color = scrapertools.find_single_match(color, '\](\w+)\[')
+    
+    return color or default

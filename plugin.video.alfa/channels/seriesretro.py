@@ -29,6 +29,7 @@ canonical = {
              'host': config.get_setting("current_host", 'seriesretro', default=''), 
              'host_alt': ["https://seriesretro.com/", "https://pelisretro.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -51,11 +52,12 @@ def get_source(url, soup=False, referer=None, unescape=False):
 
 def mainlist(item):
     logger.info()
-
-    autoplay.init(item.channel, list_servers, list_quality)
+    
     itemlist = list()
 
-    itemlist.append(
+    autoplay.init(item.channel, list_servers, list_quality)
+
+    """itemlist.append(
         Item(
             action = "sub_menu",
             channel = item.channel,
@@ -63,7 +65,7 @@ def mainlist(item):
             title = "Peliculas",
             viewType = "videos"
         )
-    )
+    )"""
 
     itemlist.append(
         Item(
@@ -149,7 +151,9 @@ def list_all(item):
     logger.info()
 
     itemlist = list()
+    
     soup = get_source(item.url, soup=True)
+    
     matches = soup.find("ul", class_="MovieList NoLmtxt Rows AX A06 B04 C03 E20")
 
     if not matches:
@@ -165,7 +169,7 @@ def list_all(item):
 
         new_item = Item(
                         channel = item.channel,
-                        infoLabels={"year": year},
+                        infoLabels={"year": year or '-'},
                         thumbnail = thumb,
                         title = title,
                         url = url
@@ -174,9 +178,11 @@ def list_all(item):
         if "pelisretro" in url:
             new_item.contentTitle = title
             new_item.action = "findvideos"
+            new_item.contentType = 'movie'
         else:
             new_item.contentSerieName = title
             new_item.action = "seasons"
+            new_item.contentType = 'tvshow'
 
         itemlist.append(new_item)
 
@@ -233,6 +239,7 @@ def alpha_list(item):
     itemlist = list()
 
     soup = get_source(item.url, soup=True).find("tbody")
+    
     if not soup:
         return itemlist
     for elem in soup.find_all("tr"):
@@ -246,6 +253,7 @@ def alpha_list(item):
                 action = 'seasons',
                 channel = item.channel,
                 contentSerieName = title,
+                contentType = 'tvshow', 
                 thumbnail = thumb,
                 title = title,
                 url = url
@@ -261,19 +269,24 @@ def seasons(item):
     logger.info()
 
     itemlist = list()
+    infoLabels = item.infoLabels
 
     soup = get_source(item.url, soup=True).find_all("div", class_="Wdgt AABox")
 
-    infoLabels = item.infoLabels
     for elem in soup:
-        season = elem.find("div", class_="AA-Season")["data-tab"]
+        try:
+            season = int(elem.find("div", class_="AA-Season")["data-tab"])
+        except:
+            season = 1
         title = "Temporada %s" % season
         infoLabels["season"] = season
+        
         itemlist.append(
             Item(
                 action = 'episodesxseason',
                 channel = item.channel,
                 infoLabels=infoLabels,
+                contentType = 'season', 
                 title = title,
                 url = item.url
             )
@@ -324,7 +337,10 @@ def episodesxseason(item):
             for epi in epi_list:
                 try:
                     url = epi.a["href"]
-                    epi_num = epi.find("span", class_="Num").text
+                    try:
+                        epi_num = int(epi.find("span", class_="Num").text)
+                    except:
+                        epi_num = 1
                     epi_name = epi.find("td", class_="MvTbTtl").a.text
                     infoLabels["episode"] = epi_num
                     title = "%sx%s - %s" % (season, epi_num, epi_name)
@@ -334,6 +350,7 @@ def episodesxseason(item):
                             action = "findvideos",
                             channel = item.channel,
                             infoLabels = infoLabels,
+                            contentType = "episode",
                             title = title,
                             url = url,
                         )
@@ -341,6 +358,7 @@ def episodesxseason(item):
                 except:
                     pass
             break
+    
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
     return itemlist
@@ -351,6 +369,7 @@ def findvideos(item):
 
     itemlist = list()
     infoLabels = item.infoLabels
+    
     soup = get_source(item.url, soup=True).find("ul", class_="TPlayerNv").find_all("li")
 
     for btn in soup:
@@ -359,6 +378,7 @@ def findvideos(item):
         if "opci" in srv.lower():
             srv = "okru"
             # continue
+        
         itemlist.append(
             Item(
                 action = 'play',
@@ -375,11 +395,9 @@ def findvideos(item):
     itemlist = sorted(itemlist, key=lambda i: i.server)
 
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
 
     # Requerido para AutoPlay
-
     autoplay.start(itemlist, item)
 
     if item.contentType != "episode":
@@ -400,15 +418,21 @@ def findvideos(item):
 
 def play(item):
     logger.info()
+    
     itemlist = list()
 
     soup = get_source(item.url, soup=True).find("div", class_="TPlayerTb", id=item.opt)
+    
     url = scrapertools.find_single_match(str(soup), 'src="([^"]+)"')
     url = re.sub("amp;|#038;", "", url)
+    
     url = get_source(url, soup=True).find("div", class_="Video").iframe["src"]
+    
     item.url = url
     item.server = ""
+    
     itemlist.append(item)
+    
     itemlist = servertools.get_servers_itemlist(itemlist)
 
     return itemlist
@@ -416,6 +440,7 @@ def play(item):
 
 def search(item, texto):
     logger.info()
+    
     search_result = list()
     try:
         texto = texto.replace(" ", "+")

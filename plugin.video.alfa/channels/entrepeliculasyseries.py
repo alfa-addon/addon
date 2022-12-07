@@ -406,16 +406,22 @@ def newest(categoria):
 def play(item):
     
     itemlist = list()
+    kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 'timeout': 5}
     
     id = scrapertools.find_single_match(item.url, "h=([^$]+)")
     headers = {"referer": item.url}
     post = {"h": id}
     base_url = "%sr.php" % host
+    url = ''
     
-    url = httptools.downloadpage(base_url, post=post, headers=headers, follow_redirects=False, 
-                                 forced_proxy_opt=forced_proxy_opt, CF=False).headers.get("location", "")
+    for x in range(2):
+        resp = httptools.downloadpage(base_url, post=post, headers=headers, follow_redirects=False, 
+                                     forced_proxy_opt=forced_proxy_opt, CF=False, **kwargs)
+        if resp.code in httptools.REDIRECTION_CODES:
+            url = resp.headers.get("location", "")
+            break
     
-    if not url.startswith("http"):
+    if url and not url.startswith("http"):
         url = "https:" + url
     item.server = ""
     itemlist.append(item.clone(url=url))

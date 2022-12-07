@@ -235,19 +235,19 @@ def run(item=None):
                     itemlist = channel.play(item)
                     b_favourite = item.isFavourite
                     # Play should return a list of playable URLS
-                    if len(itemlist) > 0 and isinstance(itemlist[0], Item):
+                    if itemlist and len(itemlist) > 0 and isinstance(itemlist[0], Item):
                         item = itemlist[0]
                         if b_favourite:
                             item.isFavourite = True
                         platformtools.play_video(item)
 
                     # Permitir varias calidades desde play en el canal
-                    elif len(itemlist) > 0 and isinstance(itemlist[0], list):
+                    elif itemlist and len(itemlist) > 0 and isinstance(itemlist[0], list):
                         item.video_urls = itemlist
                         platformtools.play_video(item)
 
                     # If not, shows user an error message
-                    else:
+                    elif not itemlist and isinstance(itemlist, list):
                         platformtools.dialog_ok(config.get_localized_string(20000), config.get_localized_string(60339))
 
                 # If player don't have a "play" function, not uses the standard play from platformtools

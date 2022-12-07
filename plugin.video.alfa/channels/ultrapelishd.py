@@ -2,6 +2,9 @@
 # -*- Channel UltraPelisHD -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 from core.item import Item
 from core import scrapertools
@@ -10,11 +13,6 @@ from channelselector import get_thumb
 from platformcode import config, logger
 from lib.AlfaChannelHelper import DooPlay
 from channels import filtertools, autoplay
-import sys
-
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
 
 IDIOMAS = {'la': 'LAT', 'ca': 'CAST', 'su': 'VOSE', 'en': 'VOSE'}
 list_language = list(IDIOMAS.values())
@@ -31,6 +29,7 @@ canonical = {
              'host': config.get_setting("current_host", 'ultrapelishd', default=''), 
              'host_alt': ["https://ultrapelishd.net/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -86,22 +85,24 @@ def findvideos(item):
 
     for elem in matches:
         lang = elem.find("span", class_="title").text[:2].lower()
+        
         data = AlfaChannel.get_data_by_post(elem).json
+        
         url = data.get("embed_url", "")
         if not url or "youtube" in url:
             continue
+        
         itemlist.append(Item(channel=item.channel, title="%s", action="play", url=url,
                              language=IDIOMAS.get(lang, "LAT"), infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server)
 
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
     # Requerido para AutoPlay
-
     autoplay.start(itemlist, item)
+    
     if item.contentType != "episode":
         if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != "findvideos":
             itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]",
@@ -113,6 +114,7 @@ def findvideos(item):
 
 def search(item, texto):
     logger.info()
+    
     try:
         texto = texto.replace(" ", "+")
         item.url = item.url + texto
@@ -164,4 +166,5 @@ def get_lang(*args):
         langs = ""
 
     args[2].language = langs
+    
     return args[2]

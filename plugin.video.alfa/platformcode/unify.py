@@ -247,7 +247,7 @@ def add_info_plot(plot, languages, quality, vextend, contentTitle, infoLabels):
     s_studio = ''
 
     if languages:
-        l_part = '[COLOR yellowgreen][B][I]Idiomas:[/COLOR] '
+        l_part = '[COLOR aquamarine][B][I]Idiomas:[/COLOR] '
         mid = ''
 
         if isinstance(languages, list):
@@ -259,19 +259,22 @@ def add_info_plot(plot, languages, quality, vextend, contentTitle, infoLabels):
         p_lang = '%s%s%s' % (l_part, mid, last)
 
     if quality:
-        q_part = '[COLOR yellowgreen][B][I]Calidad:[/COLOR] '
-        p_quality = '%s%s%s' % (q_part, quality, last)
+        q_part = '[COLOR aquamarine][B][I]Calidad:[/COLOR] '
+        p_quality = '%s%s%s' % (q_part, set_color(quality, 'quality'), last)
     
     if contentTitle:
-        c_part = '[COLOR blue][B][I]Serie:[/COLOR] '
+        if infoLabels['mediatype'] == 'movie':
+            c_part = '[COLOR blue][B][I]Peli:[/COLOR] '
+        else:
+            c_part = '[COLOR blue][B][I]Serie:[/COLOR] '
         c_content = '%s%s%s' % (c_part, contentTitle, last)
 
     if vextend:
-        v_part = '[COLOR yellowgreen][B][I]Tipo:[/COLOR] '
+        v_part = '[COLOR aquamarine][B][I]Tipo:[/COLOR] '
         p_vextend = '%s%s%s' % (v_part, "[Versión Extendida]", last)
     
     if infoLabels.get('studio', '') or (infoLabels.get('status', '') and infoLabels['mediatype'] != 'movie'):
-        s_part = '[COLOR yellowgreen][B][I]Estudio: (Estado)[/COLOR] '
+        s_part = '[COLOR aquamarine][B][I]Estudio: (Estado)[/COLOR] '
         s_studio = '%s%s' % (s_part, infoLabels.get('studio', '-'))
         if infoLabels['mediatype'] != 'movie':
             sea_epi = ''
@@ -283,9 +286,9 @@ def add_info_plot(plot, languages, quality, vextend, contentTitle, infoLabels):
             else:
                 s_studio = '%s; (%sActiva' % (s_studio, sea_epi)
             if infoLabels['mediatype'] in ['season', 'episode'] and infoLabels.get('aired', ''):
-                s_studio = '%s, %s' % (s_studio, infoLabels['aired'])
+                s_studio = '%s, %s %s' % (s_studio, set_color(infoLabels['aired'], 'year'), format_rating(infoLabels["rating"]))
             elif infoLabels.get('last_air_date', ''):
-                s_studio = '%s, %s' % (s_studio, infoLabels['last_air_date'])
+                s_studio = '%s, %s' % (s_studio, set_color(infoLabels['last_air_date'], 'year'))
             s_studio += ')'
         s_studio = '%s%s' % (s_studio, last)
 
@@ -311,7 +314,7 @@ def add_info_plot(plot, languages, quality, vextend, contentTitle, infoLabels):
 def set_color(title, category):
     #logger.info()
 
-    preset = config.get_setting("preset_style", default="Estilo 1")
+    preset = config.get_setting("preset_style", default="Inicial")
     color_setting = colors_file[preset]
 
     color_scheme_generic = ['otro', 'dual']
@@ -426,7 +429,6 @@ def title_format(item, c_file=colors_file, srv_lst={}):
         simple_language, lang = get_languages(item.language)
 
     # Server format
-
     if c_type == "server" or item.action == "play":
         if item.server:
             title = "%s" % item.server.capitalize()
@@ -441,6 +443,10 @@ def title_format(item, c_file=colors_file, srv_lst={}):
             title = "%s [%s]" % (title, item.torrent_info)
         if videolibrary:
             title += ' [%s]' % item.contentChannel
+        if info["mediatype"] == 'episode':
+            contentTitle = "%sx%s - %s" % (info["season"], info["episode"], info["tvshowtitle"])
+        elif info["mediatype"] == 'movie':
+            contentTitle = "%s %s%s" % (info["title"], set_color(info["year"], "year"), format_rating(info["rating"]))
 
         item.title = title
 

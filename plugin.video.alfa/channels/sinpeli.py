@@ -9,9 +9,10 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import base64
+
 from channels import filtertools
 from bs4 import BeautifulSoup
-from core import servertools
+from core import servertools, scrapertools
 from core.item import Item
 from channels import autoplay
 from lib.AlfaChannelHelper import ToroPlay
@@ -21,7 +22,7 @@ from channelselector import get_thumb
 IDIOMAS = {'la': 'LAT', 'ca': 'CAST', 'su': 'VOSE'}
 list_idiomas = list(set(IDIOMAS.values()))
 
-list_servers = ['okru', 'yourupload', 'mega']
+list_servers = ['okru', 'yourupload', 'mega', 'doodstream', 'fembed']
 list_quality = []
 
 canonical = {
@@ -29,6 +30,7 @@ canonical = {
              'host': config.get_setting("current_host", 'sinpeli', default=''), 
              'host_alt': ["https://www.sinpeli.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -98,7 +100,7 @@ def section(item):
 
     if item.title == "Generos":
         return AlfaChannel.section(item, menu_id="351")
-    elif item.titl == "Idiomas":
+    elif item.title == "Idiomas":
         return AlfaChannel.section(item, menu_id="415")
     else:
         return AlfaChannel.section(item, menu_id="421")
@@ -108,39 +110,84 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
+    patron_php = "<iframe\s*src='([^']+)'"
+    patron_link = "\('([^']+)'"
+    lang = "la"
     infoLabels = item.infoLabels
 
     soup, matches = AlfaChannel.get_video_options(item.url)
 
     for btn in matches:
         b_data = btn["data-player"]
-        srv = btn.span.text.lower()
-        if "trailer" in srv.lower():
+        b_data = base64.b64decode(b_data).decode('utf-8')
+        if not b_data: 
             continue
-        try:
-            lang = btn.span.next_sibling.text[:2]
-        except:
-            lang = "la"
+        if scrapertools.find_single_match(b_data, patron_php):
+            b_data = scrapertools.find_single_match(b_data, patron_php)
+            
+            if 'links.cuevana3' in b_data:
+                soup, matches = AlfaChannel.get_video_options(b_data)
 
-        itemlist.append(Item(channel=item.channel,
-                             action='play',
-                             infoLabels=infoLabels,
-                             language=IDIOMAS.get(lang.lower(), "LAT"),
-                             b_data=b_data,
-                             server=srv,
-                             title=srv,
-                             url=item.url
-                            )
-                        )
+                if not matches:
+                    try:
+                        matches = soup.find("div", class_="REactiv").find_all("li")
+                    except:
+                        continue
+
+                for link in matches:
+                    link_url = link["onclick"]
+                    if not scrapertools.find_single_match(link_url, patron_link): 
+                        continue
+                    b_data = scrapertools.find_single_match(link_url, patron_link)
+                    srv = link.span.text.lower()
+                    if "trailer" in srv:
+                        continue
+                    try:
+                        lang = link.p.text
+                        if 'Espanol' in lang: lang = 'ca'
+                        if 'Latino' in lang: lang = 'la'
+                        if 'Subtitulado' in lang: lang = 'su'
+                    except:
+                        lang = "la"
+                        
+                    itemlist.append(Item(channel=item.channel,
+                                         action='play',
+                                         infoLabels=infoLabels,
+                                         language=IDIOMAS.get(lang.lower(), "LAT"),
+                                         server=srv.split('.')[0],
+                                         title=srv.split('.')[0].capitalize(),
+                                         url=b_data
+                                        )
+                                    )
+            else:
+                srv = btn.span.text.lower()
+                if "trailer" in srv.lower():
+                    continue
+                try:
+                    lang = btn.span.next_sibling.text[:2]
+                    if 'Espanol' in lang: lang = 'ca'
+                    if 'Latino' in lang: lang = 'la'
+                    if 'Subtitulado' in lang: lang = 'su'
+                except:
+                    lang = "la"
+
+                itemlist.append(Item(channel=item.channel,
+                                     action='play',
+                                     infoLabels=infoLabels,
+                                     language=IDIOMAS.get(lang.lower(), "LAT"),
+                                     server='',
+                                     title=srv.capitalize(),
+                                     url=b_data
+                                    )
+                                )
 
     itemlist = sorted(itemlist, key=lambda i: i.server)
+    itemlist = servertools.get_servers_itemlist(itemlist)
 
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
 
     # Requerido para AutoPlay
-
     autoplay.start(itemlist, item)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and (
@@ -157,24 +204,9 @@ def findvideos(item):
     return itemlist
 
 
-def play(item):
-    logger.info()
-    itemlist = list()
-
-    try:
-        url = BeautifulSoup(base64.b64decode(item.b_data.encode("utf-8")), "html5lib").iframe["src"]
-        item.url = url
-        item.server = ""
-        itemlist.append(item)
-        itemlist = servertools.get_servers_itemlist(itemlist)
-    except:
-        pass
-
-    return itemlist
-
-
 def search(item, texto):
     logger.info()
+    
     try:
         texto = texto.replace(" ", "+")
         if texto != '':
