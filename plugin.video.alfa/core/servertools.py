@@ -665,7 +665,21 @@ def get_server_setting(name, server, default=None, caching_var=True, debug=DEBUG
     file_settings = filetools.join(config.get_data_path(), "settings_servers", server + "_data.json")
     dict_settings = {}
     dict_file = {}
-    
+
+    if isinstance(caching_var, str):
+        # Borrado de cache de un servidor y borrado de .json
+        if caching_var in ['reset', 'delete']:
+            if kodi:
+                alfa_servers = json.loads(window.getProperty("alfa_servers"))
+                if server in alfa_servers.keys():
+                    if debug: logger.error('RESET Cached SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
+                    del alfa_servers[server]
+                    window.setProperty("alfa_servers", json.dumps(alfa_servers))
+            if caching_var in ['delete']:
+                if debug: logger.error('DELETE Server JSON: %s%s' % (server.upper(), module))
+                filetools.remove(file_settings, silent=True)
+            caching_var = False
+
     if kodi and caching_var:
         alfa_caching = bool(window.getProperty("alfa_caching"))
         if not alfa_servers: alfa_servers = json.loads(window.getProperty("alfa_servers"))

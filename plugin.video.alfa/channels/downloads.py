@@ -108,7 +108,7 @@ def mainlist(item):
         if i.downloadProgress != 0 or i.downloadCompleted != 0:
             resetear = True
         if (i.language or i.quality) and i.contentType == 'movie':
-            i.contentPlot = '[B][I][COLOR yellowgreen]Idiomas: [/COLOR]%s\n[COLOR yellowgreen][B][I]Calidad: [/COLOR]%s[/B][/I]\n\n%s' \
+            i.contentPlot = '[B][I][COLOR aquamarine]Idiomas: [/COLOR]%s\n[COLOR aquamarine][B][I]Calidad: [/COLOR]%s[/B][/I]\n\n%s' \
                          % (i.language, i.quality, i.contentPlot)
         if i.infoLabels['mediatype'] == 'movie':
             year = i.infoLabels['year']
@@ -236,7 +236,7 @@ def mainlist(item):
     if not item.contentType == "tvshow" and config.get_setting("browser", "downloads") == True:
         itemlist.insert(0, Item(channel=item.channel, action="browser", title='[COLOR gold][B]%s[/B][/COLOR]' 
                                 % config.get_localized_string(70222), thumbnail=get_thumb("search.png"),  
-                                url=DOWNLOAD_PATH, remote_download=remote_download, text_color="yellow"))
+                                url=DOWNLOAD_PATH, remote_download=remote_download))
 
     if not item.contentType == "tvshow":
         itemlist.insert(0, Item(channel=item.channel, action="settings", title=config.get_localized_string(70223),
@@ -396,7 +396,7 @@ def browser(item):
                     if not title: title = download_item.downloadFilename
                     
                 url_clean = re.sub('://.*?\:.*?\@', '://', url)
-                title = TITLE_VIDEO % (unify.set_color(title, 'movie'), 
+                title = TITLE_VIDEO % (unify.set_color(title, 'movie' if download_item.infoLabels['mediatype'] == 'movie' else 'tvshow'), 
                                        unify.set_color(download_item.server.capitalize(), 'server') if download_item.server else '', 
                                        unify.set_color(year, 'year'), 
                                        unify.format_rating(download_item.infoLabels['rating']), 
@@ -427,9 +427,14 @@ def browser(item):
                     url_clean = re.sub('://.*?\:.*?\@', '://', url)
                     if url in [c for c in torrent_paths_list_seen]: continue
                     torrent_paths_list_seen += [url]
+                    if '[Cap.' in file or 'Temporada' in file or 'episodio' in file:
+                        contentType = 'tvshow'
+                    else:
+                        contentType = 'movie'
                     if filetools.isdir(url):
                         itemlist.append(
-                            Item(channel=item.channel, title=file, action=item.action, url=url, context=context,
+                            Item(channel=item.channel, action=item.action, url=url, context=context,
+                                         title=unify.set_color(file, contentType), 
                                          plot=plot % (get_size(url), url_clean.replace('\\', ' \\ ').replace('/', ' / ')), 
                                          thumbnail=get_thumb("videolibrary_movie.png")))
                     else:
@@ -438,7 +443,8 @@ def browser(item):
                                 action = ''
                             else:
                                 action = 'play'
-                            itemlist.append(Item(channel=item.channel, title=file, action=action, url=url, context=context, 
+                            itemlist.append(Item(channel=item.channel, action=action, url=url, context=context, 
+                                         title=unify.set_color(file, contentType), 
                                          plot=plot % (get_size(url), url_clean.replace('\\', ' \\ ').replace('/', ' / ')), 
                                          thumbnail=get_thumb("videolibrary_movie.png")))
 
@@ -449,19 +455,28 @@ def browser(item):
         if url in [c for c in torrent_paths_list_seen]: continue
         torrent_paths_list_seen += [url]
         plot_q = ''
+        if '[Cap.' in file or 'Temporada' in file or 'episodio' in file:
+            contentType = 'tvshow'
+        else:
+            contentType = 'movie'
         if item.language or item.quality:
             plot_q = contentPlot % (item.language, item.quality)
         if filetools.isdir(url):
+            for torr_client, path in torrent_paths_list:
+                if url == path: contentType = 'library'
+                if file in ['Extracted', 'cached_torrents_Alfa', 'Mis_Torrents', 'Torrents']: contentType = 'library'
             if file.startswith('.') or file == 'MCT-torrents': continue
-            itemlist.append(item.clone(channel=item.channel, title=file, action=item.action, context=context,
-                            url=url, plot=plot_q + plot % (get_size(url), url_clean.replace('\\', ' \\ ').replace('/', ' / '))))
+            itemlist.append(item.clone(channel=item.channel, action=item.action, context=context,
+                            title=unify.set_color(file, contentType), 
+                            url=url, plot=plot_q + plot % (get_size(url), url_clean.replace('\\', ' \\ ').replace('/', ' / ')), text_color="yellow"))
         else:
             if scrapertools.find_single_match(file, '(\.\w+)$') in extensions_list:
                 if scrapertools.find_single_match(file, '(\.\w+)$') == '.rar': 
                     action = ''
                 else:
                     action = 'play'
-                itemlist.append(item.clone(channel=item.channel, title=file, action=action, context=context, 
+                itemlist.append(item.clone(channel=item.channel, action=action, context=context, 
+                                title=unify.set_color(file, contentType), 
                                 url=url, plot=plot_q + plot % (get_size(url), url_clean.replace('\\', ' \\ ').replace('/', ' / '))))
 
     return itemlist
@@ -2020,7 +2035,11 @@ def get_episodes(item):
     if item.nfo:
         if filetools.exists(item.nfo):
             head, nfo_json = videolibrarytools.read_nfo(item.nfo)               #... tratamos de recuperar la info de la Serie
-            format_tmdb_id(nfo_json)
+            if item.contentChannel in nfo_json.library_urls:
+                format_tmdb_id(nfo_json)
+            else:
+                del item.nfo
+                nfo_json = {}
         else:
             del item.nfo
 

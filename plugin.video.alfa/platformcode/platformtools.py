@@ -43,9 +43,13 @@ class XBMCPlayer(xbmc.Player):
     def __init__(self, *args):
         pass
 
-
 xbmc_player = XBMCPlayer()
 PLUGIN_HANDLE = int(sys.argv[1]) if len(sys.argv) > 1 else -1
+extensions_list = ['.aaf', '.3gp', '.asf', '.avi', '.flv', '.mpeg',
+                   '.m1v', '.m2v', '.m4v', '.mkv', '.mov', '.mpg',
+                   '.mpe', '.mp4', '.ogg', '.rar', '.wmv', '.zip', 
+                   '.m3u8', 'hls.ts']
+
 
 def makeMessage(line1, line2, line3):
     message = line1
@@ -1032,7 +1036,9 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
     logger.info()
     # logger.debug(item.tostring('\n'))
     # logger.debug('item play: %s' % item)
+    
     xbmc_player = XBMCPlayer()
+    
     if item.channel == 'downloads':
         logger.info("Reproducir video local: %s [%s]" % (item.title, item.url))
         xlistitem = xbmcgui.ListItem(path=item.url)
@@ -1079,8 +1085,19 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
 
     xlistitem = xbmcgui.ListItem(path=item.url)
 
-    xlistitem.setContentLookup(False)
-    xlistitem.setMimeType('mime/x-type')
+    if item.setMimeType:
+        xlistitem.setContentLookup(False)
+        xlistitem.setMimeType(item.setMimeType)
+    elif item.setMimeType is False:
+        xlistitem.setContentLookup(True)
+    else:
+        xlistitem.setContentLookup(False)
+        for extension in extensions_list:
+            if extension in mediaurl:
+                xlistitem.setMimeType('application/vnd.apple.mpegurl')
+                break
+        else:
+            xlistitem.setMimeType('mime/x-type')
 
     if config.get_platform(True)['num_version'] >= 16.0:
         xlistitem.setArt({"thumb": thumb})
@@ -1878,10 +1895,6 @@ def play_torrent(item, xlistitem, mediaurl):
 
         # Si no existe, creamos un archivo de control para que sea gestionado desde Descargas
         if torrent_paths.get(torr_client.upper(), ''):  # Es un cliente monitorizable?
-
-            extensions_list = ['.aaf', '.3gp', '.asf', '.avi', '.flv', '.mpeg',
-                               '.m1v', '.m2v', '.m4v', '.mkv', '.mov', '.mpg',
-                               '.mpe', '.mp4', '.ogg', '.rar', '.wmv', '.zip']
             video_name = ''
             video_path = ''
             short_video_path = shorten_rar_path(item)

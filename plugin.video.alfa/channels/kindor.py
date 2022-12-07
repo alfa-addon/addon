@@ -2,8 +2,13 @@
 # -*- Channel InkaPelis -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import re
+import base64
+
 from core import tmdb
 from core import httptools
 from core import jsontools
@@ -14,12 +19,6 @@ from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from platformcode import config, logger
 from channels import filtertools, autoplay
-import sys
-import base64
-
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
 
 IDIOMAS = {'0': 'LAT', '1': 'CAST', '2': 'VOSE'}
 list_language = list(IDIOMAS.values())
@@ -40,10 +39,13 @@ canonical = {
              'host_alt': ["https://kindor.pro/"], 
              'host_black_list': ["https://kindor.vip/", "https://kindor.me/"], 
              'pattern': '<a\s*href="([^"]+)"\s*class="healog"\s*aria-label="[^"]+">', 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 host_save = host
+patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
+patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
 
 
 def mainlist(item):
@@ -70,7 +72,6 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + 'buscar/',
                          thumbnail=get_thumb("search", auto=True)))
-
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -99,18 +100,21 @@ def sub_menu(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False):
+def create_soup(url, headers=None, post=None, only_headers=False, ignore_response_code=True, 
+                timeout=5, unescape=False, soup=True, canonical=canonical):
     logger.info()
 
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
-    else:
-        data = httptools.downloadpage(url, canonical=canonical).data
+    resp = httptools.downloadpage(url, headers=headers, post=post, ignore_response_code=ignore_response_code, 
+                                  only_headers=only_headers, timeout=timeout, canonical=canonical)
+    data = resp.data
 
     if unescape:
         data = scrapertools.unescape(data)
 
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    if soup:
+        soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    else:
+        soup = resp
 
     return soup
 
@@ -120,6 +124,7 @@ def section(item):
 
     itemlist = list()
     base_url = "%s%s" % (host, item.mode)
+    
     soup = create_soup(base_url)
 
     if item.title == "Generos":
@@ -159,9 +164,11 @@ def list_all(item):
         if "serie/" in url:
             new_item.contentSerieName = title
             new_item.action = "seasons"
+            new_item.contentType = 'tvshow'
         else:
             new_item.contentTitle = title
             new_item.action = "findvideos"
+            new_item.contentType = 'movie'
 
         itemlist.append(new_item)
 
@@ -182,23 +189,29 @@ def seasons(item):
     logger.info()
 
     itemlist = list()
-    data = httptools.downloadpage(item.url, canonical=canonical).data
+    infoLabels = item.infoLabels
+    
+    data = create_soup(item.url, soup=False).data
+    
     fom, hash = scrapertools.find_single_match(data, "fom:(.*?),hash:'([^']+)'")
     json_data = jsontools.load(fom)
-    infoLabels = item.infoLabels
 
     for elem in json_data:
         season = elem
         title = "Temporada %s" % season
-        infoLabels["season"] = season
+        try:
+            infoLabels["season"] = int(season)
+        except:
+            infoLabels["season"] = 1
+        infoLabels["meadiatype"] = 'season'
         epi_data = json_data[elem]
+        
         itemlist.append(Item(channel=item.channel, title=title, action='episodesxseasons', epi_data=epi_data, hash=hash,
                              context=filtertools.context(item, list_language, list_quality), infoLabels=infoLabels))
 
-
-
     tmdb.set_infoLabels_itemlist(itemlist, True)
     itemlist = sorted(itemlist, key=lambda i: i.contentSeason)
+    
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
@@ -209,7 +222,9 @@ def seasons(item):
 
 def episodios(item):
     logger.info()
+    
     itemlist = []
+    
     templist = seasons(item)
     for tempitem in templist:
         itemlist += episodesxseasons(tempitem)
@@ -224,16 +239,22 @@ def episodesxseasons(item):
     matches = item.epi_data
     infoLabels = item.infoLabels
     season = infoLabels["season"]
+    
     for epi, info in matches.items():
         title = "%sx%s - %s" % (season, epi, info["name"])
         json_data = info["all"]
-        infoLabels["episode"] = epi
+        try:
+            infoLabels["episode"] = int(epi)
+        except:
+            infoLabels["season"] = 1
+        infoLabels["meadiatype"] = 'episode'
 
         itemlist.append(Item(channel=item.channel, title=title, json_data=json_data, action='findvideos',
                              infoLabels=infoLabels, hash=item.hash))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
     itemlist = sorted(itemlist, key=lambda i: i.contentEpisodeNumber)
+    
     return itemlist
 
 
@@ -246,25 +267,22 @@ def findvideos(item):
         json_data = item.json_data
         hash = item.hash
     else:
-        data = httptools.downloadpage(item.url, canonical=canonical).data
+        data = create_soup(item.url, soup=False).data
         json_data = jsontools.load(scrapertools.find_single_match(data, "fom:(\{.*?})"))
         hash = scrapertools.find_single_match(data, "hash:'([^']+)'")
 
     for url_info in json_data:
         lang = url_info
-        url = "%s?h=%s" % (base64.b64decode(json_data[url_info]), hash)
+        url = "%s?h=%s" % (base64.b64decode(json_data[url_info]).decode('utf-8'), hash)
         itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                          language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels))
-
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server)
 
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
     # Requerido para AutoPlay
-
     autoplay.start(itemlist, item)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
@@ -275,8 +293,47 @@ def findvideos(item):
     return itemlist
 
 
+def play(item):
+    logger.info()
+
+    item.server = ""
+
+    if "nuuuppp" in item.url:
+        referer = scrapertools.find_single_match(item.url, patron_host)
+        headers = {'Referer': referer}
+        
+        data = create_soup(item.url, headers=headers, soup=False, canonical={}).data
+        
+        patron = 'player\.setup\({[^}]*file\:"([^"]+)"'
+        url = scrapertools.find_single_match(data, patron)
+        if not url:
+            return []
+        patron = 'sesz="([^"]+)"'
+        sesz = scrapertools.find_single_match(data, patron)
+        item.url = url+sesz
+        
+        headers["Range"] = "bytes=0-100"                                        # HEAD no funciona con la mitad de los enlaces
+        for x in range(2):
+            resp = create_soup(item.url, timeout=7, headers=headers, soup=False, canonical={})
+            if resp.sucess: break
+        else:
+            return []
+        
+        if resp.url and resp.url != item.url:
+            item.url = resp.url
+            if referer not in item.url:
+                item.url += '|referer=%s' % referer
+        
+        item.setMimeType = 'application/vnd.apple.mpegurl'
+
+    itemlist = [item]
+
+    return itemlist
+
+
 def search(item, texto):
     logger.info()
+    
     try:
         texto = texto.replace(" ", "+")
         item.url = item.url + texto

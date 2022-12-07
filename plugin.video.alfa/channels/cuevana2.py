@@ -30,6 +30,7 @@ canonical = {
              'host': config.get_setting("current_host", 'cuevana2', default=''), 
              'host_alt': ["https://www.cuevana2.info/"], 
              'host_black_list': ["https://www.cuevana2.biz/", "https://cuevana2.io/"], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -41,6 +42,7 @@ domain = scrapertools.find_single_match(host, patron_domain)
 
 def mainlist(item):
     logger.info()
+    
     itemlist = []
 
     autoplay.init(item.channel, list_servers, list_quality)
@@ -48,7 +50,7 @@ def mainlist(item):
     # PELICULAS
     plot = "Películas en Versión Original Subtitulada en Español (VOSE)"
     itemlist.append(Item(channel = item.channel, title = "--- Peliculas ---", plot=plot,
-        folder=False, text_bold=True, thumbnail = get_thumb("movies", auto = True)))
+        folder=False, thumbnail = get_thumb("movies", auto = True)))
 
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "movies", plot=plot,
         url = host + "pelicula/", thumbnail = get_thumb("newest", auto = True)))
@@ -68,7 +70,7 @@ def mainlist(item):
     # SERIES
     plot = "Series en Versión Original Subtitulada en Español (VOSE)"
     itemlist.append(Item(channel = item.channel, title = "--- Series ---", plot=plot,
-        folder=False, text_bold=True, thumbnail = get_thumb("tvshows", auto = True)))
+        folder=False, thumbnail = get_thumb("tvshows", auto = True)))
 
     itemlist.append(Item(channel = item.channel, title = "Todas", action = "shows", plot=plot,
         url = host + "listar-series/", thumbnail = get_thumb("all", auto = True)))
@@ -81,6 +83,8 @@ def mainlist(item):
     return itemlist
 
 ### FIN MENUS ###
+
+
 def inArray(arr, arr2):
     for word in arr:
         if word not in arr2:
@@ -88,11 +92,14 @@ def inArray(arr, arr2):
 
     return True
 
+
 def load_data(url):
+    
     data = httptools.downloadpage(url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
 
     return data
+
 
 def redirect_url(url, parameters=None, scr=False):
 
@@ -113,7 +120,7 @@ def redirect_url(url, parameters=None, scr=False):
         host = 'https://' + link.split("/")[2]
         vid = scrapertools.find_single_match(link, "\?id=(\w+)")
         if vid:
-            link = host+ '/hls/' + vid + '/' + vid + '.playlist.m3u8'
+            link = host + 'hls/' + vid + '/' + vid + '.playlist.m3u8'
     elif 'm3u8' in link:
         link = scrapertools.find_single_match(data, '"file": "([^"]+)"')
 
@@ -133,22 +140,27 @@ def put_movies(item, data, pattern, paginacion):
         if 'pelicula' in link:
             itemTitle = "%s [COLOR darkgrey](%s)[/COLOR] [COLOR yellow](%s)[/COLOR]" % (title, year, rating)
             itemlist.append(Item(channel = item.channel, title=itemTitle, contentTitle=title, thumbnail=img, 
-                url=link, plot=plot, action="findvideos", infoLabels={'year': year}, language="VOSE"))
+                url=link, plot=plot, action="findvideos", infoLabels={'year': year or '-'}, language="VOSE", contentType='movie'))
             #logger.info(link)
 
     return cnt, itemlist
 
+
 def episodios(item):
     logger.info()
+    
     itemlist = []
     templist = seasons(item)
+    
     for tempitem in templist:
         itemlist += episodesxseasons(tempitem)
 
     return itemlist
 
+
 def episodesxseasons(item):
     logger.info()
+    
     itemlist = []
     infoLabels = item.infoLabels
 
@@ -159,18 +171,26 @@ def episodesxseasons(item):
     matches = scrapertools.find_multiple_matches(bloq, pattern)
     for link, title in matches:
         
-        ses, ep = scrapertools.find_single_match(title.strip(), r"^(\d+)\.(\d+)")
+        try:
+            ses, ep = scrapertools.find_single_match(title.strip(), r"(\d{1,2})[x|X](\d{1,3})")
+            ses = int(ses)
+            ep = int(ep)
+        except:
+            ses = item.infoLabels['season']
+            ep = 1
         infoLabels['episode'] = ep
         title = title.replace('%s.%s' % (ses, ep), '%sx%s' % (ses, ep))
         
-        itemlist.append(item.clone(title=title, url=link, action='findvideos', extra=1))
+        itemlist.append(item.clone(title=title, url=link, action='findvideos', extra=1, contentType='episode'))
 
     tmdb.set_infoLabels(itemlist, True)
 
     return itemlist
 
+
 def seasons(item):
     logger.info()
+    
     itemlist = []
     infoLabels = item.infoLabels
 
@@ -188,12 +208,12 @@ def seasons(item):
         
         if new_data and not '<div id="reproductor' in new_data:
             continue
-        season = scrapertools.find_single_match(title, '(\d+)')
+        season = int(scrapertools.find_single_match(title, '(\d+)'))
         infoLabels['season'] = season
 
         itemlist.append(Item(channel=item.channel, title=title, contentSeason=season,
-            contentSerieName=item.contentSerieName, action="episodesxseasons",
-            infoLabels=infoLabels, url=item.url))
+                             contentSerieName=item.contentSerieName, action="episodesxseasons",
+                             infoLabels=infoLabels, url=item.url, contentType='season'))
         #episodeMatches = scrapertools.find_single_match(data, episodesPattern % season)
         #put_episodes(itemlist, item, episodeMatches)
     tmdb.set_infoLabels(itemlist, True)
@@ -206,8 +226,10 @@ def seasons(item):
     
     return itemlist
 
+
 def shows(item):
     logger.info()
+    
     itemlist = []
     
     #Falsa paginacion
@@ -226,18 +248,20 @@ def shows(item):
     
     for link, title in matches[item.page:item.page + paginacion]:
         itemlist.append(Item(channel = item.channel, title=title, contentSerieName=title,
-                         url=host + link, action="seasons"))
+                             url=urllib.urljoin(host, link), action="seasons", contentType='tvshow'))
 
     if next_page2 < cnt:
         itemlist.append(Item(channel = item.channel, title='Siguiente >>', 
                         url=item.url, action="shows", page=next_page2))
     
     tmdb.set_infoLabels(itemlist, True)
-    
+
     return itemlist
+
 
 def movies(item):
     logger.info()
+    
     itemlist = []
     
     #Falsa paginacion
@@ -271,35 +295,40 @@ def movies(item):
     #coloca las peliculas encontradas en la lista
     return itemlist
 
+
 def searchShows2(itemlist, item, texto):
+    
     data = load_data(item.url)
 
     pattern = '"in"><a href="([^"]+)">(.*?)</a>'
-
     matches = scrapertools.find_multiple_matches(data, pattern)
     for link, title in matches:
 
         if texto.lower() in title.lower():
             itemlist.append(Item(channel = item.channel, title=title, contentSerieName=title,
-                                url=host + link, action="seasons"))
+                                 url=urllib.urljoin(host, link), action="seasons", contentType='tvshow'))
+
+
 def searchShows(itemlist, item, texto):
+    
     texto = texto.lower().split()
+    
     data = load_data(item.url)
 
     pattern = '"in"><a href="([^"]+)">(.*?)</a>'
-
     matches = scrapertools.find_multiple_matches(data, pattern)
     for link, title in matches:
         keywords = title.lower().split()
-        logger.info(keywords)
-        logger.info(texto)
 
         if inArray(texto, keywords):
             itemlist.append(Item(channel = item.channel, title=title, contentSerieName=title,
-                                url=host + link, action="seasons"))
+                                url=urllib.urljoin(host, link), action="seasons", contentType='tvshow'))
+
 
 def searchMovies(itemlist, item, texto):
+    
     data = load_data(item.url + texto)
+    
     #patron para buscar las peliculas
     pattern = '<a href="([^"]+)"><div class="img">' #link
     pattern += '<img width="120" height="160" src="([^"]+)" class="attachment-thumbnail wp-post-image" alt="([^"]+)".*?' #img and title
@@ -312,6 +341,7 @@ def searchMovies(itemlist, item, texto):
 
     if next_page:
         itemlist.append(Item(channel = item.channel, title='Siguiente Pagina', url=next_page, action="movies"))
+
 
 def search(item, texto):
     itemlist = []
@@ -329,8 +359,10 @@ def search(item, texto):
     
     return itemlist
 
+
 def by(item, pattern):
     logger.info()
+    
     itemlist = []
 
     #descarga la pagina html
@@ -341,16 +373,22 @@ def by(item, pattern):
 
     matches = scrapertools.find_multiple_matches(data, pattern)
     for link, genre in matches:
+        
         itemlist.append(Item(channel = item.channel, title=genre, url=link, action="movies"))
+    
     itemlist.reverse()
+    
     return itemlist
+
 
 def genre(item):
     return by(item, '(\w+)')
 
+
 def age(item):
     #return by(item, '(\d+)')
     logger.info()
+    
     itemlist = []
 
     #No hay lista de años, creamos una
@@ -367,12 +405,16 @@ def age(item):
         year = str(year)
         url = '%sfecha-de-estreno/%s/' % (host, year)
         plot = 'Películas del año %s' % year
+        
         itemlist.append(Item(channel=item.channel, title=year, url=url, action="movies", plot=plot))
 
     itemlist.reverse()
+    
     return itemlist
 
+
 def GKPluginLink(hash):
+    
     hashdata = urllib.urlencode({r'link':hash})
     url = 'https://player.%s/plugins/gkpluginsphp.php' % domain
     try:
@@ -381,12 +423,17 @@ def GKPluginLink(hash):
     except:
         return None
 
+
 def RedirectLink(hash_):
+    
     hashdata = urllib.urlencode({r'h':hash_})
     url = 'https://player.%s/sc/r.php' % domain
+    
     return redirect_url(url, hashdata)
 
+
 def OpenloadLink(hash):
+    
     hashdata = urllib.urlencode({r'h':hash})
     url = 'https://api.%s/openload/api.php' % domain
     try:
@@ -395,9 +442,12 @@ def OpenloadLink(hash):
     except:
         return None
 
+
 #el pattern esta raro para eliminar los duplicados, de todas formas asi es un lenguaje de programacion verificando su sintaxis
 def getContentMovie(data, item):
+    
     item.infoLabels["year"] = scrapertools.find_single_match(data, 'rel="tag">(\d+)</a>')
+    
     genre = ''
     for found_genre in scrapertools.find_multiple_matches(data, 'genero/.*?">(.*?)</a>(?=.*?</p>)'):
         genre += found_genre + ', '
@@ -411,12 +461,16 @@ def getContentMovie(data, item):
     item.infoLabels["cast"] = tuple(found_cast for found_cast in scrapertools.find_multiple_matches(
         data, 'reparto/.*?">(.*?)</a>(?=.*?</p>)'))
 
+
 def getContentShow(data, item):
+    
     item.thumbnail = scrapertools.find_single_match(data, 'width="120" height="160" src="([^"]+)"')
     item.infoLabels['genre'] = scrapertools.find_single_match(data, '-4px;">(.*?)</div>')
 
+
 def findvideos(item):
     logger.info()
+    
     itemlist = []
 
     data = load_data(item.url)
@@ -479,6 +533,22 @@ def findvideos(item):
             elif r'irgotoolp.php' in link:
                 link = redirect_url('https:'+link)
                 server = 'oprem'
+            
+            elif '/?id=' in link:
+                link = link.replace('/?id=', '/showcase.php?id=')
+                data = httptools.downloadpage(link, post={'load': 'yes'}, timeout=4).data
+                data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+                data = scrapertools.find_single_match(data, '<script>\s*let\s*player\s*=\s*\[([^\]]+\})\];')
+                data = scrapertools.find_multiple_matches(data, '({[^\}]+\})')
+                for elem in data:
+                    json = jsontools.load(elem)
+                    server = json.get('cyberlocker', '')
+                    if server in ['streamsb']: continue
+                    link = json.get('link', '')
+                    language = json.get('language', '').replace('latin_spanish', 'LAT').replace('spanish', 'CAST').replace('english', 'VO')
+                    itemlist.append(item.clone(action='play', title=title % json.get('cyberlocker', '').capitalize(), 
+                                    url=link, server=server, subtitle=subtitles, language=language, quality=json.get('quality', '')))
+            
             else:
                 link = scrapertools.find_single_match(link, 'php.*?=(\w+)&')
                 link = GKPluginLink(link)
@@ -500,24 +570,25 @@ def findvideos(item):
         if not link or 'waaw' in link:
             continue
 
-        # GKplugin puede devolver multiples links con diferentes calidades, si se pudiera colocar una lista de opciones
-        # personalizadas para Directo, se agradece, por ahora solo devuelve el primero que encuentre
-        if type(link) is list:
-            link = link[0]['link']
-        if r'chomikuj.pl' in link:
-            # En algunas personas la opcion CH les da error 401
-            link += "|Referer=https://player.%s/plugins/gkpluginsphp.php" % domain
-        elif r'vidcache.net' in link:
-            # Para que no salga error 500
-            link += '|Referer=https://player.%s/yourupload.com.php' % domain
+        if not itemlist:
+            # GKplugin puede devolver multiples links con diferentes calidades, si se pudiera colocar una lista de opciones
+            # personalizadas para Directo, se agradece, por ahora solo devuelve el primero que encuentre
+            if type(link) is list:
+                link = link[0]['link']
+            if r'chomikuj.pl' in link:
+                # En algunas personas la opcion CH les da error 401
+                link += "|Referer=https://player.%s/plugins/gkpluginsphp.php" % domain
+            elif r'vidcache.net' in link:
+                # Para que no salga error 500
+                link += '|Referer=https://player.%s/yourupload.com.php' % domain
 
-        itemlist.append(
-            item.clone(
-                channel = item.channel, 
-                title=title % server.capitalize(), 
-                url=link, action='play', 
-                subtitle=subtitles,
-                server=server))
+            itemlist.append(
+                item.clone(
+                    channel = item.channel, 
+                    title=title % server.capitalize(), 
+                    url=link, action='play', 
+                    subtitle=subtitles,
+                    server=server))
 
     autoplay.start(itemlist, item)
 

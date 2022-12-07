@@ -31,9 +31,9 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.click/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
-                          'https://verdetorrent.com/', 'https://tomadivx.net/'], 
-             'host_black_list': ['https://dontorrent.gy/',
+             'host_alt': ['https://dontorrent.futbol/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+                          'https://verdetorrent.com/', 'https://tomadivx.net/', 'https://donproxies.com/'], 
+             'host_black_list': ['https://dontorrent.fail/', 'https://dontorrent.click/', 'https://dontorrent.gy/',
                                  'https://dontorrent.gs/', 'https://dontorrent.me/', 'https://dontorrent.ltd/', 
                                  'https://dontorrent.fans/', 'https://dontorrent.uno/', 'https://dontorrent.ist/', 
                                  'https://dontorrent.vin/', 'https://dontorrent.tf/', 'https://dontorrent.pub/', 
@@ -405,6 +405,8 @@ def listado(item):                                                              
             # Verificamos si ha cambiado el Host
             if response.host:
                 next_page_url = response.url_new
+            elif response.url and response.url != next_page_url:
+                next_page_url = item.url = '%s%s' % (response.url, scrapertools.find_single_match(next_page_url, '(page\/\d+\/?)'))
             
             curr_page += 1                                                      # Apunto ya a la página siguiente
             if not data:                                                        # Si la web está caída salimos sin dar error
@@ -586,6 +588,8 @@ def listado(item):                                                              
                 title = title.replace('(Sub Forzados)', '')
                 title = title.replace('Subs integrados', '')
                 item_local.language = ['VOS']                                   # añadimos VOS
+            if 'latino/' in url:
+                item_local.language += ['LAT']                                  # añadimos LAT
             if '[Dual' in title:
                 title = re.sub(r'(?i)\[dual.*?\]', '', title)
                 item_local.language += ['DUAL']                                 # añadimos DUAL

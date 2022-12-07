@@ -29,6 +29,7 @@ canonical = {
              'host': config.get_setting("current_host", 'legalmentegratis', default=''), 
              'host_alt': ["http://legalmentegratis.com/"], 
              'host_black_list': [], 
+             'set_tls': False, 'set_tls_min': True, 'retries_cloudflare': 0, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -53,46 +54,49 @@ def mainlist(item):
     return itemlist
 
 
-def get_source(url, referer=None):
+def get_source(url, referer=None, timeout=5):
     logger.info()
+    
     if referer is None:
-        data = httptools.downloadpage(url, canonical=canonical).data
+        data = httptools.downloadpage(url, timeout=timeout, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
+        data = httptools.downloadpage(url, timeout=timeout, headers={'Referer':referer}, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    
     return data
 
 
 def list_all(item):
     logger.info()
+    
     itemlist = []
 
     data = get_source(item.url)
     patron = '<article id="post-\d+".*?href="([^"]+)".*?src="([^"]+)".*?<p>(.*?) (\(?\d{4}\)?)([^<]+)</p>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedthumbnail, scrapedtitle, year, scrapedplot in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle, _year, scrapedplot in matches:
 
         url = scrapedurl
         contentTitle = scrapedtitle
-
-        year = re.sub(r'\(|\)','', year)
-
+        year = re.sub(r'\(|\)','', _year) or '-'
         title = '%s [%s]' % (contentTitle, year)
         thumbnail = 'http:' + scrapedthumbnail
+        
         itemlist.append(Item(channel=item.channel, action='findvideos',
                              title=title,
                              url=url,
                              thumbnail=thumbnail,
                              contentTitle=contentTitle,
+                             contentType='movie', 
                              infoLabels={'year': year}
                              ))
+    
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
-
     itemlist = sorted(itemlist, key=lambda it: it.contentTitle)
+    
     #  Paginación
-
     url_next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)">')
     if url_next_page:
         itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all',
@@ -102,19 +106,21 @@ def list_all(item):
 
 def section(item):
     logger.info()
+    
     itemlist = []
 
-    data = get_source(host)
+    data = get_source(host+'generos/')
     action = 'list_all'
 
     if item.section == 'genre':
-        data = scrapertools.find_single_match(data, '>Género(.*?)</ul>')
+        data = scrapertools.find_single_match(data, '<h1\s*class="entry-title"\s*>Géneros</h1>(.*?)<\/article>')
 
     patron = 'href="([^"]+)".*?>([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for url, title in matches:
         new_item = Item(channel=item.channel, title=title, url=url, action=action, section=item.section)
+        
         itemlist.append(new_item)
 
     return itemlist
@@ -122,18 +128,21 @@ def section(item):
 
 def findvideos(item):
     logger.info()
+    
     itemlist = []
+    
     data = get_source(item.url)
+    
     lang_data = scrapertools.find_single_match(data, '<p><strong(.*?)</strong></p>')
     if 'español' in lang_data:
         language = 'español'
     else:
         language = 'VOSE'
+    
     url = scrapertools.find_single_match (data, '<iframe.*?src="([^"]+)"')
     if 'gloria.tv' in url:
         new_data = get_source(url)
         url = 'https://gloria.tv'+ scrapertools.find_single_match(new_data, '<source type=".*?" src="([^"]+)">')
-
 
     itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                          language=IDIOMAS[language], infoLabels=item.infoLabels))
@@ -142,8 +151,10 @@ def findvideos(item):
 
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
+    
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
+    
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
                              url=item.url, action="add_pelicula_to_library", extra="findvideos",

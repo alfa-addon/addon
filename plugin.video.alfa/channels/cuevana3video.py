@@ -31,8 +31,8 @@ __channel__='allcalidad'
 canonical = {
              'channel': 'cuevana3video', 
              'host': config.get_setting("current_host", 'cuevana3video', default=''), 
-             'host_alt': ["https://www3.cuevana3.ch/"], 
-             'host_black_list': ["https://www2.cuevana3.ch/", 
+             'host_alt': ["https://www4.cuevana3.ch/"], 
+             'host_black_list': ["https://www3.cuevana3.ch/", "https://www2.cuevana3.ch/", 
                                  "https://www1.cuevana3.ch/", "https://cuevana3.ch/", "https://www1.cuevana3.fm/", 
                                  "https://cuevana3.fm/", "https://www1.cuevana3.vc/", "https://cuevana3.vc/", 
                                  "https://www2.cuevana3.pe/", "https://www1.cuevana3.pe/", "https://cuevana3.pe/", 
@@ -43,11 +43,7 @@ canonical = {
 host = canonical['host'] or canonical['host_alt'][0]
 
 encoding = "utf-8"
-
-try:
-    __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
-except Exception:
-    __modo_grafico__ = True
+__modo_grafico__ = config.get_setting('modo_grafico', __channel__, default=True)
 
 
 def mainlist(item):
@@ -59,8 +55,7 @@ def mainlist(item):
     itemlist.append(
         Item(
             channel = item.channel,
-            title = "Películas:",
-            text_bold = True
+            title = "Películas:"
         )
     )
     itemlist.append(
@@ -102,8 +97,7 @@ def mainlist(item):
     itemlist.append(
         Item(
             channel = item.channel,
-            title = "Series:",
-            text_bold = True
+            title = "Series:"
         )
     )
     itemlist.append(
@@ -180,7 +174,7 @@ def last_episodes(item):
                 channel = item.channel,
                 infoLabels = infoLabels,
                 thumbnail = "https://" + scrapedthumbnail,
-                title = scrapedtitle + " %s" %scrapeddate,
+                title = scrapedtitle.strip() + " %s" %scrapeddate,
                 url = urlparse.urljoin(host, scrapedurl),
             )
         )
@@ -197,6 +191,7 @@ def last_tvshows(item):
     url = item.url
     if not item.page: item.page = 1
     if not item.extra: url += "?page=%s" %item.page
+
     data = httptools.downloadpage(url, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, 'id="%s".*?</ul>' %item.type_tvshow)
     patron  = '(?is)TPost C.*?<a href="([^"]+)'
@@ -209,7 +204,7 @@ def last_tvshows(item):
             item.clone(
                 action = "seasons",
                 channel = item.channel,
-                contentSerieName = scrapedtitle,
+                contentSerieName = scrapedtitle.strip(),
                 contentType = 'tvshow', 
                 thumbnail = "https://" + scrapedthumbnail,
                 title = scrapedtitle,
@@ -241,21 +236,25 @@ def last_tvshows(item):
 
 def seasons(item):
     logger.info()
+    
     itemlist = []
-    infoLabels = []
+    
     data = httptools.downloadpage(item.url, canonical=canonical).data
+    
     patron  = '(?is)<option value="(\d+).*?>([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedid, scrapedtitle in matches:
+    for _scrapedid, scrapedtitle in matches:
+        try:
+            scrapedid = int(_scrapedid)
+        except:
+            scrapedid = 1
         itemlist.append(
             item.clone(
                 action = "episodesxseasons",
-                channel = item.channel,
-                contentSerieName = item.contentSerieName,
-                id = scrapedid,
-                infoLabels = {"season": scrapedid},
-                season = scrapedid,
-                title = scrapedtitle
+                contentType = 'season', 
+                id = str(scrapedid),
+                contentSeason = scrapedid, 
+                title = scrapedtitle.strip()
             )
         )
 
@@ -295,8 +294,10 @@ def episodesxseasons(item):
     logger.info()
 
     itemlist = []
-    infoLabels = []
+    infoLabels = item.infoLabels
+    
     data = httptools.downloadpage(item.url, canonical=canonical).data
+    
     bloque = scrapertools.find_single_match(data, 'season-%s.*?</ul>' %item.id)
     patron  = '(?is)<a href="([^"]+)'
     patron += '.*?src="([^"]+)'
@@ -306,7 +307,7 @@ def episodesxseasons(item):
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapeddate in matches:
         season, episode  = scrapertools.get_season_and_episode(scrapedtitle).split("x")
-        infoLabels = {"mediatype": "episode", "tvshowtitle": scrapertools.find_single_match(scrapedtitle, '(.*?) \d')}
+        infoLabels["mediatype"] = "episode"
         try:
             infoLabels["episode"] = int(episode)
             infoLabels["season"] = int(season)
@@ -320,7 +321,7 @@ def episodesxseasons(item):
                 action = "findvideos",
                 episode = episode,
                 infoLabels = infoLabels,
-                title = scrapedtitle,
+                title = scrapedtitle.strip(),
                 thumbnail = scrapedthumbnail,
                 url = urlparse.urljoin(host, scrapedurl)
             )
@@ -358,6 +359,7 @@ def list_all(item):
     url = item.url
     if not item.page: item.page = 1
     if not item.extra: url += "?page=%s" %item.page
+
     data = httptools.downloadpage(url, encoding=encoding, canonical=canonical).data
     patron  = '(?is)TPost C.*?<a href="([^"]+)'
     patron += '.*?data-src="([^"]+)'
@@ -373,7 +375,7 @@ def list_all(item):
                 item.clone(
                     action = "seasons",
                     channel = item.channel,
-                    contentSerieName = scrapedtitle,
+                    contentSerieName = scrapedtitle.strip(),
                     contentType = 'tvshow', 
                     thumbnail = "https://" + scrapedthumbnail,
                     title = scrapedtitle,
@@ -387,7 +389,7 @@ def list_all(item):
                     action = "findvideos",
                     channel = item.channel,
                     contentType = "movie",
-                    contentTitle = scrapedtitle,
+                    contentTitle = scrapedtitle.strip(),
                     thumbnail = "https://" + scrapedthumbnail,
                     title = scrapedtitle,
                     url = urlparse.urljoin(host, scrapedurl),
@@ -416,7 +418,9 @@ def list_all(item):
 
 
 def findvideos(item):
+    
     itemlist = []
+    
     data = httptools.downloadpage(item.url, encoding=encoding, forced_proxy_opt='ProxyCF', canonical=canonical).data
     bloques = scrapertools.find_multiple_matches(data, '(?is)open_submenu .*?</ul>' )
 
@@ -476,6 +480,7 @@ def findvideos(item):
 
 def play(item):
     logger.info()
+    
     itemlist = []
     item.thumbnail = item.contentThumbnail
     item.url = item.url.replace("embedsito.com","fembed.com").replace("pelispng.online","fembed.com")
@@ -556,7 +561,9 @@ def generos(item):
     logger.info()
 
     itemlist = []
+    
     data = httptools.downloadpage(item.url, encoding=encoding).data
+    
     patron = '(?is)menu-item-object-category.*?<a href="([^"]+)'
     patron += '.*?">([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)

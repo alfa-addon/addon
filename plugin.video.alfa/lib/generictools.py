@@ -40,7 +40,7 @@ from core import channeltools
 from core import filetools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
+from platformcode import config, logger, unify
 
 channel_py = "newpct1"
 intervenido_judicial = 'Dominio intervenido por la Autoridad Judicial'
@@ -202,14 +202,16 @@ def downloadpage(url, **kwargs):
                             + " PATRON: " + str(patron) + " DATA: ")
                 if funcion != 'episodios':
                     itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
-                             '[COLOR yellow]' + str(response.code) + '[/COLOR]: ERROR 02: ' + ERROR_02))
+                             '[COLOR %s]' % get_color_from_settings('library_color', default='yellow') + 
+                             str(response.code) + '[/COLOR]: ERROR 02: ' + ERROR_02))
 
         if not response.sucess and str(response.code) != '301':
             logger.error('ERROR 01: ' + ERROR_01 + str(item.url) + " CODE: " + str(response.code) 
                              + " PATRON: " + str(patron) + " DATA: ")
             if funcion != 'episodios':
                 itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
-                         '[COLOR yellow]' + str(response.code) + '[/COLOR]: ERROR 01: ' + ERROR_01))
+                         '[COLOR %s]' % get_color_from_settings('library_color', default='yellow') + 
+                         str(response.code) + '[/COLOR]: ERROR 01: ' + ERROR_01))
 
         if response.host and kwargs.get('canonical', {}).get('channel', '') == channel_py:
             change_host_newpct1(response.host, host_old)
@@ -264,9 +266,13 @@ def convert_url_base64(url, host='', referer=None, rep_blanks=True):
     if len(url_base64) > 1 and not 'magnet:' in url_base64 and not '.torrent' in url_base64:
         patron_php = 'php(?:#|\?\w=)(.*?$)'
         if not scrapertools.find_single_match(url_base64, patron_php):
-            patron_php = '\?type=(?:anonym&)?(?:urlb64)?=(.*?$)'
+            patron_php = '\?(?:\w+=.*&)?(?:urlb64)?=(.*?$)'
 
         url_base64 = scrapertools.find_single_match(url_base64, patron_php)
+        if not url_base64:
+            logger.info('Url base64 vacía: Patron incorrecto: %s' % patron_php)
+            return url
+        
         try:
             # Da hasta 20 pasadas o hasta que de error
             for x in range(20):
@@ -416,10 +422,12 @@ def check_blocked_IP(data, itemlist, url, canonical={}, verbose=True):
         logger.error('ERROR 99: La IP ha sido bloqueada por la Web "%s" / DATA: %s' % (host, data[:2500]))
         
         itemlist.append(Item(channel=channel, url=host, 
-                        title="[COLOR yellow]La IP ha sido bloqueada por la Web.[/COLOR]", 
+                        title="[COLOR %s]La IP ha sido bloqueada por la Web.[/COLOR]" \
+                        % get_color_from_settings('library_color', default='yellow'), 
                         folder=False, thumbnail=thumb_separador))
         itemlist.append(Item(channel=channel, url=host, 
-                        title="[COLOR yellow]Fuerce la renovación de la IP en el Router[/COLOR]", 
+                        title="[COLOR %s]Fuerce la renovación de la IP en el Router[/COLOR]" \
+                        % get_color_from_settings('library_color', default='yellow'), 
                         folder=False, thumbnail=thumb_separador))
         if verbose:
             from platformcode.platformtools import dialog_notification
@@ -1020,8 +1028,11 @@ def post_tmdb_listado(item, itemlist):
 
         #Ahora maquillamos un poco los titulos dependiendo de si se han seleccionado títulos inteligentes o no
         if not config.get_setting("unify"):                                     #Si Titulos Inteligentes NO seleccionados:
-            title = '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' \
-                         % (title, str(item_local.infoLabels['year']), rating, item_local.quality, str(item_local.language))
+            title = '%s %s %s %s %s' % (unify.set_color(title, 'movie' if item_local.contentType == 'movie' else 'tvshow'), 
+                                        unify.set_color(item_local.infoLabels['year'], 'year') , 
+                                        unify.format_rating(rating), unify.set_color(item_local.quality, "quality"), 
+                                        unify.set_color(str(item_local.language), item_local.language[0] \
+                                        if isinstance(item_local.language, list) else item_local.language))
 
         elif item_local.action:                                                 #Si Titulos Inteligentes SÍ seleccionados:
             title = title.replace("[", "-").replace("]", "-").replace(".", ",").replace("GB", "G B")\
@@ -1075,13 +1086,17 @@ def post_tmdb_listado(item, itemlist):
     if item.intervencion:
         for clone_inter, autoridad in item.intervencion:
             thumb_intervenido = get_thumb(autoridad)
-            itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
+            itemlist_fo.append(item.clone(action='', title="[COLOR %s]" % get_color_from_settings('library_color', default='yellow')
+                                          + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial 
+                                          + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
         del item.intervencion
     
     #Si ha habido fail-over, lo comento
     if channel_alt and item.from_channel != "news":
-        itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + item.category + '[/COLOR] [ALT ] en uso'))
-        itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + channel_alt.capitalize() + '[/COLOR] inaccesible'))
+        itemlist_fo.append(item.clone(action='', title="[COLOR %s]" % get_color_from_settings('library_color', default='yellow')
+                                      + item.category + '[/COLOR] [ALT ] en uso'))
+        itemlist_fo.append(item.clone(action='', title="[COLOR %s]" % get_color_from_settings('library_color', default='yellow') 
+                                      + channel_alt.capitalize() + '[/COLOR] inaccesible'))
     
     if len(itemlist_fo) > 0:
         itemlist = itemlist_fo + itemlist
@@ -1183,8 +1198,11 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
         rating = ''
     
     if not config.get_setting("unify"):                                         #Si Titulos Inteligentes NO seleccionados:
-        title = '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % \
-                (title, str(item_season.infoLabels['year']), rating, item_season.quality, str(item_season.language))
+        title = '%s %s %s %s %s' % (unify.set_color(title, 'movie' if item_season.contentType == 'movie' else 'tvshow'), 
+                                    unify.set_color(item_season.infoLabels['year'], 'year') , 
+                                    unify.format_rating(rating), unify.set_color(item_season.quality, "quality"), 
+                                    unify.set_color(str(item_season.language), item_season.language[0] \
+                                    if isinstance(item_season.language, list) else item_season.language))
     else:                                                                       #Lo arreglamos un poco para Unify
         title = title.replace('[', '-').replace(']', '-').replace('.', ',').strip()
     title = title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
@@ -1240,23 +1258,21 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
                 logger.error(traceback.format_exc())
         
             if item_local.infoLabels['temporada_air_date']:                     #Fecha de emisión de la Temp
-                item_local.title += ' [%s]' % str(scrapertools.find_single_match(str(item_local.infoLabels['temporada_air_date']), r'\/(\d{4})'))
-            
-            #rating = ''                                                        #Ponemos el rating, si es diferente del de la Serie
-            #if item_local.infoLabels['rating'] and item_local.infoLabels['rating'] != 0.0:
-            #    try:
-            #        rating = float(item_local.infoLabels['rating'])
-            #        rating = round(rating, 1)
-            #    except:
-            #        logger.error(traceback.format_exc())
-            #if rating and rating > 0.0:
-            #    item_local.title += ' [%s]' % str(rating)
-            
+                if not config.get_setting("unify"):                             #Si Titulos Inteligentes NO seleccionados:
+                    item_local.title += ' %s %s' % (unify.set_color(scrapertools.find_single_match(str(item_local.infoLabels['temporada_air_date']),
+                                                    r'\/(\d{4})'), 'year'), unify.format_rating(item_local.infoLabels['rating']))
+                else:
+                    item_local.title += ' [%s] [%s]' % (scrapertools.find_single_match(str(item_local.infoLabels['temporada_air_date']),
+                                                    r'\/(\d{4})'), unify.check_rating(item_local.infoLabels['rating']))
+
             if item_local.infoLabels['temporada_num_episodios']:                #Núm. de episodios de la Temp
                 item_local.title += ' [%s epi]' % str(item_local.infoLabels['temporada_num_episodios'])
                 
             if not config.get_setting("unify"):                                 #Si Titulos Inteligentes NO seleccionados:
-                item_local.title = '%s [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.title, item_local.quality, str(item_local.language))
+                item_local.title = '%s %s %s' % (unify.set_color(item_local.title, 'tvshow'), 
+                                                 unify.set_color(item_local.quality, 'quality'), 
+                                                 unify.set_color(str(item_local.language), item_local.language[0] \
+                                                 if isinstance(item_local.language, list) else item_local.language))
             elif item_local.action:                                 #Si Titulos Inteligentes SÍ seleccionados:
                 item_local.title = item_local.title.replace("[", "-").replace("]", "-").replace(".", ",").replace("GB", "G B").replace("Gb", "G b").replace("gb", "g b").replace("MB", "M B").replace("Mb", "M b").replace("mb", "m b")
             item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
@@ -1275,26 +1291,34 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
     
     #Permitimos la actualización de los títulos, bien para uso inmediato, o para añadir a la videoteca
     if len(itemlist) > 0:
-        itemlist_temporadas.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
+        itemlist_temporadas.append(item.clone(title="** [COLOR %s]Actualizar Títulos - vista previa videoteca[/COLOR] **" \
+                                              % get_color_from_settings('library_color', default='yellow'), action="actualizar_titulos", 
+                                              tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
     
     #Es un canal estándar, sólo una linea de Añadir a Videoteca
     title = ''
     if item.infoLabels['status'] and (item.infoLabels['status'].lower() == "ended" \
                         or item.infoLabels['status'].lower() == "canceled"):
         title += ' [TERM]'
-    itemlist_temporadas.append(item_season.clone(title="[COLOR yellow]Añadir esta serie a videoteca-[/COLOR]" + title, action="add_serie_to_library", extra="episodios", add_menu=True))
+    itemlist_temporadas.append(item_season.clone(title="[COLOR %s]Añadir esta serie a videoteca-[/COLOR]" \
+                                                 % get_color_from_settings('library_color', default='yellow') 
+                                                 + title, action="add_serie_to_library", extra="episodios", add_menu=True))
 
     #Si intervención judicial, alerto!!!
     if item.intervencion:
         for clone_inter, autoridad in item.intervencion:
             thumb_intervenido = get_thumb(autoridad)
-            itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
+            itemlist_fo.append(item.clone(action='', title="[COLOR %s]" % get_color_from_settings('library_color', default='yellow') 
+                                          + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial 
+                                          + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
         del item.intervencion
     
     #Si ha habido fail-over, lo comento
     if channel_alt:
-        itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + channel_alt.capitalize() + '[/COLOR] [ALT ] en uso'))
-        itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + item.category.capitalize() + '[/COLOR] inaccesible'))
+        itemlist_fo.append(item.clone(action='', title="[COLOR %s]" % get_color_from_settings('library_color', default='yellow') 
+                                      + channel_alt.capitalize() + '[/COLOR] [ALT ] en uso'))
+        itemlist_fo.append(item.clone(action='', title="[COLOR %s]" % get_color_from_settings('library_color', default='yellow') 
+                                      + item.category.capitalize() + '[/COLOR] inaccesible'))
     
     if len(itemlist_fo) > 0:
         itemlist_temporadas = itemlist_fo + itemlist_temporadas
@@ -1424,6 +1448,7 @@ def find_btdigg_news(item, matches=[], canonical={}, channel_alt=''):
         urls = []
         url_final_base = btdigg_url
         convert = ['.=', '-= ', ':=', '&= ', '  = ']
+        default_lang = config.get_setting('channel_language', default='all')
         
         for _url, _title, _quality in matches:
             if 'pelicula' in item.extra:
@@ -1514,7 +1539,9 @@ def find_btdigg_news(item, matches=[], canonical={}, channel_alt=''):
                 break
         if matches_btdigg: matches = matches_btdigg[:]
         
-        url_tails = [[host_alt + 'peliculas/', 'pelicula'], [host_alt + 'estrenos-de-cine/', 'pelicula'], 
+        peliculas = 'peliculas-latino/' if default_lang == 'lat' else 'peliculas/'
+        url_tails = [[host_alt + 'peliculas-hd/', 'pelicula'], [host_alt + peliculas, 'pelicula'], 
+                     [host_alt + 'estrenos-de-cine/', 'pelicula'], 
                      [host_alt + 'series/', 'serie']]
         y = 40 if 'pelicula' in item.extra else 60
         for url_base, extra in url_tails:
@@ -1555,12 +1582,13 @@ def find_btdigg_news(item, matches=[], canonical={}, channel_alt=''):
                 title = title.replace("a?o", 'año').replace("a?O", 'año').replace("A?o", 'Año').replace("A?O", 'Año').replace("  ", ' ').strip()
                 if "en espa" in title: title = title[:-11]
 
-                url_final = '%s%s_btdig/%s' % (url_final_base, item.extra, title.replace(' ', '-').strip())
+                lang = 'latino/' if 'latino/' in url_base else ''
+                url_final = '%s%s_btdig/%s%s' % (url_final_base, item.extra, lang, title.replace(' ', '-').strip())
                 quality = '%s%s' % (quality, btdigg_label)
                 url_save = scrapertools.slugify(re.sub('(?:\s+\(+\d{4}\)+$|\s*-\s*Temp.*?$|\s+-\s+\d+.*?$)', '', title), 
                                                 strict=False, convert=convert)
 
-                if 'pelicula' in url:
+                if 'pelicula' in url or 'cine' in url:
                     if url_save in urls: continue
                     urls += [url_save]
                     matches.append((url_final, title, quality))
@@ -2014,9 +2042,12 @@ def post_tmdb_episodios(item, itemlist):
         item_local.infoLabels['title'] = item_local.infoLabels['episodio_titulo']
         if item_local.action:
             item_local.title = item_local.title.replace("[", "-").replace("]", "-")
-        item_local.title = '%s [%s] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % \
-                           (item_local.title, item_local.infoLabels['year'], rating, item_local.quality, str(item_local.language))
-    
+        item_local.title = '%s %s %s %s %s' % (unify.set_color(item_local.title, 'tvshow'), 
+                                               unify.set_color(item_local.infoLabels['year'], 'year'), unify.format_rating(rating), 
+                                               unify.set_color(item_local.quality, 'quality'), 
+                                               unify.set_color(str(item_local.language), item_local.language[0] \
+                                               if isinstance(item_local.language, list) else item_local.language))
+
         # Quitamos campos vacíos
         item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['episodio_titulo'].replace("[]", "").strip()
         item_local.infoLabels['title'] = item_local.infoLabels['title'].replace("[]", "").strip()
@@ -2066,9 +2097,10 @@ def post_tmdb_episodios(item, itemlist):
     poster = item.infoLabels['temporada_poster']
     if not poster: poster = item.infoLabels['thumbnail']
     if not item.downloadFilename and len(itemlist) > 0:                         #... si no viene de Descargas
-        itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", 
-                    action="actualizar_titulos", tmdb_stat=False, from_action=item.action, contentType='episode', 
-                    from_title_tmdb=item.title, from_update=True, thumbnail=poster))
+        itemlist.append(item.clone(title="** [COLOR %s]Actualizar Títulos - vista previa videoteca[/COLOR] **" \
+                                   % get_color_from_settings('library_color', default='yellow'), 
+                                   action="actualizar_titulos", tmdb_stat=False, from_action=item.action, contentType='episode', 
+                                   from_title_tmdb=item.title, from_update=True, thumbnail=poster))
     
     #Borro num. Temporada si no viene de menú de Añadir a Videoteca y no está actualizando la Videoteca
     if not item.library_playcounts:                                             # si no está actualizando la Videoteca
@@ -2110,45 +2142,54 @@ def post_tmdb_episodios(item, itemlist):
                 except:
                     logger.error("ERROR 08: EPISODIOS: No se ha podido actualizar la URL a la nueva Temporada")
                     logger.error(traceback.format_exc())
-                itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Serie a Videoteca-[/COLOR]" + \
-                            title, action="add_serie_to_library", extra="episodios", contentType='episode'))
+                itemlist.append(item.clone(title="[COLOR %s]Añadir esta Serie a Videoteca-[/COLOR]" \
+                                           % get_color_from_settings('library_color', default='yellow') + \
+                                           title, action="add_serie_to_library", extra="episodios", contentType='episode'))
                 
             elif modo_serie_temp == 1:      #si es Serie damos la opción de guardar la última temporada o la serie completa
-                itemlist.append(item.clone(title="[COLOR yellow]Añadir última Temp. a Videoteca-[/COLOR]" + \
-                            title, action="add_serie_to_library", contentType="season", contentSeason=contentSeason, \
-                            url=item_local.url, extra="episodios", add_menu=True))
-                itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Serie a Videoteca-[/COLOR]" + \
-                            title, action="add_serie_to_library", contentType="tvshow", extra="episodios", add_menu=True))
+                itemlist.append(item.clone(title="[COLOR %s]Añadir última Temp. a Videoteca-[/COLOR]" \
+                                           % get_color_from_settings('library_color', default='yellow') + \
+                                           title, action="add_serie_to_library", contentType="season", contentSeason=contentSeason, \
+                                           url=item_local.url, extra="episodios", add_menu=True))
+                itemlist.append(item.clone(title="[COLOR %s]Añadir esta Serie a Videoteca-[/COLOR]" \
+                                           % get_color_from_settings('library_color', default='yellow') + \
+                                           title, action="add_serie_to_library", contentType="tvshow", extra="episodios", add_menu=True))
 
             else:                           #si no, damos la opción de guardar la temporada actual o la serie completa
-                itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Serie a Videoteca-[/COLOR]" + \
-                            title, action="add_serie_to_library", contentType="tvshow", extra="episodios", add_menu=True))
+                itemlist.append(item.clone(title="[COLOR %s]Añadir esta Serie a Videoteca-[/COLOR]" \
+                                           % get_color_from_settings('library_color', default='yellow') + \
+                                           title, action="add_serie_to_library", contentType="tvshow", extra="episodios", add_menu=True))
                 if item.add_videolibrary and not item.add_menu:
                     item.contentSeason = contentSeason
-                itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Temp. a Videoteca-[/COLOR]" + \
-                            title, action="add_serie_to_library", contentType="season", contentSeason=contentSeason, \
-                            extra="episodios", add_menu=True))
+                itemlist.append(item.clone(title="[COLOR %s]Añadir esta Temp. a Videoteca-[/COLOR]" \
+                                           % get_color_from_settings('library_color', default='yellow') + \
+                                           title, action="add_serie_to_library", contentType="season", contentSeason=contentSeason, \
+                                           extra="episodios", add_menu=True))
 
         else:                               #Es un canal estándar, sólo una linea de Añadir a Videoteca
-            itemlist.append(item.clone(title="[COLOR yellow]Añadir esta serie a videoteca-[/COLOR]" + \
-                            title, action="add_serie_to_library", extra="episodios", add_menu=True, 
-                            contentType='episode'))
+            itemlist.append(item.clone(title="[COLOR %s]Añadir esta serie a videoteca-[/COLOR]" \
+                                       % get_color_from_settings('library_color', default='yellow') + \
+                                       title, action="add_serie_to_library", extra="episodios", add_menu=True, 
+                                       contentType='episode'))
         
     #Si intervención judicial, alerto!!!
     if item.intervencion and not item.downloadFilename:
         for clone_inter, autoridad in item.intervencion:
             thumb_intervenido = get_thumb(autoridad)
-            itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() \
-                            + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', \
-                            thumbnail=thumb_intervenido, contentType='episode'))
+            itemlist_fo.append(item.clone(action='', title="[COLOR %s]" % get_color_from_settings('library_color', default='yellow') 
+                                          + clone_inter.capitalize() \
+                                          + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', \
+                                          thumbnail=thumb_intervenido, contentType='episode'))
         del item.intervencion
     
     #Si ha habido fail-over, lo comento
     if channel_alt and not item.downloadFilename and not (item.library_playcounts or item.add_videolibrary):
-        itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + channel_alt.capitalize() 
-                        + '[/COLOR] [ALT ] en uso', contentType='episode'))
-        itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + item.category.capitalize() 
-                        + '[/COLOR] inaccesible', contentType='episode'))
+        itemlist_fo.append(item.clone(action='', title="[COLOR %s]" % get_color_from_settings('library_color', default='yellow') 
+                                      + channel_alt.capitalize() 
+                                      + '[/COLOR] [ALT ] en uso', contentType='episode'))
+        itemlist_fo.append(item.clone(action='', title="[COLOR %s]" % get_color_from_settings('library_color', default='yellow') 
+                                      + item.category.capitalize() 
+                                      + '[/COLOR] inaccesible', contentType='episode'))
     
     if len(itemlist_fo) > 0:
         itemlist = itemlist_fo + itemlist
@@ -2464,21 +2505,26 @@ def post_tmdb_findvideos(item, itemlist, headers={}):
         if (" al " in item.title or " Al " in item.title) and not "al " in item.infoLabels['episodio_titulo']: 
             title = '%s al %s - ' % (title, scrapertools.find_single_match(item.title, '[al|Al] (\d+)'))
         else:
-            title = '%s %s' % (title, item.infoLabels['episodio_titulo'])                       #Título Episodio
+            title = '%s %s' % (title, unify.set_color(item.infoLabels['episodio_titulo'], "tvshow"))    #Título Episodio
         title_gen = '%s, ' % title
         
-    if item.contentType == "episode" or item.contentType == "season":                           #Series o Temporadas
-        title_gen += '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] [%s]' % \
-                        (item.contentSerieName, item.infoLabels['year'], rating, item.quality, str(item.language), \
-                        scrapertools.find_single_match(item.title, '\s\[(\d+,?\d*?\s\w[b|B])\]'))   #Rating, Calidad, Idioma, Tamaño
+    if item.contentType in ["episode", "season"]:                               # Series o Temporadas
+        title_gen += '%s %s %s %s %s [%s]' % (unify.set_color(item.contentSerieName, "tvshow"), 
+                                              unify.set_color(item.infoLabels['year'], "year"), 
+                                              unify.format_rating(rating), unify.set_color(item.quality, "quality"), 
+                                              unify.set_color(str(item.language), item.language[0] \
+                                              if isinstance(item.language, list) else item.language), 
+                                              scrapertools.find_single_match(item.title, '\s\[(\d+,?\d*?\s\w[b|B])\]')) \
+                                                                                                #Año, Rating, Calidad, Idioma, Tamaño
         if item.infoLabels['status'] and (item.infoLabels['status'].lower() == "ended" \
-                        or item.infoLabels['status'].lower() == "canceled"):
+                                     or item.infoLabels['status'].lower() == "canceled"):
             title_gen = '[TERM.] %s' % title_gen            #Marca cuando la Serie está terminada y no va a haber más producción
         item.title = title_gen
 
     else:                                                   #Películas
         title = item.title
-        title_gen += '%s [COLOR yellow][%s][/COLOR] [%s]' % (item.contentTitle, item.infoLabels['year'], rating)  #Rating, Calidad, Idioma, Tamaño
+        title_gen += '%s %s %s' % (unify.set_color(item.contentTitle, "movie"), unify.set_color(item.infoLabels['year'], "year"), 
+                                   unify.format_rating(rating))                                 #Año, Rating
 
     #Limpiamos etiquetas vacías
     title_gen = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', title_gen).strip()  #Quitamos etiquetas vacías
@@ -2503,7 +2549,8 @@ def post_tmdb_findvideos(item, itemlist, headers={}):
     if item.intervencion:
         for clone_inter, autoridad in item.intervencion:
             thumb_intervenido = get_thumb(autoridad)
-            itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido, folder=False))
+            itemlist.append(item.clone(action='', title="[COLOR %s]"  % get_color_from_settings('library_color', default='yellow') 
+                                       + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido, folder=False))
         del item.intervencion
     
     #Pintamos el pseudo-título con toda la información disponible del vídeo
@@ -2517,15 +2564,18 @@ def post_tmdb_findvideos(item, itemlist, headers={}):
             channel = item.from_channel.capitalize()
         item.quality = '[COLOR yellow][%s][/COLOR] %s' % (channel, item.quality)
     
-    #agregamos la opción de Añadir a Videoteca para péliculas (no series)
+    # Agregamos la opción de Añadir a Videoteca para péliculas (no series)
     if (item.contentType == 'movie' or item.contentType == 'season') and item.contentChannel != "videolibrary" and len(itemlist) > 0:
         #Permitimos la actualización de los títulos, bien para uso inmediato, o para añadir a la videoteca
-        itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", extra="peliculas", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
+        itemlist.append(item.clone(title="** [COLOR %s]Actualizar Títulos - vista previa videoteca[/COLOR] **" \
+                                   % get_color_from_settings('library_color', default='yellow'), action="actualizar_titulos", 
+                                   extra="peliculas", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
         
     if item.contentType == 'movie' and item.contentChannel != "videolibrary":
-        itemlist.append(item.clone(title="**-[COLOR yellow] Añadir a la videoteca [/COLOR]-**", 
-                    action="add_pelicula_to_library", extra="peliculas", from_action=item.action, 
-                    from_title_tmdb=item.title))
+        itemlist.append(item.clone(title="**-[COLOR %s] Añadir a la videoteca [/COLOR]-**" \
+                                   % get_color_from_settings('library_color', default='yellow') , 
+                                   action="add_pelicula_to_library", extra="peliculas", from_action=item.action, 
+                                   from_title_tmdb=item.title))
     
     #Añadimos la opción de ver trailers
     if item.contentChannel != "videolibrary":
@@ -4701,3 +4751,14 @@ def rec(site_key, co, sa, loc):
     r_data = httptools.downloadpage(t_url, headers=head, follow_redirects=False, post=post, alfa_s=True).data
     response = scrapertools.find_single_match(r_data, '"rresp","([^"]+)"')
     return response
+
+
+def get_color_from_settings(label, default='white'):
+    
+    color = config.get_setting(label)
+    if not color:
+        return default
+    
+    color = scrapertools.find_single_match(color, '\](\w+)\[')
+    
+    return color or default

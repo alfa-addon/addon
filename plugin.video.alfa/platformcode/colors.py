@@ -3,9 +3,14 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import os
 import re
 import xbmcgui
+
 from platformcode import config
 from platformcode import logger
 from platformcode import platformtools
@@ -56,7 +61,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.action_exitkeys_id = [xbmcgui.ACTION_STOP, xbmcgui.ACTION_BACKSPACE, xbmcgui.ACTION_NAV_BACK]
         self.buttons = list()
         self.color = "white"
-        self.preset = config.get_setting("preset_style", default="Estilo 1")
+        self.preset = config.get_setting("preset_style", default="Inicial")
         self.color_schemes = unify.colors_file
         self.color_setting = self.color_schemes[self.preset]
         self.preset_mode = config.get_setting("preset_style_switch")
@@ -79,6 +84,14 @@ class Main(xbmcgui.WindowXMLDialog):
         self.show_sample()
         self.colorize_sample()
 
+        label = "Inicial"
+        self.style0 = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=6,
+                                            noFocusTexture=media_path + 'MenuItemNOFO.png',
+                                            focusTexture=media_path + "MenuItemFO.png")
+        self.addControl(self.style0)
+        self.buttons.append(self.style0)
+
+        posy += 32
         label = "Estilo 1"
         self.style1 = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=6,
                                             noFocusTexture=media_path + 'MenuItemNOFO.png',
@@ -93,6 +106,14 @@ class Main(xbmcgui.WindowXMLDialog):
                                             focusTexture=media_path + "MenuItemFO.png")
         self.addControl(self.style2)
         self.buttons.append(self.style2)
+
+        posy += 32
+        label = "All White"
+        self.style3 = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=6,
+                                            noFocusTexture=media_path + 'MenuItemNOFO.png',
+                                            focusTexture=media_path + "MenuItemFO.png")
+        self.addControl(self.style3)
+        self.buttons.append(self.style3)
 
         posy += 32
         label = "Personalizar"
@@ -170,10 +191,12 @@ class Main(xbmcgui.WindowXMLDialog):
 
         if action == ACTION_PREVIOUS_MENU or action == ACTION_GESTURE_SWIPE_LEFT or action == 110 or action == 92:
             if not self.custom.isVisible():
-                self.removeControls(self.buttons[4:])
+                self.removeControls(self.buttons[6:])
                 self.custom.setVisible(True)
+                self.style0.setVisible(True)
                 self.style1.setVisible(True)
                 self.style2.setVisible(True)
+                self.style3.setVisible(True)
             else:
                 self.close()
 
@@ -214,9 +237,9 @@ class Main(xbmcgui.WindowXMLDialog):
 
     def colorize_sample(self):
 
-        dict_set = {u"Valoración Alta": ["rating_1", 2],
+        dict_set = {u"Valoración Alta": ["rating_3", 2],
                     u"Valoración Media": ["rating_2", 1],
-                    u"Valoración Baja": ["rating_3", 0],
+                    u"Valoración Baja": ["rating_1", 0],
                     "Castellano": ["cast", 0],
                     "Latino": ["lat", 1],
                     "VOSE": ["vose", 2],
@@ -288,9 +311,9 @@ class Main(xbmcgui.WindowXMLDialog):
             config.set_setting("unify", True)
             return self.close()
 
-        dict_set = {u"Valoración Alta": ["rating_1", 2],
+        dict_set = {u"Valoración Alta": ["rating_3", 2],
                     u"Valoración Media": ["rating_2", 1],
-                    u"Valoración Baja": ["rating_3", 0],
+                    u"Valoración Baja": ["rating_1", 0],
                     "Castellano": ["cast", 0],
                     "Latino": ["lat", 1],
                     "VOSE": ["vose", 2],
@@ -299,7 +322,7 @@ class Main(xbmcgui.WindowXMLDialog):
 
         control = self.getControl(control).getLabel()
 
-        if control in ["Personalizar", "Estilo 1", "Estilo 2"]:
+        if control in ["Personalizar", "Inicial", "Estilo 1", "Estilo 2", "All White"]:
             config.set_setting("title_color", "true")
 
             if control == "Personalizar":
@@ -307,22 +330,33 @@ class Main(xbmcgui.WindowXMLDialog):
                 self.setProperty("title", "%s [%s]" % (self.window_title, "Personalizado"))
                 self.preset_mode = False
                 self.custom.setVisible(False)
+                self.style0.setVisible(False)
                 self.style1.setVisible(False)
                 self.style2.setVisible(False)
-                self.addControls(self.buttons[4:])
+                self.style3.setVisible(False)
+                self.addControls(self.buttons[6:])
                 self.setFocusId(self.buttons[self.focus].getId() + 2)
                 self.focus = self.focus + 2
 
-            if "Estilo" in control:
+            if "Estilo" in control or 'Inicial' in control or 'White' in control:
                 config.set_setting("preset_style_switch", True)
                 self.preset_mode = True
-                if control == "Estilo 1":
+                if control == "Inicial":
+                    config.set_setting("preset_style", "Inicial")
+                    self.preset = "Inicial"
+
+                elif control == "Estilo 1":
                     config.set_setting("preset_style", "Estilo 1")
                     self.preset = "Estilo 1"
 
                 elif control == "Estilo 2":
                     config.set_setting("preset_style", "Estilo 2")
                     self.preset = "Estilo 2"
+                
+                elif control == "All White":
+                    config.set_setting("preset_style", "All White")
+                    self.preset = "All White"
+                
                 self.setProperty("title", "%s [%s]" % (self.window_title, self.preset))
                 self.colorize_sample()
                 return

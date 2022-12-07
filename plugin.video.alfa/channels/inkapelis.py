@@ -137,12 +137,16 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
+    
     data = httptools.downloadpage(item.url, canonical=canonical).data
+    
     post = scrapertools.find_single_match(data, 'data-post=(\d+)')
-    url = host + "wp-json/dooplayer/v2/%s/movie/meplayembed" %post
+    url = host + "wp-json/dooplayer/v2/%s/%s/meplayembed" % (post, 'movie' if item.contentType == 'movie' else 'tv')
     data = httptools.downloadpage(url, canonical=canonical).json
+    
     url = data["embed_url"].replace("s/tmdb", "/gen")
     data = httptools.downloadpage(url, canonical=canonical).data
+    
     matches_languages = scrapertools.find_multiple_matches(data, "this, '(\d+).*?src.*?>([^<]+)")
     srv_list = {"fembed": "fembed", "stp": "streamtape", "stream": "mystream", "goplay": "gounlimited",
                 "drive": "gvideo", "meplay": "netutv", "evoplay": "netutv", "uqload": "uqload",
@@ -199,6 +203,7 @@ def play(item):
 
 def search(item, texto):
     logger.info()
+    
     try:
         texto = texto.replace(" ", "+")
         item.url = item.url + texto

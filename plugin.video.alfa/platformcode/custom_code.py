@@ -83,6 +83,9 @@ def init():
         
         # Se verifica si están bien las rutas a la videoteca
         config.verify_directories_created()
+        
+        # Se fuerzan los títulos inteligentes si no existen
+        force_intelligent_titles()
 
         # Verificamos si la versión de Python es compatible con Alfa ### TEMPORAL: error en Linux 3.10.[0-4] ###
         import platform
@@ -1306,3 +1309,31 @@ def reset_current_host(round_level):
         return
     
     config.set_setting('current_host', round_level)
+
+
+def force_intelligent_titles():
+
+    if not config.get_setting('preset_style'):
+        exceptions = False
+        default_profile = ''
+        try:
+            logger.info('Profile: % s' % default_profile, force=True)
+            styles_path = filetools.join(config.get_runtime_path(), 'resources', 'color_styles.json')
+            colors_json = jsontools.load(filetools.read(styles_path))
+
+            for profile, colors in list(colors_json.items()):
+                if default_profile and default_profile != profile:
+                    continue
+                config.set_setting("preset_style", profile)
+                config.set_setting('preset_style_switch', True)
+                config.set_setting("title_color", True)
+                config.set_setting('unify', True)
+
+                for field, color in list(colors.items()):
+                    config.set_setting('%s_color' % field, '[COLOR %s]%s[/COLOR]' % (color, color))
+
+                if not exceptions:
+                    break
+                    
+        except:
+            logger.error(traceback.format_exc())

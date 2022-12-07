@@ -267,6 +267,20 @@ def get_channel_setting(name, channel, default=None, caching_var=True, debug=DEB
     file_settings = filetools.join(config.get_data_path(), "settings_channels", channel + "_data.json")
     dict_settings = {}
     dict_file = {}
+
+    if isinstance(caching_var, str):
+        # Borrado de cache de un canal y borrado de .json
+        if caching_var in ['reset', 'delete']:
+            if kodi:
+                alfa_channels = json.loads(window.getProperty("alfa_channels"))
+                if channel in alfa_channels.keys():
+                    if debug: logger.error('RESET Cached CHANNEL: %s%s: %s:' % (channel.upper(), module, alfa_channels[channel]))
+                    del alfa_channels[channel]
+                    window.setProperty("alfa_channels", json.dumps(alfa_channels))
+            if caching_var in ['delete']:
+                if debug: logger.error('DELETE Channel JSON: %s%s' % (channel.upper(), module))
+                filetools.remove(file_settings, silent=True)
+            caching_var = False
     
     if kodi and caching_var:
         alfa_caching = bool(window.getProperty("alfa_caching"))
