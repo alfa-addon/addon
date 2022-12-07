@@ -11,6 +11,8 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
     data = ''
+    if "okru.link" in page_url:
+        return True, ""
     data = httptools.downloadpage(page_url).data
     if "copyrightsRestricted" in data or "COPYRIGHTS_RESTRICTED" in data or "LIMITED_ACCESS" in data:
         return False, "[Okru] El archivo ha sido eliminado por violación del copyright"
@@ -32,5 +34,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         if "mobile" in type:
             continue
         video_urls.append([type + " [okru]", url])
+
+    if "okru.link" in page_url:
+        v = scrapertools.find_single_match(page_url, "t=(\w+)")
+        data = httptools.downloadpage("https://okru.link/details.php?v=" + v).json
+        url = data.get("file", '')
+        video_urls.append(["video [okru]", url])
 
     return video_urls
