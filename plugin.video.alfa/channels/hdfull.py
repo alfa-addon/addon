@@ -202,15 +202,18 @@ def check_user_status(reset=False, hide_infobox=True):
     return user_status
 
 def login(data='', alfa_s=False, force_check=True, retry=False):
-    logger.info()
     global sid, account
 
     if data:
         sid = urllib.quote(scrapertools.find_single_match(data, patron_sid))
         if window: window.setProperty("hdfull_sid", sid)
+    
+    logger.info('Data: %s; SID: %s; Account: %s; Check: %s; Retry: %s' \
+                % (True if data else False, True if sid else False, account, force_check, retry), force=True)
+
     if not data or not sid or not account:
         data = agrupa_datos(urlparse.urljoin(host, 'login'), referer=False, force_check=False, 
-                            force_login=False, hide_infobox=True, cf_no_blacklist=True)
+                            force_login=False, hide_infobox=True if not retry else None, cf_no_blacklist=True)
         sid = urllib.quote(scrapertools.find_single_match(data, patron_sid))
         if window: window.setProperty("hdfull_sid", sid)
 
@@ -222,21 +225,19 @@ def login(data='', alfa_s=False, force_check=True, retry=False):
         return False
     else:
         host_alt = host
-
-        if scrapertools.find_single_match(data, patron_sid):
-            sid = urllib.quote(scrapertools.find_single_match(data, patron_sid))
-            if window: window.setProperty("hdfull_sid", sid)
+        sid = urllib.quote(scrapertools.find_single_match(data, patron_sid))
+        if window: window.setProperty("hdfull_sid", sid)
         if not sid:
             if not retry:
                 logout(Item())
                 logger.error('NO SID: RETRY: %s' % str(data))
-                return login(retry=True)
+                return login(force_check=force_check, retry=True)
             logger.error('NO SID: %s' % str(data))
             return False
         post = '__csrf_magic=%s&username=%s&password=%s&action=login' % (sid, user_, pass_)
         
         new_data = agrupa_datos(urlparse.urljoin(host, 'a/login'), post=post, referer=urlparse.urljoin(host, 'login'), 
-                                force_check=False, json=True, force_login=False, hide_infobox=alfa_s, 
+                                force_check=False, json=True, force_login=False, hide_infobox=True if not retry else None, 
                                 cf_no_blacklist=True if data else False, retries_cloudflare=1)
 
         if host not in host_alt:
@@ -355,7 +356,7 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
     
     if (page.data or (not page.data and not post)) and not 'application' in page.headers['Content-Type'] and not check_login_status(page.data):
         res = False
-        if force_login and not 'login' in url:
+        if force_login and not 'login' in url and not 'logout' in url:
             res = login(page.data)
         if not res:
             return {} if json else page.data
@@ -1260,6 +1261,7 @@ def play(item):
         type = item.url.split("###")[1].split(";")[1]
         item.url = item.url.split("###")[0]
         post = "target_id=%s&target_type=%s&target_status=1" % (id, type)
+        
         data = agrupa_datos(urlparse.urljoin(host, "a/status"), post=post, hide_infobox=True)
         check_user_status(reset=True)
     

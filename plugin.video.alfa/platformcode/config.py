@@ -699,6 +699,20 @@ def get_setting(name, channel="", server="", default=None, caching_var=True, deb
     else:
         debug = False if debug == None else DEBUG if not debug and DEBUG else debug
         if debug: from platformcode import logger
+
+        if isinstance(caching_var, str):
+            # Borrado de la cache y verificado/borrado de settings.xml
+            if caching_var in ['reset', 'delete']:
+                if window:
+                    alfa_settings = json.loads(window.getProperty("alfa_settings"))
+                    alfa_settings = {}
+                    window.setProperty("alfa_settings", json.dumps(alfa_settings))
+                    if debug: logger.error('DROPING Cached SETTINGS')
+                if caching_var in ['delete']:
+                    if debug: logger.error('DELETE Settings XML')
+                    verify_settings_integrity()
+                caching_var = False
+
         alfa_caching = bool(window.getProperty("alfa_caching"))
         if alfa_caching and caching_var:
             if not alfa_settings: alfa_settings = json.loads(window.getProperty("alfa_settings"))
@@ -822,7 +836,7 @@ def set_setting(name, value, channel="", server="", debug=DEBUG):
         except Exception as ex:
             alfa_settings = {}
             window.setProperty("alfa_settings", json.dumps(alfa_settings))
-            if debug: logger.error('DROPING Cached SETTINGS: %s' % (str(name).upper(), value_init))
+            if debug: logger.error('DROPING Cached SETTINGS: %s' % str(name).upper())
             from platformcode import logger
             logger.error("Error al convertir '%s' no se guarda el valor \n%s" % (name, ex))
             return None

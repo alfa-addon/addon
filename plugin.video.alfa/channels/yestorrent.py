@@ -24,7 +24,7 @@ from lib import generictools
 from channels import filtertools
 from channels import autoplay
 
-# Canal común con Cinetorrent, Magnetpelis, Pelispanda, Yestorrent
+# Canal común con Cinetorrent(muerto), Magnetpelis, Pelispanda, Yestorrent
 
 
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
@@ -37,6 +37,7 @@ canonical = {
              'host': config.get_setting("current_host", 'yestorrent', default=''), 
              'host_alt': ['https://yestorrent.org/'], 
              'host_black_list': ['https://yestorrent.cx/'], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -138,7 +139,7 @@ def submenu(item):
         if scrapertools.slugify(scrapedtitle) in item.extra:
             item.url = urlparse.urljoin(host, scrapedurl.replace(scrapertools.find_single_match(scrapedurl, patron_host), ''))
             if not item.url.endswith('/'): item.url += '/'
-            item.url += 'page/1'
+            item.url += 'page/1/'
             return listado(item)
             
     return itemlist
@@ -180,7 +181,7 @@ def anno(item):
     year = platformtools.dialog_numeric(0, "Introduzca el Año de búsqueda", default="")
     item.url = re.sub(r'years/\d+', 'years/%s' % year, matches[0][0])
     if not item.url.endswith('/'): item.url += '/'
-    item.url += 'page/1'
+    item.url += 'page/1/'
     item.extra2 = 'anno' + str(year)
 
     return listado(item)
@@ -218,7 +219,7 @@ def genero(item):
         return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     for scrapedurl, gen in matches:
-        itemlist.append(item.clone(action="listado", title=gen.capitalize(), url=scrapedurl + 'page/1', 
+        itemlist.append(item.clone(action="listado", title=gen.capitalize(), url=scrapedurl + 'page/1/', 
                         extra2='genero'))
 
     return itemlist
@@ -258,7 +259,7 @@ def calidad(item):
 
     for scrapedurl, cal in matches:
         if cal not in ['HD', '720p']:
-            itemlist.append(item.clone(action="listado", title=cal.capitalize(), url=scrapedurl + 'page/1', 
+            itemlist.append(item.clone(action="listado", title=cal.capitalize(), url=scrapedurl + 'page/1/', 
                         extra2='calidad'))
 
     return itemlist
@@ -333,6 +334,8 @@ def listado(item):                                                              
             # Verificamos si ha cambiado el Host
             if response.host:
                 next_page_url = response.url_new
+            elif response.url and response.url != next_page_url:
+                next_page_url = item.url = '%s%s' % (response.url, scrapertools.find_single_match(next_page_url, '(page\/\d+\/?)'))
             
             # Verificamos si se ha cargado una página correcta
             curr_page += 1                                                      # Apunto ya a la página siguiente
@@ -661,8 +664,16 @@ def findvideos(item):
         item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent con las diferentes calidades
-    for x, (episode_num, scrapedserver, scrapedquality, scrapedlanguage, scrapedsize, scrapedurl) in enumerate(matches):
+    for x, (episode_num, _scrapedserver, _scrapedquality, _scrapedlanguage, scrapedsize, scrapedurl) in enumerate(matches):
         scrapedpassword = ''
+        if _scrapedserver not in ['torrent', 'Torrent', 'array', 'Array']:
+            scrapedserver = 'torrent'
+            scrapedquality = _scrapedserver
+            scrapedlanguage = _scrapedquality
+        else:
+            scrapedserver = _scrapedserver
+            scrapedquality = _scrapedquality
+            scrapedlanguage = _scrapedlanguage
 
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
@@ -927,9 +938,9 @@ def episodios(item):
         if not response.sucess:                                                 # Si ERROR o lista de errores ...
             return itemlist                                                     # ... Salimos
 
-        patron_temp = '<div\s*class="card-header">\s*<button\s*type="button"\s*data-toggle='
-        patron_temp += '"collapse"\s*data-target="#collapse-\d+">\s*<span>Temporada\s*(\d+)'
-        patron_temp += '<\/span>(.*?)<\/table>\s*<\/div>\s*<\/div>\s*<\/div>'
+        patron_temp = '<div\s*class="card-header"[^>]*>\s*<button\s*type="button"\s*'
+        patron_temp += 'data-toggle="collapse"\s*data-target="#collapse-\d+">\s*'
+        patron_temp += '<span>Temporada\s*(\d+)[^<]*<\/span>(.*?)<\/table>\s*<\/div>\s*<\/div>\s*<\/div>'
         
         matches_temp = re.compile(patron_temp, re.DOTALL).findall(data)
         
@@ -937,6 +948,23 @@ def episodios(item):
         #logger.debug(matches_temp)
         #logger.debug(data)
         
+        if 'class="accordion__list"' not in str(matches_temp):
+            matches_temp = []
+            patron_acorta = '<a\s*class="btn\s*btn-primary"[^>]*href="([^"]+)"\s*>'
+            matches_temp_acorta = re.compile(patron_acorta, re.DOTALL).findall(data)
+
+            for acorta in matches_temp_acorta:
+                url = generictools.convert_url_base64(acorta, host_torrent)
+                data_alt, response, item, itemlist = generictools.downloadpage(url, timeout=timeout, canonical=canonical, 
+                                                                           s2=False, item=item, itemlist=itemlist)      # Descargamos la página
+                matches_temp_temp = re.compile(patron_temp, re.DOTALL).findall(data_alt)
+                if not matches_temp_temp: logger.debug(data_alt)
+                matches_temp.extend(matches_temp_temp)
+            
+            #logger.debug("PATRON_temp: " + patron_temp)
+            #logger.debug(matches_temp)
+            #logger.debug(data_alt)
+
         patron = '<tr>(?:\s*<td[^>]*>(\d+)<\/td>)?(?:\s*<td[^>]*>([^<]*)<\/td>)?\s*'
         patron += '<td[^>]*>([^<]+)<\/td>\s*<td[^>]*>([^<]*)<\/td>\s*<td\s*class=[^<]+<\/td>'
         patron += '(?:\s*<td[^>]*>([^<]+)<\/td>)?(?:\s*<td\s*class=[^<]+<\/td>)?\s*'

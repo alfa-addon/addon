@@ -12,6 +12,7 @@ import re
 from channels import filtertools
 from core import scrapertools
 from core import servertools
+from core import jsontools
 from core.item import Item
 from channels import autoplay
 from lib.AlfaChannelHelper import ToroPlay
@@ -19,7 +20,7 @@ from platformcode import logger, config
 from channelselector import get_thumb
 
 list_idiomas = ['LAT']
-list_servers = ['okru', 'yourupload', 'mega']
+list_servers = ['okru', 'yourupload', 'mega', 'direct']
 list_quality = []
 
 canonical = {
@@ -27,6 +28,7 @@ canonical = {
              'host': config.get_setting("current_host", 'retrotv', default=''), 
              'host_alt': ["https://retrotv.org/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -40,14 +42,17 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all",
-                         url=host + "category/animacion/", thumbnail=get_thumb("all", auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Todas las Series", action="list_all",
+                         url=host + "lista-series/", thumbnail=get_thumb("all", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Animación", action="list_all",
-                         url=host + "lista-series", thumbnail=get_thumb("animacion", auto=True)))
+                         url=host + "category/animacion/", thumbnail=get_thumb("animacion", auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Series", action="list_all",
+    itemlist.append(Item(channel=item.channel, title="Live Action", action="list_all",
                          url=host + "category/liveaction/", thumbnail=get_thumb("tvshows", auto=True)))
+    
+    itemlist.append(Item(channel=item.channel, title="Películas", action="list_all",
+                         url=host + "peliculas/", thumbnail=get_thumb("movies", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=host,
                          thumbnail=get_thumb("genres", auto=True)))
@@ -111,6 +116,9 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
+    opt = ''
+    srv = ''
+    
     # soup = create_soup(item.url).find("ul", class_="TPlayerNv").find_all("li")
     soup, matches = AlfaChannel.get_video_options(item.url)
 
@@ -119,20 +127,39 @@ def findvideos(item):
     for btn in matches:
         opt = btn["data-tplayernv"]
         srv = btn.span.text.lower()
-        if "opci" in srv.lower():
+        if "opci" in srv.lower() or not srv:
             # srv = "okru"
             continue
         itemlist.append(Item(channel=item.channel, title=srv, url=item.url, action='play', server=srv, opt=opt,
                              language='LAT', infoLabels=infoLabels))
 
-    itemlist = sorted(itemlist, key=lambda i: i.server)
-
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
 
-    # Requerido para AutoPlay
+    if not itemlist:
+        trtype = 1 if item.contentType == 'movie' else '2'
+        patron = '<link\s*href="([^"]+)"\s*rel="shortlink"\s*\/>'
+        matches = re.compile(patron, re.DOTALL).findall(str(soup))
+        if not matches:
+            patron = '<div\s*class="TPlayerTb\s*Current"[^>]*>\s*<iframe[^>]*src="([^"]+)"'
+            matches = re.compile(patron, re.DOTALL).findall(str(soup))
 
+        for btn in matches:
+            if not 'trid' in btn:
+                trid = scrapertools.find_single_match(btn, '\?p=(\d+)')
+                url = '%s?trembed=0&trid=%s&trtype=%s' % (host, trid, trtype)
+            else:
+                url = btn.replace('amp;', '')
+            
+            link = AlfaChannel.create_soup(url, referer=item.url).find("div", class_="Video").iframe["src"]
+            srv = 'directo'
+            
+            itemlist.append(Item(channel=item.channel, title=srv, url=link, action='play', server=srv, opt=opt,
+                                 language='LAT', infoLabels=infoLabels))
+
+    itemlist = sorted(itemlist, key=lambda i: i.server)
+
+    # Requerido para AutoPlay
     autoplay.start(itemlist, item)
 
     return itemlist
@@ -140,13 +167,69 @@ def findvideos(item):
 
 def play(item):
     logger.info()
+    
     itemlist = list()
+    url = item.url
+    server = item.server
+    
+    if item.server != 'directo':
 
-    soup = AlfaChannel.create_soup(item.url).find("div", class_="TPlayerTb", id=item.opt)
-    url = scrapertools.find_single_match(str(soup), 'src="([^"]+)"')
-    url = re.sub("amp;|#038;", "", url)
-    url = AlfaChannel.create_soup(url).find("div", class_="Video").iframe["src"]
-    itemlist.append(item.clone(url=url, server=""))
+        soup = AlfaChannel.create_soup(item.url).find("div", class_="TPlayerTb", id=item.opt)
+        
+        url = scrapertools.find_single_match(str(soup), 'src="([^"]+)"')
+        url = re.sub("amp;|#038;", "", url)
+        
+        url = AlfaChannel.create_soup(url).find("div", class_="Video").iframe["src"]
+        if 'mega.' in url:
+            url = url.replace("/embed/", "/file/")
+            server = ''
+    else:
+        soup = AlfaChannel.create_soup(item.url).find("body", class_="videoplayer")
+        
+        json = {}
+        base = scrapertools.find_single_match(str(soup), 'sources\:\[([^\]]+\})\]')
+        if base: json = jsontools.load(base)
+        if not json and str(soup).startswith('{'): 
+            json = jsontools.load(str(soup))
+            if 'sources' in json.keys():
+                json = json.get('sources', [])[0]
+        
+        url = json.get('file', '')
+        if not url:
+            url = scrapertools.find_single_match(str(soup), 'ajax\(\{url\:"([^"]+)"')
+            if not url:
+                return itemlist
+        if url and not url.startswith('http'):
+            url = 'https:%s' % url
+            
+        resp = AlfaChannel.create_soup(url, referer=item.url, soup=False)
+        if PY3 and isinstance(resp.data, bytes):
+            resp.data = "".join(chr(x) for x in bytes(resp.data))
+        if resp.json:
+            json = resp.json
+            if 'sources' in json.keys():
+                json = json.get('sources', [])[0]
+            url = json.get('file', '')
+            if url and not url.startswith('http'):
+                url = 'https:%s' % url
+            
+            resp = AlfaChannel.create_soup(url, referer=item.url, soup=False)
+            if PY3 and isinstance(resp.data, bytes):
+                resp.data = "".join(chr(x) for x in bytes(resp.data))
+        
+        matches = re.compile('QUALITY=(\w+),[^\/]+(\/\/[^\n]+)', re.DOTALL).findall(resp.data)
+        matches.reverse()
+        for quality, _url in matches:
+            if len(matches) > 1 and quality == 'mobile': continue
+            url = _url
+            break
+        if not url:
+            return itemlist
+        if not url.startswith('http'):
+            url = 'https:%s' % url
+        server = "oprem"
+        
+    itemlist.append(item.clone(url=url, server=server, title=item.title.capitalize()))
     itemlist = servertools.get_servers_itemlist(itemlist)
 
     return itemlist
@@ -154,6 +237,7 @@ def play(item):
 
 def search(item, texto):
     logger.info()
+    
     try:
         texto = texto.replace(" ", "+")
         if texto != '':

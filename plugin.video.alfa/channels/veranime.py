@@ -30,6 +30,7 @@ canonical = {
              'host': config.get_setting("current_host", 'veranime', default=''), 
              'host_alt': ["https://www1.animeonline.ninja/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -41,6 +42,7 @@ def mainlist(item):
     logger.info()
 
     itemlist = list()
+    
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(
@@ -109,7 +111,7 @@ def mainlist(item):
             channel = item.channel,
             thumbnail = get_thumb("quality", auto=True),
             title = "Blu-Ray/DVD",
-            url = "%s%s" % (host, "genero/blu-ray/")
+            url = "%s%s" % (host, "genero/blu-ray-dvd/")
         )
     )
 
@@ -157,7 +159,7 @@ def get_source(url, soup=False, json=False, unescape=False, **opt):
     if 'Javascript is required' in data.data:
         from lib import generictools
         data = generictools.js2py_conversion(data, url, domain_name='.%s' % domain, 
-                    channel=canonical['channel'], headers=opt.get('headers', {}))
+                                             channel=canonical['channel'], headers=opt.get('headers', {}))
     if json:
         data = data.json
     else:
@@ -174,10 +176,12 @@ def list_all(item):
     itemlist = list()
 
     soup = get_source(item.url, soup=True)
+    
     if "genero" in item.url or "tendencias" in item.url or "ratings" in item.url:
         matches = soup.find("div", class_="items")
     else:
         matches = soup.find("div", id="archive-content")
+    
     for elem in matches.find_all("article", id=re.compile(r"^post-\d+")):
 
         info_1 = elem.find("div", class_="poster")
@@ -204,6 +208,7 @@ def list_all(item):
             new_item.action = "seasons"
             new_item.contentSerieName = title
             new_item.contentType = 'tvshow'
+            if new_item.infoLabels['year'] == '-': new_item.infoLabels['year'] = ''
         else:
             new_item.action = "findvideos"
             new_item.contentTitle = title
@@ -212,6 +217,7 @@ def list_all(item):
         itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
+    
     try:
         next_page = soup.find_all("a", class_="arrow_pag")[-1]["href"]
         itemlist.append(
@@ -239,14 +245,23 @@ def latest(item):
     for elem in matches.find_all("article", id=re.compile(r"^post-\d+")):
 
         info = elem.find("div", class_="poster")
+        logger.error(info)
 
         thumb = info.img.get("src")
-        title = re.sub('Cap \d+.*', '', info.img["alt"]).strip()
+        title = re.sub('(?i)(?:season\s*)?(?:\d{1,2})?\s*Cap\s*\d{1,3}', '', info.img["alt"]).strip()
         url = info.a["href"]
 
         stitle = info.find("div", class_="epiposter").text
         stitle = stitle.replace('Episodio ', '1x')
-
+        
+        try:
+            season, episode = scrapertools.find_single_match(info.img["alt"], '(?i)(?:(\d{1,2}))?\s*Cap\s*(\d{1,3})')
+            season = int(season)
+            episode = int(episode)
+        except:
+            season = 1
+            episode = int(scrapertools.find_single_match(info.img["alt"], '(?i)(?:\d{1,2})?\s*Cap\s*(\d{1,3})'))
+        
         try:
             tag = info.find("span", class_="quality").text
         except:
@@ -263,6 +278,8 @@ def latest(item):
                 channel = item.channel,
                 contentSerieName = title,
                 contentType = 'episode', 
+                contentSeason = season, 
+                contentEpisodeNumber = episode, 
                 thumbnail = thumb, 
                 title = ftitle,
                 url = url
@@ -270,6 +287,7 @@ def latest(item):
         )
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
+    
     try:
         next_page = soup.find_all("a", class_="arrow_pag")[-1]["href"]
         itemlist.append(
@@ -300,7 +318,7 @@ def seasons(item):
 
     for elem in matches:
         season = elem.find("span", class_="se-t").text
-        title = "Temporada %s %s" % (season, tags)
+        title = "Temporada %s" % (season)
         infoLabels["season"] = season
         infoLabels["mediatype"] = 'season'
 
@@ -400,6 +418,7 @@ def findvideos(item):
     headers = {"Referer": host}
 
     soup = get_source(item.url, soup=True)
+    
     matches = soup.find("ul", id="playeroptionsul")
     if not matches:
         return itemlist
@@ -427,10 +446,14 @@ def findvideos(item):
             # doo_url = players.find("iframe")["src"]
             doo_url = "{}wp-json/dooplayer/v1/post/{}?type={}&source={}".format(
                 host, elem["data-post"], elem["data-type"], elem["data-nume"])
+            
             data = get_source(doo_url, json=True, headers=headers)
+            
             url = data.get("embed_url", "")
             # url = players.find("iframe")["src"]
+            
             new_soup = get_source(url, soup=True).find("div", class_="OptionsLangDisp")
+            
             resultset = new_soup.find_all("li") if new_soup else []
             resultset = new_soup.find_all("li") if new_soup else []
 
@@ -488,12 +511,11 @@ def findvideos(item):
         itemlist.sort(key=lambda i: (i.language, i.server))
 
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
     # Requerido para AutoPlay
-
     autoplay.start(itemlist, item)
+    
     if item.contentType != "episode":
         if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != "findvideos":
             itemlist.append(
@@ -540,18 +562,22 @@ def search_results(item):
         if "online" in url and not "pelicula" in url:
             new_item.action = "seasons"
             new_item.contentSerieName = title
+            new_item.contentType = 'tvshow'
         else:
             new_item.action = "findvideos"
             new_item.contentTitle = title
+            new_item.contentType = 'movie'
 
         itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
+    
     return itemlist
 
 
 def search(item, texto):
     logger.info()
+    
     try:
         texto = texto.replace(" ", "+")
         item.url = item.url + texto
@@ -569,14 +595,15 @@ def search(item, texto):
 
 def play(item):
     logger.info()
+    
     itemlist = []
+    item.setMimeType = 'application/vnd.apple.mpegurl'
     
     if not 'embed.php' in item.url:
         return [item]
 
     data = get_source(item.url)
     item.url = scrapertools.find_single_match(data, 'vp.setup\(\{.+?"file":"([^"]+).+?\);').replace("\\/", "/")
-    logger.info(item.url)
     item.server = ''
 
     itemlist.append(item.clone())
@@ -586,9 +613,11 @@ def play(item):
 
 
 def get_tags(page, sname):
+    
     tags = ""
     title = page.find("title").text
     logger.error('%s(.*?)Veranime' % sname)
+    
     match = scrapertools.find_single_match(title, r'%s\s*(.*?)\|' % sname)
     if match:
         tags = '[COLOR gold]%s[/COLOR]' % match

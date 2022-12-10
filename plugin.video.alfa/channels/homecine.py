@@ -6,11 +6,7 @@
 
 import sys
 PY3 = False
-if sys.version_info[0] >= 3:
-    PY3 = True
-    unicode = str
-    unichr = chr
-    long = int
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 from channels import autoplay
 from channels import filtertools
@@ -32,6 +28,7 @@ canonical = {
              'host_alt': ["https://homecine.tv/"], 
              'host_black_list': [], 
              'pattern': '<div\s*class="header-logo">[^>]*href="([^"]+)"', 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -41,9 +38,9 @@ AlfaChannel = PsyPlay(host, tv_path="/series", canonical=canonical)
 def mainlist(item):
     logger.info()
 
-    autoplay.init(item.channel, list_servers, list_quality)
-
     itemlist = list()
+
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel,title="Películas",
                          action="list_all",
@@ -155,11 +152,9 @@ def findvideos(item):
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
     # Requerido para AutoPlay
-
     autoplay.start(itemlist, item)
 
     if item.contentType != "episode":
@@ -171,6 +166,7 @@ def findvideos(item):
                                  action="add_pelicula_to_library",
                                  extra="findvideos",
                                  contentTitle=item.contentTitle,
+                                 setMimeType='application/vnd.apple.mpegurl'
                                  )
                             )
 

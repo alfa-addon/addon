@@ -32,6 +32,7 @@ canonical = {
              'host_alt': ["https://doramedplay.com/"], 
              'host_black_list': [], 
              'pattern': '<link\s*rel="stylesheet"\s*id="[^"]*"\s*href="([^"]+)"', 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -50,8 +51,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", url=host+'movies/',
                          type='movies', thumbnail=get_thumb('movies', auto=True)))
     
-    itemlist.append(Item(channel=item.channel, title="Generos", action="section",
-                         url=host, thumbnail=get_thumb('genres', auto=True)))
+    #itemlist.append(Item(channel=item.channel, title="Generos", action="section",
+    #                     url=host, thumbnail=get_thumb('genres', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+'?s=',
                                thumbnail=get_thumb('search', auto=True)))
@@ -80,7 +81,9 @@ def seasons(item):
 
 def episodios(item):
     logger.info()
+    
     itemlist = []
+    
     templist = seasons(item)
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
@@ -105,7 +108,8 @@ def findvideos(item):
 
     for elem in matches:
         data = AlfaChannel.get_data_by_post(elem).json
-        itemlist.append(Item(channel=item.channel, title='%s', url=data['embed_url'], action='play'))
+        itemlist.append(Item(channel=item.channel, title='%s', url=data['embed_url'], action='play', 
+                             infoLabels=item.infoLabels, contentType='episode'))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
@@ -126,11 +130,24 @@ def findvideos(item):
 
 def search(item, texto):
     logger.info()
+    
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
 
     try:
-        return AlfaChannel.search_results(item)
+        return AlfaChannel.search_results(item, next_pag=True)
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("%s" % line)
+        return []
+
+
+def search_more(item):
+    logger.info()
+
+    try:
+        return AlfaChannel.search_results(item, next_pag=True)
     except:
         import sys
         for line in sys.exc_info():

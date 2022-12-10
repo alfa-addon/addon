@@ -35,8 +35,8 @@ list_servers = [
 canonical = {
              'channel': 'pelismaraton', 
              'host': config.get_setting("current_host", 'pelismaraton', default=''), 
-             'host_alt': ["https://pelismaraton.in/"], 
-             'host_black_list': ["https://pelismaraton.me/", "https://pelismaraton.com/"], 
+             'host_alt': ["https://pelismaraton.nu/"], 
+             'host_black_list': ["https://pelismaraton.in/", "https://pelismaraton.me/", "https://pelismaraton.com/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

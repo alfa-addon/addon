@@ -3,6 +3,9 @@
 from platformcode import logger
 from core import scrapertools
 
+kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
+          'timeout': 5, 'cf_assistant': False}
+
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
@@ -15,6 +18,10 @@ def test_video_exists(page_url):
     ignore_response_code = False
     if "|ignore_response_code=True" in page_url:
         page_url, ignore_response_code = page_url.split("|")[0], True 
+    referer = None
+    if "|Referer" in page_url or "|referer" in page_url:
+        url, referer = page_url.split("|")
+        referer = referer.replace('Referer=', '').replace('referer=', '')
 
     if page_url:
         pattern = r'(?:^[A-Za-z]+://|^/|^[A-Za-z]+:[\\/]+)\S+'
@@ -24,11 +31,12 @@ def test_video_exists(page_url):
 
         if page_url.startswith('http'):
             from core import httptools
-            response = httptools.downloadpage(page_url, only_headers=True, ignore_response_code=ignore_response_code)
+            response = httptools.downloadpage(page_url, headers = {'Referer': referer, "Range": "bytes=0-100"}, **kwargs)
 
             if not ignore_response_code and not response.sucess:
-                exists = False
-                reason = "El archivo no existe." if response.code == 404 else "Se ha producido un error en el servidor (%s)" % response.code
+                if response.code != 403:
+                    exists = False
+                    reason = "El archivo no existe." if response.code == 404 else "Se ha producido un error en el servidor (%s)" % response.code
 
             else:
                 content_type = response.headers.get('Content-Type', '').split(";")[0]

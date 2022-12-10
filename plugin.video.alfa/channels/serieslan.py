@@ -42,6 +42,7 @@ canonical = {
              'host_alt': ["https://serieslan.com/"], 
              'host_black_list': [], 
              'status': 'SIN CANONICAL NI DOMINIO', 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -63,7 +64,9 @@ def create_soup(url, referer=None, unescape=False):
 
 def mainlist(item):
     logger.info()
+    
     thumb_series = get_thumb("tvshows", auto=True)
+    
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
@@ -88,10 +91,12 @@ def mainlist(item):
 
     itemlist = renumbertools.show_option(item.channel, itemlist)
     autoplay.show_option(item.channel, itemlist)
+    
     return itemlist
 
 def letters(item):
     logger.info()
+    
     itemlist = []
     
     itemlist.append(
@@ -106,9 +111,11 @@ def letters(item):
 
 def search(item, texto):
     logger.info()
+    
     texto = texto.replace(" ", "+")
     item.url = urlparse.urljoin(host, "b.php")
     item.texto = texto
+    
     if texto != '':
         return sub_search(item)
     else:
@@ -116,17 +123,20 @@ def search(item, texto):
 
 def sub_search(item):
     logger.info()
+    
     itemlist = []
-    logger.info(item.url)
     post = "k=" + item.texto
-    logger.info(post)
-    results = httptools.downloadpage(item.url, post=post, canonical=canonical).data#.json
+
+    results = httptools.downloadpage(item.url, post=post, canonical=canonical).data     #.json
     results = json.loads(results)
     if not results:
         return itemlist
+    
     for result in results["dt"]:
         scrapedthumbnail = "{}tb/{}.jpg".format(host,result[0])
         scrapedtitle = result[1]
+        year = scrapertools.find_single_match(scrapedtitle, '(\d{4})') or ''
+        scrapedtitle = re.sub('\s*\d{4}', '', scrapedtitle).strip()
         scrapedurl = urlparse.urljoin(host, result[2])
 
         context = renumbertools.context(item)
@@ -137,23 +147,29 @@ def sub_search(item):
         except:
             scrapedyear = ''
         filtro_tmdb = list({"first_air_date": scrapedyear}.items())
+        
         itemlist.append(item.clone(action = "seasons",
+                                   infoLabels={'filtro':filtro_tmdb}, 
                                    title = scrapedtitle,
                                    thumbnail = scrapedthumbnail,
                                    url = scrapedurl,
-                                   context=context,
+                                   context = context,
                                    contentSerieName = scrapedtitle,
-                                   page=0,
-                                   infoLabels={'filtro':filtro_tmdb}
+                                   contentType = 'tvshow', 
+                                   page = 0
                         ))
+    
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
+    
     return itemlist
 
 def lista(item):
     logger.info()
+    
     itemlist = []
     
     soup = create_soup(item.url)
+    
     classitems = "link" if item.category == "series" else "min-la"
     matches = soup.find_all("a", class_= classitems )
     
@@ -169,6 +185,8 @@ def lista(item):
         scrapedtitle = elem.find("h3").text if item.category == "series" else elem.find("div").text
         
         title = scrapedtitle.replace(" y "," & ") if " y " in scrapedtitle else scrapedtitle
+        year = scrapertools.find_single_match(title, '(\d{4})') or ''
+        title = re.sub('\s*\d{4}', '', title).strip()
         url = urlparse.urljoin(host, scrapedurl)
         thumbnail = urlparse.urljoin(host, scrapedthumbnail)
 
@@ -176,8 +194,9 @@ def lista(item):
         context2 = autoplay.context
         context.extend(context2)
 
-        itemlist.append(Item(channel=item.channel, title=title, url=url,
-            action="seasons", thumbnail=thumbnail, contentSerieName=title, context=context))
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action="seasons", 
+                             thumbnail=thumbnail, contentSerieName=title, contentType='tvshow', 
+                             context=context, infoLabels={'year': year}))
 
     if f_page < len(matches):
         itemlist.append(item.clone(title="[COLOR cyan]Página Siguiente >>[/COLOR]", page=f_page))
@@ -189,11 +208,13 @@ def lista(item):
                 title="[COLOR cyan]Página Siguiente >>[/COLOR]",
                 page=0, tipo=item.tipo))
 
-    tmdb.set_infoLabels(itemlist)
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
+    
     return itemlist
 
 def list_all(item):
     logger.info()
+    
     itemlist = []
 
     soup = create_soup(item.url)
@@ -208,6 +229,8 @@ def list_all(item):
             scrapedurl = elem.find("a")["href"]
             
             title = scrapedtitle.replace(" y "," & ") if " y " in scrapedtitle else scrapedtitle
+            year = scrapertools.find_single_match(title, '(\d{4})') or ''
+            title = re.sub('\s*\d{4}', '', title).strip()
             url = urlparse.urljoin(host, scrapedurl)
             thumbnail = urlparse.urljoin(host, scrapedthumbnail)
             
@@ -215,48 +238,61 @@ def list_all(item):
             context2 = autoplay.context
             context.extend(context2)
             
-            itemlist.append(Item(channel=item.channel, title=title, url=url,
-                action="seasons", thumbnail=thumbnail, contentSerieName=title, context=context))
+            itemlist.append(Item(channel=item.channel, title=title, url=url, action="seasons", 
+                                 thumbnail=thumbnail, contentSerieName=title, contentType='tvshow', 
+                                 context=context, infoLabels={'year': year}))
+    
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
     
     return itemlist
 
 def seasons(item, add_to_videolibrary = False):
     logger.info()
+    
     itemlist = []
+    
     soup = create_soup(item.url)
+    
     match = soup.find("div", class_="box lista")
     matches = match.find_all("h3", class_="colapse")
     infoLabels = item.infoLabels
+    
     for i, elem in enumerate(matches):
         title = elem.text
         dt = elem['dt']
         season = 1 if "unica" in title.lower() else title.split(" ")[1] if "temporada" in title.lower() else 0
         if not "temporada" in title.lower():
             season = i+1 if not [int(s) for s in title if s.isdigit()] else [int(s) for s in title if s.isdigit()][0]
-        infoLabels['season'] = season
-        itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.tile,
-                url=item.url, plot=item.plot, thumbnail=item.thumbnail, dt = dt,
-                action="episodesxseason", context=item.context, infoLabels=infoLabels))
+        infoLabels['season'] = int(season)
+        
+        itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.contentSerieName, 
+                             url=item.url, plot=item.plot, thumbnail=item.thumbnail, dt = dt, 
+                             action="episodesxseason", contentType='season', context=item.context, 
+                             infoLabels=infoLabels))
+    
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+    
     if config.get_videolibrary_support() and len(itemlist) > 0 and add_to_videolibrary == False:
         itemlist.append(Item(channel=item.channel, url=item.url, action="add_serie_to_library",
-                        extra="episodios", contentSerieName=item.contentSerieName,
-                        title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]'))
+                             extra="episodios", contentSerieName=item.contentSerieName,
+                             title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]'))
     return itemlist
 
 def episodesxseason(item):
     logger.info()
+    
     itemlist = []
     
     soup = create_soup(item.url)
+    
     episodes = soup.find("div", {"id": item.dt})
-
     total_episode = 0
-
     infoLabels = item.infoLabels
+    
     for episode in episodes.find_all("a"):
         scrapedurl = "/"+episode["href"]
         scrapedtitle = episode.find("li").text
-        infoLabels['episode'] = scrapedtitle.split(" -")[0].split(" ")[1]
+        infoLabels['episode'] = int(scrapedtitle.split(" -")[0].split(" ")[1])
 
         pat = "/" if not "KND" in item.title else "-"
         name = scrapedtitle.split(" -")[1]
@@ -278,16 +314,20 @@ def episodesxseason(item):
             title += "{}x{:02d}".format(season, episode_numb)
         title = "{} - {}".format(title,scrapedtitle.split(" -")[1])
 
-        itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.title,
-                url=urlparse.urljoin(host, scrapedurl), plot=item.plot, thumbnail=item.thumbnail,
-                action="findvideos", context=item.context, infoLabels=infoLabels))
+        itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.contentSerieName,
+                             url=urlparse.urljoin(host, scrapedurl), plot=item.plot, thumbnail=item.thumbnail, 
+                             action="findvideos", contentType='episode', context=item.context, 
+                             infoLabels=infoLabels))
     
     tmdb.set_infoLabels_itemlist(itemlist, True)
+    
     return itemlist
 
 def episodios(item):
     logger.info()
+    
     itemlist = list()
+    
     templist = seasons(item, add_to_videolibrary = True)
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
@@ -296,12 +336,14 @@ def episodios(item):
 
 def findvideos(item):
     logger.info()
+    
     itemlist = []
+    
     data = httptools.downloadpage(item.url, canonical=canonical).data
+    
     _sa = scrapertools.find_single_match(data, 'var _sa = (true|false);')
     _sl = scrapertools.find_single_match(data, 'var _sl = ([^;]+);')
     sl = eval(_sl)
-
     buttons = scrapertools.find_multiple_matches(data, '<button.*?class="selop" sl="([^"]+)">')
     
     if not buttons:
@@ -309,7 +351,9 @@ def findvideos(item):
     for id in buttons:
         title = '%s'
         new_url = golink(int(id), _sa, sl)
+        
         data_new = httptools.downloadpage(new_url).data
+        
         matches = scrapertools.find_multiple_matches(data_new, 'javascript">(.*?)</script>')
         js = ""
         for part in matches:
@@ -336,18 +380,20 @@ def findvideos(item):
             url = result.strip()
         
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language='latino',
-                         infoLabels=item.infoLabels))
+                             infoLabels=item.infoLabels))
+    
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
     # Requerido para AutoPlay
-
     autoplay.start(itemlist, item)
 
     return itemlist
 
 def golink (num, sa, sl):
+    
     b = [3, 10, 5, 22, 31]
     #d = ''
     #for i in range(len(b)):
@@ -357,9 +403,11 @@ def golink (num, sa, sl):
     TT = "/" + urllib.quote_plus(sl[3].replace("/", "><")) if num == 0 else ""
     url_end = link(num,sl)
     #return SVR + "el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + d + TT
+    
     return SVR + "el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + url_end + TT
 
 def link(ida,sl):
+    
     a=ida
     b=[3,10,5,22,31]
     c=1
@@ -367,6 +415,7 @@ def link(ida,sl):
     e=sl[2]
     for i in range(len(b)):
       d=d+substr(e,b[i]+a,c)
+    
     return d
 
 def substr(st,a,b):

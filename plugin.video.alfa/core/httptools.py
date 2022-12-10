@@ -37,6 +37,7 @@ requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.
 
 ## Obtiene la versión del addon
 __version = config.get_addon_version()
+__platform = config.get_system_platform()
 
 cookies_lock = Lock()
 
@@ -74,6 +75,14 @@ patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?[\w|\-\d]+\.(?:[\w|\-\d]+\.?)
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 
 retry_alt_default = True
+
+BLACK_LIST_DOMAINS = ['www.alliance4creativity.com', 'alliance4creativity.com']
+
+SUCCESS_CODES = [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]
+REDIRECTION_CODES = [300, 301, 302, 303, 304, 307, 308]
+PROXY_CODES = [305, 306, 407]
+NOT_FOUND_CODES = [400, 404, 406, 409, 410, 421, 423, 451]
+CLOUDFLARE_CODES = [429, 503, 403, 401]
 
 # Lista de dominios que necesitan CloudScraper
 CF_LIST = list()
@@ -123,8 +132,8 @@ try:
             ssl_version = ssl_version_min = ssl_high
     else:
         ssl_version = ssl.PROTOCOL_TLSv1_1
-    if not PY3:
-        ssl_version_min = ''
+    if not PY3 and __platform not in ['android', 'atv2', 'windows', 'xbox']:
+        ssl_version = ''
 
     class TLSHttpAdapter(requests.adapters.HTTPAdapter):
         def init_poolmanager(self, connections, maxsize, block=False):
@@ -138,9 +147,14 @@ except:
     logger.error(traceback.format_exc())
 
 
-def get_user_agent():
+def get_user_agent(quoted=False):
     # Devuelve el user agent global para ser utilizado cuando es necesario para la url.
-    return default_headers["User-Agent"]
+    
+    resp = default_headers["User-Agent"]
+    if quoted:
+        resp = urllib.quote(default_headers["User-Agent"])
+    
+    return resp
 
 
 def get_cookie(url, name, follow_redirects=False):
@@ -151,12 +165,8 @@ def get_cookie(url, name, follow_redirects=False):
         except Exception:
             pass
         
-    domain = urlparse.urlparse(url).netloc
-    split_lst = domain.split(".")
+    domain = obtain_domain(url, sub=True, point=True)
 
-    if len(split_lst) > 2:
-        domain = domain.replace(split_lst[0], "")
-    
     for cookie in cj:
         if cookie.name == name and domain in cookie.domain:
             return cookie.value
@@ -359,21 +369,22 @@ def channel_proxy_list(url, forced_proxy=None):
     if not url.endswith('/'):
         url += '/'
 
-    if proxy_channel_bloqued.get(scrapertools.find_single_match(url, patron_domain), ''):
+    domain = obtain_domain(url, sub=True)
+    if proxy_channel_bloqued.get(domain, ''):
         if forced_proxy and forced_proxy not in ['Total', 'ProxyDirect', 'ProxyCF', 'ProxyWeb']:
-            if forced_proxy in proxy_channel_bloqued[scrapertools.find_single_match(url, patron_domain)]:
+            if forced_proxy in proxy_channel_bloqued[domain]:
                 return True
             else:
                 return False
         if forced_proxy:
             return True
-        if not 'OFF' in proxy_channel_bloqued[scrapertools.find_single_match(url, patron_domain)]:
+        if not 'OFF' in proxy_channel_bloqued[domain]:
             return True
 
     return False
 
 
-def show_infobox(info_dict):
+def show_infobox(info_dict, force=False):
     logger.info()
     from textwrap import wrap
 
@@ -406,9 +417,9 @@ def show_infobox(info_dict):
     else:
         box = box_items
 
-    logger.info('%s%s%s' % (box['r_up_corner'], box['fill'] * width, box['l_up_corner']))
-    logger.info('%s%s%s' % (box['center'], version.center(width), box['center']))
-    logger.info('%s%s%s' % (box['r_center'], box['fill'] * width, box['l_center']))
+    logger.info('%s%s%s' % (box['r_up_corner'], box['fill'] * width, box['l_up_corner']), force=force)
+    logger.info('%s%s%s' % (box['center'], version.center(width), box['center']), force=force)
+    logger.info('%s%s%s' % (box['r_center'], box['fill'] * width, box['l_center']), force=force)
 
     count = 0
     for key, value in info_dict:
@@ -423,13 +434,13 @@ def show_infobox(info_dict):
             for line in text:
                 if len(line) < width:
                     line = line.ljust(width, ' ')
-                logger.info('%s%s%s' % (box['center'], line, box['center']))
+                logger.info('%s%s%s' % (box['center'], line, box['center']), force=force)
         else:
-            logger.info('%s%s%s' % (box['center'], text, box['center']))
+            logger.info('%s%s%s' % (box['center'], text, box['center']), force=force)
         if count < len(info_dict):
-            logger.info('%s%s%s' % (box['r_center'], box['fill'] * width, box['l_center']))
+            logger.info('%s%s%s' % (box['r_center'], box['fill'] * width, box['l_center']), force=force)
         else:
-            logger.info('%s%s%s' % (box['r_dn_corner'], box['fill'] * width, box['l_dn_corner']))
+            logger.info('%s%s%s' % (box['r_dn_corner'], box['fill'] * width, box['l_dn_corner']), force=force)
     return
 
 
@@ -540,7 +551,7 @@ def proxy_stat(url, opt, proxy_data):
             proxy_white_list_str = base64.b64decode(config.get_setting('proxy_white_list')).decode('utf-8')
             proxy_white_list = dict()
             proxy_white_list = ast.literal_eval(proxy_white_list_str)
-            if not proxy_white_list.get(scrapertools.find_single_match(url, patron_domain), ''):
+            if not proxy_white_list.get(obtain_domain(url, sub=True), ''):
                 retry = 'retry'
         except Exception:
             logger.debug('Proxytools no inicializado correctamente')
@@ -586,7 +597,7 @@ def blocking_error(url, req, proxy_data, opt):
                 opt['check_blocked_IP_save']['code'] = req.status_code
             
             logger.debug('ERROR 99: IP bloqueada por la Web "%s".  Recupenrando...' % req.url)
-            domain = scrapertools.find_single_match(req.url, patron_domain)
+            domain = obtain_domain(req.url, sub=True)
             domains = [domain]
             if domain in base64.b64decode(config.get_setting('proxy_channel_bloqued')).decode('utf-8'):
                 try:
@@ -603,7 +614,7 @@ def blocking_error(url, req, proxy_data, opt):
                         else: from . import proxytools_py3 as proxytools
                         for domain in [canonical['host']]+canonical['host_alt']:
                             if not domain: continue
-                            domains += [scrapertools.find_single_match(domain, patron_domain)]
+                            domains += [obtain_domain(domain, sub=True)]
                         proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 
                                                       opt.get('forced_proxy_retry', '') or 'ProxyCF'), delete=True)
                     resp = False
@@ -617,15 +628,23 @@ def blocking_error(url, req, proxy_data, opt):
                 
                 if not proxy_data.get('stat', ''):
                     for host in canonical.get('host_alt', []):
-                        domains += [scrapertools.find_single_match(host, patron_domain)]
+                        domains += [obtain_domain(host, sub=True)]
                 proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 
                                               opt.get('forced_proxy_retry', '') or 'ProxyCF'), delete=True)
             
-    elif data and '200' not in code:
-        data = re.sub(r"\n|\r|\t|\s{2,}", "", data)
-        proxy = proxy_stat(opt.get('url_save', ''), opt, proxy_data)
-        if proxy and 'ProxyWeb' in proxy: url += ' / %s' % opt.get('url_save', '')
-        logger.error('Error: %s, Url: %s, Datos: %s' % (code, url, data[:500]))
+    elif data:
+        for _code in SUCCESS_CODES+REDIRECTION_CODES:
+            if str(_code) in code:
+                code = ''
+                break
+        if code:
+            data = re.sub(r"\n|\r|\t|\s{2,}", "", data)
+            proxy = proxy_stat(opt.get('url_save', ''), opt, proxy_data)
+            if proxy and 'ProxyWeb' in proxy: url += ' / %s' % opt.get('url_save', '')
+            try:
+                logger.error('Error: %s, Url: %s, Datos: %s' % (code, url, data[:500]))
+            except:
+                logger.error('Error: %s, Url: %s, Datos: NULL' % (code, url))
     
     return resp
 
@@ -866,10 +885,10 @@ def proxy_post_processing(url, proxy_data, response, opt):
             data = "".join(chr(x) for x in bytes(data))
 
     try:
-        if response["code"] not in [200, 302] and opt.get('forced_proxy_opt', '') == 'ProxyJSON':
+        if response["code"] not in SUCCESS_CODES+REDIRECTION_CODES and opt.get('forced_proxy_opt', '') == 'ProxyJSON':
             opt['forced_proxy_opt'] = 'ProxyCF'
             opt['forced_proxy'] = opt['forced_proxy_opt']
-        elif response["code"] in [404, 400]:
+        elif response["code"] in NOT_FOUND_CODES:
             opt['proxy_retries'] = -1
 
         if ', Proxy Web' in proxy_data.get('stat', ''):
@@ -882,29 +901,29 @@ def proxy_post_processing(url, proxy_data, response, opt):
                 response = proxytools.restore_after_proxy_web(response, proxy_data, opt['url_save'])
                 data = response['data'][:500]
             
-            if data.startswith('ERROR') or response["code"] == 302:
-                if response["code"] in [200, 666]: 
+            if data.startswith('ERROR') or response["code"] in REDIRECTION_CODES:
+                if response["code"] in SUCCESS_CODES+[666]: 
                     response["code"] = 666
                     if not opt.get('post_cookie', False):
-                        url_domain = '%s://%s' % (urlparse.urlparse(opt['url_save']).scheme, urlparse.urlparse(opt['url_save']).netloc)
+                        url_domain = obtain_domain(url, scheme=True)
                         forced_proxy_temp = 'ProxyWeb:' + proxy_data['web_name']
                         data_domain = downloadpage(url_domain, alfa_s=True, ignore_response_code=True, headers=opt.get('headers', {}), 
                                                    CF_test=opt.get('CF_test', False), post_cookie=True, forced_proxy=forced_proxy_temp, 
                                                    proxy_retries_counter=0)
-                        if data_domain.code == 200:
+                        if data_domain.code in SUCCESS_CODES:
                             url = opt['url_save']
                             opt['post'] = opt['post_save']
                             opt['forced_proxy'] = forced_proxy_temp
                             return response, url, opt
-                elif response["code"] == 302 and response['headers'].get('location', ''):
+                elif response["code"] in REDIRECTION_CODES and response['headers'].get('location', ''):
                     response['sucess'] = True
-                if data.startswith('ERROR') or (response["code"] == 302 and not response['sucess']):
+                if data.startswith('ERROR') or (response["code"] in REDIRECTION_CODES and not response['sucess']):
                     proxy_data['stat'] = ', Proxy Direct'
                     opt['forced_proxy'] = 'ProxyDirect'
                     url = opt['url_save']
                     opt['post'] = opt['post_save']
                     response['sucess'] = False
-        elif response["code"] == 302:
+        elif response["code"] in REDIRECTION_CODES:
             response['sucess'] = True
 
         if proxy_data.get('stat', '') and response['sucess'] == False and \
@@ -1003,9 +1022,10 @@ def downloadpage(url, **opt):
     
     if not opt.get('alfa_s', False):
         logger.info()
+    url = str(url)
 
     # Evitamos escribir en el log si es un actualización de Videoteca, a menos que se fuerce con opt['hide_infobox'] = False
-    if VIDEOLIBRARY_UPDATE and opt.get('hide_infobox', True):
+    if VIDEOLIBRARY_UPDATE and not 'hide_infobox' in opt:
         opt['hide_infobox'] = True
     
     # Si es una petición de un módulo involucrado en una búsqueda global en cancelación, se devuelve el control sin más
@@ -1028,6 +1048,12 @@ def downloadpage(url, **opt):
     url = canonical_quick_check(url, opt)
     domain = urlparse.urlparse(url)[1]
 
+    if domain in BLACK_LIST_DOMAINS:
+        response = build_response()
+        response['code'] = 404
+        logger.error('Domain in BLACK LIST: %s' % domain)
+        return type('HTTPResponse', (), response)
+
     # Dominios que necesitan Cloudscraper
     CF_LIST = load_CF_list(domain, **opt)
 
@@ -1040,7 +1066,7 @@ def downloadpage(url, **opt):
     # Headers por defecto, si no se especifica nada
     req_headers = OrderedDict()
     if opt.get('add_host', False):
-        req_headers['Host'] = urlparse.urlparse(url).netloc
+        req_headers['Host'] = obtain_domain(url)
     req_headers.update(default_headers.copy())
 
     if opt.get('add_referer', False):
@@ -1068,6 +1094,8 @@ def downloadpage(url, **opt):
                 opt['forced_proxy_opt'] = 'ProxyJSON'
             else:
                 opt['forced_proxy'] = opt['forced_proxy_opt']
+        elif opt['forced_proxy_opt'] in ['ProxyCF|FORCE', 'ProxyDirect|FORCE']:
+            opt['forced_proxy'] = opt['forced_proxy_opt'].split('|')[0]
         else:
             opt['forced_proxy'] = opt['forced_proxy_opt']
 
@@ -1099,7 +1127,7 @@ def downloadpage(url, **opt):
             CS_stat = False
         
         # Conectar la versión de SSL TLS con la sesión
-        if (opt.get('set_tls', False) or opt.get('canonical', {}).get('set_tls', False) or SET_TLS) and ssl_version:
+        if url.startswith('https:') and ssl_version and (opt.get('set_tls', False) or opt.get('canonical', {}).get('set_tls', False) or SET_TLS):
             if not opt.get('set_tls_min', False) and not opt.get('canonical', {}).get('set_tls_min', False) \
                                                   or ((opt.get('set_tls_min', False) or opt.get('canonical', {}).get('set_tls_min', False)) \
                                                   and ssl_version_min):
@@ -1215,62 +1243,33 @@ def downloadpage(url, **opt):
                         if not isinstance(response, dict) and response.host:
                             return response
 
-                    response = {}
-                    response['data'] = ''
-                    response['encoding'] = None
-                    response['sucess'] = False
-                    response['code'] = ''
-                    response['soup'] = None
-                    response['json'] = dict()
                     if opt.get('canonical', {}).get('channel', ''):
                         config.set_setting("current_host", '', channel=opt['canonical']['channel'])
                         opt['canonical']['host'] = ''
-                    response['canonical'] = ''
-                    response['host'] = ''
-                    response['url'] = ''
-                    response['url_new'] = ''
-                    response['headers'] = {}
-                    response['cookies'] = ''
-                    response['proxy__'] = ''
+                    
+                    response = build_response()
                     response['time_elapsed'] = time.time() - inicio
                     info_dict.append(('Success', 'False'))
                     response['code'] = req.status_code
-                    info_dict.append(('Response code', str(e)))
-                    info_dict.append(('Finalizado en', time.time() - inicio))
+                    info_dict.append(('Response code', response['code']))
+                    info_dict.append(('Finalizado en', response['time_elapsed']))
                     if not opt.get('alfa_s', False):
-                        show_infobox(info_dict)
+                        show_infobox(info_dict, force=True)
                         logger.error(traceback.format_exc(1))
                     return type('HTTPResponse', (), response)
         
         else:
-            response['data'] = ''
-            response['encoding'] = None
-            response['sucess'] = False
-            response['code'] = ''
-            response['soup'] = None
-            response['json'] = dict()
-            response['proxy__'] = ''
-            response['canonical'] = ''
-            response['host'] = ''
-            response['url'] = ''
-            response['url_new'] = ''
-            response['headers'] = {}
-            response['cookies'] = ''
+            response = build_response()
             response['time_elapsed'] = time.time() - inicio
             return type('HTTPResponse', (), response)
         
+        response = build_response()
         response_code = req.status_code
         response['data'] = req.content
-        response['sucess'] = False
-        response['code'] = ''
-        response['soup'] = None
-        response['json'] = dict()
-        response['canonical'] = ''
-        response['host'] = ''
-        response['url_new'] = ''
         response['proxy__'] = proxy_stat(opt['url_save'], opt, proxy_data)
-        response['time_elapsed'] = 0
+
         canonical = opt.get('canonical', {})
+        
         block = blocking_error(url, req, proxy_data, opt)
 
 
@@ -1309,7 +1308,7 @@ def downloadpage(url, **opt):
             return downloadpage(url, **opt)
 
         # Retries Cloudflare errors
-        if req.headers.get('Server', '').startswith('cloudflare') and response_code in [429, 503, 403] \
+        if req.headers.get('Server', '').startswith('cloudflare') and response_code in CLOUDFLARE_CODES \
                         and (not opt.get('CF', False) or opt['retries_cloudflare'] > 0) and opt.get('CF_test', True) \
                         and not opt.get('check_blocked_IP_save', {}):
             domain = urlparse.urlparse(opt['url_save'])[1]
@@ -1324,7 +1323,7 @@ def downloadpage(url, **opt):
                 if not "CF" in opt: opt["CF"] = False if opt['retries_cloudflare'] > 0 else True
                 return downloadpage(opt['url_save'], **opt)
         
-        if req.headers.get('Server', '') == 'Alfa' and response_code in [429, 503, 403] \
+        if req.headers.get('Server', '') == 'Alfa' and response_code in CLOUDFLARE_CODES \
                         and not opt.get('cf_v2', False) and opt.get('CF_test', True):
             opt["cf_v2"] = True
             if not PY3: opt['proxy_retries'] = 0
@@ -1335,13 +1334,13 @@ def downloadpage(url, **opt):
 
         # Si hay bloqueo "cf_v2" y no hay Alfa Assistant, se reintenta con Proxy
         if (canonical.get('forced_proxy_ifnot_assistant', '') or opt.get('forced_proxy_ifnot_assistant', '')) \
-                           and ('Detected a Cloudflare version 2' in str(response_code) or response_code in [429, 503, 403]) \
+                           and ('Detected a Cloudflare version 2' in str(response_code) or response_code in CLOUDFLARE_CODES) \
                            and opt.get('proxy__test', '') != 'retry':
             opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0
             opt['proxy__test'] = 'retry'
             if not PY3: from . import proxytools
             else: from . import proxytools_py3 as proxytools
-            domain = scrapertools.find_single_match(url, patron_domain)
+            domain = obtain_domain(url, sub=True)
             opt['forced_proxy'] = canonical.get('forced_proxy_ifnot_assistant', '') or opt.get('forced_proxy_ifnot_assistant', '')
             proxytools.add_domain_retried(domain, proxy__type=opt['forced_proxy'])
             return downloadpage(url, **opt)
@@ -1412,7 +1411,7 @@ def downloadpage(url, **opt):
         response['headers'] = req.headers
         response['cookies'] = req.cookies
 
-        if response['code'] == 200:
+        if response['code'] in SUCCESS_CODES:
             response['sucess'] = True
 
         else:
@@ -1436,14 +1435,16 @@ def downloadpage(url, **opt):
             if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', ''):
                 if response_code > 399:
                     info_dict, response = fill_fields_post(info_dict, opt, req, response, req_headers, inicio)
-                    show_infobox(info_dict)
+                    show_infobox(info_dict, force=True)
                     response = canonical_check(opt['url_save'], response, req, opt)
                     raise WebErrorException(urlparse.urlparse(url)[1])
 
         info_dict, response = fill_fields_post(info_dict, opt, req, response, req_headers, inicio)
-        if not 'api.themoviedb' in url and not 'api.trakt' in url and not opt.get('alfa_s', False) \
-                    and (not opt.get("hide_infobox") or not response['sucess']):
-            show_infobox(info_dict)
+        if not 'api.themoviedb' in url and not 'api.trakt' in url and not opt.get('alfa_s', False):
+            if not response['sucess'] or opt.get("hide_infobox") is None:
+                show_infobox(info_dict, force=True)
+            elif not opt.get("hide_infobox"):
+                show_infobox(info_dict)
 
         # Si hay error del proxy, refresca la lista y reintenta el numero indicada en proxy_retries
         response, url, opt = proxy_post_processing(url, proxy_data, response, opt)
@@ -1470,7 +1471,7 @@ def downloadpage(url, **opt):
                     domains = []
                     for domain in [opt['canonical']['host']]+opt['canonical']['host_alt']:
                         if not domain: continue
-                        domains += [scrapertools.find_single_match(domain, patron_domain)]
+                        domains += [obtain_domain(domain, sub=True)]
                     proxytools.add_domain_retried(domains, proxy__type=opt.get('forced_proxy', 
                                                   opt.get('forced_proxy_retry', '') or 'ProxyCF'), delete=True)
                 if opt.get('check_blocked_IP_save', {}):
@@ -1482,20 +1483,8 @@ def downloadpage(url, **opt):
             break
 
     if not response:
-        response['data'] = ''
-        response['encoding'] = None
-        response['sucess'] = False
-        response['code'] = ''
-        response['soup'] = None
-        response['json'] = dict()
-        response['proxy__'] = ''
-        response['canonical'] = ''
-        response['host'] = ''
-        response['url'] = ''
-        response['url_new'] = ''
-        response['headers'] = {}
-        response['cookies'] = ''
-        response['time_elapsed'] = 0
+        response = build_response()
+
     return type('HTTPResponse', (), response)
 
 
@@ -1549,7 +1538,7 @@ def fill_fields_post(info_dict, opt, req, response, req_headers, inicio):
         info_dict.append(('Data Encoding', req.encoding))
         info_dict.append(('Response code', response['code']))
 
-        if response['code'] == 200:
+        if response['code'] in SUCCESS_CODES:
             info_dict.append(('Success', 'True'))
             response['sucess'] = True
         else:
@@ -1582,11 +1571,37 @@ def fill_fields_post(info_dict, opt, req, response, req_headers, inicio):
 def global_search_canceled(url, **opt):
     logger.info(url)
     
+    response = build_response()
     response = {}
+    response['code'] = 777
+
+    raise Exception(type('HTTPResponse', (), response))
+
+
+def obtain_domain(url, sub=False, point=False, scheme=False):
+
+    if url and len(url) > 1:
+        url = urlparse.urlparse(url).netloc
+        if sub:
+            split_lst = url.split(".")
+            if len(split_lst) > 2:
+                if not point:
+                    split_lst[0] += '.'
+                url = url.replace(split_lst[0], "")
+        if scheme:
+            url = '%s://%s' % (urlparse.urlparse(url).scheme, url)
+
+    return url
+    
+
+def build_response(HTTPResponse=False):
+    
+    response = {}
+    
     response['data'] = ''
     response['encoding'] = None
     response['sucess'] = False
-    response['code'] = 777
+    response['code'] = ''
     response['soup'] = None
     response['json'] = dict()
     response['proxy__'] = ''
@@ -1597,4 +1612,5 @@ def global_search_canceled(url, **opt):
     response['headers'] = {}
     response['cookies'] = ''
     response['time_elapsed'] = 0
-    raise Exception(type('HTTPResponse', (), response))
+    
+    return type('HTTPResponse', (), response) if HTTPResponse else response

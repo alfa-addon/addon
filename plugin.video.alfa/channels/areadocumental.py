@@ -21,6 +21,7 @@ canonical = {
              'host': config.get_setting("current_host", 'areadocumental', default=''), 
              'host_alt': ["https://www.area-documental.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -34,10 +35,13 @@ perfil = [['', '', ''],
           ['0xFF58D3F7', '0xFF2E9AFE', '0xFF2E64FE']]
 color1, color2, color3 = perfil[__perfil__]
 
+
 def mainlist(item):
     logger.info()
+    
     itemlist = []
     item.text_color = color1
+    
     itemlist.append(item.clone(title="Novedades", action="entradas",
                                url= host + "resultados-reciente.php?buscar=&genero="))
     
@@ -50,7 +54,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="3D", action="entradas",
                                url= host + "3D.php"))
     
-    itemlist.append(item.clone(title="Categorías", action="cat", url= host + "/index.php"))
+    itemlist.append(item.clone(title="Categorías", action="cat", url= host + "index.php"))
     
     itemlist.append(item.clone(title="Ordenados por...", action="indice"))
 
@@ -60,24 +64,31 @@ def mainlist(item):
 
     return itemlist
 
+
 def get_source(url):
     logger.info()
+    
     data = httptools.downloadpage(url, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}|"|\(|\)', "", data)
+    
     return data
 
 
 def configuracion(item):
     from platformcode import platformtools
+    
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
+    
     return ret
 
 
 def search(item, texto):
     logger.info()
-    item.url = host + "resultados.php?buscar=%s&genero=&x=0&y=0" % texto
+    
+    item.url = host + "resultados/buscar=%s/" % texto
     item.action = "entradas"
+    
     try:
         itemlist = entradas(item)
         return itemlist
@@ -90,8 +101,10 @@ def search(item, texto):
 
 def newest(categoria):
     logger.info()
+    
     itemlist = []
     item = Item()
+    
     try:
         if categoria == "documentales":
             item.url = host + "resultados-reciente.php?buscar=&genero="
@@ -113,7 +126,9 @@ def newest(categoria):
 
 def indice(item):
     logger.info()
+    
     itemlist = []
+    
     itemlist.append(item.clone(title="Título", action="entradas",
                                url= host + "resultados-titulo.php?buscar=&genero="))
     itemlist.append(item.clone(title="Año", action="entradas",
@@ -123,13 +138,16 @@ def indice(item):
 
 def cat(item):
     logger.info()
+    
     itemlist = []
+    
     data = get_source(item.url)
     bloques = scrapertools.find_multiple_matches(data, '</li><li class=dropdown>.*?</ul>')
+    
     for bloque in bloques:
         matches = scrapertools.find_multiple_matches(bloque, "<li><a href=(.*?)>(.*?)<")
-        for scrapedurl, scrapedtitle in matches:
-            scrapedurl = host + scrapedurl
+        for _scrapedurl, scrapedtitle in matches:
+            scrapedurl = urllib.urljoin(host, _scrapedurl)
             if not "TODO" in scrapedtitle:
                 itemlist.append(item.clone(action="entradas", title=scrapedtitle, url=scrapedurl))
 
@@ -138,6 +156,7 @@ def cat(item):
 
 def destacados(item):
     logger.info()
+    
     itemlist = []
     item.text_color = color2
 
@@ -145,7 +164,7 @@ def destacados(item):
     data = scrapertools.unescape(data)
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)"> ></a>')
     if next_page != "":
-        data2 = scrapertools.unescape(httptools.downloadpage(host + next_page).data)
+        data2 = scrapertools.unescape(httptools.downloadpage(urllib.urljoin(host, next_page), canonical=canonical).data)
         data += data2
     else:
         data2 = ""
@@ -158,11 +177,12 @@ def destacados(item):
     patron += '(.*?)</p>.*?'
     patron += '</strong>:(.*?)<strong>.*?'
     patron += '</strong>(.*?)</div>'
+    
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedthumbnail, scrapedtitle, year, scrapedplot, genero, extra in matches:
+    for _scrapedurl, _scrapedthumbnail, scrapedtitle, year, scrapedplot, genero, extra in matches:
         infolab = {'plot': scrapedplot, 'genre': genero}
-        scrapedurl = host + scrapedurl
-        scrapedthumbnail = host + urllib.quote(scrapedthumbnail)
+        scrapedurl = urllib.urljoin(host, _scrapedurl)
+        scrapedthumbnail = urllib.urljoin(host, urllib.quote(_scrapedthumbnail))
         title = scrapedtitle
         if "full_hd" in extra:
             quality = "3D"
@@ -181,15 +201,15 @@ def destacados(item):
 
     next_page = scrapertools.find_single_match(data2, '<a href="([^"]+)"> ></a>')
     if next_page:
-        itemlist.append(item.clone(action="entradas", title=">> Página Siguiente", url=host + next_page,
+        itemlist.append(item.clone(action="entradas", title=">> Página Siguiente", url=urllib.urljoin(host, next_page),
                                    text_color=color3))
 
     return itemlist
 
 
-
 def entradas(item):
     logger.info()
+    
     itemlist = []
     item.text_color = color2
 
@@ -197,10 +217,10 @@ def entradas(item):
 
     patron  = 'class=imagen.*?href=(.*?)><img.*?src=(.*?) alt=.*?title=(.*?)/>.*?</h2>(\d{4}) (.*?)<.*?space>(.*?)<'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for  scrapedurl, scrapedthumbnail, scrapedtitle, year, genero, scrapedplot in matches:
+    for  _scrapedurl, _scrapedthumbnail, scrapedtitle, year, genero, scrapedplot in matches:
         infolab = {'plot': scrapedplot, 'genre': genero}
-        scrapedurl = host + scrapedurl
-        scrapedthumbnail = host + scrapedthumbnail
+        scrapedurl = urllib.urljoin(host, _scrapedurl)
+        scrapedthumbnail = urllib.urljoin(host, _scrapedthumbnail)
         title = scrapedtitle
         if "3D" in genero:
             quality = "3D"
@@ -218,34 +238,37 @@ def entradas(item):
     next_page = scrapertools.find_single_match(data, '<a class=last>.*?</a></li><li><a href=(.*?)>.*?</a>')
     next_page = scrapertools.htmlclean(next_page)
     if next_page:
-        itemlist.append(item.clone(action="entradas", title=">> Página Siguiente", url=host + next_page,
+        itemlist.append(item.clone(action="entradas", title=">> Página Siguiente", url=urllib.urljoin(host, next_page),
                                    text_color=color3))
-
     return itemlist
 
 
 def findvideos(item):
     logger.info()
+    
     itemlist = []
+    
     data = httptools.downloadpage(item.url, canonical=canonical).data
 
     subs = scrapertools.find_multiple_matches(data, 'file: "(/webvtt[^"]+)".*?label: "([^"]+)"')
     bloque = scrapertools.find_single_match(data, 'title.*?track')
     patron = 'file:\s*"([^"]+).*?label:\s*"([^"]+)"'
     matches = scrapertools.find_multiple_matches(bloque, patron)
-    for url, quality in matches:
-        url = httptools.get_url_headers(host + url, forced=True)
-        for url_sub, label in subs:
-            url_sub = host + urllib.quote(url_sub)
+    
+    for _url, quality in matches:
+        url = httptools.get_url_headers(urllib.urljoin(host, _url), forced=True)
+        
+        for _url_sub, label in subs:
+            url_sub = urllib.urljoin(host, urllib.quote(_url_sub))
             title = "Ver video en [[COLOR %s]%s[/COLOR]] Sub %s" % (color3, quality, label)
             itemlist.append(item.clone(action="play", server="directo", title=title,
                                        url=url, subtitle=url_sub, extra=item.url, quality=quality, language = label))
-
     return itemlist
 
 
 def play(item):
     logger.info()
+    
     itemlist = []
 
     try:

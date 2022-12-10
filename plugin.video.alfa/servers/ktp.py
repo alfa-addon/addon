@@ -19,9 +19,13 @@ from platformcode import logger
 
 from lib.kt_player import decode
 
+kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'ignore_response_code': True, 'cf_assistant': False}
+
 
 def test_video_exists(page_url):
-    response = httptools.downloadpage(page_url)
+    
+    response = httptools.downloadpage(page_url, **kwargs)
+    
     if response.code == 404 \
     or "cwtvembeds" in page_url \
     or "Page not Found" in response.data \
@@ -30,37 +34,44 @@ def test_video_exists(page_url):
     or "is no longer available" in response.data\
     or "Embed Player Error" in response.data:
         return False, "[ktplayer] El fichero no existe o ha sido borrado"
+    
     global data, license_code
     data = response.data
     license_code = scrapertools.find_single_match(response.data, 'license_code:\s*(?:\'|")([^\,]+)(?:\'|")')
+    
     return True, ""
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info()
+    
     video_urls = []
     invert = ""
     url = ""
+    
     if "video_url_text" in data:
         patron = '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?'
         patron += '(?:video_url_text|video_alt_url_text|video_alt_url[0-9]*_text):\s*(?:\'|")([^\,]+)(?:\'|")'
     else:
         patron = 'video_url:\s*(?:\'|")([^\,]+)(?:\'|").*?'
         patron += 'postfix:\s*(?:\'|")([^\,]+)(?:\'|")'
+    
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for url,quality in matches:
+    for url, quality in matches:
         if not "?login" in url and not "signup" in url:
             if "function/" in url:
                 url = decode(url, license_code)
             elif url.startswith("/get_file/"):
-                url = urlparse.urljoin(page_url,url)
+                url = urlparse.urljoin(page_url, url)
             # url += "|verifypeer=false"
-            url += "|Referer=%s" %page_url
-            video_urls.append(['[ktplayer] %s' %quality, url])
+            url += "|Referer=%s" % page_url
+            video_urls.append(['[ktplayer] %s' % quality, url])
         if "LQ" in quality:
             invert= "true"
+    
     if invert:
         video_urls.reverse()
+    
     if not url:
         url = scrapertools.find_single_match(data, '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?')
         video_urls.append(['[ktplayer]', url])

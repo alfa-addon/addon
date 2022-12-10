@@ -34,7 +34,8 @@ canonical = {
              'host': config.get_setting("current_host", 'zoowomaniacos', default=''), 
              'host_alt': ["https://zoowomaniacos.org/"], 
              'host_black_list': [], 
-             'status': 'SIN CANANICAL NI DOMINIO',
+             'status': 'SIN CANONICAL NI DOMINIO',
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -43,9 +44,10 @@ AlfaChannel = DooPlay(host, canonical=canonical)
 
 def mainlist(item):
     logger.info()
+    
+    itemlist = list()
 
     autoplay.init(item.channel, list_servers, list_quality)
-    itemlist = list()
 
     itemlist.append(Item(channel=item.channel, title='Ultimas', start=0, action='list_all', thumbnail=get_thumb('last', auto=True)))
 
@@ -92,6 +94,9 @@ def section(item):
             new_item.year = title
 
         itemlist.append(new_item)
+        
+    if _filter == "years":
+        itemlist.reverse()
 
     return itemlist
 
@@ -114,10 +119,13 @@ def list_all(item):
                         infoLabels={"year": elem.get("a4", "-")})
 
         new_item.contentTitle = title
+        new_item.contentType = 'movie'
         new_item.action = "findvideos"
+
         itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
+    
     if matches.get("pagination", False):
         url_next_page = item.url
         itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page,
@@ -131,27 +139,26 @@ def findvideos(item):
 
     itemlist = list()
     base_url = "https://proyectox.yoyatengoabuela.com/testplayer.php?id=%s" % item.v_id
+    
     soup, matches = AlfaChannel.get_video_options(base_url)
 
     for elem in matches[1:]:
 
         lang = scrapertools.find_single_match(elem.img["src"], "flags/(\w+).png")
-
         if lang.lower() in ["ar", "mx", "pe", "cl", "co"]:
             lang = "la"
 
         url = soup.find("div", id=elem.a["href"][1:]).iframe["src"]
+        
         itemlist.append(Item(channel=item.channel, title='%s', url=url, action="play", infoLabels=item.infoLabels,
                              language=IDIOMAS.get(lang, "VO")))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.servers.capitalize())
 
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
     # Requerido para AutoPlay
-
     autoplay.start(itemlist, item)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
@@ -164,6 +171,7 @@ def findvideos(item):
 
 def search(item, texto):
     logger.info()
+    
     try:
         texto = texto.replace(" ", "+")
         item.search = item.url + texto
