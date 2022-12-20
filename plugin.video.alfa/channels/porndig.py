@@ -21,8 +21,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'porndig', 
              'host': config.get_setting("current_host", 'porndig', default=''), 
-             'host_alt': ["https://www.porndig.com"], 
+             'host_alt': ["https://www.porndig.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -41,18 +42,18 @@ def mainlist(item):
                                category = "", offset=""))
     itemlist.append(Item(channel=item.channel, title="Mas metraje" , action="lista", value="duration", id=1, per="month",
                                category = "", offset=""))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="pornstar", url="/pornstars/load_more_pornstars", id=1,
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="pornstar", url="pornstars/load_more_pornstars", id=1,
                                value="likes", offset=""))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="pornstar", url="/studios/load_more_studios", id=1,
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="pornstar", url="studios/load_more_studios", id=1,
                                value="video_views", offset=""))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/video/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "video/"))
     # itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     itemlist.append(Item(channel=item.channel, title="", action="", folder=False))
 
-    itemlist.append(Item(channel=item.channel, title="Amateur" , action="submenu", url=host + "/amateur/videos/", id=4))
-    itemlist.append(Item(channel=item.channel, title="Shemale" , action="submenu", url=host + "/transexual/videos/", id=3))
-    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=host + "/gay/videos/", id=2))
+    itemlist.append(Item(channel=item.channel, title="Amateur" , action="submenu", url=host + "amateur/videos/", id=4))
+    itemlist.append(Item(channel=item.channel, title="Shemale" , action="submenu", url=host + "transexual/videos/", id=3))
+    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=host + "gay/videos/", id=2))
     return itemlist
 
 
@@ -77,7 +78,7 @@ def submenu(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search?q=%s" % (host,texto)
+    item.url = "%ssearch?q=%s" % (host,texto)
     item.texto = texto
     try:
         return lista(item)
@@ -106,10 +107,10 @@ def create_soup(url, post=None, referer=None,  unescape=False):
     logger.info()
     if post:
         headers = {'X-Requested-With': 'XMLHttpRequest', 'Cookie':  'main_category_id=%s' %referer}
-        data = httptools.downloadpage(url, post=post, headers=headers).data
+        data = httptools.downloadpage(url, post=post, headers=headers, canonical=canonical).data
         data = data.replace("\\n", " ").replace("\\t", "").replace("\\", "")
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")

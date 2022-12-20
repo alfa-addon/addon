@@ -27,8 +27,9 @@ list_servers = ['mangovideo']
 canonical = {
              'channel': 'pandamovie', 
              'host': config.get_setting("current_host", 'pandamovie', default=''), 
-             'host_alt': ["https://pandamovies.org"], 
+             'host_alt': ["https://pandamovies.org/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -40,13 +41,13 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Peliculas", action="lista", url=host + "/movies"))
-    itemlist.append(Item(channel=item.channel, title="Year", action="categorias", url=host + "/movies", id="menu-item-24"))
-    itemlist.append(Item(channel=item.channel, title="Canal", action="categorias", url=host + "/movies", id="menu-item-23"))
-    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host + "/movies", id="menu-item-25"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + "/movies"))
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="lista", url=host + "movies"))
+    itemlist.append(Item(channel=item.channel, title="Year", action="categorias", url=host + "movies", id="menu-item-24"))
+    itemlist.append(Item(channel=item.channel, title="Canal", action="categorias", url=host + "movies", id="menu-item-23"))
+    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host + "movies", id="menu-item-25"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + "movies"))
     itemlist.append(Item(channel=item.channel, title="-------------------"))
-    itemlist.append(Item(channel=item.channel, title="Escenas", action="submenu", url=host + "/xxxscenes"))
+    itemlist.append(Item(channel=item.channel, title="Escenas", action="submenu", url=host + "xxxscenes/"))
     
     autoplay.show_option(item.channel, itemlist)
 
@@ -56,7 +57,7 @@ def mainlist(item):
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Ultimos", action="lista", url=item.url + "/movies"))
+    itemlist.append(Item(channel=item.channel, title="Ultimos", action="lista", url=item.url + "movies"))
     itemlist.append(Item(channel=item.channel, title="Canal", action="categorias", url=item.url , id="menu-item-38820"))
     itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=item.url,  id="menu-item-38760"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url))
@@ -66,7 +67,7 @@ def submenu(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/%s" % (item.url, texto)
+    item.url = "%ssearch/%s" % (item.url, texto)
     try:
         return lista(item)
     except:
@@ -101,9 +102,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")

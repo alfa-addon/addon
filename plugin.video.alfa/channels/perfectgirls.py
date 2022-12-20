@@ -16,12 +16,13 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-
+#SERVER BRAVOPORN lento
 canonical = {
              'channel': 'perfectgirls', 
              'host': config.get_setting("current_host", 'perfectgirls', default=''), 
-             'host_alt': ["https://www.perfectgirls.net"], 
+             'host_alt': ["https://www.perfectgirls.net/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,7 +32,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Ultimos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="Top" , action="lista", url=host + "/top/3days/"))
+    itemlist.append(Item(channel=item.channel, title="Top" , action="lista", url=host + "top/3days/"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -40,7 +41,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/%s/" % (host, texto)
+    item.url = "%ssearch/%s/" % (host, texto)
     try:
         return lista(item)
     except:
@@ -53,7 +54,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<li class="additional_list__item"><a href="([^"]+)">([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -69,14 +70,13 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<div class="list__item_link">.*?'
     patron  += 'href="([^"]+)".*?'
     patron  += 'data-original="([^"]+)".*?'
     patron  += '<span>([^<]+)</span><time>(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedthumbnail,scrapedtitle,duracion in matches:
         plot = ""
         time = scrapertools.find_single_match(duracion, '([^"]+)</time>')
@@ -102,7 +102,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '<source src="([^"]+)" res="\d+" label="([^"]+)" type="video/mp4"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url,quality in matches:
@@ -115,7 +115,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '<source src="([^"]+)" res="\d+" label="([^"]+)" type="video/mp4"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url,quality in matches:

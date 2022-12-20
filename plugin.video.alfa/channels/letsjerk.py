@@ -21,8 +21,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'letsjerk', 
              'host': config.get_setting("current_host", 'letsjerk', default=''), 
-             'host_alt': ["https://letsjerk.tv"], 
+             'host_alt': ["https://letsjerk.tv/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -32,11 +33,11 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?order=newest"))
-    itemlist.append(Item(channel=item.channel, title="Mas valorados" , action="lista", url=host + "/?order=rating_month"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/?order=views_month"))
-    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="lista", url=host + "/?order=comments_month"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "?order=newest"))
+    itemlist.append(Item(channel=item.channel, title="Mas valorados" , action="lista", url=host + "?order=rating_month"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "?order=views_month"))
+    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="lista", url=host + "?order=comments_month"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories"))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -45,7 +46,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/?s=%s" % (host,texto)
+    item.url = "%s?s=%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -79,10 +80,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
-        data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -111,8 +111,8 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url,
-                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle = title, url=url,
+                              thumbnail=thumbnail, fanart=thumbnail, plot=plot))
     next_page = soup.find('a', class_='next')
     if next_page:
         next_page = next_page['href']
@@ -135,8 +135,6 @@ def findvideos(item):
             itemlist.append(Item(channel=item.channel, action="play", title=quality, url=url) )
     else:
         url = v2['src']
-        data = httptools.downloadpage(url).data
-        url = scrapertools.find_single_match(data, 'src: "([^"]+)",')
         itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
@@ -157,8 +155,6 @@ def play(item):
             itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     else:
         url = v2['src']
-        data = httptools.downloadpage(url).data
-        url = scrapertools.find_single_match(data, 'src: "([^"]+)",')
         itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

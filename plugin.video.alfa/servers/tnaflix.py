@@ -10,16 +10,15 @@ from platformcode import logger
 
 
 def test_video_exists(page_url):
-    global data
     response = httptools.downloadpage(page_url)
-
+    global data
+    data = response.data
     if response.code == 404 or \
     "Page not Found" in response.data \
     or "File was deleted" in response.data \
     or "video is a private" in response.data \
     or "is no longer available" in response.data:
         return False, "[tnaflix] El fichero no existe o ha sido borrado"
-    data = response.data
     return True, ""
 
 
@@ -29,8 +28,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = httptools.downloadpage(page_url).data
     url = scrapertools.find_single_match(data, 'config = "([^"]+)"')
     if not url.startswith("https"):
-        host = "https://www.tnaflix.com"
-        url = "%s%s" % (host,url)
+        url = "https:%s" % url
     headers = {'Referer': page_url}
     data = httptools.downloadpage(url, headers=headers).data
     patron = '<res>(.*?)</res>.*?'

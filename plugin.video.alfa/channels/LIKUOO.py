@@ -21,8 +21,9 @@ from core import httptools
 canonical = {
              'channel': 'LIKUOO', 
              'host': config.get_setting("current_host", 'LIKUOO', default=''), 
-             'host_alt': ["https://www.likuoo.video"], 
+             'host_alt': ["https://www.likuoo.video/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -33,8 +34,8 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Ultimos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="categorias", url=host + "/pornstars/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/all-channels/"))
+    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="categorias", url=host + "pornstars/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "all-channels/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -42,7 +43,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/?s=%s" % (host, texto)
+    item.url = "%ssearch/?s=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -55,7 +56,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<div class="item_p">.*?<a href="([^"]+)" title="([^"]+)"><img src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -76,7 +77,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="item">.*?'
     patron += '<a href="([^"]+)" title="([^"]+)".*?'
@@ -106,7 +107,7 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
     patron = 'url:\'([^\']+)\'.*?'
     patron += 'data:\'([^\']+)\''
@@ -127,7 +128,7 @@ def play(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
     patron = 'url:\'([^\']+)\'.*?'
     patron += 'data:\'([^\']+)\''

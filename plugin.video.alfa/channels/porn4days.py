@@ -21,8 +21,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'porn4days', 
              'host': config.get_setting("current_host", 'porn4days', default=''), 
-             'host_alt': ["http://porn4days.biz/"], 
+             'host_alt': ["https://porn4days.biz/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -42,7 +43,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/page1/?s=%s" % (host,texto)
+    item.url = "%ssearch/page1/?s=%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -82,15 +83,16 @@ def categorias(item):
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
+    itemlist.sort(key=lambda x: x.title)
     return itemlist
 
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -107,7 +109,12 @@ def lista(item):
         title = elem.img['alt']
         thumbnail = elem.img['src']
         time = elem.find('div', class_='timer')
-        if time:
+        canal = elem.find('a', href=re.compile('search/\?s='))
+        if canal:
+            time = time.text.strip()
+            canal = canal.text.strip()
+            title = "[COLOR yellow]%s[/COLOR] [COLOR cyan]%s[/COLOR] %s" % (time,canal,title)
+        else:
             time = time.text.strip()
             title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         url = urlparse.urljoin(host,url)
@@ -121,10 +128,11 @@ def lista(item):
     next_page = soup.find('a', rel='next')
     if next_page:
         next_page = next_page['href']
-        if "/?s=" in item.url and not"/search/" in next_page:
-            next_page = "/search%s" %next_page
+        # if "/?s=" in item.url and not"/search/" in next_page:
+            # next_page = "/search%s" %next_page
         next_page = urlparse.urljoin(host,next_page)
-        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+        if len(itemlist) == 24:
+            itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
