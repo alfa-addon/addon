@@ -21,8 +21,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'pornone', 
              'host': config.get_setting("current_host", 'pornone', default=''), 
-             'host_alt': ["https://pornone.com"], 
+             'host_alt': ["https://pornone.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -32,9 +33,9 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Hetero" , action="submenu", url=host, pornstars = True))
-    itemlist.append(Item(channel=item.channel, title="Female" , action="submenu", url=host + "/female"))
-    itemlist.append(Item(channel=item.channel, title="Shemale" , action="submenu", url=host + "/shemale"))
-    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=host + "/gay"))
+    itemlist.append(Item(channel=item.channel, title="Female" , action="submenu", url=host + "female"))
+    itemlist.append(Item(channel=item.channel, title="Shemale" , action="submenu", url=host + "shemale"))
+    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=host + "gay"))
     return itemlist
 
 def submenu(item):
@@ -56,7 +57,7 @@ def submenu(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search?q=%s&sort=newest&page=1" % (item.url,texto)
+    item.url = "%ssearch?q=%s&sort=newest&page=1" % (item.url,texto)
     try:
         return lista(item)
     except:
@@ -103,9 +104,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -155,23 +156,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).video
-    matches = soup.find_all('source')
-    for elem in matches:
-        url = elem['src']
-        quality = elem['label']
-        itemlist.append(Item(channel=item.channel, action="play", title=quality, url=url) )
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
 
 def play(item):
     logger.info()
-    video_urls = []
-    soup = create_soup(item.url).video
-    matches = soup.find_all('source')
-    for elem in matches:
-        url = elem['src']
-        quality = elem['label']
-        video_urls.append(['%s' %quality, url])
-    video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
-    return video_urls
+    itemlist = []
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
+    return itemlist
