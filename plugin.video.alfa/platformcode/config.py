@@ -244,25 +244,16 @@ def get_addon_version(with_fix=True, from_xml=False):
     '''
     version = ''
     if from_xml:
-        try:
-            import xmltodict
-            xml_file = os.path.join(get_runtime_path(), 'addon.xml')
-            if os.path.exists(xml_file):
-                with open(xml_file, 'rb') as f:
-                    data = f.read()
-                    if not PY3:
-                        data = data.encode("utf-8", "ignore")
-                    elif PY3 and isinstance(data, (bytes, bytearray)):
-                        data = "".join(chr(x) for x in data)
-                xml = xmltodict.parse(data)
+        xml_file = os.path.join(get_runtime_path(), 'addon.xml')
+        if os.path.exists(xml_file):
+            xml = get_xml_content(xml_file)
+            if xml:
                 version = xml["addon"]["@version"]
                 if version:
                     if with_fix:
                         return version + get_addon_version_fix()
                     else:
                         return version
-        except:
-            version = ''
 
     if not version:
         if with_fix:
@@ -526,21 +517,9 @@ def get_all_settings_addon(caching_var=True):
             # Comprobamos si Kodi ha generado un archivo settings.xml accesible.  Si no es así, se cancela el cacheo y el menú de bienvenida (Apple TV)
             __settings__.setSetting('show_once', 'true')
 
-    try:
-        with open(inpath, "rb") as infile:
-            data = infile.read()
-            if not PY3:
-                data = data.encode("utf-8", "ignore")
-            elif PY3 and isinstance(data, (bytes, bytearray)):
-                data = "".join(chr(x) for x in data)
-        if data:
-            import xmltodict
-            if not xmltodict.parse(data):
-                raise
-        else:
-            raise
-    except:
-        data = ''
+    xml = get_xml_content(inpath)
+    
+    if not xml:
         alfa_caching = False
         alfa_settings = {}
         try:
@@ -557,15 +536,8 @@ def get_all_settings_addon(caching_var=True):
 
     ret = {}
 
-    # matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]*)"\s*value="([^"]*)"')
-    matches = re.compile('<setting\s*id="([^"]*)"\s*value="([^"]*)"', re.DOTALL).findall(data)
-    if not matches:
-        # matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/')
-        matches = re.compile('<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/', re.DOTALL).findall(data)
-
-    for _id, value in matches:
-        # ret[_id] = get_setting(_id, caching_var=False)
-        ret[_id] = get_setting_values(_id, value, decode_var_=False)
+    for setting in xml['settings']['setting']:
+        ret[setting['@id']] = get_setting_values(setting['@id'], setting.get('#text', ''), decode_var_=False)
 
     if DEBUG: logger.error('READ File ALL Alfa SETTINGS')
     alfa_settings = ret.copy()
@@ -859,18 +831,11 @@ def get_kodi_setting(name, total=False):
     """
 
     # Global Kodi setting
-    #from core import scrapertools
+    inpath = os.path.join(translatePath('special://masterprofile/'), "guisettings.xml")
+
+    xml = get_xml_content(inpath)
     
-    try:
-        inpath = os.path.join(translatePath('special://masterprofile/'), "guisettings.xml")
-        with open(inpath, "rb") as infile:
-            data = infile.read()
-            if not PY3:
-                data = data.encode("utf-8", "ignore")
-            elif PY3 and isinstance(data, (bytes, bytearray)):
-                data = "".join(chr(x) for x in data)
-    except:
-        data = ''
+    if not xml:
         try:
             from platformcode import logger
             logger.error(traceback.format_exc())
@@ -882,14 +847,11 @@ def get_kodi_setting(name, total=False):
             pass
 
     ret = {}
-    # matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/setting>')
-    matches = re.compile('<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/setting>', re.DOTALL).findall(data)
 
-    for _id, value in matches:
-        # hack para devolver el tipo correspondiente
-        ret[_id] = get_setting_values(_id, value, decode_var_=False)
-        if _id == name and not total:
-            return ret[_id]
+    for setting in xml['settings']['setting']:
+        ret[setting['@id']] = get_setting_values(setting['@id'], setting.get('#text', ''), decode_var_=False)
+        if setting['@id'] == name and not total:
+            return ret[setting['@id']]
 
     if not total:
         return None
@@ -1230,6 +1192,42 @@ def verify_settings_integrity_json(outpath=None):
         logger.error(traceback.format_exc())
     
     return True
+
+
+def get_xml_content(xml_file, content=''):
+    '''
+    Devuelve en formato DICT el contenido de la xml especificada en el path
+    Crea o actualiza un xml desde formato DICT
+    '''
+    import xmltodict
+    
+    if not content:
+        try:
+            if os.path.exists(xml_file):
+                with open(xml_file, 'rb') as f:
+                    data = f.read()
+                    if not PY3:
+                        data = data.encode("utf-8", "ignore")
+                    elif PY3 and isinstance(data, (bytes, bytearray)):
+                        data = "".join(chr(x) for x in data)
+                content = xmltodict.parse(data)
+        except:
+            content = ''
+            from platformcode import logger, platformtools
+            logger.error(traceback.format_exc())
+    else:
+        try:
+            data = xmltodict.unparse(content, pretty=True)
+            if PY3: data = bytes(list(ord(x) for x in data))
+            with open(xml_file, 'wb') as f:
+                f.write(data)
+            content = data
+        except:
+            content = ''
+            from platformcode import logger, platformtools
+            logger.error(traceback.format_exc())
+
+    return content
 
 
 def importer(module):

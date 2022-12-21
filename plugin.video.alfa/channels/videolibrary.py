@@ -710,6 +710,9 @@ def findvideos(item):
         list_servers = []
         try:
             # FILTERTOOLS
+            if item_json.contentType != 'movie':
+                from channels import filtertools
+                filtertools.get_season_search(item_json)
             # si el canal tiene filtro se le pasa el nombre que tiene guardado para que filtre correctamente.
             if "list_language" in item_json:
                 # si se viene desde la videoteca del addon

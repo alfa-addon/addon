@@ -255,18 +255,26 @@ def change_host_newpct1(host, host_old):
 
 def convert_url_base64(url, host='', referer=None, rep_blanks=True):
     logger.info('URL: ' + url + ', HOST: ' + host)
+    
     host_whitelist = ['mediafire.com']
     host_whitelist_skip = ['adfly.mobi']
     domain = scrapertools.find_single_match(url, patron_domain)
 
     url_base64 = url
+    url_sufix = ''
+    
+    if ('&dn=' in url_base64 or '&tr=' in url_base64) and not 'magnet:' in url_base64:
+        url_base64_list = url_base64.split('&')
+        url_base64 = url_base64_list[0]
+        for param in url_base64_list[1:]:
+            url_sufix += '&%s' % param
     if '=http' in url_base64 and not 'magnet:' in url_base64:
         url_base64 = scrapertools.find_single_match(url_base64, '=(http.*?$)')
 
     if len(url_base64) > 1 and not 'magnet:' in url_base64 and not '.torrent' in url_base64:
-        patron_php = 'php(?:#|\?\w=)(.*?$)'
+        patron_php = 'php(?:#|\?\w=)(.*?)(?:\&|$)'
         if not scrapertools.find_single_match(url_base64, patron_php):
-            patron_php = '\?(?:\w+=.*&)?(?:urlb64)?=(.*?$)'
+            patron_php = '\?(?:\w+=.*&)?(?:urlb64|anonym)?=(.*?)(?:\&|$)'
 
         url_base64 = scrapertools.find_single_match(url_base64, patron_php)
         if not url_base64:
@@ -287,7 +295,7 @@ def convert_url_base64(url, host='', referer=None, rep_blanks=True):
             if not url_base64:
                 url_base64 = url
             if url_base64.startswith('magnet') or url_base64.endswith('.torrent') or domain and domain in host_whitelist_skip:
-                return url_base64
+                return url_base64 + url_sufix
             
             from lib.unshortenit import sortened_urls
             if domain and domain in host_whitelist:
@@ -309,7 +317,7 @@ def convert_url_base64(url, host='', referer=None, rep_blanks=True):
             url_base64 = re.sub(host_name, host, url_base64)
             logger.info('Url base64 urlparsed: %s' % url_base64)
 
-    return url_base64
+    return url_base64 + url_sufix
 
 
 def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=None, headers=None, 
@@ -1904,8 +1912,6 @@ def post_tmdb_episodios(item, itemlist):
             del item_local.video_path
         if item_local.unify_extended:
             del item_local.unify_extended
-        if item_local.season_search:
-            del item_local.season_search
         item_local.wanted = 'xyz'
         del item_local.wanted
         item_local.text_color = 'xyz'

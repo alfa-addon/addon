@@ -21,6 +21,8 @@ else:
 import re
 import time
 
+PATTERN_EPISODE_TITLE = '(?i)(\d+x\d+\s*(?:-\s*)?)?(?:episod(?:e|io)|cap.tulo)\s*\d*\s*(?:\[\d{4}\]\s*)?(?:\[\d{1,2}.\d{1,2}\]\s*)?'
+
 
 def get_header_from_response(url, header_to_get="", post=None, headers=None):
     from core import httptools
@@ -622,3 +624,19 @@ def htmlparser(data):
     data = unescape_parse(data)
     
     return data
+
+
+def episode_title(title, infoLabels):
+
+    if title and infoLabels:
+        title = re.sub(PATTERN_EPISODE_TITLE, '', title)
+        title = re.sub('\[COLOR\s*\w+\][^\[]+\[\/COLOR\].?\s*', '', title)
+        title = re.sub(infoLabels.get('tvshowtitle', ''), '', title)
+        title = re.sub('%sx0*%s(?:\s*-*\s*)?' % (infoLabels['season'], infoLabels['episode']), '', title)
+        title = title.strip()
+    
+        if title:
+            infoLabels = infoLabels.copy()
+            infoLabels['title_from_channel'] = title
+    
+    return infoLabels

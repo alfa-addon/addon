@@ -516,7 +516,7 @@ def sortened_urls(url, url_base64, host, referer=None, alfa_s=True):
     domain_save = domain
     key = config.get_setting(domain, server='torrent', default='')
     if not key and not sortened_domains.get(domain, False):
-        if '//' in url_base64 and not (url_base64.startswith('magnet') or url_base64.startswith('http')):
+        if ('//' in url_base64 or ':?' in url_base64) and not (url_base64.startswith('magnet') or url_base64.startswith('http')):
             domain = 'sub-short.link'
         else:
             domain = 'acorta-link.com'
@@ -524,7 +524,7 @@ def sortened_urls(url, url_base64, host, referer=None, alfa_s=True):
 
     from lib.pyberishaes import GibberishAES
     key_saved = key
-    if not key and '//' in url_base64 and not (url_base64.startswith('magnet') or url_base64.startswith('http')):
+    if not key and ('//' in url_base64 or ':?' in url_base64) and not (url_base64.startswith('magnet') or url_base64.startswith('http')):
         try:
             chars = GibberishAES.s2a(GibberishAES(), url_base64)
             chers = []
@@ -609,7 +609,7 @@ def sortened_urls(url, url_base64, host, referer=None, alfa_s=True):
     if not (url_base64.startswith('magnet') or url_base64.startswith('http')):
         key = ''
     if key != key_saved:
-        config.set_setting(domain_save, key, server='torrent')
+        config.set_setting(str(domain_save), str(key), server='torrent')
     if key_saved and not key:
         return sortened_urls(url, url_base64, host)
 

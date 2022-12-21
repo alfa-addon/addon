@@ -522,22 +522,27 @@ def findvideos(item):
             else:
                 return itemlist                                                 # si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-    patron_t = '(?:<div\s*class="enlace_descarga"[^>]+>\s*<a\s*href=)?"([^"]+\.torrent)"'
-    patron_m = '(?:<div\s*class="enlace_descarga"[^>]+>\s*<a\s*href=)?"(magnet:?[^"]+)"'
+    patron_t = '<a\s*href="([^"]+)"[^>]*>.escargar\s*el\s*\.torrent'
+    patron_m = '<a\s*href="([^"]+)"[^>]*>.escargar\s*por\s*magnet'
     if not item.armagedon:                                                      # Si es un proceso normal, seguimos
         data_links = data
         for x in range(2):
             link_torrent = scrapertools.find_single_match(data_links, patron_t)
             if link_torrent:
-                link_torrent = urlparse.urljoin(host, link_torrent)
+                link_torrent = generictools.convert_url_base64(link_torrent, host)
+                #link_torrent = urlparse.urljoin(host, link_torrent)
                 link_torrent = link_torrent.replace(" ", "%20")                 # sustituimos espacios por %20, por si acaso
             #logger.info("link Torrent: " + link_torrent)
             
             link_magnet = scrapertools.find_single_match(data_links, patron_m)
+            if 'magnet' not in link_magnet:
+                link_magnet = generictools.convert_url_base64(link_magnet)
             #logger.info("link Magnet: " + link_magnet)
         
             if not (link_torrent and link_magnet) and x == 0:
                 data_links = generictools.identifying_links(data_links)
+            if '.torrent' in link_torrent and 'magnet' in link_magnet:
+                break
 
     #Si es un lookup para cargar las urls de emergencia en la Videoteca...
     if (link_torrent or link_magnet) and item.videolibray_emergency_urls:
