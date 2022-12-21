@@ -81,20 +81,20 @@ def sub_menu(item):
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
     itemlist.append(Item(channel=item.channel, title='Estrenos', url=item.url+'estrenos', action='list_all',
-                         thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
+                         thumbnail=get_thumb('premieres', auto=True), c_type=item.c_type))
 
     itemlist.append(Item(channel=item.channel, title='Tendencias Semana', url=item.url+'tendencias/semana', action='list_all',
-                         thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
+                         thumbnail=get_thumb('last', auto=True), c_type=item.c_type))
 
     itemlist.append(Item(channel=item.channel, title='Tendencias Día', url=item.url+'tendencias/dia', action='list_all',
-                         thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
+                         thumbnail=get_thumb('last', auto=True), c_type=item.c_type))
     
     if item.c_type == 'peliculas':
         itemlist.append(Item(channel=item.channel, title='Generos', action='section', url=host,
                              thumbnail=get_thumb('genres', auto=True), c_type=item.c_type))
     else:
         itemlist.append(Item(channel=item.channel, title='Nuevos Episodios', action='list_all', url=host+'episodios',
-                             thumbnail=get_thumb('genres', auto=True), c_type='episodios'))
+                             thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
 
     return itemlist
 

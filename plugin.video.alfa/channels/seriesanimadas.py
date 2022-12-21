@@ -36,8 +36,8 @@ list_servers = [
 canonical = {
              'channel': 'seriesanimadas', 
              'host': config.get_setting("current_host", 'seriesanimadas', default=''), 
-             'host_alt': ["https://animedesho.com/"], 
-             'host_black_list': ["https://seriesanimadas.org/"], 
+             'host_alt': ["https://ww2.animedesho.com/"], 
+             'host_black_list': ["https://animedesho.com/", "https://seriesanimadas.org/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

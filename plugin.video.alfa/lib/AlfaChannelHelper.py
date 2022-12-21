@@ -18,6 +18,7 @@ import traceback
 
 from core import httptools
 from core import scrapertools
+from core.scrapertools import episode_title
 from core import tmdb
 from core import jsontools
 from core.item import Item
@@ -494,6 +495,7 @@ class DictionaryChannel(AlfaChannelHelper):
                 except:
                     infolabels["episode"] = 1
                 infolabels["mediatype"] = 'episode'
+                infolabels = episode_title(title, infolabels)
                 title = "%sx%s - %s" % (season, infolabels["episode"], title)
 
                 new_item = Item(channel=item.channel,
@@ -773,6 +775,7 @@ class DooPlay(AlfaChannelHelper):
                 except:
                     infolabels["episode"] = 1
                 infolabels["mediatype"] = 'episode'
+                infolabels = episode_title(epi_name, infolabels)
                 title = "%sx%s - %s" % (season, infolabels["episode"], epi_name)
 
                 new_item = Item(channel=item.channel,
@@ -1093,6 +1096,7 @@ class ToroFilm(AlfaChannelHelper):
             except:
                 infolabels["episode"] = 1
             infolabels["mediatype"] = 'episode'
+            infolabels = episode_title(title, infolabels)
             title = "%sx%s - %s" % (season, infolabels["episode"], title)
 
             new_item = Item(channel=item.channel,
@@ -1344,6 +1348,7 @@ class ToroPdon(AlfaChannelHelper):
             except:
                 infolabels["episode"] = 1
             infolabels["mediatype"] = 'episode'
+            infolabels = episode_title(title, infolabels)
             title = "%sx%s - %s" % (season, infolabels["episode"], title)
 
             new_item = Item(channel=item.channel,
@@ -1657,6 +1662,7 @@ class ToroPlay(AlfaChannelHelper):
                     except:
                         infolabels["episode"] = 1
                     infolabels["mediatype"] = 'episode'
+                    infolabels = episode_title(epi_name, infolabels)
                     title = "%sx%s - %s" % (season, infolabels["episode"], epi_name)
 
                     new_item = Item(channel=item.channel,
@@ -1952,6 +1958,7 @@ class ToroFlix(AlfaChannelHelper):
             except:
                 infolabels["episode"] = 1
             infolabels["mediatype"] = 'episode'
+            infolabels = episode_title(epi_name, infolabels)
             title = "%sx%s - %s" % (season, infolabels["episode"], epi_name)
 
             new_item = Item(channel=item.channel,

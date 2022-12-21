@@ -140,7 +140,7 @@ def mainlist(item):
                     i_bis.infoLabels['mediatype'] = 'tvshow'
                     itemlist.append(i_bis.clone(channel="downloads", action="mainlist", title=title, 
                                                 quality=i_bis.quality, 
-                                                plot=unify.add_info_plot(i_bis.plot, i_bis.language, i_bis.quality, '', '', i_bis.infoLabels), 
+                                                plot=unify.add_info_plot(i_bis.plot, i_bis.language, i_bis.quality, '', '', '', i_bis.infoLabels), 
                                                 downloadProgress=[i_bis.downloadProgress], 
                                                 remote_download=remote_download))
 
@@ -186,7 +186,7 @@ def mainlist(item):
                                         unify.set_color(i.contentChannel.capitalize(), 'channel'))
                 if remote_download: i.remote_download = remote_download
                 itemlist.append(i.clone(quality=i.quality, 
-                                        plot=unify.add_info_plot(i.plot, i.language, i.quality, '', i.contentSerieName, i.infoLabels)))
+                                        plot=unify.add_info_plot(i.plot, i.language, i.quality, '', '', i.contentSerieName, i.infoLabels)))
 
     estados = [i.downloadStatus for i in itemlist]
     itemlist = sorted(itemlist, key=lambda i: i.title)

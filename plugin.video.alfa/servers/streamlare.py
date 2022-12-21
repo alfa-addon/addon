@@ -55,8 +55,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
         if response.json:
             json = response.json
-            media_url = json.get('result', {}).get('file', {})
-            if "master.m3u8" in media_url:
+            media_url = json.get('result', {}).get('file', '')
+            
+            if "xxxxxxxxxxxxxxmaster.m3u8" in media_url:
                 data = httptools.downloadpage(media_url, **kwargs).data
                 if PY3 and isinstance(data, bytes):
                     data = "".join(chr(x) for x in bytes(data))

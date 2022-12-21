@@ -31,9 +31,10 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.futbol/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.mba/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/', 'https://donproxies.com/'], 
-             'host_black_list': ['https://dontorrent.fail/', 'https://dontorrent.click/', 'https://dontorrent.gy/',
+             'host_black_list': ['https://dontorrent.futbol/', 
+                                 'https://dontorrent.fail/', 'https://dontorrent.click/', 'https://dontorrent.gy/',
                                  'https://dontorrent.gs/', 'https://dontorrent.me/', 'https://dontorrent.ltd/', 
                                  'https://dontorrent.fans/', 'https://dontorrent.uno/', 'https://dontorrent.ist/', 
                                  'https://dontorrent.vin/', 'https://dontorrent.tf/', 'https://dontorrent.pub/', 
@@ -636,7 +637,6 @@ def listado(item):                                                              
                 item_local.contentType = "tvshow"
                 item_local.action = "episodios"
                 item_local.season_colapse = season_colapse                      # Muestra las series agrupadas por temporadas?
-                item_local.context = filtertools.context(item_local, list_language, list_quality)
 
             #Limpiamos el título de la basura innecesaria
             if (item.extra == 'series' or item.extra == 'documentales') and item.extra2 == 'novedades': # Series, Docs desde Novedades
@@ -671,9 +671,11 @@ def listado(item):                                                              
             #Salvamos el título según el tipo de contenido
             if item_local.contentType == "movie":
                 item_local.contentTitle = title.strip().lower().title()
+                if not item_local.season_search: item_local.season_search = item_local.contentTitle
             else:
                 item_local.contentSerieName = title.strip().lower().title()
-                item_local.season_search = item_local.contentSerieName
+                item_local.context = filtertools.context(item_local, list_language, list_quality)
+                if not item_local.season_search: item_local.season_search = item_local.contentSerieName
 
             item_local.title = title.strip().lower().title()
                 
