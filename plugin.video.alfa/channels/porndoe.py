@@ -21,8 +21,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'porndoe', 
              'host': config.get_setting("current_host", 'porndoe', default=''), 
-             'host_alt': ["https://porndoe.com"], 
+             'host_alt': ["https://porndoe.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,15 +32,15 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host +"/videos"))
-    itemlist.append(Item(channel=item.channel, title="Exclusivos" , action="lista", url=host + "/category/74/premium-hd"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/videos?sort=views-down"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/videos?sort=likes-down"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "/videos?sort=duration-down"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/pornstars"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/channels?sort=ranking"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories?sort=name"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host +"videos"))
+    itemlist.append(Item(channel=item.channel, title="Exclusivos" , action="lista", url=host + "category/74/premium-hd"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "videos?sort=views-down"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "videos?sort=likes-down"))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "videos?sort=duration-down"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "channels?sort=ranking"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories?sort=name"))
+    # itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -56,48 +57,49 @@ def search(item, texto):
         return []
 
 
+def has_class_but_no_id(tag):
+    return not tag.has_attr('class_')
+    
 def categorias(item):
     logger.info()
     itemlist = []
-    data1 = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|amp;", "", data1)
+    soup = create_soup(item.url)
     if "channels" in item.url:
-        data = scrapertools.find_single_match(data, '<div class="channels-list">(.*?)</section>')
-        patron  = '<div>(.*?)</div>'
+        match1 = soup.find('div', class_='channels-list').find_all('div', class_='channels-item-thumb')
+        matches =[]
+        for elem in match1:
+            matches.append(elem.parent)
     else:
-        patron  = 'class="ctl-item">(.*?)</p>'
+        matches = soup.find_all('div', class_='ctl-item')
     if "pornstars" in item.url:
-        patron  = 'class="actors-list-item">(.*?)>Rank'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for match in matches:
+        matches = soup.find_all('div', class_='actors-list-item')
+    for elem in matches:
         cantidad = ""
-        scrapedurl = scrapertools.find_single_match(match,'href="([^"]+)"')
-        if "/pornstars-profile" in scrapedurl:
-            # thumbnail = scrapertools.find_single_match(match,';(https://p.cdn.porndoe.com/image/porn_star/.*?.jpg)')
-            cantidad = scrapertools.find_single_match(match,'<span class="-grow">([^<]+)<')
-            cantidad = "(%s)" % cantidad
+        if "categories" in item.url:
+            url = elem.find(href=re.compile(r"/category/"))['href']
+            cantidad = elem.find('span', class_='ctl-count')
         else:
-            scrapedurl = scrapertools.find_single_match(match,'ng-follow="([^"]+)"')
-            import base64
-            scrapedurl = base64.b64decode(scrapedurl).decode('utf-8')
-            scrapedurl = scrapedurl.replace("channel-profile", "channel-profile-videos")
-            scrapedurl += "?sort=date-down"
-        thumbnail = scrapertools.find_single_match(match,'data-src="([^"]+)"')
-        scrapedtitle = ""
-        scrapedtitle = scrapertools.find_single_match(match,'title="([^"]+)"')
-        if not scrapedtitle:
-            scrapedtitle = scrapertools.find_single_match(match,'class="item-title">([^<]+)<').strip()
-        if "/category/" in scrapedurl:
-            cantidad = scrapertools.find_single_match(match,'<span class="ctl-count">([^<]+)<')
-        title = "%s %s" % (scrapedtitle, cantidad)
-        scrapedurl = scrapedurl.replace("https://letsdoeit.com", "")
-        url = urlparse.urljoin(item.url,scrapedurl)
+            url = elem.a['href']
+            cantidad = elem.find('span', class_='-grow')
+        title = elem.a['title']
+        thumbnail  = elem.svg['data-src']
+        if cantidad:
+            cantidad = cantidad.text.strip()
+            title = "%s (%s)" % (title, cantidad)
+        url = url.replace("channel-profile", "channel-profile-videos")
+        if "categories" in item.url:
+            url += "?sort=release"
+        else:
+            url += "?sort=date-down"
+        url = url.replace("https://letsdoeit.com", "")
+        url = urlparse.urljoin(item.url,url)
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
-    next_page = scrapertools.find_single_match(data1, '<a class="pager-item pager-next"([^>]+)')
+    next_page = soup.find('a', class_='pager-next')
     if next_page:
-        next_page = scrapertools.find_single_match(next_page, 'href="([^"]+)"')
-        next_page = urlparse.urljoin(item.url,next_page)
+        next_page = next_page['href']
+        next_page = urlparse.urljoin(host,next_page)
+
         itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
@@ -105,9 +107,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -132,6 +134,7 @@ def lista(item):
         if "true" in vr: quality = "VR"
         if "true" in hd: quality = "HD"
         url = urlparse.urljoin(host,url)
+        thumbnail = urlparse.urljoin(host,thumbnail)
         title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality,title)
         action = "play"
         if logger.info() == False:

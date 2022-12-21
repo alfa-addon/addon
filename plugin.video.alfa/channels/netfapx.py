@@ -22,8 +22,9 @@ host = ''
 canonical = {
              'channel': 'netfapx', 
              'host': config.get_setting("current_host", 'netfapx', default=''), 
-             'host_alt': ["https://netfapx.com"], 
+             'host_alt': ["https://netfapx.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -33,31 +34,19 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?orderby=newest"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/?orderby=popular"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/?orderby="))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "/pornstar/?orderby=popular"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "?orderby=newest"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "?orderby=popular"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "?orderby="))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "pornstar/?orderby=popular"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
-
-
-def create_soup(url, referer=None, unescape=False):
-    logger.info()
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
-    else:
-        data = httptools.downloadpage(url).data
-    if unescape:
-        data = scrapertools.unescape(data)
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-    return soup
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/?s=%s" % (host, texto)
+    item.url = "%s?s=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -109,6 +98,18 @@ def categorias(item):
     return itemlist
 
 
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
+    else:
+        data = httptools.downloadpage(url, canonical=canonical).data
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    return soup
+
+
 def lista(item):
     logger.info()
     itemlist = []
@@ -138,9 +139,10 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     url = scrapertools.find_single_match(data, 'source: "([^"]+)"')
+    url += "|ignore_response_code=True"
     itemlist.append(Item(channel=item.channel, action="play", title = "Direto", url=url))
     return itemlist
 
@@ -148,8 +150,16 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    pornstars = scrapertools.find_single_match(data, '>Pornstars:</h2>(.*?)<h2')
+    pornstars = scrapertools.find_multiple_matches(pornstars, '>([^<]+)</a>')
+    pornstar = ' & '.join(pornstars)
+    pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+    lista = item.contentTitle.split()
+    lista.insert (2, pornstar)
+    item.contentTitle = ' '.join(lista)    
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     url = scrapertools.find_single_match(data, 'source: "([^"]+)"')
+    url += "|ignore_response_code=True"
     itemlist.append(Item(channel=item.channel, action="play", timeout=30, url=url, contentTitle=item.contentTitle))
     return itemlist

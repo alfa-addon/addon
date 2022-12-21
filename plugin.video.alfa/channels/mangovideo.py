@@ -18,10 +18,11 @@ from core import servertools
 from core import httptools
 
 canonical = {
-             'channel': 'luxuretv', 
-             'host': config.get_setting("current_host", 'luxuretv', default=''), 
-             'host_alt': ["https://mangovideo.pw"], 
+             'channel': 'mangovideo', 
+             'host': config.get_setting("current_host", 'mangovideo', default=''), 
+             'host_alt': ["https://mangovideo.pw/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,11 +32,11 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/latest-updates/?sort_by=post_date&from=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/most-popular/?sort_by=video_viewed_month&from=1"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/top-rated/?sort_by=rating_month&from=1"))
-    itemlist.append(Item(channel=item.channel, title="Sitios" , action="categorias", url=host + "/sites/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "latest-updates/?sort_by=post_date&from=1"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "most-popular/?sort_by=video_viewed_month&from=1"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "top-rated/?sort_by=rating_month&from=1"))
+    itemlist.append(Item(channel=item.channel, title="Sitios" , action="categorias", url=host + "sites/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -43,7 +44,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/%s/" % (host, texto)
+    item.url = "%ssearch/%s/" % (host, texto)
     try:
         return lista(item)
     except:
@@ -56,7 +57,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a class="item" href="([^"]+)" title="([^"]+)".*?'
     patron += '<div class="videos">(\d+) videos</div>'
@@ -78,7 +79,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="item\s+">.*?'
     patron += '<a href="([^"]+)" title="([^"]+)".*?'
@@ -106,7 +107,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
     url = ""
     url = scrapertools.find_single_match(data, 'src="(https://mangovideo.pw/embed/\d+)"')
@@ -120,7 +121,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
     url = ""
     url = scrapertools.find_single_match(data, 'src="(https://mangovideo.pw/embed/\d+)"')

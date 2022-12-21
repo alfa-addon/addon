@@ -23,8 +23,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'muchoporno', 
              'host': config.get_setting("current_host", 'muchoporno', default=''), 
-             'host_alt': ["https://www.pornburst.xxx","https://www.muchoporno.xxx"], 
+             'host_alt': ["https://www.pornburst.xxx/","https://www.muchoporno.xxx/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -34,9 +35,9 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(title="Nuevas" , action="lista", url=host))
-    itemlist.append(item.clone(title="Pornstars" , action="categorias", url=host + "/pornstars/"))
-    itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/sites/"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(item.clone(title="Pornstars" , action="categorias", url=host + "pornstars/"))
+    itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "sites/"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -44,7 +45,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/?q=%s" % (host, texto)
+    item.url = "%ssearch/?q=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -83,9 +84,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -98,10 +99,11 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='box-link-productora')
     for elem in matches:
+        logger.debug(elem)
         url = elem.a['href']
         title = elem.a['data-stats-video-name']
         thumbnail = elem.img['data-src']
-        time = elem.find('spam', class_='minutos')
+        time = elem.find('span', class_='minutos')
         if time:
             time = time.text.strip()
             title = "[COLOR yellow]%s[/COLOR] %s" % (time, title)

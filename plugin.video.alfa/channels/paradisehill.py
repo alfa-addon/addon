@@ -21,8 +21,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'paradisehill', 
              'host': config.get_setting("current_host", 'paradisehill', default=''), 
-             'host_alt': ["https://en.paradisehill.cc"], 
+             'host_alt': ["https://en.paradisehill.cc/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -32,12 +33,12 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/all/?sort=created_at"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/popular/?filter=month&sort=by_likes"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/actors/?sort=by_likes"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/studios/?sort=by_likes"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "all/?sort=created_at"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "popular/?filter=month&sort=by_likes"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "actors/?sort=by_likes"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "studios/?sort=by_likes"))
 
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/?sort=by_likes"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/?sort=by_likes"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -45,7 +46,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/?pattern=%s" % (host,texto)
+    item.url = "%ssearch/?pattern=%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -80,9 +81,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -116,6 +117,13 @@ def findvideos(item):
     itemlist = []
     num=1
     data = httptools.downloadpage(item.url).data
+    pornstars = scrapertools.find_multiple_matches(data, '"/actor/\d+/">([^<]+)</a>')
+    pornstar = ' & '.join(pornstars)
+    pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+    if len(pornstars) <= 2:
+        lista = item.contentTitle.split()
+        lista.insert (0, pornstar)
+        item.contentTitle = ' '.join(lista)
     patron = '{"src":"([^"]+)","type"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:
@@ -123,6 +131,6 @@ def findvideos(item):
         title = "[COLOR yellow] Parte %s[/COLOR]" %num
         num +=1
         contentTitle = item.contentTitle + title
-        itemlist.append(Item(channel=item.channel, action="play", title = title, contentTitle=contentTitle, url=url) )
+        itemlist.append(Item(channel=item.channel, action="play", title = title, contentTitle=contentTitle, url=url, plot=pornstar) )
     return itemlist
 

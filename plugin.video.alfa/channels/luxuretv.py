@@ -20,8 +20,9 @@ from core import httptools
 canonical = {
              'channel': 'luxuretv', 
              'host': config.get_setting("current_host", 'luxuretv', default=''), 
-             'host_alt': ["https://en.luxuretv.com"], 
+             'host_alt': ["https://en.luxuretv.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,11 +32,11 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/most-viewed/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/top-rated/"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "/longest/"))
-    itemlist.append(Item(channel=item.channel, title="Mas comentados" , action="lista", url=host + "/most-discussed/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/channels/"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "most-viewed/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "top-rated/"))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="lista", url=host + "longest/"))
+    itemlist.append(Item(channel=item.channel, title="Mas comentados" , action="lista", url=host + "most-discussed/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "channels/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -43,7 +44,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/searchgate/videos/%s/" % (host, texto)
+    item.url = "%ssearchgate/videos/%s/" % (host, texto)
     try:
         return lista(item)
     except:
@@ -56,7 +57,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="content.*?'
     patron += 'href="([^"]+)".*?'
@@ -74,7 +75,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="content">.*?'
     patron += 'href="([^"]+)" title="([^"]+)".*?'
@@ -102,20 +103,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<source src="([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for url in matches:
-        itemlist.append(Item(channel=item.channel, action="play", title ="Directo", url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<source src="([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for url in matches:
-        itemlist.append(Item(channel=item.channel, action="play", contentTitle = item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

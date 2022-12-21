@@ -22,8 +22,9 @@ import hashlib
 canonical = {
              'channel': 'nuvid', 
              'host': config.get_setting("current_host", 'nuvid', default=''), 
-             'host_alt': ["https://www.nuvid.com"], 
+             'host_alt': ["https://www.nuvid.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -33,10 +34,10 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, action="lista", title="Nuevos Vídeos", url="https://www.nuvid.com/search/videos/_empty_/"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Mejor Valorados", url="https://www.nuvid.com/search/videos/_empty_/", extra="rt"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Solo HD", url="https://www.nuvid.com/search/videos/hd", calidad="1"))
-    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=host))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Nuevos Vídeos", url=host + "search/videos/_empty_/"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Mejor Valorados", url=host + "search/videos/_empty_/", extra="rt"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Solo HD", url=host + "search/videos/hd", calidad="1"))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=host + "categories"))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search"))
     return itemlist
 
@@ -44,7 +45,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "%20")
-    item.url = "https://www.nuvid.com/search/videos/%s" %texto 
+    item.url = "%ssearch/videos/%s" %(host,texto)
     item.extra = "buscar"
     return lista(item)
 
@@ -52,7 +53,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage("https://www.nuvid.com/categories").data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     bloques = scrapertools.find_multiple_matches(data, '<h2 class="c-mt-output title2">.*?>([^<]+)</h2>(.*?)</div>')
     for cat, b in bloques:
         cat = cat.replace("Straight", "Hetero")
@@ -77,7 +78,7 @@ def lista(item):
     header = {'X-Requested-With': 'XMLHttpRequest'}
     if item.extra != "buscar":
         header['Cookie'] = 'area=EU; lang=en; search_filter_new=%s' % filter
-    data = httptools.downloadpage(item.url, headers=header, cookies=False).data
+    data = httptools.downloadpage(item.url, headers=header, cookies=False, canonical=canonical).data
     patron = '<div class="box-tumb related_vid.*?'
     patron += 'href="([^"]+)" title="([^"]+)".*?'
     patron += 'src="([^"]+)"(.*?)<i class="time">([^<]+)<'
@@ -105,9 +106,7 @@ def lista(item):
 def findvideos(item):
     logger.info(item)
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=url)) 
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
@@ -115,8 +114,6 @@ def findvideos(item):
 def play(item):
     logger.info(item)
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=url)) 
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

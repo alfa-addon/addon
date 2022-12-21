@@ -21,8 +21,9 @@ host = ''
 canonical = {
              'channel': 'motherless', 
              'host': config.get_setting("current_host", 'motherless', default=''), 
-             'host_alt': ["https://motherless.com"], 
+             'host_alt': ["https://motherless.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,10 +32,10 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host +"/videos/recent"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/videos/viewed"))
-    itemlist.append(Item(channel=item.channel, title="Mas popular" , action="lista", url=host + "/videos/popular"))
-    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="lista", url=host + "/videos/commented"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host +"videos/recent"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "videos/viewed"))
+    itemlist.append(Item(channel=item.channel, title="Mas popular" , action="lista", url=host + "videos/popular"))
+    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="lista", url=host + "videos/commented"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -43,7 +44,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/videos?term=%s&size=0&range=0&sort=date" % (host, texto)
+    item.url = "%ssearch/videos?term=%s&size=0&range=0&sort=date" % (host, texto)
     try:
         return lista(item)
     except:
@@ -56,7 +57,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     if PY3 and isinstance(data, bytes):
         data = data.decode('utf-8')
     data = scrapertools.find_single_match(data, '<div class="menu-categories-tab"(.*?)<div class="menu-categories-tab"')
@@ -76,7 +77,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     if PY3 and isinstance(data, bytes):
         data = data.decode('utf-8')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
@@ -89,6 +90,7 @@ def lista(item):
     for scrapedurl,time,scrapedthumbnail,scrapedtitle in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
         thumbnail = scrapedthumbnail
+        thumbnail += "|verifypeer=false"
         url = urlparse.urljoin(item.url,scrapedurl)
         plot = ""
         action = "play"
@@ -106,7 +108,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     if PY3 and isinstance(data, bytes):
         data = data.decode('utf-8')
     url = scrapertools.find_single_match(data, 'fileurl = \'([^,\']+)\'')
@@ -117,7 +119,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     if PY3 and isinstance(data, bytes):
         data = data.decode('utf-8')
     url = scrapertools.find_single_match(data, 'fileurl = \'([^,\']+)\'')
