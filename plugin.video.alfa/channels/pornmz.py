@@ -18,20 +18,27 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://pornmz.net'  
+canonical = {
+             'channel': 'pornmz', 
+             'host': config.get_setting("current_host", 'pornmz', default=''), 
+             'host_alt': ["https://pornmz.net/"], 
+             'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
      ############################# cloudflare ###################################
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/?filter=latest"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/?filter=most-viewed"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/?filter=popular"))
-    itemlist.append(item.clone(title="Mas metraje" , action="lista", url=host + "/?filter=longest"))
-    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/actors"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "?filter=latest"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "?filter=most-viewed"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "?filter=popular"))
+    itemlist.append(item.clone(title="Mas metraje" , action="lista", url=host + "?filter=longest"))
+    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "actors"))
     itemlist.append(item.clone(title="Canal" , action="canal", url=host))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "categories"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -39,7 +46,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/?s=%s" % (host,texto)
+    item.url = "%s?s=%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -53,7 +60,7 @@ def canal(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('nav', id='site-navigation')
-    matches = soup.find_all('a', href=re.compile(r"^https://pornmz.com/pmvideo/(?:s|c)/\w+"))
+    matches = soup.find_all('a', href=re.compile(r"^%spmvideo/(?:s|c)/\w+" %host))
     for elem in matches:
         url = elem['href']
         title = elem.text
@@ -89,9 +96,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -146,14 +153,15 @@ def findvideos(item):
     soup = create_soup(item.url).find('div', class_='responsive-player')
     url = soup.find('iframe')['src']
     url = urlparse.urljoin(item.url,url)
-    soup = create_soup(url)#.find('video', id='video')
+    soup = create_soup(url, referer=item.url)#.find('video', id='video')
     matches = soup.find_all('source')
     for elem in matches:
         url = elem['src']
         if elem.has_attr('title'):
             quality = elem['title']
         else:
-            quality =  "-"
+            quality =  "mp4"
+        url += "|Referer=%s" % item.url
         itemlist.append(item.clone(action="play", title=quality, url=url) )
     if not matches:
         url = soup.find('iframe')['src']
@@ -176,7 +184,8 @@ def play(item):
         if elem.has_attr('title'):
             quality = elem['title']
         else:
-            quality =  "-"
+            quality =  "mp4"
+        url += "|Referer=%s" % item.url
         itemlist.append(['%s' %quality, url])
     if not matches:
         url = soup.find('iframe')['src']

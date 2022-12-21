@@ -22,8 +22,9 @@ host = ''
 canonical = {
              'channel': 'pornodiamant', 
              'host': config.get_setting("current_host", 'pornodiamant', default=''), 
-             'host_alt': ["https://www.pornodiamant.com"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www.pornobereich.com/"], 
+             'host_black_list': ["https://www.pornodiamant.com/"], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -32,9 +33,9 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/filme/"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "/channels/"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "/pornostars/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "filme/"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "channels/"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "pornostars/"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -43,7 +44,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/suchen/?q=%s" % texto
+    item.url = "%ssuchen/?q=%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -56,7 +57,7 @@ def search(item, texto):
 def catalogo(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a itemprop="url" href="([^"]+)".*?'
     patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
@@ -78,7 +79,7 @@ def catalogo(item):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a href="([^"]+)" data-category-gtmname="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?'
@@ -100,7 +101,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a href="([^"]+)" data-video-id.*?'
     patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
@@ -127,27 +128,15 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<source src="([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for url in matches:
-        url = url.replace("&amp;", "&")
-        itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<source src="([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for url in matches:
-        url = url.replace("&amp;", "&")
-        itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 

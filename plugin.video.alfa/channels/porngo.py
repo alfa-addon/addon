@@ -21,8 +21,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'porngo', 
              'host': config.get_setting("current_host", 'porngo', default=''), 
-             'host_alt': ["https://www.porngo.com"], 
+             'host_alt': ["https://www.porngo.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,12 +32,12 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/latest-updates/"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/most-popular/month/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/top-rated/month/"))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="pornstar", url=host + "/models/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "latest-updates/"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "most-popular/month/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "top-rated/month/"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="pornstar", url=host + "models/"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host))
-    itemlist.append(Item(channel=item.channel, title="Categoria" , action="categoria", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Categoria" , action="categoria", url=host + "categories/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -44,7 +45,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/search/%s/" % (host, texto)
+    item.url = "%ssearch/%s/" % (host, texto)
     try:
         return lista(item)
     except:
@@ -136,9 +137,9 @@ def pornstar(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -186,32 +187,15 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('video')
-    matches = soup.find_all('source')
-    for elem in matches:
-        url = elem['src']
-        if elem['label']:
-            quality = elem['label']
-        else:  # Si unica resolucion
-            quality= scrapertools.find_single_match(url, '.*?_(\d+)m.mp4/')
-            quality += "p"
-        itemlist.append(Item(channel=item.channel, action="play", title= quality, quality= quality, url=url))
-        # itemlist.append(['%s' % quality, url])
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist[::-1]
 
 
 def play(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('video')
-    matches = soup.find_all('source')
-    for elem in matches:
-        url = elem['src']
-        if elem['label']:
-            quality = elem['label']
-        else:  # Si unica resolucion
-            quality= scrapertools.find_single_match(url, '.*?_(\d+)m.mp4/')
-            quality += "p"
-        itemlist.append(['%s' % quality, url])
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist[::-1]
 

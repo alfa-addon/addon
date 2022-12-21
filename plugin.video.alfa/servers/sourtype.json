@@ -24,7 +24,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)drpornofilme.com/filme/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)(?:drpornofilme|pornobereich|pornodiamant).com/film(?:e|)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
