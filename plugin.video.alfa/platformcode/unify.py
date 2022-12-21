@@ -240,7 +240,7 @@ def add_languages(title, languages):
     return title
 
 
-def add_info_plot(plot, languages, quality, vextend, contentTitle, infoLabels):
+def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, infoLabels):
     #logger.info()
     last = '[/I][/B]\n'
     c_content = ''
@@ -267,7 +267,9 @@ def add_info_plot(plot, languages, quality, vextend, contentTitle, infoLabels):
             c_part = '[COLOR blue][B][I]Peli:[/COLOR] '
         else:
             c_part = '[COLOR blue][B][I]Serie:[/COLOR] '
-        c_content = '%s%s%s' % (c_part, contentTitle, last)
+        c_content = '%s%s%s' % (c_part, contentTitle, last if not plot_extend else '')
+    if plot_extend:
+        c_content += '%s[B][I]%s%s' % ('' if not c_content else ' ', plot_extend, last)
 
     if vextend:
         v_part = '[COLOR aquamarine][B][I]Tipo:[/COLOR] '
@@ -444,7 +446,8 @@ def title_format(item, c_file=colors_file, srv_lst={}):
         if videolibrary:
             title += ' [%s]' % item.contentChannel
         if info["mediatype"] == 'episode':
-            contentTitle = "%sx%s - %s" % (info["season"], info["episode"], info["tvshowtitle"])
+            info = episode_title(info["episodio_titulo"], info)
+            contentTitle = "%sx%s - %s, %s" % (info["season"], info["episode"], info["episodio_titulo"], info["tvshowtitle"])
         elif info["mediatype"] == 'movie':
             contentTitle = "%s %s%s" % (info["title"], set_color(info["year"], "year"), format_rating(info["rating"]))
 
@@ -467,6 +470,7 @@ def title_format(item, c_file=colors_file, srv_lst={}):
         season = info["season"]
         episode = info["episode"]
         sufix = scrapertools.find_single_match(item.title, '(-\s*\([^-]+-(?:\s*\[TERM\])?)')
+        info = episode_title(info["episodio_titulo"], info)
         epi_name = info["episodio_titulo"] if info["episodio_titulo"] else (info["title"] if info["title"] else "Episodio %s" % episode)
         if sufix: epi_name += sufix
         contentTitle = info["tvshowtitle"]
@@ -502,9 +506,13 @@ def title_format(item, c_file=colors_file, srv_lst={}):
             new_title.append(format_rating(info["rating"]))
         title = " ".join(new_title)
         item.title = title
-    item.plot = add_info_plot(item.plot, simple_language, item.quality, vextend, contentTitle, item.infoLabels)
+    
+    plot_extend = item.plot_extend
+    if item.plot_extend and (item.contentType in ["movie", "tvshow"] and item.action not in ['play']): plot_extend = ''
+    item.plot = add_info_plot(item.plot, simple_language, item.quality, vextend, plot_extend, contentTitle, item.infoLabels)
 
     item = add_extra_info(item, checks)
+
     return item
 
 
@@ -729,7 +737,25 @@ def add_extra_info(item, checks):
             color_check = "limegreen"
 
         item.title = "[COLOR %s][B][%s][/B][/COLOR] %s" % (color_check, check, item.title)
+    
+    if item.plot_extend and item.contentType in ["movie", "tvshow"] and item.action not in ['play']:
+        item.title += ' %s' % item.plot_extend
+    if 'plot_extend' in item: del item.plot_extend
 
     return item
 
 
+def episode_title(title, infoLabels):
+
+    PATTERN_EPISODE_TITLE = '(?i)(?:episod(?:e|io)|cap.tulo)\s*\d+'
+
+    if infoLabels and (infoLabels["title_from_channel"] or infoLabels["title_alt"]):
+        if not title or scrapertools.find_single_match(title, PATTERN_EPISODE_TITLE):
+            title = re.sub(PATTERN_EPISODE_TITLE, '', title)
+            title = re.sub(infoLabels['tvshowtitle'], '', title)
+            title = re.sub('%sx%s' % (infoLabels['season'], infoLabels['episode']), '', title)
+            title = title.strip()
+            if not title:
+                infoLabels["episodio_titulo"] = infoLabels["title_from_channel"] or infoLabels["title_alt"].title()
+
+    return infoLabels

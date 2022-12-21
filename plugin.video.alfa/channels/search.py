@@ -23,8 +23,12 @@ import gc
 gc.disable()
 
 import xbmcaddon
-addon = xbmcaddon.Addon('metadata.themoviedb.org')
-def_lang = addon.getSetting('language')
+addon = None
+try:
+    addon = xbmcaddon.Addon('metadata.themoviedb.org')
+except:
+    addon = xbmcaddon.Addon('metadata.themoviedb.org.python')
+def_lang = addon.getSetting('language') if addon else 'es'
 
 all_channels = []
 channel_parameters_list = {}

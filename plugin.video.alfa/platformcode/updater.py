@@ -60,14 +60,12 @@ def check_addon_init():
         else:  # Lanzamos solo una actualización y salimos
 
             check_addon_updates(verbose)    # Lanza la actualización
-            check_date_real()               # Obtiene la fecha real de un sistema externo
-            
+
             return
 
         while not monitor.abortRequested(): # Loop infinito hasta cancelar Kodi
            
             check_addon_updates(verbose)    # Lanza la actualización
-            check_date_real()               # Obtiene la fecha real de un sistema externo
 
             if monitor.waitForAbort(timer): # Espera el tiempo programado o hasta que cancele Kodi
                 break  # Cancelación de Kodi, salimos
@@ -117,6 +115,7 @@ def check_addon_updates(verbose=False):
 
     ADDON_UPDATES_JSON = 'https://extra.alfa-addon.com/addon_updates/updates.json'
     ADDON_UPDATES_ZIP = 'https://extra.alfa-addon.com/addon_updates/updates.zip'
+    check_date_real()               # Obtiene la fecha real de un sistema externo
 
     try:
         get_ua_list()
@@ -308,6 +307,9 @@ def check_update_to_others(verbose=False, app=True):
             copytree(in_folder, out_folder)
             if os.path.exists(os.path.join(out_folder, ALFA_DEPENDENCIES)):
                 os.remove(os.path.join(out_folder, ALFA_DEPENDENCIES))
+
+        from platformcode.custom_code import set_season_holidays
+        set_season_holidays()
 
     except:
         logger.error('Error al actualizar OTROS paquetes: %s' % folder)
@@ -543,8 +545,9 @@ def show_update_info(new_fix_json):
 
 
 def check_date_real():
-    pages = ['http://worldtimeapi.org/api/ip', 'https://timeapi.io/api/Time/current/zone?timeZone=Europe/Madrid']
-    kwargs = {'timeout': 5, 'alfa_s': True, 'ignore_response_code': True}
+    pages = ['https://worldtimeapi.org/api/ip', 'https://timeapi.io/api/Time/current/zone?timeZone=Europe/Madrid']
+    kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
+              'alfa_s': True, 'timeout': 5, 'cf_assistant': False}
     
     for page in pages:
         try:
@@ -560,4 +563,8 @@ def check_date_real():
         except:
             logger.error('ERROR al obtener la Fecha REAL: %s' % page)
     else:
-        logger.error('ERROR al obtener la Fecha REAL: %s' % pages)
+        import datetime
+        dia_hoy = datetime.date.today()
+        fecha = "%s-%s-%s" % (dia_hoy.year, dia_hoy.month, dia_hoy.day)
+        config.set_setting('date_real', fecha)
+        logger.error('ERROR al obtener la Fecha REAL en: %s; Fecha del SISTEMA: %s' % (pages, fecha))

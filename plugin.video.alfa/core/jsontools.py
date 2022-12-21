@@ -128,6 +128,7 @@ def get_node_from_file(name_file, node, path=None, display=True, debug=False):
         function = inspect.currentframe().f_back.f_back.f_code.co_name
         module = ' [%s.%s]' % (module, function)
 
+    alfa_cached_data = {}
     dict_node = {}
     dict_data = {}
 
@@ -148,7 +149,8 @@ def get_node_from_file(name_file, node, path=None, display=True, debug=False):
     fname = filetools.join(path, name_file)
 
     if contentType and alfa_caching:
-        dict_data = json.loads(window.getProperty(contentType)).get(chanver, {}).copy()
+        alfa_cached_data = json.loads(window.getProperty(contentType))
+        dict_data = alfa_cached_data.get(chanver, {}).copy()
         if debug: logger.error('READ Cache JSON: %s%s: %s:' % (chanver.upper(), module, dict_data))
     if not dict_data:
         data = filetools.read(fname)
@@ -159,7 +161,6 @@ def get_node_from_file(name_file, node, path=None, display=True, debug=False):
         check_to_backup(data, fname, dict_data, display=display)
     
         if contentType and alfa_caching:
-            alfa_cached_data = {}
             alfa_cached_data.update({chanver: dict_data.copy()})
             if debug: logger.error('SAVE Cache JSON: %s%s: %s:' % (chanver.upper(), module, alfa_cached_data[chanver]))
             window.setProperty(contentType, json.dumps(alfa_cached_data))
@@ -167,7 +168,7 @@ def get_node_from_file(name_file, node, path=None, display=True, debug=False):
     if node in dict_data:
         dict_node = dict_data[node]
 
-    #logger.debug("dict_node: %s" % dict_node)
+    if debug: logger.error("dict_node: %s" % dict_node)
 
     return dict_node
 
@@ -245,6 +246,7 @@ def update_node(dict_node, name_file, node, path=None, display=True, debug=False
         function = inspect.currentframe().f_back.f_back.f_code.co_name
         module = ' [%s.%s]' % (module, function)
 
+    alfa_cached_data = {}
     dict_data = {}
     json_data = {}
     result = False
@@ -267,7 +269,8 @@ def update_node(dict_node, name_file, node, path=None, display=True, debug=False
 
     try:
         if contentType and alfa_caching:
-            dict_data = json.loads(window.getProperty(contentType)).get(chanver, {}).copy()
+            alfa_cached_data = json.loads(window.getProperty(contentType))
+            dict_data = alfa_cached_data.get(chanver, {}).copy()
             if debug: logger.error('READ Cache JSON: %s%s: %s:' % (chanver.upper(), module, dict_data))
         if not dict_data:
             data = filetools.read(fname)
@@ -290,7 +293,6 @@ def update_node(dict_node, name_file, node, path=None, display=True, debug=False
         json_data = dump(dict_data)
         result = filetools.write(fname, json_data)
         if result and contentType and alfa_caching:
-            alfa_cached_data = json.loads(window.getProperty(contentType))
             alfa_cached_data.update({chanver: dict_data.copy()})
             if debug: logger.error('WRITE File and SAVE Cache JSON: %s%s: %s:' % (chanver.upper(), module, alfa_cached_data[chanver]))
             window.setProperty(contentType, json.dumps(alfa_cached_data))

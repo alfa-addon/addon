@@ -86,7 +86,7 @@ def sub_menu(item):
 
     if item.title == "Peliculas":
         itemlist.append(Item(channel=item.channel, title='Ultimas', url=host + 'peliculas/estrenos', action='list_all',
-                             thumbnail=get_thumb('all', auto=True)))
+                             thumbnail=get_thumb('last', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title='Todas', url=host + mode, action='list_all',
                          thumbnail=get_thumb('all', auto=True)))
@@ -248,6 +248,7 @@ def episodesxseasons(item):
         except:
             infoLabels["season"] = 1
         infoLabels["meadiatype"] = 'episode'
+        infoLabels = scrapertools.episode_title(info["name"], infoLabels)
 
         itemlist.append(Item(channel=item.channel, title=title, json_data=json_data, action='findvideos',
                              infoLabels=infoLabels, hash=item.hash))

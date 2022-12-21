@@ -34,12 +34,14 @@ from channelselector import get_thumb
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             'host_alt': ['https://hdfull.digital/'], 
-             'host_black_list': ['https://hdfull.work/', 
+             'host_alt': ['https://hdfull.life/'], 
+             'host_verification': '%slogin', 
+             'host_black_list': ['https://hdfull.digital/', 'https://hdfull.work/', 
                                  'https://hdfull.video/', 'https://hdfull.cloud/', 'https://hdfull.wtf/', 
                                  'https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
                                  'https://new.hdfull.one/', 'https://hdfull.top/', 'https://hdfull.bz/'],
-             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 'expires': 365*24*60*60,
+             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 'expires': 365*24*60*60, 
+             'forced_proxy_ifnot_assistant': 'ProxyCF', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -308,7 +310,7 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
                  proxy_retries=1, force_check=False, force_login=True, alfa_s=False, hide_infobox=False, 
                  timeout=10, cf_no_blacklist=False, retries_cloudflare=canonical['retries_cloudflare']):
     global account, sid, user_status
-    forced_proxy_retry = 'ProxyWeb:hide.me'
+    forced_proxy_retry = canonical.get('forced_proxy_ifnot_assistant', '') or 'ProxyCF'
 
     if host_save != host: url = url.replace(host_save, host)
     
@@ -471,7 +473,7 @@ def menupeliculas(item):
     
     if account:
         itemlist.append(Item(channel=item.channel, action="items_usuario",
-                             title="[COLOR dodgerblue][B]Vistas[/B][/COLOR]",
+                             title="[COLOR orange][B]Vistas[/B][/COLOR]",
                              url=urlparse.urljoin(host, "a/my?target=movies&action=seen&start=-28&limit=28"),
                              thumbnail=item.thumbnail))
 
@@ -536,17 +538,17 @@ def menuseries(item):
 
     if account:
         itemlist.append(Item(channel=item.channel, action="items_usuario",
-                             title="[COLOR dodgerblue]Siguiendo[/COLOR]",
+                             title="[COLOR orange]Siguiendo[/COLOR]",
                              url=urlparse.urljoin(host, "a/my?target=shows&action=following&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
 
         itemlist.append(Item(channel=item.channel, action="items_usuario",
-                             title="[COLOR dodgerblue]Para Ver[/COLOR]",
+                             title="[COLOR orange]Para Ver[/COLOR]",
                              url=urlparse.urljoin(host, "a/my?target=shows&action=watch&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
 
         itemlist.append(Item(channel=item.channel, action="items_usuario",
-                             title="[COLOR orange]Favoritas[/COLOR]",
+                             title="[COLOR dodgerblue]Favoritas[/COLOR]",
                              url=urlparse.urljoin(host, "a/my?target=shows&action=favorite&start=-28&limit=28"), text_bold=True,
                              thumbnail=item.thumbnail))
 
@@ -627,7 +629,11 @@ def items_usuario(item):
     ## Carga las fichas de usuario
     fichas_usuario = agrupa_datos(url, post=post, json=True)
     if host_save != host: next_page = next_page.replace(host_save, host)
+    
     for ficha in fichas_usuario:
+        plot_extend = ''
+        title= ''
+        infoLabels = item.infoLabels
         try:
             if ficha.get('title', {}) and isinstance(ficha.get('title', {}), dict):
                 title = ficha.get('title', {}).get('es', '').strip() or ficha.get('title', {}).get('en', '').strip()
@@ -652,7 +658,6 @@ def items_usuario(item):
             action = "seasons"
             contentType = 'tvshow'
             str_ = get_status(status, 'shows', ficha['id'])
-            infoLabels = item.infoLabels
             if "show_title" in ficha:
                 action = "findvideos"
                 contentType = 'episode'
@@ -671,25 +676,42 @@ def items_usuario(item):
                         'iso-8859-1')
                 url = urlparse.urljoin(host, 'serie/' + ficha[
                     'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + ficha['id'] + ";3"
-                if str_ != "": title += str_
+                if str_ != "": 
+                    title += str_
+                    plot_extend = str_
+                else:
+                    plot_extend = '[COLOR orange](Siguiendo)[/COLOR]'
                 try:
                     infoLabels.update({'season': int(temporada), 'episode': int(episodio), 'playcount': 1 if 'Visto' in str_ else 0})
                 except:
                     infoLabels.update({'season': 1, 'episode': 1, 'playcount': 1 if 'Visto' in str_ else 0})
+                infoLabels = scrapertools.episode_title(title, infoLabels)
+                infoLabels['tvshowtitle'] = show
+            
+            else:
+                if str_ != "": 
+                    title += str_
+                    plot_extend = str_
             
             itemlist.append(
-                    Item(channel=item.channel, action=action, title=title,
-                        url=url, thumbnail=thumbnail, contentType=contentType, 
-                        infoLabels=infoLabels, 
+                    Item(channel=item.channel, action=action, title=title, plot_extend=plot_extend, 
+                        url=url, thumbnail=thumbnail, contentType=contentType, infoLabels=infoLabels, 
                         contentSerieName=show, text_bold=True))
         except:
+            infoLabels.update({'year': '-'})
             url = urlparse.urljoin(host, 'pelicula/' + ficha.get('perma', '')) + "###" + ficha.get('id', 0) + ";2"
             str_ = get_status(status, 'movies', ficha.get('id', 0))
-            if str_ != "": title += str_
+            if str_ != "": 
+                title += str_
+                plot_extend = str_
+                plot_extend = plot_extend.replace('[COLOR blue](Visto)[/COLOR]', '')
+                infoLabels['playcount'] = 1 if 'Visto' in str_ else 0
+            
             itemlist.append(
-                Item(channel=item.channel, action="findvideos", title=title, 
+                Item(channel=item.channel, action="findvideos", title=title, plot_extend=plot_extend, 
                      contentTitle=show, url=url, thumbnail=thumbnail, contentType=contentType, 
-                     text_bold=True, infoLabels={'year': '-'}))
+                     text_bold=True, infoLabels=infoLabels))
+    
     if len(itemlist) >= int(limit):
         itemlist.append(
             Item(channel=item.channel, action="items_usuario", title=">> Página siguiente", url=next_page, text_bold=True))
@@ -719,8 +741,7 @@ def fichas(item):
     itemlist = []
     or_matches = ""
     textoidiomas=''
-    infoLabels=dict()
-    
+
     ## Carga estados
     status = check_user_status()
     
@@ -733,7 +754,7 @@ def fichas(item):
         if len(s_p) == 1:
             data = s_p[0]
             if 'Lo sentimos</h3>' in s_p[0]:
-                return [Item(channel=item.channel, title="[COLOR gold][B]HDFull:[/B][/COLOR] [COLOR steelblue]" + item.texto.replace('%20',
+                return [Item(channel=item.channel, title="[COLOR gold]HDFull:[/COLOR] [COLOR aqua]" + item.texto.replace('%20',
                                                                                        ' ') + "[/COLOR] sin resultados")]
         else:
             data = s_p[0] + s_p[1]
@@ -763,6 +784,8 @@ def fichas(item):
     
     for scrapedurl, scrapedthumbnail, scrapedlangs, scrapedrating, scrapedtitle, scrapedid in matches:
 
+        infoLabels = dict()
+        plot_extend = ''
         thumbnail = scrapedthumbnail.replace('tthumb/130x190', 'thumbs')
         thumbnail += '|User-Agent=%s' % httptools.get_user_agent()
         language = ''
@@ -799,8 +822,12 @@ def fichas(item):
         # items usuario en titulo (visto, pendiente, etc)
         if account:
             str_ = get_status(status, type, scrapedid)
-            if str_ != "": title += str_
-        
+            if str_ != "": 
+                title += str_
+                plot_extend = str_
+                plot_extend = plot_extend.replace('[COLOR blue](Visto)[/COLOR]', '')
+                infoLabels['playcount'] = 1 if 'Visto' in str_ else 0
+
         # Muesta tipo contenido tras busqueda
         if item.title == "Buscar...":
             bus = host[-4:]
@@ -814,13 +841,13 @@ def fichas(item):
 
         if "/serie" in url or "/tags-tv" in url:
             itemlist.append(
-                Item(channel=item.channel, action=action, title=title, url=url,
+                Item(channel=item.channel, action=action, title=title, url=url, plot_extend=plot_extend, 
                      contentSerieName=show, text_bold=True, contentType=contentType,
                      language=language, infoLabels=infoLabels, thumbnail=thumbnail,
                      context=filtertools.context(item, list_language, list_quality)))
         else:
             itemlist.append(
-                Item(channel=item.channel, action=action, title=title, url=url,
+                Item(channel=item.channel, action=action, title=title, url=url, plot_extend=plot_extend, 
                      text_bold=True, contentTitle=show, contentType=contentType, 
                      language=language, infoLabels=infoLabels, thumbnail=thumbnail))
     
@@ -871,7 +898,8 @@ def seasons(item):
         #TODO desenredar todo el lio este
         if str_ != "" and item.category != "Series" and "XBMC" not in item.title:
             platformtools.itemlist_refresh()
-            title = str_.replace('steelblue', 'darkgrey').replace('Siguiendo', 'Abandonar')
+            title = str_.replace('steelblue', 'darkgrey').replace('[COLOR orange](Siguiendo)[/COLOR]', '[COLOR blue](Abandonar)[/COLOR]').replace('Siguiendo', 'Abandonar')
+
             itemlist.append(Item(channel=item.channel, action="set_status__", title=title, url=url_targets,
                                  thumbnail=item.thumbnail, contentSerieName=item.contentSerieName, 
                                  infoLabels=infoLabels, folder=True))
@@ -891,15 +919,17 @@ def seasons(item):
     matches = find_hidden_seasons(item, matches, sid)
 
     for ssid, scrapedtitle, scrapedthumbnail in matches:
+        plot_extend = ''
         if ssid == '0':
             scrapedtitle = "Especiales"
         thumbnail = scrapedthumbnail.replace('tthumb/130x190', 'thumbs')
         thumbnail += '|User-Agent=%s' % httptools.get_user_agent()
         infoLabels['mediatype'] = 'season'
+        if str_: plot_extend = str_
         
         itemlist.append(
                 Item(channel=item.channel, action="episodesxseason", title=scrapedtitle,
-                     url=item.url, thumbnail=thumbnail, sid=sid, text_bold=True,
+                     url=item.url, thumbnail=thumbnail, sid=sid, text_bold=True, plot_extend=plot_extend, 
                      contentSerieName=item.contentSerieName, contentSeason=ssid, 
                      infoLabels=infoLabels, contentType='season'))
 
@@ -936,10 +966,8 @@ def episodesxseason(item):
     
     itemlist = []
     url = urlparse.urljoin(host, "a/episodes")
-    infoLabels = item.infoLabels
     sid = item.sid
     ssid = item.contentSeason
-    title = ''
 
     #si hay cuenta
     status = check_user_status()
@@ -950,6 +978,9 @@ def episodesxseason(item):
     
     for episode in episodes:
 
+        title = ''
+        plot_extend = ''
+        infoLabels = item.infoLabels.copy()
         language = episode.get('languages', '')
         temporada = episode.get('season', '1')
         episodio = episode.get('episode', '0')
@@ -967,7 +998,7 @@ def episodesxseason(item):
         except:
             infoLabels['season'] = 1
             infoLabels['episode'] = 1
-        
+
         if len(episodio) == 1: episodio = '0' + episodio
         
         #Idiomas
@@ -980,9 +1011,8 @@ def episodesxseason(item):
             idiomas = ""
         
         if episode.get('title', {}) and isinstance(episode.get('title', {}), dict):
-            
             title = episode['title'].get('es', '') or episode['title'].get('en', '')
-
+        infoLabels = scrapertools.episode_title(title, infoLabels)
         if not title: title = "Episodio " + episodio
         
         serie = item.contentSerieName
@@ -990,12 +1020,14 @@ def episodesxseason(item):
         title = '%sx%s: [COLOR greenyellow]%s[/COLOR] %s' % (temporada, episodio, title.strip(), idiomas)
         if account:
             str_ = get_status(status, 'episodes', episode['id'])
-            if str_ != "": title += str_
+            if str_ != "":
+                title += str_
+            infoLabels.update({'playcount': 1 if 'Visto' in str_ else 0})
         
         url = urlparse.urljoin(host, 'serie/' + episode[
             'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + episode['id'] + ";3"
         
-        itemlist.append(item.clone(action="findvideos", title=title, url=url,
+        itemlist.append(item.clone(action="findvideos", title=title, url=url, plot_extend=item.plot_extend, 
                              contentType="episode", language=langs, text_bold=True,
                              infoLabels=infoLabels, thumbnail=thumbnail))
 
@@ -1024,6 +1056,8 @@ def novedades_episodios(item):
     if host_save != host: next_page = next_page.replace(host_save, host)
 
     for episode in episodes:
+        
+        title_from_channel = ''
         # Fix para thumbs
         thumb = episode['show'].get('thumbnail', '')
         if not thumb:
@@ -1058,6 +1092,7 @@ def novedades_episodios(item):
                     title = episode['title']['en'].strip()
                 except:
                     title = ''
+        title_from_channel = title
         if len(title) == 0: title = "Episodio " + episodio
         
         title = '%s %sx%s: [COLOR greenyellow]%s[/COLOR] %s' % (contentSerieName,
@@ -1077,9 +1112,12 @@ def novedades_episodios(item):
             temporada = 1
             episodio = 1
         
+        infoLabels={'season': temporada, 'episode': episodio, 'playcount': 1 if 'Visto' in str_ else 0}
+        infoLabels = scrapertools.episode_title(title_from_channel, infoLabels)
+        
         itemlist.append(
             Item(channel=item.channel, action="findvideos", title=title, 
-                 infoLabels={'season': temporada, 'episode': episodio, 'playcount': 1 if 'Visto' in str_ else 0}, 
+                 infoLabels=infoLabels, 
                  contentSerieName=contentSerieName, url=url, thumbnail=thumbnail, 
                  contentType="episode", language=langs, text_bold=True,
                  ))
@@ -1127,11 +1165,13 @@ def findvideos(item):
     itemlist = []
     it1 = []
     it2 = []
+    str_ = ''
+    title = ''
     
     if not account or not sid or not user_status: login()
 
     ## Carga estados
-    status = check_user_status()
+    status = check_user_status(reset=True)
     
     url_targets = item.url
 
@@ -1146,17 +1186,20 @@ def findvideos(item):
 
     if type == "2" and status and item.category != "Cine":
         str_ = get_status(status, "movies", id)
-
+        title = " [COLOR orange][B]( Agregar a Favoritos )[/B][/COLOR]"
+    elif type == "3" and status and item.category != "Series" and "XBMC" not in item.title:
+        str_ = get_status(status, "episodes", id)
+    if str_ or title:
         if "Favorito" in str_:
             title = " [COLOR darkgrey][B]( Quitar de Favoritos )[/B][/COLOR]"
         elif "Visto" in str_:
             title = str_
-        else:
-            title = " [COLOR orange][B]( Agregar a Favoritos )[/B][/COLOR]"
 
         it1.append(Item(channel=item.channel, action="set_status__", title=title, url=url_targets,
-                        thumbnail=item.thumbnail, contentTitle=item.contentTitle, contentType='episode', 
-                        language=item.language, folder=True))
+                        infoLabels=item.infoLabels, language=item.language, folder=True, unify=False))
+
+        if not 'playcount' in item.infoLabels: item.infoLabels['playcount'] = 1 if 'Visto' in str_ else 0
+        item.plot_extend = item.plot_extend.replace('[COLOR blue](Visto)[/COLOR]', '')
     
     if not js_data or not data_js:
         window.setProperty("hdfull_js_data", '')
@@ -1186,12 +1229,14 @@ def findvideos(item):
     try:
         data_decrypt = jsontools.load(alfaresolver.obfs(data, js_data))
     except:
+        logger.error(traceback.format_exc())
         return []
     
     infolabels = item.infoLabels
     year = scrapertools.find_single_match(data, '<span>Año:\s*</span>.*?(\d{4})')
     infolabels["year"] = year
     matches = []
+    
     for match in data_decrypt:
         if match['provider'] in provs:
             try:
@@ -1225,7 +1270,7 @@ def findvideos(item):
         it2.append(
             Item(channel=item.channel, action="play", title=title, url=url,
                  plot=plot, fanart=fanart, contentSerieName=item.contentSerieName, 
-                 infoLabels=item.infoLabels, language=idioma,
+                 infoLabels=item.infoLabels, language=idioma, plot_extend=item.plot_extend, 
                  contentType=item.contentType, tipo=option, tipo1=option1,
                  quality=calidad))
 
@@ -1363,7 +1408,11 @@ def get_status(status, type, id):
     try:
         if id in status['status'][type]:
             str2 = state[status['status'][type][id]]
-            if str2: str2 = "[COLOR blue](" + state[status['status'][type][id]] + ")[/COLOR]"
+            if str2: 
+                if 'Siguiendo' in str2:
+                    str2 = "[COLOR orange](" + state[status['status'][type][id]] + ")[/COLOR]"
+                else:
+                    str2 = "[COLOR blue](" + state[status['status'][type][id]] + ")[/COLOR]"
     except:
         str2 = ""
     

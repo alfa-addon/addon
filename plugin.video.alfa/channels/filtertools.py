@@ -14,12 +14,13 @@ from core import channeltools
 TAG_TVSHOW_FILTER = "TVSHOW_FILTER"
 TAG_NAME = "name"
 TAG_ACTIVE = "active"
+TAG_TITLE = "season_search"
 TAG_LANGUAGE = "language"
 TAG_QUALITY_ALLOWED = "quality_allowed"
 
-COLOR = {"parent_item": "yellow", "error": "red", "striped_even_active": "blue",
-         "striped_even_inactive": "0xff00bfff", "striped_odd_active": "0xff008000",
-         "striped_odd_inactive": "0xff00fa9a", "selected": "blue"
+COLOR = {"parent_item": "yellow", "error": "red", "selected": "blue", 
+         "striped_even_active": "blue", "striped_even_inactive": "limegreen", 
+         "striped_odd_active": "aqua", "striped_odd_inactive": "yellowgreen"
          }
 
 filter_global = None
@@ -32,13 +33,14 @@ __channel__ = "filtertools"
 
 class ResultFilter(object):
     def __init__(self, dict_filter):
-        self.active = dict_filter[TAG_ACTIVE]
-        self.language = dict_filter[TAG_LANGUAGE]
-        self.quality_allowed = dict_filter[TAG_QUALITY_ALLOWED]
+        self.active = dict_filter.get(TAG_ACTIVE, False)
+        self.title = dict_filter.get(TAG_TITLE, '')
+        self.language = dict_filter.get(TAG_LANGUAGE, '')
+        self.quality_allowed = dict_filter.get(TAG_QUALITY_ALLOWED, [])
 
     def __str__(self):
-        return "{active: '%s', language: '%s', quality_allowed: '%s'}" % \
-               (self.active, self.language, self.quality_allowed)
+        return "{active: '%s', title: '%s', language: '%s', quality_allowed: '%s'}" % \
+               (self.active, self.title, self.language, self.quality_allowed)
 
 
 class Filter(object):
@@ -50,14 +52,18 @@ class Filter(object):
 
         dict_filtered_shows = jsontools.get_node_from_file(item.channel, TAG_TVSHOW_FILTER)
         tvshow = normalize(item.show)
+        if tvshow not in list(dict_filtered_shows.keys()) and '*' in list(dict_filtered_shows.keys()) \
+                  and item.action not in ['buscartrailer', 'add_serie_to_library', 'add_pelicula_to_library']:
+            tvshow = '*'
 
         global_filter_language = config.get_setting(global_filter_lang_id, item.channel)
 
         if tvshow in list(dict_filtered_shows.keys()):
 
-            self.result = ResultFilter({TAG_ACTIVE: dict_filtered_shows[tvshow][TAG_ACTIVE],
-                                        TAG_LANGUAGE: dict_filtered_shows[tvshow][TAG_LANGUAGE],
-                                        TAG_QUALITY_ALLOWED: dict_filtered_shows[tvshow][TAG_QUALITY_ALLOWED]})
+            self.result = ResultFilter({TAG_ACTIVE: dict_filtered_shows[tvshow].get(TAG_ACTIVE, False),
+                                        TAG_TITLE: dict_filtered_shows[tvshow].get(TAG_TITLE, ''),
+                                        TAG_LANGUAGE: dict_filtered_shows[tvshow].get(TAG_LANGUAGE, ''),
+                                        TAG_QUALITY_ALLOWED: dict_filtered_shows[tvshow].get(TAG_QUALITY_ALLOWED, [])})
 
         # opcion general "no filtrar"
         elif global_filter_language != 0:
@@ -82,9 +88,12 @@ class Filter(object):
 
 
 def normalize(title):
-    from core.scrapertools import slugify
 
-    title = slugify(title, strict=False).strip()
+    if title:
+        from core.scrapertools import slugify
+        title = slugify(title, strict=False).strip()
+    else:
+        title = ''
     
     return title
 
@@ -158,6 +167,9 @@ def context(item, list_language=None, list_quality=None, exist=False):
                 elif exist:
                     _context.append({"title": "FILTRO: Borrar '%s'" % language, "action": "delete_from_context",
                                      "channel": "filtertools", "from_channel": item.channel})
+        
+        # Añadimos item.season_search si exist en el diccionario
+        get_season_search(item)
 
     return _context
 
@@ -459,12 +471,13 @@ def mainlist(channel, list_language, list_quality):
 
         idx += 1
         name = dict_series.get(tvshow, {}).get(TAG_NAME, tvshow)
+        if name == '*': name = '* Genérico para el Canal'
         activo = " (desactivado)"
         if dict_series[tvshow][TAG_ACTIVE]:
             activo = ""
         title = "Configurar [COLOR %s][%s][/COLOR]%s" % (tag_color, name, activo)
 
-        itemlist.append(Item(channel=__channel__, action="config_item", title=title, show=name,
+        itemlist.append(Item(channel=__channel__, action="config_item", title=title, show=name, unify=False, 
                              list_language=list_language, list_quality=list_quality, from_channel=channel))
 
     if len(itemlist) == 0:
@@ -482,7 +495,7 @@ def config_item(item):
     @type item: Item
     """
     logger.info()
-    logger.info("item %s" % item.tostring())
+    logger.debug("item %s" % item.tostring())
     
     # Si viene de una lista de enlaces vacía, se restauran valores originales del canal
     if item.context and isinstance(item.context, list):
@@ -506,7 +519,11 @@ def config_item(item):
     # OBTENEMOS LOS DATOS DEL JSON
     dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
 
-    tvshow = normalize(item.show)
+    if str(item.show).startswith('*'):
+        tvshow = '*'
+    else:
+        tvshow = normalize(item.show)
+        get_season_search(item, dict_series=dict_series)
     default_lang = ''
 
     channel_parameters = channeltools.get_channel_parameters(item.from_channel)
@@ -521,8 +538,10 @@ def config_item(item):
         platformtools.dialog_notification("FilterTools", "No hay idiomas definidos")
         return
     else:
+        title_selected = str(item.season_search.title() or tvshow.title())
         lang_selected = str(dict_series.get(tvshow, {}).get(TAG_LANGUAGE, default_lang))
         list_quality = dict_series.get(tvshow, {}).get(TAG_QUALITY_ALLOWED, [x.lower() for x in item.list_quality])
+        # logger.info("title selected {}".format(title_selected))
         # logger.info("lang selected {}".format(lang_selected))
         # logger.info("list quality {}".format(list_quality))
 
@@ -548,6 +567,18 @@ def config_item(item):
             }
             list_controls.append(active_control)
 
+        if title_selected:
+            season_search = {
+                "id": "season_search",
+                "type": "text",
+                "label": "Título alternativo para búsquedas",
+                "color": "0xFFBBFFFF",
+                "default": title_selected,
+                "enabled": True,
+                "visible": True,
+            }
+            list_controls.append(season_search)
+        
         if lang_selected not in item.list_language:
             lang_selected = default_lang
         language_option = {
@@ -597,7 +628,10 @@ def delete(item, dict_values):
 
     if item:
         dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
-        tvshow = normalize(item.show)
+        if str(item.show).startswith('*'):
+            tvshow = '*'
+        else:
+            tvshow = normalize(item.show)
 
         heading = "¿Está seguro que desea eliminar el filtro?"
         line1 = "Pulse 'Si' para eliminar el filtro de [COLOR %s]%s[/COLOR], pulse 'No' o cierre la ventana para " \
@@ -640,9 +674,14 @@ def save(item, dict_data_saved):
         if item.from_channel == "videolibrary":
             item.from_channel = item.contentChannel
         dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
+        
         tvshow = normalize(item.show)
+        if dict_series.get(tvshow, {}).get(TAG_TITLE, "") == '*' or dict_data_saved.get(TAG_TITLE, "") == '*':
+            tvshow = '*'
 
         logger.info("Se actualiza los datos de: %s" % tvshow)
+        
+        title_selected = str(dict_data_saved.get(TAG_TITLE, item.season_search or tvshow.title))
 
         list_quality = []
         for _id, value in list(dict_data_saved.items()):
@@ -651,7 +690,7 @@ def save(item, dict_data_saved):
 
         lang_selected = item.list_language[dict_data_saved[TAG_LANGUAGE]]
         dict_filter = {TAG_NAME: tvshow.title(), TAG_ACTIVE: dict_data_saved.get(TAG_ACTIVE, True),
-                       TAG_LANGUAGE: lang_selected, TAG_QUALITY_ALLOWED: list_quality}
+                       TAG_TITLE: title_selected, TAG_LANGUAGE: lang_selected, TAG_QUALITY_ALLOWED: list_quality}
         dict_series[tvshow] = dict_filter
 
         result, json_data = jsontools.update_node(dict_series, item.from_channel, TAG_TVSHOW_FILTER)
@@ -721,7 +760,12 @@ def delete_from_context(item):
         item.from_channel = item.contentChannel
 
     dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
-    tvshow = normalize(item.show)
+    if str(item.show).startswith('*'):
+        tvshow = '*'
+    else:
+        tvshow = normalize(item.show)
+        if tvshow not in dict_series.keys():
+            tvshow = '*'
 
     lang_selected = dict_series.get(tvshow, {}).get(TAG_LANGUAGE, "")
     dict_series.pop(tvshow, None)
@@ -740,3 +784,20 @@ def delete_from_context(item):
 
     if item.from_action in ["findvideos", "play", "no_filter"]:  # 'no_filter' es el mismo caso que L#601
         platformtools.itemlist_refresh()
+
+
+def get_season_search(item, dict_series={}):
+
+    tvshow = normalize(item.show)
+    item.season_search = item.season_search.title() or tvshow.title()
+    
+    # OBTENEMOS LOS DATOS DEL JSON
+    channel = item.contentChannel if item.contentChannel and item.contentChannel not in ['list', 'videolibrary'] else None \
+                                  or item.from_channel if item.from_channel and item.from_channel not in ['list', 'videolibrary'] else None \
+                                  or item.channel
+    if channel:
+        if not dict_series: dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_FILTER)
+
+        if dict_series and dict_series.get(tvshow, {}).get(TAG_TITLE, ""):
+            if dict_series[tvshow][TAG_TITLE] != '*':
+                item.season_search = dict_series[tvshow][TAG_TITLE]

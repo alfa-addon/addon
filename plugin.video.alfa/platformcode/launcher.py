@@ -159,10 +159,14 @@ def run(item=None):
                 except ImportError:
                     exec("import %s." + item.function + " as function")
 
-                logger.info("Running function %s(%s) | %s" % (function.__name__, item.options, function.__file__))
-                
-                getattr(function, item.method)(item.options)
-            
+                if function:
+                    logger.info("Running function %s(%s) | %s" % (function.__name__, item.options, function.__file__))
+
+                    getattr(function, item.method)(item.options)
+
+                else:
+                    logger.error("ERROR Running function %s(%s)" % (item.function, item.options))
+
             else:
                 logger.error("ERROR Running function %s(%s) | %s" % (function.__name__, item.options, function.__file__))
 
@@ -202,7 +206,11 @@ def run(item=None):
                 except ImportError:
                     exec("import channels." + item.channel + " as channel")
 
-            logger.info("Running channel %s | %s" % (channel.__name__, channel.__file__))
+            if channel:
+                logger.info("Running channel %s | %s" % (channel.__name__, channel.__file__))
+            else:
+                logger.error("ERROR on loading channel %s" % (item.channel))
+                return
 
             if item.channel == "test" and item.contentChannel:
                 if item.parameters == "test_channel":

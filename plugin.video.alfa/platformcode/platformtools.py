@@ -226,6 +226,14 @@ def render_items(itemlist, parent_item):
     for item in itemlist:
         item_url = item.tourl()
 
+        if item.unify or item.unify == False:
+            use_unify = item.unify
+        else:
+            if channel_param.get('adult', ''):
+                use_unify = False
+            else:
+                use_unify = channel_param.get('force_unify', False) or config.get_setting('unify', default=False)
+
         # Si el item no contiene categoria, le ponemos la del item padre
         if item.category == "":
             item.category = parent_item.category

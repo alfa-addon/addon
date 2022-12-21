@@ -16,6 +16,7 @@ import threading
 import subprocess
 import time
 import os
+import base64
 
 from platformcode import config, logger
 from core import filetools
@@ -86,6 +87,9 @@ def init():
         
         # Se fuerzan los títulos inteligentes si no existen
         force_intelligent_titles()
+        
+        # Se actualiza el Fanart de Alfa en función del calendario de holidays
+        set_season_holidays()
 
         # Verificamos si la versión de Python es compatible con Alfa ### TEMPORAL: error en Linux 3.10.[0-4] ###
         import platform
@@ -1337,3 +1341,61 @@ def force_intelligent_titles():
                     
         except:
             logger.error(traceback.format_exc())
+
+
+def set_season_holidays():
+    
+    xml_file = filetools.join(ADDON_PATH, 'addon.xml')
+    xml = ''
+    
+    try:
+        year, month, day = config.get_setting('date_real', default='0-0-0').split('-')
+        year = int(year)
+        if not int(year): 
+            logger.error('Fecha incorrecta: %s' % config.get_setting('date_real', default='0-0-0'))
+            return
+        month = int(month)
+        month_january = month if month > 1 else month+12
+        date = int('%s%s' % (month, day))
+        date_january = int('%s%s' % (month_january, day))
+        season_holidays = config.get_setting('season_holidays', default=0)
+        
+        country = base64.b64decode(config.get_setting('proxy_zip', default='')).decode('utf-8')
+        country = scrapertools.find_single_match(country, 'Country:\s*(\w+)')
+        if not country: country = '*'
+
+        season_holidays_dict = {
+                                0: {'countries': ['*'], 'dates_range': [0, 0], 'files': ['resources/fanart.jpg']},
+                                1: {'countries': ['*'], 'dates_range': [1015, 1105], 'files': ['resources/fanctober.jpg']},
+                                2: {'countries': ['*'], 'dates_range': [1205, 1306], 'files': ['resources/fanart_navidad.png']}
+                               }
+
+        for season, holiday in list(season_holidays_dict.items()):
+            if season == 0: continue
+            if country != '*' and holiday['countries'][0] != '*' and country not in holiday['countries']: continue
+
+            date_from = holiday['dates_range'][0]
+            date_to = holiday['dates_range'][1]
+
+            if date_to > 1300:
+                if date_january >= date_from and date_january <= date_to:
+                    break
+            else:
+                if date >= date_from and date <= date_to:
+                    break
+
+        else:
+            season = 0
+
+        if season != season_holidays:
+            xml = config.get_xml_content(xml_file)
+            if xml:
+                xml["addon"]["extension"][1]["assets"]["fanart"] = season_holidays_dict[season]['files'][0]
+                data = config.get_xml_content(xml_file, content=xml)
+                if data: config.set_setting('season_holidays', season)
+        
+        logger.info(season_holidays_dict[season]['files'][0], force=True)
+
+    except:
+        if xml: logger.error('XML File: %s; XML: %s' % (xml_file, str(xml)))
+        logger.error(traceback.format_exc())
