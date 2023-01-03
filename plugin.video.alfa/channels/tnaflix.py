@@ -19,18 +19,26 @@ from core import httptools
 from core import tmdb
 from core import jsontools
 
-host = 'https://www.tnaflix.com'
+canonical = {
+             'channel': 'tnaflix', 
+             'host': config.get_setting("current_host", 'tnaflix', default=''), 
+             'host_alt': ["https://www.tnaflix.com/"], 
+             'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "/new/?d=all&period=all"))
-    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "/popular/?d=all&period=all"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/toprated/?d=all&period=month"))
-    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "/channels/all/top-rated/1/all"))
-    itemlist.append(item.clone(title="PornStars" , action="categorias", url=host + "/pornstars"))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "new/?d=all&period=all"))
+    itemlist.append(item.clone(title="Popular" , action="lista", url=host + "popular/?d=all&period=all"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "toprated/?d=all&period=month"))
+    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "channels/all/top-rated/1/all"))
+    itemlist.append(item.clone(title="PornStars" , action="categorias", url=host + "pornstars"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -38,7 +46,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search.php?what=%s&tab=" % (host, texto)
+    item.url = "%ssearch.php?what=%s&&sb=date" % (host, texto)
     try:
         return lista(item)
     except:
@@ -51,7 +59,7 @@ def search(item, texto):
 def catalogo(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '<div class="vidcountSp">(\d+)</div>.*?'
     patron  += '<a class="categoryTitle channelTitle" href="([^"]+)" title="([^"]+)">.*?'
     patron  += 'data-original="([^"]+)"'
@@ -72,7 +80,7 @@ def catalogo(item):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     if "pornstars" in item.url:
         data = scrapertools.find_single_match(data,'</i> Hall Of Fame Pornstars</h1>(.*?)</section>')
@@ -88,8 +96,8 @@ def categorias(item):
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         if not scrapedurl.startswith("https"):
             scrapedurl = "https:%s" % scrapedurl
-        if "profile" in scrapedurl:
-            scrapedurl += "?section=videos"
+        if not "profile" in scrapedurl:
+            scrapedurl += "/most-recent/?hd=0&d=all"
         scrapedtitle = "%s (%s)" % (scrapedtitle,cantidad)
         itemlist.append(item.clone(action="lista", title=scrapedtitle , url=scrapedurl ,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail , plot=scrapedplot) )
@@ -103,7 +111,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a class=\'thumb no_ajax\' href=\'.*?/video(\d+).*?'
     patron += 'data-original=\'(.*?)\' alt="([^"]+)"><div class=\'videoDuration\'>([^<]+)</div>(.*?)<div class=\'watchedInfo'

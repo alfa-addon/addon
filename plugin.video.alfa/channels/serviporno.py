@@ -18,8 +18,9 @@ from platformcode import config, logger
 canonical = {
              'channel': 'serviporno', 
              'host': config.get_setting("current_host", 'serviporno', default=''), 
-             'host_alt': ["https://www.serviporno.com"], 
+             'host_alt': ["https://www.serviporno.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -29,11 +30,11 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, action="videos", title="Útimos videos", url=host))
-    itemlist.append(Item(channel=item.channel, action="videos", title="Más vistos", url=host + "/mas-vistos/"))
-    itemlist.append(Item(channel=item.channel, action="videos", title="Más votados", url=host + "/mas-votados/"))
-    itemlist.append(Item(channel=item.channel, action="chicas", title="Chicas", url=host + "/pornstars/"))
-    itemlist.append(Item(channel=item.channel, action="categorias", title="Canal", url=host + "/sitios/"))
-    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", url= host + "/categorias/"))
+    itemlist.append(Item(channel=item.channel, action="videos", title="Más vistos", url=host + "mas-vistos/"))
+    itemlist.append(Item(channel=item.channel, action="videos", title="Más votados", url=host + "mas-votados/"))
+    itemlist.append(Item(channel=item.channel, action="chicas", title="Chicas", url=host + "pornstars/"))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Canal", url=host + "sitios/"))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", url= host + "categorias/"))
 
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar", last=""))
     return itemlist
@@ -42,7 +43,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = '%s/search/?q=%s' % (host, texto)
+    item.url = '%ssearch/?q=%s' % (host, texto)
     try:
         return videos(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -56,14 +57,17 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<div class="wrap-box-escena.*?'
     patron += 'data-src="([^"]+)".*?'
     patron += '<h4.*?<a href="([^"]+)">([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for thumbnail, url, title in matches:
         url = urlparse.urljoin(item.url, url)
-        itemlist.append(Item(channel=item.channel, action='videos', title=title, url=url, thumbnail=thumbnail, plot=""))
+        itemlist.append(Item(channel=item.channel, action='videos', title=title, url=url,
+                             thumbnail=thumbnail, fanart=thumbnail))
+    if "categorias/" in item.url:
+        itemlist.sort(key=lambda x: x.title)
     # Paginador   "Página Siguiente >>"
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="btn-pagination">Siguiente')
     if next_page:
@@ -75,7 +79,7 @@ def categorias(item):
 def chicas(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<div class="box-chica">.*?'
     patron += '<a href="([^"]+)".*?'
     patron += 'src=\'([^\']+.jpg)\'.*?'
@@ -85,7 +89,8 @@ def chicas(item):
     for url, thumbnail, title, videos in matches:
         url = urlparse.urljoin(item.url, url)
         title = "%s (%s)" % (title, videos)
-        itemlist.append(Item(channel=item.channel, action='videos', title=title, url=url, thumbnail=thumbnail, fanart=thumbnail))
+        itemlist.append(Item(channel=item.channel, action='videos', title=title, url=url,
+                             thumbnail=thumbnail, fanart=thumbnail))
     # Paginador 
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="btn-pagination">Siguiente')
     if next_page:
@@ -97,7 +102,7 @@ def chicas(item):
 def videos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = '(?s)<div class="wrap-box-escena">.*?'
     patron += '<div class="box-escena">.*?'
     patron += '<a href="([^"]+)".*?'
@@ -124,7 +129,7 @@ def videos(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     url = scrapertools.find_single_match(data, "sendCdnInfo.'([^']+)")
     url = url.replace("&amp;", "&")
     itemlist.append(Item(channel=item.channel, action="play", title="Directo", url=url, contentTitle=item.contentTitle))
@@ -134,7 +139,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     url = scrapertools.find_single_match(data, "sendCdnInfo.'([^']+)")
     url = url.replace("&amp;", "&")
     itemlist.append(Item(channel=item.channel, action="play", url=url, contentTitle=item.contentTitle))

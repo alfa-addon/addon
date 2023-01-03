@@ -8,7 +8,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "tnaflix.com/[A-z-]+/[A-z-]+/video([0-9]+)?",
+        "pattern": "tnaflix.com/[A-z-]+/[A-z0-9-.]+/video([0-9]+)",
         "url": "https://player.tnaflix.com/video/\\1"
       }
     ]

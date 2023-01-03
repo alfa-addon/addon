@@ -15,7 +15,7 @@ def test_video_exists(page_url):
     global data, server
     server = scrapertools.find_single_match(page_url, '//(?:www.|es.|)([A-z0-9-]+).(?:to|ws|com)')
     data = httptools.downloadpage(page_url)
-    if data.code == 404 or "File is no longer available" in data.data or "There is nothing here" in data.data:
+    if data.code == 404 or "File is no longer available" in data.data or "There is nothing here" in data.data or "Can't create video code" in data.data:
         return False, "[%s] El archivo no existe o ha sido borrado" %server
     return True, ""
 

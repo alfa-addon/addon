@@ -65,7 +65,8 @@ def categorias(item):
         thumbnail = elem.img['src']
         # thumbnail += "|Referer=%s" % host
         plot = ""
-        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail, plot=plot) )
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
     return sorted(itemlist, key=lambda i: i.title)
 
 
@@ -97,8 +98,8 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
-                               plot=plot, fanart=thumbnail, contentTitle=title ))
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
     next_page = soup.find('div', class_='pagination')
     if next_page and next_page.find('span').find_next_sibling('a'):
         next_page = next_page.find('span').find_next_sibling('a')['href']

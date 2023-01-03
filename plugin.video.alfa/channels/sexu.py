@@ -22,8 +22,9 @@ from core import jsontools as json
 canonical = {
              'channel': 'sexu', 
              'host': config.get_setting("current_host", 'sexu', default=''), 
-             'host_alt': ["https://sexu.com"], 
+             'host_alt': ["https://sexu.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -32,12 +33,12 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/new"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/engaging"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/all"))
-    itemlist.append(Item(channel=item.channel, title="Mas comentados" , action="lista", url=host + "/trending")) 
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/pornstars"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "new"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "engaging"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "all"))
+    itemlist.append(Item(channel=item.channel, title="Mas comentados" , action="lista", url=host + "trending")) 
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories?sort=name"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -45,7 +46,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search?q=%s&st=upload" % (host, texto)
+    item.url = "%ssearch?q=%s&st=upload" % (host, texto)
     try:
         return lista(item)
     except:
@@ -58,7 +59,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a class="item" href="([^"]+)" title="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?'
@@ -81,7 +82,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a class="item__main" href="/([^"]+)/" title="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?'
@@ -108,9 +109,9 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    url = '%s/api/video-info' %host
+    url = '%sapi/video-info' %host
     headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
-    data = httptools.downloadpage(url, post=item.url, headers=headers).data
+    data = httptools.downloadpage(url, post=item.url, headers=headers, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     JSONData = json.load(data)
     for cat in  JSONData["sources"]:
@@ -125,9 +126,9 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    url = '%s/api/video-info' %host
+    url = '%sapi/video-info' %host
     headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
-    data = httptools.downloadpage(url, post=item.url, headers=headers).data
+    data = httptools.downloadpage(url, post=item.url, headers=headers, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     JSONData = json.load(data)
     for cat in  JSONData["sources"]:
@@ -135,5 +136,5 @@ def play(item):
         quality = cat["quality"]
         if not url.startswith("https"):
             url = "https:%s" % url
-        itemlist.append(['%s' %quality, url])
+        itemlist.append(['[sexu] %s' %quality, url])
     return itemlist[::-1]

@@ -30,6 +30,7 @@ canonical = {
              'host_alt': ["http://siska.video/"], 
              'host_black_list': [], 
              'pattern': ['itemprop="?url"?\s*content="?([^"|\s*]+)["|\s*]'], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -68,7 +69,7 @@ def search(item, texto):
 def catalogo(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="back">.*?'
     patron += 'href="([^"]+)" class="">([^<]+)<'
@@ -84,7 +85,7 @@ def catalogo(item):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     data = scrapertools.find_single_match(data,'<h1 class=(.*?)<div id="footer"')
     patron = 'href="([^"]+)".*?'
@@ -104,7 +105,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<li class=\'pure-u-1-3.*?'
     patron += '<a title=\'[^\']+\' href=\'([^\']+)\'.*?'
@@ -134,7 +135,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     patron = '<iframe src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -142,8 +143,6 @@ def findvideos(item):
         if not ".xyz" in url:
             itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', contentTitle = item.contentTitle))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
-    # Requerido para FilterTools
-    # itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
     return itemlist

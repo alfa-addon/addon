@@ -18,13 +18,11 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-
+# babestube
 def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="submityourflicks" , action="submenu", host= "https://www.submityourflicks.com", thumbnail= "https://www.submityourflicks.com/images/logo.png"))
-    itemlist.append(Item(channel=item.channel, title="freehardcore" , action="submenu", host= "https://www.freehardcore.com", thumbnail= "https://www.freehardcore.com/images/logo.png"))
-    itemlist.append(Item(channel=item.channel, title="moviesand" , action="submenu", host= "https://www.moviesand.com", thumbnail = "https://www.moviesand.com/images/logo.png"))
     itemlist.append(Item(channel=item.channel, title="interracial" , action="submenu", host= "https://www.interracial.com", thumbnail = "https://www.interracial.com/images/logo.png"))
     itemlist.append(Item(channel=item.channel, title="feetporno" , action="submenu", host= "https://www.feetporno.com", thumbnail = "https://www.feetporno.com/images/logo.png"))
     itemlist.append(Item(channel=item.channel, title="chubbyporn" , action="submenu", host= "https://www.chubbyporn.com", thumbnail = "https://www.chubbyporn.com/images/logo.png"))

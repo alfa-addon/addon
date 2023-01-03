@@ -20,8 +20,9 @@ from core import httptools
 canonical = {
              'channel': 'shameless', 
              'host': config.get_setting("current_host", 'shameless', default=''), 
-             'host_alt': ["https://www.shameless.com"], 
+             'host_alt': ["https://www.shameless.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -30,8 +31,8 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/videos/1/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "videos/1/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -39,7 +40,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/?q=%s" % (host, texto)
+    item.url = "%ssearch/?q=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -52,7 +53,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a href="(%s/categories/[^"]+)".*?' %host
     patron += '<span itemprop="name">(.*?)</span> <sup>(.*?)</sup>.*?'
@@ -69,7 +70,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="icnt.*?'
     patron += '<a href="([^"]+)".*?'
@@ -95,30 +96,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
-    patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for url, quality in matches:
-        headers = {'Referer': item.url}
-        url = httptools.downloadpage(url, headers=headers , follow_redirects=False, only_headers=True).headers.get("location", "")
-        url += "|Referer=%s" % item.url
-        itemlist.append(Item(channel=item.channel, action="play", title=quality, url=url) )
-    return itemlist[::-1]
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
+    return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
-    patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for url, quality in matches:
-        headers = {'Referer': item.url}
-        url = httptools.downloadpage(url, headers=headers , follow_redirects=False, only_headers=True).headers.get("location", "")
-        url += "|Referer=%s" % item.url
-        itemlist.append([quality, url])
-    return itemlist[::-1]
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
+    return itemlist

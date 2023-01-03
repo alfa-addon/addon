@@ -22,8 +22,9 @@ from core import httptools
 canonical = {
              'channel': 'pornrewind', 
              'host': config.get_setting("current_host", 'pornrewind', default=''), 
-             'host_alt': ["https://www.pornrewind.com"], 
+             'host_alt': ["https://www.pornrewind.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -33,10 +34,10 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/videos/?sort_by=post_date"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorados" , action="lista", url=host + "/videos/?sort_by=rating"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/videos/?sort_by=video_viewed"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "videos/?sort_by=post_date"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorados" , action="lista", url=host + "videos/?sort_by=rating"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "videos/?sort_by=video_viewed"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/?sort_by=total_videos"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -44,7 +45,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = host + "/search/%s/" % texto
+    item.url = "%ssearch/%s/" % (host,texto)
     try:
         return lista(item)
     except:
@@ -57,24 +58,22 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = '<div class="swiper-slide">.*?'
-    patron  += '<a href="([^"]+)".*?'
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    patron  = '<a class="thumb-categories" href="([^"]+)" title="([^"]+)".*?'
     patron  += 'data-src="([^"]+)".*?'
-    patron  += '<span class="cats-title">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
-    for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
+    for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
         scrapedplot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
+    itemlist.sort(key=lambda x: x.title)
     return itemlist
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<a class="thumb" href="([^"]+)" title="([^"]+)".*?'
     patron += '<img class="lazyload" data-src="([^"]+)".*?'
     patron += '<span>(.*?)</span>'
@@ -99,7 +98,7 @@ def lista(item):
 def findvideos(item):
     logger.info(item)
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data= scrapertools.find_single_match(data, '<div class="player">(.*?)<div class="media-info">')
     patron = '<(?:IFRAME SRC|iframe src)="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -115,7 +114,7 @@ def findvideos(item):
 def play(item):
     logger.info(item)
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data= scrapertools.find_single_match(data, '<div class="player">(.*?)<div class="media-info">')
     patron = '<(?:IFRAME SRC|iframe src)="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)

@@ -19,7 +19,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://www.sxyprn.com'
+host = "https://www.sxyprn.com"
 
 
 # list_language = []

@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:www.|)nonktube.com/video/[0-9]+/[A-z0-9-]+)",
+        "pattern": "(https://(?:www.|)nonktube.com/video/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -12,15 +12,15 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)justporn.com/video/[A-z0-9-]+)",
+        "pattern": "(https://(?:www.|)(?:justporn|pulpo69).com/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)porn300.com(?:/es|)/video/[A-z0-9-]+)",
+        "pattern": "(https://(?:www.|)porn300.com(?:/es|)/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)canalporno.com/ver/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|)canalporno.com/ver/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -28,11 +28,27 @@
         "url": "\\1"
       },
       {
-        "pattern": "(http://(?:www.|)incestflix.com/watch/[A-z0-9-]+)",
+        "pattern": "(http://(?:www.|)incestflix.com/watch/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
      {
-        "pattern": "(https://(?:www.|)errrotica.com/[a-z]/[A-z0-9-]+/[0-9]+/)",
+        "pattern": "(https://(?:www.|)errrotica.com/[a-z]/[A-z0-9-]+/[0-9]+(?:/|))",
+        "url": "\\1"
+      },
+     {
+        "pattern": "(https://(?:www.|)(?:pornvid69|sextube).(?:com|nl)/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+     {
+        "pattern": "(https://(?:www.|)(?:yrprno|youcrazyx|trendyporn|yespornplease|hentaiprno).(?:com|sexy)/video/[A-z0-9-]+.html)",
+        "url": "\\1"
+      },
+     {
+        "pattern": "(https://(?:www.|)pornxs.com/(?:embed/|)[0-9]+)",
+        "url": "\\1"
+      },
+     {
+        "pattern": "(https://(?:www.|)pornovideow.com/content_video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

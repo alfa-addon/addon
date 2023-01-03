@@ -8,6 +8,10 @@
         "url": "https://es.pornhub.com/view_video.php?viewkey=\\1"
       },
       {
+        "pattern": "(pornhub.com/video/show\\?viewkey=[A-z0-9]+)",
+        "url": "https://es.\\1"
+      },
+      {
         "pattern": "(pornhub.com/view_video.php\\?viewkey=[A-z0-9]+)",
         "url": "https://es.\\1"
       }

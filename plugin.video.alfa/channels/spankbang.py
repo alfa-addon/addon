@@ -21,8 +21,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'spankbang', 
              'host': config.get_setting("current_host", 'spankbang', default=''), 
-             'host_alt': ["https://spankbang.com"], 
+             'host_alt': ["https://spankbang.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,11 +32,12 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos", action="lista", url= host + "/new_videos/"))
-    itemlist.append(Item(channel=item.channel, title="Mas valorados", action="lista", url=host + "/trending_videos/"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos", action="lista", url= host + "/most_popular/"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=host + "/pornstars"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos", action="lista", url= host + "new_videos/"))
+    itemlist.append(Item(channel=item.channel, title="Mas valorados", action="lista", url=host + "trending_videos/"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos", action="lista", url= host + "most_popular/"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="catalogo", url=host + "pornstars"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "channels/1?o=top"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -43,7 +45,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/s/%s/" % (host, texto)
+    item.url = "%ss/%s/?o=new" % (host, texto)
     try:
         return lista(item)
     except:
@@ -66,44 +68,43 @@ def catalogo(item):
         if cantidad:
             title = "%s (%s)" %(title, cantidad.text)
         url =  urlparse.urljoin(host,url)
-        url += "?order=new"
+        url += "?o=new"
         thumbnail =  urlparse.urljoin(host,thumbnail)
+        plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title , url=url , 
-                              thumbnail=thumbnail, fanart=thumbnail) )
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('li', class_='next')
     if next_page:
         next_page = next_page.a['href']
         next_page = urlparse.urljoin(host,next_page)
         itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page ) )
-
     return itemlist
 
 
 def categorias(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('div', class_='categories')
-    matches = soup.find_all('a')
+    soup = create_soup(item.url).find('ul', class_='list')
+    matches = soup.find_all('li')
     for elem in matches:
-        url = elem['href']
-        title = elem.text
-        thumbnail = elem.img['src']
-        url = url.replace("?o=hot", "?o=new")
+        url = elem.a['href']
+        title = elem.a.text
+        thumbnail = ""
         url =  urlparse.urljoin(item.url,url)
-        thumbnail =  urlparse.urljoin(item.url,thumbnail)
+        url += "?o=new"
+        plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title , url=url , 
-                              thumbnail=thumbnail, fanart=thumbnail) )
+                             fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
     return itemlist
 
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
         data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -126,11 +127,12 @@ def lista(item):
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time.text,title)
         url =  urlparse.urljoin(item.url,url)
+        plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title , url=url, thumbnail=thumbnail, 
-                              fanart=thumbnail, contentTitle=title) )
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('li', class_='next')
     if next_page:
         next_page = next_page.a['href']
