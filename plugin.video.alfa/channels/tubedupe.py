@@ -20,30 +20,48 @@ from core import httptools
 canonical = {
              'channel': 'tubedupe', 
              'host': config.get_setting("current_host", 'tubedupe', default=''), 
-             'host_alt': ["https://tubedupe.com"], 
+             'host_alt': ["https://tubedupe.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-
+#####   Seccion gay y shemale
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/latest-updates/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorados" , action="lista", url=host + "/top-rated/"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/most-popular/"))
-    itemlist.append(Item(channel=item.channel, title="Modelos" , action="categorias", url=host + "/models/?sort_by=model_viewed"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/channels/?sort_by=cs_viewed"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/?sort_by=avg_videos_popularity"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "latest-updates/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorados" , action="lista", url=host + "top-rated/"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "most-popular/"))
+    itemlist.append(Item(channel=item.channel, title="Modelos" , action="categorias", url=host + "models/?sort_by=model_viewed"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "channels/?sort_by=cs_viewed"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/?sort_by=title"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host))
+
+    itemlist.append(Item(channel=item.channel, title=""))
+
+    itemlist.append(Item(channel=item.channel, title="Gay" , action="submenu", url=host +"gay"))
+    itemlist.append(Item(channel=item.channel, title="Shemale" , action="submenu", url=host + "shemale"))
+    return itemlist
+
+
+def submenu(item):
+    logger.info()
+    itemlist = []
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=item.url +"/latest/"))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=item.url + "/most-viewed/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=item.url + "/top-rated/"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=item.url + "-channels/?sort_by=cs_viewed"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=item.url + "-categories/?sort_by=title"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url + "/"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/?q=%s" % (host, texto)
+    item.url = "%ssearch/1/?q=%s" % (item.url, texto)
     try:
         return lista(item)
     except:
@@ -56,7 +74,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="block-[^"]+">.*?'
     patron += '<a href="([^"]+)".*?title="([^"]+)".*?'
@@ -87,7 +105,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron = '<div class="block-video.*?'
     patron += '<a href="([^"]+)" class="[^"]+" title="([^"]+)">.*?'
     patron += '<img src="([^"]+)".*?'
@@ -113,22 +131,26 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
-    patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for url,quality in matches:
-        itemlist.append(Item(channel=item.channel, action="play", title=quality, url=url) )
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
-    patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for url,quality in matches:
-        itemlist.append(['.mp4 %s' %quality, url])
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    patron = 'href="/models/[^"]+" title="([^"]+)"'
+    pornstars = re.compile(patron,re.DOTALL).findall(data)
+    pornstar = ' & '.join(pornstars)
+    pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+    lista = item.title.split()
+    if "HD" in item.title:
+        lista.insert (4, pornstar)
+    else:
+        lista.insert (2, pornstar)
+    item.contentTitle = ' '.join(lista)
+
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

@@ -27,8 +27,9 @@ list_servers = ['aparatcam']
 canonical = {
              'channel': 'viralvideosporno', 
              'host': config.get_setting("current_host", 'viralvideosporno', default=''), 
-             'host_alt': ["http://www.viralvideosporno.com"], 
+             'host_alt': ["http://www.viralvideosporno.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -40,9 +41,9 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    # itemlist.append(Item(channel=item.channel, title="Peliculas" , action="submenu", url=host + "/peliculas/all"))
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/escenas-ultimos-videos/"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/escenas-mas-visitados/"))
+    # itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/peliculas/1"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "escenas-ultimos-videos/"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "escenas-mas-visitados/"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
@@ -54,7 +55,7 @@ def mainlist(item):
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="All" , action="lista", url=host + "/peliculas/all"))
+    itemlist.append(Item(channel=item.channel, title="All" , action="lista", url=host + "peliculas/1"))
     soup = create_soup(item.url)
     matches = soup.find('div', id='movies').find_all('a')
     for elem in matches:
@@ -71,7 +72,7 @@ def submenu(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/buscar-%s.html" % (host,texto)
+    item.url = "%sbuscar-%s.html" % (host,texto)
     try:
         return lista(item)
     except:
@@ -100,9 +101,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -124,8 +125,8 @@ def lista(item):
         url = urlparse.urljoin(item.url,url)
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
-                               plot=plot, language="VO", fanart=thumbnail, contentTitle=title ))
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('a', class_='current')
     if next_page and next_page.parent.find_next_sibling("li"):
         next_page = next_page.parent.find_next_sibling("li").a['href']

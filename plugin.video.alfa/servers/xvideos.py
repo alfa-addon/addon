@@ -30,6 +30,6 @@ def get_video_url(page_url, video_password):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for quality,url in matches:
         url = m3u.replace("hls.m3u8", url)
-        video_urls.append(['%sp' %quality, url])
+        video_urls.append(['[Xvideos] %sp' %quality, url])
     video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls

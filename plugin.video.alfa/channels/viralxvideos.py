@@ -22,8 +22,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'viralxvideos', 
              'host': config.get_setting("current_host", 'viralxvideos', default=''), 
-             'host_alt': ["https://viralxvideos.es"], 
+             'host_alt': ["https://viralxvideos.es/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -32,8 +33,8 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?filter=latest"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "?filter=latest"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -41,7 +42,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/?s=%s" % (host,texto)
+    item.url = "%s?s=%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -62,7 +63,8 @@ def categorias(item):
         plot = ""
         thumbnail = ""
         if "viralxvideos" in url:
-            itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail=thumbnail , plot=plot) )
+            itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('a', class_='current')
     if next_page and next_page.parent.find_next_sibling("li"):
         next_page = next_page.parent.find_next_sibling("li").a['href']
@@ -74,9 +76,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -101,7 +103,6 @@ def lista(item):
             else:
                 thumbnail = ""
         thumbnail += "|Referer=%s" % url
-        logger.debug(thumbnail)
         quality = elem.find('span', class_='hd-video')
         if quality:
             title = "[COLOR red]HD[/COLOR] %s" % title
@@ -109,8 +110,8 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
-                               plot=plot, fanart=thumbnail, contentTitle=title ))
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('a', class_='current')
     if next_page and next_page.parent.find_next_sibling("li"):
         next_page = next_page.parent.find_next_sibling("li").a['href']
