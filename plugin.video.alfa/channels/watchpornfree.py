@@ -113,6 +113,9 @@ def lista(item):
         url = elem.a['href']
         title = elem.find('div', class_='Title').text.strip()
         thumbnail = elem.img['src']
+        if "/svg" in thumbnail:
+            thumbnail = elem.img['data-lazy-src']
+
         time = elem.find('span', class_='duration')
         if time:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time.text.strip(),title)
