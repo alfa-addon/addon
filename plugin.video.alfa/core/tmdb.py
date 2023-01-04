@@ -1604,7 +1604,8 @@ class Tmdb(object):
                         if word in ret_infoLabels['tvshowtitle'].lower():
                             break
                     else:
-                        ret_infoLabels['title_alt'] = v_alt
+                        if not scrapertools.find_single_match(v_alt, '\-\d+\.\d+'):
+                            ret_infoLabels['title_alt'] = v_alt
                 ret_infoLabels['title'] = v
 
             elif k == 'networks':

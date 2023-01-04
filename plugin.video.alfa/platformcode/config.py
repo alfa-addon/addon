@@ -518,43 +518,45 @@ def get_all_settings_addon(caching_var=True):
             __settings__.setSetting('show_once', 'true')
 
     xml = get_xml_content(inpath)
-    
-    if not xml:
-        alfa_caching = False
-        alfa_settings = {}
-        try:
-            window.setProperty("alfa_caching", '')
-            window.setProperty("alfa_settings", json.dumps(alfa_settings))
-            from platformcode import logger
-            logger.error(traceback.format_exc())
-            # Verificar si hay problemas de permisos de acceso a userdata/alfa
-            from core.filetools import file_info, listdir, dirname
-            logger.error("Error al leer settings.xml: %s, ### Folder-info: %s, ### File-info: %s" % \
-                        (inpath, file_info(dirname(inpath)), listdir(dirname(inpath), file_inf=True)))
-        except:
-            pass
-
     ret = {}
 
-    for setting in xml['settings']['setting']:
-        ret[setting['@id']] = get_setting_values(setting['@id'], setting.get('#text', ''), decode_var_=False)
+    if xml:
+        for setting in xml['settings']['setting']:
+            ret[setting['@id']] = get_setting_values(setting['@id'], setting.get('#text', ''), decode_var_=False)
 
-    if DEBUG: logger.error('READ File ALL Alfa SETTINGS')
-    alfa_settings = ret.copy()
-    alfa_caching = False
-    if alfa_settings: alfa_caching = alfa_settings.get('caching', True)
-    if alfa_caching:
-        window.setProperty("alfa_caching", str(alfa_caching))
+        if DEBUG: logger.error('READ File ALL Alfa SETTINGS')
+        alfa_settings = ret.copy()
+        alfa_caching = False
+        if alfa_settings: alfa_caching = alfa_settings.get('caching', True)
+        if alfa_caching:
+            window.setProperty("alfa_caching", str(alfa_caching))
+        else:
+            window.setProperty("alfa_caching", '')
+        
     else:
-        window.setProperty("alfa_caching", '')
+        alfa_caching = False
+        from platformcode import logger
+        logger.error(traceback.format_exc())
+        # Verificar si hay problemas de permisos de acceso a userdata/alfa
+        from core.filetools import file_info, listdir, dirname
+        logger.error("Error al leer settings.xml: %s, ### Folder-info: %s, ### File-info: %s" % \
+                    (inpath, file_info(dirname(inpath)), listdir(dirname(inpath), file_inf=True)))
+    
     if not alfa_caching:
         alfa_settings = {}
         alfa_kodi_platform = {}
         alfa_channels = {}
         alfa_servers = {}
+        alfa_servers_jsons = {}
+        window.setProperty("alfa_system_platform", "")
         window.setProperty("alfa_channels", json.dumps(alfa_channels))
         window.setProperty("alfa_servers", json.dumps(alfa_servers))
+        window.setProperty("alfa_servers_jsons", json.dumps(alfa_servers_jsons))
+        window.setProperty("alfa_cookies", '')
+        window.setProperty("alfa_CF_list", '')
+        window.setProperty("alfa_colors_file", json.dumps({}))
         if DEBUG: logger.error('DROPING ALL Cached SETTINGS')
+    
     window.setProperty("alfa_settings", json.dumps(alfa_settings))
     if DEBUG: logger.error('SAVE ALL Cached Alfa SETTINGS')
 
@@ -570,55 +572,56 @@ def open_settings(settings_pre={}):
         settings_pre = settings_post.copy()
 
     # cb_validate_config (util para validar cambios realizados en el cuadro de dialogo)
-    if settings_post.get('adult_aux_intro_password', None):
-        # Hemos accedido a la seccion de Canales para adultos
-        from platformcode import platformtools
-        if 'adult_password' not in settings_pre:
-            adult_password = set_setting('adult_password', '0000')
+    if settings_post:
+        if settings_post.get('adult_aux_intro_password', None):
+            # Hemos accedido a la seccion de Canales para adultos
+            from platformcode import platformtools
+            if 'adult_password' not in settings_pre:
+                adult_password = set_setting('adult_password', '0000')
+            else:
+                adult_password = settings_pre['adult_password']
+
+            if settings_post['adult_aux_intro_password'] == adult_password:
+                # La contraseña de acceso es correcta
+                set_setting("adult_mode", settings_post.get("adult_mode", 1))
+                set_setting("adult_request_password", settings_post.get("adult_request_password", True))
+
+                # Cambio de contraseña
+                if settings_post.get('adult_aux_new_password1', ''):
+                    if settings_post['adult_aux_new_password1'] == settings_post.get('adult_aux_new_password2', ''):
+                        set_setting('adult_password', settings_post['adult_aux_new_password1'])
+
+                    else:
+                        platformtools.dialog_ok(get_localized_string(60305),
+                                                get_localized_string(60306),
+                                                get_localized_string(60307))
+
+            else:
+                platformtools.dialog_ok(get_localized_string(60305), get_localized_string(60309),
+                                        get_localized_string(60310))
+
+                # Deshacer cambios
+                set_setting("adult_mode", settings_pre.get("adult_mode", 0))
+                set_setting("adult_request_password", settings_pre.get("adult_request_password", True))
+
+            # Borramos settings auxiliares
+            set_setting('adult_aux_intro_password', '')
+            set_setting('adult_aux_new_password1', '')
+            set_setting('adult_aux_new_password2', '')
+
+        # si se ha cambiado la ruta de la videoteca llamamos a comprobar directorios para que lo cree y pregunte
+        # automaticamente si configurar la videoteca
+        if settings_pre.get("videolibrarypath", None) != settings_post.get("videolibrarypath", None) or \
+                settings_pre.get("folder_movies", None) != settings_post.get("folder_movies", None) or \
+                settings_pre.get("folder_tvshows", None) != settings_post.get("folder_tvshows", None):
+            verify_directories_created()
+
         else:
-            adult_password = settings_pre['adult_password']
-
-        if settings_post['adult_aux_intro_password'] == adult_password:
-            # La contraseña de acceso es correcta
-            set_setting("adult_mode", settings_post.get("adult_mode", 1))
-            set_setting("adult_request_password", settings_post.get("adult_request_password", True))
-
-            # Cambio de contraseña
-            if settings_post.get('adult_aux_new_password1', ''):
-                if settings_post['adult_aux_new_password1'] == settings_post.get('adult_aux_new_password2', ''):
-                    set_setting('adult_password', settings_post['adult_aux_new_password1'])
-
-                else:
-                    platformtools.dialog_ok(get_localized_string(60305),
-                                            get_localized_string(60306),
-                                            get_localized_string(60307))
-
-        else:
-            platformtools.dialog_ok(get_localized_string(60305), get_localized_string(60309),
-                                    get_localized_string(60310))
-
-            # Deshacer cambios
-            set_setting("adult_mode", settings_pre.get("adult_mode", 0))
-            set_setting("adult_request_password", settings_pre.get("adult_request_password", True))
-
-        # Borramos settings auxiliares
-        set_setting('adult_aux_intro_password', '')
-        set_setting('adult_aux_new_password1', '')
-        set_setting('adult_aux_new_password2', '')
-
-    # si se ha cambiado la ruta de la videoteca llamamos a comprobar directorios para que lo cree y pregunte
-    # automaticamente si configurar la videoteca
-    if settings_pre.get("videolibrarypath", None) != settings_post.get("videolibrarypath", None) or \
-            settings_pre.get("folder_movies", None) != settings_post.get("folder_movies", None) or \
-            settings_pre.get("folder_tvshows", None) != settings_post.get("folder_tvshows", None):
-        verify_directories_created()
-
-    else:
-        # si se ha puesto que se quiere autoconfigurar y se había creado el directorio de la videoteca
-        if not settings_pre.get("videolibrary_kodi", None) and settings_post.get("videolibrary_kodi", None) \
-                and settings_post.get("videolibrary_kodi_flag", None) == 1:
-            from platformcode import xbmc_videolibrary
-            xbmc_videolibrary.ask_set_content(2, silent=True)
+            # si se ha puesto que se quiere autoconfigurar y se había creado el directorio de la videoteca
+            if not settings_pre.get("videolibrary_kodi", None) and settings_post.get("videolibrary_kodi", None) \
+                    and settings_post.get("videolibrary_kodi_flag", None) == 1:
+                from platformcode import xbmc_videolibrary
+                xbmc_videolibrary.ask_set_content(2, silent=True)
 
 
 def get_setting(name, channel="", server="", default=None, caching_var=True, debug=DEBUG):
@@ -1212,8 +1215,9 @@ def get_xml_content(xml_file, content=''):
                         data = "".join(chr(x) for x in data)
                 content = xmltodict.parse(data)
         except:
-            content = ''
+            content = {}
             from platformcode import logger, platformtools
+            logger.error('ERROR Parseando XML: %s; CONTENIDO: %s' % (xml_file. str(data)))
             logger.error(traceback.format_exc())
     else:
         try:
@@ -1225,6 +1229,7 @@ def get_xml_content(xml_file, content=''):
         except:
             content = ''
             from platformcode import logger, platformtools
+            logger.error('ERROR UNparseando XML: %s; CONTENIDO: %s' % (xml_file. str(data)))
             logger.error(traceback.format_exc())
 
     return content

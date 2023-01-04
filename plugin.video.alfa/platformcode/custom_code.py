@@ -781,18 +781,25 @@ def update_libtorrent():
                     unrar = unrar_dest
 
                 try:
+                    output_cmd = ''
                     p = execute_binary_from_alfa_assistant('openBinary', [unrar], wait=True, init=True)
                     try:
                         output_cmd, error_cmd = p.communicate()
+                        if PY3 and isinstance(output_cmd, bytes):
+                            output_cmd = output_cmd.decode('utf-8')
                         if p.returncode != 0 or error_cmd:
                             logger.info('######## UnRAR returncode in module %s: %s, %s in %s' % \
                                     (device, str(p.returncode), str(error_cmd), unrar), force=True)
                             unrar = ''
                         else:
+                            device = '%s - v.%s' % (device, scrapertools.find_single_match(output_cmd, 
+                                                    '(?i)unrar\s*(.*?)\s*Copyright') or 'Unknown')
                             logger.info('######## UnRAR OK in %s: %s' % (device, unrar), force=True)
                             break
                     except:
                         if p.returncode == 0:
+                            device = '%s - v.%s' % (device, scrapertools.find_single_match(output_cmd, 
+                                                    '(?i)unrar\s*(.*?)\s*Copyright') or 'Assistant')
                             logger.info('######## UnRAR OK in %s: %s' % (device, unrar), force=True)
                             break
                 except:
@@ -800,7 +807,7 @@ def update_libtorrent():
                     logger.error(traceback.format_exc(1))
                     unrar = ''
         
-        if unrar: 
+        if unrar:
             config.set_setting("unrar_path", unrar, server="torrent")
             config.set_setting("unrar_device", device, server="torrent")
         else:

@@ -27,8 +27,8 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'subtorrents', 
              'host': config.get_setting("current_host", 'subtorrents', default=''), 
-             'host_alt': ['https://www.subtorrents.re/'], 
-             'host_black_list': ['https://www.subtorrents.do/'], 
+             'host_alt': ['https://www.subtorrents.eu/'], 
+             'host_black_list': ['https://www.subtorrents.re/', 'https://www.subtorrents.do/'], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

@@ -488,7 +488,7 @@ def unshorten(uri, type=None, timeout=10):
     return uri, status
 
 
-def sortened_urls(url, url_base64, host, referer=None, alfa_s=True):
+def sortened_urls(url, url_base64, host, retry=False, referer=None, alfa_s=True):
     # https://unicode-table.com/es/#basic-latin
     # https://www.ionos.es/digitalguide/servidores/know-how/ascii-american-standard-code-for-information-interchange/
 
@@ -610,7 +610,7 @@ def sortened_urls(url, url_base64, host, referer=None, alfa_s=True):
         key = ''
     if key != key_saved:
         config.set_setting(str(domain_save), str(key), server='torrent')
-    if key_saved and not key:
-        return sortened_urls(url, url_base64, host)
+    if key_saved and not key and not retry:
+        return sortened_urls(url, url_base64, host, retry=True)
 
     return url_base64

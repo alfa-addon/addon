@@ -31,9 +31,9 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.mba/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.blue/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/', 'https://donproxies.com/'], 
-             'host_black_list': ['https://dontorrent.futbol/', 
+             'host_black_list': ['https://dontorrent.army/', 'https://dontorrent.mba/', 'https://dontorrent.futbol/', 
                                  'https://dontorrent.fail/', 'https://dontorrent.click/', 'https://dontorrent.gy/',
                                  'https://dontorrent.gs/', 'https://dontorrent.me/', 'https://dontorrent.ltd/', 
                                  'https://dontorrent.fans/', 'https://dontorrent.uno/', 'https://dontorrent.ist/', 
@@ -407,7 +407,10 @@ def listado(item):                                                              
             if response.host:
                 next_page_url = response.url_new
             elif response.url and response.url != next_page_url:
-                next_page_url = item.url = '%s%s' % (response.url, scrapertools.find_single_match(next_page_url, '(page\/\d+\/?)'))
+                if not scrapertools.find_single_match(next_page_url, '(page\/\d+\/?)'):
+                    next_page_url = item.url = '%s%s' % (response.url, scrapertools.find_single_match(next_page_url, '(page\/\d+\/?)'))
+                else:
+                    next_page_url = item.url = response.url
             
             curr_page += 1                                                      # Apunto ya a la página siguiente
             if not data:                                                        # Si la web está caída salimos sin dar error
@@ -469,9 +472,9 @@ def listado(item):                                                              
         if item.extra2 != 'novedades':
             if item.extra == 'peliculas' and (item.extra2 == 'alfabeto' or item.extra2 == 'anno' \
                             or item.extra2 == 'genero'):                        # Películas con Alfabeto y similares
-                post = re.sub(r'pagina=(\d+)', 'pagina=%s' % str(curr_page), post)
+                post = re.sub(r'pagina=\d+', 'pagina=%s' % str(curr_page), post)
             else:                                                               # Resto
-                next_page_url = re.sub(r'page\/(\d+)', 'page/%s' % str(curr_page), item.url)
+                next_page_url = re.sub(r'page\/\d+', 'page/%s' % str(curr_page), item.url)
             #logger.debug('curr_page: ' + str(curr_page) + ' / last_page: ' + str(last_page) + ' / page_factor: ' + str(page_factor))
         
         #Buscamos la última página
@@ -489,7 +492,7 @@ def listado(item):                                                              
             else:                                                               # Resto, se descarga la página 9999 para ver la última real
                 patron_last = '<li\s*class="page-item\s*active"\s*aria-current="page">\s*'
                 patron_last += '<a\s*class="page-link"\s*href="[^"]*">\s*(\d+)\s*<\/a>\s*<\/li>'
-                last_page_url = re.sub(r'page\/(\d+)', 'page/9999', item.url)
+                last_page_url = re.sub(r'page\/\d+', 'page/9999', item.url)
                 data, response, item, itemlist = generictools.downloadpage(last_page_url, timeout=timeout_search, 
                                                                            post=post, patron=patron_last, referer=referer, 
                                                                            s2=False, item=item, itemlist=itemlist)      # Descargamos la página)
@@ -681,14 +684,6 @@ def listado(item):                                                              
                 
             #Guarda la variable temporal que almacena la info adicional del título a ser restaurada después de TMDB
             item_local.title_subs = title_subs
-                
-            """
-            #Salvamos y borramos el número de temporadas porque TMDB a veces hace tonterias.  Lo pasamos como serie completa
-            if item_local.contentSeason and (item_local.contentType == "season" \
-                        or item_local.contentType == "tvshow"):
-                item_local.contentSeason_save = item_local.contentSeason
-                del item_local.infoLabels['season']
-            """
 
             #Ahora se filtra por idioma, si procede, y se pinta lo que vale
             if filter_languages > 0:                                            # Si hay idioma seleccionado, se filtra
@@ -1131,6 +1126,7 @@ def episodios(item):
     search_seasons = True
     item.category = categoria
     epis_done = []
+    contentSeason = 0
     context = filtertools.context(item, list_language, list_quality)
     
     post = None
@@ -1330,12 +1326,12 @@ def episodios(item):
                     continue
                 else:
                     raise
-                item_local.contentSeason = int(item_local.contentSeason)
+                item_local.contentSeason = contentSeason = int(item_local.contentSeason)
                 item_local.contentEpisodeNumber = int(item_local.contentEpisodeNumber)
                 alt_epi = int(alt_epi)
             except:
                 logger.error('ERROR al extraer Temporada/Episodio: ' + title)
-                item_local.contentSeason = 1
+                item_local.contentSeason = contentSeason = 1
                 item_local.contentEpisodeNumber = 1
 
             if epi_rango:                                                       # Si son episodi os múltiples, lo guardamos
@@ -1370,10 +1366,11 @@ def episodios(item):
 
     if find_alt_link_option:
         item, itemlist = generictools.find_btdigg_episodios(item, itemlist, url=url, epis_done=epis_done, 
+                                                            contentSeason=contentSeason,
                                                             domain_alt=find_alt_domains, context=context,
                                                             canonical=canonical)
 
-    if (item.add_videolibrary or item.library_playcounts) and config.get_setting('auto_download_new', channel=channel):
+    if item.library_playcounts and config.get_setting('auto_download_new', channel=channel):
         itemlist = filtertools.get_links(itemlist, item, list_language, list_quality, replace_label=btdigg_label)
     
     if item.season_colapse and not item.add_videolibrary:                       # Si viene de listado, mostramos solo Temporadas
@@ -1399,6 +1396,15 @@ def episodios(item):
 
     return itemlist
 
+
+def post_episodes(item, itemlist):
+    logger.info('add_videolibrary: "%s"' % item.add_videolibrary)
+
+    if item.add_videolibrary:
+        itemlist = filtertools.get_links(itemlist, item, list_language, list_quality, replace_label=btdigg_label)
+    
+    return itemlist
+    
 
 def actualizar_titulos(item):
     logger.info()

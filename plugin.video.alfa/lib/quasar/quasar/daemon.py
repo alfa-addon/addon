@@ -785,6 +785,9 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
         binary_awake = 0
         binary_awake_safe = 300*1000
         while not finished:
+            if not isinstance(app_response, dict):
+                log.error("## ERROR in app_response: %s - type: %s" % (str(app_response), str(type(app_response))))
+                app_response = {}
             if not app_response.get('retCode', 0) >= 999:
                 try:
                     resp = p.sess.get(url, timeout=5)

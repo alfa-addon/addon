@@ -155,7 +155,7 @@ def set_genre(string):
 
     genres_dict = {'accion':['accion', 'action', 'accion y aventura', 'action & adventure'],
                    'adultos':['adultos', 'adultos +', 'adulto'],
-                   'animacion':['animacion', 'animacion e infantil', 'dibujos animados'],
+                   'animacin':['animacion', 'animacion e infantil', 'dibujos animados'],
                    'adolescente':['adolescente', 'adolescentes', 'adolescencia', 'adolecentes'],
                    'aventura':['aventura', 'aventuras'],
                    'belico':['belico', 'belica', 'belicas', 'guerra', 'belico guerra'],
@@ -180,16 +180,34 @@ def set_genre(string):
                    'recomendadas':['recomedada', 'recomendadas'],
                    'religion':['religion', 'religiosa', 'religiosas'],
                    'romantica':['romantica', 'romanticas', 'romantico'],
-                   'suspenso':['suspenso', 'suspense'],
+                   'suspense':['suspenso', 'suspense'],
                    'thriller':['thriller', 'thrillers'],
-                   'western':['western', 'westerns', 'oeste western']
+                   'western':['western', 'westerns', 'oeste western'],
+                   'politica':['war & politics'],
+                   'ciencia ficcion y fantasia':['sci-fi & fantasy']
                    }
+    
     string = re.sub(r'peliculas de |pelicula de la |peli |cine ','', string)
+    list_genres = string.split(',')
+    string_out = ''
+    
     for genre, variants in genres_dict.items():
-        if string in variants:
-            string = genre
+        for list_genre in list_genres:
+            #logger.debug('genre: %s; variants: %s; list_genre: %s' % (genre, variants, list_genre.lower()))
+            if list_genre.strip().lower() in variants:
+                if string_out:
+                    string_out += ', %s' % genre.title()
+                else:
+                    string_out += genre.title()
+    
+    for list_genre in list_genres:
+        if list_genre.strip().lower() not in str(genres_dict):
+            if string_out:
+                string_out += ', %s' % list_genre.strip().title()
+            else:
+                string_out += list_genre.strip().title()
 
-    return string
+    return string_out
 
 
 def remove_format(string):
@@ -245,9 +263,15 @@ def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, 
     last = '[/I][/B]\n'
     c_content = ''
     s_studio = ''
+    g_genres = ''
+    t_part = '[COLOR aquamarine][B][I]%s:[/COLOR] '
 
+    if infoLabels['genre']:
+        g_part = t_part % 'Género'
+        g_genres = '%s%s%s' % (g_part, set_color(set_genre(infoLabels['genre']), 'no_update'), last)
+    
     if languages:
-        l_part = '[COLOR aquamarine][B][I]Idiomas:[/COLOR] '
+        l_part = t_part % 'Idiomas'
         mid = ''
 
         if isinstance(languages, list):
@@ -259,7 +283,7 @@ def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, 
         p_lang = '%s%s%s' % (l_part, mid, last)
 
     if quality:
-        q_part = '[COLOR aquamarine][B][I]Calidad:[/COLOR] '
+        q_part = t_part % 'Calidad'
         p_quality = '%s%s%s' % (q_part, set_color(quality, 'quality'), last)
     
     if contentTitle:
@@ -272,11 +296,11 @@ def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, 
         c_content += '%s[B][I]%s%s' % ('' if not c_content else ' ', plot_extend, last)
 
     if vextend:
-        v_part = '[COLOR aquamarine][B][I]Tipo:[/COLOR] '
+        v_part = t_part % 'Tipo'
         p_vextend = '%s%s%s' % (v_part, "[Versión Extendida]", last)
     
     if infoLabels.get('studio', '') or (infoLabels.get('status', '') and infoLabels['mediatype'] != 'movie'):
-        s_part = '[COLOR aquamarine][B][I]Estudio: (Estado)[/COLOR] '
+        s_part = t_part % 'Estudio'
         s_studio = '%s%s' % (s_part, infoLabels.get('studio', '-'))
         if infoLabels['mediatype'] != 'movie':
             sea_epi = ''
@@ -295,20 +319,20 @@ def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, 
         s_studio = '%s%s' % (s_studio, last)
 
     if languages and quality and vextend:
-        plot_ = '%s%s%s%s%s\n%s' % (p_lang, p_quality, s_studio, c_content, p_vextend, plot)
+        plot_ = '%s%s%s%s%s%s\n%s' % (p_lang, p_quality, s_studio, g_genres, c_content, p_vextend, plot)
     elif languages and quality:
-        plot_ = '%s%s%s%s\n%s' % (p_lang, p_quality, s_studio, c_content, plot)
+        plot_ = '%s%s%s%s%s\n%s' % (p_lang, p_quality, s_studio, g_genres, c_content, plot)
     elif languages:
-        plot_ = '%s%s%s\n%s' % (p_lang, s_studio, c_content, plot)
+        plot_ = '%s%s%s%s\n%s' % (p_lang, s_studio, g_genres, c_content, plot)
 
     elif quality:
-        plot_ = '%s%s%s\n%s' % (p_quality, s_studio, c_content, plot)
+        plot_ = '%s%s%s%s\n%s' % (p_quality, s_studio, g_genres, c_content, plot)
 
     elif vextend:
-        plot_ = '%s%s%s\n%s' % (p_vextend, s_studio, c_content, plot)
+        plot_ = '%s%s%s%s\n%s' % (p_vextend, s_studio, g_genres, c_content, plot)
 
     else:
-        plot_ = '%s%s\n%s' % (s_studio, c_content, plot)
+        plot_ = '%s%s%s\n%s' % (s_studio, g_genres, c_content, plot)
 
     return plot_
 

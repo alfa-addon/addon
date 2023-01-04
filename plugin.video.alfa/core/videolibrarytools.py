@@ -1277,6 +1277,7 @@ def add_tvshow(item, channel=None):
             serie.channel = generictools.verify_channel(serie.channel)
             if config.get_setting('auto_download_new', serie.channel, default=False):
                 serie.sub_action = 'auto'
+                serie.add_videolibrary = True
                 serie.category = itemlist[0].category
                 from channels import downloads
                 downloads.save_download(serie, silent=True)

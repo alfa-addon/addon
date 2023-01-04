@@ -12,10 +12,7 @@ import getopt
 
 from datetime import datetime
 
-if PY3:
-    import rarfile as rf
-else:
-    import rarfile_py2 as rf
+import rarfile_py2 as rf
 
 
 usage = """
