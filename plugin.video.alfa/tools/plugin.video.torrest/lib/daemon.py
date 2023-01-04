@@ -309,7 +309,7 @@ class Daemon(object):
             if self._p.returncode == 888:
                 self._p.returncode = None
                 self._root = False
-                logging.info("Process to cannot be run as root")
+                logging.info("Process cannot be run as root")
 
             if self._root and PLATFORM.system == System.android:
                 read_select(self._p.stdout.fileno(), 10)
@@ -839,6 +839,9 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
         binary_awake = 0
         binary_awake_safe = 300*1000
         while not finished:
+            if not isinstance(app_response, dict):
+                logging.info("## ERROR in app_response: %s - type: %s", str(app_response), str(type(app_response)))
+                app_response = {}
             if not app_response.get('retCode', 0) >= 999:
                 try:
                     resp = p.sess.get(url, timeout=5)

@@ -798,12 +798,13 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
             return p
         
         if not is_alfa_installed() or config.get_setting("assistant_mode") != 'este':
-            platformtools.dialog_notification("Estos addons necesitan Alfa Assistant: %s " % app_needed.rstrip(', '), 
-                            "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]", time=10000)
+            if not filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
+                platformtools.dialog_notification("Estos addons necesitan Alfa Assistant: %s " % app_needed.rstrip(', '), 
+                                "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]", time=10000)
             
             if config.get_setting('assistant_flag_install', default=True):
                 time.sleep(10)
-                respuesta, app_name = install_alfa_assistant(update='auto')
+                respuesta, app_name = install_alfa_assistant(update='check')
         return p
     
     if not init and not isinstance(p, int) and config.get_setting("assistant_mode") != 'este':
@@ -1015,6 +1016,9 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
         stderr_acum = ''
         msg = ''
         while not finished:
+            if not isinstance(app_response, dict):
+                logger.error("## ERROR in app_response: %s - type: %s" % (str(app_response), str(type(app_response))))
+                app_response = {}
             if not app_response:
                 resp = httptools.downloadpage(url+str(p.pid), timeout=5, ignore_response_code=True, alfa_s=True, retry_alt=False, proxy_retries=0)
                 if resp.code != 200 and not retry_req:
@@ -1304,7 +1308,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
                     " como ayuda para acceder a ciertos canales y servidores?"):
         config.set_setting('assistant_flag_install', False)
         return respuesta, app_name
-    elif update and not isinstance(update, bool):
+    elif update and not isinstance(update, bool) and update != 'check':
         platformtools.dialog_notification("Instalación Alfa Assistant", "Comienza la actualización")
     elif forced_menu:
         platformtools.dialog_notification("Instalación Alfa Assistant", "Comienza la instalación")
@@ -1334,7 +1338,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         logger.error("Error en la descarga de control de versión. Seguimos...: %s" % str(response.code))
 
     #Si es una actualización programada, comprobamos las versiones de Github y de lo instalado
-    if update and isinstance(update, bool):
+    if (update and isinstance(update, bool)) or (not isinstance(update, bool) and update == 'check'):
         try:
             newer = False
             installed_version_list = version_actual.split('.')
@@ -1395,7 +1399,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             if '.rar' in download:
                 # Empezando la extracción del .rar del APK
                 try:
-                    if PY3:
+                    if PY3 and (not alfa_assistant_pwd or not config.get_setting('assistant_binary')):
                         import rarfile
                     else:
                         import rarfile_py2 as rarfile
@@ -1690,7 +1694,7 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
     data = response.data
     if PY3 and isinstance(data, bytes):
         data = "".join(chr(x) for x in bytes(data))
-    if update and isinstance(update, bool):
+    if (update and isinstance(update, bool)) or (not isinstance(update, bool) and update == 'check'):
         try:
             newer = False
             installed_version_list = version_app.split('.')

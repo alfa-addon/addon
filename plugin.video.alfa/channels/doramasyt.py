@@ -6,8 +6,9 @@
 import sys
 import base64
 import re
-PY3 = False
+import traceback
 
+PY3 = False
 if sys.version_info[0] >= 3:
     PY3 = True
     unicode = str
@@ -36,18 +37,16 @@ canonical = {
              'host_alt': ["https://www.doramasyt.com/"], 
              'host_black_list': [], 
              'pattern': '<link\s*rel="shortcut\s*icon"\s*href="([^"]+)"', 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
 
-def create_soup(url, referer=None, unescape=False):
+def create_soup(url, referer=None, unescape=False, ignore_response_code=True):
     logger.info()
 
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
-    else:
-        data = httptools.downloadpage(url, canonical=canonical).data
+    data = httptools.downloadpage(url, headers={'Referer': referer}, ignore_response_code=ignore_response_code, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -107,18 +106,40 @@ def list_all(item):
     matches = soup.find_all("div", class_="col-lg-2 col-md-4 col-6")
 
     for elem in matches:
-        url = elem.a["href"]
-        lang, title = clear_title(elem.find("p").text)
-        thumb = elem.img["src"]
-        year = elem.find("button", class_="btntwo").text
-        c_type = elem.find("button", class_="btnone").text.lower()
-        new_item = Item(channel=item.channel, title=title, url=url, action="episodios", language=lang,
-                        thumbnail=thumb, infoLabels={"year": year})
+        try:
+            season = 0
+            url = elem.a["href"]
+            lang, title = clear_title(elem.find("p").text)
 
-        if c_type not in ["live action", "pelicula"]:
-            new_item.contentSerieName = title
-        else:
-            new_item.contentTitle = title
+            season = scrapertools.find_single_match(title, '(?i)\s*(\d+)\s*(?:st|nd|rd|th)\s+season')
+            if not season:
+                season = scrapertools.find_single_match(title, '(?i)season\s*(\d+)')
+            title = re.sub('(?i)\s*\d+\s*(?:st|nd|rd|th)\s+season', '', title)
+            title = re.sub('(?i)season\s*\d+', '', title)
+
+            thumb = elem.img["src"]
+            year = c_type = ''
+            if elem.find("button", class_="btntwo"):
+                year = elem.find("button", class_="btntwo").text
+            if elem.find("button", class_="btnone"):
+                c_type = elem.find("button", class_="btnone").text.lower()
+
+            new_item = Item(channel=item.channel, title=title, url=url, action="episodios", language=lang,
+                            thumbnail=thumb, infoLabels={"year": year})
+
+            if c_type in ["live action", "pelicula"] or 'pelicula' in item.url:
+                new_item.contentTitle = title
+                new_item.contentType = 'movie'
+                if not year: new_item.infoLabels['year'] = '-'
+            else:
+                new_item.contentSerieName = title
+                new_item.contentType = 'tvshow'
+                if season: new_item.contentSeason = int(season)
+
+        except:
+            logger.error(elem)
+            logger.error(traceback.format_exc())
+            continue
 
         itemlist.append(new_item)
 
@@ -146,6 +167,7 @@ def section(item):
 
         url = "%s&%s=%s" % (item.url, item.section, elem["value"])
         title = elem["value"].capitalize()
+        
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
 
     return itemlist
@@ -155,14 +177,15 @@ def episodios(item):
     logger.info()
 
     itemlist = list()
+    infoLabels = item.infoLabels
 
     soup = create_soup(item.url).find("div", class_="row jpage row-cols-md-5")
     matches = soup.find_all("a")
-    infoLabels = item.infoLabels
+
     for elem in matches:
         url = elem["href"]
         epi_num = scrapertools.find_single_match(url, "episodio-(\d+)")
-        infoLabels["season"] = 1
+        infoLabels["season"] = item.contentSeason or 1
         infoLabels["episode"] = epi_num
         title = "1x%s - Episodio %s" %(epi_num, epi_num)
 
@@ -179,6 +202,7 @@ def episodios(item):
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
                  extra1='library'))
+    
     return itemlist
 
 
@@ -199,11 +223,9 @@ def findvideos(item):
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_idiomas)
 
     # Requerido para AutoPlay
-
     autoplay.start(itemlist, item)
 
     return itemlist
@@ -211,6 +233,7 @@ def findvideos(item):
 
 def play(item):
     logger.info()
+
     itemlist = list()
 
     if "monoschinos" in item.url:
@@ -227,6 +250,7 @@ def play(item):
 
 def search(item, texto):
     logger.info()
+    
     try:
         texto = texto.replace(" ", "+")
         item.url = item.url + texto
@@ -243,6 +267,7 @@ def search(item, texto):
 
 
 def clear_title(title):
+    
     if 'latino' in title.lower():
         lang = 'Latino'
     elif 'castellano' in title.lower():
