@@ -11,13 +11,5 @@
     "adult"
   ],
   "settings": [
-    {
-      "id": "menu_info",
-      "type": "bool",
-      "label": "Mostrar menú antes de reproducir con imágenes",
-      "default": true,
-      "enabled": true,
-      "visible": true
-    }
   ]
 }

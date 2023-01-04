@@ -22,14 +22,15 @@ from core import httptools
 canonical = {
              'channel': 'titsbox', 
              'host': config.get_setting("current_host", 'titsbox', default=''), 
-             'host_alt': ["https://titsbox.com"], 
+             'host_alt': ["https://titsbox.com/"], 
              'host_black_list': [], 
              'pattern': ['<li class="active"><a href="?([^"|\s*]+)["|\s*]'], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-url_api = host + "/?ajax=1&type="
-
+url_api = host + "?ajax=1&type="
+# httptools.downloadpage(host, canonical=canonical).data
 
 def mainlist(item):
     logger.info()
@@ -44,13 +45,14 @@ def mainlist(item):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = scrapertools.find_single_match(data, '<ul class="sidebar-nav">(.*?)</ul>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<a class="category-item" href="([^"]+)">([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle in matches:
-        url = "%s%s?ajax=1&type=top-rated&page=1" %(host, scrapedurl)  #most-recent
+        url = urlparse.urljoin(item.url,scrapedurl)
+        url = "%s?ajax=1&type=most-recent&page=1" %(url)  #
         scrapedplot = ""
         thumbnail = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=url,
@@ -61,7 +63,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     JSONData = json.load(data)
     for Video in JSONData["data"]:

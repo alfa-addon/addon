@@ -24,7 +24,7 @@ host = ''
 canonical = {
              'channel': 'sexofilm', 
              'host': config.get_setting("current_host", 'sexofilm', default=''), 
-             'host_alt': ["http://sexofilm.com"], 
+             'host_alt': ["http://sexofilm.com/"], 
              'host_black_list': [], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -36,8 +36,8 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/xtreme-adult-wing/adult-dvds/"))
-    itemlist.append(Item(channel=item.channel, title="Parody" , action="lista", url=host + "/keywords/parodies/"))
+    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "xtreme-adult-wing/adult-dvds/"))
+    itemlist.append(Item(channel=item.channel, title="Parody" , action="lista", url=host + "keywords/parodies/"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -46,7 +46,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url =host + "/?s=%s" % texto
+    item.url = "%s?s=%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -59,7 +59,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     if item.title == "Canal" :
         data = scrapertools.find_single_match(data,'>Best Porn Studios</a>(.*?)</ul>')
     else:
@@ -75,9 +75,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -92,14 +92,16 @@ def lista(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.h2.text.strip()
-        thumbnail = elem.img['data-src']
+        thumbnail = elem.img['src']
+        if "base64" in thumbnail:
+            thumbnail = elem.img['data-src']
         title = title.replace(" Porn DVD", "").replace("Permalink to ", "").replace(" Porn Movie", "")
         plot = ""
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle = title, url=url,
-                                   fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('a', class_='nextpostslink')
     if next_page:
         next_page = next_page['href']
@@ -127,14 +129,11 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    url = ""
-    data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data,'<div class="entry-inner">(.*?)<h4>')
-    url = scrapertools.find_single_match(data,'<source src=\'([^\']+)\'')
-    if not url:
-        url = scrapertools.find_single_match(data,'<source src="([^"]+)"')
-    if not url:
-        itemlist = servertools.find_video_items(Item(channel=item.channel, url = item.url))
-    if url:
-        itemlist.append(Item(channel=item.channel, action="play", title= url, url=url, contentTitle = item.title, timeout=45))
+    soup = create_soup(item.url).find('div', class_='entry-inner')
+    if soup.find('iframe'):
+        url = soup.iframe['src']
+    if soup.find('source'):
+        url = soup.source['src']
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

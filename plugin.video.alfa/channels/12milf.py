@@ -108,8 +108,8 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel = item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
-                             fanart=thumbnail, contentTitle=title, plot=plot))
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('a', class_='current')
     if next_page and next_page.parent.find_next_sibling("li"):
         next_page = next_page.parent.find_next_sibling("li").a['href']
@@ -123,7 +123,7 @@ def findvideos(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
-    return itemlist[::-1]
+    return itemlist
 
 
 def play(item):

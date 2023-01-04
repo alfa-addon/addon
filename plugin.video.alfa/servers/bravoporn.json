@@ -40,7 +40,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.(?:xfreehd|tubewolf).com/(?:video|embed)/[0-9]+)",
+        "pattern": "(https://www.(?:xfreehd|tubewolf|sextvx).com/(?:es/|)(?:video|embed)/[0-9]+)",
         "url": "\\1"
       },
       {
@@ -93,6 +93,10 @@
       },
       {
         "pattern": "(https://hellporno.com/(?:videos|embed)/[A-z0-9-]+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://pornez.net/player/\\?v=[A-z0-9-]+)",
         "url": "\\1"
       },
       {

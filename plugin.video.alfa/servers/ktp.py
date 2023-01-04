@@ -25,7 +25,6 @@ kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'ignore
 def test_video_exists(page_url):
     
     response = httptools.downloadpage(page_url, **kwargs)
-    
     if response.code == 404 \
     or "cwtvembeds" in page_url \
     or "Page not Found" in response.data \
@@ -44,12 +43,15 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info()
-    
     video_urls = []
     invert = ""
     url = ""
-    
-    if "video_url_text" in data:
+    data = httptools.downloadpage(page_url, **kwargs).data
+    if "flashvars.video_url_text" in data: #sunporno
+        data = scrapertools.find_single_match(data, '(flashvars.video_url[^\}]+)')
+        patron = "(?:flashvars.video_url|flashvars.video_alt_url)\s*=\s*'([^']+)'.*?"
+        patron += "(?:flashvars.video_url_text|flashvars.video_alt_url_text)\s*=\s*'([^']+)'"
+    elif "video_url_text" in data:
         patron = '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?'
         patron += '(?:video_url_text|video_alt_url_text|video_alt_url[0-9]*_text):\s*(?:\'|")([^\,]+)(?:\'|")'
     else:
@@ -66,9 +68,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             # url += "|verifypeer=false"
             url += "|Referer=%s" % page_url
             video_urls.append(['[ktplayer] %s' % quality, url])
-        if "LQ" in quality:
+        if "LQ" in quality or "low" in quality:
             invert= "true"
-    
+        else:
+            video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
+
     if invert:
         video_urls.reverse()
     

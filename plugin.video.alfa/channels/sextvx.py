@@ -21,8 +21,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'sextvx', 
              'host': config.get_setting("current_host", 'sextvx', default=''), 
-             'host_alt': ["https://www.sextvx.com"], 
+             'host_alt': ["https://www.sextvx.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,9 +32,9 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/es/recent/"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/es/popular/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/es/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "es/recent/"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "es/popular/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "es/categories/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -41,7 +42,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/es/results?search_query=%s&r=1" % (host,texto)
+    item.url = "%ses/results?search_query=%s&r=1" % (host,texto)
     try:
         return lista(item)
     except:
@@ -63,15 +64,16 @@ def categorias(item):
         url = urlparse.urljoin(item.url,url)
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
-                              thumbnail=thumbnail , plot=plot) )
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     return itemlist
+
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -102,8 +104,8 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
-                               plot=plot, fanart=thumbnail, contentTitle=title ))
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('li', class_='next')
     if next_page:
         next_page = next_page.a['href']
@@ -115,21 +117,13 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('video', class_='vplayer')
-    matches = soup.find_all('source')
-    for elem in matches:
-        url = elem['src']
-        quality = elem['title']
-        itemlist.append(Item(channel=item.channel, action="play", title= quality, url=url))
-    return itemlist[::-1]
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
+    return itemlist
 
 def play(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('video', class_='vplayer')
-    matches = soup.find_all('source')
-    for elem in matches:
-        url = elem['src']
-        quality = elem['title']
-        itemlist.append(['%s' %quality, url])
-    return itemlist[::-1]
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
+    return itemlist

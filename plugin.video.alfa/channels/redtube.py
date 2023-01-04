@@ -20,8 +20,9 @@ from platformcode import config, logger
 canonical = {
              'channel': 'redtube', 
              'host': config.get_setting("current_host", 'redtube', default=''), 
-             'host_alt': ["https://es.redtube.com"], 
+             'host_alt': ["https://es.redtube.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,12 +32,12 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "/newest"))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="lista", url=host + "/mostviewed"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/top"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "/channel/top-rated"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=host + "/pornstar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/popular"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "newest"))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="lista", url=host + "mostviewed"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "top"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "channel/top-rated"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=host + "pornstar"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories/popular"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -44,7 +45,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/?search=%s" % (host, texto)
+    item.url = "%s?search=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -57,7 +58,7 @@ def search(item, texto):
 def catalogo(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<span class="channel-logo">.*?'
     patron += 'data-src="([^"]+)".*?'
@@ -81,7 +82,7 @@ def catalogo(item):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     if "categories" in item.url:
         patron = '<li id="categories_list_block_.*?'
@@ -109,21 +110,31 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = scrapertools.find_single_match(data,'<em class="premium_tab_icon rt_icon rt_Menu_Star">(.*?)<div class="footer">')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="video_block_wrapper js_mediaBookBounds ">.*?'
     patron += 'data-o_thumb="([^"]+)"(.*?)'
     patron += '<span class="duration">(.*?)</a>.*?'
-    patron += '<a title="([^"]+)".*?href="(/\d+)"'
+    patron += '<a title="([^"]+)".*?href="(/\d+)"(.*?)</ul'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedthumbnail,scrapedhd,duration,scrapedtitle,scrapedurl in matches:
+    for scrapedthumbnail,scrapedhd,duration,scrapedtitle,scrapedurl,pornstars in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
         duration = scrapertools.find_single_match(duration, '(\d+:\d+)')
         if "hd-video" in scrapedhd:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (duration,scrapedtitle)
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (duration, scrapedtitle)
+        if 'href="/pornstar/' in pornstars:
+            pornstars = scrapertools.find_multiple_matches(pornstars, 'href="/pornstar/.*?title="([^"]+)"')
+            pornstar = ' & '.join(pornstars)
+            pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+            lista = title.split()
+            if "HD" in title:
+                lista.insert (4, pornstar)
+            else:
+                lista.insert (2, pornstar)
+            title = ' '.join(lista)
         plot = ""
         action = "play"
         if logger.info() == False:
@@ -140,16 +151,15 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    url = item.url
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
+
 
 
 def play(item):
     logger.info()
     itemlist = []
-    url = item.url
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
