@@ -308,7 +308,7 @@ def logout(item):
 
 def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_proxy=None, 
                  proxy_retries=1, force_check=False, force_login=True, alfa_s=False, hide_infobox=False, 
-                 timeout=10, cf_no_blacklist=False, retries_cloudflare=canonical['retries_cloudflare']):
+                 timeout=10, cf_no_blacklist=False, retries_cloudflare=canonical.get('retries_cloudflare', 0)):
     global account, sid, user_status
     forced_proxy_retry = canonical.get('forced_proxy_ifnot_assistant', '') or 'ProxyCF'
 

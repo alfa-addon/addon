@@ -1672,7 +1672,8 @@ def download_from_server(item, silent=False):
                         item.server + '\n' + config.get_localized_string(60003) % item.contentChannel)
         if item.server == 'torrent': item.url_control = item.url
         try:
-            itemlist = channeltools.get_channel_attr(item.contentChannel, "play", item.clone(channel=item.contentChannel, action=item.contentAction))
+            itemlist = channeltools.get_channel_attr(item.contentChannel, "play", item.clone(channel=item.contentChannel, 
+                                                     action=item.contentAction))
         except:
             logger.error("Error en el canal %s" % item.contentChannel)
         else:
@@ -1878,6 +1879,7 @@ def download_from_best_server(item, silent=False):
 
     # Recorremos el listado de servers, hasta encontrar uno que funcione
     for play_item in play_items:
+        play_item.contentAction = play_item.action
         if not play_item.post and item.post:
             item.post_back = item.post
             item.post = None
@@ -2369,6 +2371,14 @@ def get_episodes(item):
     except:
         logger.error(traceback.format_exc(1))
 
+    channel = None
+    try:
+        channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
+    except ImportError:
+        exec("import channels." + serie.channel + " as channel")
+    if channel and itemlist and hasattr(channel, 'post_episodes'):
+        itemlist = getattr(channel, 'post_episodes')(item, itemlist)
+    
     return itemlist
 
 

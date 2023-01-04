@@ -150,10 +150,11 @@ def mainlist(item):
     return itemlist
 
 
-def get_source(url, soup=False, json=False, unescape=False, **opt):
+def get_source(url, soup=False, json=False, unescape=False, ignore_response_code= True, **opt):
     logger.info()
 
     opt['canonical'] = canonical
+    opt['ignore_response_code'] = ignore_response_code
     data = httptools.downloadpage(url, **opt)
 
     if 'Javascript is required' in data.data:
@@ -245,7 +246,6 @@ def latest(item):
     for elem in matches.find_all("article", id=re.compile(r"^post-\d+")):
 
         info = elem.find("div", class_="poster")
-        logger.error(info)
 
         thumb = info.img.get("src")
         title = re.sub('(?i)(?:season\s*)?(?:\d{1,2})?\s*Cap\s*\d{1,3}', '', info.img["alt"]).strip()
@@ -260,7 +260,7 @@ def latest(item):
             episode = int(episode)
         except:
             season = 1
-            episode = int(scrapertools.find_single_match(info.img["alt"], '(?i)(?:\d{1,2})?\s*Cap\s*(\d{1,3})'))
+            episode = int(scrapertools.find_single_match(info.img["alt"], '(?i)(?:\d{1,2})?\s*Cap\s*(\d{1,3})') or 1)
         
         try:
             tag = info.find("span", class_="quality").text
@@ -317,7 +317,7 @@ def seasons(item):
     infoLabels = item.infoLabels
 
     for elem in matches:
-        season = elem.find("span", class_="se-t").text
+        season = int(elem.find("span", class_="se-t").text or 1)
         title = "Temporada %s" % (season)
         infoLabels["season"] = season
         infoLabels["mediatype"] = 'season'
@@ -387,7 +387,7 @@ def episodesxseasons(item):
             info = epi.find("div", class_="episodiotitle")
             url = info.a["href"]
             epi_name = info.a.text
-            epi_num = epi.find("div", class_="numerando").text.split(" - ")[1]
+            epi_num = int(epi.find("div", class_="numerando").text.split(" - ")[1] or 1)
             infoLabels["episode"] = epi_num
             infoLabels["mediatype"] = 'episode'
             title = "%sx%s - %s" % (season, epi_num, epi_name)

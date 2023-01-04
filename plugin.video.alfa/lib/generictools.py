@@ -1548,7 +1548,7 @@ def find_btdigg_news(item, matches=[], canonical={}, channel_alt=''):
         if matches_btdigg: matches = matches_btdigg[:]
         
         peliculas = 'peliculas-latino/' if default_lang == 'lat' else 'peliculas/'
-        url_tails = [[host_alt + 'peliculas-hd/', 'pelicula'], [host_alt + peliculas, 'pelicula'], 
+        url_tails = [[host_alt + peliculas, 'pelicula'], [host_alt + 'peliculas-hd/', 'pelicula'], 
                      [host_alt + 'estrenos-de-cine/', 'pelicula'], 
                      [host_alt + 'series/', 'serie']]
         y = 40 if 'pelicula' in item.extra else 60
@@ -1622,7 +1622,7 @@ def find_btdigg_news(item, matches=[], canonical={}, channel_alt=''):
     return matches
 
 
-def find_btdigg_episodios(item, itemlist, url= '', epis_done=[], domain_alt='', cache=True, context=[], canonical={}):
+def find_btdigg_episodios(item, itemlist, url='', epis_done=[], contentSeason=0, domain_alt='', cache=True, context=[], canonical={}):
     logger.info()
     
     try:
@@ -1639,8 +1639,10 @@ def find_btdigg_episodios(item, itemlist, url= '', epis_done=[], domain_alt='', 
 
         season = item.infoLabels['number_of_seasons'] or 1
         seasons = season
-        season_low = season
-        if item.url == btdigg_url:
+        season_low = contentSeason or season
+        if season != season_low:
+            seasons = '%s-%s' % (season_low, season)
+        elif btdigg_url in item.url:
             seasons = '1-%s' % season
             season_low = 1
         episode_max = int('%s%s' % (season, str(item.infoLabels['number_of_episodes']).zfill(2)))

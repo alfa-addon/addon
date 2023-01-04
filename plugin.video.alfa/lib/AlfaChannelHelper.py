@@ -475,8 +475,15 @@ class DictionaryChannel(AlfaChannelHelper):
             soup = jsontools.load(self.create_soup(item.url).find(finds.get('findvideos', '')[0], 
                                                                   id=finds.get('findvideos', '')[1]).text)
             
-            matches = soup.get('props', {}).get('pageProps', {}).get('post', {})\
-                          .get('seasons', {})[int(infolabels['season'])-1].get('episodes', {})
+            for i in range(int(infolabels['season'])-1, -1, -1):
+                try:
+                    matches = soup.get('props', {}).get('pageProps', {}).get('post', {})\
+                                  .get('seasons', {})[i].get('episodes', {})
+                    break
+                except:
+                    logger.error('Estructura de Temporadas incorrecta. No existe %s' % infolabels['season'])
+                    matches = []
+                    continue
 
             if not matches:
                 logger.error(finds)

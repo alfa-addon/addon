@@ -3329,7 +3329,7 @@ class ToolSetup:
 
 
 UNRAR_CONFIG = {
-    "open_cmd": ("UNRAR_TOOL", "p", "-inul"),
+    "open_cmd": ("UNRAR_TOOL", "p", "-y", "-inul"),
     "check_cmd": ("UNRAR_TOOL", "-inul"),
     "password": "-p",
     "no_password": ("-p-",),

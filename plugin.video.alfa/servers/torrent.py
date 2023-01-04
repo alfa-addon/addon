@@ -3236,12 +3236,16 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
     sys.path.insert(0, config.get_setting("unrar_path", server="torrent", default="")\
                     .replace('/unrar', '').replace('\\unrar,exe', ''))
     try:
-        if PY3:
+        if PY3 and config.get_system_platform() in ['windows', 'xbox', 'android', 'atv2'] \
+               and (not password or not config.get_setting('assistant_binary')):
+            rarfile_PY = 3
             import rarfile
         else:
+            rarfile_PY = 2
             import rarfile_py2 as rarfile
+        log("##### Usando rarfile_py%s - Assistant: %s" % (rarfile_PY, config.get_setting('assistant_binary')))
     except:
-        log("##### ERROR en import rarfile")
+        log("##### ERROR en import rarfile_PY%s" % rarfile_PY)
         log(traceback.format_exc())
         config.set_setting("UNRAR_in_use", False, server="torrent")             # Marcamos unRAR como disponible
         return rar_file, False, '', ''
@@ -3301,6 +3305,11 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
         try:
             time.sleep(1)                                                       # Dejamos un tiempo para evitar colisiones (???)
             archive = rarfile.RarFile(file_path)
+            if rarfile_PY ==3 and config.get_setting('assistant_binary') and archive.needs_password():
+                rarfile_PY = 2
+                log("##### Necesita password: RE-importando rarfile_py2")
+                import rarfile_py2 as rarfile
+                archive = rarfile.RarFile(file_path)
         except:
             log("##### ERROR en Archivo rar: %s" % rar_file)
             log("##### ERROR en Carpeta del rar: %s" % file_path)
@@ -3325,7 +3334,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
             if not password:
                 pass_path = filetools.split(file_path)[0]
                 password = last_password_search(pass_path, erase_file_path)
-            if not password :
+            if not password:
                 password = dialog_input(heading="Introduce la contraseña (Mira en %s)" % pass_path)
                 if not password:
                     error_msg = "No se ha introducido la contraseña"

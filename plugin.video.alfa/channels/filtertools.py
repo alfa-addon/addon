@@ -382,7 +382,8 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
                     % (len(new_itemlist), len(list_item), _filter.language, language_count, _filter.quality_allowed,
                        quality_count))
 
-        if len(new_itemlist) == 0 or new_itemlist[-1].action not in ["findvideos", "play", "episodios"]:
+        if (not new_itemlist and item.sub_action not in ["tvshow", "season", "unseen", "auto"]) \
+                             or (new_itemlist and new_itemlist[-1].action not in ["findvideos", "play", "episodios"]):
             list_item_all = []
             for i in list_item:
                 list_item_all.append(i.tourl())

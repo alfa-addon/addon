@@ -952,7 +952,8 @@ def listado(item, alfa_s=False):                                                
             # Slugify, pero más light
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
                     .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
-                    .replace("ï¿½", "ñ").replace("Ã±", "ñ")
+                    .replace("ï¿½", "ñ").replace("Ã±", "ñ")\
+                    .replace("\\u00c3\\u00b1", "ñ").replace("\\u00c3\\u00ad", "í")
             title = scrapertools.decode_utf8_error(title)
 
             #logger.debug(title)
