@@ -9,6 +9,8 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import os
 import re
+import traceback
+
 from bs4 import BeautifulSoup
 from core import httptools
 from core import scrapertools
@@ -23,19 +25,20 @@ canonical = {
              'host': config.get_setting("current_host", 'bloghorror', default=''), 
              'host_alt': ["https://bloghorror.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': 'ProxyCF', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 fanart = host + 'wp-content/uploads/2015/04/bloghorror-2017-x.jpg'
 
 
-def create_soup(url, referer=None, unescape=False):
+def create_soup(url, referer=None, unescape=False, ignore_response_code=True):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, ignore_response_code=ignore_response_code, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url, canonical=canonical).data
+        data = httptools.downloadpage(url, ignore_response_code=ignore_response_code, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -50,10 +53,10 @@ def mainlist(item):
     itemlist = list()
 
     itemlist.append(Item(channel=item.channel, fanart=fanart, title="Todas", action="list_all",
-                         url=host+'/category/terror', thumbnail=get_thumb('all', auto=True)))
+                         url=host+'category/terror-2', thumbnail=get_thumb('all', auto=True)))
 
     itemlist.append(Item(channel=item.channel, fanart=fanart, title="Asiaticas", action="list_all",
-                         url=host+'/category/asiatico', thumbnail=get_thumb('asiaticas', auto=True)))
+                         url=host+'category/asiatico1', thumbnail=get_thumb('asiaticas', auto=True)))
 
     itemlist.append(Item(channel=item.channel, fanart=fanart, title = 'Buscar', action="search", url=host + '?s=', pages=3,
                          thumbnail=get_thumb('search', auto=True)))
@@ -92,13 +95,9 @@ def list_all(item):
         itemlist.append(Item(channel=item.channel, title=title[0], url=url, contentTitle=title[0], thumbnail=thumb,
                              action="findvideos", infoLabels={"year": year}))
 
-    tmdb.set_infoLabels_itemlist(itemlist, True)
-
-
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     # Paginacion
-
     if itemlist:
 
         try:
@@ -119,6 +118,7 @@ def findvideos(item):
     itemlist = list()
 
     soup = create_soup(item.url).find("div", class_="entry-content-wrap")
+    
     quality = scrapertools.find_single_match(soup.text, r"Calidad: ([^\n]+)\n").split("+")
     urls_list = soup.find_all("a", {"data-wpel-link": True, "href": re.compile("magnet|torrent")})
     try:
@@ -160,10 +160,14 @@ def findvideos(item):
 
 def play(item):
     logger.info()
+    
     if item.subtitle:
-        sub = subtitletools.get_from_subdivx(item.subtitle)
-
-        return [item.clone(subtitle=sub)]
+        try:
+            sub = subtitletools.get_from_subdivx(item.subtitle)
+            return [item.clone(subtitle=sub)]
+        except:
+            logger.error('ERROR en Subtítulos: %s' % traceback.format_exc())
+            return [item]
     else:
         return [item]
 
@@ -190,8 +194,10 @@ def search(item, texto):
 
 def newest(categoria):
     logger.info()
+    
     itemlist = []
     item = Item()
+    
     try:
         if categoria in ['peliculas', 'terror', 'torrent']:
             item.url = host

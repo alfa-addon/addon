@@ -562,8 +562,7 @@ def get_thumb(thumb_name, view="thumb_", auto=False):
     if auto:
         thumbnail = ''
 
-        thumb_name = set_genre(simplify(thumb_name))
-
+        thumb_name = set_genre(simplify(thumb_name)).lower()
 
         if thumb_name in thumb_dict:
             thumbnail = thumb_dict[thumb_name]

@@ -211,6 +211,11 @@ def init():
         # Se verifica si la versión del .json y del add-on son iguales.  Si es así se sale.  Si no se copia "custom_code" al add-on
         verify_copy_folders(custom_code_dir, custom_code_json_path)
         
+        # Limpia las carpetas temporales de la función "tempfile.mkdtemp"
+        tempfile_mkdtemp = config.get_temp_file('tempfile_mkdtemp')
+        if filetools.exists(tempfile_mkdtemp):
+            filetools.rmdirtree(tempfile_mkdtemp)
+        
         # Si se han quedado "colgadas" descargas con archivos .RAR, se intenta identificarlos y reactivar el UnRar
         reactivate_unrar(init=True, mute=True)
         
@@ -299,8 +304,8 @@ def verify_script_alfa_update_helper(silent=True):
     
     addons_path = filetools.translatePath("special://home/addons")
     repos_dir = 'downloads/repos/'
-    alfa_repo = ['repository.alfa-addon', '1.0.7', '*', '']
-    alfa_helper = ['script.alfa-update-helper', '0.0.6', '*', '']
+    alfa_repo = ['repository.alfa-addon', '1.0.8', '*', '']
+    alfa_helper = ['script.alfa-update-helper', '0.0.7', '*', '']
     torrest_repo = ['repository.github', '0.0.7', '*', 'V']
     torrest_addon = ['plugin.video.torrest', '0.0.14', '*', '']
     futures_script = ['%sscript.module.futures' % repos_dir, '2.2.1', 'PY2', '']
@@ -431,7 +436,7 @@ def install_alfa_now(silent=True):
         return
     
     addons_path = filetools.translatePath("special://home/addons")
-    alfa_addon = ['plugin.video.alfa', '3.4.2', '*']
+    alfa_addon = ['plugin.video.alfa', '3.8.3', '*']
     addonid = alfa_addon[0]
     new_version = versiones.get(addonid, alfa_addon[1])
     package = addonid + '-%s.zip' % new_version
@@ -1400,8 +1405,9 @@ def set_season_holidays():
                 xml["addon"]["extension"][1]["assets"]["fanart"] = season_holidays_dict[season]['files'][0]
                 data = config.get_xml_content(xml_file, content=xml)
                 if data: config.set_setting('season_holidays', season)
-        
-        logger.info(season_holidays_dict[season]['files'][0], force=True)
+            logger.info('Set to: %s' % season_holidays_dict[season]['files'][0], force=True)
+        else:
+            logger.info('Already in: %s' % season_holidays_dict[season]['files'][0], force=True)
 
     except:
         if xml: logger.error('XML File: %s; XML: %s' % (xml_file, str(xml)))

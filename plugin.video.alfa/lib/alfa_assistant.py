@@ -41,19 +41,19 @@ ASSISTANT_SERVER_PORT = 48884
 ASSISTANT_SERVER_PORT_PING = 48886
 ASSISTANT_MODE = config.get_setting("assistant_mode")
 
-assistant_urls = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/', \
+assistant_urls = ['https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/', \
                   'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/']
 assistant_desktop_urls = {
                           'windows': [
-                                      'https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/',
+                                      'https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/',
                                       'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/'
                                      ],
                           'linux':   [
-                                      'https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/',
+                                      'https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/',
                                       'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/'
                                      ],
                           'osx':     [
-                                      'https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/',
+                                      'https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/',
                                       'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/'
                                      ]
                          }

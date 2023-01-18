@@ -67,7 +67,9 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
     domain_full = urlparse.urlparse(url).netloc
     domain = domain_full
     pcb = base64.b64decode(config.get_setting('proxy_channel_bloqued')).decode('utf-8')
-    if 'hideproxy' in url or 'webproxy' in url or 'hidester' in url \
+    if (opt.get('cf_assistant_if_proxy', False) or opt.get('canonical', {}).get('cf_assistant_if_proxy', False)) and not httptools.TEST_ON_AIR:
+        pass
+    elif 'hideproxy' in url or 'webproxy' in url or 'hidester' in url \
                           or '__cpo=' in url or self.cloudscraper.proxies \
                           or httptools.TEST_ON_AIR or domain in pcb:
         blacklist_clear = False

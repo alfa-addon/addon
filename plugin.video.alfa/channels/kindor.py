@@ -100,12 +100,15 @@ def sub_menu(item):
     return itemlist
 
 
-def create_soup(url, headers=None, post=None, only_headers=False, ignore_response_code=True, 
-                timeout=5, unescape=False, soup=True, canonical=canonical):
+def create_soup(url, unescape=False, soup=True, headers=None, timeout=5, ignore_response_code=True, canonical=canonical, **kwargs):
     logger.info()
 
-    resp = httptools.downloadpage(url, headers=headers, post=post, ignore_response_code=ignore_response_code, 
-                                  only_headers=only_headers, timeout=timeout, canonical=canonical)
+    if headers: kwargs['headers'] = headers
+    kwargs['timeout'] = timeout
+    kwargs['ignore_response_code'] = ignore_response_code
+    kwargs['canonical'] = canonical
+
+    resp = httptools.downloadpage(url, **kwargs)
     data = resp.data
 
     if unescape:

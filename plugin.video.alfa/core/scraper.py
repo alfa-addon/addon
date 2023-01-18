@@ -48,11 +48,10 @@ def find_and_set_infoLabels(item):
         list_opciones_cuadro.append(scrapers_disponibles['tvdb'])
 
     # Importamos el scraper
+    scraper = None
     try:
         scraper = __import__('core.%s' % scraper_actual, fromlist=["core.%s" % scraper_actual])
     except ImportError:
-        exec("import core." + scraper_actual + " as scraper")
-    except:
         import traceback
         logger.error(traceback.format_exc())
 
@@ -119,7 +118,7 @@ def find_and_set_infoLabels(item):
                         scraper = None
                         scraper = __import__('core.%s' % scraper_actual, fromlist=["core.%s" % scraper_actual])
                     except ImportError:
-                        exec("import core." + scraper_actual + " as scraper_module")
+                        continue
                     break
 
     logger.error("Error al importar el modulo scraper %s" % scraper_actual)
@@ -298,8 +297,6 @@ def get_nfo(item, nfo_format='url_scraper'):
             try:
                 scraper = __import__('core.%s' % scraper_actual, fromlist=["core.%s" % scraper_actual])
             except ImportError:
-                exec("import core." + scraper_actual + " as scraper")
-            except:
                 import traceback
                 logger.error(traceback.format_exc())
         return scraper.get_nfo(item)

@@ -19,6 +19,7 @@ import base64
 import re
 import xbmcgui
 import json as json_fn
+import traceback
 
 from core import httptools
 from core import jsontools
@@ -31,12 +32,14 @@ from channels import filtertools
 from platformcode import platformtools
 from channelselector import get_thumb
 
+# https://dominioshdfull.com/
+
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             'host_alt': ['https://hdfull.life/'], 
+             'host_alt': ['https://hdfull.store/'], 
              'host_verification': '%slogin', 
-             'host_black_list': ['https://hdfull.digital/', 'https://hdfull.work/', 
+             'host_black_list': ['https://hdfull.life/', 'https://hdfull.digital/', 'https://hdfull.work/', 
                                  'https://hdfull.video/', 'https://hdfull.cloud/', 'https://hdfull.wtf/', 
                                  'https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
                                  'https://new.hdfull.one/', 'https://hdfull.top/', 'https://hdfull.bz/'],
@@ -1472,14 +1475,12 @@ def find_hidden_seasons(item, matches, sid):
                 else:
                     return matches
             except:
-                import traceback
                 logger.error(traceback.format_exc())
                 return matches
 
         for i in range(web+1, high_season+1):
             matches.append((str(i), season_name+str(i), thumb))
     except:
-        import traceback
         logger.error(traceback.format_exc())
     
     return matches

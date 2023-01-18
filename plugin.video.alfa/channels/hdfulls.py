@@ -40,8 +40,8 @@ list_servers = ['flix555', 'clipwatching', 'gamovideo', 'powvideo', 'streamplay'
 canonical = {
              'channel': 'hdfulls', 
              'host': config.get_setting("current_host", 'hdfulls', default=''), 
-             'host_alt': ["https://hdfull.pm/"], 
-             'host_black_list': ["https://www.hdfull.it/", "https://hdfull.bz/", "https://www.hdfull.tw/", 
+             'host_alt': ["https://www.hdfull.it/"], 
+             'host_black_list': ["https://hdfull.bz/", "https://www.hdfull.tw/", 
                                  "https://www.hdfull.app/", "https://hdfull.be/", "https://hdfull.fm/"], 
              'status': 'SIN CANONICAL NI DOMINIO', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
@@ -72,13 +72,15 @@ def mainlist(item):
     return itemlist
 
 
-def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None):
+def create_soup(url, referer=None, unescape=False, forced_proxy_opt=None, ignore_response_code=True):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical, forced_proxy_opt=forced_proxy_opt).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical, 
+                                      ignore_response_code=ignore_response_code, forced_proxy_opt=forced_proxy_opt).data
     else:
-        data = httptools.downloadpage(url, canonical=canonical, forced_proxy_opt=forced_proxy_opt).data
+        data = httptools.downloadpage(url, canonical=canonical, ignore_response_code=ignore_response_code, 
+                                      forced_proxy_opt=forced_proxy_opt).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -117,7 +119,7 @@ def menupeliculas(item):
                          mode="movies", first=1))
 
     itemlist.append(Item(channel=item.channel, action="genres", title="Películas por Género",
-                         thumbnail=get_thumb('genres', auto=True), tag='movies'))
+                         url=host + "movies", thumbnail=get_thumb('genres', auto=True), tag='movies'))
 
     return itemlist
 
@@ -141,8 +143,8 @@ def menuseries(item):
     itemlist.append(Item(channel=item.channel, action="list_all", title="Rating IMDB", url=host + "tv-shows/imdb_rating",
                          thumbnail=get_thumb('recomended', auto=True), first=1))
 
-    itemlist.append(Item(channel=item.channel, action="genres", title="Series por Género", url=host,
-                         thumbnail=get_thumb('genres', auto=True), tag="tv"))
+    itemlist.append(Item(channel=item.channel, action="genres", title="Series por Género", 
+                         url=host + "tv-shows", thumbnail=get_thumb('genres', auto=True), tag="tv"))
 
     return itemlist
 
@@ -152,16 +154,18 @@ def list_all(item):
 
     itemlist = list()
     next = True
-    if not item.url.startswith(host):
-        item.url = urlparse.urljoin(host, item.url)
-    if item.post:
-        soup = BeautifulSoup(get_source(item.url, post=item.post), "html5lib", from_encoding="utf-8")
+    item.url = urlparse.urljoin(host, item.url)
+    post = item.post or None
+    if post:
+        soup = BeautifulSoup(get_source(item.url, post=post), "html5lib", from_encoding="utf-8")
+        del item.post
     else:
         soup = create_soup(item.url, referer=host)
 
     matches = soup.find_all("div", class_="span-6 inner-6 tt view")
 
     first = item.first
+    if 'first' in item: del item.first
     last = first + 20
 
     if last > len(matches):
@@ -211,7 +215,7 @@ def list_all(item):
 
     if url_next_page and len(matches) > 20:
         itemlist.append(Item(channel=item.channel,title="Siguiente >>", url=url_next_page, action='list_all',
-                             first=first))
+                             post=post, first=first))
 
     return itemlist
 
@@ -298,7 +302,7 @@ def genres(item):
 
     itemlist = list()
 
-    soup = create_soup(host, host).find_all("li", class_="dropdown")
+    soup = create_soup(item.url, referer=host).find_all("li", class_="dropdown")
     if "Películas" in item.title:
         matches = soup[1].find_all("li")
     else:
