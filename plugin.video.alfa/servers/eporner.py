@@ -28,7 +28,7 @@ def get_video_url(page_url, video_password):
     for source in jsondata["sources"]["mp4"]:
         url = jsondata["sources"]["mp4"][source]["src"]
         quality = source.split(" ")[0].replace("@60fps", "")
-        video_urls.append(["%s" % quality, url])
+        video_urls.append(["[eporner] %s" % quality, url])
     video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls
     # return sorted(video_urls, key=lambda i: int(i[0].split("p")[1]))

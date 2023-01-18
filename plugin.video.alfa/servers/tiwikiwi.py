@@ -22,8 +22,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = httptools.downloadpage(page_url).data
     enc_data = scrapertools.find_single_match(data, "type='text/javascript'>(eval.*?)?\s+</script>")
     dec_data = jsunpack.unpack(enc_data)
+    logger.debug(dec_data)
     # sources = 'file:"([^"]+)",label:"([^"]+)"'
-    sources = 'file:"([^"]+)"'
+    sources = 'sources\:\[\{file:"([^"]+)"'
     matches = re.compile(sources, re.DOTALL).findall(dec_data)
     for url in matches:
         video_urls.append(['[Filemoon] m3u' , url])

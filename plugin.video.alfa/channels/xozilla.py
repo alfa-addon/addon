@@ -20,8 +20,9 @@ from core import httptools
 canonical = {
              'channel': 'xozilla', 
              'host': config.get_setting("current_host", 'xozilla', default=''), 
-             'host_alt': ["https://www.xozilla.com"], 
+             'host_alt': ["https://www.xozilla.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -30,13 +31,12 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas", action="lista", url=host + "/latest-updates/"))
-    itemlist.append(Item(channel=item.channel, title="Popular", action="lista", url=host + "/most-popular/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada", action="lista", url=host + "/top-rated/"))
-
-    itemlist.append(Item(channel=item.channel, title="PornStar", action="categorias", url=host + "/models/"))
-    itemlist.append(Item(channel=item.channel, title="Canal", action="categorias", url=host + "/channels/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas", action="lista", url=host + "latest-updates/"))
+    itemlist.append(Item(channel=item.channel, title="Popular", action="lista", url=host + "most-popular/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada", action="lista", url=host + "top-rated/"))
+    itemlist.append(Item(channel=item.channel, title="PornStar", action="categorias", url=host + "models/"))
+    itemlist.append(Item(channel=item.channel, title="Canal", action="categorias", url=host + "channels/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host + "categories/?sort_by=title"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -44,7 +44,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/search/%s/?sort_by=post_date&from_videos=1" % (host, texto)
+    item.url = "%ssearch/%s/?sort_by=post_date&from_videos=1" % (host, texto)
     try:
         return lista(item)
     except:
@@ -57,20 +57,20 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a class="item" href="([^"]+)" title="([^"]+)">.*?'
     patron += '<img class="thumb" src="([^"]+)".*?'
     patron += '(.*?)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle, scrapedthumbnail, cantidad in matches:
-        scrapedplot = ""
-        scrapedurl += "1/" 
+    for url, title, thumbnail, cantidad in matches:
+        plot = ""
+        url += "1/" 
         cantidad = scrapertools.find_single_match(cantidad, '(\d+) videos</div>')
         if cantidad:
-            scrapedtitle= "%s (%s)" % (scrapedtitle, cantidad)
-        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot))
+            title= "%s (%s)" % (title, cantidad)
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     if not "models" in item.url:
         itemlist.sort(key=lambda x: x.title)
 
@@ -89,7 +89,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a href="([^"]+)" class="item.*?'
     patron += 'data-original="([^"]+)".*?'
@@ -105,8 +105,8 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
-                             fanart=thumbnail, plot=plot, contentTitle=contentTitle))
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
     page = scrapertools.find_single_match(item.url, '([^"]+)\d+')
     if not "#" in next_page:
@@ -122,10 +122,7 @@ def lista(item):
 def findvideos(item):
     logger.info(item)
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    if "kt_player" in data:
-        url = item.url
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -133,9 +130,15 @@ def findvideos(item):
 def play(item):
     logger.info(item)
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    if "kt_player" in data:
-        url = item.url
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=url))
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    patron = 'href=".*?/models/[^"]+">([^<]+)<'
+    pornstars = re.compile(patron,re.DOTALL).findall(data)
+    pornstar = ' & '.join(pornstars)
+    pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+    lista = item.title.split()
+    lista.insert (2, pornstar)
+    item.contentTitle = ' '.join(lista)
+    
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

@@ -21,8 +21,9 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'youporn', 
              'host': config.get_setting("current_host", 'youporn', default=''), 
-             'host_alt': ["https://www.youporn.com"], 
+             'host_alt': ["https://www.youporn.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -31,12 +32,12 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas", action="lista", url=host + "/browse/time/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="lista", url=host + "/browse/views/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada", action="lista", url=host + "/top_rated/"))
-    itemlist.append(Item(channel=item.channel, title="Canal", action="catalogo", url=host + "/channels/most_popular/"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars", action="catalogo", url=host + "/pornstars/most_popular/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host + "/categories/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas", action="lista", url=host + "browse/time/"))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="lista", url=host + "browse/views/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada", action="lista", url=host + "top_rated/"))
+    itemlist.append(Item(channel=item.channel, title="Canal", action="catalogo", url=host + "channels/most_popular/"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars", action="catalogo", url=host + "pornstars/most_popular/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host + "categories/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -44,7 +45,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/?query=%s" % (host, texto)
+    item.url = "%ssearch/?query=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -63,7 +64,6 @@ def catalogo(item):
     else:
         matches = soup.find('div', class_='full-row-channel').find_all('div', class_='channel-box')
     for elem in matches:
-        logger.debug(elem)
         url = elem.a['href']
         title = elem.img['alt']
         thumbnail = elem.img['data-original']
@@ -74,7 +74,8 @@ def catalogo(item):
             cantidad = elem.find('div', class_='videoCount')
         title = "%s (%s)" %(title,cantidad.text)
         url = urlparse.urljoin(item.url,url)
-        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, fanart=thumbnail, thumbnail=thumbnail) )
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail) )
     next_page = soup.find('link', rel='next')
     if next_page:
         next_page = next_page['href']
@@ -97,15 +98,16 @@ def categorias(item):
         url = urlparse.urljoin(item.url,url)
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail) )
+    itemlist.sort(key=lambda x: x.title)
     return itemlist
 
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")

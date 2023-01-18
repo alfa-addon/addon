@@ -57,7 +57,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     else:
         patron = 'video_url:\s*(?:\'|")([^\,]+)(?:\'|").*?'
         patron += 'postfix:\s*(?:\'|")([^\,]+)(?:\'|")'
-    
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url, quality in matches:
         if not "?login" in url and not "signup" in url:
@@ -68,14 +67,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             # url += "|verifypeer=false"
             url += "|Referer=%s" % page_url
             video_urls.append(['[ktplayer] %s' % quality, url])
-        if "LQ" in quality or "low" in quality:
+        if "lq" in quality.lower() or "high" in quality.lower() or "low" in quality.lower():
             invert= "true"
-        else:
-            video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
-
     if invert:
         video_urls.reverse()
-    
+    else:
+        video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
+   
     if not url:
         url = scrapertools.find_single_match(data, '(?:video_url|video_alt_url|video_alt_url[0-9]*):\s*(?:\'|")([^\,]+)(?:\'|").*?')
         video_urls.append(['[ktplayer]', url])

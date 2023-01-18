@@ -115,7 +115,7 @@ def findvideos(item):
     for scrapedurl  in matches:
         scrapedurl = scrapedurl.replace("\/", "/")
         title = scrapedurl
-    itemlist.append(item.clone(action="play", title="mp4", url=scrapedurl))
+    itemlist.append(item.clone(action="play", title="[cliphunter] mp4", url=url))
     return itemlist
 
 
@@ -127,6 +127,7 @@ def play(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:
         url = scrapedurl.replace("\/", "/")
+        url += "|Referer=%s/" % host
         title = url
-    itemlist.append(item.clone(action="play", title="mp4", url=url))
+    itemlist.append(item.clone(action="play", title="[cliphunter] mp4", url=url))
     return itemlist

@@ -141,7 +141,8 @@ def lista(item):
         time= Video["duration"]
         thumbnail = Video["scr"]
         quality = Video["props"]
-        url = "%sembed/%s/" % (host,id)
+        # url = "%sembed/%s/" % (host,id)
+        url = "%svideos/%s/%s/" %(host,id,dir)
         title = "[COLOR yellow]%s[/COLOR] %s" % (time,tit)
         if "hd" in quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time,tit)
@@ -165,12 +166,16 @@ def lista(item):
 
 
 def findvideos(item):
-    logger.info(item)
-    itemlist = servertools.find_video_items(Item(channel=item.channel, url = item.url, contentTitle = item.contentTitle))
+    logger.info()
+    itemlist = []
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
 
 def play(item):
-    logger.info(item)
-    itemlist = servertools.find_video_items(Item(channel=item.channel, url = item.url, contentTitle = item.contentTitle))
+    logger.info()
+    itemlist = []
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

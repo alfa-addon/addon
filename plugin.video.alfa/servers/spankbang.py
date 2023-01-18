@@ -33,7 +33,7 @@ def get_video_url(page_url, video_password):
     for quality,url in matches:
         if "4k" in quality:
             quality = "2160p"
-        video_urls.append(['%s [.mp4]' %quality, url])
+        video_urls.append(['[spankbang] %s' %quality, url])
     video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls
 
