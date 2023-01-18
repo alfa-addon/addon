@@ -233,7 +233,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
 
     if torrent_file.startswith("magnet"):
         try:
-            tempdir = tempfile.mkdtemp()
+            tempdir = tempfile.mkdtemp(dir=config.get_temp_file('tempfile_mkdtemp/'))
         except IOError:
             tempdir = os.path.join(save_path_torrents , "temp")
             if not os.path.exists(tempdir):

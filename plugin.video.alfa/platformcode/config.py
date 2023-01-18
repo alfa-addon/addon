@@ -291,7 +291,7 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
 
     versiones = {}
     if not urls:
-        url_base = ['https://github.com/alfa-addon/alfa-repo/raw/master/',
+        url_base = ['https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/',
                     'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/']
     elif isinstance(urls, (list, tuple)):
         url_base = urls
@@ -521,8 +521,10 @@ def get_all_settings_addon(caching_var=True):
     ret = {}
 
     if xml:
-        for setting in xml['settings']['setting']:
-            ret[setting['@id']] = get_setting_values(setting['@id'], setting.get('#text', ''), decode_var_=False)
+        tag = '#text' if "'@version': '2'" in str(xml) or "u'@version', u'2'" in str(xml) else '@value'
+        for setting_ in xml['settings']['setting']:
+            setting = decode_var(setting_)
+            ret[setting['@id']] = get_setting_values(setting['@id'], setting.get(tag, ''), decode_var_=False)
 
         if DEBUG: logger.error('READ File ALL Alfa SETTINGS')
         alfa_settings = ret.copy()
@@ -835,6 +837,7 @@ def get_kodi_setting(name, total=False):
 
     # Global Kodi setting
     inpath = os.path.join(translatePath('special://masterprofile/'), "guisettings.xml")
+    ret = {}
 
     xml = get_xml_content(inpath)
     
@@ -845,16 +848,36 @@ def get_kodi_setting(name, total=False):
             # Verificar si hay problemas de permisos de acceso a userdata
             from core.filetools import file_info, listdir, dirname
             logger.error("Error al leer guisettings.xml: %s, ### Folder-info: %s, ### File-info: %s" % \
-                        (inpath, file_info(dirname(inpath)), listdir(dirname(inpath), file_inf=True)))
+                         (inpath, file_info(dirname(inpath)), listdir(dirname(inpath), file_inf=True)))
         except:
             pass
 
-    ret = {}
+    else:
+        try:
+            if "'@version': '2'" in str(xml) or "u'@version', u'2'" in str(xml):
+                for setting in xml['settings']['setting']:
+                    ret[setting['@id']] = get_setting_values(setting['@id'], setting.get('#text', ''), decode_var_=False)
+                    if setting['@id'] == name and not total:
+                        return ret[setting['@id']]
+            else:
+                # Kodi <= 17
+                sub_setting = name.split('.')[0]
+                name_setting = name.split('.')[1]
+                for setting in xml['settings'][sub_setting].items():
+                    value = decode_var(setting)
+                    key = '%s.%s' % (sub_setting, value[0])
+                    if isinstance(value[1], dict):
+                        ret[key] = get_setting_values(name_setting, value[1].get('#text', ''), decode_var_=False)
+                    else:
+                        ret[key] = get_setting_values(name_setting, value[1], decode_var_=False)
+                    if value[0] == name_setting and not total:
+                        return ret[key]
 
-    for setting in xml['settings']['setting']:
-        ret[setting['@id']] = get_setting_values(setting['@id'], setting.get('#text', ''), decode_var_=False)
-        if setting['@id'] == name and not total:
-            return ret[setting['@id']]
+        except:
+            from platformcode import logger
+            logger.error(traceback.format_exc())
+            # Verificar si hay problemas de permisos de acceso a userdata
+            logger.error("Error al leer Guisettings.xml: %s; XML: %s" % (inpath, str(xml)))
 
     if not total:
         return None
@@ -903,7 +926,10 @@ def get_videolibrary_path():
 
 
 def get_temp_file(filename):
-    return translatePath(os.path.join("special://temp/", filename))
+    temp = translatePath(os.path.join("special://temp/", filename))
+    if (temp.endswith('/') or temp.endswith('\\')) and not os.path.exists(temp):
+        os.makedirs(temp)
+    return temp
 
 
 def get_runtime_path():
@@ -1197,27 +1223,34 @@ def verify_settings_integrity_json(outpath=None):
     return True
 
 
-def get_xml_content(xml_file, content=''):
+def get_xml_content(xml_file, content='', retry=False):
     '''
     Devuelve en formato DICT el contenido de la xml especificada en el path
     Crea o actualiza un xml desde formato DICT
     '''
     import xmltodict
     
+    data = ''
     if not content:
         try:
             if os.path.exists(xml_file):
                 with open(xml_file, 'rb') as f:
-                    data = f.read()
-                    if not PY3:
-                        data = data.encode("utf-8", "ignore")
-                    elif PY3 and isinstance(data, (bytes, bytearray)):
-                        data = "".join(chr(x) for x in data)
+                    data = data_save = f.read()
+                if not PY3:
+                    data = data.encode("utf-8", "ignore")
+                elif PY3 and isinstance(data, (bytes, bytearray)):
+                    data = "".join(chr(x) for x in data)
+                if not data and not retry:
+                    from platformcode import logger
+                    logger.debug('READ Lock error on %s?... Retrying' % xml_file)
+                    time.sleep(1)
+                    return get_xml_content(xml_file, retry=True)
+                
                 content = xmltodict.parse(data)
         except:
             content = {}
-            from platformcode import logger, platformtools
-            logger.error('ERROR Parseando XML: %s; CONTENIDO: %s' % (xml_file. str(data)))
+            from platformcode import logger
+            logger.error('ERROR Parseando XML: %s; CONTENIDO: %s' % (xml_file, str(data) or str(data_save)))
             logger.error(traceback.format_exc())
     else:
         try:
@@ -1228,8 +1261,8 @@ def get_xml_content(xml_file, content=''):
             content = data
         except:
             content = ''
-            from platformcode import logger, platformtools
-            logger.error('ERROR UNparseando XML: %s; CONTENIDO: %s' % (xml_file. str(data)))
+            from platformcode import logger
+            logger.error('ERROR UNparseando XML: %s; CONTENIDO: %s' % (xml_file, str(data)))
             logger.error(traceback.format_exc())
 
     return content

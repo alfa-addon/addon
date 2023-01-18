@@ -26,12 +26,16 @@ from platformcode import config
 from platformcode import logger
 
 forced_proxy_def = 'ProxyCF'
+DEBUG = False
 
 
 class AlfaChannelHelper:
 
     def __init__(self, host, movie_path="/movies", tv_path="/serie", movie_action="findvideos", 
-                 tv_action="seasons", canonical={}, url_replace=[], finds={}):
+                 tv_action="seasons", canonical={}, url_replace=[], finds={}, debug=False):
+        global DEBUG
+        DEBUG = debug
+        
         self.host = host
         self.movie_path = movie_path
         self.tv_path = tv_path
@@ -54,7 +58,9 @@ class AlfaChannelHelper:
         if "ignore_response_code" not in kwargs: kwargs["ignore_response_code"] = True
         if "canonical" not in kwargs: kwargs["canonical"] = self.canonical
         
+        if DEBUG: logger.debug('Kwargs: %s' % kwargs)
         response = httptools.downloadpage(url, **kwargs)
+        
         if kwargs.get("soup", {}):
             soup = response.soup or {}
         else:
@@ -118,7 +124,9 @@ class AlfaChannelHelper:
 
     def add_serie_to_videolibrary(self, item, itemlist):
 
-        if config.get_videolibrary_support() and len(itemlist) > 0:
+        if item.add_videolibrary or item.library_playcounts:
+            return itemlist
+        if not (item.add_videolibrary and item.library_playcounts) and config.get_videolibrary_support() and len(itemlist) > 0:
             item.url = self.do_url_replace(item.url)
             
             itemlist.append(Item(channel=item.channel,
@@ -177,108 +185,82 @@ class AlfaChannelHelper:
     
         return itemlist
 
-    def parse_finds_dict(self, soup, finds, year=False, next_page=False, langs=False, season=False, c_type=''):
+    def parse_finds_dict(self, soup, finds, year=False, next_page=False, c_type=''):
 
-        if year:
-            matches = '-'
-            year_a = ''
-            year_b = ''
+        matches = matches_init = [] if not year and not next_page else '-' if year else ''
+        if not finds: 
+            return matches
+        
+        match = soup
 
-            try:
-                if finds.get('year', []):
-                    year_a = finds['year'][0]
-                    year_b = finds['year'][1]
-                if c_type:
-                    if c_type == 'peliculas' and finds.get('year_movie', []):
-                        year_a = finds.get('year_movie', [])[0]
-                        year_b = finds.get('year_movie', [])[1]
-                    elif c_type == 'series' and finds.get('year_serie', []):
-                        year_a = finds.get('year_serie', [])[0]
-                        year_b = finds.get('year_serie', [])[1]
-                    elif c_type == 'episodios' and finds.get('year_episode', []):
-                        year_a = finds.get('year_episode', [])[0]
-                        year_b = finds.get('year_episode', [])[1]
-
-                if year_a and year_b:
-                    matches = soup.find(year_a, class_=year_b).text.strip()
-                    if len(matches) > 4:
-                        matches = scrapertools.find_single_match(matches, '\d{4}$')
-                    matches = int(matches)
-                    if matches < 1900 or matches > 2050:
-                        matches = '-'
-                else:
-                    matches = '-'
-
-            except:
-                matches = '-'
-                logger.error(traceback.format_exc())
-
-        elif next_page:
-            matches = ''
-
-            try:
-                matches = soup.find(finds['next_page'][0], class_=finds['next_page'][1])
-                if finds.get('next_page_all', []):
-                    if len(finds['next_page_all']) == 1:
-                        matches = matches.find_all(finds['next_page_all'][0])
+        try:
+            for x, (level_, block) in enumerate(finds.items()):
+                level = re.sub('\d+', '', level_)
+                for f in block:
+                    levels = {'find': [match.find, match.find_all], 
+                              'find_all': [match.find, match.find_all], 
+                              'find_parent': [match.find_parent, match.find_parents], 
+                              'find_parents_all': [match.find_parent, match.find_parents],
+                              'find_next_sibling': [match.find_next_sibling, match.find_next_siblings], 
+                              'find_next_sibling_all': [match.find_next_sibling, match.find_next_siblings],
+                              'find_previous_sibling': [match.find_previous_sibling, match.find_previous_siblings], 
+                              'find_previous_siblings_all': [match.find_previous_sibling, match.find_previous_siblings],
+                              'find_next': [match.find_next, match.find_all_next], 
+                              'find_all_next': [match.find_next, match.find_all_next], 
+                              'find_previous': [match.find_previous, match.find_all_previous], 
+                              'find_all_previous': [match.find_previous, match.find_all_previous], 
+                              'select_one': [match.select_one, match.select], 
+                              'select_all': [match.select_one, match.select], 
+                              'get_text': [match.get_text, match.get_text]
+                              }
+                    
+                    soup_func = levels[level][0]
+                    soup_func_all = levels[level][1]
+                    
+                    tag = ''
+                    attrs = {}
+                    string = ''
+                    regex = ''
+                    argument = ''
+                    strip = ''
+                    if isinstance(f, dict):
+                        attrs = f.copy()
+                        tag = attrs.pop('tag', '')
+                        string = attrs.pop('string', '')
+                        regex = attrs.pop('@TEXT', '')
+                        argument = attrs.pop('@ARG', '')
+                        strip = attrs.pop('@STRIP', True)
                     else:
-                        matches = matches.find_all(finds['next_page_all'][0], class_=finds['next_page_all'][1])
-                    if len(finds['next_page_all']) > 2:
-                        for n_page in matches:
-                            if finds['next_page_all'][2] in str(n_page):
-                                matches = n_page['href']
-                                break
-                    else:
-                        matches = matches[-1]['href']
-                matches = urlparse.urljoin(self.host, matches)
-            except:
-                matches = ''
-                logger.error(traceback.format_exc())
+                        tag = f
+                    if (isinstance(tag, str) and tag == '*') or (isinstance(tag, list) and len(tag) == 1 and tag[0] == '*'): 
+                        tag = None
 
-        elif langs:
-            matches = []
-            
-            try:
-                matches = soup.find(finds['langs'][0], class_=finds['langs'][1])
-                if finds.get('langs_all', []):
-                    if len(finds['langs_all']) == 1:
-                        matches = matches.find_all(finds['langs_all'][0])
-                    else:
-                        matches = matches.find_all(finds['langs_all'][0], class_=finds['langs_all'][1])
-            except:
-                matches = []
-                logger.error(traceback.format_exc())
+                    if DEBUG: logger.debug('find: %s=%s, %s, %s, %s, %s, %s' % (level, tag, attrs, string, regex, argument, str(strip)))
+                    if '_all' not in level or ('_all' in level and x < len(finds[level])-1):
 
-        elif season:
-            matches = []
-            
-            try:
-                matches = soup.find(finds['season'][0], class_=finds['season'][1])
-                if finds.get('season_all', []):
-                    if len(finds['season_all']) == 1:
-                        matches = matches.find_all(finds['season_all'][0])
+                        if level == 'get_text':
+                            match = soup_func(tag or '', strip=strip)
+                            if regex:
+                                match = scrapertools.find_single_match(match, regex)
+                        elif regex:
+                            match = scrapertools.find_single_match(soup_func(tag, attrs=attrs, string=string).text, regex)
+                        elif argument:
+                            match = soup_func(tag, attrs=attrs, string=string).get(argument)
+                        else:
+                            match = soup_func(tag, attrs=attrs, string=string)
+                    
                     else:
-                        matches = matches.find_all(finds['season_all'][0], class_=finds['season_all'][1])
-            except:
-                matches = []
-                logger.error(traceback.format_exc())
+                        match = soup_func_all(tag, attrs=attrs, string=string)
+                    
+                    if DEBUG: logger.debug('Matches[500]: %s' % str(match)[:500])
 
-        else:
-            matches = []
+                    if not match: break
+                if not match: break
 
-            try:
-                matches = soup.find(finds['find'][0], class_=finds['find'][1])
-                if finds.get('find_all', []):
-                    if len(finds['find_all']) == 1:
-                        matches = matches.find_all(finds['find_all'][0])
-                    else:
-                        matches = matches.find_all(finds['find_all'][0], class_=finds['find_all'][1])
-                if finds.get('find_all_2', []):
-                    for f in finds['find_all_2']:
-                        matches = matches.find_all(f)
-            except:
-                matches = []
-                logger.error(traceback.format_exc())
+            matches = matches_init if not match else match
+        except:
+            matches = matches_init
+            logger.error(traceback.format_exc())
 
         return matches
 
@@ -289,26 +271,33 @@ class CustomChannel(AlfaChannelHelper):
 
 class DictionaryChannel(AlfaChannelHelper):
 
-    def list_all(self, item, postprocess=None, lim_max=30, finds={}):
+    def list_all(self, item, data='', postprocess=None, lim_max=30, finds={}):
         logger.info()
 
         if not finds: finds = self.finds
+        finds_out = finds.get('find', {})
+        finds_next_page = finds.get('next_page', {})
+        finds_year = finds.get('year', {})
+        finds_season_episode = finds.get('season_episode', {})
         itemlist = list()
         
-        soup = self.create_soup(item.url)
+        soup = data or self.create_soup(item.url)
         
-        matches = self.parse_finds_dict(soup, finds)
+        matches = self.parse_finds_dict(soup, finds_out)
         if not matches:
             return itemlist
 
         matches, next_limit, next_page = self.limit_results(item, matches, lim_max=lim_max)
 
-        next_page = self.parse_finds_dict(soup, finds, next_page=True, c_type=item.c_type)
+        next_page = self.parse_finds_dict(soup, finds_next_page, next_page=True, c_type=item.c_type)
+        if next_page: next_page = urlparse.urljoin(self.host, next_page)
 
         for elem in matches:
             try:
                 url = urlparse.urljoin(self.host, elem.a["href"])
                 title = elem.find("img")["alt"]
+                if not title:
+                    title = elem.h2.text
             except:
                 logger.error(elem)
                 continue
@@ -318,7 +307,7 @@ class DictionaryChannel(AlfaChannelHelper):
                 thumb = elem.find("img")["src"]
             thumb = urlparse.urljoin(self.host, thumb)
 
-            year = self.parse_finds_dict(elem, finds, year=True, c_type=item.c_type)
+            year = self.parse_finds_dict(elem, finds_year, year=True, c_type=item.c_type)
 
             new_item = Item(channel=item.channel,
                             title=title,
@@ -330,10 +319,7 @@ class DictionaryChannel(AlfaChannelHelper):
             if item.c_type == 'episodios':
                 new_item.contentType = 'episode'
                 try:
-                    sxe = elem.find(finds['season_episode'][0], class_=finds['season_episode'][1])
-                    if finds.get('season_episode_2', []):
-                        for tag in finds['season_episode_2']:
-                            sxe = sxe.find(finds['season_episode_2'])
+                    sxe = self.parse_finds_dict(elem, finds_season_episode, c_type=item.c_type)
                     new_item.contentSeason, new_item.contentEpisodeNumber = sxe.text.split('x')
                     new_item.contentSeason = int(new_item.contentSeason)
                     new_item.contentEpisodeNumber = int(new_item.contentEpisodeNumber)
@@ -364,10 +350,11 @@ class DictionaryChannel(AlfaChannelHelper):
                                )
         return itemlist
 
-    def section(self, item, menu_id=None, section=None, action="list_all", postprocess=None, section_list={}, finds={}):
+    def section(self, item, data= '',  menu_id=None, section=None, action="list_all", postprocess=None, section_list={}, finds={}):
         logger.info()
 
         if not finds: finds = self.finds
+        finds_out = finds.get('find', {})
         itemlist = list()
         matches = list()
         soup = {}
@@ -379,17 +366,17 @@ class DictionaryChannel(AlfaChannelHelper):
                 title = genre.capitalize()
                 matches.append([title, url])
 
-        elif finds:
-            soup = self.create_soup(item.url)
+        elif finds_out:
+            soup = data or self.create_soup(item.url)
 
-            matches = self.parse_finds_dict(soup, finds)
+            matches = self.parse_finds_dict(soup, finds_out)
             for elem in matches:
                 title = elem.a.text
                 url = elem.a["href"]
                 matches.append([title, url])
 
         if not matches:
-            logger.error(finds)
+            logger.error(finds_out)
             logger.error(soup or section_list)
             return itemlist
 
@@ -415,34 +402,46 @@ class DictionaryChannel(AlfaChannelHelper):
 
         return itemlist
 
-    def seasons(self, item, action="episodesxseason", postprocess=None, finds={}):
+    def seasons(self, item, data='', action="episodesxseason", postprocess=None, finds={}):
         logger.info()
 
         if not finds: finds = self.finds
+        finds_out = finds.get('season', {})
         itemlist = list()
         item.url = self.do_url_replace(item.url)
         
-        soup = self.create_soup(item.url)
+        soup = data or self.create_soup(item.url)
         
-        matches = self.parse_finds_dict(soup, finds, season=True)
+        matches = self.parse_finds_dict(soup, finds_out)
 
         if not matches:
-            logger.error(finds)
+            logger.error(finds_out)
             logger.error(soup)
             return itemlist
 
         infolabels = item.infoLabels
 
         for elem in matches:
+            url = item.url
+            try:
+                if elem.a["href"].startswith('#'):
+                    url = urlparse.urljoin(item.url, elem.a["href"])
+                else:
+                    url = urlparse.urljoin(self.host, elem.a["href"])
+            except:
+                pass
             try:
                 infolabels["season"] = int(elem["value"])
             except:
-                infolabels["season"] = 1
+                try:
+                    infolabels["season"] = int(re.sub('(?i)temp\w*\s*', '', elem.a.text))
+                except:
+                    infolabels["season"] = 1
             title = "Temporada %s" % infolabels["season"]
             infolabels["mediatype"] = 'season'
 
             new_item = Item(channel=item.channel,
-                            url=item.url, 
+                            url=url, 
                             title=title,
                             action='episodesxseason',
                             infoLabels=infolabels
@@ -461,10 +460,11 @@ class DictionaryChannel(AlfaChannelHelper):
 
         return itemlist
 
-    def episodes(self, item, action="findvideos", postprocess=None, json=True, finds={}):
+    def episodes(self, item, data= '', action="findvideos", postprocess=None, json=True, finds={}):
         logger.info()
         
         if not finds: finds = self.finds
+        finds_out = finds.get('episodes', {})
         itemlist = list()
         item.url = self.do_url_replace(item.url)
 
@@ -472,10 +472,10 @@ class DictionaryChannel(AlfaChannelHelper):
         season = infolabels["season"]
 
         if json:
-            soup = jsontools.load(self.create_soup(item.url).find(finds.get('findvideos', '')[0], 
-                                                                  id=finds.get('findvideos', '')[1]).text)
+            soup = data or self.create_soup(item.url)
+            soup = jsontools.load(self.parse_finds_dict(soup, finds_out))
             
-            for i in range(int(infolabels['season'])-1, -1, -1):
+            for i in range(int(infolabels.get('season', 1))-1, -1, -1):
                 try:
                     matches = soup.get('props', {}).get('pageProps', {}).get('post', {})\
                                   .get('seasons', {})[i].get('episodes', {})
@@ -486,7 +486,7 @@ class DictionaryChannel(AlfaChannelHelper):
                     continue
 
             if not matches:
-                logger.error(finds)
+                logger.error(finds_out)
                 logger.error(soup)
                 return itemlist
 
@@ -518,30 +518,83 @@ class DictionaryChannel(AlfaChannelHelper):
                 new_item.url = self.do_url_replace(new_item.url)
                 
                 itemlist.append(new_item)
+        else:
+            soup = data or self.create_soup(item.url)
+        
+            matches = self.parse_finds_dict(soup, finds_out)
+            
+            if not matches:
+                logger.error(finds_out)
+                logger.error(soup)
+                return itemlist
 
-        tmdb.set_infoLabels_itemlist(itemlist, True)
+            for elem in matches:
+                try:
+                    url = elem.a["href"]
+                    title = scrapertools.slugify(elem.h2.text.strip(), strict=False)
+                except:
+                    continue
+
+                for episode_num in finds.get('episode_num', []):
+                    if scrapertools.find_single_match(title, episode_num):
+                        infolabels["episode"] = int(scrapertools.find_single_match(title, episode_num))
+                        break
+                else:
+                    infolabels["episode"] = int(scrapertools.find_single_match(title, '\d{2}') or 1)
+
+                for episode_clean in finds.get('episode_clean', []):
+                    if scrapertools.find_single_match(title, episode_clean):
+                        title = scrapertools.find_single_match(title, episode_clean).strip()
+                        break
+
+                infolabels["mediatype"] = 'episode'
+                infolabels = episode_title(title.capitalize(), infolabels)
+                title = "%sx%s - %s" % (season, infolabels["episode"], title)
+
+                new_item = Item(channel=item.channel,
+                                title=title,
+                                url=url,
+                                action=action,
+                                infoLabels=infolabels
+                                )
+
+                if postprocess:
+                    new_item = postprocess(soup, elem, new_item, item)
+
+                new_item.url = self.do_url_replace(new_item.url)
+                
+                itemlist.append(new_item)
+
+        if itemlist:
+            itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
+            tmdb.set_infoLabels_itemlist(itemlist, True)
 
         return itemlist
 
-    def get_video_options(self, url, forced_proxy_opt=forced_proxy_def, referer=None, finds={}):
+    def get_video_options(self, url, data='', langs=[], forced_proxy_opt=forced_proxy_def, referer=None, findvideos=False, finds={}):
 
         if not finds: finds = self.finds
+        finds_out = finds.get('findvideos', {})
+        finds_langs = finds.get('langs', {})
         options = list()
         results = list()
         url = self.do_url_replace(url)
 
-        soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt, referer=referer)
+        soup = data or self.create_soup(url, forced_proxy_opt=forced_proxy_opt, referer=referer)
         
-        langs = self.parse_finds_dict(soup, finds, langs=True)
-        matches = self.parse_finds_dict(soup, finds)
+        langs = langs or self.parse_finds_dict(soup, finds_langs)
+        matches = self.parse_finds_dict(soup, finds_out)
         
         if not matches or not langs:
-            logger.error(finds)
+            logger.error(finds_out)
             logger.error(soup)
-            return results
+            return [[soup, []]]
         
         for x, _lang in enumerate(langs):
-            lang = _lang.find("span").text.lower()
+            try:
+                lang = _lang.find("span").text.lower()
+            except:
+                lang = _lang
             if 'descargar' in lang: continue
             if 'latino' in lang:
                 lang = 'latino'
@@ -550,12 +603,51 @@ class DictionaryChannel(AlfaChannelHelper):
             elif 'subtitulado' in lang:
                 lang = 'subtitulado'
             
-            for opt in matches[x].find_all("li"):
-                options.append((lang, opt))
+            try:
+                for opt in matches[x]:
+                    if not opt.strip().strip('\n'): continue
+                    options.append((lang, opt))
+            except:
+                try:
+                    for opt in matches[x].find_all("li"):
+                        if not opt.strip().strip('\n'): continue
+                        options.append((lang, opt))
+                except:
+                    pass
+        
+        if not options:
+            for opt in matches:
+                options.append((langs[0], opt))
 
         results.append([soup, options])
 
-        return results[0]
+        if not findvideos: return results[0]
+
+        itemlist = []
+        for lang, url in results[0][1]:
+            item_local = findvideos.clone()
+            try:
+                item_local.url = url.iframe.get("src", '') or url.iframe.get("href", '')
+            except:
+                try:
+                    item_local.url = url.a.get("src", '') or url.a.get("href", '')
+                except:
+                    item_local.url = url
+            item_local.channel = findvideos.channel
+            item_local.title = '%s'
+            item_local.server = ''
+            item_local.language = lang
+            item_local.action = 'play'
+            item_local.thumbnail = findvideos.thumbnail
+            item_local.infoLabels = findvideos.infoLabels
+            item_local.setMimeType = 'application/vnd.apple.mpegurl'
+            
+            itemlist.append(item_local)
+
+        from core import servertools
+        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+
+        return itemlist
 
 
 class DooPlay(AlfaChannelHelper):

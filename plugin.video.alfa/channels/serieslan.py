@@ -48,17 +48,21 @@ canonical = {
 host = canonical['host'] or canonical['host_alt'][0]
 
 
-def create_soup(url, referer=None, unescape=False):
+def create_soup(url, soup=True, referer=None, unescape=False, ignore_response_code=True, canonical=canonical, **kwargs):
     logger.info()
 
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
-    else:
-        data = httptools.downloadpage(url, canonical=canonical).data
+    kwargs['headers'] = {'referer': referer}
+    kwargs['ignore_response_code'] = ignore_response_code
+    kwargs['canonical'] = canonical
+
+    resp = httptools.downloadpage(url, **kwargs)
 
     if unescape:
-        data = scrapertools.unescape(data)
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+        resp.data = scrapertools.unescape(resp.data)
+    if soup:
+        soup = BeautifulSoup(resp.data, "html5lib", from_encoding="utf-8")
+    else:
+        soup = resp
 
     return soup
 
@@ -127,7 +131,7 @@ def sub_search(item):
     itemlist = []
     post = "k=" + item.texto
 
-    results = httptools.downloadpage(item.url, post=post, canonical=canonical).data     #.json
+    results = create_soup(item.url, post=post, soup=False).data                             #.json
     results = json.loads(results)
     if not results:
         return itemlist
@@ -339,11 +343,12 @@ def findvideos(item):
     
     itemlist = []
     
-    data = httptools.downloadpage(item.url, canonical=canonical).data
+    data = create_soup(item.url, soup=False).data
     
     _sa = scrapertools.find_single_match(data, 'var _sa = (true|false);')
     _sl = scrapertools.find_single_match(data, 'var _sl = ([^;]+);')
     sl = eval(_sl)
+
     buttons = scrapertools.find_multiple_matches(data, '<button.*?class="selop" sl="([^"]+)">')
     
     if not buttons:
@@ -352,7 +357,7 @@ def findvideos(item):
         title = '%s'
         new_url = golink(int(id), _sa, sl)
         
-        data_new = httptools.downloadpage(new_url).data
+        data_new = create_soup(new_url, soup=False, canonical={}).data
         
         matches = scrapertools.find_multiple_matches(data_new, 'javascript">(.*?)</script>')
         js = ""

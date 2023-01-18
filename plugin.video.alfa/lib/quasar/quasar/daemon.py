@@ -422,8 +422,9 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                                'USER_ADDON_STATUS': xbmc.getCondVisibility('System.HasAddon("plugin.video.alfa")'), 
                                'USER_ADDON_USERDATA': os.path.join(xbmc.translatePath('special://masterprofile/'), 
                                             'addon_data', 'plugin.video.alfa'), 
-                               'USER_APK': ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/alfa-mobile-assistant.apk',
-                                            'https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/alfa-mobile-assistant.version'], 
+                               'USER_APK': [
+                                    'https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/alfa-mobile-assistant.apk',
+                                    'https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/alfa-mobile-assistant.version'], 
                                'USER_APP': 'com.alfa.alfamobileassistant', 
                                'USER_APP_CONTROL': 'alfa-mobile-assistant.version',
                                'USER_APP_URL': 'http://127.0.0.1', 

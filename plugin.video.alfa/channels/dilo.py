@@ -37,7 +37,7 @@ canonical = {
              'host_alt': ["https://www.dilo.nu/"], 
              'host_black_list': ["https://streamtape.com/", "https://upstream.to/", "https://vidoza.net/", "http://vidoza.net/"], 
              'pattern': '<link\s*rel="stylesheet"\s*href="([^"]+)"', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 2, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 2, 'cf_assistant_if_proxy': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -48,7 +48,7 @@ forced_proxy_opt = 'ProxyCF'
 def get_source(url, ignore_response_code=True):
     logger.info()
     
-    data = httptools.downloadpage(url, ignore_response_code=ignore_response_code, canonical=canonical).data
+    data = httptools.downloadpage(url, timeout=10, ignore_response_code=ignore_response_code, canonical=canonical).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     
     return data
@@ -104,6 +104,9 @@ def list_all(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, _scrapedtitle, scrapedyear, scrapedtype in matches:
+        if str(scrapedtype).lower().strip() in ['libros', 'musica', 'audiolibros', 'juego pc', 'juegos pc', 'onlyfans'] \
+                                            or not str(scrapedtype).strip(): continue
+
         url = urlparse.urljoin(host, scrapedurl)
         scrapedtitle = scrapertools.decode_utf8_error(_scrapedtitle)
         thumbnail = scrapedthumbnail
@@ -173,8 +176,11 @@ def section(item):
 
 def latest_episodes(item):
     logger.info()
+    import datetime
     
     itemlist = []
+    dia_hoy = datetime.date.today()
+    year = str(dia_hoy.year)
     
     data = get_source(item.url)
     
@@ -184,6 +190,8 @@ def latest_episodes(item):
     logger.info("page=%s" % item.page)
     
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedcontent, scrapedep in matches[item.page:item.page + 30]:
+        if '-%s-' % year in scrapedurl or '/va-' in scrapedurl or '-pc-' in scrapedurl: continue
+
         title = '%s' % (scrapertools.decode_utf8_error(scrapedtitle.replace(' Online sub español', '')))
         contentSerieName = scrapertools.decode_utf8_error(scrapedcontent)
         season = episode = 1

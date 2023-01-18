@@ -1220,7 +1220,9 @@ def add_tvshow(item, channel=None):
             try:
                 channel = __import__('channels.%s' % item.channel, fromlist=["channels.%s" % item.channel])
             except ImportError:
-                exec("import channels." + item.channel + " as channel")
+                platformtools.dialog_ok(config.get_localized_string(30131), config.get_localized_string(60068))
+                logger.error("La serie %s no se ha podido añadir a la videoteca, Canal: %s" % (item.show, item.channel))
+                return
 
         #Para desambiguar títulos, se provoca que TMDB pregunte por el título realmente deseado
         #El usuario puede seleccionar el título entre los ofrecidos en la primera pantalla

@@ -359,7 +359,7 @@ def list_all(item):
 
     btnnext = soup.find("div", class_="pagPlaydede")
     
-    if btnnext:
+    if btnnext and 'href' in str(btnnext):
         itemlist.append(
             item.clone(
                 title = "Siguiente >",
