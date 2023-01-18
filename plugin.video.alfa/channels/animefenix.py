@@ -33,10 +33,10 @@ list_servers = ['directo', 'verystream', 'openload',  'streamango', 'uploadmp4',
 canonical = {
              'channel': 'animefenix', 
              'host': config.get_setting("current_host", 'animefenix', default=''), 
-             'host_alt': ["https://www.animefenix.tv/"], 
-             'host_black_list': ["https://www.animefenix.com/"], 
+             'host_alt': ["https://animefenix.tv/"], 
+             'host_black_list': ["https://www.animefenix.tv/", "https://www.animefenix.com/"], 
              'pattern': '<div\s*class="navbar-start">\s*<a\s*class="navbar-item"\s*href="([^"]+)"', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': 'ProxyCF', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -53,7 +53,7 @@ def mainlist(item):
         Item(
             action = "new_episodes",
             channel = item.channel,
-            thumbnail = get_thumb('new episodes', auto=True),
+            thumbnail = get_thumb("channels_anime.png"),
             title = "Nuevos Capítulos",
             url = host
         )
@@ -63,7 +63,7 @@ def mainlist(item):
         Item(
             action = "list_all",
             channel = item.channel,
-            thumbnail = get_thumb('on air', auto=True),
+            thumbnail = get_thumb("now_playing.png"),
             title = "Emision",
             url = host + 'animes?type%5B%5D=tv&estado%5B%5D=1',
         )
@@ -73,7 +73,7 @@ def mainlist(item):
         Item(
             action = "list_all",
             channel = item.channel,
-            thumbnail = get_thumb('recents', auto=True),
+            thumbnail = get_thumb("channels_anime.png"),
             title = "Recientes",
             url = host
         )
@@ -83,7 +83,7 @@ def mainlist(item):
         Item(
             action = "list_all",
             channel = item.channel,
-            thumbnail = get_thumb('all', auto=True),
+            thumbnail = get_thumb("channels_anime.png"),
             title = "Todas",
             url = '%sanimes?order=title' % host
         )
@@ -93,7 +93,7 @@ def mainlist(item):
         Item(
             action = "search",
             channel = item.channel,
-            thumbnail = get_thumb('search', auto=True),
+            thumbnail = get_thumb('search.png'),
             title = "Buscar",
             url = host + 'animes?q='
         )
@@ -110,6 +110,8 @@ def get_source(url, json=False, unescape=False, **opt):
     logger.info()
 
     opt['canonical'] = canonical
+    opt['ignore_response_code'] = True
+    opt['timeout'] = 10
     data = httptools.downloadpage(url, **opt)
     data.data = scrapertools.unescape(data.data) if unescape else data.data
 
@@ -129,7 +131,10 @@ def list_all(item):
     itemlist = list()
 
     soup = get_source(item.url, soup=True)
-    matches = soup.find("div", class_="list-series").find_all("article", class_="serie-card")
+    try:
+        matches = soup.find("div", class_="list-series").find_all("article", class_="serie-card")
+    except:
+        matches = []
 
     for elem in matches:
         url = elem.a["href"]
@@ -186,49 +191,52 @@ def new_episodes(item):
 
     soup = get_source(item.url, soup=True).find("div", class_="capitulos-grid")
 
-    for elem in soup.find_all("div", "overarchingdiv"):
+    try:
+        for elem in soup.find_all("div", "overarchingdiv"):
 
-        title = elem.img["alt"]
-        thumb = elem.img["src"]
-        url = elem.a["href"]
+            title = elem.img["alt"]
+            thumb = elem.img["src"]
+            url = elem.a["href"]
 
-        season = 1
-        episode = 1
-        if scrapertools.find_single_match(title, '(?i)\s*\d{1,2}(?:st|nd|rd|th)\s*season\s+\d{1,3}\s*$'):
-            season, episode = scrapertools.find_single_match(title, '(?i)\s*(\d{1,2})(?:st|nd|rd|th)\s*season\s+(\d{1,3})\s*$')
-            name = re.sub('(?i)\s*\d{1,2}(?:st|nd|rd|th)\s*season\s+\d{1,3}\s*$', '', title)
-            title = '%s %sx%s' % (name, season, str(episode).zfill(2))
-        elif scrapertools.find_single_match(title, '(?i)season\s+\d{1,2}\s*$'):
-            season = scrapertools.find_single_match(title, '(?i)season\s+(\d{1,2})\s*$')
-            name = re.sub('(?i)season\s+\d{1,2}\s*$', '', title)
-            title = '%s %sx%s' % (name, season, str(episode).zfill(2))
-        elif scrapertools.find_single_match(title, '\s+\d{1,2}\s+\d+\s*$'):
-            season, episode = scrapertools.find_single_match(title, '\s+(\d{1,2})\s+(\d+)\s*$')
-            name = re.sub('\s+\d{1,2}\s+\d+\s*$', '', title)
-            title = '%s %sx%s' % (name, season, str(episode).zfill(2))
-        elif scrapertools.find_single_match(title, '\s+\d{1,3}\s*$'):
-            episode = scrapertools.find_single_match(title, '\s+(\d{1,3})\s*$')
-            name = re.sub('\s+\d{1,3}\s*$', '', title)
-            title = '%s %sx%s' % (name, season, str(episode).zfill(2))
-        else:
-            # name = elem.find("div", class_="overtitle").text
-            name = title
-        try:
-            season = int(season)
-            episode = int(episode)
-        except:
             season = 1
             episode = 1
-        
-        if scrapertools.find_single_match(name, '\s*\(?\[?\d{4}\]?\)?\s*'):
-            name = re.sub('\s*\(?\[?\d{4}\]?\)?\s*', '', name)
-            title = re.sub('\s*\(?\[?\d{4}\]?\)?\s*', '', title)
-        name = re.sub('(?i)\s*season\s*|\s*part\s*|\s*\d+(?:st|nd|rd|th)\s*', '', name)
-        title = re.sub('(?i)\s*season\s*|\s*part\s*|\s*\d+(?:st|nd|rd|th)\s*', '', name)
+            if scrapertools.find_single_match(title, '(?i)\s*\d{1,2}(?:st|nd|rd|th)\s*season\s+\d{1,3}\s*$'):
+                season, episode = scrapertools.find_single_match(title, '(?i)\s*(\d{1,2})(?:st|nd|rd|th)\s*season\s+(\d{1,3})\s*$')
+                name = re.sub('(?i)\s*\d{1,2}(?:st|nd|rd|th)\s*season\s+\d{1,3}\s*$', '', title)
+                title = '%s %sx%s' % (name, season, str(episode).zfill(2))
+            elif scrapertools.find_single_match(title, '(?i)season\s+\d{1,2}\s*$'):
+                season = scrapertools.find_single_match(title, '(?i)season\s+(\d{1,2})\s*$')
+                name = re.sub('(?i)season\s+\d{1,2}\s*$', '', title)
+                title = '%s %sx%s' % (name, season, str(episode).zfill(2))
+            elif scrapertools.find_single_match(title, '\s+\d{1,2}\s+\d+\s*$'):
+                season, episode = scrapertools.find_single_match(title, '\s+(\d{1,2})\s+(\d+)\s*$')
+                name = re.sub('\s+\d{1,2}\s+\d+\s*$', '', title)
+                title = '%s %sx%s' % (name, season, str(episode).zfill(2))
+            elif scrapertools.find_single_match(title, '\s+\d{1,3}\s*$'):
+                episode = scrapertools.find_single_match(title, '\s+(\d{1,3})\s*$')
+                name = re.sub('\s+\d{1,3}\s*$', '', title)
+                title = '%s %sx%s' % (name, season, str(episode).zfill(2))
+            else:
+                # name = elem.find("div", class_="overtitle").text
+                name = title
+            try:
+                season = int(season)
+                episode = int(episode)
+            except:
+                season = 1
+                episode = 1
+            
+            if scrapertools.find_single_match(name, '\s*\(?\[?\d{4}\]?\)?\s*'):
+                name = re.sub('\s*\(?\[?\d{4}\]?\)?\s*', '', name)
+                title = re.sub('\s*\(?\[?\d{4}\]?\)?\s*', '', title)
+            name = re.sub('(?i)\s*season\s*|\s*part\s*|\s*\d+(?:st|nd|rd|th)\s*', '', name)
+            title = re.sub('(?i)\s*season\s*|\s*part\s*|\s*\d+(?:st|nd|rd|th)\s*', '', name)
 
-        itemlist.append(Item(channel=item.channel, title=title, thumbnail=thumb, url=url, action="findvideos",
-                             contentSerieName=name, contentType='episode', contentSeason=season, contentEpisodeNumber=episode))
-
+            itemlist.append(Item(channel=item.channel, title=title, thumbnail=thumb, url=url, action="findvideos",
+                                 contentSerieName=name, contentType='episode', contentSeason=season, contentEpisodeNumber=episode))
+    except:
+        pass
+    
     tmdb.set_infoLabels_itemlist(itemlist, True)
     return itemlist
 
@@ -251,29 +259,32 @@ def episodesxseason(item):
 
     infoLabels = item.infoLabels
 
-    for elem in soup.find_all("li"):
-        url = elem.a["href"]
-        try:
-            if scrapertools.find_single_match(elem.a.text, "(?i)\s*(?:Part|Season)\s*(\d+)"):
-                sea_num = int(scrapertools.find_single_match(elem.a.text, "(?i)\s*(?:Part|Season)\s*(\d+)"))
-            elif scrapertools.find_single_match(elem.a.text, "(?i)\s*\d{1,2}(?:st|nd|rd|th)\s*season"):
-                sea_num = int(scrapertools.find_single_match(elem.a.text, "(?i)\s*(\d{1,2})(?:st|nd|rd|th)\s*season"))
-            elif scrapertools.find_single_match(elem.a.text, "(?i)\s*(\d{1,3})\s+Episodio\s+\d{1,3}"):
-                sea_num = int(scrapertools.find_single_match(elem.a.text, "(?i)\s*(\d{1,3})\s+Episodio\s+\d{1,3}"))
-            else:
+    try:
+        for elem in soup.find_all("li"):
+            url = elem.a["href"]
+            try:
+                if scrapertools.find_single_match(elem.a.text, "(?i)\s*(?:Part|Season)\s*(\d+)"):
+                    sea_num = int(scrapertools.find_single_match(elem.a.text, "(?i)\s*(?:Part|Season)\s*(\d+)"))
+                elif scrapertools.find_single_match(elem.a.text, "(?i)\s*\d{1,2}(?:st|nd|rd|th)\s*season"):
+                    sea_num = int(scrapertools.find_single_match(elem.a.text, "(?i)\s*(\d{1,2})(?:st|nd|rd|th)\s*season"))
+                elif scrapertools.find_single_match(elem.a.text, "(?i)\s*(\d{1,3})\s+Episodio\s+\d{1,3}"):
+                    sea_num = int(scrapertools.find_single_match(elem.a.text, "(?i)\s*(\d{1,3})\s+Episodio\s+\d{1,3}"))
+                else:
+                    sea_num = 1
+            except:
                 sea_num = 1
-        except:
-            sea_num = 1
-        try:
-            epi_num = int(scrapertools.find_single_match(elem.span.text, "(\d+)"))
-        except:
-            epi_num = 1
-        infoLabels['season'] = sea_num or 1
-        infoLabels['episode'] = epi_num
-        title = '%sx%s - Episodio %s' % (sea_num, epi_num, epi_num)
-        
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', 
-                             infoLabels=infoLabels, contentType='episode'))
+            try:
+                epi_num = int(scrapertools.find_single_match(elem.span.text, "(\d+)"))
+            except:
+                epi_num = 1
+            infoLabels['season'] = sea_num or 1
+            infoLabels['episode'] = epi_num
+            title = '%sx%s - Episodio %s' % (sea_num, epi_num, epi_num)
+            
+            itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', 
+                                 infoLabels=infoLabels, contentType='episode'))
+    except:
+        pass
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -304,7 +315,7 @@ def findvideos(item):
                "17": "https://videobin.co/embed-%s.html", "9": host + "stream/amz.php?v=%s",
                "11": host +"stream/amz.php?v=%s", "2": "https://www.fembed.com/v/%s",
                "3": "https://www.mp4upload.com/embed-%s.html", "4": "https://sendvid.com/embed/%s",
-               "19": "https://videa.hu/player?v=%s"}
+               "19": "https://videa.hu/player?v=%s", "23": "https://sbthe.com/e/%s"}
 
     try:
         soup = get_source(item.url, soup=True, unescape=True)
@@ -321,9 +332,13 @@ def findvideos(item):
             if urllib.unquote(v_id).startswith("/"):
                 v_id = v_id[1:]
 
-            if srv_id not in servers:
-                srv_data = get_source(url)
-                url = scrapertools.find_single_match(srv_data, 'playerContainer.innerHTML .*?src="([^"]+)"')
+            if 'fireload' in v_id:
+                url = v_id
+                if not url.startswith('http'):
+                    url = 'https://' + url
+            elif srv_id not in servers:
+                srv_data = get_source(url, referer=item.url)
+                url = host.rstrip('/') + scrapertools.find_single_match(srv_data, 'playerContainer.innerHTML .*?src="([^"]+)"')
             else:
                 srv = servers.get(srv_id, "directo")
                 if srv != "directo":
@@ -331,8 +346,9 @@ def findvideos(item):
 
             if "/stream/" in url:
                 data = get_source(url, referer=item.url)
-                url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace('\\/', '/')
-            if not url:
+                url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace('\\/', '/').replace('/stream/fl.php?v=', '')
+
+            if not url or url == 'https://':
                 continue
             url = urllib.unquote(url)
             
@@ -350,11 +366,9 @@ def findvideos(item):
         itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
         # Requerido para FilterTools
-
         itemlist = filtertools.get_links(itemlist, item, list_language)
 
         # Requerido para AutoPlay
-
         autoplay.start(itemlist, item)
 
         return itemlist

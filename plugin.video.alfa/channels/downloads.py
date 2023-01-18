@@ -2375,7 +2375,7 @@ def get_episodes(item):
     try:
         channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
     except ImportError:
-        exec("import channels." + serie.channel + " as channel")
+        pass
     if channel and itemlist and hasattr(channel, 'post_episodes'):
         itemlist = getattr(channel, 'post_episodes')(item, itemlist)
     

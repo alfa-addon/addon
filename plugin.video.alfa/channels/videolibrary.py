@@ -676,10 +676,7 @@ def findvideos(item):
             try:
                 channel = __import__('channels.%s' % nom_canal, fromlist=["channels.%s" % nom_canal])
             except ImportError:
-                try:
-                    exec("import channels." + nom_canal + " as channel")
-                except:
-                    pass
+                pass
             if channel: 
                 break
 

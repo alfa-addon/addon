@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
-# -*- Channel Cuevana2Español -*-
+# -*- Channel Cuevana2 -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
-import base64
 import sys
-
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import re
-from core import tmdb
+
 from core.item import Item
 from core import servertools
 from core import scrapertools
@@ -37,22 +35,18 @@ canonical = {
 host = canonical['host'] or canonical['host_alt'][0]
 forced_proxy_opt = 'ProxyCF|FORCE'
 
-finds = {'find': ['div', 'row row-cols-xl-5 row-cols-lg-4 row-cols-3'],
-         'find_all': [], 
-         'find_all_2': ['article'],
-         'year': [], 
-         'year_movie': ['div', 'MovieItem_data__BdOz3'], 
-         'year_serie': ['div', 'SerieItem_data__LFJR_'], 
-         'season': ['div', 'serieBlockListEpisodes_selector__RwIbM'], 
-         'season_all': ['option'], 
-         'season_episode': ['div', 'EpisodeItem_data__jsvqZ'], 
-         'season_episode_2': ['span'], 
+finds = {'find': {'find': [{'tag': ['div'], 'class': ['row row-cols-xl-5 row-cols-lg-4 row-cols-3']}], 'find_all': ['article']},
+         'next_page': {'find': [{'tag': ['span'], 'string': re.compile('Next')}], 'find_parent': [{'tag': ['a'], '@ARG': 'href'}]}, 
+         'year': {'find': [{'tag': ['div'], 'class': ['MovieItem_data__BdOz3', 'SerieItem_data__LFJR_'], '@TEXT': '\d{4}'}]}, 
+         'season_episode': {'find': [{'tag': ['div'], 'class': ['EpisodeItem_data__jsvqZ']}, ['span']]}, 
+         'season': {'find': [{'tag': ['div'], 'class': ['serieBlockListEpisodes_selector__RwIbM']}], 'find_all': ['option']}, 
          'episode_url': '%sepisodio/%s-%sx%s', 
-         'next_page': ['ul', 'justify-content-center pagination pagination-sm'], 
-         'next_page_all': ['a', 'page-link', 'Next'],
-         'findvideos': ['script', '__NEXT_DATA__'], 
+         'episodes': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False}]}, 
+         'episode_num': [], 
+         'episode_clean': [], 
+         'findvideos': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False}]}, 
          'title_clean': []}
-AlfaChannel = DictionaryChannel(host, movie_path="/pelicula", tv_path='/serie', canonical=canonical, finds=finds)
+AlfaChannel = DictionaryChannel(host, movie_path="/pelicula", tv_path='/serie', canonical=canonical, finds=finds, debug=False)
 
 
 def mainlist(item):
@@ -110,7 +104,7 @@ def list_all(item):
     global finds
     
     if item.c_type == 'episodios':
-        finds['find'] = ['div', 'row row-cols-xl-4 row-cols-lg-3 row-cols-2']
+        finds['find'] = {'find': [{'tag': ['div'], 'class': ['row row-cols-xl-4 row-cols-lg-3 row-cols-2']}]}
 
     return AlfaChannel.list_all(item, finds=finds)
 
@@ -164,13 +158,15 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
-    
+    if not finds.get('findvideos', {}):
+        return itemlist
+
     servers = {'drive': 'gvideo', 'fembed': 'fembed', "player": "oprem", "openplay": "oprem", "embed": "mystream"}
     action = item.contentType if item.contentType == 'episode' else 'post'
-    
+
     soup = AlfaChannel.create_soup(item.url)
-    
-    json = jsontools.load(soup.find(finds.get('findvideos', '')[0], id=finds.get('findvideos', '')[1]).text)
+
+    json = jsontools.load(AlfaChannel.parse_finds_dict(soup, finds['findvideos']))
     matches = json.get('props', {}).get('pageProps', {}).get(action, {}).get('players', {})
     
     if not matches: 
@@ -219,7 +215,10 @@ def play(item):
               'CF': False, 'forced_proxy_opt': forced_proxy_opt}
     item.setMimeType = 'application/vnd.apple.mpegurl'
 
-    soup = AlfaChannel.create_soup(item.url, **kwargs).find("script").text
+    soup = AlfaChannel.create_soup(item.url, **kwargs)
+    if not soup:
+        return []
+    soup = soup.find("script").text
 
     item.url = scrapertools.find_single_match(str(soup), "url\s*=\s*'([^']+)'")
     if item.url:

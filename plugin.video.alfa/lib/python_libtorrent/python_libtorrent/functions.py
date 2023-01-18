@@ -87,7 +87,7 @@ class LibraryManager(object):
             ver2 = 0
         if ver1 > 1 or (ver1 == 1 and ver2 >= 2):
             global __libbaseurl__
-            __libbaseurl__ = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/libtorrent', \
+            __libbaseurl__ = ['https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/libtorrent', \
                               'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/libtorrent']
         else:
             __libbaseurl__ = ["https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/master/python_libtorrent"]
@@ -133,7 +133,7 @@ class LibraryManager(object):
             ver2 = 0
         if ver1 > 1 or (ver1 == 1 and ver2 >= 2):
             global __libbaseurl__
-            __libbaseurl__ = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/libtorrent', \
+            __libbaseurl__ = ['https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/libtorrent', \
                               'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/libtorrent']
         else:
             __libbaseurl__ = ["https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/master/python_libtorrent"]

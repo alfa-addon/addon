@@ -300,7 +300,8 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
     url_proxy = url
 
     if httptools.channel_proxy_list(url):
-        url_proxy, proxy_data, opt = httptools.check_proxy(url, forced_proxy=None, force_proxy_get=True)
+        opt = {'forced_proxy': None, 'force_proxy_get': True}
+        url_proxy, proxy_data, opt = httptools.check_proxy(url, **opt)
         if not proxy_data['web_name']:
             url_proxy = url
 
