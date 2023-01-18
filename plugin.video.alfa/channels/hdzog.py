@@ -155,13 +155,14 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     JSONData = json.load(data)
     for Video in  JSONData["videos"]:
-        video_id = Video["video_id"]
+        id = Video["video_id"]
         dir = Video["dir"]
         scrapedtitle = Video["title"]
         duration = Video["duration"]
         scrapedthumbnail =  Video["scr"]
         scrapedhd =  Video["props"]
-        scrapedurl = "%sembed/%s" %(host,video_id)
+        # url = "%sembed/%s/" % (host,id)
+        url = "%svideos/%s/%s/" %(host,id,dir)
         if scrapedhd:
             title = "[COLOR yellow]%s[/COLOR] [COLOR tomato]HD[/COLOR] %s" % (duration, scrapedtitle)
         else:
@@ -171,7 +172,7 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title , url=scrapedurl, thumbnail=thumbnail, 
+        itemlist.append(Item(channel=item.channel, action=action, title=title , url=url, thumbnail=thumbnail, 
                         fanart=thumbnail, plot=plot, contentTitle=title) )
     total= int(JSONData["total_count"])
     page = int(scrapertools.find_single_match(item.url,'(\d+).all..'))
@@ -187,7 +188,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -195,6 +196,6 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle= item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

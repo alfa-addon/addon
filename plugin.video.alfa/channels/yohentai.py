@@ -14,8 +14,6 @@ from channelselector import get_thumb
 from channels import autoplay
 from lib import strptime_fix
 
-host = 'https://yohentai.net/'
-
 IDIOMAS = {'VOSE': 'VOSE', 'CAST': 'CAST'}
 
 list_language = list(IDIOMAS.values())
@@ -26,6 +24,17 @@ meses = {'Enero':    1, 'Febrero':    2, 'Marzo':       3,
          'Abril':    4, 'Mayo':       5, 'Junio':       6,
          'Julio':    7, 'Agosto':     8, 'Septiembre':  9,
          'Octubre': 10, 'Noviembre': 11, 'Diciembre':  12}
+
+canonical = {
+             'channel': 'yohentai', 
+             'host': config.get_setting("current_host", 'yohentai', default=''), 
+             'host_alt': ["https://yohentai.net/"], 
+             'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
+             'CF': False, 'CF_test': False, 'alfa_s': True
+            }
+host = canonical['host'] or canonical['host_alt'][0]
+
 
 def mainlist(item):
     logger.info()
@@ -140,7 +149,7 @@ def setting_channel(item):
 def get_source(url, soup=True, post=None, headers=None):
     logger.info()
 
-    data = httptools.downloadpage(url, post=post, headers=headers).data
+    data = httptools.downloadpage(url, post=post, headers=headers, canonical=canonical).data
     if soup:
         return BeautifulSoup(data, "html5lib")
     else:

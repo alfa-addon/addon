@@ -99,10 +99,11 @@ def pornstar(item):
         n = 'videos'
         num = num.get(n,n)
         thumbnail = scrapedthumbnail.replace("\/", "/")
-        scrapedplot = ""
+        plot = ""
         url = url_api % ("14400", item.orientation, "latest-updates", "model", dir, "")
         title = "%s (%s)" %(scrapedtitle,num)
-        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail=thumbnail , plot=scrapedplot) )
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
     total= int(JSONData["total_count"])
     page = int(scrapertools.find_single_match(item.url,'.*?(\d+).json'))
     url_page = scrapertools.find_single_match(item.url,'(.*?)\d+.json')
@@ -130,11 +131,11 @@ def catalogo(item):
         n = 'videos'
         num = num.get(n,n)
         thumbnail = scrapedthumbnail.replace("\/", "/")
-        scrapedplot = ""
+        plot = ""
         url = url_api % ("7200", item.orientation, "latest-updates", "channel", dir, "")
         title = "%s (%s)" %(scrapedtitle,num)
-        itemlist.append(Item(channel=item.channel, action="lista", title=title , url=url , 
-                        thumbnail=thumbnail , plot=scrapedplot) )
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, 
+                             fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
     total= int(JSONData["total_count"])
     page = int(scrapertools.find_single_match(item.url,'.*?.(\d+).json'))
     url_page = scrapertools.find_single_match(item.url,'(.*?).\d+.json')
@@ -161,7 +162,8 @@ def categorias(item):
         thumbnail = ""
         plot = ""
         title = "%s (%s)" %(scrapedtitle,num)
-        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail=thumbnail, plot=plot) )
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     return  sorted(itemlist, key=lambda i: i.title)
 
 
@@ -173,13 +175,14 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     JSONData = json.load(data)
     for Video in  JSONData["videos"]:
-        video_id = Video["video_id"]
+        id = Video["video_id"]
         dir = Video["dir"]
         scrapedtitle = Video["title"]
         duration = Video["duration"]
         scrapedthumbnail =  Video["scr"]
         scrapedhd =  Video["props"]
-        url = "%sembed/%s" %(host, video_id)
+        # url = "%sembed/%s" %(host, video_id)
+        url = "%svideos/%s/%s/" %(host,id,dir)
         if scrapedhd:
             title = "[COLOR yellow]%s[/COLOR] [COLOR tomato]HD[/COLOR] %s" % (duration, scrapedtitle)
         else:
@@ -189,8 +192,8 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(item.clone(action=action, title=title , url=url, thumbnail=thumbnail, 
-                        fanart=thumbnail, plot=plot, contentTitle=title) )
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     total= int(JSONData["total_count"])
     page = int(scrapertools.find_single_match(item.url,'(\d+).all..'))
     url_page = scrapertools.find_single_match(item.url,'(.*?).\d+.all..')

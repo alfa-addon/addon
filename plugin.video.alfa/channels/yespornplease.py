@@ -18,12 +18,7 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-from channels import autoplay
 from bs4 import BeautifulSoup
-
-list_quality = ['default']
-list_servers = []
-
 
 canonical = {
              'channel': 'yespornplease', 
@@ -39,23 +34,17 @@ host = canonical['host'] or canonical['host_alt'][0]
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    autoplay.init(item.channel, list_servers, list_quality)
-
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
     itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars/"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host ))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags/" ))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
-
-    autoplay.show_option(item.channel, itemlist)
-
     return itemlist
 
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
+    texto = texto.replace(" ", "-")
     item.url = "%s?s=%s" % (host,texto)
     try:
         return lista(item)
@@ -81,7 +70,6 @@ def categorias(item):
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     return itemlist
-
 
 
 def canal(item):
@@ -124,10 +112,13 @@ def lista(item):
         url = elem.a['href']
         title = elem.a['title']
         thumbnail = elem.img['src']
-        time = elem.find('p').text.strip().replace(" […]", "")
+        time = elem.find('p').text.strip()
         title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         plot = ""
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
+        action = "play"
+        if logger.info() == False:
+            action = "findvideos"
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('a', class_='next')
     if next_page:
@@ -140,19 +131,41 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    url1 = soup.find('div', class_='wp-video')
-    url2 = soup.find('div', class_='iframe-container')
-    if url1:
-        url1 = url1.iframe['src']
-        url = create_soup(url1).find('source', type='video/mp4')
-        url = url['src']
-        url += "|Referer=%s" % item.url
-        itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=url)) 
-    if url2:
-        url = url2.iframe['src']
-        itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=url)) 
-        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
-    # Requerido para AutoPlay
-    autoplay.start(itemlist, item)
+    soup = create_soup(item.url).find('div', class_='wp-video')
+    url = soup.iframe['src']
+    matches = create_soup(url).find_all('source', type='video/mp4')
+    for elem in matches:
+        url = elem['src']
+        itemlist.append(Item(channel=item.channel, action="play", title= "Directo", url=url))
+    # itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
+
+
+# def play(item):
+    # logger.info()
+    # itemlist = []
+    # soup = create_soup(item.url).find('div', class_='wp-video')
+    # url = soup.iframe['src']
+    # matches = create_soup(url).find_all('source', type='video/mp4')
+    # for elem in matches:
+        # url = elem['src']
+        # url += "|ignore_response_code=True"
+        # itemlist.append(Item(channel=item.channel, action="play", title= "Directo", url=url))
+    # return itemlist
+
+
+def play(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url).find('div', class_='wp-video')
+    url = soup.iframe['src']
+    matches = create_soup(url).find_all('source', type='video/mp4')
+    for elem in matches:
+        url = elem['src']
+    url += "|Referer=%s" % item.url
+    listitem = xbmcgui.ListItem(item.title)
+    listitem.setArt({'thumb': item.thumbnail, 'icon': "DefaultVideo.png", 'poster': item.thumbnail})
+    listitem.setInfo('video', {'Title': item.title, 'Genre': 'Porn', 'plot': '', 'plotoutline': ''})
+    listitem.setMimeType('application/vnd.apple.mpegurl')
+    listitem.setContentLookup(False)
+    return xbmc.Player().play(url, listitem)

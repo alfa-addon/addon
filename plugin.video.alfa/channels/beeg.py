@@ -7,17 +7,18 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import re
 
-# from core import jsontools as json
 from core import scrapertools
 from core.item import Item
+from core import servertools
 from platformcode import logger
 from core import httptools
 
 
-Host = "https://beeg.com"
+host = "https://beeg.com"
 
 
 url_api = "https://store.externulls.com"
+# https://store.externulls.com/facts/file/0954825500144333
 # https://store.externulls.com/facts/tag?id=27173&limit=48&offset=0
 # https://store.externulls.com/tag/facts/tags?get_original=true&slug=index
 def mainlist(item):
@@ -71,6 +72,7 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).json
     for Video in data:
+        logger.debug(Video)
         id = Video['fc_file_id']
         th2= Video["fc_facts"][0]['fc_thumbs']
         segundos = Video["file"]["fl_duration"]
@@ -95,7 +97,8 @@ def lista(item):
         else:
             duration = "%s:%s:%s" % (horas,minutos,segundos)
         thumbnail = "https://thumbs-015.externulls.com/videos/%s/%s.jpg" %(id, th2[0])
-        url = '%s/facts/file/%s' % (url_api, id)
+        # url = '%s/facts/file/%s' % (url_api, id)
+        url = "%s/%s" % (host, id)
         title = "[COLOR yellow]%s[/COLOR] %s" %( duration, title)
         action = "play"
         if logger.info() == False:
@@ -114,23 +117,14 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '"fl_cdn_(\d+)": "([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for quality,url in matches:
-        url = "https://video.beeg.com/%s" %url
-        itemlist.append(item.clone(action="play", title = quality, contentTitle = item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '"fl_cdn_(\d+)": "([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for quality,url in matches:
-        url = "https://video.beeg.com/%s" %url
-        itemlist.append(['.mp4 %s' %quality, url])
-    itemlist.sort(key=lambda item: int( re.sub("\D", "", item[0])))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

@@ -26,8 +26,9 @@ list_servers = ['mangovideo']
 canonical = {
              'channel': 'xxxparodyhd', 
              'host': config.get_setting("current_host", 'xxxparodyhd', default=''), 
-             'host_alt': ["https://xxxparodyhd.net"], 
+             'host_alt': ["https://xxxparodyhd.net/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -39,9 +40,9 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "/movies/"))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="lista", url=host + "/most-viewed/"))
-    itemlist.append(Item(channel=item.channel, title="Mejor Valoradas" , action="lista", url=host + "/most-rating/"))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "movies/"))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="lista", url=host + "most-viewed/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valoradas" , action="lista", url=host + "most-rating/"))
     itemlist.append(Item(channel=item.channel, title="Year" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
@@ -55,7 +56,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/%s" % (host,texto)
+    item.url = "%ssearch/%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -92,9 +93,9 @@ def categorias(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -116,8 +117,8 @@ def lista(item):
             year = elem.find('div', class_='jtip-top').a.text.strip()
         else:
             year = ""
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
-                             fanart=thumbnail, contentTitle=title, infoLabels={"year": year} ))
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail, infoLabels={"year": year} ))
     next_page = soup.find('li', class_='active')
     if next_page and next_page.find_next_sibling("li"):
         next_page = next_page.find_next_sibling("li").a['href']

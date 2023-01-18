@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:www.|)nonktube.com/video/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:nonktube|udvl).com/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -30,6 +30,10 @@
       {
         "pattern": "(http://(?:www.|)incestflix.com/watch/[A-z0-9-]+(?:/|))",
         "url": "\\1"
+      },
+      {
+        "pattern": "(vagina.nl/sexfilms/view/[A-z0-9-]+(?:/|))",
+        "url": "https://en.\\1"
       },
      {
         "pattern": "(https://(?:www.|)errrotica.com/[a-z]/[A-z0-9-]+/[0-9]+(?:/|))",

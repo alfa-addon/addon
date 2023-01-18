@@ -20,6 +20,7 @@ canonical = {
              'host': config.get_setting("current_host", 'xhamster', default=''), 
              'host_alt': ["https://xhamster.com/"], 
              'host_black_list': [], 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -42,7 +43,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/%s" % (host, texto)
+    item.url = "%ssearch/%s?sort=newest" % (host, texto)
     item.extra = "buscar"
     try:
         return lista(item)
@@ -62,6 +63,7 @@ def categorias(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.text.strip()
+        url += "/newest"
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url))
     return itemlist
 
@@ -88,7 +90,7 @@ def catalogo(item):
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
-                              thumbnail=thumbnail , plot=plot) )
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('li', class_='next')
     if next_page:
         next_page = next_page.a['href']
@@ -100,9 +102,9 @@ def catalogo(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -133,11 +135,14 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
-                               plot=plot, fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('li', class_='next')
+        itemlist.append(Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url,
+                             fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
+    if soup.find('a', attrs={'data-page':'next'}):
+        next_page = soup.find('a', attrs={'data-page':'next'})
+    else:
+        next_page = soup.find('a', class_='prev-next-list-link--next')
     if next_page:
-        next_page = next_page.a['href']
+        next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -187,8 +192,22 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    patron = 'class="video-tag" href=".*?/pornstars/[^"]+".*?>([^<]+)</a>'
+    pornstars = re.compile(patron,re.DOTALL).findall(data)
+    for x , value in enumerate(pornstars):
+        pornstars[x] = value.strip()
+    pornstar = ' & '.join(pornstars)
+    pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+    lista = item.title.split()
+    if "HD" in item.title or "4K" in item.title:
+        lista.insert (4, pornstar)
+    else:
+        lista.insert (2, pornstar)
+    item.contentTitle = ' '.join(lista)
+    
     url = scrapertools.find_single_match(data, '"embedUrl":"([^"]+)"')
     url = url.replace("\\", "")
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

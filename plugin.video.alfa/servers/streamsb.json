@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:sblongvu|cloudemb|embedsb).\\w{2,4}/(?:st/|e/|v/)?([A-z0-9]+)",
+        "pattern": "(?:sblongvu|cloudemb|embedsb|sbchill).\\w{2,4}/(?:st/|e/|v/)?([A-z0-9]+)",
         "url": "https://streamsb.net/play/\\1"
       },
       {

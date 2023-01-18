@@ -20,7 +20,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.(?:porncake|porngo).com/videos/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:porncake|porngo|xxxfiles).com/videos/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1/"
       },
       {
@@ -88,7 +88,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://collectionofbestporn.com/video/[A-z0-9-]+.html)",
+        "pattern": "(https://(?:www.|)(?:collectionofbestporn|xerotica).com/video/[A-z0-9-]+.html)",
         "url": "\\1"
       },
       {
