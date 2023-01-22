@@ -23,7 +23,7 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'yespornplease', 
              'host': config.get_setting("current_host", 'yespornplease', default=''), 
-             'host_alt': ["https://yespornpleasexxx.com"], 
+             'host_alt': ["https://yespornpleasexxx.com/"], 
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -35,9 +35,9 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/pornstars/"))
+    itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars/"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host ))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/tags/" ))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags/" ))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -45,7 +45,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = "%s/?s=%s" % (host,texto)
+    item.url = "%s?s=%s" % (host,texto)
     try:
         return lista(item)
     except:
