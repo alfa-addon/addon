@@ -7,9 +7,10 @@ from builtins import object
 import sys
 PY3 = False
 VFS = True
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; VFS = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; VFS = True
 
 import zipfile
+import time
 
 from platformcode import config, logger
 from core import filetools
@@ -49,6 +50,12 @@ class ziptools(object):
 
                 else:
                     outfilename = filetools.join(dir, name)
+                if not filetools.exists(filetools.dirname(outfilename)):
+                    logger.error('Carpeta no generada, se crea: %s' % filetools.dirname(outfilename))
+                    res = filetools.mkdir(filetools.dirname(outfilename))
+                    time.sleep(0.5)
+                    if not filetools.exists(filetools.dirname(outfilename)):
+                        logger.error('Carpeta NO SE PUEDE CREAR, PARENT: %s' % filetools.listdir(filetools.dirname(filetools.dirname(outfilename))))
                 if not silent: logger.info("outfilename=%s" % outfilename)
                 try:
                     if filetools.exists(outfilename) and overwrite_question:
@@ -60,7 +67,6 @@ class ziptools(object):
                         if not dyesno:
                             break
                         if backup:
-                            import time
                             hora_folder = "Copia seguridad [%s]" % time.strftime("%d-%m_%H-%M", time.localtime())
                             backup = filetools.join(config.get_data_path(), 'backups', hora_folder, folder_to_extract)
                             if not filetools.exists(backup):
@@ -68,7 +74,7 @@ class ziptools(object):
                             filetools.copy(outfilename, filetools.join(backup, filetools.basename(outfilename)))
 
                     if not filetools.write(outfilename, zf.read(nameo), silent=True, vfs=VFS):  #TRUNCA en FINAL en Kodi 19 con VFS
-                        logger.error("Error en fichero " + nameo)
+                        logger.error("Error al escribir en el fichero %s" % outfilename)
                 except:
                     import traceback
                     logger.error(traceback.format_exc())
@@ -93,7 +99,11 @@ class ziptools(object):
         for dir in directories:
             curdir = filetools.join(basedir, dir)
             if not filetools.exists(curdir):
-                filetools.mkdir(curdir)
+                res = filetools.mkdir(curdir)
+                if not res or not filetools.exists(curdir):
+                    time.sleep(0.5)
+                    logger.error('Carpeta NO SE PUEDE CREAR, REINTENTADO: %s' % curdir)
+                    res = filetools.mkdir(curdir)
 
     def _listdirs(self, file):
         zf = zipfile.ZipFile(file)

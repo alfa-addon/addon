@@ -1021,6 +1021,16 @@ def mkdir(path, silent=False, vfs=True, ch_mod=''):
                 path = join(path, ' ').rstrip()
             result = bool(xbmcvfs.mkdirs(path))
             if not result:
+                try:
+                    os.makedirs(path)
+                    result = True
+                except:
+                    try:
+                        os.mkdir(path)
+                        result = True
+                    except:
+                        pass
+            if not result:
                 import time
                 time.sleep(0.1)
                 result = exists(path)
@@ -1031,7 +1041,10 @@ def mkdir(path, silent=False, vfs=True, ch_mod=''):
             if not samba: import_samba()
             samba.mkdir(path)
         else:
-            os.mkdir(path)
+            try:
+                os.makedirs(path)
+            except:
+                os.mkdir(path)
     except:
         logger.error("ERROR al crear el directorio: %s" % path)
         if not silent:
