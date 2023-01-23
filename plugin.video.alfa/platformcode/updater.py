@@ -8,6 +8,7 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import os
+import re
 import time
 import threading
 import traceback
@@ -16,15 +17,19 @@ import xbmc
 
 from platformcode import config
 from platformcode import logger
-from platformcode.platformtools import dialog_notification
+from platformcode.platformtools import dialog_notification, is_playing
+from platformcode import help_window
 from core import httptools
 from core import jsontools
 from core import downloadtools
 from core import scrapertools
 from core import ziptools
+from core.item import Item
 
 ALFA_DEPENDENCIES = 'alfa_dependencies.json'
-
+CURRENT_VERSION = config.get_addon_version(with_fix=False, from_xml=True)
+ITEM = Item()
+last_fix_json = os.path.join(config.get_runtime_path(), 'last_fix.json')        # información de la versión fixeada del usuario
 
 def check_addon_init():
     logger.info()
@@ -54,26 +59,36 @@ def check_addon_init():
             timer = 12  # Por defecto cada 12 horas
             verbose = False  # Por defecto, sin mensajes
         timer = timer * 3600  # Lo pasamos a segundos
+        timer_emer = 30 * 60
+        timer_blocks = int(timer / timer_emer)
 
         if config.get_platform(True)['num_version'] >= 14:  # Si es Kodi, lanzamos el monitor
             monitor = xbmc.Monitor()
         else:  # Lanzamos solo una actualización y salimos
 
-            check_addon_updates(verbose)    # Lanza la actualización
+            check_addon_updates(verbose, monitor=False)     # Lanza la actualización
+            if verify_emergency_update():
+                check_addon_updates(verbose)                # Lanza la actualización de emergencia
 
             return
 
-        while not monitor.abortRequested(): # Loop infinito hasta cancelar Kodi
+        while not monitor.abortRequested():                 # Loop infinito hasta cancelar Kodi
            
-            check_addon_updates(verbose)    # Lanza la actualización
+            check_addon_updates(verbose, monitor=monitor)   # Lanza la actualización
+            
+            for x in range(timer_blocks + 1):
+                if verify_emergency_update():
+                    check_addon_updates(verbose)            # Lanza la actualización de emergencia
 
-            if monitor.waitForAbort(timer): # Espera el tiempo programado o hasta que cancele Kodi
-                break  # Cancelación de Kodi, salimos
+                if monitor.waitForAbort(timer_emer):        # Espera el tiempo programado o hasta que cancele Kodi
+                    break                                   # Cancelación de Kodi, salimos
+            else:
+                continue
+            break
 
-        check_update_to_others(verbose=False,
-                               app=False)  # Actualizamos otros add-ons antes de irnos, para el siguiente inicio
+        check_update_to_others(verbose=False, app=False)    # Actualizamos otros add-ons antes de irnos, para el siguiente inicio
         # Borra el .zip de instalación de Alfa de la carpeta Packages, por si está corrupto, y que así se pueda descargar de nuevo
-        version = 'plugin.video.alfa-%s.zip' % config.get_addon_version(with_fix=False, from_xml=True)
+        version = 'plugin.video.alfa-%s.zip' % CURRENT_VERSION
         packages_path = os.path.join(config.translatePath('special://home'), 'addons', 'packages', version)
         if os.path.exists(packages_path):
             os.remove(packages_path)
@@ -107,14 +122,17 @@ def check_addon_init():
     return
 
 
-def check_addon_updates(verbose=False):
+def check_addon_updates(verbose=False, monitor=None):
     logger.info()
 
     # Forzamos la actualización de los repos para facilitar la actualización del addon Alfa
     xbmc.executebuiltin('UpdateAddonRepos')
 
-    ADDON_UPDATES_JSON = 'https://extra.alfa-addon.com/addon_updates/updates.json'
-    ADDON_UPDATES_ZIP = 'https://extra.alfa-addon.com/addon_updates/updates.zip'
+    ADDON_UPDATES = 'https://extra.alfa-addon.com/addon_updates/'
+    ADDON_UPDATES_ALT = 'https://extra.alfa-addon.com/addon_updates/addon_updates_alt_%s/'
+    ADDON_UPDATES_JSON = 'updates.json'
+    ADDON_UPDATES_ZIP = 'updates.zip'
+    ADDON_UPDATES_BROADCAST = 'broadcast.json'
     check_date_real()               # Obtiene la fecha real de un sistema externo
 
     try:
@@ -123,10 +141,8 @@ def check_addon_updates(verbose=False):
         pass
 
     try:
-        last_fix_json = os.path.join(config.get_runtime_path(),
-                                     'last_fix.json')  # información de la versión fixeada del usuario
+        
         # Se guarda en get_runtime_path en lugar de get_data_path para que se elimine al cambiar de versión
-
         try:
             localfilename = os.path.join(config.get_data_path(), 'temp_updates.zip')
             if os.path.exists(localfilename): os.remove(localfilename)
@@ -135,48 +151,82 @@ def check_addon_updates(verbose=False):
 
         # Descargar json con las posibles actualizaciones
         # -----------------------------------------------
-        resp = httptools.downloadpage(ADDON_UPDATES_JSON, timeout=5, ignore_response_code=True)
+        url = ADDON_UPDATES
+        resp = httptools.downloadpage(url + ADDON_UPDATES_JSON, timeout=5, ignore_response_code=True)
+        if resp.sucess:
+            data = jsontools.load(resp.data)
+            if data:
+                resp.sucess = verify_addon_version(CURRENT_VERSION, data.get('addon_version', ''))
+            else:
+                resp.sucess = False
+        if not resp.sucess:
+            for x in range(9):
+                url = ADDON_UPDATES_ALT % str(x+1)
+                resp = httptools.downloadpage(url + ADDON_UPDATES_JSON, timeout=5, ignore_response_code=True)
+                if not resp.sucess or 'login' in resp.url:
+                    resp.sucess = False
+                    if 'login' in resp.url: resp.code = 404
+                    break
+                if resp.sucess:
+                    data = jsontools.load(resp.data)
+                    if data:
+                        resp.sucess = verify_addon_version(CURRENT_VERSION, data.get('addon_version', ''))
+                    else:
+                        resp.sucess = False
+                if resp.sucess:
+                    break
+
         if not resp.sucess and resp.code != 404:
             logger.info('ERROR en la descarga de actualizaciones: %s' % resp.code, force=True)
             if verbose:
                 dialog_notification('Alfa: error en la actualización', 'Hay un error al descargar la actualización')
+            if monitor is None and verify_emergency_update():
+                return check_addon_updates(verbose, monitor=False)              # Lanza la actualización de emergencia
             return False
         if not resp.data:
             logger.info('No se encuentran actualizaciones del addon', force=True)
             if verbose:
                 dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
+            if monitor is None and verify_emergency_update():
+                return check_addon_updates(verbose, monitor=False)              # Lanza la actualización de emergencia
             check_update_to_others(verbose=verbose)  # Comprueba las actualuzaciones de otros productos
             return False
 
-        data = jsontools.load(resp.data)
         if 'addon_version' not in data or 'fix_version' not in data:
             logger.info('No hay actualizaciones del addon', force=True)
             if verbose:
                 dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
+            if monitor is None and verify_emergency_update():
+                return check_addon_updates(verbose, monitor=False)              # Lanza la actualización de emergencia
             check_update_to_others(verbose=verbose)  # Comprueba las actualuzaciones de otros productos
             return False
 
         # Comprobar versión que tiene instalada el usuario con versión de la actualización
         # --------------------------------------------------------------------------------
-        current_version = config.get_addon_version(with_fix=False, from_xml=True)
-        if current_version != data['addon_version']:
+        current_version = CURRENT_VERSION
+        if not verify_addon_version(current_version, data['addon_version']):
             logger.info('No hay actualizaciones para la versión %s del addon' % current_version, force=True)
             if verbose:
                 dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
+            if monitor is None and verify_emergency_update():
+                return check_addon_updates(verbose, monitor=False)              # Lanza la actualización de emergencia
             check_update_to_others(verbose=verbose)  # Comprueba las actualuzaciones de otros productos
             return False
 
+        data['addon_version'] = current_version
         if os.path.exists(last_fix_json):
             try:
                 lastfix = {}
                 with open(last_fix_json, "r") as lfj:
                     lastfix = jsontools.load(lfj.read())
-                if lastfix['addon_version'] == data['addon_version'] and lastfix['fix_version'] == data['fix_version']:
+                if lastfix['addon_version'] == current_version and lastfix['fix_version'] == data['fix_version']:
                     logger.info('Ya está actualizado con los últimos cambios. Versión %s.fix%d' % (
                     data['addon_version'], data['fix_version']), force=True)
                     if verbose:
                         dialog_notification('Alfa ya está actualizado',
-                                            'Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
+                                            'Versión %s.fix%d' % (current_version, data['fix_version']))
+                    if monitor is None and verify_emergency_update():
+                        return check_addon_updates(verbose, monitor=False)      # Lanza la actualización de emergencia
                     check_update_to_others(verbose=verbose)  # Comprueba las actualuzaciones de otros productos
                     return False
             except:
@@ -186,10 +236,24 @@ def check_addon_updates(verbose=False):
                     logger.error('last_fix.json: ERROR desconocido')
                 lastfix = {}
 
+        # Guardar .json de Broadcast
+        # -----------------------------------------
+        resp_broadcast = httptools.downloadpage(url + ADDON_UPDATES_BROADCAST, timeout=5, ignore_response_code=True)
+        if resp_broadcast.sucess and not 'login' in resp_broadcast.url:
+            broadcast = jsontools.load(resp_broadcast.data)
+            if broadcast:
+                try:
+                    help_window.show_info(0, wait=False, title="[COLOR limegreen]Alfa BROADCAST: [/COLOR][COLOR hotpink]Noticia IMPORTANTE[/COLOR]", 
+                                          text=broadcast.get('broadcast', ''))
+                    logger.info('Mensaje de Broadcast enviado: %s ' % str(broadcast), force=True)
+                except:
+                    logger.error('ERROR en mensaje de Broadcast: %s ' % str(broadcast))
+        
+        
         # Descargar zip con las actualizaciones
         # -------------------------------------
 
-        if downloadtools.downloadfile(ADDON_UPDATES_ZIP, localfilename, silent=True) < 0:
+        if downloadtools.downloadfile(url + ADDON_UPDATES_ZIP, localfilename, silent=True) < 0:
             raise
 
         try:
@@ -237,7 +301,7 @@ def check_addon_updates(verbose=False):
         # Guardar información de la versión fixeada
         # -----------------------------------------
         try:
-            show_update_info(data)
+            show_update_info(data, wait=False)
         except:
             pass
         last_id = 0
@@ -261,9 +325,12 @@ def check_addon_updates(verbose=False):
         logger.info('Addon actualizado correctamente a %s.fix%d' % (data['addon_version'], data['fix_version']), force=True)
 
         if verbose and not config.get_setting("show_fixes", default=True):
-            dialog_notification('Alfa actualizado a', 'Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
+            dialog_notification('Alfa actualizado a', 'Versión %s.fix%d' % (current_version, data['fix_version']))
 
-        check_update_to_others(verbose=verbose)  # Comprueba las actualuzaciones de otros productos
+        if monitor is None and verify_emergency_update():
+            return check_addon_updates(verbose, monitor=False)  # Lanza la actualización de emergencia
+        
+        check_update_to_others(verbose=verbose)                 # Comprueba las actualuzaciones de otros productos
         return True
 
     except:
@@ -275,8 +342,78 @@ def check_addon_updates(verbose=False):
         return False
 
 
+def verify_addon_version(installed, fixes):
+    logger.info('Installed: %s; Fixes: %s' % (str(installed), str(fixes)))
+    
+    resp = False
+    
+    try:
+        if installed and fixes:
+            if installed == fixes:
+                return True
+            
+            installed = str(installed).split('.')
+            fixes = str(fixes).split('.')
+            
+            for x, fix in enumerate(fixes):
+                if str(fix) != '*' and not str(fix).startswith('[') and str(fix) != installed[x]:
+                    break
+                elif str(fix) == '*':
+                    return True
+                elif str(fix).startswith('['):
+                    fix_list = fix.replace('[', '').replace(']', '').split(':')
+                    if not fix_list[0] or fix_list[0] == '*' or int(fix_list[0]) <= int(installed[x]):
+                        if not fix_list[1] or fix_list[1] == '*' or int(fix_list[1]) >= int(installed[x]):
+                            return True
+    except:
+        logger.error('Error al verificar versiones: Installed: %s; Fixes: %s' % (str(installed), str(fixes)))
+        logger.error(traceback.format_exc())
+
+    return resp
+
+
+def verify_emergency_update():
+
+    resp = False
+    install = 0
+    command = ''
+    
+    try:
+        if not PY3: from lib import alfaresolver
+        else: from lib import alfaresolver_py3 as alfaresolver
+        result = alfaresolver.frequency_count(ITEM, emergency=True)
+        if result:
+            for x, (fecha, addon_version, fix_version, install, key) in enumerate(result):
+                if verify_addon_version(CURRENT_VERSION, addon_version):
+                    if os.path.exists(last_fix_json):
+                        with open(last_fix_json, "r") as lfj:
+                            lastfix = jsontools.load(lfj.read())
+                        if lastfix:
+                            if verify_addon_version(lastfix.get('fix_version', '0'), fix_version):
+                                resp = True
+                                command = result[x]
+                                break
+                        else:
+                            resp = True
+                    else:
+                        resp = True
+
+            if resp and install == 1:
+                logger.info('REINSTALLING: %s' % str(command), force=True)
+                from platformcode.custom_code import verify_script_alfa_update_helper
+                verify_script_alfa_update_helper(emergency=True)
+                resp = False
+    except:
+        logger.error(traceback.format_exc())
+
+    logger.info('%s %s' % (str(resp), str(command)), force=True)
+
+    return resp
+
+
 def check_update_to_others(verbose=False, app=True):
     logger.info()
+
     folder = ''
     folder_list = []
 
@@ -480,12 +617,7 @@ def get_ua_list():
 
 
 def show_update_info(new_fix_json):
-    import re
-    import os
-    from core import jsontools
     from core import channeltools
-    from platformcode import help_window
-    from platformcode import platformtools
 
     fixed = list()
     old_fix = os.path.join(config.get_runtime_path(), 'last_fix.json')
@@ -536,11 +668,11 @@ def show_update_info(new_fix_json):
                         fixed.append("- %s\n" % fix.title())
 
     if fixed:
-        fix_number = "%s - FIX %s" % (new_fix_json["addon_version"], new_fix_json["fix_version"])
+        fix_number = "%s - FIX %s" % (CURRENT_VERSION, new_fix_json["fix_version"])
         fixed_list = "".join(set(fixed))
         text = "[B]Se han aplicado correcciones a los siguientes canales:[/B] \n\n%s\n\n" % fixed_list
         text += "[I]Si no deseas ver esta ventana desactívala desde:[/I]\nConfiguración > Preferencias > General > Mostrar informe de correcciones"
-        if not platformtools.is_playing() and config.get_setting("show_fixes", default=True):
+        if not is_playing() and config.get_setting("show_fixes", default=True):
             help_window.show_info(0, wait=False, title="Alfa - Correcciones (%s)" % fix_number, text=text)
 
 

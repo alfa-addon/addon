@@ -408,7 +408,7 @@ def check_proxy(url, **opt):
         # Returns: {'addr': , 'CF_addr': , 'web_name': , 'log': }
         proxy_data, opt = proxytools.get_proxy_addr(url, forced_proxy_m=proxy_data['forced_proxy'], proxy_data=proxy_data, **opt)
         url = proxy_data['url']
-        proxy_data['stat'] = proxy_data['stat'].replace(',P', ', P')
+        proxy_data['stat'] = proxy_data.get('stat', '').replace(',P', ', P')
 
         if not PY3 and proxy_data.get('dict', {}).get('https', ''):
             proxy_data['dict']['https'] = str('http://'+ proxy_data['dict']['https'])
@@ -1447,8 +1447,7 @@ def fill_fields_pre(url, proxy_data, file_name_, **opt):
     try:
         info_dict.append(('Timeout', opt['timeout']))
         info_dict.append(('URL', url))
-        info_dict.append(('Dominio', '%s - Verify: %s' % (urlparse.urlparse(url)[1], 
-                           opt.get('session_verify', False) if not CS_stat else opt.get('session_verify', True))))
+        info_dict.append(('Dominio', '%s - Verify: %s' % (urlparse.urlparse(url)[1], opt.get('session_verify', False))))
         if CS_stat:
             info_dict.append(('Dominio_CF', True))
         if not opt.get('CF_test', True):

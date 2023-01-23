@@ -390,6 +390,24 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
     import json
     import xbmcvfs
     
+    def translatePath(path):
+        """
+        Kodi 19: xbmc.translatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.translatePath instead.
+        @param path: cadena con path special://
+        @type path: str
+        @rtype: str
+        @return: devuelve la cadena con el path real
+        """
+        if PY3:
+            if isinstance(path, bytes):
+                path = path.decode('utf-8')
+            path = xbmcvfs.translatePath(path)
+            if isinstance(path, bytes):
+                path = path.decode('utf-8')
+        else:
+            path = xbmc.translatePath(path)
+        return path
+    
     # Lets try first the traditional way
     if not p:
         try:
@@ -414,9 +432,9 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                                'ACTIVE': 0, 
                                'USER_ADDON': 'plugin.video.torrest', 
                                'USER_ADDON_STATUS': xbmc.getCondVisibility('System.HasAddon("plugin.video.torrest")'), 
-                               'USER_ADDON_USERDATA': os.path.join(xbmc.translatePath('special://masterprofile/'), 
+                               'USER_ADDON_USERDATA': os.path.join(translatePath('special://masterprofile/'), 
                                             'addon_data', 'plugin.video.torrest'), 
-                               'USER_APK': [os.path.join(xbmc.translatePath('special://xbmcbinaddons/'), 
+                               'USER_APK': [os.path.join(translatePath('special://xbmcbinaddons/'), 
                                             'plugin.video.torrest', 'resources', 'apk', 
                                             'torrest-mobile-assistant.apk')], 
                                'USER_APP': 'com.torrest.torrestmobileassistant', 
@@ -429,7 +447,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                                'ACTIVE': 1, 
                                'USER_ADDON': 'plugin.video.alfa', 
                                'USER_ADDON_STATUS': xbmc.getCondVisibility('System.HasAddon("plugin.video.alfa")'), 
-                               'USER_ADDON_USERDATA': os.path.join(xbmc.translatePath('special://masterprofile/'), 
+                               'USER_ADDON_USERDATA': os.path.join(translatePath('special://masterprofile/'), 
                                             'addon_data', 'plugin.video.alfa'), 
                                'USER_APK': 
                                     ['https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/alfa-mobile-assistant.apk',
@@ -448,7 +466,7 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
         TORREST_ADDON_SETTING.setSetting('run_as_root', 'false')
         run_as_root = True
         logging.info('## Assistant checking "run_as_root": SET to False')
-    TORREST_ADDON_USERDATA = xbmc.translatePath(TORREST_ADDON_SETTING.getAddonInfo("profile"))
+    TORREST_ADDON_USERDATA = translatePath(TORREST_ADDON_SETTING.getAddonInfo("profile"))
     USER_APP_URL = ''
     USER_APP_URL_ALT = ''
     USER_ADDON = ''
@@ -582,8 +600,8 @@ def call_binary(function, cmd, retry=False, p=None, **kwargs):
                             _settings_spec = [s for s in kodi.get_all_settings_spec() if s["id"].startswith(
                                             _settings_prefix + _settings_separator)]
                             s = kodi.generate_dict_settings(_settings_spec, separator=_settings_separator)[_settings_prefix]
-                            s["download_path"] = assure_unicode(xbmc.translatePath(s["download_path"]))
-                            s["torrents_path"] = assure_unicode(xbmc.translatePath(s["torrents_path"]))
+                            s["download_path"] = assure_unicode(translatePath(s["download_path"]))
+                            s["torrents_path"] = assure_unicode(translatePath(s["torrents_path"]))
                             try:
                                 if not os.path.exists(os.path.dirname(argum)):
                                     res = xbmcvfs.mkdirs(os.path.dirname(argum))

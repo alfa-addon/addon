@@ -44,7 +44,7 @@ canonical = {
                                  'https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
                                  'https://new.hdfull.one/', 'https://hdfull.top/', 'https://hdfull.bz/'],
              'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 'expires': 365*24*60*60, 
-             'forced_proxy_ifnot_assistant': 'ProxyCF', 
+             'forced_proxy_ifnot_assistant': 'ProxyCF', 'session_verify': False, 'CF_stat': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

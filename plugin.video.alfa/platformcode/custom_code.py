@@ -294,7 +294,7 @@ def marshal_check():
         logger.error(traceback.format_exc(1))
 
 
-def verify_script_alfa_update_helper(silent=True):
+def verify_script_alfa_update_helper(silent=True, emergency=False):
     logger.info()
     
     import json
@@ -309,6 +309,10 @@ def verify_script_alfa_update_helper(silent=True):
     torrest_repo = ['repository.github', '0.0.7', '*', 'V']
     torrest_addon = ['plugin.video.torrest', '0.0.14', '*', '']
     futures_script = ['%sscript.module.futures' % repos_dir, '2.2.1', 'PY2', '']
+    if emergency:
+        alfa_repo[3] = 'F'
+        alfa_helper[3] = 'F'
+        torrest_repo[3] = 'F'
     
     try:
         versiones = config.get_versions_from_repo()
@@ -402,18 +406,21 @@ def verify_script_alfa_update_helper(silent=True):
     new_version = versiones.get(addonid, ADDON_VERSION)
     updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
     if updated:
-        if ADDON_VERSION != new_version:
+        if ADDON_VERSION != new_version or emergency:
             def check_alfa_version():
                 logger.info(new_version, force=True)
                 xbmc.executebuiltin('UpdateAddonRepos')
-                for x in range(40):
+                rango = 40 if not emergency else 1
+                for x in range(rango):
                     addon_version = config.get_addon_version(with_fix=False, from_xml=True)
                     if addon_version == new_version: break
                     time.sleep(2)
-                if addon_version != new_version:
+                if addon_version != new_version or emergency:
                     logger.info("Notifying obsolete version %s ==> %s" % (addon_version, new_version), force=True)
                     platformtools.dialog_notification("Alfa: versión oficial: [COLOR hotpink][B]%s[/B][/COLOR]" % new_version, \
                             "[COLOR yellow]Tienes una versión obsoleta: [B]%s[/B][/COLOR]" % addon_version)
+                if emergency:
+                    return install_alfa_now()
             try:
                 threading.Thread(target=check_alfa_version).start()
                 time.sleep(1)
@@ -480,6 +487,8 @@ def install_alfa_now(silent=True):
             time.sleep(3)
         except:
             try:
+                res = filetools.rmdirtree(ADDON_PATH, silent=silent)
+                time.sleep(3)
                 xbmc.executebuiltin('Extract("%s", "%s")' % (pkg_updated, addons_path))
                 time.sleep(3)
             except:
