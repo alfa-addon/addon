@@ -192,6 +192,7 @@ class AlfaChannelHelper:
             return matches
         
         match = soup
+        json = {}
 
         try:
             for x, (level_, block) in enumerate(finds.items()):
@@ -223,6 +224,7 @@ class AlfaChannelHelper:
                     regex = ''
                     argument = ''
                     strip = ''
+                    json = {}
                     if isinstance(f, dict):
                         attrs = f.copy()
                         tag = attrs.pop('tag', '')
@@ -230,6 +232,7 @@ class AlfaChannelHelper:
                         regex = attrs.pop('@TEXT', '')
                         argument = attrs.pop('@ARG', '')
                         strip = attrs.pop('@STRIP', True)
+                        json = attrs.pop('@JSON', {})
                     else:
                         tag = f
                     if (isinstance(tag, str) and tag == '*') or (isinstance(tag, list) and len(tag) == 1 and tag[0] == '*'): 
@@ -251,12 +254,33 @@ class AlfaChannelHelper:
                     
                     else:
                         match = soup_func_all(tag, attrs=attrs, string=string)
-                    
-                    if DEBUG: logger.debug('Matches[500]: %s' % str(match)[:500])
 
                     if not match: break
                 if not match: break
 
+            if json:
+                try:
+                    if DEBUG: logger.debug('Json[500]: %s' % str(match)[:500])
+                    json_all_work = {}
+                    json_all = jsontools.load(match)
+                    if json_all:
+                        match = []
+                        json_match = {}
+                        for json_field in json:
+                            json_all_work = json_all.copy()
+                            key_org, key_des = json_field.split('|')
+                            key_org = key_org.split(',')
+                            for key_org_item in key_org:
+                                json_match[key_des] = json_all_work.get(key_org_item, '')
+                                json_all_work = json_all_work.get(key_org_item, {})
+                        match.append(json_match)
+                except:
+                    match = []
+                    logger.error('Json[500]: %s' % str(json_all_work)[:500])
+                    logger.error(traceback.format_exc())
+            
+            if DEBUG: logger.debug('Matches[500]: %s' % str(match)[:500])
+            
             matches = matches_init if not match else match
         except:
             matches = matches_init
@@ -301,6 +325,12 @@ class DictionaryChannel(AlfaChannelHelper):
             except:
                 logger.error(elem)
                 continue
+            if finds.get('title_clean'):
+                cleaner = finds['title_clean']
+                if isinstance(finds['title_clean'], str):
+                    cleaner = [finds['title_clean']]
+                for clean in cleaner:
+                    title = re.sub(clean, '', title).strip()
             try:
                 thumb = elem.find("img")["data-src"]
             except:
@@ -312,8 +342,8 @@ class DictionaryChannel(AlfaChannelHelper):
             new_item = Item(channel=item.channel,
                             title=title,
                             url=url,
-                            thumbnail=thumb,
-                            infoLabels={"year": year}
+                            infoLabels={"year": year, 'thumbnail': thumb},
+                            thumbnail=thumb
                             )
 
             if item.c_type == 'episodios':
@@ -331,13 +361,18 @@ class DictionaryChannel(AlfaChannelHelper):
             if postprocess:
                 new_item = postprocess(soup, elem, new_item, item)
 
+            if item.c_type == 'peliculas': new_item.contentType = 'movie'
             new_item = self.define_content_type(new_item)
 
             new_item.url = self.do_url_replace(new_item.url)
 
             itemlist.append(new_item)
+            #if DEBUG: logger.debug('New_item: %s' % new_item)
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
+        for new_item in itemlist:
+            if not isinstance(new_item.infoLabels['year'], int):
+                new_item.infoLabels['year'] = str(new_item.infoLabels['year']).replace('-', '')
 
         if next_page:
             itemlist.append(Item(channel=item.channel,
@@ -571,7 +606,7 @@ class DictionaryChannel(AlfaChannelHelper):
 
         return itemlist
 
-    def get_video_options(self, url, data='', langs=[], forced_proxy_opt=forced_proxy_def, referer=None, findvideos=False, finds={}):
+    def get_video_options(self, url, data='', langs=[], forced_proxy_opt=forced_proxy_def, referer=None, findvideos=False, json=False, finds={}):
 
         if not finds: finds = self.finds
         finds_out = finds.get('findvideos', {})
@@ -579,6 +614,10 @@ class DictionaryChannel(AlfaChannelHelper):
         options = list()
         results = list()
         url = self.do_url_replace(url)
+        if findvideos: 
+            item_local = findvideos.clone()
+        else:
+            item_local = findvideos
 
         soup = data or self.create_soup(url, forced_proxy_opt=forced_proxy_opt, referer=referer)
         
@@ -588,8 +627,9 @@ class DictionaryChannel(AlfaChannelHelper):
         if not matches or not langs:
             logger.error(finds_out)
             logger.error(soup)
+            if findvideos: return [Item()]
             return [[soup, []]]
-        
+
         for x, _lang in enumerate(langs):
             try:
                 lang = _lang.find("span").text.lower()
@@ -603,17 +643,26 @@ class DictionaryChannel(AlfaChannelHelper):
             elif 'subtitulado' in lang:
                 lang = 'subtitulado'
             
-            try:
-                for opt in matches[x]:
-                    if not opt.strip().strip('\n'): continue
+            if json:
+                for json_fields in matches:
+                    opt = [json_fields.get('server', ''), json_fields.get('url', ''), json_fields.get('quality', '')]
                     options.append((lang, opt))
-            except:
+                    if item_local:
+                        if not item_local.plot and json_fields.get('plot', ''): item_local.plot = json_fields['plot']
+                        if not item_local.thumbnail and json_fields.get('thumbnail', ''): item_local.plot = json_fields['thumbnail']
+                        if not item_local.fanart and json_fields.get('fanart', ''): item_local.plot = json_fields['fanart']
+            else:
                 try:
-                    for opt in matches[x].find_all("li"):
+                    for opt in matches[x]:
                         if not opt.strip().strip('\n'): continue
                         options.append((lang, opt))
                 except:
-                    pass
+                    try:
+                        for opt in matches[x].find_all("li"):
+                            if not opt.strip().strip('\n'): continue
+                            options.append((lang, opt))
+                    except:
+                        pass
         
         if not options:
             for opt in matches:
@@ -625,21 +674,25 @@ class DictionaryChannel(AlfaChannelHelper):
 
         itemlist = []
         for lang, url in results[0][1]:
-            item_local = findvideos.clone()
-            try:
-                item_local.url = url.iframe.get("src", '') or url.iframe.get("href", '')
-            except:
+            
+            if isinstance(url, list) and len(url) >= 3:
+                item_local.server = url[0]
+                item_local.url = url[1]
+                item_local.quality = url[2]
+            else:
+                item_local.server = ''
                 try:
-                    item_local.url = url.a.get("src", '') or url.a.get("href", '')
+                    item_local.url = url.iframe.get("src", '') or url.iframe.get("href", '')
                 except:
-                    item_local.url = url
-            item_local.channel = findvideos.channel
+                    try:
+                        item_local.url = url.a.get("src", '') or url.a.get("href", '')
+                    except:
+                        item_local.url = url
+            
             item_local.title = '%s'
-            item_local.server = ''
             item_local.language = lang
             item_local.action = 'play'
-            item_local.thumbnail = findvideos.thumbnail
-            item_local.infoLabels = findvideos.infoLabels
+            item_local.headers = {'Referer': findvideos.url}
             item_local.setMimeType = 'application/vnd.apple.mpegurl'
             
             itemlist.append(item_local)

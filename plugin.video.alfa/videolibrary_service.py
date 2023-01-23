@@ -397,7 +397,7 @@ def start(thread=True):
         t.start()
     else:
 
-        update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000]
+        update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000, 600000, 900000]
         wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]
         if wait > 0:
             if monitor:
@@ -525,7 +525,7 @@ if __name__ == "__main__":
 
     # Actualiza la videoteca de Alfa, con una espera inicial si se ha configurado
     if config.get_setting("update", "videolibrary") not in [0, 2, 4]:
-        update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000]
+        update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000, 600000, 900000]
         wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]
         if wait > 0:
             if monitor:

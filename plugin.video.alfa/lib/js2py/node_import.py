@@ -8,8 +8,13 @@ import tempfile
 import hashlib
 import random
 
+try:
+    from platformcode import config
+    DIRNAME = tempfile.mkdtemp(dir=config.get_temp_file('tempfile_mkdtemp/'))
+except:
+    DIRNAME = tempfile.mkdtemp()
+
 DID_INIT = False
-DIRNAME = tempfile.mkdtemp()
 PY_NODE_MODULES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'py_node_modules')
 
 

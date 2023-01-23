@@ -31,6 +31,8 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['openload', 'streamango', 'powvideo', 'clipwatching', 'streamplay', 'streamcherry', 'gamovideo']
 
+forced_proxy_opt = 'ProxyCF'
+
 canonical = {
              'channel': 'dilo', 
              'host': config.get_setting("current_host", 'dilo', default=''), 
@@ -38,11 +40,10 @@ canonical = {
              'host_black_list': ["https://streamtape.com/", "https://upstream.to/", "https://vidoza.net/", "http://vidoza.net/"], 
              'pattern': '<link\s*rel="stylesheet"\s*href="([^"]+)"', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 2, 'cf_assistant_if_proxy': True, 
+             'forced_proxy_ifnot_assistant': forced_proxy_opt, 'session_verify': False, 'CF_stat': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-
-forced_proxy_opt = 'ProxyCF'
 
 
 def get_source(url, ignore_response_code=True):
