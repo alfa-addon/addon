@@ -25,7 +25,7 @@ canonical = {
              'host': config.get_setting("current_host", 'yespornplease', default=''), 
              'host_alt': ["https://yespornpleasexxx.com/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': True, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -72,7 +72,6 @@ def categorias(item):
     return itemlist
 
 
-
 def canal(item):
     logger.info()
     itemlist = []
@@ -95,9 +94,9 @@ def canal(item):
 def create_soup(url, referer=None, unescape=False):
     logger.info()
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
     if unescape:
         data = scrapertools.unescape(data)
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
@@ -112,9 +111,7 @@ def lista(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
-        thumbnail = ""
-        if elem.img:
-            thumbnail = elem.img['src']
+        thumbnail = elem.img['src']
         time = elem.find('p').text.strip()
         title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)
         plot = ""
@@ -155,6 +152,7 @@ def findvideos(item):
         # url += "|ignore_response_code=True"
         # itemlist.append(Item(channel=item.channel, action="play", title= "Directo", url=url))
     # return itemlist
+
 
 def play(item):
     logger.info()
