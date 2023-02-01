@@ -17,6 +17,8 @@ from threading import Thread
 
 client_id = "c40ba210716aee87f6a9ddcafafc56246909e5377b623b72c15909024448e89d"
 client_secret = "999164f25832341f0214453bb11c915adb18e9490d6b5e9a707963a5a1bee43e"
+kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
+          'timeout': 5, 'alfa_s': True, 'cf_assistant': False}
 
 
 def auth_trakt():
@@ -30,13 +32,13 @@ def auth_trakt():
         post = jsontools.dump(post)
         # Se solicita url y código de verificación para conceder permiso a la app
         url = "http://api-v2launch.trakt.tv/oauth/device/code"
-        #data = httptools.downloadpage(url, post=post, headers=headers, replace_headers=True).data
-        data = httptools.downloadpage(url, post=post, headers=headers).data
+        #data = httptools.downloadpage(url, post=post, headers=headers, replace_headers=True, **kwargs).data
+        data = httptools.downloadpage(url, post=post, headers=headers, **kwargs).data
         data = jsontools.load(data)
-        item.verify_url = data["verification_url"]
-        item.user_code = data["user_code"]
-        item.device_code = data["device_code"]
-        item.intervalo = data["interval"]
+        item.verify_url = data.get("verification_url", '')
+        item.user_code = data.get("user_code", '')
+        item.device_code = data.get("device_code", '')
+        item.intervalo = data.get("interval", '')
         if not item.folder:
             token_trakt(item)
 
@@ -64,12 +66,12 @@ def token_trakt(item):
             url = "https://api.trakt.tv/oauth/token"
             post = {'refresh_token': refresh, 'client_id': client_id, 'client_secret': client_secret,
                     'redirect_uri': 'urn:ietf:wg:oauth:2.0:oob', 'grant_type': 'refresh_token'}
-            data = httptools.downloadpage(url, post=post).data
+            data = httptools.downloadpage(url, post=post, **kwargs).data
             data = jsontools.load(data)
         elif item.action == "token_trakt":
             url = "https://api-v2launch.trakt.tv/oauth/device/token"
             post = "code=%s&client_id=%s&client_secret=%s" % (item.device_code, client_id, client_secret)
-            data = httptools.downloadpage(url, post=post, headers=headers).data
+            data = httptools.downloadpage(url, post=post, headers=headers, **kwargs).data
             data = jsontools.load(data)
         else:
             import time
@@ -90,7 +92,7 @@ def token_trakt(item):
                     url = "http://api-v2launch.trakt.tv/oauth/device/token"
                     post = {'code': item.device_code, 'client_id': client_id, 'client_secret': client_secret}
                     post = jsontools.dump(post)
-                    data = httptools.downloadpage(url, post=post, headers=headers).data
+                    data = httptools.downloadpage(url, post=post, headers=headers, **kwargs).data
                     data = jsontools.load(data)
                     if "access_token" in data:
                         # Código introducido, salimos del bucle
@@ -103,8 +105,8 @@ def token_trakt(item):
             except:
                 pass
 
-        token = data["access_token"]
-        refresh = data["refresh_token"]
+        token = data.get("access_token", '')
+        refresh = data.get("refresh_token", '')
 
         config.set_setting("token_trakt", token, "trakt")
         config.set_setting("refresh_token_trakt", refresh, "trakt")
@@ -170,7 +172,7 @@ def get_trakt_watched(id_type, mediatype, update=False):
                     if token_auth:
                         headers.append(['Authorization', "Bearer %s" % token_auth])
                         url = "https://api.trakt.tv/sync/watched/%s" % mediatype
-                        data = httptools.downloadpage(url, headers=headers)
+                        data = httptools.downloadpage(url, headers=headers, **kwargs)
                         if data.code == 401:
                             token_trakt(Item(extra="renew"))
                             return get_trakt_watched(id_type, mediatype, update)
@@ -293,14 +295,17 @@ def ask_install_script():
 
 def wait_for_update_trakt():
     logger.info()
-    t = Thread(update_all)
+    
+    t = Thread(target=update_all)
     t.setDaemon(True)
     t.start()
     t.is_alive()
 
+
 def update_all():
-    from time import sleep
     logger.info()
+    from time import sleep
+    
     sleep(20)
     while xbmc.Player().isPlaying():
         sleep(20)
