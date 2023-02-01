@@ -26,6 +26,12 @@ from core import scrapertools
 from core import ziptools
 from core.item import Item
 
+ADDON_UPDATES = 'https://extra.alfa-addon.com/addon_updates/'
+ADDON_UPDATES_ALT = ADDON_UPDATES + 'addon_updates_alt_%s/'
+ADDON_UPDATES_JSON = 'updates.json'
+ADDON_UPDATES_ZIP = 'updates.zip'
+ADDON_UPDATES_BROADCAST = 'broadcast.json'
+
 ALFA_DEPENDENCIES = 'alfa_dependencies.json'
 CURRENT_VERSION = config.get_addon_version(with_fix=False, from_xml=True)
 ITEM = Item()
@@ -96,9 +102,9 @@ def check_addon_init():
 
     # Lanzamos en Servicio de actualización de FIXES
     try:
-        threading.Thread(target=check_addon_monitor).start()  # Creamos un Thread independiente, hasta el fin de Kodi
+        threading.Thread(target=check_addon_monitor).start()    # Creamos un Thread independiente, hasta el fin de Kodi
         time.sleep(5)  # Dejamos terminar la primera verificación...
-    except:  # Si hay problemas de threading, se llama una sola vez
+    except:                                     # Si hay problemas de threading, se llama una sola vez
         try:
             timer = int(config.get_setting('addon_update_timer',
                                            default=12))  # Intervalo entre actualizaciones, en Ajustes de Alfa
@@ -111,13 +117,13 @@ def check_addon_init():
                     config.set_setting('addon_update_timer', 12)  # Si es usuario se fuerza a 12 horas
                     timer = 12
                 else:
-                    return  # 0.  No se quieren actualizaciones
+                    return                      # 0.  No se quieren actualizaciones
             verbose = config.get_setting('addon_update_message', default=False)
         except:
-            verbose = False  # Por defecto, sin mensajes
+            verbose = False                     # Por defecto, sin mensajes
             pass
-        check_addon_updates(verbose)  # Lanza la actualización, en Ajustes de Alfa
-        time.sleep(5)  # Dejamos terminar la primera verificación...
+        check_addon_updates(verbose)            # Lanza la actualización, en Ajustes de Alfa
+        time.sleep(5)                           # Dejamos terminar la primera verificación...
 
     return
 
@@ -128,20 +134,10 @@ def check_addon_updates(verbose=False, monitor=None):
     # Forzamos la actualización de los repos para facilitar la actualización del addon Alfa
     xbmc.executebuiltin('UpdateAddonRepos')
 
-    ADDON_UPDATES = 'https://extra.alfa-addon.com/addon_updates/'
-    ADDON_UPDATES_ALT = 'https://extra.alfa-addon.com/addon_updates/addon_updates_alt_%s/'
-    ADDON_UPDATES_JSON = 'updates.json'
-    ADDON_UPDATES_ZIP = 'updates.zip'
-    ADDON_UPDATES_BROADCAST = 'broadcast.json'
-    check_date_real()               # Obtiene la fecha real de un sistema externo
+    check_date_real()                           # Obtiene la fecha real de un sistema externo
+    get_ua_list()
 
     try:
-        get_ua_list()
-    except:
-        pass
-
-    try:
-        
         # Se guarda en get_runtime_path en lugar de get_data_path para que se elimine al cambiar de versión
         try:
             localfilename = os.path.join(config.get_data_path(), 'temp_updates.zip')
@@ -153,26 +149,31 @@ def check_addon_updates(verbose=False, monitor=None):
         # -----------------------------------------------
         url = ADDON_UPDATES
         resp = httptools.downloadpage(url + ADDON_UPDATES_JSON, timeout=5, ignore_response_code=True)
+        
         if resp.sucess:
             data = jsontools.load(resp.data)
             if data:
                 resp.sucess = verify_addon_version(CURRENT_VERSION, data.get('addon_version', ''))
             else:
                 resp.sucess = False
+        
         if not resp.sucess:
             for x in range(9):
                 url = ADDON_UPDATES_ALT % str(x+1)
                 resp = httptools.downloadpage(url + ADDON_UPDATES_JSON, timeout=5, ignore_response_code=True)
-                if not resp.sucess or 'login' in resp.url:
+                
+                if not resp.sucess or 'login' in str(resp.url):
                     resp.sucess = False
-                    if 'login' in resp.url: resp.code = 404
+                    if 'login' in str(resp.url): resp.code = 404
                     break
+                
                 if resp.sucess:
                     data = jsontools.load(resp.data)
                     if data:
                         resp.sucess = verify_addon_version(CURRENT_VERSION, data.get('addon_version', ''))
                     else:
                         resp.sucess = False
+                
                 if resp.sucess:
                     break
 
@@ -214,17 +215,18 @@ def check_addon_updates(verbose=False, monitor=None):
             return False
 
         data['addon_version'] = current_version
+        lastfix = {}
         if os.path.exists(last_fix_json):
             try:
-                lastfix = {}
                 with open(last_fix_json, "r") as lfj:
                     lastfix = jsontools.load(lfj.read())
-                if lastfix['addon_version'] == current_version and lastfix['fix_version'] == data['fix_version']:
+                if verify_addon_version(lastfix['addon_version'], current_version) \
+                                        and lastfix['fix_version'] >= data['fix_version']:
                     logger.info('Ya está actualizado con los últimos cambios. Versión %s.fix%d' % (
-                    data['addon_version'], data['fix_version']), force=True)
+                                current_version, lastfix['fix_version'] or data['fix_version']), force=True)
                     if verbose:
-                        dialog_notification('Alfa ya está actualizado',
-                                            'Versión %s.fix%d' % (current_version, data['fix_version']))
+                        dialog_notification('Alfa ya está actualizado', 'Versión %s.fix%d' \
+                                            % (current_version, lastfix['fix_version'] or data['fix_version']))
                     if monitor is None and verify_emergency_update():
                         return check_addon_updates(verbose, monitor=False)      # Lanza la actualización de emergencia
                     check_update_to_others(verbose=verbose)  # Comprueba las actualuzaciones de otros productos
@@ -239,20 +241,22 @@ def check_addon_updates(verbose=False, monitor=None):
         # Guardar .json de Broadcast
         # -----------------------------------------
         resp_broadcast = httptools.downloadpage(url + ADDON_UPDATES_BROADCAST, timeout=5, ignore_response_code=True)
-        if resp_broadcast.sucess and not 'login' in resp_broadcast.url:
+        
+        if resp_broadcast.sucess and not 'login' in str(resp_broadcast.url):
             broadcast = jsontools.load(resp_broadcast.data)
             if broadcast:
-                try:
-                    help_window.show_info(0, wait=False, title="[COLOR limegreen]Alfa BROADCAST: [/COLOR][COLOR hotpink]Noticia IMPORTANTE[/COLOR]", 
-                                          text=broadcast.get('broadcast', ''))
-                    logger.info('Mensaje de Broadcast enviado: %s ' % str(broadcast), force=True)
-                except:
-                    logger.error('ERROR en mensaje de Broadcast: %s ' % str(broadcast))
-        
-        
+                if broadcast.get('fix_version', '') and verify_addon_version(lastfix['fix_version'] , broadcast['fix_version']):
+                    try:
+                        help_window.show_info(0, wait=False, title="[COLOR limegreen]Alfa BROADCAST: [/COLOR][COLOR hotpink]Noticia IMPORTANTE[/COLOR]", 
+                                              text=broadcast.get('broadcast', ''))
+                        logger.info('Mensaje de Broadcast enviado: %s ' % str(broadcast), force=True)
+                    except:
+                        logger.error('ERROR en mensaje de Broadcast: %s ' % str(broadcast))
+                else:
+                    logger.info('Broadcast existe pero no aplica: %s' % str(broadcast), force=True)
+
         # Descargar zip con las actualizaciones
         # -------------------------------------
-
         if downloadtools.downloadfile(url + ADDON_UPDATES_ZIP, localfilename, silent=True) < 0:
             raise
 
@@ -300,10 +304,8 @@ def check_addon_updates(verbose=False, monitor=None):
 
         # Guardar información de la versión fixeada
         # -----------------------------------------
-        try:
-            show_update_info(data, wait=False)
-        except:
-            pass
+        show_update_info(data, wait=False)
+
         last_id = 0
         if isinstance(data["files"], list):
             last_id = len(data["files"])
@@ -316,6 +318,7 @@ def check_addon_updates(verbose=False, monitor=None):
         data["last_id"] = last_id
         with open(last_fix_json, "w") as lfj:
             lfj.write(jsontools.dump(data))
+        
         # Actualiza la versión del addon en las cabeceras
         try:
             httptools.__version = '%s.fix%d' % (data['addon_version'], data['fix_version'])
@@ -324,13 +327,13 @@ def check_addon_updates(verbose=False, monitor=None):
 
         logger.info('Addon actualizado correctamente a %s.fix%d' % (data['addon_version'], data['fix_version']), force=True)
 
-        if verbose and not config.get_setting("show_fixes", default=True):
+        if verbose:
             dialog_notification('Alfa actualizado a', 'Versión %s.fix%d' % (current_version, data['fix_version']))
 
         if monitor is None and verify_emergency_update():
-            return check_addon_updates(verbose, monitor=False)  # Lanza la actualización de emergencia
+            return check_addon_updates(verbose, monitor=False)          # Lanza la actualización de emergencia
         
-        check_update_to_others(verbose=verbose)                 # Comprueba las actualuzaciones de otros productos
+        check_update_to_others(verbose=verbose)                         # Comprueba las actualuzaciones de otros productos
         return True
 
     except:
@@ -377,21 +380,33 @@ def verify_emergency_update():
     resp = False
     install = 0
     command = ''
+    updates_url = ''
+    github_url = ''
     
     try:
         if not PY3: from lib import alfaresolver
         else: from lib import alfaresolver_py3 as alfaresolver
         result = alfaresolver.frequency_count(ITEM, emergency=True)
         if result:
-            for x, (fecha, addon_version, fix_version, install, key) in enumerate(result):
+            for x, (fecha, addon_version, fix_version_, install, key) in enumerate(result):
                 if verify_addon_version(CURRENT_VERSION, addon_version):
                     if os.path.exists(last_fix_json):
                         with open(last_fix_json, "r") as lfj:
                             lastfix = jsontools.load(lfj.read())
                         if lastfix:
+                            if not fix_version_:
+                                break
+                            fix_version__ = fix_version_.split('|')
+                            fix_version = fix_version__[0] or '*'
+                            if len(fix_version__) == 2:
+                                updates_url = fix_version__[1]
+                            elif len(fix_version__) == 3:
+                                updates_url = fix_version__[1]
+                                github_url = fix_version__[2]
                             if verify_addon_version(lastfix.get('fix_version', '0'), fix_version):
                                 resp = True
                                 command = result[x]
+                                github_url = parse_emergency_update(updates_url, github_url)
                                 break
                         else:
                             resp = True
@@ -401,7 +416,7 @@ def verify_emergency_update():
             if resp and install == 1:
                 logger.info('REINSTALLING: %s' % str(command), force=True)
                 from platformcode.custom_code import verify_script_alfa_update_helper
-                verify_script_alfa_update_helper(emergency=True)
+                verify_script_alfa_update_helper(emergency=True, github_url=github_url)
                 resp = False
     except:
         logger.error(traceback.format_exc())
@@ -409,6 +424,40 @@ def verify_emergency_update():
     logger.info('%s %s' % (str(resp), str(command)), force=True)
 
     return resp
+
+
+def parse_emergency_update(updates_url, github_url):
+    logger.info('updates_url: %s; github_url: %s' % (updates_url, github_url))
+    global ADDON_UPDATES
+
+    url = ''
+    
+    try:
+        if updates_url:
+            updates_url = updates_url.split(',')
+            for u_url_ in updates_url:
+                u_url = u_url_.strip('[').strip(']').strip('{').strip('}').strip('"').strip("'").strip()
+                resp = httptools.downloadpage(u_url + ADDON_UPDATES_JSON, timeout=5, ignore_response_code=True, hide_infobox=True)
+                if not resp.sucess or 'login' in str(resp.url):
+                    continue
+                ADDON_UPDATES = u_url
+                logger.debug('ADDON_UPDATES: %s' % ADDON_UPDATES)
+                break
+        
+        if github_url:
+            github_url = github_url.split(',')
+            for g_url_ in github_url:
+                g_url = g_url_.strip('[').strip(']').strip('{').strip('}').strip('"').strip("'").strip()
+                resp = httptools.downloadpage(g_url + 'addons.xml', timeout=5, ignore_response_code=True, hide_infobox=True)
+                if not resp.sucess:
+                    continue
+                url = g_url
+                logger.debug('Github_url: %s' % url)
+                break
+    except:
+        logger.error(traceback.format_exc())
+
+    return url
 
 
 def check_update_to_others(verbose=False, app=True):
@@ -445,6 +494,7 @@ def check_update_to_others(verbose=False, app=True):
             if os.path.exists(os.path.join(out_folder, ALFA_DEPENDENCIES)):
                 os.remove(os.path.join(out_folder, ALFA_DEPENDENCIES))
 
+        config.verify_settings_integrity()
         from platformcode.custom_code import set_season_holidays
         set_season_holidays()
 
@@ -566,137 +616,168 @@ def copytree(src, dst, symlinks=False, ignore=None):
     XXX Consider this example code rather than the ultimate tool.
 
     """
-    length = 16 * 1024
-    names = os.listdir(src)
-    if ignore is not None:
-        ignored_names = ignore(src, names)
-    else:
-        ignored_names = set()
-
-    if not os.path.exists(dst):
-        os.makedirs(dst)
-
-    for name in names:
-        if name in ignored_names:
-            continue
-        srcname = os.path.join(src, name)
-        dstname = os.path.join(dst, name)
-
-        if symlinks and os.path.islink(srcname):
-            linkto = os.readlink(srcname)
-            os.symlink(linkto, dstname)
-        elif os.path.isdir(srcname):
-            copytree(srcname, dstname, symlinks, ignore)
+    try:
+        length = 16 * 1024
+        names = os.listdir(src)
+        if ignore is not None:
+            ignored_names = ignore(src, names)
         else:
-            # Will raise a SpecialFileError for unsupported file types
-            with open(srcname, 'rb') as fsrc:
-                with open(dstname, 'wb') as fdst:
-                    while 1:
-                        buf = fsrc.read(length)
-                        if not buf:
-                            break
-                        fdst.write(buf)
+            ignored_names = set()
+
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+
+        for name in names:
+            if name in ignored_names:
+                continue
+            srcname = os.path.join(src, name)
+            dstname = os.path.join(dst, name)
+
+            if symlinks and os.path.islink(srcname):
+                linkto = os.readlink(srcname)
+                os.symlink(linkto, dstname)
+            elif os.path.isdir(srcname):
+                copytree(srcname, dstname, symlinks, ignore)
+            else:
+                # Will raise a SpecialFileError for unsupported file types
+                with open(srcname, 'rb') as fsrc:
+                    with open(dstname, 'wb') as fdst:
+                        while 1:
+                            buf = fsrc.read(length)
+                            if not buf:
+                                break
+                            fdst.write(buf)
+    except:
+        logger.error(traceback.format_exc())
 
 
 def get_ua_list():
     logger.info()
-    url = "http://omahaproxy.appspot.com/all?csv=1"
-    current_ver = config.get_setting("chrome_ua_version", default="").split(".")
-    data = httptools.downloadpage(url, alfa_s=True, ignore_response_code=True).data
-    new_ua_ver = scrapertools.find_single_match(data, "win64,stable,([^,]+),")
-    if not new_ua_ver:
+    
+    try:
+        url = "http://omahaproxy.appspot.com/all?csv=1"
+        current_ver = config.get_setting("chrome_ua_version", default="").split(".")
+        data = httptools.downloadpage(url, alfa_s=True, ignore_response_code=True).data
+        
+        new_ua_ver = scrapertools.find_single_match(data, "win64,stable,([^,]+),")
+        if not new_ua_ver:
+            return
+
+        if not current_ver:
+            config.set_setting("chrome_ua_version", new_ua_ver)
+        else:
+            for pos, val in enumerate(new_ua_ver.split('.')):
+                if int(val) > int(current_ver[pos]):
+                    config.set_setting("chrome_ua_version", new_ua_ver)
+                    break
+    except:
+        logger.error(traceback.format_exc())
+
+
+def show_update_info(new_fix_json, wait=False):
+    
+    if not config.get_setting("show_fixes", default=True):
         return
 
-    if not current_ver:
-        config.set_setting("chrome_ua_version", new_ua_ver)
-    else:
-        for pos, val in enumerate(new_ua_ver.split('.')):
-            if int(val) > int(current_ver[pos]):
-                config.set_setting("chrome_ua_version", new_ua_ver)
-                break
-
-
-def show_update_info(new_fix_json):
     from core import channeltools
 
-    fixed = list()
-    old_fix = os.path.join(config.get_runtime_path(), 'last_fix.json')
+    try:
+        fixed = list()
+        old_fix = os.path.join(config.get_runtime_path(), 'last_fix.json')
 
-    if isinstance(new_fix_json, dict):
-        if not os.path.exists(old_fix):
-            for k, v in new_fix_json["files"].items():
-                if "channels" in v:
-                    v = re.sub(r"\.py|\.json", "", v[1])
-                    channel_parameters = channeltools.get_channel_parameters(v)
-                    if not channel_parameters["channel"] or channel_parameters["adult"]:
-                        continue
-                    fixed.append("- %s\n" % v.title())
-        else:
-            with open(old_fix, "r") as f:
-                old_fix_json = jsontools.load(f.read())
+        if isinstance(new_fix_json, dict):
+            if not os.path.exists(old_fix):
+                for k, v in new_fix_json["files"].items():
+                    if "channels" in v:
+                        v = re.sub(r"\.py|\.json", "", v[1])
+                        channel_parameters = channeltools.get_channel_parameters(v)
+                        if not channel_parameters["channel"] or channel_parameters["adult"]:
+                            continue
+                        fixed.append("- %s\n" % v.title())
+            else:
+                with open(old_fix, "r") as f:
+                    old_fix_json = jsontools.load(f.read())
 
-            last_id = old_fix_json.get("last_id", 0)
+                last_id = old_fix_json.get("last_id", 0)
 
-            for k, v in new_fix_json["files"].items():
-                if int(k) > last_id and "channels" in v:
-                    v = re.sub(r"\.py|\.json", "", v[1])
-                    channel_parameters = channeltools.get_channel_parameters(v)
-                    if not channel_parameters["channel"] or channel_parameters["adult"]:
-                        continue
-                    fixed.append("- %s\n" % v.title())
-    elif isinstance(new_fix_json, list):
-        if not os.path.exists(old_fix):
-            for fix in new_fix_json["files"]:
-                if "channels" in fix:
-                    fix = re.sub(r"\.py|\.json", "", fix[1])
-                    channel_parameters = channeltools.get_channel_parameters(fix)
-                    if not channel_parameters["channel"] or channel_parameters["adult"]:
-                        continue
-                    fixed.append("- %s\n" % fix.title())
-        else:
-            with open(old_fix, "r") as f:
-                old_fix_json = jsontools.load(f.read())
-
-            last_id = old_fix_json.get("last_id", 0)
-            if len(new_fix_json["files"]) > last_id:
-                for fix in new_fix_json["files"][last_id + 1:]:
+                for k, v in new_fix_json["files"].items():
+                    if int(k) > last_id and "channels" in v:
+                        v = re.sub(r"\.py|\.json", "", v[1])
+                        channel_parameters = channeltools.get_channel_parameters(v)
+                        if not channel_parameters["channel"] or channel_parameters["adult"]:
+                            continue
+                        fixed.append("- %s\n" % v.title())
+        elif isinstance(new_fix_json, list):
+            if not os.path.exists(old_fix):
+                for fix in new_fix_json["files"]:
                     if "channels" in fix:
                         fix = re.sub(r"\.py|\.json", "", fix[1])
                         channel_parameters = channeltools.get_channel_parameters(fix)
                         if not channel_parameters["channel"] or channel_parameters["adult"]:
                             continue
                         fixed.append("- %s\n" % fix.title())
+            else:
+                with open(old_fix, "r") as f:
+                    old_fix_json = jsontools.load(f.read())
 
-    if fixed:
-        fix_number = "%s - FIX %s" % (CURRENT_VERSION, new_fix_json["fix_version"])
-        fixed_list = "".join(set(fixed))
-        text = "[B]Se han aplicado correcciones a los siguientes canales:[/B] \n\n%s\n\n" % fixed_list
-        text += "[I]Si no deseas ver esta ventana desactívala desde:[/I]\nConfiguración > Preferencias > General > Mostrar informe de correcciones"
-        if not is_playing() and config.get_setting("show_fixes", default=True):
-            help_window.show_info(0, wait=False, title="Alfa - Correcciones (%s)" % fix_number, text=text)
+                last_id = old_fix_json.get("last_id", 0)
+                if len(new_fix_json["files"]) > last_id:
+                    for fix in new_fix_json["files"][last_id + 1:]:
+                        if "channels" in fix:
+                            fix = re.sub(r"\.py|\.json", "", fix[1])
+                            channel_parameters = channeltools.get_channel_parameters(fix)
+                            if not channel_parameters["channel"] or channel_parameters["adult"]:
+                                continue
+                            fixed.append("- %s\n" % fix.title())
+
+        if fixed:
+            fix_number = "%s - FIX %s" % (CURRENT_VERSION, new_fix_json["fix_version"])
+            fixed_list = "".join(set(fixed))
+            text = "[B]Se han aplicado correcciones a los siguientes canales:[/B] \n\n%s\n\n" % fixed_list
+            text += "[I]Si no deseas ver esta ventana desactívala desde:[/I]\nConfiguración > Preferencias > General > Mostrar informe de correcciones"
+            if not is_playing():
+                help_window.show_info(0, wait=wait, title="Alfa - Correcciones (%s)" % fix_number, text=text)
+    except:
+        logger.error(traceback.format_exc())
 
 
 def check_date_real():
-    pages = ['https://worldtimeapi.org/api/ip', 'https://timeapi.io/api/Time/current/zone?timeZone=Europe/Madrid']
-    kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
-              'alfa_s': True, 'timeout': 5, 'cf_assistant': False}
+    import datetime
     
-    for page in pages:
-        try:
-            resp = httptools.downloadpage(page, **kwargs)
-            if resp.sucess:
-                fecha_int = resp.json.get('datetime', '')[:10] or resp.json.get('dateTime', '')[:10] or resp.json.get('currentDateTime', '')[:10]
-                if not fecha_int: continue
-                config.set_setting('date_real', fecha_int)
-                logger.info('Fecha REAL: %s' % fecha_int, force=True)
-                break
-            else:
-                logger.debug('ERROR al obtener la Fecha REAL: %s: %s' % (page, str(resp.code)))
-        except:
-            logger.error('ERROR al obtener la Fecha REAL: %s' % page)
-    else:
-        import datetime
+    try:
+        pages = ['https://worldtimeapi.org/api/ip', 'https://timeapi.io/api/Time/current/zone?timeZone=Europe/Madrid']
+        kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
+                  'alfa_s': True, 'timeout': 5, 'cf_assistant': False}
+        
         dia_hoy = datetime.date.today()
-        fecha = "%s-%s-%s" % (dia_hoy.year, dia_hoy.month, dia_hoy.day)
-        config.set_setting('date_real', fecha)
-        logger.error('ERROR al obtener la Fecha REAL en: %s; Fecha del SISTEMA: %s' % (pages, fecha))
+        fecha_int = ''
+        
+        for page in pages:
+            try:
+                resp = httptools.downloadpage(page, **kwargs)
+                if resp.sucess:
+                    fecha_int = resp.json.get('datetime', '')[:10] or resp.json.get('dateTime', '')[:10] or resp.json.get('currentDateTime', '')[:10]
+                    if not fecha_int: continue
+                    config.set_setting('date_real', fecha_int)
+                    break
+                else:
+                    logger.debug('ERROR al obtener la Fecha REAL: %s: %s' % (page, str(resp.code)))
+            except:
+                logger.error('ERROR al obtener la Fecha REAL: %s' % page)
+        else:
+            fecha = "%s-%s-%s" % (dia_hoy.year, dia_hoy.month, dia_hoy.day)
+            config.set_setting('date_real', fecha)
+            logger.error('ERROR al obtener la Fecha REAL en: %s; Fecha del SISTEMA: %s' % (pages, fecha))
+
+        if fecha_int and len(fecha_int) >= 10:
+            fecha_int_alt = fecha_int[:10].split('-')
+            if (dia_hoy.year == int(fecha_int_alt[0]) or dia_hoy.year == int(fecha_int_alt[0])-1) \
+                                and (dia_hoy.month == int(fecha_int_alt[1]) or int(fecha_int_alt[1])-1 == 0) \
+                                and (dia_hoy.day == int(fecha_int_alt[2])-1 or int(fecha_int_alt[2])-1 == 0):
+                fecha = "%s-%s-%s" % (dia_hoy.year, dia_hoy.month, dia_hoy.day)
+                config.set_setting('date_real', fecha)
+                logger.info('Fecha REAL (del SISTEMA): %s' % fecha, force=True)
+            else:
+                logger.info('Fecha REAL (de la WEB): %s' % fecha_int, force=True)
+    except:
+        logger.error(traceback.format_exc())

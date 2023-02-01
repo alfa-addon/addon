@@ -56,6 +56,8 @@ modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', chann
 timeout = config.get_setting('timeout_downloadpage', channel)
 season_colapse = config.get_setting('season_colapse', channel)                  # Season colapse?
 filter_languages = config.get_setting('filter_languages', channel)              # Filtrado de idiomas?
+#page = 'page/1/'
+page = ''
 
 
 def mainlist(item):
@@ -139,7 +141,7 @@ def submenu(item):
         if scrapertools.slugify(scrapedtitle) in item.extra:
             item.url = urlparse.urljoin(host, scrapedurl.replace(scrapertools.find_single_match(scrapedurl, patron_host), ''))
             if not item.url.endswith('/'): item.url += '/'
-            item.url += 'page/1/'
+            item.url += page
             return listado(item)
             
     return itemlist
@@ -181,7 +183,7 @@ def anno(item):
     year = platformtools.dialog_numeric(0, "Introduzca el Año de búsqueda", default="")
     item.url = re.sub(r'years/\d+', 'years/%s' % year, matches[0][0])
     if not item.url.endswith('/'): item.url += '/'
-    item.url += 'page/1/'
+    item.url += page
     item.extra2 = 'anno' + str(year)
 
     return listado(item)
@@ -219,7 +221,7 @@ def genero(item):
         return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     for scrapedurl, gen in matches:
-        itemlist.append(item.clone(action="listado", title=gen.capitalize(), url=scrapedurl + 'page/1/', 
+        itemlist.append(item.clone(action="listado", title=gen.capitalize(), url=scrapedurl + page, 
                         extra2='genero'))
 
     return itemlist
@@ -259,7 +261,7 @@ def calidad(item):
 
     for scrapedurl, cal in matches:
         if cal not in ['HD', '720p']:
-            itemlist.append(item.clone(action="listado", title=cal.capitalize(), url=scrapedurl + 'page/1/', 
+            itemlist.append(item.clone(action="listado", title=cal.capitalize(), url=scrapedurl + page, 
                         extra2='calidad'))
 
     return itemlist
@@ -379,7 +381,10 @@ def listado(item):                                                              
             return itemlist                                                     #Salimos
         
         # Buscamos la próxima página
-        next_page_url = re.sub(r'page\/(\d+)', 'page/%s' % str(curr_page), item.url)
+        if not '/page/' in item.url:
+            next_page_url = ''
+        else:
+            next_page_url = re.sub(r'page\/(\d+)', 'page/%s' % str(curr_page), item.url)
         #logger.debug('curr_page: ' + str(curr_page) + ' / last_page: ' + str(last_page))
         
         # Buscamos la última página
@@ -1098,7 +1103,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     
     try:
-        item.url = host + 'buscar/page/1/?buscar=' + texto
+        item.url = host + 'buscar/%s?buscar=' % page + texto
         item.extra = 'search'
 
         if texto:

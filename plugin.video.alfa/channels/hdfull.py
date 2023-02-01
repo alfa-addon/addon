@@ -43,13 +43,12 @@ canonical = {
                                  'https://hdfull.video/', 'https://hdfull.cloud/', 'https://hdfull.wtf/', 
                                  'https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
                                  'https://new.hdfull.one/', 'https://hdfull.top/', 'https://hdfull.bz/'],
-             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 3, 'expires': 365*24*60*60, 
-             'forced_proxy_ifnot_assistant': 'ProxyCF', 'session_verify': False, 'CF_stat': True, 
+             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 'expires': 365*24*60*60, 
+             'forced_proxy_ifnot_assistant': 'ProxyCF', 'CF_stat': True, 'cf_assistant_if_proxy': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 host_save = host
-CF = True
 
 _silence = config.get_setting('silence_mode', channel=canonical['channel'])
 show_langs = config.get_setting('show_langs', channel=canonical['channel'])
@@ -329,7 +328,7 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
         headers.update({'Referer': referer})
 
     page = httptools.downloadpage(url, post=post, headers=headers, ignore_response_code=True, timeout=timeout, 
-                                  CF=CF, canonical=canonical, proxy=proxy, forced_proxy=forced_proxy, hide_infobox=hide_infobox, 
+                                  canonical=canonical, proxy=proxy, forced_proxy=forced_proxy, hide_infobox=hide_infobox, 
                                   proxy_retries=proxy_retries, alfa_s=alfa_s, forced_proxy_retry=forced_proxy_retry, 
                                   cf_no_blacklist=cf_no_blacklist, retries_cloudflare=retries_cloudflare)
 

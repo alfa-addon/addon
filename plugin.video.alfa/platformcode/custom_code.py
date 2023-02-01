@@ -294,8 +294,8 @@ def marshal_check():
         logger.error(traceback.format_exc(1))
 
 
-def verify_script_alfa_update_helper(silent=True, emergency=False):
-    logger.info()
+def verify_script_alfa_update_helper(silent=True, emergency=False, github_url=''):
+    logger.info(github_url)
     
     import json
     from core import ziptools
@@ -316,6 +316,7 @@ def verify_script_alfa_update_helper(silent=True, emergency=False):
     
     try:
         versiones = config.get_versions_from_repo()
+        if versiones and github_url: versiones['url'] = github_url
     except:
         versiones = {}
         logger.info("ERROR en VERSIONES", force=True)
@@ -364,7 +365,7 @@ def verify_script_alfa_update_helper(silent=True, emergency=False):
             
         if not updated or (forced == 'V' and not filetools.exists(ADDON_CUSTOMCODE_JSON)) or forced == 'F':
             url_repo = '%s%s/%s' % (versiones.get('url', ''), path_folder, package)
-            response = httptools.downloadpage(url_repo, ignore_response_code=True, alfa_s=True, json_to_utf8=False)
+            response = httptools.downloadpage(url_repo, ignore_response_code=True, hide_infobox=True, json_to_utf8=False)
             if response.code == 200:
                 zip_data = response.data
                 pkg_updated = filetools.join(addons_path, 'packages', package)
@@ -420,7 +421,7 @@ def verify_script_alfa_update_helper(silent=True, emergency=False):
                     platformtools.dialog_notification("Alfa: versión oficial: [COLOR hotpink][B]%s[/B][/COLOR]" % new_version, \
                             "[COLOR yellow]Tienes una versión obsoleta: [B]%s[/B][/COLOR]" % addon_version)
                 if emergency:
-                    return install_alfa_now()
+                    return install_alfa_now(github_url=github_url)
             try:
                 threading.Thread(target=check_alfa_version).start()
                 time.sleep(1)
@@ -428,20 +429,22 @@ def verify_script_alfa_update_helper(silent=True, emergency=False):
                 logger.error(traceback.format_exc())
 
 
-def install_alfa_now(silent=True):
-    logger.info()
+def install_alfa_now(silent=True, github_url=''):
+    logger.info(github_url)
+
     import json
     from core import ziptools
     from core import httptools
 
     try:
         versiones = config.get_versions_from_repo()
+        if versiones and github_url: versiones['url'] = github_url
     except:
         versiones = {}
         logger.error(traceback.format_exc())
     if not versiones:
         return
-    
+
     addons_path = filetools.translatePath("special://home/addons")
     alfa_addon = ['plugin.video.alfa', '3.8.3', '*']
     addonid = alfa_addon[0]
@@ -450,7 +453,7 @@ def install_alfa_now(silent=True):
 
     logger.info("Downloading %s" % package)
     url = '%s%s/%s' % (versiones.get('url', ''), addonid, package)
-    response = httptools.downloadpage(url, ignore_response_code=True, alfa_s=True, json_to_utf8=False)
+    response = httptools.downloadpage(url, ignore_response_code=True, hide_infobox=True, json_to_utf8=False)
     if response.code == 200:
         zip_data = response.data
         pkg_updated = filetools.join(addons_path, 'packages', package)

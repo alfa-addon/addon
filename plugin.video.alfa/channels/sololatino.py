@@ -41,10 +41,12 @@ canonical = {
              'host_black_list': [], 
              'pattern': ['<meta\s*property="og:url"\s*content="([^"]+)"'], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'forced_proxy_ifnot_assistant': 'ProxyCF', 'CF_stat': True, 'cf_assistant_if_proxy': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
+TIMEOUT = 30
 
 
 def mainlist(item):
@@ -102,9 +104,9 @@ def create_soup(url, referer=None, unescape=False):
     logger.info()
 
     if referer:
-        data = httptools.downloadpage(url, headers={'Referer':referer}, canonical=canonical).data
+        data = httptools.downloadpage(url, timeout=TIMEOUT, headers={'Referer':referer}, canonical=canonical).data
     else:
-        data = httptools.downloadpage(url, canonical=canonical).data
+        data = httptools.downloadpage(url, timeout=TIMEOUT, canonical=canonical).data
 
     if unescape:
         data = scrapertools.unescape(data)
@@ -222,9 +224,12 @@ def seasons(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url).find("div", id="seasons")
+    try:
+        soup = create_soup(item.url).find("div", id="seasons")
 
-    matches = soup.find_all("div", class_="clickSeason")
+        matches = soup.find_all("div", class_="clickSeason")
+    except:
+        return itemlist
 
     infoLabels = item.infoLabels
 
@@ -266,9 +271,12 @@ def episodesxseasons(item):
     logger.info()
 
     itemlist = list()
-
-    soup = create_soup(item.url).find("div", id="seasons")
-    matches = soup.find_all("div", class_="se-c")
+    
+    try:
+        soup = create_soup(item.url).find("div", id="seasons")
+        matches = soup.find_all("div", class_="se-c")
+    except:
+        return itemlist
     
     infoLabels = item.infoLabels
     season = infoLabels["season"]
@@ -312,7 +320,7 @@ def findvideos(item):
         headers = {"Referer": item.url}
         doo_url = "%swp-admin/admin-ajax.php" % host
 
-        data = httptools.downloadpage(doo_url, post=post, headers=headers, canonical=canonical).data
+        data = httptools.downloadpage(doo_url, timeout=TIMEOUT, post=post, headers=headers, canonical=canonical).data
 
         if not data:
             continue
@@ -329,7 +337,7 @@ def findvideos(item):
                 itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url,
                                      language="LAT", infoLabels=item.infoLabels, subtitle=sub))
         else:
-            player = httptools.downloadpage(player_url, headers={"referer": item.url}).data
+            player = httptools.downloadpage(player_url, timeout=TIMEOUT, headers={"referer": item.url}).data
             soup = BeautifulSoup(player, "html5lib")
             if soup.find("div", id="ErrorWin"):
                 continue
@@ -384,7 +392,7 @@ def process_url(url):
         file_id = scrapertools.find_single_match(url, "link=([A-z0-9]+)")
         post = {'link': file_id}
         hidden_url = 'https://animekao.club/playmp4/plugins/gkpluginsphp.php'
-        dict_vip_url = httptools.downloadpage(hidden_url, post=post).json
+        dict_vip_url = httptools.downloadpage(hidden_url, timeout=TIMEOUT, post=post).json
         url = dict_vip_url['link']
 
     elif "animekao.club/reproductores" in url:
@@ -396,7 +404,7 @@ def process_url(url):
         url = scrapertools.find_single_match(unpacked, '"file":"([^"]+)"')
 
     elif "kaodrive" in url:
-        new_data = httptools.downloadpage(url, add_referer=True).data
+        new_data = httptools.downloadpage(url, timeout=TIMEOUT, add_referer=True).data
         v_id = scrapertools.find_single_match(new_data, 'var shareId = "([^"]+)"')
         url = "https://www.amazon.com/drive/v1/shares/%s" % v_id
 
@@ -406,7 +414,7 @@ def process_url(url):
         slug = scrapertools.find_single_match(url, 'v=(\w+)')
         post = "slug=%s&dataType=mp4" % slug
         try:
-            data = httptools.downloadpage("https://ping.iamcdn.net/", post=post).json
+            data = httptools.downloadpage("https://ping.iamcdn.net/", timeout=TIMEOUT, post=post).json
             url = data.get("url", '')
         except:
             url = None
@@ -427,7 +435,7 @@ def process_url(url):
         unpacked = get_unpacked(url)
         if unpacked:
             url = "https://kplayer.animekao.club/%s" % scrapertools.find_single_match(unpacked, '"file":"([^"]+)"')
-        url = httptools.downloadpage(url, add_referer=True, follow_redirects=False).url
+        url = httptools.downloadpage(url, timeout=TIMEOUT, add_referer=True, follow_redirects=False).url
         if "animekao.club/http" in url:
             url = scrapertools.find_single_match(url, "https://kplayer.animekao.club/([^$]+)")
             url = url + "|ignore_response_code=True"
@@ -446,7 +454,7 @@ def process_url(url):
 
     elif "re.sololatino" in url:
         url_save = url
-        data = httptools.downloadpage(url, add_referer=True, follow_redirects=False).data
+        data = httptools.downloadpage(url, timeout=TIMEOUT, add_referer=True, follow_redirects=False).data
         patron = '"*file"*\:\s*"([^"]+)"'
         url = re.compile(patron, re.DOTALL).findall(data.replace("'", '"'))
         for i, u in enumerate(url):
@@ -460,7 +468,7 @@ def get_unpacked(url):
     logger.info()
     
     try:
-        data = httptools.downloadpage(url, headers={"referer": host}, follow_redirects=False).data
+        data = httptools.downloadpage(url, timeout=TIMEOUT, headers={"referer": host}, follow_redirects=False).data
     except:
         return None
 
