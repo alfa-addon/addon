@@ -33,6 +33,7 @@ from platformcode import platformtools
 EXTRA_TIMEOUT = 10
 
 PLATFORM = config.get_system_platform()
+VERBOSE = config.get_setting('addon_update_message', default=False)
 
 ASSISTANT_APP = 'com.alfa.alfamobileassistant'
 ASSISTANT_DESKTOP = 'alfa-desktop-assistant'
@@ -563,7 +564,7 @@ def close_alfa_assistant(retryIfTimeout=False):
 #
 def check_webview_version(wvbVersion):
     
-    if PLATFORM not in ['android', 'atv2']:
+    if PLATFORM not in ['android', 'atv2'] and ASSISTANT_MODE == "este":
         return
 
     if not wvbVersion:
@@ -575,9 +576,13 @@ def check_webview_version(wvbVersion):
         return
 
     # Comparar la versión de WebView que tiene el Android donde reside la APP con la versión mínima adecuada
-    ver_min = 85
+    ver_min = 109
     
     wvbVersion_list = wvbVersion.split('.')
+    wvbVersion_msg = config.get_setting('wvbVersion_msg', default=0)
+    if isinstance(wvbVersion_msg, bool): 
+        wvbVersion_msg = 85
+        config.set_setting('wvbVersion_msg', ver_min)
     if len(wvbVersion_list) > 1:
         try:
             wvbVersion_major = int(wvbVersion_list[0])
@@ -587,14 +592,14 @@ def check_webview_version(wvbVersion):
             
         if wvbVersion_major < ver_min:
             logger.info('##Assistant wvbVersion OBSOLETA: %s' % str(wvbVersion), force=True)
-            if not config.get_setting('wvbVersion_msg', False):
-                config.set_setting('wvbVersion_msg', True)
+            if wvbVersion_msg < ver_min:
+                config.set_setting('wvbVersion_msg', ver_min)
                 platformtools.dialog_notification("Alfa Assistant WebView: versión obsoleta", \
                             "%s - Actualice a una versión actual" % str(wvbVersion), time=10000)
     else:
         logger.error('##Assistant wvbVersion INCOMPATIBLE: %s' % str(wvbVersion))
-        if not config.get_setting('wvbVersion_msg', False):
-            config.set_setting('wvbVersion_msg', True)
+        if wvbVersion_msg < ver_min:
+            config.set_setting('wvbVersion_msg', ver_min)
             platformtools.dialog_notification("Alfa Assistant WebView: versión INCOMPATIBLE", \
                         "%s - Actualice a una versión actual" % str(wvbVersion), time=10000)
     
@@ -602,7 +607,7 @@ def check_webview_version(wvbVersion):
 #
 ## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
 #
-def is_alfa_installed(remote='', verbose=False):
+def is_alfa_installed(remote='', verbose=VERBOSE):
     version = True
     if not isAlfaAssistantOpen:
         version, app_name = install_alfa_assistant(update=False, remote=remote, verbose=verbose)
@@ -611,7 +616,7 @@ def is_alfa_installed(remote='', verbose=False):
 #
 ## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
 #
-def update_alfa_assistant(remote='', verbose=False):
+def update_alfa_assistant(remote='', verbose=VERBOSE):
     #return execute_in_alfa_assistant_with_cmd('update')
     return install_alfa_assistant(update=True, remote=remote, verbose=verbose)
 
@@ -1151,7 +1156,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
 #
 ## Instala o actualiza la app de Assitant ##################################################################################################################################
 #
-def install_alfa_assistant(update=False, remote='', verbose=False):
+def install_alfa_assistant(update=False, remote='', verbose=VERBOSE):
     if PLATFORM not in ['android', 'atv2'] and ASSISTANT_MODE == "este":
         return install_alfa_desktop_assistant(update=update, remote=remote, verbose=verbose)
     
@@ -1159,7 +1164,6 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         logger.info('update=%s' % str(update))
     # Si ya está instalada, devolvemos el control
     app_name = ASSISTANT_APP
-    if not verbose: verbose = config.get_setting('addon_update_message')        # Verbose en la actualización/instalación
     assistant_flag_install = config.get_setting('assistant_flag_install', default=True)
     addonid = 'alfa-mobile-assistant'
     download = addonid + '.apk'
@@ -1604,7 +1608,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
 #
 ## Instala o actualiza el DESKTOP de Assitant ##################################################################################################################################
 #
-def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
+def install_alfa_desktop_assistant(update=False, remote='', verbose=VERBOSE):
     
     platform = PLATFORM
     if update:
@@ -1613,7 +1617,6 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=False):
     app_name = ASSISTANT_DESKTOP
     version_name = '%s.version' % (app_name)
     assistant_flag_install = config.get_setting('assistant_flag_install')
-    if not verbose: verbose = config.get_setting('addon_update_message')        # Verbose en la actualización/instalación
     alfa_s = True
     force_install = False                                                       # Instalación bajo demanda ?
     addons_path = config.get_runtime_path()

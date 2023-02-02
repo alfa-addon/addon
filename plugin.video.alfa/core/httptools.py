@@ -33,8 +33,6 @@ from platformcode.logger import WebErrorException
 from threading import Lock
 from collections import OrderedDict
 
-requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
-
 ## Obtiene la versión del addon
 __version = config.get_addon_version()
 __platform = config.get_system_platform()
@@ -109,7 +107,9 @@ try:
     SET_TLS = False
     ssl_version = ''
     ssl_version_min = ''
+    requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
     import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
     try:
         if PY3:
             ssl_high = ssl.PROTOCOL_TLSv1_2
@@ -330,24 +330,36 @@ def save_CF_list(domain, **opt):
            window.setProperty("alfa_CF_list", str(alfa_CF_list))
 
 
-def random_useragent():
+def random_useragent(browser='chrome'):
     """
-    Based on code from https://github.com/theriley106/RandomHeaders
-    
-    Python Method that generates fake user agents with a locally saved DB (.csv file).
-
+    Python Method that generates fake user agents with a locally saved DB ('cloudscraper', 'user_agent', 'browsers.json').
     This is useful for webscraping, and testing programs that identify devices based on the user agent.
     """
-    
-    import random
+    try:
+        import random
 
-    UserAgentPath = os.path.join(config.get_runtime_path(), 'tools', 'UserAgent.csv')
-    if os.path.exists(UserAgentPath):
-        with open(UserAgentPath, "r") as uap:
-            UserAgentIem = random.choice(list(uap.read())).strip()
-            if UserAgentIem:
-                return UserAgentIem
-    
+        UserAgentPath = os.path.join(config.get_runtime_path(), 'lib', 'cloudscraper', 'user_agent', 'browsers.json')
+        if os.path.exists(UserAgentPath):
+            with open(UserAgentPath, "r") as uap:
+                json_ua = json.loads(uap.read())
+                platform_ua = __platform.replace('raspberry', 'linux').replace('osx', 'darwin')\
+                                        .replace('xbox', 'windows').replace('tvos', 'ios')\
+                                        .replace('atv2', 'android').replace('unknown', 'windows')
+                if json_ua and (platform_ua in json_ua['user_agents']['desktop'] or platform_ua in json_ua['user_agents']['mobile']):
+                    if platform_ua in json_ua['user_agents']['desktop']:
+                        browser_json = json_ua['user_agents']['desktop'][platform_ua].get(browser, [])
+                    else:
+                        browser_json = json_ua['user_agents']['mobile'][platform_ua].get(browser, [])
+
+                    UserAgentIem = random.choice(browser_json).strip()
+                    logger.debug('Found %s' % UserAgentIem)
+                    if UserAgentIem:
+                        return UserAgentIem
+
+    except:
+        logger.error(traceback.format_exc())
+
+    logger.debug('NOT Found, default %s' % default_headers["User-Agent"])
     return default_headers["User-Agent"]
 
 
@@ -907,8 +919,10 @@ def downloadpage(url, **opt):
                 HTTPResponse.proxy__: | str      | Si la página se descarga con proxy, datos del proxy usado: proxy-type:addr:estado
     """
     global CF_LIST, CS_stat
+    
+    if 'api.themoviedb' in url: opt['hide_infobox'] = True
 
-    if not opt.get('alfa_s', False):
+    if not opt.get('alfa_s', False) and not opt.get('hide_infobox', False):
         logger.info()
     url = str(url)
 
@@ -926,6 +940,7 @@ def downloadpage(url, **opt):
     if 'CF' not in opt and 'CF_stat' in opt.get('canonical', {}): opt['CF'] = opt['canonical']['CF_stat']
     if 'cf_assistant' not in opt and 'cf_assistant' in opt.get('canonical', {}): opt['cf_assistant'] = opt['canonical']['cf_assistant']
     if 'session_verify' not in opt and 'session_verify' in opt.get('canonical', {}): opt['session_verify'] = opt['canonical']['session_verify']
+    if not "session_verify_save" in opt: opt["session_verify_save"] = opt["session_verify"] if "session_verify" in opt else None
     
     # Preparando la url
     if not PY3:
@@ -946,7 +961,7 @@ def downloadpage(url, **opt):
     CF_LIST = load_CF_list(domain, **opt)
 
     # Cargando Cookies
-    load_cookies(opt.get('alfa_s', False))
+    load_cookies(opt.get('alfa_s', False) or opt.get('hide_infobox', False))
 
     # Cargando UA
     cf_ua = config.get_setting('cf_assistant_ua', None)
@@ -1001,13 +1016,16 @@ def downloadpage(url, **opt):
         files = {}
         file_name_ = ''
         opt['proxy_retries_counter'] += 1
-
         domain = urlparse.urlparse(url)[1]
+
         if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True) \
                               and opt.get('cloudscraper_active', True):         # Está en la lista de CF o viene en la llamada
             from lib.cloudscraper import create_scraper
             session = create_scraper(user_url=url, user_opt=opt)                # El dominio necesita CloudScraper
-            if 'session_verify' not in opt: opt['session_verify'] = True
+            if 'session_verify' not in opt:
+                opt['session_verify'] = True
+            elif not opt['session_verify'] and not ssl_version:
+                opt['session_verify'] = True
             session.verify = opt['session_verify']
             CS_stat = True
             if cf_ua and cf_ua != 'Default' and get_cookie(url, 'cf_clearance'):
@@ -1016,7 +1034,7 @@ def downloadpage(url, **opt):
             session = requests.session()
             session.verify = opt.get('session_verify', False)
             CS_stat = False
-        
+
         # Conectar la versión de SSL TLS con la sesión
         if url.startswith('https:') and ssl_version and (opt.get('set_tls', False) or opt.get('canonical', {}).get('set_tls', False) or SET_TLS):
             if not opt.get('set_tls_min', False) and not opt.get('canonical', {}).get('set_tls_min', False) \
@@ -1036,9 +1054,10 @@ def downloadpage(url, **opt):
         url, proxy_data, opt = check_proxy(url, **opt)
         if proxy_data.get('dict', {}):
             session.proxies = proxy_data['dict']
+            #if opt["session_verify_save"] is None: session.verify = opt['session_verify'] = False
         if opt.get('headers_proxy', {}):
             req_headers.update(dict(opt['headers_proxy']))
-            
+
         session.headers = req_headers.copy()
 
         inicio = time.time()
@@ -1208,14 +1227,15 @@ def downloadpage(url, **opt):
                         and not opt.get('check_blocked_IP_save', {}):
             domain = urlparse.urlparse(opt['url_save'])[1]
             if (domain not in CF_LIST and opt['retries_cloudflare'] >= 0) or opt['retries_cloudflare'] > 0:
-                if not '__cpo=' in url:
+                if not '__cpo=' in url and domain not in CF_LIST:
                     CF_LIST += [domain]
                     save_CF_list(domain, **opt)
                 opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0 if opt['retries_cloudflare'] < 1 else 1
                 logger.debug("CF retry... for domain: %s, Retry: %s" % (domain, opt['retries_cloudflare']))
                 if opt['retries_cloudflare'] > 0: time.sleep(1)
                 opt['retries_cloudflare'] -= 1
-                if not "CF" in opt: opt["CF"] = False if opt['retries_cloudflare'] > 0 else True
+                if not "CF_save" in opt: opt["CF_save"] = opt["CF"] if "CF" in opt else None
+                if opt["CF_save"] is None: opt["CF"] = False if opt['retries_cloudflare'] > 0 else True
                 return downloadpage(opt['url_save'], **opt)
         
         if req.headers.get('Server', '') == 'Alfa' and response_code in CLOUDFLARE_CODES \
@@ -1231,6 +1251,12 @@ def downloadpage(url, **opt):
         if opt.get('forced_proxy_ifnot_assistant', '') \
                            and ('Detected a Cloudflare version 2' in str(response_code) or response_code in CLOUDFLARE_CODES) \
                            and opt.get('proxy__test', '') != 'retry':
+            if opt.get('cf_v2', False):
+                response['code'] = response_code
+                response['headers'] = req.headers
+                info_dict, response = fill_fields_post(url, info_dict, req, response, req_headers, inicio, **opt)
+                show_infobox(info_dict, force=True)
+            
             opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0
             opt['proxy__test'] = 'retry'
             if not PY3: from . import proxytools
@@ -1305,12 +1331,7 @@ def downloadpage(url, **opt):
         response['code'] = response_code
         response['headers'] = req.headers
         response['cookies'] = req.cookies
-
-        if response['code'] in SUCCESS_CODES:
-            response['sucess'] = True
-
-        else:
-            response['sucess'] = False
+        response['sucess'] = True if response['code'] in SUCCESS_CODES else False
 
         if not response['sucess'] and opt.get('retry_alt', retry_alt_default) \
                                   and opt.get('canonical', {}).get('host_alt', []) \
@@ -1329,13 +1350,13 @@ def downloadpage(url, **opt):
         if is_channel and isinstance(response_code, int):
             if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', ''):
                 if response_code > 399:
-                    info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio, **opt)
+                    info_dict, response = fill_fields_post(url, info_dict, req, response, req_headers, inicio, **opt)
                     show_infobox(info_dict, force=True)
                     response = canonical_check(opt['url_save'], response, req, **opt)
                     raise WebErrorException(urlparse.urlparse(url)[1])
 
-        info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio, **opt)
-        if not 'api.themoviedb' in url and not 'api.trakt' in url and not opt.get('alfa_s', False):
+        info_dict, response = fill_fields_post(url, info_dict, req, response, req_headers, inicio, **opt)
+        if not opt.get('alfa_s', False):
             if not response['sucess'] or opt.get("hide_infobox") is None:
                 show_infobox(info_dict, force=True)
             elif not opt.get("hide_infobox"):
@@ -1479,14 +1500,15 @@ def fill_fields_pre(url, proxy_data, file_name_, **opt):
     return info_dict
     
     
-def fill_fields_post(info_dict, req, response, req_headers, inicio, **opt):
+def fill_fields_post(url, info_dict, req, response, req_headers, inicio, **opt):
     try:
         if isinstance(response["data"], str) and \
                         ('Hotlinking directly to proxied pages is not permitted.' in response["data"] \
                         or '<h3>Something is wrong</h3>' in response["data"]):
             response["code"] = 666
-        
-        info_dict.append(('Cookies', req.cookies))
+        cf_clearance = get_cookie(str(url), 'cf_clearance')
+        cf_clearance = 'cf_clearance=%s' % cf_clearance if cf_clearance else ''
+        info_dict.append(('Cookies', '%s %s' % (str(req.cookies), cf_clearance)))
         info_dict.append(('Data Encoding', req.encoding))
         info_dict.append(('Response code', response['code']))
 
@@ -1497,7 +1519,7 @@ def fill_fields_post(info_dict, req, response, req_headers, inicio, **opt):
             info_dict.append(('Success', 'False'))
             response['sucess'] = False
 
-        info_dict.append(('Response data length', len(response['data'])))
+        info_dict.append(('Response data length', 0 if not response['data'] else len(response['data'])))
 
         info_dict.append(('Request Headers', ''))
         for header in req_headers:
@@ -1531,6 +1553,7 @@ def global_search_canceled(url, **opt):
 
 
 def obtain_domain(url, sub=False, point=False, scheme=False):
+    url_org = url
 
     if url and len(url) > 1:
         url = urlparse.urlparse(url).netloc
@@ -1541,7 +1564,7 @@ def obtain_domain(url, sub=False, point=False, scheme=False):
                     split_lst[0] += '.'
                 url = url.replace(split_lst[0], "")
         if scheme:
-            url = '%s://%s' % (urlparse.urlparse(url).scheme, url)
+            url = '%s://%s' % (urlparse.urlparse(url_org).scheme, url)
 
     return url
     
