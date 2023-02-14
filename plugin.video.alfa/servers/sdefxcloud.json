@@ -4,14 +4,18 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:http:|https:)//mydaddy.cc/video/([A-z0-9]+)",
-        "url": "https://mydaddy.cc/video/\\1"
+        "pattern": "(https://sdefx.cloud/[A-z0-9-]+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "https://strdef.world/([A-z0-9-]+)",
+        "url": "https://sdefx.cloud/\\1"
       }
     ]
   },
   "free": true,
-  "id": "mydaddy",
-  "name": "mydaddy",
+  "id": "sdefxcloud",
+  "name": "sdefxcloud",
   "settings": [
     {
       "default": false,

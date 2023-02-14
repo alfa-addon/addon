@@ -5,11 +5,12 @@ from core import scrapertools
 from platformcode import logger
 from bs4 import BeautifulSoup
 
+kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'ignore_response_code': True, 'cf_assistant': False}
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data, server
-    data = httptools.downloadpage(page_url).data
+    data = httptools.downloadpage(page_url, **kwargs).data
     server = scrapertools.find_single_match(page_url, '//(?:www.|es.|)([A-z0-9-]+).(?:com|net|nl)')
     if "<h2>WE ARE SORRY</h2>" in data or '<title>404 Not Found</title>' in data:
         return False, "[%s] El fichero no existe o ha sido borrado" %server
