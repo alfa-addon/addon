@@ -17,6 +17,7 @@ TAG_ACTIVE = "active"
 TAG_TITLE = "season_search"
 TAG_LANGUAGE = "language"
 TAG_QUALITY_ALLOWED = "quality_allowed"
+TAG_ALL = 'No filtrar'
 
 COLOR = {"parent_item": "yellow", "error": "red", "selected": "blue", 
          "striped_even_active": "blue", "striped_even_inactive": "limegreen", 
@@ -51,7 +52,7 @@ class Filter(object):
     def __get_data(self, item, global_filter_lang_id):
 
         dict_filtered_shows = jsontools.get_node_from_file(item.channel, TAG_TVSHOW_FILTER)
-        tvshow = normalize(item.show)
+        tvshow = normalize(item.show or item.contentTitle)
         if tvshow not in list(dict_filtered_shows.keys()) and '*' in list(dict_filtered_shows.keys()) \
                   and item.action not in ['buscartrailer', 'add_serie_to_library', 'add_pelicula_to_library']:
             tvshow = '*'
@@ -177,7 +178,9 @@ def context(item, list_language=None, list_quality=None, exist=False):
 def show_option(itemlist, channel, list_language, list_quality):
     if access():
         from channelselector import get_thumb
-        itemlist.append(Item(channel=__channel__, title="[COLOR %s]Configurar filtro para series...[/COLOR]" %
+        if TAG_ALL not in list_language: list_language += [TAG_ALL]
+        if TAG_ALL.lower() not in list_quality: list_quality += [TAG_ALL.lower()]
+        itemlist.append(Item(channel=__channel__, title="[COLOR %s]Configurar filtro para Series y Películas...[/COLOR]" %
                                                         COLOR.get("parent_item", "auto"), action="load",
                              list_language=list_language, thumbnail=get_thumb('wishlist.png'), 
                              list_quality=list_quality, from_channel=channel))
@@ -199,8 +202,10 @@ def check_conditions(_filter, list_item, item, list_language, list_quality, qual
         from platformcode import unify
         _filter.language = unify.set_lang(_filter.language).upper()
 
+        if not item.language or TAG_ALL.upper() in _filter.language:
+            is_language_valid = True
         # viene de episodios
-        if isinstance(item.language, list):
+        elif isinstance(item.language, list):
             #2nd lang
             for n, lang in enumerate(item.language):
                 item.language[n] = unify.set_lang(lang).upper()
@@ -237,12 +242,14 @@ def check_conditions(_filter, list_item, item, list_language, list_quality, qual
             else:
                 quality_list = [item.quality]
 
-            for quality in quality_list:
-                if quality.lower() in _filter.quality_allowed or quality.lower().replace(' ', '-') in _filter.quality_allowed:
-                    quality_count += 1
-                    break
-            else:
-                is_quality_valid = False
+            if TAG_ALL.lower() not in _filter.quality_allowed:
+                for quality in quality_list:
+                    if quality.lower().replace(config.BTDIGG_LABEL, '') in _filter.quality_allowed \
+                                       or quality.lower().replace(' ', '-') in _filter.quality_allowed:
+                        quality_count += 1
+                        break
+                else:
+                    is_quality_valid = False
 
         if is_language_valid and is_quality_valid:
             #TODO 2nd lang: habría que ver si conviene unificar el idioma aqui o no
@@ -291,7 +298,7 @@ def get_link(list_item, item, list_language, list_quality=None, global_filter_la
 
     if not filter_global:
         filter_global = Filter(item, global_filter_lang_id).result
-    logger.debug("filter: '%s' datos: '%s'" % (normalize(item.show).title(), filter_global))
+    logger.debug("filter: '%s' datos: '%s'" % (normalize(item.show or item.contentTitle).title(), filter_global))
 
     if filter_global and filter_global.active:
         list_item, quality_count, language_count = \
@@ -303,7 +310,7 @@ def get_link(list_item, item, list_language, list_quality=None, global_filter_la
     return list_item
 
 
-def get_links(list_item, item, list_language, list_quality=None, global_filter_lang_id="filter_languages", replace_label=None):
+def get_links(list_item, item_in, list_language, list_quality=None, global_filter_lang_id="filter_languages", replace_label=None):
     """
     Devuelve una lista de enlaces filtrados.
 
@@ -322,9 +329,8 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
     """
     logger.info()
 
-
     # si los campos obligatorios son None salimos
-    if list_item is None or item is None:
+    if list_item is None or item_in is None:
         return []
 
     # si list_item está vacío volvemos, no se añade validación de plataforma para que Plex pueda hacer filtro global
@@ -344,9 +350,8 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
     quality_count = 0
     language_count = 0
 
-    _filter = Filter(item, global_filter_lang_id).result
-    logger.debug("filter: '%s' datos: '%s'" % (normalize(item.show).title(), _filter))
-
+    _filter = Filter(item_in, global_filter_lang_id).result
+    logger.debug("filter: '%s' datos: '%s'" % (normalize(item_in.show or item_in.contentTitle).title(), _filter))
 
     if _filter and _filter.active:
 
@@ -382,16 +387,16 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
                     % (len(new_itemlist), len(list_item), _filter.language, language_count, _filter.quality_allowed,
                        quality_count))
 
-        if (not new_itemlist and item.sub_action not in ["tvshow", "season", "unseen", "auto"]) \
+        if (not new_itemlist and item_in.sub_action not in ["tvshow", "season", "unseen", "auto"]) \
                              or (new_itemlist and new_itemlist[-1].action not in ["findvideos", "play", "episodios"]):
             list_item_all = []
             for i in list_item:
                 list_item_all.append(i.tourl())
 
             _context = [{"title": "FILTRO: Borrar '%s'" % _filter.language, "action": "delete_from_context",
-                         "channel": "filtertools", "to_channel": item.channel},
+                         "channel": "filtertools", "to_channel": item_in.channel},
                          {"title": "FILTRO: Configurar", "action": "config_item", "channel": "filtertools", 
-                         "from_channel_save": item.channel, "from_action_save": item.action, 
+                         "from_channel_save": item_in.channel, "from_action_save": item_in.action, 
                          "list_language": list_language, "list_quality": list_quality}]
             
             if _filter.quality_allowed:
@@ -404,7 +409,8 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
                 msg_lang = 's %s ni %s' % (first_lang.upper(), second_lang.upper())
             
             new_itemlist.append(Item(channel=__channel__, action="no_filter", list_item_all=list_item_all,
-                                     show=normalize(item.show).title(),
+                                     show=normalize(item_in.show).title(),
+                                     contentTitle = normalize(item_in.contentTitle).title(), 
                                      title="[COLOR %s]No hay elementos con idioma%s%s, pulsa para mostrar "
                                            "sin filtro[/COLOR]"
                                            % (COLOR.get("error", "auto"), msg_lang, msg_quality_allowed),
@@ -520,15 +526,15 @@ def config_item(item):
     # OBTENEMOS LOS DATOS DEL JSON
     dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
 
-    if str(item.show).startswith('*'):
+    if str(item.show).startswith('*') or str(item.contentTitle).startswith('*'):
         tvshow = '*'
     else:
-        tvshow = normalize(item.show)
+        tvshow = normalize(item.show or item.contentTitle)
         get_season_search(item, dict_series=dict_series)
     default_lang = ''
 
     channel_parameters = channeltools.get_channel_parameters(item.from_channel)
-    list_language = channel_parameters["filter_languages"]
+    list_language = channel_parameters.get("filter_languages", [])
     try:
         if channel_parameters["filter_languages"] and len(list_language) > 0:
             default_lang = list_language[1]
@@ -542,9 +548,15 @@ def config_item(item):
         title_selected = str(item.season_search.title() or tvshow.title())
         lang_selected = str(dict_series.get(tvshow, {}).get(TAG_LANGUAGE, default_lang))
         list_quality = dict_series.get(tvshow, {}).get(TAG_QUALITY_ALLOWED, [x.lower() for x in item.list_quality])
-        # logger.info("title selected {}".format(title_selected))
-        # logger.info("lang selected {}".format(lang_selected))
-        # logger.info("list quality {}".format(list_quality))
+        #logger.info("title selected {}".format(title_selected))
+        #logger.info("lang selected {}".format(lang_selected))
+        #logger.info("list quality {}".format(list_quality))
+        #logger.info("list languages {}".format(item.list_language))
+        if item.list_language and TAG_ALL not in item.list_language: 
+            list_language.insert(0, TAG_ALL)
+            item.list_language.insert(0, TAG_ALL)
+        if list_quality and TAG_ALL not in list_quality: 
+            item.list_quality += [TAG_ALL]
 
         active = True
         custom_button = {'visible': False}
@@ -629,10 +641,10 @@ def delete(item, dict_values):
 
     if item:
         dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
-        if str(item.show).startswith('*'):
+        if str(item.show).startswith('*') or str(item.contentTitle).startswith('*'):
             tvshow = '*'
         else:
-            tvshow = normalize(item.show)
+            tvshow = normalize(item.show or item.contentTitle)
 
         heading = "¿Está seguro que desea eliminar el filtro?"
         line1 = "Pulse 'Si' para eliminar el filtro de [COLOR %s]%s[/COLOR], pulse 'No' o cierre la ventana para " \
@@ -676,7 +688,7 @@ def save(item, dict_data_saved):
             item.from_channel = item.contentChannel
         dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
         
-        tvshow = normalize(item.show)
+        tvshow = normalize(item.show or item.contentTitle)
         if dict_series.get(tvshow, {}).get(TAG_TITLE, "") == '*' or dict_data_saved.get(TAG_TITLE, "") == '*':
             tvshow = '*'
 
@@ -722,7 +734,7 @@ def save_from_context(item):
     if item.from_channel == "videolibrary":
         item.from_channel = item.contentChannel
     dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
-    tvshow = normalize(item.show)
+    tvshow = normalize(item.show or item.contentTitle)
 
     language = item.language[0] if isinstance(item.language, list) else item.language
     
@@ -761,10 +773,10 @@ def delete_from_context(item):
         item.from_channel = item.contentChannel
 
     dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
-    if str(item.show).startswith('*'):
+    if str(item.show).startswith('*') or str(item.contentTitle).startswith('*'):
         tvshow = '*'
     else:
-        tvshow = normalize(item.show)
+        tvshow = normalize(item.show or item.contentTitle)
         if tvshow not in dict_series.keys():
             tvshow = '*'
 
@@ -789,7 +801,7 @@ def delete_from_context(item):
 
 def get_season_search(item, dict_series={}):
 
-    tvshow = normalize(item.show)
+    tvshow = normalize(item.show or item.contentTitle)
     item.season_search = item.season_search.title() or tvshow.title()
     
     # OBTENEMOS LOS DATOS DEL JSON

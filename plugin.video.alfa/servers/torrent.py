@@ -618,7 +618,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
             filetools.remove(torrent_path, silent=True)
 
 
-def caching_torrents(url, torrent_params={}, **kwargs):
+def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
     logger.info("Url: %s / Path: %s / Local: %s" % (url or torrent_params.get('torrents_path', ''), 
                  torrent_params.get('torrents_path', None) if torrent_params.get('torrents_path', None) != url else '', 
                  torrent_params.get('local_torr', None) if torrent_params.get('local_torr', None) \
@@ -627,7 +627,11 @@ def caching_torrents(url, torrent_params={}, **kwargs):
     if (monitor and monitor.abortRequested()) or (not monitor and xbmc and xbmc.abortRequested):
         torrent_params['torrents_path'] = ''
         return '', torrent_params
-        
+
+    DEBUG = config.get_setting('debug_report', default=False)
+    if DEBUG: logger.debug('KWARGS: %s: RETRY: %s' % (str(kwargs), retry))
+
+    kwargs_save = kwargs.copy()
     item = kwargs.pop('item', Item())
     url_domain = False
     if scrapertools.find_single_match(url, patron_domain):
@@ -762,9 +766,9 @@ def caching_torrents(url, torrent_params={}, **kwargs):
                 from core import httptools
                 if torrent_params.get('lookup', False):
                     proxy_retries = 0
-                follow_redirects = True
+                follow_redirects = kwargs.get('follow_redirects', True)
                 if post:
-                    follow_redirects = False
+                    follow_redirects = kwargs.get('follow_redirects', False)
                 if timeout < 20 and httptools.channel_proxy_list(url):          # Si usa proxy, duplicamos el timeout
                     timeout *= 3
                 
@@ -785,10 +789,11 @@ def caching_torrents(url, torrent_params={}, **kwargs):
                 torrent_params['code'] = response.code
                 torrent_params['time_elapsed'] = response.time_elapsed
                 
-                if not response.sucess or (torrent_params['torrents_path'] == 'CF_BLOCKED' \
-                                           and not scrapertools.find_single_match(response.data, patron)) \
-                                           or (isinstance(response.data, str) and 'recaptcha' in response.data \
-                                           and not scrapertools.find_single_match(response.data, patron)):
+                if response.code not in httptools.SUCCESS_CODES+httptools.REDIRECTION_CODES \
+                                        or (torrent_params['torrents_path'] == 'CF_BLOCKED' \
+                                        and not scrapertools.find_single_match(response.data, patron)) \
+                                        or (isinstance(response.data, str) and 'recaptcha' in response.data \
+                                        and not scrapertools.find_single_match(response.data, patron)):
                     # Si hay un bloqueo de CloudFlare, intenta descargarlo directamente desde el Browser y lo recoge de descargas
                     cf_error = ''
                     for cf_error in CF_BLOCKING_ERRORS:
@@ -839,6 +844,13 @@ def caching_torrents(url, torrent_params={}, **kwargs):
                         return torrent_file, torrent_params                     # Si hay un error, devolvemos el "path" vacío
                 
                 else:
+                    if response.code in httptools.REDIRECTION_CODES:
+                        torrent_params['url'] = url = response.headers.get('Location', '')
+                        if url.startswith("magnet"):
+                            return url, torrent_params                          # Si es un magnet lo devolvemos
+                        if not retry: 
+                            return caching_torrents(url, torrent_params=torrent_params, retry=True, **kwargs_save)
+                    
                     # En caso de que sea necesaria la conversión js2py
                     from lib.generictools import js2py_conversion
                     torrent_file = response.data
@@ -1209,8 +1221,8 @@ def magnet2torrent(magnet, headers={}):
 
             response = httptools.downloadpage(url, timeout=timeout, headers=headers, post=post, retry_alt=False, 
                                               proxy_retries=0, proxy__test=False, alfa_s=True, set_tls=set_tls_VALUES['set_tls'], 
-                                                  set_tls_min=set_tls_VALUES['set_tls_min'], 
-                                                  retries_cloudflare=set_tls_VALUES['retries_cloudflare'])
+                                              set_tls_min=set_tls_VALUES['set_tls_min'], 
+                                              retries_cloudflare=set_tls_VALUES['retries_cloudflare'])
             if not response.sucess:
                 logger.debug('ERROR: %s: Elapsed: %s' % (response.code, response.time_elapsed))
                 continue

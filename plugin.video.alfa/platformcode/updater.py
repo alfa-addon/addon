@@ -260,10 +260,7 @@ def check_addon_updates(verbose=False, monitor=None):
         if downloadtools.downloadfile(url + ADDON_UPDATES_ZIP, localfilename, silent=True) < 0:
             raise
 
-        try:
-            alfa_caching = config.cache_reset(action='OFF')         # Reseteamos e inactivamos las caches de settings
-        except:
-            alfa_caching = False
+        alfa_caching = config.cache_reset(action='OFF')             # Reseteamos e inactivamos las caches de settings
         
         # Descomprimir zip dentro del addon
         # ---------------------------------
@@ -275,10 +272,7 @@ def check_addon_updates(verbose=False, monitor=None):
             time.sleep(1)
 
         if alfa_caching:
-            try:
-                alfa_caching = config.cache_reset(action='ON')      # Reseteamos y activamos las caches de settings
-            except:
-                alfa_caching = False
+            alfa_caching = config.cache_reset(action='ON')          # Reseteamos y activamos las caches de settings
         
         # Borrar el zip descargado
         # ------------------------
@@ -685,7 +679,7 @@ def show_update_info(new_fix_json, wait=False):
         fixed = list()
         old_fix = os.path.join(config.get_runtime_path(), 'last_fix.json')
 
-        if isinstance(new_fix_json, dict):
+        if isinstance(new_fix_json.get("files", {}), dict):
             if not os.path.exists(old_fix):
                 for k, v in new_fix_json["files"].items():
                     if "channels" in v:
@@ -707,7 +701,7 @@ def show_update_info(new_fix_json, wait=False):
                         if not channel_parameters["channel"] or channel_parameters["adult"]:
                             continue
                         fixed.append("- %s\n" % v.title())
-        elif isinstance(new_fix_json, list):
+        elif isinstance(new_fix_json.get("files", []), list):
             if not os.path.exists(old_fix):
                 for fix in new_fix_json["files"]:
                     if "channels" in fix:
