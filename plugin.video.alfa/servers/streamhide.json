@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:http:|https:)//mydaddy.cc/video/([A-z0-9]+)",
-        "url": "https://mydaddy.cc/video/\\1"
+        "pattern": "https://streamhide.to/(?:e|d)/([A-z0-9]+)",
+        "url": "https://streamhide.to/e/\\1"
       }
     ]
   },
   "free": true,
-  "id": "mydaddy",
-  "name": "mydaddy",
+  "id": "streamhide",
+  "name": "streamhide",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": ""
+  "thumbnail": "https://streamhide.to/images/New_theme/logo.png"
 }
