@@ -408,12 +408,17 @@ def get_videos_watched_on_kodi(item, value=1, list_videos=False):
     else:
         path = item.path
     
+    fields = 'strFileName, playCount'
     if item.contentType == 'movie':
         video_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
         view = 'movie'
     else:
         video_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
-        view = 'episode'
+        if item.contentType == 'tvshow':
+            view = 'season'
+            fields = 'season, playCount, episodes'
+        else:
+            view = 'episode'
     
     tvshows_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
     item_path1 = "%" + path.replace("\\\\", "\\").replace(tvshows_path, "")
@@ -425,8 +430,8 @@ def get_videos_watched_on_kodi(item, value=1, list_videos=False):
         item_path3 = scrapertools.slugify(item_path1, strict=False, convert=['.=', '-= ', ':=', '&= ', '  = '])
     item_path3 = '%' + item_path3 + '%'
 
-    sql = 'select strFileName, playCount from %s_view where (strPath like "%s" or strPath like "%s" or strPath like "%s")' \
-                                                             % (view, item_path1, item_path2, item_path3)
+    sql = 'select %s from %s_view where (strPath like "%s" or strPath like "%s" or strPath like "%s")' \
+                                                             % (fields, view, item_path1, item_path2, item_path3)
 
     nun_records, records = execute_sql_kodi(sql, silent=True)
 
@@ -437,7 +442,13 @@ def get_videos_watched_on_kodi(item, value=1, list_videos=False):
             return False
 
     records = filetools.decode(records, trans_none=0)
-    records = dict(records)
+    if view != 'season':
+        records = dict(records)
+    else:
+        records_out = {}
+        for season, playCount, episodes in records:
+            records_out[season] = [playCount, episodes]
+        records = records_out
     
     if list_videos:
         return records

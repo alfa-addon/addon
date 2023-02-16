@@ -25,15 +25,18 @@ from channels import autoplay
 
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO', 'Original subtitulado': 'VOS', "subtitulado en español": "VOSE"}
 list_language = list(IDIOMAS.values())
-list_quality = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
+list_quality = []
+list_quality_movies = []
+list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['torrent']
 
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.how/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.chat/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/', 'https://donproxies.com/'], 
-             'host_black_list': ['https://dontorrent.surf/', 'https://dontorrent.beer/', 'https://dontorrent.blue/', 
+             'host_black_list': ['https://dontorrent.casa/', 'https://dontorrent.how/', 
+                                 'https://dontorrent.surf/', 'https://dontorrent.beer/', 'https://dontorrent.blue/', 
                                  'https://dontorrent.army/', 'https://dontorrent.mba/', 'https://dontorrent.futbol/', 
                                  'https://dontorrent.fail/', 'https://dontorrent.click/', 'https://dontorrent.gy/',
                                  'https://dontorrent.gs/', 'https://dontorrent.me/', 'https://dontorrent.ltd/', 
@@ -73,8 +76,8 @@ filter_languages = config.get_setting('filter_languages', channel)              
 find_alt_link_option = config.get_setting('find_alt_link_option', channel)      # Buscamos enlaces alternativos en buscador externo
 find_alt_search = config.get_setting('find_alt_search', channel)                # Buscamos enlaces alternativos
 find_alt_domains = 'atomixhq'       
-btdigg_url = 'https://btdig.com/'                                               # Dominios para el buscador externo
-btdigg_label = ' [COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR]'
+btdigg_url = config.BTDIGG_URL
+btdigg_label = config.BTDIGG_LABEL
 
 
 def mainlist(item):
@@ -118,7 +121,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
                 thumbnail=thumb_settings))
     
-    itemlist = filtertools.show_option(itemlist, channel, list_language, list_quality)
+    itemlist = filtertools.show_option(itemlist, channel, list_language, list_quality_movies + list_quality_tvshow)
     
     autoplay.show_option(item.channel, itemlist)                                #Activamos Autoplay
 
@@ -676,10 +679,11 @@ def listado(item):                                                              
             #Salvamos el título según el tipo de contenido
             if item_local.contentType == "movie":
                 item_local.contentTitle = title.strip().lower().title()
+                item_local.context = filtertools.context(item_local, list_language, list_quality_movies)
                 if not item_local.season_search: item_local.season_search = item_local.contentTitle
             else:
                 item_local.contentSerieName = title.strip().lower().title()
-                item_local.context = filtertools.context(item_local, list_language, list_quality)
+                item_local.context = filtertools.context(item_local, list_language, list_quality_tvshow)
                 if not item_local.season_search: item_local.season_search = item_local.contentSerieName
 
             item_local.title = title.strip().lower().title()
@@ -1113,7 +1117,10 @@ def findvideos(item):
         itemlist.extend(itemlist_t)                                             # Pintar pantalla con todo si no hay filtrado
     
     # Requerido para FilterTools
-    if item.contentType != 'movie': itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
+    if item.contentType == 'movie': 
+        itemlist = filtertools.get_links(itemlist, item, list_language, list_quality_movies)
+    else:
+        itemlist = filtertools.get_links(itemlist, item, list_language, list_quality_tvshow)
     
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)                                              # Lanzamos Autoplay
@@ -1129,7 +1136,7 @@ def episodios(item):
     item.category = categoria
     epis_done = []
     contentSeason = 0
-    context = filtertools.context(item, list_language, list_quality)
+    context = filtertools.context(item, list_language, list_quality_tvshow)
     
     post = None
     forced_proxy_opt = None
@@ -1373,7 +1380,7 @@ def episodios(item):
                                                             canonical=canonical)
 
     if item.library_playcounts and config.get_setting('auto_download_new', channel=channel):
-        itemlist = filtertools.get_links(itemlist, item, list_language, list_quality, replace_label=btdigg_label)
+        itemlist = filtertools.get_links(itemlist, item, list_language, list_quality_tvshow, replace_label=btdigg_label)
     
     if item.season_colapse and not item.add_videolibrary:                       # Si viene de listado, mostramos solo Temporadas
         item, itemlist = generictools.post_tmdb_seasons(item, itemlist, url='season')
@@ -1403,7 +1410,7 @@ def post_episodes(item, itemlist):
     logger.info('add_videolibrary: "%s"' % item.add_videolibrary)
 
     if item.add_videolibrary:
-        itemlist = filtertools.get_links(itemlist, item, list_language, list_quality, replace_label=btdigg_label)
+        itemlist = filtertools.get_links(itemlist, item, list_language, list_quality_tvshow, replace_label=btdigg_label)
     
     return itemlist
     
@@ -1440,7 +1447,9 @@ def search(item, texto):
                 for item_search in itemlist_search:
                     if item_search.contentType != 'movie':
                         item_search.quality = item_search.quality.replace('HDTV 720p', 'HDTV-720p')
-                        item_search.context = filtertools.context(item_search, list_language, list_quality)
+                        item_search.context = filtertools.context(item_search, list_language, list_quality_tvshow)
+                    else:
+                        item_search.context = filtertools.context(item_search, list_language, list_quality_movies)
                 itemlist.extend(itemlist_search)
             except:
                 logger.error(traceback.format_exc())

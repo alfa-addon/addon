@@ -107,7 +107,7 @@ def unescape(text):
                     text = text.decode("utf-8")
             except KeyError:
                 from platformcode import logger
-                logger.error("keyerror")
+                logger.error("keyerror: %s" % str(text))
                 pass
             except Exception:
                 pass

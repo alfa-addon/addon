@@ -150,7 +150,8 @@ episodio_serie = config.get_setting('clonenewpct1_serie_episodio_novedades', cha
 
 headers = {'referer': None}
 DUMMY = 'DUMMY'
-btdigg_label = ' [COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR]'
+btdigg_url = config.BTDIGG_URL
+btdigg_label = config.BTDIGG_LABEL
 find_alt_link_result_save = []
 
 #Temporal, sólo para actualizar newpct1_data.json con otro valor por defecto

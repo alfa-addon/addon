@@ -25,6 +25,8 @@ VIDEOLIBRARY_PATH = config.get_videolibrary_path()
 MOVIES_PATH = filetools.join(VIDEOLIBRARY_PATH, FOLDER_MOVIES)
 TVSHOWS_PATH = filetools.join(VIDEOLIBRARY_PATH, FOLDER_TVSHOWS)
 NFO_FORMAT = 'url_scraper'      # 'url_scraper' o 'xml'
+DEBUG = config.get_setting('debug_report', default=False)
+magnet_caching = config.get_setting("magnet2torrent", server='torrent', default=False)
 
 if not FOLDER_MOVIES or not FOLDER_TVSHOWS or not VIDEOLIBRARY_PATH \
         or not filetools.exists(MOVIES_PATH) or not filetools.exists(TVSHOWS_PATH):
@@ -1163,6 +1165,7 @@ def add_movie(item):
     insertados, sobreescritos, fallidos = save_movie(new_item)
 
     if fallidos == 0:
+        config.cache_reset(label='alfa_videolab_movies_list')
         platformtools.dialog_ok(config.get_localized_string(30131), new_item.contentTitle,
                                 config.get_localized_string(30135))             # 'se ha añadido a la videoteca'
     else:
@@ -1258,6 +1261,7 @@ def add_tvshow(item, channel=None):
         logger.error("No se han podido añadir %s episodios de la serie %s a la videoteca" % (fallidos, item.show))
 
     else:
+        config.cache_reset(label='alfa_videolab_series_list')
         platformtools.dialog_ok(config.get_localized_string(30131), config.get_localized_string(60070))
         logger.info("Se han añadido %s episodios de la serie %s a la videoteca" %
                     (insertados, item.show))
@@ -1292,10 +1296,6 @@ def add_tvshow(item, channel=None):
 def emergency_urls(item, channel=None, path=None, headers={}):
     logger.info()
     from servers.torrent import caching_torrents
-    try:
-        magnet_caching_e = magnet_caching
-    except:
-        magnet_caching_e = True
     
     """ 
     Llamamos a Findvideos del canal con la variable "item.videolibray_emergency_urls = True" para obtener la variable
@@ -1309,6 +1309,7 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             channel = generictools.verify_channel(item.channel)             #Se verifica si es un clon, que devuelva "newpct1"
             channel = __import__('channels.%s' % channel, fromlist=["channels.%s" % channel])
         if hasattr(channel, 'findvideos'):                                  #Si el canal tiene "findvideos"...
+            logger.error(item.kwargs)
             item.videolibray_emergency_urls = True                          #... se marca como "lookup"
             channel_save = item.channel                 #... guarda el canal original por si hay fail-over en Newpct1
             category_save = item.category               #... guarda la categoría original por si hay fail-over o redirección en Newpct1
@@ -1367,19 +1368,25 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                     if not url.startswith('http') and (filetools.isfile(url) or filetools.isdir(url)) and filetools.exists(url):
                         filetools.copy(url, torrents_path, silent=True)
                         path_real = torrents_path
-                    elif magnet_caching_e or not url.startswith('magnet'):
+                    elif magnet_caching or not url.startswith('magnet'):
                         torrent_params = {
                                           'url': url,
                                           'torrents_path': torrents_path,
                                           'local_torr': item_res.torrents_path,
                                           'lookup': True
                                          }
+                        kwargs = {}
+                        if item_res.kwargs: kwargs = item_res.kwargs
+                        logger.error(item_res.kwargs)
                         torrent_file, torrent_params = caching_torrents(url, torrent_params=torrent_params, referer=referer, 
-                                                                        post=post, headers=headers or item_res.headers, item=item_res)
+                                                                        post=post, headers=headers or item_res.headers, item=item_res, 
+                                                                        **kwargs)
                         if torrents_path == 'CF_BLOCKED' or url == 'CF_BLOCKED' or torrent_params['torrents_path'] == 'CF_BLOCKED':
                             torrents_path = ''
                             torrent_params['torrents_path'] = ''
                         path_real = torrent_params.get('torrents_path', '')
+                        url = torrent_params.get('url', url)
+                        if url.startswith('magnet'): path_real = url
                         subtitles_list = torrent_params.get('subtitles_list', [])
                     elif url.startswith('magnet'):
                         path_real = url
@@ -1407,6 +1414,10 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                 del item.torrents_path
             if item_res.torrents_path:
                 del item_res.torrents_path
+            if item_res.kwargs:
+                del item_res.kwargs
+            if item.kwargs:
+                del item.kwargs
 
         except:
             logger.error('ERROR al cachear el .torrent de: ' + item.channel + ' / ' + item.title)

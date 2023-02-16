@@ -124,6 +124,7 @@ def init():
             config.set_setting('cf_assistant_ua', '')                           # Se limpia CF_UA. Mejora de rendimiento en httptools CF
             config.set_setting("current_host", '', channel='dontorrent')        # Se resetea el host de algunos canales que tienen alternativas
             config.set_setting("current_host", '', channel='mejortorrent')      # Se resetea el host de algunos canales que tienen alternativas
+            config.set_setting("report_started", False)                         # Se resetea el DEBUG extendido
             
         # Periodicamente se resetean los valores de "current_host" de los canales para eliminar asignaciones antiguas
         round_level = 1

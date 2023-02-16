@@ -69,6 +69,9 @@ TEST_ON_AIR = False
 # Se activa cuando se actualiza la Videoteca
 VIDEOLIBRARY_UPDATE = False
 
+# Activa DEBUG extendido cuando se extrae un Informe de error (log)
+DEBUG = config.get_setting('debug_report', default=False) if not TEST_ON_AIR else False
+
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?[\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 
@@ -929,7 +932,12 @@ def downloadpage(url, **opt):
     # Evitamos escribir en el log si es un actualización de Videoteca, a menos que se fuerce con opt['hide_infobox'] = False
     if VIDEOLIBRARY_UPDATE and not 'hide_infobox' in opt:
         opt['hide_infobox'] = True
-    
+
+    # Activa DEBUG extendido cuando se extrae un Informe de error (log)
+    if DEBUG and not 'api.themoviedb' in url and not '//127.' in url:
+        logger.debug('OPT: %s' % str(opt))
+        opt['alfa_s'] = opt['hide_infobox'] = False
+
     # Si es una petición de un módulo involucrado en una búsqueda global en cancelación, se devuelve el control sin más
     if opt.get('canonical', {}).get('global_search_cancelled', False) or (config.GLOBAL_SEARCH_CANCELLED \
                                 and opt.get('canonical', {}).get('global_search_active', False)):
@@ -1356,7 +1364,7 @@ def downloadpage(url, **opt):
                     raise WebErrorException(urlparse.urlparse(url)[1])
 
         info_dict, response = fill_fields_post(url, info_dict, req, response, req_headers, inicio, **opt)
-        if not opt.get('alfa_s', False):
+        if not opt.get('alfa_s', False) and not 'api.themoviedb' in url and not '//127.' in url:
             if not response['sucess'] or opt.get("hide_infobox") is None:
                 show_infobox(info_dict, force=True)
             elif not opt.get("hide_infobox"):

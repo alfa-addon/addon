@@ -306,8 +306,10 @@ def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, 
         s_studio = '%s%s' % (s_part, infoLabels.get('studio', '-'))
         if infoLabels['mediatype'] != 'movie':
             sea_epi = ''
+            if infoLabels['mediatype'] in ['season'] and infoLabels.get('temporada_num_episodios'):
+                sea_epi += '%s epis de ' % str(infoLabels['temporada_num_episodios'])
             if infoLabels.get('number_of_seasons') and infoLabels.get('number_of_episodes'):
-                sea_epi = '%sx%s, ' % (str(infoLabels['number_of_seasons']), str(infoLabels['number_of_episodes']).zfill(2))
+                sea_epi += '%sx%s, ' % (str(infoLabels['number_of_seasons']), str(infoLabels['number_of_episodes']).zfill(2))
             if infoLabels.get('status') and (infoLabels['status'].lower() == "ended" \
                                         or infoLabels['status'].lower() == "canceled"):
                 s_studio = '%s; (%sTERM' % (s_studio, sea_epi)
@@ -382,7 +384,8 @@ def set_lang(language):
                       'ingles sub español'],
              "vos": ['vos', 'sub ingles', 'engsub', 'vosi','ingles subtitulado', 'sub: ingles'],
              "vo": ['ingles', 'en','vo', 'ovos', 'eng','v.o', 'english'],
-             "dual": ['dual']
+             "dual": ['dual'], 
+             "no filtrar": ['no filtrar']
              }
 
     language = scrapertools.decodeHtmlentities(language)

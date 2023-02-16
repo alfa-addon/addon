@@ -42,6 +42,23 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger, unify
 
+import xbmcgui
+alfa_caching = False
+window = None
+video_list_str = ''
+
+try:
+    window = xbmcgui.Window(10000)
+    alfa_caching = bool(window.getProperty("alfa_caching"))
+    if not alfa_caching:
+        window.setProperty("alfa_videolab_movies_list", '')
+        window.setProperty("alfa_videolab_series_list", '')
+except:
+    alfa_caching = False
+    window = None
+    video_list_str = ''
+    logger.error(traceback.format_exc())
+
 channel_py = "newpct1"
 intervenido_judicial = 'Dominio intervenido por la Autoridad Judicial'
 intervenido_policia = 'Judicial_Policia_Nacional'
@@ -56,8 +73,9 @@ patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_canal = '(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
 find_alt_domains = 'atomohd'   # Solo poner uno.  Alternativas: pctmix, pctmix1, pctreload, pctreload1, maxitorrent, descargas2020, pctnew
-btdigg_url = 'https://btdig.com/'
-btdigg_label = ' [COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR]'
+btdigg_url = config.BTDIGG_URL
+btdigg_label = config.BTDIGG_LABEL
+DEBUG = config.get_setting('debug_report', default=False)
 
 
 def downloadpage(url, **kwargs):
@@ -166,12 +184,7 @@ def downloadpage(url, **kwargs):
                 return (data, response, item, itemlist)
 
         if data:
-            data = js2py_conversion(data, url, domain_name=domain_name, timeout=kwargs.get('timeout', None), 
-                                    channel=item.channel, headers=kwargs.get('headers', None), 
-                                    referer=kwargs.get('referer', None), post=kwargs.get('post', None), 
-                                    follow_redirects=kwargs.get('follow_redirects', True), 
-                                    ignore_response_code=kwargs.get('ignore_response_code', False),
-                                    json=json, soup=soup)                       # Conversión js2py
+            data = js2py_conversion(data, url, domain_name=domain_name, channel=item.channel, json=json, **kwargs)  # Conversión js2py
             
             if not json and not soup:
                 data = re.sub(r"\n|\r|\t", "", data)                            # Reemplaza caracteres innecesarios
@@ -279,63 +292,66 @@ def convert_url_base64(url, host='', referer=None, rep_blanks=True):
         url_base64 = scrapertools.find_single_match(url_base64, patron_php)
         if not url_base64:
             logger.info('Url base64 vacía: Patron incorrecto: %s' % patron_php)
-            return url
-        
-        try:
-            # Da hasta 20 pasadas o hasta que de error
-            for x in range(20):
-                url_base64 = base64.b64decode(url_base64).decode('utf-8')
-            logger.info('Url base64 después de 20 pasadas (incompleta): %s' % url_base64)
             url_base64 = url
-        except:
-            if url_base64 and url_base64 != url:
-                logger.info('Url base64 convertida: %s' % url_base64)
-                if rep_blanks: url_base64 = url_base64.replace(' ', '%20')
-            #logger.error(traceback.format_exc())
-            if not url_base64:
+        else:
+            try:
+                # Da hasta 20 pasadas o hasta que de error
+                for x in range(20):
+                    url_base64 = base64.b64decode(url_base64).decode('utf-8')
+                logger.info('Url base64 después de 20 pasadas (incompleta): %s' % url_base64)
                 url_base64 = url
-            if url_base64.startswith('magnet') or url_base64.endswith('.torrent') or domain and domain in host_whitelist_skip:
-                return url_base64 + url_sufix
-            
-            from lib.unshortenit import sortened_urls
-            if domain and domain in host_whitelist:
-                url_base64_bis = sortened_urls(url_base64, url_base64, host, referer=referer, alfa_s=True)
-            else:
-                url_base64_bis = sortened_urls(url, url_base64, host, referer=referer, alfa_s=True)
-            domain_bis = scrapertools.find_single_match(url_base64_bis, patron_domain)
-            if domain_bis: domain = domain_bis
-            if url_base64_bis != url_base64:
-                url_base64 = url_base64_bis
-                logger.info('Url base64 RE-convertida: %s' % url_base64)
+            except:
+                if url_base64 and url_base64 != url:
+                    logger.info('Url base64 convertida: %s' % url_base64)
+                    if rep_blanks: url_base64 = url_base64.replace(' ', '%20')
+                #logger.error(traceback.format_exc())
+                if not url_base64:
+                    url_base64 = url
+                if url_base64.startswith('magnet') or url_base64.endswith('.torrent') or domain and domain in host_whitelist_skip:
+                    return url_base64 + url_sufix
+                
+                from lib.unshortenit import sortened_urls
+                if domain and domain in host_whitelist:
+                    url_base64_bis = sortened_urls(url_base64, url_base64, host, referer=referer, alfa_s=True)
+                else:
+                    url_base64_bis = sortened_urls(url, url_base64, host, referer=referer, alfa_s=True)
+                domain_bis = scrapertools.find_single_match(url_base64_bis, patron_domain)
+                if domain_bis: domain = domain_bis
+                if url_base64_bis != url_base64:
+                    url_base64 = url_base64_bis
+                    logger.info('Url base64 RE-convertida: %s' % url_base64)
                 
     if not domain: domain = 'default'
     if host and host not in url_base64 and not url_base64.startswith('magnet') \
-                    and domain not in str(host_whitelist):
+                    and not url_base64.startswith('http') and domain not in str(host_whitelist):
         url_base64 = urlparse.urljoin(host, url_base64)
         if url_base64 != url or host not in url_base64:
-            host_name = scrapertools.find_single_match(url_base64, patron_host)
+            host_name = scrapertools.find_single_match(url_base64, patron_host) + '/'
             url_base64 = re.sub(host_name, host, url_base64)
             logger.info('Url base64 urlparsed: %s' % url_base64)
 
     return url_base64 + url_sufix
 
 
-def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=None, headers=None, 
-                     json=False, soup=False, timeout=10, follow_redirects=True, proxy_retries=1,
-                     ignore_response_code=False, canonical={}):
-    from core import httptools
-    
+def js2py_conversion(data, url, domain_name='', channel='', size=10000, resp={}, **kwargs):
+
     if PY3 and isinstance(data, bytes):
-        if not b'Javascript is required' in data:
+        if not b'Javascript is required' in data[:size]:
             return data
-    elif not 'Javascript is required' in data:
-        return data
+    elif not 'Javascript is required' in data[:size]:
+        return data if not resp else resp
     
     from lib import js2py
+    from core import httptools
+    
+    if DEBUG: logger.debug('url: %s; domain_name: %s, channel: %s, size: %s; kwargs: %s, DATA: %s' \
+                            % (url, domain_name, channel, size, kwargs, data[:1000]))
+    json = kwargs.pop('json', False)
+    soup = kwargs.get('soup', False)
     
     # Obtiene nombre del dominio para la cookie
     if not domain_name:
-        domain_name = scrapertools.find_single_match(url, patron_domain)
+        domain_name = httptools.obtain_domain(url)
 
     # Obtiene nombre del canal que hace la llamada para marcarlo en su settings.xml
     if not channel and channel is not None:
@@ -403,10 +419,13 @@ def js2py_conversion(data, url, domain_name='', channel='', post=None, referer=N
 
     # Se ejecuta de nuevo la descarga de la página, ya con la nueva cookie
     data_new = ''
-    response = httptools.downloadpage(url, soup=soup, ignore_response_code=ignore_response_code, 
-                                      timeout=timeout, headers=headers, referer=referer, post=post, 
-                                      follow_redirects=follow_redirects, proxy_retries=proxy_retries, 
-                                      canonical=canonical)
+    response = httptools.downloadpage(url, **kwargs)
+
+    if resp:
+        return response
+    if response.code not in httptools.SUCCESS_CODES + httptools.REDIRECTION_CODES:
+        return data
+
     if json and response.json:
         data_new = response.json
     elif soup and response.soup:
@@ -690,6 +709,177 @@ def format_tmdb_id(entity):
     else:                                                           # Es Itemlist
         for item_local in entity:
             format_entity(item_local)
+
+
+def AH_find_videolab_status(item, itemlist, **AHkwargs):
+    logger.info()
+
+    res = False
+    season_episode = ''
+
+    try:
+        format_tmdb_id(item)
+        format_tmdb_id(itemlist)
+        
+        if AHkwargs.get('function', '') == 'list_all':
+            tmdb.set_infoLabels_itemlist(itemlist, True)
+            for item_local in itemlist:
+                item_local.video_path = AH_check_title_in_videolibray(item_local)
+                if item_local.video_path:
+                    item_local.title  = '(V)-%s' % item_local.title
+                    item_local.contentTitle = '(V)-%s' % item_local.contentTitle
+                    item_local = context_for_videolibray(item_local)
+                    item_local.unify_extended = True
+
+                    if item_local.contentType in ['season', 'episode']:
+                        season_episode = '%sx%s.strm' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
+                        if check_marks_in_videolibray(item_local, strm=season_episode):
+                            item_local.infoLabels["playcount"] = 1
+                    elif item_local.contentType in ['movie']:
+                        season_episode = '%s.strm' % item_local.contentTitle.replace('(V)-' , '').lower()
+                        if check_marks_in_videolibray(item_local, strm=season_episode):
+                            item_local.infoLabels["playcount"] = 1
+                    elif item_local.contentType in ['tvshow']:
+                        res, season_list = check_marks_in_videolibray(item_local, video_list_init=True)
+                        for season, values in list(season_list.items()):
+                            if values[0] < values[1]:
+                                break
+                        else:
+                            item_local.infoLabels["playcount"] = 1
+
+        elif AHkwargs.get('function', '') in ['seasons']:
+            if item.video_path:
+                res, season_list = check_marks_in_videolibray(item, video_list_init=True)
+                for item_local in itemlist:
+                    if season_list.get(item_local.contentSeason, 0)[0] >= season_list.get(item_local.contentSeason, 0)[1]:
+                        item_local.infoLabels["playcount"] = 1
+
+        elif AHkwargs.get('function', '') in ['episodes']:
+            if item.video_path:
+                res, episode_list = check_marks_in_videolibray(item, video_list_init=True)
+                for item_local in itemlist:
+                    season_episode = '%sx%s.strm' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
+                    if episode_list.get(season_episode, 0) >= 1:
+                        item_local.infoLabels["playcount"] = 1
+
+        elif AHkwargs.get('function', '') in ['get_video_options']:
+            if item.video_path:
+                if item.contentType in ['movie']:
+                    season_episode = '%s.strm' % item.contentTitle.replace('(V)-' , '').lower()
+                else:
+                    season_episode = '%sx%s.strm' % (str(item.contentSeason), str(item.contentEpisodeNumber).zfill(2))
+                if check_marks_in_videolibray(item, strm=season_episode):
+                    for item_local in itemlist:
+                        if item_local.action == 'play':
+                            item_local.infoLabels["playcount"] = 1
+    except:
+        logger.error(traceback.format_exc())
+
+    return itemlist
+
+
+def AH_check_title_in_videolibray(item):
+    """
+    Comprueba si el item listado está en la videoteca Alfa.  Si lo está devuelve True
+    """
+    
+    global video_list_str
+    res = False
+    
+    if not item.infoLabels['imdb_id'] and not item.infoLabels['tmdb_id']:
+        return res
+    
+    if not video_list_str:
+        if alfa_caching and window.getProperty("alfa_videolab_movies_list") \
+                        and window.getProperty("alfa_videolab_series_list"):
+            video_list_str = window.getProperty("alfa_videolab_movies_list")
+            video_list_str += window.getProperty("alfa_videolab_series_list")
+            logger.info(True)
+        else:
+            video_list_movies = str(filetools.listdir(movies_videolibrary_path))
+            video_list_series = str(filetools.listdir(series_videolibrary_path))
+            video_list_str = video_list_movies + video_list_series
+            logger.info(False)
+            
+            if alfa_caching:
+                window.setProperty("alfa_videolab_movies_list", video_list_movies)
+                window.setProperty("alfa_videolab_series_list", video_list_series)
+
+    if item.infoLabels['imdb_id'] in video_list_str or item.infoLabels['tmdb_id'] in video_list_str:
+        patron = "(?:\[|\s+)'([^\[]+\[%s\][^']*)'" % item.infoLabels['imdb_id'] or item.infoLabels['tmdb_id']
+        res = scrapertools.find_single_match(video_list_str, patron) or False
+        return res
+
+    return res
+
+
+def check_marks_in_videolibray(item, strm='', video_list_init=False):
+    logger.info()
+    
+    """
+    Comprueba si el item listado está visto/no visto en la videoteca Kodi.  Si lo está devuelve True
+    """
+    
+    from platformcode import xbmc_videolibrary
+    ret = False
+    
+    season_episode = strm
+    if not season_episode and item.contentSeason and item.contentEpisodeNumber:
+        season_episode = '%sx%s.strm' % (str(item.contentSeason), str(item.contentEpisodeNumber).zfill(2))
+    
+    episode_list = xbmc_videolibrary.get_videos_watched_on_kodi(item, list_videos=True)
+
+    if video_list_init:
+        if episode_list: ret = True
+        return ret, episode_list
+
+    if not episode_list and item.video_path:
+        del item.video_path
+        return False
+    
+    if season_episode and episode_list.get(season_episode, 0) >= 1:
+        return True
+    else:
+        return False
+
+
+def context_for_videolibray(item):
+    logger.info()
+
+    if item.video_path:
+
+        if item.contentType == 'tvshow':
+            poner_marca = config.get_localized_string(60021)
+            quitar_marca = config.get_localized_string(60020)
+        elif item.contentType == 'season':
+            poner_marca = config.get_localized_string(60029)
+            quitar_marca = config.get_localized_string(60028)
+        else:
+            poner_marca = config.get_localized_string(60033)
+            quitar_marca = config.get_localized_string(60032)
+
+        context = [{"title": quitar_marca,
+                    "action": "mark_video_as_watched",
+                    "channel": "videolibrary",
+                    "playcount": 0},
+                   {"title": poner_marca,
+                    "action": "mark_video_as_watched",
+                    "channel": "videolibrary",
+                    "playcount": 1}]
+    
+    if (item.video_path and item.contentType in ['tvshow']) or (item.contentType in ['episode'] and item.nfo):
+        context = [{"title": config.get_localized_string(70269),
+                    "action": "update_tvshow",
+                    "channel": "videolibrary"}]
+    
+        if not item.context: item.context = []
+        if not isinstance(item.context, list):
+            item.context = item.context.replace('["', '').replace('"]', '').replace("['", "").replace("']", "").split("|")
+        for cont in context:
+            if cont['title'] in str(item.context): continue
+            item.context += [cont]
+
+    return item
 
 
 def post_tmdb_listado(item, itemlist):
@@ -2410,7 +2600,10 @@ def post_tmdb_findvideos(item, itemlist, headers={}):
             
     # Comprobamos las marcas de visto/no visto
     playcount = 0
-    if item.video_path and check_marks_in_videolibray(item):
+    season_episode = ''
+    if item.contentType == 'movie':
+        season_episode = '%s.strm' % item.contentTitle.replace('(V)-' , '').lower()
+    if item.video_path and check_marks_in_videolibray(item, strm=season_episode):
         playcount = 1
     
     # Guardamos la url del episodio/película para favorecer la recuperación en caso de errores
@@ -2720,75 +2913,6 @@ def check_nfo_quality(item):
     return False
 
 
-def check_marks_in_videolibray(item, strm='', video_list_init=False):
-    logger.info()
-    
-    """
-    Comprueba si el item listado está visto/no visto en la videoteca Kodi.  Si lo está devuelve True
-    """
-    
-    from platformcode import xbmc_videolibrary
-    ret = False
-    
-    season_episode = strm
-    if not season_episode and item.contentSeason and item.contentEpisodeNumber:
-        season_episode = '%sx%s.strm' % (str(item.contentSeason), str(item.contentEpisodeNumber).zfill(2))
-    
-    episode_list = xbmc_videolibrary.get_videos_watched_on_kodi(item, list_videos=True)
-
-    if video_list_init:
-        if episode_list: ret = True
-        return ret, episode_list
-
-    if not episode_list and item.video_path:
-        del item.video_path
-        return False
-    
-    if season_episode and episode_list.get(season_episode, 0) >= 1:
-        return True
-    else:
-        return False
-
-
-def context_for_videolibray(item):
-    logger.info()
-
-    if item.video_path:
-
-        if item.contentType == 'tvshow':
-            poner_marca = config.get_localized_string(60021)
-            quitar_marca = config.get_localized_string(60020)
-        elif item.contentType == 'season':
-            poner_marca = config.get_localized_string(60029)
-            quitar_marca = config.get_localized_string(60028)
-        else:
-            poner_marca = config.get_localized_string(60033)
-            quitar_marca = config.get_localized_string(60032)
-
-        context = [{"title": quitar_marca,
-                    "action": "mark_video_as_watched",
-                    "channel": "videolibrary",
-                    "playcount": 0},
-                   {"title": poner_marca,
-                    "action": "mark_video_as_watched",
-                    "channel": "videolibrary",
-                    "playcount": 1}]
-    
-    if item.video_path or (item.contentType in ['episode'] and item.nfo):
-        context = [{"title": config.get_localized_string(70269),
-                    "action": "update_tvshow",
-                    "channel": "videolibrary"}]
-    
-        if not item.context: item.context = []
-        if not isinstance(item.context, list):
-            item.context = item.context.replace('["', '').replace('"]', '').replace("['", "").replace("']", "").split("|")
-        for cont in context:
-            if cont['title'] in str(item.context): continue
-            item.context += [cont]
-
-    return item
-
-
 def find_rar_password(item):
     logger.info()
     from core import httptools
@@ -3053,6 +3177,10 @@ def get_torrent_size(url, **kwargs):
         elif torrent_params['cached']:
             torrent_file = filetools.read(torrent_params['local_torr'], mode='rb')
             torrent_params['torrents_path'] = torrent_params['local_torr']
+        
+        if torrent_params['url'].startswith("magnet"):
+            torrent_params['size'] = ''
+            return torrent_params
         
         if isinstance(torrent_params['torrents_path'], list):
             torrents_path_list = torrent_params['torrents_path'][:]
