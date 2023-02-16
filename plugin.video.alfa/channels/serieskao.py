@@ -36,8 +36,8 @@ list_servers = [
 canonical = {
              'channel': 'serieskao', 
              'host': config.get_setting("current_host", 'serieskao', default=''), 
-             'host_alt': ["https://serieskao.org/"], 
-             'host_black_list': ["https://serieskao.net/"], 
+             'host_alt': ["https://serieskao.top/"], 
+             'host_black_list': ["https://serieskao.org/", "https://serieskao.net/"], 
              'pattern': ['<link\s*rel="shortcut\s*icon"\s*href="(\w+\:\/\/[^\/]+\/)'], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True

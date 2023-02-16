@@ -31,8 +31,8 @@ list_quality = []
 canonical = {
              'channel': 'ennovelas', 
              'host': config.get_setting("current_host", 'ennovelas', default=''), 
-             'host_alt': ["https://www.ennovelas.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www.zonevipz.com/"], 
+             'host_black_list': ["https://www.ennovelas.com/"], 
              'pattern': ['href="?([^"|\s*]+)["|\s*]\s*rel="?stylesheet"?'], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
