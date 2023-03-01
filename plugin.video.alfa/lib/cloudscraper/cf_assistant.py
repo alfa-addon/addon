@@ -36,8 +36,15 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
     from lib import alfa_assistant
     from core import httptools
     
-    url = self.cloudscraper.user_url
-    opt = self.cloudscraper.user_opt
+    try:
+        url = self.cloudscraper.user_url
+        opt = self.cloudscraper.user_opt
+        proxies = self.cloudscraper.proxies
+    except:
+        url = self.get('url', '')
+        opt = self
+        proxies = {}
+
     if opt.get('canonical', {}).get('global_search_cancelled', False) or (config.GLOBAL_SEARCH_CANCELLED \
                                 and opt.get('canonical', {}).get('global_search_active', False)):
         logger.info('## Búsqueda global cancelada: %s: %s' % (opt.get('canonical', {}).get('channel', ''), url), force=True)
@@ -70,7 +77,7 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
     if (opt.get('cf_assistant_if_proxy', False) or opt.get('canonical', {}).get('cf_assistant_if_proxy', False)) and not httptools.TEST_ON_AIR:
         retry = True
     elif 'hideproxy' in url or 'webproxy' in url or 'hidester' in url \
-                          or '__cpo=' in url or self.cloudscraper.proxies \
+                          or '__cpo=' in url or proxies \
                           or httptools.TEST_ON_AIR or domain in pcb:
         blacklist_clear = False
         blacklist = False
@@ -179,7 +186,7 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
                             rin = {'Server': 'Alfa'}
 
                             resp.headers.update(dict(rin))
-                            logger.info("cf_clearence=%s" % val, force=True)
+                            logger.info("Dominio=%s: cf_clearence=%s" % (dom[0], val), force=True)
                             
                             if not retry:
                                 freequent_data[1] += 'OK'

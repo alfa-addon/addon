@@ -50,7 +50,7 @@ finds = AlfaChannel_class.finds
 finds['controls']['add_video_to_videolibrary'] = True
 
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
-                                   language=language, list_language=list_language, list_servers=list_servers, 
+                                   idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
                                    list_quality_movies=list_quality_movies, list_quality_tvshow=list_quality_tvshow, 
                                    channel=canonical['channel'], actualizar_titulos=True, url_replace=url_replace, debug=debug)
 
@@ -120,13 +120,9 @@ def findvideos(item):
 
 def actualizar_titulos(item):
     logger.info()
-    from lib.generictools import update_title
-    
     #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
-    item = update_title(item)
-    
-    #Volvemos a la siguiente acción en el canal
-    return item
+
+    return AlfaChannel.do_actualizar_titulos(item)
 
 
 def search(item, texto):

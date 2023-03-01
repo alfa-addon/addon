@@ -271,8 +271,7 @@ def check_addon_updates(verbose=False, monitor=None):
             xbmc.executebuiltin('Extract("%s", "%s")' % (localfilename, config.get_runtime_path()))
             time.sleep(1)
 
-        if alfa_caching:
-            alfa_caching = config.cache_reset(action='ON')          # Reseteamos y activamos las caches de settings
+        alfa_caching = config.cache_reset(action='ON')              # Reseteamos y activamos las caches de settings
         
         # Borrar el zip descargado
         # ------------------------
@@ -383,6 +382,7 @@ def verify_emergency_update():
         result = alfaresolver.frequency_count(ITEM, emergency=True)
         if result:
             for x, (fecha, addon_version, fix_version_, install, key) in enumerate(result):
+                if str(install).startswith('-'): break
                 if verify_addon_version(CURRENT_VERSION, addon_version):
                     if os.path.exists(last_fix_json):
                         with open(last_fix_json, "r") as lfj:

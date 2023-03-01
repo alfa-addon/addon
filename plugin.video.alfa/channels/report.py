@@ -626,7 +626,7 @@ def report_send(item, description=False, fatal=False):
     if not filetools.exists(channel_custom):
         config.set_setting("debug", False)
 
-    config.set_setting("debug_report", True)
+    config.set_setting("debug_report", False)
     config.set_setting("report_started", False)
 
     return item

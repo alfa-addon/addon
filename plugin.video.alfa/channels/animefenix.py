@@ -36,7 +36,8 @@ canonical = {
              'host_alt': ["https://animefenix.tv/"], 
              'host_black_list': ["https://www.animefenix.tv/", "https://www.animefenix.com/"], 
              'pattern': '<div\s*class="navbar-start">\s*<a\s*class="navbar-item"\s*href="([^"]+)"', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': 'ProxyCF', 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
+             'forced_proxy_ifnot_assistant': 'ProxySSL', 'CF_stat': False, 'session_verify': True, 'cf_assistant_if_proxy': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
