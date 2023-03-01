@@ -43,8 +43,9 @@ canonical = {
                                  'https://hdfull.video/', 'https://hdfull.cloud/', 'https://hdfull.wtf/', 
                                  'https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
                                  'https://new.hdfull.one/', 'https://hdfull.top/', 'https://hdfull.bz/'],
-             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 'expires': 365*24*60*60, 
-             'forced_proxy_ifnot_assistant': 'ProxyCF', 'CF_stat': True, 'cf_assistant_if_proxy': True, 
+             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 'expires': 365*24*60*60, 'CF_if_assistant': True, 
+             'forced_proxy_ifnot_assistant': 'ProxySSL', 'CF_stat': False, 'session_verify': True, 'cf_assistant_if_proxy': True, 
+             'preferred_proxy_ip': '', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -95,17 +96,20 @@ try:
     js_data = window.getProperty("hdfull_js_data")
     data_js = window.getProperty("hdfull_data_js")
     just_logout = window.getProperty("hdfull_just_logout")
+    preferred_proxy_ip = window.getProperty("hdfull_preferred_proxy_ip")
 except:
     user_status = {}
     sid = ''
     js_data = ''
     data_js = ''
     just_logout = ''
+    preferred_proxy_ip = ''
     window.setProperty("hdfull_user_status", json_fn.dumps(user_status))
     window.setProperty("hdfull_sid", sid)
     window.setProperty("hdfull_js_data", js_data)
     window.setProperty("hdfull_data_js", data_js)
     window.setProperty("hdfull_just_logout", str(just_logout))
+    window.setProperty("hdfull_preferred_proxy_ip", str(preferred_proxy_ip))
 
 
 def check_login_status(data):
@@ -311,7 +315,7 @@ def logout(item):
 def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_proxy=None, 
                  proxy_retries=1, force_check=False, force_login=True, alfa_s=False, hide_infobox=False, 
                  timeout=10, cf_no_blacklist=False, retries_cloudflare=canonical.get('retries_cloudflare', 0)):
-    global account, sid, user_status
+    global account, sid, user_status, preferred_proxy_ip
     forced_proxy_retry = canonical.get('forced_proxy_ifnot_assistant', '') or 'ProxyCF'
 
     if host_save != host: url = url.replace(host_save, host)
@@ -326,12 +330,19 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
     #     headers.update('Cookie:' 'language=es')
     if isinstance(referer, str):
         headers.update({'Referer': referer})
+    
+    if preferred_proxy_ip:
+        canonical['preferred_proxy_ip'] = preferred_proxy_ip
 
     page = httptools.downloadpage(url, post=post, headers=headers, ignore_response_code=True, timeout=timeout, 
                                   canonical=canonical, proxy=proxy, forced_proxy=forced_proxy, hide_infobox=hide_infobox, 
                                   proxy_retries=proxy_retries, alfa_s=alfa_s, forced_proxy_retry=forced_proxy_retry, 
                                   cf_no_blacklist=cf_no_blacklist, retries_cloudflare=retries_cloudflare)
 
+    if page.proxy__ and 'ProxyWeb' in page.proxy__: 
+        preferred_proxy_ip = canonical['preferred_proxy_ip'] = page.proxy__.split('|')[2] \
+                             if page.code in httptools.SUCCESS_CODES + httptools.REDIRECTION_CODES else ''
+        if window: window.setProperty("hdfull_preferred_proxy_ip", str(preferred_proxy_ip))
     if page.sucess and page.host and host_save not in page.host:
         account = False
         config.set_setting("logged", account, channel=canonical['channel'])
@@ -346,6 +357,8 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
                             retries_cloudflare=retries_cloudflare, cf_no_blacklist=cf_no_blacklist)
 
     if not page.sucess:
+        preferred_proxy_ip = canonical['preferred_proxy_ip'] = ''
+        if window: window.setProperty("hdfull_preferred_proxy_ip", str(preferred_proxy_ip))
         account = False
         config.set_setting("logged", account, channel=canonical['channel'])
         config.set_setting("current_host", '', channel=canonical['channel'])
@@ -916,9 +929,12 @@ def seasons(item):
     
     patron = 'itemprop="season".*?<a\s*href=\'.*?/temporada-(\d+).*?'
     patron += 'alt="([^"]+)"\s*src="([^"]+)"'
-    
+
     matches = re.compile(patron, re.DOTALL).findall(data)
     matches = find_hidden_seasons(item, matches, sid)
+    if not matches:
+        logger.debug('PATRON: %s' % patron)
+        logger.debug('DATA: %s' % data)
 
     for ssid, scrapedtitle, scrapedthumbnail in matches:
         plot_extend = ''
@@ -1435,8 +1451,15 @@ def get_page_num(item):
 
 def find_hidden_seasons(item, matches, sid):
     
+    if not matches: 
+        return matches
+    
     try:
-        web = int(matches[-1][0])
+        try:
+            web = int(matches[-1][0])
+        except:
+            web = 1
+            logger.error('Web: %s)' % matches)
         try:
             if not item.infoLabels['number_of_seasons']:
                 tmdb.set_infoLabels(item, True)

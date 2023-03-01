@@ -713,6 +713,7 @@ def format_tmdb_id(entity):
 
 def AH_find_videolab_status(item, itemlist, **AHkwargs):
     logger.info()
+    if DEBUG: logger.debug('video_list_str: %s' % video_list_str)
 
     res = False
     season_episode = ''
@@ -722,7 +723,7 @@ def AH_find_videolab_status(item, itemlist, **AHkwargs):
         format_tmdb_id(itemlist)
         
         if AHkwargs.get('function', '') == 'list_all':
-            tmdb.set_infoLabels_itemlist(itemlist, True)
+            #tmdb.set_infoLabels_itemlist(itemlist, True)
             for item_local in itemlist:
                 item_local.video_path = AH_check_title_in_videolibray(item_local)
                 if item_local.video_path:
@@ -741,26 +742,30 @@ def AH_find_videolab_status(item, itemlist, **AHkwargs):
                             item_local.infoLabels["playcount"] = 1
                     elif item_local.contentType in ['tvshow']:
                         res, season_list = check_marks_in_videolibray(item_local, video_list_init=True)
-                        for season, values in list(season_list.items()):
-                            if values[0] < values[1]:
-                                break
-                        else:
-                            item_local.infoLabels["playcount"] = 1
+                        if res:
+                            for season, values in list(season_list.items()):
+                                if values[0] < values[1]:
+                                    break
+                            else:
+                                item_local.infoLabels["playcount"] = 1
 
         elif AHkwargs.get('function', '') in ['seasons']:
             if item.video_path:
                 res, season_list = check_marks_in_videolibray(item, video_list_init=True)
-                for item_local in itemlist:
-                    if season_list.get(item_local.contentSeason, 0)[0] >= season_list.get(item_local.contentSeason, 0)[1]:
-                        item_local.infoLabels["playcount"] = 1
+                if res:
+                    for item_local in itemlist:
+                        if season_list.get(item_local.contentSeason):
+                            if season_list.get(item_local.contentSeason, 0)[0] >= season_list.get(item_local.contentSeason, 0)[1]:
+                                item_local.infoLabels["playcount"] = 1
 
         elif AHkwargs.get('function', '') in ['episodes']:
             if item.video_path:
                 res, episode_list = check_marks_in_videolibray(item, video_list_init=True)
-                for item_local in itemlist:
-                    season_episode = '%sx%s.strm' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
-                    if episode_list.get(season_episode, 0) >= 1:
-                        item_local.infoLabels["playcount"] = 1
+                if res:
+                    for item_local in itemlist:
+                        season_episode = '%sx%s.strm' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
+                        if episode_list.get(season_episode, 0) >= 1:
+                            item_local.infoLabels["playcount"] = 1
 
         elif AHkwargs.get('function', '') in ['get_video_options']:
             if item.video_path:
@@ -782,11 +787,10 @@ def AH_check_title_in_videolibray(item):
     """
     Comprueba si el item listado está en la videoteca Alfa.  Si lo está devuelve True
     """
-    
     global video_list_str
     res = False
     
-    if not item.infoLabels['imdb_id'] and not item.infoLabels['tmdb_id']:
+    if not item.infoLabels['imdb_id'] and not item.infoLabels['tmdb_id'] and not item.infoLabels['tvdb_id']:
         return res
     
     if not video_list_str:
@@ -796,8 +800,7 @@ def AH_check_title_in_videolibray(item):
             video_list_str += window.getProperty("alfa_videolab_series_list")
             logger.info(True)
         else:
-            video_list_movies = str(filetools.listdir(movies_videolibrary_path))
-            video_list_series = str(filetools.listdir(series_videolibrary_path))
+            video_list_movies, video_list_series = create_videolab_list()
             video_list_str = video_list_movies + video_list_series
             logger.info(False)
             
@@ -805,12 +808,123 @@ def AH_check_title_in_videolibray(item):
                 window.setProperty("alfa_videolab_movies_list", video_list_movies)
                 window.setProperty("alfa_videolab_series_list", video_list_series)
 
-    if item.infoLabels['imdb_id'] in video_list_str or item.infoLabels['tmdb_id'] in video_list_str:
-        patron = "(?:\[|\s+)'([^\[]+\[%s\][^']*)'" % item.infoLabels['imdb_id'] or item.infoLabels['tmdb_id']
-        res = scrapertools.find_single_match(video_list_str, patron) or False
-        return res
+    if (item.infoLabels['imdb_id'] and '[%s]' % item.infoLabels['imdb_id'] in video_list_str) \
+        or (item.infoLabels['tmdb_id'] and '|%s|' % item.infoLabels['tmdb_id'] in video_list_str) \
+        or (item.infoLabels['tvdb_id'] and '|%s|' % item.infoLabels['tvdb_id'] in video_list_str):
+
+        for video in video_list_str.split(','):
+            if (item.infoLabels['imdb_id'] and '[%s]' % item.infoLabels['imdb_id'] in video) \
+                or (item.infoLabels['tmdb_id'] and '|%s|' % item.infoLabels['tmdb_id'] in video) \
+                or (item.infoLabels['tvdb_id'] and '|%s|' % item.infoLabels['tvdb_id'] in video):
+                res = video.split('|')[0].strip().strip("'").strip()
+                if res: break
+
+    if DEBUG: logger.debug('video "%s" %s en videolab: "%s"' % (item.infoLabels['imdb_id'] \
+                            or item.infoLabels['tmdb_id'] or item.infoLabels['tvdb_id'], 
+                            'ENCONTRADO' if res else 'NO Encontrado', video_list_str))
 
     return res
+
+
+def create_videolab_list(update=None):
+    logger.info('update: %s' % True if update else None)
+    from core import jsontools
+    
+    patron = "\[([^\]]+)\]"
+
+    def build_videolab_json(videolab_list, list_movies, list_series, json_path):
+        from core import videolibrarytools
+        
+        res = False
+        hit = False
+
+        try:
+            for movie in list_movies:
+                imdb_id = scrapertools.find_single_match(movie, patron)
+                if imdb_id:
+                    path_nfo = filetools.join(movies_videolibrary_path, movie, movie+'.nfo')
+                    head_nfo, it = videolibrarytools.read_nfo(path_nfo)
+                    if it and it.infoLabels.get('imdb_id') and it.infoLabels.get('tmdb_id'):
+                        videolab_list['movie'][imdb_id] = it.infoLabels
+                        hit = True
+            
+            for tvshow in list_series:
+                imdb_id = scrapertools.find_single_match(tvshow, patron)
+                if imdb_id:
+                    path_nfo = filetools.join(series_videolibrary_path, tvshow, 'tvshow.nfo')
+                    head_nfo, it = videolibrarytools.read_nfo(path_nfo)
+                    if it and it.infoLabels.get('imdb_id') and it.infoLabels.get('tmdb_id'):
+                        videolab_list['tvshow'][imdb_id] = it.infoLabels
+                        hit = True
+
+            res = filetools.write(json_path, jsontools.dump(videolab_list))
+        except:
+            logger.error(traceback.format_exc())
+            
+        if not res:
+            logger.error('ERROR en la ESCRITURA del videolab_list.json: %s' % videolab_list)
+            filetools.remove(json_path)
+        if not hit:
+            logger.info('Videolibrary VACÍA para videolab_list.json', force=True)
+        return res and hit
+
+    try:
+        video_list_movies = ''
+        video_list_series = ''
+        json_path = filetools.join(config.get_runtime_path(), 'resources', 'videolab_list.json')
+
+        list_movies = filetools.listdir(movies_videolibrary_path)
+        list_series = filetools.listdir(series_videolibrary_path)
+
+        if not filetools.exists(json_path):
+            videolab_list = {
+                             'movie': {}, 
+                             'tvshow': {}
+                            }
+            res = filetools.write(json_path, jsontools.dump(videolab_list))
+            if not res:
+                logger.error('ERROR en la CREACIÓN del videolab_list.json')
+                return video_list_movies, video_list_series
+            
+            res = build_videolab_json(videolab_list, list_movies, list_series, json_path)
+            if res: logger.info('CREACIÓN del videolab_list.json con ÉXITO', force=True)
+
+        if filetools.exists(json_path) and not update:
+            videolab_list = jsontools.load(filetools.read(json_path))
+            if videolab_list:
+                for movie in list_movies:
+                    imdb_id = scrapertools.find_single_match(movie, patron)
+                    if imdb_id:
+                        video_list_movies += "'%s'|%s|%s|, " % (movie, videolab_list.get('movie', {}).get(imdb_id, {}).get('tmdb_id', ''),
+                                                                videolab_list.get('movie', {}).get(imdb_id, {}).get('tvdb_id', ''))
+                
+                for tvshow in list_series:
+                    imdb_id = scrapertools.find_single_match(tvshow, patron)
+                    if imdb_id:
+                        video_list_series += "'%s'|%s|%s|, " % (tvshow, videolab_list.get('tvshow', {}).get(imdb_id, {}).get('tmdb_id', ''),
+                                                                videolab_list.get('tvshow', {}).get(imdb_id, {}).get('tvdb_id', ''))
+            if DEBUG: logger.debug('videolab_list.json LEÍDO')
+
+        elif filetools.exists(json_path) and update:
+            res = False
+            if update.get('mediatype') and update.get('imdb_id') and update.get('tmdb_id'):
+                videolab_list = jsontools.load(filetools.read(json_path))
+                videolab_list[update['mediatype']][update['imdb_id']] = update
+                res = filetools.write(json_path, jsontools.dump(videolab_list))
+                if not res:
+                    logger.error('ERROR en la ACTUALIZACIÓN del videolab_list.json: %s' % update)
+                    return
+                config.cache_reset(label='alfa_videolab_series_list')
+            if DEBUG: logger.debug('videolab_list.json UPDATE %s: %s' % (res, update))
+            return
+
+    except:
+        logger.error(traceback.format_exc())
+
+    if DEBUG: logger.debug('video_list_movies: %s' % video_list_movies)
+    if DEBUG: logger.debug('video_list_series: %s' % video_list_series)
+
+    return video_list_movies, video_list_series
 
 
 def check_marks_in_videolibray(item, strm='', video_list_init=False):
@@ -880,6 +994,12 @@ def context_for_videolibray(item):
             item.context += [cont]
 
     return item
+
+
+def AH_find_seasons(item, matches, **AHkwargs):
+    logger.info()
+    
+    return matches
 
 
 def post_tmdb_listado(item, itemlist):

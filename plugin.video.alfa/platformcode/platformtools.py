@@ -927,6 +927,14 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                 context_commands.append((config.get_localized_string(60353), "RunPlugin(%s?%s&%s)" %
                                          (sys.argv[0], item_url,
                                           'action=add_pelicula_to_library&from_action=' + item.action)))
+                                          
+            if item.action in ["episodios", "get_episodios", "seasons", "detail", "findvideos"]:
+                channel = __import__('channels.%s' % item.channel, None, None, ["channels.%s" % item.channel])
+                if hasattr(channel, 'actualizar_titulos'):
+                    context_commands.append(('Actualizar título', "RunPlugin(%s?%s&%s)" %
+                                             (sys.argv[0], item_url,
+                                              'action=actualizar_titulos&from_action=%s&from_title_tmdb=%s&from_update=%s' \
+                                              % (item.action, item.contentSerieName or item.contentTitle, True))))
 
         # Descargar
         if item.channel not in ["downloads", "search"]:
@@ -963,7 +971,8 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
             elif item.contentSerieName or (
                     item.contentType in ["tvshow", "episode"] and item.infoLabels['tmdb_id'] == 'None'):
                 # Descargar serie
-                if item.contentType == "tvshow" or (item.contentType == "episode" and \
+                if item.contentType in ["tvshow", "season"] or \
+                                                    (item.contentType == "episode" and \
                                                     item.server == 'torrent' and item.infoLabels['tmdb_id'] != 'None' \
                                                     and not item.channel_recovery):
                     context_commands.append((config.get_localized_string(60355), "RunPlugin(%s?%s&%s)" %
@@ -973,8 +982,8 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                     if tc:
                         context_commands.append((config.get_localized_string(60355) + en, "RunPlugin(%s?%s&%s)" %
                                                  (sys.argv[0], item_url,
-                                                  'channel=downloads&action=save_download%s&from_channel=' % tc + channel_p + '&sub_action=tvshow' +
-                                                  '&from_action=' + item.action)))
+                                                  'channel=downloads&action=save_download%s&from_channel=' % tc + channel_p + 
+                                                  '&sub_action=tvshow' + '&from_action=' + item.action)))
                 # Descargar serie NO vistos
                 if (
                         item.contentType == "episode" and item.server == 'torrent' and item.channel == 'videolibrary' \
@@ -996,7 +1005,8 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                                                   'channel=downloads&action=save_download%s&from_channel=' % tc + channel_p +
                                                   '&from_action=' + item.action)))
                 # Descargar temporada
-                if item.contentType == "season" or (item.contentType == "episode" \
+                if item.contentType == "season" or parent_item.action in ["episodios", "episodesxseason"] or \
+                                                    (item.contentType == "episode" \
                                                     and item.server == 'torrent' and item.infoLabels[
                                                         'tmdb_id'] != 'None' and not item.channel_recovery):
                     context_commands.append((config.get_localized_string(60357), "RunPlugin(%s?%s&%s)" %
@@ -1503,7 +1513,7 @@ def set_player(item, xlistitem, mediaurl, view, strm, autoplay):
             logger.info("Tras setResolvedUrl")
             # si es un archivo de la videoteca enviar a marcar como visto
 
-            if strm or item.strm_path:
+            if strm or item.strm_path or item.video_path:
                 from platformcode import xbmc_videolibrary
                 xbmc_videolibrary.mark_auto_as_watched(item)
             # logger.debug(item)
@@ -1521,7 +1531,7 @@ def set_player(item, xlistitem, mediaurl, view, strm, autoplay):
         xbmc_player.setSubtitles(item.subtitle)
 
     # si es un archivo de la videoteca enviar a marcar como visto
-    if strm or item.strm_path:
+    if strm or item.strm_path or item.video_path:
         from platformcode import xbmc_videolibrary
         xbmc_videolibrary.mark_auto_as_watched(item)
 

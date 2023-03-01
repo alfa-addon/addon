@@ -321,7 +321,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
     else:
         server_parameters = {}
 
-    if server_parameters:
+    if server_parameters and server_parameters.get("name"):
         # Muestra un diágo de progreso
         if muestra_dialogo:
             from platformcode.platformtools import dialog_progress

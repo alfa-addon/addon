@@ -33,9 +33,10 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.chat/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.love/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/', 'https://donproxies.com/'], 
-             'host_black_list': ['https://dontorrent.casa/', 'https://dontorrent.how/', 
+             'host_black_list': ['https://dontorrent.ninja/', 'https://dontorrent.plus/', 
+                                 'https://dontorrent.chat/', 'https://dontorrent.casa/', 'https://dontorrent.how/', 
                                  'https://dontorrent.surf/', 'https://dontorrent.beer/', 'https://dontorrent.blue/', 
                                  'https://dontorrent.army/', 'https://dontorrent.mba/', 'https://dontorrent.futbol/', 
                                  'https://dontorrent.fail/', 'https://dontorrent.click/', 'https://dontorrent.gy/',
@@ -276,6 +277,8 @@ def novedades_menu(item):
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
                     url=host, thumbnail=thumb_buscar, extra="search", btdigg=find_alt_search))
+
+    itemlist = filtertools.show_option(itemlist, channel, list_language, list_quality_movies + list_quality_tvshow)
 
     return itemlist
     

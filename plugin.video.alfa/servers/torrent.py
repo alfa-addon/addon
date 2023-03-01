@@ -629,7 +629,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
         return '', torrent_params
 
     DEBUG = config.get_setting('debug_report', default=False)
-    if DEBUG: logger.debug('KWARGS: %s: RETRY: %s' % (str(kwargs), retry))
+    if DEBUG: logger.debug('KWARGS: %s: TORRENT_PARAMS: %s: RETRY: %s' % (str(kwargs), str(torrent_params), retry))
 
     kwargs_save = kwargs.copy()
     item = kwargs.pop('item', Item())
@@ -750,12 +750,12 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
                         return url, torrent_params                              # Si hay un error, devolvemos el "path" vacío
             
             elif (torrent_params.get('local_torr', None) and filetools.exists(torrent_params['local_torr'])) or not url.startswith("http"):
-                if filetools.exists(torrent_params['local_torr']):
+                if filetools.exists(torrent_params['local_torr'] or url):
                     torrent_file = filetools.read(torrent_params.get('local_torr', None) or url, silent=True, mode='rb', vfs=VFS)
                 else:
                     torrent_file = filetools.read(url, silent=True, mode='rb', vfs=VFS)
                 if not torrent_file:
-                    logger.error('1.- No es un archivo Torrent: %s' % torrent_params.get('local_torr', None) or url)
+                    logger.error('1.- No es un archivo Torrent: %s' % torrent_params)
                     if not url.startswith("http"):
                         torrent_params['torrents_path'] = ''
                         return torrent_file, torrent_params                     # Si hay un error, devolvemos el "path" vacío

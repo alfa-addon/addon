@@ -134,7 +134,7 @@ idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', channel_p
 idioma_busqueda_VO = IDIOMAS_TMDB[2]                                                # Idioma para VO
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel_py)  #Actualización sólo últ. Temporada?
 timeout = config.get_setting('clonenewpct1_timeout_downloadpage', channel_py)   #Timeout downloadpage
-#timeout = timeout * 2.5                                                         # Incremento temporal
+timeout = timeout * 2.5                                                         # Incremento temporal
 if timeout == 0: timeout = None
 season_colapse = config.get_setting('season_colapse', channel_py)               # Season colapse?
 filter_languages = config.get_setting('filter_languages', channel_py)           # Filtrado de idiomas?

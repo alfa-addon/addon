@@ -31,7 +31,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['openload', 'streamango', 'powvideo', 'clipwatching', 'streamplay', 'streamcherry', 'gamovideo']
 
-forced_proxy_opt = 'ProxyCF'
+forced_proxy_opt = 'ProxyCF|CHECK'
 
 canonical = {
              'channel': 'dilo', 
@@ -40,8 +40,8 @@ canonical = {
              'host_black_list': ["https://streamtape.com/", "https://upstream.to/", "https://vidoza.net/", "http://vidoza.net/"], 
              'pattern': '<link\s*rel="stylesheet"\s*href="([^"]+)"', 
              'pattern_proxy': '{"item_id":\s*(\d+)}', 'proxy_url_test': 'breaking-bad/', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant_if_proxy': True, 
-             'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_stat': True, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
+             'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_stat': False, 'session_verify': True, 'cf_assistant_if_proxy': True,
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -50,7 +50,7 @@ host = canonical['host'] or canonical['host_alt'][0]
 def get_source(url, ignore_response_code=True):
     logger.info()
     
-    data = httptools.downloadpage(url, timeout=10, ignore_response_code=ignore_response_code, canonical=canonical).data
+    data = httptools.downloadpage(url, timeout=15, ignore_response_code=ignore_response_code, canonical=canonical, proxy_retries=0).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     
     return data
@@ -247,7 +247,7 @@ def seasons(item):
     seasons_url = '%sapi/web/seasons.php' % host
     headers = {'Referer':item.url}
     
-    data = httptools.downloadpage(seasons_url, post=post, headers=headers, forced_proxy_opt=forced_proxy_opt, canonical=canonical).json
+    data = httptools.downloadpage(seasons_url, post=post, headers=headers, canonical=canonical).json
 
     for dict in data:
         try:
@@ -287,7 +287,7 @@ def episodesxseason(item):
 
     seasons_url = '%sapi/web/episodes.php' % host
     headers = {'Referer': item.url}
-    data = httptools.downloadpage(seasons_url, post=post, headers=headers, forced_proxy_opt=forced_proxy_opt, canonical=canonical).json
+    data = httptools.downloadpage(seasons_url, post=post, headers=headers, canonical=canonical).json
     infoLabels = item.infoLabels
     
     for dict in data:

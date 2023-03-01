@@ -31,7 +31,7 @@ canonical = {
              'host_black_list': ["https://playdede.org/", "https://playdede.com/"], 
              'pattern': '<link\s*rel="shortcut\s*icon"[^>]+href="([^"]+)"', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
-             'session_verify': False, 'CF_stat': True, 
+             'session_verify': True, 'CF_stat': True, 'cf_assistant_if_proxy': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

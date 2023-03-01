@@ -71,19 +71,24 @@ VIDEOLIBRARY_UPDATE = False
 
 # Activa DEBUG extendido cuando se extrae un Informe de error (log)
 DEBUG = config.get_setting('debug_report', default=False) if not TEST_ON_AIR else False
+DEBUG_EXC = ['//127.', '//192.', 'croxyproxy', 'proxyium', 'worldtimeapi', 'omahaproxy', 'timeapi', 'login', 
+             '/a/status', 'js/jquery', 'js/providers', 'themoviedb', 'addons.xml',
+             'hastebin', 'dpaste', 'ghostbin', 'write.as', 'controlc', 'bpa.st/', 'dumpz', 'file.io/', 'ufile.io/', 'anonfiles']
 
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?[\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
 
 retry_alt_default = True
 
+alfa_domain_web_list = {}
+
 BLACK_LIST_DOMAINS = ['www.alliance4creativity.com', 'alliance4creativity.com']
 
 SUCCESS_CODES = [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]
 REDIRECTION_CODES = [300, 301, 302, 303, 304, 307, 308]
 PROXY_CODES = [305, 306, 407]
-NOT_FOUND_CODES = [400, 404, 406, 409, 410, 421, 423, 451]
-CLOUDFLARE_CODES = [429, 503, 403, 401]
+NOT_FOUND_CODES = [400, 404, 406, 409, 410, 421, 423, 451, 525]
+CLOUDFLARE_CODES = [429, 503, 403, 401, 500, 502, 504]
 
 # Lista de dominios que necesitan CloudScraper
 CF_LIST = list()
@@ -99,6 +104,7 @@ try:
     window = xbmcgui.Window(10000)  # Home
     alfa_caching = bool(window.getProperty("alfa_caching"))
 except:
+    window = None
     alfa_caching = False
     alfa_cookies = ''
     alfa_CF_list = []
@@ -406,18 +412,19 @@ def check_proxy(url, **opt):
     proxy_data['url'] = url
     proxy_data['headers_proxy'] = {}
     proxy_data['post_proxy'] = None
-    proxy_data['proxy__test'] = opt.get('proxy__test', '')
-    proxy_data['proxy'] = opt.get('proxy', True)
-    proxy_data['proxy_web'] = opt.get('proxy_web', False)
-    proxy_data['proxy_addr_forced'] = opt.get('proxy_addr_forced', None)
-    proxy_data['forced_proxy'] = opt.get('forced_proxy', None)
-    proxy_data['force_proxy_get'] = opt.get('force_proxy_get', False)
-    proxy_data['forced_proxy_opt'] = opt.get('forced_proxy_opt', '') or opt.get('canonical', {}).get('forced_proxy_opt', '')
+    proxy_data['proxy__test'] = opt.get('proxy__test', '') or opt.get('canonical', {}).get('proxy__test', '')
+    proxy_data['proxy'] = opt.get('proxy', True) or opt.get('canonical', {}).get('proxy', True)
+    proxy_data['proxy_web'] = opt.get('proxy_web', False) or opt.get('canonical', {}).get('proxy_web', False)
+    proxy_data['proxy_addr_forced'] = opt.get('proxy_addr_forced', None) or opt.get('canonical', {}).get('proxy_addr_forced', None)
+    proxy_data['forced_proxy'] = opt.get('forced_proxy', None) or opt.get('canonical', {}).get('forced_proxy', None)
+    proxy_data['force_proxy_get'] = opt.get('force_proxy_get', False) or opt.get('canonical', {}).get('force_proxy_get', False)
+    proxy_data['forced_proxy_opt'] = opt.get('forced_proxy_opt', '')
     proxy_data['forced_proxy_ifnot_assistant'] = opt.get('forced_proxy_ifnot_assistant', '')
-    proxy_data['proxy_retries'] = opt.get('proxy_retries', 1)
+    proxy_data['proxy_retries'] = opt.get('proxy_retries', 1) or opt.get('canonical', {}).get('proxy_retries', 1)
 
     if (proxy_data['proxy'] or proxy_data['proxy_web']) and (proxy_data['forced_proxy'] or proxy_data['proxy_addr_forced'] \
-                            or channel_proxy_list(url, forced_proxy=proxy_data['forced_proxy'])):
+                            or channel_proxy_list(url, forced_proxy=proxy_data['forced_proxy'])) \
+                            and str(proxy_data['forced_proxy_opt']) != 'reset' and not config.get_setting('external_vpn', default=False):
         if not PY3: from . import proxytools
         else: from . import proxytools_py3 as proxytools
         # Returns: {'addr': , 'CF_addr': , 'web_name': , 'log': }
@@ -449,9 +456,10 @@ def proxy_stat(url, proxy_data, **opt):
             logger.error(traceback.format_exc())
             
     
-    if 'Proxy Direct' in proxy_data['stat']: return 'ProxyDirect:%s:%s' % (proxy_data.get('log', ''), retry)
-    if 'Proxy CF' in proxy_data['stat']: return 'ProxyCF:%s:%s' % (proxy_data.get('log', ''), retry)
-    if 'Proxy Web' in proxy_data['stat']: return 'ProxyWeb:%s:%s' % (proxy_data.get('web_name', ''), retry)
+    if 'Proxy Direct' in proxy_data['stat']: return 'ProxyDirect|%s||%s' % (proxy_data.get('log', ''), retry)
+    if 'Proxy CF' in proxy_data['stat']: return 'ProxyCF|%s||%s' % (proxy_data.get('log', ''), retry)
+    if 'Proxy Web' in proxy_data['stat']: return 'ProxyWeb|%s|%s|%s' % (proxy_data.get('web_name', ''), 
+                                                  obtain_domain(proxy_data.get('url', ''), scheme=True), retry)
     
     return ''
 
@@ -624,12 +632,13 @@ def blocking_error(url, req, proxy_data, **opt):
         if code:
             data = re.sub(r"\n|\r|\t|\s{2,}", "", data)
             proxy = proxy_stat(opt.get('url_save', ''), proxy_data, **opt)
+            print_DEBUG(url, proxy_data, label='BLOCKING', **opt)
             if proxy and 'ProxyWeb' in proxy: url += ' / %s' % opt.get('url_save', '')
             try:
                 logger.error('Error: %s, Url: %s, Datos: %s' % (code, url, data[:500]))
             except:
                 logger.error('Error: %s, Url: %s, Datos: NULL' % (code, url))
-    
+
     return resp
 
 
@@ -933,11 +942,6 @@ def downloadpage(url, **opt):
     if VIDEOLIBRARY_UPDATE and not 'hide_infobox' in opt:
         opt['hide_infobox'] = True
 
-    # Activa DEBUG extendido cuando se extrae un Informe de error (log)
-    if DEBUG and not 'api.themoviedb' in url and not '//127.' in url:
-        logger.debug('OPT: %s' % str(opt))
-        opt['alfa_s'] = opt['hide_infobox'] = False
-
     # Si es una petición de un módulo involucrado en una búsqueda global en cancelación, se devuelve el control sin más
     if opt.get('canonical', {}).get('global_search_cancelled', False) or (config.GLOBAL_SEARCH_CANCELLED \
                                 and opt.get('canonical', {}).get('global_search_active', False)):
@@ -949,6 +953,18 @@ def downloadpage(url, **opt):
     if 'cf_assistant' not in opt and 'cf_assistant' in opt.get('canonical', {}): opt['cf_assistant'] = opt['canonical']['cf_assistant']
     if 'session_verify' not in opt and 'session_verify' in opt.get('canonical', {}): opt['session_verify'] = opt['canonical']['session_verify']
     if not "session_verify_save" in opt: opt["session_verify_save"] = opt["session_verify"] if "session_verify" in opt else None
+    if 'CF_if_assistant' not in opt and 'CF_if_assistant' in opt.get('canonical', {}): opt['CF_if_assistant'] = opt['canonical']['CF_if_assistant']
+    if 'forced_proxy_opt' not in opt and 'forced_proxy_opt' in opt.get('canonical', {}): \
+                          opt['forced_proxy_opt'] = opt['canonical']['forced_proxy_opt']
+    if 'cf_assistant_if_proxy' not in opt and 'cf_assistant_if_proxy' in opt.get('canonical', {}): \
+                          opt['cf_assistant_if_proxy'] = opt['canonical']['cf_assistant_if_proxy']
+    if opt.get('canonical', {}).get('forced_proxy_ifnot_assistant', '') or opt.get('forced_proxy_ifnot_assistant', ''):
+        opt['forced_proxy_ifnot_assistant'] = opt.get('canonical', {}).get('forced_proxy_ifnot_assistant', '') \
+                                              or opt.get('forced_proxy_ifnot_assistant', '')
+        opt['ignore_response_code'] = True
+    
+    # Activa DEBUG extendido cuando se extrae un Informe de error (log)
+    print_DEBUG(url, opt, label='OPT', **opt)
     
     # Preparando la url
     if not PY3:
@@ -1001,30 +1017,28 @@ def downloadpage(url, **opt):
     opt['post_save'] = opt.get('post', None)
     if opt.get('forced_proxy_opt', None) and channel_proxy_list(url):
         if opt['forced_proxy_opt'] in ['ProxyCF', 'ProxyDirect']:
-            if 'cliver' not in url:
-                opt['forced_proxy_opt'] = 'ProxyJSON'
-            else:
-                opt['forced_proxy'] = opt['forced_proxy_opt']
+            opt['forced_proxy_opt'] = 'ProxyJSON'
         elif opt['forced_proxy_opt'] in ['ProxyCF|FORCE', 'ProxyDirect|FORCE']:
-            opt['forced_proxy'] = opt['forced_proxy_opt'].split('|')[0]
+            opt['forced_proxy'] = opt['forced_proxy_opt'].replace('|FORCE', '')
         else:
             opt['forced_proxy'] = opt['forced_proxy_opt']
-
-    if opt.get('canonical', {}).get('forced_proxy_ifnot_assistant', '') or opt.get('forced_proxy_ifnot_assistant', ''):
-        opt['forced_proxy_ifnot_assistant'] = opt.get('canonical', {}).get('forced_proxy_ifnot_assistant', '') \
-                                              or opt.get('forced_proxy_ifnot_assistant', '')
-        opt['ignore_response_code'] = True
 
     response = {}
     
     while opt['proxy_retries_counter'] <= opt.get('proxy_retries', 1):
         response = {}
+        proxy_data = {}
         info_dict = []
         payload = dict()
         files = {}
         file_name_ = ''
         opt['proxy_retries_counter'] += 1
         domain = urlparse.urlparse(url)[1]
+        
+        # Prepara la url en caso de necesitar proxy, o si se envía "proxy_addr_forced" desde el canal
+        url, proxy_data, opt = check_proxy(url, **opt)
+        if not proxy_data.get('stat', '') and opt.get('CF_if_assistant', False):
+            opt['CF'] = opt['cloudscraper_active'] = True
 
         if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True) \
                               and opt.get('cloudscraper_active', True):         # Está en la lista de CF o viene en la llamada
@@ -1042,6 +1056,7 @@ def downloadpage(url, **opt):
             session = requests.session()
             session.verify = opt.get('session_verify', False)
             CS_stat = False
+        print_DEBUG(url, proxy_data, label='PROXY_DATA', req=session, **opt)
 
         # Conectar la versión de SSL TLS con la sesión
         if url.startswith('https:') and ssl_version and (opt.get('set_tls', False) or opt.get('canonical', {}).get('set_tls', False) or SET_TLS):
@@ -1059,7 +1074,6 @@ def downloadpage(url, **opt):
             req_headers['Connection'] = "close"
 
         # Prepara la url en caso de necesitar proxy, o si se envía "proxy_addr_forced" desde el canal
-        url, proxy_data, opt = check_proxy(url, **opt)
         if proxy_data.get('dict', {}):
             session.proxies = proxy_data['dict']
             #if opt["session_verify_save"] is None: session.verify = opt['session_verify'] = False
@@ -1229,6 +1243,52 @@ def downloadpage(url, **opt):
             opt['proxy__test'] = 'retry'
             return downloadpage(url, **opt)
 
+        # Si falla proxy SSL por timeout, sacarlo de proxy y reejecutarlo si está instalado Assistant, si no pasarlo a ProxyCF
+        if ('timeout' in str(response_code).lower() or 'Detected a Cloudflare version 2' in str(response_code) \
+                                                    or response_code in CLOUDFLARE_CODES+NOT_FOUND_CODES) \
+                                                    and ', Proxy Web' in proxy_data.get('stat', '') \
+                                                    and proxy_data.get('web_name') == 'croxyproxy.com':
+            update_alfa_domain_web_list(url, 'Timeout=%s' % opt['timeout'], proxy_data, **opt)
+
+            if not alfa_domain_web_list or not alfa_domain_web_list.get(proxy_data.get('web_name', ''), []):
+                from core import filetools
+                if not PY3: from . import proxytools
+                else: from . import proxytools_py3 as proxytools
+                domain = obtain_domain(opt['url_save'], sub=True)
+                print_DEBUG(url, proxy_data, label='TIMEOUT', req=req, **opt)
+                opt['post'] = opt['post_save']
+                opt['proxy_web'] = False
+                opt['proxy_retries'] = 1 if not TEST_ON_AIR else 0
+                if 'forced_proxy' in opt: del opt['forced_proxy']
+
+                if (opt.get('forced_proxy_ifnot_assistant', '') in ['ProxySSL'] or not channel_proxy_list(opt['url_save'])) \
+                            and filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
+                    opt['CF'] = opt['CF_save'] = opt['cloudscraper_active'] = opt['CF_test'] = opt['CF_if_assistant'] = True
+                    if opt.get('canonical', {}): opt['canonical']['CF_stat'] = opt['CF']
+                    opt['retries_cloudflare'] = 1
+                    opt['forced_proxy_ifnot_assistant'] = ''
+                    opt['proxy_web'] = False
+                    opt['proxy_addr_forced'] = None
+                    opt['forced_proxy'] = None
+                    if opt.get('canonical', {}): 
+                        opt['canonical']['forced_proxy_ifnot_assistant'] = opt['forced_proxy_ifnot_assistant']
+                        opt['canonical']['proxy_web'] = opt['proxy_web']
+                        opt['canonical']['proxy_addr_forced'] = opt['proxy_addr_forced']
+                        opt['canonical']['forced_proxy'] = opt['forced_proxy']
+                    proxytools.add_domain_retried(domain, proxy__type='', delete='forced')
+                    logger.debug("CF Assistant reTRY without SSL... for domain: %s" % domain)
+                    return downloadpage(opt['url_save'], **opt)
+
+                logger.debug("reTRY without SSL... for domain: %s" % domain)
+                proxytools.add_domain_retried(domain, proxy__type='ProxyCF', delete='SSL')
+                return downloadpage(opt['url_save'], **opt)
+
+            else:
+                if isinstance(opt['timeout'], int): opt['timeout'] += 3
+                if isinstance(opt['timeout'], float): opt['timeout'] += 3.0
+                opt['post'] = opt['post_save']
+                return downloadpage(opt['url_save'], **opt)
+
         # Retries Cloudflare errors
         if req.headers.get('Server', '').startswith('cloudflare') and response_code in CLOUDFLARE_CODES \
                         and (not opt.get('CF', False) or opt['retries_cloudflare'] > 0) and opt.get('CF_test', True) \
@@ -1238,6 +1298,7 @@ def downloadpage(url, **opt):
                 if not '__cpo=' in url and domain not in CF_LIST:
                     CF_LIST += [domain]
                     save_CF_list(domain, **opt)
+                update_alfa_domain_web_list(url, response_code, proxy_data, **opt)
                 opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0 if opt['retries_cloudflare'] < 1 else 1
                 logger.debug("CF retry... for domain: %s, Retry: %s" % (domain, opt['retries_cloudflare']))
                 if opt['retries_cloudflare'] > 0: time.sleep(1)
@@ -1246,8 +1307,28 @@ def downloadpage(url, **opt):
                 if opt["CF_save"] is None: opt["CF"] = False if opt['retries_cloudflare'] > 0 else True
                 return downloadpage(opt['url_save'], **opt)
         
+        # Retry con Assistant si falla proxy SSL
+        if opt['retries_cloudflare'] <= 0 and response_code in CLOUDFLARE_CODES and opt.get('cf_assistant_if_proxy', True) \
+                        and not opt.get('cf_v2', False) and opt.get('CF_test', True) and ', Proxy Web' in proxy_data.get('stat', ''):
+            update_alfa_domain_web_list(url, response_code, proxy_data, **opt)
+            url = opt['url_save']
+            domain = obtain_domain(url, sub=True)
+            opt['post'] = opt['post_save']
+            opt['retries_cloudflare'] = 1
+            logger.debug("CF Assistant TRY... for domain: %s" % domain)
+            from lib.cloudscraper import cf_assistant
+            req = cf_assistant.get_cl(opt, req)
+            response_code = req.status_code
+            if not PY3: from . import proxytools
+            else: from . import proxytools_py3 as proxytools
+            if response_code == 403: 
+                proxytools.add_domain_retried(domain, proxy__type='ProxyWeb', delete='forced')
+                opt['forced_proxy_ifnot_assistant'] = 'ProxyCF'
+                opt['CF'] = opt['CF_save'] = opt['cloudscraper_active'] = True
+        
         if req.headers.get('Server', '') == 'Alfa' and response_code in CLOUDFLARE_CODES \
                         and not opt.get('cf_v2', False) and opt.get('CF_test', True):
+            update_alfa_domain_web_list(url, response_code, proxy_data, **opt)
             opt["cf_v2"] = True
             if not PY3: opt['proxy_retries'] = 0
             if opt['retries_cloudflare'] > 0: time.sleep(1)
@@ -1265,14 +1346,15 @@ def downloadpage(url, **opt):
                 info_dict, response = fill_fields_post(url, info_dict, req, response, req_headers, inicio, **opt)
                 show_infobox(info_dict, force=True)
             
+            update_alfa_domain_web_list(url, response_code, proxy_data, **opt)
             opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0
             opt['proxy__test'] = 'retry'
             if not PY3: from . import proxytools
             else: from . import proxytools_py3 as proxytools
-            domain = obtain_domain(url, sub=True)
-            opt['forced_proxy'] = opt.get('forced_proxy_ifnot_assistant', '')
-            proxytools.add_domain_retried(domain, proxy__type=opt['forced_proxy'])
-            return downloadpage(url, **opt)
+            domain = obtain_domain(opt['url_save'], sub=True)
+            opt['forced_proxy'] = 'ProxyCF'
+            proxytools.add_domain_retried(domain, proxy__type=opt['forced_proxy'], delete='SSL')
+            return downloadpage(opt['url_save'], **opt)
 
         try:
             response['encoding'] = str(req.encoding).lower() if req.encoding and req.encoding is not None else None
@@ -1597,3 +1679,48 @@ def build_response(HTTPResponse=False):
     response['time_elapsed'] = 0
     
     return type('HTTPResponse', (), response) if HTTPResponse else response
+
+
+def print_DEBUG(url, obj, label='', req={}, **opt):
+
+    url_stat = ''
+    if DEBUG:
+        for exc in DEBUG_EXC:
+            if exc in url: break
+            if 'PROXY' in label:
+                url_stat = 'Proxy_SESSION: %s; ' % req
+            if 'BLOCKING' in label:
+                url_stat = 'Blocking_WEBS: %s; ' % alfa_domain_web_list
+            if 'OPT' in label:
+                #if opt_logger.get('post'): opt_logger['post'] = '******'
+                #if opt_logger.get('post_save'): opt_logger['post_save'] = '******'
+                url_stat = 'Opt_URL: %s; ' % url
+            if 'TIMEOUT' in label:
+                 url_stat = 'Error_CODE: %s; PROXY: %s; ' % (req.status_code, channel_proxy_list(opt['url_save']))
+                
+        else:
+            opt['alfa_s'] = opt['hide_infobox'] = False
+            logger.debug('%s%s: %s' % (url_stat, label, obj))
+
+
+def update_alfa_domain_web_list(url, code, proxy_data, **opt):
+    global alfa_domain_web_list
+
+    alfa_domain_web_list = {}
+
+    if not ', Proxy Web' in proxy_data.get('stat', ''): return
+    if window:
+        alfa_domain_web_list = json.loads(window.getProperty("alfa_domain_web_list")) if window.getProperty("alfa_domain_web_list") else {}
+    if not alfa_domain_web_list: return
+
+    domain = obtain_domain(url, scheme=True)
+
+    for proxy_type, urls_list in list(alfa_domain_web_list.copy().items()):
+        for x, (server, url_proxy) in enumerate(urls_list):
+            if server == 0: continue
+
+            if domain in url_proxy:
+                del alfa_domain_web_list[proxy_type][x]
+                window.setProperty("alfa_domain_web_list", json.dumps(alfa_domain_web_list))
+
+                if DEBUG: logger.debug('ELIMINADO "%s" de %s: RAZÓN: %s' % (url_proxy, alfa_domain_web_list, code))

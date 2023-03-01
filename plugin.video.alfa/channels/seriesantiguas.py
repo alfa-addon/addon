@@ -48,17 +48,24 @@ finds = {'find': {'find': [{'tag': ['div'], 'class': ['progression-masonry-margi
                   'find_all': [{'tag': ['div'], 'class': ['progression-masonry-item']}]}, 
          'categories': {}, 
          'search': {}, 
+         'get_language': {}, 
+         'get_language_rgx': '(?:flags\/||d{4}\/\d{2}\/)(\w+)\.(?:png|jpg|jpeg|webp)', 
+         'get_quality': {}, 
+         'get_quality_rgx': '', 
          'next_page': {'find': [{'tag': ['div'], 'class': ['nav-previous']}, {'tag': ['a'], '@ARG': 'href'}]}, 
          'next_page_rgx': [['\/page\/\d+', '/page/%s']], 
-         'last_page': False, 
+         'last_page': {}, 
          'year': {}, 
          'season_episode': {}, 
          'seasons': {'find': [{'tag': ['ul'], 'class': ['video-tabs-nav-aztec nav']}], 'find_all': [['li']]}, 
+         'season_num': {}, 
+         'seasons_search_num_rgx': '', 
+         'seasons_search_qty_rgx': '', 
          'episode_url': '', 
          'episodes': {'find': [{'tag': ['div'], 'id': ['aztec-tab-%s']}], 
                       'find_all': [{'tag': ['div'], 'class': ['progression-studios-season-item']}]}, 
          'episode_num': ['(?i)(\d+)\.\s*[^$]+$', '(?i)[a-z_0-9 ]+\s*\((?:temp|epis)\w*\s*(?:\d+\s*x\s*)?(\d+)\)'], 
-         'episode_clean': ['(?i)\d+\.\s*([^$]+)$', '(?i)([a-z_0-9 ]+)\s*\((?:temp|epis)\w*\s*(?:\d+\s*x\s*)?\d+\)'], 
+         'episode_clean': [['(?i)\d+\.\s*([^$]+)$', None], ['(?i)([a-z_0-9 ]+)\s*\((?:temp|epis)\w*\s*(?:\d+\s*x\s*)?\d+\)', None]], 
          'findvideos': {'find_all': [{'tag': ['div'], 'class': ['embed-code-remove-styles-aztec']}]}, 
          'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie', ''],
                          ['[\(|\[]\s*[\)|\]]', '']],
@@ -66,10 +73,11 @@ finds = {'find': {'find': [{'tag': ['div'], 'class': ['progression-masonry-margi
          'language_clean': [], 
          'url_replace': [], 
          'controls': {'duplicates': [], 'min_temp': False, 'url_base64': False, 'add_video_to_videolibrary': True, 
-                      'get_lang': False, 'reverse': False, 'videolab_status': True}, 
+                      'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False}, 
          'timeout': timeout}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
-                                   language=language, list_language=list_language, list_servers=list_servers, 
+                                   idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
+                                   list_quality_movies=list_quality_movies, list_quality_tvshow=list_quality_tvshow, 
                                    channel=canonical['channel'], actualizar_titulos=True, url_replace=url_replace, debug=debug)
 
 
@@ -279,13 +287,9 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
 def actualizar_titulos(item):
     logger.info()
-    from lib.generictools import update_title
-    
     #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
-    item = update_title(item)
-    
-    #Volvemos a la siguiente acción en el canal
-    return item
+
+    return AlfaChannel.do_actualizar_titulos(item)
 
 
 def search(item, texto):
