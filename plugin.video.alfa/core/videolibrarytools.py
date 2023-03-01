@@ -1165,7 +1165,8 @@ def add_movie(item):
     insertados, sobreescritos, fallidos = save_movie(new_item)
 
     if fallidos == 0:
-        config.cache_reset(label='alfa_videolab_movies_list')
+        generictools.create_videolab_list(update=item.infoLabels)
+        config.cache_reset(label='alfa_videolab_series_list')
         platformtools.dialog_ok(config.get_localized_string(30131), new_item.contentTitle,
                                 config.get_localized_string(30135))             # 'se ha añadido a la videoteca'
     else:
@@ -1261,6 +1262,7 @@ def add_tvshow(item, channel=None):
         logger.error("No se han podido añadir %s episodios de la serie %s a la videoteca" % (fallidos, item.show))
 
     else:
+        generictools.create_videolab_list(update=item.infoLabels)
         config.cache_reset(label='alfa_videolab_series_list')
         platformtools.dialog_ok(config.get_localized_string(30131), config.get_localized_string(60070))
         logger.info("Se han añadido %s episodios de la serie %s a la videoteca" %

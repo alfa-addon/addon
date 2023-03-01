@@ -321,6 +321,14 @@ def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, 
                 s_studio = '%s, %s' % (s_studio, set_color(infoLabels['last_air_date'], 'year'))
             s_studio += ')'
         s_studio = '%s%s' % (s_studio, last)
+    elif infoLabels.get('temporada_nombre', '') and infoLabels['mediatype'] in ['season', 'episode']:
+        s_studio = t_part % 'Emisión'
+        if infoLabels.get('temporada_num_episodios'):
+            s_studio += '%sx%s ' % (str(infoLabels['season']), str(infoLabels['temporada_num_episodios']))
+        if infoLabels['mediatype'] in ['season', 'episode'] and infoLabels.get('aired', ''):
+            s_studio = '%s, %s %s' % (s_studio, set_color(infoLabels['aired'], 'year'), format_rating(infoLabels["rating"]))
+        s_studio += ')'
+        s_studio = '%s%s' % (s_studio, last)
 
     if languages and quality and vextend:
         plot_ = '%s%s%s%s%s%s\n%s' % (p_lang, p_quality, s_studio, g_genres, c_content, p_vextend, plot)

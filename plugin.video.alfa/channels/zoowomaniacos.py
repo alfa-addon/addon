@@ -210,13 +210,9 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
 def actualizar_titulos(item):
     logger.info()
-    from lib.generictools import update_title
-    
     #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
-    item = update_title(item)
-    
-    #Volvemos a la siguiente acción en el canal
-    return item
+
+    return AlfaChannel.do_actualizar_titulos(item)
 
 
 def search(item, texto):

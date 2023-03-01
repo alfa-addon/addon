@@ -19,15 +19,17 @@ from platformcode import config, logger
 from channels import filtertools, autoplay
 from lib.AlfaChannelHelper import DictionaryAllChannel
 
-IDIOMAS = {'*': 'TODOS', 'mx': 'Latino', 'dk': 'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb': 'VOSE', 
+IDIOMAS = {'mx': 'Latino', 'dk': 'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb': 'VOSE', 
            'sub': 'VOSE', 'su': 'VOSE', 'eng': 'VOSE', "subtitulado": "VOSE", "usa": "VOSE", 
            'de': 'VOSE', "español": "Castellano", "espana": "Castellano", 'cas': 'Castellano', 
-           "mexico": "Latino", "latino": "Latino", 'lat': 'Latino', 'jp': 'VOSE'}
+           "mexico": "Latino", "latino": "Latino", 'lat': 'Latino', 'LAT': 'Latino', 'jp': 'VOSE',
+           'spain': 'Castellano'}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
-list_quality_movies = ['HD', '1080p', 'TODOS']
-list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip', 'TODOS']
+list_quality_movies = ['HD', '1080p']
+list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['fembed', 'streamtape', 'streamlare', 'zplayer']
+forced_proxy_opt = 'ProxyCF|FORCE'
 
 canonical = {
              'channel': 'cuevana2espanol', 
@@ -38,7 +40,6 @@ canonical = {
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-forced_proxy_opt = 'ProxyCF|FORCE'
 
 timeout = 5
 kwargs = {}
@@ -66,22 +67,24 @@ finds = {'find': {'find': [{'tag': ['div'], 'class': ['row row-cols-xl-5 row-col
                             'get_text': [{'tag': '', '@STRIP': True}]}, 
          'seasons': {'find': [{'tag': ['div'], 'class': ['serieBlockListEpisodes_selector__RwIbM']}], 'find_all': ['option']}, 
          'season_num': {}, 
+         'seasons_search_num_rgx': '', 
+         'seasons_search_qty_rgx': '', 
          'episode_url': '%sseries/%s/seasons/%s/episodes/%s', 
          'episodes': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False}]}, 
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
          'findvideos': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False}]}, 
-         'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie', ''],
+         'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*\(\d{4}\)', ''],
                          ['[\(|\[]\s*[\)|\]]', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'language_clean': [], 
          'url_replace': [], 
          'controls': {'duplicates': [], 'min_temp': False, 'url_base64': False, 'add_video_to_videolibrary': True, 
-                      'get_lang': False, 'reverse': False, 'videolab_status': True}, 
+                      'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False}, 
          'timeout': timeout}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
-                                   language=language, list_language=list_language, list_servers=list_servers, 
+                                   idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
                                    list_quality_movies=list_quality_movies, list_quality_tvshow=list_quality_tvshow, 
                                    channel=canonical['channel'], actualizar_titulos=True, url_replace=url_replace, debug=debug)
 
@@ -177,22 +180,25 @@ def list_all_matches(item, matches_int, **AHkwargs):
         elem_json = {}
         #logger.error(elem)
 
-        if item.c_type == 'episodios':
-            sxe = AlfaChannel.parse_finds_dict(elem, findS.get('season_episode', {}), c_type=item.c_type)
-            elem_json['season'], elem_json['episode'] = sxe.split('x')
-            elem_json['season'] = int(elem_json['season'] or 1)
-            elem_json['episode'] = int(elem_json['episode'] or 1)
+        try:
+            if item.c_type == 'episodios':
+                sxe = AlfaChannel.parse_finds_dict(elem, findS.get('season_episode', {}), c_type=item.c_type)
+                elem_json['season'], elem_json['episode'] = sxe.split('x')
+                elem_json['season'] = int(elem_json['season'] or 1)
+                elem_json['episode'] = int(elem_json['episode'] or 1)
 
-        elem_json['url'] = elem.a.get('href', '')
-        elem_json['title'] = elem.img.get('alt', '') if item.c_type != 'episodios' else elem.img.get('alt', '').replace(sxe, '').strip()
-        elem_json['thumbnail'] = elem.img.get('src', '')
-        if ('tmdb' in elem_json['thumbnail'] or 'imdb' in elem_json['thumbnail']) and '=http' in elem_json['thumbnail']:
-            elem_json['thumbnail'] = scrapertools.find_single_match(AlfaChannel.do_unquote(elem_json['thumbnail']), '=(.*?)[&|$]')
-        elem_json['quality'] = '*'
-        elem_json['language'] = '*'
-        elem_json['year'] = AlfaChannel.parse_finds_dict(elem, findS.get('year', {}), year=True, c_type=item.c_type)
-        if findS.get('plot', {}) and AlfaChannel.parse_finds_dict(elem, findS.get('plot', {}), c_type=item.c_type):
-            elem_json['plot'] = AlfaChannel.parse_finds_dict(elem, findS.get('plot', {}), c_type=item.c_type)
+            elem_json['url'] = elem.a.get('href', '')
+            elem_json['title'] = elem.img.get('alt', '') if item.c_type != 'episodios' else elem.img.get('alt', '').replace(sxe, '').strip()
+            elem_json['thumbnail'] = elem.img.get('src', '')
+            elem_json['quality'] = '*'
+            elem_json['language'] = '*'
+            elem_json['year'] = AlfaChannel.parse_finds_dict(elem, findS.get('year', {}), year=True, c_type=item.c_type)
+            if findS.get('plot', {}) and AlfaChannel.parse_finds_dict(elem, findS.get('plot', {}), c_type=item.c_type):
+                elem_json['plot'] = AlfaChannel.parse_finds_dict(elem, findS.get('plot', {}), c_type=item.c_type)
+        except:
+            logger.error(elem)
+            logger.error(traceback.format_exc())
+            continue
 
         if not elem_json['url']: continue
 
@@ -328,13 +334,9 @@ def play(item):
 
 def actualizar_titulos(item):
     logger.info()
-    from lib.generictools import update_title
-    
     #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
-    item = update_title(item)
-    
-    #Volvemos a la siguiente acción en el canal
-    return item
+
+    return AlfaChannel.do_actualizar_titulos(item)
 
 
 def search(item, texto):

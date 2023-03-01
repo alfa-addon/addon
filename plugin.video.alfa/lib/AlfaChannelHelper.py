@@ -17,6 +17,8 @@ import re
 import traceback
 import time
 import base64
+import xbmcgui
+window = xbmcgui.Window(10000) or None
 
 from core import httptools
 from core import scrapertools
@@ -33,12 +35,13 @@ DEBUG = False
 IDIOMAS = {'mx': 'Latino', 'dk': 'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb': 'VOSE', 
            'sub': 'VOSE', 'su': 'VOSE', 'eng': 'VOSE', "subtitulado": "VOSE", "usa": "VOSE", 
            'de': 'VOSE', "español": "Castellano", "espana": "Castellano", 'cas': 'Castellano', 
-           "mexico": "Latino", "latino": "Latino", 'lat': 'Latino', 'LAT': 'Latino', 'jp': 'VOSE'}
+           "mexico": "Latino", "latino": "Latino", 'lat': 'Latino', 'LAT': 'Latino', 'jp': 'VOSE',
+           'spain': 'Castellano'}
 
 
 class AlfaChannelHelper:
 
-    def __init__(self, host, channel='', movie_path="/movies", tv_path="/serie", 
+    def __init__(self, host, timeout=15, channel='', movie_path="/movies", tv_path="/serie", 
                  movie_action="findvideos", tv_action="seasons", forced_proxy_opt='ProxyCF', 
                  list_language=[], list_quality=[], list_quality_movies=[], list_quality_tvshow=[], 
                  list_servers=[], language=[], idiomas={}, IDIOMAS_TMDB={0: 'es', 1: 'en', 2: 'es,en'}, 
@@ -49,12 +52,14 @@ class AlfaChannelHelper:
         
         self.url = ''
         self.host = host
+        self.timeout = timeout
         self.doo_url = "%swp-admin/admin-ajax.php" % host
-        self.channel = channel
+        self.channel = channel or canonical.get('channel', '')
         self.movie_path = movie_path
         self.tv_path = tv_path
         self.movie_action = movie_action
         self.tv_action = tv_action
+        self.forced_proxy_opt = forced_proxy_opt
         self.list_language = list_language
         self.list_quality = self.list_quality_tvshow = list_quality or list_quality_tvshow
         self.list_quality_movies = list_quality_movies
@@ -67,7 +72,17 @@ class AlfaChannelHelper:
         self.finds = finds
         self.url_replace = url_replace
 
-    def create_soup(self, url, resp=False, **kwargs):
+        self.response = httptools.build_response(HTTPResponse=True)
+        self.response_proxy = self.response.proxy__
+        self.response_preferred_proxy_ip = ''
+        
+        self.SUCCESS_CODES = httptools.SUCCESS_CODES
+        self.REDIRECTION_CODES = httptools.REDIRECTION_CODES
+        self.PROXY_CODES = httptools.PROXY_CODES
+        self.NOT_FOUND_CODES = httptools.NOT_FOUND_CODES
+        self.CLOUDFLARE_CODES = httptools.CLOUDFLARE_CODES
+
+    def create_soup(self, url, **kwargs):
         """
         :param url: url destino
         :param kwargs: parametros que se usan en donwloadpage
@@ -80,19 +95,27 @@ class AlfaChannelHelper:
                                    and "add_referer" not in kwargs: kwargs["add_referer"] = True
         if "ignore_response_code" not in kwargs: kwargs["ignore_response_code"] = True
         if "canonical" not in kwargs: kwargs["canonical"] = self.canonical
+        if "forced_proxy_opt" not in kwargs and "forced_proxy_opt" not in kwargs["canonical"]: \
+                                   kwargs["forced_proxy_opt"] = self.forced_proxy_opt
+        if "timeout" not in kwargs and "timeout" not in kwargs["canonical"]: \
+                                   kwargs["timeout"] = self.timeout
         size_js = kwargs.pop('size_js', 10000)
+        if kwargs.get('preferred_proxy_ip', ''):
+            window.getProperty("AH_%s_preferred_proxy_ip" % self.channel) if window else self.response_preferred_proxy_ip
+        if kwargs.get('canonical', {}).get('preferred_proxy_ip', ''):
+            window.getProperty("AH_%s_preferred_proxy_ip" % self.channel) if window else self.response_preferred_proxy_ip
         
-        if DEBUG: logger.debug('KWARGS: %s' % kwargs)
+        #if DEBUG: logger.debug('KWARGS: %s' % kwargs)
         response = httptools.downloadpage(url, **kwargs)
 
-        if response.code in httptools.SUCCESS_CODES + httptools.REDIRECTION_CODES \
-                       and ('text/' in response.headers.get('Content-Type', '') \
-                       or 'json' in response.headers.get('Content-Type', '') \
-                       or 'xml' in response.headers.get('Content-Type', '') \
-                       or 'javascript' in req.headers.get('Content-Type', '')):
+        if response.code in httptools.SUCCESS_CODES \
+                         and ('text/' in response.headers.get('Content-Type', '') \
+                         or 'json' in response.headers.get('Content-Type', '') \
+                         or 'xml' in response.headers.get('Content-Type', '') \
+                         or 'javascript' in response.headers.get('Content-Type', '')):
                 response = js2py_conversion(response.data, url, resp=response, size=size_js, **kwargs)
         
-        if kwargs.get("soup", {}):
+        if kwargs.get("soup", True):
             soup = response.soup or {}
         else:
             soup = response
@@ -107,7 +130,15 @@ class AlfaChannelHelper:
             else:
                 self.url = response.url
 
-        if resp: return response
+        self.response = response
+        self.response_proxy = response.proxy__
+        if self.response_proxy: 
+            self.response_preferred_proxy_ip = self.response_proxy.split('|')[2] \
+                        if response.code in httptools.SUCCESS_CODES + httptools.REDIRECTION_CODES else ''
+            if kwargs.get('preferred_proxy_ip', ''): self.response_preferred_proxy_ip
+            if kwargs.get('canonical', {}).get('preferred_proxy_ip', ''): self.response_preferred_proxy_ip
+            if window: window.setProperty("AH_%s_preferred_proxy_ip" % self.channel, str(self.response_preferred_proxy_ip))
+
         return soup
 
     def list_all(self, item, postprocess=None):
@@ -140,16 +171,17 @@ class AlfaChannelHelper:
     def get_video_options(self, url, forced_proxy_opt=forced_proxy_def):
         pass
 
-    def define_content_type(self, new_item, is_tvshow=False):
+    def define_content_type(self, new_item, contentType=''):
 
         if new_item.infoLabels.get("year", '') and str(new_item.infoLabels["year"]) in new_item.title and len(new_item.title) > 4:
             new_item.title = re.sub("\(|\)|%s" % str(new_item.infoLabels["year"]), "", new_item.title).strip()
 
         if new_item.contentType == 'episode': 
-            new_item.contentSerieName = re.sub('\s*\d+x\d+\s*', '', new_item.title)
+            new_item.title = re.sub('(?i)\s*temp\w*\s*\d+\s*(?:epi\w*|cap\w*)\s*\d+\s*', '', new_item.title)
+            new_item.contentSerieName = re.sub('\s*\d+x\d+\s*(?:\s*-\s*)?', '', new_item.title)
             new_item.action = self.movie_action
             if not new_item.season_search: new_item.season_search = new_item.contentSerieName
-        elif not is_tvshow and (self.movie_path in new_item.url or not self.tv_path in new_item.url):
+        elif contentType != 'tvshow' and (self.movie_path in new_item.url or not self.tv_path in new_item.url):
             new_item.action = self.movie_action
             new_item.contentTitle = new_item.title.strip()
             if not new_item.contentType: new_item.contentType = 'movie'
@@ -172,12 +204,13 @@ class AlfaChannelHelper:
         contentTitle = 'pelicula' if contentType == 'movie' else 'temporada' if contentType == 'season' else 'serie'
 
         if len(itemlist) > 0:
-            if item.contentChannel != "videolibrary" and item.action == 'findvideos':
+            if item.action == 'findvideos':
                 itemlist.append(item.clone(channel="trailertools", title="**-[COLOR magenta] Buscar Trailer [/COLOR]-**", 
                                            action="buscartrailer", context=""))
         
-        if config.get_videolibrary_support() and len(itemlist) > 0 \
-                        and ((item.contentType == 'movie' and item.action == 'findvideos') or item.action != 'findvideos'):
+        if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentChannel != "videolibrary" \
+                        and ((item.contentType == 'episode' and item.url_tvshow) or item.action != 'findvideos' \
+                        or (item.contentType == 'movie' and item.action == 'findvideos')):
             item.url = self.do_url_replace(item.url)
             
             if self.actualizar_titulos:
@@ -195,7 +228,7 @@ class AlfaChannelHelper:
                                )
 
             itemlist.append(item.clone(title='[COLOR yellow]Añadir esta %s a la videoteca[/COLOR]' % contentTitle, 
-                                       url=item.url,
+                                       url=item.url_tvshow or item.url,
                                        action="add_%s_to_library" % actionType,
                                        extra="episodios",
                                        contentType=contentType, 
@@ -224,18 +257,33 @@ class AlfaChannelHelper:
         
         return urlparse.unquote(url)
 
+    def urljoin(self, domain, url):
+        
+        return urlparse.urljoin(domain, url)
+
     def obtain_domain(self, url, sub=False, point=False, scheme=False):
 
         return httptools.obtain_domain(url, sub=sub, point=point, scheme=scheme)
+    
+    def do_actualizar_titulos(self, item):
+
+        from lib.generictools import update_title
+        return update_title(item)
+
+    def do_seasons_search(self, item, matches, **AHkwargs):
+        
+        from lib.generictools import AH_find_seasons
+        return AH_find_seasons(item, matches, **AHkwargs)
 
     def get_language_and_set_filter(self, elem, elem_json):
 
-        langs = ""
+        langs = "*"
         finds_out = self.finds.get('get_language', {})
         finds_lang_rgx = self.finds.get('get_language_rgx', '(?:flags\/|-)(\w+)\.(?:png|jpg|jpeg|webp)')
 
         try:
             lang_list = self.parse_finds_dict(elem, finds_out)
+            if not isinstance(lang_list, list): lang_list = [lang_list]
             for lang in lang_list:
                 lang_ = scrapertools.find_single_match(str(lang), finds_lang_rgx)
                 if self.idiomas.get(lang_, ''):
@@ -245,9 +293,9 @@ class AlfaChannelHelper:
                     langs += '%s,' % lang_
         except:
             langs = ""
-        if DEBUG or not langs: 
+        if DEBUG or not langs or langs == '*': 
             logger.debug('FINDS_get_language: %s; LANGS: %s' % (finds_lang_rgx, langs))
-            if not langs: logger.debug('FINDS_get_language: ELEM: %s' % elem)
+            if not langs or langs == '*': logger.debug('FINDS_get_language: ELEM: %s' % elem)
 
         elem_json['language'] = langs.rstrip(',')
 
@@ -666,7 +714,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if DEBUG: logger.debug('FINDS: %s' % finds)
         finds_out = finds.get('find', {})
         finds_next_page = finds.get('next_page', {})
-        finds_next_page_rgx = finds.get('next_page_rgx', [['page\/\d+\/', 'page/%s/']])
+        finds_next_page_rgx = finds.get('next_page_rgx') if finds.get('next_page_rgx') else [['page\/\d+\/', 'page/%s/']]
         finds_last_page = finds.get('last_page', {})
         finds_year = finds.get('year', {})
         finds_season_episode = finds.get('season_episode', {})
@@ -685,7 +733,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         last_page = 99999 if not isinstance(finds_last_page, bool) else 0       # Última página inicial
         last_page_print = 1                                                     # Última página inicial, para píe de página
         page_factor = finds_controls.get('page_factor', 1.0 )                   # Factor de conversión de pag. web a pag. Alfa
-        cnt_tot = finds_controls.get('cnt_tot', 30)                             # Poner el num. máximo de items por página
+        cnt_tot = finds_controls.get('cnt_tot', 20)                             # Poner el num. máximo de items por página
         cnt_tot_ovf = finds_controls.get('page_factor_overflow', 1.3)           # Overflow al num. máximo de items por página
         cnt_title = 0                                                           # Contador de líneas insertadas en Itemlist
         cnt_tot_match = 0.0                                                     # Contador TOTAL de líneas procesadas de matches
@@ -708,28 +756,22 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         inicio = time.time()                                                    # Controlaremos que el proceso no exceda de un tiempo razonable
         fin = inicio + finds_controls.get('inicio', 5)                          # Después de este tiempo pintamos (segundos)
-        timeout = finds.get('timeout', 15)                                      # Timeout normal
+        timeout = finds.get('timeout', self.timeout)                            # Timeout normal
         timeout_search = timeout * 2                                            # Timeout para búsquedas
 
+        host = finds_controls.get('host', self.host)
+        host_referer = finds_controls.get('host_referer', host)
         post = item.post or finds_controls.pop('post', None)
         headers = item.headers or finds_controls.get('headers', {})
         forced_proxy_opt = finds_controls.get('forced_proxy_opt', None)
-        host = finds_controls.get('host', self.host)
-        host_referer = finds_controls.get('host_referer', host)
-        url_replace = finds_controls.get('url_replace', [])
-        url_base64 = finds_controls.get('url_base64', True)
-        videolab_status = finds_controls.get('videolab_status', True)
-
+        
         season_colapse = config.get_setting('season_colapse', item.channel, default=True)
         filter_languages = config.get_setting('filter_languages', item.channel, default=0)
         modo_grafico = config.get_setting('modo_grafico', item.channel, default=True)
         if not filter_languages: filter_languages = 0
-        IDIOMAS_TMDB = finds_controls.get('IDIOMAS_TMDB', {}) or self.IDIOMAS_TMDB
-        idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', item.channel, default=0)]    # Idioma base para TMDB
-        if not idioma_busqueda: idioma_busqueda = 0
-        idioma_busqueda_VO = IDIOMAS_TMDB[2]                                    # Idioma para VO: Local,VO
 
         next_page_url = item.url
+        episodios = False
         # Máximo num. de líneas permitidas por TMDB. Máx de 5 segundos por Itemlist para no degradar el rendimiento
         while (cnt_title < cnt_tot and (curr_page <= last_page or (last_page == 0 and finds_next_page and next_page_url)) \
                                    and fin > time.time()) or item.matches:
@@ -753,7 +795,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
                         if custom_pagination:
                             if len(matches) < cnt_tot:
                                 custom_pagination = False
-                if not matches:
+                if not matches and item.extra != 'continue':
+                    #logger.error(finds_out)
+                    #logger.error(soup or section_list)
                     break
             else:
                 matches =  AHkwargs['soup'] = item.matches
@@ -764,6 +808,16 @@ class DictionaryAllChannel(AlfaChannelHelper):
                         if len(matches) < cnt_tot:
                             custom_pagination = False
             if DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
+
+            # Refrescamos variables posiblemente actualizadas en "matches_post"
+            host = finds_controls.get('host', self.host)
+            host_referer = finds_controls.get('host_referer', host)
+            url_replace = finds_controls.get('url_replace', [])
+            url_base64 = finds_controls.get('url_base64', True)
+            IDIOMAS_TMDB = finds_controls.get('IDIOMAS_TMDB', {}) or self.IDIOMAS_TMDB
+            idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', item.channel, default=0)]    # Idioma base para TMDB
+            if not idioma_busqueda: idioma_busqueda = 0
+            idioma_busqueda_VO = IDIOMAS_TMDB[2]                                # Idioma para VO: Local,VO
 
             # Buscamos la próxima página
             if soup:
@@ -797,7 +851,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
             for elem in matches:
                 new_item = Item()
-                new_item.infoLabels = item.infoLabels
+                new_item.infoLabels = item.infoLabels.copy()
                 cnt_match += 1
 
                 new_item.channel = item.channel
@@ -805,11 +859,16 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                 new_item.url = elem.get('url', '')
                 if not new_item.url: continue
-                new_item.url = urlparse.urljoin(self.host, new_item.url)
+                new_item.url = self.urljoin(self.host, new_item.url)
                 
                 new_item.title = elem.get('title', '')
                 for clean_org, clean_des in finds.get('title_clean', []):
-                    new_item.title = re.sub(clean_org, clean_des, new_item.title).strip()
+                    if clean_des is None:
+                        if scrapertools.find_single_match(new_item.title, clean_org):
+                            new_item.title = scrapertools.find_single_match(new_item.title, clean_org).strip()
+                            break
+                    else:
+                        new_item.title = re.sub(clean_org, clean_des, new_item.title).strip()
                 # Slugify, pero más light
                 new_item.title = new_item.title.replace("á", "a").replace("é", "e").replace("í", "i")\
                                                .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
@@ -830,12 +889,22 @@ class DictionaryAllChannel(AlfaChannelHelper):
                         if DEBUG: logger.debug('AÑADIDO %s' % url_list)
                         title_lista += [url_list]                               # La añadimos a la lista de títulos
                 
-                if elem.get('thumbnail', ''): new_item.thumbnail = elem['thumbnail'] if elem['thumbnail'].startswith('http') \
-                                                                   else urlparse.urljoin(self.host, elem['thumbnail'])
+                if elem.get('thumbnail', ''): 
+                    elem['thumbnail'] = elem['thumbnail'] if elem['thumbnail'].startswith('http') \
+                                                             else 'https:' + elem['thumbnail'] if elem['thumbnail'].startswith('//') \
+                                                             else self.urljoin(self.host, elem['thumbnail'])
+                    if ('tmdb' in elem['thumbnail'] or 'imdb' in elem['thumbnail']) and '=http' in elem['thumbnail']:
+                        elem['thumbnail'] = scrapertools.find_single_match(self.do_unquote(elem['thumbnail']), '=(.*?)[&|$]')
+
                 if elem.get('quality', ''):
                     new_item.quality = elem['quality']
                     for clean_org, clean_des in finds.get('quality_clean', []):
-                        new_item.quality = re.sub(clean_org, clean_des, new_item.quality).strip()
+                        if clean_des is None:
+                            if scrapertools.find_single_match(new_item.quality, clean_org):
+                                new_item.quality = scrapertools.find_single_match(new_item.quality, clean_org).strip()
+                                break
+                        else:
+                            new_item.quality = re.sub(clean_org, clean_des, new_item.quality).strip()
                 if str(elem.get('quality', '')).startswith('*'):
                     elem['quality'] = new_item.quality
                     new_item.quality = self.find_quality(elem, item)
@@ -843,7 +912,12 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 if elem.get('language', self.language):
                     new_item.language = elem.get('language', self.language)
                     for clean_org, clean_des in finds.get('language_clean', []):
-                        new_item.language = re.sub(clean_org, clean_des, new_item.language).strip()
+                        if clean_des is None:
+                            if scrapertools.find_single_match(new_item.language, clean_org):
+                                new_item.language = scrapertools.find_single_match(new_item.language, clean_org).strip()
+                                break
+                        else:
+                            new_item.language = re.sub(clean_org, clean_des, new_item.language).strip()
                 if '*' in str(elem.get('language', '')):
                     elem['language'] = new_item.language
                     new_item.language = self.find_language(elem, item)
@@ -867,9 +941,11 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     new_item.contentSeason = int(elem.get('season', '1') or '1')
                     new_item.contentEpisodeNumber = int(elem.get('episode', '1') or '1')
                     new_item.title = '%sx%s - %s' % (new_item.contentSeason, new_item.contentEpisodeNumber, new_item.title)
+                    episodios = True
 
-                if item.c_type == 'peliculas': new_item.contentType = 'movie'
-                new_item = self.define_content_type(new_item)
+                if elem.get('mediatype', ''): new_item.contentType = elem['mediatype']
+                elif item.c_type == 'peliculas': new_item.contentType = 'movie'
+                new_item = self.define_content_type(new_item, contentType=new_item.contentType)
 
                 if new_item.contentType != 'movie':
                     new_item.season_colapse = season_colapse
@@ -878,6 +954,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 new_item.context = filtertools.context(new_item, self.list_language, self.list_quality_movies \
                                                        if new_item.contentType == 'movie' else self.list_quality_tvshow)
 
+                if elem.get('post', None): new_item.post = elem['post']
+                if elem.get('headers', None): new_item.headers = elem['headers']
+                
                 new_item.url = self.do_url_replace(new_item.url, url_replace)
 
                 if postprocess:
@@ -904,7 +983,13 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                 % (str(curr_page), str(last_page), str(page_factor), str(next_page_url), len(matches)))
 
         if itemlist:
-            tmdb.set_infoLabels_itemlist(itemlist, modo_grafico, idioma_busqueda=idioma_busqueda)
+            videolab_status = finds_controls.get('videolab_status', True) and modo_grafico and not httptools.TEST_ON_AIR
+            if not isinstance(finds_controls.get('tmdb_extended_info', True), bool):
+                if episodios: tmdb.set_infoLabels_itemlist(itemlist, modo_grafico, idioma_busqueda=idioma_busqueda)
+                tmdb_extended_info = False
+            else:
+                tmdb_extended_info = not finds_controls.get('tmdb_extended_info', True)     # Info de TMDB extendida para Series y Episodios
+            tmdb.set_infoLabels_itemlist(itemlist, modo_grafico, idioma_busqueda=idioma_busqueda, extended_info=tmdb_extended_info)
 
             for new_item in itemlist:
                 if not isinstance(new_item.infoLabels['year'], int):
@@ -957,21 +1042,16 @@ class DictionaryAllChannel(AlfaChannelHelper):
         finds_controls = finds.get('controls', {})
         if DEBUG: logger.debug('FINDS_categories: %s; FINDS_controls: %s' % (finds_out, finds_controls))
 
-        page = finds_controls.get('page', '')
-        year = finds_controls.get('year', False)
-        reverse = finds_controls.get('reverse', False)
-        timeout = finds.get('timeout', 15)
+        timeout = finds.get('timeout', self.timeout)
+        host = finds_controls.get('host', self.host)
+        host_referer = finds_controls.get('host_referer', host)
         post = item.post or finds_controls.pop('post', None)
         headers = item.headers or finds_controls.get('headers', {})
         forced_proxy_opt = finds_controls.get('forced_proxy_opt', None)
-        host = finds_controls.get('host', self.host)
-        host_referer = finds_controls.get('host_referer', host)
-        url_replace = finds_controls.get('url_replace', [])
-        url_base64 = finds_controls.get('url_base64', True)
 
         if section_list:
             for genre, url in list(section_list.items()):
-                matches.append({'url': url + page, 'title': genre})
+                matches.append({'url': url, 'title': genre})
         else:
             soup = data or self.create_soup(item.url, timeout=timeout, post=post, headers=headers, 
                                             forced_proxy_opt=forced_proxy_opt, **kwargs)
@@ -983,7 +1063,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             else:
                 for elem in matches_section:
                     elem_json = {}
-                    elem_json['url'] = elem.a["href"] + page
+                    elem_json['url'] = elem.a["href"]
                     elem_json['title'] = elem.a.text
                     matches.append(elem_json.copy())
 
@@ -992,16 +1072,33 @@ class DictionaryAllChannel(AlfaChannelHelper):
             logger.error(soup or section_list)
             return itemlist
 
+        # Refrescamos variables posiblemente actualizadas en "matches_post"
+        year = finds_controls.get('year', False)
+        reverse = finds_controls.get('reverse', False)
+        url_replace = finds_controls.get('url_replace', [])
+        
         for elem in matches:
             if not elem.get('url'): continue
-            elem['url'] = urlparse.urljoin(self.host, elem['url'])
+            elem['url'] = self.urljoin(self.host, elem['url'])
+            if elem.get('thumbnail', ''): 
+                elem['thumbnail'] = elem['thumbnail'] if elem['thumbnail'].startswith('http') \
+                                                         else 'https:' + elem['thumbnail'] if elem['thumbnail'].startswith('//') \
+                                                         else self.urljoin(self.host, elem['thumbnail'])
+                if ('tmdb' in elem['thumbnail'] or 'imdb' in elem['thumbnail']) and '=http' in elem['thumbnail']:
+                    elem['thumbnail'] = scrapertools.find_single_match(self.do_unquote(elem['thumbnail']), '=(.*?)[&|$]')
 
             new_item = item.clone(
                                   category=item.channel.capitalize(),
                                   title=elem.get('title', '').title(),
                                   action=action,
-                                  url=elem['url']
+                                  url=elem['url'],
+                                  thumbnail=elem.get('thumbnail', item.thumbnail)
                                   )
+
+            if 'post' in new_item: del new_item.post
+            if elem.get('post', None): new_item.post = elem['post']
+            if 'headers' in new_item: del new_item.headers
+            if elem.get('headers', None): new_item.headers = elem['headers']
             if year and scrapertools.find_single_match(new_item.title, '\d{4}'):
                 new_item.infoLabels = {'year': int(scrapertools.find_single_match(new_item.title, '\d{4}'))}
 
@@ -1018,13 +1115,14 @@ class DictionaryAllChannel(AlfaChannelHelper):
         return itemlist
 
     def seasons(self, item, data='', action="episodesxseason", matches_post=None, postprocess=None, 
-                generictools=False, seasons_list={}, finds={}, **kwargs):
+                seasons_search_post=None, generictools=False, seasons_list={}, finds={}, **kwargs):
         logger.info()
         from lib.generictools import post_tmdb_findvideos, convert_url_base64, AH_find_videolab_status
 
         if not finds: finds = self.finds
         finds_out = finds.get('seasons', {})
         finds_season_num = finds.get('season_num', {})
+        finds_seasons_search = finds.get('seasons_search', {})
         itemlist = list()
         matches = list()
         soup = {}
@@ -1036,26 +1134,19 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         item.title  = item.title.replace('(V)-' , '')
         item.contentTitle  = item.contentTitle.replace('(V)-' , '')
-        timeout = finds.get('timeout', 15)
-        post = item.post or finds_controls.pop('post', None)
-        headers = item.headers or finds_controls.get('headers', {})
-        forced_proxy_opt = finds_controls.get('forced_proxy_opt', None)
+        timeout = finds.get('timeout', self.timeout)
         host = finds_controls.get('host', self.host)
         host_referer = finds_controls.get('host_referer', host)
         url_replace = finds_controls.get('url_replace', [])
-        url_base64 = finds_controls.get('url_base64', True)
-        add_video_to_videolibrary = finds_controls.get('add_video_to_videolibrary', True)
-        videolab_status = finds_controls.get('videolab_status', True)
+        post = item.post or finds_controls.pop('post', None)
+        headers = item.headers or finds_controls.get('headers', {})
+        forced_proxy_opt = finds_controls.get('forced_proxy_opt', None)
 
-        modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', item.channel, default=True)
+        modo_ultima_temp = AHkwargs['modo_ultima_temp'] = config.get_setting('seleccionar_ult_temporadda_activa', item.channel, default=True)
         season_colapse = config.get_setting('season_colapse', item.channel, default=True)
         filter_languages = config.get_setting('filter_languages', item.channel, default=0)
         modo_grafico = config.get_setting('modo_grafico', item.channel, default=True)
         if not filter_languages: filter_languages = 0
-        IDIOMAS_TMDB = finds_controls.get('IDIOMAS_TMDB', {}) or self.IDIOMAS_TMDB
-        idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', item.channel, default=0)]    # Idioma base para TMDB
-        if not idioma_busqueda: idioma_busqueda = 0
-        idioma_busqueda_VO = IDIOMAS_TMDB[2]                                    # Idioma para VO: Local,VO
 
         item.context = filtertools.context(item, self.list_language, self.list_quality_tvshow)
 
@@ -1067,9 +1158,11 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                 elem_json['season'] = int(scrapertools.find_single_match(str(elem.get('season', '1')), '\d+') or '1')
                 elem_json['url'] = elem.get('url', item.url)
+                elem_json['post'] = elem.get('post', None)
+                elem_json['headers'] = elem.get('headers', None)
                 if not elem.get('url', ''): continue
 
-                matches.append(elem_json)
+                matches.append(elem_json.copy())
         else:
             soup = data or self.create_soup(item.url, timeout=timeout, post=post, headers=headers, 
                                             forced_proxy_opt=forced_proxy_opt, **kwargs)
@@ -1087,19 +1180,21 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     if not elem_json.get('season'):
                         if finds_season_num: elem_json['season'] = int(self.parse_finds_dict(elem, finds_season_num))
 
-                        try:
-                            elem_json['season'] = int(elem.span.get_text(strip=True).lower().replace('temporada', ''))
-                        except:
+                        if not elem_json.get('season'):
                             try:
-                                elem_json['season'] = int(elem["value"])
+                                elem_json['season'] = int(elem.span.get_text(strip=True).lower().replace('temporada', ''))
                             except:
                                 try:
-                                    elem_json['season'] = int(re.sub('(?i)temp\w*\s*', '', elem.a.get_text(strip=True)))
+                                    elem_json['season'] = int(elem["value"])
                                 except:
-                                    ielem_json['season'] = 1
+                                    try:
+                                        elem_json['season'] = int(re.sub('(?i)temp\w*\s*', '', elem.a.get_text(strip=True)))
+                                    except:
+                                        elem_json['season'] = 1
                     elem_json['url'] = elem.a.get("href", '') if "href" in str(elem) else item.url
+                    if 'javascript' in elem_json['url']: elem_json['url'] = self.doo_url
                     if elem_json['url'].startswith('#'):
-                        elem_json['url'] = urlparse.urljoin(item.url, elem_json['url'])
+                        elem_json['url'] = self.urljoin(item.url, elem_json['url'])
 
                     matches.append(elem_json.copy())
 
@@ -1107,12 +1202,36 @@ class DictionaryAllChannel(AlfaChannelHelper):
             logger.error(finds_out)
             logger.error(soup or seasons_list)
             return itemlist
+        
+        if finds_seasons_search:
+            AHkwargs['function'] = 'seasons_search'
+            matches = self.do_seasons_search(item, matches, **AHkwargs)
+            if seasons_search_post:
+                matches = seasons_search_post(item, matches, **AHkwargs)
+            AHkwargs['function'] = 'seasons'
 
         if DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
+
+        # Refrescamos variables posiblemente actualizadas en "matches_post"
+        host = finds_controls.get('host', self.host)
+        host_referer = finds_controls.get('host_referer', host)
+        url_replace = finds_controls.get('url_replace', [])
+        url_base64 = finds_controls.get('url_base64', True)
+        IDIOMAS_TMDB = finds_controls.get('IDIOMAS_TMDB', {}) or self.IDIOMAS_TMDB
+        idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', item.channel, default=0)]    # Idioma base para TMDB
+        if not idioma_busqueda: idioma_busqueda = 0
+        idioma_busqueda_VO = IDIOMAS_TMDB[2]                                    # Idioma para VO: Local,VO
+
         for elem in matches:
             elem['season'] = int(scrapertools.find_single_match(str(elem.get('season', '1')), '\d+') or '1')
             elem['url'] = elem.get('url', item.url)
             if url_base64: elem['url'] = convert_url_base64(elem['url'], self.host)
+            if elem.get('thumbnail', ''): 
+                elem['thumbnail'] = elem['thumbnail'] if elem['thumbnail'].startswith('http') \
+                                                         else 'https:' + elem['thumbnail'] if elem['thumbnail'].startswith('//') \
+                                                         else self.urljoin(self.host, elem['thumbnail'])
+                if ('tmdb' in elem['thumbnail'] or 'imdb' in elem['thumbnail']) and '=http' in elem['thumbnail']:
+                    elem['thumbnail'] = scrapertools.find_single_match(self.do_unquote(elem['thumbnail']), '=(.*?)[&|$]')
 
             new_item = item.clone(action=action,
                                   category=item.channel.capitalize(), 
@@ -1120,8 +1239,15 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                   url_tvshow = item.url, 
                                   contentSeason=elem['season'], 
                                   title='Temporada %s' % elem['season'],
+                                  contentPlot=elem.get('plot', item.contentPlot), 
+                                  thumbnail=elem.get('thumbnail', item.thumbnail), 
                                   contentType='season'
                                  )
+
+            if 'post' in new_item: del new_item.post
+            if elem.get('post', None): new_item.post = elem['post']
+            if 'headers' in new_item: del new_item.headers
+            if elem.get('headers', None): new_item.headers = elem['headers']
 
             if postprocess:
                 new_item = postprocess(elem, new_item, item, **AHkwargs)
@@ -1135,7 +1261,12 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
             if new_item.quality:
                 for clean_org, clean_des in finds.get('quality_clean', []):
-                    new_item.quality = re.sub(clean_org, clean_des, new_item.quality).strip()
+                    if clean_des is None:
+                        if scrapertools.find_single_match(new_item.quality, clean_org):
+                            new_item.quality = scrapertools.find_single_match(new_item.quality, clean_org).strip()
+                            break
+                    else:
+                        new_item.quality = re.sub(clean_org, clean_des, new_item.quality).strip()
             if str(new_item.quality).startswith('*'):
                 new_item.quality = self.find_quality(new_item, item)
             if not new_item.quality and item.quality:
@@ -1143,7 +1274,12 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
             if new_item.language:
                 for clean_org, clean_des in finds.get('language_clean', []):
-                    new_item.language = re.sub(clean_org, clean_des, new_item.language).strip()
+                    if clean_des is None:
+                        if scrapertools.find_single_match(new_item.language, clean_org):
+                            new_item.language = scrapertools.find_single_match(new_item.language, clean_org).strip()
+                            break
+                    else:
+                        new_item.language = re.sub(clean_org, clean_des, new_item.language).strip()
             if '*' in str(new_item.language):
                 new_item.language = self.find_language(new_item, item)
             if not new_item.language and item.language:
@@ -1157,6 +1293,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                 or (modo_ultima_temp and item.library_playcounts):
                 itemlist = [itemlist[-1]]
 
+            add_video_to_videolibrary = finds_controls.get('add_video_to_videolibrary', True)
+            videolab_status = finds_controls.get('videolab_status', True) and modo_grafico and not httptools.TEST_ON_AIR
             tmdb.set_infoLabels_itemlist(itemlist, modo_grafico, idioma_busqueda=idioma_busqueda)
 
             if add_video_to_videolibrary:
@@ -1181,7 +1319,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if not finds: finds = self.finds
         finds_out = finds.get('episodes', {})
         finds_episode_num = finds.get('episode_num', [])
-        do_episode_clean = finds.get('episode_clean', [])
+        do_episode_clean = finds.get('episode_clean') if finds.get('episode_clean') else [['(?i)\s*\d+x\d+', '']]
         itemlist = list()
         matches = list()
         soup = {}
@@ -1190,36 +1328,22 @@ class DictionaryAllChannel(AlfaChannelHelper):
         finds_controls = finds.get('controls', {})
         if DEBUG: logger.debug('FINDS_episodes: %s; FINDS_controls: %s' % (finds_out, finds_controls))
 
-        timeout = finds.get('timeout', 15)
+        timeout = finds.get('timeout', self.timeout)
         post = item.post or finds_controls.pop('post', None)
         headers = item.headers or finds_controls.get('headers', {})
         forced_proxy_opt = finds_controls.get('forced_proxy_opt', None)
         host = finds_controls.get('host', self.host)
         host_referer = finds_controls.get('host_referer', host)
         url_replace = finds_controls.get('url_replace', [])
-        url_base64 = finds_controls.get('url_base64', True)
         min_temp = finds_controls.get('min_temp', False)
-        add_video_to_videolibrary = finds_controls.get('add_video_to_videolibrary', True)
-        videolab_status = finds_controls.get('videolab_status', True)
         
         modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', item.channel, default=True)
         season_colapse = config.get_setting('season_colapse', item.channel, default=True)
         filter_languages = config.get_setting('filter_languages', item.channel, default=0)
         modo_grafico = config.get_setting('modo_grafico', item.channel, default=True)
         if not filter_languages: filter_languages = 0
-        IDIOMAS_TMDB = finds_controls.get('IDIOMAS_TMDB', {}) or self.IDIOMAS_TMDB
-        idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', item.channel, default=0)]    # Idioma base para TMDB
-        if not idioma_busqueda: idioma_busqueda = 0
-        idioma_busqueda_VO = IDIOMAS_TMDB[2]                                    # Idioma para VO: Local,VO
 
         item.context = filtertools.context(item, self.list_language, self.list_quality_tvshow)
-        
-        if 'VO' in str(item.language):
-            idioma_busqueda = idioma_busqueda_VO
-        try:
-            tmdb.set_infoLabels(item, modo_grafico, idioma_busqueda=idioma_busqueda)
-        except:
-            pass
 
         # Vemos la última temporada de TMDB y del .nfo
         if item.ow_force == "1":                                                # Si hay una migración de canal o url, se actualiza todo 
@@ -1253,9 +1377,11 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 elem_json['language'] = elem.get('language', '')
                 elem_json['server'] = elem.get('server', '')
                 elem_json['size'] = elem.get('size', '')
-                elem_json['plot'] = elem.get('plot', item.contentPlot)
+                elem_json['plot'] = elem.get('plot', '')
+                elem_json['post'] = elem.get('post', None)
+                elem_json['headers'] = elem.get('headers', None)
 
-                matches.append(elem_json)
+                matches.append(elem_json.copy())
         else:
             soup = data or self.create_soup(item.url, timeout=timeout, post=post, headers=headers, 
                                             forced_proxy_opt=forced_proxy_opt, **kwargs)
@@ -1270,13 +1396,27 @@ class DictionaryAllChannel(AlfaChannelHelper):
             logger.error(soup or episodes_list)
             return itemlist
 
-        infolabels = item.infoLabels
+        infolabels = item.infoLabels.copy()
+
+        # Refrescamos variables posiblemente actualizadas en "matches_post"
+        host = finds_controls.get('host', self.host)
+        host_referer = finds_controls.get('host_referer', host)
+        url_replace = finds_controls.get('url_replace', [])
+        url_base64 = finds_controls.get('url_base64', True)
+        IDIOMAS_TMDB = finds_controls.get('IDIOMAS_TMDB', {}) or self.IDIOMAS_TMDB
+        idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', item.channel, default=0)]    # Idioma base para TMDB
+        if not idioma_busqueda: idioma_busqueda = 0
+        idioma_busqueda_VO = IDIOMAS_TMDB[2]                                    # Idioma para VO: Local,VO
 
         if DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
+        
         for elem in matches:
 
             if not elem.get('url', ''): continue
-            if url_base64: elem['url'] = convert_url_base64(elem['url'], self.host)
+            if url_base64: 
+                elem['url'] = convert_url_base64(elem['url'], self.host)
+            else:
+                elem['url'] = self.urljoin(self.host, elem['url'])
 
             infolabels["season"] = elem.get('season', item.contentSeason)
 
@@ -1290,15 +1430,24 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     infolabels["episode"] = int(scrapertools.find_single_match(str(elem.get('episode', '1')), '\d+') or '1')
 
             if isinstance(do_episode_clean, list):
-                for episode_clean in do_episode_clean:
-                    if scrapertools.find_single_match(elem.get('title', ''), episode_clean):
-                        elem['title'] = scrapertools.find_single_match(elem['title'], episode_clean).strip()
-                        break
+                for clean_org, clean_des in do_episode_clean:
+                    if clean_des is None:
+                        if scrapertools.find_single_match(elem.get('title', ''), clean_org):
+                            elem['title'] = scrapertools.find_single_match(elem['title'], clean_org).strip()
+                            break
+                    else:
+                        elem['title'] = re.sub(clean_org, clean_des, elem.get('title', '')).strip()
             elem['title'] = elem.get('title', '').strip()
             if elem['title']:
                 elem['title'] = scrapertools.slugify(elem.get('title', '').strip(), strict=False)
                 infolabels = episode_title(elem['title'].capitalize(), infolabels)
             elem['title'] = "%sx%s - %s" % (item.contentSeason, infolabels["episode"], elem['title'] or item.contentSerieName)
+            if elem.get('thumbnail', ''): 
+                elem['thumbnail'] = elem['thumbnail'] if elem['thumbnail'].startswith('http') \
+                                                         else 'https:' + elem['thumbnail'] if elem['thumbnail'].startswith('//') \
+                                                         else self.urljoin(self.host, elem['thumbnail'])
+                if ('tmdb' in elem['thumbnail'] or 'imdb' in elem['thumbnail']) and '=http' in elem['thumbnail']:
+                    elem['thumbnail'] = scrapertools.find_single_match(self.do_unquote(elem['thumbnail']), '=(.*?)[&|$]')
 
             new_item = Item(channel=item.channel,
                             category=item.channel.capitalize(), 
@@ -1308,7 +1457,6 @@ class DictionaryAllChannel(AlfaChannelHelper):
                             action=action,
                             infoLabels=infolabels,
                             contentType='episode',
-                            headers=headers,
                             quality=elem.get('quality', ''),
                             language=elem.get('language', ''),
                             contentPlot=elem.get('plot', item.contentPlot), 
@@ -1317,6 +1465,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
                             matches=[]
                            )
 
+            if elem.get('post', None): new_item.post = elem['post']
+            if elem.get('headers', None): new_item.headers = elem['headers']
             if item.video_path: new_item.video_path = item.video_path
 
             if postprocess:
@@ -1337,7 +1487,12 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                 if new_item.quality:
                     for clean_org, clean_des in finds.get('quality_clean', []):
-                        new_item.quality = re.sub(clean_org, clean_des, new_item.quality).strip()
+                        if clean_des is None:
+                            if scrapertools.find_single_match(new_item.quality, clean_org):
+                                new_item.quality = scrapertools.find_single_match(new_item.quality, clean_org).strip()
+                                break
+                        else:
+                            new_item.quality = re.sub(clean_org, clean_des, new_item.quality).strip()
                 if str(new_item.quality).startswith('*'):
                     new_item.quality = self.find_quality(new_item, item)
                 if not new_item.quality and item.quality:
@@ -1345,7 +1500,12 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                 if new_item.language:
                     for clean_org, clean_des in finds.get('language_clean', []):
-                        new_item.language = re.sub(clean_org, clean_des, new_item.language).strip()
+                        if clean_des is None:
+                            if scrapertools.find_single_match(new_item.language, clean_org):
+                                new_item.language = scrapertools.find_single_match(new_item.language, clean_org).strip()
+                                break
+                        else:
+                            new_item.language = re.sub(clean_org, clean_des, new_item.language).strip()
                 if '*' in str(new_item.language):
                     new_item.language = self.find_language(new_item, item)
                 if not new_item.language and item.language:
@@ -1388,6 +1548,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                 itemlist.append(new_item)
 
+            add_video_to_videolibrary = finds_controls.get('add_video_to_videolibrary', True)
+            videolab_status = finds_controls.get('videolab_status', True) and modo_grafico and not httptools.TEST_ON_AIR
             tmdb.set_infoLabels_itemlist(itemlist, modo_grafico, idioma_busqueda=idioma_busqueda)
 
             # Requerido para FilterTools
@@ -1427,16 +1589,13 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         item.title  = item.title.replace('(V)-' , '')
         item.contentTitle  = item.contentTitle.replace('(V)-' , '')
-        timeout = finds.get('timeout', 15)
+        timeout = finds.get('timeout', self.timeout)
         post = item.post or finds_controls.pop('post', None)
         headers = item.headers or finds_controls.get('headers', {})
         forced_proxy_opt = finds_controls.get('forced_proxy_opt', forced_proxy_def)
         host = finds_controls.get('host_torrent', self.host)
         host_referer = finds_controls.get('host_torrent_referer', host)
         url_replace = finds_controls.get('url_replace', [])
-        url_base64 = finds_controls.get('url_base64', True)
-        add_video_to_videolibrary = finds_controls.get('add_video_to_videolibrary', True)
-        videolab_status = finds_controls.get('videolab_status', True)
 
         filter_languages = config.get_setting('filter_languages', item.channel, default=0)
         modo_grafico = config.get_setting('modo_grafico', item.channel, default=True)
@@ -1452,16 +1611,13 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         if data or item.matches:
             soup = data
-            response = {
-                        'data': data, 
-                        'soup': soup, 
-                        'sucess': False, 
-                        'code': 0
-                       }
-            response = type('HTTPResponse', (), response)
+            response = self.response
+            response.data = data
+            response.soup = soup
         else:
-            response = self.create_soup(url, resp=True, timeout=timeout, post=post, headers=headers, 
-                                        forced_proxy_opt=forced_proxy_opt, **kwargs)
+            soup = self.create_soup(url, timeout=timeout, post=post, headers=headers, 
+                                    forced_proxy_opt=forced_proxy_opt, **kwargs)
+            response = self.response
             soup = response.soup or {}
             AHkwargs['soup'] = soup
         
@@ -1477,7 +1633,6 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 # Generar el json desde matches videoteca antiguos
                 AHkwargs['videolibrary'] = True
                 matches, langs = matches_post(item, matches, langs, response, **AHkwargs)
-        if DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
 
         if not matches:
             if item.emergency_urls and not item.videolibray_emergency_urls:     # Hay urls de emergencia?
@@ -1495,6 +1650,14 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     return item                                                 # Devolvemos el Item de la llamada
                 else:
                     return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
+
+        # Refrescamos variables posiblemente actualizadas en "matches_post"
+        host = finds_controls.get('host', self.host)
+        host_referer = finds_controls.get('host_referer', host)
+        url_replace = finds_controls.get('url_replace', [])
+        url_base64 = finds_controls.get('url_base64', True)
+
+        if DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
 
         # Si es un lookup para cargar las urls de emergencia en la Videoteca...
         if item.videolibray_emergency_urls:
@@ -1563,13 +1726,19 @@ class DictionaryAllChannel(AlfaChannelHelper):
             new_item.url = elem.get('url', '')
             new_item.server = elem.get('server', '')
             new_item.title = elem.get('title', '%s')
-            new_item.headers = headers or {'Referer': item.url}
+            if elem.get('post', None): new_item.post = elem['post']
+            new_item.headers = elem.get('headers', {'Referer': item.url})
             new_item.setMimeType = 'application/vnd.apple.mpegurl'
 
             if elem.get('quality', ''):
                 new_item.quality = elem['quality']
                 for clean_org, clean_des in finds.get('quality_clean', []):
-                    new_item.quality = re.sub(clean_org, clean_des, new_item.quality).strip()
+                    if clean_des is None:
+                        if scrapertools.find_single_match(new_item.quality, clean_org):
+                            new_item.quality = scrapertools.find_single_match(new_item.quality, clean_org).strip()
+                            break
+                    else:
+                        new_item.quality = re.sub(clean_org, clean_des, new_item.quality).strip()
             if str(elem.get('quality', '')).startswith('*'):
                 elem['quality'] = new_item.quality
                 new_item.quality = self.find_quality(elem, item)
@@ -1577,7 +1746,12 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if elem.get('language', lang):
                 new_item.language = elem['language']
                 for clean_org, clean_des in finds.get('language_clean', []):
-                    new_item.language = re.sub(clean_org, clean_des, new_item.language).strip()
+                    if clean_des is None:
+                        if scrapertools.find_single_match(new_item.language, clean_org):
+                            new_item.language = scrapertools.find_single_match(new_item.language, clean_org).strip()
+                            break
+                    else:
+                        new_item.language = re.sub(clean_org, clean_des, new_item.language).strip()
             if '*' in str(elem.get('language', '')):
                 elem['language'] = new_item.language
                 new_item.language = self.find_language(elem, item)
@@ -1610,6 +1784,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                                        if new_item.contentType == 'movie' else self.list_quality_tvshow)
 
         if itemlist:
+            add_video_to_videolibrary = finds_controls.get('add_video_to_videolibrary', True)
+            videolab_status = finds_controls.get('videolab_status', True) and modo_grafico
             try:
                 itemlist = servertools.get_servers_itemlist(itemlist, lambda it: it.title % it.server.capitalize())
             except:
@@ -1636,7 +1812,8 @@ class DooPlay(AlfaChannelHelper):
 
     def __init__(self, host, canonical={}, channel='', finds={}, debug=False,
                  list_language=[], list_quality=[], list_quality_tvshow=[], list_quality_movies=[], 
-                 list_servers=[], language=[], idiomas={}, url_replace=[]):
+                 list_servers=[], language=[], idiomas={}, url_replace=[], 
+                 IDIOMAS_TMDB={0: 'es', 1: 'en', 2: 'es,en'}, forced_proxy_opt='ProxyCF'):
         global DEBUG
         DEBUG = debug
 
@@ -1683,13 +1860,16 @@ class DooPlay(AlfaChannelHelper):
                                             'custom_pagination': False}, 
                                'timeout': 5}
         self.url = self.movie_path = self.tv_path = self.movie_action = self.tv_action = ''
+        self.timeout = finds.get('control', {}).get('timeout', 5)
         self.doo_url = "%swp-admin/admin-ajax.php" % host
+        self.forced_proxy_opt = forced_proxy_opt
         self.list_language = list_language
         self.list_quality = self.list_quality_tvshow = list_quality or list_quality_tvshow
         self.list_quality_movies = list_quality_movies
         self.list_servers = list_servers
         self.language = language
         self.idiomas = idiomas or IDIOMAS
+        self.IDIOMAS_TMDB = finds.get('control', {}).get('IDIOMAS_TMDB', {}) or IDIOMAS_TMDB
         self.url_replace = url_replace
 
 
@@ -1805,7 +1985,8 @@ class DooPlay(AlfaChannelHelper):
                    }
 
             if DEBUG: logger.debug('MATCHES_int %s; POST: %s' % (str(elem), str(post)))
-            response = self.create_soup(self.doo_url, resp=True, timeout=self.finds.get('timeout', 5), post=post)
+            soup = self.create_soup(self.doo_url, timeout=self.finds.get('timeout', self.timeout), post=post)
+            response = self.response
 
             if response.json:
                 if DEBUG: logger.debug('MATCHES_JSON %s' % (str(response.json)))
@@ -1827,553 +2008,6 @@ class DooPlay(AlfaChannelHelper):
                 matches.append(elem_json.copy())
 
         return matches, langs
-
-
-class ToroFilm(AlfaChannelHelper):
-
-    def list_all(self, item, postprocess=None, lim_max=20):
-        logger.info()
-
-        itemlist = list()
-        
-        try:
-            soup = self.create_soup(item.url)
-            matches = soup.find("ul", class_="post-lst").find_all("article", class_="post")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-
-        matches, next_limit, next_page = self.limit_results(item, matches, lim_max=lim_max)
-
-        if not next_page:
-            try:
-                next_page = soup.find("div", class_="nav-links").find_all("a")[-1]["href"]
-                next_page = urlparse.urljoin(self.host, next_page)
-            except:
-                pass
-
-        for elem in matches:
-            try:
-                url = urlparse.urljoin(self.host, elem.a["href"])
-                title = elem.h2.text
-            except:
-                logger.error(elem)
-                continue
-            try:
-                thumb = elem.find("img")["data-src"]
-            except:
-                thumb = elem.find("img")["src"]
-
-            try:
-                year = int(elem.find("span", class_="year").text)
-            except:
-                year = '-'
-
-            new_item = Item(channel=item.channel,
-                            title=title,
-                            url=url,
-                            thumbnail=thumb,
-                            infoLabels={"year": year}
-                            )
-
-            if postprocess:
-                new_item = postprocess(soup, elem, new_item, item)
-
-            new_item = self.define_content_type(new_item)
-            
-            new_item.url = self.do_url_replace(new_item.url)
-
-            itemlist.append(new_item)
-
-        tmdb.set_infoLabels_itemlist(itemlist, True)
-
-        if next_page:
-            itemlist.append(Item(channel=item.channel,
-                                 title="Siguiente >>",
-                                 url=next_page,
-                                 action='list_all',
-                                 next_limit=next_limit
-                                 )
-                               )
-        return itemlist
-
-    def section(self, item, menu_id=None, section=None, action="list_all", postprocess=None):
-        logger.info()
-
-        itemlist = list()
-        matches = list()
-
-        reverse = True if section == "year" else False
-        
-        try:
-            soup = self.create_soup(item.url)
-
-            if menu_id:
-                matches = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
-            elif section:
-                if section == "alpha":
-                    matches = soup.find("ul", class_="az-lst")
-                elif section == "year":
-                    matches = soup.find("section", id=re.compile(r"torofilm_movies_annee-\d+"))
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-
-        for elem in matches.find_all("li"):
-            url = elem.a["href"]
-            title = elem.a.text
-
-            url = urlparse.urljoin(self.host, url)
-
-            new_item = Item(channel=item.channel,
-                            title=title.capitalize(),
-                            action=action,
-                            url=url,
-                            c_type=item.c_type
-                            )
-
-            if postprocess:
-                new_item = postprocess(soup, elem, new_item, item)
-
-            new_item.url = self.do_url_replace(new_item.url)
-            
-            itemlist.append(new_item)
-        
-        if reverse:
-            return itemlist[::-1]
-        return itemlist
-
-    def seasons(self, item, action="episodesxseason", postprocess=None):
-        logger.info()
-
-        itemlist = list()
-        item.url = self.do_url_replace(item.url)
-
-        try:
-            soup = self.create_soup(item.url)
-            matches = soup.find_all("li", class_="sel-temp")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-
-        infolabels = item.infoLabels
-
-        for elem in matches:
-            try:
-                infolabels["season"] = int(elem.a["data-season"])
-            except:
-                infolabels["season"] = 1
-            title = "Temporada %s" % infolabels["season"]
-            infolabels["mediatype"] = 'season'
-            post_id = elem.a["data-post"]
-
-            new_item = Item(channel=item.channel,
-                            title=title,
-                            action='episodesxseason',
-                            post_id=post_id,
-                            infoLabels=infolabels
-                            )
-
-            if postprocess:
-                new_item = postprocess(soup, elem, new_item, item)
-
-            new_item.url = self.do_url_replace(new_item.url)
-            
-            itemlist.append(new_item)
-
-        tmdb.set_infoLabels_itemlist(itemlist, True)
-
-        itemlist = self.add_video_to_videolibrary(item, itemlist)
-
-        return itemlist
-
-    def episodes(self, item, action="findvideos", postprocess=None):
-        logger.info()
-
-        itemlist = list()
-        item.url = self.do_url_replace(item.url)
-
-        infolabels = item.infoLabels
-        season = infolabels["season"]
-
-        post = {"action": "action_select_season",
-                "season": season,
-                "post": item.post_id
-                }
-        
-        try:
-            soup = self.create_soup(self.doo_url, post=post)
-
-            matches = soup.find_all("li")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-
-        for elem in matches:
-            try:
-                url = elem.a["href"]
-                title = elem.find("span", class_="num-epi").text
-            except:
-                continue
-            try:
-                infolabels["episode"] = int(title.split("x")[1])
-            except:
-                infolabels["episode"] = 1
-            infolabels["mediatype"] = 'episode'
-            infolabels = episode_title(title, infolabels)
-            title = "%sx%s - %s" % (season, infolabels["episode"], title)
-
-            new_item = Item(channel=item.channel,
-                            title=title,
-                            url=url,
-                            action=action,
-                            infoLabels=infolabels
-                            )
-
-            if postprocess:
-                new_item = postprocess(soup, elem, new_item, item)
-
-            new_item.url = self.do_url_replace(new_item.url)
-            
-            itemlist.append(new_item)
-
-        tmdb.set_infoLabels_itemlist(itemlist, True)
-
-        return itemlist
-
-    def get_video_options(self, url, forced_proxy_opt=forced_proxy_def, referer=None):
-
-        options = list()
-        results = list()
-        url = self.do_url_replace(url)
-
-        try:
-            soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt, referer=referer)
-
-            matches = soup.find_all("ul", class_="aa-tbs aa-tbs-video")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        for opt in matches:
-            options.extend(opt.find_all("li"))
-
-        results.append([soup, options])
-
-        return results[0]
-
-
-class ToroPlay(AlfaChannelHelper):
-
-    def list_all(self, item, postprocess=None, lim_max=20):
-        logger.info()
-
-        itemlist = list()
-        
-        try:
-            soup = self.create_soup(item.url)
-            matches = soup.find("ul", class_="MovieList").find_all("article", class_=re.compile("TPost C"))
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-
-        matches, next_limit, next_page = self.limit_results(item, matches, lim_max=lim_max)
-
-        if not next_page:
-            try:
-                next_page = soup.find(class_="wp-pagenavi").find(class_="current").find_next_sibling()["href"]
-                next_page = urlparse.urljoin(self.host, next_page)
-            except:
-                pass
-
-        for elem in matches:
-            try:
-                url = urlparse.urljoin(self.host, elem.a["href"])
-                title = elem.a.h3.text
-                thumb = elem.find("img")
-                thumb = thumb["data-src"] if thumb.has_attr("data-src") else thumb["src"]
-            except:
-                logger.error(elem)
-                continue
-            try:
-                year = scrapertools.find_single_match(title, r'\((\d{4})\)')
-                if not year:
-                    year = elem.find("span", class_="Year").text
-                year = int(year)
-            except:
-                year = "-"
-
-            new_item = Item(channel=item.channel,
-                            title=title,
-                            url=url,
-                            thumbnail=thumb,
-                            infoLabels={"year": year}
-                            )
-
-            new_item = self.define_content_type(new_item)
-
-            if postprocess:
-                new_item = postprocess(soup, elem, new_item, item)
-
-            new_item.url = self.do_url_replace(new_item.url)
-            
-            itemlist.append(new_item)
-
-        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
-        if next_page:
-            itemlist.append(Item(channel=item.channel,
-                                 title="Siguiente >>",
-                                 url=next_page,
-                                 action='list_all',
-                                 next_limit=next_limit
-                                 )
-                            )
-
-        return itemlist
-
-    def section(self, item, menu_id=None, section=None, action="list_all", postprocess=None):
-        logger.info()
-
-        itemlist = list()
-        matches = list()
-        reverse = True if section == "year" else False
-
-        try:
-            soup = self.create_soup(item.url)
-
-            if menu_id:
-                matches = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
-            elif section:
-                if section == "genres":
-                    matches = soup.find(id=re.compile(r"categories-\d+"))
-                elif section == "alpha":
-                    matches = soup.find("ul", class_="AZList")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-
-        for elem in matches.find_all("li"):
-            url = elem.a["href"]
-            title = elem.a.text
-
-            url = urlparse.urljoin(self.host, url)
-
-            new_item = Item(channel=item.channel,
-                            title=title.capitalize(),
-                            action=action,
-                            url=url,
-                            c_type=item.c_type
-                            )
-
-            if postprocess:
-                new_item = postprocess(soup, elem, new_item, item)
-
-            new_item.url = self.do_url_replace(new_item.url)
-            
-            itemlist.append(new_item)
-
-        if reverse:
-            return itemlist[::-1]
-
-        return itemlist
-
-    def list_alpha(self, item, action="season", postprocess=None):
-
-        itemlist = list()
-
-        try:
-            soup = self.create_soup(item.url)
-            matches = soup.find("tbody").find_all("tr")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-        
-        matches, next_limit, next_page = self.limit_results(item, matches)
-
-        if not next_page:
-            try:
-                next_page = soup.find(class_="wp-pagenavi").find(class_="current").find_next_sibling()["href"]
-                next_page = urlparse.urljoin(self.host, next_page)
-            except:
-                pass
-
-        for elem in matches:
-            info = elem.find("td", class_="MvTbTtl")
-            thumb = elem.find("td", class_="MvTbImg").a.img["src"]
-            url = info.a["href"]
-            title = info.a.text.strip()
-            try:
-                year = int(elem.find("td", text=re.compile(r"\d{4}")).string)
-            except:
-                year = "-"
-
-            new_item = Item(channel=item.channel,
-                            title=title,
-                            url=url,
-                            action=action,
-                            thumbnail=thumb,
-                            infoLabels={"year": year}
-                            )
-
-            new_item = self.define_content_type(new_item)
-
-            if postprocess:
-                new_item = postprocess(soup, elem, new_item, item)
-
-            new_item.url = self.do_url_replace(new_item.url)
-            
-            itemlist.append(new_item)
-
-        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
-        if next_page:
-            itemlist.append(Item(channel=item.channel,
-                                 title="Siguiente >>",
-                                 url=next_page,
-                                 action='list_alpha',
-                                 next_limit=next_limit
-                                 )
-                            )
-
-        return itemlist
-
-    def seasons(self, item, action="episodesxseason", postprocess=None):
-        
-        itemlist = list()
-        item.url = self.do_url_replace(item.url)
-
-        try:
-            soup = self.create_soup(item.url)
-            matches = soup.find_all("div", class_="Wdgt AABox")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-
-        infolabels = item.infoLabels
-        for elem in matches:
-            try:
-                infolabels["season"] = int(elem.find("div", class_="AA-Season")["data-tab"])
-            except:
-                infolabels["season"] = 1
-            title = "Temporada %s" % infolabels["season"]
-            infolabels["mediatype"] = 'season'
-
-            new_item = Item(channel=item.channel,
-                            title=title,
-                            url=item.url,
-                            action=action,
-                            infoLabels=infolabels
-                            )
-
-            if postprocess:
-                new_item = postprocess(soup, elem, new_item, item)
-
-            new_item.url = self.do_url_replace(new_item.url)
-            
-            itemlist.append(new_item)
-
-        tmdb.set_infoLabels_itemlist(itemlist, True)
-
-        itemlist = self.add_video_to_videolibrary(item, itemlist)
-
-        return itemlist
-
-    def episodes(self, item, action="findvideos", postprocess=None):
-        logger.info()
-
-        itemlist = list()
-        item.url = self.do_url_replace(item.url)
-
-        try:
-            soup = self.create_soup(item.url)
-            matches = soup.find_all("div", class_="Wdgt AABox")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-
-        infolabels = item.infoLabels
-        season = infolabels["season"]
-
-        for elem in matches:
-            if elem.find("div", class_="AA-Season")["data-tab"] == str(season):
-                epi_list = elem.find_all("tr")
-                for epi in epi_list:
-                    try:
-                        url = epi.a["href"]
-                        epi_name = epi.find("td", class_="MvTbTtl").a.text
-                    except:
-                        continue
-                    try:
-                        infolabels["episode"] = int(epi.find("span", class_="Num").text)
-                    except:
-                        infolabels["episode"] = 1
-                    infolabels["mediatype"] = 'episode'
-                    infolabels = episode_title(epi_name, infolabels)
-                    title = "%sx%s - %s" % (season, infolabels["episode"], epi_name)
-
-                    new_item = Item(channel=item.channel,
-                                    title=title,
-                                    url=url,
-                                    action=action,
-                                    infoLabels=infolabels
-                                    )
-
-                    if postprocess:
-                        new_item = postprocess(soup, elem, new_item, item)
-
-                    new_item.url = self.do_url_replace(new_item.url)
-                    
-                    itemlist.append(new_item)
-                break
-
-        tmdb.set_infoLabels_itemlist(itemlist, True)
-
-        return itemlist
-
-    def get_video_options(self, url, forced_proxy_opt=forced_proxy_def, referer=None):
-        
-        results = list()
-        url = self.do_url_replace(url)
-
-        try:
-            soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt, referer=referer)
-
-            matches = soup.find("ul", class_="TPlayerNv").find_all("li")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        results.append([soup, matches])
-
-        return results[0]
 
 
 class ToroFlix(AlfaChannelHelper):
@@ -2398,13 +2032,13 @@ class ToroFlix(AlfaChannelHelper):
         if not next_page:
             try:
                 next_page = soup.find(class_="wp-pagenavi").find(class_="current").find_next_sibling()["href"]
-                next_page = urlparse.urljoin(self.host, next_page)
+                next_page = self.urljoin(self.host, next_page)
             except:
                 pass
 
         for elem in matches:
             try:
-                url = urlparse.urljoin(self.host, elem.a["href"])
+                url = self.urljoin(self.host, elem.a["href"])
                 title = elem.find(class_="Title").text
                 thumb = elem.find("img")
                 thumb = thumb["data-src"] if thumb.has_attr("data-src") else thumb["src"]
@@ -2472,7 +2106,7 @@ class ToroFlix(AlfaChannelHelper):
             url = elem.a["href"]
             title = elem.a.text
 
-            url = urlparse.urljoin(self.host, url)
+            url = self.urljoin(self.host, url)
 
             new_item = Item(channel=item.channel,
                             title=title.capitalize(),
@@ -2512,7 +2146,7 @@ class ToroFlix(AlfaChannelHelper):
         if not next_page:
             try:
                 next_page = soup.find(class_="wp-pagenavi").find(class_="current").find_next_sibling()["href"]
-                next_page = urlparse.urljoin(self.host, next_page)
+                next_page = self.urljoin(self.host, next_page)
             except:
                 pass
 
@@ -2665,231 +2299,6 @@ class ToroFlix(AlfaChannelHelper):
                 matches = soup.find_all("button")
             else:
                 matches = soup.find("ul", class_="ListOptions").find_all("li")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        results.append([soup, matches])
-
-        return results[0]
-
-
-class PsyPlay(AlfaChannelHelper):
-
-    def list_all(self, item, postprocess=None, lim_max=20):
-        logger.info()
-
-        itemlist = list()
-
-        try:
-            soup = self.create_soup(item.url)
-            matches = soup.find("div", class_="movies-list").find_all("div", class_="ml-item")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-
-        matches, next_limit, next_page = self.limit_results(item, matches, lim_max=lim_max)
-        if not next_page:
-            try:
-                item.url = re.sub(r"page/\d+/", "", item.url)
-                next_page = soup.find("ul", class_="pagination").find("li", class_="active").next_sibling.a.text
-                next_page = urlparse.urljoin(self.host, "page/%s/" % next_page)
-                next_page = urlparse.urljoin(self.host, next_page)
-            except:
-                pass
-
-        for elem in matches:
-            try:
-                thumb = urlparse.urljoin(self.host, elem.a.img.get("src", '') or elem.a.img.get("data-original", ''))
-                title = elem.a.find("span", class_="mli-info").h2.text
-                url = urlparse.urljoin(self.host, elem.a["href"])
-            except:
-                logger.error(elem)
-                continue
-
-            try:
-                year = int(elem.find("div", class_="jt-info", text=re.compile("\d{4}")).text)
-            except:
-                year = "-"
-
-            new_item = Item(channel=item.channel,
-                            title=title,
-                            url=url,
-                            thumbnail=thumb,
-                            infoLabels={"year": year})
-
-            new_item = self.define_content_type(new_item)
-
-            if postprocess:
-                new_item = postprocess(soup, elem, new_item, item)
-
-            new_item.url = self.do_url_replace(new_item.url)
-            
-            itemlist.append(new_item)
-
-        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
-        if next_page:
-            itemlist.append(Item(channel=item.channel,
-                                 title="Siguiente >>",
-                                 url=next_page,
-                                 action='list_all'
-                                 )
-                            )
-
-        return itemlist
-
-    def section(self, item, menu_id=None, section=None, action="list_all", postprocess=None):
-        logger.info()
-
-        itemlist = list()
-        matches = list()
-        reverse = True if section == "year" else False
-
-        try:
-            soup = self.create_soup(item.url)
-
-            if menu_id:
-                matches = soup.find("li", id="menu-item-%s" % menu_id).find("ul", class_="sub-menu")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-
-        for elem in matches.find_all("li"):
-            url = elem.a["href"]
-            title = elem.a.text
-
-            url = urlparse.urljoin(self.host, url)
-
-            new_item = Item(channel=item.channel,
-                            title=title.capitalize(),
-                            action=action,
-                            url=url,
-                            c_type=item.c_type
-                            )
-
-            if postprocess:
-                new_item = postprocess(soup, elem, new_item, item)
-
-            new_item.url = self.do_url_replace(new_item.url)
-            
-            itemlist.append(new_item)
-
-        if reverse:
-            return itemlist[::-1]
-
-        return itemlist
-
-    def seasons(self, item, action="episodesxseason", postprocess=None):
-        
-        itemlist = list()
-        item.url = self.do_url_replace(item.url)
-
-        try:
-            soup = self.create_soup(item.url)
-            matches = soup.find("div", id="seasons").find_all("div", recursive=False)
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-
-        infolabels = item.infoLabels
-
-        for elem in matches:
-            try:
-                infolabels["season"] = int(scrapertools.find_single_match(elem.text, r"(\d+)"))
-            except:
-                infolabels["season"] = 1
-            title = "Temporada %s" % infolabels["season"]
-            infolabels["mediatype"] = 'season'
-
-            new_item = Item(channel=item.channel,
-                            title=title,
-                            url=item.url,
-                            action=action,
-                            infoLabels=infolabels
-                            )
-
-            if postprocess:
-                new_item = postprocess(soup, elem, new_item, item)
-
-            new_item.url = self.do_url_replace(new_item.url)
-            
-            itemlist.append(new_item)
-
-        tmdb.set_infoLabels_itemlist(itemlist, True)
-
-        itemlist = self.add_video_to_videolibrary(item, itemlist)
-
-        return itemlist
-
-    def episodes(self, item, action="findvideos", postprocess=None):
-        logger.info()
-
-        itemlist = list()
-        item.url = self.do_url_replace(item.url)
-
-        try:
-            soup = self.create_soup(item.url)
-
-            infolabels = item.infoLabels
-            season = infolabels["season"]
-
-            matches = soup.find("div", id="seasons").find_all("div", recursive=False)[int(season) - 1].find_all("a")
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-
-        if not matches:
-            return itemlist
-
-        for elem in matches:
-            try:
-                url = elem["href"]
-            except:
-                continue
-            try:
-                infolabels["episode"] = int(scrapertools.find_single_match(elem.text, r"(\d+)"))
-            except:
-                infolabels["episode"] = 1
-            infolabels["mediatype"] = 'episode'
-            title = "%sx%s - " % (season, infolabels["episode"])
-
-            new_item = Item(channel=item.channel,
-                            title=title,
-                            url=url,
-                            action=action,
-                            infoLabels=infolabels
-                            )
-
-            if postprocess:
-                new_item = postprocess(soup, elem, new_item, item)
-
-            new_item.url = self.do_url_replace(new_item.url)
-            
-            itemlist.append(new_item)
-
-        tmdb.set_infoLabels_itemlist(itemlist, True)
-
-        return itemlist
-
-    def get_video_options(self, url, forced_proxy_opt=forced_proxy_def, referer=None):
-        
-        results = list()
-        url = self.do_url_replace(url)
-
-        try:
-            soup = self.create_soup(url, forced_proxy_opt=forced_proxy_opt, referer=referer)
-        
-            matches = soup.find("ul", class_="idTabs").find_all("li")
         except:
             matches = []
             logger.error(traceback.format_exc())

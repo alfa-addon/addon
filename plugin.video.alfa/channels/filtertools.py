@@ -242,7 +242,7 @@ def check_conditions(_filter, list_item, item, list_language, list_quality, qual
             else:
                 quality_list = [item.quality]
 
-            if TAG_ALL.lower() not in _filter.quality_allowed:
+            if TAG_ALL.lower() not in _filter.quality_allowed and list_quality:
                 for quality in quality_list:
                     if quality.lower().replace(config.BTDIGG_LABEL, '') in _filter.quality_allowed \
                                        or quality.lower().replace(' ', '-') in _filter.quality_allowed:
