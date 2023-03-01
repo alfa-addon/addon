@@ -7,31 +7,30 @@ from core.item import Item
 from lib import jsunhunt
 from platformcode import logger
 
+kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF': True, 'cf_assistant': False, 'ignore_response_code': True}
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data
-    data = httptools.downloadpage(page_url).data
-    if ">404</h1>" in data or '<title>404 - Tubeload.co</title>' in data:
+    data = httptools.downloadpage(page_url, **kwargs).data
+    if ">404</h1>" in data or 'is invalid' in data:
         return False, "[sdefxcloud] El fichero no existe o ha sido borrado"
     return True, ""
 
 
-# https://sdefx.cloud/1pQP10-1Qg >>>>>>  https://dood.la/e/ihnus5jpqc7u8zu8vog3sn70t7zrczds
-
-
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
-    video_urls = []
+    video_url  = ""
     code = scrapertools.find_single_match(data, 'dhYas638H\("([^"]+)"')
     decod = decode(code)
     code = scrapertools.find_single_match(decod, 'dhYas638H\("([^"]+)"')
     decod = decode(code)
     url = scrapertools.find_single_match(decod, '<iframe.*? src="([^"]+)"')
     server = servertools.get_server_from_url(url)
-    url = servertools.resolve_video_urls_for_playing(server, url)
-    video_urls.append(["[%s]" %server, url])
-    return video_urls
+    video_url = servertools.resolve_video_urls_for_playing(server, url)
+    if not video_url:
+        platformtools.dialog_ok("sdefxcloud: Error", "Error en el servidor: %s" %server)
+    return video_url[0]
 
 def decode(code):
     logger.info()

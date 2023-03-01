@@ -60,8 +60,8 @@
         "url": "https://www.\\1.com/videos/a-\\2/"
       },
       {
-        "pattern": "https://www.porntrex.com/embed/([0-9]+(?:/|))",
-        "url": "https://www.porntrex.com/video/\\1/a"
+        "pattern": "(https://www.porntrex.com/embed/[0-9]+(?:/|))",
+        "url": "\\1"
       },
       {
         "pattern": "(https://www.bigwank.com/embed/[0-9]+/[A-z0-9-.]+(?:/|))",
