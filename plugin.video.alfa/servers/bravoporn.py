@@ -24,9 +24,11 @@ def get_video_url(page_url, video_password):
     matches  = soup.video.find_all('source')
     for elem in matches:
         url = elem['src']
+        if elem.get("data-res", ""):
+            quality = elem['data-res']
         if elem.get("title", ""):
             quality = elem['title']
-        else:
+        if elem.get("label", ""):
             quality = elem['label']
         if "sd" in quality.lower(): quality = "480p"
         if "hd" in quality.lower(): quality = "720p"
