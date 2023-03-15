@@ -119,39 +119,19 @@ try:
     requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
     import ssl
     ssl._create_default_https_context = ssl._create_unverified_context
-    try:
-        if PY3:
-            ssl_high = ssl.PROTOCOL_TLSv1_2
-        else:
-            ssl_high = ssl.PROTOCOL_TLSv1_1
-    except:
-        ssl_high = ssl.PROTOCOL_TLS_CLIENT
+    ssl_context = ssl.create_default_context()
+    OPENSSL_VERSION = ssl.OPENSSL_VERSION_INFO
     
-    ssl_ver = str(ssl.OPENSSL_VERSION)
-    ssl_ver_list = scrapertools.find_single_match(ssl_ver, '(\d+\.\d+\.\d+)').split('.')
-    min_ssl_ver = [1, 1, 1]
-    if int(ssl_ver_list[0]) > int(min_ssl_ver[0]):
-        ssl_version = ssl_version_min = ssl_high
-    elif len(ssl_ver_list) >= 3:
-        for i, ver in enumerate(ssl_ver_list):
-            if int(ver) < min_ssl_ver[i]:
-                ssl_version = ssl.PROTOCOL_TLSv1_1
-                break
-        else:
-            ssl_version = ssl_version_min = ssl_high
+    if OPENSSL_VERSION >= (1, 1, 1):
+        ssl_version = ssl.PROTOCOL_TLS_CLIENT
+        ssl_version_min = ssl.PROTOCOL_TLSv1_2
     else:
         ssl_version = ssl.PROTOCOL_TLSv1_1
     if not PY3 and __platform not in ['android', 'atv2', 'windows', 'xbox']:
         ssl_version = ''
 
-    class TLSHttpAdapter(requests.adapters.HTTPAdapter):
-        def init_poolmanager(self, connections, maxsize, block=False):
-            self.poolmanager = requests.packages.urllib3.poolmanager.PoolManager(num_pools=connections,
-                                                                                 maxsize=maxsize,
-                                                                                 block=block,
-                                                                                 assert_hostname=False,
-                                                                                 ssl_version=ssl_version)
 except:
+    ssl = None
     ssl_version = ''
     logger.error(traceback.format_exc())
 
@@ -432,9 +412,13 @@ def check_proxy(url, **opt):
         url = proxy_data['url']
         proxy_data['stat'] = proxy_data.get('stat', '').replace(',P', ', P')
 
-        if not PY3 and proxy_data.get('dict', {}).get('https', ''):
-            proxy_data['dict']['https'] = str('http://'+ proxy_data['dict']['https'])
-    
+        if proxy_data.get('dict', {}).get('https', ''):
+            proxy_data['dict']['http'] = str('http://'+ proxy_data['dict']['https'])
+            proxy_data['dict']['https'] = proxy_data['dict']['http']
+        elif proxy_data.get('dict', {}).get('http', ''):
+            proxy_data['dict']['https'] = str('http://'+ proxy_data['dict']['http'])
+            proxy_data['dict']['http'] = proxy_data['dict']['https']
+
     return url, proxy_data, opt
 
 
@@ -930,7 +914,7 @@ def downloadpage(url, **opt):
                 HTTPResponse.canonical:| str     | Dirección actual de la página descargada
                 HTTPResponse.proxy__: | str      | Si la página se descarga con proxy, datos del proxy usado: proxy-type:addr:estado
     """
-    global CF_LIST, CS_stat
+    global CF_LIST, CS_stat, ssl_version, ssl_context
     
     if 'api.themoviedb' in url: opt['hide_infobox'] = True
 
@@ -962,6 +946,9 @@ def downloadpage(url, **opt):
         opt['forced_proxy_ifnot_assistant'] = opt.get('canonical', {}).get('forced_proxy_ifnot_assistant', '') \
                                               or opt.get('forced_proxy_ifnot_assistant', '')
         opt['ignore_response_code'] = True
+    if 'set_tls' not in opt and 'set_tls' in opt.get('canonical', {}): opt['set_tls'] = opt['canonical']['set_tls']
+    if (opt.get('set_tls', '') or opt.get('set_tls', '') is None) and not opt.get('set_tls', '') == True: ssl_version = opt['set_tls']
+    if 'set_tls_min' not in opt and 'set_tls_min' in opt.get('canonical', {}): opt['set_tls_min'] = opt['canonical']['set_tls_min']
     
     # Activa DEBUG extendido cuando se extrae un Informe de error (log)
     print_DEBUG(url, opt, label='OPT', **opt)
@@ -1049,22 +1036,34 @@ def downloadpage(url, **opt):
             elif not opt['session_verify'] and not ssl_version:
                 opt['session_verify'] = True
             session.verify = opt['session_verify']
+            if ssl and ssl_version:
+                ssl_context = ssl.SSLContext(ssl_version)
             CS_stat = True
             if cf_ua and cf_ua != 'Default' and get_cookie(url, 'cf_clearance'):
                 req_headers['User-Agent'] = cf_ua
         else:
             session = requests.session()
             session.verify = opt.get('session_verify', False)
+            if ssl: 
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE
             CS_stat = False
         print_DEBUG(url, proxy_data, label='PROXY_DATA', req=session, **opt)
 
         # Conectar la versión de SSL TLS con la sesión
-        if url.startswith('https:') and ssl_version and (opt.get('set_tls', False) or opt.get('canonical', {}).get('set_tls', False) or SET_TLS):
-            if not opt.get('set_tls_min', False) and not opt.get('canonical', {}).get('set_tls_min', False) \
-                                                  or ((opt.get('set_tls_min', False) or opt.get('canonical', {}).get('set_tls_min', False)) \
-                                                  and ssl_version_min):
-                session.mount(url.rstrip('/'), TLSHttpAdapter())
-                opt['set_tls_OK'] = True
+        if url.startswith('https:') and ssl_version and (opt.get('set_tls', '') or SET_TLS):
+            ssl_version = ssl_version if ssl_version_min or not opt.get('set_tls_min', False) else None
+                
+            class TLSHttpAdapter(requests.adapters.HTTPAdapter):
+                def init_poolmanager(self, connections, maxsize, block=False):
+                    self.poolmanager = requests.packages.urllib3.poolmanager.PoolManager(num_pools=connections,
+                                                                                         maxsize=maxsize,
+                                                                                         block=block,
+                                                                                         assert_hostname=False,
+                                                                                         ssl_version=ssl_version, 
+                                                                                         ssl_context=ssl_context)
+            session.mount(url.rstrip('/'), TLSHttpAdapter())
+            opt['set_tls_OK'] = True
 
         if opt.get('cookies', True):
             session.cookies = cj
@@ -1300,11 +1299,15 @@ def downloadpage(url, **opt):
                     save_CF_list(domain, **opt)
                 update_alfa_domain_web_list(url, response_code, proxy_data, **opt)
                 opt['proxy_retries'] = 1 if PY3 and not TEST_ON_AIR else 0 if opt['retries_cloudflare'] < 1 else 1
-                logger.debug("CF retry... for domain: %s, Retry: %s" % (domain, opt['retries_cloudflare']))
+                if ssl_version and ssl:
+                    if ssl_context == ssl.PROTOCOL_TLS_CLIENT: opt['set_tls'] = ssl.PROTOCOL_TLSv1_2
+                    if ssl_context == ssl.PROTOCOL_TLSv1_2: opt['set_tls'] = ssl.PROTOCOL_TLSv1_1
+                    if ssl_context == ssl.PROTOCOL_TLSv1_1: opt['set_tls'] = False
                 if opt['retries_cloudflare'] > 0: time.sleep(1)
                 opt['retries_cloudflare'] -= 1
                 if not "CF_save" in opt: opt["CF_save"] = opt["CF"] if "CF" in opt else None
                 if opt["CF_save"] is None: opt["CF"] = False if opt['retries_cloudflare'] > 0 else True
+                logger.debug("CF retry... for domain: %s, Retry: %s" % (domain, opt['retries_cloudflare']))
                 return downloadpage(opt['url_save'], **opt)
         
         # Retry con Assistant si falla proxy SSL
@@ -1580,7 +1583,7 @@ def fill_fields_pre(url, proxy_data, file_name_, **opt):
         elif file_name_: 
             info_dict.append(('Fichero para Upload', file_name_))
         if opt.get('params', {}): info_dict.append(('Params', opt.get('params', {})))
-        if opt.get('set_tls_OK', False): info_dict.append(('SSL_TLS_version:', ssl_version))
+        if opt.get('set_tls_OK', False): info_dict.append(('SSL_TLS_version', ssl_version))
         info_dict.append(('Usar cookies', opt.get('cookies', True)))
         info_dict.append(('Fichero de cookies', ficherocookies))
 
@@ -1688,7 +1691,7 @@ def print_DEBUG(url, obj, label='', req={}, **opt):
         for exc in DEBUG_EXC:
             if exc in url: break
             if 'PROXY' in label:
-                url_stat = 'Proxy_SESSION: %s; ' % req
+                url_stat = 'Proxy_SESSION: %s; SSL_version: %s; ' % (req, ssl_version)
             if 'BLOCKING' in label:
                 url_stat = 'Blocking_WEBS: %s; ' % alfa_domain_web_list
             if 'OPT' in label:

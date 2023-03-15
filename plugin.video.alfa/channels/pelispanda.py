@@ -224,21 +224,45 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
 def seasons(item):
     logger.info()
+    
+    itemlist = []
 
-    itemlist = AlfaChannel.seasons(item, matches_post=None, **kwargs)
+    templist = AlfaChannel.seasons(item, **kwargs)
 
-    if itemlist and not item.library_playcounts and not item.add_videolibrary \
-                    and ((finds['controls']['add_video_to_videolibrary'] and len(itemlist) <= 3) \
-                    or (not finds['controls']['add_video_to_videolibrary'] and len(itemlist) <= 1)):
-        return episodesxseason(itemlist[0].clone(action='episodesxseason'))
+    if templist and not item.library_playcounts and not item.add_videolibrary \
+                    and ((finds['controls']['add_video_to_videolibrary'] and len(templist) <= 3) \
+                    or (not finds['controls']['add_video_to_videolibrary'] and len(templist) <= 1)):
+        return episodesxseason(templist[0].clone(action='episodesxseason'))
+
+    if not AlfaChannel.season_colapse:
+        len_seasons = len(templist) if  not finds['controls']['add_video_to_videolibrary'] else len(templist) - 2
+        finds['controls'].update({'add_video_to_videolibrary': False})
+        for x, tempitem in enumerate(templist):
+            if x >= len_seasons - 1:
+                finds['controls'].update({'add_video_to_videolibrary': True})
+            if "actualizar_titulos" in tempitem.action or "_to_library" in tempitem.action: continue
+            itemlist += episodesxseason(tempitem.clone(action='episodesxseason'))
+
+    return itemlist or templist
+
+
+def episodios(item):
+    logger.info()
+    
+    itemlist = []
+    
+    templist = seasons(item)
+    
+    for tempitem in templist:
+        itemlist += episodesxseason(tempitem)
 
     return itemlist
 
 
-def episodesxseason(item):
+def episodesxseason(item, data={}):
     logger.info()
 
-    return AlfaChannel.episodes(item, matches_post=episodesxseason_matches, **kwargs)
+    return AlfaChannel.episodes(item, data=data, matches_post=episodesxseason_matches, finds=finds, **kwargs)
 
 
 def episodesxseason_matches(item, matches_int, **AHkwargs):
@@ -271,20 +295,6 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             matches.append(elem_json.copy())
     
     return matches
-
-
-def episodios(item):
-    logger.info()
-    
-    itemlist = []
-    
-    templist = seasons(item)
-    
-    for tempitem in templist:
-        logger.error(tempitem)
-        itemlist += episodesxseason(tempitem)
-
-    return itemlist
 
 
 def findvideos(item):

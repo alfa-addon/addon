@@ -101,15 +101,16 @@ for clone in clone_list:
     clone_list_inter += [list(clone)]
 clone_list = clone_list_inter[:]
 
-forced_proxy_opt = 'ProxyWeb:hide.me'
-CF_test = False
+forced_proxy_opt = 'ProxyCF'
+CF_test = True
 
 canonical = {
              'channel': channel_py, 
              'host': host, 
              'host_alt': [], 
              'host_black_list': [], 
-             'retries_cloudflare': 5, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
+             'forced_proxy_ifnot_assistant': 'ProxyCF', 'CF_stat': True, 'session_verify': True, 'cf_assistant_if_proxy': True, 
              'CF': False, 'CF_test': CF_test, 'alfa_s': True, 
              'forced_proxy_opt': forced_proxy_opt
             }

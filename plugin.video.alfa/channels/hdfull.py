@@ -44,7 +44,7 @@ canonical = {
                                  'https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
                                  'https://new.hdfull.one/', 'https://hdfull.top/', 'https://hdfull.bz/'],
              'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 'expires': 365*24*60*60, 'CF_if_assistant': True, 
-             'forced_proxy_ifnot_assistant': 'ProxySSL', 'CF_stat': False, 'session_verify': True, 'cf_assistant_if_proxy': True, 
+             'forced_proxy_ifnot_assistant': 'ProxyCF', 'CF_stat': True, 'session_verify': True, 'cf_assistant_if_proxy': True, 
              'preferred_proxy_ip': '', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

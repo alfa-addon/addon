@@ -33,9 +33,10 @@ list_servers = ['torrent']
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.love/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.cloud/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/', 'https://donproxies.com/'], 
-             'host_black_list': ['https://dontorrent.ninja/', 'https://dontorrent.plus/', 
+             'host_black_list': ['https://dontorrent.africa/', 
+                                 'https://dontorrent.love/', 'https://dontorrent.ninja/', 'https://dontorrent.plus/', 
                                  'https://dontorrent.chat/', 'https://dontorrent.casa/', 'https://dontorrent.how/', 
                                  'https://dontorrent.surf/', 'https://dontorrent.beer/', 'https://dontorrent.blue/', 
                                  'https://dontorrent.army/', 'https://dontorrent.mba/', 'https://dontorrent.futbol/', 
@@ -501,7 +502,7 @@ def listado(item):                                                              
                 patron_last = '<li\s*class="page-item\s*active"\s*aria-current="page">\s*'
                 patron_last += '<a\s*class="page-link"\s*href="[^"]*">\s*(\d+)\s*<\/a>\s*<\/li>'
                 last_page_url = re.sub(r'page\/\d+', 'page/9999', item.url)
-                data, response, item, itemlist = generictools.downloadpage(last_page_url, timeout=timeout_search, 
+                data, response, item, itemlist = generictools.downloadpage(last_page_url, timeout=timeout_search, canonical=canonical, 
                                                                            post=post, patron=patron_last, referer=referer, 
                                                                            s2=False, item=item, itemlist=itemlist)      # Descargamos la página)
                 
