@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'joysporn', 
              'host': config.get_setting("current_host", 'joysporn', default=''), 
-             'host_alt': ["https://joysporn.sex/"], 
+             'host_alt': ["https://www.joysporn.sex/"], 
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
