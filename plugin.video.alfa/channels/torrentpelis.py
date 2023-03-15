@@ -32,7 +32,8 @@ canonical = {
              'host': config.get_setting("current_host", 'torrentpelis', default=''), 
              'host_alt': ['https://torrentpelis.org/'], 
              'host_black_list': ['https://www2.torrentpelis.com/', 'https://www1.torrentpelis.com/', 'https://torrentpelis.com/'], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant_if_proxy': True, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
+             'forced_proxy_ifnot_assistant': 'ProxySSL', 'CF_stat': False, 'session_verify': True, 'cf_assistant_if_proxy': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
