@@ -28,8 +28,8 @@ list_servers = ['okru', 'mailru', 'openload']
 canonical = {
              'channel': 'doramedplay', 
              'host': config.get_setting("current_host", 'doramedplay', default=''), 
-             'host_alt': ["https://doramedplay.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://doramedplay.net/"], 
+             'host_black_list': ["https://doramedplay.com/"], 
              'pattern': '<link\s*rel="stylesheet"\s*id="[^"]*"\s*href="([^"]+)"', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True

@@ -1157,7 +1157,7 @@ def add_movie(item):
     #if item.tmdb_stat:
     #    del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
     
-    new_item = item.clone(action="findvideos")
+    new_item = item.clone(action="findvideos", contentType='movie')
     new_item.contentTitle = re.sub('^(V)-', '', new_item.title)
     new_item.title = re.sub('^(V)-', '', new_item.title)
     if '-Película-' in new_item.infoLabels.get('tagline', ''): del new_item.infoLabels['tagline']
@@ -1165,7 +1165,7 @@ def add_movie(item):
     insertados, sobreescritos, fallidos = save_movie(new_item)
 
     if fallidos == 0:
-        generictools.create_videolab_list(update=item.infoLabels)
+        generictools.create_videolab_list(update=new_item.infoLabels)
         config.cache_reset(label='alfa_videolab_series_list')
         platformtools.dialog_ok(config.get_localized_string(30131), new_item.contentTitle,
                                 config.get_localized_string(30135))             # 'se ha añadido a la videoteca'

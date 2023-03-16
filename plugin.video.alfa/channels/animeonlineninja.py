@@ -25,7 +25,8 @@ canonical = {
              'host': config.get_setting("current_host", 'animeonlineninja', default=''), 
              'host_alt': ["https://www1.animeonline.ninja/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
+             'forced_proxy_ifnot_assistant': 'ProxyCF', 'CF_stat': False, 'session_verify': True, 'cf_assistant_if_proxy': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

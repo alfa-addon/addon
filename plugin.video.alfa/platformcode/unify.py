@@ -301,12 +301,12 @@ def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, 
         v_part = t_part % 'Tipo'
         p_vextend = '%s%s%s' % (v_part, "[Versión Extendida]", last)
     
-    if infoLabels.get('studio', '') or (infoLabels.get('status', '') and infoLabels['mediatype'] != 'movie'):
+    if (infoLabels.get('studio', '') or (infoLabels.get('status', '')) and infoLabels['mediatype'] != 'movie'):
         s_part = t_part % 'Estudio'
         s_studio = '%s%s' % (s_part, infoLabels.get('studio', '-'))
         if infoLabels['mediatype'] != 'movie':
             sea_epi = ''
-            if infoLabels['mediatype'] in ['season'] and infoLabels.get('temporada_num_episodios'):
+            if infoLabels['mediatype'] in ['season', 'episode'] and infoLabels.get('temporada_num_episodios'):
                 sea_epi += '%s epis de ' % str(infoLabels['temporada_num_episodios'])
             if infoLabels.get('number_of_seasons') and infoLabels.get('number_of_episodes'):
                 sea_epi += '%sx%s, ' % (str(infoLabels['number_of_seasons']), str(infoLabels['number_of_episodes']).zfill(2))

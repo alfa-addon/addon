@@ -420,13 +420,15 @@ def get_environment():
         if filetools.exists(filetools.join(config.get_data_path(), 'alfa-desktop-assistant.version')) \
                             and config.get_setting("assistant_mode") == "este":
             environment['assistant_version'] = filetools.read(filetools.join(config.get_data_path(), 'alfa-desktop-assistant.version'))
+            config.set_setting('assistant_version', environment['assistant_version'])
             environment['assistant_version'] = '%s, %s' % (environment['assistant_version'], str(config.get_setting("assistant_mode")))
             environment['assistant_path'] = str(filetools.file_info(filetools.join(config.get_data_path(), 'assistant')))
         elif filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
             environment['assistant_version'] = filetools.read(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version'))
+            config.set_setting('assistant_version', environment['assistant_version'])
             environment['assistant_version'] = '%s, %s, %s' % (environment['assistant_version'], str(config.get_setting("assistant_mode")), 
                                                                str(config.get_setting("assistant_custom_address")))
-        environment['assistant_version'] += '; Req: %s' % str(config.get_setting('assistant_binary', default=False))
+        environment['assistant_version'] += ', Req: %s' % str(config.get_setting('assistant_binary', default=False))
         environment['assistant_cf_ua'] = str(config.get_setting('cf_assistant_ua', default=None))
         assistant_path = filetools.join(os.getenv('ANDROID_STORAGE'), 'emulated', '0', 'Android', 'data', 'com.alfa.alfamobileassistant')
         if PLATFORM in ['android', 'atv2'] and filetools.exists(assistant_path):
