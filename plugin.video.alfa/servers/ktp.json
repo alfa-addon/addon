@@ -32,7 +32,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(http(?:s|)://(?:www.|)(?:camwhores|camwhoreshd|lesbianbliss|goodporn|sunporno|porntrex|tonicporn|whoreshub).(?:tv|com|org|to)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(http(?:s|)://(?:www.|)(?:camwhores|camwhorescloud|camwhoreshd|lesbianbliss|goodporn|sunporno|porntrex|tonicporn|whoreshub).(?:tv|com|org|to|lol)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -53,6 +53,10 @@
       },
       {
         "pattern": "(https://www.theyarehuge.com/v/[A-z0-9-.]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://pornox.hu/porno/[0-9]+/[A-z0-9-.]+(?:/|))",
         "url": "\\1"
       },
       {
