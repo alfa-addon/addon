@@ -132,8 +132,9 @@ def search(item, texto):
         texto = texto.replace(" ", "+")
         item.url = host + '?s=' + texto
 
-        if texto != '':
+        if texto:
             item.c_type = "search"
+            item.texto = texto
             return list_all(item)
         else:
             return []

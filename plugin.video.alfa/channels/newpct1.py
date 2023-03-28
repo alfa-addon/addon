@@ -109,8 +109,7 @@ canonical = {
              'host': host, 
              'host_alt': [], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
-             'forced_proxy_ifnot_assistant': 'ProxyCF', 'CF_stat': True, 'session_verify': True, 'cf_assistant_if_proxy': True, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': CF_test, 'alfa_s': True, 
              'forced_proxy_opt': forced_proxy_opt
             }
@@ -140,6 +139,7 @@ if timeout == 0: timeout = None
 season_colapse = config.get_setting('season_colapse', channel_py)               # Season colapse?
 filter_languages = config.get_setting('filter_languages', channel_py)           # Filtrado de idiomas?
 find_alt_link_option = config.get_setting('find_alt_link_option', channel_py)   # Buscamos enlaces alternativos en buscador externo
+default_lang = config.get_setting('channel_language', default='all')
 
 fecha_rango = config.get_setting('clonenewpct1_rango_fechas_novedades', channel_py) #Rango fechas para Novedades
 if fecha_rango == 0: fecha_rango = 'Hoy'
@@ -159,6 +159,60 @@ find_alt_link_result_save = []
 #channel_banned = config.get_setting('clonenewpct1_excluir1_enlaces_veronline', channel_py)  #1eer Canal baneado
 #if channel_banned == 9:
 #    config.set_setting('clonenewpct1_excluir1_enlaces_veronline', 22, channel_py)      #se pone el nuevo valor por defecto
+
+finds = {'find': {'find': [{'tag': ['ul'], 'class': ['pelilist', 'buscar-list']}], 'find_all': [{'tag': ['li']}]}, 
+         'sub_menu': {}, 
+         'categories': {},  
+         'search': {}, 
+         'get_language': {}, 
+         'get_language_rgx': '(?:flags\/|\/images\/)([^\.]+)\.(?:png|jpg|jpeg|webp)', 
+         'get_quality': {'find': [{'tag': ['ul'], 'class': True}], 'get_text': [{'tag': '', '@STRIP': True}]}, 
+         'get_quality_rgx': [], 
+         'next_page': {}, 
+         'next_page_rgx': [['\/page\/\d+', '/page/%s/']], 
+         'last_page': {}, 
+         'year': {}, 
+         'season_episode': {}, 
+         'seasons': {},
+         'season_num': {}, 
+         'seasons_search_num_rgx': [], 
+         'seasons_search_qty_rgx': [], 
+         'episode_url': '', 
+         'episodes': {}, 
+         'episode_num': [], 
+         'episode_clean': [], 
+         'plot': {}, 
+         'findvideos': {}, 
+         'title_clean': [['(?i)castellano|español|ingl.s\s*|english\s*|calidad|de\s*la\s*serie|spanish|\w*scarga\w*\s*\w+\-\w+', ''],
+                         ['(?i)ver\s*online\s*(?:serie\s*)|\w*scarga.*\s*Serie\s*(?:hd\s*)?|ver\s*en\s*linea\s*|v.o.\s*|cvcd\s*', ''], 
+                         ['(?i)en\s*(?:Full\s*)?HD\s*|microhd\s*|hdtv\s*|\(proper\)\s*|ratdvd\s*|dvdrip\s*|dvd.*\s*|dvbrip\s*', ''], 
+                         ['(?i)ESDLA\s*|dvb\s*|\w*scarga\w*\s*|torr\w*\s*|gratis\s*|estreno\w*\s*', ''],
+                         ['(?i)(?:la\s*)?pelicula\w*\s*en\s*latino\s*|(?:la\s*)?pelicula\w*\s*|\w*scarga\w*\s*todas\s*', ''], 
+                         ['(?i)bajar\s*|hdrip\s*|rip\s*|xvid\s*|ac3\s*5\.1\s*|ac3\s*|1080p\s*|720p\s*|dvd-screener\s*', ''], 
+                         ['(?i)ts-screener\s*|screener\s*|bdremux\s*|4k\s*uhdrip\s*|full\s*uhd4k\s*|4kultra\s*|2cd\s*', ''], 
+                         ['(?i)fullbluray\s*|en\s*bluray\s*|bluray\s*en\s*|bluray\s*|bonus\s*disc\s*|de\s*cine\s*', ''],
+                         ['(?i)telecine\s*|argentina\s*|\+\+sub\w+\s*|\+-\+sub\w+\s*|directors\s*cut\s*|\s*en\s*hd', ''],
+                         ['(?i)subs.\s*integrados\s*|subtitulos\s*|blurayrip(?:\])?|\w*scarga\w*\s*otras\s*|\(comple.*?\)', ''],
+                         ['(?i)resubida|montaje\s*del\s*director|-*v.cine\s*|x264\s*|mkv\s*|sub\w*\s*|remaste\w+', ''],
+                         ['(?i)-\s*ES\s+|\(4k\)\s*|\[4k\]\s*|\[|\]|BR\s+|[\(|\[]\s+[\)|\]]|\(\)\s*|\[\]\s*|\+\s*', ''],
+                         ['(?i)spam|proper|porper|v\d+|\s+sin$|line$|\(line\)|\s+SIN|\s*imax|sw\s*', ''],
+                         ['(?i)version\s*ext\w*|\(version\s*ext\w*\)|v.\s*ext\w*|V\.E\.', ''],
+                         ['\(\s*\)', '']],
+         'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
+         'language_clean': [], 
+         'url_replace': [], 
+         'controls': {'duplicates': [], 'min_temp': False, 'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 15, 
+                      'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
+                      'host_torrent': host},
+         'timeout': timeout,
+         'btdigg_cfg': [{'url': host + 'peliculas-latino/' if default_lang == 'lat' else host + 'peliculas/', 
+                                'c_type': 'peliculas', 'entries': 2, 'movie_path': 'peliculas'}, 
+                        {'url': host + 'peliculas-hd', 'c_type': 'peliculas', 'entries': 1, 'movie_path': '/peliculas'},
+                        {'url': host + 'estrenos-de-cine/', 'c_type': 'peliculas', 'entries': 1, 'movie_path': '/peliculas'},
+                        {'url': host + 'series/', 'c_type': 'series', 'entries': 3, 'tv_path': '/series'},
+                        {'url': host + 'get/result/', 'post': 'categoryIDR=&categoryID=&idioma=&calidad=&ordenar=Fecha&inon=Descendente&s=%s&pg=1', 
+                                'c_type': 'search', 'entries': 3, 'movie_path': '/peliculas', 'tv_path': '/series', 
+                                'find': {'find': [{'tag': ['body']}], 'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}}]}
 
 
 def mainlist(item):

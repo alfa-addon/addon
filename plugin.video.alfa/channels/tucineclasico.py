@@ -156,8 +156,9 @@ def search(item, texto):
         item.url = item.url + '?s=' + texto
         item.first = 0
 
-        if texto != '':
+        if texto:
             item.c_type = "search"
+            item.texto = texto
             return list_all(item)
         else:
             return []

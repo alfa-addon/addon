@@ -29,13 +29,14 @@ list_quality = []
 list_quality_movies = []
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['torrent']
+forced_proxy_opt = 'ProxySSL'
 
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.cloud/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.pictures/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/', 'https://donproxies.com/'], 
-             'host_black_list': ['https://dontorrent.africa/', 
+             'host_black_list': ['https://dontorrent.cloud/', 'https://dontorrent.africa/', 
                                  'https://dontorrent.love/', 'https://dontorrent.ninja/', 'https://dontorrent.plus/', 
                                  'https://dontorrent.chat/', 'https://dontorrent.casa/', 'https://dontorrent.how/', 
                                  'https://dontorrent.surf/', 'https://dontorrent.beer/', 'https://dontorrent.blue/', 
@@ -55,7 +56,7 @@ canonical = {
                                  'https://dontorrent.pm/', 'https://dontorrent.top/', 'https://dontorrent.re/'], 
              'pattern_proxy': '<a[^>]*class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>', 
              'proxy_url_test': 'pelicula/25159/The-Batman', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_stat': False, 'cf_assistant': False, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -290,11 +291,9 @@ def novedades(item):
     matches_fin = []
     
     post = None
-    forced_proxy_opt = None
     referer = host
     if item.post:                                                               # Rescatamos el Post, si lo hay
         post = item.post
-        forced_proxy_opt = None
     if item.referer:
         referer = item.referer
 
@@ -392,11 +391,9 @@ def listado(item):                                                              
         item.extra2 = ''
         
     post = None
-    forced_proxy_opt = None
     referer = host
     if item.post:                                                               # Rescatamos el Post, si lo hay
         post = item.post
-        forced_proxy_opt = None
     if item.referer:
         referer = item.referer
     
@@ -752,7 +749,6 @@ def findvideos(item):
     code = 0
     
     post = None
-    forced_proxy_opt = None
     referer = None
     if item.post:                                                               # Rescatamos el Post, si lo hay
         post = item.post
@@ -1143,7 +1139,6 @@ def episodios(item):
     context = filtertools.context(item, list_language, list_quality_tvshow)
     
     post = None
-    forced_proxy_opt = None
     referer = None
     if item.post:                                                               # Rescatamos el Post, si lo hay
         post = item.post

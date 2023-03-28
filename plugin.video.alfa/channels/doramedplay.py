@@ -18,7 +18,7 @@ from platformcode import config, logger
 from channels import filtertools, autoplay
 from lib.AlfaChannelHelper import DictionaryAllChannel, DooPlay
 
-IDIOMAS = {'VOSE': 'VOSE', 'LAT': 'LAT'}
+IDIOMAS = {'VOSE': 'VOSE', 'Sub': 'VOSE', 'LAT': 'LAT'}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_quality_movies = ['HD', '1080p']
@@ -28,13 +28,15 @@ list_servers = ['okru', 'mailru', 'openload']
 canonical = {
              'channel': 'doramedplay', 
              'host': config.get_setting("current_host", 'doramedplay', default=''), 
-             'host_alt': ["https://doramedplay.net/"], 
-             'host_black_list': ["https://doramedplay.com/"], 
+             'host_alt': ["https://doramedplay.net/", "https://doramedplay.com/"], 
+             'host_black_list': [], 
              'pattern': '<link\s*rel="stylesheet"\s*id="[^"]*"\s*href="([^"]+)"', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
+host_sub = canonical['host_alt'][0]
+host_esp = canonical['host_alt'][1]
 forced_proxy_opt = 'ProxyCF'
 
 timeout = 5
@@ -62,20 +64,29 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
-    itemlist.append(Item(channel=item.channel, title="Doramas", action="list_all", url=host+'tvshows/',
-                         c_type='series', thumbnail=get_thumb('tvshows', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Doramas Subtitulados", action="list_all", url=host_sub+'tvshows/',
+                         c_type='series', thumbnail=get_thumb('tvshows', auto=True), language=['VOSE']))
 
-    itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", url=host+'movies/',
-                         c_type='peliculas', thumbnail=get_thumb('movies', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Películas Subtituladas", action="list_all", url=host_sub+'movies/',
+                         c_type='peliculas', thumbnail=get_thumb('movies', auto=True), language=['VOSE']))
 
-    itemlist.append(Item(channel=item.channel, title="Alfabético", action="alfabetico", url=host,
-                        thumbnail=get_thumb('alphabet', auto=True), c_type='peliculas'))
+    itemlist.append(Item(channel=item.channel, title="Buscar Subtitulados...", action="search", url=host_sub,
+                               thumbnail=get_thumb('search', auto=True), language=['VOSE']))
+
+    itemlist.append(Item(channel=item.channel, title="Doramas Español", action="list_all", url=host_esp+'tvshows/',
+                         c_type='series', thumbnail=get_thumb('tvshows', auto=True), language=['LAT']))
+
+    itemlist.append(Item(channel=item.channel, title="Películas Español", action="list_all", url=host_esp+'movies/',
+                         c_type='peliculas', thumbnail=get_thumb('movies', auto=True), language=['LAT']))
+
+    itemlist.append(Item(channel=item.channel, title="Alfabético Español", action="alfabetico", url=host_esp,
+                         c_type='peliculas', thumbnail=get_thumb('alphabet', auto=True), language=['LAT']))
 
     #itemlist.append(Item(channel=item.channel, title="Generos", action="section",
     #                     url=host, thumbnail=get_thumb('genres', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host,
-                               thumbnail=get_thumb('search', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Buscar Español...", action="search", url=host_esp,
+                               thumbnail=get_thumb('search', auto=True), language=['LAT']))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_movies + list_quality_tvshow)
 
@@ -85,6 +96,8 @@ def mainlist(item):
 
 
 def section(item):
+
+    AlfaChannel.host = AlfaChannel_class.host = host_sub if host_sub in item.url else host_esp
 
     if item.title == "Generos":
         finds['categories']['find'][0]['id'][0] = 'menu-item-????'
@@ -96,7 +109,8 @@ def alfabetico(item):
     logger.info()
 
     itemlist = []
-    url = 'https://doramedplay.com/wp-json/dooplay/glossary/?term=%s&nonce=506f86d0fc&type=all'
+    url = host_esp + 'wp-json/dooplay/glossary/?term=%s&nonce=506f86d0fc&type=all'
+    AlfaChannel.host = AlfaChannel_class.host = host_sub if host_sub in item.url else host_esp
 
     for letra in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
                   'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
@@ -110,17 +124,14 @@ def list_all(item):
     logger.info()
 
     findS = finds.copy()
-
-    findS['year'] = {'find': [{'tag': ['span']}], 'get_text': [{'@TEXT': '(\d{4})'}]}
+    findS['controls']['get_lang'] = True
+    AlfaChannel.host = AlfaChannel_class.host = host_sub if host_sub in item.url else host_esp
 
     if item.c_type == 'search':
         findS['find'] = findS.get('search', findS['find'])
-        findS['year'] = {'find': [{'tag': ['span'], 'class': ['year']}], 'get_text': [{'@TEXT': '(\d{4})'}]}
-        findS['controls']['get_lang'] = True
-        return AlfaChannel.list_all(item, matches_post=AlfaChannel_class.list_all_matches, finds=findS, **kwargs)
 
     if item.json:
-        findS['find'] = {'find': [{'tag': ['body']}], 'get_text': [{'@TEXT': '(.*?)$'}]}
+        findS['find'] = {'find': [{'tag': ['body']}], 'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}
 
     return AlfaChannel.list_all(item, matches_post=AlfaChannel_class.list_all_matches, finds=findS, **kwargs)
 
@@ -135,6 +146,7 @@ def episodios(item):
     logger.info()
     
     itemlist = []
+    AlfaChannel.host = AlfaChannel_class.host = host_sub if host_sub in item.url else host_esp
     
     templist = seasons(item)
 
@@ -154,6 +166,7 @@ def findvideos(item):
     logger.info()
 
     findS = finds.copy()
+    AlfaChannel.host = AlfaChannel_class.host = host_sub if host_sub in item.url else host_esp
 
     findS['get_language'] = {'find_all': [{'tag': ['img'], '@ARG': 'src'}]}
 
@@ -175,8 +188,9 @@ def search(item, texto):
     item.url = item.url + '?s=' + texto
 
     try:
-        if texto != '':
+        if texto:
             item.c_type = "search"
+            item.texto = texto
             return list_all(item)
     except:
         import sys

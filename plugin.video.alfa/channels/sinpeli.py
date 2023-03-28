@@ -290,9 +290,10 @@ def search(item, texto):
     
     try:
         texto = texto.replace(" ", "+")
-        if texto != '':
+        if texto:
             item.url += "?s=" + texto
             item.c_type = 'search'
+            item.texto = texto
             return list_all(item)
         else:
             return []
