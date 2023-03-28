@@ -301,8 +301,9 @@ def search(item, texto):
         texto = texto.replace(" ", "+")
         item.url = item.url + '?post_type=video_skrn&search_keyword=' + texto
         
-        if texto != '':
+        if texto:
             item.c_type = 'search'
+            item.texto = texto
             return list_all(item)
         else:
             return []

@@ -4,7 +4,7 @@
   "active": true,
   "adult": false,
   "language": ["lat"],
-  "thumbnail": "https://www.ennovelas.com/LOGOO.png",
+  "thumbnail": "https://www.zonevipz.com/favicon.ico",
   "banner": "",
   "fanart": "",
   "categories": [
@@ -20,6 +20,20 @@
       "default": true,
       "enabled": true,
       "visible": true
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "LAT",
+        "CAST",
+        "VOSE"
+      ]
     }
   ]
 }

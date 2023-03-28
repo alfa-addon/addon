@@ -1311,7 +1311,6 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             channel = generictools.verify_channel(item.channel)             #Se verifica si es un clon, que devuelva "newpct1"
             channel = __import__('channels.%s' % channel, fromlist=["channels.%s" % channel])
         if hasattr(channel, 'findvideos'):                                  #Si el canal tiene "findvideos"...
-            logger.error(item.kwargs)
             item.videolibray_emergency_urls = True                          #... se marca como "lookup"
             channel_save = item.channel                 #... guarda el canal original por si hay fail-over en Newpct1
             category_save = item.category               #... guarda la categoría original por si hay fail-over o redirección en Newpct1
@@ -1379,7 +1378,6 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                                          }
                         kwargs = {}
                         if item_res.kwargs: kwargs = item_res.kwargs
-                        logger.error(item_res.kwargs)
                         torrent_file, torrent_params = caching_torrents(url, torrent_params=torrent_params, referer=referer, 
                                                                         post=post, headers=headers or item_res.headers, item=item_res, 
                                                                         **kwargs)

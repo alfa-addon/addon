@@ -34,8 +34,7 @@ canonical = {
              'host_alt': ["https://yts.mx/"], 
              'host_black_list': [], 
              'pattern': '<ul\s*class="nav-links">\s*<li>\s*<a\s*href="([^"]+)"', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
-             'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_stat': False, 'session_verify': True, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -300,6 +299,7 @@ def search(item, text):
         if text:
             item.url = URL_BROWSE + '/' + text + '/all/all/0/latest/0/all'
             item.c_type = 'peliculas'
+            item.texto = texto
             itemlist = list_all(item)
 
             return itemlist

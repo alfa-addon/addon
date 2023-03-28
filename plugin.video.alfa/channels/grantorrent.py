@@ -28,7 +28,6 @@ list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['torrent']
 forced_proxy_opt = 'ProxySSL'
 
-
 canonical = {
              'channel': 'grantorrent', 
              'host': config.get_setting("current_host", 'grantorrent', default=''), 
@@ -36,8 +35,7 @@ canonical = {
              'host_black_list': ['https://grantorrent.si/', 
                                  'https://grantorrent.re/', 'https://grantorrent.ac/', 'https://grantorrent.ch/'], 
              'pattern': '<div\s*class="flex[^>]*>\s*<a\s*href="([^"]+)"[^>]*>\s*.nicio\s*<', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
-             'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_stat': False, 'session_verify': True, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -325,12 +323,13 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     if videolibrary:
         for x, (scrapedlang, scrapedpassword, scrapedurl) in enumerate(matches_int):
             elem_json = {}
+            #logger.error(matches_int[x])
 
             if item.infoLabels['mediatype'] in ['episode']:
                 elem_json['season'] = item.infoLabels['season']
                 elem_json['episode'] = item.infoLabels['episode']
 
-            elem_json['url'] = item.emergency_urls[1][0][2]
+            elem_json['url'] = scrapedurl
             elem_json['server'] = 'torrent'
             elem_json['language'] = '*%s' % scrapedlang.replace('N/A', '')
             elem_json['quality'] = '*'
@@ -400,6 +399,7 @@ def search(item, texto):
     try:
         if texto:
             item.url = "%s?query=%s" % (item.url, texto)
+            item.texto = texto
             return list_all(item)
         else:
             return []

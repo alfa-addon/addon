@@ -123,8 +123,12 @@ try:
     OPENSSL_VERSION = ssl.OPENSSL_VERSION_INFO
     
     if OPENSSL_VERSION >= (1, 1, 1):
-        ssl_version = ssl.PROTOCOL_TLS_CLIENT
-        ssl_version_min = ssl.PROTOCOL_TLSv1_2
+        try:
+            ssl_version = ssl.PROTOCOL_TLS_CLIENT
+            ssl_version_min = ssl.PROTOCOL_TLSv1_2
+        except:
+            ssl_version = ssl.PROTOCOL_TLSv1_2
+            ssl_version_min = ssl.PROTOCOL_TLSv1_1
     else:
         ssl_version = ssl.PROTOCOL_TLSv1_1
     if not PY3 and __platform not in ['android', 'atv2', 'windows', 'xbox']:
@@ -1005,6 +1009,8 @@ def downloadpage(url, **opt):
     if opt.get('forced_proxy_opt', None) and channel_proxy_list(url):
         if opt['forced_proxy_opt'] in ['ProxyCF', 'ProxyDirect']:
             opt['forced_proxy_opt'] = 'ProxyJSON'
+        elif opt['forced_proxy_opt'] in ['ProxySSL']:
+            opt['forced_proxy'] = 'ProxyWeb:croxyproxy.com'
         elif opt['forced_proxy_opt'] in ['ProxyCF|FORCE', 'ProxyDirect|FORCE']:
             opt['forced_proxy'] = opt['forced_proxy_opt'].replace('|FORCE', '')
         else:
@@ -1026,6 +1032,8 @@ def downloadpage(url, **opt):
         url, proxy_data, opt = check_proxy(url, **opt)
         if not proxy_data.get('stat', '') and opt.get('CF_if_assistant', False):
             opt['CF'] = opt['cloudscraper_active'] = True
+        if 'croxyproxy.com' in proxy_data.get('web_name', ''):
+            opt['CF'] = opt['cloudscraper_active'] = False
 
         if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True) \
                               and opt.get('cloudscraper_active', True):         # Está en la lista de CF o viene en la llamada
@@ -1033,10 +1041,11 @@ def downloadpage(url, **opt):
             session = create_scraper(user_url=url, user_opt=opt)                # El dominio necesita CloudScraper
             if 'session_verify' not in opt:
                 opt['session_verify'] = True
-            elif not opt['session_verify'] and not ssl_version:
-                opt['session_verify'] = True
             session.verify = opt['session_verify']
-            if ssl and ssl_version:
+            if not opt['session_verify'] and ssl:
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE
+            if ssl and ssl_version and opt['session_verify']:
                 ssl_context = ssl.SSLContext(ssl_version)
             CS_stat = True
             if cf_ua and cf_ua != 'Default' and get_cookie(url, 'cf_clearance'):
@@ -1356,6 +1365,9 @@ def downloadpage(url, **opt):
             else: from . import proxytools_py3 as proxytools
             domain = obtain_domain(opt['url_save'], sub=True)
             opt['forced_proxy'] = 'ProxyCF'
+            if opt['forced_proxy_ifnot_assistant'] in ['ProxySSL'] and not proxy_data.get('stat', ''):
+                opt['forced_proxy'] = 'ProxyWeb:croxyproxy.com'
+                opt['forced_proxy_ifnot_assistant'] = 'ProxyCF'
             proxytools.add_domain_retried(domain, proxy__type=opt['forced_proxy'], delete='SSL')
             return downloadpage(opt['url_save'], **opt)
 
@@ -1405,6 +1417,7 @@ def downloadpage(url, **opt):
             logger.error(traceback.format_exc(1))
 
         response['url'] = req.url
+        logger.error(req.url)
 
         if not response['data']:
             response['data'] = ''
@@ -1459,6 +1472,8 @@ def downloadpage(url, **opt):
         response, url, opt = proxy_post_processing(url, proxy_data, response, **opt)
         response = canonical_check(opt['url_save'], response, req, **opt)
         
+        if opt.get('unescape', False): 
+            response['data'] = scrapertools.unescape(response['data'])
         response['soup'] = None
         if opt.get("soup", False):
             try:
@@ -1690,15 +1705,15 @@ def print_DEBUG(url, obj, label='', req={}, **opt):
     if DEBUG:
         for exc in DEBUG_EXC:
             if exc in url: break
-            if 'PROXY' in label:
+            if 'proxy' in label.lower():
                 url_stat = 'Proxy_SESSION: %s; SSL_version: %s; ' % (req, ssl_version)
-            if 'BLOCKING' in label:
+            if 'blocking' in label.lower():
                 url_stat = 'Blocking_WEBS: %s; ' % alfa_domain_web_list
-            if 'OPT' in label:
+            if 'opt' in label.lower():
                 #if opt_logger.get('post'): opt_logger['post'] = '******'
                 #if opt_logger.get('post_save'): opt_logger['post_save'] = '******'
                 url_stat = 'Opt_URL: %s; ' % url
-            if 'TIMEOUT' in label:
+            if 'timeout' in label.lower():
                  url_stat = 'Error_CODE: %s; PROXY: %s; ' % (req.status_code, channel_proxy_list(opt['url_save']))
                 
         else:

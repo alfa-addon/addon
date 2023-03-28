@@ -403,6 +403,7 @@ def search(item, texto):
 
         if texto:
             item.c_type = 'search'
+            item.texto = texto
             return list_all(item)
         else:
             return []

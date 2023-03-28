@@ -25,7 +25,7 @@ list_quality = []
 list_quality_movies = ['CAM', 'HD-RIP', 'DVD-RIP', 'HD-720', 'HD-1080']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['gvideo', 'fembed']
-forced_proxy_opt = 'ProxyCF'
+forced_proxy_opt = 'ProxySSL'
 
 canonical = {
              'channel': 'pelisxd', 
@@ -33,8 +33,7 @@ canonical = {
              'host_alt': ["https://www.pelisxd.com/"], 
              'host_black_list': [], 
              'pattern_proxy': 'span\s*class="server"', 'proxy_url_test': 'pelicula/black-adam/', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
-             'forced_proxy_ifnot_assistant': 'ProxySSL', 'CF_stat': False, 'session_verify': True, 'cf_assistant_if_proxy': True, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -299,10 +298,10 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
-    findS['findvideos'] = {'find': [{'tag': ['aside'], 'class': ['video-options']}], 'find_all': [{'tag': ['li']}]}
 
     servers = {"femax20": "fembed", "embed": "mystream", "dood": "doodstream"}
-    server_names = AlfaChannel.parse_finds_dict(AlfaChannel.response.soup, findS.get('findvideos', {}), c_type=item.c_type)
+    findS_findvideos = {'find': [{'tag': ['aside'], 'class': ['video-options']}], 'find_all': [{'tag': ['li']}]}
+    server_names = AlfaChannel.parse_finds_dict(AlfaChannel.response.soup, findS_findvideos, c_type=item.c_type)
 
     for server, elem in zip(server_names, matches_int):
         elem_json = {}
@@ -345,8 +344,9 @@ def search(item, texto):
         texto = texto.replace(" ", "+")
         item.url = item.url + '?s=' + texto
 
-        if texto != '':
+        if texto:
             item.c_type = "search"
+            item.texto = texto
             return list_all(item)
         else:
             return []

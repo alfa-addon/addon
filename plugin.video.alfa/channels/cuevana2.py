@@ -71,11 +71,11 @@ finds = {'find': {'find': [{'tag': ['div'], 'class': ['row row-cols-xl-5 row-col
          'seasons_search_num_rgx': '', 
          'seasons_search_qty_rgx': '', 
          'episode_url': '%sepisodio/%s-%sx%s', 
-         'episodes': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False}]}, 
+         'episodes': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}, 
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
-         'findvideos': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False}]}, 
+         'findvideos': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}, 
          'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*\(\d{4}\)', ''],
                          ['[\(|\[]\s*[\)|\]]', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
@@ -239,7 +239,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     matches = []
     findS = AHkwargs.get('finds', finds)
 
-    matches_int = jsontools.load(matches_int)
+    if not isinstance(matches_int, dict): matches_int = jsontools.load(matches_int)
     matches_int = matches_int.get('props', {}).get('pageProps', {}).get('post', {}).get('seasons', {})
 
     for x, elem_season in enumerate(matches_int):
@@ -276,7 +276,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
-    matches_int = jsontools.load(matches_int)
+    if not isinstance(matches_int, dict): matches_int = jsontools.load(matches_int)
 
     servers = {'drive': 'gvideo', 'fembed': 'fembed', "player": "oprem", "openplay": "oprem", "embed": "mystream"}
     action = item.contentType if item.contentType == 'episode' else 'post'
@@ -349,6 +349,7 @@ def search(item, texto):
 
         if texto:
             item.c_type = 'search'
+            item.texto = texto
             return list_all(item)
         else:
             return []
