@@ -343,8 +343,12 @@ def search(item, texto):
     item.url = item.url + '?s=' + texto
 
     try:
-        item.c_type = 'search'
-        return list_all(item)
+        if texto:
+            item.c_type = "search"
+            item.texto = texto
+            return list_all(item)
+        else:
+            return []
     except:
         import sys
         for line in sys.exc_info():

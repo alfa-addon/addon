@@ -68,11 +68,11 @@ finds = {'find': {'find': [{'tag': ['ul'], 'class': ['MovieList Rows', 'MovieLis
          'seasons_search_num_rgx': '', 
          'seasons_search_qty_rgx': '', 
          'episode_url': '%sepisodio/%s-temporada-%s-episodio-%s', 
-         'episodes': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False}]}, 
+         'episodes': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}, 
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {'find': [{'tag': ['div'], 'class': ['Description']}, {'tag': ['p']}], 'get_text': [{'tag': '', '@STRIP': True}]}, 
-         'findvideos': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False}]}, 
+         'findvideos': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}, 
          'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*\(\d{4}\)', ''],
                          ['[\(|\[]\s*[\)|\]]', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
@@ -216,7 +216,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     matches = []
     findS = AHkwargs.get('finds', finds)
 
-    matches_int = jsontools.load(matches_int)
+    if not isinstance(matches_int, dict): matches_int = jsontools.load(matches_int)
     matches_int = matches_int.get('props', {}).get('pageProps', {}).get('thisSerie', {}).get('seasons', {})
 
     for x, elem_season in enumerate(matches_int):
@@ -258,7 +258,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
-    matches_int = jsontools.load(matches_int)
+    if not isinstance(matches_int, dict): matches_int = jsontools.load(matches_int)
 
     servers = {'drive': 'gvideo', 'fembed': 'fembed', "player": "oprem", "openplay": "oprem", "embed": "mystream"}
     action = item.contentType if item.contentType == 'episode' else 'thisMovie' if item.contentType == 'movie' else 'thisSerie'
@@ -269,7 +269,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
         for link in elem:
             elem_json = {}
-            #logger.error(elem)
+            logger.error(elem)
 
             try:
                 elem_json['server'] = link.get('cyberlocker', '')
@@ -337,8 +337,10 @@ def search(item, texto):
     try:
         texto = texto.replace(" ", "+")
         item.url = host + 'search?q=' + texto
-        item.c_type = "search"
+
         if texto:
+            item.c_type = "search"
+            item.texto = texto
             return list_all(item)
         else:
             return []

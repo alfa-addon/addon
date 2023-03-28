@@ -31,9 +31,9 @@ canonical = {
              'channel': 'entrepeliculasyseries', 
              'host': config.get_setting("current_host", 'entrepeliculasyseries', default=''), 
              'host_alt': ['https://entrepeliculasyseries.nz/'], 
-             'host_black_list': ['https://entrepeliculasyseries.pro/', 'https://entrepeliculasyseries.nu/'],            
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
-             'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_stat': False, 'session_verify': True, 'cf_assistant_if_proxy': True, 
+             'host_black_list': ['https://entrepeliculasyseries.pro/', 'https://entrepeliculasyseries.nu/'],   
+             'pattern_proxy': '(?i)<div\s*class="TpRwCont\s*Container">', 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -383,7 +383,7 @@ def play(item):
     
     itemlist = list()
     kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 'timeout': 5, 
-              'session_verify': True, 'canonical': {}}
+              'canonical': {}}
     
     id = scrapertools.find_single_match(item.url, "h=([^$]+)")
     headers = {"Referer": item.url}
@@ -415,8 +415,9 @@ def search(item, texto):
         texto = texto.replace(" ", "+")
         item.url = host + '?s=' + texto
 
-        if texto != '':
+        if texto:
             item.c_type = 'search'
+            item.texto = texto
             return list_all(item)
         else:
             return []

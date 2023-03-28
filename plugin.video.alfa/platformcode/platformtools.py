@@ -272,6 +272,9 @@ def render_items(itemlist, parent_item):
 
         if item.text_italic:
             item.title = '[I]%s[/I]' % item.title
+        
+        if item.action in ["search"]:
+            item.title = unify.set_color(item.title, 'tvshow')
 
         if use_unify and parent_item.channel not in ['alfavorites']:
             # Formatear titulo con unify
@@ -1905,11 +1908,14 @@ def play_torrent(item, xlistitem, mediaurl):
     
     if seleccion >= 0:
         if item.subtitle:
-            if not filetools.exists(item.subtitle):
-                item.subtitle = filetools.join(videolibrary_path, folder, item.subtitle)
-            log("##### 'Subtítulos externos: %s" % item.subtitle)
-            time.sleep(1)
-            xbmc_player.setSubtitles(item.subtitle)  # Activamos los subtítulos
+            from platformcode import subtitletools
+            item = subtitletools.download_subtitles(item)
+            if item.subtitle:
+                if not filetools.exists(item.subtitle):
+                    item.subtitle = filetools.join(videolibrary_path, folder, item.subtitle)
+                log("##### 'Subtítulos externos: %s" % item.subtitle)
+                time.sleep(1)
+                xbmc_player.setSubtitles(item.subtitle)  # Activamos los subtítulos
 
         # Si no existe, creamos un archivo de control para que sea gestionado desde Descargas
         if torrent_paths.get(torr_client.upper(), ''):  # Es un cliente monitorizable?
@@ -2147,8 +2153,10 @@ def play_torrent(item, xlistitem, mediaurl):
                         filetools.copy(subtitle, filetools.join(rar_path, filetools.basename(subtitle)))
                 log("##### Subtítulos copiados junto a vídeo: %s" % str(subtitles_list))
             if item.subtitle and filetools.isfile(item.subtitle) and rar_path:
-                filetools.copy(item.subtitle, filetools.join(rar_path, filetools.basename(item.subtitle)))
-                log("##### Subtítulo copiado junto a vídeo: %s" % str(item.subtitle))
+                rar_path_folder = rar_path if filetools.isdir(rar_path) else filetools.dirname(rar_path)
+                dest_file = filetools.join(rar_path_folder, filetools.basename(item.subtitle))
+                filetools.copy(item.subtitle, dest_file, silent=True)
+                log("##### Subtítulo copiado junto a vídeo: %s" % str(dest_file))
 
         except Exception as e:
             config.set_setting("LIBTORRENT_in_use", False, server="torrent")  # Marcamos Libtorrent como disponible
@@ -2175,7 +2183,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
         # Si es un archivo RAR, monitorizamos el cliente Torrent hasta que haya descargado el archivo,
         # y después lo extraemos, incluso con RAR's anidados y con contraseña
         if torrent_paths[torr_client.upper()] != 'Memory':
-            rar_file, save_path_videos, torr_folder, rar_control = wait_for_download(item, mediaurl,
+            rar_file, save_path_videos, torr_folder, rar_control = wait_for_download(item, xlistitem, mediaurl,
                                                                                      rar_files, torr_client,
                                                                                      password, size,
                                                                                      rar_control)  # Esperamos mientras se descarga el TORRENT

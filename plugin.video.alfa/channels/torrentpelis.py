@@ -26,14 +26,14 @@ list_quality = []
 list_quality_movies = ['HD', '1080p', 'Full HD']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['torrent']
+forced_proxy_opt = 'ProxySSL'
 
 canonical = {
              'channel': 'torrentpelis', 
              'host': config.get_setting("current_host", 'torrentpelis', default=''), 
              'host_alt': ['https://torrentpelis.org/'], 
              'host_black_list': ['https://www2.torrentpelis.com/', 'https://www1.torrentpelis.com/', 'https://torrentpelis.com/'], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
-             'forced_proxy_ifnot_assistant': 'ProxySSL', 'CF_stat': False, 'session_verify': True, 'cf_assistant_if_proxy': True, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -237,6 +237,7 @@ def search(item, texto):
 
         if texto:
             item.c_type = 'search'
+            item.texto = texto
             return list_all(item)
         else:
             return []

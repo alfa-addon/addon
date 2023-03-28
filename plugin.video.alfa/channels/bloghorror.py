@@ -34,8 +34,7 @@ canonical = {
              'host': config.get_setting("current_host", 'bloghorror', default=''), 
              'host_alt': ["https://bloghorror.com/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
-             'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_stat': False, 'session_verify': True, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -182,12 +181,13 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             if elem.find('a', href=re.compile('subdivx')): elem_json['subtitle'] = elem.find('a', href=re.compile('subdivx'))['href']
             elem_json['url'] = elem.a.get('href', '')
             elem_json['server'] = 'torrent' if 'magnet' in elem_json['url'] or ',torrent' in elem_json['url'] else 'directo'
+            if '1fichier' in elem_json['url']: elem_json['server'] = 'onefichier'
 
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())
 
-        if not elem_json.get('url', '') or '1fichier' in elem_json['url']: 
+        if not elem_json.get('url', ''): 
             continue
 
         matches.append(elem_json.copy())
@@ -224,8 +224,9 @@ def search(item, texto):
         texto = texto.replace(" ", "+")
         item.url = item.url + '?s=' + texto
 
-        if texto != '':
+        if texto:
             item.c_type = 'peliculas'
+            item.texto = texto
             return list_all(item)
         else:
             return []

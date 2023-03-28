@@ -31,7 +31,7 @@ canonical = {
              'host_black_list': ["https://playdede.org/", "https://playdede.com/"], 
              'pattern': '<link\s*rel="shortcut\s*icon"[^>]+href="([^"]+)"', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
-             'session_verify': True, 'CF_stat': True, 'cf_assistant_if_proxy': True, 
+             'session_verify': False, 'CF_stat': True, 'cf_assistant_if_proxy': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -316,8 +316,10 @@ def list_all(item):
         url = article.find('a')['href']
         url = "{}%s".format(host) % url
         
+        """
         if 'tmdb.org' in thumbnail:
             infoLabels['filtro'] = scrapertools.find_single_match(thumbnail, "/(\w+)\.\w+$")
+        """
 
         it = Item(
                 action = 'findvideos',
@@ -336,7 +338,7 @@ def list_all(item):
             list_type = item.list_type
 
         else:
-            if 'serie' in it.url:
+            if 'serie' in it.url or 'anime' in it.url:
                 list_type = 'tvshows'
 
             elif 'pelicula' in it.url:
@@ -400,13 +402,17 @@ def seasons(item):
     items = soup.find('div', id='seasons').find_all('div', class_='se-c')
 
     for div in items:
-        season = div['data-season']
+        try:
+            season = int(div['data-season'])
+        except:
+            season = 1
 
         itemlist.append(
             item.clone(
                 action = 'episodesxseason',
                 contentSeason = season,
                 episode_data = str(div),
+                contentType='season', 
                 title = config.get_localized_string(60027) % season
             )
         )
@@ -423,7 +429,7 @@ def episodios(item):
     templist = seasons(item)
 
     for tempitem in templist:
-        itemlist.append(episodesxseason(tempitem))
+        itemlist += episodesxseason(tempitem)
 
     return itemlist
 
