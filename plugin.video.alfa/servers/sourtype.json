@@ -47,6 +47,10 @@
         "pattern": "(https://(?:www.|)(?:yrprno|youcrazyx|trendyporn|yespornplease|hentaiprno|tubehentai).(?:com|sexy)/video/[A-z0-9-]+.html)",
         "url": "\\1"
       },
+      {
+        "pattern": "(https://bigfuck.tv/video/[0-9]+/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
      {
         "pattern": "(https://(?:www.|)pornxs.com/(?:embed/|)[0-9]+)",
         "url": "\\1"
