@@ -307,14 +307,16 @@ def play(item):
         if not data.startswith('http'):
             base_url = "%sr.php" % host
             post = {"data": data}
-            url = AlfaChannel.create_soup(base_url, post=post, forced_proxy_opt=forced_proxy_opt, soup=False, **kwargs).url
+            kwargs['soup'] = False
+            url = AlfaChannel.create_soup(base_url, post=post, forced_proxy_opt=forced_proxy_opt, **kwargs).url
             if not url: return itemlist
         
         if "fs.%s" % host.replace("https://", "") in url:
             api_url = "%sr.php" % host.replace("https://", "https://fs.")
             v_id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
             post = {"h": v_id}
-            url = AlfaChannel.create_soup(api_url, post=post, forced_proxy_opt=forced_proxy_opt, soup=False, **kwargs).url
+            kwargs['soup'] = False
+            url = AlfaChannel.create_soup(api_url, post=post, forced_proxy_opt=forced_proxy_opt, **kwargs).url
         
         itemlist.append(item.clone(url=url, server=""))
         itemlist = servertools.get_servers_itemlist(itemlist)

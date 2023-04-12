@@ -418,7 +418,8 @@ def get_videos_watched_on_kodi(item, value=1, list_videos=False):
         if item.contentType == 'tvshow':
             view = 'season'
             fields = 'season, playCount, episodes'
-            search = ' or showTitle like "%s"' % item.contentSerieName
+            search = ' or showTitle like "*%s*" or strPath like "*%s*"' % (item.contentSerieName, item.contentSerieName)
+            search = search.replace('*', '%')
         else:
             view = 'episode'
             search = ''

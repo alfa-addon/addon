@@ -244,7 +244,7 @@ def check_conditions(_filter, list_item, item, list_language, list_quality, qual
 
             if TAG_ALL.lower() not in _filter.quality_allowed and list_quality:
                 for quality in quality_list:
-                    if quality.lower().replace(config.BTDIGG_LABEL, '') in _filter.quality_allowed \
+                    if quality.replace(config.BTDIGG_LABEL, '').lower() in _filter.quality_allowed \
                                        or quality.lower().replace(' ', '-') in _filter.quality_allowed:
                         quality_count += 1
                         break
@@ -264,7 +264,7 @@ def check_conditions(_filter, list_item, item, list_language, list_quality, qual
         logger.debug(" idioma valido?: %s, item.language: %s, filter.language: %s" %
                      (is_language_valid, item.language, _filter.language))
         logger.debug(" calidad valida?: %s, item.quality: %s, filter.quality_allowed: %s"
-                     % (is_quality_valid, quality, _filter.quality_allowed))
+                     % (is_quality_valid, quality.replace(config.BTDIGG_LABEL, '').lower(), _filter.quality_allowed))
 
     return list_item, quality_count, language_count, _filter.language
 
@@ -812,5 +812,5 @@ def get_season_search(item, dict_series={}):
         if not dict_series: dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_FILTER)
 
         if dict_series and dict_series.get(tvshow, {}).get(TAG_TITLE, ""):
-            if dict_series[tvshow][TAG_TITLE] != '*':
+            if not dict_series[tvshow][TAG_TITLE].startswith('*'):
                 item.season_search = dict_series[tvshow][TAG_TITLE]

@@ -2064,13 +2064,11 @@ def play_torrent(item, xlistitem, mediaurl):
             # Plugins externos
             else:
                 from lib.alfa_assistant import is_alfa_installed
-                if xbmc.getCondVisibility("system.platform.android") and torr_client in ['quasar',
-                                                                                         'torrest'] and config.get_setting(
-                    'assistant_binary', default=False) and not is_alfa_installed():
+                if xbmc.getCondVisibility("system.platform.android") and torr_client in ['quasar'] \
+                                and config.get_setting('assistant_binary', default=False) and not is_alfa_installed():
                     dialog_notification('Alfa Assistant es requerido', '%s lo requiere en esta versión de Android' \
                                         % torr_client.capitalize(), time=10000)
-                    logger.error(
-                        'Alfa Assistant es requerido. %s lo requiere en esta versión de Android' % torr_client.capitalize())
+                    logger.error('Alfa Assistant es requerido. %s lo requiere en esta versión de Android' % torr_client.capitalize())
                 mediaurl = urllib.quote_plus(item.url)
                 # Llamada con más parámetros para completar el título
                 if torr_client in ['quasar', 'elementum'] and item.infoLabels['tmdb_id']:

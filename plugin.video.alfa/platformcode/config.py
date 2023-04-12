@@ -27,6 +27,7 @@ DEBUG_JSON = DEBUG or False
 GLOBAL_SEARCH_CANCELLED = False
 BTDIGG_URL = 'https://btdig.com/'
 BTDIGG_LABEL = ' [COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR]'
+BTDIGG_LABEL_B = '[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B] '
 
 __settings__ = xbmcaddon.Addon(id="plugin.video.{}".format(PLUGIN_NAME))
 __language__ = __settings__.getLocalizedString

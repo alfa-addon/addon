@@ -241,8 +241,9 @@ def findvideos(item):
     logger.info()
     
     item.matches = []
+    kwargs['soup'] = False
 
-    data = AlfaChannel.create_soup(item.url, soup=False).data
+    data = AlfaChannel.create_soup(item.url, **kwargs).data
 
     patron = 'src\s*:\s*"([^"]+).*?res\s*:\s*(\d+)'
     matches = scrapertools.find_multiple_matches(data, patron)

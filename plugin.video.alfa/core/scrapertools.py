@@ -113,6 +113,10 @@ def unescape(text):
                 pass
         return text  # leave as is
 
+    if PY3:
+        text = text.replace(u'\xa0', ' ').replace('\xa0', ' ')
+    else:
+        text = text.replace(u'\xa0', ' ')
     return re.sub("&#?\w+;", fixup, str(text))
 
     # Convierte los codigos html "&ntilde;" y lo reemplaza por "ñ" caracter unicode utf-8
