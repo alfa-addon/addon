@@ -1495,22 +1495,35 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
 def call_torrent_via_web(mediaurl, torr_client, torrent_action='add',oper=2, alfa_s=True, timeout=5):
     # Usado para llamar a los clientes externos de Torrents para automatizar la descarga de archivos que contienen .RAR
     logger.info()
+    global torrent_paths
     from core import httptools
-    
+
+    if not torrent_paths: torrent_paths = torrent_dirs()
+
     if (monitor and monitor.abortRequested()) or (not monitor and xbmc and xbmc.abortRequested):
         sys.exit()
-    
+
     post = None
     files = {}
     if mediaurl.startswith('magnet'):
         mediaurl = urllib.unquote_plus(mediaurl).replace('&amp;', '&') + magnet_trackets
     torrent_type = 'torrent'
+    method = 'get'
     if torr_client == "torrest":
-        if mediaurl.startswith('magnet'): torrent_type = 'magnet'
-        torrent_action = "add/%s?ignore_duplicate=true&download=true" % torrent_type
-        if mediaurl.startswith('magnet') or mediaurl.startswith('http'): torrent_action += '&uri=%s' % mediaurl
-    global torrent_paths
-    if not torrent_paths: torrent_paths = torrent_dirs()
+        method = 'post'
+        if mediaurl.startswith('magnet'): 
+            torrent_type = 'magnet'
+            method = torrent_paths['TORREST_verbs']['add_magnet'][0]
+            torrent_action = torrent_paths['TORREST_verbs']['add_magnet'][1] % mediaurl
+        elif mediaurl.startswith('http'):
+            torrent_type = 'torrent'
+            method = torrent_paths['TORREST_verbs']['add_magnet'][0]
+            torrent_action = torrent_paths['TORREST_verbs']['add_torrent'][1] % mediaurl
+        else:
+            method = torrent_paths['TORREST_verbs']['add_magnet'][0]
+            torrent_type = 'torrent'
+            torrent_action = torrent_paths['TORREST_verbs']['add_torrent_local'][1]
+
     local_host = {"quasar": ["http://localhost:65251/torrents/", "%s?uri" % torrent_action], \
                   "elementum": ["%storrents/" % torrent_paths['ELEMENTUM_web'], torrent_action], \
                   "torrest": ["%s" % torrent_paths['TORREST_web'], torrent_action]}
@@ -1520,14 +1533,17 @@ def call_torrent_via_web(mediaurl, torr_client, torrent_action='add',oper=2, alf
     elif torr_client == "elementum":
         uri = '%s%s' % (local_host[torr_client][0], local_host[torr_client][1])
         post = 'uri=%s&file=null&all=1' % mediaurl
+        method = 'post'
     elif torr_client == "torrest":
         uri = '%s%s' % (local_host[torr_client][0], local_host[torr_client][1])  
         if torrent_type == 'torrent' and not mediaurl.startswith('http'):
             mediaurl = urllib.unquote_plus(mediaurl)
             files = {"torrent": open(mediaurl, 'rb')}
 
-    logger.info('url: %s%s, mediaurl: %s, post: %s' % (local_host[torr_client][0], local_host[torr_client][1], urllib.unquote_plus(mediaurl), post))
-    response = httptools.downloadpage(uri, post=post, files=files, timeout=timeout, alfa_s=alfa_s, ignore_response_code=True)
+    logger.info('method: %s, url: %s%s, mediaurl: %s, post: %s' % (method, local_host[torr_client][0], 
+                 local_host[torr_client][1], urllib.unquote_plus(mediaurl), post))
+    response = httptools.downloadpage(uri, method=method, post=post, files=files, timeout=timeout, 
+                                      alfa_s=alfa_s, ignore_response_code=True)
 
     if not response.sucess:
         logger.error('Error %s al acceder al la web de %s' % (str(response.code), torr_client.upper()))
@@ -1536,6 +1552,10 @@ def call_torrent_via_web(mediaurl, torr_client, torrent_action='add',oper=2, alf
 
 def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_new='', alfa_s=True):
     # Monitoriza el estado de descarga del torrent en Quasar y Elementum
+    global torrent_paths
+    
+    if not torrent_paths: torrent_paths = torrent_dirs()
+    torrest_verbs = torrent_paths.get('TORREST_verbs', {})
 
     if not web:
         web = 'http://127.0.0.1:%s/' % port
@@ -1543,7 +1563,7 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
         web = '%s:%s/' % (web, port)
 
     local_host = {"quasar": web+"torrents/", "elementum": web+"torrents/", \
-                  "torrest":  web+"torrents/"}
+                  "torrest":  web+torrest_verbs['root'][1]}
 
     torr = ''
     torr_id = ''
@@ -1563,11 +1583,13 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
     
     try:
         from core import httptools
+        method = 'get'
         uri = '%s/list' % (local_host[torr_client])
         if "torrest" in torr_client:
-            uri = '%s?status=true' % (local_host[torr_client].rstrip('/'))
+            method = torrest_verbs['list'][0]
+            uri = '%s%s' % (local_host[torr_client].rstrip('/'), torrest_verbs['list'][1])
         for z in range(10): 
-            res = httptools.downloadpage(uri, timeout=10, alfa_s=alfa_s)
+            res = httptools.downloadpage(uri, method=method, timeout=10, alfa_s=alfa_s)
             if not res.data:
                 log('##### Servicio de %s TEMPORALMENTE no disponible: %s - ERROR Code: %s' % \
                                     (torr_client, local_host[torr_client], str(res.code)))
@@ -1674,16 +1696,16 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
                 action_f = action
                 if action_f == 'reset': action_f = 'delete'
                 if torr_client in ['torrest']:
-                    if action_f == 'delete': action_f = 'remove?delete=true'
-                    if action_f == 'stop': action_f = 'remove?delete=false'
-                    uri = '%s%s/%s' % (local_host[torr_client], y, action_f)
+                    method = torrest_verbs[action_f][0]
+                    action_f = torrest_verbs[action_f][1]
+                    uri = '%s%s%s' % (local_host[torr_client], y, action_f)
                 else:
                     if action_f == 'stop': action_f = 'pause'
                     uri = '%s%s/%s' % (local_host[torr_client], action_f, y)
                     if torr_client in ['elementum'] and action_f == 'delete': uri += '?files=true'
 
                 for z in range(10):
-                    res = httptools.downloadpage(uri, timeout=10, alfa_s=alfa_s, ignore_response_code=True)
+                    res = httptools.downloadpage(uri, method=method, timeout=10, alfa_s=alfa_s, ignore_response_code=True)
                     if not res.sucess:
                         time.sleep(1)
                         continue
@@ -1784,7 +1806,31 @@ def torrent_dirs():
                      'TORREST_buffer': 0,
                      'TORREST_version': '',
                      'TORREST_port': 61235,
-                     'TORREST_web': 'http://%s:'
+                     'TORREST_web': 'http://%s:',
+                     'TORREST_verbs': {
+                                       'add_torrent': ['GET', 'add/torrent?ignore_duplicate=true&download=true&uri=%s'],
+                                       'add_torrent_local': ['GET', 'add/torrent?ignore_duplicate=true&download=true'],
+                                       'add_magnet': ['GET', 'add/magnet?ignore_duplicate=true&download=true&uri=%s'],
+                                       'root': ['', 'torrents/'],
+                                       'list': ['GET', '?status=true'],
+                                       'stop': ['GET', '/remove?delete=false'],
+                                       'delete': ['GET', '/remove?delete=true'],
+                                       'pause': ['GET', '/pause'],
+                                       'resume': ['GET', '/resume'],
+                                       'download': ['GET', '/download']
+                                      },
+                     'TORREST_verbs_15': {
+                                       'add_torrent': ['POST', 'add/torrent?ignore_duplicate=true&download=true&uri=%s'],
+                                       'add_torrent_local': ['POST', 'add/torrent?ignore_duplicate=true&download=true'],
+                                       'add_magnet': ['POST', 'add/magnet?ignore_duplicate=true&download=true&uri=%s'],
+                                       'root': ['', 'torrents/'],
+                                       'list': ['GET', '?status=true'],
+                                       'stop': ['PUT', '/stop'],
+                                       'delete': ['DELETE', '?delete=true'],
+                                       'pause': ['PUT', '/pause'],
+                                       'resume': ['PUT', '/resume'],
+                                       'download': ['PUT', '/download']
+                                      }
                     }
     
     try:
@@ -1899,6 +1945,11 @@ def torrent_dirs():
                 torrent_paths[torr_client.upper() + '_port'] = __settings__.getSetting('port')
                 torrent_paths[torr_client.upper() + '_web'] = '%s%s/' % (torrent_paths[torr_client.upper() + '_web'] \
                             % __settings__.getSetting('service_ip'), str(torrent_paths[torr_client.upper() + '_port']))
+
+                ### TEMPORAL: migración de versión 0.0.14 a 0.0.15 por cambio de API
+                if '15' in torrent_paths[torr_client.upper() + '_version']:
+                    torrent_paths[torr_client.upper() + '_verbs'] = torrent_paths[torr_client.upper() + '_verbs_15']
+
             except:
                 logger.error(traceback.format_exc(1))
         else:

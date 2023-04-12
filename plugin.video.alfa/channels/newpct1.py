@@ -188,7 +188,7 @@ finds = {'find': {'find': [{'tag': ['ul'], 'class': ['pelilist', 'buscar-list']}
                          ['(?i)en\s*(?:Full\s*)?HD\s*|microhd\s*|hdtv\s*|\(proper\)\s*|ratdvd\s*|dvdrip\s*|dvd.*\s*|dvbrip\s*', ''], 
                          ['(?i)ESDLA\s*|dvb\s*|\w*scarga\w*\s*|torr\w*\s*|gratis\s*|estreno\w*\s*', ''],
                          ['(?i)(?:la\s*)?pelicula\w*\s*en\s*latino\s*|(?:la\s*)?pelicula\w*\s*|\w*scarga\w*\s*todas\s*', ''], 
-                         ['(?i)bajar\s*|hdrip\s*|rip\s*|xvid\s*|ac3\s*5\.1\s*|ac3\s*|1080p\s*|720p\s*|dvd-screener\s*', ''], 
+                         ['(?i)bajar\s*|hdrip\s+|rip\s+|xvid\s*|ac3\s*5\.1\s*|ac3\s*|1080p\s*|720p\s*|dvd-screener\s*', ''], 
                          ['(?i)ts-screener\s*|screener\s*|bdremux\s*|4k\s*uhdrip\s*|full\s*uhd4k\s*|4kultra\s*|2cd\s*', ''], 
                          ['(?i)fullbluray\s*|en\s*bluray\s*|bluray\s*en\s*|bluray\s*|bonus\s*disc\s*|de\s*cine\s*', ''],
                          ['(?i)telecine\s*|argentina\s*|\+\+sub\w+\s*|\+-\+sub\w+\s*|directors\s*cut\s*|\s*en\s*hd', ''],

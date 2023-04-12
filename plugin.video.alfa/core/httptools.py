@@ -937,11 +937,14 @@ def downloadpage(url, **opt):
     
     # Reintentos para errores 403, 503
     if 'retries_cloudflare' not in opt: opt['retries_cloudflare'] = opt.get('canonical', {}).get('retries_cloudflare', 0)
-    if 'CF' not in opt and 'CF_stat' in opt.get('canonical', {}): opt['CF'] = opt['canonical']['CF_stat']
+    if 'CF' not in opt and 'CF_stat' in opt.get('canonical', {}): opt['CF'] = opt['CF_stat'] = opt['canonical']['CF_stat']
     if 'cf_assistant' not in opt and 'cf_assistant' in opt.get('canonical', {}): opt['cf_assistant'] = opt['canonical']['cf_assistant']
     if 'session_verify' not in opt and 'session_verify' in opt.get('canonical', {}): opt['session_verify'] = opt['canonical']['session_verify']
     if not "session_verify_save" in opt: opt["session_verify_save"] = opt["session_verify"] if "session_verify" in opt else None
-    if 'CF_if_assistant' not in opt and 'CF_if_assistant' in opt.get('canonical', {}): opt['CF_if_assistant'] = opt['canonical']['CF_if_assistant']
+    if 'CF_if_assistant' not in opt and 'CF_if_assistant' in opt.get('canonical', {}): 
+        opt['CF_if_assistant'] = opt['canonical']['CF_if_assistant']
+    if 'CF_if_NO_assistant' not in opt and 'CF_if_NO_assistant' in opt.get('canonical', {}): 
+        opt['CF_if_NO_assistant'] = opt['canonical']['CF_if_NO_assistant']
     if 'forced_proxy_opt' not in opt and 'forced_proxy_opt' in opt.get('canonical', {}): \
                           opt['forced_proxy_opt'] = opt['canonical']['forced_proxy_opt']
     if 'cf_assistant_if_proxy' not in opt and 'cf_assistant_if_proxy' in opt.get('canonical', {}): \
@@ -953,10 +956,7 @@ def downloadpage(url, **opt):
     if 'set_tls' not in opt and 'set_tls' in opt.get('canonical', {}): opt['set_tls'] = opt['canonical']['set_tls']
     if (opt.get('set_tls', '') or opt.get('set_tls', '') is None) and not opt.get('set_tls', '') == True: ssl_version = opt['set_tls']
     if 'set_tls_min' not in opt and 'set_tls_min' in opt.get('canonical', {}): opt['set_tls_min'] = opt['canonical']['set_tls_min']
-    
-    # Activa DEBUG extendido cuando se extrae un Informe de error (log)
-    print_DEBUG(url, opt, label='OPT', **opt)
-    
+
     # Preparando la url
     if not PY3:
         url = urllib.quote(url.encode('utf-8'), safe="%/:=&?~#+!$,;'@()*[]")
@@ -1030,9 +1030,9 @@ def downloadpage(url, **opt):
         
         # Prepara la url en caso de necesitar proxy, o si se envía "proxy_addr_forced" desde el canal
         url, proxy_data, opt = check_proxy(url, **opt)
-        if not proxy_data.get('stat', '') and opt.get('CF_if_assistant', False):
+        if not proxy_data.get('stat', '') and opt.get('CF_if_assistant', False) and opt.get('CF_if_NO_assistant', True):
             opt['CF'] = opt['cloudscraper_active'] = True
-        if 'croxyproxy.com' in proxy_data.get('web_name', ''):
+        if 'croxyproxy.com' in proxy_data.get('web_name', '') or 'CF_stat' in opt and not opt['CF_stat']:
             opt['CF'] = opt['cloudscraper_active'] = False
 
         if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True) \
@@ -1057,6 +1057,9 @@ def downloadpage(url, **opt):
                 ssl_context.check_hostname = False
                 ssl_context.verify_mode = ssl.CERT_NONE
             CS_stat = False
+
+        # Activa DEBUG extendido cuando se extrae un Informe de error (log)
+        print_DEBUG(url, opt, label='OPT', **opt)
         print_DEBUG(url, proxy_data, label='PROXY_DATA', req=session, **opt)
 
         # Conectar la versión de SSL TLS con la sesión
@@ -1140,13 +1143,21 @@ def downloadpage(url, **opt):
                     else:
                         ### Makes the request with POST method
                         req = session.post(url, data=payload, allow_redirects=opt.get('follow_redirects', True),
-                                          files=files, timeout=opt.get('timeout', None), params=opt.get('params', {}))
+                                           files=files, timeout=opt.get('timeout', None), params=opt.get('params', {}))
                 
                 elif opt.get('only_headers', False):
                     info_dict = fill_fields_pre(url, proxy_data, file_name_, **opt)
                     ### Makes the request with HEAD method
                     req = session.head(url, allow_redirects=opt.get('follow_redirects', True),
-                                      timeout=opt.get('timeout', None), params=opt.get('params', {}))
+                                       timeout=opt.get('timeout', None), params=opt.get('params', {}))
+
+                elif opt.get('method', False):
+                    info_dict = fill_fields_pre(url, proxy_data, file_name_, **opt)
+                    ### Makes the request with SEND method
+                    req_send = requests.Request(opt['method'], url, data=payload, files=files, params=opt.get('params', {}))
+                    prepped = session.prepare_request(req_send)
+                    req = session.send(prepped, timeout=opt.get('timeout', None), allow_redirects=opt.get('follow_redirects', True))
+
                 else:
                     info_dict = fill_fields_pre(url, proxy_data, file_name_, **opt)
                     ### Makes the request with GET method
@@ -1364,6 +1375,9 @@ def downloadpage(url, **opt):
             if not PY3: from . import proxytools
             else: from . import proxytools_py3 as proxytools
             domain = obtain_domain(opt['url_save'], sub=True)
+            if not opt.get('CF_if_NO_assistant', True):
+                opt['CF'] = opt['CF_save'] = opt['CF_stat'] = opt['session_verify'] \
+                          = opt['session_verify_save'] = opt['cloudscraper_active'] = False
             opt['forced_proxy'] = 'ProxyCF'
             if opt['forced_proxy_ifnot_assistant'] in ['ProxySSL'] and not proxy_data.get('stat', ''):
                 opt['forced_proxy'] = 'ProxyWeb:croxyproxy.com'
@@ -1417,7 +1431,6 @@ def downloadpage(url, **opt):
             logger.error(traceback.format_exc(1))
 
         response['url'] = req.url
-        logger.error(req.url)
 
         if not response['data']:
             response['data'] = ''

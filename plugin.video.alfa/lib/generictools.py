@@ -966,6 +966,8 @@ def check_marks_in_videolibray(item, strm='', video_list_init=False):
 
 def context_for_videolibray(item):
     logger.info()
+    
+    context = []
 
     if item.video_path:
 
@@ -979,19 +981,19 @@ def context_for_videolibray(item):
             poner_marca = config.get_localized_string(60033)
             quitar_marca = config.get_localized_string(60032)
 
-        context = [{"title": quitar_marca,
-                    "action": "mark_video_as_watched",
-                    "channel": "videolibrary",
-                    "playcount": 0},
-                   {"title": poner_marca,
-                    "action": "mark_video_as_watched",
-                    "channel": "videolibrary",
-                    "playcount": 1}]
+        context.extend(({"title": quitar_marca,
+                        "action": "mark_video_as_watched",
+                        "channel": "videolibrary",
+                        "playcount": 0},
+                       {"title": poner_marca,
+                        "action": "mark_video_as_watched",
+                        "channel": "videolibrary",
+                        "playcount": 1}))
     
     if (item.video_path and item.contentType in ['tvshow']) or (item.contentType in ['episode'] and item.nfo):
-        context = [{"title": config.get_localized_string(70269),
-                    "action": "update_tvshow",
-                    "channel": "videolibrary"}]
+        context.append(({"title": config.get_localized_string(70269),
+                        "action": "update_tvshow",
+                        "channel": "videolibrary"}))
     
         if not item.context: item.context = []
         if not isinstance(item.context, list):
@@ -1239,7 +1241,6 @@ def AH_find_seasons(item, matches, **AHkwargs):
     patron_seasons = findS.get('seasons_search_num_rgx', [['(?i)-(\d+)-(?:Temporada|Miniserie)', None], 
                                                          ['(?i)(?:Temporada|Miniserie)-(\d+)', None]])
     patron_qualities = findS.get('seasons_search_qty_rgx', [['(?i)(?:Temporada|Miniserie)(?:-(.*?)(?:\.|\/|-$|$))', None]])
-    logger.error(patron_seasons)
     list_temps = []
     list_temp_int = []
     list_temp = []
@@ -1356,7 +1357,6 @@ def AH_find_seasons(item, matches, **AHkwargs):
                     list_temp_int.append(elem_json.copy())
         
         list_temp_int = sorted(list_temp_int, key=lambda el: el['season'])
-        logger.error(list_temp_int)
         for x, elem_json in enumerate(list_temp_int):
             if elem_json['season'] in seasons:
                 continue
@@ -1568,7 +1568,10 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt='', **AHkwargs):
                 title = scrapertools.slugify(re.sub('\s+-\s+\d+.+?$', '', elem_json.get('title', '')).strip(), strict=False, convert=convert)
                 if title in urls: continue
                 quality = scrapertools.find_single_match(elem_json.get('quality', ''), '\[(.*?)\]') or 'HDTV'
-                urls += ['%s [%s]' % (title, quality.strip())]
+                if quality_control:
+                    urls += ['%s [%s]' % (title, quality.strip())]
+                else:
+                    urls += [title]
 
             matches_inter.append(elem_json.copy())
             if len(matches_inter) >= channel_entries: break
@@ -1593,6 +1596,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt='', **AHkwargs):
                 elem_cfg['url'] = elem_cfg['url'].replace(host_alt, self.response.host)
                 host_alt = self.response.host
 
+            item.btdig_in_use= True
             finds_find_alt = elem_cfg.get('find', {}) or finds_alt.get('find', {})
             if not finds_find_alt:
                 return matches
@@ -1603,7 +1607,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt='', **AHkwargs):
             x = 0
             for elem in matches_btdigg if isinstance(matches_btdigg, list) else matches_btdigg.items():
                 elem_json = {}
-                logger.error(elem)
+                #logger.error(elem)
 
                 if isinstance(matches_btdigg, list):
                     elem_json['url'] = elem.a.get('href', '')
@@ -1643,6 +1647,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt='', **AHkwargs):
                 url_final = '%s%s_btdig/%s%s' % (btdigg_url, media_path, elem_json['language'],
                                                  elem_json['title'].replace(' ', '-').lower().strip())
                 elem_json['quality'] = '%s%s' % (elem_json['quality'], btdigg_label)
+                elem_json['btdig_in_use'] = True
                 url_save = scrapertools.slugify(re.sub('(?:\s+\(+\d{4}\)+$|\s*-\s*Temp.*?$|\s+-\s+\d+.*?$)', '', elem_json['title']), 
                                                 strict=False, convert=convert)
 
@@ -1722,37 +1727,33 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt='', **AHkwargs):
             season_low = 1
 
         torrent_params = {
-                          'quality_alt': 'HDTV, 720p 1080p 4kwebrip 4k' if not quality_control \
+                          'quality_alt': '[HDTV] 720p 1080p 4kwebrip 4k' if not quality_control \
                                           else '720p 1080p 4kwebrip 4k' if '720' in item.quality else '[HDTV]', 
                           'find_alt_link_season': seasons, 
                           'find_alt_link_next': 0, 
-                          'domain_alt': domain_alt or find_alt_domains,
-                          'find_alt_link_test': True
+                          'domain_alt': domain_alt or find_alt_domains
                           }
-        find_alt_link_result = []
-        if item.find_alt_link_result:
-            find_alt_link_result = item.find_alt_link_result
-            del item.find_alt_link_result
+
         limit_pages = 3
         interface = str(config.get_setting('btdigg_status', server='torrent'))
         limit_items_found = 5 * 10 if interface != '200' else 10 * 10
         patron_sea = 'Cap.(\d+)\d{2}'
 
-        if not find_alt_link_result:
-            x = 0
-            while x < limit_pages:
-                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=cache)
+        x = 0
+        while x < limit_pages:
+            torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=cache)
 
-                if not torrent_params['find_alt_link_result'] and not torrent_params['find_alt_link_next']: x = 999999
-                if not torrent_params['find_alt_link_next']: x = 999999
-                if int(torrent_params['find_alt_link_found']) < limit_items_found: 
-                    limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
-                x += 1
+            if not torrent_params['find_alt_link_result'] and not torrent_params['find_alt_link_next']: x = 999999
+            if not torrent_params['find_alt_link_next']: x = 999999
+            if torrent_params.get('find_alt_link_found') and int(torrent_params['find_alt_link_found']) < limit_items_found: 
+                limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
+            x += 1
 
-                for y, (scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet) in enumerate(torrent_params['find_alt_link_result']):
-                    elem_json = {}
-                    #logger.error(find_alt_link_result[y])
+            for y, (scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet) in enumerate(torrent_params['find_alt_link_result']):
+                elem_json = {}
+                #logger.error(torrent_params['find_alt_link_result'][y])
 
+                try:
                     if not scrapertools.find_single_match(scrapedtitle, patron_sea): continue
                     elem_json['season'] = int(scrapertools.find_single_match(scrapedtitle, patron_sea))
                     if elem_json['season'] in season_high: continue
@@ -1771,8 +1772,11 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt='', **AHkwargs):
                             elem_json['quality'] = '%s%s' % (item.quality.replace(btdigg_label, ''), btdigg_label)
 
                     matches.append(elem_json.copy())
+                except:
+                    logger.error(traceback.format_exc())
+                    continue
 
-                if isinstance(seasons, int) and seasons in season_high: break
+            if isinstance(seasons, int) and seasons in season_high: break
 
         matches = sorted(matches, key=lambda it: int(it.get('season', 0)))
 
@@ -1786,172 +1790,196 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt='', **AHkwargs):
     logger.info()
 
     controls = self.finds.get('controls', {})
-    url = AHkwargs.pop('url', item.url)
     contentSeason = AHkwargs.pop('btdigg_contentSeason', controls.get('btdigg_contentSeason', 0))
     cache = AHkwargs.pop('btdigg_cache', controls.get('btdigg_cache', True))
     quality_control = AHkwargs.pop('btdigg_quality_control', controls.get('btdigg_quality_control', False))
     canonical = AHkwargs.pop('canonical', self.canonical)
+    
     matches = sorted(matches, key=lambda it: int(it.get('episode', 0))) if matches else []
-    season_high = [elem_json['episode'] for elem_json in matches] if matches else [0]
-
-    return matches
+    epis_index = {}
+    for x, epi in enumerate(matches):
+        json_inter = {}
+        if not epi.get('episode'): continue
+        epi['quality'] = epi.get('quality', 'HDTV').replace('*', '') or 'HDTV'
+        if not epis_index.get(epi['episode']):
+            epis_index[epi['episode']] = [[epi['episode'], x, epi['quality'].lower()]]
+        else:
+            epis_index[epi['episode']] += [[epi['episode'], x, epi['quality'].lower()]]
 
     try:
         if canonical.get('global_search_cancelled', False) or (config.GLOBAL_SEARCH_CANCELLED \
                                                            and canonical.get('global_search_active', False)):
             logger.info('## Búsqueda global cancelada: %s: %s' % (item.channel, item.title), force=True)
             return itemlist
-        
+
         format_tmdb_id(item)
-        format_tmdb_id(itemlist)
 
         if not PY3: from lib.alfaresolver import find_alternative_link
         else: from lib.alfaresolver_py3 import find_alternative_link
 
-        season = item.infoLabels['number_of_seasons'] or 1
-        seasons = season
-        season_low = contentSeason or season
-        if season != season_low:
-            seasons = '%s-%s' % (season_low, season)
-        elif btdigg_url in item.url:
-            seasons = '1-%s' % season
-            season_low = 1
-        episode_max = int('%s%s' % (season, str(item.infoLabels['number_of_episodes']).zfill(2)))
-        if epis_done:
-            epis_done = sorted(epis_done)
-            episode_max_int = int(epis_done[-1])
-            episode_max = episode_max_int if episode_max < episode_max_int else episode_max
-        if not url:
-            url = item.url
-
+        season = seasons = item.infoLabels['season'] or 1
+        episode_max = item.infoLabels['temporada_num_episodios'] or item.infoLabels['number_of_episodes']
         torrent_params = {
-                          'quality_alt': '720p 1080p 4kwebrip 4k' if '720' in item.quality else '[HDTV]', 
+                          'quality_alt': '[HDTV] 720p 1080p 4kwebrip 4k' if not quality_control \
+                                          else '720p 1080p 4kwebrip 4k' if '720' in item.quality else '[HDTV]', 
                           'find_alt_link_season': seasons, 
                           'find_alt_link_next': 0, 
                           'domain_alt': domain_alt or find_alt_domains
                           }
-        find_alt_link_result = []
-        if item.find_alt_link_result:
-            find_alt_link_result = item.find_alt_link_result
-            del item.find_alt_link_result
-        itemlist_t = []
+
         limit_pages = 3
         interface = str(config.get_setting('btdigg_status', server='torrent'))
         limit_items_found = 5 * 10 if interface != '200' else 10 * 10
-        patron_cap = 'Cap.(\d+\d{2})'
-        patron_seaepi = 'Cap.(\d+)(\d{2})'
-        
-        if not find_alt_link_result:
-            x = 0
-            while x < limit_pages:
-                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=cache)
-                if not torrent_params['find_alt_link_result'] and not torrent_params['find_alt_link_next']: break
-                if torrent_params['find_alt_link_result']: find_alt_link_result.extend(torrent_params['find_alt_link_result'])
-                if not torrent_params['find_alt_link_next']: break
-                if int(torrent_params['find_alt_link_found']) < limit_items_found: 
-                    limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
-                x += 1
-            if find_alt_link_result and not item.add_videolibrary:
-                item.find_alt_link_result = find_alt_link_result
+        patron_sea = 'Cap.(\d+)\d{2}'
+        patron_cap = 'Cap.\d+(\d{2})'
 
-        for scrapedurl, scrapedtitle, scrapedsize, _scrapedquality, scrapedmagnet in find_alt_link_result:
-            scrapedquality = _scrapedquality.replace('HDTV 720p', 'HDTV-720p')
-            seaepi = scrapertools.find_single_match(scrapedtitle, patron_cap)
-            if not seaepi: continue
-            seaepi = int(seaepi)
-            contentSeason, contentEpisodeNumber = scrapertools.find_single_match(scrapedtitle, patron_seaepi)
-            contentSeason = int(contentSeason)
-            contentEpisodeNumber = int(contentEpisodeNumber)
-            if contentSeason and item.infoLabels['number_of_seasons'] \
-                             and contentSeason > int(item.infoLabels['number_of_seasons']): continue
-            if contentEpisodeNumber and item.infoLabels['number_of_episodes'] \
-                                    and contentEpisodeNumber > int(item.infoLabels['number_of_episodes']) \
-                                    and seaepi > episode_max: continue
-            if item.from_num_season_colapse:
-                if contentSeason < season_low or contentSeason > season: continue
-                if item.from_num_season_colapse and int(item.from_num_season_colapse) != contentSeason: continue
-            if scrapertools.find_single_match(scrapedtitle, patron_cap) in epis_done:
-                for item_local in itemlist:
-                    if item_local.contentSeason == contentSeason and item_local.contentEpisodeNumber == contentEpisodeNumber:
-                        quality_local = scrapertools.find_single_match(item_local.quality, '\d+\w').lower()
-                        if not quality_local in scrapedquality.lower():
-                            if not scrapedquality.lower() in item_local.quality.lower():
-                                item_local.quality += ', %s' % scrapedquality
-                            if not item_local.matches:
-                                item_local.matches = [(scrapedtitle, scrapedmagnet, scrapedsize, scrapedquality)]
-                            else:
-                                item_local.matches.append((scrapedtitle, scrapedmagnet, scrapedsize, scrapedquality))
-                continue
-            
-            item_local = item.clone()
-            
-            item_local.action = "findvideos"
-            item_local.contentType = "episode"
-            item_local.extra = "episodios"
-            if item_local.library_playcounts:
-                del item_local.library_playcounts
-            if item_local.library_urls:
-                del item_local.library_urls
-            if item_local.path:
-                del item_local.path
-            if item_local.update_last:
-                del item_local.update_last
-            if item_local.update_next:
-                del item_local.update_next
-            if item_local.channel_host:
-                del item_local.channel_host
-            if item_local.active:
-                del item_local.active
-            if item_local.contentTitle:
-                del item_local.infoLabels['title']
-            if item_local.season_colapse:
-                del item_local.season_colapse
-            if item_local.find_alt_link_result:
-                del item_local.find_alt_link_result
-            if item_local.matches:
-                del item_local.matches
-            if item_local.list_temp:
-                del item_local.list_temp
-            
-            item_local.url = url                                                # Usamos las url de la temporada, no hay de episodio
-            item_local.url_tvshow = url
-            item_local.context = context if context else "['buscar_trailer']"
-            if not item_local.infoLabels['poster_path']:
-                item_local.thumbnail = item_local.infoLabels['thumbnail']
-            item_local.matches = []
-            
-            item_local.quality = '%s%s' % (scrapedquality, btdigg_label)
-            item_local.contentSeason, item_local.contentEpisodeNumber = scrapertools.find_single_match(scrapedtitle, patron_seaepi)
-            item_local.title = '%sx%s' % (item_local.contentSeason, str(item_local.contentEpisodeNumber).zfill(2))
-            item_local.torrents_path = ''
-            item_local.matches.append((scrapedtitle, scrapedmagnet, scrapedsize, scrapedquality))
-            
-            itemlist_t.append(item_local)
-            #logger.debug(item_local)
-            
-        if len(itemlist_t) > 1:
-            itemlist_t = sorted(itemlist_t, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber), it.quality))   #clasificamos
-        
-        # Si es el mismo episodio, pero con diferente calidad, se acumula a item anterior
-        for x, item_local in enumerate(itemlist_t):
-            if x > 0 and item_local.contentSeason == itemlist_t[x-1].contentSeason \
-                     and item_local.contentEpisodeNumber == itemlist_t[x-1].contentEpisodeNumber \
-                     and itemlist_t[x-1].contentEpisodeNumber != 0:             # solo guardamos un episodio ...
-                itemlist[-1].matches.extend(item_local.matches)
-                quality = item_local.quality.replace(btdigg_label, '')
-                if quality not in itemlist[-1].quality: itemlist[-1].quality += ', %s' % quality
-                #logger.debug(itemlist[-1])
-                continue                                                        # ignoramos el episodio duplicado
-            itemlist.append(item_local)
-            #logger.debug(itemlist[-1])
-            
-        if itemlist_t and len(itemlist) > 1:
-            itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))   #clasificamos
+        x = 0
+        while x < limit_pages:
+            torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=cache)
+
+            if not torrent_params['find_alt_link_result'] and not torrent_params['find_alt_link_next']: x = 999999
+            if not torrent_params['find_alt_link_next']: x = 999999
+            if torrent_params.get('find_alt_link_found') and int(torrent_params['find_alt_link_found']) < limit_items_found: 
+                limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
+            x += 1
+
+            for y, (scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet) in enumerate(torrent_params['find_alt_link_result']):
+                elem_json = {}
+                #logger.error(torrent_params['find_alt_link_result'][y])
+
+                try:
+                    if not scrapertools.find_single_match(scrapedtitle, patron_sea): continue
+                    elem_json['season'] = int(scrapertools.find_single_match(scrapedtitle, patron_sea))
+                    if elem_json['season'] != item.infoLabels['season']: continue
+                    if not scrapertools.find_single_match(scrapedtitle, patron_cap): continue
+                    elem_json['episode'] = int(scrapertools.find_single_match(scrapedtitle, patron_cap))
+                    if elem_json['episode'] > episode_max: continue
+
+                    elem_json['url'] = scrapedmagnet
+                    elem_json['quality'] = scrapedquality.replace('HDTV 720p', 'HDTV-720p')
+                    ignore = False
+                    for episode, index, quality in epis_index.get(elem_json['episode'], []):
+                        if elem_json['quality'].lower() == quality:
+                            ignore = True
+                            break
+                    if ignore:
+                        continue
+                    elem_json['quality'] = '%s%s' % (elem_json['quality'], btdigg_label)
+                    elem_json['torrent_info'] = scrapedsize
+                    elem_json['language'] = '*%s' % scrapedmagnet
+                    elem_json['size'] = elem_json['torrent_info'].replace(config.BTDIGG_LABEL_B, '')\
+                                                                 .replace('[COLOR magenta][B]RAR-[/B][/COLOR]', '')
+                    elem_json['server'] = 'torrent'
+                    elem_json['btdig_in_use'] = True
+
+                    if elem_json['episode'] in epis_index:
+                        matches.append(elem_json.copy())
+                        epis_index[elem_json['episode']] += [[elem_json['episode'], len(matches) - 1, 
+                                                              elem_json['quality'].replace(btdigg_label, '').lower()]]
+                    else:
+                        matches.append(elem_json.copy())
+                        epis_index[elem_json['episode']] = [[elem_json['episode'], len(matches) - 1, 
+                                                             elem_json['quality'].replace(btdigg_label, '').lower()]]
+                except:
+                    logger.error(traceback.format_exc())
+                    continue
+
+        matches = sorted(matches, key=lambda it: (it.get('episode', 0), self.convert_size(it.get('size', 0)))) if matches else []
     
     except:
         logger.error(traceback.format_exc())
+
+    return matches
+
+
+def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt='', **AHkwargs):
+    logger.info()
+
+    if item.matches and item.channel != 'videolibrary' and item.contentChannel != 'videolibrary' and item.from_channel != 'videolibrary':
+        return matches
+
+    controls = self.finds.get('controls', {})
+    contentSeason = AHkwargs.pop('btdigg_contentSeason', controls.get('btdigg_contentSeason', 0))
+    cache = True if item.contentChannel == 'videolibrary' or item.from_channel == 'videolibrary' or not item.matches else False
+    quality_control = AHkwargs.pop('btdigg_quality_control', controls.get('btdigg_quality_control', False))
+    canonical = AHkwargs.pop('canonical', self.canonical)
+
+    try:
+        if canonical.get('global_search_cancelled', False) or (config.GLOBAL_SEARCH_CANCELLED \
+                                                           and canonical.get('global_search_active', False)):
+            logger.info('## Búsqueda global cancelada: %s: %s' % (item.channel, item.title), force=True)
+            return itemlist
+
+        format_tmdb_id(item)
+
+        if not PY3: from lib.alfaresolver import find_alternative_link
+        else: from lib.alfaresolver_py3 import find_alternative_link
+
+        torrent_params = {
+                          'quality_alt': '[HDTV] 720p 1080p 4kwebrip 4k' if not quality_control \
+                                          else '720p 1080p 4kwebrip 4k' if '720' in item.quality else '[HDTV]', 
+                          'find_alt_link_next': 0, 
+                          'domain_alt': domain_alt or find_alt_domains
+                          }
+        if item.contentType == 'movie':
+            torrent_params['quality_alt'] += ' rip'
+            if 'screener' in item.quality.lower(): torrent_params['quality_alt'] += ' screener'
+
+        limit_pages = 3
+        interface = str(config.get_setting('btdigg_status', server='torrent'))
+        limit_items_found = 5 * 10 if interface != '200' else 10 * 10
+        patron_sea = 'Cap.(\d+)\d{2}'
+        patron_cap = 'Cap.\d+(\d{2})'
+
+        x = 0
+        while x < limit_pages:
+            torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=cache)
+
+            if not torrent_params['find_alt_link_result'] and not torrent_params['find_alt_link_next']: x = 999999
+            if not torrent_params['find_alt_link_next']: x = 999999
+            if torrent_params.get('find_alt_link_found') and int(torrent_params['find_alt_link_found']) < limit_items_found: 
+                limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
+            x += 1
+
+            for y, (scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet) in enumerate(torrent_params['find_alt_link_result']):
+                elem_json = {}
+                #logger.error(torrent_params['find_alt_link_result'][y])
+
+                try:
+                    if item.contentType == 'episode':
+                        if not scrapertools.find_single_match(scrapedtitle, patron_sea): continue
+                        elem_json['season'] = int(scrapertools.find_single_match(scrapedtitle, patron_sea))
+                        if elem_json['season'] != item.infoLabels['season']: continue
+                        if not scrapertools.find_single_match(scrapedtitle, patron_cap): continue
+                        elem_json['episode'] = int(scrapertools.find_single_match(scrapedtitle, patron_cap))
+                        if elem_json['episode'] != item.contentEpisodeNumber: continue
+
+                    elem_json['url'] = scrapedmagnet
+                    if elem_json['url'] in str(matches): 
+                        if DEBUG: logger.debug('DROP: %s' % elem_json['url'])
+                        continue
+
+                    elem_json['quality'] = scrapedquality.replace('HDTV 720p', 'HDTV-720p')
+                    elem_json['quality'] = '%s%s' % (elem_json['quality'], btdigg_label)
+                    elem_json['torrent_info'] = scrapedsize
+                    elem_json['language'] = '*%s' % scrapedmagnet
+                    elem_json['size'] = elem_json['torrent_info'].replace(config.BTDIGG_LABEL_B, '')\
+                                                                 .replace('[COLOR magenta][B]RAR-[/B][/COLOR]', '')
+                    elem_json['server'] = 'torrent'
+                    elem_json['btdig_in_use'] = True
+
+                    matches.append(elem_json.copy())
+
+                except:
+                    logger.error(traceback.format_exc())
+                    continue
+
+        matches = sorted(matches, key=lambda it: (self.convert_size(it.get('size', 0)))) if matches else []
     
-    return item, itemlist
+    except:
+        logger.error(traceback.format_exc())
+
+    return matches
 
 
 def post_tmdb_listado(item, itemlist):

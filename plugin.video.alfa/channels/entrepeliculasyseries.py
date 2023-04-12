@@ -26,14 +26,18 @@ list_quality_movies = ['HD', '1080p', 'HD - 1080p']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['mega', 'fembed', 'vidtodo', 'gvideo']
 forced_proxy_opt = 'ProxyCF'
+host = 'https://entrepeliculasyseries.nz/'
+assistant = config.get_setting('assistant_version', default='') and not DictionaryAllChannel.channel_proxy_list({}, host)
 
 canonical = {
              'channel': 'entrepeliculasyseries', 
              'host': config.get_setting("current_host", 'entrepeliculasyseries', default=''), 
-             'host_alt': ['https://entrepeliculasyseries.nz/'], 
+             'host_alt': [host], 
              'host_black_list': ['https://entrepeliculasyseries.pro/', 'https://entrepeliculasyseries.nu/'],   
              'pattern_proxy': '(?i)<div\s*class="TpRwCont\s*Container">', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'CF_stat': True if assistant else False, 'session_verify': True if assistant else False, 
+             'CF_if_assistant': True if assistant else False, 'CF_if_NO_assistant': False,  
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -231,8 +235,9 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
         try:
             if item.c_type == 'episodios':
-                sxe = AlfaChannel.parse_finds_dict(elem, findS.get('season_episode', {}), c_type=item.c_type)
                 try:
+                    sxe = AlfaChannel.parse_finds_dict(elem, findS.get('season_episode', {}), c_type=item.c_type)
+                    if not sxe: continue
                     elem_json['season'], elem_json['episode'] = sxe.split('x')
                     elem_json['season'] = int(elem_json['season'] or 1)
                     elem_json['episode'] = int(elem_json['episode'] or 1)
@@ -299,8 +304,9 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         elem_json = {}
         #logger.error(elem)
 
-        sxe = AlfaChannel.parse_finds_dict(elem, findS.get('season_episode', {}), c_type=item.c_type)
         try:
+            sxe = AlfaChannel.parse_finds_dict(elem, findS.get('season_episode', {}), c_type=item.c_type)
+            if not sxe: continue
             elem_json['season'], elem_json['episode'] = sxe.split('x')
             elem_json['season'] = int(elem_json['season'] or 1)
             elem_json['episode'] = int(elem_json['episode'] or 1)
@@ -384,16 +390,24 @@ def play(item):
     itemlist = list()
     kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 'timeout': 5, 
               'canonical': {}}
-    
+
     id = scrapertools.find_single_match(item.url, "h=([^$]+)")
-    headers = {"Referer": item.url}
-    post = {"h": id}
-    base_url = "%sr.php" % host
+    headers = item.headers or {"Referer": item.url}
+
+    post = None
+    base_url = item.url
     url = ''
     
     for x in range(2):
         resp = AlfaChannel.create_soup(base_url, post=post, headers=headers, follow_redirects=False, 
                                        forced_proxy_opt=forced_proxy_opt, soup=False, **kwargs)
+        url = AlfaChannel.get_cookie(url, 'nofernu')
+        if url:
+            url = AlfaChannel.do_unquote(url)
+            break
+        
+        post = {"h": id}
+        base_url = "%sr.php" % host
         if resp.code in AlfaChannel.REDIRECTION_CODES:
             url = resp.headers.get("location", "")
             break
@@ -456,13 +470,13 @@ def play_netu(item):
     
     itemlist = list()
     kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 'timeout': 5, 
-              'CF': True, 'canonical': {}}
+              'CF': True, 'canonical': {}, 'soup': False}
     
     headers = {"Referer": item.url}
     url = '%s?=&best=t' % item.url
     
     resp = AlfaChannel.create_soup(url, headers=headers, follow_redirects=False, 
-                                   forced_proxy_opt=forced_proxy_opt, soup=False, **kwargs)
+                                   forced_proxy_opt=forced_proxy_opt, **kwargs)
     if resp.code in AlfaChannel.REDIRECTION_CODES:
         url = resp.headers.get("location", "")
     else:
@@ -472,18 +486,18 @@ def play_netu(item):
     domain_e = AlfaChannel.obtain_domain(url, scheme=True)
     url = '%s/f/%s?http_referer=%s' % (domain_e, scrapertools.find_single_match(url, "\?v=([^$]+)"), AlfaChannel.do_quote(domain+'/'))
     resp = AlfaChannel.create_soup(url, headers=headers, follow_redirects=False, 
-                                   forced_proxy_opt=forced_proxy_opt, soup=False, **kwargs)
+                                   forced_proxy_opt=forced_proxy_opt, **kwargs)
 
     #url = scrapertools.find_single_match(resp.data, "self\.location\.replace\('([^']+)'").replace('#', '%23')
     url = scrapertools.find_single_match(resp.data, "self\.location\.replace\('([^']+)'").split('&')[0]
     url = AlfaChannel.urljoin(domain_e, url)
     resp = AlfaChannel.create_soup(url, headers=headers, follow_redirects=False, 
-                                   forced_proxy_opt=forced_proxy_opt, soup=False, **kwargs)
+                                   forced_proxy_opt=forced_proxy_opt, **kwargs)
                                    
     url = scrapertools.find_single_match(resp.data, "self\.location\.replace\('([^']+)'")
     url = AlfaChannel.urljoin(domain_e, url)
     resp = AlfaChannel.create_soup(url, headers=headers, follow_redirects=False, 
-                                   forced_proxy_opt=forced_proxy_opt, soup=False, **kwargs)
+                                   forced_proxy_opt=forced_proxy_opt, **kwargs)
 
     logger.error(resp.data)
     

@@ -777,7 +777,7 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
         # Check if other add-ons may need the Assistant app
         import xbmcaddon
         app_needed = ''
-        for addon_binary in ['torrest', 'quasar']:
+        for addon_binary in ['quasar']:
             if xbmc.getCondVisibility('System.HasAddon("plugin.video.%s")' % addon_binary):
                 try:
                     __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % addon_binary)

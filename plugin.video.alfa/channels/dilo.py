@@ -253,8 +253,9 @@ def seasons(item):
     logger.info()
     
     matches = []
+    kwargs['soup'] = False
 
-    data = AlfaChannel.create_soup(item.url, soup=False, **kwargs).data
+    data = AlfaChannel.create_soup(item.url, **kwargs).data
 
     item_id = scrapertools.find_single_match(data, '{"item_id":\s*(\d+)}')
     kwargs['post'] = AlfaChannel.do_urlencode({'item_id': item_id})
@@ -387,20 +388,20 @@ def play(item):
 
     itemlist = []
     kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
-              'timeout': timeout, 'cf_assistant': False, 'canonical': {}}
+              'timeout': timeout, 'cf_assistant': False, 'canonical': {}, 'soup': False}
 
     if item.server not in ['openload', 'streamcherry', 'streamango']:
         item.server = ''
 
     try:
-        new_data = AlfaChannel.create_soup(item.url, soup=False).data
+        new_data = AlfaChannel.create_soup(item.url, **kwargs).data
         if "gamovideo" in item.url:
             item.url = scrapertools.find_single_match(new_data, '<a href="([^"]+)"')
         else:
             new_enc_url = scrapertools.find_single_match(new_data, '<iframe\s*class=[^>]+src="([^"]+)"')
 
             try:
-                item.url = AlfaChannel.create_soup(new_enc_url, follow_redirects=False, soup=False, **kwargs).headers['location']
+                item.url = AlfaChannel.create_soup(new_enc_url, follow_redirects=False, **kwargs).headers['location']
             except:
                 if not 'jquery' in new_enc_url:
                     item.url = new_enc_url

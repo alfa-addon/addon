@@ -34,17 +34,27 @@ from channelselector import get_thumb
 
 # https://dominioshdfull.com/
 
+host = 'https://hdfull.store/'
+assistant = config.get_setting('assistant_version', default='')
+if assistant: 
+    assistant_copy = assistant.split('.')
+    assistant = tuple((int(assistant_copy[0]), int(assistant_copy[1]), int(assistant_copy[2])))
+    if assistant < (1, 3, 91) or httptools.channel_proxy_list(host): assistant = tuple()
+
 canonical = {
              'channel': 'hdfull', 
-             'host': config.get_setting("current_host", 'hdfull', default=''), 
-             'host_alt': ['https://hdfull.store/'], 
+             'host': host if assistant else 'https://hdfull.org/', 
+             'host_alt': [host if assistant else 'https://hdfull.org/'], 
              'host_verification': '%slogin', 
-             'host_black_list': ['https://hdfull.life/', 'https://hdfull.digital/', 'https://hdfull.work/', 
+             'host_black_list': ['https://hdfull.store/' if not assistant else 'https://hdfull.org/', 
+                                 'https://hdfull.life/', 'https://hdfull.digital/', 'https://hdfull.work/', 
                                  'https://hdfull.video/', 'https://hdfull.cloud/', 'https://hdfull.wtf/', 
                                  'https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
                                  'https://new.hdfull.one/', 'https://hdfull.top/', 'https://hdfull.bz/'],
-             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 'expires': 365*24*60*60, 'CF_if_assistant': True, 
-             'forced_proxy_ifnot_assistant': 'ProxyCF', 'CF_stat': True, 'session_verify': True, 'cf_assistant_if_proxy': True, 
+             'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 'expires': 365*24*60*60, 
+             'forced_proxy_ifnot_assistant': 'ProxyCF', 'CF_if_NO_assistant': False, 
+             'CF_stat': True if assistant else False, 'session_verify': True if assistant else False, 
+             'CF_if_assistant': True if assistant else False, 
              'preferred_proxy_ip': '', 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -88,6 +98,7 @@ js_url = urlparse.urljoin(host, "templates/hdfull/js/jquery.hdfull.view.min.js")
 data_js_url = urlparse.urljoin(host, "js/providers.js")
 patron_sid = "<input\s*type='hidden'\s*name='__csrf_magic'\s*value=\"([^\"]+)\"\s*\/>"
 window = None
+proxy__ = ''
 
 try:
     window = xbmcgui.Window(10000)
@@ -237,6 +248,13 @@ def login(data='', alfa_s=False, force_check=True, retry=False):
         if window: window.setProperty("hdfull_sid", sid)
         if not sid:
             if not retry:
+                if proxy__:
+                    if 'ProxyWeb' in page.proxy__: 
+                        preferred_proxy_ip = ''
+                        if window: window.setProperty("hdfull_preferred_proxy_ip", str(preferred_proxy_ip))
+                    else:
+                        config.set_setting('proxy_addr', '')
+                        config.set_setting('proxy_CF_addr', '')
                 logout(Item())
                 logger.error('NO SID: RETRY: %s' % str(data))
                 return login(force_check=force_check, retry=True)
@@ -315,7 +333,7 @@ def logout(item):
 def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_proxy=None, 
                  proxy_retries=1, force_check=False, force_login=True, alfa_s=False, hide_infobox=False, 
                  timeout=10, cf_no_blacklist=False, retries_cloudflare=canonical.get('retries_cloudflare', 0)):
-    global account, sid, user_status, preferred_proxy_ip
+    global account, sid, user_status, preferred_proxy_ip, proxy__
     forced_proxy_retry = canonical.get('forced_proxy_ifnot_assistant', '') or 'ProxyCF'
 
     if host_save != host: url = url.replace(host_save, host)
@@ -339,10 +357,13 @@ def agrupa_datos(url, post=None, referer=True, json=False, proxy=True, forced_pr
                                   proxy_retries=proxy_retries, alfa_s=alfa_s, forced_proxy_retry=forced_proxy_retry, 
                                   cf_no_blacklist=cf_no_blacklist, retries_cloudflare=retries_cloudflare)
 
-    if page.proxy__ and 'ProxyWeb' in page.proxy__: 
-        preferred_proxy_ip = canonical['preferred_proxy_ip'] = page.proxy__.split('|')[2] \
-                             if page.code in httptools.SUCCESS_CODES + httptools.REDIRECTION_CODES else ''
-        if window: window.setProperty("hdfull_preferred_proxy_ip", str(preferred_proxy_ip))
+    if page.proxy__:
+        if 'ProxyWeb' in page.proxy__: 
+            preferred_proxy_ip = canonical['preferred_proxy_ip'] = page.proxy__.split('|')[2] \
+                                 if page.code in httptools.SUCCESS_CODES + httptools.REDIRECTION_CODES else ''
+            if window: window.setProperty("hdfull_preferred_proxy_ip", str(preferred_proxy_ip))
+        else:
+            canonical['CF_if_NO_assistant'] = False
     if page.sucess and page.host and host_save not in page.host:
         account = False
         config.set_setting("logged", account, channel=canonical['channel'])
