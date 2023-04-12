@@ -346,17 +346,18 @@ def play(item):
 
     itemlist = list()
     kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
-              'timeout': 5, 'cf_assistant': False, 'follow_redirects': False, 'referer': item.referer, 'canonical': {}, 
+              'timeout': 5, 'cf_assistant': False, 'follow_redirects': False, 'headers': item.headers, 'canonical': {}, 
               'CF': False, 'forced_proxy_opt': forced_proxy_opt}
 
-    url = AlfaChannel.create_soup(item.url, **kwargs).find("div", class_="Video").iframe["src"]
+    url = AlfaChannel.create_soup(item.url, **kwargs).find("div", class_="Video").iframe.get("src", "")
 
     if "streamcheck" in url or "//sc." in url:
         api_url = "%sstreamcheck/r.php" % host
         v_id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
         post = {"h": v_id}
+        kwargs['soup'] = False
         
-        resp = AlfaChannel.create_soup(api_url, post=post, proxy_retries=-0, soup=False, count_retries_tot=0, **kwargs)
+        resp = AlfaChannel.create_soup(api_url, post=post, proxy_retries=-0, count_retries_tot=0, **kwargs)
         
         if resp.code in AlfaChannel.REDIRECTION_CODES:
             url = resp.headers.get('Location', '') or resp.url

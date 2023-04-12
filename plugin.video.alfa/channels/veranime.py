@@ -32,7 +32,6 @@ canonical = {
              'host_alt': ["https://www1.animeonline.ninja/"], 
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
-             'CF_if_assistant': True, 'CF_stat': False, 'session_verify': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

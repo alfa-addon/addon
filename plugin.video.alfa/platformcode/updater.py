@@ -576,6 +576,7 @@ def check_dependencies(in_folder):
                     return res
 
     except:
+        return False
         logger.error(traceback.format_exc())
 
     return res

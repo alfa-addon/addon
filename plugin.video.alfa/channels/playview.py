@@ -361,13 +361,13 @@ def play(item):
     import base64
 
     kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
-              'timeout': timeout, 'cf_assistant': False, 'canonical': {}}
+              'timeout': timeout, 'cf_assistant': False, 'canonical': {}, 'soup': False}
 
     url_data = AlfaChannel.create_soup(item.url, post=item.post)
     
     try:
         iframe = re.sub('https*:\/*\/*', 'https://', url_data.find("iframe", class_="embed-responsive-item")["src"])
-        url = AlfaChannel.create_soup(iframe, soup=False, **kwargs).url
+        url = AlfaChannel.create_soup(iframe, **kwargs).url
     except:
         try:
             url_data = url_data.find("button", class_="linkfull").get("data-url", "")

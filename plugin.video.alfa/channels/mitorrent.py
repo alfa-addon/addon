@@ -243,7 +243,7 @@ def seasons(item):
 
     templist = AlfaChannel.seasons(item, **kwargs)
 
-    if templist and not item.library_playcounts and not item.add_videolibrary \
+    if templist and not item.library_playcounts and not item.add_videolibrary and not item.downloadFilename \
                     and ((finds['controls']['add_video_to_videolibrary'] and len(templist) <= 3) \
                     or (not finds['controls']['add_video_to_videolibrary'] and len(templist) <= 1)):
         return episodesxseason(templist[0].clone(action='episodesxseason'))

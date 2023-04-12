@@ -229,7 +229,7 @@ def seasons(item):
 
     templist = AlfaChannel.seasons(item, **kwargs)
 
-    if templist and not item.library_playcounts and not item.add_videolibrary \
+    if templist and not item.library_playcounts and not item.add_videolibrary and not item.downloadFilename \
                     and ((finds['controls']['add_video_to_videolibrary'] and len(templist) <= 3) \
                     or (not finds['controls']['add_video_to_videolibrary'] and len(templist) <= 1)):
         return episodesxseason(templist[0].clone(action='episodesxseason'))
@@ -371,13 +371,13 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
 def play(item):
 
-    kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'timeout': 5, 'CF': True, 'canonical': {}}
+    kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'timeout': 5, 'CF': True, 'canonical': {}, 'soup': False}
 
     if 'cinestart' in item.url:
         url, post = item.url.split('?')
         headers = {'Content-type': 'application/x-www-form-urlencoded', 'Referer': item.url}
         response = AlfaChannel.create_soup(url.replace('player.php', 'r.php'), post=post, headers=headers, 
-                                           follow_redirects=False, soup=False, hide_infobox=True, **kwargs)
+                                           follow_redirects=False, hide_infobox=True, **kwargs)
 
         if response.code in AlfaChannel.REDIRECTION_CODES:
             item.url = '%s|Referer=%s' % (response.headers.get('location', ''), AlfaChannel.obtain_domain(item.url, scheme=True))

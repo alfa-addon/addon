@@ -23,15 +23,18 @@ SERVIDORES = {'11': 'clipwatching', '57': 'aparatcam', '12': 'gamovideo', '56': 
 list_language = list(IDIOMAS.values())
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP']
 list_servers = list(SERVIDORES.values())
+host = "https://playdede.to/"
+assistant = config.get_setting('assistant_version', default='') and not httptools.channel_proxy_list(host)
 
 canonical = {
              'channel': 'playdede', 
              'host': config.get_setting("current_host", 'playdede', default=''), 
-             'host_alt': ["https://playdede.nu/"], 
-             'host_black_list': ["https://playdede.org/", "https://playdede.com/"], 
+             'host_alt': [host], 
+             'host_black_list': ["https://playdede.nu/", "https://playdede.org/", "https://playdede.com/"], 
              'pattern': '<link\s*rel="shortcut\s*icon"[^>]+href="([^"]+)"', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
-             'session_verify': False, 'CF_stat': True, 'cf_assistant_if_proxy': True, 
+             'CF_stat': True if assistant else False, 'session_verify': True if assistant else False, 
+             'CF_if_assistant': True if assistant else False, 'CF_if_NO_assistant': False,  
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

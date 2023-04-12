@@ -23,7 +23,9 @@ IDIOMAS = {'es': 'CAST', 'la': 'LAT', 'us': 'VOSE', 'ES': 'CAST', 'LA': 'LAT', '
            'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VOSE'}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
-list_quality_movies = ['DVDR', 'DVDrip', 'HD', '1080p', '3D', '4K']
+list_quality_movies = ['DVDR', 'DVDrip', 'HD', '1080p', '3D', '4K', 'BluRayRip', 
+                       'BluRay MichroHD', '4KWebrip', 'BluRay 1080p', '4KUHDrip', 
+                       '4KUHDremux', 'BluRay-Screener', 'TS-Screener']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['torrent']
 forced_proxy_opt = 'ProxyWeb'
@@ -31,8 +33,8 @@ forced_proxy_opt = 'ProxyWeb'
 canonical = {
              'channel': 'divxtotal', 
              'host': config.get_setting("current_host", 'divxtotal', default=''), 
-             'host_alt': ["https://www.divxtotal.pl/"], 
-             'host_black_list': ["https://www.divxtotal.cat/", 
+             'host_alt': ["https://www.divxtotal.wf/"], 
+             'host_black_list': ["https://www.divxtotal.pl/", "https://www.divxtotal.cat/", 
                                  "https://www.divxtotal.fi/", "https://www.divxtotal.dev/", "https://www.divxtotal.ac/", 
                                  "https://www.divxtotal.re/", "https://www.divxtotal.pm/", "https://www.divxtotal.nl/"], 
              'pattern': '<li>\s*<a\s*href="([^"]+)"\s*>\S*\/a><\/li>', 
@@ -47,7 +49,7 @@ min_temp = modo_ultima_temp if not modo_ultima_temp else 'continue'
 movies_sufix = 'peliculas-hd/'
 series_sufix = 'series/'
 
-timeout = config.get_setting('timeout_downloadpage', channel)
+timeout = config.get_setting('timeout_downloadpage', channel) * 3
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = "/peliculas"
@@ -55,7 +57,7 @@ tv_path = '/series'
 language = []
 url_replace = []
 
-finds = {'find': {'find_all': [{'tag': ['table'], 'class': ['table']}], 'find_all': [{'tag': ['tr']}]}, 
+finds = {'find': {'find': [{'tag': ['table'], 'class': ['table']}], 'find_all': [{'tag': ['tr']}]}, 
          'sub_menu': {'find': [{'tag': ['ul'], 'class': ['nav navbar-nav']}], 'find_all': [{'tag': ['li']}]}, 
          'categories': {'find': [{'tag': ['div'], 'id': 'bloque_cat'}], 'find_all': [{'tag': ['a']}]},  
          'search': {}, 
@@ -84,7 +86,7 @@ finds = {'find': {'find_all': [{'tag': ['table'], 'class': ['table']}], 'find_al
                          ['(?i)[-|\(]?\s*HDRip\)?|microHD|\(?BR-LINE\)?|\(?HDTS-SCREENER\)?', ''], 
                          ['(?i)\(?BDRip\)?|\(?BR-Screener\)?|\(?DVDScreener\)?|\(?TS-Screener\)?|[\(|\[]\S*\.*$', ''],
                          ['(?i)Castellano-*|Ingl.s|Trailer|Audio|\(*SBS\)*|\[*\(*dvd\s*r\d*\w*\]*\)*|[\[|\(]*dv\S*[\)|\]]*', ''], 
-                         ['(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?', ''], 
+                         ['(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?|\s+final', ''], 
                          ['(?i)(?:\s*&#8211;)?\s*temp.*?\d+.*', ''], ['\d?\d?&#.*', ''], ['\d+[x|×]\d+.*', ''], 
                          ['[\(|\[]\s*[\)|\]]', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
@@ -92,7 +94,7 @@ finds = {'find': {'find_all': [{'tag': ['table'], 'class': ['table']}], 'find_al
          'url_replace': [], 
          'controls': {'duplicates': [], 'min_temp': min_temp, 'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 15, 
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
-                      'host_torrent': host},
+                      'host_torrent': host, 'btdigg': True},
          'timeout': timeout}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
                                    idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -283,7 +285,7 @@ def seasons(item):
 
     templist = AlfaChannel.seasons(item, **kwargs)
 
-    if templist and not item.library_playcounts and not item.add_videolibrary \
+    if templist and not item.library_playcounts and not item.add_videolibrary and not item.downloadFilename \
                     and ((finds['controls']['add_video_to_videolibrary'] and len(templist) <= 3) \
                     or (not finds['controls']['add_video_to_videolibrary'] and len(templist) <= 1)):
         return episodesxseason(templist[0].clone(action='episodesxseason'), data=AlfaChannel.response.soup)
@@ -308,6 +310,7 @@ def episodios(item):
     templist = seasons(item)
     
     for tempitem in templist:
+        logger.error(tempitem)
         itemlist += episodesxseason(tempitem)
 
     return itemlist
@@ -364,7 +367,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                 continue
 
             elem_json['server'] = 'torrent'
-            elem_json['quality'] = '*'
+            elem_json['quality'] = 'HDTV'
             elem_json['size'] = ''
             elem_json['torrent_info'] = ''
 
