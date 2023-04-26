@@ -1825,7 +1825,7 @@ def torrent_dirs():
                                        'add_magnet': ['POST', 'add/magnet?ignore_duplicate=true&download=true&uri=%s'],
                                        'root': ['', 'torrents/'],
                                        'list': ['GET', '?status=true'],
-                                       'stop': ['PUT', '/stop'],
+                                       'stop': ['DELETE', '?delete=false'],
                                        'delete': ['DELETE', '?delete=true'],
                                        'pause': ['PUT', '/pause'],
                                        'resume': ['PUT', '/resume'],
@@ -1946,9 +1946,13 @@ def torrent_dirs():
                 torrent_paths[torr_client.upper() + '_web'] = '%s%s/' % (torrent_paths[torr_client.upper() + '_web'] \
                             % __settings__.getSetting('service_ip'), str(torrent_paths[torr_client.upper() + '_port']))
 
-                ### TEMPORAL: migración de versión 0.0.14 a 0.0.15 por cambio de API
-                if '15' in torrent_paths[torr_client.upper() + '_version']:
-                    torrent_paths[torr_client.upper() + '_verbs'] = torrent_paths[torr_client.upper() + '_verbs_15']
+                ### TEMPORAL: migración de versión 0.0.14 a 0.0.15+ por cambio de API
+                try:
+                    t_version = tuple(int(x) for x in torrent_paths[torr_client.upper() + '_version'].split('.'))
+                    if t_version >= (0, 0, 15):
+                        torrent_paths[torr_client.upper() + '_verbs'] = torrent_paths[torr_client.upper() + '_verbs_15']
+                except:
+                    logger.error(traceback.format_exc())
 
             except:
                 logger.error(traceback.format_exc(1))

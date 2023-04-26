@@ -25,7 +25,7 @@ IDIOMAS = {'Español': 'CAST', 'Latino': 'LAT', 'Subtitulado': 'VOSE', 'en_es': 
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_quality_movies = []
-list_quality_tvshow = []
+list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['openload', 'streamango', 'powvideo', 'clipwatching', 'streamplay', 'streamcherry', 'gamovideo']
 forced_proxy_opt = 'ProxyCF|CHECK'
 
@@ -36,9 +36,7 @@ canonical = {
              'host_black_list': ["https://streamtape.com/", "https://upstream.to/", "https://vidoza.net/", "http://vidoza.net/"], 
              'pattern': '<link\s*rel="stylesheet"\s*href="([^"]+)"', 
              'pattern_proxy': '{"item_id":\s*(\d+)}', 'proxy_url_test': 'breaking-bad/', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_if_assistant': True, 
-             'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_stat': False, 'session_verify': False, 'cf_assistant_if_proxy': True,
-             'preferred_proxy_ip': '', 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -121,7 +119,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title = 'Buscar...', action="search", url= host+'search?s=',
                          thumbnail=get_thumb('search', auto=True)))
 
-    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_movies + list_quality_tvshow)
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -260,9 +258,10 @@ def seasons(item):
     item_id = scrapertools.find_single_match(data, '{"item_id":\s*(\d+)}')
     kwargs['post'] = AlfaChannel.do_urlencode({'item_id': item_id})
     kwargs['headers'] = {'Referer':item.url}
+    kwargs['soup'] = False
     url = '%sapi/web/seasons.php' % host
 
-    json_matches = AlfaChannel.create_soup(url, soup=False, **kwargs).json
+    json_matches = AlfaChannel.create_soup(url, **kwargs).json
 
     for elem in json_matches:
         elem_json = {}
@@ -295,7 +294,8 @@ def episodios(item):
 
 def episodesxseason(item):
     logger.info()
-    
+
+    kwargs['matches_post_get_video_options'] = findvideos_matches
     kwargs['soup'] = False
 
     return AlfaChannel.episodes(item, matches_post=episodesxseason_matches, **kwargs)
@@ -340,6 +340,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
 def findvideos(item):
     logger.info()
+
+    kwargs['matches_post_episodes'] = episodesxseason_matches
 
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
@@ -417,17 +419,18 @@ def play(item):
     return itemlist
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
-    
-    itemlist = []
-    
+    global kwargs
+    kwargs = AHkwargs
+
     texto = texto.replace(" ", "+")
     item.url = host + 'search?s=' + texto
     
     try:
         if texto != '':
             item.c_type = "series"
+            item.texto = texto
             return list_all(item)
         else:
             return []

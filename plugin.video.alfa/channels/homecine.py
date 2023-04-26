@@ -24,7 +24,7 @@ IDIOMAS = {'Latino': 'LAT', 'Castellano': 'CAST', 'Subtitulado': 'VOSE', 'Ingles
            'la': 'Latino', 'es': 'Castellano', 'us': 'VOSE', '🇲🇽': 'Latino', '🇪🇸': 'Castellano'}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
-list_quality_movies = []
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = []
 list_servers = ['cinemaupload', 'fastream']
 forced_proxy_opt = 'ProxyCF'
@@ -35,7 +35,7 @@ canonical = {
              'host_alt': ["https://homecine.tv/"], 
              'host_black_list': [], 
              'pattern': '<div\s*class="header-logo">[^>]*href="([^"]+)"', 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -147,6 +147,8 @@ def mainlist(item):
                          )
                     )
 
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
+
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
@@ -247,6 +249,8 @@ def episodesxseason(item):
     findS = finds.copy()
     findS['episodes'] = {'find': [{'tag': ['div'], 'id': ['seasons']}], 'find_all': [{'tag': ['a']}]}
 
+    kwargs['matches_post_get_video_options'] = findvideos_matches
+
     return AlfaChannel.episodes(item, matches_post=episodesxseason_matches, finds=findS, **kwargs)
 
 
@@ -287,6 +291,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
 def findvideos(item):
     logger.info()
+
+    kwargs['matches_post_episodes'] = episodesxseason_matches
 
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
@@ -336,8 +342,10 @@ def actualizar_titulos(item):
     return AlfaChannel.do_actualizar_titulos(item)
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
     texto = texto.replace(" ", "+")
     item.url = item.url + '?s=' + texto
@@ -356,8 +364,10 @@ def search(item, texto):
         return []
 
 
-def newest(categoria):
+def newest(categoria, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
     item = Item()
     try:

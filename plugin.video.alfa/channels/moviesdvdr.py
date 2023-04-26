@@ -23,7 +23,7 @@ IDIOMAS = {'es': 'CAST', 'la': 'LAT', 'us': 'VOSE', 'ES': 'CAST', 'LA': 'LAT', '
            'espaniol': 'CAST', 'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VOSE'}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
-list_quality_movies = ['DVDR']
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['torrent']
 forced_proxy_opt = 'ProxySSL'
@@ -118,7 +118,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
                 thumbnail=get_thumb("setting_0.png")))
 
-    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_movies + list_quality_tvshow)
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)                                # Activamos Autoplay
 
@@ -235,14 +235,16 @@ def actualizar_titulos(item):
     return AlfaChannel.do_actualizar_titulos(item)
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
-
+    global kwargs
+    kwargs = AHkwargs
     texto = texto.replace(" ", "+")
 
     try:
         item.url = host + '?s=' + texto
         item.c_type = 'peliculas'
+        item.texto = texto
 
         if texto:
             return list_all(item)
@@ -254,8 +256,10 @@ def search(item, texto):
         return []
  
  
-def newest(categoria):
+def newest(categoria, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
     itemlist = []
     item = Item()

@@ -23,7 +23,7 @@ IDIOMAS = {'es': 'CAST', 'la': 'LAT', 'us': 'VOSE', 'ES': 'CAST', 'LA': 'LAT', '
            'espaniol': 'CAST', 'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VOSE'}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
-list_quality_movies = []
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = []
 list_servers = ['torrent']
 forced_proxy_opt = 'ProxySSL'
@@ -166,6 +166,8 @@ def mainlist(item):
                          url = URL_BROWSE
                         ))
 
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
+
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
@@ -290,8 +292,10 @@ def actualizar_titulos(item):
     return AlfaChannel.do_actualizar_titulos(item)
 
 
-def search(item, text):
-    logger.info('search: ' + text)
+def search(item, texto, **AHkwargs):
+    logger.info()
+    global kwargs
+    kwargs = AHkwargs
     
     text = text.replace(" ", "%20")
 

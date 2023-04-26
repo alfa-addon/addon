@@ -26,9 +26,10 @@ IDIOMAS = {'mx': 'Latino', 'dk': 'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb
            "mexico": "Latino", "latino": "Latino", 'lat': 'Latino', 'LAT': 'Latino', 'jp': 'VOSE'}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
-list_quality_movies = ['HD', '1080p']
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['okru']
+forced_proxy_opt = 'ProxyCF'
 
 canonical = {
              'channel': 'zoowomaniacos', 
@@ -36,11 +37,10 @@ canonical = {
              'host_alt': ["https://zoowomaniacos.org/"], 
              'host_black_list': [], 
              'status': 'SIN CANONICAL NI DOMINIO',
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt,
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-forced_proxy_opt = 'ProxyCF'
 
 timeout = 5
 kwargs = {}
@@ -85,6 +85,8 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
                          thumbnail=get_thumb("search", auto=True)))
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -215,8 +217,10 @@ def actualizar_titulos(item):
     return AlfaChannel.do_actualizar_titulos(item)
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
     
     try:
         texto = texto.replace(" ", "+")
