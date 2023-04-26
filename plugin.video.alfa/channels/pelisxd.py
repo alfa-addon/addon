@@ -22,10 +22,10 @@ from lib.AlfaChannelHelper import DictionaryAllChannel
 IDIOMAS = {'la': 'Latino', 'es': 'Castellano', 'us': 'VOSE'}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
-list_quality_movies = ['CAM', 'HD-RIP', 'DVD-RIP', 'HD-720', 'HD-1080']
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['gvideo', 'fembed']
-forced_proxy_opt = 'ProxySSL'
+forced_proxy_opt = 'ProxyCF'
 
 canonical = {
              'channel': 'pelisxd', 
@@ -101,7 +101,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True),  c_type='search'))
 
-    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_movies + list_quality_tvshow)
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -251,6 +251,8 @@ def episodios(item):
 def episodesxseason(item):
     logger.info()
 
+    kwargs['matches_post_get_video_options'] = findvideos_matches
+
     return AlfaChannel.episodes(item, matches_post=episodesxseason_matches, **kwargs)
 
 
@@ -288,6 +290,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
 def findvideos(item):
     logger.info()
+
+    kwargs['matches_post_episodes'] = episodesxseason_matches
 
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
@@ -338,8 +342,11 @@ def actualizar_titulos(item):
     return AlfaChannel.do_actualizar_titulos(item)
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
+
     try:
         texto = texto.replace(" ", "+")
         item.url = item.url + '?s=' + texto
@@ -357,10 +364,14 @@ def search(item, texto):
         return []
 
 
-def newest(categoria):
+def newest(categoria, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
+    itemlist = []
     item = Item()
+
     try:
         if categoria in ['peliculas']:
             item.url = host + 'peliculas/'

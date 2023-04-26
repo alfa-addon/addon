@@ -23,7 +23,8 @@ IDIOMAS = {'es': 'CAST', 'la': 'LAT', 'us': 'VOSE', 'ES': 'CAST', 'LA': 'LAT', '
            'espaniol': 'CAST', 'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VOSE'}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
-list_quality_movies = ['1080p', '4k', '720p', 'BR-SCREEN', 'CAM', 'MicroHD', 'WEB', 'web-scr']
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay', 
+                       'BR-SCREEN', 'CAM', 'MicroHD', 'WEB', 'web-scr']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['torrent']
 forced_proxy_opt = 'ProxySSL'
@@ -130,9 +131,9 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
                          thumbnail=get_thumb("setting_0.png")))
 
-    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_movies + list_quality_tvshow)
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
-    autoplay.show_option(item.channel, itemlist)                                #Activamos Autoplay
+    autoplay.show_option(item.channel, itemlist)                                # Activamos Autoplay
 
     return itemlist
 
@@ -238,45 +239,30 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
 def seasons(item):
     logger.info()
-    
-    itemlist = []
 
-    templist = AlfaChannel.seasons(item, **kwargs)
-
-    if templist and not item.library_playcounts and not item.add_videolibrary and not item.downloadFilename \
-                    and ((finds['controls']['add_video_to_videolibrary'] and len(templist) <= 3) \
-                    or (not finds['controls']['add_video_to_videolibrary'] and len(templist) <= 1)):
-        return episodesxseason(templist[0].clone(action='episodesxseason'))
-
-    if not AlfaChannel.season_colapse:
-        len_seasons = len(templist) if  not finds['controls']['add_video_to_videolibrary'] else len(templist) - 2
-        finds['controls'].update({'add_video_to_videolibrary': False})
-        for x, tempitem in enumerate(templist):
-            if x >= len_seasons - 1:
-                finds['controls'].update({'add_video_to_videolibrary': True})
-            if "actualizar_titulos" in tempitem.action or "_to_library" in tempitem.action: continue
-            itemlist += episodesxseason(tempitem.clone(action='episodesxseason'))
-
-    return itemlist or templist
+    return AlfaChannel.seasons(item, **kwargs)
 
 
 def episodios(item):
     logger.info()
-    
+
     itemlist = []
-    
+
     templist = seasons(item)
-    
+
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
 
     return itemlist
 
 
-def episodesxseason(item, data={}):
+def episodesxseason(item):
     logger.info()
 
-    return AlfaChannel.episodes(item, data=data, matches_post=episodesxseason_matches, generictools=True, **kwargs)
+    kwargs['matches_post_get_video_options'] = findvideos_matches
+    kwargs['headers'] = {'Referer': item.url}
+
+    return AlfaChannel.episodes(item, matches_post=episodesxseason_matches, generictools=True, finds=finds, **kwargs)
 
 
 def episodesxseason_matches(item, matches_int, **AHkwargs):
@@ -309,6 +295,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
 def findvideos(item):
     logger.info()
+
+    kwargs['matches_post_episodes'] = episodesxseason_matches
     
     return AlfaChannel.get_video_options(item, item.url, matches_post=findvideos_matches, 
                                          verify_links=False, generictools=True, findvideos_proc=True, **kwargs)
@@ -377,15 +365,19 @@ def actualizar_titulos(item):
     return AlfaChannel.do_actualizar_titulos(item)
 
     
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
+
     texto = texto.replace(" ", "+")
     
     try:
         item.url = '%ssearch-result/?search_query=%s&calidad=&genero=&dtyear=&audio=' % (host, texto)
-        item.c_type = 'search'
 
         if texto:
+            item.c_type = "search"
+            item.texto = texto
             return list_all(item)
         else:
             return []
@@ -395,8 +387,11 @@ def search(item, texto):
         return []
  
  
-def newest(categoria):
+def newest(categoria, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
+
     itemlist = []
     item = Item()
 

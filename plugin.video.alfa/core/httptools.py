@@ -942,13 +942,13 @@ def downloadpage(url, **opt):
     if 'session_verify' not in opt and 'session_verify' in opt.get('canonical', {}): opt['session_verify'] = opt['canonical']['session_verify']
     if not "session_verify_save" in opt: opt["session_verify_save"] = opt["session_verify"] if "session_verify" in opt else None
     if 'CF_if_assistant' not in opt and 'CF_if_assistant' in opt.get('canonical', {}): 
-        opt['CF_if_assistant'] = opt['canonical']['CF_if_assistant']
+                            opt['CF_if_assistant'] = opt['canonical']['CF_if_assistant']
     if 'CF_if_NO_assistant' not in opt and 'CF_if_NO_assistant' in opt.get('canonical', {}): 
-        opt['CF_if_NO_assistant'] = opt['canonical']['CF_if_NO_assistant']
+                            opt['CF_if_NO_assistant'] = opt['canonical']['CF_if_NO_assistant']
     if 'forced_proxy_opt' not in opt and 'forced_proxy_opt' in opt.get('canonical', {}): \
-                          opt['forced_proxy_opt'] = opt['canonical']['forced_proxy_opt']
+                            opt['forced_proxy_opt'] = opt['canonical']['forced_proxy_opt']
     if 'cf_assistant_if_proxy' not in opt and 'cf_assistant_if_proxy' in opt.get('canonical', {}): \
-                          opt['cf_assistant_if_proxy'] = opt['canonical']['cf_assistant_if_proxy']
+                            opt['cf_assistant_if_proxy'] = opt['canonical']['cf_assistant_if_proxy']
     if opt.get('canonical', {}).get('forced_proxy_ifnot_assistant', '') or opt.get('forced_proxy_ifnot_assistant', ''):
         opt['forced_proxy_ifnot_assistant'] = opt.get('canonical', {}).get('forced_proxy_ifnot_assistant', '') \
                                               or opt.get('forced_proxy_ifnot_assistant', '')
@@ -956,6 +956,8 @@ def downloadpage(url, **opt):
     if 'set_tls' not in opt and 'set_tls' in opt.get('canonical', {}): opt['set_tls'] = opt['canonical']['set_tls']
     if (opt.get('set_tls', '') or opt.get('set_tls', '') is None) and not opt.get('set_tls', '') == True: ssl_version = opt['set_tls']
     if 'set_tls_min' not in opt and 'set_tls_min' in opt.get('canonical', {}): opt['set_tls_min'] = opt['canonical']['set_tls_min']
+    if 'check_blocked_IP' not in opt and 'check_blocked_IP' in opt.get('canonical', {}): 
+                            opt['check_blocked_IP'] = opt['canonical']['check_blocked_IP']
 
     # Preparando la url
     if not PY3:
@@ -1237,11 +1239,12 @@ def downloadpage(url, **opt):
         
         # Retries blocked domain with proxy
         if block and opt.get('retry_alt', retry_alt_default) and opt.get('proxy__test', '') != 'retry' \
-                 and not proxy_data.get('stat', '') and opt.get('proxy_retries', 1):
+                 and not proxy_data.get('stat', '') and opt.get('proxy_retries', 1) and opt.get('forced_proxy_ifnot_assistant', ''):
             if not opt.get('alfa_s', False): logger.error('Error: %s in url: %s - Reintentando' % (response_code, url))
             forced_proxy_web = 'ProxyWeb:croxyproxy.com' if not opt.get('CF', False) else 'ProxyWeb:hidester.com'
             opt['forced_proxy'] = opt.get('forced_proxy', '') or opt.get('forced_proxy_retry', '') \
-                                                              or opt.get('forced_proxy_ifnot_assistant', '') \
+                                                              or forced_proxy_web if opt.get('forced_proxy_ifnot_assistant', '') == 'ProxySSL' \
+                                                                                  else opt.get('forced_proxy_ifnot_assistant', '') \
                                                               or forced_proxy_web
             if 'ProxyWeb' in opt['forced_proxy']: 
                 opt['proxy_web'] = True
@@ -1285,7 +1288,7 @@ def downloadpage(url, **opt):
                     opt['CF'] = opt['CF_save'] = opt['cloudscraper_active'] = opt['CF_test'] = opt['CF_if_assistant'] = True
                     if opt.get('canonical', {}): opt['canonical']['CF_stat'] = opt['CF']
                     opt['retries_cloudflare'] = 1
-                    opt['forced_proxy_ifnot_assistant'] = ''
+                    opt['forced_proxy_ifnot_assistant'] = 'ProxyCF'
                     opt['proxy_web'] = False
                     opt['proxy_addr_forced'] = None
                     opt['forced_proxy'] = None
@@ -1362,7 +1365,7 @@ def downloadpage(url, **opt):
         # Si hay bloqueo "cf_v2" y no hay Alfa Assistant, se reintenta con Proxy
         if opt.get('forced_proxy_ifnot_assistant', '') \
                            and ('Detected a Cloudflare version 2' in str(response_code) or response_code in CLOUDFLARE_CODES) \
-                           and opt.get('proxy__test', '') != 'retry':
+                           and not channel_proxy_list(opt['url_save']):
             if opt.get('cf_v2', False):
                 response['code'] = response_code
                 response['headers'] = req.headers

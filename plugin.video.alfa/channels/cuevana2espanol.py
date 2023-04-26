@@ -26,7 +26,7 @@ IDIOMAS = {'mx': 'Latino', 'dk': 'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb
            'spain': 'Castellano'}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
-list_quality_movies = ['HD', '1080p']
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['fembed', 'streamtape', 'streamlare', 'zplayer']
 forced_proxy_opt = 'ProxyCF|FORCE'
@@ -36,7 +36,7 @@ canonical = {
              'host': config.get_setting("current_host", 'cuevana2espanol', default=''), 
              'host_alt': ["https://cuevana2espanol.com/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt,  
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -105,7 +105,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True)))
 
-    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_movies + list_quality_tvshow)
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -229,6 +229,8 @@ def episodios(item):
 def episodesxseason(item):
     logger.info()
 
+    kwargs['matches_post_get_video_options'] = findvideos_matches
+
     return AlfaChannel.episodes(item, matches_post=episodesxseason_matches, **kwargs)
 
 
@@ -265,6 +267,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
 def findvideos(item):
     logger.info()
+
+    kwargs['matches_post_episodes'] = episodesxseason_matches
 
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
@@ -339,8 +343,10 @@ def actualizar_titulos(item):
     return AlfaChannel.do_actualizar_titulos(item)
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
     try:
         texto = texto.replace(" ", "+")
@@ -360,8 +366,10 @@ def search(item, texto):
         return []
 
 
-def newest(categoria):
+def newest(categoria, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
     item = Item()
     try:
