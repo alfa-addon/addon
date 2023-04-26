@@ -110,7 +110,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True), c_type='search'))
 
-    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_movies + list_quality_tvshow)
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -254,6 +254,8 @@ def episodios(item):
 def episodesxseason(item):
     logger.info()
 
+    kwargs['matches_post_get_video_options'] = findvideos_matches
+
     return AlfaChannel.episodes(item, matches_post=episodesxseason_matches, **kwargs)
 
 
@@ -290,6 +292,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
 def findvideos(item):
     logger.info()
+
+    kwargs['matches_post_episodes'] = episodesxseason_matches
 
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
@@ -368,8 +372,10 @@ def play(item):
     return itemlist
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
     try:
         texto = texto.replace(" ", "+")

@@ -260,13 +260,15 @@ def add_languages(title, languages):
     return title
 
 
-def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, infoLabels):
+def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, item):
     #logger.info()
+
     last = '[/I][/B]\n'
     c_content = ''
     s_studio = ''
     g_genres = ''
     t_part = '[COLOR aquamarine][B][I]%s:[/COLOR] '
+    infoLabels = item.infoLabels
 
     if infoLabels['genre']:
         g_part = t_part % 'Género'
@@ -296,6 +298,8 @@ def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, 
         c_content = '%s%s%s' % (c_part, contentTitle, last if not plot_extend else '')
     if plot_extend:
         c_content += '%s[B][I]%s%s' % ('' if not c_content else ' ', plot_extend, last)
+    if item.filtertools:
+        c_content += '%s[B][I][COLOR hotpink]%s[/COLOR]%s' % ('' if not c_content else ' ', '**Filtrado', last)
 
     if vextend:
         v_part = t_part % 'Tipo'
@@ -546,7 +550,7 @@ def title_format(item, c_file=colors_file, srv_lst={}):
     
     plot_extend = item.plot_extend
     if item.plot_extend and (item.contentType in ["movie", "tvshow"] and item.action not in ['play']): plot_extend = ''
-    item.plot = add_info_plot(item.plot, simple_language, item.quality, vextend, plot_extend, contentTitle, item.infoLabels)
+    item.plot = add_info_plot(item.plot, simple_language, item.quality, vextend, plot_extend, contentTitle, item)
 
     item = add_extra_info(item, checks)
 

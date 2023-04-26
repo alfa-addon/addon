@@ -23,8 +23,8 @@ IDIOMAS = {'la': 'Latino', 'lat': 'Latino', 'LAT': 'Latino', 'latino': 'Latino',
            'castellano': 'Castellano', 'subtitulado': 'VOSE', 'us': 'VOSE'}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
-list_quality_movies = []
-list_quality_tvshow = []
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
+list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['okru', 'yourupload', 'mega', 'doodstream', 'fembed']
 forced_proxy_opt = 'ProxyCF'
 
@@ -135,6 +135,8 @@ def mainlist(item):
                          title="Buscar..."
                          )
                     )
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -285,8 +287,10 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     return matches, langs
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
     
     try:
         texto = texto.replace(" ", "+")
@@ -304,8 +308,10 @@ def search(item, texto):
         return []
 
 
-def newest(categoria):
+def newest(categoria, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
     item = Item()
     try:

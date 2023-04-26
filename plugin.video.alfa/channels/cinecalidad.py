@@ -21,8 +21,8 @@ from lib.AlfaChannelHelper import DictionaryAllChannel
 
 IDIOMAS = {'latino': 'LAT', 'castellano': 'CAST', 'portugues': 'VOSE'}
 list_language = list(IDIOMAS.values())
-list_quality = ['1080p']
-list_quality_movies = []
+list_quality = []
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = []
 list_servers = ['gounlimited', 'mega', 'vidcloud', 'torrent']
 forced_proxy_opt = 'ProxySSL'
@@ -145,6 +145,8 @@ def mainlist(item):
                          folder=False, thumbnail=get_thumb("next.png")))
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
                          thumbnail=get_thumb("setting_0.png")))
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -393,42 +395,6 @@ def actualizar_titulos(item):
     return AlfaChannel.do_actualizar_titulos(item)
 
 
-
-def create_soup(url, referer=None, unescape=False):
-    logger.info()
-
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
-    else:
-        data = httptools.downloadpage(url, canonical=canonical).data
-
-    if unescape:
-        data = scrapertools.unescape(data)
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-
-    return soup
-
-
-# def featured(item):
-    # logger.info()
-    # itemlist = list()
-    # soup = create_soup(item.url).find("div", class_="widget_movies")
-    # matches = soup.find_all("a")
-
-    # for elem in matches:
-        # url = elem["href"]
-        # if scrapertools.find_single_match(url, "\d+x\d+") or "episode" in url:
-            # continue
-        # title = elem["title"]
-        # year = "-"
-        # contentTitle = title.replace("(%s)" % year, "").strip()
-        
-        # itemlist.append(Item(channel=item.channel, title=contentTitle, contentTitle=contentTitle, url=url,
-                             # action="findvideos", infoLabels={"year": year}))
-        # tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    # return itemlist
-
-
 def play(item):
     logger.info()
 
@@ -442,8 +408,10 @@ def play(item):
     return itemlist
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
     itemlist = []
     texto = texto.replace(" ", "-")
@@ -453,6 +421,7 @@ def search(item, texto):
     try:
         if texto != '':
             item.c_type = 'peliculas'
+            item.texto = texto
             itemlist.extend(list_all(item))
             return itemlist
         else:
@@ -465,8 +434,10 @@ def search(item, texto):
         return []
 
 
-def newest(categoria):
+def newest(categoria, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
     itemlist = []
     item = Item()

@@ -21,7 +21,7 @@ from lib.AlfaChannelHelper import DictionaryAllChannel, DooPlay
 IDIOMAS = {'la': 'LAT', 'mx': 'LAT', 'ca': 'CAST', 'su': 'VOSE', 'en': 'VOSE'}
 list_language = list(IDIOMAS.values())
 list_quality = []
-list_quality_movies = ['HD', '1080p']
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['fembed', 'uqload',]
 
@@ -77,7 +77,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True), c_type='search'))
 
-    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_movies + list_quality_tvshow)
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -125,8 +125,10 @@ def actualizar_titulos(item):
     return AlfaChannel.do_actualizar_titulos(item)
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
     
     try:
         texto = texto.replace(" ", "+")
@@ -145,8 +147,10 @@ def search(item, texto):
         return []
 
 
-def newest(categoria):
+def newest(categoria, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
     item = Item()
     try:

@@ -29,7 +29,7 @@ IDIOMAS = {'vose': 'VOSE'}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['directo', 'verystream', 'openload',  'streamango', 'uploadmp4', 'fembed']
-forced_proxy_opt = 'ProxySSL'
+forced_proxy_opt = 'ProxyCF'
 
 canonical = {
              'channel': 'animefenix', 

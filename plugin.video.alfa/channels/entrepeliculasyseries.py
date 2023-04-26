@@ -22,7 +22,7 @@ from lib.AlfaChannelHelper import DictionaryAllChannel
 IDIOMAS = {"latino": "LAT", "castellano": "CAST", "subtitulado": "VOSE"}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
-list_quality_movies = ['HD', '1080p', 'HD - 1080p']
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['mega', 'fembed', 'vidtodo', 'gvideo']
 forced_proxy_opt = 'ProxyCF'
@@ -106,7 +106,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True), c_type='search'))
 
-    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_movies + list_quality_tvshow)
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -290,6 +290,8 @@ def episodios(item):
 def episodesxseason(item):
     logger.info()
 
+    kwargs['matches_post_get_video_options'] = findvideos_matches
+
     return AlfaChannel.episodes(item, matches_post=episodesxseason_matches, **kwargs)
 
 
@@ -332,6 +334,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
 def findvideos(item):
     logger.info()
+
+    kwargs['matches_post_episodes'] = episodesxseason_matches
 
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
@@ -389,7 +393,7 @@ def play(item):
     
     itemlist = list()
     kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 'timeout': 5, 
-              'canonical': {}}
+              'canonical': {}, 'soup': False}
 
     id = scrapertools.find_single_match(item.url, "h=([^$]+)")
     headers = item.headers or {"Referer": item.url}
@@ -400,7 +404,7 @@ def play(item):
     
     for x in range(2):
         resp = AlfaChannel.create_soup(base_url, post=post, headers=headers, follow_redirects=False, 
-                                       forced_proxy_opt=forced_proxy_opt, soup=False, **kwargs)
+                                       forced_proxy_opt=forced_proxy_opt, **kwargs)
         url = AlfaChannel.get_cookie(url, 'nofernu')
         if url:
             url = AlfaChannel.do_unquote(url)
@@ -422,8 +426,10 @@ def play(item):
     return itemlist
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
     try:
         texto = texto.replace(" ", "+")
@@ -442,8 +448,10 @@ def search(item, texto):
         return []
 
 
-def newest(categoria):
+def newest(categoria, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
 
     item = Item()
     try:

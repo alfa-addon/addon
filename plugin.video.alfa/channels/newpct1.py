@@ -101,8 +101,8 @@ for clone in clone_list:
     clone_list_inter += [list(clone)]
 clone_list = clone_list_inter[:]
 
-forced_proxy_opt = 'ProxyCF'
-CF_test = True
+forced_proxy_opt = 'ProxySSL'
+CF_test = False
 
 canonical = {
              'channel': channel_py, 
@@ -110,8 +110,7 @@ canonical = {
              'host_alt': [], 
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
-             'CF': False, 'CF_test': CF_test, 'alfa_s': True, 
-             'forced_proxy_opt': forced_proxy_opt
+             'CF': False, 'CF_test': CF_test, 'alfa_s': True
             }
 
 if not channel_clone_post: channel_clone_post = channel_clone_post
@@ -767,7 +766,6 @@ def listado(item, alfa_s=False):                                                
             data, response, item, itemlist = generictools.downloadpage(next_page_url, timeout=timeout_search, post=post, CF_test=CF_test, 
                                                                        s2=True, headers=headers, decode_code=decode_code, 
                                                                        quote_rep=True, no_comments=False, canonical=canonical, 
-                                                                       forced_proxy_opt=forced_proxy_opt_loc, 
                                                                        item=item, itemlist=itemlist, alfa_s=alfa_s)
             curr_page += 1                                                      #Apunto ya a la página siguiente
             

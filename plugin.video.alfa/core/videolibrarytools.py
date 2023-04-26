@@ -186,6 +186,8 @@ def save_movie(item, silent=False):
     sobreescritos = 0
     fallidos = 0
     path = ""
+    # Quitamos la etiqueta de Filtertools
+    if 'filtertools' in item: del item.filtertools
 
     # Itentamos obtener el titulo correcto:
     # 1. contentTitle: Este deberia ser el sitio correcto, ya que title suele contener "Añadir a la videoteca..."
@@ -355,6 +357,8 @@ def save_tvshow(item, episodelist, silent=False, overwrite=True, monitor=None):
     logger.info()
     # logger.debug(item.tostring('\n'))
     path = ""
+    # Quitamos la etiqueta de Filtertools
+    if 'filtertools' in item: del item.filtertools
     
     if not monitor and config.is_xbmc():
         import xbmc
@@ -591,6 +595,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True, monito
             headers = e.headers
         if tags != [] and tags != None and any(tag in e.title.lower() for tag in tags):
             continue
+        # Quitamos la etiqueta de Filtertools
+        if 'filtertools' in e: del e.filtertools
 
         try:
             # Valor por defecto por si no se provee temporada = 1
@@ -1162,6 +1168,7 @@ def add_movie(item):
     new_item.title = re.sub('^(V)-', '', new_item.title)
     if '-Película-' in new_item.infoLabels.get('tagline', ''): del new_item.infoLabels['tagline']
     generictools.format_tmdb_id(new_item)                                       # Normaliza el formato de los IDs
+
     insertados, sobreescritos, fallidos = save_movie(new_item)
 
     if fallidos == 0:
@@ -1216,7 +1223,6 @@ def add_tvshow(item, channel=None):
             item.__dict__["action"] = item.__dict__.pop("from_action")
             item.__dict__["extra"] = item.__dict__["action"]
 
-
         if item.from_channel:
             item.__dict__["channel"] = item.__dict__.pop("from_channel")
 
@@ -1238,12 +1244,15 @@ def add_tvshow(item, channel=None):
         item = generictools.update_title(item)      # Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
         #if item.tmdb_stat:
         #    del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
-                
+        
+        # Quitamos la etiqueta de Filtertools
+        if 'filtertools' in item: del item.filtertools
+        
         # Obtiene el listado de episodios
         generictools.format_tmdb_id(item)                                       # Normaliza el formato de los IDs
         itemlist = getattr(channel, item.action)(item)
         generictools.format_tmdb_id(itemlist)                                   # Normaliza el formato de los IDs
-        
+
     global magnet_caching
     magnet_caching = False
     insertados, sobreescritos, fallidos, path = save_tvshow(item, itemlist)

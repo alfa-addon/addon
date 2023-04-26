@@ -22,8 +22,8 @@ from lib.AlfaChannelHelper import DictionaryAllChannel
 IDIOMAS = {'la': 'Latino', 'lat': 'Latino', 'LAT': 'Latino', 'es': 'Castellano', 'us': 'VOSE'}
 list_language = list(set(IDIOMAS.values()))
 list_quality = []
-list_quality_movies = []
-list_quality_tvshow = []
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
+list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['okru', 'yourupload', 'mega', 'direct']
 forced_proxy_opt = 'ProxyCF'
 
@@ -33,7 +33,7 @@ canonical = {
              'host': config.get_setting("current_host", 'retrotv', default=''), 
              'host_alt': ["https://retrotv.org/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -112,6 +112,8 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url= host, c_type='search', 
                          thumbnail=get_thumb("search", auto=True)))
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -215,10 +217,11 @@ def episodesxseason(item):
     return AlfaChannel.episodes(item, matches_post=episodesxseason_matches, **kwargs)
 
 
-def episodesxseason_matches(item, matches_int, **AHkwargs):
+def episodesxseason(item):
     logger.info()
 
     matches = []
+    kwargs['matches_post_get_video_options'] = findvideos_matches
     findS = AHkwargs.get('finds', finds)
 
     for elem_season in matches_int:
@@ -253,6 +256,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
 def findvideos(item):
     logger.info()
+
+    kwargs['matches_post_episodes'] = episodesxseason_matches
 
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
@@ -372,8 +377,10 @@ def play(item):
     return itemlist
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
     
     try:
         texto = texto.replace(" ", "+")

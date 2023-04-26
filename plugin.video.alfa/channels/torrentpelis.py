@@ -23,7 +23,7 @@ from lib.AlfaChannelHelper import DictionaryAllChannel
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
 list_language = list(IDIOMAS.values())
 list_quality = []
-list_quality_movies = ['HD', '1080p', 'Full HD']
+list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['torrent']
 forced_proxy_opt = 'ProxySSL'
@@ -99,7 +99,7 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", c_type='peliculas', 
                 url=host + 'peliculas/page/1/', thumbnail=thumb_pelis, extra2="PELICULA"))
-    itemlist.append(Item(channel=item.channel, title="    - por Género", action="genero", c_type='peliculas', 
+    itemlist.append(Item(channel=item.channel, title="    - por Género", action="section", c_type='peliculas', 
                 url=host, thumbnail=thumb_genero, extra2="GENERO"))
     itemlist.append(Item(channel=item.channel, title="    - por Tendencias", action="list_all", c_type='peliculas', 
                 url=host + 'tendencias/page/1/', thumbnail=thumb_calidad, extra2="TENDENCIAS"))
@@ -111,6 +111,8 @@ def mainlist(item):
                 folder=False, thumbnail=thumb_separador))
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
                 thumbnail=thumb_settings))
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)                                #Activamos Autoplay
 
@@ -126,7 +128,7 @@ def configuracion(item):
     return
 
 
-def genero(item):
+def section(item):
     logger.info()
 
     return AlfaChannel.section(item)
@@ -226,8 +228,10 @@ def actualizar_titulos(item):
     return AlfaChannel.do_actualizar_titulos(item)
 
 
-def search(item, texto):
+def search(item, texto, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
     
     texto = texto.replace(" ", "+")
     
@@ -248,8 +252,10 @@ def search(item, texto):
         return []
  
  
-def newest(categoria):
+def newest(categoria, **AHkwargs):
     logger.info()
+    global kwargs
+    kwargs = AHkwargs
     
     itemlist = []
     item = Item()
