@@ -16,7 +16,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:ballzdeep|pornxpert|hoes|bigtitslust|mondetube|watchporn|faapy).(?:com|xxx|tube|to)/videos/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:ballzdeep|pornxpert|hoes|bigtitslust|mondetube|watchporn|faapy|pornvase|sortporn|4wank).(?:com|xxx|tube|to)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -92,7 +92,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(http(?:s|)://www.(?:cambro|camvideos).tv/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(http(?:s|)://(?:www.|)(?:cambro|camvideos|alotporn).(?:tv|com)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -136,10 +136,6 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://jizzberry.com/vids/[0-9]+/[A-z0-9-]+(?:/|))",
-        "url": "\\1"
-      },
-      {
         "pattern": "(https://(?:www.|)(?:pornestro|love4porn).com/embed/[0-9]+(?:/|))",
         "url": "\\1"
       },
@@ -160,7 +156,11 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.tabootube.xxx/[A-z0-9-]+)(?:/|)",
+        "pattern": "(https://www.(?:tabootube|nubilefilm).xxx/[A-z0-9-]+)(?:/|)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://area51.porn/view/[A-z0-9-]+)(?:/|)",
         "url": "\\1"
       },
       {
