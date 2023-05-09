@@ -22,17 +22,22 @@ def test_video_exists(page_url):
 def get_video_url(page_url, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    headers = {'Referer': page_url}
-    url= ""
+    headers = {'Referer': 'https://www.pornhub.com'}
     data = httptools.downloadpage(page_url, headers=headers, set_tls=True, set_tls_min=True).data
     data = scrapertools.find_single_match(data, '<div id="player"(.*?)</script>')
     data = data.replace('" + "', '' )
-    videourl = scrapertools.find_multiple_matches(data, 'var media_\d+=([^;]+)')
+    flashvars = scrapertools.find_single_match(data, 'var flashvars_(.*?)"hotspots"')
+    videourl = scrapertools.find_multiple_matches(data, "(var\sra[a-z0-9]+=.+?);flash")
+    # logger.debug(flashvars)
+    # logger.debug(videourl)
+    
     for elem in videourl:
         orden = scrapertools.find_multiple_matches(elem, '\*\/([A-z0-9]+)')
+        # logger.debug(orden)
         url= ""
         for i in orden:
-            url += scrapertools.find_single_match(data, '%s="([^"]+)"' %i)
+            url += scrapertools.find_single_match(elem, '%s="([^"]+)"' %i)
+        # logger.debug(url)
         if "master.m3u8" in url and not "K," in url and not "get_media" in url:
             quality = scrapertools.find_single_match(url, '(\d+P)_')
             video_urls.append(["[pornhub] %s" % quality, url])

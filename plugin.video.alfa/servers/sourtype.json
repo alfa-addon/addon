@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:justporn|pulpo69).com/video/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:justporn|pulpo69|fapmeifyoucan).(?:com|net)/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
