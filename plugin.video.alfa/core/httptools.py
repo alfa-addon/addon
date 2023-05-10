@@ -208,13 +208,17 @@ def set_cookies(dict_cookie, clear=True, alfa_s=False):
     """
     
     #Se le dara a la cookie un dia de vida por defecto
-    expires_plus = dict_cookie.get('expires', 86400)
-    ts = int(time.time())
-    expires = ts + expires_plus
+    expires = None
+    if 'expires' in dict_cookie and dict_cookie['expires'] is not None:
+        expires_plus = dict_cookie.get('expires', 86400)
+        ts = int(time.time())
+        expires = ts + expires_plus
 
     name = dict_cookie.get('name', '')
     value = dict_cookie.get('value', '')
     domain = dict_cookie.get('domain', '')
+    secure = dict_cookie.get('secure', False)
+    domain_initial_dot = dict_cookie.get('domain_initial_dot', False)
 
     #Borramos las cookies ya existentes en dicho dominio (cp)
     if clear:
@@ -225,8 +229,8 @@ def set_cookies(dict_cookie, clear=True, alfa_s=False):
 
     ck = cookielib.Cookie(version=0, name=name, value=value, port=None, 
                     port_specified=False, domain=domain, 
-                    domain_specified=False, domain_initial_dot=False,
-                    path='/', path_specified=True, secure=False, 
+                    domain_specified=False, domain_initial_dot=domain_initial_dot,
+                    path='/', path_specified=True, secure=secure, 
                     expires=expires, discard=True, comment=None, comment_url=None, 
                     rest={'HttpOnly': None}, rfc2109=False)
     
@@ -1099,7 +1103,7 @@ def downloadpage(url, **opt):
         
         if opt.get('timeout', None) is None and HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT is not None: 
             opt['timeout'] = HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT
-        if opt['timeout'] == 0:
+        if opt.get('timeout', 0) == 0:
             opt['timeout'] = None
 
         if len(url) > 0:
@@ -1388,6 +1392,14 @@ def downloadpage(url, **opt):
             proxytools.add_domain_retried(domain, proxy__type=opt['forced_proxy'], delete='SSL')
             return downloadpage(opt['url_save'], **opt)
 
+        if proxy_data.get('stat', '') and not proxy_data.get('web_name', '') \
+                                      and response['data'] and '<HTML><HEAD><TITLE>302 Moved</TITLE></HEAD>' in str(response['data']):
+            if not PY3: from . import proxytools
+            else: from . import proxytools_py3 as proxytools
+            proxytools.pop_proxy_entry(proxy_data.get('log', ''))
+            opt['post'] = opt['post_save']
+            return downloadpage(opt['url_save'], **opt)
+        
         try:
             response['encoding'] = str(req.encoding).lower() if req.encoding and req.encoding is not None else None
 

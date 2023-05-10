@@ -47,18 +47,19 @@ def check_addon_init():
         # Obtiene el íntervalo entre actualizaciones y si se quieren mensajes
         try:
             timer = int(config.get_setting('addon_update_timer',
-                                           default=12))  # Intervalo entre actualizaciones, en Ajustes de Alfa
+                                           default=12))                         # Intervalo entre actualizaciones, en Ajustes de Alfa
             if timer <= 0:
                 try:
                     user_type = base64.b64decode(config.get_setting('proxy_dev')).decode('utf-8')
                 except:
                     user_type = 'user'
                 if user_type == 'user':
-                    config.set_setting('addon_update_timer', 12)  # Si es usuario se fuerza a 12 horas
+                    config.set_setting('addon_update_timer', 12)                # Si es usuario se fuerza a 12 horas
                     timer = 12
                 else:
-                    check_date_real()       # Obtiene la fecha real de un sistema externo
-                    return  # 0.  No se quieren actualizaciones
+                    check_date_real()                                           # Obtiene la fecha real de un sistema externo
+                    verify_emergency_update(proxy_only=True)
+                    return                                                      # 0.  No se quieren actualizaciones
             verbose = config.get_setting('addon_update_message', default=False)
         except:
             logger.error(traceback.format_exc())
@@ -68,31 +69,31 @@ def check_addon_init():
         timer_emer = 30 * 60
         timer_blocks = int(timer / timer_emer)
 
-        if config.get_platform(True)['num_version'] >= 14:  # Si es Kodi, lanzamos el monitor
+        if config.get_platform(True)['num_version'] >= 14:                      # Si es Kodi, lanzamos el monitor
             monitor = xbmc.Monitor()
         else:  # Lanzamos solo una actualización y salimos
 
-            check_addon_updates(verbose, monitor=False)     # Lanza la actualización
+            check_addon_updates(verbose, monitor=False)                         # Lanza la actualización
             if verify_emergency_update():
-                check_addon_updates(verbose)                # Lanza la actualización de emergencia
+                check_addon_updates(verbose)                                    # Lanza la actualización de emergencia
 
             return
 
-        while not monitor.abortRequested():                 # Loop infinito hasta cancelar Kodi
+        while not monitor.abortRequested():                                     # Loop infinito hasta cancelar Kodi
            
-            check_addon_updates(verbose, monitor=monitor)   # Lanza la actualización
+            check_addon_updates(verbose, monitor=monitor)                       # Lanza la actualización
             
             for x in range(timer_blocks + 1):
                 if verify_emergency_update():
-                    check_addon_updates(verbose)            # Lanza la actualización de emergencia
+                    check_addon_updates(verbose)                                # Lanza la actualización de emergencia
 
-                if monitor.waitForAbort(timer_emer):        # Espera el tiempo programado o hasta que cancele Kodi
-                    break                                   # Cancelación de Kodi, salimos
+                if monitor.waitForAbort(timer_emer):                            # Espera el tiempo programado o hasta que cancele Kodi
+                    break                                                       # Cancelación de Kodi, salimos
             else:
                 continue
             break
 
-        check_update_to_others(verbose=False, app=False)    # Actualizamos otros add-ons antes de irnos, para el siguiente inicio
+        check_update_to_others(verbose=False, app=False)                        # Actualizamos otros add-ons antes de irnos, para el siguiente inicio
         # Borra el .zip de instalación de Alfa de la carpeta Packages, por si está corrupto, y que así se pueda descargar de nuevo
         version = 'plugin.video.alfa-%s.zip' % CURRENT_VERSION
         packages_path = os.path.join(config.translatePath('special://home'), 'addons', 'packages', version)
@@ -102,28 +103,31 @@ def check_addon_init():
 
     # Lanzamos en Servicio de actualización de FIXES
     try:
-        threading.Thread(target=check_addon_monitor).start()    # Creamos un Thread independiente, hasta el fin de Kodi
+        from platformcode.custom_code import emergency_fixes
+        emergency_fixes()                                                       # Fixes de emergencia que deben ejecutarse lo antes posible
+        threading.Thread(target=check_addon_monitor).start()                    # Creamos un Thread independiente, hasta el fin de Kodi
         time.sleep(5)  # Dejamos terminar la primera verificación...
-    except:                                     # Si hay problemas de threading, se llama una sola vez
+    except:                                                                     # Si hay problemas de threading, se llama una sola vez
         try:
             timer = int(config.get_setting('addon_update_timer',
-                                           default=12))  # Intervalo entre actualizaciones, en Ajustes de Alfa
+                                           default=12))                         # Intervalo entre actualizaciones, en Ajustes de Alfa
             if timer <= 0:
                 try:
                     user_type = base64.b64decode(config.get_setting('proxy_dev')).decode('utf-8')
                 except:
                     user_type = 'user'
                 if user_type == 'user':
-                    config.set_setting('addon_update_timer', 12)  # Si es usuario se fuerza a 12 horas
+                    config.set_setting('addon_update_timer', 12)                # Si es usuario se fuerza a 12 horas
                     timer = 12
                 else:
-                    return                      # 0.  No se quieren actualizaciones
+                    verify_emergency_update(proxy_only=True)
+                    return                                                      # 0.  No se quieren actualizaciones
             verbose = config.get_setting('addon_update_message', default=False)
         except:
-            verbose = False                     # Por defecto, sin mensajes
+            verbose = False                                                     # Por defecto, sin mensajes
             pass
-        check_addon_updates(verbose)            # Lanza la actualización, en Ajustes de Alfa
-        time.sleep(5)                           # Dejamos terminar la primera verificación...
+        check_addon_updates(verbose)                                            # Lanza la actualización, en Ajustes de Alfa
+        time.sleep(5)                                                           # Dejamos terminar la primera verificación...
 
     return
 
@@ -134,7 +138,7 @@ def check_addon_updates(verbose=False, monitor=None):
     # Forzamos la actualización de los repos para facilitar la actualización del addon Alfa
     xbmc.executebuiltin('UpdateAddonRepos')
 
-    check_date_real()                           # Obtiene la fecha real de un sistema externo
+    check_date_real()                                                           # Obtiene la fecha real de un sistema externo
     get_ua_list()
 
     try:
@@ -190,7 +194,7 @@ def check_addon_updates(verbose=False, monitor=None):
                 dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
             if monitor is None and verify_emergency_update():
                 return check_addon_updates(verbose, monitor=False)              # Lanza la actualización de emergencia
-            check_update_to_others(verbose=verbose)  # Comprueba las actualuzaciones de otros productos
+            check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
             return False
 
         if 'addon_version' not in data or 'fix_version' not in data:
@@ -199,7 +203,7 @@ def check_addon_updates(verbose=False, monitor=None):
                 dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
             if monitor is None and verify_emergency_update():
                 return check_addon_updates(verbose, monitor=False)              # Lanza la actualización de emergencia
-            check_update_to_others(verbose=verbose)  # Comprueba las actualuzaciones de otros productos
+            check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
             return False
 
         # Comprobar versión que tiene instalada el usuario con versión de la actualización
@@ -229,7 +233,7 @@ def check_addon_updates(verbose=False, monitor=None):
                                             % (current_version, lastfix['fix_version'] or data['fix_version']))
                     if monitor is None and verify_emergency_update():
                         return check_addon_updates(verbose, monitor=False)      # Lanza la actualización de emergencia
-                    check_update_to_others(verbose=verbose)  # Comprueba las actualuzaciones de otros productos
+                    check_update_to_others(verbose=verbose)                     # Comprueba las actualuzaciones de otros productos
                     return False
             except:
                 if lastfix:
@@ -260,7 +264,7 @@ def check_addon_updates(verbose=False, monitor=None):
         if downloadtools.downloadfile(url + ADDON_UPDATES_ZIP, localfilename, silent=True) < 0:
             raise
 
-        alfa_caching = config.cache_reset(action='OFF')             # Reseteamos e inactivamos las caches de settings
+        alfa_caching = config.cache_reset(action='OFF')                         # Reseteamos e inactivamos las caches de settings
         
         # Descomprimir zip dentro del addon
         # ---------------------------------
@@ -271,7 +275,7 @@ def check_addon_updates(verbose=False, monitor=None):
             xbmc.executebuiltin('Extract("%s", "%s")' % (localfilename, config.get_runtime_path()))
             time.sleep(1)
 
-        alfa_caching = config.cache_reset(action='ON')              # Reseteamos y activamos las caches de settings
+        alfa_caching = config.cache_reset(action='ON')                          # Reseteamos y activamos las caches de settings
         
         # Borrar el zip descargado
         # ------------------------
@@ -324,9 +328,9 @@ def check_addon_updates(verbose=False, monitor=None):
             dialog_notification('Alfa actualizado a', 'Versión %s.fix%d' % (current_version, data['fix_version']))
 
         if monitor is None and verify_emergency_update():
-            return check_addon_updates(verbose, monitor=False)          # Lanza la actualización de emergencia
+            return check_addon_updates(verbose, monitor=False)                  # Lanza la actualización de emergencia
         
-        check_update_to_others(verbose=verbose)                         # Comprueba las actualuzaciones de otros productos
+        check_update_to_others(verbose=verbose)                                 # Comprueba las actualuzaciones de otros productos
         return True
 
     except:
@@ -368,13 +372,15 @@ def verify_addon_version(installed, fixes):
     return resp
 
 
-def verify_emergency_update():
+def verify_emergency_update(proxy_only=False):
 
     resp = False
     install = 0
     command = ''
     updates_url = ''
     github_url = ''
+    proxyCF = ''
+    proxySSL = ''
     
     try:
         if not PY3: from lib import alfaresolver
@@ -382,21 +388,29 @@ def verify_emergency_update():
         result = alfaresolver.frequency_count(ITEM, emergency=True)
         if result:
             for x, (fecha, addon_version, fix_version_, install, key) in enumerate(result):
-                if str(install).startswith('-'): break
                 if verify_addon_version(CURRENT_VERSION, addon_version):
+
+                    fix_version__ = fix_version_.split('|')
+                    fix_version = fix_version__[0] or '*'
+                    if len(fix_version__) >= 2:
+                        updates_url = fix_version__[1]
+                    if len(fix_version__) >= 3:
+                        github_url = fix_version__[2]
+                    if x == 0:
+                        if len(fix_version__) >= 4:
+                            proxyCF = fix_version__[3]
+                        if len(fix_version__) >= 5:
+                            proxySSL = fix_version__[4]
+                        parse_emergency_proxies(proxyCF, proxySSL)
+
+                    if str(install).startswith('-') or proxy_only: break
+
                     if os.path.exists(last_fix_json):
                         with open(last_fix_json, "r") as lfj:
                             lastfix = jsontools.load(lfj.read())
                         if lastfix:
-                            if not fix_version_:
+                            if not fix_version:
                                 break
-                            fix_version__ = fix_version_.split('|')
-                            fix_version = fix_version__[0] or '*'
-                            if len(fix_version__) == 2:
-                                updates_url = fix_version__[1]
-                            elif len(fix_version__) == 3:
-                                updates_url = fix_version__[1]
-                                github_url = fix_version__[2]
                             if verify_addon_version(lastfix.get('fix_version', '0'), fix_version):
                                 resp = True
                                 command = result[x]
@@ -415,7 +429,7 @@ def verify_emergency_update():
     except:
         logger.error(traceback.format_exc())
 
-    logger.info('%s %s' % (str(resp), str(command)), force=True)
+    logger.info('%s %s' % (str('Proxy_only' if proxy_only else resp), str(command)), force=True)
 
     return resp
 
@@ -452,6 +466,19 @@ def parse_emergency_update(updates_url, github_url):
         logger.error(traceback.format_exc())
 
     return url
+
+
+def parse_emergency_proxies(proxyCF, proxySSL):
+
+    try:
+        if not PY3:
+            from core.proxytools import set_proxy_lists
+        else:
+            from core.proxytools_py3 import set_proxy_lists
+        set_proxy_lists(proxyCF, proxySSL)
+
+    except:
+        logger.error(traceback.format_exc())
 
 
 def check_update_to_others(verbose=False, app=True):
@@ -751,7 +778,8 @@ def check_date_real():
             try:
                 resp = httptools.downloadpage(page, **kwargs)
                 if resp.sucess:
-                    fecha_int = resp.json.get('datetime', '')[:10] or resp.json.get('dateTime', '')[:10] or resp.json.get('currentDateTime', '')[:10]
+                    fecha_int = resp.json.get('datetime', '')[:10] or resp.json.get('dateTime', '')[:10] \
+                                                                   or resp.json.get('currentDateTime', '')[:10]
                     if not fecha_int: continue
                     config.set_setting('date_real', fecha_int)
                     break

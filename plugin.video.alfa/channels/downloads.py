@@ -2458,7 +2458,7 @@ def save_download(item, silent=False):
 
     # Descarga desde menú contextual
     if item.from_action and item.from_channel:
-        if 'list' in item.contentChannel: item.contentChannel = item.channel
+        if 'list' in item.contentChannel and item.channel != 'downloads': item.contentChannel = item.channel
         item.channel = item.from_channel
         item.action = item.from_action
         item.contextual = True
