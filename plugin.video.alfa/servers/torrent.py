@@ -2758,6 +2758,17 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
                         'size': size
                        }
 
+    if rar_control and ('UnRARing' in rar_control.get('status', '') or 'unRAR_in_use' in rar_control.get('status', '')):
+        rar_names = [rar_control['rar_names'][0]]
+
+        return {
+            'folder': filetools.basename(rar_control['download_path']),
+            'rar_names':rar_names,
+            'video_names': video_names, 
+            'rar': True,
+            'size': size
+           }
+    
     if not rar_files and item.url.startswith('magnet') and downloadServer:
         info_hash = filetools.basename(downloadServer).split('.')[0].lower()
         found = False
@@ -4033,10 +4044,12 @@ def check_rar_control(folder, error=True, torr_client=None, init=False):
         return {}
     if 'UnRARing' in rar_control['status'] or 'ERROR' in rar_control['status']:
         rar_control['status'] = 'RECOVERY: ' + rar_control['status']
+    if 'unRAR_in_use' in rar_control['status'] and init:
+        rar_control['status'] = 'RECOVERY: ' + 'UnRARing'
     rar_control['download_path'] = folder
     if not rar_control.get('torr_client', ''): rar_control['torr_client'] = torr_client
     if error and not init and ('ERROR' in rar_control['status'] or 'UnRARing' in rar_control['status'] \
-                or 'RECOVERY' in rar_control['status']):
+                          or 'RECOVERY' in rar_control['status']):
         rar_control['error'] += 1
     ret = filetools.write(rar_control_file, jsontools.dump(rar_control))
     logger.debug('%s, %s, %s, %s, %s, %s' % (rar_control['download_path'], \

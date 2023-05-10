@@ -5,10 +5,11 @@
 
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
 
 import re
 import traceback
+if not PY3: _dict = dict; from collections import OrderedDict as dict
 
 from core.item import Item
 from core import servertools
@@ -25,13 +26,13 @@ list_quality = []
 list_quality_movies = []
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['fembed', 'mega', 'yourupload', 'streamsb', 'mp4upload', 'mixdrop', 'uqload']
-forced_proxy_opt = 'ProxySSL'
+forced_proxy_opt = 'ProxyCF'
 
 canonical = {
              'channel': 'ennovelas', 
              'host': config.get_setting("current_host", 'ennovelas', default=''), 
-             'host_alt': ["https://w.ennovelas.net/"], 
-             'host_black_list': ["https://www.zonevipz.com/", "https://www.ennovelas.com/"], 
+             'host_alt': ["https://ww.ennovelas.net/"], 
+             'host_black_list': ["https://w.ennovelas.net/", "https://www.zonevipz.com/", "https://www.ennovelas.com/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -54,8 +55,8 @@ finds = {'find': {'find_all': [{'tag': ['article'], 'class': 'post'}]},
          'get_quality_rgx': '', 
          'next_page': {}, 
          'next_page_rgx': [['\/page\/\d+', '/page/%s/']], 
-         'last_page': {'find': [{'tag': ['div'], 'class': ['navigation']}], 
-                       'find_all': [{'tag': ['a'], '@POS': [-1], '@ARG': 'href', '@TEXT': '\/(\d+)\/$'}]}, 
+         'last_page': dict([('find', [{'tag': ['div'], 'class': ['navigation']}]), 
+                            ('find_all', [{'tag': ['a'], '@POS': [-1], '@ARG': 'href', '@TEXT': '\/(\d+)\/$'}])]), 
          'year': {}, 
          'season_episode': {},
          'seasons': {}, 
@@ -67,7 +68,8 @@ finds = {'find': {'find_all': [{'tag': ['article'], 'class': 'post'}]},
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
-         'findvideos': {'find': [{'tag': ['div'], 'id': ['btnServers']}], 'find_all': [{'tag': ['form']}]}, 
+         'findvideos': dict([('find', [{'tag': ['div'], 'id': ['btnServers']}]), 
+                             ('find_all', [{'tag': ['form']}])]), 
          'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*\(\d{4}\)', ''],
                          ['[\(|\[]\s*[\)|\]]', ''], ['(?i)\s*(?:\s*–|-)?\s+(\d+)\s+(?:temp\w*\s+-*\s+)?cap.\w+\s+(\d+)', ''], 
                          ['(?i)(?:\s*–|-)?\s+cap.\w+\s+(\d+)', ''], ['(?i)(?:\s+\d+)?\s+temp\w*(?:\s+\d+)?', ''], 
@@ -121,10 +123,12 @@ def section(item):
     findS = finds.copy()
 
     if 'Países' in item.title:
-        findS['categories'] = {'find': [{'tag': ['li'], 'id': 'menu-item-42726'}], 'find_all': [{'tag': ['li']}]}
+        findS['categories'] = dict([('find', [{'tag': ['li'], 'id': 'menu-item-42726'}]), 
+                                    ('find_all', [{'tag': ['li']}])])
 
     if 'Años' in item.title:
-        findS['categories'] = {'find': [{'tag': ['li'], 'id': 'menu-item-42731'}], 'find_all': [{'tag': ['li']}]}
+        findS['categories'] = dict([('find', [{'tag': ['li'], 'id': 'menu-item-42731'}]), 
+                                    ('find_all', [{'tag': ['li']}])])
 
     return AlfaChannel.section(item, finds=findS, **kwargs)
 
@@ -292,8 +296,7 @@ def actualizar_titulos(item):
 
 def search(item, texto, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
 
     try:
         texto = texto.replace(" ", "+")

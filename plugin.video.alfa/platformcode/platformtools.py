@@ -1312,8 +1312,12 @@ def get_dialogo_opciones(item, default_action, strm, autoplay):
     except AttributeError:
         item.server = ""
 
-    if item.server == "":
-        item.server = "directo"
+    if not item.server:
+        itemlist = servertools.get_servers_itemlist([item])
+        if itemlist: 
+            item = itemlist[0]
+        else:
+            item.server = "directo"
 
     # Si no es el modo normal, no muestra el diálogo porque cuelga XBMC
     muestra_dialogo = (config.get_setting("player_mode", default=0) == 0 and not strm)

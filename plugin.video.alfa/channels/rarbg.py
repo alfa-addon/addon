@@ -5,10 +5,11 @@
 
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
 
 import re
 import traceback
+if not PY3: _dict = dict; from collections import OrderedDict as dict
 
 from core.item import Item
 from core import servertools
@@ -61,8 +62,8 @@ finds = {'find': {'find_all': [{'tag': ['tr'], 'class': ['lista2']}]},
          'get_language_rgx': '', 
          'get_quality': {}, 
          'get_quality_rgx': [], 
-         'next_page': {'find': [{'tag': ['div'], 'id': ['pager_links']}], 
-                       'find_all': [{'tag': ['a'], '@POS': [-1], '@ARG': 'href'}]}, 
+         'next_page': dict([('find', [{'tag': ['div'], 'id': ['pager_links']}]), 
+                            ('find_all', [{'tag': ['a'], '@POS': [-1], '@ARG': 'href'}])]), 
          'next_page_rgx': [['\?page=\d+', '?page=%s']], 
          'last_page': {}, 
          'year': {}, 
@@ -158,14 +159,14 @@ def section(item):
     logger.info()
 
     findS = finds.copy()
-    
+
     if 'Calidades' in item.title:
         findS['categories'] = {'find_all': [{'tag': ['div'], 'class': ['divadvscat']}]}
-    
+
     elif 'Géneros' in item.title:
-        findS['categories'] = {'find': [{'tag': ['div'], 'align': ['center']}], 
-                               'find_next': [{'tag': ['div'], 'align': ['center']}], 
-                               'find_all': [{'tag': ['span'], 'class': ['catalog-genre']}]}
+        findS['categories'] = dict([('find', [{'tag': ['div'], 'align': ['center']}]), 
+                                    ('find_next', [{'tag': ['div'], 'align': ['center']}]), 
+                                    ('find_all', [{'tag': ['span'], 'class': ['catalog-genre']}])])
         findS['next_page_rgx'] = [['\d+', '%s']]
 
     return AlfaChannel.section(item, matches_post=section_matches, finds=findS, **kwargs)
@@ -452,7 +453,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
     if seeds > 0:
         matches = sorted(matches, key=lambda match: int(-match.get('seeds', 0)))
-        for x, match in enumerate(matches.copy()):
+        for x, match in enumerate(matches[:]):
             if not match.get('seeds'):
                 del matches[x]
 
@@ -566,177 +567,6 @@ def play(item):                                                                 
     return itemlist
 
     
-def episodios_OLD(item):
-    logger.info()
-    itemlist = []
-    item.category = categoria
-    
-    #logger.debug(item)
-
-    if item.from_title:
-        item.title = item.from_title
-    
-    #Limpiamos num. Temporada y Episodio que ha podido quedar por Novedades
-    season_display = 0
-    if item.contentSeason:
-        if item.season_colapse:                                                             #Si viene del menú de Temporadas...
-            season_display = item.contentSeason                                             #... salvamos el num de sesión a pintar
-            item.from_num_season_colapse = season_display
-            del item.season_colapse
-            item.contentType = "tvshow"
-            if item.from_title_season_colapse:
-                item.title = item.from_title_season_colapse
-                del item.from_title_season_colapse
-                if item.infoLabels['title']:
-                    del item.infoLabels['title']
-        del item.infoLabels['season']
-    if item.contentEpisodeNumber:
-        del item.infoLabels['episode']
-    if season_display == 0 and item.from_num_season_colapse:
-        season_display = item.from_num_season_colapse
-
-    # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
-    try:
-        tmdb.set_infoLabels(item, True, idioma_busqueda='es,en')
-    except:
-        pass
-        
-    modo_ultima_temp_alt = modo_ultima_temp
-    if item.ow_force == "1":                                    #Si hay un traspaso de canal o url, se actualiza todo 
-        modo_ultima_temp_alt = False
-    
-    max_temp = 1
-    if item.infoLabels['number_of_seasons']:
-        max_temp = item.infoLabels['number_of_seasons']
-    y = []
-    if modo_ultima_temp_alt and item.library_playcounts:        #Averiguar cuantas temporadas hay en Videoteca
-        patron = 'season (\d+)'
-        matches = re.compile(patron, re.DOTALL).findall(str(item.library_playcounts))
-        for x in matches:
-            y += [int(x)]
-        max_temp = max(y)
-
-    # Descarga la página
-    patron_temp = '<h1\s*class="[^"]+">Season\s*(\d+)<\/h1><div class="tvcontent">'
-    patron_temp += '<div id="[^"]+"><\/div>(.*?<\/div><\/div>)(?:<script>.*?<\/script>)?<\/div>'
-    data = ''                                                                   #Inserto en num de página en la url
-    data, response, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, canonical=canonical, 
-                                                               patron=patron_temp, item=item, itemlist=[], 
-                                                               quote_rep=False, check_blocked_IP=True)
-    data = re.sub(r"&nbsp;", "", data)
-    if not data or response.code in [999, 99]:                                  # Si ERROR o lista de errores lo reintentamos con otro Host
-        return itemlist                                                         # ... Salimos
-
-    #Capturamos las temporadas de episodios dentro de la serie
-    
-    temp_serie = re.compile(patron_temp, re.DOTALL).findall(data)
-    
-    for season_num, temporada in temp_serie:
-        
-        patron = '<div id="episode_(\d+)"><div class="[^"]+">\s*<a onclick="[^"]+"'
-        patron += '\s*class="[^"]+"><div class="[^"]+">.*?\s*(\d+)<\/div>\s*(.*?)\s*<'
-        matches = re.compile(patron, re.DOTALL).findall(temporada)
-        if not matches:                                                             #error
-            logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
-            return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
-
-        #logger.debug("PATRON: " + patron)
-        #logger.debug(matches)
-        #logger.debug(data)
-        
-        season = max_temp
-        #Comprobamos si realmente sabemos el num. máximo de temporadas
-        if item.library_playcounts or (item.infoLabels['number_of_seasons'] and item.tmdb_stat):
-            num_temporadas_flag = True
-        else:
-            num_temporadas_flag = False
-
-        if modo_ultima_temp_alt and item.library_playcounts:    #Si solo se actualiza la última temporada de Videoteca
-            if int(season_num) < max_temp:
-                break                                           #Sale del bucle actual del FOR
-        
-        # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
-        for epi_id, episode_num, scrapedtitle in matches:
-            item_local = item.clone()
-            item_local.action = "findvideos"
-            item_local.contentType = "episode"
-            item_local.extra = "episodios"
-            if item_local.library_playcounts:
-                del item_local.library_playcounts
-            if item_local.library_urls:
-                del item_local.library_urls
-            if item_local.path:
-                del item_local.path
-            if item_local.update_last:
-                del item_local.update_last
-            if item_local.update_next:
-                del item_local.update_next
-            if item_local.channel_host:
-                del item_local.channel_host
-            if item_local.active:
-                del item_local.active
-            if item_local.contentTitle:
-                del item_local.infoLabels['title']
-            if item_local.season_colapse:
-                del item_local.season_colapse
-
-            item_local.title = ''
-            item_local.context = "['buscar_trailer']"
-            item_local.url = urlparse.urljoin(host, 'tv.php?ajax=1&tvepisode=%s' % epi_id)
-            title = scrapedtitle
-            item_local.language = ['VO']
-            if not item_local.infoLabels['poster_path']:
-                item_local.thumbnail = item_local.infoLabels['thumbnail']
-            epi_rango = False
-
-            try:
-                item_local.contentSeason = int(season_num)
-                if 'season pack' in title.lower():
-                    item_local.contentEpisodeNumber = 1
-                    epi_rango = True
-                else:
-                    item_local.contentEpisodeNumber = int(episode_num)
-            except:
-                logger.error('ERROR al extraer Temporada/Episodio: ' + title)
-                item_local.contentSeason = 1
-                item_local.contentEpisodeNumber = 0
-            
-            #Si son episodios múltiples, lo extraemos
-            if epi_rango:
-                item_local.infoLabels['episodio_titulo'] = 'al 99'
-                item_local.title = '%sx%s al 99 - Season Pack' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
-            else:
-                item_local.title = '%sx%s - ' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
-
-            if season_display > 0:
-                if item_local.contentSeason > season_display:
-                    continue
-                elif item_local.contentSeason < season_display:
-                    break
-            
-            itemlist.append(item_local.clone())
-
-            #logger.debug(item_local)
-            
-    if len(itemlist) > 1:
-        itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))       #clasificamos
-        
-    if item.season_colapse and not item.add_videolibrary:                       #Si viene de listado, mostramos solo Temporadas
-        item, itemlist = generictools.post_tmdb_seasons(item, itemlist)
-
-    if not item.season_colapse:                                                 #Si no es pantalla de Temporadas, pintamos todo
-        # Pasada por TMDB y clasificación de lista por temporada y episodio
-        tmdb.set_infoLabels(itemlist, True, idioma_busqueda='es,en')
-
-        #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
-        item, itemlist = generictools.post_tmdb_episodios(item, itemlist)
-    
-    #logger.debug(item)
-
-    return itemlist
-    
-    
 def actualizar_titulos(item):
     logger.info()
     #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
@@ -746,8 +576,7 @@ def actualizar_titulos(item):
 
 def search(item, texto, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
 
     texto = texto.replace(" ", "+")
     

@@ -67,8 +67,21 @@ def dump(*args, **kwargs):
     try:
         value = json.dumps(*args, **kwargs)
     except:
-        logger.error("**NO** se ha podido guardar el JSON")
+        try:
+            import inspect
+            module = inspect.getmodule(inspect.currentframe().f_back.f_back)
+            if module == None:
+                module = "None"
+            else:
+                module = module.__name__
+            function = inspect.currentframe().f_back.f_back.f_code.co_name
+            module = ' [%s.%s]' % (module, function)
+        except:
+            module = ''
+        
+        logger.error("**NO** se ha podido guardar el JSON: %s, args: %s, kwargs: %s" % (str(module), str(args), str(kwargs)))
         logger.error(traceback.format_exc())
+        module = ''
         value = ""
     return value
 

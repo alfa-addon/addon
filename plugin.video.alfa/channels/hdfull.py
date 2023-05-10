@@ -34,19 +34,24 @@ from channelselector import get_thumb
 
 # https://dominioshdfull.com/
 
-host = 'https://hdfull.store/'
+host = 'https://hdfull.sbs/'
 assistant = config.get_setting('assistant_version', default='')
 if assistant: 
     assistant_copy = assistant.split('.')
     assistant = tuple((int(assistant_copy[0]), int(assistant_copy[1]), int(assistant_copy[2])))
     if assistant < (1, 3, 91) or httptools.channel_proxy_list(host): assistant = tuple()
 
+#'host': host if assistant else 'https://hdfull.org/', 
+#'host_alt': [host if assistant else 'https://hdfull.org/'], 
+#'host_black_list': ['https://hdfull.sbs/' if not assistant else 'https://hdfull.org/', 
+
 canonical = {
              'channel': 'hdfull', 
-             'host': host if assistant else 'https://hdfull.org/', 
-             'host_alt': [host if assistant else 'https://hdfull.org/'], 
+             'host': config.get_setting("current_host", 'hdfull', default=''), 
+             'host_alt': ['https://hdfull.sbs/'], 
              'host_verification': '%slogin', 
-             'host_black_list': ['https://hdfull.store/' if not assistant else 'https://hdfull.org/', 
+             'host_black_list': ['https://hdfull.org/', 
+                                 'https://hdfull.store/', 
                                  'https://hdfull.life/', 'https://hdfull.digital/', 'https://hdfull.work/', 
                                  'https://hdfull.video/', 'https://hdfull.cloud/', 'https://hdfull.wtf/', 
                                  'https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 

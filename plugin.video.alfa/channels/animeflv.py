@@ -27,6 +27,7 @@ IDIOMAS = {'LAT': 'LAT','SUB': 'VOSE'}
 list_language = list(IDIOMAS.values())
 list_servers = ['directo', 'rapidvideo', 'streamango', 'yourupload', 'mailru', 'netutv', 'okru']
 list_quality = ['default']
+forced_proxy_opt = 'ProxyCF'
 
 canonical = {
              'channel': 'animeflv', 
@@ -34,7 +35,8 @@ canonical = {
              'host_alt': ["https://www3.animeflv.net/"], 
              'host_clone': ["https://www1.animeflv.bz/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 3, 'cf_assistant': False,
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'cf_assistant': False, 'CF_stat': False, 
              'CF': True, 'CF_test': True, 'alfa_s': True
             }
 
