@@ -5,10 +5,11 @@
 
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
 
 import re
 import traceback
+if not PY3: _dict = dict; from collections import OrderedDict as dict
 
 from core.item import Item
 from core import servertools
@@ -34,8 +35,8 @@ forced_proxy_opt = 'ProxyCF'
 canonical = {
              'channel': 'poseidonhd', 
              'host': config.get_setting("current_host", 'poseidonhd', default=''), 
-             'host_alt': ["https://tekilaz.co/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www.poseidonhd2.com/"], 
+             'host_black_list': ["https://tekilaz.co/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -49,8 +50,8 @@ tv_path = '/serie'
 language = []
 url_replace = [("/series/", "/serie/")]
 
-finds = {'find': {'find': [{'tag': ['ul'], 'class': ['MovieList Rows', 'MovieList Rows episodes']}], 
-                  'find_all': [{'tag': ['div', 'li'], 'class': ['TPost C hentry', 'TPostMv']}]},
+finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList Rows', 'MovieList Rows episodes']}]), 
+                       ('find_all', [{'tag': ['li'], 'class': ['TPostMv']}])]),
          'categories': {'find': [{'tag': ['li'], 'id': ['menu-item-1953']}], 'find_all': [{'tag': ['li']}]}, 
          'search': {}, 
          'get_language': {'find_all': [{'tag': ['span'], 'class': ['flag']}]}, 
@@ -59,20 +60,26 @@ finds = {'find': {'find': [{'tag': ['ul'], 'class': ['MovieList Rows', 'MovieLis
          'get_quality_rgx': '', 
          'next_page': {}, 
          'next_page_rgx': [['\/page\/\d+', '/page/%s']], 
-         'last_page': {'find': [{'tag': ['a'], 'class': ['next page-numbers']}], 
-                       'find_previous': [{'tag': ['span'], 'class': ['page-link'], '@TEXT': '(\d+)'}]}, 
-         'year': {'find': [{'tag': ['span']}], 'get_text': [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}]}, 
+         'last_page': dict([('find', [{'tag': ['a'], 'class': ['next page-numbers']}]), 
+                            ('find_previous', [{'tag': ['span'], 'class': ['page-link'], '@TEXT': '(\d+)'}])]), 
+         'year': dict([('find', [{'tag': ['span']}]), 
+                       ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}])]), 
          'season_episode': {'find': [{'tag': ['img'], '@ARG': 'alt', '@TEXT': '(?i)(\d+x\d+)'}]}, 
-         'seasons': {'find': [{'tag': ['select'], 'id': ['select-season']}], 'find_all': [{'tag': ['option']}]}, 
+         'seasons': dict([('find', [{'tag': ['select'], 'id': ['select-season']}]), 
+                          ('find_all', [{'tag': ['option']}])]), 
          'season_num': {}, 
          'seasons_search_num_rgx': '', 
          'seasons_search_qty_rgx': '', 
-         'episode_url': '%sepisodio/%s-temporada-%s-episodio-%s', 
-         'episodes': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}, 
+         'episode_url': '', 
+         'episodes': dict([('find', [{'tag': ['script'], 'id': ['__NEXT_DATA__']}]), 
+                           ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}])]), 
          'episode_num': [], 
          'episode_clean': [], 
-         'plot': {'find': [{'tag': ['div'], 'class': ['Description']}, {'tag': ['p']}], 'get_text': [{'tag': '', '@STRIP': True}]}, 
-         'findvideos': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}, 
+         'plot': dict([('find', [{'tag': ['div'], 'class': ['Description']}, 
+                                 {'tag': ['p']}]), 
+                       ('get_text', [{'tag': '', '@STRIP': True}])]), 
+         'findvideos': dict([('find', [{'tag': ['script'], 'id': ['__NEXT_DATA__']}]), 
+                             ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}])]), 
          'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*\(\d{4}\)', ''],
                          ['[\(|\[]\s*[\)|\]]', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
@@ -218,7 +225,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     matches = []
     findS = AHkwargs.get('finds', finds)
 
-    if not isinstance(matches_int, dict): matches_int = jsontools.load(matches_int)
+    if not isinstance(matches_int, _dict): matches_int = jsontools.load(matches_int)
     matches_int = matches_int.get('props', {}).get('pageProps', {}).get('thisSerie', {}).get('seasons', {})
 
     for x, elem_season in enumerate(matches_int):
@@ -229,8 +236,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             #logger.error(elem)
 
             try:
-                elem_json['url'] = findS.get('episode_url', '') % (host, elem.get('slug', {}).get('name', ''), 
-                                                                   item.contentSeason, elem.get('slug', {}).get('episode', 1))
+                elem_json['url'] = elem.get('url', {}).get('slug', '').replace('seasons', 'temporada').replace('episodes', 'episodio')
                 elem_json['title'] = elem.get('title', '')
                 elem_json['season'] = item.contentSeason
                 elem_json['episode'] = int(elem.get('number', '1') or '1')
@@ -262,7 +268,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
-    if not isinstance(matches_int, dict): matches_int = jsontools.load(matches_int)
+    if not isinstance(matches_int, _dict): matches_int = jsontools.load(matches_int)
 
     servers = {'drive': 'gvideo', 'fembed': 'fembed', "player": "oprem", "openplay": "oprem", "embed": "mystream"}
     action = item.contentType if item.contentType == 'episode' else 'thisMovie' if item.contentType == 'movie' else 'thisSerie'
@@ -273,7 +279,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
         for link in elem:
             elem_json = {}
-            logger.error(elem)
+            #logger.error(elem)
 
             try:
                 elem_json['server'] = link.get('cyberlocker', '')
@@ -339,8 +345,7 @@ def actualizar_titulos(item):
 
 def search(item, texto, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
 
     try:
         texto = texto.replace(" ", "+")
@@ -362,8 +367,7 @@ def search(item, texto, **AHkwargs):
 
 def newest(categoria, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
 
     item = Item()
 

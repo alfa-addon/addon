@@ -5,10 +5,11 @@
 
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
 
 import re
 import traceback
+if not PY3: _dict = dict; from collections import OrderedDict as dict
 
 from core.item import Item
 from core import servertools
@@ -26,7 +27,7 @@ list_quality = []
 list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['torrent']
-forced_proxy_opt = 'ProxySSL'
+forced_proxy_opt = 'ProxyCF'
 
 canonical = {
              'channel': 'torrentpelis', 
@@ -48,10 +49,10 @@ tv_path = '/serie'
 language = []
 url_replace = []
 
-finds = {'find': {'find': [{'tag': ['div'], 'id': ['archive-content', 'items normal']}], 
-                  'find_all': [{'tag': ['article'], 'class': ['item']}]}, 
-         'categories': {'find': [{'tag': ['ul'], 'class': ['sub-menu']}], 
-                        'find_all': [{'tag': ['li']}]}, 
+finds = {'find': dict([('find', [{'tag': ['div'], 'id': ['archive-content', 'items normal']}]), 
+                       ('find_all', [{'tag': ['article'], 'class': ['item']}])]), 
+         'categories': dict([('find', [{'tag': ['ul'], 'class': ['sub-menu']}]), 
+                             ('find_all', [{'tag': ['li']}])]), 
          'search': {'find_all': [{'tag': ['div'], 'class': ['result-item']}]}, 
          'get_language': {}, 
          'get_language_rgx': '(?:flags\/||d{4}\/\d{2}\/)(\w+)\.(?:png|jpg|jpeg|webp)', 
@@ -59,8 +60,8 @@ finds = {'find': {'find': [{'tag': ['div'], 'id': ['archive-content', 'items nor
          'get_quality_rgx': '', 
          'next_page': {}, 
          'next_page_rgx': [['\/page\/\d+', '/page/%s']], 
-         'last_page': {'find': [{'tag': ['div'], 'class': ['pagination']}, {'tag': ['span']}], 
-                       'get_text': [{'@TEXT': '..gina \d+ de (\d+)'}]}, 
+         'last_page': dict([('find', [{'tag': ['div'], 'class': ['pagination']}, {'tag': ['span']}]), 
+                            ('get_text', [{'@TEXT': '..gina \d+ de (\d+)'}])]), 
          'season_episode': {}, 
          'season': {}, 
          'season_num': {}, 
@@ -70,7 +71,8 @@ finds = {'find': {'find': [{'tag': ['div'], 'id': ['archive-content', 'items nor
          'episodes': {}, 
          'episode_num': [], 
          'episode_clean': [], 
-         'findvideos': {'find': [{'tag': ['tbody']}], 'find_all': [{'tag': ['tr']}]}, 
+         'findvideos': dict([('find', [{'tag': ['tbody']}]), 
+                             ('get_text', [{'tag': ['tr']}])]), 
          'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie', ''], ['[\(|\[]\s*[\)|\]]', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'language_clean': [], 
@@ -99,9 +101,9 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all", c_type='peliculas', 
                 url=host + 'peliculas/page/1/', thumbnail=thumb_pelis, extra2="PELICULA"))
-    itemlist.append(Item(channel=item.channel, title="    - por Género", action="section", c_type='peliculas', 
+    itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Género[/COLOR]", action="section", c_type='peliculas', 
                 url=host, thumbnail=thumb_genero, extra2="GENERO"))
-    itemlist.append(Item(channel=item.channel, title="    - por Tendencias", action="list_all", c_type='peliculas', 
+    itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Tendencias[/COLOR]", action="list_all", c_type='peliculas', 
                 url=host + 'tendencias/page/1/', thumbnail=thumb_calidad, extra2="TENDENCIAS"))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
@@ -140,10 +142,8 @@ def list_all(item):
     findS = finds.copy()
 
     if item.extra2 in ["GENERO", "TENDENCIAS"]: 
-        findS['find'] = {
-                         'find': [{'tag': ['div'], 'class': ['items normal']}], 
-                         'find_all': [{'tag': ['article'], 'class': ['item']}]
-                        }
+        findS['find'] = dict([('find', [{'tag': ['div'], 'class': ['items normal']}]), 
+                              ('get_text', [{'tag': ['article'], 'class': ['item']}])])
     elif item.extra == "search":
         findS['find'] = findS.get('search', {})
                        
@@ -230,8 +230,7 @@ def actualizar_titulos(item):
 
 def search(item, texto, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
     
     texto = texto.replace(" ", "+")
     
@@ -254,8 +253,7 @@ def search(item, texto, **AHkwargs):
  
 def newest(categoria, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
     
     itemlist = []
     item = Item()

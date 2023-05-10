@@ -5,10 +5,11 @@
 
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
 
 import re
 import traceback
+if not PY3: _dict = dict; from collections import OrderedDict as dict
 
 from core.item import Item
 from core import servertools
@@ -29,7 +30,7 @@ list_quality = []
 list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['rapidvideo', 'streamango', 'directo', 'yourupload', 'openload', 'dostream']
-forced_proxy_opt = 'ProxyCF|FORCE'
+forced_proxy_opt = 'ProxySSL'
 
 canonical = {
              'channel': 'cuevana2', 
@@ -50,7 +51,8 @@ tv_path = '/serie'
 language = []
 url_replace = []
 
-finds = {'find': {'find': [{'tag': ['div'], 'class': ['row row-cols-xl-5 row-cols-lg-4 row-cols-3']}], 'find_all': ['article']},
+finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['row row-cols-xl-5 row-cols-lg-4 row-cols-3']}]), 
+                       ('find_all', ['article'])]),
          'categories': {}, 
          'search': {}, 
          'get_language': {}, 
@@ -59,23 +61,28 @@ finds = {'find': {'find': [{'tag': ['div'], 'class': ['row row-cols-xl-5 row-col
          'get_quality_rgx': '', 
          'next_page': {}, 
          'next_page_rgx': [['\/page\/\d+', '/page/%s']], 
-         'last_page': {'find': [{'tag': ['ul'], 'class': ['pagination']}, 
-                                {'tag': ['span'], 'class': ['visually-hidden'], 'string': re.compile('(?i)Last')}], 
-                       'find_previous': [{'tag': ['a'], 'class': ['page-link'], '@ARG': 'href', '@TEXT': '(\d+)'}]}, 
-         'year': {'find': [{'tag': ['div'], 'class': ['MovieItem_data__BdOz3', 'SerieItem_data__LFJR_']}, {'tag': ['span']}], 
-                  'get_text': [{'strip': True, '@TEXT': '(\d{4})'}]}, 
-         'season_episode': {'find': [{'tag': ['div'], 'class': ['EpisodeItem_data__jsvqZ']}, {'tag': ['span']}], 
-                            'get_text': [{'tag': '', '@STRIP': True}]}, 
-         'seasons': {'find': [{'tag': ['div'], 'class': ['serieBlockListEpisodes_selector__RwIbM']}], 'find_all': ['option']}, 
+         'last_page': dict([('find', [{'tag': ['ul'], 'class': ['pagination']}, 
+                                      {'tag': ['span'], 'class': ['visually-hidden'], 'string': re.compile('(?i)Last')}]), 
+                            ('find_previous', [{'tag': ['a'], 'class': ['page-link'], '@ARG': 'href', '@TEXT': '(\d+)'}])]), 
+         'year': dict([('find', [{'tag': ['div'], 'class': ['MovieItem_data__BdOz3', 'SerieItem_data__LFJR_']}, 
+                                 {'tag': ['span']}]), 
+                       ('get_text', [{'strip': True, '@TEXT': '(\d{4})'}])]), 
+         'season_episode': dict([('find', [{'tag': ['div'], 'class': ['EpisodeItem_data__jsvqZ']}, 
+                                           {'tag': ['span']}]), 
+                                 ('get_text', [{'tag': '', '@STRIP': True}])]), 
+         'seasons': dict([('find', [{'tag': ['div'], 'class': ['serieBlockListEpisodes_selector__RwIbM']}]), 
+                          ('find_all', ['option'])]), 
          'season_num': {}, 
          'seasons_search_num_rgx': '', 
          'seasons_search_qty_rgx': '', 
          'episode_url': '%sepisodio/%s-%sx%s', 
-         'episodes': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}, 
+         'episodes': dict([('find', [{'tag': ['script'], 'id': ['__NEXT_DATA__']}]), 
+                           ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}])]), 
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
-         'findvideos': {'find': [{'tag': ['script'], 'id': ['__NEXT_DATA__']}], 'get_text': [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}]}, 
+         'findvideos': dict([('find', [{'tag': ['script'], 'id': ['__NEXT_DATA__']}]), 
+                             ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}])]), 
          'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*\(\d{4}\)', ''],
                          ['[\(|\[]\s*[\)|\]]', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
@@ -241,7 +248,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     matches = []
     findS = AHkwargs.get('finds', finds)
 
-    if not isinstance(matches_int, dict): matches_int = jsontools.load(matches_int)
+    if not isinstance(matches_int, (dict, _dict)): matches_int = jsontools.load(matches_int)
     matches_int = matches_int.get('props', {}).get('pageProps', {}).get('post', {}).get('seasons', {})
 
     for x, elem_season in enumerate(matches_int):
@@ -280,7 +287,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
-    if not isinstance(matches_int, dict): matches_int = jsontools.load(matches_int)
+    if not isinstance(matches_int, (dict, _dict)): matches_int = jsontools.load(matches_int)
 
     servers = {'drive': 'gvideo', 'fembed': 'fembed', "player": "oprem", "openplay": "oprem", "embed": "mystream"}
     action = item.contentType if item.contentType == 'episode' else 'post'
@@ -313,15 +320,13 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 def play(item):
     logger.info()
     
-    kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
-              'timeout': 5, 'cf_assistant': False, 'follow_redirects': False, 'referer': item.referer, 'canonical': {}, 
-              'CF': False, 'forced_proxy_opt': forced_proxy_opt}
+    kwargs = {'cf_assistant': False, 'follow_redirects': False, 'headers': {'Referer': host}, 'CF': False}
     item.setMimeType = 'application/vnd.apple.mpegurl'
 
     soup = AlfaChannel.create_soup(item.url, **kwargs)
     if not soup or not soup.find("script"):
         return []
-    soup = soup.find("script").text
+    soup = soup.find("script", string=re.compile('start.onclick')).get_text(strip=False)
 
     item.url = scrapertools.find_single_match(str(soup), "url\s*=\s*'([^']+)'")
     if item.url:
@@ -346,8 +351,7 @@ def actualizar_titulos(item):
 
 def search(item, texto, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
 
     try:
         texto = texto.replace(" ", "+")
@@ -369,8 +373,7 @@ def search(item, texto, **AHkwargs):
 
 def newest(categoria, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
 
     item = Item()
     try:

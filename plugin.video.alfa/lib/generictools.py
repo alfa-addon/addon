@@ -311,7 +311,7 @@ def convert_url_base64(url, host='', referer=None, rep_blanks=True, force_host=F
                 #logger.error(traceback.format_exc())
                 if not url_base64:
                     url_base64 = url
-                if url_base64.startswith('magnet') or url_base64.endswith('.torrent') or domain and domain in host_whitelist_skip:
+                if url_base64.startswith('magnet') or url_base64.endswith('.torrent') or (domain and domain in host_whitelist_skip):
                     return url_base64 + url_sufix
                 
                 from lib.unshortenit import sortened_urls

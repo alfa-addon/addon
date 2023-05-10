@@ -5,10 +5,11 @@
 
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
 
 import re
 import traceback
+if not PY3: _dict = dict; from collections import OrderedDict as dict
 
 from core.item import Item
 from core import servertools
@@ -45,8 +46,8 @@ tv_path = '/series/'
 language = []
 url_replace = []
 
-finds = {'find': {'find': [{'tag': ['ul'], 'class': ['MovieList']}], 
-                  'find_all': [{'tag': ['article'], 'class': ['TPost B']}]},
+finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList']}]), 
+                       ('find_all', [{'tag': ['article'], 'class': ['TPost B']}])]),
          'categories': {}, 
          'search': {}, 
          'get_language': {}, 
@@ -55,12 +56,16 @@ finds = {'find': {'find': [{'tag': ['ul'], 'class': ['MovieList']}],
          'get_quality_rgx': '', 
          'next_page': {}, 
          'next_page_rgx': [['\/page\/\d+', '/page/%s/']], 
-         'last_page': {'find': [{'tag': ['nav', 'div'], 'class': ['wp-pagenavi']}, {'tag': ['i'], 'class': ['fa-arrow-right']}], 
-                       'find_previous': [{'tag': ['a'], 'class': ['page-link']}], 'get_text': [{'tag': '', '@STRIP': True}]}, 
-         'year': {'find': [{'tag': ['span'], 'class': ['Date']}], 'get_text': [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}]}, 
+         'last_page': dict([('find', [{'tag': ['nav', 'div'], 'class': ['wp-pagenavi']}, 
+                                      {'tag': ['i'], 'class': ['fa-arrow-right']}]), 
+                            ('find_previous', [{'tag': ['a'], 'class': ['page-link']}]), 
+                            ('get_text', [{'tag': '', '@STRIP': True}])]), 
+         'year': dict([('find', [{'tag': ['span'], 'class': ['Date']}]), 
+                                 ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}])]), 
          'season_episode': {}, 
          'seasons': {'find_all': [{'tag': ['section'], 'class': ['SeasonBx AACrdn']}]}, 
-         'season_num': {'find': [{'tag': ['a']}], 'get_text': [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}]}, 
+         'season_num': dict([('find', [{'tag': ['a']}]), 
+                             ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}])]), 
          'seasons_search_num_rgx': '', 
          'seasons_search_qty_rgx': '', 
          'episode_url': '', 
@@ -68,9 +73,9 @@ finds = {'find': {'find': [{'tag': ['ul'], 'class': ['MovieList']}],
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
-         'findvideos': {'find': [{'tagOR': ['div'], 'class': ['optns-bx']},
-                                 {'tag': ['ul'], 'class': ['ListOptions']}], 
-                                 'find_all': [{'tag': ['li', 'button']}]}, 
+         'findvideos': dict([('find', [{'tagOR': ['div'], 'class': ['optns-bx']},
+                                       {'tag': ['ul'], 'class': ['ListOptions']}]), 
+                             ('find_all', [{'tag': ['li', 'button']}])]), 
          'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*\(\d{4}\)', ''],
                          ['[\(|\[]\s*[\)|\]]', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real-*|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
@@ -133,18 +138,18 @@ def section(item):
         return itemlist
 
     if "Géneros" in item.extra:
-        findS['categories'] = {'find': [{'tag': ['div'], 'id': ['toroflix_genres_widget-2']}], 
-                               'find_all': [{'tag': ['li']}]}
+        findS['categories'] = dict([('find', [{'tag': ['div'], 'id': ['toroflix_genres_widget-2']}]), 
+                                    ('find_all', [{'tag': ['li']}])])
 
     elif 'Año' in item.extra:
-        findS['categories'] = {'find': [{'tag': ['select'], 'class': ['Select-Md']}], 
-                               'find_all': [{'tag': ['option']}]}
+        findS['categories'] = dict([('find', [{'tag': ['select'], 'class': ['Select-Md']}]), 
+                                    ('find_all', [{'tag': ['option']}])])
         findS['controls'].update({'reverse': True})
         return AlfaChannel.section(item, matches_post=section_matches, finds=findS, **kwargs)
 
     elif 'Productoras' in item.extra:
-        findS['categories'] = {'find': [{'tag': ['li'], 'id': ['menu-item-1888']}], 
-                               'find_all': [{'tag': ['li']}]}
+        findS['categories'] = dict([('find', [{'tag': ['li'], 'id': ['menu-item-1888']}]), 
+                                    ('find_all', [{'tag': ['li']}])])
         return AlfaChannel.section(item, postprocess=section_post, finds=findS, **kwargs)
 
     return AlfaChannel.section(item, finds=findS, **kwargs)
@@ -181,11 +186,12 @@ def list_all(item):
     logger.info()
 
     findS = finds.copy()
-    
+
     if item.extra == "Alfabético":
-        findS['find'] = {'find': [{'tag': ['tbody']}], 'find_all': [{'tag': ['tr']}]}
-        findS['year'] = {'find': [{'tag': ['td'], 'string': re.compile(r"\d{4}")}], 
-                         'get_text': [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}]}
+        findS['find'] = dict([('find',  [{'tag': ['tbody']}]), 
+                              ('find_all', [{'tag': ['tr']}])])
+        findS['year'] = dict([('find', [{'tag': ['td'], 'string': re.compile(r"\d{4}")}]), 
+                              ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}])])
 
     return AlfaChannel.list_all(item, matches_post=list_all_matches, finds=findS, **kwargs)
 
@@ -374,8 +380,7 @@ def play(item):
 
 def search(item, texto, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
 
     try:
         texto = texto.replace(" ", "+")

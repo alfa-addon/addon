@@ -5,10 +5,11 @@
 
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
 
 import re
 import traceback
+if not PY3: _dict = dict; from collections import OrderedDict as dict
 
 from core.item import Item
 from core import servertools
@@ -77,7 +78,8 @@ language = ['CAST']
 url_replace = []
 
 finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['text-center']}]}, 
-         'sub_menu': {'find': [{'tag': ['div'], 'class': ['torrents-list']}], 'find_all': [{'tag': ['a']}]}, 
+         'sub_menu': dict([('find', [{'tag': ['div'], 'class': ['torrents-list']}]), 
+                           ('find_all', [{'tag': ['a']}])]), 
          'categories': {},  
          'search': {}, 
          'get_language': {}, 
@@ -86,16 +88,19 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['text-center']}]},
          'get_quality_rgx': [], 
          'next_page': {}, 
          'next_page_rgx': [['\/page\/\d+', '/page/%s'], ['&pagina=\d+', '&pagina=%s']], 
-         'last_page': {'find': [{'tag': ['ul'], 'class': ['pagination']}], 
-                       'find_all': [{'tag': ['a'], '@POS': [-2]}], 'get_text': [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}]}, 
+         'last_page': dict([('find', [{'tag': ['ul'], 'class': ['pagination']}]), 
+                            ('find_all', [{'tag': ['a'], '@POS': [-2]}]), 
+                            ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}])]), 
          'year': {}, 
          'season_episode': {}, 
          'seasons': {},
-         'season_num': {'find': [{'tag': ['a']}], 'get_text': [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}]}, 
+         'season_num': dict([('find', [{'tag': ['a']}]), 
+                             ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}])]), 
          'seasons_search_num_rgx': [['(?i)-(\d+)-(?:Temporada|Miniserie)', None], ['(?i)(?:Temporada|Miniserie)-(\d+)', None]], 
          'seasons_search_qty_rgx': [['(?i)(?:Temporada|Miniserie)(?:-(.*?)(?:\.|\/|-$|$))', None]], 
          'episode_url': '', 
-         'episodes': {'find': [{'tag': ['div'], 'class': ['card shadow-sm p-4']}], 'find_all': [{'tag': ['tr']}]}, 
+         'episodes': dict([('find', [{'tag': ['div'], 'class': ['card shadow-sm p-4']}]), 
+                           ('find_all', [{'tag': ['tr']}])]), 
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
@@ -108,7 +113,7 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['text-center']}]},
                          ['(?i)Dual|Subt\w*|\(?Reparado\)?|\(?Proper\)?|\(?Latino\)?|saga(?:\s*del)?|\s+final', ''], 
                          ['(?i)\s+\[*sub.*.*\s*int\w*\]*', ''], 
                          ['(?i)(?:\s*&#8211;)?\s*temp.*?\d+.*', ''], ['\d?\d?&#.*', ''], ['\d+[x|×]\d+.*', ''], 
-                         ['[\(|\[]\s*[\)|\]]', ''], ['(?i)\s*-\s*\d{1,2}.\s*temporada\s*(?:\[.*?\])?', '']],
+                         ['[\(|\[]\s*[\)|\]]', ''], ['(?i)\s*-*\s*\d{1,2}[^t]*\s*temp\w*\s*(?:\[.*?\])?', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'language_clean': [], 
          'url_replace': [], 
@@ -215,7 +220,7 @@ def submenu(item):
         if contentType == 'movie':
             quality = 'HD' if 'hd' in title.lower() or '4k' in title.lower() else ''
         else:
-            quality = 'HDTV-720p' if 'hd' in title.lower() else 'HDTV'
+            quality = 'HDTV-720p' if 'hd' in title.lower() else '' if item.title == "Documentales" else 'HDTV'
 
         if item.title in title:
             if 'descargar-' in url: 
@@ -227,12 +232,12 @@ def submenu(item):
             if item.c_type != 'peliculas':                                      # Para todo, menos películas
                 itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por [A-Z][/COLOR]', action="section", 
                                      url=url + "/letra-%s/page/1", thumbnail=get_thumb('channels_movie_az.png'), c_type=item.c_type, 
-                                     extra='Alfabético', category=categoria))
+                                     extra='Alfabético', quality=quality, category=categoria))
 
             elif title == '[B]Películas[/B]':                                   # Categorías sólo de películas
                 itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por [A-Z][/COLOR]', action="section", 
                                      url=url + "/buscar", thumbnail=get_thumb('channels_movie_az.png'), c_type=item.c_type, 
-                                     extra='Alfabético', category=categoria, post=post_alfabeto))
+                                     extra='Alfabético', quality=quality, category=categoria, post=post_alfabeto))
 
                 itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por Género[/COLOR]', action="section", 
                                      url=url+'/page/1', thumbnail=get_thumb('genres.png'), c_type=item.c_type, 
@@ -275,7 +280,8 @@ def section(item):
         
         return list_all(item)
 
-    findS['categories'] = {'find': [{'tag': ['select'], 'name': item.info[2]}], 'find_all': [{'tag': ['option']}]}
+    findS['categories'] = dict([('find', [{'tag': ['select'], 'name': item.info[2]}]), 
+                                ('find_all', [{'tag': ['option']}])])
 
     return AlfaChannel.section(item, matches_post=section_matches, finds=findS, **kwargs)
 
@@ -316,8 +322,8 @@ def list_all(item):
     elif item.extra in ['Alfabético', 'Géneros', 'Year', 'Quality'] and item.c_type == 'peliculas':
         findS['find'] = {'find_all': [{'tag': ['div'], 'class': ['card shadow-sm p-3 mt-3']}]}
 
-        findS['last_page'] = {'find': [{'tag': ['select'], 'name': ['pagina']}], 
-                             'find_all': [{'tag': ['option'], '@POS': [-1], '@ARG': 'value'}]}
+        findS['last_page'] = dict([('find', [{'tag': ['select'], 'name': ['pagina']}]), 
+                                   ('find_all', [{'tag': ['option'], '@POS': [-1], '@ARG': 'value'}])])
         findS['controls'].update({'force_find_last_page': ['', '', 'post']})
 
     elif item.extra in ['Alfabético'] and item.c_type == 'series':
@@ -345,6 +351,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
         if item.extra in ['novedades']:
             for elem_a in elem.find_all('a', class_='text-primary'):
                 elem_json = {}
+                #logger.error(elem_a)
 
                 try:
                     elem_json['url'] = elem_a.get("href", "")
@@ -395,7 +402,11 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     logger.error(traceback.format_exc())
                     continue
 
-                if not elem_json.get('url') or tienda_path in elem_json['url']: continue
+                logger.error(item.quality)
+                logger.error(elem_json['quality'])
+                if not elem_json.get('url') or tienda_path in elem_json['url'] \
+                                            or (item.quality and '720p' not in item.quality \
+                                                and elem_json['quality'].replace('*', '') != item.quality): continue
 
                 matches.append(elem_json.copy())
         
@@ -696,8 +707,7 @@ def actualizar_titulos(item):
 
 def search(item, texto, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
 
     texto = texto.replace(" ", "%20")
 
@@ -718,8 +728,7 @@ def search(item, texto, **AHkwargs):
  
 def newest(categoria, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
 
     itemlist = []
     item = Item()

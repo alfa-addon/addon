@@ -5,10 +5,11 @@
 
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
 
 import re
 import traceback
+if not PY3: _dict = dict; from collections import OrderedDict as dict
 
 from core.item import Item
 from core import servertools
@@ -53,14 +54,15 @@ url_replace = []
 
 finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['browse-movie-wrap']}]}, 
          'sub_menu': {}, 
-         'categories': {'find': [{'tag': ['select'], 'name': ['%s']}], 'find_all': [{'tag': ['option']}]},
+         'categories': dict([('find', [{'tag': ['select'], 'name': ['%s']}]), 
+                             ('find_all', [{'tag': ['option']}])]),
          'search': {}, 
          'get_language': {}, 
          'get_language_rgx': '', 
          'get_quality': {}, 
          'get_quality_rgx': [], 
-         'next_page': {'find': [{'tag': ['ul'], 'class': ['tsc_pagination']}], 
-                       'find_all': [{'tag': ['a'], '@POS': [-1], 'string': re.compile('(?i)Next'), '@ARG': 'href'}]}, 
+         'next_page': dict([('find', [{'tag': ['ul'], 'class': ['tsc_pagination']}]), 
+                            ('find_all', [{'tag': ['a'], '@POS': [-1], 'string': re.compile('(?i)Next'), '@ARG': 'href'}])]), 
          'next_page_rgx': [['\?page=\d+', '?page=%s']], 
          'last_page': {}, 
          'year': {}, 
@@ -122,7 +124,7 @@ def mainlist(item):
                         ))  
 
     itemlist.append(Item(channel = item.channel,
-                         title = " - Explorar por Géneros",
+                         title = " - [COLOR paleturquoise]Por Género[/COLOR]",
                          action = "section",
                          extra = 'genre',
                          c_type = 'peliculas', 
@@ -131,7 +133,7 @@ def mainlist(item):
                         ))
 
     itemlist.append(Item(channel = item.channel,
-                         title = " - Explorar por Calidades",
+                         title = " - [COLOR paleturquoise]Por Calidad[/COLOR]",
                          action = "section",
                          extra = 'quality',
                          c_type = 'peliculas', 
@@ -140,7 +142,7 @@ def mainlist(item):
                         ))
 
     itemlist.append(Item(channel = item.channel,
-                         title = " - Explorar por Idiomas",
+                         title = " - [COLOR paleturquoise]Por Idiomas[/COLOR]",
                          action = "section",
                          extra = 'language',
                          c_type = 'peliculas', 
@@ -149,7 +151,7 @@ def mainlist(item):
                         ))
 
     itemlist.append(Item(channel = item.channel,
-                         title = " - Explorar por Años",
+                         title = " - [COLOR paleturquoise]Por Año[/COLOR]",
                          action = "section",
                          extra = 'year',
                          c_type = 'peliculas', 
@@ -178,8 +180,8 @@ def section(item):
 
     findS = finds.copy()
 
-    findS['categories'] = {'find': [{'tag': ['select'], 'name': ['%s' % item.extra]}], 
-                           'find_all': [{'tag': ['option']}]}
+    findS['categories'] = dict([('find', [{'tag': ['select'], 'name': ['%s' % item.extra]}]), 
+                                ('find_all', [{'tag': ['option']}])])
 
     return AlfaChannel.section(item, matches_post=section_matches, finds=findS, **kwargs)
 
@@ -294,14 +296,13 @@ def actualizar_titulos(item):
 
 def search(item, texto, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
     
-    text = text.replace(" ", "%20")
+    texto = texto.replace(" ", "%20")
 
     try:
-        if text:
-            item.url = URL_BROWSE + '/' + text + '/all/all/0/latest/0/all'
+        if texto:
+            item.url = URL_BROWSE + '/' + texto + '/all/all/0/latest/0/all'
             item.c_type = 'peliculas'
             item.texto = texto
             itemlist = list_all(item)

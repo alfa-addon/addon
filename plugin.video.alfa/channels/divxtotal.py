@@ -5,10 +5,11 @@
 
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
 
 import re
 import traceback
+if not PY3: _dict = dict; from collections import OrderedDict as dict
 
 from core.item import Item
 from core import servertools
@@ -55,26 +56,32 @@ tv_path = '/series'
 language = []
 url_replace = []
 
-finds = {'find': {'find': [{'tag': ['table'], 'class': ['table']}], 'find_all': [{'tag': ['tr']}]}, 
-         'sub_menu': {'find': [{'tag': ['ul'], 'class': ['nav navbar-nav']}], 'find_all': [{'tag': ['li']}]}, 
-         'categories': {'find': [{'tag': ['div'], 'id': 'bloque_cat'}], 'find_all': [{'tag': ['a']}]},  
+finds = {'find': dict([('find', [{'tag': ['table'], 'class': ['table']}]), 
+                       ('find_all', [{'tag': ['tr']}])]), 
+         'sub_menu': dict([('find', [{'tag': ['ul'], 'class': ['nav navbar-nav']}]), 
+                           ('find_all', [{'tag': ['li']}])]), 
+         'categories': dict([('find', [{'tag': ['div'], 'id': 'bloque_cat'}]), 
+                             ('find_all', [{'tag': ['a']}])]),  
          'search': {}, 
          'get_language': {}, 
          'get_language_rgx': '(?:flags\/|\/images\/)([^\.]+)\.(?:png|jpg|jpeg|webp)', 
-         'get_quality': {'find': [{'tag': ['ul'], 'class': True}], 'get_text': [{'tag': '', '@STRIP': True}]}, 
+         'get_quality': dict([('find', [{'tag': ['ul'], 'class': True}]), 
+                              ('get_text', [{'tag': '', '@STRIP': True}])]), 
          'get_quality_rgx': [], 
          'next_page': {}, 
          'next_page_rgx': [['\/page\/\d+', '/page/%s/']], 
-         'last_page': {'find': [{'tag': ['ul'], 'class': ['pagination']}], 
-                       'find_all': [{'tag': ['a'], '@POS': [-1], '@ARG': 'href', '@TEXT': '\/(\d+)\/'}]}, 
+         'last_page': dict([('find', [{'tag': ['ul'], 'class': ['pagination']}]), 
+                            ('find_all', [{'tag': ['a'], '@POS': [-1], '@ARG': 'href', '@TEXT': '\/(\d+)\/'}])]), 
          'year': {}, 
          'season_episode': {}, 
          'seasons': {'find_all': [{'tag': ['h3'], 'string': re.compile('(?i)temporada')}]},
-         'season_num': {'find': [{'tag': ['a']}], 'get_text': [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}]}, 
+         'season_num': dict([('find', [{'tag': ['a']}]), 
+                             ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}])]), 
          'seasons_search_num_rgx': [['(?i)-(\d+)-(?:Temporada|Miniserie)', None], ['(?i)(?:Temporada|Miniserie)-(\d+)', None]], 
          'seasons_search_qty_rgx': [['(?i)(?:Temporada|Miniserie)(?:-(.*?)(?:\.|\/|-$|$))', None]], 
          'episode_url': '', 
-         'episodes': {'find': [{'tag': ['div'], 'class': ['row fichseriecapitulos']}], 'find_all': [{'tag': ['tbody']}]}, 
+         'episodes': dict([('find', [{'tag': ['div'], 'class': ['row fichseriecapitulos']}]), 
+                           ('find_all', [{'tag': ['tbody']}])]), 
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
@@ -459,8 +466,7 @@ def actualizar_titulos(item):
 
 def search(item, texto, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
 
     texto = texto.replace(" ", "+")
 
@@ -482,8 +488,7 @@ def search(item, texto, **AHkwargs):
  
 def newest(categoria, **AHkwargs):
     logger.info()
-    global kwargs
-    kwargs = AHkwargs
+    kwargs.update(AHkwargs)
 
     itemlist = []
     item = Item()
