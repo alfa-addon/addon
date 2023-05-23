@@ -7,6 +7,7 @@ import re
 from core import httptools
 from core import scrapertools
 from platformcode import logger
+from core import jsontools as json
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
@@ -22,26 +23,36 @@ def test_video_exists(page_url):
 def get_video_url(page_url, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    headers = {'Referer': 'https://www.pornhub.com'}
+    headers = {'Referer': 'https://es.pornhub.com/'}
     data = httptools.downloadpage(page_url, headers=headers, set_tls=True, set_tls_min=True).data
-    data = scrapertools.find_single_match(data, '<div id="player"(.*?)</script>')
-    data = data.replace('" + "', '' )
-    flashvars = scrapertools.find_single_match(data, 'var flashvars_(.*?)"hotspots"')
-    videourl = scrapertools.find_multiple_matches(data, "(var\sra[a-z0-9]+=.+?);flash")
-    # logger.debug(flashvars)
-    # logger.debug(videourl)
-    
-    for elem in videourl:
-        orden = scrapertools.find_multiple_matches(elem, '\*\/([A-z0-9]+)')
-        # logger.debug(orden)
-        url= ""
-        for i in orden:
-            url += scrapertools.find_single_match(elem, '%s="([^"]+)"' %i)
-        # logger.debug(url)
-        if "master.m3u8" in url and not "K," in url and not "get_media" in url:
+    flashvars = scrapertools.find_single_match(data, '(var flashvars.*?)</script>')
+    flashvars = flashvars.replace('" + "', '' ).replace("\/", "/")
+    videos = scrapertools.find_single_match(flashvars, '"mediaDefinitions":(.*?),"isVertical"')
+    crypto = scrapertools.find_multiple_matches(flashvars, "(var\sra[a-z0-9]+=.+?);flash")
+    if not crypto:
+        JSONData = json.load(videos)
+        for elem in JSONData:
+            url = elem['videoUrl']
+            type = elem['format']
+            quality = elem['quality']
+            if "get_media" in url:
+                video_json = httptools.downloadpage(url, set_tls=True, set_tls_min=True).json
+                url = video_json[0]['videoUrl']
+                quality = video_json[0]['quality']
+            # logger.debug("[%s] %s" %(quality, url))
+            video_urls.append(["[pornhub] %s" % quality, url])
+    else:
+        for elem in crypto:
+            orden = scrapertools.find_multiple_matches(elem, '\*\/([A-z0-9]+)')
+            url= ""
+            for i in orden:
+                url += scrapertools.find_single_match(elem, '%s="([^"]+)"' %i)
+            if "get_media" in url:
+                video_json = httptools.downloadpage(url, set_tls=True, set_tls_min=True).json
+                url = video_json[0]['videoUrl']
+                quality = video_json[0]['quality']
+            # if "master.m3u8" in url and not "K," in url:
             quality = scrapertools.find_single_match(url, '(\d+P)_')
             video_urls.append(["[pornhub] %s" % quality, url])
     video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
     return video_urls
-
-
