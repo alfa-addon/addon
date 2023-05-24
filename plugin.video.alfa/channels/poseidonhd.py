@@ -35,8 +35,8 @@ forced_proxy_opt = 'ProxyCF'
 canonical = {
              'channel': 'poseidonhd', 
              'host': config.get_setting("current_host", 'poseidonhd', default=''), 
-             'host_alt': ["https://www.poseidonhd2.com/"], 
-             'host_black_list': ["https://tekilaz.co/"], 
+             'host_alt': ["https://www.poseidonhd2.co/"], 
+             'host_black_list': ["https://www.poseidonhd2.com/", "https://tekilaz.co/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

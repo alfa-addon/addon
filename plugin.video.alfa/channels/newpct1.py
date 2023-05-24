@@ -202,7 +202,7 @@ finds = {'find': {'find': [{'tag': ['ul'], 'class': ['pelilist', 'buscar-list']}
          'url_replace': [], 
          'controls': {'duplicates': [], 'min_temp': False, 'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 15, 
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
-                      'host_torrent': host},
+                      'host_torrent': host, 'btdigg_service': False},
          'timeout': timeout,
          'btdigg_cfg': [{'url': host + 'peliculas-latino/' if default_lang == 'lat' else host + 'peliculas/', 
                                 'c_type': 'peliculas', 'entries': 2, 'movie_path': 'peliculas'}, 

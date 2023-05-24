@@ -32,9 +32,10 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ['https://dontorrent.observer/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+             'host_alt': ['https://dontorrent.dad/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
                           'https://verdetorrent.com/', 'https://tomadivx.net/', 'https://donproxies.com/'], 
-             'host_black_list': ['https://dontorrent.cash/', 'https://dontorrent.care/', 'https://dontorrent.ms/', 
+             'host_black_list': ['https://dontorrent.discount/', 'https://dontorrent.company/', 'https://dontorrent.observer/', 
+                                 'https://dontorrent.cash/', 'https://dontorrent.care/', 'https://dontorrent.ms/', 
                                  'https://dontorrent.pictures/', 'https://dontorrent.cloud/', 'https://dontorrent.africa/', 
                                  'https://dontorrent.love/', 'https://dontorrent.ninja/', 'https://dontorrent.plus/', 
                                  'https://dontorrent.chat/', 'https://dontorrent.casa/', 'https://dontorrent.how/', 
@@ -437,6 +438,11 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 matches.append(elem_json.copy())
 
         elif item.c_type in ['search']:
+            try:
+                items_found = int(elem.find('p', class_="lead").find_next('p', class_="lead").get_text('|', strip=True).split('|')[1])
+            except:
+                items_found = 0
+
             for elem_a in elem.find_all('p'):
                 elem_json = {}
                 #logger.error(elem_a)
@@ -444,6 +450,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 try:
                     if not elem_a.find('a'): continue
                     elem_json['url'] = elem_a.find('a').get("href", "")
+                    if items_found > 0: items_found -= 1
                     if movie_path not in elem_json['url'] and tv_path not in elem_json['url'] and docu_path not in elem_json['url']: continue
                     elem_json['title'] = re.sub('(?i)\s*\(.*?\).*?$', '', elem_a.get_text()).rstrip('.')
                     elem_json['quality'] = '*%s' % scrapertools.find_single_match(elem_a.get_text(), '\((.*?)\)').replace('Ninguno', '')
@@ -458,12 +465,8 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
                 matches.append(elem_json.copy())
 
-            if not AlfaChannel.last_page:
-                try:           
-                    AlfaChannel.last_page = int(float(elem.find('p', class_="lead").find_next('p', class_="lead")\
-                                                .get_text('|', strip=True).split('|')[1]) / float(len(matches))  + 0.500009)
-                except:
-                    AlfaChannel.last_page = 0
+            if not AlfaChannel.last_page and items_found:
+                AlfaChannel.last_page = int(float(items_found / float(len(matches))  + 0.500009))
 
         elif item.c_type in ['peliculas', 'series']:
             for elem_a in elem.find_all('a'):
