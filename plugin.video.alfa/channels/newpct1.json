@@ -1,7 +1,7 @@
 {
   "id": "newpct1",
   "name": "Newpct1",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.postimg.cc/hQthW08Y/newpct1.jpg",
