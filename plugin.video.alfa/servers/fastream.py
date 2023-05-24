@@ -7,6 +7,8 @@ from core import httptools, scrapertools
 from platformcode import config, logger
 from lib import jsunpack
 
+from core.httptools import urlparse
+
 data = ''
 
 
@@ -19,8 +21,24 @@ def test_video_exists(page_url):
     if 'referer' in locals():
         page_url += referer
 
+    url_components = urlparse.urlparse(page_url)
+    code = urlparse.parse_qsl(url_components.query)[0][0]
+
+    origin = "{}://{}".format(url_components.scheme, url_components.hostname)
+    post = {
+        "op": "embed",
+        "file_code": code,
+        "auto": "1",
+        "referer": "",
+    }
+
     global data
-    data = httptools.downloadpage(page_url).data
+    data = httptools.downloadpage(
+        "{}/dl".format(origin),
+        post=post,
+        referer=page_url,
+        cookies=False,
+    ).data
 
     if 'File is no longer available as it expired or has been deleted' in data:
         return False, (config.get_localized_string(70449) % "fastream")
