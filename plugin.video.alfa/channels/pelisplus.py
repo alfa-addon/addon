@@ -104,7 +104,7 @@ def sub_menu(item):
                              thumbnail=get_thumb('genres', auto=True), type=content))
     elif item.title.lower() == "series":
         itemlist.append(Item(channel=item.channel, title="Ultimos estrenos", action="list_all",
-                             url=host + 'series-en-estreno', thumbnail=get_thumb('more watched', auto=True), type=content))
+                             url=host + 'series-de-estreno', thumbnail=get_thumb('more watched', auto=True), type=content))
         itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="list_all",
                              url=host + 'series-populares', thumbnail=get_thumb('more watched', auto=True), type=content))
     return itemlist
@@ -132,16 +132,19 @@ def list_all(item):
         if "/pelicula/" in url:
             new_item.contentTitle = title
             new_item.action = "findvideos"
+            new_item.contentType = 'movie'
         else:
             new_item.contentSerieName = title
             new_item.action = "seasons"
+            new_item.contentType = 'tvshow'
 
         itemlist.append(new_item)
     tmdb.set_infoLabels_itemlist(itemlist, True)
     #  Paginación
 
     try:
-        next_page = scrapertools.find_single_match(data, 'href="([^"]+)"><i class="ic-chevron-right"></i>')
+        #next_page = scrapertools.find_single_match(data, 'href="([^"]+)"><i class="ic-chevron-right"></i>')
+        next_page = scrapertools.find_single_match(data, '<div\s*class="nav-links">.*?<a\s*class="page-link\s*current".*?''<a\s*class="page-link"[^>]*href="([^"]+)"')
 
         if next_page:
             if not next_page.startswith(host):
@@ -158,7 +161,7 @@ def seasons(item):
 
     itemlist = list()
     data = httptools.downloadpage(item.url).data
-    patron  = 'data-toggle="tab">([^<]+)'
+    patron  = 'data-toggle="tab"[^>]*aria-controls="\d+"[^>]*>([^<]+)'
     infoLabels = item.infoLabels
     matches = scrapertools.find_multiple_matches(data, patron)
     
@@ -166,7 +169,7 @@ def seasons(item):
         title = title.capitalize()
         infoLabels["season"] = scrapertools.find_single_match(title, "Temporada (\d+)")
         itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseasons',
-                             infoLabels=infoLabels))
+                             infoLabels=infoLabels, contentType='season'))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
@@ -209,7 +212,7 @@ def episodesxseasons(item):
         infoLabels['episode'] = epi_num
         title = '%sx%s - %s' % (season, epi_num, epi_name.strip())
 
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', infoLabels=infoLabels))
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', infoLabels=infoLabels, contentType='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
@@ -239,10 +242,11 @@ def findvideos(item):
     if data.sucess or data.code == 302:
         data = data.data
     patron  = 'data-lang="#([^"]+).*?'
-    patron += 'lngopt"><a>([^<]+)'
+    #patron += 'lngopt"><a>([^<]+)'
+    patron += 'aria-controls="[^>]+>([^<]+)<'
     languages = scrapertools.find_multiple_matches(data, patron)
     for language, idioma in languages:
-        bloque = scrapertools.find_single_match(data, '"%s.*?</a></li></ul></div>' %language)
+        bloque = scrapertools.find_single_match(data, 'id="%s.*?<\/a><\/li><\/ul><\/div>' % language)
         language=IDIOMAS.get(idioma.lower(), "VOSE")
         pattern = 'data-tr="([^"]+)"'
         matches = scrapertools.find_multiple_matches(bloque, pattern)

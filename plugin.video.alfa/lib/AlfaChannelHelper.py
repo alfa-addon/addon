@@ -436,7 +436,7 @@ class AlfaChannelHelper:
                 title_colored += color_tag % (canal, '[%s]' % elem.get('canal')) if elem.get('canal') else ''
                 title_colored += color_tag % (star, '%s' % elem.get('star')) if elem.get('star') else ''
                 title_colored += color_tag % (text if not elem.get('premium', '') else error, title.title())
-                title_colored += color_tag % (views, '[%s visitas]' % elem.get('views')) if elem.get('views') and elem['views'] != '0' else ''
+                title_colored += color_tag % (views, '[%s visitas]' % elem.get('views')) if (elem.get('views') and elem['views'] != '0') else ''
 
             elif function in ['section_A']:
                 title_colored += color_tag % (text, title.title())
@@ -598,6 +598,7 @@ class AlfaChannelHelper:
 
         try:
             size_name = {"M·B": 1, "G·B": 1024, "MB": 1, "GB": 1024}
+            size = size.replace('\xa0', ' ')
             if ' ' in size:
                 size_list = size.split(' ')
                 size = float(size_list[0])
@@ -795,7 +796,7 @@ class AlfaChannelHelper:
 
     def parse_finds_dict(self, soup, finds, year=False, next_page=False, c_type=''):
 
-        matches = matches_init = [] if not year and not next_page else '-' if year else ''
+        matches = matches_init = [] if (not year and not next_page) else '-' if year else ''
         if not finds: 
             return soup
         if not soup: 
@@ -1085,7 +1086,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     AHkwargs['soup'] = self.response.soup or self.response.json or self.response.data
                     curr_page += 1
                     matches_list_all = self.parse_finds_dict(soup, finds_out) if finds_out \
-                                       else self.response.soup or self.response.json or self.response.data
+                                       else (self.response.soup or self.response.json or self.response.data)
                     if not isinstance(matches_list_all, (list, _dict)):
                         matches = []
                     if matches_post and matches_list_all:
@@ -1097,6 +1098,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     if ((self.btdigg and item.extra == 'novedades') or (self.btdigg_search \
                                      and item.c_type == 'search' and item.extra != 'find_seasons')) \
                                      and not item.btdig_in_use:
+                        if 'matches' in  AHkwargs: del AHkwargs['matches']
                         matches = self.find_btdigg_list_all(item, matches, finds_controls.get('channel_alt', ''), **AHkwargs)
 
                     if not matches and item.extra != 'continue':
@@ -1443,7 +1445,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
             AHkwargs['soup'] = self.response.soup or self.response.json or self.response.data
             matches_section = self.parse_finds_dict(soup, finds_out) if finds_out \
-                              else self.response.soup or self.response.json or self.response.data
+                              else (self.response.soup or self.response.json or self.response.data)
             if not isinstance(matches_section, (list, _dict)):
                 matches_section = []
 
@@ -1654,7 +1656,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                     AHkwargs['soup'] = self.response.soup or self.response.json or self.response.data
                     matches_seasons = self.parse_finds_dict(soup, finds_out) if finds_out \
-                                      else self.response.soup or self.response.json or self.response.data
+                                      else (self.response.soup or self.response.json or self.response.data)
                     if not isinstance(matches_seasons, (list, _dict)):
                         matches_seasons = []
 
@@ -1687,8 +1689,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                                 except:
                                                     elem_json['season'] = 1
                                 elem_json['url'] = item.url if not "href" in str(elem) \
-                                                   else elem.find('a').get("href", '') if elem.find('a') and "href" in str(elem.find('a')) \
-                                                   else elem.a.get("href", '') if elem.a and "href" in str(elem.a) \
+                                                   else elem.find('a').get("href", '') if (elem.find('a') and "href" in str(elem.find('a'))) \
+                                                   else elem.a.get("href", '') if (elem.a and "href" in str(elem.a)) \
                                                    else elem.get("href", '') if "href" in str(elem) else item.url
                                 if not elem_json['url']: elem_json['url'] = item.url
                                 if 'javascript' in elem_json['url']: elem_json['url'] = self.doo_url if post else item.url
@@ -1710,6 +1712,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if self.btdigg:
                 if (len(matches) < 1 and item.infoLabels.get('number_of_seasons', 1) > 1) or (len(matches) >= 1 and matches[-1].get('season', 1) < item.infoLabels.get('number_of_seasons', 1)):
                     AHkwargs['btdigg_contentSeason'] = 1
+                if 'matches' in AHkwargs: del AHkwargs['matches']
                 matches = self.find_btdigg_seasons(item, matches, finds_controls.get('domain_alt', ''), **AHkwargs)
 
             if not matches:
@@ -1990,7 +1993,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                 AHkwargs['soup'] = self.response.soup or self.response.json or self.response.data
                 matches_episodes = self.parse_finds_dict(soup, finds_out) if finds_out \
-                                   else self.response.soup or self.response.json or self.response.data
+                                   else (self.response.soup or self.response.json or self.response.data)
                 if not isinstance(matches_episodes, (list, _dict)):
                     matches_episodes = []
 
@@ -1998,6 +2001,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 matches = matches_post(item, matches_episodes, **AHkwargs)
 
         if self.btdigg:
+            if 'matches' in AHkwargs: del AHkwargs['matches']
             matches = self.find_btdigg_episodes(item, matches, finds_controls.get('domain_alt', ''), **AHkwargs)
 
         if not matches:
@@ -2326,8 +2330,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if not elem_json['url'].startswith('magnet'): elem_json['url'] = self.urljoin(self.host, elem_json['url'])
             elem_json['quality'] = item.quality
             elem_json['language'] = item.language
-            elem_json['server'] = 'torrent' if elem_json['url'].startswith('magnet') \
-                                            or elem_json['url'].endswith('.torrent') else ''
+            elem_json['server'] = 'torrent' if (elem_json['url'].startswith('magnet') \
+                                                or elem_json['url'].endswith('.torrent')) else ''
             elem_json['title'] = elem_json['server'] or '%s'
             if item.torrent_info: elem_json['size'] = elem_json['torrent_info'] = item.torrent_info
             if item.btdig_in_use: elem_json['btdig_in_use'] = item.btdig_in_use
@@ -2341,15 +2345,15 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if not item.matches or (item.matches and not matches and (item.channel == 'videolibrary' \
                                                                   or item.contentChannel == 'videolibrary' \
                                                                   or item.from_channel == 'videolibrary')):
-            matches = self.parse_finds_dict(soup, finds_out) if finds_out \
-                      else self.response.soup or self.response.json or self.response.data
-            if not isinstance(matches, (list, _dict)):
-                matches = []
+            matches_findvideos = self.parse_finds_dict(soup, finds_out) if finds_out \
+                                 else (self.response.soup or self.response.json or self.response.data)
+            if not isinstance(matches_findvideos, (list, _dict)):
+                matches_findvideos = []
             if item.matches and not isinstance(item.matches[0], _dict):
                 AHkwargs['matches'] = item.matches
                 del item.matches
-            if matches_post and matches:
-                matches, langs = matches_post(item, matches, langs, response, **AHkwargs)
+            if matches_post and matches_findvideos:
+                matches, langs = matches_post(item, matches_findvideos, langs, response, **AHkwargs)
             if matches and AHkwargs.get('matches'):
                 item.matches = matches[:]
                 del AHkwargs['matches']
@@ -2357,34 +2361,36 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if (item.matches or AHkwargs.get('matches')) and not matches:
             matches = AHkwargs.get('matches', []) or item.matches
             if item.matches and not isinstance(item.matches[0], _dict):
-                AHkwargs['matches'] = matches
+                AHkwargs['matches'] = matches[:]
+                matches_findvideos = matches[:]
                 del item.matches
-            if matches_post and matches and not isinstance(matches[0], _dict):
+            if matches_post and matches_findvideos and not isinstance(matches_findvideos[0], _dict):
                 # Generar el json desde matches videoteca antiguos
                 AHkwargs['videolibrary'] = True
-                matches, langs = matches_post(item, matches, langs, response, **AHkwargs)
+                matches, langs = matches_post(item, matches_findvideos, langs, response, **AHkwargs)
                 item.matches = matches[:]
             if AHkwargs.get('matches'): del AHkwargs['matches']
 
         if self.btdigg:
+            if AHkwargs.get('matches'): del AHkwargs['matches']
             matches = self.find_btdigg_findvideos(item, item.matches or matches, finds_controls.get('domain_alt', ''), **AHkwargs)
         
         if not matches:
             if item.emergency_urls and not item.videolibray_emergency_urls:     # Hay urls de emergencia?
                 item.armagedon = True                                           # Marcamos la situación como catastrófica 
                 if len(item.emergency_urls) > 1:
-                    matches = item.emergency_urls[1]                            # Restauramos matches de vídeos
+                    matches_findvideos = item.emergency_urls[1]                 # Restauramos matches de vídeos
                 else:
-                    matches = item.emergency_urls[0]                            # Restauramos torrents/magnetes
-                if matches_post and matches and not isinstance(matches[0], _dict):
+                    matches_findvideos = item.emergency_urls[0]                 # Restauramos torrents/magnetes
+                if matches_post and matches_findvideos and not isinstance(matches_findvideos[0], _dict):
                     # Generar el json desde matches videoteca antiguos
                     AHkwargs['videolibrary'] = True
-                    matches, langs = matches_post(item, matches, langs, response, **AHkwargs)
+                    matches, langs = matches_post(item, matches_findvideos, langs, response, **AHkwargs)
             if not matches:
                 if item.videolibray_emergency_urls:                             # Si es llamado desde creación de Videoteca...
                     return item                                                 # Devolvemos el Item de la llamada
                 else:
-                    return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
+                    return itemlist                                             # Si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         # Refrescamos variables posiblemente actualizadas en "matches_post"
         self.finds = finds
@@ -2546,7 +2552,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 try:
                     itemlist = sorted(itemlist, key=lambda it: (int(-it.size if it.size \
                                                 and it.contentType == 'movie' else it.size if it.size else 0), 
-                                                it.language[0] if it.language and isinstance(it.language, list) else '', 
+                                                it.language[0] if (it.language and isinstance(it.language, list)) else '', 
                                                 it.server))
                 except:
                     size = []
@@ -2667,7 +2673,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                     curr_page += 1
 
                     matches_list_all = self.parse_finds_dict(soup, finds_out) if finds_out \
-                                       else self.response.soup or self.response.json or self.response.data
+                                       else (self.response.soup or self.response.json or self.response.data)
                     if not isinstance(matches_list_all, (list, _dict)):
                         matches = []
 
@@ -2680,7 +2686,8 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                 if profile in [DEFAULT]:
                                     elem_json['url'] = elem.a.get('href', '')
                                     elem_json['title'] = elem.a.get('title', '') \
-                                                         or elem.find(class_='title').get_text(strip=True) if elem.find(class_='title') else ''
+                                                         or (elem.find(class_='title').get_text(strip=True) if elem.find(class_='title') else '') \
+                                                         or (elem.img.get('alt', '') if (elem.img and elem.img.get('alt', '')) else '')
                                     elem_json['thumbnail'] = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
                                                              or elem.img.get('data-src', '') \
                                                              or elem.img.get('src', '')
@@ -2689,8 +2696,8 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                                               and 'duration' in text):
                                         elem_json['stime'] = self.do_soup(elem.find(text=lambda text: isinstance(text, self.Comment) \
                                                                           and 'duration' in text)).find(class_='duration').get_text(strip=True)
-                                    if not elem_json['stime'] and elem.find(string=re.compile('^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$')):
-                                        elem_json['stime'] = elem.find(string=re.compile('^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$'))
+                                    if not elem_json['stime'] and elem.find(string=re.compile('\d{2}:\d{2}$')):
+                                        elem_json['stime'] = elem.find(string=re.compile('(\d{2}:\d{2}$)')).replace("duration: ", "")
                                     if elem.find('span', class_=['hd-thumbnail', 'is-hd']):
                                         elem_json['quality'] = elem.find('span', class_=['hd-thumbnail', 'is-hd']).get_text(strip=True)
                                     elif elem.find(text=lambda text: isinstance(text, self.Comment) and 'hd' in text):
@@ -3022,7 +3029,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                     AHkwargs['soup'] = self.response.soup or self.response.json or self.response.data
                     curr_page += 1
                     matches_section = self.parse_finds_dict(soup, finds_out) if finds_out \
-                                      else self.response.soup or self.response.json or self.response.data
+                                      else (self.response.soup or self.response.json or self.response.data)
                     if not isinstance(matches_section, (list, _dict)):
                         matches_section = []
 
@@ -3050,10 +3057,12 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                 elem_json['cantidad'] = elem.find('span', class_=['videoCount', 'videosNumber']).get_text(strip=True)
                             elif elem.find('div', class_='videos'):
                                 elem_json['cantidad'] = elem.find('div', class_='videos').get_text(strip=True)
-                            elif elem.find(string='Videos'):
-                                elem_json['cantidad'] = elem.find(string='Videos').parent.get_text(strip=True)
+                            elif elem.find(string=re.compile(r"(?i)videos|movies")):
+                                elem_json['cantidad'] = elem.find(string=re.compile(r"(?i)videos|movies"))
+                                if not scrapertools.find_single_match(elem_json['cantidad'], "\d+"):
+                                     elem_json['cantidad'] = elem_json['cantidad'].parent.get_text(strip=True)
                             if not elem_json.get('cantidad') and elem.find(text=lambda text: isinstance(text, self.Comment) \
-                                                              and 'videos' in text):
+                                                             and 'videos' in text):
                                 elem_json['cantidad'] = self.do_soup(elem.find(text=lambda text: isinstance(text, self.Comment) \
                                                                      and 'videos' in text)).find(class_='videos').get_text(strip=True)
                             if elem.a:
@@ -3123,6 +3132,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                             post = re.sub(rgx_org, rgx_des % str(curr_page), post.rstrip('/')).replace('//?', '/?')
                 if not next_page_url:
                     cnt_tot = 9999
+                    last_page = 0
 
             if DEBUG: logger.debug('curr_page: %s / last_page: %s / page_factor: %s / next_page_url: %s / matches: %s' \
                                     % (str(curr_page), str(last_page), str(page_factor), str(next_page_url), len(matches)))
@@ -3228,6 +3238,8 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         if DEBUG: logger.debug('curr_page: %s / last_page: %s / page_factor: %s / next_page_url: %s / matches: %s' \
                                 % (str(curr_page), str(last_page), str(page_factor), str(next_page_url), len(matches)))
 
+        if item.extra.lower() in ['categorías', 'categorias'] or item.title.lower() in ['categorías', 'categorias']:
+            itemlist = sorted(itemlist, key=lambda it: it.title)
         if reverse:
             itemlist = itemlist[::-1]
         
@@ -3332,8 +3344,8 @@ class DictionaryAdultChannel(AlfaChannelHelper):
             if not elem_json['url'].startswith('magnet'): elem_json['url'] = self.urljoin(self.host, elem_json['url'])
             elem_json['quality'] = item.quality
             elem_json['language'] = item.language
-            elem_json['server'] = 'torrent' if elem_json['url'].startswith('magnet') \
-                                            or elem_json['url'].endswith('.torrent') else ''
+            elem_json['server'] = 'torrent' if (elem_json['url'].startswith('magnet') \
+                                                or elem_json['url'].endswith('.torrent')) else ''
             elem_json['title'] = elem_json['server'] or '%s'
             if item.torrent_info: elem_json['size'] = elem_json['torrent_info'] = item.torrent_info
             if item.btdig_in_use: elem_json['btdig_in_use'] = item.btdig_in_use
@@ -3346,7 +3358,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         
         if not item.matches and not matches and finds_out:
             matches_findvideos = self.parse_finds_dict(soup, finds_out) if finds_out \
-                                 else self.response.soup or self.response.json or self.response.data
+                                 else (self.response.soup or self.response.json or self.response.data)
             if not isinstance(matches_findvideos, (list, _dict)):
                 matches_findvideos = []
 
@@ -3357,11 +3369,11 @@ class DictionaryAdultChannel(AlfaChannelHelper):
 
                     try:
                         if profile in [DEFAULT]:
-                            elem_json['url'] = elem.get("href", '') or elem.a.get("href", '')
+                            elem_json['url'] = elem.get("href", '') or (elem.a.get("href", '') if elem.a else '') or elem.get("src", '')
                             elem_json['quality'] = item.quality
                             elem_json['language'] = item.language
-                            elem_json['server'] = 'torrent' if elem_json['url'].startswith('magnet') \
-                                                            or elem_json['url'].endswith('.torrent') else ''
+                            elem_json['server'] = 'torrent' if (elem_json['url'].startswith('magnet') \
+                                                                or elem_json['url'].endswith('.torrent')) else ''
                             elem_json['title'] = elem_json['server'] or '%s'
                             
                     except:
@@ -3488,7 +3500,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                 try:
                     itemlist = sorted(itemlist, key=lambda it: (int(-it.size if it.size \
                                                 and it.contentType == 'movie' else it.size if it.size else 0), 
-                                                it.language[0] if it.language and isinstance(it.language, list) else '', 
+                                                it.language[0] if (it.language and isinstance(it.language, list)) else '', 
                                                 it.server))
                 except:
                     size = []
@@ -3636,10 +3648,10 @@ class DooPlay(AlfaChannelHelper):
                 if '/http' in elem_json['thumbnail']:
                     elem_json['thumbnail'] = scrapertools.find_single_match(self.do_unquote(elem_json['thumbnail']), '\/(http.*?)(?:&|$)')
                 elem_json['year'] = self.parse_finds_dict(elem, finds.get('year', {}), year=True, c_type=item.c_type).split('|')
-                elem_json['year'] = elem_json['year'][1] if len(elem_json['year']) >= 3 and len(elem_json['year'][1]) == 4 \
-                                    else elem_json['year'][0] if len(elem_json['year']) >= 2 and len(elem_json['year'][0]) == 4 \
-                                    else elem_json['year'][1] if len(elem_json['year']) >= 2 and len(elem_json['year'][1]) == 4 \
-                                    else elem_json['year'][0] if len(elem_json['year']) >= 1 and len(elem_json['year'][0]) == 4 \
+                elem_json['year'] = elem_json['year'][1] if (len(elem_json['year']) >= 3 and len(elem_json['year'][1]) == 4) \
+                                    else elem_json['year'][0] if (len(elem_json['year']) >= 2 and len(elem_json['year'][0]) == 4) \
+                                    else elem_json['year'][1] if (len(elem_json['year']) >= 2 and len(elem_json['year'][1]) == 4) \
+                                    else elem_json['year'][0] if (len(elem_json['year']) >= 1 and len(elem_json['year'][0]) == 4) \
                                     else '-'
                 if self.parse_finds_dict(elem, finds.get('plot', {}), c_type=item.c_type):
                     elem_json['plot'] = self.parse_finds_dict(elem, finds.get('plot', {}), c_type=item.c_type)

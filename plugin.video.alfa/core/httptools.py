@@ -951,6 +951,8 @@ def downloadpage(url, **opt):
                             opt['CF_if_NO_assistant'] = opt['canonical']['CF_if_NO_assistant']
     if 'forced_proxy_opt' not in opt and 'forced_proxy_opt' in opt.get('canonical', {}): \
                             opt['forced_proxy_opt'] = opt['canonical']['forced_proxy_opt']
+    if 'forced_proxy' not in opt and 'forced_proxy' in opt.get('canonical', {}): \
+                            opt['forced_proxy'] = opt['canonical']['forced_proxy']
     if 'cf_assistant_if_proxy' not in opt and 'cf_assistant_if_proxy' in opt.get('canonical', {}): \
                             opt['cf_assistant_if_proxy'] = opt['canonical']['cf_assistant_if_proxy']
     if opt.get('canonical', {}).get('forced_proxy_ifnot_assistant', '') or opt.get('forced_proxy_ifnot_assistant', ''):
