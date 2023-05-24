@@ -25,9 +25,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     pack = scrapertools.find_single_match(data.data, 'p,a,c,k,e,d.*?</script>')
     unpacked = jsunpack.unpack(pack)
+    logger.debug(unpacked)
     url =""
     url = scrapertools.find_single_match(unpacked, 'src="([^"]+)"')# + "|referer=%s" %(page_url)
     if not url:
-        url = scrapertools.find_single_match(unpacked, 'file:"([^"]+)') + "|referer=%s" %(page_url)
+        url = scrapertools.find_single_match(unpacked, '(?:file|src):"([^"]+)') + "|referer=%s" %(page_url)
     video_urls.append(['m3u8 [%s]' %server, url] )
     return video_urls

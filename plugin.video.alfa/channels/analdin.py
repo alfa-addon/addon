@@ -33,6 +33,7 @@ canonical = {
              'host': config.get_setting("current_host", 'analdin', default=''), 
              'host_alt': ["https://www.analdin.com/"], 
              'host_black_list': [], 
+             'pattern': ['href="?([^"|\s*]+)["|\s*]\s* id="item1"?'], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

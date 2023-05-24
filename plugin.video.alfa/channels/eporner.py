@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel PornVase -*-
+# -*- Channel Eporner -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -70,7 +70,6 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 
 def mainlist(item):
     logger.info()
-    
     itemlist = []
     
     itemlist.append(Item(channel=item.channel, title="Nuevos", action="list_all", url=host + "0/"))
@@ -79,7 +78,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Pornstars", action="section", url=host + "pornstar-list/"))
     itemlist.append(Item(channel=item.channel, title="Categorias", action="section", url=host + "cats/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
-
+    
     return itemlist
 
 
@@ -168,7 +167,6 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    # item.url = "%sbuscar/?q=%s&sort_by=video_viewed&from_videos=1" % (host, texto.replace(" ", "+"))
     item.url = "%ssearch/%s/" % (host, texto.replace(" ", "-"))
     
     try:

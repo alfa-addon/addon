@@ -46,11 +46,10 @@ tv_path = ''
 language = []
 url_replace = []
 
-finds = {'find': dict([('find', [{'tagOR': ['ul'], 'id': ['mostRecentVideosSection']}, 
-                                 {'tagOR': ['ul'], 'class': ['row-5-thumbs']}, 
-                                 {'tag': ['li'], 'class': ['sniperModeEngaged']}]), ('find_parent', [{'tag': []}]), 
-                       ('find_all', [{'tag': ['li'], 'class': ['pcVideoListItem']}])]),
-         'categories': {'find_all': [{'tag': ['div'], 'class': ['category-wrapper', 'channelsWrapper']}]}, 
+
+finds = {'find': dict([ ('find', [{'tag': ['ul'], 'class': ['nf-videos', 'search-video-thumbs', 'row-5-thumbs']}]), 
+                         ('find_all', [{'tag': ['li'], 'data-video-id': re.compile(r"^\d+")}]) ]),
+         'categories': {'find_all': [{'tag': ['li'], 'class': ['pornstarLi', 'modelLi', 'wrap', 'catPic']}]}, 
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 
@@ -75,9 +74,11 @@ def mainlist(item):
     logger.info()
 
     itemlist = []
-    plot = 'Canal de pruebas de [COLOR yellow][B]AlfaChannelHelper[/B][/COLOR]'
-
+    plot = ''
+    
     itemlist.append(Item(channel=item.channel, action="list_all", title="Novedades", url="%svideo?o=cm" % host, 
+                         fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot))
+    itemlist.append(Item(channel=item.channel, action="list_all", title="Recientes", url="%svideo" % host, 
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot))
     itemlist.append(Item(channel=item.channel, action="list_all", title="Mas visto", url="%svideo?o=mv" % host, 
                          fanart=item.fanart, thumbnail=item.thumbnail, contentPlot=plot))
@@ -105,62 +106,97 @@ def mainlist(item):
 
 def section(item):
     logger.info()
-
-    findS = finds.copy()
-
-    if item.extra == 'PornStar':
-        findS['categories'] = dict([('find', [{'tag': ['ul'], 'class': ['popular-pornstar']}]), 
-                                    ('find_all', [{'tag': ['div'], 'class': ['wrap']}])])
-        findS['url_replace'] = [['(\/(?:pornstar|model)\/[^$]+$)', r'\1/videos']]
-
-    return AlfaChannel.section(item, finds=findS, **kwargs)
+    
+    return AlfaChannel.section(item, matches_post=section_matches, **kwargs)
+    # return AlfaChannel.section(item, **kwargs)   Coge todo pero falta url+ de pornstar
+    
 
 
-def list_all(item):
+
+def section_matches(item, matches_int, **AHkwargs):
     logger.info()
-
-    findS = finds.copy()
-    '''usar primero “profile=default” en AH, A PESAR DE tener “list_all_matches” y luego llama a “list_all_matches'''
-    findS['controls']['profile'] = 'default'
-    return AlfaChannel.list_all(item, matches_post=list_all_matches, finds=findS, **kwargs)  #  añadido  finds=findS
-
-
-def list_all_matches(item, matches_int, **AHkwargs):
-    logger.info()
-
+    
     matches = []
-    ''' Carga desde AHkwargs la clave “matches” resultado de la ejecución del “profile=default” en AH. 
-        En “matches_int” sigue pasando los valores de siempre. '''
-    matches_org = AHkwargs.get('matches', [])
     findS = AHkwargs.get('finds', finds)
-    ''' contador para asegurar que matches_int y matches_org van sincronizados'''
-    x = 0
+    
     for elem in matches_int:
-        '''carga el valor del json que ya viene procesado del “profile=default” en AH'''
-        elem_json = matches_org[x].copy() if x+1 <= len(matches_org) else {}
-
+        elem_json = {}
+        
         try:
-            '''filtros que deben coincidir con los que tiene el “profile=default” en AH para que no descuadren las dos listas  '''
-            if elem.find('div', class_='thumbTextPlaceholder'): continue   
-            data = elem.find('div', class_='usernameWrap')
-            if 'channels' in data.a['href']:
-                elem_json['canal'] = data.get_text(strip=True)
-                elem_json['extra'] = 'casa'
-            else:
-                elem_json['star'] = data.get_text(strip=True)
-
+            elem_json['url'] = elem.a.get('href', '')
+            elem_json['title'] = elem.img.get('alt', '')
+            elem_json['thumbnail'] = elem.img.get('data-original', '') \
+                                     or elem.img.get('data-src', '') \
+                                     or elem.img.get('src', '')
+            elem_json['cantidad'] = elem.find('span', class_=['videosNumber', 'videoCount']).get_text(strip=True) if elem.find('span', class_=['videosNumber', 'videoCount']) else ''
+            if not elem_json['cantidad'] and elem.find(string=re.compile(r"(?i)videos|movies")):
+                elem_json['cantidad'] = elem.find(string=re.compile(r"(?i)videos|movies"))
+                if not "\d+" in elem_json['cantidad']:
+                    elem_json['cantidad'] = elem_json['cantidad'].parent.text.strip()
+            if item.extra == 'PornStar':
+               elem_json['url'] += "/videos"
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
-        '''filtros que deben coincidir con los que tiene el “profile=default” en AH para que no descuadren las dos listas'''
-        if not elem.a.get('href', ''): continue 
         
-        '''guarda json modificado '''
+        if not elem_json['url']: continue
+        
         matches.append(elem_json.copy())
-        '''se suma al contador de registros procesados VÁLIDOS'''
-        x += 1
+       
 
+    return matches
+
+
+def list_all(item):
+    logger.info()
+    
+    findS = finds.copy()
+    if item.extra == 'PornStar':
+        findS['find'] = dict([ ('find', [{'tag': ['ul'], 'id': ['mostRecentVideosSection']}]), 
+                                        ('find_all', [{'tag': ['li'], 'data-video-id': re.compile(r"^\d+")}]) ])
+    
+    return AlfaChannel.list_all(item, finds=findS, matches_post=list_all_matches, **kwargs)
+
+
+def list_all_matches(item, matches_int, **AHkwargs):
+    logger.info()
+    
+    matches = []
+    findS = AHkwargs.get('finds', finds)
+    
+    for elem in matches_int:
+        elem_json = {}
+        
+        try:    
+            if elem.find('div', class_='thumbTextPlaceholder'): continue   
+            elem_json['url'] = elem.a.get('href', '')
+            elem_json['title'] = elem.a.get('title', '')
+            elem_json['thumbnail'] = elem.img.get('data-original', '') \
+                                     or elem.img.get('data-src', '') \
+                                     or elem.img.get('src', '')
+            elem_json['stime'] = elem.find('var', class_='duration').get_text(strip=True) if elem.find('var', class_='duration') else ''
+            if elem.find('span', class_='views'):
+                elem_json['views'] = elem.find('span', class_='views').get_text(strip=True)
+
+            
+            data = elem.find('div', class_='videoUploaderBlock')
+            if data and 'channels' in data.a['href']:
+                elem_json['canal'] = data.a.get_text(strip=True)
+                elem_json['extra'] = 'casa'
+            elif data:
+                elem_json['star'] = data.a.get_text(strip=True)
+
+        
+        except:
+            logger.error(elem)
+            logger.error(traceback.format_exc())
+            continue
+        
+        if not elem_json['url']: continue
+        
+        matches.append(elem_json.copy())
+    
     return matches
 
 
@@ -206,7 +242,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
-    item.url = "%svideo/search?search=%s&o=mr" % (host, texto)
+    item.url = "%svideo/search?search=%s&o=mr" % (host, texto.replace(" ", "+"))
 
     try:
         if texto:

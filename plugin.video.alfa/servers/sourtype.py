@@ -30,7 +30,9 @@ def get_video_url(page_url, video_password):
     video_urls = []
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
     try:
-        matches  = soup.video.find_all('source', type='video/mp4')
+        if soup.video.source:
+            tipo = soup.video.source['type']    # application/x-mpegURL & video/mp4
+        matches  = soup.video.find_all('source', type=tipo)
     except:
         matches = scrapertools.find_multiple_matches(data, '<source src="([^"]+)" type="video/mp4"')
         for url in matches:
