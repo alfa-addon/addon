@@ -365,7 +365,6 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['server'] = elem.find('div', class_='font-weight-500').get_text(strip=True)
 
             elem_json['language'] = re.compile('src="([^"]+)"', re.DOTALL).findall(str(elem.find('span', class_='juM9Fbab')))
-            logger.error(elem_json['language'])
             AlfaChannel.get_language_and_set_filter(elem_json['language'], elem_json)
 
             elem_json['title'] = '%s'

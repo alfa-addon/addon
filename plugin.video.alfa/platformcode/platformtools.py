@@ -1208,6 +1208,28 @@ def get_seleccion(default_action, opciones, seleccion, video_urls):
                 seleccion = 0
             else:
                 seleccion = len(video_urls) - 1
+    # Ver en calidad media
+    elif default_action == 3:
+        resolutions = []
+        for url in video_urls:
+            if "debrid]" in url[0] or "Premium)" in url[0]:
+                check.append(True)
+            res = calcResolution(url[0])
+            if res:
+                resolutions.append(res)
+
+        if resolutions:
+            if (fixpri == True and
+                    check and
+                    priority == 2):
+                seleccion = 0
+            else:
+                seleccion = resolutions.index(int(len(resolutions)/2))
+        else:
+            if fixpri == True and check:
+                seleccion = 0
+            else:
+                seleccion = int(len(video_urls)/2)
     else:
         seleccion = 0
     return seleccion

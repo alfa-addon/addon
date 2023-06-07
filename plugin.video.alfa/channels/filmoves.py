@@ -37,7 +37,6 @@ canonical = {
              'host': config.get_setting("current_host", 'filmoves', default=''), 
              'host_alt': ["https://filmoves.net/"], 
              'host_black_list': ["https://www.filmoves.net/", "https://filmoves.com/"], 
-             'status': 'caído??? - 24/05/2023', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

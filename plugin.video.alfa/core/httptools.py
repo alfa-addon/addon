@@ -964,6 +964,8 @@ def downloadpage(url, **opt):
     if 'set_tls_min' not in opt and 'set_tls_min' in opt.get('canonical', {}): opt['set_tls_min'] = opt['canonical']['set_tls_min']
     if 'check_blocked_IP' not in opt and 'check_blocked_IP' in opt.get('canonical', {}): 
                             opt['check_blocked_IP'] = opt['canonical']['check_blocked_IP']
+    if 'cf_assistant_get_source' not in opt and 'cf_assistant_get_source' in opt.get('canonical', {}): 
+                            opt['cf_assistant_get_source'] = opt['canonical']['cf_assistant_get_source']
 
     # Preparando la url
     if not PY3:
@@ -1222,7 +1224,8 @@ def downloadpage(url, **opt):
         
         response = build_response()
         response_code = req.status_code
-        response['data'] = req.content
+        response['data'] = req.content if not opt.get('cf_assistant_get_source', False) \
+                                       else req.reason if req.status_code in [207, 208] else req.content
         response['proxy__'] = proxy_stat(opt['url_save'], proxy_data, **opt)
 
         canonical = opt.get('canonical', {})
