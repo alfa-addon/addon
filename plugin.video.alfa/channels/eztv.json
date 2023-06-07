@@ -1,15 +1,14 @@
 {
-  "id": "rarbg",
-  "name": "Rarbg",
+  "id": "eztv",
+  "name": "Eztv",
   "active": true,
   "adult": false,
   "language": [],
-  "thumbnail": "https://i.postimg.cc/QH6LWhP1/rarbg.png",
+  "thumbnail": "https://i.postimg.cc/1ngpmMRB/eztv-logo-small-thumb.jpg",
   "banner": "",
   "fanart": "",
   "categories": [
     "torrent",
-    "movie",
     "tvshow",
     "vos"
   ],
@@ -29,6 +28,19 @@
       "label": "Buscar información extra (TMDB)", 
       "type": "bool", 
       "visible": true
+    }, 
+    {
+      "id": "modo_grafico_lang",
+      "type": "list",
+      "label": "Idioma para buscar información extra (TMDB)",
+      "default": 1,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Español",
+        "Inglés",
+        "Español+Inglés"
+      ]
     },
     {
       "id": "pseudo_titulos",
@@ -71,6 +83,28 @@
       ]
     },
     {
+      "id": "emergency_urls",
+      "type": "list",
+      "label": "Se quieren guardar Enlaces de Emergencia por si se cae la Web?",
+      "default": 1,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No",
+        "Guardar",
+        "Borrar",
+        "Actualizar"
+      ]
+    },
+    {
+      "id": "emergency_urls_torrents",
+      "type": "bool",
+      "label": "Se quieren guardar Torrents de Emergencia por si se cae la Web?",
+      "default": true,
+      "enabled": true,
+      "visible": "!eq(-1,'No')"
+    },
+    {
       "id": "timeout_downloadpage",
       "type": "list",
       "label": "Timeout (segs.) en descarga de páginas o verificación de servidores",
@@ -88,7 +122,12 @@
         "7",
         "8",
         "9",
-        "10"
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15"
       ]
     },
     {

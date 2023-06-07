@@ -509,22 +509,37 @@ if __name__ == "__main__":
     if config.get_setting("adult_mode") == 2:
         config.set_setting("adult_mode", 0)
 
+    if monitor and monitor.waitForAbort(0.1):
+        sys.exit()
+
     # Verificar quick-fixes al abrirse Kodi, y dejarlo corriendo como Thread
     from platformcode import updater
     updater.check_addon_init()
 
+    if monitor and monitor.waitForAbort(0.1):
+        sys.exit()
+
     # Copia Custom code a las carpetas de Alfa desde la zona de Userdata
     from platformcode import custom_code
     custom_code.init()
+
+    if monitor and monitor.waitForAbort(0.1):
+        sys.exit()
 
     # Identifica la dirección Proxy y la lista de alternativas
     #if PY3: from core import proxytool_py3 as proxytool else from core import proxytool_py2 as proxytool
     if not PY3: from core.proxytools import get_proxy_list
     else: from core.proxytools_py3 import get_proxy_list
     get_proxy_list()
-    
+
+    if monitor and monitor.waitForAbort(0.1):
+        sys.exit()
+
     # Incializamos caching de variables
     config.cache_init()
+
+    if monitor and monitor.waitForAbort(0.1):
+        sys.exit()
 
     # Actualiza la videoteca de Alfa, con una espera inicial si se ha configurado
     if config.get_setting("update", "videolibrary") not in [0, 2, 4]:
@@ -554,6 +569,9 @@ if __name__ == "__main__":
     # Añade al LOG las variables de entorno necesarias para diagnóstico
     from platformcode import envtal
     envtal.list_env()
+
+    if monitor and monitor.waitForAbort(0.1):
+        sys.exit()
 
     # Busqueda de estrenos
     from channels import info_popup

@@ -33,6 +33,7 @@ canonical = {
              'host': config.get_setting("current_host", 'seriesflix', default=''), 
              'host_alt': ["https://seriesflix.video/"], 
              'host_black_list': [], 
+             'status': 'Caído 31-5-2023', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
