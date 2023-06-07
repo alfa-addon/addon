@@ -345,7 +345,7 @@ def js2py_conversion(data, url, domain_name='', channel='', size=10000, resp={},
 
     if PY3 and isinstance(data, bytes):
         if not b'Javascript is required' in data[:size]:
-            return data
+            return data if not resp else resp
     elif not 'Javascript is required' in data[:size]:
         return data if not resp else resp
     
@@ -379,7 +379,7 @@ def js2py_conversion(data, url, domain_name='', channel='', size=10000, resp={},
         data_new = scrapertools.find_single_match(data, patron)
     if not data_new:
         logger.error('js2py_conversion: NO data_new')
-        return data
+        return data if not resp else resp
         
     # Descompone el código Base64
     try:
@@ -391,10 +391,10 @@ def js2py_conversion(data, url, domain_name='', channel='', size=10000, resp={},
         js2py_code = data_new
     else:
         logger.error('js2py_conversion: base64 data_new NO Funciona: ' + str(data_new))
-        return data
+        return data if not resp else resp
     if not js2py_code:
         logger.error('js2py_conversion: NO js2py_code BASE64')
-        return data
+        return data if not resp else resp
 
     def atob(s):
         import base64
@@ -1811,7 +1811,7 @@ def AH_find_btdigg_list_all_from_channel_py(self, item, matches=[], channel_alt=
     except:
         logger.error(traceback.format_exc())
 
-    if DEBUG: logger.debug('matches_BTDIGG: %s' % matches_btdigg)
+    if DEBUG: logger.debug('matches_BTDIGG: %s / %s' % (len(matches_btdigg), matches_btdigg))
     return matches_btdigg
 
 
@@ -1820,13 +1820,21 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], channel_alt='', 
 
     matches_inter = []
     matches_btdigg = []
-    movie_search = 'bluray'
-    tv_search = 'hdtv 720p'
+    convert = ['.=', '-= ', ':=', '&= ', '  = ']
+    matches_str = scrapertools.slugify(str(matches), strict=False, convert=convert)
+    movie_search = 'Bluray Castellano'
+    tv_search = 'HDTV-720p|Temporada'
+    titles_search = [tv_search if item.c_type == 'series' else movie_search if item.c_type == 'peliculas' else '']
+    if item.c_type == 'search':
+        titles_search = ['Castellano Bluray ', 'Castellano HDTV-720p ']
 
     controls = self.finds.get('controls', {})
     cache = False
     quality_control = AHkwargs.get('btdigg_quality_control', controls.get('btdigg_quality_control', False))
     canonical = AHkwargs.get('canonical', self.canonical)
+
+    title_clean = AHkwargs.get('finds', {}).get('title_clean', [])
+    title_clean.append(['(?i)\s*UNCUT', ''])
 
     try:
         if canonical.get('global_search_cancelled', False) or (config.GLOBAL_SEARCH_CANCELLED \
@@ -1851,71 +1859,87 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], channel_alt='', 
             elif '720' not in item.quality and '1080' not in item.quality and '4k' not in item.quality:
                 quality_alt =  '[HDTV]'
 
-        torrent_params = {
-                          'find_alt_news': 'HDTV 720p' if item.c_type == 'series' else 'Bluray' if item.c_type == 'peliculas' else '' , 
-                          'quality_alt': quality_alt, 
-                          'find_alt_link_next': 0, 
-                          'domain_alt': find_alt_domains,
-                          'extensive_search': False if item.c_type != 'search' else True,
-                          'search_order': 2 if item.c_type != 'search' else 0,
-                          'link_found_limit': 20000 if item.c_type != 'search' else 1000
-                          }
+        for title_search in titles_search:
 
-        limit_pages = int(btdigg_entries / 10)
-        interface = str(config.get_setting('btdigg_status', server='torrent'))
-        limit_items_found = 5 * 10 if interface != '200' else 10 * 10
+            torrent_params = {
+                              'find_alt_news': title_search if item.c_type != 'search' else '', 
+                              'title_prefix': title_search if item.c_type == 'search' else '', 
+                              'quality_alt': quality_alt, 
+                              'find_alt_link_next': 0, 
+                              'domain_alt': None, #find_alt_domains,
+                              'extensive_search': False if item.c_type != 'search' else True,
+                              'search_order': 2 if item.c_type != 'search' else 0,
+                              'link_found_limit': 20000 if item.c_type != 'search' else 100000
+                              }
 
-        x = 0
-        while x < limit_pages - 1:
-            torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=cache)
+            limit_pages = int(btdigg_entries / 10)
+            interface = str(config.get_setting('btdigg_status', server='torrent'))
+            limit_items_found = 5 * 10 if interface != '200' else 10 * 10
 
-            if not torrent_params['find_alt_link_result'] and not torrent_params['find_alt_link_next']: x = 999999
-            if not torrent_params['find_alt_link_next']: x = 999999
-            if torrent_params.get('find_alt_link_found') and int(torrent_params['find_alt_link_found']) < limit_items_found: 
-                limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
-            x += 1
+            x = 0
+            while x < limit_pages - 1:
+                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=cache)
 
-            for y, (scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet) in enumerate(torrent_params['find_alt_link_result']):
-                elem_json = {}
-                #logger.error(torrent_params['find_alt_link_result'][y])
+                if not torrent_params['find_alt_link_result'] and not torrent_params['find_alt_link_next']: x = 999999
+                if not torrent_params['find_alt_link_next']: x = 999999
+                if torrent_params.get('find_alt_link_found') and int(torrent_params['find_alt_link_found']) < limit_items_found: 
+                    limit_pages = int(int(torrent_params['find_alt_link_found']) / 10) + 1
+                x += 1
 
-                try:
-                    elem_json['url'] = scrapedmagnet
-                    if elem_json['url'] in str(matches): 
-                        if DEBUG: logger.debug('DROP: %s' % elem_json['url'])
+                z = 0
+                for y, (scrapedurl, scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet) in enumerate(torrent_params['find_alt_link_result']):
+                    elem_json = {}
+                    #logger.error(torrent_params['find_alt_link_result'][y])
+
+                    try:
+                        elem_json['url'] = scrapedmagnet
+                        if elem_json['url'].lower() in matches_str: 
+                            if DEBUG: logger.debug('DROP: %s' % elem_json['url'])
+                            continue
+                        
+                        elem_json['title'] = scrapedtitle.replace(btdigg_label_B, '')
+                        elem_json['year'] = scrapertools.find_single_match(elem_json['title'], '.*?\((\d{4})\)') or '-'
+                        elem_json['title'] = scrapertools.find_single_match(elem_json['title'], '(?i)(.*?)\s*(?:-*\s*temp|\(|\[)').strip()
+                        for clean_org, clean_des in title_clean:
+                            if clean_des is None:
+                                if scrapertools.find_single_match(elem_json['title'], clean_org):
+                                    elem_json['title'] = scrapertools.find_single_match(elem_json['title'], clean_org).strip()
+                                    break
+                            else:
+                                elem_json['title'] = re.sub(clean_org, clean_des, elem_json['title']).strip()
+                        if elem_json['title'].lower() in matches_str: 
+                            if DEBUG: logger.debug('DROP: %s' % elem_json['title'])
+                            continue
+                        z += 1
+                        if elem_json['title'].lower() in torrent_params.get('find_alt_link_result_total_str', '').lower(): 
+                            if DEBUG: logger.debug('DROP: %s' % elem_json['title'])
+                            continue
+                        
+                        elem_json['quality'] = scrapedquality.replace('HDTV 720p', 'HDTV-720p')
+                        elem_json['language'] = '*%s' % scrapedmagnet
+                        elem_json['mediatype'] = 'tvshow' if 'Cap.' in elem_json['url'] else 'movie'
+                        elem_json['media_path'] = self.movie_path.strip('/') if elem_json['mediatype'] == 'movie' else self.tv_path.strip('/')
+                        elem_json['torrent_info'] = scrapedsize.replace(btdigg_label_B, '').replace('GB', 'G·B').replace('Gb', 'G·b')\
+                                                               .replace('MB', 'M·B').replace('Mb', 'M·b').replace('.', ',')
+                        elem_json['size'] = scrapedsize.replace(btdigg_label_B, '')\
+                                                       .replace('[COLOR magenta][B]RAR-[/B][/COLOR]', '')
+                        if elem_json['mediatype'] == 'movie': elem_json['size'] = self.convert_size(elem_json['size'])
+
+                        item.btdig_in_use =  True
+                        matches_btdigg.append(elem_json.copy())
+
+                    except:
+                        logger.error(traceback.format_exc())
                         continue
-                    elem_json['title'] = scrapedtitle.replace(btdigg_label_B, '')
-                    elem_json['year'] = scrapertools.find_single_match(elem_json['title'], '.*?\((\d{4})\)') or '-'
-                    elem_json['title'] = scrapertools.find_single_match(elem_json['title'], '(.*?)[\(|\[]').strip()
-                    if elem_json['title'].lower() in str(matches).lower(): 
-                        if DEBUG: logger.debug('DROP: %s' % elem_json['title'])
-                        continue
-                    elem_json['quality'] = scrapedquality.replace('HDTV 720p', 'HDTV-720p')
-                    if elem_json['quality'] in str(matches): 
-                        if DEBUG: logger.debug('DROP: %s' % elem_json['quality'])
-                        continue
-                    elem_json['language'] = '*%s' % scrapedmagnet
-                    elem_json['mediatype'] = 'tvshow' if 'Cap.' in elem_json['url'] else 'movie'
-                    elem_json['media_path'] = self.movie_path.strip('/') if elem_json['mediatype'] == 'movie' else self.tv_path.strip('/')
-                    elem_json['torrent_info'] = scrapedsize.replace(btdigg_label_B, '').replace('GB', 'G·B').replace('Gb', 'G·b')\
-                                                           .replace('MB', 'M·B').replace('Mb', 'M·b').replace('.', ',')
-                    elem_json['size'] = scrapedsize.replace(btdigg_label_B, '')\
-                                                   .replace('[COLOR magenta][B]RAR-[/B][/COLOR]', '')
-                    if elem_json['mediatype'] == 'movie': elem_json['size'] = self.convert_size(elem_json['size'])
-
-                    item.btdig_in_use =  True
-                    matches_btdigg.append(elem_json.copy())
-
-                except:
-                    logger.error(traceback.format_exc())
-                    continue
+                if not z:
+                    break
                     
         if item.c_type == 'peliculas' and matches_btdigg: matches_btdigg = sorted(matches_btdigg, key=lambda it: int(-it['size']))
 
     except:
         logger.error(traceback.format_exc())
 
-    if DEBUG: logger.debug('matches_BTDIGG: %s' % matches_btdigg)
+    if DEBUG: logger.debug('matches_BTDIGG: %s / %s' % (len(matches_btdigg), matches_btdigg))
     return matches_btdigg
 
 
@@ -1966,7 +1990,6 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt='', **AHkwargs):
                     urls += [title]
 
             matches_inter.append(elem_json.copy())
-            #if len(matches_inter) >= channel_entries: break
 
         if channeltools.is_enabled(channel_alt):
             matches_btdigg = AH_find_btdigg_list_all_from_channel_py(self, item, matches=matches, channel_alt=channel_alt, 
@@ -1974,7 +1997,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt='', **AHkwargs):
         if not matches_btdigg:
             matches_btdigg = AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=matches, channel_alt=channel_alt, 
                                                                  channel_entries=channel_entries, btdigg_entries=btdigg_entries, **AHkwargs)
-            channel_entries = 99
+            #channel_entries = 99
 
         if matches_inter and matches_btdigg: matches = matches_inter[:channel_entries]
 
@@ -2033,6 +2056,8 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt='', **AHkwargs):
             if x >= btdigg_entries: 
                 break
 
+        if matches_inter and matches_btdigg: matches += matches_inter[channel_entries:]
+
     except:
         logger.error(traceback.format_exc())
 
@@ -2086,10 +2111,11 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt='', **AHkwargs):
                 quality_alt =  '[HDTV]'
 
         torrent_params = {
+                          'title_prefix': 'Castellano ', 
                           'quality_alt': quality_alt, 
                           'find_alt_link_season': seasons, 
                           'find_alt_link_next': 0, 
-                          'domain_alt': domain_alt or find_alt_domains,
+                          'domain_alt': domain_alt or None, #find_alt_domains,
                           'extensive_search': True if contentSeason > 0 else False
                           }
 
@@ -2229,10 +2255,11 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt='', **AHkwargs):
                 quality_alt =  '[HDTV]'
 
         torrent_params = {
+                          'title_prefix': 'Castellano ', 
                           'quality_alt': quality_alt, 
                           'find_alt_link_season': seasons, 
                           'find_alt_link_next': 0, 
-                          'domain_alt': domain_alt or find_alt_domains
+                          'domain_alt': domain_alt or None #find_alt_domains,
                           }
 
         limit_pages = 3
@@ -2328,7 +2355,7 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt='', **AHkwargs)
 
         quality_alt = '720p 1080p 4kwebrip 4k'
         if item.contentType == 'movie':
-            quality_alt +=  ' [HDTV] rip'
+            quality_alt +=  ' [HDTV] rip bluray'
             if 'screener' in item.quality.lower(): quality_alt += ' screener'
         else:
             if not quality_control:
@@ -2337,9 +2364,10 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt='', **AHkwargs)
                 quality_alt =  '[HDTV]'
 
         torrent_params = {
+                          'title_prefix': 'Castellano ', 
                           'quality_alt': quality_alt, 
                           'find_alt_link_next': 0, 
-                          'domain_alt': domain_alt or find_alt_domains
+                          'domain_alt': domain_alt or None #find_alt_domains,
                           }
 
         limit_pages = 3

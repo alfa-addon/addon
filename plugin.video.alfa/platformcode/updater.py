@@ -26,16 +26,17 @@ from core import scrapertools
 from core import ziptools
 from core.item import Item
 
+CURRENT_VERSION = config.get_addon_version(with_fix=False, from_xml=True)
 ADDON_UPDATES = 'https://extra.alfa-addon.com/addon_updates/'
-ADDON_UPDATES_ALT = ADDON_UPDATES + 'addon_updates_alt_%s/'
-ADDON_UPDATES_JSON = 'updates.json'
-ADDON_UPDATES_ZIP = 'updates.zip'
-ADDON_UPDATES_BROADCAST = 'broadcast.json'
+ADDON_UPDATES_JSON = '?version=%s' % CURRENT_VERSION
+ADDON_UPDATES_ZIP = '%s&download=zip' % ADDON_UPDATES_JSON
+ADDON_UPDATES_BROADCAST = '%s&download=broadcast' % ADDON_UPDATES_JSON
 
 ALFA_DEPENDENCIES = 'alfa_dependencies.json'
-CURRENT_VERSION = config.get_addon_version(with_fix=False, from_xml=True)
+
 ITEM = Item()
 last_fix_json = os.path.join(config.get_runtime_path(), 'last_fix.json')        # información de la versión fixeada del usuario
+timeout = 15
 
 def check_addon_init():
     logger.info()
@@ -151,35 +152,19 @@ def check_addon_updates(verbose=False, monitor=None):
 
         # Descargar json con las posibles actualizaciones
         # -----------------------------------------------
+        data = {}
         url = ADDON_UPDATES
-        resp = httptools.downloadpage(url + ADDON_UPDATES_JSON, timeout=5, ignore_response_code=True)
-        
+        resp = httptools.downloadpage(url + ADDON_UPDATES_JSON, timeout=timeout, ignore_response_code=True)
+
+        if monitor and monitor.waitForAbort(0.1):
+            return False
+
         if resp.sucess:
-            data = jsontools.load(resp.data)
+            data = resp.json
             if data:
                 resp.sucess = verify_addon_version(CURRENT_VERSION, data.get('addon_version', ''))
             else:
                 resp.sucess = False
-        
-        if not resp.sucess:
-            for x in range(9):
-                url = ADDON_UPDATES_ALT % str(x+1)
-                resp = httptools.downloadpage(url + ADDON_UPDATES_JSON, timeout=5, ignore_response_code=True)
-                
-                if not resp.sucess or 'login' in str(resp.url):
-                    resp.sucess = False
-                    if 'login' in str(resp.url): resp.code = 404
-                    break
-                
-                if resp.sucess:
-                    data = jsontools.load(resp.data)
-                    if data:
-                        resp.sucess = verify_addon_version(CURRENT_VERSION, data.get('addon_version', ''))
-                    else:
-                        resp.sucess = False
-                
-                if resp.sucess:
-                    break
 
         if not resp.sucess and resp.code != 404:
             logger.info('ERROR en la descarga de actualizaciones: %s' % resp.code, force=True)
@@ -188,17 +173,12 @@ def check_addon_updates(verbose=False, monitor=None):
             if monitor is None and verify_emergency_update():
                 return check_addon_updates(verbose, monitor=False)              # Lanza la actualización de emergencia
             return False
-        if not resp.data:
-            logger.info('No se encuentran actualizaciones del addon', force=True)
-            if verbose:
-                dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
-            if monitor is None and verify_emergency_update():
-                return check_addon_updates(verbose, monitor=False)              # Lanza la actualización de emergencia
-            check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
-            return False
 
-        if 'addon_version' not in data or 'fix_version' not in data:
-            logger.info('No hay actualizaciones del addon', force=True)
+        # Comprobar que ha llegado un json válido
+        # ---------------------------------------
+        if not resp.data or 'Not found.' in str(resp.data) or not data or 'addon_version' not in data \
+                                                           or 'fix_version' not in data or data.get('fix_version', 0) == 0:
+            logger.info('No se encuentran actualizaciones de esta versión del addon', force=True)
             if verbose:
                 dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
             if monitor is None and verify_emergency_update():
@@ -209,7 +189,8 @@ def check_addon_updates(verbose=False, monitor=None):
         # Comprobar versión que tiene instalada el usuario con versión de la actualización
         # --------------------------------------------------------------------------------
         current_version = CURRENT_VERSION
-        if not verify_addon_version(current_version, data['addon_version']):
+        if (not data.get('files', []) and verify_addon_version(current_version, data['addon_version'])) \
+                                      or not verify_addon_version(current_version, data['addon_version']):
             logger.info('No hay actualizaciones para la versión %s del addon' % current_version, force=True)
             if verbose:
                 dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
@@ -242,29 +223,46 @@ def check_addon_updates(verbose=False, monitor=None):
                     logger.error('last_fix.json: ERROR desconocido')
                 lastfix = {}
 
-        # Guardar .json de Broadcast
-        # -----------------------------------------
-        resp_broadcast = httptools.downloadpage(url + ADDON_UPDATES_BROADCAST, timeout=5, ignore_response_code=True)
-        
-        if resp_broadcast.sucess and not 'login' in str(resp_broadcast.url):
-            broadcast = jsontools.load(resp_broadcast.data)
-            if broadcast:
-                if broadcast.get('fix_version', '') and verify_addon_version(lastfix['fix_version'] , broadcast['fix_version']):
-                    try:
-                        help_window.show_info(0, wait=False, title="[COLOR limegreen]Alfa BROADCAST: [/COLOR][COLOR hotpink]Noticia IMPORTANTE[/COLOR]", 
-                                              text=broadcast.get('broadcast', ''))
-                        logger.info('Mensaje de Broadcast enviado: %s ' % str(broadcast), force=True)
-                    except:
-                        logger.error('ERROR en mensaje de Broadcast: %s ' % str(broadcast))
+        # Muestra y guarda .json de Broadcast
+        # -----------------------------------
+        if lastfix.get('broadcast_version'):
+            data['broadcast_version'] = lastfix['broadcast_version']
+            data['broadcast'] = lastfix.get('broadcast', '')
+
+        resp_broadcast = httptools.downloadpage(url + ADDON_UPDATES_BROADCAST, timeout=timeout, ignore_response_code=True)
+
+        if resp_broadcast.sucess and not 'login' in str(resp_broadcast.url) and not 'Not found.' in str(resp_broadcast.data):
+            broadcast = resp_broadcast.json
+            if broadcast and str(broadcast.get('fix_version', '')) != '0' \
+                         and verify_addon_version(CURRENT_VERSION, broadcast.get('addon_version', '')):
+                if broadcast.get('fix_version', '') and verify_addon_version(lastfix.get('broadcast_version', 0), broadcast.get('fix_version', '')):
+                    if not lastfix.get('broadcast_version') or verify_addon_version(data['fix_version'], broadcast.get('fix_version', '')):
+                        try:
+                            help_window.show_info(0, wait=False, 
+                                                  title="[COLOR limegreen]Alfa BROADCAST: [/COLOR][COLOR hotpink]Noticia IMPORTANTE[/COLOR]", 
+                                                  text=str(broadcast.get('message', '')))
+                            data['broadcast_version'] = data['fix_version']
+                            data['broadcast'] = str(broadcast.get('message', ''))
+                            logger.info('Mensaje de Broadcast enviado: %s ' % str(broadcast), force=True)
+                        except:
+                            logger.error('ERROR en mensaje de Broadcast: %s ' % str(broadcast))
+                    else:
+                        logger.info('Broadcast existe pero no aplica: %s' % str(broadcast), force=True)
                 else:
                     logger.info('Broadcast existe pero no aplica: %s' % str(broadcast), force=True)
 
+        if monitor and monitor.waitForAbort(0.1):
+            return False
+        
         # Descargar zip con las actualizaciones
         # -------------------------------------
         if downloadtools.downloadfile(url + ADDON_UPDATES_ZIP, localfilename, silent=True) < 0:
             raise
 
         alfa_caching = config.cache_reset(action='OFF')                         # Reseteamos e inactivamos las caches de settings
+        
+        if monitor and monitor.waitForAbort(0.1):
+            return False
         
         # Descomprimir zip dentro del addon
         # ---------------------------------
@@ -284,6 +282,9 @@ def check_addon_updates(verbose=False, monitor=None):
         except:
             pass
 
+        if monitor and monitor.waitForAbort(0.1):
+            return False
+        
         # Si es PY3 se actualizan los módulos marshal
         # Se reinicia Proxytools
         try:
@@ -327,18 +328,23 @@ def check_addon_updates(verbose=False, monitor=None):
         if verbose:
             dialog_notification('Alfa actualizado a', 'Versión %s.fix%d' % (current_version, data['fix_version']))
 
+        if monitor and monitor.waitForAbort(0.1):
+            return False
+        
         if monitor is None and verify_emergency_update():
             return check_addon_updates(verbose, monitor=False)                  # Lanza la actualización de emergencia
-        
+
         check_update_to_others(verbose=verbose)                                 # Comprueba las actualuzaciones de otros productos
         return True
 
     except:
+        if monitor and monitor.waitForAbort(0.1):
+            return False
         logger.error('Error al comprobar actualizaciones del addon!')
         logger.error(traceback.format_exc())
         if verbose:
             dialog_notification('Alfa actualizaciones', 'Error al comprobar actualizaciones')
-        check_update_to_others(verbose=verbose)  # Comprueba las actualuzaciones de otros productos
+        check_update_to_others(verbose=verbose)                                 # Comprueba las actualuzaciones de otros productos
         return False
 
 
@@ -348,8 +354,8 @@ def verify_addon_version(installed, fixes):
     resp = False
     
     try:
-        if installed and fixes:
-            if installed == fixes:
+        if str(installed) and str(fixes):
+            if str(installed) == str(fixes):
                 return True
             
             installed = str(installed).split('.')
@@ -445,7 +451,7 @@ def parse_emergency_update(updates_url, github_url):
             updates_url = updates_url.split(',')
             for u_url_ in updates_url:
                 u_url = u_url_.strip('[').strip(']').strip('{').strip('}').strip('"').strip("'").strip()
-                resp = httptools.downloadpage(u_url + ADDON_UPDATES_JSON, timeout=5, ignore_response_code=True, hide_infobox=True)
+                resp = httptools.downloadpage(u_url, timeout=timeout, ignore_response_code=True, hide_infobox=True)
                 if not resp.sucess or 'login' in str(resp.url):
                     continue
                 ADDON_UPDATES = u_url
@@ -456,7 +462,7 @@ def parse_emergency_update(updates_url, github_url):
             github_url = github_url.split(',')
             for g_url_ in github_url:
                 g_url = g_url_.strip('[').strip(']').strip('{').strip('}').strip('"').strip("'").strip()
-                resp = httptools.downloadpage(g_url + 'addons.xml', timeout=5, ignore_response_code=True, hide_infobox=True)
+                resp = httptools.downloadpage(g_url + 'addons.xml', timeout=timeout, ignore_response_code=True, hide_infobox=True)
                 if not resp.sucess:
                     continue
                 url = g_url

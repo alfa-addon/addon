@@ -34,6 +34,7 @@ IDIOMAS = {"optl": "LAT", "opte": "CAST", "opts": "VOSE"}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['fastplay', 'directo', 'streamplay', 'flashx', 'streamito', 'streamango', 'vidoza']
+forced_proxy_opt = 'ProxyCF'
 
 canonical = {
              'channel': 'cuevana3', 
@@ -46,7 +47,7 @@ canonical = {
                                  "https://s2.cuevana3.me/", "https://z2.cuevana3.me/", "https://a2.cuevana3.me/", 
                                  "https://ww1.cuevana3.me/", "https://s3.cuevana3.me/", "https://ww4.cuevana3.me/", 
                                  "https://ww3.cuevana3.me/", "https://cuevana3.me/", "https://cuevana3.io/"], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]

@@ -51,7 +51,7 @@ language = []
 url_replace = []
 
 finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['row row-cols-xl-5 row-cols-lg-4 row-cols-3']}]), 
-                       ('find_all', ['article'])]),
+                       ('find_all', [{'tag': ['article']}])]),
          'categories': {}, 
          'search': {}, 
          'get_language': {}, 
@@ -69,7 +69,8 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['row row-cols-xl-5 r
          'season_episode': dict([('find', [{'tag': ['div'], 'class': ['EpisodeItem_data__jsvqZ']}, 
                                            {'tag': ['span']}]), 
                                  ('get_text', [{'tag': '', '@STRIP': True}])]), 
-         'seasons': {'find': [{'tag': ['div'], 'class': ['serieBlockListEpisodes_selector__RwIbM']}], 'find_all': ['option']}, 
+         'seasons': dict([('find', [{'tag': ['div'], 'class': ['serieBlockListEpisodes_selector__RwIbM']}]), 
+                          ('find_all', [{'tag': ['option']}])]),
          'season_num': {}, 
          'seasons_search_num_rgx': '', 
          'seasons_search_qty_rgx': '', 

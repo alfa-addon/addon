@@ -299,7 +299,7 @@ def verify_script_alfa_update_helper(silent=True, emergency=False, github_url=''
     alfa_repo = ['repository.alfa-addon', '1.0.8', '*', '']
     alfa_helper = ['script.alfa-update-helper', '0.0.7', '*', '']
     torrest_repo = ['repository.github', '0.0.7', '*', 'V']
-    torrest_addon = ['plugin.video.torrest', '0.0.14', '*', '']
+    torrest_addon = ['plugin.video.torrest', '0.0.16', '*', '']
     futures_script = ['%sscript.module.futures' % repos_dir, '2.2.1', 'PY2', '']
     if emergency:
         alfa_repo[3] = 'F'

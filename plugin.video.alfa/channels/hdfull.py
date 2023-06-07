@@ -34,7 +34,7 @@ from channelselector import get_thumb
 
 # https://dominioshdfull.com/
 
-host = 'https://hdfull.sbs/'
+host = 'https://hdfull.today/'
 assistant = config.get_setting('assistant_version', default='')
 if assistant: 
     assistant_copy = assistant.split('.')
@@ -48,9 +48,9 @@ if assistant:
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             'host_alt': ['https://hdfull.sbs/'], 
+             'host_alt': ['https://hdfull.today/'], 
              'host_verification': '%slogin', 
-             'host_black_list': ['https://hdfull.org/', 
+             'host_black_list': ['https://hdfull.sbs/', 'https://hdfull.org/', 
                                  'https://hdfull.store/', 
                                  'https://hdfull.life/', 'https://hdfull.digital/', 'https://hdfull.work/', 
                                  'https://hdfull.video/', 'https://hdfull.cloud/', 'https://hdfull.wtf/', 

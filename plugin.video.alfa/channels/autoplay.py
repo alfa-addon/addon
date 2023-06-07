@@ -135,8 +135,9 @@ def start(itemlist, item):
 
         user_config_setting_player = config.get_setting("player_mode")
         # Habilita la accion "Ver en calidad alta o baja"(si el servidor devuelve más de una calidad p.e. gdrive)
-        forced = {"Baja": 1, "Alta": 2}
-        config.set_setting("default_action", forced[user_forced_action])
+        forced = {"Baja": 1, "Alta": 2, "Media": 3}
+        if user_config_setting_action != forced[user_forced_action]:
+            config.set_setting("default_action", forced[user_forced_action])
 
         if user_config_setting_player != 0:
             config.set_setting("player_mode", 0)
@@ -387,9 +388,9 @@ def start(itemlist, item):
             platformtools.dialog_notification("AutoPlay", config.get_localized_string(60076), sound=False)
 
         # Restaura si es necesario el valor previo de "Accion y Player Mode" en preferencias
-        if user_config_setting_action != 2:
+        if user_config_setting_action != config.get_setting("default_action"):
             config.set_setting("default_action", user_config_setting_action)
-        if user_config_setting_player != 0:
+        if user_config_setting_player != config.get_setting("player_mode"):
             config.set_setting("player_mode", user_config_setting_player)
 
     return itemlist
