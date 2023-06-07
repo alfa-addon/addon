@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel FreeoMovie -*-
+# -*- Channel IncestVidz -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -29,16 +29,16 @@ list_servers = []
 forced_proxy_opt = 'ProxySSL'
 
 canonical = {
-             'channel': 'freeomovie', 
-             'host': config.get_setting("current_host", 'freeomovie', default=''), 
-             'host_alt': ["https://www.freeomovie.to/"], 
+             'channel': 'incestvidz', 
+             'host': config.get_setting("current_host", 'incestvidz', default=''), 
+             'host_alt': ["https://www.incestvidz.com/"], 
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-timeout = 15
+timeout = 5
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = ''
@@ -46,19 +46,20 @@ tv_path = ''
 language = []
 url_replace = []
 
-finds = {'find': {'find_all': [{'tag': ['li'], 'id': re.compile(r"^post-\d+")}]},
-         'categories': {'find_all': [{'tag': ['li'], 'class': 'cat-item'}]}, 
+
+finds = {'find': {'find_all': [{'tag': ['div'], 'id': re.compile(r"^post-\d+")}]},
+         'categories': {'find_all': [{'tag': ['a'], 'href': re.compile(r"/category/[A-z0-9-]+")}]}, 
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 
          'next_page': {},
-         'next_page_rgx': [['\/page\/\d+\/', '/page/%s/']], 
-         'last_page': dict([('find', [{'tag': ['div'], 'class': ['pager']}]), 
-                            ('find_all', [{'tag': ['a'], '@POS': [-2], 
-                                           '@ARG': 'href', '@TEXT': 'page/(\d+)'}])]), 
+         'next_page_rgx': [['\/page\/\d+', '/page/%s']], 
+         'last_page': dict([('find', [{'tag': ['div'], 'class': ['wp-pagenavi']}]), 
+                            ('find_all', [{'tag': ['a'], '@POS': [-1],
+                            '@ARG': 'href', '@TEXT': '\/page\/(\d+)'}])]), 
          'plot': {}, 
-         'findvideos': dict([('find', [{'tag': ['ul'], 'id': 'link-tabs'}]),
-                             ('find_all', [{'tag': ['a']}])]),
+         'findvideos': dict([('find', [{'tag': ['div'], 'class': ['entry-content']}]),
+                             ('find_all', [{'tag': ['iframe'], '@ARG': 'src'}])]), 
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
@@ -73,14 +74,13 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    autoplay.init(item.channel, list_servers, list_quality)
-
-    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="list_all", url=host + "category/full-movie/"))
-    itemlist.append(Item(channel=item.channel, title="Videos" , action="list_all", url=host + "category/clips/"))
+    
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=host + "?orderby=date"))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=host + "?orderby=views"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="list_all", url=host + "?orderby=likes"))
+    itemlist.append(Item(channel=item.channel, title="Mas Comentado" , action="list_all", url=host + "?orderby=comments"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host, extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
-
-    autoplay.show_option(item.channel, itemlist)
     
     return itemlist
 
@@ -88,7 +88,10 @@ def mainlist(item):
 def section(item):
     logger.info()
     
-    return AlfaChannel.section(item, **kwargs)
+    findS = finds.copy()
+    findS['url_replace'] = [['(\/category\/[^$]+$)', r'\1?orderby=date']]
+    
+    return AlfaChannel.section(item, finds=findS, **kwargs)
 
 
 def list_all(item):
@@ -99,25 +102,21 @@ def list_all(item):
 
 def list_all_matches(item, matches_int, **AHkwargs):
     logger.info()
-    matches = []
     
-    ''' Carga desde AHkwargs la clave “matches” resultado de la ejecución del “profile=default” en AH. 
-    En “matches_int” sigue pasando los valores de siempre. '''
-    matches_org = AHkwargs.get('matches', [])
+    matches = []
     findS = AHkwargs.get('finds', finds)
-    ''' contador para asegurar que matches_int y matches_org van sincronizados'''
-    x = 0
     
     for elem in matches_int:
-        
         elem_json = {}
-        '''carga el valor del json que ya viene procesado del “profile=default” en AH'''
-        elem_json = matches_org[x].copy() if x+1 <= len(matches_org) else {}
         
         try:
-            
+            elem_json['url'] = elem.a.get('href', '')
+            elem_json['title'] = elem.a.get('title', '')
+            elem_json['thumbnail'] = elem.img.get('data-original', '') \
+                                     or elem.img.get('data-src', '') \
+                                     or elem.img.get('src', '')
             elem_json['action'] = 'findvideos'
-            
+        
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -125,9 +124,6 @@ def list_all_matches(item, matches_int, **AHkwargs):
         
         if not elem_json['url']: continue
         matches.append(elem_json.copy())
-        
-        '''se suma al contador de registros procesados VÁLIDOS'''
-        x += 1
     
     return matches
 
@@ -135,46 +131,15 @@ def list_all_matches(item, matches_int, **AHkwargs):
 def findvideos(item):
     logger.info()
     
-    return AlfaChannel.get_video_options(item, item.url, matches_post=findvideos_matches, 
-                                         verify_links=False, generictools=True, findvideos_proc=True, **kwargs)
-
-
-def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
-    logger.info()
-    matches = []
-    findS = AHkwargs.get('finds', finds)
-    srv_ids = {"Doodstream": "Doodstream",
-               "Streamtape": "Streamtape ",
-               "StreamSB": "Streamsb",
-               "VOE": "voe",
-               "MIXdrop": "Mixdrop",
-               "Upstream": "Upstream"}
-    for elem in matches_int:
-        elem_json = {}
-        
-        try:
-            elem_json['url'] = elem.get("href", "")
-            elem_json['server'] = elem.get_text(strip=True).capitalize()
-            if elem_json['server'] in ["Netu", "trailer"]: continue
-            if elem_json['server'] in srv_ids:
-                elem_json['server'] = srv_ids[elem_json['server']]
-            elem_json['language'] = ''
-        
-        except:
-            logger.error(elem)
-            logger.error(traceback.format_exc())
-
-        if not elem_json.get('url', ''): continue
-        matches.append(elem_json.copy())
-
-    return matches, langs
+    return AlfaChannel.get_video_options(item, item.url, data='', matches_post=None, 
+                                         verify_links=False, findvideos_proc=True, **kwargs)
 
 
 def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%s?s=%s" % (host, texto.replace(" ", "+"))
+    item.url = "%s?s=%s&orderby=date" % (host, texto.replace(" ", "+"))
     
     try:
         if texto:
