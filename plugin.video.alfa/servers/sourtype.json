@@ -52,6 +52,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(http://www.absoluporn.com/(?:en|fr)/[A-z0-9-]+.html)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://cheemsporn.com/videos/[0-9]+/[0-9-]+(?:/|))",
         "url": "\\1"
       },

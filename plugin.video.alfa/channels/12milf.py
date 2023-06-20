@@ -78,7 +78,7 @@ def mainlist(item):
     itemlist.append(Item(channel = item.channel, title="Mas vistos" , action="list_all", url=host + "?filter=most-viewed"))
     itemlist.append(Item(channel = item.channel, title="Mejor valorado" , action="list_all", url=host + "?filter=popular"))
     itemlist.append(Item(channel = item.channel, title="Mas metraje" , action="list_all", url=host + "?filter=longest"))
-    itemlist.append(Item(channel = item.channel, title="Categorias" , action="section", url=host + "categories/"))
+    itemlist.append(Item(channel = item.channel, title="Categorias" , action="section", url=host + "categories/", extra="Categorias"))
     itemlist.append(Item(channel = item.channel, title="Buscar", action="search"))
     
     return itemlist
@@ -88,7 +88,7 @@ def section(item):
     logger.info()
     
     findS = finds.copy()
-    if item.title == "Categorias":
+    if "Categorias" in item.extra:
         findS['controls']['cnt_tot'] = 9999
     
     return AlfaChannel.section(item, finds=findS, **kwargs)
