@@ -27,14 +27,14 @@ IDIOMAS = {'Subtitulado': 'VOSE', 'Latino':'LAT', 'Castellano':'CAST'}
 list_language = list(IDIOMAS.values())
 list_servers = ['okru', 'fembed', 'gvideo', 'mega']
 list_quality = ['HD-1080p', 'HD-720p', 'Cam']
-forced_proxy_opt = 'ProxySSL'
+forced_proxy_opt = 'ProxyCF'
 
 canonical = {
              'channel': 'fullseriehd', 
              'host': config.get_setting("current_host", 'fullseriehd', default=''), 
              'host_alt': ["https://megaxserie.me/"], 
              'host_black_list': ["https://megaserie.me/", "https://megaserie.net/"], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_stat': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -88,7 +88,7 @@ def sub_menu(item):
     itemlist = list()
 
     itemlist.append(Item(channel=item.channel, title="Novedades", action="list_all", 
-                         url=host + item.title.lower(),
+                         url=host + item.title.lower() + '/',
                          thumbnail=get_thumb("newest", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="section", url=host,

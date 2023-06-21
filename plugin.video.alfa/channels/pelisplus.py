@@ -44,8 +44,8 @@ list_servers = [
 canonical = {
              'channel': 'pelisplus', 
              'host': config.get_setting("current_host", 'pelisplus', default=''), 
-             'host_alt': ["https://pelisplus.mov/"], 
-             'host_black_list': ["https://pelisplus.ninja/", "https://www.pelisplus.lat/", 
+             'host_alt': ["https://home.pelisplus.lat/"], 
+             'host_black_list': ["https://pelisplus.mov/", "https://pelisplus.ninja/", "https://www.pelisplus.lat/", 
                                  "https://www.pelisplus.me/", "https://pelisplushd.net/","https://pelisplushd.to/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -61,7 +61,8 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url_todas = "listado-peliculas", url_populares = "peliculas-polulares",
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url_todas = "listado-peliculas", 
+                         url_populares = "peliculas-polulares",
                          thumbnail=get_thumb('movies', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Series", action="sub_menu", url_todas = "ver-series",
@@ -99,7 +100,7 @@ def sub_menu(item):
                             url=host + 'peliculas-populares',
                             thumbnail=get_thumb('more watched', auto=True), type=content))
         itemlist.append(Item(channel=item.channel, title="Peliculas estreno", action="list_all",
-                            url=host + '/estrenos',
+                            url=host + 'estrenos',
                             thumbnail=get_thumb('more watched', auto=True), type=content))
         itemlist.append(Item(channel=item.channel, title="Generos", action="section",
                              thumbnail=get_thumb('genres', auto=True), type=content))
