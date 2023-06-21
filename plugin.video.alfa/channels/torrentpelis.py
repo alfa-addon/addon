@@ -144,6 +144,8 @@ def list_all(item):
     if item.extra2 in ["GENERO", "TENDENCIAS"]: 
         findS['find'] = dict([('find', [{'tag': ['div'], 'class': ['items normal']}]), 
                               ('get_text', [{'tag': ['article'], 'class': ['item']}])])
+    elif item.extra == "search":
+        findS['find'] = findS.get('search', {})
                        
     return AlfaChannel.list_all(item, matches_post=list_all_matches, generictools=True, finds=findS, **kwargs)
                         
