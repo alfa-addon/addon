@@ -21,11 +21,6 @@ import base64
 from platformcode import config, logger
 from core import filetools
 
-try:
-    monitor = xbmc.Monitor()
-except:
-    monitor = None
-
 json_data_file_name = 'custom_code.json'
 ADDON_NAME = 'plugin.video.alfa'
 ADDON_PATH = config.get_runtime_path()
@@ -404,26 +399,20 @@ def verify_script_alfa_update_helper(silent=True, emergency=False, github_url=''
     new_version = versiones.get(addonid, ADDON_VERSION)
     updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
     if updated:
-        ADDON_VERSION_NUM = ADDON_VERSION.split('.')
-        ADDON_VERSION_NUM = (int(ADDON_VERSION_NUM[0]), int(ADDON_VERSION_NUM[1]), int(ADDON_VERSION_NUM[2]))
-        new_version_num = new_version.split('.')
-        new_version_num = (int(new_version_num[0]), int(new_version_num[1]), int(new_version_num[2]))
-        if ADDON_VERSION_NUM < new_version_num or emergency:
+        if ADDON_VERSION != new_version or emergency:
             def check_alfa_version():
-                logger.info(new_version_num, force=True)
+                logger.info(new_version, force=True)
                 xbmc.executebuiltin('UpdateAddonRepos')
-                rango = 150 if not emergency else 1
+                rango = 40 if not emergency else 1
                 for x in range(rango):
-                    ADDON_VERSION_NUM = config.get_addon_version(with_fix=False, from_xml=True).split('.')
-                    ADDON_VERSION_NUM = (int(ADDON_VERSION_NUM[0]), int(ADDON_VERSION_NUM[1]), int(ADDON_VERSION_NUM[2]))
-                    if ADDON_VERSION_NUM == new_version_num: break
-                    if monitor: monitor.waitForAbort(2)
-                    else: time.sleep(2)
-                if ADDON_VERSION_NUM < new_version_num or emergency:
-                    logger.info("Notifying obsolete version %s ==> %s" % (str(ADDON_VERSION_NUM), str(new_version_num)), force=True)
-                    platformtools.dialog_notification("Alfa: versión oficial: [COLOR hotpink][B]%s[/B][/COLOR]" % str(new_version_num), \
-                            "[COLOR yellow]Tienes una versión obsoleta: [B]%s[/B][/COLOR]" % str(ADDON_VERSION_NUM))
-                if emergency or (config.get_kodi_setting('general.addonupdates') == 0 and not platformtools.xbmc_player.isPlaying()):
+                    addon_version = config.get_addon_version(with_fix=False, from_xml=True)
+                    if addon_version == new_version: break
+                    time.sleep(2)
+                if addon_version != new_version or emergency:
+                    logger.info("Notifying obsolete version %s ==> %s" % (addon_version, new_version), force=True)
+                    platformtools.dialog_notification("Alfa: versión oficial: [COLOR hotpink][B]%s[/B][/COLOR]" % new_version, \
+                            "[COLOR yellow]Tienes una versión obsoleta: [B]%s[/B][/COLOR]" % addon_version)
+                if emergency:
                     return install_alfa_now(github_url=github_url)
             try:
                 threading.Thread(target=check_alfa_version).start()

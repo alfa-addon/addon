@@ -32,9 +32,9 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.day/", "https://todotorrents.net/", "https://dontorrent.in/", 
-                          "https://verdetorrent.com/", "https://tomadivx.net/", "https://donproxies.com/"], 
-             'host_black_list': ["https://dontorrent.mov/", 'https://dontorrent.zip/', 'https://dontorrent.dad/', 
+             'host_alt': ['https://dontorrent.zip/', 'https://todotorrents.net/', 'https://dontorrent.in/', 
+                          'https://verdetorrent.com/', 'https://tomadivx.net/', 'https://donproxies.com/'], 
+             'host_black_list': ['https://dontorrent.dad/', 
                                  'https://dontorrent.discount/', 'https://dontorrent.company/', 'https://dontorrent.observer/', 
                                  'https://dontorrent.cash/', 'https://dontorrent.care/', 'https://dontorrent.ms/', 
                                  'https://dontorrent.pictures/', 'https://dontorrent.cloud/', 'https://dontorrent.africa/', 
@@ -374,7 +374,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     elif tv_path in elem_json['url']:
                         elem_json['quality'] = '*%s' % scrapertools.find_single_match(elem_json['title'], '\[([^\]]+)\]')
 
-                except Exception:
+                except:
                     logger.error(elem_a)
                     logger.error(traceback.format_exc())
                     continue
@@ -399,7 +399,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                                                                 .replace('Subs. integrados', '').strip() or 'HDTV')
                     elem_json['language'] = '*'
 
-                except Exception:
+                except:
                     logger.error(elem_a)
                     logger.error(traceback.format_exc())
                     continue
@@ -427,7 +427,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     elem_json['quality'] = '*%s' % re.sub('(?i)\(|\)|Ninguno', '', elem_a.get_text(strip=True))
                     elem_json['language'] = '*'
 
-                except Exception:
+                except:
                     logger.error(elem_a)
                     logger.error(traceback.format_exc())
                     continue
@@ -441,9 +441,8 @@ def list_all_matches(item, matches_int, **AHkwargs):
         elif item.c_type in ['search']:
             try:
                 items_found = int(elem.find('p', class_="lead").find_next('p', class_="lead").get_text('|', strip=True).split('|')[1])
-            except Exception:
+            except:
                 items_found = 0
-            items_found_save = items_found
 
             for elem_a in elem.find_all('p'):
                 elem_json = {}
@@ -458,7 +457,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     elem_json['quality'] = '*%s' % scrapertools.find_single_match(elem_a.get_text(), '\((.*?)\)').replace('Ninguno', '')
                     elem_json['language'] = '*'
 
-                except Exception:
+                except:
                     logger.error(elem_a)
                     logger.error(traceback.format_exc())
                     continue
@@ -467,9 +466,8 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
                 matches.append(elem_json.copy())
 
-            if AlfaChannel.last_page in [9999, 99999] and items_found:
-                AlfaChannel.last_page = int(float(items_found_save / float(findS['controls']['cnt_tot'])  + 0.500009))
-                AlfaChannel.cnt_tot = items_found_save
+            if not AlfaChannel.last_page and items_found:
+                AlfaChannel.last_page = int(float(items_found / float(len(matches))  + 0.500009))
 
         elif item.c_type in ['peliculas', 'series']:
             for elem_a in elem.find_all('a'):
@@ -505,7 +503,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                             elem_json['title'] = elem_json['url']
                         elem_json['title'] = scrapertools.remove_htmltags(elem_json['title'])
 
-                except Exception:
+                except:
                     logger.error(elem_a)
                     logger.error(traceback.format_exc())
                     continue
@@ -593,7 +591,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                     elem_json['season'] = contentSeason = int(elem_json['season'])
                     elem_json['episode'] = int(elem_json['episode'])
                     alt_epi = int(alt_epi)
-                except Exception:
+                except:
                     logger.error('ERROR al extraer Temporada/Episodio: %s' % sxe)
                     logger.error(td)
                     logger.error(traceback.format_exc())
@@ -688,7 +686,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 if  elem.find('b', class_='bold', string=re.compile('Clave:')):
                     elem_json['password'] = elem.find('b', class_='bold', string=re.compile('Clave:'))\
                                                 .find_previous('p').get('data-clave', '')
-            except Exception:
+            except:
                 logger.error(elem)
                 logger.error(traceback.format_exc())
                 continue
@@ -725,7 +723,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except Exception:
+    except:
         for line in sys.exc_info():
             logger.error("%s" % line)
         logger.error(traceback.format_exc())
@@ -755,7 +753,7 @@ def newest(categoria, **AHkwargs):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except Exception:
+    except:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         logger.error(traceback.format_exc())

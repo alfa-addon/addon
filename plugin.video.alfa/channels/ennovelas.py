@@ -31,8 +31,8 @@ forced_proxy_opt = 'ProxyCF'
 canonical = {
              'channel': 'ennovelas', 
              'host': config.get_setting("current_host", 'ennovelas', default=''), 
-             'host_alt': ["https://a.ennovelas.net/"], 
-             'host_black_list': ["https://e.ennovelas.net/", "https://ww.ennovelas.net/", 
+             'host_alt': ["https://e.ennovelas.net/"], 
+             'host_black_list': ["https://ww.ennovelas.net/", 
                                  "https://w.ennovelas.net/", "https://www.zonevipz.com/", "https://www.ennovelas.com/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -101,7 +101,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Novelas", action="list_all", 
                          url=host + "telenovelas/", c_type='series', thumbnail=get_thumb("tvshows", auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Nuevos Episodios[/COLOR]" , action="list_all", 
-                         url= host + "capitulos-n2/", c_type='episodios', thumbnail=get_thumb('new_episodes', auto=True)))
+                         url= host + "capitulos-n1/", c_type='episodios', thumbnail=get_thumb('new_episodes', auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Países[/COLOR]" , action="section", 
                          url= host, c_type='series', thumbnail=get_thumb('country', auto=True)))
 

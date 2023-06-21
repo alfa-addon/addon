@@ -11,7 +11,7 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 try:
     from platformcode import logger
-except Exception:
+except:
     pass
 
 try:
@@ -23,7 +23,7 @@ try:
         if PY3: continue
         config.importer(module)
     import xbmc
-except Exception:
+except:
     xbmc = None
     logger.error(traceback.format_exc())
     
@@ -42,7 +42,7 @@ def update(path, p_dialog, i, t, serie, overwrite, redir=True):
     from core import channeltools, videolibrarytools
     from platformcode import platformtools
     from channels import videolibrary
-    from lib.generictools import verify_channel
+    from lib import generictools
     if config.is_xbmc():
         from platformcode import xbmc_videolibrary
 
@@ -60,23 +60,19 @@ def update(path, p_dialog, i, t, serie, overwrite, redir=True):
         serie.channel = channel
         serie.url = url
         
-        ###### Redirección a otro canal y url si hay cambio de dominio
-        try:
-            head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')         #Refresca el .nfo para recoger actualizaciones
-            if not it:
-                logger.error('.nfo erroneo en ' + str(path))
-                continue
-            if it.emergency_urls:
-                serie.emergency_urls = it.emergency_urls
-            serie.category = category
-            if serie.library_filter_show:
-                serie.show = serie.library_filter_show.get(channel, serie.contentSerieName)
-            if it.library_urls.get(serie.channel, '') and config.BTDIGG_URL not in it.library_urls[serie.channel]:
-                if config.BTDIGG_URL in serie.url: serie.url = it.library_urls[serie.channel]
-                if config.BTDIGG_URL in serie.url_tvshow: serie.url_tvshow = it.library_urls[serie.channel]
-            serie = videolibrarytools.redirect_url(serie)
-        except Exception:
-            logger.error(traceback.format_exc())
+        ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
+        if redir:
+            try:
+                head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')         #Refresca el .nfo para recoger actualizaciones
+                if not it:
+                    logger.error('.nfo erroneo en ' + str(path))
+                    continue
+                if it.emergency_urls:
+                    serie.emergency_urls = it.emergency_urls
+                serie.category = category
+                serie, it, overwrite = generictools.redirect_clone_newpct1(serie, head_nfo, it, path, overwrite)
+            except:
+                logger.error(traceback.format_exc())
 
         channel_enabled = channeltools.is_enabled(serie.channel)
 
@@ -89,6 +85,11 @@ def update(path, p_dialog, i, t, serie, overwrite, redir=True):
                 pathchannels = filetools.join(config.get_runtime_path(), "channels", serie.channel + '.py')
                 logger.info("Cargando canal: " + pathchannels + " " +
                             serie.channel)
+
+                if serie.library_filter_show:
+                    serie.show = serie.library_filter_show.get(channel, serie.contentSerieName)
+                
+                if redir: serie = videolibrarytools.redirect_url(serie)
 
                 obj = __import__('channels.%s' % serie.channel, fromlist=["channels.%s" % serie.channel])
                 itemlist = getattr(obj, 'episodios')(serie)                     #... se procesa Episodios para ese canal
@@ -131,7 +132,7 @@ def update(path, p_dialog, i, t, serie, overwrite, redir=True):
                 
             # Si el canal lo permite, se comienza el proceso de descarga de los nuevos episodios descargados
             serie_d = serie.clone()
-            serie_d.channel = verify_channel(serie_d.channel)
+            serie_d.channel = generictools.verify_channel(serie_d.channel)
             if insertados > 0 and config.get_setting('auto_download_new', serie_d.channel, default=False) and int(overwrite_back) != 3:
                 config.set_setting("search_new_content", 1, "videolibrary")     # Escaneamos a final todas la series
                 serie_d.sub_action = 'auto'
@@ -152,7 +153,7 @@ def update(path, p_dialog, i, t, serie, overwrite, redir=True):
         if config.is_xbmc() and not config.get_setting('cleanlibrary', 'videolibrary', default=False) \
                     and int(overwrite_back) != 3:                               #Si es Kodi, lo hacemos
             xbmc_videolibrary.mark_content_as_watched_on_alfa(path + '/tvshow.nfo')
-    except Exception:
+    except:
         logger.error(traceback.format_exc())
     
     return insertados_total > 0
@@ -165,6 +166,7 @@ def check_for_update(overwrite=True):
     from core import channeltools, videolibrarytools
     from platformcode import platformtools
     from channels import videolibrary
+    from lib import generictools
     if config.is_xbmc():
         from platformcode import xbmc_videolibrary
     
@@ -201,11 +203,11 @@ def check_for_update(overwrite=True):
                         continue
                     path = filetools.dirname(tvshow_file)
                     
-                    ###### Redirección a otro canal y url si hay cambio de dominio
+                    ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
                     overwrite_forced = False
                     try:
-                        serie = videolibrarytools.redirect_url(serie)
-                    except Exception:
+                        serie, serie, overwrite_forced = generictools.redirect_clone_newpct1(serie, head_nfo, serie, path, overwrite, lookup=True)
+                    except:
                         logger.error(traceback.format_exc())
                     if overwrite_forced == True:
                         overwrite = True
@@ -219,23 +221,23 @@ def check_for_update(overwrite=True):
                                 str(serie.active), str(serie.update_last), str(info_status)))
                     p_dialog.update(int(math.ceil((i + 1) * t)), heading, serie.contentSerieName)
                     
-                    # Verificamos el estado del serie.library_playcounts de la Serie por si está incompleto
+                    #Verificamos el estado del serie.library_playcounts de la Serie por si está incompleto
                     try:
                         estado = False
-                        # Si no hemos hecho la verificación o no tiene playcount, entramos
+                        #Si no hemos hecho la verificación o no tiene playcount, entramos
                         estado = config.get_setting("verify_playcount", "videolibrary")
                         if not estado or estado == False or not serie.library_playcounts:       #Si no se ha pasado antes, lo hacemos ahora
                             serie, estado = videolibrary.verify_playcount_series(serie, path)   #También se pasa si falta un PlayCount por completo
-                    except Exception:
+                    except:
                         logger.error(traceback.format_exc())
                     else:
-                        if estado:                                              # Si ha tenido éxito la actualización...
-                            estado_verify_playcount_series = True               # ... se marca para cambiar la opción de la Videoteca
+                        if estado:                                              #Si ha tenido éxito la actualización...
+                            estado_verify_playcount_series = True               #... se marca para cambiar la opción de la Videoteca
 
                     if serie.active:
                         try:
                             interval = int(serie.active)                        # Podria ser del tipo bool
-                        except Exception:
+                        except:
                             interval = 1
                     else:
                         interval = 0
@@ -245,9 +247,9 @@ def check_for_update(overwrite=True):
                         if overwrite_forced == False:
                             #Sincronizamos los episodios vistos desde la videoteca de Kodi con la de Alfa, aunque la serie esté desactivada
                             try:
-                                if config.is_xbmc():                            # Si es Kodi, lo hacemos
+                                if config.is_xbmc():                #Si es Kodi, lo hacemos
                                     xbmc_videolibrary.mark_content_as_watched_on_alfa(path + '/tvshow.nfo')
-                            except Exception:
+                            except:
                                 logger.error(traceback.format_exc())
                         
                             continue
@@ -305,7 +307,7 @@ def check_for_update(overwrite=True):
                     if monitor and monitor.waitForAbort(0.1):
                         return
                     
-                    head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)   # Vuelve a leer el.nfo, que ha sido modificado
+                    head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)   #Vuelve a leer el.nfo, que ha sido modificado
                     if interval != int(serie.active) or update_next.strftime('%Y-%m-%d') != serie.update_next or update_last.strftime('%Y-%m-%d') != serie.update_last:
                         serie.update_last = update_last.strftime('%Y-%m-%d')
                         if update_next > hoy:
@@ -410,7 +412,7 @@ def start(thread=True):
             if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
                 try:
                     threading.Thread(target=scan_after_remote_update, args=('start',)).start()
-                except Exception:
+                except:
                     scan_after_remote_update('start')
             else:
                 check_for_update(overwrite=False)
@@ -475,7 +477,7 @@ def monitor_update():
                         and update_setting == 4)):
             try:
                 logger.info("Inicio actualizacion programada para las %s h.: %s" % (update_start, datetime.datetime.now()))
-            except Exception:
+            except:
                 pass
             if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
                 scan_after_remote_update('clock')
@@ -556,7 +558,7 @@ if __name__ == "__main__":
             if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
                 try:
                     threading.Thread(target=scan_after_remote_update, args=('start',)).start()
-                except Exception:
+                except:
                     scan_after_remote_update('start')
             else:
                 check_for_update(overwrite=False)
