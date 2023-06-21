@@ -140,7 +140,7 @@ def sub_menu(item):
     itemlist = []
 
     if item.c_type == "peliculas":
-        itemlist.append(Item(channel=item.channel, action="list_all", title="Todas las Películas (Fecha)", text_bold=True, 
+        itemlist.append(Item(channel=item.channel, action="list_all", title="Todas las Películas", text_bold=True, 
                              url=host + "movies/date/1/",thumbnail=get_thumb('last', auto=True), c_type=item.c_type, plot=plot))
 
         itemlist.append(Item(channel=item.channel, action="list_all", title=" - [COLOR paleturquoise]Películas Estreno[/COLOR]",
@@ -164,7 +164,7 @@ def sub_menu(item):
         
 
     if item.c_type == "series":
-        itemlist.append(Item(channel=item.channel, action="list_all", title="Todas las Series (Fecha)", text_bold=True, 
+        itemlist.append(Item(channel=item.channel, action="list_all", title="Todas las Series", text_bold=True, 
                              url=host + "tv-shows/date/1/", thumbnail=get_thumb('last', auto=True), c_type=item.c_type, plot=plot))
 
         itemlist.append(Item(channel=item.channel, action="list_all", title=" - [COLOR paleturquoise]Novelas Estreno[/COLOR]", 
