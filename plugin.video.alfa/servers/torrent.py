@@ -25,7 +25,7 @@ try:
     import xbmc
     import xbmcgui
     import xbmcaddon
-except:
+except Exception:
     xbmc = None
 
 from core import filetools
@@ -155,7 +155,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
                 torrent_path = filetools.join(save_path_videos, '.cache', t_hash.upper()+'.torrent')
         if not filetools.exists(torrent_path):
             filetools.copy(mediaurl, torrent_path, silent=True)
-    except:
+    except Exception:
         pass
     if not config.get_setting("bt_download_path", server="torrent") and save_path_videos:
         config.set_setting("bt_download_path", filetools.join(config.get_data_path(), 'downloads'), server="torrent")
@@ -168,14 +168,14 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     RAR = config.get_setting("mct_rar_unpack", server="torrent", default=True)
     try:
         BUFFER = int(config.get_setting("bt_buffer", server="torrent", default="50"))
-    except:
+    except Exception:
         BUFFER = 50
         config.set_setting("bt_buffer", "50", server="torrent")
     DOWNLOAD_LIMIT = config.get_setting("mct_download_limit", server="torrent", default="")
     if DOWNLOAD_LIMIT:
         try:
             DOWNLOAD_LIMIT = int(DOWNLOAD_LIMIT)
-        except:
+        except Exception:
             DOWNLOAD_LIMIT = 0
     else:
         DOWNLOAD_LIMIT = 0
@@ -546,7 +546,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
                     dp_cerrado = False
                     
                 break
-    except:
+    except Exception:
         logger.error(traceback.format_exc(1))
         return
     
@@ -896,7 +896,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
                         from core import ziptools
                         unzipper = ziptools.ziptools()
                         unzipper.extract(torrents_path_zip_file, torrents_path_zip)
-                    except:
+                    except Exception:
                         import xbmc
                         xbmc.executebuiltin('Extract("%s", "%s")' % (torrents_path_zip_file, torrents_path_zip))
                         time.sleep(1)
@@ -909,7 +909,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
                             import rarfile_py2 as rarfile
                         archive = rarfile.RarFile(torrents_path_zip_file)
                         archive.extractall(torrents_path_zip)
-                    except:
+                    except Exception:
                         logger.error(traceback.format_exc(1))
                 
                 for root, folders, files in filetools.walk(torrents_path_zip):  # Recorremos la carpeta para leer el .torrent
@@ -952,7 +952,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
             else:
                 t_hash = hashlib.sha1(bencode.bencode(decodedDict["info"])).hexdigest()
             t_hash_upper = t_hash.upper()
-        except:
+        except Exception:
             logger.error(traceback.format_exc(1))
 
         if t_hash and not scrapertools.find_single_match(torrent_params['torrents_path'], '(?:\d+x\d+)?\s+\[.*?\]_\d+'):
@@ -1001,7 +1001,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
                 torrent_params['torrents_path'] = ''
                 torrent_file = ''                                               #... y el buffer del .torrent
                 return torrent_file, torrent_params                             #Si hay un error, devolvemos el "path" vacío
-    except:
+    except Exception:
         logger.error('Torrent_file: %s' % str(torrent_file[:200]))
         torrent_params['torrents_path'] = ''                                    #Si hay un error, devolvemos el "path" vacío
         torrent_file = ''                                                       #... y el buffer del .torrent
@@ -1044,7 +1044,7 @@ def capture_thru_browser(url, capture_path, item, response, VFS):
                 CAPTURE_THRU_BROWSER_in_use = window.getProperty("CAPTURE_THRU_BROWSER_in_use")
                 CAPTURE_THRU_BROWSER_in_use = ast.literal_eval(CAPTURE_THRU_BROWSER_in_use) if CAPTURE_THRU_BROWSER_in_use else []
                 logger.debug('CAPTURE_THRU_BROWSER_in_use: %s / %s / %s' % (url, item.path+seaxepi, CAPTURE_THRU_BROWSER_in_use))
-            except:
+            except Exception:
                 window = ''
                 CAPTURE_THRU_BROWSER_in_use = config.get_setting("CAPTURE_THRU_BROWSER_in_use", server="torrent", default='')
                 CAPTURE_THRU_BROWSER_in_use = ast.literal_eval(CAPTURE_THRU_BROWSER_in_use) if CAPTURE_THRU_BROWSER_in_use else []
@@ -1136,7 +1136,7 @@ def capture_thru_browser(url, capture_path, item, response, VFS):
             if i > loop or salida:
                 try:
                     res.kill()
-                except:
+                except Exception:
                     pass
             
             if i > loop and not salida:
@@ -1184,7 +1184,7 @@ def capture_thru_browser(url, capture_path, item, response, VFS):
                     return ('', '')
                 xbmc.sleep(elapsed*1000)
 
-    except:
+    except Exception:
         logger.error('Error_en_la_CAPTURA del .torrent descargado: %s; %s; %s' % (url, item.path+seaxepi, CAPTURE_THRU_BROWSER_in_use))
         logger.error(traceback.format_exc())
         if window: 
@@ -1360,18 +1360,14 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
             nun_records, records = execute_sql_kodi(sql, silent='found')        # Ejecución de la SQL, avisa si encuentra algo
             records = filetools.decode(records, trans_none=0)                   # Decode de records, cambiando None por 0
             if nun_records == 0: return cached_torrents                         # No estará catalogada o hay un error en el SQL
-        except:
+        except Exception:
             logger.error(traceback.format_exc())
             return cached_torrents
 
         from lib.generictools import verify_channel
         channel, clones = verify_channel(channel_name, clones_list=True)
         channels_alt = []
-        if channel == 'newpct1':
-            for clone in clones:
-                channels_alt += [clone[1]]
-        else:
-            channels_alt = [channel_name]
+        channels_alt = [channel_name]
         for json_name in filetools.listdir(records[0][0]):
             if not json_name.endswith('.json'): continue
             if not filename in json_name: continue
@@ -1483,10 +1479,10 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
                 head_nfo, item_nfo = read_nfo(filetools.join(records[0][0], nfo))
                 if item_nfo:
                     threading.Thread(target=videolibrary_backup_exec, args=(item_nfo, videolibrary_backup)).start()
-            except:
+            except Exception:
                 logger.error('Error en el backup de la serie %s' % tvshow_item.path)
                 logger.error(traceback.format_exc(1))
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
     
     return cached_torrents
@@ -1662,7 +1658,7 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
                     progress = ("%.2f" % round(float(status.get('progress', 0.00)), 2)) + '%'
                     torr_data_status = status.get('status', '')
                     torr_down_rate = '%.0fkB/s' % int(status.get('download_rate', 0))
-                except:
+                except Exception:
                     torr_data_status = torrent_states[3]
                     log(traceback.format_exc(1))
             
@@ -1674,7 +1670,7 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
                         progress = ("%.2f" % round(float(status.get('progress', 0.00)), 2)) + '%'
                         torr_data_status = torrent_states[status.get('state', 1)]
                         torr_down_rate = '%.0fkB/s' % int(status.get('download_rate', 0) / 1024)
-                    except:
+                    except Exception:
                         torr_data_status = torrent_states[3]
                         log(traceback.format_exc(1))
                     if status.get('paused', False): torr_data_status = 'Paused'
@@ -1727,7 +1723,7 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
             if action in ['delete', 'reset'] and folder_new:
                 delete_torrent_folder(folder_new)
             return '', local_host[torr_client], -1
-    except:
+    except Exception:
         log(traceback.format_exc(1))
         return '', local_host[torr_client], 0
 
@@ -1835,14 +1831,14 @@ def torrent_dirs():
     
     try:
         torrent_paths['TORR_opt'] = int(config.get_setting("torrent_client", server="torrent", default=0, debug=DEBUG))
-    except:
+    except Exception:
         from platformcode import custom_code
         custom_code.verify_data_jsons(json_file='torrent_data.json')
         try:
             if config.get_setting("torrent_client", server="torrent", default=0, debug=DEBUG) == None:
                 config.set_setting("torrent_client", 0, server="torrent", debug=DEBUG)
             torrent_paths['TORR_opt'] = int(config.get_setting("torrent_client", server="torrent", default=0, debug=DEBUG))
-        except:
+        except Exception:
             torrent_paths['TORR_opt'] = 0
             torrent_json_path = filetools.join(config.get_data_path(), 'settings_servers', 'torrent_data.json')
             torrent_json = jsontools.load(filetools.read(torrent_json_path))
@@ -1875,7 +1871,7 @@ def torrent_dirs():
             try:
                 __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)  # Apunta settings del cliente torrent externo
                 torrent_paths[torr_client.upper() + '_version'] = __settings__.getAddonInfo('version')
-            except:
+            except Exception:
                 continue
         if torr_client == 'BT':
             if not config.get_setting("bt_download_path", server="torrent", default='', debug=DEBUG) and downloadpath:
@@ -1925,7 +1921,7 @@ def torrent_dirs():
                         torrent_paths['ELEMENTUM'] = 'Memory'
                         if __settings__.getSetting('memory_size'):
                             torrent_paths['ELEMENTUM_memory_size'] = __settings__.getSetting('memory_size')
-            except:
+            except Exception:
                 logger.error(traceback.format_exc(1))
         elif torr_client in ['torrest']:
             try:
@@ -1943,18 +1939,21 @@ def torrent_dirs():
                 torrent_paths[torr_client.upper() + '_buffer'] = __settings__.getSetting('s:buffer_size')
                 torrent_paths[torr_client.upper() + '_url'] = torr_client_url
                 torrent_paths[torr_client.upper() + '_port'] = __settings__.getSetting('port')
-                torrent_paths[torr_client.upper() + '_web'] = '%s%s/' % (torrent_paths[torr_client.upper() + '_web'] \
-                            % __settings__.getSetting('service_ip'), str(torrent_paths[torr_client.upper() + '_port']))
+                try:
+                    torrent_paths[torr_client.upper() + '_web'] = '%s%s/' % (torrent_paths[torr_client.upper() + '_web'] \
+                                % __settings__.getSetting('service_ip'), str(torrent_paths[torr_client.upper() + '_port']))
+                except Exception:
+                    pass
 
                 ### TEMPORAL: migración de versión 0.0.14 a 0.0.15+ por cambio de API
                 try:
                     t_version = tuple(int(x) for x in torrent_paths[torr_client.upper() + '_version'].split('.'))
                     if t_version >= (0, 0, 15):
                         torrent_paths[torr_client.upper() + '_verbs'] = torrent_paths[torr_client.upper() + '_verbs_15']
-                except:
+                except Exception:
                     logger.error(traceback.format_exc())
 
-            except:
+            except Exception:
                 logger.error(traceback.format_exc(1))
         else:
             torrent_paths[torr_client.upper()] = ''
@@ -2118,7 +2117,7 @@ def mark_torrent_as_watched():
             if xbmc.abortRequested: 
                 return
             xbmc.sleep(5*1000)                                                  # Dejamos terminar la inicialización...
-    except:                                                                     # Si hay problemas de threading, salimos
+    except Exception:                                                                     # Si hay problemas de threading, salimos
         logger.error(traceback.format_exc())
 
     # Si hay descargas de BT o MCT inacabadas, se reinician la descargas secuencialmente
@@ -2130,7 +2129,7 @@ def mark_torrent_as_watched():
             if xbmc.abortRequested: 
                 return
             xbmc.sleep(3*1000)                                                  # Dejamos terminar la inicialización...
-    except:                                                                     # Si hay problemas de threading, salimos
+    except Exception:                                                                     # Si hay problemas de threading, salimos
         logger.error(traceback.format_exc())
 
     #Inicia un rastreo de vídeos decargados: marca los VISTOS y elimina los controles de los BORRADOS
@@ -2139,7 +2138,7 @@ def mark_torrent_as_watched():
 
             try:
                 check_seen_torrents()                                           # Ha las comprobaciones...
-            except:
+            except Exception:
                 logger.error(traceback.format_exc())
             if monitor.waitForAbort(900):                                       # ... cada 15'
                 break
@@ -2149,7 +2148,7 @@ def mark_torrent_as_watched():
 
             try:
                 check_seen_torrents()                                           # Ha las comprobaciones...
-            except:
+            except Exception:
                 logger.error(traceback.format_exc())
             xbmc.sleep(900*1000)                                                # ... cada 15'
             
@@ -2282,7 +2281,7 @@ def restart_unfinished_downloads():
                                         if xbmc.abortRequested: 
                                             return
                                         xbmc.sleep(5*1000)                      # Dejamos terminar la inicialización...
-                                except:
+                                except Exception:
                                     logger.error(item)
                                     logger.error(traceback.format_exc())
                                 
@@ -2309,7 +2308,7 @@ def restart_unfinished_downloads():
                         logger.info('RESTART_DOWNLOADS Activado externamente')
                         config.set_setting("RESTART_DOWNLOADS", False, "downloads", debug=DEBUG) 
                         break
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
 
@@ -2335,7 +2334,7 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
             torr_data, deamon_url, index = get_tclient_data(item.torr_folder, \
                                 torr_client.lower(), port=torrent_paths.get(torr_client.upper()+'_port', 0), \
                                 web=torrent_paths.get(torr_client.upper()+'_web', ''))
-        except:
+        except Exception:
             logger.error(traceback.format_exc(1))
             return False
         
@@ -2421,7 +2420,7 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
             if xbmc.abortRequested: 
                 return False
             xbmc.sleep(3*1000)                                                  # Dejamos terminar la inicialización...
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
         
     return True
@@ -2513,7 +2512,7 @@ def check_seen_torrents():
                                 filename = ''
 
                 check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PATH, LISTDIR, fichero, filename, nun_records)
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
 
@@ -2617,7 +2616,7 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
                             port=torrent_paths.get(torr_client.upper()+'_port', 0), action='delete', \
                             web=torrent_paths.get(torr_client.upper()+'_web', ''), folder_new=folder_new)
 
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
 
@@ -2707,7 +2706,7 @@ def check_torrent_is_buffering(item, magnet_retries=60, torrent_retries=30):
                     return resp
             time.sleep(sleep)
 
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
     return False
@@ -3016,7 +3015,7 @@ def wait_for_download(item, xlistitem, mediaurl, rar_files, torr_client, passwor
             try:
                 threading.Thread(target=stream_rar_video, args=(rar_file, save_path_videos, password, 
                                  xlistitem, item, torr_client, rar_control, size, mediaurl)).start()
-            except:
+            except Exception:
                 logger.error('Error en el streaming del vídeo %s' % folder)
                 logger.error(traceback.format_exc())
 
@@ -3040,7 +3039,7 @@ def wait_for_download(item, xlistitem, mediaurl, rar_files, torr_client, passwor
                 logger.error('ABORTING...')
                 try:
                     progreso.close()
-                except:
+                except Exception:
                     pass
                 sys.exit()
 
@@ -3084,7 +3083,7 @@ def wait_for_download(item, xlistitem, mediaurl, rar_files, torr_client, passwor
                 logger.error('%s session aborted: %s' % (str(torr_client).upper(), str(folder)))
                 try:
                     progreso.close()
-                except:
+                except Exception:
                     pass
                 return ('', '', folder, rar_control)                            # Volvemos
             
@@ -3162,7 +3161,7 @@ def wait_for_download(item, xlistitem, mediaurl, rar_files, torr_client, passwor
                                     web=torrent_paths.get(torr_client.upper()+'_web', ''))
             try:
                 progreso.close()
-            except:
+            except Exception:
                 pass
             return (rar_file, save_path_videos, folder, rar_control)
     else:
@@ -3172,7 +3171,7 @@ def wait_for_download(item, xlistitem, mediaurl, rar_files, torr_client, passwor
     
     try:
         progreso.close()
-    except:
+    except Exception:
         pass
     
     # Plan B: monitorizar con UnRAR si los archivos se han desacargado por completo
@@ -3214,7 +3213,7 @@ def wait_for_download(item, xlistitem, mediaurl, rar_files, torr_client, passwor
                                      stderr=STDOUT)
                     out_, error_ = data_rar.communicate()
                     responses.append([z, str(data_rar.returncode), out_, error_])   # Se guarda la respuesta de cada parte
-            except:
+            except Exception:
                 logger.error(traceback.format_exc(1))                           # Error de incompatibilidad de UnRAR
                 rar = False
                 break
@@ -3343,7 +3342,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
             rarfile_PY = 2
             import rarfile_py2 as rarfile
         log("##### Usando rarfile_py%s - Assistant: %s" % (rarfile_PY, config.get_setting('assistant_binary')))
-    except:
+    except Exception:
         log("##### ERROR en import rarfile_PY%s" % rarfile_PY)
         log(traceback.format_exc())
         config.set_setting("UNRAR_in_use", False, server="torrent")             # Marcamos unRAR como disponible
@@ -3409,7 +3408,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                 log("##### Necesita password: RE-importando rarfile_py2")
                 import rarfile_py2 as rarfile
                 archive = rarfile.RarFile(file_path)
-        except:
+        except Exception:
             log("##### ERROR en Archivo rar: %s" % rar_file)
             log("##### ERROR en Carpeta del rar: %s" % file_path)
             log(traceback.format_exc(1))
@@ -3552,7 +3551,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                             torr_client=torr_client, rar_control=rar_control, size=size, mediaurl=mediaurl)
                 else:
                     return rar_file, False, '', erase_file_path
-            except:
+            except Exception:
                 logger.error(traceback.format_exc(1))
                 error_msg = "Error al extraer"
                 error_msg1 = "Comprueba el log para más detalles"
@@ -3665,7 +3664,7 @@ def stream_rar_video(rar_file, save_path_videos, password, xlistitem, item, \
             import rarfile
         else:
             return False
-    except:
+    except Exception:
         log("##### ERROR en import rarfile_PY%s" % rarfile_PY)
         log(traceback.format_exc())
         return False
@@ -3725,7 +3724,7 @@ def stream_rar_video(rar_file, save_path_videos, password, xlistitem, item, \
         archive = rarfile.RarFile(file_path, crc_check=False)
         if archive.needs_password():
             return False
-    except:
+    except Exception:
         log("##### ERROR en Carpeta del rar: %s" % file_path)
         log(traceback.format_exc())
         error_msg = "RAR inaccesible"
@@ -3873,7 +3872,7 @@ def stream_rar_video(rar_file, save_path_videos, password, xlistitem, item, \
             log("##### RAR Streaming END #####")
             if t and t.is_alive(): t.terminate()
             return True
-        except:
+        except Exception:
             error_msg = "Error al extraer para STREAMING"
             error_msg1 = "Comprueba el log para más detalles"
             dialog_notification(error_msg, error_msg1)
@@ -3933,7 +3932,7 @@ def rename_rar_dir(item, rar_file, save_path_videos, video_path, torr_client):
                     filetools.rename(src, dst_file, silent=True, strict=True)
                 elif not filetools.exists(dst):
                     break
-            except:
+            except Exception:
                 log("##### Rename ERROR: SRC: %s" % src)
                 logger.error(traceback.format_exc(1))
             else:
@@ -3981,7 +3980,7 @@ def last_password_search(pass_path, erase_file_path=''):
             if password:
                 update_rar_control(erase_file_path, password=password, status='UnRARing: Password update')
                 break
-    except:
+    except Exception:
         logger.error(traceback.format_exc(1))
     
     log("##### Contraseña extraída: %s" % password)
@@ -4024,7 +4023,7 @@ def update_rar_control(path, newpath='', newextract='', password='', error='', e
                         str(rar_control['error']), rar_control['error_msg'], rar_control['status']))
         else:
             raise
-    except:
+    except Exception:
         logger.error('path: %s, newpath: %s, newextract: %s, password: %s, error: %s, error_msg: %s, status: %s' % 
                 (path, newpath, newextract, password, str(error), error_msg, status))
         logger.error(traceback.format_exc(1))
@@ -4151,19 +4150,19 @@ def import_libtorrent(LIBTORRENT_PATH):
             ok = dialog_ok('ERROR en el cliente Interno Libtorrent', \
                         'Módulo no encontrado o imcompatible con el dispositivo.', \
                         'Reporte el fallo adjuntando un "log" %s' % str(e2))
-        except:
+        except Exception:
             pass
     
     try:
         if not e1 and e2: e1 = e2
-    except:
+    except Exception:
         try:
             if e2:
                 e1 = e2
             else:
                 e1 = ''
                 e2 = ''
-        except:
+        except Exception:
             e1 = ''
             e2 = ''
     

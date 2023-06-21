@@ -18,7 +18,6 @@ from core import jsontools
 from channelselector import get_thumb
 from platformcode import config, logger
 from channels import filtertools, autoplay
-from lib.generictools import check_blocked_IP
 from lib.AlfaChannelHelper import DictionaryAllChannel
 
 IDIOMAS = {'es': 'CAST', 'la': 'LAT', 'us': 'VOSE', 'ES': 'CAST', 'LA': 'LAT', 'US': 'VOSE', 
@@ -73,11 +72,12 @@ finds = {'find': {'find_all': [{'tag': ['tr'], 'name': ['hover'], '@LIM': 500}]}
          'seasons_search_num_rgx': [], 
          'seasons_search_qty_rgx': [], 
          'episode_url': '', 
-         'episodes': {'find_all': [{'tag': ['tr'], 'name': ['hover']}]}, 
+         'episodes': dict([('find', [{'tag': ['table'], 'class': ['show_info_description']}]), 
+                           ('find_all', [{'string': re.compile('[^-]+\s+--\s+[^\-]+(?:\s+--\s+[^$]*)?$')}])]), 
          'episode_num': [], 
          'episode_clean': [], 
          'plot': {}, 
-         'findvideos': {}, 
+         'findvideos': {'find_all': [{'tag': ['tr'], 'name': ['hover']}]}, 
          'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*imax|documental|completo|\s*torrent', ''],
                          ['[\(|\[]\s+[\)|\]]', '']],
          'quality_clean': [['(?i)proper\s*|unrated\s*|directors\s*|cut\s*|german\s*|repack\s*|internal\s*|real\s*|korean\s*', ''],
@@ -87,7 +87,7 @@ finds = {'find': {'find_all': [{'tag': ['tr'], 'name': ['hover'], '@LIM': 500}]}
          'controls': {'min_temp': min_temp, 'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 20,
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
                       'host_torrent': host_torrent, 'btdigg': False, 'duplicates': [], 'dup_list': 'title', 'dup_movies': True, 
-                      'join_dup_episodes': True, 'manage_torrents': True},
+                      'join_dup_episodes': False, 'manage_torrents': True},
          'timeout': timeout}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
                                    idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -223,15 +223,11 @@ def seasons(item):
     
     soup = AlfaChannel.create_soup(item.url, **kwargs)
     
-    imdb = soup.find('table', class_='show_info_description').find('a', string=re.compile('(?i)imdb'))
-    if imdb:
-        imdb = scrapertools.find_single_match(str(imdb), 'imdb.com\/title\/(tt\d+)\/')
-        if imdb and imdb not in item.infoLabels['imdb_id']:
-            from core import tmdb
-            
-            item.infoLabels['imdb_id'] = imdb
-            item.infoLabels['tmdb_id'] = item.infoLabels['tvdb_id'] = ''
-            tmdb.set_infoLabels_item(item, True, idioma_busqueda='en')
+    imdb_id = soup.find('table', class_='show_info_description').find('a', string=re.compile('(?i)imdb'))
+    if imdb_id:
+        imdb_id = scrapertools.find_single_match(str(imdb_id), 'imdb.com\/title\/(tt\d+)\/')
+        if imdb_id and imdb_id not in item.infoLabels['imdb_id']:
+            AlfaChannel.verify_infoLabels_keys(item, {'imdb_id': imdb_id})
 
     return AlfaChannel.seasons(item, data=soup, **kwargs)
 
@@ -263,15 +259,62 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     logger.info()
 
     matches = []
+    elem_json_list = {}
     findS = AHkwargs.get('finds', finds)
-    
-    for elem_in in matches_int:
+
+    soup = AHkwargs.get('soup', {})
+    findS['episodes'] = {'find_all': [{'tag': ['tr'], 'name': ['hover']}]}
+    matches_links = AlfaChannel.parse_finds_dict(soup, findS['episodes'])
+
+    for elem in matches_int:
         elem_json = {}
-        #logger.error(elem_in)
-        
-        elem_json = findvideos_links(item, elem_in, elem_json)
-        
+        #logger.error(elem)
+
+        try:
+            info = elem.split(' -- ')
+
+            try:
+                elem_json['season'], elem_json['episode'] = scrapertools.find_single_match(info[0], '(?i)(\d{1,2})x(\d{1,3})')
+                elem_json['season'] = int(elem_json['season'])
+                elem_json['episode'] = int(elem_json['episode'])
+            except Exception:
+                logger.error(info)
+                elem_json['season'] = item.contentSeason
+                elem_json['episode'] = 0
+            if elem_json['season'] != item.contentSeason: continue
+
+            sxe = 's%se%s' % (str(elem_json['season']).zfill(2), str(elem_json['episode']).zfill(2))
+            elem_json['url'] = elem_json['url_episode'] = '%ssearch/%s-%s' % (host, item.contentSerieName.replace(' ', '-').lower(), sxe)
+            elem_json['title'] = '%sx%s %s' % (str(elem_json['season']), str(elem_json['episode']).zfill(2), (info[2] if len(info) > 2 else ''))
+
+            elem_json['language'] = item.language
+            elem_json['quality'] = ''
+            elem_json['matches'] = []
+
+        except Exception:
+            logger.error(elem)
+            logger.error(traceback.format_exc())
+            continue
+
+        elem_json_list[sxe] = elem_json.copy()
+
+    for elem_links in matches_links:
+        elem_json = {}
+        #logger.error(elem_links)
+
+        elem_json = findvideos_links(item, elem_links, elem_json)
         if not elem_json.get('url'): continue
+
+        sxe = 's%se%s' % (str(elem_json['season']).zfill(2), str(elem_json['episode']).zfill(2))
+        if elem_json_list.get(sxe):
+            elem_json_list[sxe]['matches'] += [elem_json.copy()]
+            if elem_json['quality'] not in elem_json_list[sxe]['quality']:
+                elem_json_list[sxe]['quality'] += '%s, ' % elem_json['quality']
+
+    for key, elem_json in elem_json_list.items():
+        if item.infoLabels['number_of_seasons'] and item.infoLabels['number_of_seasons'] == elem_json['season']:
+            if not elem_json['matches']: continue
+        elem_json['quality'] = elem_json['quality'].rstrip(', ')
 
         matches.append(elem_json.copy())
 
@@ -283,8 +326,26 @@ def findvideos(item):
 
     kwargs['matches_post_episodes'] = episodesxseason_matches
 
-    return AlfaChannel.get_video_options(item, item.url, matches_post=None, 
+    return AlfaChannel.get_video_options(item, item.url, matches_post=findvideos_matches, 
                                          verify_links=False, generictools=True, findvideos_proc=True, **kwargs)
+
+
+def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
+    logger.info()
+
+    matches = []
+    findS = AHkwargs.get('finds', finds)
+    
+    for elem in matches_int:
+        elem_json = {}
+        #logger.error(elem)
+        
+        elem_json = findvideos_links(item, elem, elem_json)
+        
+        if elem_json:
+            matches.append(elem_json.copy())
+
+    return matches, langs
 
 
 def findvideos_links(item, elem_in, elem_json):
@@ -322,17 +383,22 @@ def findvideos_links(item, elem_in, elem_json):
                         elem_json['episode'] = int(elem_json['episode'])
                     elem_json['url_episode'] = '%ssearch/%s-s%se%s' % (host, item.contentSerieName.replace(' ', '-').lower(), 
                                                                        str(elem_json['season']).zfill(2), str(elem_json['episode']).zfill(2))
+                    elem_json['title'] = '%sx%s - ' % (str(elem_json['season']), str(elem_json['episode']).zfill(2))
                     
+                elem_json['language'] = item.language
+                elem_json['server'] = 'torrent'
+                elem_json['url'] = ''
                 elem_json['quality'] = '*%s' % scrapertools.find_single_match(info, patron_quality)
-            
+                elem_json['quality'] = AlfaChannel.find_quality(elem_json, item)
+
             if x == 2:
                 for url in elem.find_all('a'):
                     elem_json['url'] = url.get('href', '')
                     if elem_json['url'].endswith('.torrent'): break
-            
+
             if x == 3:
                 elem_json['torrent_info'] = elem_json['size'] = elem.get_text(strip=True)
-            
+
             if x == 5:
                 try:
                     elem_json['seeds'] = int(elem.get_text(strip=True) or elem.font.get_text(strip=True))
@@ -345,12 +411,9 @@ def findvideos_links(item, elem_in, elem_json):
             logger.error(traceback.format_exc())
             break
 
-    if elem_json.get('url'): 
-        elem_json['language'] = item.language or language
-        elem_json['server'] = 'torrent'
-    else:
+    if not elem_json.get('url') or item.contentSerieName.lower().replace(' ', '.') not in elem_json.get('url', '').lower(): 
         elem_json = {}
-    
+
     return elem_json
 
 

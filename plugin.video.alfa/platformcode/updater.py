@@ -28,15 +28,17 @@ from core.item import Item
 
 CURRENT_VERSION = config.get_addon_version(with_fix=False, from_xml=True)
 ADDON_UPDATES = 'https://extra.alfa-addon.com/addon_updates/'
-ADDON_UPDATES_JSON = '?version=%s' % CURRENT_VERSION
-ADDON_UPDATES_ZIP = '%s&download=zip' % ADDON_UPDATES_JSON
-ADDON_UPDATES_BROADCAST = '%s&download=broadcast' % ADDON_UPDATES_JSON
+ADDON_UPDATES_JSON = 'json/%s.json' % CURRENT_VERSION
+ADDON_UPDATES_ZIP = 'zip/%s.zip' % CURRENT_VERSION
+ADDON_UPDATES_BROADCAST = 'json/%s_broadcast.json' % CURRENT_VERSION
 
 ALFA_DEPENDENCIES = 'alfa_dependencies.json'
 
 ITEM = Item()
 last_fix_json = os.path.join(config.get_runtime_path(), 'last_fix.json')        # información de la versión fixeada del usuario
 timeout = 15
+command = ''
+last_id_old = 0
 
 def check_addon_init():
     logger.info()
@@ -52,7 +54,7 @@ def check_addon_init():
             if timer <= 0:
                 try:
                     user_type = base64.b64decode(config.get_setting('proxy_dev')).decode('utf-8')
-                except:
+                except Exception:
                     user_type = 'user'
                 if user_type == 'user':
                     config.set_setting('addon_update_timer', 12)                # Si es usuario se fuerza a 12 horas
@@ -62,7 +64,7 @@ def check_addon_init():
                     verify_emergency_update(proxy_only=True)
                     return                                                      # 0.  No se quieren actualizaciones
             verbose = config.get_setting('addon_update_message', default=False)
-        except:
+        except Exception:
             logger.error(traceback.format_exc())
             timer = 12  # Por defecto cada 12 horas
             verbose = False  # Por defecto, sin mensajes
@@ -108,14 +110,14 @@ def check_addon_init():
         emergency_fixes()                                                       # Fixes de emergencia que deben ejecutarse lo antes posible
         threading.Thread(target=check_addon_monitor).start()                    # Creamos un Thread independiente, hasta el fin de Kodi
         time.sleep(5)  # Dejamos terminar la primera verificación...
-    except:                                                                     # Si hay problemas de threading, se llama una sola vez
+    except Exception:                                                                     # Si hay problemas de threading, se llama una sola vez
         try:
             timer = int(config.get_setting('addon_update_timer',
                                            default=12))                         # Intervalo entre actualizaciones, en Ajustes de Alfa
             if timer <= 0:
                 try:
                     user_type = base64.b64decode(config.get_setting('proxy_dev')).decode('utf-8')
-                except:
+                except Exception:
                     user_type = 'user'
                 if user_type == 'user':
                     config.set_setting('addon_update_timer', 12)                # Si es usuario se fuerza a 12 horas
@@ -124,7 +126,7 @@ def check_addon_init():
                     verify_emergency_update(proxy_only=True)
                     return                                                      # 0.  No se quieren actualizaciones
             verbose = config.get_setting('addon_update_message', default=False)
-        except:
+        except Exception:
             verbose = False                                                     # Por defecto, sin mensajes
             pass
         check_addon_updates(verbose)                                            # Lanza la actualización, en Ajustes de Alfa
@@ -135,6 +137,7 @@ def check_addon_init():
 
 def check_addon_updates(verbose=False, monitor=None):
     logger.info()
+    from platformcode.custom_code import verify_script_alfa_update_helper
 
     # Forzamos la actualización de los repos para facilitar la actualización del addon Alfa
     xbmc.executebuiltin('UpdateAddonRepos')
@@ -147,7 +150,7 @@ def check_addon_updates(verbose=False, monitor=None):
         try:
             localfilename = os.path.join(config.get_data_path(), 'temp_updates.zip')
             if os.path.exists(localfilename): os.remove(localfilename)
-        except:
+        except Exception:
             pass
 
         # Descargar json con las posibles actualizaciones
@@ -166,7 +169,7 @@ def check_addon_updates(verbose=False, monitor=None):
             else:
                 resp.sucess = False
 
-        if not resp.sucess and resp.code != 404:
+        if not resp.sucess:
             logger.info('ERROR en la descarga de actualizaciones: %s' % resp.code, force=True)
             if verbose:
                 dialog_notification('Alfa: error en la actualización', 'Hay un error al descargar la actualización')
@@ -181,9 +184,8 @@ def check_addon_updates(verbose=False, monitor=None):
             logger.info('No se encuentran actualizaciones de esta versión del addon', force=True)
             if verbose:
                 dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
-            if monitor is None and verify_emergency_update():
-                return check_addon_updates(verbose, monitor=False)              # Lanza la actualización de emergencia
             check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
+            verify_script_alfa_update_helper(emergency=False)                   # Verifica si hay una nueva versión de Alfa e instala
             return False
 
         # Comprobar versión que tiene instalada el usuario con versión de la actualización
@@ -194,9 +196,9 @@ def check_addon_updates(verbose=False, monitor=None):
             logger.info('No hay actualizaciones para la versión %s del addon' % current_version, force=True)
             if verbose:
                 dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
-            if monitor is None and verify_emergency_update():
-                return check_addon_updates(verbose, monitor=False)              # Lanza la actualización de emergencia
-            check_update_to_others(verbose=verbose)  # Comprueba las actualuzaciones de otros productos
+            if monitor:
+                check_update_to_others(verbose=verbose)                         # Comprueba las actualuzaciones de otros productos
+                verify_script_alfa_update_helper(emergency=False)               # Verifica si hay una nueva versión de Alfa e instala
             return False
 
         data['addon_version'] = current_version
@@ -212,11 +214,11 @@ def check_addon_updates(verbose=False, monitor=None):
                     if verbose:
                         dialog_notification('Alfa ya está actualizado', 'Versión %s.fix%d' \
                                             % (current_version, lastfix['fix_version'] or data['fix_version']))
-                    if monitor is None and verify_emergency_update():
-                        return check_addon_updates(verbose, monitor=False)      # Lanza la actualización de emergencia
-                    check_update_to_others(verbose=verbose)                     # Comprueba las actualuzaciones de otros productos
+                    if monitor:
+                        check_update_to_others(verbose=verbose)                 # Comprueba las actualuzaciones de otros productos
+                        verify_script_alfa_update_helper(emergency=False)       # Verifica si hay una nueva versión de Alfa e instala
                     return False
-            except:
+            except Exception:
                 if lastfix:
                     logger.error('last_fix.json: ERROR en: ' + str(lastfix))
                 else:
@@ -244,7 +246,7 @@ def check_addon_updates(verbose=False, monitor=None):
                             data['broadcast_version'] = data['fix_version']
                             data['broadcast'] = str(broadcast.get('message', ''))
                             logger.info('Mensaje de Broadcast enviado: %s ' % str(broadcast), force=True)
-                        except:
+                        except Exception:
                             logger.error('ERROR en mensaje de Broadcast: %s ' % str(broadcast))
                     else:
                         logger.info('Broadcast existe pero no aplica: %s' % str(broadcast), force=True)
@@ -253,38 +255,38 @@ def check_addon_updates(verbose=False, monitor=None):
 
         if monitor and monitor.waitForAbort(0.1):
             return False
-        
+
         # Descargar zip con las actualizaciones
         # -------------------------------------
         if downloadtools.downloadfile(url + ADDON_UPDATES_ZIP, localfilename, silent=True) < 0:
             raise
 
         alfa_caching = config.cache_reset(action='OFF')                         # Reseteamos e inactivamos las caches de settings
-        
+
         if monitor and monitor.waitForAbort(0.1):
             return False
-        
+
         # Descomprimir zip dentro del addon
         # ---------------------------------
         try:
             unzipper = ziptools.ziptools()
             unzipper.extract(localfilename, config.get_runtime_path())
-        except:
+        except Exception:
             xbmc.executebuiltin('Extract("%s", "%s")' % (localfilename, config.get_runtime_path()))
             time.sleep(1)
 
         alfa_caching = config.cache_reset(action='ON')                          # Reseteamos y activamos las caches de settings
-        
+
         # Borrar el zip descargado
         # ------------------------
         try:
             os.remove(localfilename)
-        except:
+        except Exception:
             pass
 
         if monitor and monitor.waitForAbort(0.1):
             return False
-        
+
         # Si es PY3 se actualizan los módulos marshal
         # Se reinicia Proxytools
         try:
@@ -296,13 +298,14 @@ def check_addon_updates(verbose=False, monitor=None):
             else:
                 from core.proxytools_py3 import get_proxy_list
             get_proxy_list(monitor_start=False)
-        except:
+        except Exception:
             logger.error('Error Marshalizando e iniciando Proxytools')
             logger.error(traceback.format_exc())
 
         # Guardar información de la versión fixeada
         # -----------------------------------------
         show_update_info(data, wait=False)
+        new_fix_json = data.copy()
 
         last_id = 0
         if isinstance(data["files"], list):
@@ -320,7 +323,7 @@ def check_addon_updates(verbose=False, monitor=None):
         # Actualiza la versión del addon en las cabeceras
         try:
             httptools.__version = '%s.fix%d' % (data['addon_version'], data['fix_version'])
-        except:
+        except Exception:
             pass
 
         logger.info('Addon actualizado correctamente a %s.fix%d' % (data['addon_version'], data['fix_version']), force=True)
@@ -330,14 +333,13 @@ def check_addon_updates(verbose=False, monitor=None):
 
         if monitor and monitor.waitForAbort(0.1):
             return False
-        
-        if monitor is None and verify_emergency_update():
-            return check_addon_updates(verbose, monitor=False)                  # Lanza la actualización de emergencia
 
         check_update_to_others(verbose=verbose)                                 # Comprueba las actualuzaciones de otros productos
+        verify_script_alfa_update_helper(emergency=False)                       # Verifica si hay una nueva versión de Alfa e instala
+        reset_fixed_services(new_fix_json)                                      # Si se actualizan los módulos de servicios se recargan
         return True
 
-    except:
+    except Exception:
         if monitor and monitor.waitForAbort(0.1):
             return False
         logger.error('Error al comprobar actualizaciones del addon!')
@@ -371,7 +373,7 @@ def verify_addon_version(installed, fixes):
                     if not fix_list[0] or fix_list[0] == '*' or int(fix_list[0]) <= int(installed[x]):
                         if not fix_list[1] or fix_list[1] == '*' or int(fix_list[1]) >= int(installed[x]):
                             return True
-    except:
+    except Exception:
         logger.error('Error al verificar versiones: Installed: %s; Fixes: %s' % (str(installed), str(fixes)))
         logger.error(traceback.format_exc())
 
@@ -379,6 +381,7 @@ def verify_addon_version(installed, fixes):
 
 
 def verify_emergency_update(proxy_only=False):
+    global command
 
     resp = False
     install = 0
@@ -402,7 +405,7 @@ def verify_emergency_update(proxy_only=False):
                         updates_url = fix_version__[1]
                     if len(fix_version__) >= 3:
                         github_url = fix_version__[2]
-                    if x == 0:
+                    if int(key) == 1:
                         if len(fix_version__) >= 4:
                             proxyCF = fix_version__[3]
                         if len(fix_version__) >= 5:
@@ -432,7 +435,7 @@ def verify_emergency_update(proxy_only=False):
                 from platformcode.custom_code import verify_script_alfa_update_helper
                 verify_script_alfa_update_helper(emergency=True, github_url=github_url)
                 resp = False
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
     logger.info('%s %s' % (str('Proxy_only' if proxy_only else resp), str(command)), force=True)
@@ -442,7 +445,7 @@ def verify_emergency_update(proxy_only=False):
 
 def parse_emergency_update(updates_url, github_url):
     logger.info('updates_url: %s; github_url: %s' % (updates_url, github_url))
-    global ADDON_UPDATES
+    global ADDON_UPDATES, command
 
     url = ''
     
@@ -468,7 +471,7 @@ def parse_emergency_update(updates_url, github_url):
                 url = g_url
                 logger.debug('Github_url: %s' % url)
                 break
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
     return url
@@ -483,7 +486,7 @@ def parse_emergency_proxies(proxyCF, proxySSL):
             from core.proxytools_py3 import set_proxy_lists
         set_proxy_lists(proxyCF, proxySSL)
 
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
 
@@ -525,7 +528,7 @@ def check_update_to_others(verbose=False, app=True):
         from platformcode.custom_code import set_season_holidays
         set_season_holidays()
 
-    except:
+    except Exception:
         logger.error('Error al actualizar OTROS paquetes: %s' % folder)
         logger.error(traceback.format_exc())
 
@@ -533,7 +536,7 @@ def check_update_to_others(verbose=False, app=True):
         try:
             from lib import alfa_assistant
             res, addonid = alfa_assistant.update_alfa_assistant(verbose=verbose)
-        except:
+        except Exception:
             logger.error("Alfa Assistant.  Error en actualización")
             logger.error(traceback.format_exc())
 
@@ -565,7 +568,7 @@ def check_dependencies(in_folder):
         addon_name = os.path.split(in_folder)[1]
         __settings__ = xbmcaddon.Addon(id="{}".format(addon_name))
         addon_version = __settings__.getAddonInfo('version').split('.')
-    except:
+    except Exception:
         return False
     
     try:
@@ -608,7 +611,7 @@ def check_dependencies(in_folder):
                 else:
                     return res
 
-    except:
+    except Exception:
         return False
         logger.error(traceback.format_exc())
 
@@ -675,7 +678,7 @@ def copytree(src, dst, symlinks=False, ignore=None):
                             if not buf:
                                 break
                             fdst.write(buf)
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
 
@@ -698,11 +701,12 @@ def get_ua_list():
                 if int(val) > int(current_ver[pos]):
                     config.set_setting("chrome_ua_version", new_ua_ver)
                     break
-    except:
+    except Exception:
         logger.error(traceback.format_exc())
 
 
 def show_update_info(new_fix_json, wait=False):
+    global last_id_old
     
     if not config.get_setting("show_fixes", default=True):
         return
@@ -726,10 +730,10 @@ def show_update_info(new_fix_json, wait=False):
                 with open(old_fix, "r") as f:
                     old_fix_json = jsontools.load(f.read())
 
-                last_id = old_fix_json.get("last_id", 0)
+                last_id_old = old_fix_json.get("last_id", 0)
 
                 for k, v in new_fix_json["files"].items():
-                    if int(k) > last_id and "channels" in v:
+                    if int(k) > last_id_old and "channels" in v:
                         v = re.sub(r"\.py|\.json", "", v[1])
                         channel_parameters = channeltools.get_channel_parameters(v)
                         if not channel_parameters["channel"] or channel_parameters["adult"]:
@@ -748,9 +752,9 @@ def show_update_info(new_fix_json, wait=False):
                 with open(old_fix, "r") as f:
                     old_fix_json = jsontools.load(f.read())
 
-                last_id = old_fix_json.get("last_id", 0)
-                if len(new_fix_json["files"]) > last_id:
-                    for fix in new_fix_json["files"][last_id + 1:]:
+                last_id_old = old_fix_json.get("last_id", 0)
+                if len(new_fix_json["files"]) > last_id_old:
+                    for fix in new_fix_json["files"][last_id_old + 1:]:
                         if "channels" in fix:
                             fix = re.sub(r"\.py|\.json", "", fix[1])
                             channel_parameters = channeltools.get_channel_parameters(fix)
@@ -765,7 +769,41 @@ def show_update_info(new_fix_json, wait=False):
             text += "[I]Si no deseas ver esta ventana desactívala desde:[/I]\nConfiguración > Preferencias > General > Mostrar informe de correcciones"
             if not is_playing():
                 help_window.show_info(0, wait=wait, title="Alfa - Correcciones (%s)" % fix_number, text=text)
-    except:
+    except Exception:
+        logger.error(traceback.format_exc())
+
+
+def reset_fixed_services(new_fix_json):
+    global last_id_old
+
+    services_list = ['updater.py', 'videolibrary_service.py']
+    services_reload = []
+
+    try:
+        if isinstance(new_fix_json.get("files", {}), dict) and new_fix_json.get("files", {}):
+
+            for k, fix in new_fix_json["files"].items():
+                if int(k) > last_id_old and fix[1] in services_list:
+                    fix[1] = re.sub(r"\.py|\.json", "", fix[1])
+                    services_reload.append([fix[0], fix[1]])
+
+        elif isinstance(new_fix_json.get("files", []), list) and new_fix_json.get("files", []):
+
+            if len(new_fix_json["files"]) > last_id_old:
+                for fix in new_fix_json["files"][last_id_old + 1:]:
+                    if fix[1] in services_list:
+                        fix[1] = re.sub(r"\.py|\.json", "", fix[1])
+                        services_reload.append([fix[0], fix[1]])
+
+        if services_reload:
+            import importlib
+            logger.info('Reseting Services: %s' % services_reload, force=True)
+
+            for folder, service in services_reload:
+                function = __import__('%s.%s' % (folder, service), None, None, ["%s.%s" % (folder, service)])
+                importlib.reload(function)
+
+    except Exception:
         logger.error(traceback.format_exc())
 
 
@@ -791,7 +829,7 @@ def check_date_real():
                     break
                 else:
                     logger.debug('ERROR al obtener la Fecha REAL: %s: %s' % (page, str(resp.code)))
-            except:
+            except Exception:
                 logger.error('ERROR al obtener la Fecha REAL: %s' % page)
         else:
             fecha = "%s-%s-%s" % (dia_hoy.year, dia_hoy.month, dia_hoy.day)
@@ -808,5 +846,5 @@ def check_date_real():
                 logger.info('Fecha REAL (del SISTEMA): %s' % fecha, force=True)
             else:
                 logger.info('Fecha REAL (de la WEB): %s' % fecha_int, force=True)
-    except:
+    except Exception:
         logger.error(traceback.format_exc())

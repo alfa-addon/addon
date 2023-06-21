@@ -223,9 +223,9 @@ def run(item=None):
             if item.context and 'alfavorites' in str(item.context) \
                             and item.action in ['findvideos', 'episodios', 'seasons', 'play']:
                 try:
-                    from lib import generictools
-                    item, it, overwrite = generictools.redirect_clone_newpct1(item)
-                except:
+                    from core.videolibrarytools import redirect_url
+                    item = redirect_url(item)
+                except Exception:
                     import traceback
                     logger.error(traceback.format_exc())
             
@@ -235,7 +235,7 @@ def run(item=None):
                 try:
                     from core import trakt_tools
                     trakt_tools.set_trakt_info(item)
-                except:
+                except Exception:
                     pass
                 logger.info("item.action=%s" % item.action.upper())
                 # logger.debug("item_toPlay: " + "\n" + item.tostring('\n'))
@@ -324,7 +324,7 @@ def run(item=None):
                 #     try:
                 #         current_saved_searches_list = list(config.get_setting("saved_searches_list", "search"))
                 #         last_search = current_saved_searches_list[0]
-                #     except:
+                #     except Exception:
                 #         pass
 
                 last_search = channeltools.get_channel_setting('Last_searched', 'search', '')
@@ -405,7 +405,7 @@ def run(item=None):
         platformtools.dialog_ok(
             config.get_localized_string(59985) + canal,
             config.get_localized_string(60013) %(e))
-    except:
+    except Exception:
         import traceback
         from core import scrapertools
         logger.error(traceback.format_exc())
@@ -420,7 +420,7 @@ def run(item=None):
             else:
                 log_name = "kodi.log"
             log_message = config.get_localized_string(50004) + config.translatePath("special://logpath") + log_name
-        except:
+        except Exception:
             log_message = ""
 
         if canal:
@@ -499,7 +499,7 @@ def limit_itemlist(itemlist):
 
         # logger.debug("Outlet itemlist size: %i" % len(new_list))
         return new_list
-    except:
+    except Exception:
         return itemlist
 
 
