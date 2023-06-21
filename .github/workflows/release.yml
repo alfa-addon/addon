@@ -22,10 +22,10 @@ jobs:
 
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
-      GIT_USER_NAME: Alfa Addon
-      GIT_USER_EMAIL: alfa-addon@users.noreply.github.com
+      GIT_USER_NAME: SistemaRayoXP
+      GIT_USER_EMAIL: SistemaRayoXP@users.noreply.github.com
       GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-      GITHUB_REPOSITORY: alfa-addon/addon
+      GITHUB_REPOSITORY: SistemaRayoXP/addon
       ADDON_REPOSITORY: alfa-repo
       ADDON: 'plugin.video.alfa'
 
@@ -36,7 +36,7 @@ jobs:
       - name: Configure Python 3.8 
         uses: actions/setup-python@v2
         with:
-          python-version: '2.7'
+          python-version: '3.8'
 
       - name: Checkout repo
         uses: actions/checkout@v2
