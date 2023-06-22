@@ -310,17 +310,17 @@ def findvideos(item):
         window.setProperty("AH_hdfull_js_data", '')
         window.setProperty("AH_hdfull_data_js", '')
         
-        js_data = AlfaChannel.create_soup(js_url, soup=False, hide_infobox=True)
+        js_data = AlfaChannel.create_soup(js_url, soup=False, hide_infobox=True).data
         if js_data:
-            if window: window.setProperty("AH_hdfulls_js_data", str(js_data))
+            if window: window.setProperty("AH_hdfulls_js_data", js_data)
             logger.info('Js_data DESCARGADO', force=True)
         else:
             logger.error('Js_data ERROR en DESCARGA')
             return matches
         
-        data_js = AlfaChannel.create_soup(data_js_url, soup=False, hide_infobox=True)
+        data_js = AlfaChannel.create_soup(data_js_url, soup=False, hide_infobox=True).data
         if data_js:
-            if window: window.setProperty("AH_hdfulls_data_js", str(data_js))
+            if window: window.setProperty("AH_hdfulls_data_js", data_js)
             logger.info('Data_js DESCARGADO', force=True)
         else:
             logger.error('Data_js ERROR en DESCARGA')
