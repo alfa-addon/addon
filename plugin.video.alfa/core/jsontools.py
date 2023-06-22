@@ -36,10 +36,12 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 def load(*args, **kwargs):
     if "object_hook" not in kwargs:
         kwargs["object_hook"] = to_utf8
+    silence = kwargs.pop('silence', False)
 
     try:
         value = json.loads(*args, **kwargs)
     except:
+        if silence: return {}
         try:
             import inspect
             module = inspect.getmodule(inspect.currentframe().f_back.f_back)
@@ -61,12 +63,14 @@ def load(*args, **kwargs):
 
 
 def dump(*args, **kwargs):
+    silence = kwargs.pop('silence', False)
     if not kwargs:
         kwargs = {"indent": 4, "skipkeys": True, "sort_keys": True, "ensure_ascii": True}
 
     try:
         value = json.dumps(*args, **kwargs)
     except:
+        if silence: return ""
         try:
             import inspect
             module = inspect.getmodule(inspect.currentframe().f_back.f_back)

@@ -57,9 +57,7 @@ torrent_params = {
                   'local_torr': 'Downloads_torrent_file', 
                   'lookup': True
                   }
-blocked_channels = [
-                    'newpct1'
-                   ]
+blocked_channels = []
 
 
 def mainlist(item):
@@ -2077,18 +2075,15 @@ def get_episodes(item):
                 format_tmdb_id(nfo_json)
             
             if nfo_json:
-                if item.contentChannel != 'newpct1':
-                    item.url = nfo_json.library_urls[item.contentChannel]
+                category = item.category.lower()
+                if item.category_alt:
+                    category = item.category_alt.lower()
+                if nfo_json.library_urls.get(category):
+                    item.url = nfo_json.library_urls.get(category)
                 else:
-                    category = item.category.lower()
-                    if item.category_alt:
-                        category = item.category_alt.lower()
-                    if nfo_json.library_urls.get(category):
-                        item.url = nfo_json.library_urls.get(category)
-                    else:
-                        for key, value in list(nfo_json.library_urls.items()):
-                            item.url = value
-                            break
+                    for key, value in list(nfo_json.library_urls.items()):
+                        item.url = value
+                        break
                 if not item.url_tvshow:
                     item.url_tvshow = item.url
             elif item.url_tvshow:
