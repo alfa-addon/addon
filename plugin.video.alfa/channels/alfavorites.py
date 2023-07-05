@@ -27,7 +27,6 @@ from datetime import datetime
 from core.item import Item
 from platformcode import config, logger, platformtools
 from core import filetools, jsontools
-from bs4 import BeautifulSoup
 from core import httptools
 
 
@@ -831,6 +830,7 @@ def crear_lista(item):
 
 def descargar_lista(item, url):
     logger.info()
+    from bs4 import BeautifulSoup
     from core import httptools, scrapertools
 
 
