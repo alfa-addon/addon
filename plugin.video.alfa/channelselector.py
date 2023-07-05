@@ -504,11 +504,13 @@ def filterchannels(category, view="thumb_", alfa_s=True, settings=False):
         channel_parameters = channeltools.get_channel_parameters('url')
         # Si prefiere el banner y el canal lo tiene, cambia ahora de idea
         if view == "banner_" and "banner" in channel_parameters:
-            channel_parameters["thumbnail"] = channel_parameters["banner"]
+            thumbnail = get_thumb("url", "banner_")
+        else:
+            thumbnail = get_thumb("url")
 
         channelslist.insert(0, Item(title=config.get_localized_string(60088), action="mainlist", channel="url", 
                                     settings=[], active=channel_parameters["active"], 
-                                    thumbnail=channel_parameters["thumbnail"], type="generic", viewmode="list"))
+                                    thumbnail=thumbnail, type="generic", viewmode="list"))
 
     if frequent_list and config.get_setting('frequents'):
         channelslist =  frequent_list + channelslist
