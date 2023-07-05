@@ -252,7 +252,7 @@ def episodesxseason(item, data=[]):
     kwargs['headers'] = {'Referer': item.url}
     #kwargs['matches_post_get_video_options'] = findvideos_matches
 
-    return AlfaChannel.episodes(item, data=data, matches_post=episodesxseason_matches, generictools=True, finds=finds, **kwargs)
+    return AlfaChannel.episodes(item, data=data, matches_post=episodesxseason_matches, generictools=True, **kwargs)
 
 
 def episodesxseason_matches(item, matches_int, **AHkwargs):
@@ -260,7 +260,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
     matches = []
     elem_json_list = {}
-    findS = AHkwargs.get('finds', finds)
+    findS = finds.copy()
 
     soup = AHkwargs.get('soup', {})
     findS['episodes'] = {'find_all': [{'tag': ['tr'], 'name': ['hover']}]}

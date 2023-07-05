@@ -32,8 +32,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'grantorrent', 
              'host': config.get_setting("current_host", 'grantorrent', default=''), 
-             'host_alt': ['https://grantorrent.bz/'], 
-             'host_black_list': ['https://grantorrent.fi/', 'https://grantorrent.si/', 
+             'host_alt': ["https://grantorrent.zip/"], 
+             'host_black_list': ['https://grantorrent.bz/', 'https://grantorrent.fi/', 'https://grantorrent.si/', 
                                  'https://grantorrent.re/', 'https://grantorrent.ac/', 'https://grantorrent.ch/'], 
              'pattern': '<div\s*class="flex[^>]*>\s*<a\s*href="([^"]+)"[^>]*>\s*.nicio\s*<', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
@@ -421,9 +421,6 @@ def newest(categoria, **AHkwargs):
             if cat != categoria: continue
                 
             item.extra = cat
-            if cat == '4k': 
-                item.c_type = 'peliculas'
-                item.url = host + 'tag/4k/'
             if cat == 'peliculas': 
                 item.c_type = 'peliculas'
                 item.url = host + movies_sufix
@@ -443,4 +440,5 @@ def newest(categoria, **AHkwargs):
             logger.error("{0}".format(line))
         return []
 
+    logger.error(itemlist[0])
     return itemlist

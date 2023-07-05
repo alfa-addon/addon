@@ -266,14 +266,18 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
         if elem_ini.input.get('name', '') != 'watch': continue
         url = elem_ini.get('action', '')
-        post = 'watch=%s&submit=' % elem_ini.input.get('value', '')
+        post = 'watch=%s' % elem_ini.input.get('value', '')
+        soup = AlfaChannel.create_soup(url, post=post, **kwargs)
 
-        for elem in AlfaChannel.create_soup(url, post=post, **kwargs).find('ul', class_="serversList").find_all('li'):
+        for elem in soup.find('div', class_="watch").find_all('iframe') or soup.find('ul', class_="serversList").find_all('li'):
             elem_json = {}
             #logger.error(elem)
 
-            elem_json['url'] = elem.get('data-server', '')
-            elem_json['url'] = scrapertools.find_single_match(elem_json['url'], "src='([^']+)'")
+            if elem.get('data-server', ''):
+                elem_json['url'] = elem.get('data-server', '')
+                elem_json['url'] = scrapertools.find_single_match(elem_json['url'], "src='([^']+)'")
+            else:
+                elem_json['url'] = elem.get('src', '')
             if not elem_json.get('url', ''): continue
             if 'ennovelas' in elem_json['url'] or 'lvturbo' in elem_json['url'] or 'vidmoly' in elem_json['url'] \
                                                or 'sbface' in elem_json['url']:
