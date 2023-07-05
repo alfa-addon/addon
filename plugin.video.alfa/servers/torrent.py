@@ -105,7 +105,7 @@ patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)
 patron_host = '((?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?[\w|\-]+\.\w+)(?:\/|\?|$)'
 patron_canal = '(?:http.*\:)?\/\/(?:ww[^\.]*)?\.?(\w+)\.\w+(?:\/|\?|$)'
 
-domain_CF_blacklist = ['atomohd', 'atomixhq', 'atomtt']                         ############# TEMPORAL
+domain_CF_blacklist = ['atomohd', 'atomixhq', 'atomtt', 'wolfmax4k']            ############# TEMPORAL
 
 torrent_paths = {}
 
@@ -778,7 +778,7 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
                 
                 global set_tls_VALUES
                 if 'set_tls' in str(kwargs): set_tls_VALUES['set_tls'] = kwargs['set_tls']
-                if 'set_tls' not in str(kwargs) and url_domain in domain_CF_blacklist: set_tls_VALUES['set_tls'] = False
+                #if 'set_tls' not in str(kwargs) and url_domain in domain_CF_blacklist: set_tls_VALUES['set_tls'] = False
                 if 'set_tls_min' in str(kwargs): set_tls_VALUES['set_tls_min'] = kwargs['set_tls_min']
                 if 'retries_cloudflare' in str(kwargs): set_tls_VALUES['retries_cloudflare'] = kwargs['retries_cloudflare']
                 response = httptools.downloadpage(url, headers=headers, post=post, 

@@ -47,6 +47,7 @@ canonical = {
                                  "https://s2.cuevana3.me/", "https://z2.cuevana3.me/", "https://a2.cuevana3.me/", 
                                  "https://ww1.cuevana3.me/", "https://s3.cuevana3.me/", "https://ww4.cuevana3.me/", 
                                  "https://ww3.cuevana3.me/", "https://cuevana3.me/", "https://cuevana3.io/"], 
+             'status': 'Web caída 5-7-2023', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

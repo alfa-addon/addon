@@ -1937,7 +1937,10 @@ def play_torrent(item, xlistitem, mediaurl):
             from platformcode import subtitletools
             item = subtitletools.download_subtitles(item)
             if item.subtitle:
-                if not filetools.exists(item.subtitle):
+                if isinstance(item.subtitle, list):
+                    subtitles_list = item.subtitle[:]
+                    item.subtitle = item.subtitle[0]
+                if not filetools.exists(filetools.dirname(item.subtitle)):
                     item.subtitle = filetools.join(videolibrary_path, folder, item.subtitle)
                 log("##### 'Subtítulos externos: %s" % item.subtitle)
                 time.sleep(1)
@@ -2171,16 +2174,19 @@ def play_torrent(item, xlistitem, mediaurl):
                         else:
                             rar_path = ''
                         break
-            if subtitles_list and rar_path:
+            
+            rar_path_folder = rar_path if filetools.isdir(rar_path) else filetools.dirname(rar_path)
+            if subtitles_list and rar_path_folder:
+                filetools.mkdir(rar_path_folder)
                 for subtitle in subtitles_list:
                     if filetools.exists(subtitle):
-                        filetools.copy(subtitle, filetools.join(rar_path, filetools.basename(subtitle)))
+                        filetools.copy(subtitle, filetools.join(rar_path_folder, filetools.basename(subtitle)), silent=True)
                 log("##### Subtítulos copiados junto a vídeo: %s" % str(subtitles_list))
-            if item.subtitle and filetools.isfile(item.subtitle) and rar_path:
-                rar_path_folder = rar_path if filetools.isdir(rar_path) else filetools.dirname(rar_path)
+            elif item.subtitle and filetools.isfile(item.subtitle) and rar_path_folder:
+                filetools.mkdir(rar_path_folder)
                 dest_file = filetools.join(rar_path_folder, filetools.basename(item.subtitle))
-                filetools.copy(item.subtitle, dest_file, silent=True)
-                log("##### Subtítulo copiado junto a vídeo: %s" % str(dest_file))
+                res = filetools.copy(item.subtitle, dest_file, silent=True)
+                if res: log("##### Subtítulo copiado junto a vídeo: %s" % str(dest_file))
 
         except Exception as e:
             config.set_setting("LIBTORRENT_in_use", False, server="torrent")  # Marcamos Libtorrent como disponible

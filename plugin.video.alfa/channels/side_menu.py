@@ -73,7 +73,7 @@ def set_custom_start(item):
 def get_start_page():
     logger.info()
 
-    category = config.get_setting('category').lower()
+    category = config.get_setting('category')
     custom_start= config.get_setting("custom_start")
     #if category != 'definido':
     if custom_start == False:

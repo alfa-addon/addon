@@ -26,7 +26,7 @@ list_quality = []
 list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
 list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
 list_servers = ['okru', 'yourupload', 'mega', 'direct']
-forced_proxy_opt = 'ProxyCF'
+forced_proxy_opt = 'ProxySSL'
 
 
 canonical = {

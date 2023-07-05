@@ -867,6 +867,7 @@ def update_tvshow(item):
         if item.season_search: it.season_search = item.season_search
     else:
         it = item.clone()
+    it.from_action = 'update_tvshow'
     tmdb.set_infoLabels_item(it, seekTmdb=True)
 
     import videolibrary_service
