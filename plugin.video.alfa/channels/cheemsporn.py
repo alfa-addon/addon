@@ -64,6 +64,12 @@ finds = {'find': dict([('find', [{'tag': ['div', 'section'], 'id': ['primary']}]
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
+         'profile_labels': {
+                            # 'list_all_stime': dict([('find', [{'tag': ['div', 'span'], 'class': ['dur']}]),
+                                                    # ('get_text', [{'strip': True}])]),
+                            'list_all_quality': dict([('find', [{'tag': ['div', 'span'], 'class': ['hd-video']}]),
+                                                      ('get_text', [{'strip': True}])]),
+                           },
          'controls': {'url_base64': False, 'cnt_tot': 24, 'reverse': False, 'profile': 'default'}, 
          'timeout': timeout}
 AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_path, movie_action='play', canonical=canonical, finds=finds, 
@@ -96,36 +102,7 @@ def section(item):
 def list_all(item):
     logger.info()
     
-    return AlfaChannel.list_all(item, matches_post=list_all_matches, **kwargs)
-
-
-def list_all_matches(item, matches_int, **AHkwargs):
-    logger.info()
-    
-    matches = []
-    findS = AHkwargs.get('finds', finds)
-    
-    for elem in matches_int:
-        elem_json = {}
-        
-        try:
-            elem_json['url'] = elem.a.get('href', '')
-            elem_json['title'] = elem.a.get('title', '')
-            elem_json['thumbnail'] = elem.img.get('data-original', '') \
-                                     or elem.img.get('data-src', '') \
-                                     or elem.img.get('src', '')
-            elem_json['stime'] = elem.find(class_='duration').get_text(strip=True) if elem.find(class_='duration') else ''
-            elem_json['quality'] = elem.find('span', class_='hd-video').get_text(strip=True) if elem.find('span', class_='hd-video') else ''
-        
-        except:
-            logger.error(elem)
-            logger.error(traceback.format_exc())
-            continue
-        
-        if not elem_json['url']: continue
-        matches.append(elem_json.copy())
-    
-    return matches
+    return AlfaChannel.list_all(item, **kwargs)
 
 
 def findvideos(item):
