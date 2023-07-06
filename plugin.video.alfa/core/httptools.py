@@ -551,7 +551,7 @@ def proxy_post_processing(url, proxy_data, response, **opt):
 
 def blocking_error(url, req, proxy_data, **opt):
 
-    if opt.get('canonical_check', False): return False
+    if not opt.get('canonical_check', True): return False
     code = str(req.status_code) or ''
     data = ''
     if req.content: data = req.content[:5000]
@@ -658,7 +658,7 @@ def canonical_quick_check(url, **opt):
 
 def canonical_check(url, response, req, **opt):
     
-    if opt.get('canonical_check', False): return response
+    if not opt.get('canonical_check', True): return response
     if not response['data']: return response
     if isinstance(response['data'], dict): return response
     if '//127.0.0.1' in url or '//192.168.' in url or '//10.' in url or '//176.' in url or '//localhost' in url: return response

@@ -872,6 +872,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True, monito
 
     logger.debug("%s [%s]: insertados= %s, sobreescritos= %s, fallidos= %s" %
                  (serie.contentSerieName, serie.channel, insertados, sobreescritos, fallidos))
+    if DEBUG: logger.debug('Listado serie: %s' % filetools.listdir(path))
     return insertados, sobreescritos, fallidos
 
 

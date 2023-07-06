@@ -146,6 +146,8 @@ def check_addon_updates(verbose=False, monitor=None):
     get_ua_list()
 
     try:
+        help_window.show_info('broadcast', wait=False)                          # Muestra nuevo mensaje de broadcast, si está disponible
+
         # Se guarda en get_runtime_path en lugar de get_data_path para que se elimine al cambiar de versión
         try:
             localfilename = os.path.join(config.get_data_path(), 'temp_updates.zip')
@@ -169,7 +171,7 @@ def check_addon_updates(verbose=False, monitor=None):
             else:
                 resp.sucess = False
 
-        if not resp.sucess:
+        if not resp.sucess and str(resp.code) != '404':
             logger.info('ERROR en la descarga de actualizaciones: %s' % resp.code, force=True)
             if verbose:
                 dialog_notification('Alfa: error en la actualización', 'Hay un error al descargar la actualización')
@@ -776,7 +778,8 @@ def show_update_info(new_fix_json, wait=False):
 def reset_fixed_services(new_fix_json):
     global last_id_old
 
-    services_list = ['updater.py', 'videolibrary_service.py']
+    services_list = ['videolibrary_service.py', 'generictools.py', 'custom_code.py', 
+                     'config.py', 'httptools.py', 'filetools.py', 'updater.py']
     services_reload = []
 
     try:

@@ -121,17 +121,17 @@ def init():
         
         # Analizamos la estructura de los _data-json con cada nueva versión de Alfa
         verify_data_jsons()
-        
-        # Limpiamos los mensajes de ayuda obsoletos y restauramos los que tienen "version": True.  Por cada nueva versión
+
+        # Mostramos mensajes de Broadcast y Limpiamos los mensajes de ayuda obsoletos y restauramos los que tienen "version": True.
+        from platformcode import help_window
+        help_window.show_info('broadcast', wait=False)
         if not filetools.exists(ADDON_CUSTOMCODE_JSON):
-            from platformcode import help_window
             help_window.clean_watched_new_version()
         
         # Se realizan algunas funciones con cada nueva versión de Alfa
         if not filetools.exists(ADDON_CUSTOMCODE_JSON):
             config.set_setting('cf_assistant_ua', '')                           # Se limpia CF_UA. Mejora de rendimiento en httptools CF
-            config.set_setting("current_host", '', channel='dontorrent')        # Se resetea el host de algunos canales que tienen alternativas
-            config.set_setting("current_host", '', channel='mejortorrent')      # Se resetea el host de algunos canales que tienen alternativas
+            config.set_setting("current_host", 0)                               # Se resetea el host de algunos canales que tienen alternativas
             config.set_setting("debug_report", False)                           # Se resetea el DEBUG extendido
             config.set_setting("report_started", False)                         # Se resetea el Reporte de error
         if config.get_setting("debug_report") and not config.get_setting("debug"):
@@ -1333,23 +1333,33 @@ def btdigg_status():
 
 
 def reset_current_host(round_level):
-    
+    logger.info(round_level)
+
+    exclude_list = ['downloads', 'info_popup', 'menu_settings', 'news', 'search', 
+                    'trailertools', 'trakt', 'tvmoviedb', 'url', 'autoplay']
+
     try:
         for channel_json in sorted(filetools.listdir(filetools.join(ADDON_USERDATA_PATH, 'settings_channels'))):
             if not channel_json.endswith('.json'): continue
             channel_name = channel_json.replace('_data.json', '')
-            
-            try:
-                channel = __import__('channels.%s' % channel_name, None,
-                             None, ["channels.%s" % channel_name])
-                host = channel.host
-                new_host = channel.canonical['host_alt'][0]
-                if host != new_host:
-                    config.set_setting('current_host', new_host, channel=channel_name)
-                    logger.info('%s: current_host reseteado desde "%s" a "%s"' % (channel_name.capitalize(), host, new_host))
-                continue
-            except:
-                continue
+            if channel_name in exclude_list: continue
+            current_host = config.get_setting('current_host', channel=channel_name)
+            if current_host is None or current_host is False:
+                current_host = ''
+                config.set_setting('current_host', current_host, channel=channel_name)
+
+            if current_host:
+                try:
+                    channel = __import__('channels.%s' % channel_name, None,
+                                 None, ["channels.%s" % channel_name])
+                    host = channel.host
+                    new_host = channel.canonical['host_alt'][0]
+                    if host and new_host and host != new_host:
+                        config.set_setting('current_host', new_host, channel=channel_name)
+                        logger.info('%s: current_host reseteado desde "%s" a "%s"' % (channel_name.capitalize(), host, new_host))
+                    continue
+                except:
+                    continue
     except:
         return
     

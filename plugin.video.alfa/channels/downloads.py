@@ -2144,7 +2144,7 @@ def get_episodes(item):
             if item.torrent_info: del item.torrent_info
             if item.torrent_alt: del item.torrent_alt
 
-        if item.strm_path or item.nfo or nfo_json:                              # Si viene de Videoteca, usamos los .jsons
+        if (item.strm_path or item.nfo or nfo_json) and item.sub_action in ["auto"]:    # Si viene de Videoteca, usamos los .jsons
             if item.strm_path: serie_path = filetools.dirname(item.strm_path)
             if not serie_path and item.nfo: serie_path = filetools.dirname(item.nfo)
             if not serie_path and nfo_json: serie_path = filetools.join(SERIES, item.path.lower())

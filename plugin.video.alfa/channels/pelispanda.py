@@ -332,6 +332,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     else:
         for elem in matches_int:
             elem_json = {}
+            #logger.error(elem)
             x = 0
             
             for td in elem.find_all('td'):
@@ -341,7 +342,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                             elem_json['server'] = 'torrent'
                             x += 1
                         else:
-                            elem_json['server'] = 'torrent' if td.get_text().lower() in ['torrent', 'array'] else 'directo'
+                            elem_json['server'] = 'torrent' if td.get_text().lower() in ['t', 'torrent', 'array'] else 'directo'
                     if x == 1: elem_json['quality'] = '*%s' % td.get_text()
                     if x == 2: elem_json['language'] = '*%s' % td.get_text()
                     if x == 4: elem_json['torrent_info'] =  td.get_text().replace('-', '')
