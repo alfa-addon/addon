@@ -43,7 +43,7 @@ def start():
     
 
 def load_item():
-    from channels import side_menu
+    from modules import side_menu
     from platformcode import configurator
 
     # Extract item from sys.argv
@@ -607,7 +607,7 @@ def play_from_library(item):
     import xbmcplugin
     import xbmc
     from time import sleep, time
-    from channels import nextep
+    from modules import nextep
     from channels import autoplay
     from channels import videolibrary
 

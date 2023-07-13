@@ -79,7 +79,7 @@ def get_start_page():
     if custom_start == False:
         item = Item(module="news", action="news", news=category)
     else:
-        from channels import side_menu
+        from modules import side_menu
         item = Item()
         item = side_menu.check_user_home(item)
     return item

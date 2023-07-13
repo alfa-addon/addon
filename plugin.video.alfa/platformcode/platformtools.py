@@ -909,7 +909,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
             if item.action not in ['episodios', 'seasons', 'findvideos', 'play']:
                 context_commands.insert(0, (config.get_localized_string(60351),
                                             "RunPlugin(%s?%s)" % (
-                                                sys.argv[0], Item(channel='side_menu',
+                                                sys.argv[0], Item(module='side_menu',
                                                                   action="set_custom_start",
                                                                   parent=item.tourl()).tourl())))
 
@@ -1024,7 +1024,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
 
         # Abrir configuración
         if parent_item.module not in ["setting", "news", "search"]:
-            # pre-serialized: Item(channel="setting", action="mainlist").tourl()
+            # pre-serialized: Item(module="setting", action="mainlist").tourl()
             context_commands.append((config.get_localized_string(60358), "Container.Update(%s?%s)" %
                                      (sys.argv[0], Item(module="setting", action="mainlist").tourl())))
 
@@ -1042,7 +1042,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
 
     # Menu Rapido
     # pre-serialized
-    # Item(channel='side_menu', action="open_menu").tourl()
+    # Item(module='side_menu', action="open_menu").tourl()
     context_commands.insert(0, (config.get_localized_string(60360),
                                 "Container.Update (%s?%s)" % (sys.argv[0],
                                                               'ewogICAgImFjdGlvbiI6ICJvcGVuX21lbnUiLAogICAgImNoYW5uZWwiOiAic2lkZV9tZW51Igp9Cg==')))
@@ -1438,13 +1438,13 @@ def set_opcion(item, seleccion, opciones, video_urls):
 
     # "Quitar de favoritos"
     elif opciones[seleccion] == config.get_localized_string(30154):
-        from channels import favorites
+        from modules import favorites
         favorites.delFavourite(item)
         salir = True
 
     # "Añadir a favoritos":
     elif opciones[seleccion] == config.get_localized_string(30155):
-        from channels import favorites
+        from modules import favorites
         item.from_channel = "favorites"
         favorites.addFavourite(item)
         salir = True

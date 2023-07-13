@@ -96,7 +96,7 @@ def faq(item):
                                                "Puedes activar/desactivar los canales uno por uno o todos a la vez. ",
                                                "¿Deseas gestionar ahora los canales?")
         if respuesta == 1:
-            from channels import setting
+            from modules import setting
             setting.conf_tools(Item(extra='channels_onoff'))
 
     elif item.extra == "trakt_sync":
@@ -163,7 +163,7 @@ def faq(item):
                                                "¿Deseas acceder ahora a esa seccion?")
         if respuesta == 1:
             itemlist = []
-            from channels import setting
+            from modules import setting
             new_item = Item(module="setting", action="submenu_tools", folder=True)
             itemlist.extend(setting.submenu_tools(new_item))
             return itemlist
