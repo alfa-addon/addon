@@ -252,7 +252,7 @@ def mostrar_perfil(item):
             elif 'themes' in ruta and 'default' in ruta: 
                 it.thumbnail = filetools.join(ruta_runtime, 'resources', 'media', 'themes', 'default', fichero)
         
-        if it.channel != it.module:
+        if it.module and it.channel != it.module:
             del it.module
 
         itemlist.append(it)
