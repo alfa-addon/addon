@@ -40,47 +40,47 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, action="", title="FAQ:",
+    itemlist.append(Item(module=item.module, action="", title="FAQ:",
                          thumbnail=get_thumb("help.png"),
                          folder=False))
     if config.is_xbmc():
-        itemlist.append(Item(channel=item.channel, action="faq",
+        itemlist.append(Item(module=item.module, action="faq",
                              title="    - ¿Cómo reportar un error?",
                              thumbnail=get_thumb("help.png"),
                              folder=False, extra="report_error"))
-    itemlist.append(Item(channel=item.channel, action="faq",
+    itemlist.append(Item(module=item.module, action="faq",
                          title="    - ¿Se pueden activar/desactivar los canales?",
                          thumbnail=get_thumb("help.png"),
                          folder=False, extra="onoff_canales"))
-    itemlist.append(Item(channel=item.channel, action="faq",
+    itemlist.append(Item(module=item.module, action="faq",
                          title="    - ¿Es posible la sincronización automática con Trakt?",
                          thumbnail=get_thumb("help.png"),
                          folder=False, extra="trakt_sync"))
-    itemlist.append(Item(channel=item.channel, action="faq",
+    itemlist.append(Item(module=item.module, action="faq",
                          title="    - ¿Es posible mostrar todos los resultados juntos en el buscador global?",
                          thumbnail=get_thumb("help.png"),
                          folder=False, extra="buscador_juntos"))
-    itemlist.append(Item(channel=item.channel, action="faq",
+    itemlist.append(Item(module=item.module, action="faq",
                          title="    - Los enlaces tardan en aparecer.",
                          thumbnail=get_thumb("help.png"),
                          folder=False, extra="tiempo_enlaces"))
-    itemlist.append(Item(channel=item.channel, action="faq",
+    itemlist.append(Item(module=item.module, action="faq",
                          title="    - La búsqueda de contenido no se hace correctamente.",
                          thumbnail=get_thumb("help.png"),
                          folder=False, extra="prob_busquedacont"))
-    itemlist.append(Item(channel=item.channel, action="faq",
+    itemlist.append(Item(module=item.module, action="faq",
                          title="    - Algún canal no funciona correctamente.",
                          thumbnail=get_thumb("help.png"),
                          folder=False, extra="canal_fallo"))
-    itemlist.append(Item(channel=item.channel, action="faq",
+    itemlist.append(Item(module=item.module, action="faq",
                          title="    - Los enlaces Torrent no funcionan.",
                          thumbnail=get_thumb("help.png"),
                          folder=False, extra="prob_torrent"))
-    itemlist.append(Item(channel=item.channel, action="faq",
+    itemlist.append(Item(module=item.module, action="faq",
                          title="    - No se actualiza correctamente la videoteca.",
                          thumbnail=get_thumb("help.png"),
                          folder=True, extra="prob_bib"))
-    itemlist.append(Item(channel=item.channel, action="faq",
+    itemlist.append(Item(module=item.module, action="faq",
                          title="    - Enlaces de interés",
                          thumbnail=get_thumb("help.png"),
                          folder=False, extra=""))
@@ -108,7 +108,7 @@ def faq(item):
                                                "¿Deseas acceder a dichos ajustes?")
         if respuesta == 1:
             from channels import videolibrary
-            videolibrary.channel_config(Item(channel='videolibrary'))
+            videolibrary.channel_config(Item(module='videolibrary'))
 
     elif item.extra == "tiempo_enlaces":
         respuesta = platformtools.dialog_yesno("Alfa",
@@ -119,7 +119,7 @@ def faq(item):
                                                "¿Deseas acceder a dichos ajustes?")
         if respuesta == 1:
             from channels import videolibrary
-            videolibrary.channel_config(Item(channel='videolibrary'))
+            videolibrary.channel_config(Item(module='videolibrary'))
 
     elif item.extra == "prob_busquedacont":
         title = "Alfa - FAQ - %s" % item.title[6:]
@@ -164,7 +164,7 @@ def faq(item):
         if respuesta == 1:
             itemlist = []
             from channels import setting
-            new_item = Item(channel="setting", action="submenu_tools", folder=True)
+            new_item = Item(module="setting", action="submenu_tools", folder=True)
             itemlist.extend(setting.submenu_tools(new_item))
             return itemlist
 

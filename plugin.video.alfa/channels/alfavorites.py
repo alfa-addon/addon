@@ -192,24 +192,24 @@ def mainlist(item):
     for i_perfil, perfil in enumerate(alfav.user_favorites):
         context = []
 
-        context.append({'title': 'Cambiar nombre de la carpeta', 'channel': item.channel, 'action': 'editar_perfil_titulo',
+        context.append({'title': 'Cambiar nombre de la carpeta', 'module': item.module, 'action': 'editar_perfil_titulo',
                         'i_perfil': i_perfil})
-        context.append({'title': 'Eliminar la carpeta', 'channel': item.channel, 'action': 'eliminar_perfil',
+        context.append({'title': 'Eliminar la carpeta', 'module': item.module, 'action': 'eliminar_perfil',
                         'i_perfil': i_perfil})
 
         if i_perfil > 0:
-            context.append({'title': 'Mover arriba del todo', 'channel': item.channel, 'action': 'mover_perfil',
+            context.append({'title': 'Mover arriba del todo', 'module': item.module, 'action': 'mover_perfil',
                             'i_perfil': i_perfil, 'direccion': 'top'})
-            context.append({'title': 'Mover hacia arriba', 'channel': item.channel, 'action': 'mover_perfil',
+            context.append({'title': 'Mover hacia arriba', 'module': item.module, 'action': 'mover_perfil',
                             'i_perfil': i_perfil, 'direccion': 'arriba'})
         if i_perfil < last_i:
-            context.append({'title': 'Mover hacia abajo', 'channel': item.channel, 'action': 'mover_perfil',
+            context.append({'title': 'Mover hacia abajo', 'module': item.module, 'action': 'mover_perfil',
                             'i_perfil': i_perfil, 'direccion': 'abajo'})
-            context.append({'title': 'Mover abajo del todo', 'channel': item.channel, 'action': 'mover_perfil',
+            context.append({'title': 'Mover abajo del todo', 'module': item.module, 'action': 'mover_perfil',
                             'i_perfil': i_perfil, 'direccion': 'bottom'})
 
         plot = '%d enlaces en la carpeta' % len(perfil['items'])
-        itemlist.append(Item(channel=item.channel, action='mostrar_perfil', title=perfil['title'], plot=plot, i_perfil=i_perfil, context=context))
+        itemlist.append(Item(module=item.module, action='mostrar_perfil', title=perfil['title'], plot=plot, i_perfil=i_perfil, context=context))
 
     itemlist.append(item.clone(action='crear_perfil', title='Crear nueva carpeta ...', folder=False)) 
     
@@ -233,7 +233,7 @@ def mostrar_perfil(item):
     for i_enlace, enlace in enumerate(alfav.user_favorites[i_perfil]['items']):
 
         it = Item().fromurl(enlace)
-        it.context = [ {'title': '[COLOR blue]Modificar enlace[/COLOR]', 'channel': item.channel, 'action': 'acciones_enlace',
+        it.context = [ {'title': '[COLOR blue]Modificar enlace[/COLOR]', 'module': item.module, 'action': 'acciones_enlace',
                         'i_enlace': i_enlace, 'i_perfil': i_perfil} ]
 
         it.plot += '[CR][CR][COLOR blue]Canal:[/COLOR] ' + it.channel + ' [COLOR blue]Action:[/COLOR] ' + it.action
@@ -251,6 +251,9 @@ def mostrar_perfil(item):
                 it.thumbnail = filetools.join(ruta_runtime, 'resources', 'media', 'channels', 'thumb', fichero)
             elif 'themes' in ruta and 'default' in ruta: 
                 it.thumbnail = filetools.join(ruta_runtime, 'resources', 'media', 'themes', 'default', fichero)
+        
+        if it.channel != it.module:
+            del it.module
 
         itemlist.append(it)
 
@@ -656,7 +659,7 @@ def activar_lista(item):
     config.set_setting('lista_activa', item.lista)
 
     from channelselector import get_thumb
-    item_inicio = Item(title=config.get_localized_string(70527), channel="alfavorites", action="mainlist",
+    item_inicio = Item(title=config.get_localized_string(70527), module="alfavorites", action="mainlist",
                        thumbnail=get_thumb("mylink.png"),
                        category=config.get_localized_string(70527), viewmode="thumbnails")
     platformtools.itemlist_update(item_inicio, replace=True)

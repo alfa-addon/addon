@@ -501,12 +501,11 @@ def filterchannels(category, view="thumb_", alfa_s=True, settings=False):
     channelslist.sort(key=lambda item: item.title.lower().strip())
 
     if category == "all":
-        channel_parameters = channeltools.get_channel_parameters('url')
-        # Si prefiere el banner y el canal lo tiene, cambia ahora de idea
-        if view == "banner_" and "banner" in channel_parameters:
-            thumbnail = get_thumb("url", "banner_")
+        # Si prefiere el banner, cambia ahora de idea
+        if view == "banner_":
+            thumbnail = get_thumb("url.png", "banner_")
         else:
-            thumbnail = get_thumb("url")
+            thumbnail = get_thumb("url.png")
 
         channelslist.insert(0, Item(title=config.get_localized_string(60088), action="mainlist", module="url", 
                                     settings=[], active=True, 
@@ -527,17 +526,17 @@ def filterchannels(category, view="thumb_", alfa_s=True, settings=False):
                 id = ids[x]
             channelslist.insert(x,
                 Item(module='search', action='discover_list', title=title, search_type='list', 
-                     settings=[], active=channel_parameters["active"], 
+                     settings=[], active=True,
                      list_type='%s/%s' % (category.replace('show',''), id), thumbnail=get_thumb(id+".png"),
                      mode=category))
 
         channelslist.insert(3, Item(module='search', action='years_menu', title='Por Años', 
-                                    settings=[], active=channel_parameters["active"], 
+                                    settings=[], active=True, 
                                     type=category.replace('show', ''), thumbnail=get_thumb("years.png"),
                                     mode=category))
 
         channelslist.insert(4, Item(module='search', action='genres_menu', title='Generos', 
-                                    settings=[], active=channel_parameters["active"], 
+                                    settings=[], active=True, 
                                     type=category.replace('show',''), thumbnail=get_thumb("genres.png"),
                                     mode=category))
 
@@ -553,7 +552,7 @@ def filterchannels(category, view="thumb_", alfa_s=True, settings=False):
                      "primary_release_date.gte": from_date, "page": "1"}
 
         channelslist.insert(0, Item(module="search", title="Halloween %s" % this_year, page=1, action='discover_list', 
-                                    settings=[], active=channel_parameters["active"], 
+                                    settings=[], active=True,
                                     discovery=discovery, mode="movie", thumbnail=get_thumb("channels_horror.png")))
     return channelslist
 

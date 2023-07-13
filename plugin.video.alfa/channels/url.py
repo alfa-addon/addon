@@ -14,7 +14,7 @@ from platformcode import config, logger, platformtools
 
 context = [{"title": config.get_localized_string(70221),
             "action": "delete_file",
-            "channel": "url"}]
+            "module": "url"}]
 btdigg_magnet = '&amp;tr=udp://tracker.openbittorrent.com:80'
 
 
@@ -22,10 +22,10 @@ def mainlist(item):
     logger.info()
 
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="search", title=config.get_localized_string(60089), list_type='server'))
-    itemlist.append(Item(channel=item.channel, action="search", title=config.get_localized_string(60090), list_type='direct'))
-    itemlist.append(Item(channel=item.channel, action="search", title=config.get_localized_string(60091), list_type='findvideos'))
-    itemlist.append(Item(channel=item.channel, action="menu_storage", title="Descargar desde Torrents almacenados", list_type='videolibrary'))
+    itemlist.append(Item(module=item.module, action="search", title=config.get_localized_string(60089), list_type='server'))
+    itemlist.append(Item(module=item.module, action="search", title=config.get_localized_string(60090), list_type='direct'))
+    itemlist.append(Item(module=item.module, action="search", title=config.get_localized_string(60091), list_type='findvideos'))
+    itemlist.append(Item(module=item.module, action="menu_storage", title="Descargar desde Torrents almacenados", list_type='videolibrary'))
 
     return itemlist
 
@@ -42,19 +42,19 @@ def search(item, texto):
     if "server" in item.list_type:
         itemlist = servertools.find_video_items(data=texto)
         for item in itemlist:
-            item.channel = "url"
+            item.module = "url"
             item.action = "play"
     elif "direct" in item.list_type:
-        itemlist.append(Item(channel=item.channel, action="play", url=texto, server="directo", title=config.get_localized_string(60092)))
+        itemlist.append(Item(module=item.module, action="play", url=texto, server="directo", title=config.get_localized_string(60092)))
     else:
         data = httptools.downloadpage(texto).data
         itemlist = servertools.find_video_items(data=data)
         for item in itemlist:
-            item.channel = "url"
+            item.module = "url"
             item.action = "play"
 
     if len(itemlist) == 0:
-        itemlist.append(Item(channel=item.channel, action="search", title=config.get_localized_string(60093)))
+        itemlist.append(Item(module=item.module, action="search", title=config.get_localized_string(60093)))
 
     return itemlist
 
@@ -122,7 +122,7 @@ def findvideos(item):
                         # Generamos una copia de Item para trabajar sobre ella
                         item_local = item.clone()
                         
-                        item_local.channel = 'url'
+                        item_local.module = 'url'
                         item_local.url = link_path
                         if btdigg_magnet in item_local.url: item_local.btdigg = True
                         item_local.torrent_info = size
@@ -157,7 +157,7 @@ def findvideos(item):
                             item_local.alive = "ok"                             #link en error, CF challenge, Chrome disponible
                         elif 'ERROR' in size and 'Introduce' in size:
                             item_local.alive = "??"                             #link en error, CF challenge, ruta de descarga no disponible
-                            item_local.channel = 'setting'
+                            item_local.module = 'setting'
                             item_local.action = 'setting_torrent'
                             item_local.unify = False
                             item_local.folder = False
@@ -194,28 +194,28 @@ def menu_storage(item):
     itemlist = []
     
     if 'videolibrary' in item.list_type:
-        itemlist.append(Item(channel=item.channel, action="", title="Videoteca Alfa"))
-        itemlist.append(Item(channel=item.channel, action="list_storage", url=MOVIES_PATH, title="  - " + FOLDER_MOVIES))
-        itemlist.append(Item(channel=item.channel, action="list_storage", url=TVSHOWS_PATH, title="  - " + FOLDER_TVSHOWS))
+        itemlist.append(Item(module=item.module, action="", title="Videoteca Alfa"))
+        itemlist.append(Item(module=item.module, action="list_storage", url=MOVIES_PATH, title="  - " + FOLDER_MOVIES))
+        itemlist.append(Item(module=item.module, action="list_storage", url=TVSHOWS_PATH, title="  - " + FOLDER_TVSHOWS))
         
-        itemlist.append(Item(channel=item.channel, action="", title="Almacenamiento general"))
-        itemlist.append(Item(channel=item.channel, action="list_storage", url=MIS_TORRENT_FOLDER, title="  - Mis Torrents"))
-        itemlist.append(Item(channel=item.channel, action="btdigg", url="", 
+        itemlist.append(Item(module=item.module, action="", title="Almacenamiento general"))
+        itemlist.append(Item(module=item.module, action="list_storage", url=MIS_TORRENT_FOLDER, title="  - Mis Torrents"))
+        itemlist.append(Item(module=item.module, action="btdigg", url="", 
                         title="  - Buscar Mis Torrents en [B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B]"))
-        itemlist.append(Item(channel=item.channel, action="list_storage", url='', title="  - Almacenamiento"))
+        itemlist.append(Item(module=item.module, action="list_storage", url='', title="  - Almacenamiento"))
         
         if TORRENT_PATHS['TORREST_torrents'] or TORRENT_PATHS['QUASAR_torrents'] \
                           or TORRENT_PATHS['ELEMENTUM_torrents'] or TORRENT_PATHS['TORRENTER_torrents']:
-            itemlist.append(Item(channel=item.channel, action="", title="Gestores Torrent"))
+            itemlist.append(Item(module=item.module, action="", title="Gestores Torrent"))
             
             if TORRENT_PATHS['TORREST_torrents']:
-                itemlist.append(Item(channel=item.channel, action="list_storage", url=TORRENT_PATHS['TORREST_torrents'], title="  - Torrest"))
+                itemlist.append(Item(module=item.module, action="list_storage", url=TORRENT_PATHS['TORREST_torrents'], title="  - Torrest"))
             if TORRENT_PATHS['QUASAR_torrents']:
-                itemlist.append(Item(channel=item.channel, action="list_storage", url=TORRENT_PATHS['QUASAR_torrents'], title="  - Quasar"))
+                itemlist.append(Item(module=item.module, action="list_storage", url=TORRENT_PATHS['QUASAR_torrents'], title="  - Quasar"))
             if TORRENT_PATHS['ELEMENTUM_torrents']:
-                itemlist.append(Item(channel=item.channel, action="list_storage", url=TORRENT_PATHS['ELEMENTUM_torrents'], title="  - Elementum"))
+                itemlist.append(Item(module=item.module, action="list_storage", url=TORRENT_PATHS['ELEMENTUM_torrents'], title="  - Elementum"))
             if TORRENT_PATHS['TORRENTER_torrents']:
-                itemlist.append(Item(channel=item.channel, action="list_storage", url=TORRENT_PATHS['TORRENTER_torrents'], title="  - Torrenter"))
+                itemlist.append(Item(module=item.module, action="list_storage", url=TORRENT_PATHS['TORRENTER_torrents'], title="  - Torrenter"))
 
             return itemlist
 
@@ -268,7 +268,7 @@ def list_storage(item):
     for file in path_list:
         if FOLDER and file.endswith('.json') and file.split('.')[0]+'_01.torrent' in str(path_list):
             json_video = Item().fromjson(filetools.read(filetools.join(path_out, file)))
-            json_video.channel = 'url'
+            json_video.module = 'url'
             json_video.action = 'findvideos'
             json_video.torrents_path = json_video.url
             itemlist.append(json_video)
@@ -276,7 +276,7 @@ def list_storage(item):
         elif FOLDER and filetools.isdir(filetools.join(path_out, file)):
             if '.torrent' in str(filetools.listdir(filetools.join(path_out, file))) \
                                  or '.magnet' in str(filetools.listdir(filetools.join(path_out, file))):
-                itemlist.append(Item(channel=item.channel, action="list_storage", url=filetools.join(path_out, file), 
+                itemlist.append(Item(module=item.module, action="list_storage", url=filetools.join(path_out, file), 
                                 title=file.title(), contentTitle=file.title(), contentType="list", unify=False, context=context))
                 if len(itemlist) > 1:
                     itemlist = sorted(itemlist, key=lambda it: it.title)        #clasificamos
@@ -286,7 +286,7 @@ def list_storage(item):
                 title = file.title()
                 if 'BTDigg' in file:
                     title = title.replace('Btdigg', '[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B]')
-                itemlist.append(Item(channel=item.channel, action="list_storage", url=filetools.join(path_out, file), 
+                itemlist.append(Item(module=item.module, action="list_storage", url=filetools.join(path_out, file), 
                                 title=title, contentTitle=title, contentType="list", unify=False, 
                                 btdigg=True if 'BTDigg' in file else False, 
                                 url_org=filetools.join(path_out, file), context=context))
@@ -312,7 +312,7 @@ def list_storage(item):
             if '.magnet' in file and 'ERROR' in torrent_params['size']: torrent_params['size'] = 'MAGNET'
             size = torrent_params['size']
 
-            itemlist.append(Item(channel=item.channel, action="play", url=url, url_org=filetools.join(path_out, file), server='torrent', 
+            itemlist.append(Item(module=item.module, action="play", url=url, url_org=filetools.join(path_out, file), server='torrent', 
                             title=filetools.join(filetools.basename(path_out.rstrip('/').rstrip('\\')), file).title()+" [%s]" % size, 
                             contentTitle=filetools.join(filetools.basename(path_out.rstrip('/').rstrip('\\')), file).title(), 
                             contentType="movie", unify=False, torrents_path=torrent_params['torrents_path'],
@@ -329,7 +329,7 @@ def btdigg(item):
     
     context = [{"title": "Copiar a Mis Torrents",
                 "action": "copy_file",
-                "channel": "url"}]
+                "module": "url"}]
     if item.torrent_params:
         torrent_params = item.torrent_params
         del item.torrent_params

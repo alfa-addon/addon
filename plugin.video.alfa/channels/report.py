@@ -73,7 +73,7 @@ def mainlist(item):
 
             itemlist.append(
                 Item(
-                    channel = item.channel,
+                    module = item.module,
                     folder = False,
                     text_color = 'limegreen',
                     thumbnail = thumb_next,
@@ -84,7 +84,7 @@ def mainlist(item):
             itemlist.append(
                 Item(
                     action = actions['browser'],
-                    channel = 'setting',
+                    module = 'setting',
                     folder = False,
                     thumbnail = thumb_next,
                     title = titles['report_text'],
@@ -95,7 +95,7 @@ def mainlist(item):
             itemlist.append(
                 Item(
                     action = actions['browser'],
-                    channel = 'setting',
+                    module = 'setting',
                     folder = False,
                     thumbnail = thumb_next,
                     title = titles['forum'],
@@ -107,7 +107,7 @@ def mainlist(item):
             itemlist.append(
                 Item(
                     action = actions['browser_one_use'],
-                    channel = 'setting',
+                    module = 'setting',
                     folder = False,
                     thumbnail = thumb_next,
                     title = titles['log'],
@@ -119,7 +119,7 @@ def mainlist(item):
             if item.one_use:
                 itemlist.append(
                     Item(
-                        channel = item.channel,
+                        module = item.module,
                         folder = False,
                         text_color = 'orange',
                         thumbnail = thumb_next,
@@ -128,7 +128,7 @@ def mainlist(item):
                 )
                 itemlist.append(
                     Item(
-                        channel = item.channel,
+                        module = item.module,
                         folder = False,
                         text_color = 'orange',
                         thumbnail = thumb_next,

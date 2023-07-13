@@ -48,11 +48,11 @@ def mainlist(item):
 
             item.context.extend([{"title": config.get_localized_string(30154),  # "Quitar de favoritos"
                                   "action": "delFavourite",
-                                  "channel": "favorites",
+                                  "module": "favorites",
                                   "from_title": item.title},
-                                 {"title": "Renombrar",
+                                 {"title": config.get_localized_string(70278),  # "Renombrar"
                                   "action": "renameFavourite",
-                                  "channel": "favorites",
+                                  "module": "favorites",
                                   "from_title": item.title}
                                  ])
             # logger.debug(item.tostring('\n'))

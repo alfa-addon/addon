@@ -7,7 +7,7 @@ from core import scrapertools
 from core.item import Item
 from platformcode import logger
 
-CHANNELNAME = "youtube_channel"
+MODULE_NAME = "youtube_channel"
 YOUTUBE_V3_API_KEY = "AIzaSyCjsmBT0JZy1RT-PLwB-Zkfba87sa2inyI"
 
 
@@ -63,7 +63,7 @@ def playlists(item, channel_id, pageToken=""):
         url = entry["id"]
 
         # Appends a new item to the xbmc item list
-        itemlist.append(Item(channel=CHANNELNAME, title=title, action="videos", url=url, thumbnail=thumbnail, plot=plot,
+        itemlist.append(Item(module=MODULE_NAME, title=title, action="videos", url=url, thumbnail=thumbnail, plot=plot,
                              folder=True))
 
     try:
@@ -98,7 +98,7 @@ def videos(item, pageToken=""):
 
         # Appends a new item to the xbmc item list
         itemlist.append(
-            Item(channel=CHANNELNAME, title=title, action="play", server="youtube", url=url, thumbnail=thumbnail,
+            Item(module=MODULE_NAME, title=title, action="play", server="youtube", url=url, thumbnail=thumbnail,
                  plot=plot, folder=False))
 
     try:
