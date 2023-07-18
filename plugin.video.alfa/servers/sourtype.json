@@ -20,6 +20,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://(?:www.|)send.cm/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)canalporno.com/ver/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
@@ -29,6 +33,10 @@
       },
       {
         "pattern": "(http://(?:www.|)incestflix.com/watch/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)eroticmv.com/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

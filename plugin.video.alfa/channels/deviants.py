@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel BabesTube -*-
+# -*- Channel Deviants -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -31,9 +31,9 @@ forced_proxy_opt = 'ProxySSL'
 # https://www.babestube.com   https://www.deviants.com   https://www.momvids.com     https://www.pornomovies.com  
 
 canonical = {
-             'channel': 'babestube', 
-             'host': config.get_setting("current_host", 'babestube', default=''), 
-             'host_alt': ["https://www.babestube.com/"], 
+             'channel': 'deviants', 
+             'host': config.get_setting("current_host", 'deviants', default=''), 
+             'host_alt': ["https://www.deviants.com/"], 
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True

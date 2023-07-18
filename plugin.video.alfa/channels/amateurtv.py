@@ -135,7 +135,6 @@ def list_all_matches(item, matches_int, **AHkwargs):
     findS = AHkwargs.get('finds', finds)
     
     matches_int = matches_int.get('body', {}).get('cams', {}).copy()
-    if not matches_int: return matches
     
     # AlfaChannel.last_page = int(len(matches_int) / finds['controls'].get('cnt_tot', 25))
     # AlfaChannel.last_page = int((float(len(matches_int)) / float(finds['controls'].get('cnt_tot', 25)))  + 0.999999)

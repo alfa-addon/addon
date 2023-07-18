@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel HotMovs -*-
+# -*- Channel ManySex -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -34,15 +34,15 @@ forced_proxy_opt = 'ProxySSL'
 #  https://pornzog.com/   https://tporn.xxx/  https://see.xxx/ 
 
 canonical = {
-             'channel': 'hotmovs', 
-             'host': config.get_setting("current_host", 'hotmovs', default=''), 
-             'host_alt': ["https://hotmovs.com/"], 
+             'channel': 'manysex', 
+             'host': config.get_setting("current_host", 'manysex', default=''), 
+             'host_alt': ["https://manysex.com/"], 
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-url_api = host + "api/json/videos/%s/%s/%s/60/%s.%s.1.all..%s.json"
+url_api = host + "api/json/videos2/%s/%s/%s/60/%s.%s.1.all..%s.json"
 
 timeout = 5
 kwargs = {}
@@ -79,36 +79,15 @@ def mainlist(item):
     itemlist = []
     soup = AlfaChannel.create_soup(host, alfa_s=True) #Para coger canonical
     
-    itemlist.append(Item(channel=item.channel, title="Ultimas" , action="list_all", url=url_api % ("14400", "str", "latest-updates", "", "", "")))
-    itemlist.append(Item(channel=item.channel, title="Mejor valoradas" , action="list_all", url=url_api % ("14400", "str", "top-rated", "", "", "month")))
-    itemlist.append(Item(channel=item.channel, title="Mas popular" , action="list_all", url=url_api % ("14400", "str", "most-popular", "", "", "month")))
-    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="list_all",  url=url_api % ("14400", "str", "most-commented", "", "", "month") ))
-    itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="list_all", url=url_api %  ("14400", "str", "longest", "", "", "")))
+    itemlist.append(Item(channel=item.channel, title="Ultimas" , action="list_all", url=url_api % ("86400", "str", "latest-updates", "", "", "")))
+    itemlist.append(Item(channel=item.channel, title="Mejor valoradas" , action="list_all", url=url_api % ("86400", "str", "top-rated", "", "", "month")))
+    itemlist.append(Item(channel=item.channel, title="Mas popular" , action="list_all", url=url_api % ("86400", "str", "most-popular", "", "", "month")))
+    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="list_all",  url=url_api % ("86400", "str", "most-commented", "", "", "month") ))
+    itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="list_all", url=url_api %  ("86400", "str", "longest", "", "", "")))
     itemlist.append(Item(channel=item.channel, title="Pornstar" , action="section", url=host + "api/json/models/86400/%s/filt........../most-popular/60/1.json" %"str", extra="PornStars"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "api/json/channels/14400/%s/most-viewed/80/..1.json" %"str", extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "api/json/channels/86400/%s/most-viewed/80/..1.json" %"str", extra="Canal"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "api/json/categories/14400/%s.all.json" %"str", extra="Categorías"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", orientation="str"))
-    
-    itemlist.append(Item(channel = item.channel, title = ""))
-    
-    itemlist.append(Item(channel=item.channel, title="Trans", action="submenu", orientation="she"))
-    itemlist.append(Item(channel=item.channel, title="Gay", action="submenu", orientation="gay"))
-    
-    return itemlist
-
-
-def submenu(item):
-    logger.info()
-    itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Ultimas" , action="list_all", url=url_api % ("14400", item.orientation, "latest-updates", "", "", "")))
-    itemlist.append(Item(channel=item.channel, title="Mejor valoradas" , action="list_all", url=url_api % ("14400", item.orientation, "top-rated", "", "", "month")))
-    itemlist.append(Item(channel=item.channel, title="Mas popular" , action="list_all", url=url_api % ("14400", item.orientation, "most-popular", "", "", "month")))
-    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="list_all",  url=url_api % ("14400", item.orientation, "most-commented", "", "", "month") ))
-    itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="list_all", url=url_api %  ("14400", item.orientation, "longest", "", "", "")))
-    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="section", url=host + "api/json/models/86400/%s/filt........../most-popular/60/1.json" %item.orientation, orientation=item.orientation, extra="PornStars"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "api/json/channels/14400/%s/most-viewed/80/..1.json" %item.orientation, orientation=item.orientation, extra="Canal"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "api/json/categories/14400/%s.all.json" %item.orientation, orientation=item.orientation, extra="Categorías"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", orientation=item.orientation))
     return itemlist
 
 
@@ -148,7 +127,7 @@ def section_matches(item, matches_int, **AHkwargs):
             elem_json['url'] = url_api % ("14400", item.orientation, "latest-updates", c_type ,  elem.get('dir', ''), "")
             elem_json['title'] = elem.get('title', '')
             elem_json['thumbnail'] = elem.get('img', '') if  elem.get('img', '') else ''
-            if  elem.get('cf3', ''):  elem_json['thumbnail'] = elem.get('cf3', '')
+            if  elem.get('scr1', ''):  elem_json['thumbnail'] = elem.get('scr1', '')
             if  elem.get('total_videos', ''):  elem_json['cantidad'] = elem.get('total_videos', '')
             else: elem_json['cantidad'] =  elem.get('statistics', {}).get('videos', '')
         except:
@@ -215,7 +194,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%sapi/videos.php?params=259200/%s/latest-updates/60/search..1.all..&s=%s&sort=latest-updates&date=all&type=all&duration=all" % (host,item.orientation, texto.replace(" ", "%20")) 
+    item.url = "%sapi/videos2.php?params=86400/%s/latest-updates/60/search..1.all..&s=%s" % (host,item.orientation, texto.replace(" ", "%20")) 
     
     try:
         if texto:
