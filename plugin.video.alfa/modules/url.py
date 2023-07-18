@@ -5,6 +5,7 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import re
+import traceback
 
 from core import httptools
 from core import scrapertools
@@ -14,7 +15,7 @@ from platformcode import config, logger, platformtools
 
 context = [{"title": config.get_localized_string(70221),
             "action": "delete_file",
-            "module": "url"}]
+            "channel": "url"}]
 btdigg_magnet = '&amp;tr=udp://tracker.openbittorrent.com:80'
 
 
@@ -42,19 +43,19 @@ def search(item, texto):
     if "server" in item.list_type:
         itemlist = servertools.find_video_items(data=texto)
         for item in itemlist:
-            item.module = "url"
+            item.channel = "url"
             item.action = "play"
     elif "direct" in item.list_type:
-        itemlist.append(Item(module=item.module, action="play", url=texto, server="directo", title=config.get_localized_string(60092)))
+        itemlist.append(Item(channel=item.channel, action="play", url=texto, server="directo", title=config.get_localized_string(60092)))
     else:
         data = httptools.downloadpage(texto).data
         itemlist = servertools.find_video_items(data=data)
         for item in itemlist:
-            item.module = "url"
+            item.channel = "url"
             item.action = "play"
 
     if len(itemlist) == 0:
-        itemlist.append(Item(module=item.module, action="search", title=config.get_localized_string(60093)))
+        itemlist.append(Item(channel=item.channel, action="search", title=config.get_localized_string(60093)))
 
     return itemlist
 
@@ -330,49 +331,74 @@ def btdigg(item):
     context = [{"title": "Copiar a Mis Torrents",
                 "action": "copy_file",
                 "module": "url"}]
+    itemlist = []
+    matches = []
+
     if item.torrent_params:
         torrent_params = item.torrent_params
         del item.torrent_params
     else:
+        item.btdigg = url = platformtools.dialog_input(heading='Introduce criterios de búsqueda: título calidad [filtro A Filtro B ...]\r\n' + 
+                                                               'ej: silo HDTV [Cap.] ó silo 1080p Cap.110 [Cap.] ó volpina bluray [Esp]')
+        url = [item.btdigg]
+        contentTitle = []
+        if not item.btdigg: return itemlist
+
+        if '[' in item.btdigg:
+            contentTitle = scrapertools.find_single_match(item.btdigg, '\s*\[(.*?)[\]|$]').split(' ')
+            url = [scrapertools.find_single_match(item.btdigg, '(.*?)\s*\[')]
+
         torrent_params = {
+                          'title_prefix': [{'urls': url, 'checks': contentTitle}], 
+                          'quality_alt': [], 
+                          'language_alt': [], 
+                          'domain_alt': None,
                           'find_alt_link_next': 0
                           }
-    itemlist = []
-    find_alt_link_result = []
-    
-    if not item.btdigg:
-        item.btdigg = platformtools.dialog_input(heading='Introduce criterios de búsqueda (ej: all american 720p Cap.102 atomixhq)')
-    
+
+    if item.matches: 
+        matches = item.matches
+        del item.matches
+
     if item.btdigg:
         torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=True)
-        find_alt_link_result = torrent_params['find_alt_link_result']
-        
-    for scrapedurl, _scrapedtitle, scrapedsize, scrapedquality, scrapedmagnet in find_alt_link_result:
+
+    for elem in torrent_params['find_alt_link_result']:
         item_local = item.clone()
-        scrapedtitle = config.decode_var(_scrapedtitle)
+        #logger.error(elem)
         
-        item_local.url = scrapedmagnet
-        item_local.server = 'torrent'
-        item_local.contentType = 'movie'
-        item_local.action = 'play'
-        item_local.quality = scrapedquality
-        item_local.language = torrent_params['find_alt_link_language']
-        item_local.torrent_info = '%s [MAGNET]: %s' % (scrapedsize, 
-                                   scrapedtitle.replace('[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B] ', ''))
-        item_local.title = scrapedtitle.replace('[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B] ', '')
-        item_local.copytitle = item_local.title
-        item_local.contentTitle = '%s / %s' % (item.btdigg, item_local.title)
-        item_local.torrents_path = ''
-        item_local.infoLabels["tmdb_id"] = "111"
-        item_local.context=context
-        item_local.btdigg = True
+        try:
+            scrapedtitle = config.decode_var(elem.get('title', ''))
+            
+            item_local.url = elem.get('url', '')
+            if item_local.url in str(matches): continue
+            item_local.server = 'torrent'
+            item_local.contentType = 'movie'
+            item_local.action = 'play'
+            item_local.quality = elem.get('quality', '')
+            item_local.language = elem.get('language', [])
+            item_local.torrent_info = '%s [MAGNET]: %s' % (elem.get('size', ''), 
+                                       scrapedtitle.replace('[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B] ', ''))
+            item_local.title = scrapedtitle.replace('[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B] ', '')
+            item_local.copytitle = item_local.title
+            item_local.contentTitle = '%s / %s' % (item.btdigg, item_local.title)
+            item_local.torrents_path = ''
+            item_local.infoLabels["tmdb_id"] = "111"
+            item_local.context=context
+            item_local.btdigg = True
         
+        except:
+            logger.error(traceback.format_exc())
+            continue
+            
         itemlist.append(item_local)
-        
-    if torrent_params['find_alt_link_next'] > 0:
+        matches.append(elem)
+
+    torrent_params['find_alt_link_result_total'] = []
+    if torrent_params['find_alt_link_next'] > 0 and itemlist:
         itemlist.append(item.clone(action='btdigg', title=">> Página siguiente " 
                         + str(torrent_params['find_alt_link_next']+1) + ' de ' + str(int(torrent_params['find_alt_link_found']/10)+1), 
-                        torrent_params=torrent_params)) 
+                        torrent_params=torrent_params, matches=matches)) 
     return itemlist
 
 
