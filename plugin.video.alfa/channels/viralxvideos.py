@@ -50,8 +50,8 @@ url_replace = []
 
 finds = {'find': dict([('find', [{'tag': ['main'], 'id': ['main']}]), 
                         ('find_all', [{'tag': ['article'],  'class': re.compile(r"^post-\d+")}])]),
-         'categories':  dict([('find', [{'tag': ['main'], 'id': ['main']}]), 
-                        ('find_all', [{'tag': ['article'],  'class': re.compile(r"^post-\d+")}])]),
+         'categories': dict([('find', [{'tag': ['main'], 'id': ['main']}]), 
+                             ('find_all', [{'tag': ['article'],  'class': re.compile(r"^post-\d+")}])]),
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 
@@ -106,16 +106,10 @@ def section(item):
     findS['url_replace'] = [['(\/(?:category|actor|tag)\/[^$]+$)', r'\1page/1/']]
     
     if item.extra == 'Categorias':
-       # <a aria-label="1 on 1 (48 items)" class="tag-cloud-link tag-link-351 tag-link-position-1" href="https://www.viralxvideos.net/tag/1-on-1/" style="font-size: 17.397769516729px;">1 on 1</a>
-
         findS['categories'] = dict([('find', [{'tag': ['main'], 'class': 'site-main'}]), 
                                     ('find_all', [{'tag': ['a']}])])
-        findS['profile_labels']['section_title'] = dict([('find_previous', [{'tag': []}]), ('find', [{'tag': ['a'], 'class': ['tag-cloud-link'], '@ARG': 'aria-label'}])])
-        # findS['profile_labels'] = {'section_title':  {'find': [{'tag': ['a'], 'class': ['tag-cloud-link'], '@ARG': 'aria-label'}]}}
-                                   # 'section_title': {('get', 'aria-label')}
-                                   # 'section_title': dict([('find', [{'tag': ['main'], 'class': 'site-main'}]), 
-                                                          # ('find_all', [{'tag': ['a'], '@ARG': 'aria-label'}])])
-                                  # }
+        findS['profile_labels']['section_title'] = {'find': [{'tag': ['*'], '@ARG': 'aria-label'}]}
+
     return AlfaChannel.section(item, finds=findS, **kwargs)
 
 

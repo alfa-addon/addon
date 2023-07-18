@@ -108,7 +108,7 @@ def section(item):
     if item.extra == 'Categorias':
         findS['categories'] = dict([('find', [{'tag': ['main'], 'class': 'site-main'}]), 
                                     ('find_all', [{'tag': ['a']}])])
-        findS['profile_labels'] = {'section_title': {'@ARG': 'aria-label'}}
+        findS['profile_labels']['section_title'] = {'find': [{'tag': ['*'], '@ARG': 'aria-label'}]}
     return AlfaChannel.section(item, finds=findS, **kwargs)
 
 
