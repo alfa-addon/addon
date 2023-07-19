@@ -262,7 +262,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                         elem_json['title'] = 'al %s' % scrapertools.find_single_match(elem_json['title'], '(?i)epi\w*\s*\d+\s*-\s*(\d+)').zfill(2)
                         elem_json['extra'] = 'seasons'
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
@@ -382,7 +382,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                         elem_json['torrent_info'] = 'Season %s - ' % elem_json['season']
                 elem_json['mediatype'] = 'episode'
 
-        except:
+        except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
 
@@ -419,7 +419,7 @@ def search(item, texto, **AHkwargs):
         else:
             return []
 
-    except:
+    except Exception:
         import sys
         for line in sys.exc_info():
             logger.error("%s" % line)

@@ -1,17 +1,17 @@
 {
-  "id": "torrentpelis",
-  "name": "Torrentpelis",
+  "id": "mejortorrent",
+  "name": "MejorTorrent",
   "active": true,
   "adult": false,
-  "language": ["lat"],
-  "thumbnail": "https://i.postimg.cc/qvVntb2F/IMG-20201118-110838.png",
+  "language": ["cast"],
+  "thumbnail": "https://i.postimg.cc/t7GcMYW9/mejortorrent.jpg",
   "banner": "",
   "fanart": "",
   "categories": [
     "torrent",
     "movie",
     "tvshow",
-    "vos"
+    "documentary"
   ],
   "settings": [
     {
@@ -71,13 +71,13 @@
       "id": "filter_languages",
       "type": "list",
       "label": "Mostrar enlaces en idioma...",
-      "default": 1,
+      "default": 0,
       "enabled": true,
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "LAT",
         "CAST",
+        "LAT",
         "VO",
         "VOS",
         "VOSE"
@@ -109,7 +109,7 @@
       "id": "timeout_downloadpage",
       "type": "list",
       "label": "Timeout (segs.) en descarga de páginas o verificación de servidores",
-      "default": 5,
+      "default": 10,
       "enabled": true,
       "visible": true,
       "lvalues": [
@@ -144,38 +144,6 @@
       "type": "bool",
       "label": "Seleccionar para Videoteca si estará activa solo la última Temporada",
       "default": true,
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "include_in_newest_peliculas",
-      "type": "bool",
-      "label": "Incluir en Novedades - Peliculas",
-      "default": false,
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "include_in_newest_series",
-      "type": "bool",
-      "label": "Incluir en Novedades - Series",
-      "default": false,
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "include_in_newest_latino",
-      "type": "bool",
-      "label": "Incluir en Novedades - Latino",
-      "default": true,
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "include_in_newest_torrent",
-      "type": "bool",
-      "label": "Incluir en Novedades - Torrent",
-      "default": false,
       "enabled": true,
       "visible": true
     }

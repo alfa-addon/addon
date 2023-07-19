@@ -690,7 +690,9 @@ def findvideos(item):
         try:
             generictools.format_tmdb_id(item_json)                              # Normaliza el formato de los IDs
             if item_json.infoLabels['tmdb_id']:
+                config.set_setting('tmdb_cache_read', False)
                 tmdb.set_infoLabels_item(item_json, seekTmdb=True)
+                config.set_setting('tmdb_cache_read', True)
                 
                 item_json.infoLabels["thumbnail"] = item_json.infoLabels["thumbnail"].replace('http:', 'https:')
                 if item.contentType == 'movie':
