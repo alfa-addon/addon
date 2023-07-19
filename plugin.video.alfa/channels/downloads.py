@@ -266,9 +266,10 @@ def get_progress(item):
         folder = scrapertools.find_single_match(item.downloadFilename, '^\:\w+\:\s*(.*?)$')
     
     if folder:
-        torr_data, deamon_url, index = torrent.get_tclient_data(folder, torr_client.lower(), \
-                                    port=torrent_paths.get(torr_client.upper()+'_port', 0), \
-                                    web=DOWNLOAD_HOST or torrent_paths.get(torr_client.upper()+'_web', ''))
+        torr_data, deamon_url, index = torrent.get_tclient_data(folder, torr_client.lower(), 
+                                    port=torrent_paths.get(torr_client.upper()+'_port', 0), 
+                                    web=DOWNLOAD_HOST or torrent_paths.get(torr_client.upper()+'_web', ''),
+                                    item=item)
         if torr_data and isinstance(torr_data, dict):
             try:
                 status = torr_data
@@ -1119,9 +1120,10 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
     # Detiene y borra la sesion de los clientes externos Quasar y Elementum
     if torr_client in ['QUASAR', 'ELEMENTUM', 'TORREST']:
         if not delete_RAR or action == 'pause': folder_new = ''
-        torr_data, deamon_url, index = torrent.get_tclient_data(folder, torr_client.lower(), \
-                                port=torrent_paths.get(torr_client.upper()+'_port', 0), action=action, \
-                                web=DOWNLOAD_HOST or torrent_paths.get(torr_client.upper()+'_web', ''), folder_new=folder_new)
+        torr_data, deamon_url, index = torrent.get_tclient_data(folder, torr_client.lower(), 
+                                                                port=torrent_paths.get(torr_client.upper()+'_port', 0), action=action, 
+                                                                web=DOWNLOAD_HOST or torrent_paths.get(torr_client.upper()+'_web', ''), 
+                                                                folder_new=folder_new, item=item)
         
     # Detiene y borra la sesion de los clientes Internos
     if torr_client in ['BT', 'MCT']:

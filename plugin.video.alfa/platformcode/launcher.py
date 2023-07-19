@@ -680,8 +680,9 @@ def play_from_library(item):
                 while not xbmc.Monitor().abortRequested():
                     # El usuario elige el mirror
                     opciones = []
-                    for item in itemlist:
-                        opciones.append(item.title)
+                    for i in itemlist:
+                        if '%s' in i.title and i.action == 'play' and i.server: i.title = i.title % i.server.capitalize()
+                        opciones.append(i.title)
 
                     # Se abre la ventana de seleccion
                     if (item.contentSerieName != "" and

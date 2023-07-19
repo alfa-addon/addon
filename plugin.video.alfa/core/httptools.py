@@ -1234,7 +1234,8 @@ def downloadpage(url, **opt):
 
 
         # Retries if host changed but old host in error
-        if block and opt.get('retry_alt', retry_alt_default) and opt.get('proxy__test', '') != 'retry' and not proxy_data.get('stat', ''):
+        if block and opt.get('retry_alt', retry_alt_default) and opt.get('proxy__test', '') != 'retry' \
+                 and not proxy_data.get('stat', '') and response_code not in [404]:
             url_host = scrapertools.find_single_match(url, patron_host)
             url_host = url_host  + '/' if url_host and not url_host.endswith('/') else ''
             
@@ -1248,7 +1249,8 @@ def downloadpage(url, **opt):
         
         # Retries blocked domain with proxy
         if block and opt.get('retry_alt', retry_alt_default) and opt.get('proxy__test', '') != 'retry' \
-                 and not proxy_data.get('stat', '') and opt.get('proxy_retries', 1) and opt.get('forced_proxy_ifnot_assistant', ''):
+                 and not proxy_data.get('stat', '') and opt.get('proxy_retries', 1) and opt.get('forced_proxy_ifnot_assistant', '') \
+                 and response_code not in [404]:
             if not opt.get('alfa_s', False): logger.error('Error: %s in url: %s - Reintentando' % (response_code, url))
             forced_proxy_web = 'ProxyWeb:croxyproxy.com' if not opt.get('CF', False) else 'ProxyWeb:hidester.com'
             opt['forced_proxy'] = opt.get('forced_proxy', '') or opt.get('forced_proxy_retry', '') \
@@ -1450,6 +1452,14 @@ def downloadpage(url, **opt):
         except Exception:
             logger.error(traceback.format_exc(1))
 
+        if req.headers.get('Content-Encoding', '') == 'br':
+            try:
+                from lib.brotlipython.brotlipython import brotlidec
+                response['data'] = brotlidec(response['data'], [])
+            except Exception as e:
+                response['data'] = ''
+                logger.error('Error de descompresión BROTLI: %s' % str(e))
+
         response['url'] = req.url
 
         if not response['data']:
@@ -1475,7 +1485,8 @@ def downloadpage(url, **opt):
         if not response['sucess'] and opt.get('retry_alt', retry_alt_default) \
                                   and opt.get('canonical', {}).get('host_alt', []) \
                                   and len(opt['canonical']['host_alt']) > 1 \
-                                  and opt.get('canonical', {}).get('channel', []):
+                                  and opt.get('canonical', {}).get('channel', []) \
+                                  and response_code not in [404]:
             url, response = retry_alt(url, req, response, proxy_data, **opt)
             if not isinstance(response, dict) and response.host:
                 response.time_elapsed = time.time() - inicio

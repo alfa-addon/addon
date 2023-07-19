@@ -23,7 +23,7 @@ IDIOMAS = {'Latino': 'LAT', 'Español': 'ESP', 'Subtitulado': 'VOSE'}
 list_language = list(IDIOMAS.values())
 list_servers = ['streamango', 'streamplay', 'openload', 'okru']
 list_quality = ['BR-Rip', 'HD-Rip', 'DVD-Rip', 'TS-HQ', 'TS-Screner', 'Cam']
-forced_proxy_opt = 'ProxySSL'
+forced_proxy_opt = 'ProxyCF'
 
 canonical = {
              'channel': 'mirapeliculas', 

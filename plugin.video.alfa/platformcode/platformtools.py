@@ -638,7 +638,7 @@ def set_infolabels(listitem, item, player=False):
                        'episodio_sinopsis': 'episodeguide', 'episodio_air_date': 'None', 'episodio_imagen': 'None',
                        'episodio_titulo': 'title', 'episodio_vote_average': 'rating', 'episodio_vote_count': 'votes',
                        'fanart': 'None', 'genre': 'genre', 'homepage': 'None', 'imdb_id': 'imdbnumber',
-                       'imdbnumber': 'imdbnumber', 'in_production': 'None', 'last_air_date': 'lastplayed',
+                       'imdbnumber': 'imdbnumber', 'in_production': 'None', 'last_air_date': 'lastplayed', 'last_episode_to_air': 'None',
                        'mediatype': 'mediatype', 'mpaa': 'mpaa', 'number_of_episodes': 'None',
                        'number_of_seasons': 'None', 'original_language': 'None', 'originaltitle': 'originaltitle',
                        'overlay': 'overlay', 'poster_path': 'path', 'popularity': 'None', 'playcount': 'playcount',
@@ -671,16 +671,16 @@ def set_infolabels(listitem, item, player=False):
         try:
             if config.get_platform(True)['num_version'] < 18.0:
                 listitem.setUniqueIDs({"tmdb": item.infoLabels.get("tmdb_id", 0),
-                                  "imdb": item.infoLabels.get("imdb_id", 0),
-                                  "tvdb": item.infoLabels.get("tvdb_id", 0)})
+                                       "imdb": item.infoLabels.get("imdb_id", 0),
+                                       "tvdb": item.infoLabels.get("tvdb_id", 0)})
             elif config.get_platform(True)['num_version'] < 20.0:
                 listitem.setUniqueIDs({"tmdb": item.infoLabels.get("tmdb_id", 0),
-                                  "imdb": item.infoLabels.get("imdb_id", 0),
-                                  "tvdb": item.infoLabels.get("tvdb_id", 0)}, "imdb")
+                                       "imdb": item.infoLabels.get("imdb_id", 0),
+                                       "tvdb": item.infoLabels.get("tvdb_id", 0)}, "imdb")
             else:                                                                               ### VERIFY
                 infotagvideo.setUniqueIDs(str({"tmdb": item.infoLabels.get("tmdb_id", 0),
-                                  "imdb": item.infoLabels.get("imdb_id", 0),
-                                  "tvdb": item.infoLabels.get("tvdb_id", 0)}), "imdb")
+                                               "imdb": item.infoLabels.get("imdb_id", 0),
+                                               "tvdb": item.infoLabels.get("tvdb_id", 0)}), "imdb")
         except:
             import traceback
             logger.error(traceback.format_exc())
@@ -2016,7 +2016,7 @@ def play_torrent(item, xlistitem, mediaurl):
                         if torr_client in ['quasar', 'elementum', 'torrest']:
                             torr_data, deamon_url, index = get_tclient_data(video_path, \
                                                                             torr_client, port=torrent_port,
-                                                                            web=torrent_web, action='delete')
+                                                                            web=torrent_web, action='delete', item=item)
                         elif torr_client in ['BT', 'MCT'] and 'url' in str(item.downloadServer):
                             file_t = scrapertools.find_single_match(item.downloadServer['url'],
                                                                       '\w+\.torrent$').upper()
@@ -2117,7 +2117,8 @@ def play_torrent(item, xlistitem, mediaurl):
                                                                   filetools.basename(item.url)), silent=True)
 
                 if (torr_client in ['quasar', 'elementum', 'torrest'] and item.downloadFilename \
-                    and (item.downloadStatus not in [5] or item.downloadProgress == -1 or item.url.startswith('magnet:'))) \
+                    and (item.downloadStatus not in [5] or item.downloadProgress == -1 \
+                        or (item.url.startswith('magnet:') and torr_client not in ['elementum']))) \
                         or (torr_client in ['quasar', 'elementum', 'torrest'] \
                             and ('RAR-' in size or 'RAR-' in item.torrent_info) and BACKGROUND_DOWNLOAD):
 
@@ -2132,7 +2133,7 @@ def play_torrent(item, xlistitem, mediaurl):
                         downloadProgress = -1
                         result, deamon_url, index = get_tclient_data(torr_folder, \
                                                                      torr_client, port=torrent_port,
-                                                                     web=torrent_web, action='resume')
+                                                                     web=torrent_web, action='resume', item=item)
                     if not result:  # Si es nuevo, o hay error en resume, se añade
                         result = call_torrent_via_web(urllib.quote_plus(item.url), torr_client,
                                                       oper=item.downloadStatus)
@@ -2290,13 +2291,14 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
                 if dialog_yesno('Alfa %s' % torr_client, '¿Borrar las descargas del RAR y Vídeo?'):
                     log("##### erase_file_path: %s" % erase_file_path)
                     try:
-                        torr_data, deamon_url, index = get_tclient_data(torr_folder, \
+                        torr_data, deamon_url, index = get_tclient_data(torr_folder, 
                                                                         torr_client, port=torrent_paths.get(
-                                                                        torr_client.upper() + '_port', 0), \
+                                                                        torr_client.upper() + '_port', 0), 
                                                                         web=torrent_paths.get(
                                                                         torr_client.upper() + '_web', ''),
-                                                                        action='delete', \
-                                                                        folder_new=erase_file_path)
+                                                                        action='delete', 
+                                                                        folder_new=erase_file_path,
+                                                                        item=item)
                     except:
                         logger.error(traceback.format_exc(1))
 

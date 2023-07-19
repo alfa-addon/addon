@@ -45,8 +45,9 @@ list_servers = [
 canonical = {
              'channel': 'pelisplus', 
              'host': config.get_setting("current_host", 'pelisplus', default=''), 
-             'host_alt': ["https://home.pelisplus.lat/"], 
-             'host_black_list': ["https://pelisplus.mov/", "https://pelisplus.ninja/", "https://www.pelisplus.lat/", 
+             'host_alt': ["https://pelisplus.lat"], 
+             'host_black_list': ["https://home.pelisplus.lat/", 
+                                 "https://pelisplus.mov/", "https://pelisplus.ninja/", "https://www.pelisplus.lat/", 
                                  "https://www.pelisplus.me/", "https://pelisplushd.net/","https://pelisplushd.to/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
