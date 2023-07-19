@@ -127,7 +127,8 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearch/%s/?sort_by=post_date&from_videos=01"  % (host, texto.replace(" ", "-"))
+    # item.url = "%ssearch/%s/?sort_by=post_date&from_videos=01"  % (host, texto.replace(" ", "-"))
+    item.url = "%ssearch/?q=%s&sort_by=post_date&from_videos=1" % (host, texto.replace(" ", "+"))
     
     try:
         if texto:

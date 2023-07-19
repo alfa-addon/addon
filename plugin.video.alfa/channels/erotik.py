@@ -93,7 +93,9 @@ def mainlist(item):
 def section(item):
     logger.info()
     
-    return AlfaChannel.section(item, **kwargs)
+    findS = finds.copy()
+    findS['url_replace'] = [['(\/(?:categories|channels|models|pornstars)\/[^$]+$)', r'\1?sort_by=post_date&from=1']]
+    return AlfaChannel.section(item, finds=findS, **kwargs)
 
 
 def list_all(item):
@@ -136,7 +138,8 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%ssearches/%s/?sort_by=post_date&from_videos=1" % (host, texto.replace(" ", "-"))
+    # item.url = "%ssearches/%s/?sort_by=post_date&from_videos=1" % (host, texto.replace(" ", "-"))
+    item.url = "%ssearch/?q=%s&sort_by=post_date&from_videos=1" % (host, texto.replace(" ", "+"))
     
     try:
         if texto:
