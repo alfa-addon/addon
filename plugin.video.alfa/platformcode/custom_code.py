@@ -118,9 +118,6 @@ def init():
                         browser, res = call_browser(articulo.replace(' ' , ''))
             except:
                 logger.error(traceback.format_exc())
-        
-        # Analizamos la estructura de los _data-json con cada nueva versión de Alfa
-        verify_data_jsons()
 
         # Mostramos mensajes de Broadcast y Limpiamos los mensajes de ayuda obsoletos y restauramos los que tienen "version": True.
         from platformcode import help_window
@@ -132,11 +129,13 @@ def init():
         if not filetools.exists(ADDON_CUSTOMCODE_JSON):
             config.set_setting('cf_assistant_ua', '')                           # Se limpia CF_UA. Mejora de rendimiento en httptools CF
             config.set_setting("current_host", 0)                               # Se resetea el host de algunos canales que tienen alternativas
-            config.set_setting("debug_report", False)                           # Se resetea el DEBUG extendido
             config.set_setting("report_started", False)                         # Se resetea el Reporte de error
         if config.get_setting("debug_report") and not config.get_setting("debug"):
             config.set_setting("debug_report", False)                           # Se resetea el DEBUG extendido
-            
+
+        # Analizamos la estructura de los _data-json con cada nueva versión de Alfa
+        verify_data_jsons()
+
         # Periodicamente se resetean los valores de "current_host" de los canales para eliminar asignaciones antiguas
         round_level = 1
         if config.get_setting('current_host', default=0) < round_level:
@@ -1334,15 +1333,17 @@ def btdigg_status():
 
 def reset_current_host(round_level):
     logger.info(round_level)
+    from core.channeltools import is_adult
 
     exclude_list = ['downloads', 'info_popup', 'menu_settings', 'news', 'search', 
-                    'trailertools', 'trakt', 'tvmoviedb', 'url', 'autoplay']
+                    'trailertools', 'trakt', 'tvmoviedb', 'url', 'autoplay', 'playdede']
 
     try:
         for channel_json in sorted(filetools.listdir(filetools.join(ADDON_USERDATA_PATH, 'settings_channels'))):
             if not channel_json.endswith('.json'): continue
             channel_name = channel_json.replace('_data.json', '')
             if channel_name in exclude_list: continue
+            if is_adult(channel_name): continue
             current_host = config.get_setting('current_host', channel=channel_name)
             if current_host is None or current_host is False:
                 current_host = ''

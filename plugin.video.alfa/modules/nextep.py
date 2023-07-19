@@ -102,7 +102,7 @@ def next_ep(item):
             info_file = next_file.replace("strm", "nfo")
             item = Item(
                 action='play_from_library',
-                channel='videolibrary',
+                module='videolibrary',
                 contentEpisodeNumber=episode,
                 contentSeason=season,
                 contentTitle=next_ep,

@@ -1,5 +1,10 @@
 *.pyo
 *.pyc
+__pycache__
 .DS_Store
 .idea/
 plugin.video.alfa/channels/okxxx.py
+custom.py
+test.py
+last_fix.json
+custom_code.json

@@ -21,34 +21,34 @@ from platformcode import platformtools
 from core import httptools
 import re
 
-CHANNELNAME = "setting"
+MODULE_NAME = "setting"
 
 
 def mainlist(item):
     logger.info()
 
     itemlist = list()
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60535), action="settings", folder=False,
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60535), action="settings", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60537), action="menu_channels", folder=True,
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60537), action="menu_channels", folder=True,
                          thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60538), action="menu_servers", folder=True,
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60538), action="menu_servers", folder=True,
                          thumbnail=get_thumb("on_the_air.png")))
-    itemlist.append(Item(channel="search", title=config.get_localized_string(60540), action="opciones", folder=True,
+    itemlist.append(Item(module="search", title=config.get_localized_string(60540), action="opciones", folder=True,
                          thumbnail=get_thumb("search.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60541), action="channel_config",
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60541), action="channel_config",
                          config="downloads", folder=True, thumbnail=get_thumb("downloads.png")))
 
     if config.get_videolibrary_support():
-        itemlist.append(Item(channel="videolibrary", title=config.get_localized_string(60542), action="channel_config",
+        itemlist.append(Item(module="videolibrary", title=config.get_localized_string(60542), action="channel_config",
                              folder=True, thumbnail=get_thumb("videolibrary.png")))
 
     if config.is_xbmc():
-        itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(70253), action="setting_torrent",
+        itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(70253), action="setting_torrent",
                              folder=True, thumbnail=get_thumb("channels_torrent.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60544), action="submenu_tools", folder=True,
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60544), action="submenu_tools", folder=True,
                          thumbnail=get_thumb("setting_0.png")))
 
     return itemlist
@@ -58,10 +58,10 @@ def menu_channels(item):
     logger.info()
     itemlist = list()
 
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60545), action="conf_tools", folder=False,
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60545), action="conf_tools", folder=False,
                          extra="channels_onoff", thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60546) + ":", action="", folder=False,
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60546) + ":", action="", folder=False,
                          text_bold = True, thumbnail=get_thumb("setting_0.png")))
 
     # Inicio - Canales configurables
@@ -78,14 +78,14 @@ def menu_channels(item):
             continue
         
         if channel_parameters["has_settings"]:
-            itemlist.append(Item(channel=CHANNELNAME, title=".    " + config.get_localized_string(60547) % channel.title,
+            itemlist.append(Item(module=MODULE_NAME, title=".    " + config.get_localized_string(60547) % channel.title,
                                  action="channel_config", config=channel.channel, folder=False,
                                  thumbnail=channel.thumbnail))
     # Fin - Canales configurables
-    itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60548) + ":", action="", folder=False,
+    itemlist.append(Item(module=MODULE_NAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60548) + ":", action="", folder=False,
                          text_bold=True, thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title=".    " + config.get_localized_string(60549), action="conf_tools",
+    itemlist.append(Item(module=MODULE_NAME, title=".    " + config.get_localized_string(60549), action="conf_tools",
                          folder=True, extra="lib_check_datajson", thumbnail=get_thumb("channels.png")))
     return itemlist
 
@@ -264,13 +264,13 @@ def menu_servers(item):
     logger.info()
     itemlist = list()
 
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60550), action="servers_blacklist", folder=False,
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60550), action="servers_blacklist", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60551),
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60551),
                          action="servers_favorites", folder=False, thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60552),
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60552),
                          action="", folder=False, text_bold = True, thumbnail=get_thumb("setting_0.png")))
 
     # Inicio - Servidores configurables
@@ -280,10 +280,10 @@ def menu_servers(item):
         server_parameters = servertools.get_server_parameters(server)
         if server_parameters["has_settings"]:
             itemlist.append(
-                Item(channel=CHANNELNAME, title = ".    " + config.get_localized_string(60553) % server_parameters["name"],
+                Item(module=MODULE_NAME, title = ".    " + config.get_localized_string(60553) % server_parameters["name"],
                      action="server_config", config=server, folder=False, thumbnail=""))
 
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60554),
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60554),
                          action="", folder=False, text_bold = True, thumbnail=get_thumb("setting_0.png")))
 
     server_list = list(servertools.get_servers_list().keys())
@@ -293,7 +293,7 @@ def menu_servers(item):
         logger.info(server_parameters)
         if server_parameters["has_settings"] and [x for x in server_parameters["settings"] if x["id"] not in ["black_list", "white_list"]]:
             itemlist.append(
-                Item(channel=CHANNELNAME, title=".    " + config.get_localized_string(60553) % server_parameters["name"],
+                Item(module=MODULE_NAME, title=".    " + config.get_localized_string(60553) % server_parameters["name"],
                      action="server_config", config=server, folder=False, thumbnail=""))
 
     # Fin - Servidores configurables
@@ -445,34 +445,34 @@ def submenu_tools(item):
         itemlist.append(Item(channel='custom', action='mainlist', title='Custom Channel', thumbnail=get_thumb('setting_0.png'), viewType='files'))
 
 
-    itemlist.append(Item(action = "check_quickfixes", channel= CHANNELNAME, folder = False,
+    itemlist.append(Item(action = "check_quickfixes", module= MODULE_NAME, folder = False,
                          plot = "Versión actual: {}".format(config.get_addon_version(from_xml=True)),
                          thumbnail = get_thumb("update.png"),
                          title = "Comprobar actualizaciones urgentes (Actual: Alfa {})".format(config.get_addon_version(from_xml=True))))
 
-    itemlist.append(Item(action = "update_quasar", channel = CHANNELNAME, folder = False,
+    itemlist.append(Item(action = "update_quasar", module = MODULE_NAME, folder = False,
                          thumbnail = get_thumb("update.png"), title = "Actualizar addon externo Quasar"))
 
-    itemlist.append(Item(action = "reset_trakt", channel = CHANNELNAME, folder = False,
+    itemlist.append(Item(action = "reset_trakt", module = MODULE_NAME, folder = False,
                          plot = "Reinicia la vinculacion, no se pierden los datos de seguimiento",
                          thumbnail = "https://trakt.tv/assets/logos/white-bg@2x-626e9680c03d0542b3e26c3305f58050d2178e5d4222fac7831d83cf37fef42b.png",
                          title = "Reiniciar vinculación con Trakt"))
 
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60564) + ":", action="", folder=False,
+    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60564) + ":", action="", folder=False,
                          text_bold=True, thumbnail=get_thumb("channels.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title="- {}".format(config.get_localized_string(60565)), action="conf_tools",
+    itemlist.append(Item(module=MODULE_NAME, title="- {}".format(config.get_localized_string(60565)), action="conf_tools",
                          folder=True, extra="lib_check_datajson", thumbnail=get_thumb("channels.png")))
 
     if config.get_videolibrary_support():
-        itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60566) + ":", action="", folder=False,
+        itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60566) + ":", action="", folder=False,
                              text_bold=True, thumbnail=get_thumb("videolibrary.png")))
 
-        itemlist.append(Item(channel=CHANNELNAME, action="overwrite_tools", folder=False,
+        itemlist.append(Item(module=MODULE_NAME, action="overwrite_tools", folder=False,
                              thumbnail=get_thumb("videolibrary.png"),
                              title="- " + config.get_localized_string(60567)))
 
-        itemlist.append(Item(channel="videolibrary", action="update_videolibrary", folder=False,
+        itemlist.append(Item(module="videolibrary", action="update_videolibrary", folder=False,
                              thumbnail=get_thumb("videolibrary.png"),
                              title="- " + config.get_localized_string(60568)))
 
@@ -597,7 +597,7 @@ def conf_tools(item):
                     list_controls, dict_settings = channeltools.get_channel_controls_settings(channel.channel)
 
                     if not list_controls:
-                        itemlist.append(Item(channel=CHANNELNAME,
+                        itemlist.append(Item(module=MODULE_NAME,
                                              title=channel.title + config.get_localized_string(60569),
                                              action="", folder=False,
                                              thumbnail=channel.thumbnail))
@@ -685,7 +685,7 @@ def conf_tools(item):
                                 list_colour = "green"
 
                     if list_status is not None:
-                        itemlist.append(Item(channel=CHANNELNAME,
+                        itemlist.append(Item(module=MODULE_NAME,
                                              title=channel.title + list_status,
                                              action="", folder=False,
                                              thumbnail=channel.thumbnail,
@@ -820,7 +820,7 @@ def channel_status(item, dict_values):
                 config.set_setting("enabled", dict_values[k], k)
                 logger.info("el valor esta como %s " % config.get_setting("enabled", k))
 
-        platformtools.itemlist_update(Item(channel=CHANNELNAME, action="mainlist"))
+        platformtools.itemlist_update(Item(module=MODULE_NAME, action="mainlist"))
 
     except:
         import traceback

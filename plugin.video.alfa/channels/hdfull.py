@@ -130,6 +130,8 @@ if not user_ or not pass_:
                                                        str(type(config.get_setting('hdfullpassword', 
                                                        channel=canonical['channel'], default=''))), setting))
     account = False
+    user_ = ''
+    pass_ = ''
     config.set_setting('hdfulluser', user_, channel=canonical['channel'])
     config.set_setting('hdfullpassword', pass_, channel=canonical['channel'])
     config.set_setting('logged', account, channel=canonical['channel'])
@@ -682,12 +684,12 @@ def seasons_matches(item, matches_int, **AHkwargs):
 
 def episodios(item):
     logger.info()
-    
+
     itemlist = []
-    verify_credentials(force_login=True)
-    
+    verify_credentials(force_login=True, force_check=False)
+
     templist = seasons(item)
-    
+
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
 
@@ -976,19 +978,19 @@ def verify_credentials(force_login=True, force_check=True):
             configuracion(Item)
 
             try:
-                user_ = AlfaChannel.do_quote_plus(config.get_setting('hdfulluser', channel=canonical['channel'], default=''), plus=False)
-                pass_ = AlfaChannel.do_quote_plus(config.get_setting('hdfullpassword', channel=canonical['channel'], default=''), plus=False)
-            except Exception:
+                user_ = AlfaChannel.do_quote(config.get_setting('hdfulluser', channel=canonical['channel'], default=''))
+                pass_ = AlfaChannel.do_quote(config.get_setting('hdfullpassword', channel=canonical['channel'], default=''))
+            except Exception as e:
                 from core import filetools
                 setting = filetools.read(filetools.join(config.get_data_path(), 'settings_channels', 'hdfull_data.json'), silent=True)
                 if setting:
                     setting = base64.b64encode(setting.encode('utf-8')).decode('utf-8')
                 else:
                     setting = 'VACIO'
-                logger.error('Type: User: %s; Password: %s; %s' % (str(type(config.get_setting('hdfulluser', 
-                                                                   channel=canonical['channel'], default=''))), 
-                                                                   str(type(config.get_setting('hdfullpassword', 
-                                                                   channel=canonical['channel'], default=''))), setting))
+                logger.error('ERROR: %s; Type: User: %s; Password: %s; %s' % (str(e), str(type(config.get_setting('hdfulluser', 
+                                                                              channel=canonical['channel'], default=''))), 
+                                                                              str(type(config.get_setting('hdfullpassword', 
+                                                                              channel=canonical['channel'], default=''))), setting))
                 user_ = ''
                 pass_ = ''
                 account = False

@@ -43,6 +43,9 @@ def start():
     
 
 def load_item():
+    from modules import side_menu
+    from platformcode import configurator
+
     # Extract item from sys.argv
     if sys.argv[2]:
         sp = sys.argv[2].split('&')
@@ -64,24 +67,66 @@ def load_item():
                 if isinstance(category, int):
                     category = config.get_localized_string(config.get_setting("category")).lower()
 
-                item = Item(channel="news", action="news", news=category.lower(), startpage=True)
+                item = Item(module="news", action="news", news=category.lower(), startpage=True)
             else:
-                from channels import side_menu
                 item = Item()
                 item = side_menu.check_user_home(item)
                 item.startpage = True
         else:
-            item = Item(channel="channelselector", action="getmainlist", viewmode="movie")
+            item = Item(module="channelselector", action="getmainlist", viewmode="movie")
     
     if not config.get_setting('show_once'):
         if config.verify_settings_integrity() and not config.get_setting('show_once'):
-            from platformcode import configurator
             configurator.show_window()
+
+    return item
+
+def monkey_patch_modules(item):
+    content_modules = [
+        "community",
+        "downloads",
+        "info_popup",
+        "news",
+        "search",
+        "tvmoviedb",
+        "videolibrary",
+    ]
     
+    modules = list(content_modules)
+    modules.extend([
+        'alfavorites',
+        'autoplay',
+        'favorites',
+        'filtertools',
+        'help',
+        'infoplus',
+        'nextep',
+        'renumbertools',
+        'report',
+        'setting',
+        'side_menu',
+        'trailertools',
+        'url',
+        'youtube_channel',
+    ])
+
+    if item.channel in modules:
+        item.module = item.channel
+
+    if item.module:
+        if not item.channel:
+            item.channel = item.module
+
+        if item.module in content_modules:
+            item.moduleContent = True
+
     return item
 
 
 def run(item=None):
+    from channels import downloads
+    import channelselector
+
     logger.info()
 
     itemlist = None
@@ -100,6 +145,8 @@ def run(item=None):
     if item.video_path:
         item.infoLabels["playcount"] = 1
         del item.infoLabels["playcount"]
+    
+    item = monkey_patch_modules(item)
 
     try:
         if not config.get_setting('tmdb_active'):
@@ -122,7 +169,6 @@ def run(item=None):
                 platformtools.dialog_notification(config.get_localized_string(20000), config.get_localized_string(60011), time=2000, sound=False)
 
         elif item.channel == 'channelselector':
-            import channelselector
 
             # Action for addon install on channelselector
             if item.action == "install_alfa":
@@ -141,7 +187,7 @@ def run(item=None):
                 elif item.action == "filterchannels":
                     itemlist = channelselector.filterchannels(item.channel_type)
 
-                
+
         elif item.action == "function":
             """
             {
@@ -173,58 +219,88 @@ def run(item=None):
 
                 else:
                     logger.error('Function "%s(%s)" missing (%s: %s) or not imported: %s' \
-                                  % (item.function, item.options, channel_file, os.path.exists(channel_file), function))
+                                  % (item.function, item.options, function_file, os.path.exists(function_file), function))
 
             else:
                 logger.error('Function "%s(%s)" missing (%s: %s) or not imported: %s' \
-                              % (item.function, item.options, channel_file, os.path.exists(channel_file), function))
+                              % (item.function, item.options, function_file, os.path.exists(function_file), function))
 
-        
-        # Action in certain channel specified in "action" and "channel" parameters
         else:
+            module = None
 
-            # Entry point for a channel is the "mainlist" action, so here we check parental control
-            if item.action == "mainlist":
-                from core import channeltools
+            if item.module:
+                logger.info("item.module")
+                module_type = {
+                    "folder" : "modules",
+                    "type" : "module",
+                }
+                
+                module_file = os.path.join(
+                    config.get_runtime_path(),
+                    module_type["folder"],
+                    item.module + ".py"
+                )
+                
+                if not os.path.exists(module_file):
+                    module_type["folder"] = "channels"
 
+                if item.module == 'channelselector':
+                    # channelselector.install_alfa()    # Action for addon install on channelselector
+                    # channelselector.getmainlist()     # Action for main menu in channelselector
+                    # channelselector.getchanneltypes() # Action for channel types on channelselector: movies, series, etc.
 
-                # Parental control
-                # If it is an adult channel, and user has configured pin, asks for it
-                if channeltools.is_adult(item.channel) and config.get_setting("adult_request_password"):
-                    tecleado = platformtools.dialog_input("", config.get_localized_string(60334), True)
-                    if tecleado is None or tecleado != config.get_setting("adult_password"):
-                        return
+                    # Action for channel listing on channelselector
+                    if item.action == "filterchannels":
+                        itemlist = channelselector.filterchannels(item.channel_type)
+                    else:
+                        itemlist = getattr(channelselector, item.action)()
 
-            # # Actualiza el canal individual
-            # if (item.action == "mainlist" and item.channel != "channelselector" and
-            #             config.get_setting("check_for_channel_updates") == True):
-            #     from core import updater
-            #     updater.update_channel(item.channel)
+                elif item.module == "test" and item.contentChannel:
+                    if item.parameters == "test_channel":
+                        getattr(module, item.action)(item.contentChannel)
 
-            # Checks if channel exists
-            channel_file = os.path.join(config.get_runtime_path(),
-                                        'channels', item.channel + ".py")
-            logger.info("channel_file=%s" % channel_file)
-
-            channel = None
-
-            if os.path.exists(channel_file):
-                try:
-                    channel = __import__('channels.%s' % item.channel, None,
-                                         None, ["channels.%s" % item.channel])
-                except ImportError:
-                    exec("import channels." + item.channel + " as channel")
-
-            if channel:
-                logger.info("Running channel %s | %s" % (channel.__name__, channel.__file__))
             else:
-                logger.error('Channel "%s" missing (%s: %s) or not imported: %s' \
-                              % (item.channel, channel_file, os.path.exists(channel_file), channel))
-                return
+                logger.info("item.channel")
+                module_type = {
+                    "folder" : "channels",
+                    "type" : "channel",
+                }
+                # Action in certain channel specified in "action" and "channel" parameters
+                # Entry point for a channel is the "mainlist" action, so here we check parental control
+                if item.action == "mainlist":
+                    from core import channeltools
+                    # Parental control
+                    # If it is an adult channel, and user has configured pin, asks for it
+                    if channeltools.is_adult(item.channel) and config.get_setting("adult_request_password"):
+                        tecleado = platformtools.dialog_input("", config.get_localized_string(60334), True)
+                        if tecleado is None or tecleado != config.get_setting("adult_password"):
+                            return
 
-            if item.channel == "test" and item.contentChannel:
-                if item.parameters == "test_channel":
-                    getattr(channel, item.action)(item.contentChannel)
+            # This is wrong, but there's no way around this yet
+            # TODO: Get rid of these "special files"
+            if item.module != "channelselector":
+                # Checks if channel exists
+                module_name = item.channel if module_type["type"] == "channel" else item.module
+                module_package = '%s.%s' % (module_type["folder"], module_name)
+                module_file = os.path.join(config.get_runtime_path(),
+                                            module_type["folder"], module_name + ".py")
+                logger.info("%s_file=%s" % (module_type["type"], module_file))
+
+                module = None
+
+                if os.path.exists(module_file):
+                    try:
+                        module = __import__(module_package, None,
+                                            None, [module_package])
+                    except ImportError:
+                        exec("import " + module_package + " as module")
+
+                if module:
+                    logger.info("Running %s | %s" % (module.__name__, module.__file__))
+                else:
+                    logger.error('%s "%s" missing (%s: %s) or not imported: %s' % \
+                        (module_type["type"], module_name, module_file, os.path.exists(module_file), module))
+                    return
 
             # Calls redirection if Alfavorites findvideos, episodios, seasons
             if item.context and 'alfavorites' in str(item.context) \
@@ -250,9 +326,9 @@ def run(item=None):
                 # logger.debug("item_toPlay: " + "\n" + item.tostring('\n'))
 
                 # First checks if channel has a "play" function
-                if hasattr(channel, 'play'):
+                if hasattr(module, 'play'):
                     logger.info("Executing channel 'play' method")
-                    playlist = channel.play(item)
+                    playlist = module.play(item)
                     b_favourite = item.isFavourite
                     # Play should return a list of playable URLS
                     if playlist and len(playlist) > 0 and isinstance(playlist[0], Item):
@@ -278,10 +354,9 @@ def run(item=None):
             # Special action for findvideos, where the plugin looks for known urls
             elif item.action == "findvideos":
                 from core import servertools
-
                 # First checks if channel has a "findvideos" function
-                if hasattr(channel, 'findvideos'):
-                    itemlist = getattr(channel, item.action)(item)
+                if hasattr(module, 'findvideos'):
+                    itemlist = getattr(module, item.action)(item)
                     itemlist = servertools.filter_servers(itemlist)
 
                 # If not, uses the generic findvideos function
@@ -296,7 +371,6 @@ def run(item=None):
                 from platformcode import subtitletools
                 subtitletools.saveSubtitleName(item)
 
-
             # Special action for adding a movie to the library
             elif item.action == "add_pelicula_to_library":
                 from core import videolibrarytools
@@ -305,14 +379,14 @@ def run(item=None):
             # Special action for adding a serie to the library
             elif item.action == "add_serie_to_library":
                 from core import videolibrarytools
-                videolibrarytools.add_tvshow(item, channel)
+                videolibrarytools.add_tvshow(item, module)
             
             # Special action for adding a season to the library
             elif item.action == "add_season_to_library":
                 from core import videolibrarytools
                 item.action = "add_serie_to_library"
                 item.infoLabels['last_season_only'] = True
-                videolibrarytools.add_tvshow(item, channel)
+                videolibrarytools.add_tvshow(item, module)
 
             # Special action for downloading all episodes from a serie
             elif item.action == "download_all_episodes":
@@ -342,31 +416,37 @@ def run(item=None):
                 if tecleado is not None:
                     if "http" not in tecleado:
                         channeltools.set_channel_setting('Last_searched', tecleado, 'search')
-                    itemlist = channel.search(item, tecleado)
+                    itemlist = module.search(item, tecleado)
 
 
             # For all other actions
-            else:
-                logger.info("Executing channel '%s' method" % item.action)
-                if hasattr(channel, item.action):
-                    itemlist = getattr(channel, item.action)(item)
+            elif not itemlist:
+                # This logic is not correct, should be fixed
+                #  \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/
+                logger.info("Executing '%s' method" % item.action)
+                # Get itemlist from module.action
+                if hasattr(module, item.action):
+                    itemlist = getattr(module, item.action)(item)
+
+                # Run the method from the contentChannel
                 else:
-                    channel_file = os.path.join(config.get_runtime_path(),
+                    module_file = os.path.join(config.get_runtime_path(),
                                                 'channels', item.contentChannel + ".py")
-                    channel = None
-                    if os.path.exists(channel_file):
+                    module = None
+                    if os.path.exists(module_file):
                         try:
-                            channel = __import__('channels.%s' % item.contentChannel, None,
-                                                 None, ["channels.%s" % item.contentChannel])
+                            module = __import__('channels.%s' % item.contentChannel, None,
+                                                None, ["channels.%s" % item.contentChannel])
                         except ImportError:
                             exec("import channels." + item.contentChannel + " as channel")
 
-                    if not channel:
+                    if not module:
                         logger.error('Channel "%s" missing (%s: %s) or not imported: %s' \
-                                      % (item.contentChannel, channel_file, os.path.exists(channel_file), channel))
+                                    % (item.contentChannel, module_file, os.path.exists(module_file), module))
 
-                    logger.info("Running channel %s | %s" % (channel.__name__, channel.__file__))
-                    itemlist = getattr(channel, item.action)(item)
+                    logger.info("Running channel %s | %s" % (module.__name__, module.__file__))
+                    itemlist = getattr(module, item.action)(item)
+
                 if config.get_setting('trakt_sync'):
                     from core import trakt_tools
                     token_auth = config.get_setting("token_trakt", "trakt")
@@ -527,7 +607,10 @@ def play_from_library(item):
     import xbmcplugin
     import xbmc
     from time import sleep, time
-    from channels import nextep
+    from modules import nextep
+    from channels import autoplay
+    from channels import videolibrary
+
     # Intentamos reproducir una imagen (esto no hace nada y ademas no da error)
     xbmcplugin.setResolvedUrl(int(sys.argv[1]), True,
                               xbmcgui.ListItem(
@@ -553,7 +636,6 @@ def play_from_library(item):
 
         # Ventana emergente
 
-        from channels import videolibrary, autoplay
         p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(20000), config.get_localized_string(70004))
         p_dialog.update(0, '')
 
@@ -598,8 +680,9 @@ def play_from_library(item):
                 while not xbmc.Monitor().abortRequested():
                     # El usuario elige el mirror
                     opciones = []
-                    for item in itemlist:
-                        opciones.append(item.title)
+                    for i in itemlist:
+                        if '%s' in i.title and i.action == 'play' and i.server: i.title = i.title % i.server.capitalize()
+                        opciones.append(i.title)
 
                     # Se abre la ventana de seleccion
                     if (item.contentSerieName != "" and
@@ -633,7 +716,6 @@ def play_from_library(item):
                                                      channel=item.contentChannel))
                             return
 
-                    from channels import autoplay
                     if (platformtools.is_playing() and item.action) or item.server == 'torrent' or autoplay.is_active(item.contentChannel):
                         break
 

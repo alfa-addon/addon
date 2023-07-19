@@ -17,6 +17,7 @@ import re, base64
 from channels import autoplay
 from channels import filtertools
 from core import httptools
+from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -44,8 +45,9 @@ list_servers = [
 canonical = {
              'channel': 'pelisplus', 
              'host': config.get_setting("current_host", 'pelisplus', default=''), 
-             'host_alt': ["https://home.pelisplus.lat/"], 
-             'host_black_list': ["https://pelisplus.mov/", "https://pelisplus.ninja/", "https://www.pelisplus.lat/", 
+             'host_alt': ["https://pelisplus.lat"], 
+             'host_black_list': ["https://home.pelisplus.lat/", 
+                                 "https://pelisplus.mov/", "https://pelisplus.ninja/", "https://www.pelisplus.lat/", 
                                  "https://www.pelisplus.me/", "https://pelisplushd.net/","https://pelisplushd.to/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -62,10 +64,10 @@ def mainlist(item):
     itemlist = list()
 
     itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url_todas = "listado-peliculas", 
-                         url_populares = "peliculas-polulares",
+                         url_populares = "/tendencias/dia",
                          thumbnail=get_thumb('movies', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Series", action="sub_menu", url_todas = "ver-series",
+    itemlist.append(Item(channel=item.channel, title="Series", action="sub_menu", url_todas = "listado-series",
                          thumbnail=get_thumb('tvshows', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Anime", action="sub_menu", url_todas ="ver-animes",
@@ -97,10 +99,10 @@ def sub_menu(item):
 
     if item.title.lower() == "peliculas":
         itemlist.append(Item(channel=item.channel, title="Ultimos populares", action="list_all",
-                            url=host + 'peliculas-populares',
+                            url=host + item.url_todas + item.url_populares,
                             thumbnail=get_thumb('more watched', auto=True), type=content))
         itemlist.append(Item(channel=item.channel, title="Peliculas estreno", action="list_all",
-                            url=host + 'estrenos',
+                            url=host + item.url_todas + '/estrenos',
                             thumbnail=get_thumb('more watched', auto=True), type=content))
         itemlist.append(Item(channel=item.channel, title="Generos", action="section",
                              thumbnail=get_thumb('genres', auto=True), type=content))
@@ -118,9 +120,9 @@ def list_all(item):
 
     data = httptools.downloadpage(item.url).data
     bloque = scrapertools.find_single_match(data, '(?is)card-body.*?Page navigation example')
-    patron  = '(?is)a href="([^"]+).*?'
-    patron += 'src="([^"]+).*?'
-    patron += '<p>([^<]+)</p>'
+    patron  = '(?is)<a class="Posters-link" href="([^"]+).*?'
+    patron += 'srcSet="([^"]+).*?'
+    patron += '<p> <!-- -->([^<]+)'
     matches = scrapertools.find_multiple_matches(bloque, patron)
 
     for url, thumb, title in matches:
@@ -129,7 +131,7 @@ def list_all(item):
             year = "-"
         if item.type and item.type.lower() not in url:
             continue
-        new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
+        new_item = Item(channel=item.channel, title=title, url=host + url, thumbnail=thumb, infoLabels={"year": year})
 
         if "/pelicula/" in url:
             new_item.contentTitle = title
@@ -146,7 +148,9 @@ def list_all(item):
 
     try:
         #next_page = scrapertools.find_single_match(data, 'href="([^"]+)"><i class="ic-chevron-right"></i>')
-        next_page = scrapertools.find_single_match(data, '<div\s*class="nav-links">.*?<a\s*class="page-link\s*current".*?''<a\s*class="page-link"[^>]*href="([^"]+)"')
+        #next_page = scrapertools.find_single_match(data, '<div\s*class="nav-links">.*?<a\s*class="page-link\s*current".*?''<a\s*class="page-link"[^>]*href="([^"]+)"')
+        next_page = scrapertools.find_single_match(data, '<div\s*class="nav-links">.*?<a\s*class="next page-numbers" href="([^"]+)"')
+        
 
         if next_page:
             if not next_page.startswith(host):
@@ -163,12 +167,12 @@ def seasons(item):
 
     itemlist = list()
     data = httptools.downloadpage(item.url).data
-    patron  = 'data-toggle="tab"[^>]*aria-controls="\d+"[^>]*>([^<]+)'
+    patron  = 'data-toggle="tab"[^>]*.?[^<]+<!-- -->([^<])+'
     infoLabels = item.infoLabels
     matches = scrapertools.find_multiple_matches(data, patron)
     
     for title in matches:
-        title = title.capitalize()
+        title = "Temporada " + title
         infoLabels["season"] = scrapertools.find_single_match(title, "Temporada (\d+)")
         itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseasons',
                              infoLabels=infoLabels, contentType='season'))
@@ -225,11 +229,12 @@ def section(item):
     logger.info()
     itemlist = list()
     data = httptools.downloadpage(host).data
-    patron  = '(%scategory/[^"]+)' %host
-    patron += '">([^<]+)'
-    matches = scrapertools.find_multiple_matches(data, patron)
+    bloque = scrapertools.find_single_match(data, "Generos(.*?)side-nav-header")
+    patron  = '<a href="([^"]+)">'
+    patron += '([^<]+)'
+    matches = scrapertools.find_multiple_matches(bloque, patron)
     for url, title in matches:
-        itemlist.append(Item(channel=item.channel, url=url, title=title, action='list_all', type=item.type))
+        itemlist.append(Item(channel=item.channel, url=host + url, title=title, action='list_all', type=item.type))
 
     return itemlist
 
@@ -240,34 +245,22 @@ def findvideos(item):
     itemlist = list()
 
     data = httptools.downloadpage(item.url, forced_proxy_opt='ProxyCF', canonical=canonical)
+    
+    json = scrapertools.find_single_match(data.data, '(?is)type="application/json">(.*?)</script>')
+    
+   
+    json1 = jsontools.load(json)["props"]["pageProps"]["thisMovie"]["videos"]
 
-    if data.sucess or data.code == 302:
-        data = data.data
-    patron  = 'data-lang="#([^"]+).*?'
-    #patron += 'lngopt"><a>([^<]+)'
-    patron += 'aria-controls="[^>]+>([^<]+)<'
-    languages = scrapertools.find_multiple_matches(data, patron)
-    for language, idioma in languages:
-        bloque = scrapertools.find_single_match(data, 'id="%s.*?<\/a><\/li><\/ul><\/div>' % language)
-        language=IDIOMAS.get(idioma.lower(), "VOSE")
-        pattern = 'data-tr="([^"]+)"'
-        matches = scrapertools.find_multiple_matches(bloque, pattern)
-        encontrados = []
-        for url in matches:
-            url = base64.b64decode(url)
-            if PY3 and isinstance(url, bytes):
-                url = "".join(chr(x) for x in bytes(url))
-            if not "http" in url:
-                url = "https://www.pelisplus.lat" + url
-            if "pelisplus.lat" in url:
-                prueba = httptools.downloadpage(url).data
-                url = scrapertools.find_single_match(prueba, "(?is)window.location.href = '([^']+)")
-                if not url.startswith("http"):  url = "https:" + url
-            if "plusto.link" in url: url = url.replace("plusto.link","fembed.com")
-            if url in encontrados: continue
-            encontrados.append(url)
-            itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language=language,
-            infoLabels=item.infoLabels))
+    for idioma in json1:
+        for videos in json1[idioma]:
+            url = videos["result"]
+                
+            if u"player.php" in url:
+                data = httptools.downloadpage(url).data
+                url = scrapertools.find_single_match(data, "var url = '([^']+)'")
+            itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language=idioma,
+                infoLabels=item.infoLabels))
+    
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % (i.server.capitalize(), i.language))
 

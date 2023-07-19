@@ -18,7 +18,7 @@ import json
 
 from rJs import runJavascript
 
-from channels import renumbertools
+from modules import renumbertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from core import httptools

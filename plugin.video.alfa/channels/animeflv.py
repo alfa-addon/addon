@@ -11,7 +11,7 @@ else:
 
 import re
 
-from channels import renumbertools
+from modules import renumbertools
 from core import httptools
 from core import jsontools
 from core import servertools

@@ -22,7 +22,7 @@ from core.item import Item
 from platformcode import config, logger
 from channels import filtertools, autoplay
 from core import tmdb
-from channels import renumbertools
+from modules import renumbertools
 from platformcode import platformtools
 
 canonical = {

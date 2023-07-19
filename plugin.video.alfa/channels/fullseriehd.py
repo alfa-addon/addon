@@ -27,7 +27,7 @@ IDIOMAS = {'Subtitulado': 'VOSE', 'Latino':'LAT', 'Castellano':'CAST'}
 list_language = list(IDIOMAS.values())
 list_servers = ['okru', 'fembed', 'gvideo', 'mega']
 list_quality = ['HD-1080p', 'HD-720p', 'Cam']
-forced_proxy_opt = 'ProxyCF'
+forced_proxy_opt = 'ProxySSL'
 
 canonical = {
              'channel': 'fullseriehd', 

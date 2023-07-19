@@ -271,6 +271,8 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['thumbnail'] = elem.find('p', class_="secconimagen").img.get("src", "")
                 #elem_json['year'] = scrapertools.find_single_match(elem.find('p', class_="seccontfetam").get_text(strip=True), '\d{4}')
 
+            elem_json['quality'] = elem_json.get('quality', '') or 'HDTV' if tv_path in elem_json['url'] else ''
+
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())
