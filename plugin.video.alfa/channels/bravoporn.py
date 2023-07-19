@@ -28,6 +28,9 @@ list_quality_tvshow = []
 list_servers = []
 forced_proxy_opt = 'ProxySSL'
 
+#####################    Estetico titulos pornstar  y canal
+
+
 canonical = {
              'channel': 'bravoporn', 
              'host': config.get_setting("current_host", 'bravoporn', default=''), 
@@ -63,9 +66,12 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['video_block']}]},
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
-         'profile_labels': {'list_all_stime': dict([('find', [{'tag': ['span'], 'class': ['time']}]),
-                                                    ('get_text', [{'strip': True}])]),
-                            # 'list_all_quality': {'find': [{'tag': ['div'], 'class': ['hd'], '@ARG': 'class'}]}
+         'profile_labels': {
+                            'list_all_stime': dict([('find', [{'tag': ['span'], 'class': ['time']}]),
+                                                    ('get_text', [{'tag': '', 'strip': True}])]),
+                            'section_cantidad': dict([('find', [{'tag': ['div'], 'class': ['in-mod']}]),
+                                                      ('get_text', [{'tag': '', 'strip': True, '@TEXT': '(\d+)'}])])
+
                             },
          'controls': {'url_base64': False, 'cnt_tot': 24, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
          'timeout': timeout}
@@ -98,11 +104,12 @@ def section(item):
                                     ('find_all', [{'tag': ['a'], '@POS': [-1], '@ARG': 'href'}])])
         findS['last_page'] = {}
     if item.extra == 'Categorias':
-        findS['categories']: dict([('find', [{'tag': ['div'], 'class': ['list-tags']}]),
-                                   ('find_all', [{'tag': ['a']}])])
-        # findS['profile_labels']: {'section_title': {'find': [{'tag': ['img'], '@ARG': 'alt'}]},
-                                  # 'section_cantidad': {'find': ['string', re.compile(r"(\d+)\smovies")]}
-                                 # }
+        # findS['categories']= dict([('find', [{'tag': ['div'], 'class': ['list-tags']}]),
+                                   # ('find_all', [{'tag': ['a']}])])
+        findS['profile_labels']= {'section_title': {'find': [{'tag': ['img'], '@ARG': 'alt'}]},
+                                  'section_cantidad': dict([('find', [{'tag': ['div'], 'class': ['in-mod']}]),
+                                                            ('get_text', [{'tag': '', 'strip': True, '@TEXT': '(\d+)'}])])
+                                 }
         
     return AlfaChannel.section(item, finds=findS, **kwargs)
 

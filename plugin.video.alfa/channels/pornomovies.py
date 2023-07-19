@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel BabesTube -*-
+# -*- Channel PornoMovies -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -31,9 +31,9 @@ forced_proxy_opt = 'ProxySSL'
 # https://www.babestube.com   https://www.deviants.com   https://www.momvids.com     https://www.pornomovies.com  
 
 canonical = {
-             'channel': 'babestube', 
-             'host': config.get_setting("current_host", 'babestube', default=''), 
-             'host_alt': ["https://www.babestube.com/"], 
+             'channel': 'pornomovies', 
+             'host': config.get_setting("current_host", 'pornomovies', default=''), 
+             'host_alt': ["https://www.pornomovies.com/"], 
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -94,11 +94,13 @@ def mainlist(item):
 
 def section(item):
     logger.info()
-    
+    soup = AlfaChannel.create_soup(item.url, **kwargs)
+    logger.debug(soup)
+
     findS = finds.copy()
     
-    if item.extra == 'Canal':
-        findS['profile_labels'] = {'section_thumbnail': dict([('find', [{'tag': ['div'], 'class': ['brand_image']}, {'tag': ['img'], '@ARG': 'src'}])])}
+    # if item.extra == 'Canal':
+        # findS['profile_labels'] = {'section_thumbnail': dict([('find', [{'tag': ['div'], 'class': ['brand_image']}, {'tag': ['img'], '@ARG': 'src'}])])}
     
     return AlfaChannel.section(item, finds=findS, **kwargs)
 

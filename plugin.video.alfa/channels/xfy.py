@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel ViralXvideos -*-
+# -*- Channel xfy -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -31,10 +31,10 @@ forced_proxy_opt = 'ProxySSL'
 # https://viralxvideos.net  https://xmoviesforyou.net/ XFY
 
 canonical = {
-             'channel': 'viralxvideos', 
-             'host': config.get_setting("current_host", 'viralxvideos', default=''), 
-             'host_alt': ["https://viralxvideos.net/"], 
-             'host_black_list': ["https://viralxvideos.es/"], 
+             'channel': 'xfy', 
+             'host': config.get_setting("current_host", 'xfy', default=''), 
+             'host_alt': ["https://xmoviesforyou.net/"], 
+             'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -50,8 +50,8 @@ url_replace = []
 
 finds = {'find': dict([('find', [{'tag': ['main'], 'id': ['main']}]), 
                         ('find_all', [{'tag': ['article'],  'class': re.compile(r"^post-\d+")}])]),
-         'categories': dict([('find', [{'tag': ['main'], 'id': ['main']}]), 
-                             ('find_all', [{'tag': ['article'],  'class': re.compile(r"^post-\d+")}])]),
+         'categories':  dict([('find', [{'tag': ['main'], 'id': ['main']}]), 
+                        ('find_all', [{'tag': ['article'],  'class': re.compile(r"^post-\d+")}])]),
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 
@@ -109,7 +109,6 @@ def section(item):
         findS['categories'] = dict([('find', [{'tag': ['main'], 'class': 'site-main'}]), 
                                     ('find_all', [{'tag': ['a']}])])
         findS['profile_labels']['section_title'] = {'find': [{'tag': ['*'], '@ARG': 'aria-label'}]}
-
     return AlfaChannel.section(item, finds=findS, **kwargs)
 
 
@@ -139,7 +138,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
         
         try:
             if isinstance(elem, str):
-                if "viralxvideos.net" in elem or 'facebook' in elem: continue
+                if "xmoviesforyou.net" in elem or 'facebook' in elem: continue
                 elem_json['url'] = elem
             else:
                 elem_json['url'] = elem.get("href", "") or elem.get("src", "")
@@ -161,7 +160,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%spage/1/?s=%s" % (host, texto.replace(" ", "+"))
+    item.url = "%spage/1/?s=%s&filter=latest" % (host, texto.replace(" ", "+"))
     
     try:
         if texto:

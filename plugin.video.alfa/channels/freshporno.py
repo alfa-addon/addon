@@ -90,35 +90,9 @@ def mainlist(item):
 def section(item):
     logger.info()
     
-    return AlfaChannel.section(item, matches_post=section_matches, **kwargs)
-
-
-def section_matches(item, matches_int, **AHkwargs):
-    logger.info()
-    matches = []
-    findS = AHkwargs.get('finds', finds)
-    
-    for elem in matches_int:
-        elem_json = {}
-        
-        try:
-            elem_json['url'] = elem.a.get('href', '')
-            elem_json['title'] = elem.a.get('title', '')
-            elem_json['thumbnail'] = elem.img.get('data-original', '') \
-                                     or elem.img.get('data-src', '') \
-                                     or elem.img.get('src', '')
-            if elem.find(string=re.compile(r"(?i)videos")):
-                elem_json['cantidad'] = elem.find(string=re.compile(r"(?i)videos"))
-        
-        except:
-            logger.error(elem)
-            logger.error(traceback.format_exc())
-            continue
-        
-        if not elem_json['url']: continue
-        matches.append(elem_json.copy())
-    
-    return matches
+    findS = finds.copy()
+    findS['url_replace'] = [['(\/(?:categories|channels|models|pornstars)\/[^$]+$)', r'\1?sort_by=post_date&from=1']]
+    return AlfaChannel.section(item, finds=findS, **kwargs)
 
 
 def list_all(item):
@@ -136,16 +110,13 @@ def findvideos(item):
 
 def play(item):
     logger.info()
-    
     itemlist = []
     
     soup = AlfaChannel.create_soup(item.url, **kwargs)
     if soup.find_all('a', href=re.compile("/models/[A-z0-9-]+/")):
         pornstars = soup.find_all('a', href=re.compile("/models/[A-z0-9-]+/"))
-        
         for x, value in enumerate(pornstars):
             pornstars[x] = value.get_text(strip=True)
-        
         pornstar = ' & '.join(pornstars)
         pornstar = AlfaChannel.unify_custom('', item, {'play': pornstar})
         lista = item.contentTitle.split('[/COLOR]')
@@ -170,7 +141,8 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
     
     # item.url = "%sbuscar/?q=%s&sort_by=video_viewed&from_videos=1" % (host, texto.replace(" ", "+"))
-    item.url = "%ssearch/%s/" % (host, texto.replace(" ", "-"))
+    # item.url = "%ssearch/%s/" % (host, texto.replace(" ", "-"))
+    item.url = "%ssearch/?q=%s&sort_by=post_date&from_videos=1" % (host, texto.replace(" ", "+"))
     
     try:
         if texto:

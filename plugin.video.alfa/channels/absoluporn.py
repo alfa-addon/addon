@@ -66,7 +66,7 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['bloc-thumb']}]),
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
          'profile_labels': {'section_cantidad': dict([('find', [{'tag': ['span']}]),
-                                                      ('get_text', [{'strip': True}])])}, 
+                                                      ('get_text', [{'tag': '', 'strip': True, '@TEXT': '(\d+)'}])])}, 
          'controls': {'url_base64': False, 'cnt_tot': 30, 'reverse': False, 'profile': 'default'}, 
          'timeout': timeout}
 AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_path, movie_action='play', canonical=canonical, finds=finds, 
