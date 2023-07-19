@@ -21,7 +21,7 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from channels import filtertools, autoplay
-from channels import renumbertools
+from modules import renumbertools
 from core import tmdb
 
 

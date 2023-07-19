@@ -783,7 +783,7 @@ def findvideos(item):
     # return sorted(itemlist, key=lambda it: it.title.lower())
     autoplay.play_multi_channel(item, itemlist)
     from inspect import stack
-    from channels import nextep
+    from modules import nextep
     if nextep.check(item) and stack()[1][3] == 'run':
         nextep.videolibrary(item)
     return itemlist
