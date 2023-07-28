@@ -11,7 +11,7 @@ from platformcode import launcher
 from time import sleep
 from platformcode.config import get_setting
 
-__channel__ = "autoplay"
+__module__ = "autoplay"
 
 PLAYED = False
 
@@ -30,7 +30,7 @@ def context():
     if config.is_xbmc():
         _context = [{"title": config.get_localized_string(60071),
                      "action": "autoplay_config",
-                     "channel": "autoplay"}]
+                     "module": "autoplay"}]
     return _context
 
 
@@ -61,7 +61,7 @@ def show_option(channel, itemlist, text_color='yellow', thumbnail=None, fanart=N
 
     plot_autoplay = config.get_localized_string(60399)
     itemlist.append(
-        Item(channel=__channel__,
+        Item(module=__module__,
              title=config.get_localized_string(60071),
              action="autoplay_config",
              text_color=text_color,
@@ -99,7 +99,7 @@ def start(itemlist, item):
         autoplay_node = jsontools.get_node_from_file('autoplay', 'AUTOPLAY')
 
     channel_id = item.channel
-    if item.channel == 'videolibrary':
+    if item.module == 'videolibrary':
         autoplay_node = jsontools.get_node_from_file('autoplay', 'AUTOPLAY')
         channel_id = item.contentChannel
     try:
@@ -194,7 +194,7 @@ def start(itemlist, item):
             if not filter(lambda x: x['action'] == 'autoplay_config', context):
                 item_local.context.append({"title": config.get_localized_string(60071),
                                            "action": "autoplay_config",
-                                           "channel": "autoplay",
+                                           "module": "autoplay",
                                            "from_channel": channel_id})
 
             # Si no tiene calidad definida le asigna calidad 'default'
@@ -335,7 +335,7 @@ def start(itemlist, item):
 
                     # Verifica si el item viene de la videoteca
                     try:
-                        if item.contentChannel == 'videolibrary' or item.channel == 'videolibrary':
+                        if item.contentChannel == 'videolibrary' or item.module == 'videolibrary':
                             # Marca como visto
                             from platformcode import xbmc_videolibrary
                             xbmc_videolibrary.mark_auto_as_watched(item)
