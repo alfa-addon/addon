@@ -57,7 +57,7 @@ finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['video-list', 'list
          'next_page_rgx': [['&page=\d+', '&page=%s'], ['\?page=\d+', '?page=%s'], ['\/page\/\d+\/', '/page/%s/'], ['&from_videos=\d+', '&from_videos=%s'], ['&from=\d+', '&from=%s']], 
          'last_page': dict([('find', [{'tag': ['div'], 'class': ['pagination']}]), 
                             ('find_all', [{'tag': ['a'], '@POS': [-2], 
-                                           '@ARG': 'data-parameters', '@TEXT': ':(\d+)'}])]), 
+                                           '@ARG': 'data-parameters', '@TEXT': '\:(\d+)'}])]), 
          'plot': {}, 
          'findvideos': dict([('find', [{'tag': ['li'], 'class': 'link-tabs-container', '@ARG': 'href'}]),
                              ('find_all', [{'tag': ['a'], '@ARG': 'href'}])]),
