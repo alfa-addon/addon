@@ -404,7 +404,9 @@ def verify_script_alfa_update_helper(silent=True, emergency=False, github_url=''
     updated = bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid))
     if updated:
         ADDON_VERSION_NUM = ADDON_VERSION.split('.')
-        ADDON_VERSION_NUM = (int(ADDON_VERSION_NUM[0]), int(ADDON_VERSION_NUM[1]), int(ADDON_VERSION_NUM[2]))
+        ADDON_VERSION_NUM = (int(scrapertools.find_single_match(ADDON_VERSION_NUM[0], '(\d+)')), 
+                             int(scrapertools.find_single_match(ADDON_VERSION_NUM[1], '(\d+)')), 
+                             int(scrapertools.find_single_match(ADDON_VERSION_NUM[2], '(\d+)')))
         new_version_num = new_version.split('.')
         new_version_num = (int(new_version_num[0]), int(new_version_num[1]), int(new_version_num[2]))
         if ADDON_VERSION_NUM < new_version_num or emergency:

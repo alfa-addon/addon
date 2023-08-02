@@ -1607,15 +1607,18 @@ class Tmdb(object):
                 ret_infoLabels['genre'] = self.get_generos(origen)
 
             elif k == 'name' or k == 'title':
-                if ret_infoLabels.get('mediatype', '') in ['tvshow', 'episode'] and not ret_infoLabels.get('title_alt', ''):
-                    v_alt = scrapertools.slugify(v, strict=False)
-                    for word in v_alt.split(' '):
-                        if word in ret_infoLabels['tvshowtitle'].lower():
-                            break
-                    else:
-                        if not scrapertools.find_single_match(v_alt, '\-\d+\.\d+'):
-                            ret_infoLabels['title_alt'] = v_alt
-                ret_infoLabels['title'] = v
+                if scrapertools.find_single_match(v, '[a-zA-Z0-9_]+'):
+                    if ret_infoLabels.get('mediatype', '') in ['tvshow', 'episode'] and not ret_infoLabels.get('title_alt', ''):
+                        v_alt = scrapertools.slugify(v, strict=False)
+                        for word in v_alt.split(' '):
+                            if word in ret_infoLabels['tvshowtitle'].lower():
+                                break
+                        else:
+                            if not scrapertools.find_single_match(v_alt, '\-\d+\.\d+'):
+                                ret_infoLabels['title_alt'] = v_alt
+                    ret_infoLabels['title'] = v
+                elif not ret_infoLabels.get('title'):
+                    ret_infoLabels['title'] = v
 
             elif k == 'networks':
                 ret_infoLabels['studio'] = ", ".join(i['name'] for i in v)

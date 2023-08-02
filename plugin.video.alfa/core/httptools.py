@@ -468,7 +468,8 @@ def proxy_post_processing(url, proxy_data, response, **opt):
     try:
         if response["code"] in NOT_FOUND_CODES:
             opt['proxy_retries'] = -1
-        elif response["code"] not in SUCCESS_CODES+REDIRECTION_CODES and opt.get('forced_proxy_opt', '') == 'ProxyJSON':
+        elif response["code"] not in SUCCESS_CODES+REDIRECTION_CODES and opt.get('forced_proxy_opt', '') == 'ProxyJSON' \
+                              and opt.get('error_check', True):
             opt['forced_proxy_opt'] = 'ProxyCF'
             opt['forced_proxy'] = opt['forced_proxy_opt']
 
@@ -507,7 +508,7 @@ def proxy_post_processing(url, proxy_data, response, **opt):
         elif response["code"] in REDIRECTION_CODES:
             response['sucess'] = True
 
-        if proxy_data.get('stat', '') and not response['sucess'] and \
+        if proxy_data.get('stat', '')  and opt.get('error_check', True) and not response['sucess'] and \
                 opt.get('proxy_retries_counter', 0) <= opt.get('proxy_retries', 1) and \
                 opt.get('count_retries_tot', 5) > 1:
             if not PY3: from . import proxytools
@@ -552,6 +553,7 @@ def proxy_post_processing(url, proxy_data, response, **opt):
 def blocking_error(url, req, proxy_data, **opt):
 
     if not opt.get('canonical_check', True): return False
+    if not opt.get('error_check', True): return False
     code = str(req.status_code) or ''
     data = ''
     if req.content: data = req.content[:5000]
@@ -1278,9 +1280,10 @@ def downloadpage(url, **opt):
 
         # Si falla proxy SSL por timeout, sacarlo de proxy y reejecutarlo si está instalado Assistant, si no pasarlo a ProxyCF
         if ('timeout' in str(response_code).lower() or 'Detected a Cloudflare version 2' in str(response_code) \
-                                                    or response_code in CLOUDFLARE_CODES+NOT_FOUND_CODES) \
+                                                    or response_code in CLOUDFLARE_CODES) \
                                                     and ', Proxy Web' in proxy_data.get('stat', '') \
-                                                    and proxy_data.get('web_name') == 'croxyproxy.com':
+                                                    and proxy_data.get('web_name') == 'croxyproxy.com' \
+                                                    and opt.get('error_check', True):
             update_alfa_domain_web_list(url, 'Timeout=%s' % opt['timeout'], proxy_data, **opt)
 
             if not alfa_domain_web_list or not alfa_domain_web_list.get(proxy_data.get('web_name', ''), []):
@@ -1325,7 +1328,7 @@ def downloadpage(url, **opt):
         # Retries Cloudflare errors
         if req.headers.get('Server', '').startswith('cloudflare') and response_code in CLOUDFLARE_CODES \
                         and (not opt.get('CF', False) or opt['retries_cloudflare'] > 0) and opt.get('CF_test', True) \
-                        and not opt.get('check_blocked_IP_save', {}):
+                        and not opt.get('check_blocked_IP_save', {}) and opt.get('error_check', True):
             domain = urlparse.urlparse(opt['url_save'])[1]
             if (domain not in CF_LIST and opt['retries_cloudflare'] >= 0) or opt['retries_cloudflare'] > 0:
                 if not '__cpo=' in url and domain not in CF_LIST:
@@ -1346,7 +1349,8 @@ def downloadpage(url, **opt):
         
         # Retry con Assistant si falla proxy SSL
         if opt['retries_cloudflare'] <= 0 and response_code in CLOUDFLARE_CODES and opt.get('cf_assistant_if_proxy', True) \
-                        and not opt.get('cf_v2', False) and opt.get('CF_test', True) and ', Proxy Web' in proxy_data.get('stat', ''):
+                        and not opt.get('cf_v2', False) and opt.get('CF_test', True) and ', Proxy Web' in proxy_data.get('stat', '') \
+                        and opt.get('error_check', True) and opt.get('error_check', True):
             update_alfa_domain_web_list(url, response_code, proxy_data, **opt)
             url = opt['url_save']
             domain = obtain_domain(url, sub=True)
@@ -1376,7 +1380,7 @@ def downloadpage(url, **opt):
         # Si hay bloqueo "cf_v2" y no hay Alfa Assistant, se reintenta con Proxy
         if opt.get('forced_proxy_ifnot_assistant', '') \
                            and ('Detected a Cloudflare version 2' in str(response_code) or response_code in CLOUDFLARE_CODES) \
-                           and not channel_proxy_list(opt['url_save']):
+                           and not channel_proxy_list(opt['url_save']) and opt.get('error_check', True):
             if opt.get('cf_v2', False):
                 response['code'] = response_code
                 response['headers'] = req.headers
@@ -1665,10 +1669,10 @@ def fill_fields_post(url, info_dict, req, response, req_headers, inicio, **opt):
         info_dict.append(('Response code', response['code']))
 
         if response['code'] in SUCCESS_CODES:
-            info_dict.append(('Success', 'True'))
+            info_dict.append(('Success', 'True - Error_check: %s' % opt.get('error_check', True)))
             response['sucess'] = True
         else:
-            info_dict.append(('Success', 'False'))
+            info_dict.append(('Success', 'False - Error_check: %s' % opt.get('error_check', True)))
             response['sucess'] = False
 
         info_dict.append(('Response data length', 0 if not response['data'] else len(response['data'])))
