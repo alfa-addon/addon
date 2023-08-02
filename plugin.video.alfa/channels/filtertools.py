@@ -161,7 +161,7 @@ def context(item, list_language=None, list_quality=None, exist=False):
         if isinstance(_context, list):
             for x in _context:
                 if x and isinstance(x, dict):
-                    if x["channel"] == "filtertools":
+                    if x.get("channel", "") == "filtertools":
                         added = True
                         break
 

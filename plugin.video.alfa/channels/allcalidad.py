@@ -5,7 +5,7 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 from channelselector import get_thumb
-from channels import autoplay
+from modules import autoplay
 from channels import filtertools
 from core import httptools
 from core import scrapertools
@@ -19,6 +19,7 @@ IDIOMAS = {'Latino': 'Latino'}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['fembed', 'streamtape', 'gvideo', 'Jawcloud']
+forced_proxy_opt = 'ProxySSL'
 
 canonical = {
              'channel': 'allcalidad', 
@@ -26,13 +27,12 @@ canonical = {
              'host_alt': ["https://allcalidad.ms"], 
              'host_black_list': ["https://allcalidad.si", 
                                  "https://ww3.allcalidad.is", "https://allcalidad.is", "https://allcalidad.ac"], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 __channel__ = canonical['channel']
 
-forced_proxy_opt = 'ProxyDirect'
 encoding = "utf-8"
 
 try:

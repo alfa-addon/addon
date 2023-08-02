@@ -7,29 +7,18 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
 
-import re
-import traceback
-if not PY3: _dict = dict; from collections import OrderedDict as dict
+from lib import AlfaChannelHelper
+if not PY3: _dict = dict; from AlfaChannelHelper import dict
+from AlfaChannelHelper import DictionaryAllChannel
+from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
+from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
-from core.item import Item
-from core import servertools
-from core import scrapertools
-from core import jsontools
-from channelselector import get_thumb
-from platformcode import config, logger
-from channels import filtertools, autoplay
-from lib.AlfaChannelHelper import DictionaryAllChannel
-
-IDIOMAS = {'mx': 'Latino', 'dk': 'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb': 'VOSE', 
-           'sub': 'VOSE', 'su': 'VOSE', 'eng': 'VOSE', "subtitulado": "VOSE", "usa": "VOSE", 
-           'de': 'VOSE', "español": "Castellano", "espana": "Castellano", 'cas': 'Castellano', 
-           "mexico": "Latino", "latino": "Latino", 'lat': 'Latino', 'LAT': 'Latino', 'jp': 'VOSE',
-           'spain': 'Castellano'}
+IDIOMAS = AlfaChannelHelper.IDIOMAS
 list_language = list(set(IDIOMAS.values()))
-list_quality = []
-list_quality_movies = ['DVDR', 'HDRip', 'VHSRip', 'HD', '2160p', '1080p', '720p', '4K', '3D', 'Screener', 'BluRay']
-list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
-list_servers = ['gvideo', 'fembed']
+list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
+list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
+list_quality = list_quality_movies + list_quality_tvshow
+list_servers = AlfaChannelHelper.LIST_SERVERS
 forced_proxy_opt = 'ProxyCF'
 
 canonical = {
@@ -72,14 +61,14 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList Rows', 'Mo
          'seasons_search_qty_rgx': '', 
          'episode_url': '', 
          'episodes': dict([('find', [{'tag': ['script'], 'id': ['__NEXT_DATA__']}]), 
-                           ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}])]), 
+                           ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'props,pageProps,thisSerie,seasons|DEFAULT'}])]), 
          'episode_num': [], 
          'episode_clean': [], 
          'plot': dict([('find', [{'tag': ['div'], 'class': ['Description']}, 
                                  {'tag': ['p']}]), 
                        ('get_text', [{'tag': '', '@STRIP': True}])]), 
          'findvideos': dict([('find', [{'tag': ['script'], 'id': ['__NEXT_DATA__']}]), 
-                             ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}])]), 
+                             ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'props,pageProps,episode/thisMovie/thisSerie,videos|DEFAULT'}])]), 
          'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie|\s*\(\d{4}\)', ''],
                          ['[\(|\[]\s*[\)|\]]', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
@@ -225,10 +214,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     matches = []
     findS = AHkwargs.get('finds', finds)
 
-    if not isinstance(matches_int, _dict): matches_int = jsontools.load(matches_int)
-    matches_int = matches_int.get('props', {}).get('pageProps', {}).get('thisSerie', {}).get('seasons', {})
-
     for x, elem_season in enumerate(matches_int):
+        #logger.error(elem_season)
 
         if item.contentSeason != elem_season.get('number', 1): continue
         for elem in elem_season.get('episodes', []):
@@ -268,18 +255,14 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
-    if not isinstance(matches_int, _dict): matches_int = jsontools.load(matches_int)
-
     servers = {'drive': 'gvideo', 'fembed': 'fembed', "player": "oprem", "openplay": "oprem", "embed": "mystream"}
-    action = item.contentType if item.contentType == 'episode' else 'thisMovie' if item.contentType == 'movie' else 'thisSerie'
-
-    matches_int = matches_int.get('props', {}).get('pageProps', {}).get(action, {}).get('videos', [])
 
     for lang, elem in list(matches_int.items()):
+        #logger.error(elem)
 
         for link in elem:
             elem_json = {}
-            #logger.error(elem)
+            #logger.error(link)
 
             try:
                 elem_json['server'] = link.get('cyberlocker', '')

@@ -7,32 +7,26 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
 
-import re
-import traceback
-if not PY3: _dict = dict; from collections import OrderedDict as dict
+from lib import AlfaChannelHelper
+if not PY3: _dict = dict; from AlfaChannelHelper import dict
+from AlfaChannelHelper import DictionaryAllChannel
+from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
+from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
-from core.item import Item
-from core import servertools
-from core import scrapertools
-from core import jsontools
-from channelselector import get_thumb
-from platformcode import config, logger
-from channels import filtertools, autoplay
-from lib.AlfaChannelHelper import DictionaryAllChannel
-
-IDIOMAS = {'la': 'LAT', 'sub': 'VOSE', 'es': 'CAST'}
+IDIOMAS = AlfaChannelHelper.IDIOMAS_T
 list_language = list(set(IDIOMAS.values()))
-list_quality = []
 list_quality_movies = []
-list_quality_tvshow = ['HDTV', 'HDTV-720p', 'WEB-DL 1080p', '4KWebRip']
-list_servers = ['fembed', 'mega', 'yourupload', 'streamsb', 'mp4upload', 'mixdrop', 'uqload']
+list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
+list_quality = list_quality_movies + list_quality_tvshow
+list_servers = AlfaChannelHelper.LIST_SERVERS
 forced_proxy_opt = 'ProxyCF'
 
 canonical = {
              'channel': 'ennovelas', 
              'host': config.get_setting("current_host", 'ennovelas', default=''), 
-             'host_alt': ["https://b.ennovelas.net/"], 
-             'host_black_list': ["https://a.ennovelas.net/", "https://e.ennovelas.net/", "https://ww.ennovelas.net/", 
+             'host_alt': ["https://s.ennovelas.net/"], 
+             'host_black_list': ["https://b.ennovelas.net/", 
+                                 "https://a.ennovelas.net/", "https://e.ennovelas.net/", "https://ww.ennovelas.net/", 
                                  "https://w.ennovelas.net/", "https://www.zonevipz.com/", "https://www.ennovelas.com/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -99,13 +93,12 @@ def mainlist(item):
                          url=host + "movies/", c_type='peliculas', thumbnail=get_thumb("movies", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Novelas", action="list_all", 
-                         url=host + "telenovelas/", c_type='series', thumbnail=get_thumb("tvshows", auto=True)))
+                         url=host + "novelas/", c_type='series', thumbnail=get_thumb("tvshows", auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Nuevos Episodios[/COLOR]" , action="list_all", 
-                         url= host + "capitulos-n2/", c_type='episodios', thumbnail=get_thumb('new_episodes', auto=True)))
+                         url= host + "episodes/", c_type='episodios', thumbnail=get_thumb('new_episodes', auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Países[/COLOR]" , action="section", 
                          url= host, c_type='series', thumbnail=get_thumb('country', auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title="Por Años" , action="section", 
+    itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Años[/COLOR]" , action="section", 
                          url= host, c_type='series', thumbnail=get_thumb('year', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
@@ -266,49 +259,63 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     for elem_ini in matches_int:
         #logger.error(elem_ini)
 
-        if elem_ini.a and elem_ini.a.get('id', '') != 'btnWatch': continue
-        elif elem_ini.input and elem_ini.input.get('name', '') != 'watch': continue
-        url = elem_ini.get('action', '') or elem_ini.a.get('href', '')
-        post = 'watch=%s' % elem_ini.input.get('value', '') if elem_ini.input else None
-        matches_alt = []
-        soup = AlfaChannel.create_soup(url, post=post, **kwargs)
+        try:
+            if elem_ini.a and elem_ini.a.get('id', '') != 'btnWatch': continue
+            elif elem_ini.input and elem_ini.input.get('name', '') != 'watch': continue
+            url = elem_ini.get('action', '') or elem_ini.a.get('href', '')
+            post = 'watch=%s&submit=' % elem_ini.input.get('value', '') if elem_ini.input else None
+            matches_alt = []
 
-        if soup.find('div', id="btnServers"):
-            try:
-                bs4 = base64.b64decode(soup.find('div', id="btnServers").find('form').find('input').get('value', '')).decode('utf-8')
-                matches_alt = jsontools.load(bs4).values()
-            except:
-                pass
-        
-        if not matches_alt:
-            matches_alt = soup.find('div', class_="watch").find_all('iframe') or soup.find('ul', class_="serversList").find_all('li')
+            soup = AlfaChannel.create_soup(url, post=post, headers={'Referer': host}, **kwargs)
 
-        for elem in matches_alt:
-            elem_json = {}
-            #logger.error(elem)
+            if soup.find('div', id="btnServers"):
+                try:
+                    bs4 = base64.b64decode(soup.find('div', id="btnServers").find('form').find('input').get('value', '')).decode('utf-8')
+                    matches_alt = jsontools.load(bs4).values()
+                except:
+                    pass
+            
+            if not matches_alt and (soup.find('ul', class_="serversList") or soup.find('div', class_="watch")):
+                matches_alt = soup.find('ul', class_="serversList").find_all('li') or soup.find('div', class_="watch").find_all('iframe')
 
-            if isinstance(elem, str):
-                elem_json['url'] = elem
-                if elem_json['url'] in str(matches): continue
+            for elem in matches_alt:
+                elem_json = {}
+                #logger.error(elem)
 
-            else:
-                if elem.get('data-server', ''):
-                    elem_json['url'] = elem.get('data-server', '')
-                    elem_json['url'] = scrapertools.find_single_match(elem_json['url'], "src='([^']+)'")
-                else:
-                    elem_json['url'] = elem.get('src', '')
+                try:
+                    if isinstance(elem, str):
+                        elem_json['url'] = elem
+                        if elem_json['url'] in str(matches): continue
 
-            if not elem_json.get('url', ''): continue
-            if 'ennovelas' in elem_json['url'] or 'lvturbo' in elem_json['url'] or 'vidmoly' in elem_json['url'] \
-                                               or 'sbface' in elem_json['url']:
-                logger.debug('Servidor no soportado: %s' % elem_json['url'])
-                continue
+                    else:
+                        if elem.get('data-server', ''):
+                            elem_json['url'] = elem.get('data-server', '')
+                            elem_json['url'] = scrapertools.find_single_match(elem_json['url'], "src='([^']+)'")
+                        else:
+                            elem_json['url'] = elem.get('src', '')
 
-            elem_json['title'] = '%s'
-            elem_json['server'] = ''
-            elem_json['language'] = '*'
+                    if not elem_json.get('url', ''): continue
+                    if elem_json['url'].startswith('//'): elem_json['url'] = 'https:%s' % elem_json['url']
+                    if 'ennovelas' in elem_json['url'] or 'lvturbo' in elem_json['url'] or 'vidmoly' in elem_json['url'] \
+                                                       or 'sbface' in elem_json['url']:
+                        logger.debug('Servidor no soportado: %s' % elem_json['url'])
+                        continue
 
-            matches.append(elem_json.copy())
+                except:
+                    logger.error(elem)
+                    logger.error(traceback.format_exc())
+                    continue
+
+                elem_json['title'] = '%s'
+                elem_json['server'] = ''
+                elem_json['language'] = '*'
+
+                matches.append(elem_json.copy())
+
+        except:
+            logger.error(elem_ini)
+            logger.error(traceback.format_exc())
+            continue
 
     return matches, langs
 
