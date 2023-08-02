@@ -869,7 +869,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                   'module=favorites&action=addFavourite&from_channel=' + item.channel + '&from_action=' + item.action)))
 
         # Añadir a Alfavoritos (Mis enlaces)
-        if item.module not in ["favorites", "videolibrary", "help", "search", ""] and parent_item.module != "favorites":
+        if item.module not in ["favorites", "videolibrary", "help", "search"] and parent_item.module != "favorites":
             context_commands.append(
                 ('[COLOR blue]%s[/COLOR]' % config.get_localized_string(70557), "RunPlugin(%s?%s&%s)" %
                  (sys.argv[0], item_url, urllib.urlencode({'module': "alfavorites", 'action': "addFavourite",
