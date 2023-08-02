@@ -17,7 +17,7 @@ from core import scrapertools
 from core import jsontools
 from channelselector import get_thumb
 from platformcode import config, logger
-from channels import filtertools, autoplay
+from channels import filtertools
 from lib.AlfaChannelHelper import DictionaryAdultChannel
 
 IDIOMAS = {}
@@ -96,34 +96,35 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="submityourflicks" , action="submenu", url= "https://www.submityourflicks.com/", thumbnail= "https://www.submityourflicks.com/images/logo.png"))
-    itemlist.append(Item(channel=item.channel, title="interracial" , action="submenu", url= "https://www.interracial.com/", thumbnail = "https://www.interracial.com/images/logo.png"))
-    itemlist.append(Item(channel=item.channel, title="feetporno" , action="submenu", url= "https://www.feetporno.com/", thumbnail = "https://www.feetporno.com/images/logo.png"))
-    itemlist.append(Item(channel=item.channel, title="chubbyporn" , action="submenu", url= "https://www.chubbyporn.com/", thumbnail = "https://www.chubbyporn.com/images/logo.png"))
-    itemlist.append(Item(channel=item.channel, title="cartoonporn" , action="submenu", url= "https://www.cartoonporn.com/", thumbnail = "https://www.cartoonporn.com/images/logo.png"))
-    itemlist.append(Item(channel=item.channel, title="trannylime" , action="submenu", url= "https://www.trannylime.com/", thumbnail = "https://www.trannylime.com/images/logo.png"))
-    itemlist.append(Item(channel=item.channel, title="gotgayporn" , action="submenu", url= "https://www.gotgayporn.com/", thumbnail = "https://www.gotgayporn.com/images/logo.png"))
-    
-    AlfaChannel.host = item.url
-    AlfaChannel.canonical = canonical.update({'channel': item.chanel, 'host': config.get_setting("current_host", item.chanel, default=''), 'host_alt': AlfaChannel.host})    
-    
+    itemlist.append(Item(channel=item.channel, title="submityourflicks" , action="submenu", url= "https://www.submityourflicks.com/", chanel="submityourflicks", thumbnail= "https://www.submityourflicks.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="interracial" , action="submenu", url= "https://www.interracial.com/", chanel="interracial", thumbnail = "https://www.interracial.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="feetporno" , action="submenu", url= "https://www.feetporno.com/", chanel="feetporno", thumbnail = "https://www.feetporno.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="chubbyporn" , action="submenu", url= "https://www.chubbyporn.com/", chanel="chubbyporn", thumbnail = "https://www.chubbyporn.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="cartoonporn" , action="submenu", url= "https://www.cartoonporn.com/", chanel="cartoonporn", thumbnail = "https://www.cartoonporn.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="trannylime" , action="submenu", url= "https://www.trannylime.com/", chanel="trannylime", thumbnail = "https://www.trannylime.com/images/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="gotgayporn" , action="submenu", url= "https://www.gotgayporn.com/", chanel="gotgayporn", thumbnail = "https://www.gotgayporn.com/images/logo.png"))
     return itemlist
 
 
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=item.url  + "search/?sort_by=post_date&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=item.url  + "search/?sort_by=video_viewed_month&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mejor Valorada" , action="list_all", url=item.url  + "search/?sort_by=rating_month&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Favoritas" , action="list_all", url=item.url  + "search/?sort_by=most_favourited&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Comentadas" , action="list_all", url=item.url  + "search/?sort_by=most_commented&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Mas Largas" , action="list_all", url=item.url  + "search/?sort_by=duration&from_videos=1"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=item.url  + "sites/?sort_by=total_videos&from=1", extra="Canal"))
+    
+    config.set_setting("current_host", item.url, item.chanel)
+    AlfaChannel.host = item.url
+    AlfaChannel.canonical.update({'channel': item.chanel, 'host': AlfaChannel.host, 'host_alt': [AlfaChannel.host]})
+    
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=item.url  + "search/?sort_by=post_date&from_videos=1", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas Vistas" , action="list_all", url=item.url  + "search/?sort_by=video_viewed_month&from_videos=1", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mejor Valorada" , action="list_all", url=item.url  + "search/?sort_by=rating_month&from_videos=1", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas Favoritas" , action="list_all", url=item.url  + "search/?sort_by=most_favourited&from_videos=1", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas Comentadas" , action="list_all", url=item.url  + "search/?sort_by=most_commented&from_videos=1", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas Largas" , action="list_all", url=item.url  + "search/?sort_by=duration&from_videos=1", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=item.url  + "sites/?sort_by=total_videos&from=1", extra="Canal", chanel=item.chanel))
     if not "submityourflicks" in item.url and not "feetporno" in item.url and not "chubbyporn" in item.url and not "cartoonporn" in item.url and not "trannylime" in item.url:
-        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=item.url  + "models/?sort_by=total_videos&from=1", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=item.url  + "categories/", extra="Categorias"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url))
+        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=item.url  + "models/?sort_by=total_videos&from=1", extra="PornStar", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=item.url  + "categories/", extra="Categorias", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url, chanel=item.chanel))
     return itemlist
 
 
@@ -157,6 +158,9 @@ def play(item):
     logger.info()
     itemlist = []
     
+    AlfaChannel.host = config.get_setting("current_host", item.chanel, default=host)
+    AlfaChannel.canonical.update({'channel': item.chanel, 'host': AlfaChannel.host, 'host_alt': [AlfaChannel.host]})
+    
     soup = AlfaChannel.create_soup(item.url, **kwargs)
     if soup.find_all('a', href=re.compile("/(?:pornstars|models|model|pornosztarok)/[A-z0-9-]+/")):
         pornstars = soup.find_all('a', href=re.compile("/(?:pornstars|models|model|pornosztarok)/[A-z0-9-]+/"))
@@ -174,13 +178,6 @@ def play(item):
             lista.insert (1, pornstar)
         item.contentTitle = '[/COLOR]'.join(lista)
     
-    if soup.find('div', id='kt_player'):
-        url = item.url
-    else:
-        url = soup.iframe['src']
-        url = url.replace("embed", "videos").replace('lol', 'tv')
-        name = item.url.split("/")[-2]
-        url += "/%s/" %name
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     
