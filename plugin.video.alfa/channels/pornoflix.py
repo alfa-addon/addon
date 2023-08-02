@@ -24,7 +24,7 @@ forced_proxy_opt = 'ProxySSL'
 ''' CANAL ANTIGUA OUT pages
     gameofporn  veporns  https://www.veporno.net  https://www.fxporn.net      http://www.veporns.com    '''
 
-#  https://veporn.com/  https://pornoflix.com/
+#  https://veporn.com/  https://pornoflix.com/  https://ultrahorny.com/
 
 canonical = {
              'channel': 'pornoflix', 
