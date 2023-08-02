@@ -608,7 +608,7 @@ def play_from_library(item):
     import xbmc
     from time import sleep, time
     from modules import nextep
-    from channels import autoplay
+    from modules import autoplay
     from channels import videolibrary
 
     # Intentamos reproducir una imagen (esto no hace nada y ademas no da error)
