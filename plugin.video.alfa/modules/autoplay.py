@@ -11,7 +11,7 @@ from platformcode import launcher
 from time import sleep
 from platformcode.config import get_setting
 
-__channel__ = "autoplay"
+__module__ = "autoplay"
 
 PLAYED = False
 
@@ -30,7 +30,7 @@ def context():
     if config.is_xbmc():
         _context = [{"title": config.get_localized_string(60071),
                      "action": "autoplay_config",
-                     "channel": "autoplay"}]
+                     "module": "autoplay"}]
     return _context
 
 
@@ -61,7 +61,7 @@ def show_option(channel, itemlist, text_color='yellow', thumbnail=None, fanart=N
 
     plot_autoplay = config.get_localized_string(60399)
     itemlist.append(
-        Item(channel=__channel__,
+        Item(module=__module__,
              title=config.get_localized_string(60071),
              action="autoplay_config",
              text_color=text_color,
@@ -73,7 +73,7 @@ def show_option(channel, itemlist, text_color='yellow', thumbnail=None, fanart=N
     return itemlist
 
 
-def start(itemlist, item):
+def start(itemlist, item, user_server_list=[], user_quality_list=[]):
     '''
     Metodo principal desde donde se reproduce automaticamente los enlaces
     - En caso la opcion de personalizar activa utilizara las opciones definidas por el usuario.
@@ -99,7 +99,7 @@ def start(itemlist, item):
         autoplay_node = jsontools.get_node_from_file('autoplay', 'AUTOPLAY')
 
     channel_id = item.channel
-    if item.channel == 'videolibrary':
+    if item.module == 'videolibrary':
         autoplay_node = jsontools.get_node_from_file('autoplay', 'AUTOPLAY')
         channel_id = item.contentChannel
     try:
@@ -175,6 +175,14 @@ def start(itemlist, item):
         for num in range(1, 4):
             favorite_servers.append(channel_node['servers'][settings_node['server_%s' % num]].lower())
             favorite_quality.append(channel_node['quality'][settings_node['quality_%s' % num]])
+        favorite_servers += [s.lower() for s in user_server_list if s not in favorite_servers]
+        favorite_quality += [s for s in user_quality_list if s not in favorite_quality]
+        for s in favorite_quality[:]:
+            if s in ['720p', '1080p', 'Screener'] and 'BluRay %s' % s not in favorite_quality: favorite_quality += ['BluRay %s' % s]
+            if s in ['720p', '1080p'] and 'HD%s' % s not in favorite_quality:favorite_quality += ['HD%s' % s] + ['HD%s' % s.replace('p', '')]
+            if s in ['Rip']: favorite_quality += ['BluRay%s' % s] + ['BluRay%s' % s.upper()] + ['DVD%s' % s] + ['DVD%s' % s.upper()] + \
+                                                 ['HD%s' % s] + ['HD%s' % s.upper()] + ['VHS%s' % s] + ['VHS%s' % s.upper()]
+            if s in ['2160p'] and  '4K %s' % s not in favorite_quality: favorite_quality += ['4K %s' % s]
 
         # Se filtran los enlaces de itemlist y que se correspondan con los valores de autoplay
         for n, item_local in enumerate(itemlist):
@@ -182,7 +190,7 @@ def start(itemlist, item):
             b_dict = dict()
 
             # Comprobamos q se trata de un item_local de video
-            if 'server' not in item_local:
+            if 'server' not in item_local or (item_local.server == 'torrent' and str(item_local.size) in ['0', 'ERROR']):
                 continue
             # 2nd lang lista idiomas
             if item_local.language not in favorite_langs:
@@ -194,12 +202,13 @@ def start(itemlist, item):
             if not filter(lambda x: x['action'] == 'autoplay_config', context):
                 item_local.context.append({"title": config.get_localized_string(60071),
                                            "action": "autoplay_config",
-                                           "channel": "autoplay",
+                                           "module": "autoplay",
                                            "from_channel": channel_id})
 
             # Si no tiene calidad definida le asigna calidad 'default'
             if item_local.quality == '':
                 item_local.quality = 'default'
+            item_local.quality = item_local.quality.replace(config.BTDIGG_LABEL, '').replace(config.BTDIGG_LABEL_B, '')
 
             # Se crea la lista para configuracion personalizada
             if priority < 2:  # 0: Servidores y calidades o 1: Calidades y servidores
@@ -335,7 +344,7 @@ def start(itemlist, item):
 
                     # Verifica si el item viene de la videoteca
                     try:
-                        if item.contentChannel == 'videolibrary' or item.channel == 'videolibrary':
+                        if item.contentChannel == 'videolibrary' or item.module == 'videolibrary':
                             # Marca como visto
                             from platformcode import xbmc_videolibrary
                             xbmc_videolibrary.mark_auto_as_watched(item)
@@ -493,11 +502,11 @@ def check_value(channel, itemlist):
         quality_list = channel_node['quality'] = list()
 
     for item in itemlist:
-        if item.server.lower() not in server_list and item.server != '':
+        if item.server and item.server.lower() not in server_list:
             server_list.append(item.server.lower())
             change = True
-        if item.quality not in quality_list and item.quality != '':
-            quality_list.append(item.quality)
+        if item.quality and item.quality.replace(config.BTDIGG_LABEL, '').replace(config.BTDIGG_LABEL_B, '') not in quality_list:
+            quality_list.append(item.quality.replace(config.BTDIGG_LABEL, '').replace(config.BTDIGG_LABEL_B, ''))
             change = True
 
     if change:
