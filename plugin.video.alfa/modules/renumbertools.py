@@ -119,14 +119,15 @@ def config_item(item):
     :type item: Item
     """
     logger.info("item %s" % item.tostring("\n"))
+    channel = item.channel
 
-    dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_RENUMERATE)
+    dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
     data = dict_series.get(item.show, {})
 
     if data:
         data = data.get(TAG_SEASON_EPISODE, [])
 
-        ventana = RenumberWindow(show=item.show, channel=item.from_channel, data=data)
+        ventana = RenumberWindow(show=item.show, channel=channel, data=data)
         del ventana
     else:
         # tenemos información y devolvemos los datos añadidos para que se muestre en la ventana
@@ -136,7 +137,7 @@ def config_item(item):
         # para evitar error al listar los items
         else:
             data = add_season(data)
-            write_data(item.from_channel, item.show, data)
+            write_data(channel, item.show, data)
 
 
 def numbered_for_tratk(channel, show, season, episode):
