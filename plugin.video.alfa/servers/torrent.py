@@ -2714,16 +2714,21 @@ def check_torrent_is_buffering(item, magnet_retries=60, torrent_retries=30):
                                                             port=torrent_paths.get(torr_client.upper()+'_port', 0), 
                                                             web=torrent_paths.get(torr_client.upper()+'_web', ''),
                                                             item=item)
+
             if (isinstance(torr_data, dict) and torr_data.get('shutdown', False)) or not isinstance(torr_data, dict):
                 return False                                                    # Abortando
+
             if torr_client.upper() in ['TORREST']:
                 status = torr_data.get('status', {})
-                if torrent_states[status.get('state', 0)] not in ['Checking_resume_data', 'Buffering', 'Checking']:
+                if torrent_states[status.get('state', 0)] not in ['Checking_resume_data', 'Buffering', 'Checking', 'Downloading']:
                     return resp
                 if status.get('progress', 0) > 0:
                     sleep = sleep_base * 2
                 if status.get('progress', 0) > 0 and status.get('download_rate', 0) == 0:
                     return False 
+                if xbmc_player.isPlaying() or resp == 'RAR':
+                    return resp
+
             elif torr_client in ['quasar', 'elementum']:
                 if not torr_data['label'].startswith('0.00%'):
                     sleep = sleep_base * 2
@@ -2732,6 +2737,7 @@ def check_torrent_is_buffering(item, magnet_retries=60, torrent_retries=30):
             else:
                 if xbmc_player.isPlaying() or resp == 'RAR':
                     return resp
+
             time.sleep(sleep)
 
     except Exception:

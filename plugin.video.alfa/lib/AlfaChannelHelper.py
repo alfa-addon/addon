@@ -16,11 +16,15 @@ import xbmcgui
 window = xbmcgui.Window(10000) or None
 if not PY3: _dict = dict; from collections import OrderedDict as dict
 
+from channelselector import get_thumb
 from core import scrapertools
+from core import servertools
 from core import jsontools
 from core.item import Item
 from platformcode import config
 from platformcode import logger
+from channels import filtertools
+from modules import autoplay
 
 DEBUG = False
 BTDIGG = 'btdig'
@@ -34,7 +38,22 @@ IDIOMAS = {'mx': 'Latino', 'dk': 'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb
            'sub': 'VOSE', 'su': 'VOSE', 'eng': 'VOSE', "subtitulado": "VOSE", "usa": "VOSE", 
            'de': 'VOSE', "español": "Castellano", "espana": "Castellano", 'cas': 'Castellano', 
            "mexico": "Latino", "latino": "Latino", 'lat': 'Latino', 'LAT': 'Latino', 'jp': 'VOSE',
-           'spain': 'Castellano'}
+           'spain': 'Castellano', '🇲🇽': 'Latino', '🇪🇸': 'Castellano'}
+IDIOMAS_T = {'es': 'CAST', 'la': 'LAT', 'us': 'VOSE', 'ES': 'CAST', 'LA': 'LAT', 'US': 'VOSE', 
+             'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VOSE', 'latino': 'LAT', 
+             'castellano': 'CAST', 'portugues': 'VOSE', 'sub': 'VOSE', 'spa': 'CAST', 'esp': 'CAST', 
+             'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO', 'VOSE': 'VOSE', 'Sub': 'VOSE', 'LAT': 'LAT',
+             'Original subtitulado': 'VOS', 'subtitulado en español': 'VOSE', 'espanol': 'CAST', 
+             'ingles': 'VO', 'espaniol': 'CAST', 'Frances': 'VOSE'}
+IDIOMAS_A = {'Castellano': 'CAST', 'CAST': 'CAST', 'us': 'VOSE', 'US': 'VOSE', 'Version Original': 'VOSE'}
+IDIOMAS_ANIME = {"audio castellano": "CAST", "audio latino": "LAT", "subtitulado": "VOSE"}
+LIST_SERVERS = ['streamtape', 'doodstream', 'okru', 'streamsb', 'streamlare', 'wolfstream', 'voe', 'mega', 'torrent']
+LIST_SERVERS_T = ['torrent']
+LIST_SERVERS_A = ['doodstream', 'vidlox', 'gounlimited', 'verystream', 'aparatcam', 'mangovideo', 'streamtape', 'okru', 'torrent']
+LIST_QUALITY_MOVIES = ['BluRay', '1080p', 'HD', 'Rip', 'MicroHD', '720p', '2160p', '4K', '3D', 'RHDTV', 'DVDSCR', 'DVDR', 'CAM', 'Screener']
+LIST_QUALITY_MOVIES_T = LIST_QUALITY_MOVIES
+LIST_QUALITY_MOVIES_A = ['1080p', '720p', 'HD', 'Rip', '2160p', '4K', 'CAM']
+LIST_QUALITY_TVSHOW = ['HDTV-720p', 'HDTV', 'WEB-DL 1080p', '4KWebRip']
 
 
 class AlfaChannelHelper:
@@ -63,9 +82,10 @@ class AlfaChannelHelper:
         self.tv_action = tv_action
         self.forced_proxy_opt = forced_proxy_opt
         self.list_language = list_language
-        self.list_quality = self.list_quality_tvshow = list_quality or list_quality_tvshow
-        self.list_quality_movies = list_quality_movies
-        self.list_servers = list_servers
+        self.list_servers = list_servers or LIST_SERVERS
+        self.list_quality_movies = list_quality_movies or LIST_QUALITY_MOVIES
+        self.list_quality_tvshow = list_quality_tvshow or LIST_QUALITY_TVSHOW
+        self.list_quality = list_quality or self.list_quality_movies + self.list_quality_tvshow
         self.language = language
         self.idiomas = idiomas or IDIOMAS
         self.IDIOMAS_TMDB = IDIOMAS_TMDB
@@ -154,6 +174,13 @@ class AlfaChannelHelper:
                          or 'javascript' in response.headers.get('Content-Type', '')):
                 response = js2py_conversion(response.data, url, resp=response, size=size_js, **kwargs)
         
+        if response.code in self.httptools.NOT_FOUND_CODES:
+            response.data = ''
+            if kwargs.get("soup", True):
+                response.soup = self.do_soup(response.data, encoding='utf-8')
+            elif json:
+                response.json = {}
+
         if kwargs.get("soup", True):
             soup = response.soup or {}
         elif json:
@@ -264,47 +291,46 @@ class AlfaChannelHelper:
         if item.add_videolibrary or item.library_playcounts or item.downloadFilename:
             return itemlist
 
+        item_p = item.clone()
+        item_p.quality = ''
+        if 'server' in item_p: del item_p.server
+        if 'post' in item_p: del item_p.post
+        item_p.infoLabels['playcount'] = 0
         actionType = 'pelicula' if contentType == 'movie' else 'season' if contentType == 'season' else 'serie'
         contentTitle = 'pelicula' if contentType == 'movie' else 'temporada' if contentType == 'season' else 'serie'
-        infoLabels = item.infoLabels
-        infoLabels['playcount'] = 0
 
         if self.Window_IsMedia:
             if len(itemlist) > 0:
-                if item.action == 'findvideos':
-                    itemlist.append(item.clone(channel="trailertools", title="**-[COLOR magenta] Buscar Trailer [/COLOR]-**", 
-                                               action="buscartrailer", context="", post="", infoLabels=infoLabels))
+                if item_p.action == 'findvideos':
+                    itemlist.append(item_p.clone(channel="trailertools", title="**-[COLOR magenta] Buscar Trailer [/COLOR]-**", 
+                                                 action="buscartrailer", context=""))
             
-            if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentChannel != "videolibrary" \
-                            and ((item.contentType == 'episode' and item.url_tvshow) or item.action != 'findvideos' \
-                            or (item.contentType == 'movie' and item.action == 'findvideos')):
-                item.url = self.do_url_replace(item.url)
+            if config.get_videolibrary_support() and len(itemlist) > 0 and item_p.contentChannel != "videolibrary" \
+                            and ((item_p.contentType == 'episode' and item_p.url_tvshow) or item_p.action != 'findvideos' \
+                            or (item_p.contentType == 'movie' and item_p.action == 'findvideos')):
+                item_p.url = self.do_url_replace(item_p.url)
                 
                 if self.actualizar_titulos:
-                    itemlist.append(item.clone(title="** [COLOR %s]Actualizar Títulos - vista previa videoteca[/COLOR] **" \
-                                                      % self.get_color_from_settings('library_color', default='yellow'), 
-                                               action="actualizar_titulos",
-                                               infoLabels = infoLabels, 
-                                               tmdb_stat=False, 
-                                               from_action=item.action, 
-                                               contentType=contentType,
-                                               from_title_tmdb=item.title, 
-                                               from_update=True, 
-                                               thumbnail=item.infoLabels['temporada_poster'] or item.infoLabels['thumbnail'],
-                                               post=""
-                                              )
+                    itemlist.append(item_p.clone(title="** [COLOR %s]Actualizar Títulos - vista previa videoteca[/COLOR] **" \
+                                                        % self.get_color_from_settings('library_color', default='yellow'), 
+                                                 action="actualizar_titulos",
+                                                 tmdb_stat=False, 
+                                                 from_action=item_p.action, 
+                                                 contentType=contentType,
+                                                 from_title_tmdb=item_p.title, 
+                                                 from_update=True, 
+                                                 thumbnail=item_p.infoLabels['temporada_poster'] or item_p.infoLabels['thumbnail']
+                                                )
                                    )
 
-                itemlist.append(item.clone(title='[COLOR yellow]Añadir esta %s a la videoteca[/COLOR]' % contentTitle, 
-                                           url=item.url_tvshow or item.url,
-                                           action="add_%s_to_library" % actionType,
-                                           extra="episodios",
-                                           infoLabels = infoLabels, 
-                                           contentType=contentType, 
-                                           contentSerieName=item.contentSerieName,
-                                           plot_extend = '',
-                                           post=""
-                                          )
+                itemlist.append(item_p.clone(title='[COLOR yellow]Añadir esta %s a la videoteca[/COLOR]' % contentTitle, 
+                                             url=item_p.url_tvshow or item_p.url,
+                                             action="add_%s_to_library" % actionType,
+                                             extra="episodios",
+                                             contentType=contentType, 
+                                             contentSerieName=item_p.contentSerieName,
+                                             plot_extend = ''
+                                            )
                                )
         return itemlist
 
@@ -392,10 +418,10 @@ class AlfaChannelHelper:
         from lib.generictools import AH_find_seasons
         return AH_find_seasons(self, item, matches, **AHkwargs)
 
-    def convert_url_base64(self, url, host='', referer=None, rep_blanks=True, force_host=False):
+    def convert_url_base64(self, url, host='', referer=None, rep_blanks=True, force_host=False, item=Item()):
 
         from lib.generictools import convert_url_base64
-        return convert_url_base64(url, host, referer, rep_blanks, force_host)
+        return convert_url_base64(url, host, referer, rep_blanks, force_host, item)
 
     def is_local_torrent(self, url):
 
@@ -422,7 +448,6 @@ class AlfaChannelHelper:
         return AH_find_btdigg_findvideos(self, item, matches, domain_alt, **AHkwargs)
 
     def check_filter(self, item, itemlist, **AHkwargs):
-        from channels import filtertools
 
         return filtertools.check_filter(item, itemlist)
 
@@ -630,9 +655,10 @@ class AlfaChannelHelper:
             elif not quality and ('avi' in elem['title'].lower() or 'avi' in url or 'avi' in elem.get('quality', '').lower()):
                 quality = 'BlueRayRip'
             if '720' not in quality and ('720' in elem['title'] or '720' in url or '720' in elem.get('quality', '')):
-                quality += '720p' if not quality else ', 720p'
+                quality += 'BluRay-720p' if not quality else ', BluRay-720p'
             if '1080' not in quality and ('1080' in elem['title'] or '1080' in url or '1080' in elem.get('quality', '')):
-                quality += '1080p' if not quality else ', 1080p'
+                quality += 'BluRay-1080p' if not quality else ', BluRay-1080p'
+            quality = quality.replace('HD, ', '')
 
             if (('4k' in url_item and not url_item.startswith('magnet')) or ('4k' in url \
                                           and not url.startswith('magnet'))) and not '4k' in quality.lower():
@@ -640,6 +666,7 @@ class AlfaChannelHelper:
             if (('3d' in url_item and not url_item.startswith('magnet')) or ('3d' in url \
                                           and not url.startswith('magnet'))) and not '3d' in quality.lower():
                 quality += ', 3D'
+            quality = quality.replace('-', ' ').replace('_', ' ').replace('bluray', 'BluRay').replace('Bluray', 'BluRay').replace('BLURAY', 'BluRay')
 
         if 'dual' in quality.lower(): quality = re.sub('(?i)\s*dual', '', quality)
         if 'digg' in elem.get('quality', '').lower() and 'digg' not in quality.lower(): quality += BTDIGG_LABEL
@@ -774,7 +801,7 @@ class AlfaChannelHelper:
         # Puede ser necesario bajar otro nivel para encontrar la página
         if elem.get('url', '') and not 'magnet:' in elem['url'] and not '.torrent' in elem['url']:
             if finds.get('controls', {}).get('url_base64', True):
-                elem['url'] = self.convert_url_base64(elem['url'], self.host_torrent, referer=host_torrent_referer)
+                elem['url'] = self.convert_url_base64(elem['url'], self.host_torrent, referer=host_torrent_referer, item=item)
             if elem['url'] and not 'magnet:' in elem['url'] and not '.torrent' in elem['url']:
                 if host_torrent_referer: kwargs['referer'] = host_torrent_referer
                 torrent = self.create_soup(elem['url'], **kwargs)
@@ -789,7 +816,7 @@ class AlfaChannelHelper:
             try:                                                                # Guardamos la url ALTERNATIVA
                 elem['torrent_alt'] = item.emergency_urls[0][0] if not elem['url'].startswith('magnet') else elem['url']
                 if finds.get('controls', {}).get('url_base64', True):
-                    elem['torrent_alt'] = self.convert_url_base64(elem['torrent_alt'], self.host_torrent, referer=host_torrent_referer)
+                    elem['torrent_alt'] = self.convert_url_base64(elem['torrent_alt'], self.host_torrent, referer=host_torrent_referer, item=item)
             except Exception:
                 item_local.torrent_alt = ''
                 item.emergency_urls[0] = []
@@ -1100,15 +1127,35 @@ class AlfaChannelHelper:
 
             if json:
                 try:
-                    if DEBUG: logger.debug('Json[500] (%s/%s): %s' % (len(match) if isinstance(match, list) else 1, 
-                                                                      len(str(match)), str(match)[:500]))
+                    if DEBUG: logger.debug('Json[500] (%s/%s): "%s" / %s' % (len(match) if isinstance(match, list) else 1, 
+                                                                           len(str(match)), str(json), str(match)[:500]))
                     json_all_work = {}
                     json_all = jsontools.load(match)
                     if json_all:
                         match = []
-                        if 'DEFAULT' in str(json):
+                        if str(json) == 'DEFAULT':
                             json = {}
                             match = json_all
+                        elif str(json).endswith('DEFAULT'):
+                            key_org, key_des = str(json).split('|')
+                            key_org = key_org.split(',')
+                            match = json_all
+                            for key_org_item in key_org:
+                                key_org_item_alt = key_org_item.split('/')
+                                for key_org_alt in key_org_item_alt:
+                                    if not key_org_alt: continue
+                                    if '&' not in key_org_alt:
+                                        if match.get(key_org_alt, []):
+                                            match = match.get(key_org_alt, [])
+                                            break
+                                    else:
+                                        key_org_item_and = key_org_alt.split('&')
+                                        match_and = []
+                                        for key_org_and in key_org_item_and:
+                                            if not key_org_and: continue
+                                            if match.get(key_org_and, []):
+                                                match_and.extend(match.get(key_org_and, []))
+                                        match = match_and[:]
                         else:
                             json_match = {}
                             if json_match: json = {}
@@ -1148,7 +1195,6 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
     def list_all(self, item, data='', matches_post=None, postprocess=None, generictools=None, finds={}, **kwargs):
         logger.info()
-        from channels import filtertools
         from core import tmdb
 
         itemlist = list()
@@ -1380,7 +1426,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                     % (str(self.curr_page), str(self.last_page), str(page_factor), str(next_page_url), len(matches)))
 
             # Buscamos la última página
-            if self.last_page == 99999:                                              # Si es el valor inicial, buscamos
+            if self.last_page == 99999:                                         # Si es el valor inicial, buscamos
                 try:
                     self.last_page = int(self.parse_finds_dict(soup, finds_last_page, next_page=True, c_type=item.c_type).lstrip('#'))
                     if finds_controls.get('force_find_last_page') and isinstance(finds_controls['force_find_last_page'], list) \
@@ -1815,7 +1861,6 @@ class DictionaryAllChannel(AlfaChannelHelper):
     def seasons(self, item, data='', action="episodesxseason", matches_post=None, postprocess=None, 
                 seasons_search_post=None, generictools=True, seasons_list={}, finds={}, **kwargs):
         from lib.generictools import AH_post_tmdb_seasons, AH_find_videolab_status
-        from channels import filtertools
         from core import tmdb
 
         if not finds: finds = self.finds.copy()
@@ -1844,7 +1889,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         logger.info('Serie: %s; Seasons_search: %s' % (item.contentSerieName, finds_seasons_search))
 
-        if DEBUG: logger.debug('FINDS_seasons: %s; FINDS_season_num: %s; FINDS_season_num: %s' \
+        if DEBUG: logger.debug('FINDS_seasons: %s; FINDS_season_num: %s; FINDS_controls: %s' \
                                 % (finds_out, finds_season_num, finds_controls))
 
         item.title  = item.title.replace('(V)-' , '')
@@ -1852,7 +1897,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         host = finds_controls.get('host', self.host)
         self.doo_url = "%swp-admin/admin-ajax.php" % host
         host_referer = finds_controls.get('host_referer', host)
-        url_replace = self.url_replace = self.finds.get('url_replace', []) or self.url_replace
+        url_replace = self.url_replace = self.finds.get('url_replace', [])
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)
         post = item.post or kwargs.pop('post', None) or finds_controls.pop('post', None)
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
@@ -2046,7 +2091,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 continue
 
             elem['url'] = elem.get('url', item.url)
-            if url_base64: elem['url'] = self.convert_url_base64(elem['url'], self.host)
+            if url_base64: elem['url'] = self.convert_url_base64(elem['url'], self.host, item=item)
 
             if elem.get('thumbnail', ''): 
                 elem['thumbnail'] = elem['thumbnail'] if elem['thumbnail'].startswith('http') \
@@ -2099,6 +2144,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if elem.get('headers', None): new_item.headers = elem['headers']
             if elem.get('context', []): new_item.context.extend(elem['context'])
             if elem.get('broadcast', ''): new_item.broadcast = elem['broadcast']
+            if elem.get('info', None): new_item.info = elem['info']
             if elem.get('plot_extend', ''): new_item.infoLabels['plot_extend'] = elem['plot_extend']
             if 'plot_extend_show' in elem: new_item.plot_extend_show = elem['plot_extend_show']
             if finds_controls.get('mediatype', ''): new_item.contentType = finds_controls['mediatype']
@@ -2204,7 +2250,6 @@ class DictionaryAllChannel(AlfaChannelHelper):
                  generictools=False, episodes_list={}, finds={}, **kwargs):
         logger.info('Serie: %s; Season: %s/%s' % (item.contentSerieName, item.contentSeason, item.infoLabels['number_of_seasons']))
         from lib.generictools import AH_post_tmdb_episodios, AH_find_videolab_status
-        from channels import filtertools
         from core import tmdb
 
         if not finds: finds = self.finds.copy()
@@ -2239,7 +2284,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         host = finds_controls.get('host', self.host)
         self.doo_url = "%swp-admin/admin-ajax.php" % host
         host_referer = finds_controls.get('host_referer', host)
-        url_replace = self.url_replace = self.finds.get('url_replace', []) or self.url_replace
+        url_replace = self.url_replace = self.finds.get('url_replace', [])
         min_temp = finds_controls.get('min_temp', False)
         join_dup_episodes = finds_controls.get('join_dup_episodes', True)
 
@@ -2353,7 +2398,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
             if not elem.get('url', ''): continue
             if url_base64: 
-                elem['url'] = self.convert_url_base64(elem['url'], self.host)
+                elem['url'] = self.convert_url_base64(elem['url'], self.host, item=item)
             else:
                 elem['url'] = self.urljoin(self.host, elem['url'])
             elem['url'] = self.do_url_replace(elem['url'], url_replace)
@@ -2554,7 +2599,6 @@ class DictionaryAllChannel(AlfaChannelHelper):
             logger.info('Serie: %s; Season: %s: Episode: %s' % (item.contentSerieName, item.contentSeason, item.contentEpisodeNumber))
         if DEBUG: logger.debug('FINDS: %s' % finds)
         from lib.generictools import AH_post_tmdb_findvideos, AH_find_videolab_status
-        from channels import filtertools
         from core import tmdb
         import xbmc
 
@@ -2600,7 +2644,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         self.host_torrent = finds_controls.get('host_torrent', self.host)
         self.doo_url = "%swp-admin/admin-ajax.php" % self.host
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
-        url_replace = self.url_replace = self.finds.get('url_replace', []) or self.url_replace
+        url_replace = self.url_replace = self.finds.get('url_replace', [])
         manage_torrents = finds_controls.get('manage_torrents', True)
 
         filter_languages = config.get_setting('filter_languages', item.channel, default=0)
@@ -2698,6 +2742,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 del item.matches
             if matches_post and matches_findvideos:
                 matches, langs = matches_post(item, matches_findvideos, langs, response, **AHkwargs)
+            if not matches_post and not matches and matches_findvideos:
+                matches = matches_findvideos[:]
             if matches and AHkwargs.get('matches'):
                 item.matches = matches[:]
                 del AHkwargs['matches']
@@ -2784,7 +2830,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
                 if elem['url'].startswith('//'):
                     elem['url'] = 'https:%s' % elem['url']
-                if url_base64: elem['url'] = self.convert_url_base64(elem['url'], self.host_torrent, referer=host_torrent_referer)
+                if url_base64: elem['url'] = self.convert_url_base64(elem['url'], self.host_torrent, referer=host_torrent_referer, item=item)
 
                 if not 'title' in elem:
                     elem['title'] = 'torrent' if elem.get('server', '').lower() == 'torrent' else '%s'
@@ -2804,12 +2850,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         if not findvideos_proc: return results[0]
 
-        from channels import autoplay
-        from core import servertools
-
-        if btdig_in_use:
-            itemlist.append(item.clone(action="", size=999999 if item.contentType == 'movie' else 0, language=[''], 
-                            title="[COLOR blue] Enlaces (imprecisos) buscados en %s" % BTDIGG_LABEL))
+        if btdig_in_use and not self.httptools.TEST_ON_AIR:
+            itemlist_total.append(Item(channel=item.channel, action="", infoLabels=item.infoLabels, quality='', 
+                                       title="[COLOR blue] Enlaces (imprecisos) buscados en %s" % BTDIGG_LABEL))
         for lang, elem in results[0][1]:
             new_item = item.clone()
             
@@ -2834,6 +2877,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
             if elem.get('quality', ''):
                 new_item.quality = elem['quality']
+                if 'bluray' in new_item.quality.lower(): new_item.quality = new_item.quality.replace('-', ' ').replace('_', ' ')
                 for clean_org, clean_des in finds.get('quality_clean', []):
                     if clean_des is None:
                         if scrapertools.find_single_match(new_item.quality, clean_org):
@@ -2922,8 +2966,11 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     size = []
                     for it in itemlist:
                         size += [[it.size, it.title]]
+                        if not it.size and 'magnet' in new_item.torrent_info.lower(): it.size = 'Magnet'
                     logger.error('ERROR_SIZE: %s' % size)
                     logger.error(traceback.format_exc())
+                for it in itemlist:
+                    if not it.size and 'magnet' in new_item.torrent_info.lower(): it.size = 'Magnet'
                 if videolab_status:
                     # Llamamos al método para encontrar el estado del vídeo en la videoteca
                     itemlist = AH_find_videolab_status(item, itemlist, **AHkwargs)
@@ -2933,7 +2980,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             itemlist_total.extend(itemlist)
 
         # Requerido para AutoPlay
-        autoplay.start(itemlist_total, item)
+        autoplay.start(itemlist, item, user_server_list=[], user_quality_list=self.list_quality_tvshow if item.contentType != 'movie' else [])
 
         return itemlist_total
 
@@ -2961,6 +3008,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         finds_season_episode = finds.get('season_episode', {})
         finds_controls = finds.get('controls', {})
         profile = self.profile = finds_controls.get('profile', self.profile)
+        premium_skip = finds_controls.get('premium_skip', '')
 
         AHkwargs = {'url': item.url, 'soup': item.matches or {}, 'finds': finds, 'kwargs': kwargs, 'function': 'list_all_A', 
                     'function_alt': kwargs.get('function', '')}
@@ -3010,7 +3058,10 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)     # Timeout normal
         timeout_search = timeout * 2                                            # Timeout para búsquedas
 
-        host = finds_controls.get('host', self.host)
+        host = self.host = finds_controls.get('host', self.host)
+        if item.chanel:
+            host = self.host = config.get_setting("current_host", item.chanel, default=host)
+            self.canonical.update({'channel': item.chanel, 'host': self.host, 'host_alt': [self.host]})
         self.doo_url = "%swp-admin/admin-ajax.php" % host
         host_referer = finds_controls.get('host_referer', host)
         post = item.post or kwargs.pop('post', None) or finds_controls.pop('post', None)
@@ -3079,7 +3130,16 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                     elif elem.find(text=lambda text: isinstance(text, self.Comment) and 'hd' in text):
                                         elem_json['quality'] = 'HD'
                                     elem_json['premium'] = elem.find('i', class_='premiumIcon') \
-                                                             or elem.find('span', class_='ico-private') or ''
+                                                           or elem.find('span', class_='ico-private') or ''
+                                    if elem_json['premium'] and not isinstance(elem_json['premium'], str):
+                                        try:
+                                            premium = elem_json['premium'].get_text(strip=True)
+                                            if premium: elem_json['premium'] = premium
+                                        except Exception:
+                                            pass
+                                    if premium_skip and premium_skip in elem_json['premium']:
+                                        if DEBUG: logger.debug('PREMIUM-SKIP %s: %s' % (elem_json['premium'], elem_json['title']))
+                                        continue
                                     if elem.find('div', class_='videoDetailsBlock') \
                                                              and elem.find('div', class_='videoDetailsBlock').find('span', class_='views'):
                                         elem_json['views'] = elem.find('div', class_='videoDetailsBlock')\
@@ -3157,7 +3217,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
             finds = self.finds.copy()
             finds_controls = finds.get('controls', {})
             self.cnt_tot = self.cnt_tot or finds_controls.get('cnt_tot', 20)
-            host = finds_controls.get('host', self.host)
+            host = self.host = finds_controls.get('host', self.host)
             self.doo_url = "%swp-admin/admin-ajax.php" % host
             if AHkwargs.get('url') and AHkwargs['url'] != item.url: self.next_page_url = next_page_url = item.url
             next_page_url = self.next_page_url
@@ -3239,6 +3299,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                 new_item = Item()
                 new_item.infoLabels = item.infoLabels.copy()
                 if new_item.infoLabels['plot']: del new_item.infoLabels['plot']
+                if item.chanel: new_item.chanel = item.chanel
                 cnt_match += 1
 
                 new_item.channel = item.channel
@@ -3443,7 +3504,10 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)     # Timeout normal
         timeout_search = timeout * 2                                            # Timeout para búsquedas
 
-        host = finds_controls.get('host', self.host)
+        host = self.host = finds_controls.get('host', self.host)
+        if item.chanel:
+            host = self.host = config.get_setting("current_host", item.chanel, default=host)
+            self.canonical.update({'channel': item.chanel, 'host': self.host, 'host_alt': [self.host]})
         self.doo_url = "%swp-admin/admin-ajax.php" % host
         host_referer = finds_controls.get('host_referer', host)
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)
@@ -3514,13 +3578,29 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                             elif elem.find('div', class_='videos'):
                                 elem_json['cantidad'] = elem.find('div', class_='videos').get_text(strip=True)
                             elif elem.find(string=re.compile(r"(?i)videos|movies")):
-                                elem_json['cantidad'] = elem.find(string=re.compile(r"(?i)videos|movies")).strip()
-                                if not scrapertools.find_single_match(elem_json['cantidad'], "\d+"):
-                                     elem_json['cantidad'] = elem_json['cantidad'].parent.get_text(strip=True)
+                                elem_json['cantidad'] = elem.find(string=re.compile(r"(?i)videos|movies"))
+                                cantidad = elem_json['cantidad']
+                                try:
+                                    for x in range(5):
+                                        cantidad = elem_json['cantidad']
+                                        if scrapertools.find_single_match(str(elem_json['cantidad']), "\d+"):
+                                            elem_json['cantidad'] = scrapertools.find_single_match(str(elem_json['cantidad']), "(\d+)")
+                                            break
+                                        elem_json['cantidad'] = elem_json['cantidad'].parent
+                                    else:
+                                        elem_json['cantidad'] = ''
+                                        logger.error('ERROR en cantidad.parent: %s' % cantidad)
+                                except Exception:
+                                    elem_json['cantidad'] = ''
+                                    logger.error('ERROR en cantidad.parent: %s' % cantidad)
+                                    logger.error(elem)
+                                    logger.error(traceback.format_exc())
                             if not elem_json.get('cantidad') and elem.find(text=lambda text: isinstance(text, self.Comment) \
                                                              and 'videos' in text):
                                 elem_json['cantidad'] = self.do_soup(elem.find(text=lambda text: isinstance(text, self.Comment) \
                                                                      and 'videos' in text)).find(class_='videos').get_text(strip=True)
+                            if elem_json.get('cantidad'):
+                                elem_json['cantidad'] = scrapertools.find_single_match(elem_json['cantidad'], "(\d+)")
                             if elem.a:
                                 elem_json['title'] = elem.a.get('data-mxptext', '') or elem.a.get('title', '') \
                                                                                     or (elem.img.get('alt', '') if elem.img else '') \
@@ -3545,9 +3625,13 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                 elem_json['stime'] = stime
                             if finds.get('profile_labels', {}).get('section_cantidad'):
                                 cantidad = self.parse_finds_dict(elem, finds['profile_labels']['section_cantidad'])
+                                if not cantidad and elem.find(text=lambda text: isinstance(text, self.Comment) and 'videos' in text):
+                                    cantidad = self.do_soup(elem.find(text=lambda text: isinstance(text, self.Comment) and 'videos' in text))
+                                    cantidad = self.parse_finds_dict(cantidad, finds['profile_labels']['section_cantidad'])
                                 if cantidad: elem_json['cantidad'] = cantidad
 
                     except Exception:
+                        logger.error(elem)
                         logger.error(traceback.format_exc())
                     
                     if not elem_json.get('url', ''): continue
@@ -3577,6 +3661,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
             reverse = finds_controls.get('reverse', False)
             if AHkwargs.get('url') and AHkwargs['url'] != item.url: self.next_page_url = next_page_url = item.url
             next_page_url = self.next_page_url
+            host = self.host = finds_controls.get('host', self.host)
             host_referer = finds_controls.get('host_referer', host) or host_referer
             post = item.post or finds_controls.pop('post', None) or post
             headers = item.headers or finds_controls.get('headers', {}) or headers
@@ -3675,6 +3760,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                       thumbnail=elem.get('thumbnail', item.thumbnail)
                                       )
 
+                if item.chanel: new_item.chanel = item.chanel
                 if item.extra: new_item.extra = item.extra
                 if elem.get('extra', ''): new_item.extra = elem['extra']
                 if elem.get('plot', ''): new_item.contentPlot =  elem['plot']
@@ -3822,9 +3908,12 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
         forced_proxy_opt = finds_controls.get('forced_proxy_opt', None) or kwargs.pop('forced_proxy_opt', None)
         self.host_torrent = finds_controls.get('host_torrent', self.host)
+        if item.chanel:
+            self.host = self.host_torrent = config.get_setting("current_host", item.chanel, default=self.host_torrent)
+            self.canonical.update({'channel': item.chanel, 'host': self.host_torrent, 'host_alt': [self.host_torrent]})
         self.doo_url = "%swp-admin/admin-ajax.php" % self.host
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
-        url_replace = self.url_replace = self.finds.get('url_replace', []) or self.url_replace
+        url_replace = self.url_replace = self.finds.get('url_replace', [])
         manage_torrents = finds_controls.get('manage_torrents', True)
         
         url = self.do_url_replace(url, url_replace)
@@ -3918,7 +4007,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         # Refrescamos variables posiblemente actualizadas en "matches_post"
         finds = self.finds.copy()
         finds_controls = finds.get('controls', {})
-        self.host_torrent = finds_controls.get('host_torrent', self.host)
+        self.host_torrent = finds_controls.get('host_torrent', self.host_torrent)
         self.doo_url = "%swp-admin/admin-ajax.php" % self.host
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
         post = item.post or finds_controls.pop('post', None) or post
@@ -3948,7 +4037,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
 
                 if elem['url'].startswith('//'):
                     elem['url'] = 'https:%s' % elem['url']
-                if url_base64: elem['url'] = self.convert_url_base64(elem['url'], self.host_torrent, referer=host_torrent_referer)
+                if url_base64: elem['url'] = self.convert_url_base64(elem['url'], self.host_torrent, referer=host_torrent_referer, item=item)
 
                 if not 'title' in elem:
                     elem['title'] = 'torrent' if elem.get('server', '').lower() == 'torrent' else '%s'
@@ -3964,9 +4053,6 @@ class DictionaryAdultChannel(AlfaChannelHelper):
 
         if not findvideos_proc: return results[0]
 
-        from channels import autoplay
-        from core import servertools
-
         for lang, elem in results[0][1]:
             new_item = item.clone()
             
@@ -3979,6 +4065,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                 if 'NO' in elem['alive']:
                     continue
             
+            if item.chanel: new_item.chanel = item.chanel
             new_item.channel = elem.get('channel', item.channel)
             new_item.category = new_item.channel.capitalize()
             new_item.action = elem.get('action', 'play')
@@ -4047,7 +4134,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
             itemlist_total.extend(itemlist)
 
         # Requerido para AutoPlay
-        autoplay.start(itemlist_total, item)
+        autoplay.start(itemlist, item)
 
         return itemlist_total
 
@@ -4115,9 +4202,10 @@ class DooPlay(AlfaChannelHelper):
         self.doo_url = "%swp-admin/admin-ajax.php" % self.host
         self.forced_proxy_opt = forced_proxy_opt
         self.list_language = list_language
-        self.list_quality = self.list_quality_tvshow = list_quality or list_quality_tvshow
-        self.list_quality_movies = list_quality_movies
-        self.list_servers = list_servers
+        self.list_servers = list_servers or LIST_SERVERS
+        self.list_quality_movies = list_quality_movies or LIST_QUALITY_MOVIES
+        self.list_quality_tvshow = list_quality_tvshow or LIST_QUALITY_TVSHOW
+        self.list_quality = list_quality or self.list_quality_movies + self.list_quality_tvshow
         self.language = language
         self.idiomas = idiomas or IDIOMAS
         self.IDIOMAS_TMDB = finds.get('control', {}).get('IDIOMAS_TMDB', {}) or IDIOMAS_TMDB

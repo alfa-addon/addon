@@ -111,7 +111,7 @@ def monkey_patch_modules(item):
     ])
 
     if item.channel in modules:
-        item.module = item.channel
+        item.module = item.module or item.channel
 
     if item.module:
         if not item.channel:
@@ -302,6 +302,10 @@ def run(item=None):
                         (module_type["type"], module_name, module_file, os.path.exists(module_file), module))
                     return
 
+            if item.channel == "test" and item.contentChannel:
+                if item.parameters == "test_channel":
+                    getattr(module, item.action)(item.contentChannel)
+            
             # Calls redirection if Alfavorites findvideos, episodios, seasons
             if item.context and 'alfavorites' in str(item.context) \
                             and item.action in ['findvideos', 'episodios', 'seasons', 'play']:
