@@ -2742,6 +2742,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 del item.matches
             if matches_post and matches_findvideos:
                 matches, langs = matches_post(item, matches_findvideos, langs, response, **AHkwargs)
+            if not matches_post and not matches and matches_findvideos:
+                matches = matches_findvideos[:]
             if matches and AHkwargs.get('matches'):
                 item.matches = matches[:]
                 del AHkwargs['matches']
