@@ -11,6 +11,8 @@ from core import servertools
 from core.item import Item
 from channelselector import get_thumb
 import sys
+import re
+
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
@@ -152,18 +154,33 @@ def list_all(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle, _type, plot in matches:
         url = scrapedurl
         thumbnail = host+scrapedthumbnail
-        title = scrapedtitle
+        scrapedtitle = scrapertools.htmlparser(scrapedtitle) # htmlparser convierte los carateres HTML (&#038;, ...) a su equivalente utf-8
+        plot = scrapertools.htmlparser(plot)
+
         season = ''
-        if 'season' in scrapedtitle.lower():
-            season = scrapertools.find_single_match(scrapedtitle, 'season (\d+)')
-            scrapedtitle = scrapertools.find_single_match(scrapedtitle, '(.*?) season')
+
+        # El siguiente código hacía que algunos títulos quedasen vacios 
+        # ya que no se estaba comprobando que despues de 'season' vaya un numero.
+        # Ademas esta web usa la palabra 'Temporada' no 'season'.
+
+        # if 'season' in scrapedtitle.lower():
+            # season = scrapertools.find_single_match(scrapedtitle, 'season (\d+)')
+            # scrapedtitle = scrapertools.find_single_match(scrapedtitle, '(.*?) season')
+
+        # Reemplazo, aunque no parece que se esté mostrando la temporada en ninguna parte, 
+        # por lo que la segunda linea está comentada, para que así se siga mostrando al menos en el titulo
+        # pero dejo este reemplazo por si contentSeasonNumber sí se usase en algun caso. Lo ignoro.
+        seasonPattern = '\s+Temporada\s+(\d+)'
+        if re.search(seasonPattern, scrapedtitle):
+            season = scrapertools.find_single_match(scrapedtitle, seasonPattern)
+            # scrapedtitle = re.sub(seasonPattern, '', scrapedtitle)
 
         new_item = Item(
                     action = 'episodesxseason',
                     channel = item.channel,
                     plot = plot,
                     thumbnail = thumbnail,
-                    title = title,
+                    title = scrapedtitle,
                     type = _type,
                     url = url
                 )
@@ -181,7 +198,16 @@ def list_all(item):
     # Paginacion
     next_patron = r'<a class="page-link" href="([^"]+)" rel="next">'
     next_page = scrapertools.find_single_match(data, next_patron)
-
+    # La web convierte el 'path' de la url de paginacion en caracteres HTML,
+    # lo cual hace que el parametro de paginación en la url no sea el esperado (amp;page en lugar de page)
+    # por ejemplo, se espera:
+    # https://www.anime-jl.net/animes?q=español&page=2
+    # pero, sin usar htmlparser, se obtiene:
+    # https://www.anime-jl.net/animes?q=espa%C3%B1ol&amp;page=2
+    # mientras que el navegador opera sin problema, kodi no parece interpretarlo correctamente.
+    next_page = scrapertools.htmlparser(next_page)
+    # logger.info(next_page, True)
+    
     if next_page != '':
         itemlist.append(
             Item(
@@ -252,7 +278,7 @@ def episodesxseason(item):
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
+    texto = urllib.quote_plus(texto, "") #https://docs.python.org/2/library/urllib.html#urllib.quote_plus (escapa los caracteres de la busqueda para usarlos en la URL)
     item.url = item.url + texto
 
     try:
@@ -262,7 +288,8 @@ def search(item, texto):
             return []
 
     except:
-        import sys
+        # ya se esta importando en la cabecera
+        # import sys
 
         for line in sys.exc_info():
             logger.error("%s" % line)
