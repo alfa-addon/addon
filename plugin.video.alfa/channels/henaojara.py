@@ -14,9 +14,11 @@ from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
 if PY3:
+    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
     from urllib.parse import urlparse
     from urllib.parse import parse_qs
 else:
+    import urllib
     from urlparse import urlparse
     from urlparse import parse_qs
 
@@ -95,13 +97,13 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
-    
+
     itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host, action='list_all',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
-    
+
     itemlist.append(Item(channel=item.channel, title='Series', url=host + 'ver/category/categorias/', action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
-    
+
     itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'ver/category/pelicula/', action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
@@ -122,12 +124,12 @@ def categories_menu(item):
     logger.info()
 
     new_soup = AlfaChannel.create_soup(item.url, **kwargs)
-    
+
     new_soup = new_soup.find(id="categories-3")
     resultset = new_soup.find_all("li") if new_soup else []
 
     itemlist = list()
-    
+
     for elem in resultset:
         title = elem.a.text
         url = elem.a["href"]
@@ -144,9 +146,9 @@ def section(item):
 
 
 def newest(categoria):
-    
+
     itemlist = []
-    
+
     if categoria == 'anime':
         itemlist = list_all(Item(url=host,c_type='episodios'))
     return itemlist
@@ -154,9 +156,9 @@ def newest(categoria):
 
 def list_all(item):
     logger.info()
-        
+
     findS = finds.copy()
-    
+
     if item.c_type == 'episodios':
         findS['find'] = dict([('find', [{'tag': ['ul'], 'class': ['MovieList Rows BX B06 C04 E03 NoLmtxt Episodes']}]), 
                               ('find_all', [{'tag': ['li']}])])
@@ -168,7 +170,6 @@ def list_all_matches(item, matches_int, **AHkwargs):
     logger.info()
 
     matches = []
-    findS = AHkwargs.get('finds', finds)
 
     for elem in matches_int:
         elem_json = {}
@@ -210,7 +211,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
             if item.peliculas == 'peliculas' and elem_json['mediatype'] == 'tvshow':
                 continue
-            # logger.info(item.c_type + ', ' + elem_json['mediatype'], True)
+
             thumbnail = elem.find("noscript").find("img").get("src", "")
             if not thumbnail.startswith("https"):
                 thumbnail = "https:%s" % thumbnail
@@ -225,7 +226,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['language'] = lang
             if elem.find("div", class_=["Description"]): 
                 elem_json['plot'] = elem.find("div", class_=["Description"]).p.get_text(strip=True)
-        
+
         except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -246,11 +247,11 @@ def seasons(item):
 
 def episodios(item):
     logger.info()
-    
+
     itemlist = []
-    
+
     templist = seasons(item)
-    
+
     for tempitem in templist:
         itemlist += episodesxseason(tempitem)
 
@@ -268,17 +269,12 @@ def episodesxseason(item, **AHkwargs):
 
 def episodesxseason_matches(item, matches_int, **AHkwargs):
     logger.info()
-    
+
     matches = []
-    findS = AHkwargs.get('finds', finds)
-    
-    # logger.info(item, True)
 
     for elem_season in matches_int:
         if elem_season.find("div", class_="AA-Season").span.get_text(strip=True) != str(item.contentSeason): continue
-        # logger.info('Season : ' + str(item.contentSeason), True)
-        # logger.info('Season Check: ' + elem_season.find("div", class_="AA-Season").span.get_text(strip=True), True)
-        
+
         try:
             epi_list = elem_season.find("div", class_="TPTblCn")
         except Exception:
@@ -291,15 +287,13 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             try:
                 info = elem.find("td", class_="MvTbTtl")
                 title = info.a.get_text(strip=True)
-                #title = scrapertools.remove_htmltags(title)
                 lang, c_title = clear_title(title)
                 nextChapterDateRegex = r'\s*-\s*(Proximo\s*Capitulo\s*\d+-[A-Za-z]+-\d+)'
-                # nextChapterDate = '' #Quiza se pueda mostrar en alguna parte mas adelante
                 if re.search(nextChapterDateRegex, c_title):
                     nextChapterDate = scrapertools.find_single_match(c_title, nextChapterDateRegex)
                     c_title = re.sub(nextChapterDateRegex, '', c_title)
                     elem_json['plot_extend'] = '[COLOR red][' + nextChapterDate + '][/COLOR]'
-                
+
                 elem_json['title'] = c_title
                 elem_json['episode'] = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
                 elem_json['url'] = info.a.get("href", "")
@@ -324,11 +318,10 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
 def findvideos(item):
     logger.info()
-    
-    # logger.info(item, True)
+
     if item.contentType == 'movie':
         return AlfaChannel.seasons(item, **kwargs)
-    
+
     kwargs['matches_post_episodes'] = episodesxseason_matches
 
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
@@ -337,10 +330,8 @@ def findvideos(item):
 
 def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     logger.info()
-    # logger.info(item, True)
+
     matches = []
-    findS = AHkwargs.get('finds', finds)
-    servers = {'fcom': 'fembed', 'dood': 'doodstream', 'hqq': '', 'youtube': '', 'saruch': '', 'supervideo': '', 'aparat': 'aparatcam'}
 
     for elem in matches_int:
         elem_json = {}
@@ -366,14 +357,14 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 continue
 
             iframeUrl = iframe.get('src', '')
-            
+
             if iframeUrl != "":
                 iframeUrl = check_hjstream(iframeUrl)
                 uriData = urlparse(iframeUrl)
-                logger.info(uriData.hostname, True)
-                if re.search(r'embedwish|hqq|netuplayer|krakenfiles', uriData.hostname, re.IGNORECASE):
+
+                if re.search(r'embedwish|hqq|netuplayer|krakenfiles|hj.henaojara.com', uriData.hostname, re.IGNORECASE):
                     continue
-                # logger.info(iframeUrl, True)
+
                 elem_json['url'] = iframeUrl
                 elem_json['title'] = '%s'
                 elem_json['language'] = item.language
@@ -401,7 +392,7 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
 
     try:
-        texto = texto.replace(" ", "+")
+        texto = urllib.quote_plus(texto, "") #https://docs.python.org/2/library/urllib.html#urllib.quote_plus (escapa los caracteres de la busqueda para usarlos en la URL)
         item.url = item.url + "?s=" + texto
 
         if texto:
@@ -447,10 +438,9 @@ def clear_title(title):
         lang = ['Latino', 'Castellano']
     else:
         lang = 'VOSE'
-    
+
     title = re.sub(r'^[P|p]el[i|í]cula |HD|Español Castellano|Sub Español|Español Latino|ova\s+\d+:|OVA\s+\d+|\:|\((.*?)\)| \s19\d{2}| \s20\d{2}', '', title)
     title = re.sub(r'\s:', ':', title)
     title = " ".join( title.split() )
 
     return lang, title
-    
