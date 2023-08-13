@@ -65,7 +65,8 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList']}]),
          'episode_url': '', 
          'episodes': {'find_all': [{'tag': ['div'], 'class': ['AABox']}]},
          'episode_num': [], 
-         'episode_clean': [['(?i)\s*-\s*proximo\s*capitulo(?:\:|)\s*\d+-[A-Za-z]+-\d+', '']], 
+         'episode_clean': [['(?i)\s*-\s*proximo\s*capitulo(?:\:|)\s*\d+-[A-Za-z]+-\d+', ''],
+                           ['(?i)HD|Español Castellano|Sub Español|Español Latino', '']], 
          'plot': {}, 
          'findvideos': {'find_all': [{'tag': ['div'], 'class': ['TPlayerTb']}]},
          'title_clean': [['(?i)HD|Español Castellano|Sub Español|Español Latino|ova\s+\d+\:|OVA\s+\d+|\:|\((.*?)\)|\s19\d{2}|\s20\d{2}', ''],
@@ -154,7 +155,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['mediatype'] = 'episode'
 
             elem_json['title'] = elem.find("h3", class_="Title").get_text(strip=True)
-            elem_json['language'] = get_lang_from_title(elem_json['title'])
+            elem_json['language'] = get_lang_from_str(elem_json['title'])
 
             seasonPattern = '\s+Temporada\s+(\d+)'
             if re.search(seasonPattern, elem_json['title']):
@@ -331,7 +332,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
                 elem_json['url'] = iframeUrl
                 elem_json['title'] = '%s'
-                elem_json['language'] = item.language
+                elem_json['language'] = item.language if item.contentChannel != 'videolibrary' else get_lang_from_str(item.url) #cuando lees desde la videoteca el lenguaje en item viene vacio
                 elem_json['quality'] = 'HD'
 
             if not elem_json.get('url'): continue
@@ -426,13 +427,13 @@ def check_hjstream(url):
 
     return url
 
-def get_lang_from_title(title):
+def get_lang_from_str(string):
 
-    if 'latino' in title.lower():
+    if 'latino' in string.lower():
         lang = 'Latino'
-    elif 'castellano' in title.lower():
+    elif 'castellano' in string.lower():
         lang = 'Castellano'
-    elif 'audio español' in title.lower():
+    elif 'audio español' in string.lower():
         lang = ['Latino', 'Castellano']
     else:
         lang = 'VOSE'
