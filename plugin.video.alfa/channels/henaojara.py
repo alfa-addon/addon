@@ -65,11 +65,10 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList']}]),
          'episode_url': '', 
          'episodes': {'find_all': [{'tag': ['div'], 'class': ['AABox']}]},
          'episode_num': [], 
-         'episode_clean': [], 
+         'episode_clean': [['(?i)\s*-\s*proximo\s*capitulo(?:\:|)\s*\d+-[A-Za-z]+-\d+', '']], 
          'plot': {}, 
          'findvideos': {'find_all': [{'tag': ['div'], 'class': ['TPlayerTb']}]},
-         'title_clean': [['(?i)\s*-\s*(Proximo\s*Capitulo\s*\d+-[A-Za-z]+-\d+)', ''],
-                         ['(?i)HD|Español Castellano|Sub Español|Español Latino|ova\s+\d+\:|OVA\s+\d+|\:|\((.*?)\)|\s19\d{2}|\s20\d{2}', ''],
+         'title_clean': [['(?i)HD|Español Castellano|Sub Español|Español Latino|ova\s+\d+\:|OVA\s+\d+|\:|\((.*?)\)|\s19\d{2}|\s20\d{2}', ''],
                          ['(?i)\s*Temporada\s*\d+', '']],
          'quality_clean': [],
          'language_clean': [], 
@@ -240,6 +239,11 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
+    
+    # Asi lee los datos correctos de TMDB
+    titleSeason = item.contentSeason
+    if item.contentSeason == 1:
+        titleSeason = get_title_season(item.url)
 
     for elem_season in matches_int:
         if elem_season.find("div", class_="AA-Season").span.get_text(strip=True) != str(item.contentSeason): continue
@@ -251,15 +255,14 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
         for elem in epi_list.find_all("tr"):
             elem_json = {}
-            logger.error(elem)
+            # logger.error(elem)
 
             try:
                 info = elem.find("td", class_="MvTbTtl")
                 elem_json['title'] = info.a.get_text(strip=True)
-
                 elem_json['episode'] = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
                 elem_json['url'] = info.a.get("href", "")
-                elem_json['season'] = item.contentSeason
+                elem_json['season'] = titleSeason
 
                 try:
                     elem_json['thumbnail'] = elem.find(["noscript", "span"]).find("img").get("src", "")
@@ -273,12 +276,6 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
             if not elem_json.get('url', ''): 
                 continue
-            
-            # Asi lee los datos correctos de TMDB
-            if elem_json['season'] == 1:
-                titleSeason = get_title_season(item.url)
-                if titleSeason != elem_json['season']:
-                    elem_json['season'] = titleSeason
 
             matches.append(elem_json.copy())
 
