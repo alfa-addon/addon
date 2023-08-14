@@ -162,7 +162,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
         try:
             if item.c_type == 'episodios':
-                logger.error(elem)
+                # logger.error(elem)
                 url = elem.a.get('href', '')
                 try:
                     elem_json['season'] = get_title_season(url)
@@ -181,10 +181,10 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 
                 seasonPattern = '(?i)\s+(?:temporada|season)\s+(\d+)'
                 if re.search(seasonPattern, elem_json['title']):
-                    season = int(scrapertools.find_single_match(elem_json['title'], seasonPattern))
-                    if season > 1:
+                    elem_json['season'] = int(scrapertools.find_single_match(elem_json['title'], seasonPattern))
+                    if elem_json['season'] > 1:
                         elem_json['title_subs'] = [' [COLOR %s][B]%s[/B][/COLOR] ' \
-                                                  % (AlfaChannel.color_setting.get('movies', 'white'), 'Temporada %s' % season)]
+                                                  % (AlfaChannel.color_setting.get('movies', 'white'), 'Temporada %s' % elem_json['season'])]
 
                 if item.c_type == 'series' and elem_json['mediatype'] == 'movie':
                     continue
@@ -249,8 +249,9 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     findS = AHkwargs.get('finds', finds)
 
     # Asi lee los datos correctos de TMDB
-    titleSeason = get_title_season(item.url)
-
+    titleSeason = item.contentSeason if item.contentSeason != 1 else get_title_season(item.url)
+    
+    # logger.error(item)
     for elem in matches_int:
         episodes = scrapertools.find_multiple_matches(elem.get_text(strip=True), '\[(\d+),"([^"]+)","([^"]+)",(?:"(.*?)"|)\]')
         if episodes:
