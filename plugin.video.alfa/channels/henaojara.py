@@ -34,8 +34,8 @@ host = canonical['host'] or canonical['host_alt'][0]
 timeout = 15
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
-movie_path = '/ver/category/pelicula'
-tv_path = '/ver/category/categorias'
+movie_path = 'ver/category/pelicula/'
+tv_path = 'ver/category/categorias/'
 language = []
 url_replace = []
 
@@ -56,6 +56,7 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList']}]),
          'year': {}, 
          'season_episode': {}, 
          'seasons': {'find_all': [{'tag': ['div'], 'class': ['AABox']}]},
+         #'season_num': dict([('find', [{'tag': ['a'], 'class': ['MvTbImg'], '@ARG': 'href', '@TEXT': '(?i)temporada-(\d+)-'}])]),
          'season_num': dict([('find', [{'tag': ['div'], 'class': ['AA-Season']}, 
                                        {'tag': ['span']}]), 
                              ('get_text', [{'tag': '', '@STRIP': True}])]),
@@ -65,7 +66,7 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList']}]),
          'episode_url': '', 
          'episodes': {'find_all': [{'tag': ['div'], 'class': ['AABox']}]},
          'episode_num': [], 
-         'episode_clean': [['(?i)\s*-\s*proximo\s*capitulo(?:\:|)\s*\d+-[A-Za-z]+-\d+', ''],
+         'episode_clean': [['(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)', ''],
                            ['(?i)HD|Español Castellano|Sub Español|Español Latino', '']], 
          'plot': {}, 
          'findvideos': {'find_all': [{'tag': ['div'], 'class': ['TPlayerTb']}]},
@@ -94,8 +95,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host, action='list_all',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
 
-    itemlist.append(Item(channel=item.channel, title='Estrenos', url=host + 'ver/category/estrenos/', action='list_all',
-                         thumbnail=get_thumb('premieres', auto=True), extra='estrenos'))
+    itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host, action='list_all',
+                         thumbnail=get_thumb('newest', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title='Series', url=host + 'ver/category/categorias/', action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
@@ -127,6 +128,10 @@ def list_all(item):
 
     findS = finds.copy()
 
+    if item.c_type == 'episodios':
+        findS['find'] = dict([('find', [{'tag': ['ul'], 'class': ['MovieList Rows BX B06 C04 E03 NoLmtxt Episodes']}]), 
+                              ('find_all', [{'tag': ['li']}])])
+
     return AlfaChannel.list_all(item, matches_post=list_all_matches, generictools=True, finds=findS, **kwargs)
 
 
@@ -154,15 +159,23 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     elem_json['episode'] = 1
                 elem_json['mediatype'] = 'episode'
 
+                nextChapterDateRegex = r'(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)'
+                proximo = elem.find('figcaption').get_text(strip=True)
+                if re.search(nextChapterDateRegex, proximo):
+                    nextChapterDate = scrapertools.find_single_match(proximo, nextChapterDateRegex)
+                    elem_json['next_episode_air_date'] = nextChapterDate
+
             elem_json['title'] = elem.find("h3", class_="Title").get_text(strip=True)
             elem_json['language'] = get_lang_from_str(elem_json['title'])
+            """ alternativamente mira: elem_json['language'] = '*%s' % elem_json['title'] AH busca el el idioma o la calidad si lo precedes con '*' """                                                                                          
 
-            seasonPattern = '\s+Temporada\s+(\d+)'
-            if re.search(seasonPattern, elem_json['title']):
-                season = int(scrapertools.find_single_match(elem_json['title'], seasonPattern))
-                if season > 1:
-                    elem_json['season'] = season
-                    elem_json['mediatype'] = 'season'
+            seasonPattern = '(?i)\s*Temporada\s*(\d+)'
+            temporada = elem.find("span", class_="Year").get_text(strip=True) if elem.find("span", class_="Year") else elem_json['title']
+            if re.search(seasonPattern, temporada):
+                elem_json['season'] = int(scrapertools.find_single_match(temporada, seasonPattern))
+                if elem_json['season'] > 1:
+                    elem_json['title_subs'] = [' [COLOR %s][B]%s[/B][/COLOR] ' \
+                                              % (AlfaChannel.color_setting.get('movies', 'white'), 'Temporada %s' % elem_json['season'])]
 
             elem_json['url'] = elem.find("article", class_="TPost C").a.get('href', '')
 
@@ -182,7 +195,10 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if elem_json['mediatype'] == 'movie':
                 elem_json['action'] = 'seasons'
 
-            elem_json['thumbnail'] = elem.find("noscript").find("img").get("src", "")
+            try:
+                elem_json['thumbnail'] = elem.find(["noscript", "span"]).find("img").get("src", "")
+            except Exception:
+                pass
 
             try:
                 elem_json['year'] = elem.find("span", class_="Date AAIco-date_range").get_text(strip=True)
@@ -242,12 +258,10 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     findS = AHkwargs.get('finds', finds)
     
     # Asi lee los datos correctos de TMDB
-    titleSeason = item.contentSeason
-    if item.contentSeason == 1:
-        titleSeason = get_title_season(item.url)
+    titleSeason = item.contentSeason if item.contentSeason != 1 else get_title_season(item.url)
 
     for elem_season in matches_int:
-        if elem_season.find("div", class_="AA-Season").span.get_text(strip=True) != str(item.contentSeason): continue
+        if (AlfaChannel.parse_finds_dict(elem_season, findS['season_num']) or '1') != str(item.contentSeason): continue
 
         try:
             epi_list = elem_season.find("div", class_="TPTblCn")
@@ -264,6 +278,11 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                 elem_json['episode'] = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
                 elem_json['url'] = info.a.get("href", "")
                 elem_json['season'] = titleSeason
+                
+                nextChapterDateRegex = r'(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)'
+                if re.search(nextChapterDateRegex, elem_json['title']):
+                    nextChapterDate = scrapertools.find_single_match(elem_json['title'], nextChapterDateRegex)
+                    elem_json['next_episode_air_date'] = nextChapterDate
 
                 try:
                     elem_json['thumbnail'] = elem.find(["noscript", "span"]).find("img").get("src", "")
@@ -332,7 +351,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
                 elem_json['url'] = iframeUrl
                 elem_json['title'] = '%s'
-                elem_json['language'] = item.language if item.contentChannel != 'videolibrary' else get_lang_from_str(item.url) #cuando lees desde la videoteca el lenguaje en item viene vacio
+                elem_json['language'] = item.language
                 elem_json['quality'] = 'HD'
 
             if not elem_json.get('url'): continue
@@ -442,15 +461,13 @@ def get_lang_from_str(string):
 
 # Algunas series tienen la temporada en el titulo, lo cual hace que TMDB devuelva los datos incorrectos
 # Ya que por defecto la temporada se obtiene de otro lado, esto crea una ambigüedad.
-# Esta funcion se usa para extraer el numero de temporada correcto del titulo
+# Esta funcion se usa para extraer el numero de temporada correcto del titulo en la url
 def get_title_season(url):
     logger.info()
 
-    page = AlfaChannel.create_soup(url, hide_infobox=True, **kwargs)
-    title = page.find("h1", class_="Title").get_text(strip=True)
     season = 1
-    seasonPattern = '\s+Temporada\s+(\d+)'
-    if re.search(seasonPattern, title):
-        season = int(scrapertools.find_single_match(title, seasonPattern))
+    seasonPattern = '(?i)temporada-(\d+)-'
+    if re.search(seasonPattern, url):
+        season = int(scrapertools.find_single_match(url, seasonPattern))
 
     return season
