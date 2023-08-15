@@ -55,23 +55,15 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList']}]),
                             ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}])]),
          'year': {}, 
          'season_episode': {}, 
-         #'seasons': {'find_all': [{'tag': ['div'], 'class': ['AABox']}]},
-         'seasons': dict([('find', [{'tag': ['div'], 'class': ['AABox', 'snslst']}]),
-                          ('find_all', [{'tag': ['div', 'a'], 'class': ['AA-Season', 'STPb']}])]),
-         'season_num': dict([('find_previous', [{'tag': ['div'], 'class': ['AABox']}]), 
-                             ('find', [{'tag': ['a'], 'class': ['MvTbImg'], '@ARG': 'href', '@TEXT': '(?i)temporada-(\d+)-'}])]),
-         #'season_num': {'get_text': [{'tag': '|', '@STRIP': True, '@POS': [1], '@TEXT': '(\d+)'}]},
-         #'season_num': dict([('find', [{'tag': ['div'], 'class': ['AA-Season']}, 
-         #                              {'tag': ['span']}]), 
-         #                    ('get_text', [{'tag': '', '@STRIP': True}])]),
+         'seasons': {'find_all': [{'tagOR': ['div'], 'class': ['AA-Season']},
+                                  {'tag': ['a'], 'class': ['STPb']}]},
+         'season_num': dict([('find', [{'tag': ['span']}]), 
+                             ('get_text', [{'tag': '', '@STRIP': True}])]),
          'seasons_search_num_rgx': '', 
          'seasons_search_qty_rgx': '', 
-         #'season_url': host, 
          'episode_url': '', 
          'episodes': dict([('find', [{'tag': ['div'], 'class': ['TPTblCn']}]),
                            ('find_all', [{'tag': ['tr']}])]),
-         #'episodes': {'find_all': [{'tag': ['div'], 'class': ['AABox', 'TPTblCn']}]},
-         #'episodes': {'find_all': [{'tag': ['div'], 'class': ['AABox']}]},
          'episode_num': [], 
          'episode_clean': [['(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)', ''],
                            ['(?i)HD|Español Castellano|Sub Español|Español Latino', '']], 
@@ -177,9 +169,9 @@ def list_all_matches(item, matches_int, **AHkwargs):
             """ alternativamente mira: elem_json['language'] = '*%s' % elem_json['title'] AH busca el el idioma o la calidad si lo precedes con '*' """                                                                                          
 
             seasonPattern = '(?i)\s*Temporada\s*(\d+)'
-            temporada = elem.find("span", class_="Year").get_text(strip=True) if elem.find("span", class_="Year") else elem_json['title']
-            if re.search(seasonPattern, temporada):
-                elem_json['season'] = int(scrapertools.find_single_match(temporada, seasonPattern))
+            # temporada = elem.find("span", class_="Year").get_text(strip=True) if elem.find("span", class_="Year") else elem_json['title']
+            if re.search(seasonPattern, elem_json['title']):
+                elem_json['season'] = int(scrapertools.find_single_match(elem_json['title'], seasonPattern))
                 if elem_json['season'] > 1:
                     elem_json['title_subs'] = [' [COLOR %s][B]%s[/B][/COLOR] ' \
                                               % (AlfaChannel.color_setting.get('movies', 'white'), 'Temporada %s' % elem_json['season'])]
@@ -266,10 +258,9 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     soup = AHkwargs.get('soup', {})
     
     # Asi lee los datos correctos de TMDB
-    if matches_int:
-        titleSeason = get_title_season(matches_int[0].a.get("href", ""), soup)
-        if titleSeason != item.contentSeason:
-            return matches
+    titleSeason = item.contentSeason
+    if matches_int and titleSeason == 1:
+        titleSeason = get_title_season(item.url, soup)
 
     for elem in matches_int:
         elem_json = {}
