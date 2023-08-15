@@ -59,12 +59,14 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['ListAnimes']}]),
          'seasons_search_qty_rgx': '', 
          'season_url': host, 
          'episode_url': '', 
-         'episodes': {'find_all': [{'tag': ['script']}]},
+         'episodes': dict([('find', [{'tag': ['script'], 'string': re.compile('var\s*episodes\s*=\s*\[')}]),
+                           ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': 'var\s*episodes\s*=\s*([^;]+);', '@EVAL': True}])]),
          'episode_num': [], 
          'episode_clean': [['(?i)\s*-\s*proximo\s*capitulo(?:\:|)\s*\d+-[A-Za-z]+-\d+', ''],
                            ['(?i)HD|Español Castellano|Sub Español|Español Latino', '']], 
          'plot': {}, 
-         'findvideos': {'find_all': [{'tag': ['script']}]},
+         'findvideos': dict([('find', [{'tag': ['script'], 'string': re.compile('var\s*video \s*=\s*\[')}]),
+                             ('get_text', [{'tag': '', '@STRIP': True, '@TEXT_M': "video\[\d+\]\s*=\s*'([^']+)'", '@DO_SOUP': True}])]),
          'title_clean': [['(?i)Español|Latino', ''],
                          ['(?i)\s*(?:temporada|season)\s*\d+', '']],
          'quality_clean': [],
@@ -136,6 +138,7 @@ def section_matches(item, matches_int, **AHkwargs):
         matches.append(elem_json.copy())
     
     return matches
+
 
 def list_all(item):
     logger.info()
@@ -247,29 +250,41 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
+    soup = AHkwargs.get('soup', {})
 
     # Asi lee los datos correctos de TMDB
-    titleSeason = item.contentSeason if item.contentSeason != 1 else get_title_season(item.url)
+    titleSeason = get_title_season(soup.find('script', string=re.compile('var\s*anime_info\s*=\s*\[')).get_text(strip=True))
+    if titleSeason != item.contentSeason:
+        return matches
     
     # logger.error(item)
-    for elem in matches_int:
-        episodes = scrapertools.find_multiple_matches(elem.get_text(strip=True), '\[(\d+),"([^"]+)","([^"]+)",(?:"(.*?)"|)\]')
-        if episodes:
-            for episode, url, thumbnail, movie_data in episodes:
-                elem_json = {}
-                if item.contentType == 'movie':
-                    index , language = movie_data.split('|')
-                    episode = scrapertools.find_single_match(index, 'Película\s*(\d+)') or '1'
-                    elem_json['title'] = 'Película %s' % episode
-                    elem_json['episode'] = episode
-                    elem_json['language'] = language.strip()
-                else:
-                    elem_json['title'] = 'Episodio %s' % episode
-                    elem_json['episode'] = episode
-                elem_json['url'] = "%s/%s" % (item.url, url)
-                elem_json['season'] = titleSeason
-                elem_json['thumbnail'] = thumbnail
-                matches.append(elem_json.copy())
+    for x, (episode, url, thumbnail, movie_data) in enumerate(matches_int):
+        elem_json = {}
+        # logger.error(matches_int[x])
+        
+        try:
+            if item.contentType == 'movie':
+                index , language = movie_data.split('|')
+                episode = scrapertools.find_single_match(index, 'Película\s*(\d+)') or '1'
+                elem_json['title'] = 'Película %s' % episode
+                elem_json['episode'] = episode
+                elem_json['language'] = language.strip()
+            else:
+                elem_json['title'] = 'Episodio %s' % episode
+                elem_json['episode'] = episode
+            elem_json['url'] = "%s/%s" % (item.url, url)
+            elem_json['season'] = titleSeason
+            elem_json['thumbnail'] = thumbnail
+        
+        except Exception:
+            logger.error(matches_int[x])
+            logger.error(traceback.format_exc())
+            continue
+
+        if not elem_json.get('url', ''): 
+            continue
+
+        matches.append(elem_json.copy())
 
     return matches
 
@@ -290,30 +305,28 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     findS = AHkwargs.get('finds', finds)
 
     for elem in matches_int:
+        elem_json = {}
+        # logger.error(elem)
+
         try:
-            videos = scrapertools.find_multiple_matches(elem.get_text(strip=True), 'video\[\d+\]\s*=\s*\'<iframe.*?src="([^"]+)"')
-            if videos:
-                # logger.info(videos, True)
-                for url in videos:
-                    elem_json = {}
+            elem_json['url'] = elem.find('iframe').get('src', '')
 
-                    uriData = AlfaChannel.urlparse(url)
+            if re.search(r'embedwish|hqq|netuplayer|krakenfiles', elem_json['url'], re.IGNORECASE):
+                continue
 
-                    if re.search(r'embedwish|hqq|netuplayer|krakenfiles', uriData.hostname, re.IGNORECASE):
-                        continue
-
-                    elem_json['url'] = url
-                    elem_json['title'] = '%s'
-                    elem_json['language'] = item.language
-                    elem_json['quality'] = 'HD'
-                    matches.append(elem_json.copy())
-
+            elem_json['title'] = '%s'
+            elem_json['language'] = item.language
+            elem_json['quality'] = 'HD'
+            
+            matches.append(elem_json.copy())
+        
         except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
             continue
 
     return matches, langs
+
 
 def actualizar_titulos(item):
     logger.info()
@@ -376,6 +389,7 @@ def newest(categoria, **AHkwargs):
 
     return itemlist
 
+
 def get_lang_from_str(string):
 
     if 'latino' in string.lower():
@@ -394,7 +408,8 @@ def get_title_season(url):
     logger.info()
 
     season = 1
-    seasonPattern = '(?i)(?:temporada|season)-(\d+)'
+    seasonPattern = '(?i)temporada(?:-|\s*)(\d+)-?'
+
     if re.search(seasonPattern, url):
         season = int(scrapertools.find_single_match(url, seasonPattern))
 

@@ -55,16 +55,23 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList']}]),
                             ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}])]),
          'year': {}, 
          'season_episode': {}, 
-         'seasons': {'find_all': [{'tag': ['div'], 'class': ['AABox']}]},
-         #'season_num': dict([('find', [{'tag': ['a'], 'class': ['MvTbImg'], '@ARG': 'href', '@TEXT': '(?i)temporada-(\d+)-'}])]),
-         'season_num': dict([('find', [{'tag': ['div'], 'class': ['AA-Season']}, 
-                                       {'tag': ['span']}]), 
-                             ('get_text', [{'tag': '', '@STRIP': True}])]),
+         #'seasons': {'find_all': [{'tag': ['div'], 'class': ['AABox']}]},
+         'seasons': dict([('find', [{'tag': ['div'], 'class': ['AABox', 'snslst']}]),
+                          ('find_all', [{'tag': ['div', 'a'], 'class': ['AA-Season', 'STPb']}])]),
+         'season_num': dict([('find_previous', [{'tag': ['div'], 'class': ['AABox']}]), 
+                             ('find', [{'tag': ['a'], 'class': ['MvTbImg'], '@ARG': 'href', '@TEXT': '(?i)temporada-(\d+)-'}])]),
+         #'season_num': {'get_text': [{'tag': '|', '@STRIP': True, '@POS': [1], '@TEXT': '(\d+)'}]},
+         #'season_num': dict([('find', [{'tag': ['div'], 'class': ['AA-Season']}, 
+         #                              {'tag': ['span']}]), 
+         #                    ('get_text', [{'tag': '', '@STRIP': True}])]),
          'seasons_search_num_rgx': '', 
          'seasons_search_qty_rgx': '', 
-         'season_url': host, 
+         #'season_url': host, 
          'episode_url': '', 
-         'episodes': {'find_all': [{'tag': ['div'], 'class': ['AABox']}]},
+         'episodes': dict([('find', [{'tag': ['div'], 'class': ['TPTblCn']}]),
+                           ('find_all', [{'tag': ['tr']}])]),
+         #'episodes': {'find_all': [{'tag': ['div'], 'class': ['AABox', 'TPTblCn']}]},
+         #'episodes': {'find_all': [{'tag': ['div'], 'class': ['AABox']}]},
          'episode_num': [], 
          'episode_clean': [['(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)', ''],
                            ['(?i)HD|Español Castellano|Sub Español|Español Latino', '']], 
@@ -256,48 +263,44 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
+    soup = AHkwargs.get('soup', {})
     
     # Asi lee los datos correctos de TMDB
-    titleSeason = item.contentSeason if item.contentSeason != 1 else get_title_season(item.url)
-
-    for elem_season in matches_int:
-        if (AlfaChannel.parse_finds_dict(elem_season, findS['season_num']) or '1') != str(item.contentSeason): continue
-
-        try:
-            epi_list = elem_season.find("div", class_="TPTblCn")
-        except Exception:
+    if matches_int:
+        titleSeason = get_title_season(matches_int[0].a.get("href", ""), soup)
+        if titleSeason != item.contentSeason:
             return matches
 
-        for elem in epi_list.find_all("tr"):
-            elem_json = {}
-            # logger.error(elem)
+    for elem in matches_int:
+        elem_json = {}
+        # logger.error(elem)
+
+        try:
+            info = elem.find("td", class_="MvTbTtl")
+            elem_json['title'] = info.a.get_text(strip=True)
+            elem_json['episode'] = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
+            elem_json['url'] = info.a.get("href", "")
+            elem_json['season'] = titleSeason
+            
+            nextChapterDateRegex = r'(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)'
+            if re.search(nextChapterDateRegex, elem_json['title']):
+                nextChapterDate = scrapertools.find_single_match(elem_json['title'], nextChapterDateRegex)
+                elem_json['next_episode_air_date'] = nextChapterDate
 
             try:
-                info = elem.find("td", class_="MvTbTtl")
-                elem_json['title'] = info.a.get_text(strip=True)
-                elem_json['episode'] = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
-                elem_json['url'] = info.a.get("href", "")
-                elem_json['season'] = titleSeason
-                
-                nextChapterDateRegex = r'(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)'
-                if re.search(nextChapterDateRegex, elem_json['title']):
-                    nextChapterDate = scrapertools.find_single_match(elem_json['title'], nextChapterDateRegex)
-                    elem_json['next_episode_air_date'] = nextChapterDate
-
-                try:
-                    elem_json['thumbnail'] = elem.find(["noscript", "span"]).find("img").get("src", "")
-                except Exception:
-                    pass
-
+                elem_json['thumbnail'] = elem.find(["noscript", "span"]).find("img").get("src", "")
             except Exception:
-                logger.error(elem)
-                logger.error(traceback.format_exc())
-                continue
+                pass
 
-            if not elem_json.get('url', ''): 
-                continue
+        except Exception:
+            logger.error(elem)
+            logger.error(traceback.format_exc())
+            continue
 
-            matches.append(elem_json.copy())
+        if not elem_json.get('url', ''): 
+            continue
+
+        matches.append(elem_json.copy())
 
     return matches
 
@@ -462,12 +465,19 @@ def get_lang_from_str(string):
 # Algunas series tienen la temporada en el titulo, lo cual hace que TMDB devuelva los datos incorrectos
 # Ya que por defecto la temporada se obtiene de otro lado, esto crea una ambigüedad.
 # Esta funcion se usa para extraer el numero de temporada correcto del titulo en la url
-def get_title_season(url):
+def get_title_season(url, soup):
     logger.info()
 
     season = 1
-    seasonPattern = '(?i)temporada-(\d+)-'
+    seasonPattern = '(?i)temporada(?:-|\s*)(\d+)-?'
+    
     if re.search(seasonPattern, url):
         season = int(scrapertools.find_single_match(url, seasonPattern))
+
+    elif soup.find("div", class_="TPTblCn") and soup.find("div", class_="TPTblCn").find_previous('div', class_="Title"):
+        season_name = soup.find("div", class_="TPTblCn").find_previous('div', class_="Title").get_text(strip=True)
+
+        if re.search(seasonPattern, season_name):
+            season = int(scrapertools.find_single_match(season_name, seasonPattern))
 
     return season
