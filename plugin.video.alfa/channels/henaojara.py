@@ -268,10 +268,9 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         try:
             info = elem.find("td", class_="MvTbTtl")
             elem_json['url'] = info.a.get("href", "")
-            if elem_json['url'][-4] != str(item.contentSeason): continue
+            if not re.search(r'%sx\d+\/$' % str(item.contentSeason), elem_json['url']): continue
             elem_json['title'] = info.a.get_text(strip=True)
             elem_json['episode'] = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
-            
             elem_json['season'] = titleSeason
             
             nextChapterDateRegex = r'(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)'
