@@ -178,6 +178,10 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
             elem_json['url'] = elem.find("article", class_="TPost C").a.get('href', '')
 
+            # En episodios permite desde el menú contextual ir a la Serie
+            if item.c_type == 'episodios' and elem_json['url']:
+                elem_json['go_serie'] = {'url': re.sub('x\d+', '', elem_json['url']).replace('episode', 'season')}
+
             try:
                 Qlty = elem.find("span", class_="Qlty").get_text(strip=True)
             except Exception:
@@ -300,9 +304,6 @@ def findvideos(item, **AHkwargs):
     logger.info()
 
     kwargs['matches_post_episodes'] = episodesxseason_matches
-    
-    if item.contentType == 'movie':
-        return seasons(item)
 
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
