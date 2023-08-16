@@ -10,6 +10,10 @@
       {
         "pattern": "https://uqload.co/(?:embed-|)([a-z0-9]+).html",
         "url": "https://uqload.co/embed-\\1.html"
+      },
+      {
+        "pattern": "https://uqload.io/(?:embed-|)([a-z0-9]+).html",
+        "url": "https://uqload.io/embed-\\1.html"
       }
     ]
   },
