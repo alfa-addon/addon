@@ -24,8 +24,9 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'divxtotal', 
              'host': config.get_setting("current_host", 'divxtotal', default=''), 
-             'host_alt': ["https://www.divxtotal.win/"], 
-             'host_black_list': ["https://www.divxtotal.wf/", "https://www.divxtotal.pl/", "https://www.divxtotal.cat/", 
+             'host_alt': ["https://www1.divxtotal.zip/"], 
+             'host_black_list': ["https://www.divxtotal.win/", 
+                                 "https://www.divxtotal.wf/", "https://www.divxtotal.pl/", "https://www.divxtotal.cat/", 
                                  "https://www.divxtotal.fi/", "https://www.divxtotal.dev/", "https://www.divxtotal.ac/", 
                                  "https://www.divxtotal.re/", "https://www.divxtotal.pm/", "https://www.divxtotal.nl/"], 
              'pattern': '<li>\s*<a\s*href="([^"]+)"\s*>\S*\/a><\/li>', 
@@ -263,7 +264,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['thumbnail'] = elem.find('p', class_="secconimagen").img.get("src", "")
                 #elem_json['year'] = scrapertools.find_single_match(elem.find('p', class_="seccontfetam").get_text(strip=True), '\d{4}')
 
-            elem_json['quality'] = elem_json.get('quality', '') or 'HDTV' if tv_path in elem_json['url'] else ''
+            elem_json['quality'] = elem_json.get('quality', '') or 'HDTV' if tv_path in elem_json.get('url', '') else ''
 
         except:
             logger.error(elem)
@@ -413,7 +414,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                                 AlfaChannel.get_language_and_set_filter(td, elem_json)
                                 if not elem_json['language']: elem_json['language'] = '*%s' % td.img.get('src', '').replace('N/A', '')
                             if x == 2: elem_json['quality'] = '*%s' % td.get_text().replace('-', '').replace('N/A', '')
-                            if x == 3: elem_json['torrent_info'] =  td.get_text().replace('-', '').replace('N/A', '')
+                            if x == 3: elem_json['size'] =  td.get_text().replace('-', '').replace('N/A', '')
                             if x == 4:
                                 elem_json['url'] = td.a.get('href', '')
                                 if host not in elem_json['url'] and elem.find('a', class_="opcion_2").get('href', ''):
@@ -427,12 +428,14 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                                 AlfaChannel.get_language_and_set_filter(td, elem_json)
                                 if not elem_json['language']: elem_json['language'] = '*'
                                 elem_json['quality'] = '*3D'
-                                elem_json['torrent_info'] = ''
+                                elem_json['size'] = ''
 
                         else:
                             break
 
                     elem_json['server'] = 'torrent'
+                    if elem_json.get('size', ''): 
+                        elem_json['size'] = re.sub('(\d+)GB', r'\1 GB', elem_json['size']).replace('.', ',')
 
                     if elem_json.get('url', ''):
                         elem_json['url'] = elem_json['url'].replace("download/torrent.php', {u: ", "download_tt.php?u=")

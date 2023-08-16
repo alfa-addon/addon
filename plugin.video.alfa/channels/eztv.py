@@ -215,11 +215,12 @@ def seasons(item):
     
     soup = AlfaChannel.create_soup(item.url, **kwargs)
     
-    imdb_id = soup.find('table', class_='show_info_description').find('a', string=re.compile('(?i)imdb'))
-    if imdb_id:
-        imdb_id = scrapertools.find_single_match(str(imdb_id), 'imdb.com\/title\/(tt\d+)\/')
-        if imdb_id and imdb_id not in item.infoLabels['imdb_id']:
-            AlfaChannel.verify_infoLabels_keys(item, {'imdb_id': imdb_id})
+    if soup.find('table', class_='show_info_description'):
+        imdb_id = soup.find('table', class_='show_info_description').find('a', string=re.compile('(?i)imdb'))
+        if imdb_id:
+            imdb_id = scrapertools.find_single_match(str(imdb_id), 'imdb.com\/title\/(tt\d+)\/')
+            if imdb_id and imdb_id not in item.infoLabels['imdb_id']:
+                AlfaChannel.verify_infoLabels_keys(item, {'imdb_id': imdb_id})
 
     return AlfaChannel.seasons(item, data=soup, **kwargs)
 
@@ -352,6 +353,8 @@ def findvideos_links(item, elem_in, elem_json):
         #logger.error(elem)
 
         try:
+            if x == 0 and item.extra == 'Temporadas':
+                elem_json['go_serie'] = {'url': AlfaChannel.urljoin(host, elem.a.get('href', ''))}
             if x == 1:
                 info = elem.a.get('title', '')
                 if not info: break
@@ -364,6 +367,7 @@ def findvideos_links(item, elem_in, elem_json):
                         elem_json['title'], season = scrapertools.find_single_match(info, patron_title_epi)
                         elem_json['title_subs'] = ['Episodio %s' % season]
                     elem_json['action'] = 'findvideos'
+
                 else:
                     if not scrapertools.find_single_match(info, patron_sxe):
                         elem_json['season'] = item.contentSeason

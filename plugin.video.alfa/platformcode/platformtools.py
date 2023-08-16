@@ -779,24 +779,29 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
             # Los parametros del dict, se sobreescriben al nuevo context_item en caso de sobreescribir "action" y
             # "channel", los datos originales se guardan en "from_action" y "from_channel"
             if "action" in command:
-                command["from_action"] = item.action
+                command["from_action"] = command.get("from_action", "") or item.action
             if "channel" in command:
-                command["from_channel"] = item.channel
+                command["from_channel"] = command.get("from_channel", "") or item.channel
 
             # Si no se está dentro de Alfavoritos y hay los contextos de alfavoritos, descartarlos.
             # (pasa al ir a un enlace de alfavoritos, si este se clona en el canal)
             if parent_item.module != 'alfavorites' and 'i_perfil' in command and 'i_enlace' in command:
                 continue
 
+            item_url = item
+            if 'item_url' in command:
+                item_url = Item().fromurl(command['item_url'])
+                del command['item_url']
+
             if "goto" in command:
                 context_commands.append((command["title"], "Container.Refresh (%s?%s)" %
-                                         (sys.argv[0], item.clone(**command).tourl())))
+                                         (sys.argv[0], item_url.clone(**command).tourl())))
             if "switch_to" in command:
                 context_commands.append((command["title"], "Container.Update (%s?%s)" %
-                                         (sys.argv[0], item.clone(**command).tourl())))
+                                         (sys.argv[0], item_url.clone(**command).tourl())))
             else:
                 context_commands.append(
-                    (command["title"], "RunPlugin(%s?%s)" % (sys.argv[0], item.clone(**command).tourl())))
+                    (command["title"], "RunPlugin(%s?%s)" % (sys.argv[0], item_url.clone(**command).tourl())))
 
     # No añadir más opciones predefinidas si se está dentro de Alfavoritos
     if parent_item.module in ['alfavorites', 'info_popup']:

@@ -171,7 +171,7 @@ def section_matches(item, matches_int, **AHkwargs):
 
     for elem in matches_int:
         elem_json = {}
-        logger.error(elem)
+        #logger.error(elem)
         
         quality = year = language = ''
 

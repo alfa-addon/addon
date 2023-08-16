@@ -1407,7 +1407,8 @@ class Tmdb(object):
         ret_dic["temporada_num_episodios"] = len(temporada["episodes"])
         ret_dic["last_episode_to_air"] = 0
         for x, epi in enumerate(temporada["episodes"]):
-            if epi.get('runtime') and epi.get('crew'): ret_dic["last_episode_to_air"] = epi.get('episode_number', x+1)
+            if epi.get('runtime') and epi.get('crew'):
+                ret_dic["last_episode_to_air"] = epi.get('episode_number', x+1)
         if temporada["air_date"]:
             date = temporada["air_date"].split("-")
             ret_dic["temporada_air_date"] = date[2] + "/" + date[1] + "/" + date[0]
@@ -1664,6 +1665,15 @@ class Tmdb(object):
 
             elif isinstance(v, str) or isinstance(v, int) or isinstance(v, float):
                 ret_infoLabels[k] = v
+
+            elif k == 'next_episode_to_air':
+                if v.get('air_date', '') and v.get('air_date', '') != origen.get('last_air_date', ''):
+                    y, m, d = v['air_date'].split('-') if '-' in v['air_date'] else v['air_date'].split('/')
+                    ret_infoLabels['next_episode_air_date'] = '%s/%s/%s' % (d, m, y)
+
+            elif k == 'last_episode_to_air':
+                if v.get('episode_number', '') and v.get('season_number', ''):
+                    ret_infoLabels['last_series_episode_to_air'] = '%sx%s' % (v['season_number'], v['episode_number'])
 
             else:
                 # logger.debug("Atributos no añadidos: " + k +'= '+ str(v))

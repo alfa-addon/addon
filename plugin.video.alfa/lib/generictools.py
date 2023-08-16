@@ -42,6 +42,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger, unify
 
+import xbmc
 import xbmcgui
 alfa_caching = False
 window = None
@@ -73,11 +74,12 @@ find_alt_domains = 'atomohd'   # Solo poner uno.  Alternativas: pctmix, pctmix1,
 btdigg_url = config.BTDIGG_URL
 btdigg_label = config.BTDIGG_LABEL
 btdigg_label_B = config.BTDIGG_LABEL_B
-DEBUG = config.get_setting('debug_report', default=False)
+TEST_ON_AIR = False
+DEBUG = config.get_setting('debug_report', default=False) if not TEST_ON_AIR else False
 
 
 def convert_url_base64(url, host='', referer=None, rep_blanks=True, force_host=False, item=Item()):
-    logger.info('URL: ' + url + ', HOST: ' + host)
+    if not TEST_ON_AIR: logger.info('URL: ' + url + ', HOST: ' + host)
     
     host_whitelist = ['mediafire.com']
     host_whitelist_skip = ['adfly.mobi']
@@ -115,7 +117,7 @@ def convert_url_base64(url, host='', referer=None, rep_blanks=True, force_host=F
                 url_base64 = url
             except Exception:
                 if url_base64 and url_base64 != url:
-                    logger.info('Url base64 convertida: %s' % url_base64)
+                    if not TEST_ON_AIR: logger.info('Url base64 convertida: %s' % url_base64)
                     if rep_blanks: url_base64 = url_base64.replace(' ', '%20')
                 #logger.error(traceback.format_exc())
                 if not url_base64:
@@ -137,7 +139,7 @@ def convert_url_base64(url, host='', referer=None, rep_blanks=True, force_host=F
                 if domain_bis: domain = domain_bis
                 if url_base64_bis != url_base64:
                     url_base64 = url_base64_bis
-                    logger.info('Url base64 RE-convertida: %s' % url_base64)
+                    if not TEST_ON_AIR: logger.info('Url base64 RE-convertida: %s' % url_base64)
                 
     if not domain: domain = 'default'
     if host and host not in url_base64 and not url_base64.startswith('magnet') \
@@ -149,7 +151,7 @@ def convert_url_base64(url, host='', referer=None, rep_blanks=True, force_host=F
         if url_base64 != url or host not in url_base64:
             host_name = scrapertools.find_single_match(url_base64, patron_host) + '/'
             url_base64 = re.sub(host_name, host, url_base64)
-            logger.info('Url base64 urlparsed: %s' % url_base64)
+            if not TEST_ON_AIR: logger.info('Url base64 urlparsed: %s' % url_base64)
 
     return url_base64 + url_sufix
 
@@ -164,6 +166,9 @@ def js2py_conversion(data, url, domain_name='', channel='', size=10000, resp={},
     
     from lib import js2py
     from core import httptools
+    global DEBUG, TEST_ON_AIR
+    TEST_ON_AIR = httptools.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
     
     if DEBUG: logger.debug('url: %s; domain_name: %s, channel: %s, size: %s; kwargs: %s, DATA: %s' \
                             % (url, domain_name, channel, size, kwargs, data[:1000]))
@@ -454,7 +459,7 @@ def update_title(item):
                     del item.from_update
                     if item.AHkwargs:
                         try:
-                            item = AH_find_videolab_status(item, [item], **item.AHkwargs)[0]
+                            item = AH_find_videolab_status({}, item, [item], **item.AHkwargs)[0]
                             del item.AHkwargs
                         except Exception:
                             logger.error(traceback.format_exc())
@@ -490,7 +495,6 @@ def refresh_screen(item):
 
     try:
         import xbmcplugin
-        import xbmcgui
         from platformcode.platformtools import itemlist_update
         
         xlistitem = xbmcgui.ListItem(path=item.url)                             # Creamos xlistitem por compatibilidad con Kodi 18
@@ -715,8 +719,11 @@ def context_for_videolibray(item):
     return item
 
 
-def AH_find_videolab_status(item, itemlist, **AHkwargs):
+def AH_find_videolab_status(self, item, itemlist, **AHkwargs):
     logger.info()
+    global DEBUG, TEST_ON_AIR
+    if self: TEST_ON_AIR = self.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
     if DEBUG: logger.debug('video_list_str: %s; function: %s' % (video_list_str, AHkwargs.get('function', '')))
 
     res = False
@@ -729,7 +736,7 @@ def AH_find_videolab_status(item, itemlist, **AHkwargs):
         if AHkwargs.get('function', '') == 'list_all':
             #tmdb.set_infoLabels_itemlist(itemlist, True)
             for item_local in itemlist:
-                item_local.video_path = AH_check_title_in_videolibray(item_local)
+                item_local.video_path = AH_check_title_in_videolibray(self, item_local)
                 if item_local.video_path:
                     item_local.title  = '(V)-%s' % item_local.title
                     item_local.contentTitle = '(V)-%s' % (item_local.contentSerieName or item_local.contentTitle)
@@ -790,7 +797,7 @@ def AH_find_videolab_status(item, itemlist, **AHkwargs):
     return itemlist
 
 
-def AH_check_title_in_videolibray(item):
+def AH_check_title_in_videolibray(self, item):
     """
     Comprueba si el item listado está en la videoteca Alfa.  Si lo está devuelve True
     """
@@ -833,8 +840,11 @@ def AH_check_title_in_videolibray(item):
     return res
 
 
-def AH_post_tmdb_listado(item, itemlist, **AHkwargs):
+def AH_post_tmdb_listado(self, item, itemlist, **AHkwargs):
     logger.info()
+    global DEBUG, TEST_ON_AIR
+    if self: TEST_ON_AIR = self.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
 
     """
         
@@ -858,7 +868,7 @@ def AH_post_tmdb_listado(item, itemlist, **AHkwargs):
     format_tmdb_id(itemlist)
 
     for item_local in itemlist:                                                 # Recorremos el Itemlist generado por el canal
-        item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
+        #item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
         title = item_local.title
         season = 0
         episode = 0
@@ -1006,16 +1016,17 @@ def AH_post_tmdb_listado(item, itemlist, **AHkwargs):
 
             elif item_local.contentType == "season":
                 if not item_local.contentSeason:
-                    item_local.contentSeason = scrapertools.find_single_match(item_local.url, '-(\d+)x')
-                if not item_local.contentSeason:
-                    item_local.contentSeason = scrapertools.find_single_match(item_local.url, '-temporadas?-(\d+)')
+                    item_local.contentSeason = int(scrapertools.find_single_match(item_local.url, '-(\d+)x') or \
+                                                   scrapertools.find_single_match(item_local.url, '-temporadas?-(\d+)') or 1)
                 if item_local.contentSeason:
                     title = '%s -Temporada %s' % (title, str(item_local.contentSeason))
-                    if not item_local.contentSeason_save:                           # Restauramos el num. de Temporada
-                        item_local.contentSeason_save = item_local.contentSeason    # Y lo volvemos a salvar
-                    del item_local.infoLabels['season']                             # Funciona mal con num. de Temporada.  Luego lo restauramos
                 else:
                     title = '%s -Temporada !!!' % (title)
+                item_local.unify_extended = True
+                item_local.contentType = 'tvshow'
+
+            elif item_local.contentSeason:
+                item_local.unify_extended = True
 
         # Se añaden etiquetas adicionales, si las hay
         title += title_add.replace(' (MAX_EPISODIOS)', '').replace('BTDIGG_INFO', '(de %sx%s)' \
@@ -1056,6 +1067,9 @@ def AH_post_tmdb_listado(item, itemlist, **AHkwargs):
 
 def AH_find_seasons(self, item, matches, **AHkwargs):
     logger.info()
+    global DEBUG, TEST_ON_AIR
+    if self: TEST_ON_AIR = self.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
 
     # Si hay varias temporadas, buscamos todas las ocurrencias y las filtrados por TMDB, calidad e idioma
     findS = AHkwargs.get('finds', {})
@@ -1246,8 +1260,11 @@ def AH_find_seasons(self, item, matches, **AHkwargs):
     return list_temp
 
 
-def AH_post_tmdb_seasons(item, itemlist, **AHkwargs):
+def AH_post_tmdb_seasons(self, item, itemlist, **AHkwargs):
     logger.info()
+    global DEBUG, TEST_ON_AIR
+    if self: TEST_ON_AIR = self.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
     
     """
 
@@ -1291,8 +1308,11 @@ def AH_post_tmdb_seasons(item, itemlist, **AHkwargs):
     return item, itemlist
     
 
-def AH_post_tmdb_episodios(item, itemlist, **AHkwargs):
+def AH_post_tmdb_episodios(self, item, itemlist, **AHkwargs):
     logger.info()
+    global DEBUG, TEST_ON_AIR
+    if self: TEST_ON_AIR = self.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
 
     itemlist_fo = []
         
@@ -1334,8 +1354,11 @@ def AH_post_tmdb_episodios(item, itemlist, **AHkwargs):
     return item, itemlist
 
 
-def AH_post_tmdb_findvideos(item, itemlist, **AHkwargs):
+def AH_post_tmdb_findvideos(self, item, itemlist, **AHkwargs):
     logger.info()
+    global DEBUG, TEST_ON_AIR
+    if self: TEST_ON_AIR = self.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
     
     """
         
@@ -1355,7 +1378,6 @@ def AH_post_tmdb_findvideos(item, itemlist, **AHkwargs):
     item.unify = False
     Window_IsMedia = False
     try:
-        import xbmc
         if xbmc.getCondVisibility('Window.IsMedia') == 1:
             Window_IsMedia = True
             item.unify = config.get_setting("unify")
@@ -1540,6 +1562,9 @@ def AH_find_btdigg_matches(item, matches, **AHkwargs):
 def AH_find_btdigg_list_all_from_channel_py(self, item, matches=[], matches_index={}, channel_alt=channel_py, 
                                             channel_entries=20, btdigg_entries=80, **AHkwargs):
     logger.info('"%s"' % len(matches))
+    global DEBUG, TEST_ON_AIR
+    if self: TEST_ON_AIR = self.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
 
     matches_inter = []
     matches_btdigg = matches[:]
@@ -1697,6 +1722,9 @@ def AH_find_btdigg_list_all_from_channel_py(self, item, matches=[], matches_inde
 def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}, channel_alt=channel_py, 
                                         channel_entries=15, btdigg_entries=45, **AHkwargs):
     logger.info('"%s"' % len(matches))
+    global DEBUG, TEST_ON_AIR
+    if self: TEST_ON_AIR = self.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
 
     matches_inter = []
     matches_btdigg = matches[:]
@@ -1766,7 +1794,10 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
 
             x = 0
             while x < limit_pages:
-                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache)
+                use_assistant = True
+                if xbmc.Player().isPlaying() and config.get_setting('btdigg_status', server='torrent', default=False):
+                    use_assistant = False
+                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
                 if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
                 if not torrent_params.get('find_alt_link_result') and torrent_params.get('find_alt_link_next', 0) >= limit_pages_min: x = 999999
@@ -1841,6 +1872,9 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
 
 def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, **AHkwargs):
     logger.info('"%s"' % len(matches))
+    global DEBUG, TEST_ON_AIR
+    if self: TEST_ON_AIR = self.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
 
     canonical = self.canonical
     controls = self.finds.get('controls', {})
@@ -1991,7 +2025,6 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, **AH
 def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
     logger.info()
 
-    import xbmc
     monitor = xbmc.Monitor()
     if not PY3: from lib.alfaresolver import find_alternative_link
     else: from lib.alfaresolver_py3 import find_alternative_link
@@ -1999,7 +2032,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
 
     item = Item()
 
-    titles_search = [[{'urls': ['%sBluray ' + channel_py], 'checks': ['Cast', 'Esp', 'Spanish', '%s' % channel_py.replace('4k', '')]}, 'movie'], 
+    titles_search = [[{'urls': ['%sBluray 720p ' + channel_py], 'checks': ['Cast', 'Esp', 'Spanish', '%s' \
+                                                                 % channel_py.replace('4k', '')]}, 'movie'], 
                      [{'urls': ['%sBluray Castellano'], 'checks': ['Cast', 'Esp', 'Spanish', '%s' % channel_py.replace('4k', '')]}, 'movie'], 
                      [{'urls': ['%sHDTV 720p ' + channel_py], 'checks': ['Cap.']}, 'tvshow'], 
                      [{'urls': ['%sHDTV 720p'], 'checks': ['Cap.']}, 'tvshow']]
@@ -2073,7 +2107,10 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
 
             x = 0
             while x < limit_pages:
-                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache)
+                use_assistant = True
+                if xbmc.Player().isPlaying() and config.get_setting('btdigg_status', server='torrent', default=False):
+                    use_assistant = False
+                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
                 if torrent_params.get('find_alt_link_code', '') in ['200']:
                     if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
@@ -2122,12 +2159,15 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
 
 def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkwargs):
     logger.info()
-    global channel_py_episode_list
+    global channel_py_episode_list, DEBUG, TEST_ON_AIR
+    if self: TEST_ON_AIR = self.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
 
     controls = self.finds.get('controls', {})
     url = AHkwargs.pop('url', item.url)
     contentSeason = AHkwargs.pop('btdigg_contentSeason', controls.get('btdigg_contentSeason', 0))
-    disable_cache = not AHkwargs.pop('btdigg_cache', controls.get('btdigg_cache', True))
+    disable_cache = True if (not 'btdigg_cache' in AHkwargs  and not 'btdigg_cache' in controls) else \
+                    not AHkwargs.pop('btdigg_cache', controls.get('btdigg_cache', True))
     quality_control = AHkwargs.pop('btdigg_quality_control', controls.get('btdigg_quality_control', False))
     canonical = AHkwargs.pop('canonical', self.canonical)
     matches = sorted(matches, key=lambda it: int(it.get('season', 0))) if matches else []
@@ -2202,7 +2242,10 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
 
             x = 0
             while x < limit_pages:
-                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache)
+                use_assistant = True
+                if xbmc.Player().isPlaying() and config.get_setting('btdigg_status', server='torrent', default=False):
+                    use_assistant = False
+                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
                 if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
                 if not torrent_params.get('find_alt_link_result') and torrent_params.get('find_alt_link_next', 0) >= limit_pages_min: x = 999999
@@ -2262,18 +2305,30 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
 
 
 def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHkwargs):
-    global channel_py_episode_list
+    global channel_py_episode_list, DEBUG, TEST_ON_AIR
+    if self: TEST_ON_AIR = self.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
 
     controls = self.finds.get('controls', {})
     contentSeason = AHkwargs.pop('btdigg_contentSeason', controls.get('btdigg_contentSeason', 0))
-    disable_cache = not AHkwargs.pop('btdigg_cache', controls.get('btdigg_cache', True))
+    disable_cache = True if str(item.infoLabels['number_of_seasons']) == '1' else \
+                    not AHkwargs.pop('btdigg_cache', controls.get('btdigg_cache', True))
     quality_control = AHkwargs.pop('btdigg_quality_control', controls.get('btdigg_quality_control', False))
     canonical = AHkwargs.pop('canonical', self.canonical)
     channel_py_strict = False
 
     season = seasons = item.infoLabels['season'] or 1
     episode_max = item.infoLabels['temporada_num_episodios'] or item.infoLabels['number_of_episodes'] or 1
-    last_episode_to_air = item.infoLabels['last_episode_to_air'] or episode_max
+    last_episode_to_air = item.infoLabels.get('last_episode_to_air', 0) or episode_max
+    e = 0
+    le = item.infoLabels.get('last_episode_to_air', 0)
+    if scrapertools.find_single_match(item.infoLabels.get('last_series_episode_to_air', ''), '\d+x\d+'):
+        s, e = item.infoLabels['last_series_episode_to_air'].split('x')
+        if int(s) == item.infoLabels['season']:
+            if int(e) > item.infoLabels.get('last_episode_to_air', 0):
+                last_episode_to_air = item.infoLabels['last_episode_to_air'] = int(e)
+        else:
+            e = item.infoLabels['last_series_episode_to_air']
 
     matches = sorted(matches, key=lambda it: int(it.get('episode', 0))) if matches else []
     matches_len = len(matches)
@@ -2295,9 +2350,10 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
         if sxe not in item.library_playcounts and epi_avl not in epis_index:
             l_p_missing += [sxe]
 
-    logger.info('[LE: %s / EPI: %s / MAX: %s / MISSING: %s / MATCHES: %s]' % (item.infoLabels['last_episode_to_air'], 
-                                                                              last_episode_to_air, episode_max, 
-                                                                              l_p_missing, epis_index))
+    logger.info('[LE: %sx%s-%s / EPI: %s / MAX: %s / MISSING: %s / MATCHES: %s]' % (item.infoLabels['season'], 
+                                                                                    le, e, 
+                                                                                    last_episode_to_air, episode_max, 
+                                                                                    l_p_missing, epis_index))
 
     if item.infoLabels['last_air_date'] and matches and (item.library_playcounts or item.video_path) \
                                         and item.from_action not in ['update_tvshow'] and not l_p_missing:
@@ -2399,7 +2455,10 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
 
             x = 0
             while x < limit_pages:
-                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache)
+                use_assistant = True
+                if xbmc.Player().isPlaying() and config.get_setting('btdigg_status', server='torrent', default=False):
+                    use_assistant = False
+                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
                 if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
                 if not torrent_params.get('find_alt_link_result') and torrent_params.get('find_alt_link_next', 0) >= limit_pages_min: x = 999999
@@ -2467,6 +2526,9 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
 
 def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **AHkwargs):
     logger.info()
+    global DEBUG, TEST_ON_AIR
+    if self: TEST_ON_AIR = self.TEST_ON_AIR
+    DEBUG = DEBUG if not TEST_ON_AIR else False
 
     if item.matches and item.channel != 'videolibrary' and item.contentChannel != 'videolibrary' and item.from_channel != 'videolibrary':
         return matches
@@ -2479,7 +2541,8 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
     
     controls = self.finds.get('controls', {})
     contentSeason = AHkwargs.pop('btdigg_contentSeason', controls.get('btdigg_contentSeason', 0))
-    disable_cache = False if (item.contentChannel == 'videolibrary' or item.from_channel == 'videolibrary' or not item.matches) else True
+    disable_cache = True if (not 'btdigg_cache' in AHkwargs  and not 'btdigg_cache' in controls) else \
+                    not AHkwargs.pop('btdigg_cache', controls.get('btdigg_cache', True))
     quality_control = AHkwargs.pop('btdigg_quality_control', controls.get('btdigg_quality_control', False))
     canonical = AHkwargs.pop('canonical', self.canonical)
     matches_len = len(matches)
@@ -2530,7 +2593,10 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
 
             x = 0
             while x < limit_pages:
-                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache)
+                use_assistant = True
+                if xbmc.Player().isPlaying() and config.get_setting('btdigg_status', server='torrent', default=False):
+                    use_assistant = False
+                torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
                 if not torrent_params.get('find_alt_link_result') and not torrent_params.get('find_alt_link_next'): x = 999999
                 if not torrent_params.get('find_alt_link_result') and torrent_params.get('find_alt_link_next', 0) >= limit_pages_min: x = 999999
@@ -3018,7 +3084,6 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
     logger.info()
     # Basado en el código de "Chrome Launcher 1.2.0" de Jani (@rasjani) Mikkonen
     # Llama a un browser disponible y le pasa una url
-    import xbmc
     import subprocess
     
     exePath = {}
