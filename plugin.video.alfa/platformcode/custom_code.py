@@ -125,6 +125,9 @@ def init():
         if not filetools.exists(ADDON_CUSTOMCODE_JSON):
             help_window.clean_watched_new_version()
         
+        # Se resetean errores de BTDigg
+        config.set_setting('btdigg_status', False, server='torrent')
+        
         # Se realizan algunas funciones con cada nueva versión de Alfa
         if not filetools.exists(ADDON_CUSTOMCODE_JSON):
             config.set_setting('cf_assistant_ua', '')                           # Se limpia CF_UA. Mejora de rendimiento en httptools CF

@@ -294,8 +294,11 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                 sxe = elem.get_text(strip=True)
                 if scrapertools.find_single_match(sxe, '(?i)(\d+)x(\d+)'):
                     season, episode = scrapertools.find_single_match(sxe, '(?i)(\d+)x(\d+)')
-                else:
+                elif scrapertools.find_single_match(sxe, '(?i)\[Cap\.(\d{1})(\d{2})\]'):
                     season, episode = scrapertools.find_single_match(sxe, '(?i)\[Cap\.(\d{1})(\d{2})\]')
+                else:
+                    logger.error(elem)
+                    continue
 
                 if len(season) > 2:
                     pos = len(str(item.contentSeason)) * -1
@@ -395,7 +398,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 logger.error(elem)
                 logger.error(traceback.format_exc())
 
-            if not elem_json.get('url', ''): 
+            if not elem_json.get('url', '') or elem_json['url'] in str(matches): 
                 continue
 
             matches.append(elem_json.copy())
