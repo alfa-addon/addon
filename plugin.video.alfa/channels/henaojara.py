@@ -62,7 +62,7 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList']}]),
          'seasons_search_num_rgx': '', 
          'seasons_search_qty_rgx': '', 
          'episode_url': '', 
-         'episodes': dict([('find', [{'tag': ['div'], 'class': ['TPTblCn']}]),
+         'episodes': dict([('find_all', [{'tag': ['div'], 'class': ['TPTblCn']}]),
                            ('find_all', [{'tag': ['tr']}])]),
          'episode_num': [], 
          'episode_clean': [['(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)', ''],
@@ -265,12 +265,13 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     for elem in matches_int:
         elem_json = {}
         # logger.error(elem)
-
         try:
             info = elem.find("td", class_="MvTbTtl")
+            elem_json['url'] = info.a.get("href", "")
+            if elem_json['url'][-4] != str(item.contentSeason): continue
             elem_json['title'] = info.a.get_text(strip=True)
             elem_json['episode'] = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
-            elem_json['url'] = info.a.get("href", "")
+            
             elem_json['season'] = titleSeason
             
             nextChapterDateRegex = r'(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)'
@@ -300,6 +301,9 @@ def findvideos(item, **AHkwargs):
     logger.info()
 
     kwargs['matches_post_episodes'] = episodesxseason_matches
+    
+    if item.contentType == 'movie':
+        return seasons(item)
 
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
