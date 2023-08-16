@@ -56,13 +56,13 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['MovieList']}]),
          'year': {}, 
          'season_episode': {}, 
          'seasons': {'find_all': [{'tagOR': ['div'], 'class': ['AA-Season']},
-                                  {'tag': ['a'], 'class': ['STPb']}]},
+                                  {'tag': ['a'], 'class': ['Button STPb Current']}]},
          'season_num': dict([('find', [{'tag': ['span']}]), 
                              ('get_text', [{'tag': '', '@STRIP': True}])]),
          'seasons_search_num_rgx': '', 
          'seasons_search_qty_rgx': '', 
          'episode_url': '', 
-         'episodes': dict([('find_all', [{'tag': ['div'], 'class': ['TPTblCn']}]),
+         'episodes': dict([('find', [{'tag': ['main']}]),
                            ('find_all', [{'tag': ['tr']}])]),
          'episode_num': [], 
          'episode_clean': [['(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)', ''],
@@ -169,9 +169,9 @@ def list_all_matches(item, matches_int, **AHkwargs):
             """ alternativamente mira: elem_json['language'] = '*%s' % elem_json['title'] AH busca el el idioma o la calidad si lo precedes con '*' """                                                                                          
 
             seasonPattern = '(?i)\s*Temporada\s*(\d+)'
-            # temporada = elem.find("span", class_="Year").get_text(strip=True) if elem.find("span", class_="Year") else elem_json['title']
-            if re.search(seasonPattern, elem_json['title']):
-                elem_json['season'] = int(scrapertools.find_single_match(elem_json['title'], seasonPattern))
+            temporada = elem.find("span", class_="Year").get_text(strip=True) if elem.find("span", class_="Year") else elem_json['title']
+            if re.search(seasonPattern, temporada):
+                elem_json['season'] = int(scrapertools.find_single_match(temporada, seasonPattern))
                 if elem_json['season'] > 1:
                     elem_json['title_subs'] = [' [COLOR %s][B]%s[/B][/COLOR] ' \
                                               % (AlfaChannel.color_setting.get('movies', 'white'), 'Temporada %s' % elem_json['season'])]
