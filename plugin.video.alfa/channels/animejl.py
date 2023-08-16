@@ -20,11 +20,15 @@ list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = ['uqload', 'voe', 'streamtape', 'doodstream', 'okru', 'streamlare', 'wolfstream', 'mega']
 
+forced_proxy_opt = 'ProxySSL'
+
 canonical = {
              'channel': 'animejl', 
              'host': config.get_setting("current_host", 'animejl', default=''), 
              'host_alt': ["https://www.anime-jl.net/"], 
              'host_black_list': [],
+             'pattern': '<ul\s*class="Menu">\s*<li\s*class="Current">\s*<a\s*href="([^"]+)"',
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
