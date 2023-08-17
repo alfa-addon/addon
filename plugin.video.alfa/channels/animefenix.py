@@ -41,6 +41,7 @@ movie_path = 'animes?type[]=movie&order=updated'
 tv_path = 'animes?type[]=tv&order=updated'
 language = []
 url_replace = []
+seasonPattern = '(?i)(?:\s+Season|)\s+(\d{1,2})(?:[a-z]{2}\s+Season|)$'
 
 finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['list-series']}]), 
                        ('find_all', [{'tag': ['article'], 'class': ['serie-card']}])]), 
@@ -66,12 +67,11 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['list-series']}]),
          'episodes': dict([('find', [{'tag': ['ul'], 'class': ['anime-page__episode-list']}]),
                            ('find_all', [{'tag': ['a']}])]),
          'episode_num': [], 
-         'episode_clean': [['(?i)(?:\s+Season|)\s+(\d{1,2})(?:.*?\s+Season|)$', '']], 
+         'episode_clean': [[seasonPattern, '']], 
          'plot': {}, 
          'findvideos': dict([('find', [{'tag': ['script'], 'string': re.compile('var\s*tabsArray')}]),
                              ('get_text', [{'tag': '', '@STRIP': True, '@TEXT_M': "tabsArray\['\d+'\]\s*=\s*\"([^\"]+)\"", '@DO_SOUP': True}])]),
-         'title_clean': [['(?i)(?:\s+Season|)\s+(\d{1,2})(?:.*?\s+Season|)$', ''],
-                         ['[^a-zA-Z0-9 ]', '']],
+         'title_clean': [[seasonPattern, '']],
          'quality_clean': [],
          'language_clean': [], 
          'url_replace': [], 
@@ -92,16 +92,16 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host + 'zerotwo', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host, action='list_all',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
 
-    itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host + 'zerotwo', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host, action='list_all',
                          thumbnail=get_thumb('newest', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'animes?type[]=tv&order=updated', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'animes?page=1&type[]=tv&order=updated', action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'animes?type[]=movie&order=updated', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'animes?page=1&type[]=movie&order=updated', action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
     itemlist.append(Item(channel=item.channel, title='Categorías',  action='section', url=host + 'animes?page=1', 
@@ -181,7 +181,6 @@ def list_all_matches(item, matches_int, **AHkwargs):
             else:
                 elem_json['title'] = elem.find("div", class_="title").h3.a.get_text(strip=True)
                 elem_json['url'] = elem.find("figure", class_="image").a.get('href', '')
-                elem_json['season'] = 1
 
                 try:
                     _type = elem.find("span", class_="type").get_text(strip=True)
@@ -195,27 +194,34 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     continue
                 if item.c_type == 'peliculas' and elem_json['mediatype'] == 'tvshow':
                     continue
-                    
+                
                 if elem_json['mediatype'] == 'movie':
                     elem_json['action'] = 'seasons'
                 else:
-                    seasonPattern = '(?i)\s+(\d+)(?:.*?\s+season|)$'
                     if re.search(seasonPattern, elem_json['title']):
                         elem_json['season'] = int(scrapertools.find_single_match(elem_json['title'], seasonPattern))
                         if elem_json['season'] > 1:
                             elem_json['title_subs'] = [' [COLOR %s][B]%s[/B][/COLOR] ' \
                                                       % (AlfaChannel.color_setting.get('movies', 'white'), 'Temporada %s' % elem_json['season'])]
 
-                try:
-                    elem_json['year'] = elem.find("span", class_="year").get_text(strip=True)
-                except Exception:
-                    elem_json['year'] = '-'
+                # Todos los thumbs dan: "Failed: HTTP response code said error(22)"
+                # try:
+                    # elem_json['thumbnail'] = elem.find("figure", class_="image").a.img.get("src", "")
+                # except Exception:
+                    # pass
 
+                # Esto se carga la busqueda en TMDB porque el año no coincide
+                # try:
+                    # elem_json['year'] = elem.find("span", class_="year").get_text(strip=True)
+                # except Exception:
+                    # elem_json['year'] = '-'
+
+                elem_json['year'] = '-'
                 elem_json['quality'] = 'HD'
 
                 if elem.find("div", class_=["serie-card__information"]): 
                     elem_json['plot'] = elem.find("div", class_=["serie-card__information"]).p.get_text(strip=True)
- 
+
             elem_json['language'] = 'VOSE'
         except Exception:
             logger.error(elem)
