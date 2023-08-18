@@ -19,8 +19,8 @@ list_language = list(IDIOMAS.values())
 list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
 list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
-list_servers = ['directo', 'verystream', 'openload',  'streamango', 'uploadmp4', 'burstcloud']
-forced_proxy_opt = 'ProxyCF'
+list_servers = ['burstcloud', 'verystream', 'openload', 'streamango', 'uploadmp4', 'directo']
+forced_proxy_opt = 'ProxySSL'
 
 canonical = {
              'channel': 'animefenix', 
@@ -41,7 +41,8 @@ movie_path = 'animes?type[]=movie&order=updated'
 tv_path = 'animes?type[]=tv&order=updated'
 language = []
 url_replace = []
-seasonPattern = '(?i)(?:\s+Season|)\s+(\d{1,2})(?:[a-z]{2}\s+Season|)$'
+seasonPattern = '(?i)((?:\s+Season|\s+cour|\s+Part|\s+Movie|)\s+\d{1,2}(?:[a-z]{2}\s+Season|[a-z]{2}\s+cour|[a-z]{2}\s+Season\s+Part\s+\d+|)(?:\s+extra\s+edition|\s+specials|\s+ova|))$'
+normalizePattern = '(?i)(2i|iii|ii|iv|second season|third season|fourth season)(?:\s+ova|)$'
 
 finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['list-series']}]), 
                        ('find_all', [{'tag': ['article'], 'class': ['serie-card']}])]), 
@@ -67,11 +68,11 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['list-series']}]),
          'episodes': dict([('find', [{'tag': ['ul'], 'class': ['anime-page__episode-list']}]),
                            ('find_all', [{'tag': ['a']}])]),
          'episode_num': [], 
-         'episode_clean': [[seasonPattern, '']], 
+         'episode_clean': [[normalizePattern, ''],[seasonPattern, '']], 
          'plot': {}, 
          'findvideos': dict([('find', [{'tag': ['script'], 'string': re.compile('var\s*tabsArray')}]),
                              ('get_text', [{'tag': '', '@STRIP': True, '@TEXT_M': "tabsArray\['\d+'\]\s*=\s*\"([^\"]+)\"", '@DO_SOUP': True}])]),
-         'title_clean': [[seasonPattern, '']],
+         'title_clean': [[normalizePattern, ''],[seasonPattern, '']],
          'quality_clean': [],
          'language_clean': [], 
          'url_replace': [], 
@@ -194,15 +195,23 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     continue
                 if item.c_type == 'peliculas' and elem_json['mediatype'] == 'tvshow':
                     continue
-                
+
                 if elem_json['mediatype'] == 'movie':
                     elem_json['action'] = 'seasons'
-                else:
-                    if re.search(seasonPattern, elem_json['title']):
-                        elem_json['season'] = int(scrapertools.find_single_match(elem_json['title'], seasonPattern))
-                        if elem_json['season'] > 1:
-                            elem_json['title_subs'] = [' [COLOR %s][B]%s[/B][/COLOR] ' \
-                                                      % (AlfaChannel.color_setting.get('movies', 'white'), 'Temporada %s' % elem_json['season'])]
+
+                
+                if re.search(normalizePattern, elem_json['title']):
+                    elem_json['title'] = normalize_season(elem_json['title'])
+
+                # Retorna el string entero dado que a veces se detecta incorrectamente al ser un simple numero al final del título.
+                # Ademas 'title_clean' no hace distincion entre pelicula y serie, asi que hay que devolver el string tal cual,
+                # para que el usuario sepa que contenido es exactamente el que va a ver.
+                if re.search(seasonPattern, elem_json['title']):
+                    seasonStr = scrapertools.find_single_match(elem_json['title'], seasonPattern)
+                    elem_json['title_subs'] = [' [COLOR %s][B]%s[/B][/COLOR] ' \
+                                              % (AlfaChannel.color_setting.get('movies', 'white'), seasonStr.strip())]
+                    if elem_json['mediatype'] == 'tvshow':
+                        elem_json['season'] = int(scrapertools.find_single_match(seasonStr, '(\d{1,2})'))
 
                 # Todos los thumbs dan: "Failed: HTTP response code said error(22)"
                 # try:
@@ -314,7 +323,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
         try:
             iframeUrl = elem.find('iframe').get('src', '')
-            elem_json['url'] = convertUrl(item, iframeUrl)
+            elem_json['url'] = convert_url(item, iframeUrl)
             if re.search(r'embedwish|hqq|netuplayer|krakenfiles|fireload', elem_json['url'], re.IGNORECASE):
                 continue
 
@@ -394,7 +403,7 @@ def newest(categoria, **AHkwargs):
     return itemlist
 
 
-def convertUrl(item, iframeUrl, **AHkwargs):
+def convert_url(item, iframeUrl, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
@@ -439,3 +448,15 @@ def convertUrl(item, iframeUrl, **AHkwargs):
         return iframeUrl
 
     return AlfaChannel.do_unquote(url, plus=False)
+    
+def normalize_season(title):
+    logger.info()
+    # logger.info('Title: ' + title, True)
+    for f, r in [['2i', '3'],['iii', '3'],['ii', '2'],['iv', '4'],['second season', '2nd Season'],['third season', '3rd Season'],['fourth season', '4th Season']]:
+        m = scrapertools.find_single_match(title, '(?i)(%s)(?:\s+ova|)$' % f)
+        if m:
+            title = re.sub(m, r, title)
+            # logger.info('MATCH FOUND: ' + m + ', REPLACING WITH ' + r + ', Result: ' + title, True)
+            break
+            
+    return title
