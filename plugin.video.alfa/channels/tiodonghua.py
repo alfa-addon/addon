@@ -38,18 +38,22 @@ movie_path = 'peliculas/'
 tv_path = 'genero/donghua/'
 language = []
 url_replace = []
+seasonPattern = '(?i)((?:\s+Season|\s+cour|\s+Part|\s+Movie|)\s+\d{1,2}(?:[a-z]{2}\s+Season|[a-z]{2}\s+cour|[a-z]{2}\s+Season\s+Part\s+\d+|)(?:\s+extra\s+edition|\s+specials|\s+ova|)(?:\s+Sub\s+Español|\s+Legendado\s+Portugués|))$'
 
-finds = {'find': {'find_all': [{'tag': ['article'], 'class': ['item']}]},
+finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['items']}]),
+                       ('find_all', [{'tag': ['article'], 'class': ['item']}])]),
          'categories': {},
-         'search': {}, 
+         'search': dict([('find', [{'tag': ['div'], 'class': ['search-page']}]),
+                         ('find_all', [{'tag': ['article']}])]), 
          'get_language': {}, 
          'get_language_rgx': '', 
          'get_quality': {}, 
          'get_quality_rgx': '', 
-         'next_page': dict([('find', [{'tag': ['div'], 'class': ['pagination']}]),
-                            ('find_all', [{'tag': ['a'], '@POS': [-1], '@ARG': 'href'}])]),
+         'next_page': {},
          'next_page_rgx': [['\/page\/\d+', '/page/%s/']],
-         'last_page': {},
+         'last_page': dict([('find', [{'tag': ['div'], 'class': ['pagination']}]),
+                            ('find_all', [{'tag': ['span'], '@POS': [0]}]),
+                            ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '\s+(\d+)$'}])]),
          'year': {}, 
          'season_episode': {}, 
          'seasons': {},
@@ -60,11 +64,11 @@ finds = {'find': {'find_all': [{'tag': ['article'], 'class': ['item']}]},
          'episodes': dict([('find', [{'tag': ['ul'], 'class': ['episodios']}]),
                            ('find_all', [{'tag': ['li']}])]),
          'episode_num': [], 
-         'episode_clean': [], 
+         'episode_clean': [['(?i)pt/br', '']], 
          'plot': {}, 
          'findvideos': dict([('find', [{'tag': ['div'], 'id': ['playeroptions']}]),
                            ('find_all', [{'tag': ['li']}])]),
-         'title_clean': [['(?i)Sub Español|Legendado Portugués', '']],
+         'title_clean': [[seasonPattern, ''], ['(?i)Sub Español|Legendado Portugués', '']],
          'quality_clean': [],
          'language_clean': [], 
          'url_replace': [], 
@@ -88,8 +92,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host, action='list_all',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
 
-    itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host, action='list_all',
-                         thumbnail=get_thumb('newest', auto=True)))
+    itemlist.append(Item(channel=item.channel, title='Nuevos Donghuas', url=host + 'donghua/', action='list_all',
+                         thumbnail=get_thumb('newest', auto=True), c_type='newest'))
 
     itemlist.append(Item(channel=item.channel, title='Series', url=host + 'genero/donghua/', action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
@@ -123,9 +127,10 @@ def list_all(item):
 
     if item.c_type == 'episodios':
         findS['find'] = dict([('find_all', [{'tag': ['article'], 'class': ['episodes']}])])
-
-    if item.c_type == 'search':
-        findS['find'] = dict([('find_all', [{'tag': ['article']}])])
+        
+    if item.c_type == 'newest':
+        findS['find'] = dict([('find', [{'tag': ['div'], 'id': ['archive-content']}]),
+                              ('find_all', [{'tag': ['article'], 'class': ['item']}])])
 
     return AlfaChannel.list_all(item, matches_post=list_all_matches, generictools=True, finds=findS, **kwargs)
 
@@ -155,16 +160,31 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 info = elem.find("div", class_="title").a
                 elem_json['title'] = info.get_text(strip=True)
                 elem_json['url'] = info.get('href', '')
-                mediatype = elem.find("div", class_="thumbnail").a.span.get_text(strip=True)
                 elem_json['plot'] = elem.find("div", class_="contenido").p.get_text(strip=True)
                 elem_json['thumbnail'] = elem.find("div", class_="thumbnail").a.img.get("data-src", "")
-                elem_json['mediatype'] = 'tvshow' if not elem.find("div", class_="thumbnail").a.span.get_text(strip=True) == 'Película' and 'Película' not in elem_json['plot'] else 'movie'
-            else:
+                mtype = elem.find("div", class_="thumbnail").a.span.get_text(strip=True)
+                elem_json['mediatype'] = 'tvshow' if not mtype == 'Película' and 'Película' not in elem_json['plot'] else 'movie'
+            elif item.c_type == 'peliculas':
+                elem_json['title'] = elem.find("h3").get_text(strip=True)
+                elem_json['url'] = elem.find("a").get('href', '')
+                elem_json['thumbnail'] = elem.find("img").get("data-src", "")
+                elem_json['mediatype'] = 'movie'
+            else:    
                 elem_json['title'] = elem.find("h3").a.get_text(strip=True)
                 elem_json['url'] = elem.find("h3").a.get('href', '')
                 elem_json['thumbnail'] = elem.find("img").get("data-src", "")
-                elem_json['language'] = get_lang_from_str(elem_json['title'])
-                elem_json['mediatype'] = 'tvshow' if item.c_type != 'peliculas' else 'movie'
+                elem_json['mediatype'] = 'tvshow'
+                
+            elem_json['language'] = get_lang_from_str(elem_json['title'])
+            
+            if re.search(seasonPattern, elem_json['title']):
+                seasonStr = scrapertools.find_single_match(elem_json['title'], seasonPattern)
+                seasonStr = scrapertools.find_single_match(seasonStr, '(\d{1,2})')
+                if elem_json['mediatype'] == 'tvshow':
+                    elem_json['season'] = int(seasonStr)
+                    seasonStr = 'Temporada %s' % elem_json['season']
+                elem_json['title_subs'] = [' [COLOR %s][B]%s[/B][/COLOR] ' \
+                                          % (AlfaChannel.color_setting.get('movies', 'white'), seasonStr)]
 
             elem_json['year'] = '-'
             elem_json['quality'] = 'HD'
@@ -217,22 +237,22 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     matches = []
     findS = AHkwargs.get('finds', finds)
     soup = AHkwargs.get('soup', {})
-    
-    # # Asi lee los datos correctos de TMDB
-    # titleSeason = item.contentSeason
-    # if matches_int and titleSeason == 1:
-        # titleSeason = get_title_season(item.url, soup)
 
     for elem in matches_int:
         elem_json = {}
         # logger.error(elem)
-        logger.info(elem, True)
         try:
             info = elem.find("div", class_="episodiotitle")
             elem_json['url'] = info.a.get("href", "")
             elem_json['title'] = info.a.get_text(strip=True)
+            portugues = scrapertools.find_single_match(elem_json['title'], '(?i)(PT\/BR)$')
+            if portugues:
+                # La verdad es que no se que poner aqui, pero no es Version Original Subtitulada en Español ¿VOSP entonces?
+                elem_json['language'] = 'VOS Portugués'
+            else:
+                elem_json['language'] = 'VOSE'
             season, episode = elem.find("div", class_="numerando").get_text(strip=True).split(' - ')
-            elem_json['season'] = int(season or 1)
+            elem_json['season'] = item.contentSeason if int(season or 1) == 1 else int(season or 1)
             elem_json['episode'] = int(episode or 1)
             elem_json['thumbnail'] = elem.find("div", class_="imagen").img.get("data-src", "")
         except Exception:
@@ -268,16 +288,26 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
         # logger.error(elem)
 
         try:
-            kwargs['post'] = 'action=doo_player_ajax&post=%s&nume=%s&type=%s' % (elem.get('data-post', ''), elem.get('data-nume', ''), elem.get('data-type', ''))
+            kwargs['post'] = 'action=doo_player_ajax&post=%s&nume=%s&type=%s' \
+                             % (elem.get('data-post', ''), elem.get('data-nume', ''), elem.get('data-type', ''))
+
             kwargs['soup'] = False
             kwargs['json'] = True
-            iframeData = AlfaChannel.create_soup(AlfaChannel.doo_url, hide_infobox=True, **kwargs)
-            
-            if iframeData['embed_url'] == "": continue
-            if not iframeData['embed_url'].startswith('https'): continue
-            if re.search(r'rumble.com|vidguard.to|hqq.ac|modagamers.com|digitalxona.com|animetemaefiore.club|sbface.com|guccihide.com|terabox.com|sharezweb.com', iframeData['embed_url'], re.IGNORECASE): continue
 
-            elem_json['url'] = iframeData['embed_url']
+            iframeData = AlfaChannel.create_soup(AlfaChannel.doo_url, hide_infobox=True, **kwargs)
+            if not iframeData: continue
+            if not iframeData.get('embed_url', ''): continue
+            url = check_embed_url(iframeData['embed_url'])
+            if url == "": continue
+
+            if re.search(r'vidguard.to|hqq.ac|modagamers.com|'
+                         +'digitalxona.com|animetemaefiore.club|sbface.com|'
+                         +'guccihide.com|terabox.com|sharezweb.com|'
+                         +'cuyplay.com|vgembed.com|ahvsh.com|videopress.com|tioplayer.com|videa.hu', 
+                         url, re.IGNORECASE):
+                continue
+
+            elem_json['url'] = url
             elem_json['title'] = '%s'
             elem_json['language'] = item.language
             elem_json['quality'] = 'HD'
@@ -291,6 +321,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             continue
 
     return matches, langs
+
 
 def actualizar_titulos(item):
     logger.info()
@@ -362,23 +393,25 @@ def get_lang_from_str(string):
         lang = 'VOSE'
 
     return lang
-
-# Algunas series tienen la temporada en el titulo, lo cual hace que TMDB devuelva los datos incorrectos
-# Ya que por defecto la temporada se obtiene de otro lado, esto crea una ambigüedad.
-# Esta funcion se usa para extraer el numero de temporada correcto del titulo en la url
-def get_title_season(url, soup):
-    logger.info()
-
-    season = 1
-    seasonPattern = '(?i)temporada(?:-|\s*)(\d+)-?'
     
-    if re.search(seasonPattern, url):
-        season = int(scrapertools.find_single_match(url, seasonPattern))
+def check_embed_url(embed_url):
+    if embed_url == '':
+        return ''
+    if not embed_url.startswith('https'):
+        if embed_url.startswith('//'):
+            embed_url = 'https:' + embed_url
+        else:
+            embed_soup = AlfaChannel.do_soup(embed_url)
+            if embed_soup:
+                if embed_soup.iframe:
+                    embed_url = embed_soup.iframe.get('src', '')
+                    if embed_url.startswith('//'):
+                        embed_url = 'https:' + embed_url
+                else:
+                    logger.info('DANI: ' + str(embed_soup), True)
+                    embed_url = ''
+            else:
+                logger.info('DANI: ' + embed_url, True)
+                embed_url = ''
 
-    elif soup.find("div", class_="TPTblCn") and soup.find("div", class_="TPTblCn").find_previous('div', class_="Title"):
-        season_name = soup.find("div", class_="TPTblCn").find_previous('div', class_="Title").get_text(strip=True)
-
-        if re.search(seasonPattern, season_name):
-            season = int(scrapertools.find_single_match(season_name, seasonPattern))
-
-    return season
+    return embed_url
