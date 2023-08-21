@@ -218,7 +218,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             logger.error(traceback.format_exc())
             continue
 
-        if not elem_json['url']: continue
+        if not elem_json.get('url', ''): continue
 
         matches.append(elem_json.copy())
 
@@ -342,9 +342,9 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
             if iframeUrl != "":
                 iframeUrl = check_hjstream(iframeUrl)
+                # logger.info(iframeUrl, True)
                 uriData = AlfaChannel.urlparse(iframeUrl)
-
-                if re.search(r'hqq|netuplayer|krakenfiles|hj.henaojara.com', uriData.hostname, re.IGNORECASE):
+                if re.search(r'hqq|netuplayer|krakenfiles|hj.henaojara.com|streamhj.top', uriData.hostname, re.IGNORECASE):
                     continue
 
                 elem_json['url'] = iframeUrl
@@ -441,7 +441,6 @@ def check_hjstream(url):
                 decurl = base64.b64decode(v).decode("utf-8")
                 if decurl.startswith('https'):
                     url = scrapertools.htmlparser(decurl)
-
     return url
 
 def get_lang_from_str(string):
