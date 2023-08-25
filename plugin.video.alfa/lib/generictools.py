@@ -719,6 +719,73 @@ def context_for_videolibray(item):
     return item
 
 
+def monitor_domains_update(options=None):
+    logger.info()
+
+    monitor = xbmc.Monitor()
+    server_domains_list = json.loads(window.getProperty("alfa_cached_domains_update"))
+    window.setProperty("alfa_cached_domains_update", "")
+    alfa_channels_list = {}
+    alfa_domains_list = {}
+
+    try:
+        alfa_path = config.get_runtime_path()
+        alfa_channels_path = os.path.join(alfa_path, 'channels')
+        from core import httptools
+        httptools.TEST_ON_AIR = True
+        httptools.CACHING_DOMAINS = True
+    except Exception as e:
+        logger.error(str(e))
+        return False
+
+    channels = filetools.listdir(alfa_channels_path)
+    for channel_ in channels:
+        if not channel_.endswith('.py'): continue
+        channel = channel_.replace('.py', '')
+        try:
+            channel_obj = __import__('channels.%s' % channel, None, None, ["channels.%s" % channel])
+            if not channel_obj.canonical: continue
+            if not 'host' in channel_obj.canonical or not 'host_alt' in channel_obj.canonical \
+                                                   or not 'host_black_list' in channel_obj.canonical: continue
+            alfa_channels_list[channel] = channel_obj
+        except Exception as e:
+            logger.error('%s: %s' % (channel, str(e)))
+
+    logger.info('Verificando Host de %s canales' % len(alfa_channels_list), force=True)
+    for channel, channel_obj in alfa_channels_list.items():
+        if monitor and monitor.abortRequested(): 
+            return
+        canonical = channel_obj.canonical.copy()
+        if 'host' in canonical: del canonical['host']
+        opt = {'timeout': 5, 'method': 'GET', 'canonical': canonical, 'alfa_s': True}
+
+        response = httptools.downloadpage(canonical['host_alt'][0], **opt)
+
+        if not response.sucess:
+            logger.error('ERROR Verificando Host de canal %s: %s' % (channel.upper(), str(response.code)))
+            continue
+        
+        if not canonical['host_alt'][0].endswith('/'): response.canonical = response.canonical.rstrip('/')
+        if response.canonical and response.canonical != canonical['host_alt'][0] \
+                              and response.canonical not in canonical['host_black_list']:
+            host_alt = canonical['host_alt'][0]
+            if server_domains_list.get(channel):
+                alfa_domains_list[channel] = server_domains_list[channel]
+            else:
+                alfa_domains_list[channel] = {'host_alt': canonical['host_alt'], 
+                                              'host_black_list': canonical['host_black_list']}
+            if alfa_domains_list[channel]['host_alt'][0] not in alfa_domains_list[channel]['host_black_list']:
+                alfa_domains_list[channel]['host_black_list'].insert(0, alfa_domains_list[channel]['host_alt'][0])
+            if response.canonical not in alfa_domains_list[channel]['host_alt']:
+                del alfa_domains_list[channel]['host_alt'][0]
+                alfa_domains_list[channel]['host_alt'].insert(0, response.canonical)
+            logger.info('Cached UPDATED DOMAIN: %s TO %s' % (host_alt, alfa_domains_list[channel]), force=True)
+
+    window.setProperty("alfa_cached_domains_update", json.dumps(alfa_domains_list))
+    httptools.TEST_ON_AIR = False
+    httptools.CACHING_DOMAINS = False
+    
+
 def AH_find_videolab_status(self, item, itemlist, **AHkwargs):
     logger.info()
     global DEBUG, TEST_ON_AIR
@@ -1905,7 +1972,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, **AH
         convert = ['.=', '-= ', ':=', '&= ', '  = ']
         matches_len = len(matches)
 
-        for elem_json in matches[:channel_entries]:
+        for elem_json in matches:
             language = elem_json.get('language', '')
             if not language or '*' in str(language): language = elem_json['language'] = ['CAST']
             mediatype = elem_json['mediatype'] = elem_json.get('mediatype', '') or ('movie' if self.movie_path in elem_json['url'] else 'tvshow')
@@ -1930,7 +1997,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, **AH
 
             matches_inter.append(elem_json.copy())
 
-        matches_btdigg = matches_inter[:]
+        matches_btdigg = matches_inter[:channel_entries]
         matches = []
 
         if channeltools.is_enabled(channel_alt):
@@ -1942,6 +2009,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, **AH
                                                                             channel_alt=channel_alt, channel_entries=channel_entries, 
                                                                             btdigg_entries=btdigg_entries, **AHkwargs)
 
+        if len(matches_btdigg) == channel_entries: matches_btdigg = matches_inter[:]
         x = 0
         for elem_json in matches_btdigg:
             #logger.error(elem_json)
@@ -2108,7 +2176,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
             x = 0
             while x < limit_pages:
                 use_assistant = True
-                if xbmc.Player().isPlaying() and config.get_setting('btdigg_status', server='torrent', default=False):
+                if window.getProperty("alfa_gateways") and len(eval(base64.b64decode(window.getProperty("alfa_gateways")))) >= 1:
                     use_assistant = False
                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
@@ -2539,12 +2607,12 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
         for scrapedtitle, scrapedmagnet, scrapedsize, scrapedquality in matches_in:
             matches.append({'bt_url': '', 'title': scrapedtitle, 'url': scrapedmagnet, 'size': scrapedsize, 'quality': scrapedquality})
     
-    controls = self.finds.get('controls', {})
+    controls = self.finds.get('controls', {}) if self else {}
     contentSeason = AHkwargs.pop('btdigg_contentSeason', controls.get('btdigg_contentSeason', 0))
     disable_cache = True if (not 'btdigg_cache' in AHkwargs  and not 'btdigg_cache' in controls) else \
                     not AHkwargs.pop('btdigg_cache', controls.get('btdigg_cache', True))
     quality_control = AHkwargs.pop('btdigg_quality_control', controls.get('btdigg_quality_control', False))
-    canonical = AHkwargs.pop('canonical', self.canonical)
+    canonical = AHkwargs.pop('canonical', self.canonical if self else {})
     matches_len = len(matches)
     language_alt = []
 
@@ -2651,7 +2719,7 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                         continue
 
         if matches_len == len(matches): matches = AH_find_btdigg_matches(item, matches, **AHkwargs)
-        matches = sorted(matches, key=lambda it: (self.convert_size(it.get('size', 0)))) if matches else []
+        if self: matches = sorted(matches, key=lambda it: (self.convert_size(it.get('size', 0)))) if matches else []
     
     except Exception:
         logger.error(traceback.format_exc())
@@ -3435,7 +3503,14 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
                     return (False, False)
 
             else:
-                # Si no se ha encontrado ningún browser que cumpla las condiciones, se vuelve con error
+                # Si no se ha encontrado ningún browser que cumpla las condiciones, mostramos un codigo QR
+                if lookup:
+                    return ('QRCODE', False)
+                else:
+                    from platformcode.platformtools import dialog_qr_message
+                    if dialog_qr_message(config.get_localized_string(70759), url, url):
+                        return ('QRCODE', False)
+                # Si no esta disponible QRCODE, se vuelve con error
                 logger.error('No se ha encontrado ningún BROWSER: %s' % str(exePath))
                 if PM_LIST: logger.debug('PACKAGE LIST: %s' % PM_LIST)
                 logger.debug('Listado de APPS INSTALADAS en %s: %s' % (PATHS[0], sorted(filetools.listdir(PATHS[0]))))
