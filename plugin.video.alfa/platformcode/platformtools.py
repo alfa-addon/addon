@@ -144,12 +144,14 @@ def dialog_browse(_type, heading, shares='files', default=""):
 
 
 def dialog_qr_message(heading="", message="", qrdata=""):
+    from platformcode.custom_code import check_addon_installed
     if not check_addon_installed('script.module.pyqrcode'):
         '''
         Por alguna razón no se puede hacer un import 
         en la misma llamada a la funcion en la que se instala
         por lo tanto vamos a devolver false, se instale o no.
         '''
+        from platformcode.custom_code import install_addon
         r = install_addon('script.module.pyqrcode')
         return False
 
@@ -162,14 +164,8 @@ def dialog_qr_message(heading="", message="", qrdata=""):
         En principio funcionaba bien en special://temp, 
         pero en Android no parece reconocer las rutas completas, la imagen no cargaba.
         Así que el único modo es usar una ruta relativa a la carpeta 'media' del directorio del skin.
-        Otra alternativa era usar special://skin/media, pero ubicaba el archivo en una carpeta de Android (/users/0/...)
-        a la que no tengo acceso (sin root) para depuración.
-        Además esa carpeta (special://skin/media), al estar hubicada en la carpeta de instalación, 
-        en Windows está dentro de "Program Files" y no tiene permisos de escritura, 
-        probablemente pase lo mismo en otros sistemas.
-        https://kodi.wiki/view/Special_protocol
         '''
-        media_folder = filetools.translatePath('special://home/addons/plugin.video.alfa/resources/skins/Default/media')
+        media_folder = filetools.join(config.get_runtime_path(), 'resources', 'skins', 'Default', 'media')
         # logger.info(media_folder, True)
     except:
         logger.error('No se pudo ubicar la carpeta \'media\'.')
@@ -2392,32 +2388,6 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
 
 def log(texto):
     logger.info(texto, force=True)
-
-
-def install_addon(addon_name_py2, addon_name_py3 = ""):
-    if addon_name_py3 == "": addon_name_py3 = addon_name_py2
-    addon_name = addon_name_py3 if PY3 else addon_name_py2
-    if not xbmc.getCondVisibility('System.HasAddon(%s)' % addon_name):
-        try:
-            xbmc.executebuiltin('InstallAddon(%s)' % addon_name, True)
-            if xbmc.getCondVisibility('System.HasAddon(%s)' % addon_name):
-                return True
-            else:
-                return False
-        except:
-            return False
-    else:
-        return True
-        
-def check_addon_installed(addon_name_py2, addon_name_py3 = ""):
-    if addon_name_py3 == "": addon_name_py3 = addon_name_py2
-    addon_name = addon_name_py3 if PY3 else addon_name_py2
-    try:
-        addon = xbmcaddon.Addon(addon_name)
-        # logger.info("Installed Addon: %s, version %s." % (addon_name, addon.getAddonInfo('version')), True)
-    except:
-        return False
-    return True
 
 
 class QRDialog(xbmcgui.WindowXMLDialog):

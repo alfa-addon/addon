@@ -723,7 +723,7 @@ def monitor_domains_update(options=None):
     logger.info()
 
     monitor = xbmc.Monitor()
-    server_domains_list = json.loads(window.getProperty("alfa_cached_domains_update"))
+    server_domains_list = json.loads(window.getProperty("alfa_cached_domains_update") or '{}')
     window.setProperty("alfa_cached_domains_update", "")
     alfa_channels_list = {}
     alfa_domains_list = {}
@@ -742,6 +742,7 @@ def monitor_domains_update(options=None):
     for channel_ in channels:
         if not channel_.endswith('.py'): continue
         channel = channel_.replace('.py', '')
+
         try:
             channel_obj = __import__('channels.%s' % channel, None, None, ["channels.%s" % channel])
             if not channel_obj.canonical: continue
@@ -751,35 +752,53 @@ def monitor_domains_update(options=None):
         except Exception as e:
             logger.error('%s: %s' % (channel, str(e)))
 
-    logger.info('Verificando Host de %s canales' % len(alfa_channels_list), force=True)
+    logger.error('Verificando Host de %s canales' % len(alfa_channels_list))
     for channel, channel_obj in alfa_channels_list.items():
         if monitor and monitor.abortRequested(): 
             return
-        canonical = channel_obj.canonical.copy()
-        if 'host' in canonical: del canonical['host']
-        opt = {'timeout': 5, 'method': 'GET', 'canonical': canonical, 'alfa_s': True}
 
-        response = httptools.downloadpage(canonical['host_alt'][0], **opt)
+        try:
+            canonical = channel_obj.canonical.copy()
+            if 'host' in canonical: del canonical['host']
+            opt = {'timeout': 5, 'method': 'GET', 'canonical': canonical, 'alfa_s': True}
 
-        if not response.sucess:
-            logger.error('ERROR Verificando Host de canal %s: %s' % (channel.upper(), str(response.code)))
-            continue
-        
-        if not canonical['host_alt'][0].endswith('/'): response.canonical = response.canonical.rstrip('/')
-        if response.canonical and response.canonical != canonical['host_alt'][0] \
-                              and response.canonical not in canonical['host_black_list']:
-            host_alt = canonical['host_alt'][0]
-            if server_domains_list.get(channel):
-                alfa_domains_list[channel] = server_domains_list[channel]
-            else:
-                alfa_domains_list[channel] = {'host_alt': canonical['host_alt'], 
-                                              'host_black_list': canonical['host_black_list']}
-            if alfa_domains_list[channel]['host_alt'][0] not in alfa_domains_list[channel]['host_black_list']:
-                alfa_domains_list[channel]['host_black_list'].insert(0, alfa_domains_list[channel]['host_alt'][0])
-            if response.canonical not in alfa_domains_list[channel]['host_alt']:
-                del alfa_domains_list[channel]['host_alt'][0]
-                alfa_domains_list[channel]['host_alt'].insert(0, response.canonical)
-            logger.info('Cached UPDATED DOMAIN: %s TO %s' % (host_alt, alfa_domains_list[channel]), force=True)
+            response = httptools.downloadpage(canonical['host_alt'][0], **opt)
+
+            if not response.sucess:
+                current_host = config.get_setting("current_host", channel, default='')
+                if current_host and current_host != canonical['host_alt'][0]:
+                    response = httptools.downloadpage(current_host, **opt)
+                if not response.sucess:
+                    logger.error('ERROR Verificando Host de canal %s: %s' % (channel.upper(), str(response.code)))
+                    continue
+
+            if not canonical['host_alt'][0].endswith('/'): response.canonical = response.canonical.rstrip('/')
+            if response.canonical and response.canonical != canonical['host_alt'][0] \
+                                  and response.canonical not in canonical['host_black_list'] \
+                                  and response.canonical not in server_domains_list.get(channel, {}).get('host_black_list', []):
+
+                host_alt = canonical['host_alt'][0]
+                if server_domains_list.get(channel):
+                    alfa_domains_list[channel] = server_domains_list[channel].copy()
+                else:
+                    alfa_domains_list[channel] = {'host_alt': canonical['host_alt'][:], 
+                                                  'host_black_list': canonical['host_black_list'][:]}
+
+                if response.canonical not in alfa_domains_list[channel]['host_alt'] \
+                                      and response.canonical not in alfa_domains_list[channel]['host_black_list']:
+                    current_host = config.get_setting("current_host", channel, default='')
+                    if current_host and current_host != response.canonical:
+                        config.set_setting("current_host", response.canonical, channel)
+                    if alfa_domains_list[channel]['host_alt'][0] not in alfa_domains_list[channel]['host_black_list']:
+                        alfa_domains_list[channel]['host_black_list'].insert(0, alfa_domains_list[channel]['host_alt'][0])
+                    if response.canonical not in alfa_domains_list[channel]['host_alt']:
+                        del alfa_domains_list[channel]['host_alt'][0]
+                        alfa_domains_list[channel]['host_alt'].insert(0, response.canonical)
+
+                logger.error('Cached UPDATED DOMAIN: %s TO %s' % (host_alt, alfa_domains_list[channel]))
+
+        except Exception as e:
+            logger.error('%s: %s' % (channel, str(e)))
 
     window.setProperty("alfa_cached_domains_update", json.dumps(alfa_domains_list))
     httptools.TEST_ON_AIR = False
