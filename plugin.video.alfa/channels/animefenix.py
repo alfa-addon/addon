@@ -2,24 +2,34 @@
 # -*- Channel AnimeFenix -*-
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
-# -*- Convertido a AH por DieFeM -*-
 
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; _dict = dict
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-from lib import AlfaChannelHelper
-if not PY3: _dict = dict; from AlfaChannelHelper import dict
-from AlfaChannelHelper import DictionaryAllChannel
-from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
-from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
+if PY3:
+    import urllib.parse as urllib
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+
+import re
+
+from channelselector import get_thumb
+from core import httptools
+from core import scrapertools
+from core import servertools
+from core.item import Item
+from platformcode import config, logger
+from channels import filtertools
+from modules import autoplay
+from modules import renumbertools
+from core import tmdb
+
 
 IDIOMAS = {'vose': 'VOSE'}
 list_language = list(IDIOMAS.values())
-list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
-list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
-list_quality = list_quality_movies + list_quality_tvshow
-list_servers = ['burstcloud', 'verystream', 'openload', 'streamango', 'uploadmp4', 'directo']
+list_quality = []
+list_servers = ['directo', 'verystream', 'openload',  'streamango', 'uploadmp4', 'fembed']
 forced_proxy_opt = 'ProxyCF'
 
 canonical = {
@@ -34,439 +44,361 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-timeout = 15
-kwargs = {}
-debug = config.get_setting('debug_report', default=False)
-movie_path = 'animes?type[]=movie&order=updated'
-tv_path = 'animes?type[]=tv&order=updated'
-language = []
-url_replace = []
-seasonPattern = '(?i)((?:\s+Season|\s+cour|\s+Part|\s+Movie|)\s+\d{1,2}(?:[a-z]{2}\s+Season|[a-z]{2}\s+cour|[a-z]{2}\s+Season\s+Part\s+\d+|)(?:\s+extra\s+edition|\s+specials|\s+ova|))$'
-normalizePattern = '(?i)(2i|iii|ii|iv|second season|third season|fourth season)(?:\s+ova|)$'
-home = 'zerotwo'
-
-finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['list-series']}]), 
-                       ('find_all', [{'tag': ['article'], 'class': ['serie-card']}])]), 
-         'categories': dict([('find', [{'tag': ['select'], 'id': ['genre_select']}]),
-                             ('find_all', [{'tag': ['option']}])]),
-         'search': {}, 
-         'get_language': {}, 
-         'get_language_rgx': '', 
-         'get_quality': {}, 
-         'get_quality_rgx': '', 
-         'next_page': {}, 
-         'next_page_rgx': [['\?page=\d+', '?page=%s']],
-         'last_page': dict([('find', [{'tag': ['ul'], 'class': ['pagination-list']}]),
-                            ('find_all', [{'tag': ['a'], '@POS': [-2]}]),
-                            ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}])]),
-         'year': {}, 
-         'season_episode': {}, 
-         'seasons': {},
-         'season_num': {},
-         'seasons_search_num_rgx': '', 
-         'seasons_search_qty_rgx': '', 
-         'episode_url': '', 
-         'episodes': dict([('find', [{'tag': ['ul'], 'class': ['anime-page__episode-list']}]),
-                           ('find_all', [{'tag': ['a']}])]),
-         'episode_num': [], 
-         'episode_clean': [[normalizePattern, ''],[seasonPattern, '']], 
-         'plot': {}, 
-         'findvideos': dict([('find', [{'tag': ['script'], 'string': re.compile('var\s*tabsArray')}]),
-                             ('get_text', [{'tag': '', '@STRIP': True, '@TEXT_M': "tabsArray\['\d+'\]\s*=\s*\"([^\"]+)\"", '@DO_SOUP': True}])]),
-         'title_clean': [[normalizePattern, ''], [seasonPattern, ''], ['-?\s*\(\d{4}\)', '']],
-         'quality_clean': [],
-         'language_clean': [], 
-         'url_replace': [], 
-         'controls': {'duplicates': [], 'min_temp': False, 'url_base64': False, 'add_video_to_videolibrary': True, 'cnt_tot': 24, 
-                      'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
-                      'IDIOMAS_TMDB': {0: 'es', 1: 'ja', 2: 'es'}, 'join_dup_episodes': False, 'season_TMDB_limit': False}, 
-         'timeout': timeout}
-AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
-                                   idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
-                                   list_quality_movies=list_quality_movies, list_quality_tvshow=list_quality_tvshow, 
-                                   channel=canonical['channel'], actualizar_titulos=True, url_replace=url_replace, debug=debug)
-
 
 def mainlist(item):
     logger.info()
 
-    autoplay.init(item.channel, list_servers, list_quality)
-
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host + home, action='list_all',
-                         thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
+    autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host + home, action='list_all',
-                         thumbnail=get_thumb('newest', auto=True), c_type='series'))
+    itemlist.append(
+        Item(
+            action = "new_episodes",
+            channel = item.channel,
+            thumbnail = get_thumb("channels_anime.png"),
+            title = "Nuevos Capítulos",
+            url = host + 'nino'
+        )
+    )
 
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'animes?page=1&type%5B%5D=tv&order=updated', action='list_all',
-                         thumbnail=get_thumb('anime', auto=True), c_type='series'))
+    itemlist.append(
+        Item(
+            action = "list_all",
+            channel = item.channel,
+            thumbnail = get_thumb("now_playing.png"),
+            title = "Emision",
+            url = host + 'animes?type%5B%5D=tv&estado%5B%5D=1',
+        )
+    )
 
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'animes?page=1&type%5B%5D=movie&order=updated', action='list_all',
-                         thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
+    itemlist.append(
+        Item(
+            action = "list_all",
+            channel = item.channel,
+            thumbnail = get_thumb("channels_anime.png"),
+            title = "Recientes",
+            url = host
+        )
+    )
 
-    itemlist.append(Item(channel=item.channel, title='Categorías',  action='section', url=host + 'animes?page=1', 
-                         thumbnail=get_thumb('categories', auto=True), extra='categorías'))
+    itemlist.append(
+        Item(
+            action = "list_all",
+            channel = item.channel,
+            thumbnail = get_thumb("channels_anime.png"),
+            title = "Todas",
+            url = '%sanimes?order=title' % host
+        )
+    )
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
-                         thumbnail=get_thumb("search", auto=True)))
-
-    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
+    itemlist.append(
+        Item(
+            action = "search",
+            channel = item.channel,
+            thumbnail = get_thumb('search.png'),
+            title = "Buscar",
+            url = host + 'animes?q='
+        )
+    )
 
     autoplay.show_option(item.channel, itemlist)
+
+    itemlist = renumbertools.show_option(item.channel, itemlist)
 
     return itemlist
 
 
-def section(item):
+def get_source(url, json=False, unescape=False, **opt):
     logger.info()
 
-    return AlfaChannel.section(item, matches_post=section_matches, **kwargs)
+    opt['canonical'] = canonical
+    opt['ignore_response_code'] = True
+    opt['timeout'] = 10
+    data = httptools.downloadpage(url, **opt)
+    data.data = scrapertools.unescape(data.data) if unescape else data.data
 
+    if json:
+        data = data.json
+    elif opt.get('soup', False):
+        data = data.soup
+    else:
+        data = data.data
 
-def section_matches(item, matches_int, **AHkwargs):
-    logger.info()
-
-    matches = []
-
-    findS = AHkwargs.get('finds', finds)
-
-    for elem in matches_int:
-        # logger.error(elem)
-        elem_json = {}
-        elem_json['title'] = elem.get_text(strip=True)
-        elem_json['url'] = ('%sanimes?page=1&genero[]=%s&order=updated' % (host, elem.get('value', '').replace(' ', '+')))\
-                                                                          .replace('[', '%5B').replace(']', '%5D')
-        matches.append(elem_json.copy())
-    
-    return matches
+    return data
 
 
 def list_all(item):
     logger.info()
 
-    findS = finds.copy()
+    itemlist = list()
 
-    if item.c_type == 'episodios':
-        findS['find'] = dict([('find', [{'tag': ['div'], 'class': ['capitulos-grid']}]), 
-                              ('find_all', [{'tag': ['div'], 'class': ['item']}])])
+    soup = get_source(item.url, soup=True)
+    try:
+        matches = soup.find("div", class_="list-series").find_all("article", class_="serie-card")
+    except:
+        matches = []
 
-    return AlfaChannel.list_all(item, matches_post=list_all_matches, generictools=True, finds=findS, **kwargs)
+    for elem in matches:
+        url = elem.a["href"]
+        title = elem.a["title"]
+        title = re.sub('(?i)\s*season\s*|\s*part\s*|\s*\d+(?:st|nd|rd|th)\s*|\s*\d{1,3}$', '', title)
+        thumb = elem.img["src"]
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
+        itemlist.append(
+            Item(
+                action = 'episodios',
+                channel = item.channel,
+                contentSerieName = title,
+                context = context,
+                thumbnail = thumb,
+                title = title,
+                url = url,
+                contentType='tvshow'
+            )
+        )
 
+    tmdb.set_infoLabels_itemlist(itemlist, True)
 
-def list_all_matches(item, matches_int, **AHkwargs):
-    logger.info()
+    next_page = soup.find('div', class_='pagination')
 
-    matches = []
-
-    findS = AHkwargs.get('finds', finds)
-
-    for elem in matches_int:
-        elem_json = {}
-        # logger.error(elem)
-
+    if next_page and len(next_page.find_all('li')) > 0:
         try:
-            if item.c_type == 'episodios':
-                elem_json['title'] = elem.find("div", class_="overtitle").get_text(strip=True)
-                try:
-                    season = scrapertools.find_single_match(elem_json['title'], '\s+(\d+)$') or '1'
-                    episode = elem.find("div", class_="overepisode").get_text(strip=True)
-                    episode = scrapertools.find_single_match(episode, '\s+(\d+)$')
-                    elem_json['season'] = int(season)
-                    elem_json['episode'] = int(episode)
-                except Exception:
-                    elem_json['season'] = 1
-                    elem_json['episode'] = 1
-                elem_json['mediatype'] = 'episode'
-                elem_json['url'] = elem.find("div", class_="overarchingdiv").a.get('href', '')
-                elem_json['go_serie'] = {'url': re.sub('-\d{1,2}$', '', elem_json['url']).replace('ver/', ''), 'contentSeason': elem_json['season']}
-            else:
-                elem_json['title'] = elem.find("div", class_="title").h3.a.get_text(strip=True)
-                elem_json['url'] = elem.find("figure", class_="image").a.get('href', '')
+            next_page = next_page.find_all('li')[-1]
+            next_url = next_page.find('a')['href'] if next_page.find('a') and next_page.find('a').get('href') else ''
+            base_url = scrapertools.find_single_match(item.url, '(.+?)\?')
 
-                try:
-                    _type = elem.find("span", class_="type").get_text(strip=True)
-                except Exception:
-                    _type = ''
-
-                if not elem_json.get('mediatype'):
-                    elem_json['mediatype'] = 'tvshow' if _type != "Película" else 'movie'
-
-                if item.c_type == 'series' and elem_json['mediatype'] == 'movie':
-                    continue
-                if item.c_type == 'peliculas' and elem_json['mediatype'] == 'tvshow':
-                    continue
-
-                if elem_json['mediatype'] == 'movie':
-                    elem_json['action'] = 'seasons'
-
-                
-                if re.search(normalizePattern, elem_json['title']):
-                    elem_json['title'] = normalize_season(elem_json['title'])
-
-                # Retorna el string entero dado que a veces se detecta incorrectamente al ser un simple numero al final del título.
-                # Ademas 'title_clean' no hace distincion entre pelicula y serie, asi que hay que devolver el string tal cual,
-                # para que el usuario sepa que contenido es exactamente el que va a ver.
-                if re.search(seasonPattern, elem_json['title']):
-                    seasonStr = scrapertools.find_single_match(elem_json['title'], seasonPattern)
-                    elem_json['title_subs'] = [' [COLOR %s][B]%s[/B][/COLOR] ' \
-                                              % (AlfaChannel.color_setting.get('movies', 'white'), seasonStr.strip())]
-                    if elem_json['mediatype'] == 'tvshow':
-                        elem_json['season'] = int(scrapertools.find_single_match(seasonStr, '(\d{1,2})'))
-
-                # Todos los thumbs dan: "Failed: HTTP response code said error(22)"
-                # try:
-                    # elem_json['thumbnail'] = elem.find("figure", class_="image").a.img.get("src", "")
-                # except Exception:
-                    # pass
-
-                # Esto se carga la busqueda en TMDB porque el año no coincide
-                # try:
-                    # elem_json['year'] = elem.find("span", class_="year").get_text(strip=True)
-                # except Exception:
-                    # elem_json['year'] = '-'
-
-                                       
-                                           
-
-                if elem.find("div", class_=["serie-card__information"]): 
-                    elem_json['plot'] = elem.find("div", class_=["serie-card__information"]).p.get_text(strip=True)
-
-            elem_json['year'] = '-'
-            elem_json['quality'] = 'HD'
-            elem_json['language'] = 'VOSE'
-
-        except Exception:
-            logger.error(elem)
+            if next_url:
+                itemlist.append(
+                    Item(
+                        action = item.action,
+                        channel = item.channel,
+                        thumbnail = thumb,
+                        title = 'Siguiente página >',
+                        url = "%s%s" % (base_url, next_url) if not base_url in next_url else next_url
+                    )
+                )
+        except:
+            import traceback
             logger.error(traceback.format_exc())
-            continue
 
-        if not elem_json['url']: continue
-
-        matches.append(elem_json.copy())
-
-    return matches
+    return itemlist
 
 
-def seasons(item):
+def new_episodes(item):
     logger.info()
 
-    return AlfaChannel.seasons(item, **kwargs)
+    itemlist = list()
+
+    soup = get_source(item.url, soup=True).find("div", class_="capitulos-grid")
+
+    try:
+        for elem in soup.find_all("div", "overarchingdiv"):
+
+            title = elem.img["alt"]
+            thumb = elem.img["src"]
+            url = elem.a["href"]
+
+            season = 1
+            episode = 1
+            if scrapertools.find_single_match(title, '(?i)\s*\d{1,2}(?:st|nd|rd|th)\s*season\s+\d{1,3}\s*$'):
+                season, episode = scrapertools.find_single_match(title, '(?i)\s*(\d{1,2})(?:st|nd|rd|th)\s*season\s+(\d{1,3})\s*$')
+                name = re.sub('(?i)\s*\d{1,2}(?:st|nd|rd|th)\s*season\s+\d{1,3}\s*$', '', title)
+                title = '%s %sx%s' % (name, season, str(episode).zfill(2))
+            elif scrapertools.find_single_match(title, '(?i)season\s+\d{1,2}\s*$'):
+                season = scrapertools.find_single_match(title, '(?i)season\s+(\d{1,2})\s*$')
+                name = re.sub('(?i)season\s+\d{1,2}\s*$', '', title)
+                title = '%s %sx%s' % (name, season, str(episode).zfill(2))
+            elif scrapertools.find_single_match(title, '\s+\d{1,2}\s+\d+\s*$'):
+                season, episode = scrapertools.find_single_match(title, '\s+(\d{1,2})\s+(\d+)\s*$')
+                name = re.sub('\s+\d{1,2}\s+\d+\s*$', '', title)
+                title = '%s %sx%s' % (name, season, str(episode).zfill(2))
+            elif scrapertools.find_single_match(title, '\s+\d{1,3}\s*$'):
+                episode = scrapertools.find_single_match(title, '\s+(\d{1,3})\s*$')
+                name = re.sub('\s+\d{1,3}\s*$', '', title)
+                title = '%s %sx%s' % (name, season, str(episode).zfill(2))
+            else:
+                # name = elem.find("div", class_="overtitle").text
+                name = title
+            try:
+                season = int(season)
+                episode = int(episode)
+            except:
+                season = 1
+                episode = 1
+            
+            if scrapertools.find_single_match(name, '\s*\(?\[?\d{4}\]?\)?\s*'):
+                name = re.sub('\s*\(?\[?\d{4}\]?\)?\s*', '', name)
+                title = re.sub('\s*\(?\[?\d{4}\]?\)?\s*', '', title)
+            name = re.sub('(?i)\s*season\s*|\s*part\s*|\s*\d+(?:st|nd|rd|th)\s*', '', name)
+            title = re.sub('(?i)\s*season\s*|\s*part\s*|\s*\d+(?:st|nd|rd|th)\s*', '', name)
+
+            itemlist.append(Item(channel=item.channel, title=title, thumbnail=thumb, url=url, action="findvideos",
+                                 contentSerieName=name, contentType='episode', contentSeason=season, contentEpisodeNumber=episode))
+    except:
+        pass
+    
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+    return itemlist
 
 
 def episodios(item):
     logger.info()
 
-    itemlist = []
-
-    templist = seasons(item)
-
-    for tempitem in templist:
-        itemlist += episodesxseason(tempitem)
-
-    return itemlist
-
-
-def episodesxseason(item, **AHkwargs):
-    logger.info()
-
-    """ Aquí le decimos a qué función tienen que saltar para las películas de un solo vídeo """
-    kwargs['matches_post_get_video_options'] = findvideos
-    soup = AHkwargs.get('soup', '')
-
-    return AlfaChannel.episodes(item, data=soup, matches_post=episodesxseason_matches, **kwargs)
-
-
-def episodesxseason_matches(item, matches_int, **AHkwargs):
-    logger.info()
-
-    matches = []
-    findS = AHkwargs.get('finds', finds)
-    soup = AHkwargs.get('soup', {})
-
-    for elem in matches_int:
-        elem_json = {}
-        # logger.error(elem)
-        try:
-            elem_json['url'] = elem.get("href", "")
-            epistr = elem.span.get_text(strip=True)
-            elem_json['title'] = elem.get_text(strip=True).replace(epistr, '')
-            elem_json['episode'] = int(scrapertools.find_single_match(epistr, '\s+(\d+)$') or 1)
-            elem_json['season'] = item.contentSeason
-
-        except Exception:
-            logger.error(elem)
-            logger.error(traceback.format_exc())
-            continue
-
-        if not elem_json.get('url', ''): 
-            continue
-
-        matches.append(elem_json.copy())
-
-    return matches
-
-
-def findvideos(item, **AHkwargs):
-    logger.info()
-
-    kwargs['matches_post_episodes'] = episodesxseason_matches
-
-    return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
-                                         verify_links=False, findvideos_proc=True, **kwargs)
-
-
-def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
-    logger.info()
-
-    matches = []
-    findS = AHkwargs.get('finds', finds)
-
-    for elem in matches_int:
-        elem_json = {}
-
-        try:
-            iframeUrl = elem.find('iframe').get('src', '')
-            elem_json['url'] = convert_url(item, iframeUrl)
-            if re.search(r'embedwish|hqq|netuplayer|krakenfiles|fireload', elem_json['url'], re.IGNORECASE):
-                continue
-
-            elem_json['title'] = '%s'
-            elem_json['language'] = item.language
-            elem_json['quality'] = 'HD'
-            
-            matches.append(elem_json.copy())
-        
-        except Exception:
-            logger.error(elem)
-            logger.error(traceback.format_exc())
-            continue
-
-    return matches, langs
-
-
-def actualizar_titulos(item):
-    logger.info()
-    #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
-
-    return AlfaChannel.do_actualizar_titulos(item)
-
-
-def search(item, texto, **AHkwargs):
-    logger.info()
-    kwargs.update(AHkwargs)
-
-    try:
-        # https://docs.python.org/2/library/urllib.html#urllib.quote_plus (escapa los caracteres de la busqueda para usarlos en la URL)
-        texto = AlfaChannel.do_quote(texto, '', plus=True) 
-        item.url = host + 'animes?page=1&q=' + texto
-
-        if texto:
-            item.c_type = 'search'
-            item.texto = texto
-            return list_all(item)
-        else:
-            return []
-
-    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except Exception:
-        for line in sys.exc_info():
-            logger.error("%s" % line)
-        return []
-
-
-def newest(categoria, **AHkwargs):
-    logger.info()
-    kwargs.update(AHkwargs)
-
-    itemlist = []
-    item = Item()
-
-    item.title = "newest"
-    item.category_new = "newest"
-    item.channel = channel
-
-    try:
-        if categoria in ['anime']:
-            item.url = host
-            item.c_type = 'episodios'
-            item.extra = "novedades"
-            item.action = "list_all"
-            itemlist = list_all(item)
-
-        if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
-            itemlist.pop()
-
-    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except Exception:
-        for line in sys.exc_info():
-            logger.error("{0}".format(line))
-        logger.error(traceback.format_exc())
-        return []
-
-    return itemlist
-
-
-def convert_url(item, iframeUrl, **AHkwargs):
-    logger.info()
-    kwargs.update(AHkwargs)
+    item.videolibrary = True if item.extra else False
+    itemlist = episodesxseason(item)
     
-    kwargs['soup'] = False
-    #kwargs['json'] = False
-    #kwargs['unescape'] = False
-    kwargs['referer'] = item.url
-    kwargs['hide_infobox'] = True
-    kwargs['canonical'] = {}
-    #kwargs['ignore_response_code'] = True
-    kwargs['timeout'] = 10
-    kwargs['set_tls'] = True
-    kwargs['set_tls_min'] = True
-    kwargs['retries_cloudflare'] = 0
-    kwargs['CF'] = False
+    return itemlist
 
+
+def episodesxseason(item):
+    logger.info()
+
+    itemlist = list()
+
+    soup = get_source(item.url, soup=True).find("div", class_="column is-12")
+
+    infoLabels = item.infoLabels
+
+    try:
+        for elem in soup.find_all("li"):
+            url = elem.a["href"]
+            try:
+                if scrapertools.find_single_match(elem.a.text, "(?i)\s*(?:Part|Season)\s*(\d+)"):
+                    sea_num = int(scrapertools.find_single_match(elem.a.text, "(?i)\s*(?:Part|Season)\s*(\d+)"))
+                elif scrapertools.find_single_match(elem.a.text, "(?i)\s*\d{1,2}(?:st|nd|rd|th)\s*season"):
+                    sea_num = int(scrapertools.find_single_match(elem.a.text, "(?i)\s*(\d{1,2})(?:st|nd|rd|th)\s*season"))
+                elif scrapertools.find_single_match(elem.a.text, "(?i)\s*(\d{1,3})\s+Episodio\s+\d{1,3}"):
+                    sea_num = int(scrapertools.find_single_match(elem.a.text, "(?i)\s*(\d{1,3})\s+Episodio\s+\d{1,3}"))
+                else:
+                    sea_num = 1
+            except:
+                sea_num = 1
+            try:
+                epi_num = int(scrapertools.find_single_match(elem.span.text, "(\d+)"))
+            except:
+                epi_num = 1
+            infoLabels['season'] = sea_num or 1
+            infoLabels['episode'] = epi_num
+            title = '%sx%s - Episodio %s' % (sea_num, epi_num, epi_num)
+            
+            itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', 
+                                 infoLabels=infoLabels, contentType='episode'))
+    except:
+        pass
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    itemlist = itemlist[::-1]
+
+    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.videolibrary:
+        itemlist.append(
+            Item(
+                action = "add_serie_to_library",
+                channel = item.channel,
+                contentSerieName = item.contentSerieName,
+                extra = 'episodios',
+                text_color = "yellow",
+                title = 'Añadir esta serie a la videoteca',
+                url = item.url
+            )
+        )
+
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+
+    itemlist = list()
     servers = {"6": "https://www.yourupload.com/embed/%s", "15": "https://mega.nz/embed/%s",
                "21": "https://www.burstcloud.co/embed/%s", "12": "https://ok.ru/videoembed/%s",
                "17": "https://videobin.co/embed-%s.html", "9": host + "stream/amz.php?v=%s",
                "11": host +"stream/amz.php?v=%s", "2": "https://www.fembed.com/v/%s",
                "3": "https://www.mp4upload.com/embed-%s.html", "4": "https://sendvid.com/embed/%s",
                "19": "https://videa.hu/player?v=%s", "23": "https://sbthe.com/e/%s"}
-    url = ''
 
-    srv_id, v_id = scrapertools.find_single_match(iframeUrl, "player=(\d+)&code=([^&]+)")
+    try:
+        soup = get_source(item.url, soup=True, unescape=True)
 
-    if AlfaChannel.do_unquote(v_id, plus=False).startswith("/"):
-        v_id = v_id[1:]
+        pl = soup.find("div", class_="player-container")
 
-    if 'fireload' in v_id:
-        url = v_id
-        if not url.startswith('http'):
-            url = 'https://' + url
-    elif srv_id not in servers:
-        srv_data = AlfaChannel.create_soup(iframeUrl, **kwargs).data
-        url = AlfaChannel.urljoin(host, scrapertools.find_single_match(srv_data, 'playerContainer.innerHTML .*?src="([^"]+)"'))
-    else:
-        srv = servers.get(srv_id, "directo")
-        if srv != "directo":
-            url = srv % v_id
+        script = pl.find("script").string
+        urls = scrapertools.find_multiple_matches(script, "src='([^']+)'")
 
-    if "/stream/" in url:
-        data = AlfaChannel.create_soup(url, **kwargs).data
-        url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace('\\/', '/').replace('/stream/fl.php?v=', '')
+        for url in urls:
 
-    if not url or url == 'https://':
-        return iframeUrl
+            srv_id, v_id = scrapertools.find_single_match(url, "player=(\d+)&amp;code=([^&]+)")
 
-    return AlfaChannel.do_unquote(url, plus=False)
-    
-def normalize_season(title):
-    logger.info()
-    # logger.info('Title: ' + title, True)
-    for f, r in [['2i', '3'],['iii', '3'],['ii', '2'],['iv', '4'],['second season', '2nd Season'],['third season', '3rd Season'],['fourth season', '4th Season']]:
-        m = scrapertools.find_single_match(title, '(?i)(%s)(?:\s+ova|)$' % f)
-        if m:
-            title = re.sub(m, r, title)
-            # logger.info('MATCH FOUND: ' + m + ', REPLACING WITH ' + r + ', Result: ' + title, True)
-            break
+            if urllib.unquote(v_id).startswith("/"):
+                v_id = v_id[1:]
+
+            if 'fireload' in v_id:
+                url = v_id
+                if not url.startswith('http'):
+                    url = 'https://' + url
+            elif srv_id not in servers:
+                srv_data = get_source(url, referer=item.url)
+                url = host.rstrip('/') + scrapertools.find_single_match(srv_data, 'playerContainer.innerHTML .*?src="([^"]+)"')
+            else:
+                srv = servers.get(srv_id, "directo")
+                if srv != "directo":
+                    url = srv % v_id
+
+            if "/stream/" in url:
+                data = get_source(url, referer=item.url)
+                url = scrapertools.find_single_match(data, '"file":"([^"]+)"').replace('\\/', '/').replace('/stream/fl.php?v=', '')
+
+            if not url or url == 'https://':
+                continue
+            url = urllib.unquote(url)
             
-    return title
+            itemlist.append(
+                Item(
+                    action = 'play',
+                    channel = item.channel,
+                    infoLabels = item.infoLabels,
+                    language = IDIOMAS['vose'],
+                    title = '%s',
+                    url = url
+                )
+            )
+
+        itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
+
+        # Requerido para FilterTools
+        itemlist = filtertools.get_links(itemlist, item, list_language)
+
+        # Requerido para AutoPlay
+        autoplay.start(itemlist, item)
+
+        return itemlist
+    except:
+        import traceback
+        logger.info(traceback.format_exc())
+        return [Item(title='Cambio de estructura. Reportar en el foro')]
+
+
+def search(item, texto):
+    logger.info()
+    texto = texto.replace(" ", "+")
+    item.url = item.url + texto
+
+    if texto != '':
+        try:
+            return list_all(item)
+        except:
+            import traceback
+            logger.error(traceback.format_exc())
+            return []
+
+
+def newest(categoria):
+    itemlist = []
+    item = Item()
+    if categoria == 'anime':
+        item.url=host
+        itemlist = new_episodes(item)
+    return itemlist
