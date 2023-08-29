@@ -20,7 +20,7 @@ list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
 list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = ['burstcloud', 'verystream', 'openload', 'streamango', 'uploadmp4', 'directo']
-forced_proxy_opt = 'ProxySSL'
+forced_proxy_opt = 'ProxyCF'
 
 canonical = {
              'channel': 'animefenix', 
@@ -43,6 +43,7 @@ language = []
 url_replace = []
 seasonPattern = '(?i)((?:\s+Season|\s+cour|\s+Part|\s+Movie|)\s+\d{1,2}(?:[a-z]{2}\s+Season|[a-z]{2}\s+cour|[a-z]{2}\s+Season\s+Part\s+\d+|)(?:\s+extra\s+edition|\s+specials|\s+ova|))$'
 normalizePattern = '(?i)(2i|iii|ii|iv|second season|third season|fourth season)(?:\s+ova|)$'
+home = 'zerotwo'
 
 finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['list-series']}]), 
                        ('find_all', [{'tag': ['article'], 'class': ['serie-card']}])]), 
@@ -72,7 +73,7 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['list-series']}]),
          'plot': {}, 
          'findvideos': dict([('find', [{'tag': ['script'], 'string': re.compile('var\s*tabsArray')}]),
                              ('get_text', [{'tag': '', '@STRIP': True, '@TEXT_M': "tabsArray\['\d+'\]\s*=\s*\"([^\"]+)\"", '@DO_SOUP': True}])]),
-         'title_clean': [[normalizePattern, ''],[seasonPattern, '']],
+         'title_clean': [[normalizePattern, ''], [seasonPattern, ''], ['-?\s*\(\d{4}\)', '']],
          'quality_clean': [],
          'language_clean': [], 
          'url_replace': [], 
@@ -93,16 +94,16 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host, action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host + home, action='list_all',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
 
-    itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host, action='list_all',
-                         thumbnail=get_thumb('newest', auto=True)))
+    itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host + home, action='list_all',
+                         thumbnail=get_thumb('newest', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'animes?page=1&type[]=tv&order=updated', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'animes?page=1&type%5B%5D=tv&order=updated', action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'animes?page=1&type[]=movie&order=updated', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'animes?page=1&type%5B%5D=movie&order=updated', action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
     itemlist.append(Item(channel=item.channel, title='Categorías',  action='section', url=host + 'animes?page=1', 
@@ -135,7 +136,8 @@ def section_matches(item, matches_int, **AHkwargs):
         # logger.error(elem)
         elem_json = {}
         elem_json['title'] = elem.get_text(strip=True)
-        elem_json['url'] = '%sanimes?page=1&genre[]=%s&order=updated' % (host, elem.get('value', ''))
+        elem_json['url'] = ('%sanimes?page=1&genero[]=%s&order=updated' % (host, elem.get('value', '').replace(' ', '+')))\
+                                                                          .replace('[', '%5B').replace(']', '%5D')
         matches.append(elem_json.copy())
     
     return matches
@@ -178,7 +180,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     elem_json['episode'] = 1
                 elem_json['mediatype'] = 'episode'
                 elem_json['url'] = elem.find("div", class_="overarchingdiv").a.get('href', '')
-                elem_json['go_serie'] = {'url': re.sub('(?:-\d+|)-\d+$', '', elem_json['url']).replace('ver/', '')}
+                elem_json['go_serie'] = {'url': re.sub('-\d{1,2}$', '', elem_json['url']).replace('ver/', ''), 'contentSeason': elem_json['season']}
             else:
                 elem_json['title'] = elem.find("div", class_="title").h3.a.get_text(strip=True)
                 elem_json['url'] = elem.find("figure", class_="image").a.get('href', '')
@@ -225,13 +227,16 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 # except Exception:
                     # elem_json['year'] = '-'
 
-                elem_json['year'] = '-'
-                elem_json['quality'] = 'HD'
+                                       
+                                           
 
                 if elem.find("div", class_=["serie-card__information"]): 
                     elem_json['plot'] = elem.find("div", class_=["serie-card__information"]).p.get_text(strip=True)
 
+            elem_json['year'] = '-'
+            elem_json['quality'] = 'HD'
             elem_json['language'] = 'VOSE'
+
         except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -408,13 +413,17 @@ def convert_url(item, iframeUrl, **AHkwargs):
     kwargs.update(AHkwargs)
     
     kwargs['soup'] = False
-    kwargs['json'] = False
-    kwargs['unescape'] = False
+    #kwargs['json'] = False
+    #kwargs['unescape'] = False
     kwargs['referer'] = item.url
     kwargs['hide_infobox'] = True
-    kwargs['canonical'] = canonical
-    kwargs['ignore_response_code'] = True
+    kwargs['canonical'] = {}
+    #kwargs['ignore_response_code'] = True
     kwargs['timeout'] = 10
+    kwargs['set_tls'] = True
+    kwargs['set_tls_min'] = True
+    kwargs['retries_cloudflare'] = 0
+    kwargs['CF'] = False
 
     servers = {"6": "https://www.yourupload.com/embed/%s", "15": "https://mega.nz/embed/%s",
                "21": "https://www.burstcloud.co/embed/%s", "12": "https://ok.ru/videoembed/%s",
@@ -422,6 +431,7 @@ def convert_url(item, iframeUrl, **AHkwargs):
                "11": host +"stream/amz.php?v=%s", "2": "https://www.fembed.com/v/%s",
                "3": "https://www.mp4upload.com/embed-%s.html", "4": "https://sendvid.com/embed/%s",
                "19": "https://videa.hu/player?v=%s", "23": "https://sbthe.com/e/%s"}
+    url = ''
 
     srv_id, v_id = scrapertools.find_single_match(iframeUrl, "player=(\d+)&code=([^&]+)")
 
@@ -433,8 +443,8 @@ def convert_url(item, iframeUrl, **AHkwargs):
         if not url.startswith('http'):
             url = 'https://' + url
     elif srv_id not in servers:
-        srv_data = AlfaChannel.create_soup(url, **kwargs).data
-        url = host.rstrip('/') + scrapertools.find_single_match(srv_data, 'playerContainer.innerHTML .*?src="([^"]+)"')
+        srv_data = AlfaChannel.create_soup(iframeUrl, **kwargs).data
+        url = AlfaChannel.urljoin(host, scrapertools.find_single_match(srv_data, 'playerContainer.innerHTML .*?src="([^"]+)"'))
     else:
         srv = servers.get(srv_id, "directo")
         if srv != "directo":
