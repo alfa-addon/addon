@@ -1443,6 +1443,7 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                 from lib.generictools import get_torrent_size
                 SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
                 for x, play_item in enumerate(play_items):
+                    magnitude = 1.0
                     size = str(x)
                     logger.info('torrent_file: %s' % play_item)
                     torrent_file = filetools.join(SERIES, play_item)
@@ -1501,6 +1502,7 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
         if len(play_items) > 1:
             if play_items[0].server == 'torrent' and play_items[1].server == 'torrent':
                 for x, play_item in enumerate(play_items):
+                    magnitude = 1.0
                     if play_item.server == 'torrent':
                         logger.info('torrent_info: %s, %s' % (play_item.quality, play_item.torrent_info))
                         if play_item.torrent_info and scrapertools.find_single_match(play_item.torrent_info, patron):
@@ -1540,8 +1542,12 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                                 logger.error('Size ERROR: %s' % play_item.url)
                                 continue
                             else:
+                                                                    
                                 if scrapertools.find_single_match(play_item.torrent_info, '\d+.M'): magnitude = 0.001
                                 size = scrapertools.find_single_match(size, patron).replace(',', '.')
+                                logger.error(play_item.torrent_info)
+                                logger.error(size)
+                                logger.error(magnitude)
                         try:
                             if play_item.contentChannel not in blocked_channels:
                                 if 'Seeds: 0' in play_item.torrent_info: magnitude = 0.0
