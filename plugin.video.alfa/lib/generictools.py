@@ -75,6 +75,7 @@ btdigg_url = config.BTDIGG_URL
 btdigg_label = config.BTDIGG_LABEL
 btdigg_label_B = config.BTDIGG_LABEL_B
 TEST_ON_AIR = False
+VIDEOLIBRARY_UPDATE = False
 DEBUG = config.get_setting('debug_report', default=False) if not TEST_ON_AIR else False
 
 
@@ -718,6 +719,92 @@ def context_for_videolibray(item):
 
     return item
 
+
+def monitor_domains_update(options=None):
+    logger.info()
+
+    monitor = xbmc.Monitor()
+    server_domains_list = json.loads(window.getProperty("alfa_cached_domains_update") or '{}')
+    window.setProperty("alfa_cached_domains_update", "")
+    alfa_channels_list = {}
+    alfa_domains_list = {}
+
+    try:
+        alfa_path = config.get_runtime_path()
+        alfa_channels_path = os.path.join(alfa_path, 'channels')
+        from core import httptools
+        httptools.TEST_ON_AIR = True
+        httptools.CACHING_DOMAINS = True
+    except Exception as e:
+        logger.error(str(e))
+        return False
+
+    channels = filetools.listdir(alfa_channels_path)
+    for channel_ in channels:
+        if not channel_.endswith('.py'): continue
+        channel = channel_.replace('.py', '')
+
+        try:
+            channel_obj = __import__('channels.%s' % channel, None, None, ["channels.%s" % channel])
+            if not channel_obj.canonical: continue
+            if not 'host' in channel_obj.canonical or not 'host_alt' in channel_obj.canonical \
+                                                   or not 'host_black_list' in channel_obj.canonical: continue
+            alfa_channels_list[channel] = channel_obj
+        except Exception as e:
+            logger.error('%s: %s' % (channel, str(e)))
+
+    logger.error('Verificando Host de %s canales' % len(alfa_channels_list))
+    for channel, channel_obj in alfa_channels_list.items():
+        if monitor and monitor.abortRequested(): 
+            return
+
+        try:
+            canonical = channel_obj.canonical.copy()
+            if 'host' in canonical: del canonical['host']
+            opt = {'timeout': 5, 'method': 'GET', 'canonical': canonical, 'alfa_s': True}
+
+            response = httptools.downloadpage(canonical['host_alt'][0], **opt)
+
+            if not response.sucess:
+                current_host = config.get_setting("current_host", channel, default='')
+                if current_host and current_host != canonical['host_alt'][0]:
+                    response = httptools.downloadpage(current_host, **opt)
+                if not response.sucess:
+                    logger.error('ERROR Verificando Host de canal %s: %s' % (channel.upper(), str(response.code)))
+                    continue
+
+            if not canonical['host_alt'][0].endswith('/'): response.canonical = response.canonical.rstrip('/')
+            if response.canonical and response.canonical != canonical['host_alt'][0] \
+                                  and response.canonical not in canonical['host_black_list'] \
+                                  and response.canonical not in server_domains_list.get(channel, {}).get('host_black_list', []):
+
+                host_alt = canonical['host_alt'][0]
+                if server_domains_list.get(channel):
+                    alfa_domains_list[channel] = server_domains_list[channel].copy()
+                else:
+                    alfa_domains_list[channel] = {'host_alt': canonical['host_alt'][:], 
+                                                  'host_black_list': canonical['host_black_list'][:]}
+
+                if response.canonical not in alfa_domains_list[channel]['host_alt'] \
+                                      and response.canonical not in alfa_domains_list[channel]['host_black_list']:
+                    current_host = config.get_setting("current_host", channel, default='')
+                    if current_host and current_host != response.canonical:
+                        config.set_setting("current_host", response.canonical, channel)
+                    if alfa_domains_list[channel]['host_alt'][0] not in alfa_domains_list[channel]['host_black_list']:
+                        alfa_domains_list[channel]['host_black_list'].insert(0, alfa_domains_list[channel]['host_alt'][0])
+                    if response.canonical not in alfa_domains_list[channel]['host_alt']:
+                        del alfa_domains_list[channel]['host_alt'][0]
+                        alfa_domains_list[channel]['host_alt'].insert(0, response.canonical)
+
+                logger.error('Cached UPDATED DOMAIN: %s TO %s' % (host_alt, alfa_domains_list[channel]))
+
+        except Exception as e:
+            logger.error('%s: %s' % (channel, str(e)))
+
+    window.setProperty("alfa_cached_domains_update", json.dumps(alfa_domains_list))
+    httptools.TEST_ON_AIR = False
+    httptools.CACHING_DOMAINS = False
+    
 
 def AH_find_videolab_status(self, item, itemlist, **AHkwargs):
     logger.info()
@@ -1437,8 +1524,8 @@ def AH_post_tmdb_findvideos(self, item, itemlist, **AHkwargs):
     if 'RAR-' in item.torrent_info and not item.password:
         item = find_rar_password(item)
     if item.password:
-        itemlist.append(item.clone(action="", title="[COLOR magenta][B] Contraseña: [/B][/COLOR]'" 
-                                                     + item.password + "'", quality='', server='', folder=False))
+        itemlist.append(item.clone(action="", title="[COLOR magenta][B] Contraseña: [/COLOR]'" 
+                                                     + str(item.password) + "'", quality='', server='', folder=False))
     
     #Si es ventana damos la opción de descarga, ya que no hay menú contextual
     if not Window_IsMedia:
@@ -1476,7 +1563,10 @@ def post_btdigg(itemlist, channel, channel_obj=None, **AHkwargs):
 
         for it in itemlist:
             if it.action and it.action not in ['configuracion', 'autoplay_config']:
-                it.contentPlot = config.BTDIGG_POST + it.contentPlot
+                assistant_OK = filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')) \
+                               or filetools.exists(filetools.join(config.get_data_path(), 'alfa-desktop-assistant.version'))
+                assistant_req = 'Puede requerir [COLOR yellow]la instalación de [B]la app Assistant[/B][/COLOR]\n\n' if not assistant_OK else ''
+                it.contentPlot = config.BTDIGG_POST + assistant_req + it.contentPlot
     except Exception:
         logger.error(traceback.format_exc())
     
@@ -1725,6 +1815,7 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
     global DEBUG, TEST_ON_AIR
     if self: TEST_ON_AIR = self.TEST_ON_AIR
     DEBUG = DEBUG if not TEST_ON_AIR else False
+    ASSISTANT_REMOTE = True if config.get_setting("assistant_mode") == 'otro' else False
 
     matches_inter = []
     matches_btdigg = matches[:]
@@ -1795,7 +1886,11 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
             x = 0
             while x < limit_pages:
                 use_assistant = True
-                if xbmc.Player().isPlaying() and config.get_setting('btdigg_status', server='torrent', default=False):
+                try:
+                    alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
+                except:
+                    alfa_gateways = []
+                if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
@@ -1905,7 +2000,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, **AH
         convert = ['.=', '-= ', ':=', '&= ', '  = ']
         matches_len = len(matches)
 
-        for elem_json in matches[:channel_entries]:
+        for elem_json in matches:
             language = elem_json.get('language', '')
             if not language or '*' in str(language): language = elem_json['language'] = ['CAST']
             mediatype = elem_json['mediatype'] = elem_json.get('mediatype', '') or ('movie' if self.movie_path in elem_json['url'] else 'tvshow')
@@ -1930,7 +2025,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, **AH
 
             matches_inter.append(elem_json.copy())
 
-        matches_btdigg = matches_inter[:]
+        matches_btdigg = matches_inter[:channel_entries]
         matches = []
 
         if channeltools.is_enabled(channel_alt):
@@ -1942,6 +2037,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, **AH
                                                                             channel_alt=channel_alt, channel_entries=channel_entries, 
                                                                             btdigg_entries=btdigg_entries, **AHkwargs)
 
+        if len(matches_btdigg) == channel_entries: matches_btdigg = matches_inter[:]
         x = 0
         for elem_json in matches_btdigg:
             #logger.error(elem_json)
@@ -2029,14 +2125,22 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
     if not PY3: from lib.alfaresolver import find_alternative_link
     else: from lib.alfaresolver_py3 import find_alternative_link
     from lib.AlfaChannelHelper import DictionaryAllChannel
+    import ast
 
     item = Item()
+    ASSISTANT_REMOTE = True if config.get_setting("assistant_mode") == 'otro' else False
+    if ASSISTANT_REMOTE: ASSISTANT_REMOTE = filetools.join(config.get_data_path(), 'assistant_remote_status.json')
 
-    titles_search = [[{'urls': ['%sBluray 720p ' + channel_py], 'checks': ['Cast', 'Esp', 'Spanish', '%s' \
-                                                                 % channel_py.replace('4k', '')]}, 'movie'], 
-                     [{'urls': ['%sBluray Castellano'], 'checks': ['Cast', 'Esp', 'Spanish', '%s' % channel_py.replace('4k', '')]}, 'movie'], 
-                     [{'urls': ['%sHDTV 720p ' + channel_py], 'checks': ['Cap.']}, 'tvshow'], 
-                     [{'urls': ['%sHDTV 720p'], 'checks': ['Cap.']}, 'tvshow']]
+    try:
+        titles_search = ast.literal_eval(window.getProperty("alfa_cached_btdigg_movie"))
+        window.setProperty("alfa_cached_btdigg_movie", "")
+    except Exception as e:
+        logger.error('ERROR en titles_search: %s / %s' % (window.getProperty("alfa_cached_btdigg_movie"), str(e)))
+        titles_search = [[{'urls': ['%sBluray ' + channel_py], 'checks': ['Cast', 'Esp', 'Spanish', '%s' \
+                                                                % channel_py.replace('4k', '')]}, 'movie'], 
+                         [{'urls': ['%sBluray Castellano'], 'checks': ['Cast', 'Esp', 'Spanish', '%s' % channel_py.replace('4k', '')]}, 'movie'], 
+                         [{'urls': ['%sHDTV 720p ' + channel_py], 'checks': ['Cap.']}, 'tvshow'], 
+                         [{'urls': ['%sHDTV 720p'], 'checks': ['Cap.']}, 'tvshow']]
 
     btdigg_entries = 50
     disable_cache = True
@@ -2087,8 +2191,10 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
             else:
                 quality_alt += ' HDTV'
 
-            limit_pages = int((btdigg_entries * (1 if contentType == 'movie' else 1.4 if contentType == 'tvshow' else 3)) / 10)
-            limit_items_found = int(btdigg_entries * (1 if contentType == 'movie' else 1.4 if contentType == 'tvshow' else 2))
+            limit_pages = int((btdigg_entries * (1 if contentType == 'movie' and not channel_py in str(title_search) else \
+                                                 1.5 if contentType == 'tvshow' or channel_py in str(title_search) else 3)) / 10)
+            limit_items_found = int(btdigg_entries * (1 if contentType == 'movie' and not channel_py in str(title_search) else \
+                                                      1.5 if contentType == 'tvshow' or channel_py in str(title_search) else 2))
             item.contentType = contentType
             item.c_type = 'peliculas' if contentType == 'movie' else 'series'
             cached_str = str(cached[contentType])
@@ -2108,8 +2214,23 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
             x = 0
             while x < limit_pages:
                 use_assistant = True
-                if xbmc.Player().isPlaying() and config.get_setting('btdigg_status', server='torrent', default=False):
+                try:
+                    alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
+                except:
+                    alfa_gateways = []
+                if len(alfa_gateways) > 1:
                     use_assistant = False
+                if use_assistant and not ASSISTANT_REMOTE and xbmc.Player().isPlaying() \
+                                 and config.get_setting('btdigg_status', server='torrent', default=False):
+                    window.setProperty("alfa_cached_btdigg_episode", 'CANCEL')
+                    raise Exception("CANCEL")
+                if alfa_gateways:
+                    if ASSISTANT_REMOTE and filetools.exists(ASSISTANT_REMOTE):
+                        use_assistant = False
+                elif ASSISTANT_REMOTE and filetools.exists(ASSISTANT_REMOTE):
+                    window.setProperty("alfa_cached_btdigg_episode", 'CANCEL')
+                    raise Exception("CANCEL")
+                
                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
                 if torrent_params.get('find_alt_link_code', '') in ['200']:
@@ -2153,7 +2274,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
         if not window.getProperty("alfa_cached_btdigg_episode"):
             window.setProperty("alfa_cached_btdigg_episode", str(cached['episode']))
 
-    except Exception:
+    except Exception as e:
         logger.error(traceback.format_exc())
 
 
@@ -2162,6 +2283,7 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
     global channel_py_episode_list, DEBUG, TEST_ON_AIR
     if self: TEST_ON_AIR = self.TEST_ON_AIR
     DEBUG = DEBUG if not TEST_ON_AIR else False
+    ASSISTANT_REMOTE = True if config.get_setting("assistant_mode") == 'otro' else False
 
     controls = self.finds.get('controls', {})
     url = AHkwargs.pop('url', item.url)
@@ -2243,7 +2365,11 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
             x = 0
             while x < limit_pages:
                 use_assistant = True
-                if xbmc.Player().isPlaying() and config.get_setting('btdigg_status', server='torrent', default=False):
+                try:
+                    alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
+                except:
+                    alfa_gateways = []
+                if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
@@ -2308,6 +2434,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
     global channel_py_episode_list, DEBUG, TEST_ON_AIR
     if self: TEST_ON_AIR = self.TEST_ON_AIR
     DEBUG = DEBUG if not TEST_ON_AIR else False
+    ASSISTANT_REMOTE = True if config.get_setting("assistant_mode", default="") == 'otro' else False
 
     controls = self.finds.get('controls', {})
     contentSeason = AHkwargs.pop('btdigg_contentSeason', controls.get('btdigg_contentSeason', 0))
@@ -2456,7 +2583,11 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
             x = 0
             while x < limit_pages:
                 use_assistant = True
-                if xbmc.Player().isPlaying() and config.get_setting('btdigg_status', server='torrent', default=False):
+                try:
+                    alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
+                except:
+                    alfa_gateways = []
+                if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
@@ -2529,6 +2660,7 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
     global DEBUG, TEST_ON_AIR
     if self: TEST_ON_AIR = self.TEST_ON_AIR
     DEBUG = DEBUG if not TEST_ON_AIR else False
+    ASSISTANT_REMOTE = True if config.get_setting("assistant_mode") == 'otro' else False
 
     if item.matches and item.channel != 'videolibrary' and item.contentChannel != 'videolibrary' and item.from_channel != 'videolibrary':
         return matches
@@ -2539,12 +2671,12 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
         for scrapedtitle, scrapedmagnet, scrapedsize, scrapedquality in matches_in:
             matches.append({'bt_url': '', 'title': scrapedtitle, 'url': scrapedmagnet, 'size': scrapedsize, 'quality': scrapedquality})
     
-    controls = self.finds.get('controls', {})
+    controls = self.finds.get('controls', {}) if self else {}
     contentSeason = AHkwargs.pop('btdigg_contentSeason', controls.get('btdigg_contentSeason', 0))
     disable_cache = True if (not 'btdigg_cache' in AHkwargs  and not 'btdigg_cache' in controls) else \
                     not AHkwargs.pop('btdigg_cache', controls.get('btdigg_cache', True))
     quality_control = AHkwargs.pop('btdigg_quality_control', controls.get('btdigg_quality_control', False))
-    canonical = AHkwargs.pop('canonical', self.canonical)
+    canonical = AHkwargs.pop('canonical', self.canonical if self else {})
     matches_len = len(matches)
     language_alt = []
 
@@ -2594,7 +2726,11 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
             x = 0
             while x < limit_pages:
                 use_assistant = True
-                if xbmc.Player().isPlaying() and config.get_setting('btdigg_status', server='torrent', default=False):
+                try:
+                    alfa_gateways = eval(base64.b64decode(window.getProperty("alfa_gateways")))
+                except:
+                    alfa_gateways = []
+                if (xbmc.Player().isPlaying() or ASSISTANT_REMOTE) and len(alfa_gateways) > 1:
                     use_assistant = False
                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
 
@@ -2651,7 +2787,7 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                         continue
 
         if matches_len == len(matches): matches = AH_find_btdigg_matches(item, matches, **AHkwargs)
-        matches = sorted(matches, key=lambda it: (self.convert_size(it.get('size', 0)))) if matches else []
+        if self: matches = sorted(matches, key=lambda it: (self.convert_size(it.get('size', 0)))) if matches else []
     
     except Exception:
         logger.error(traceback.format_exc())

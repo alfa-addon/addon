@@ -34,6 +34,7 @@ ADDON_USERDATA_BIN_PATH = filetools.join(ADDON_USERDATA_PATH, 'bin')
 ADDON_VERSION = config.get_addon_version(with_fix=False, from_xml=True)
 ADDON_CUSTOMCODE_JSON = filetools.join(ADDON_PATH, json_data_file_name)
 ADDON_PLATFORM = config.get_system_platform()
+CUSTOM_CODE_DIR = filetools.join(ADDON_USERDATA_PATH, 'custom_code')
 
 if not filetools.exists(ADDON_CUSTOMCODE_JSON):
     filetools.remove(filetools.join(ADDON_USERDATA_PATH, 'cookies.dat'), silent=True)
@@ -128,6 +129,9 @@ def init():
         # Se resetean errores de BTDigg
         config.set_setting('btdigg_status', False, server='torrent')
         
+        # Se cargan los dominios actualizados de canales
+        set_updated_domains()
+        
         # Se realizan algunas funciones con cada nueva versión de Alfa
         if not filetools.exists(ADDON_CUSTOMCODE_JSON):
             config.set_setting('cf_assistant_ua', '')                           # Se limpia CF_UA. Mejora de rendimiento en httptools CF
@@ -197,19 +201,7 @@ def init():
         
         # Comprueba estado de BTDigg
         btdigg_status()
-        
-        # Existe carpeta "custom_code" ? Si no existe se crea y se sale
-        custom_code_dir = filetools.join(ADDON_USERDATA_PATH, 'custom_code')
-        custom_code_json_path = ADDON_PATH
-        custom_code_json = ADDON_CUSTOMCODE_JSON
-        if not filetools.exists(custom_code_dir):
-            create_folder_structure(custom_code_dir)
-        # Existe "custom_code.json" ? Si no existe se crea
-        if not filetools.exists(custom_code_json):
-            create_json(custom_code_json_path)
-        # Se verifica si la versión del .json y del add-on son iguales.  Si es así se sale.  Si no se copia "custom_code" al add-on
-        verify_copy_folders(custom_code_dir, custom_code_json_path)
-        
+
         # Limpia las carpetas temporales de la función "tempfile.mkdtemp"
         tempfile_mkdtemp = config.get_temp_file('tempfile_mkdtemp')
         if filetools.exists(tempfile_mkdtemp):
@@ -526,9 +518,11 @@ def create_folder_structure(custom_code_dir):
     filetools.mkdir(filetools.join(custom_code_dir, 'channels'))
     filetools.mkdir(filetools.join(custom_code_dir, 'core'))
     filetools.mkdir(filetools.join(custom_code_dir, 'lib'))
+    filetools.mkdir(filetools.join(custom_code_dir, 'modules'))
     filetools.mkdir(filetools.join(custom_code_dir, 'platformcode'))
     filetools.mkdir(filetools.join(custom_code_dir, 'resources'))
     filetools.mkdir(filetools.join(custom_code_dir, 'servers'))
+    filetools.mkdir(filetools.join(custom_code_dir, 'tools'))
 
     return
 
@@ -545,44 +539,52 @@ def create_json(custom_code_json_path, json_name=json_data_file_name):
     return
 
 
-def verify_copy_folders(custom_code_dir, custom_code_json_path):
+def verify_copy_folders(custom_code_dir=CUSTOM_CODE_DIR, custom_code_json_path=ADDON_PATH, update=None):
     logger.info()
-    
-    #verificamos si es una nueva versión de Alfa instalada o era la existente.  Si es la existente, nos vamos sin hacer nada
-    update = None
+
     json_data_file = ADDON_CUSTOMCODE_JSON
+
     try:
-        json_data = jsontools.load(filetools.read(json_data_file))
-        if not json_data or not 'addon_version' in json_data: 
-            create_json(custom_code_json_path)
+        # Existe carpeta "custom_code" ? Si no existe se crea y se sale
+        custom_code_json = ADDON_CUSTOMCODE_JSON
+        if not filetools.exists(custom_code_dir) or not filetools.exists(json_data_file):
+            create_folder_structure(custom_code_dir)
+
+        #verificamos si es una nueva versión de Alfa instalada o era la existente.  Si es la existente, nos vamos sin hacer nada
+        try:
             json_data = jsontools.load(filetools.read(json_data_file))
-            if not json_data:
+            if not json_data or not 'addon_version' in json_data: 
+                create_json(custom_code_json_path)
+                json_data = jsontools.load(filetools.read(json_data_file))
+                if not json_data:
+                    return
+        
+            if ADDON_VERSION != json_data.get('addon_version', ''):
+                update = 'version'
+        except:
+            logger.error(traceback.format_exc())
+            json_data['addon_version'] = ADDON_VERSION
+            if not filetools.write(json_data_file, jsontools.dump(json_data)):
                 return
-    
-        if ADDON_VERSION != json_data.get('addon_version', ''):
-            update = 'version'
+        
+        #Ahora copiamos los archivos desde el área de Userdata, Custom_code, sobre las carpetas del add-on
+        if update == 'version':
+            for root, folders, files in filetools.walk(custom_code_dir):
+                for file in files:
+                    input_file = filetools.join(root, file)
+                    output_file = input_file.replace(custom_code_dir, custom_code_json_path)
+                    filetools.copy(input_file, output_file, silent=True)
+        
+        if init_version(json_data):
+            json_data['init_version'] = 'true'
+            update = 'init'
+        
+        #Guardamaos el json con la versión actual de Alfa, para no volver a hacer la copia hasta la nueva versión
+        if update:
+            json_data['addon_version'] = ADDON_VERSION
+            filetools.write(json_data_file, jsontools.dump(json_data))
     except:
         logger.error(traceback.format_exc())
-        json_data['addon_version'] = ADDON_VERSION
-        if not filetools.write(json_data_file, jsontools.dump(json_data)):
-            return
-    
-    #Ahora copiamos los archivos desde el área de Userdata, Custom_code, sobre las carpetas del add-on
-    if update == 'version':
-        for root, folders, files in filetools.walk(custom_code_dir):
-            for file in files:
-                input_file = filetools.join(root, file)
-                output_file = input_file.replace(custom_code_dir, custom_code_json_path)
-                filetools.copy(input_file, output_file, silent=True)
-    
-    if init_version(json_data):
-        json_data['init_version'] = 'true'
-        update = 'init'
-    
-    #Guardamaos el json con la versión actual de Alfa, para no volver a hacer la copia hasta la nueva versión
-    if update:
-        json_data['addon_version'] = ADDON_VERSION
-        filetools.write(json_data_file, jsontools.dump(json_data))
 
     return
 
@@ -1398,6 +1400,22 @@ def force_intelligent_titles():
                     
         except:
             logger.error(traceback.format_exc())
+
+
+def set_updated_domains():
+    logger.info()
+
+    try:
+        if not PY3: from lib.alfaresolver import get_cached_files
+        else: from lib.alfaresolver_py3 import get_cached_files
+        window = xbmcgui.Window(10000) or None
+
+        alfa_domains_updated = get_cached_files('domains') or {}
+        window.setProperty("alfa_domains_updated", jsontools.dump(alfa_domains_updated))
+
+    except:
+        logger.error(traceback.format_exc())
+        window.setProperty("alfa_domains_updated", jsontools.dump({}))
 
 
 def set_season_holidays():

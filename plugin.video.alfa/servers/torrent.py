@@ -2102,6 +2102,61 @@ def update_control(item, function=''):
                     item_control.downloadProgress, item_control.downloadQueued, item_control.url))
 
 
+def set_assistant_remote_status(assistant_remote_status_paths):
+    logger.info()
+    
+    isPlaying_status = True
+    remote_path = filetools.join('userdata', 'addon_data', 'plugin.video.alfa', 'assistant_remote_status.json')
+    remote_file = {'isPlaying': True}
+
+    try:
+        if assistant_remote_status_paths.startswith('['):
+            assistant_remote_status_paths = eval(assistant_remote_status_paths)
+        else:
+            assistant_remote_status_paths = [assistant_remote_status_paths]
+
+        if monitor:
+            while not monitor.abortRequested():
+                if not xbmc.Player().isPlaying() and isPlaying_status:
+                    for client in assistant_remote_status_paths:
+                        path = filetools.join(client, remote_path)
+                        if 'smb:' in path or 'ftp:' in path or 'nfs:' in path: path.replace('\\', '/')
+                        filetools.remove(path, silent=True)
+                    isPlaying_status = False
+
+                if xbmc.Player().isPlaying() and not isPlaying_status:
+                    for client in assistant_remote_status_paths:
+                        path = filetools.join(client, remote_path)
+                        if 'smb:' in path or 'ftp:' in path or 'nfs:' in path: path.replace('\\', '/')
+                        filetools.write(path, jsontools.dump(remote_file))
+                    isPlaying_status = True
+
+                if monitor.waitForAbort(15):                                    # ... cada 15"
+                    break
+                
+        else:
+            while not xbmc.abortRequested:
+
+                if not xbmc.Player().isPlaying() and isPlaying_status:
+                    for client in assistant_remote_status_paths:
+                        path = filetools.join(client, remote_path)
+                        if 'smb:' in path or 'ftp:' in path or 'nfs:' in path: path.replace('\\', '/')
+                        filetools.remove(path, silent=True)
+                    isPlaying_status = False
+
+                if xbmc.Player().isPlaying() and not isPlaying_status:
+                    for client in assistant_remote_status_paths:
+                        path = filetools.join(client, remote_path)
+                        if 'smb:' in path or 'ftp:' in path or 'nfs:' in path: path.replace('\\', '/')
+                        filetools.write(path, jsontools.dump(remote_file))
+                    isPlaying_status = True
+                
+                xbmc.sleep(15*1000)                                             # ... cada 15"
+
+    except Exception:
+        logger.error(traceback.format_exc())
+    
+
 def mark_torrent_as_watched():
     logger.info()
     
@@ -2120,6 +2175,14 @@ def mark_torrent_as_watched():
         filetools.mkdir(mis_torrents, silent=True)
     # Limpio la lista de torrent cacheados en la sesión anterior
     config.set_setting('torrent_cached_list', [], server='torrent')
+
+    # Si tiene el Assistant instalado, hace un broadcast cuando entra a reproducir un vídeo para evitar interrupciones del Assistant
+    try:
+        assistant_remote_status_paths = config.get_setting('assistant_remote_status', default='')
+        if assistant_remote_status_paths:
+            threading.Thread(target=set_assistant_remote_status, args=(assistant_remote_status_paths, )).start() 
+    except Exception:
+        logger.error(traceback.format_exc())
 
     # Si en la actualización de la Videoteca no se ha completado, encolo las descargas AUTO pendientes
     try:

@@ -96,10 +96,19 @@ def findvideos(item):
             if item.contentChannel == 'videolibrary':
                 item.armagedon = True                                           # Lo marcammos como URLs de Emergencia
             item.channel_recovery = 'url'
-            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
+            item, itemlist = generictools.AH_post_tmdb_findvideos({}, item, itemlist)
             
-            for x, link in enumerate(item.emergency_urls[0]):
-                quality = item.quality
+            btdigg_matches = generictools.AH_find_btdigg_findvideos({}, item)
+            
+            for x, link in enumerate(item.emergency_urls[0] + btdigg_matches):
+                if isinstance(link, dict):
+                    torrent_params['url'] = link.get('url', '')
+                    if not torrent_params['url']: continue
+                    quality = link.get('quality', '')
+                    link = link.get('url', '')
+                else:
+                    quality = item.quality
+
                 if link.startswith('magnet'):
                     link_path = link
                     item.torrents_path = ''
@@ -117,8 +126,9 @@ def findvideos(item):
                         torrent_params['torrents_path'] = link_path
                         torrent_params['local_torr'] = link_path
                         torrent_params = generictools.get_torrent_size(link_path, torrent_params=torrent_params, item=item) # Tamaño en el .torrent
-                        size = torrent_params['size']
+                        size = torrent_params['size'] or ('Magnet' if link_path.startswith('magnet') else '')
                         item.torrents_path = torrent_params['torrents_path']
+
                     if size:
                         # Generamos una copia de Item para trabajar sobre ella
                         item_local = item.clone()

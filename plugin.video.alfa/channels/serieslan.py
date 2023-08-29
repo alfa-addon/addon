@@ -46,7 +46,6 @@ url_replace = []
 
 finds = {'find': {'find_all': [{'tag': ['a', 'div'], 'class': ['link', 'min-la', 'el']}]},
          'categories': {}, 
-         'search': {'find': [{'tag': ['body'], '@JSON': 'DEFAULT'}]},
          'search': dict([('find', [{'tag': ['body']}]), 
                          ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'dt|DEFAULT'}])]), 
          'get_language': {}, 
