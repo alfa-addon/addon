@@ -20,7 +20,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)send.cm/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:send|pornez).(?:cm|cam|net)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

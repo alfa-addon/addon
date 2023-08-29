@@ -24,7 +24,7 @@ host = ''
 canonical = {
              'channel': 'sexofilm', 
              'host': config.get_setting("current_host", 'sexofilm', default=''), 
-             'host_alt': ["http://sexofilm.com/"], 
+             'host_alt': ["https://sexofilm.com/"], 
              'host_black_list': [], 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -114,15 +114,19 @@ def findvideos(item):
     logger.info()
     itemlist = []
     url = ""
-    data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data,'<div class="entry-inner">(.*?)<h4>')
-    url = scrapertools.find_single_match(data,'<source src=\'([^\']+)\'')
-    if not url:
-        url = scrapertools.find_single_match(data,'<source src="([^"]+)"')
-    if not url:
-        itemlist = servertools.find_video_items(Item(channel=item.channel, url = item.url))
-    if url:
-        itemlist.append(Item(channel=item.channel, action="play", title= "Directo", url=url, contentTitle = item.title, timeout=40))
+    soup = create_soup(item.url).find('div', class_='entry-inner')
+    if soup.find(re.compile("(?:iframe|source)")):
+        vid = soup.find(re.compile("(?:iframe|source)"))
+        if vid.get("src", ""):
+            url = vid['src']
+        if vid.get("data-src", ""):
+            url = vid['data-src']
+        itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=url)) 
+    matches = soup.find_all('a', class_='myButton')#parece el mismo server que play
+    for elem in matches:
+        url = elem['href']
+        itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 
 
@@ -130,10 +134,12 @@ def play(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find('div', class_='entry-inner')
-    if soup.find('iframe'):
-        url = soup.iframe['src']
-    if soup.find('source'):
-        url = soup.source['src']
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=url)) 
+    if soup.find(re.compile("(?:iframe|source)")):
+        vid = soup.find(re.compile("(?:iframe|source)"))
+        if vid.get("src", ""):
+            url = vid['src']
+        if vid.get("data-src", ""):
+            url = vid['data-src']
+        itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
