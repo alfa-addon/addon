@@ -161,7 +161,7 @@ def sub_menu(item):
                              action='list_all', thumbnail=item.thumbnail, c_type=item.c_type, extra='vistas'))
 
         itemlist.append(Item(channel=item.channel, title='Todas las %s' % item.c_type.title(), 
-                             url=host + 'torrents-%s' % item.c_type, action='list_all',
+                             url=host + 'torrents-%s/' % item.c_type, action='list_all',
                              thumbnail=item.thumbnail, c_type=item.c_type))
 
         itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por Género[/COLOR]', 
