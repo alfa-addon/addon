@@ -493,6 +493,10 @@ if __name__ == "__main__":
     # Reseteamos caches por si se acaba de actualizar la versión de Alfa
     alfa_caching = config.cache_reset()
     
+    # Copia Custom code a las carpetas de Alfa desde la zona de Userdata
+    from platformcode import custom_code
+    custom_code.verify_copy_folders()
+    
     # Detecta la versión correcta de marshal
     if PY3:
         from platformcode import custom_code
@@ -517,8 +521,7 @@ if __name__ == "__main__":
     if monitor and monitor.waitForAbort(0.1):
         sys.exit()
 
-    # Copia Custom code a las carpetas de Alfa desde la zona de Userdata
-    from platformcode import custom_code
+    # Inicializa varios aspectos de Alfa
     custom_code.init()
 
     if monitor and monitor.waitForAbort(0.1):

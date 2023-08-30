@@ -310,7 +310,7 @@ def play(item):
     soup = AlfaChannel.create_soup(item.url, **kwargs)
     if not soup or not soup.find("script"):
         return []
-    soup = soup.find("script", string=re.compile('start.onclick')).get_text(strip=False)
+    soup = soup.find("script", string=re.compile('start.onclick')).string
 
     item.url = scrapertools.find_single_match(str(soup), "url\s*=\s*'([^']+)'")
     if item.url:

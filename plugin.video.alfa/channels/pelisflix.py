@@ -31,8 +31,9 @@ list_servers = list(SERVER.values())
 canonical = {
              'channel': 'pelisflix', 
              'host': config.get_setting("current_host", 'pelisflix', default=''), 
-             'host_alt': ["https://pelisflix.quest/"], 
-             'host_black_list': ["https://pelisflix.hair/", "https://pelisflix.store/", 
+             'host_alt': ["https://pelisflix.codes/"], 
+             'host_black_list': ["https://pelisflix.mom/", "https://pelisflix.tools/", 
+                                 "https://pelisflix.quest/", "https://pelisflix.hair/", "https://pelisflix.store/", 
                                  "https://pelis28.art/", "https://pelisflix2.fun/", "https://pelisflix.run/", 
                                  "https://pelisflix.pw/", "https://pelisflix.biz/", "https://ww2.pelisflix2.one/", 
                                  "https://pelisflix2.one/", "https://pelisflix.li/", "https://ww3.pelisflix2.one/"], 

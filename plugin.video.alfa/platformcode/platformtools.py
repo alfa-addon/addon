@@ -143,6 +143,74 @@ def dialog_browse(_type, heading, shares='files', default=""):
     return d
 
 
+def dialog_qr_message(heading="", message="", qrdata=""):
+    from platformcode.custom_code import check_addon_installed
+    if not check_addon_installed('script.module.pyqrcode'):
+        '''
+        Por alguna razón no se puede hacer un import 
+        en la misma llamada a la funcion en la que se instala
+        por lo tanto vamos a devolver false, se instale o no.
+        '''
+        from platformcode.custom_code import install_addon
+        r = install_addon('script.module.pyqrcode')
+        return False
+
+    import hashlib
+    from core import filetools
+    import pyqrcode
+
+    try:
+        '''
+        En principio funcionaba bien en special://temp, 
+        pero en Android no parece reconocer las rutas completas, la imagen no cargaba.
+        Así que el único modo es usar una ruta relativa a la carpeta 'media' del directorio del skin.
+        '''
+        media_folder = filetools.join(config.get_runtime_path(), 'resources', 'skins', 'Default', 'media')
+        # logger.info(media_folder, True)
+    except:
+        logger.error('No se pudo ubicar la carpeta \'media\'.')
+        return False
+
+    if not filetools.exists(media_folder):
+        logger.error('No existe la carpeta \'media\': %s.' % media_folder)
+        return False
+
+    '''
+    Usando el mismo nombre para todas las imágenes se generaba una caché de la imagen
+    y no se mostraba el QR correcto porque Kodi la inyecta en Textures.xbt
+    https://kodi.wiki/view/Texture_Attributes
+    usando un hash, diferentes datos van a producir diferentes nombres, así no cargará la misma imagen
+    ni tampoco empacará un infinito número de imágenes como haría con un nombre aleatorio.
+    '''
+    file_name = '%s.png' % hashlib.md5(str(qrdata).encode('utf-8')).hexdigest()
+    img_path = filetools.join(media_folder, file_name)
+
+    try:
+        qr = pyqrcode.create(qrdata)
+        qr.png(img_path, scale=6, module_color='#000', background='#fff')
+    except:
+        logger.error('No se pudo generar el código QR')
+        return False
+
+    if filetools.exists(img_path):
+        try:
+            qrDialog = QRDialog('QRDialog.xml', config.get_runtime_path(), heading=heading, message=message, img_path=file_name)
+            qrDialog.show()
+        except:
+            logger.error('Hubo un error al mostrar la imagen del QR: %s' % img_path)
+            return False
+
+        try:
+            filetools.remove(img_path, vfs=False)
+        except:
+            logger.error('Hubo un error al eliminar la imagen QR generada: %s' % img_path)
+    else:
+        logger.error('No se guardó la imagen generada para el código QR')
+        return False
+
+    return True
+
+
 def itemlist_refresh():
     xbmc.executebuiltin("Container.Refresh")
 
@@ -779,24 +847,29 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
             # Los parametros del dict, se sobreescriben al nuevo context_item en caso de sobreescribir "action" y
             # "channel", los datos originales se guardan en "from_action" y "from_channel"
             if "action" in command:
-                command["from_action"] = item.action
+                command["from_action"] = command.get("from_action", "") or item.action
             if "channel" in command:
-                command["from_channel"] = item.channel
+                command["from_channel"] = command.get("from_channel", "") or item.channel
 
             # Si no se está dentro de Alfavoritos y hay los contextos de alfavoritos, descartarlos.
             # (pasa al ir a un enlace de alfavoritos, si este se clona en el canal)
             if parent_item.module != 'alfavorites' and 'i_perfil' in command and 'i_enlace' in command:
                 continue
 
+            item_from_url = item
+            if 'item_url' in command:
+                item_from_url = Item().fromurl(command['item_url'])
+                del command['item_url']
+
             if "goto" in command:
                 context_commands.append((command["title"], "Container.Refresh (%s?%s)" %
-                                         (sys.argv[0], item.clone(**command).tourl())))
+                                         (sys.argv[0], item_from_url.clone(**command).tourl())))
             if "switch_to" in command:
                 context_commands.append((command["title"], "Container.Update (%s?%s)" %
-                                         (sys.argv[0], item.clone(**command).tourl())))
+                                         (sys.argv[0], item_from_url.clone(**command).tourl())))
             else:
                 context_commands.append(
-                    (command["title"], "RunPlugin(%s?%s)" % (sys.argv[0], item.clone(**command).tourl())))
+                    (command["title"], "RunPlugin(%s?%s)" % (sys.argv[0], item_from_url.clone(**command).tourl())))
 
     # No añadir más opciones predefinidas si se está dentro de Alfavoritos
     if parent_item.module in ['alfavorites', 'info_popup']:
@@ -2315,3 +2388,40 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
 
 def log(texto):
     logger.info(texto, force=True)
+
+
+class QRDialog(xbmcgui.WindowXMLDialog):
+
+    def __init__(self, *args, **kwargs):
+        logger.info()
+        self.action_exitkeys_id = [xbmcgui.ACTION_BACKSPACE, xbmcgui.ACTION_PREVIOUS_MENU,
+                                   xbmcgui.ACTION_NAV_BACK]
+
+        self.heading = kwargs.get("heading")
+        self.message = kwargs.get("message")
+        self.img_path = kwargs.get("img_path")
+        self.doModal()
+
+    def onInit(self, *args, **kwargs):
+        self.setProperty("heading", self.heading)
+        self.setProperty("message", self.message)
+        self.setProperty("img_path", self.img_path)
+        # logger.info(self.img_path, True)
+
+    def onFocus(self, controlId):
+        pass
+
+    def doAction(self):
+        pass
+
+    def closeDialog(self):
+        self.close()
+
+    def onClick(self, controlId):
+        if controlId == 3012:  # Still watching
+            self.close()
+
+    def onAction(self, action):
+        logger.info()
+        if action in self.action_exitkeys_id:
+            self.close()

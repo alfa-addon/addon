@@ -299,12 +299,12 @@ class Main(xbmcgui.WindowXMLDialog):
                 category = menu_node['categoria actual']
             new_item = Item(module='news', action="setting_channel", news=category, menu=True)
         elif control == 'Buscar':
-            new_item = Item(module='search', action="search")
+            new_item = Item(module='search', action="new_search")
         elif control == 'Buscar Actor':
             new_item = Item(module='tvmoviedb', title="Buscar actor/actriz", action="search_",
                             search={'url': 'search/person', 'language': 'es', 'page': 1}, star=True)
         elif control == 'Donde Buscar':
-            new_item = Item(module='search', action="setting_channel")
+            new_item = Item(module='search', action="opciones")
         elif control == '':
             self.close()
         if new_item !='':

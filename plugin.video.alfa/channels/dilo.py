@@ -17,13 +17,15 @@ from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
+import datetime
+
 IDIOMAS = AlfaChannelHelper.IDIOMAS_T
 list_language = list(set(IDIOMAS.values()))
 list_quality_movies = []
 list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS
-forced_proxy_opt = 'ProxyCF|CHECK'
+forced_proxy_opt = 'ProxySSL'
 
 canonical = {
              'channel': 'dilo', 

@@ -223,7 +223,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             #logger.error(elem)
 
             try:
-                elem_json['url'] = elem.get('url', {}).get('slug', '').replace('seasons', 'temporada').replace('episodes', 'episodio')
+                elem_json['url'] = elem.get('url', {}).get('slug', '').replace('seasons', 'temporada')\
+                                                                      .replace('episodes', 'episodio').replace('series/', 'serie/')
                 elem_json['title'] = elem.get('title', '')
                 elem_json['season'] = item.contentSeason
                 elem_json['episode'] = int(elem.get('number', '1') or '1')

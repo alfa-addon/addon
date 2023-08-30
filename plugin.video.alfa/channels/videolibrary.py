@@ -662,9 +662,9 @@ def findvideos(item):
             
         # Importamos el canal de la parte seleccionada
         channel = None
-        for nom_canal in [nom_canal, 'url']:
+        for nom_canal, folder in [[nom_canal, 'channels'], ['url', 'modules']]:
             try:
-                channel = __import__('channels.%s' % nom_canal, fromlist=["channels.%s" % nom_canal])
+                channel = __import__('%s.%s' % (folder, nom_canal), fromlist=['%s.%s' % (folder, nom_canal)])
             except ImportError:
                 pass
             if channel: 

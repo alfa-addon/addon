@@ -320,7 +320,11 @@ def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, 
             else:
                 s_studio = '%s; (%sActiva' % (s_studio, sea_epi)
             if infoLabels['mediatype'] in ['season', 'episode'] and infoLabels.get('aired', ''):
-                s_studio = '%s, %s %s' % (s_studio, set_color(infoLabels['aired'], 'year'), format_rating(infoLabels["rating"]))
+                aired = infoLabels['aired']
+                if infoLabels.get('next_episode_air_date', '') and infoLabels.get('season', 0) >= infoLabels.get('number_of_seasons', 0):
+                    if infoLabels["next_episode_air_date"] != infoLabels['aired']:
+                        aired = '%s - Prox: %s' % (aired, infoLabels["next_episode_air_date"])
+                s_studio = '%s, %s %s' % (s_studio, set_color(aired, 'year'), format_rating(infoLabels["rating"]))
             elif infoLabels.get('last_air_date', ''):
                 s_studio = '%s, %s' % (s_studio, set_color(infoLabels['last_air_date'], 'year'))
             s_studio += ')'
@@ -330,7 +334,11 @@ def add_info_plot(plot, languages, quality, vextend, plot_extend, contentTitle, 
         if infoLabels.get('temporada_num_episodios'):
             s_studio += '%sx%s ' % (str(infoLabels['season']), str(infoLabels['temporada_num_episodios']))
         if infoLabels['mediatype'] in ['season', 'episode'] and infoLabels.get('aired', ''):
-            s_studio = '%s, %s %s' % (s_studio, set_color(infoLabels['aired'], 'year'), format_rating(infoLabels["rating"]))
+            aired = infoLabels['aired']
+            if infoLabels.get('next_episode_air_date', '') and infoLabels.get('season', 0) >= infoLabels.get('number_of_seasons', 0):
+                if infoLabels["next_episode_air_date"] != infoLabels['aired']:
+                    aired = '%s - Prox: %s' % (aired, infoLabels["next_episode_air_date"])
+            s_studio = '%s, %s %s' % (s_studio, set_color(aired, 'year'), format_rating(infoLabels["rating"]))
         s_studio += ')'
         s_studio = '%s%s' % (s_studio, last)
 

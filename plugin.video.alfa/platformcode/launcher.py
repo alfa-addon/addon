@@ -415,7 +415,7 @@ def run(item=None):
 
                 last_search = channeltools.get_channel_setting('Last_searched', 'search', '')
 
-                tecleado = platformtools.dialog_input(last_search)
+                tecleado = item.texto or platformtools.dialog_input(last_search)
 
                 if tecleado is not None:
                     if "http" not in tecleado:
@@ -523,7 +523,6 @@ def run(item=None):
 
     if itemlist is not None:
         platformtools.render_items(itemlist, item)
-
 
 
 def reorder_itemlist(itemlist):
