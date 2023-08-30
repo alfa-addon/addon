@@ -370,9 +370,9 @@ def play(item):
             url = base64.b64decode(scrapertools.find_single_match(url_data, "/go/(.+)")).decode('utf-8')
         except:
             url = host
-
-    srv = servertools.get_server_from_url(url)
-    item = item.clone(url=url, server=srv)
+    if url:
+        srv = servertools.get_server_from_url(url)
+        item = item.clone(url=url, server=srv)
 
     return [item]
 

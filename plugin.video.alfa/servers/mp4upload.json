@@ -2,12 +2,13 @@
   "active": true,
   "find_videos": {
     "ignore_urls": [
-      "http://www.mp4upload.com/embed/embed"
+      "http://www.mp4upload.com/embed/embed",
+      "https://www.mp4upload.com/embed/embed"
     ],
     "patterns": [
       {
         "pattern": "mp4upload.com(?:/embed-|/)([A-Za-z0-9]+)",
-        "url": "http://www.mp4upload.com/embed-\\1.html"
+        "url": "https://www.mp4upload.com/embed-\\1.html"
       }
     ]
   },

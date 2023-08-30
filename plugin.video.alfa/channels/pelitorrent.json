@@ -1,10 +1,10 @@
 {
-  "id": "wolfmax4k",
-  "name": "WolfMax4K",
+  "id": "pelitorrent",
+  "name": "Pelitorrent",
   "active": true,
   "adult": false,
   "language": ["cast"],
-  "thumbnail": "https://i.postimg.cc/svy20gV2/wolfmax4k.png",
+  "thumbnail": "https://i.postimg.cc/qgNNHmWM/pelitorrent.png",
   "banner": "",
   "fanart": "",
   "categories": [
@@ -12,23 +12,23 @@
     "movie",
     "tvshow"
   ],
-  "settings":[
+  "settings": [
     {
-      "id": "include_in_global_search",
-      "type": "bool",
-      "label": "Incluir en busqueda global",
-      "default": false,
-      "enabled": true,
+      "default": true, 
+      "enabled": true, 
+      "id": "include_in_global_search", 
+      "label": "Incluir en busqueda global", 
+      "type": "bool", 
       "visible": true
-    },
+    }, 
     {
-      "id": "modo_grafico",
-      "type": "bool",
-      "label": "Buscar información extra en TMDB",
-      "default": true,
-      "enabled": true,
+      "default": true, 
+      "enabled": true, 
+      "id": "modo_grafico", 
+      "label": "Buscar información extra (TMDB)", 
+      "type": "bool", 
       "visible": true
-    },
+    }, 
     {
       "id": "modo_grafico_lang",
       "type": "list",
@@ -47,6 +47,22 @@
       "type": "bool",
       "label": "Desea ver Pseudo títulos de ayuda?",
       "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "auto_download_new",
+      "type": "bool",
+      "label": "Desea que se descarguen automáticamente los nuevos episodios de la Videoteca?",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "auto_download_new_all",
+      "type": "bool",
+      "label": "Incluso si es una Temporada NUEVA?",
+      "default": false,
       "enabled": true,
       "visible": true
     },
@@ -70,7 +86,7 @@
       "id": "emergency_urls",
       "type": "list",
       "label": "Se quieren guardar Enlaces de Emergencia por si se cae la Web?",
-      "default": 0,
+      "default": 1,
       "enabled": true,
       "visible": true,
       "lvalues": [
@@ -89,50 +105,10 @@
       "visible": "!eq(-1,'No')"
     },
     {
-      "id": "filter_languages",
-      "type": "list",
-      "label": "Mostrar enlaces en idioma...",
-      "default": 0,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "No filtrar",
-        "CAST",
-        "LAT",
-        "VO",
-        "VOS",
-        "VOSE"
-      ]
-    },
-    {
-      "id": "include_in_newest_peliculas",
-      "type": "bool",
-      "label": "Incluir en Novedades - Peliculas",
-      "default": false,
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "include_in_newest_4k",
-      "type": "bool",
-      "label": "Incluir en Novedades - 4K",
-      "default": false,
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "include_in_newest_torrent",
-      "type": "bool",
-      "label": "Incluir en Novedades - Torrents",
-      "default": false,
-      "enabled": true,
-      "visible": true
-    },
-    {
       "id": "timeout_downloadpage",
       "type": "list",
       "label": "Timeout (segs.) en descarga de páginas o verificación de servidores",
-      "default": 5,
+      "default": 10,
       "enabled": true,
       "visible": true,
       "lvalues": [
@@ -146,8 +122,61 @@
         "7",
         "8",
         "9",
-        "10"
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15"
       ]
+    },
+    {
+      "id": "season_colapse",
+      "type": "bool",
+      "label": "Seleccionar si quiere colapsar las Temporadas de Series",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "seleccionar_ult_temporadda_activa",
+      "type": "bool",
+      "label": "Seleccionar para Videoteca si estará activa solo la última Temporada",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_4k",
+      "type": "bool",
+      "label": "Incluir en Novedades - 4K",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_series",
+      "type": "bool",
+      "label": "Incluir en Novedades - Series",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_torrent",
+      "type": "bool",
+      "label": "Incluir en Novedades - Torrent",
+      "default": true,
+      "enabled": true,
+      "visible": true
     }
- ]
+  ]
 }
