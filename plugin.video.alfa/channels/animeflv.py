@@ -5,8 +5,7 @@
 # -*- Responsible: SistemaRayoXP -*-
 
 import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+PY3 = sys.version_info[0] >= 3
 
 if PY3:
     import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
@@ -16,6 +15,8 @@ else:
 import re
 
 from modules import renumbertools
+from modules import autoplay
+from channels import filtertools
 from core import httptools
 from core import jsontools
 from core import servertools
@@ -23,8 +24,6 @@ from core import scrapertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
-from modules import autoplay
-from channels import filtertools
 from channelselector import get_thumb
 
 IDIOMAS = {'LAT': 'LAT','SUB': 'VOSE'}
@@ -361,8 +360,7 @@ def episodios(item):
 
 def findvideos(item):
     logger.info()
-    from core import jsontools
-    
+
     itemlist = []
 
     if CLONEHOST in item.url:
