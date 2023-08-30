@@ -1542,17 +1542,13 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                                 logger.error('Size ERROR: %s' % play_item.url)
                                 continue
                             else:
-                                                                    
                                 if scrapertools.find_single_match(play_item.torrent_info, '\d+.M'): magnitude = 0.001
                                 size = scrapertools.find_single_match(size, patron).replace(',', '.')
-                                logger.error(play_item.torrent_info)
-                                logger.error(size)
-                                logger.error(magnitude)
+
                         try:
                             if play_item.contentChannel not in blocked_channels:
                                 if 'Seeds: 0' in play_item.torrent_info: magnitude = 0.0
                                 play_item.size_torr = float(size) * magnitude
-                                logger.error(play_item.size_torr)
                         except:
                             logger.error('Size ERROR: %s: %s' % (play_item.url, size))
                             continue

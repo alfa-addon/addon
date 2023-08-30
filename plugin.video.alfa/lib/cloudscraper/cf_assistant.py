@@ -298,9 +298,15 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
             freequent_data[1] += 'KO'
         else:
             freequent_data[1] += 'KO_R'
-        
+
         check_assistant = alfa_assistant.open_alfa_assistant(getWebViewInfo=True, retry=True, assistantLatestVersion=False)
         if not isinstance(check_assistant, dict) and not retry:
+            import xbmcgui
+            window = xbmcgui.Window(10000) or None
+            if 'btdig' in url and len(window.getProperty("alfa_gateways")) > 5:
+                logger.error("Assistant no disponible: usa gateways")
+                return (data, resp) if not from_get_cl else resp
+
             alfa_assistant.close_alfa_assistant()
             time.sleep(2)
             check_assistant = alfa_assistant.open_alfa_assistant(getWebViewInfo=True, retry=True, assistantLatestVersion=False)
