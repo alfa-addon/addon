@@ -1,0 +1,15 @@
+{
+  "id": "celebsnudeworld",
+  "name": "celebsnudeworld",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "https://celebsnw.b-cdn.net/templates/defboot/images/logo.png",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+  ]
+}

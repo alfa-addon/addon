@@ -27,7 +27,6 @@ forced_proxy_opt = 'ProxySSL'
 #  
 # https://fanstube.net/  https://leakedbay.com/   clones de camcaps con <article 'thumb'
 
-#      https://www.sexvr.com/  https://celebsnudeworld.com/      https://www.hentaikif.com/
 
 canonical = {
              'channel': 'camcaps', 
@@ -50,22 +49,14 @@ url_replace = []
 
 finds = {'find': {'find_all': [{'tag': ['div'],  'class': ['col-sm-6']}]},
          'categories': {'find_all': [{'tag': ['div'], 'class': ['col-md-3', 'col-md-4']}]}, 
-         # 'find':  dict([('find', [{'tag': ['div'], 'class': ['v-cards']}]),
-                        # ('find_all', [{'tag': ['a'], 'href': re.compile("/video/[0-9]+/")}])]),
-         # 'categories': dict([('find', [{'tag': ['div'], 'class': ['v-cards']}]),
-                             # ('find_all', [{'tag': ['div'], 'class': ['item']}])]),
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 
          'next_page': {},
          'next_page_rgx': [['&page=\d+', '&page=%s']], 
-         # 'last_page': dict([('find', [{'tag': ['div'], 'class': ['load-more']}]), 
-                            # ('find_all', [{'tag': ['a'], '@POS': [-1], 
-                                           # '@ARG': 'data-max-queries', '@TEXT': '(\d+)'}])]), 
          'last_page': dict([('find', [{'tag': ['div', 'nav', 'ul'], 'class': ['n-pagination', 'pagination']}]), 
                             ('find_all', [{'tag': ['a'], '@POS': [-2], 
                                            '@ARG': 'href', '@TEXT': 'page=(\d+)'}])]), 
-         # 'last_page': {}, 
          'plot': {}, 
          'findvideos': dict([('find', [{'tag': ['li'], 'class': 'link-tabs-container', '@ARG': 'href'}]),
                              ('find_all', [{'tag': ['a'], '@ARG': 'href'}])]),
@@ -73,17 +64,6 @@ finds = {'find': {'find_all': [{'tag': ['div'],  'class': ['col-sm-6']}]},
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
          'profile_labels': {
-                            # 'list_all_stime': {'find': [{'tag': ['span'], 'class': ['is-hd'], '@TEXT': '(\d+:\d+)' }]},
-                            # 'list_all_url': {'find': [{'tag': ['a'], 'class': ['link'], '@ARG': 'href'}]},
-                            # 'list_all_title': dict([('find', [{'tag': ['h3']}]),
-                                                    # ('get_text', [{'tag': '', 'strip': True}])]),
-                            # 'list_all_stime': dict([('find', [{'tag': ['div', 'span'], 'class': ['thumb-duration', 'time']}]),
-                                                    # ('get_text', [{'tag': '', 'strip': True}])]),
-                            # 'list_all_quality': {'find': [{'tag': ['span', 'div'], 'class': ['hd'], '@ARG': 'class',  '@TEXT': '(hd)' }]},
-                            # 'list_all_quality': dict([('find', [{'tag': ['span'], 'class': ['is-hd']}]),
-                                                      # ('get_text', [{'tag': '', 'strip': True}])]),
-                            # 'list_all_premium': dict([('find', [{'tag': ['span'], 'class': ['ico-private']}]),
-                                                       # ('get_text', [{'tag': '', 'strip': True}])]),
                             'section_cantidad': dict([('find', [{'tag': ['div'], 'class':['float-right', 'pull-right']}]),
                                                       ('get_text', [{'tag': '', 'strip': True, '@TEXT': '(\d+)'}])])
                             },
@@ -104,9 +84,9 @@ def mainlist(item):
     # itemlist.append(Item(channel=item.channel, title="LeakedBay" , action="submenu", url= "https://leakedbay.com/", chanel="leakedbay", thumbnail = "https://i.postimg.cc/qvwwDSGk/leakedbay.png"))
     itemlist.append(Item(channel=item.channel, title="NSFWcrave" , action="submenu", url= "https://www.nsfwcrave.com/", chanel="nsfwcrave", thumbnail = "https://www.nsfwcrave.com/images/logo/logo.png", cat="yes"))
     itemlist.append(Item(channel=item.channel, title="RealLifeCam" , action="submenu", url= "https://reallifecam.to/", chanel="reallifecam", thumbnail = "https://reallifecam.to/images/logo/logo.png", cat="yes"))
-    itemlist.append(Item(channel=item.channel, title="VoyeurHouse" , action="submenu", url= "https://voyeur-house.to/", chanel="voyeur-house", thumbnail = "https://voyeur-house.to/images/logo/logo.png"))
-    itemlist.append(Item(channel=item.channel, title="VoyeurFunHouse" , action="submenu", url= "https://www.voyeur-house.fun/", chanel="voyeur-house", thumbnail = "https://www.voyeur-house.fun/images/logo/logo.png"))
-    itemlist.append(Item(channel=item.channel, title="VoyeurLifeHouse" , action="submenu", url= "https://www.voyeur-house.life/", chanel="voyeur-house", thumbnail = "https://www.voyeur-house.life/images/logo/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="VoyeurHouse" , action="submenu", url= "https://voyeur-house.to/", chanel="voyeurhouse", thumbnail = "https://voyeur-house.to/images/logo/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="VoyeurFunHouse" , action="submenu", url= "https://www.voyeur-house.fun/", chanel="voyeurfun", thumbnail = "https://www.voyeur-house.fun/images/logo/logo.png"))
+    itemlist.append(Item(channel=item.channel, title="VoyeurLifeHouse" , action="submenu", url= "https://www.voyeur-house.life/", chanel="voyeurlife", thumbnail = "https://www.voyeur-house.life/images/logo/logo.png"))
     itemlist.append(Item(channel=item.channel, title="ChaturbateVideo" , action="submenu", url= "https://www.chaturbate-video.xyz/", chanel="chaturbate-video", thumbnail = "https://www.chaturbate-video.xyz/images/logo/logo.png", cat="yes"))
 
     return itemlist

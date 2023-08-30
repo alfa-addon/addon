@@ -21,8 +21,8 @@ from bs4 import BeautifulSoup
 canonical = {
              'channel': 'porn4days', 
              'host': config.get_setting("current_host", 'porn4days', default=''), 
-             'host_alt': ["https://porn4days.biz/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://porn4days.red/"], 
+             'host_black_list': ["https://porn4days.biz/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
