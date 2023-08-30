@@ -74,7 +74,7 @@ def next_ep(item):
         path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"),base_path)
         fileList = []
         strmList = []
-        for file in os.listdir(path):
+        for file in filetools.listdir(path):
             if file.endswith('.strm'):
                 fileList.append(file)
 
@@ -156,10 +156,8 @@ class NextDialog(xbmcgui.WindowXMLDialog):
         self.set_info()
 
     def set_info(self):
-
-        with open(INFO, 'r') as f:
-            full_info = f.readlines()
-            full_info = full_info[1:]
+        full_info = filetools.read(INFO).splitlines()
+        full_info = full_info[1:]
         full_info = "".join(full_info)
         info = jsontools.load(full_info)
         info = info["infoLabels"]

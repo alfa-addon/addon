@@ -24,8 +24,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'cinecalidad', 
              'host': config.get_setting("current_host", 'cinecalidad', default=''), 
-             'host_alt': ["https://www.cinecalidad.tf/"], 
-             'host_black_list': ["https://www3.cinecalidad.ms/", "https://startgaming.net/", 
+             'host_alt': ["https://wwv.cinecalidad.tf/"], 
+             'host_black_list': ["https://www.cinecalidad.tf/", "https://www3.cinecalidad.ms/", "https://startgaming.net/", 
                                  "https://cinecalidad.ms/", "https://cinecalidad.dev/", "https://www.cinecalidad.lat/", 
                                  "https://v3.cine-calidad.com/", "https://www5.cine-calidad.com/", "https://cinecalidad3.com/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 

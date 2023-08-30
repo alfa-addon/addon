@@ -30,9 +30,9 @@ assistant = False
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             'host_alt': ["https://hdfull.today/"], 
+             'host_alt': ["https://hdfull.quest/"], 
              'host_verification': '%slogin', 
-             'host_black_list': ['https://hdfull.sbs/', 'https://hdfull.org/', 
+             'host_black_list': ["https://hdfull.today/", 'https://hdfull.sbs/', 'https://hdfull.org/', 
                                  'https://hdfull.store/', 
                                  'https://hdfull.life/', 'https://hdfull.digital/', 'https://hdfull.work/', 
                                  'https://hdfull.video/', 'https://hdfull.cloud/', 'https://hdfull.wtf/', 
@@ -556,6 +556,10 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['url'] = AlfaChannel.urljoin(host, '%s/' % path + (elem.get('permalink', '') or elem.get('perma', '')))
                 elem_json['url'] += '/temporada-%s/episodio-%s' % (elem.get('season', '1'), elem.get('episode', '00').zfill(2))
                 elem_json['info'] = {elem.get('id', '0'): elem.get('show', {}).get('id', '0')}
+
+                if elem_json['url']:
+                    elem_json['go_serie'] = {'url': re.sub('\/temp\w*-?\d*\/epi\w*-?\d*\/?', '', elem_json['url']),
+                                             'info': {elem.get('show', {}).get('id', '0'): elem.get('show', {}).get('id', '0')}}
 
             elif not item.extra or item.extra in ['fichas', 'Género', 'Alfabético', 'listas_res'] or item.c_type == 'search':
                 if item.extra in ['Alfabético'] and AlfaChannel.last_page in [9999, 99999]:

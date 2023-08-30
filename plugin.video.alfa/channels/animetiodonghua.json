@@ -1,0 +1,32 @@
+{
+  "id": "animetiodonghua",
+  "name": "Anime TioDonghua",
+  "active": true,
+  "adult": false,
+  "language": ["vose"],
+  "thumbnail": "https://anime.tiodonghua.com/wp-content/uploads/2023/07/Logotio123.png",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+    "anime",
+    "vos"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_anime",
+      "type": "bool",
+      "label": "Incluir en Novedades - Episodios de anime",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}
