@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+	<defaultcontrol always="true">3012</defaultcontrol>
+    <controls>
+        <control type="group">
+            <animation type="WindowOpen" reversible="false">
+                <effect type="fade" start="0" end="100" time="100"/>
+            </animation>
+            <control type="group">
+                <width>530</width>
+                <top>10</top>
+                <align>center</align>
+                <right>375</right>
+				<control type="image">
+                    <top>30</top>
+                    <right>20</right>
+                    <height>32</height>
+                    <colordiffuse>bbffffff</colordiffuse>
+                    <texture>Windows/Header.png</texture>
+                </control>
+                <control type="image">
+                    <top>62</top>
+                    <right>20</right>
+                    <height>525</height>
+                    <colordiffuse>bbffffff</colordiffuse>
+                    <texture>Windows/BG.png</texture>
+                </control>
+                <control type="label">
+                    <top>32</top>
+					<left>15</left>
+					<width>460</width>
+                    <visible>true</visible>
+                    <align>center</align>
+                    <scroll>true</scroll>
+                    <scrollspeed>50</scrollspeed>
+                    <info>Window.Property(heading)</info>
+                    <font>font30_title</font>
+                </control>
+                <control type="label">
+                    <top>60</top>
+					<left>15</left>
+					<width>480</width>
+                    <height>30</height>
+                    <visible>true</visible>
+                    <align>center</align>
+					<aligny>center</aligny>
+                    <scroll>true</scroll>
+                    <scrollspeed>50</scrollspeed>
+                    <info>Window.Property(message)</info>
+                    <font>font10</font>
+                </control>
+                <control type="image">
+                    <top>90</top>
+                    <width>480</width>
+                    <height>480</height>
+                    <left>15</left>
+                    <texture>$INFO[Window.Property(img_path)]</texture>
+                </control>
+                <!-- button -->
+                <control type="grouplist" id="20">
+                    <top>34</top>
+                    <align>right</align>
+					<right>28</right>
+                    <orientation>horizontal</orientation>
+                    <itemgap>4</itemgap>
+                    <control type="button" id="3012">
+                        <onclick>SendClick(3012)</onclick>
+                        <width>24</width>
+                        <height>24</height>
+                        <texturefocus>Shortcut/close.png</texturefocus>
+                        <texturenofocus>Shortcut/logo.png</texturenofocus>
+                        <pulseonselect>no</pulseonselect>
+                    </control>
+                </control>
+            </control>
+        </control>
+    </controls>
+</window>

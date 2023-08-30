@@ -325,7 +325,7 @@ def findvideos(item):
 
         pl = soup.find("div", class_="player-container")
 
-        script = pl.find("script").text
+        script = pl.find("script").string
         urls = scrapertools.find_multiple_matches(script, "src='([^']+)'")
 
         for url in urls:
