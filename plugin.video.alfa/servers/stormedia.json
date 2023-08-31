@@ -10,6 +10,10 @@
       {
         "pattern": "(https://(?:www.|wwv.|)joysporn.sex/view/[0-9]+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|vwv.|)pornktube.com/view/[0-9]+(?:/|))",
+        "url": "\\1"
       }
     ]
   },

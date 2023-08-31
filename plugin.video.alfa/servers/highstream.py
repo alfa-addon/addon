@@ -31,6 +31,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     mp4_sources = re.compile('\{file:"([^"]+)",label:"([^"]+)"', re.DOTALL).findall(data)
 
     for url, qlty in mp4_sources:
-        video_urls.append(['%s [highstream]' % qlty, url])
+        video_urls.append(['[highstream] %s' % qlty, url])
 
     return video_urls

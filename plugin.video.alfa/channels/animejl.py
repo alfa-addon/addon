@@ -66,8 +66,7 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['ListAnimes']}]),
          'episodes': dict([('find', [{'tag': ['script'], 'string': re.compile('var\s*episodes\s*=\s*\[')}]),
                            ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': 'var\s*episodes\s*=\s*([^;]+);', '@EVAL': True}])]),
          'episode_num': [], 
-         'episode_clean': [['(?i)\s*-\s*proximo\s*capitulo(?:\:|)\s*\d+-[A-Za-z]+-\d+', ''],
-                           ['(?i)HD|Español Castellano|Sub Español|Español Latino', '']], 
+         'episode_clean': [], 
          'plot': {}, 
          'findvideos': dict([('find', [{'tag': ['script'], 'string': re.compile('var\s*video \s*=\s*\[')}]),
                              ('get_text', [{'tag': '', '@STRIP': True, '@TEXT_M': "video\[\d+\]\s*=\s*'([^']+)'", '@DO_SOUP': True}])]),
@@ -111,7 +110,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Categorías',  action='section', url=host + 'animes?page=1', 
                          thumbnail=get_thumb('categories', auto=True), extra='categorías'))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + 'animes?page=1',
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True)))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
@@ -257,7 +256,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
     soup = AHkwargs.get('soup', {})
 
     # Asi lee los datos correctos de TMDB
-    titleSeason = get_title_season(soup.find('script', string=re.compile('var\s*anime_info\s*=\s*\[')).get_text(strip=True))
+    titleSeason = get_title_season(soup.find('script', string=re.compile('var\s*anime_info\s*=\s*\[')).string)
     if titleSeason != item.contentSeason:
         return matches
     
@@ -315,7 +314,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
         try:
             elem_json['url'] = elem.find('iframe').get('src', '')
 
-            if re.search(r'embedwish|hqq|netuplayer|krakenfiles', elem_json['url'], re.IGNORECASE):
+            if re.search(r'hqq|netuplayer|krakenfiles', elem_json['url'], re.IGNORECASE):
                 continue
 
             elem_json['title'] = '%s'
@@ -346,7 +345,7 @@ def search(item, texto, **AHkwargs):
     try:
         # https://docs.python.org/2/library/urllib.html#urllib.quote_plus (escapa los caracteres de la busqueda para usarlos en la URL)
         texto = AlfaChannel.do_quote(texto, '', plus=True) 
-        item.url = item.url + "&q=" + texto
+        item.url = host + 'animes?page=1&q=' + texto
 
         if texto:
             item.c_type = 'search'

@@ -31,6 +31,7 @@ ADDON_UPDATES = 'https://extra.alfa-addon.com/addon_updates/'
 ADDON_UPDATES_JSON = 'json/%s.json' % CURRENT_VERSION
 ADDON_UPDATES_ZIP = 'zip/%s.zip' % CURRENT_VERSION
 ADDON_UPDATES_BROADCAST = 'json/%s_broadcast.json' % CURRENT_VERSION
+FTP = config.get_setting('ftp_update_server', default=False)
 
 ALFA_DEPENDENCIES = 'alfa_dependencies.json'
 
@@ -137,13 +138,14 @@ def check_addon_init():
 
 def check_addon_updates(verbose=False, monitor=None):
     logger.info()
-    from platformcode.custom_code import verify_script_alfa_update_helper
+    from platformcode.custom_code import verify_script_alfa_update_helper, marshal_check, set_updated_domains
 
     # Forzamos la actualización de los repos para facilitar la actualización del addon Alfa
     xbmc.executebuiltin('UpdateAddonRepos')
 
     check_date_real()                                                           # Obtiene la fecha real de un sistema externo
     get_ua_list()
+    set_updated_domains()
 
     try:
         help_window.show_info('broadcast', wait=False)                          # Muestra nuevo mensaje de broadcast, si está disponible
@@ -151,6 +153,7 @@ def check_addon_updates(verbose=False, monitor=None):
         # Se guarda en get_runtime_path en lugar de get_data_path para que se elimine al cambiar de versión
         try:
             localfilename = os.path.join(config.get_data_path(), 'temp_updates.zip')
+            custome_code_path = os.path.join(config.get_data_path(), 'custom_code')
             if os.path.exists(localfilename): os.remove(localfilename)
         except Exception:
             pass
@@ -159,20 +162,33 @@ def check_addon_updates(verbose=False, monitor=None):
         # -----------------------------------------------
         data = {}
         url = ADDON_UPDATES
-        resp = httptools.downloadpage(url + ADDON_UPDATES_JSON, timeout=timeout, ignore_response_code=True)
+        success = False
+        code = 404
+        if not FTP:
+            resp = httptools.downloadpage(url + ADDON_UPDATES_JSON, timeout=timeout, ignore_response_code=True)
+            success = resp.sucess
+            data = resp.json
+            code = resp.code
+
+        else:
+            if not PY3: from lib import alfaresolver
+            else: from lib import alfaresolver_py3 as alfaresolver
+            data = alfaresolver.get_cached_files('json', path=ADDON_UPDATES_JSON, buffer=None)
+            if data: 
+                success = True
+                code = 200
 
         if monitor and monitor.waitForAbort(0.1):
             return False
 
-        if resp.sucess:
-            data = resp.json
+        if success:
             if data:
-                resp.sucess = verify_addon_version(CURRENT_VERSION, data.get('addon_version', ''))
+                success = verify_addon_version(CURRENT_VERSION, data.get('addon_version', ''))
             else:
-                resp.sucess = False
+                success = False
 
-        if not resp.sucess and str(resp.code) != '404':
-            logger.info('ERROR en la descarga de actualizaciones: %s' % resp.code, force=True)
+        if not success and str(code) != '404':
+            logger.info('ERROR en la descarga de actualizaciones: %s' % code, force=True)
             if verbose:
                 dialog_notification('Alfa: error en la actualización', 'Hay un error al descargar la actualización')
             if monitor is None and verify_emergency_update():
@@ -181,7 +197,7 @@ def check_addon_updates(verbose=False, monitor=None):
 
         # Comprobar que ha llegado un json válido
         # ---------------------------------------
-        if not resp.data or 'Not found.' in str(resp.data) or not data or 'addon_version' not in data \
+        if not data or 'Not found.' in str(data) or not data or 'addon_version' not in data \
                                                            or 'fix_version' not in data or data.get('fix_version', 0) == 0:
             logger.info('No se encuentran actualizaciones de esta versión del addon', force=True)
             if verbose:
@@ -206,6 +222,7 @@ def check_addon_updates(verbose=False, monitor=None):
             return False
 
         data['addon_version'] = current_version
+        store = data.get('store', 0)
         lastfix = {}
         if os.path.exists(last_fix_json):
             try:
@@ -235,10 +252,22 @@ def check_addon_updates(verbose=False, monitor=None):
             data['broadcast_version'] = lastfix['broadcast_version']
             data['broadcast'] = lastfix.get('broadcast', '')
 
-        resp_broadcast = httptools.downloadpage(url + ADDON_UPDATES_BROADCAST, timeout=timeout, ignore_response_code=True)
-
-        if resp_broadcast.sucess and not 'login' in str(resp_broadcast.url) and not 'Not found.' in str(resp_broadcast.data):
+        success = False
+        code = 404
+        if not FTP:
+            resp_broadcast = httptools.downloadpage(url + ADDON_UPDATES_BROADCAST, timeout=timeout, ignore_response_code=True)
+            success = resp_broadcast.sucess
             broadcast = resp_broadcast.json
+            code = resp_broadcast.code
+            login = resp_broadcast.url
+        
+        else:
+            broadcast = alfaresolver.get_cached_files('json', path=ADDON_UPDATES_BROADCAST, buffer=None)
+            if broadcast: 
+                success = True
+                code = 200
+
+        if success and not 'login' in str(login) and not 'Not found.' in str(broadcast):
             if broadcast and str(broadcast.get('fix_version', '')) != '0' \
                          and verify_addon_version(CURRENT_VERSION, broadcast.get('addon_version', '')):
                 if broadcast.get('fix_version', '') and verify_addon_version(lastfix.get('broadcast_version', 0), broadcast.get('fix_version', '')):
@@ -262,8 +291,12 @@ def check_addon_updates(verbose=False, monitor=None):
 
         # Descargar zip con las actualizaciones
         # -------------------------------------
-        if downloadtools.downloadfile(url + ADDON_UPDATES_ZIP, localfilename, silent=True) < 0:
-            raise
+        if not FTP:
+            if downloadtools.downloadfile(url + ADDON_UPDATES_ZIP, localfilename, silent=True) < 0:
+                raise
+        else:
+            if alfaresolver.get_cached_files('zip', path=ADDON_UPDATES_ZIP, buffer=None, file=localfilename) < 0:
+                raise
 
         alfa_caching = config.cache_reset(action='OFF')                         # Reseteamos e inactivamos las caches de settings
 
@@ -275,8 +308,10 @@ def check_addon_updates(verbose=False, monitor=None):
         try:
             unzipper = ziptools.ziptools()
             unzipper.extract(localfilename, config.get_runtime_path())
+            if store: unzipper.extract(localfilename, custome_code_path)
         except Exception:
             xbmc.executebuiltin('Extract("%s", "%s")' % (localfilename, config.get_runtime_path()))
+            if store: xbmc.executebuiltin('Extract("%s", "%s")' % (localfilename, custome_code_path))
             time.sleep(1)
 
         alfa_caching = config.cache_reset(action='ON')                          # Reseteamos y activamos las caches de settings
@@ -295,7 +330,6 @@ def check_addon_updates(verbose=False, monitor=None):
         # Se reinicia Proxytools
         try:
             if PY3:
-                from platformcode.custom_code import marshal_check
                 marshal_check()
             if not PY3:
                 from core.proxytools import get_proxy_list
@@ -312,9 +346,9 @@ def check_addon_updates(verbose=False, monitor=None):
         new_fix_json = data.copy()
 
         last_id = 0
-        if isinstance(data["files"], list):
+        if isinstance(data.get("files"), list):
             last_id = len(data["files"])
-        elif isinstance(data["files"], dict):
+        elif isinstance(data.get("files"), dict):
             for k in data["files"].keys():
                 if int(k) > last_id:
                     last_id = int(k)
@@ -330,10 +364,10 @@ def check_addon_updates(verbose=False, monitor=None):
         except Exception:
             pass
 
-        logger.info('Addon actualizado correctamente a %s.fix%d' % (data['addon_version'], data['fix_version']), force=True)
+        logger.info('Addon actualizado correctamente a %s.fix%d' % (data.get('addon_version', ''), data.get('fix_version', 0)), force=True)
 
         if verbose:
-            dialog_notification('Alfa actualizado a', 'Versión %s.fix%d' % (current_version, data['fix_version']))
+            dialog_notification('Alfa actualizado a', 'Versión %s.fix%d' % (current_version, data.get('fix_version', 0)))
 
         if monitor and monitor.waitForAbort(0.1):
             return False
@@ -394,6 +428,7 @@ def verify_emergency_update(proxy_only=False):
     github_url = ''
     proxyCF = ''
     proxySSL = ''
+    gateways = ''
     
     try:
         if not PY3: from lib import alfaresolver
@@ -408,7 +443,9 @@ def verify_emergency_update(proxy_only=False):
                         proxyCF = fix_version__[3]
                     if len(fix_version__) >= 5:
                         proxySSL = fix_version__[4]
-                    parse_emergency_proxies(proxyCF, proxySSL)
+                    if len(fix_version__) >= 6:
+                        gateways = fix_version__[5]
+                    parse_emergency_proxies(proxyCF, proxySSL, gateways)
                     if proxy_only: break
 
                 if verify_addon_version(CURRENT_VERSION, addon_version):
@@ -483,8 +520,16 @@ def parse_emergency_update(updates_url, github_url):
     return url
 
 
-def parse_emergency_proxies(proxyCF, proxySSL):
+def parse_emergency_proxies(proxyCF, proxySSL, gateways):
 
+    try:
+        import xbmcgui
+        window = xbmcgui.Window(10000)
+        window.setProperty("alfa_gateways", gateways)
+        logger.info('Gateways: %s' % window.getProperty("alfa_gateways"))
+    except Exception:
+        logger.error(traceback.format_exc())
+    
     try:
         if not PY3:
             from core.proxytools import set_proxy_lists
@@ -738,7 +783,7 @@ def show_update_info(new_fix_json, wait=False):
 
                 last_id_old = old_fix_json.get("last_id", 0)
 
-                for k, v in new_fix_json["files"].items():
+                for k, v in new_fix_json.get("files", {}).items():
                     if int(k) > last_id_old and "channels" in v:
                         v = re.sub(r"\.py|\.json", "", v[1])
                         channel_parameters = channeltools.get_channel_parameters(v)

@@ -223,20 +223,21 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
                 config.set_setting('cf_assistant_ua', '')
                 logger.debug("No se obtuvieron resultados, reintentando...")
                 return get_cl(self, resp, timeout=timeout-5, extraPostDelay=extraPostDelay, 
-                            debug=debug, CF_testing=CF_testing, retry=True, blacklist=True, retryIfTimeout=False, 
+                            debug=debug, CF_testing=CF_testing, retry=True, blacklist=blacklist, retryIfTimeout=False, 
                             cache=cache, clearWebCache=clearWebCache, 
                             elapsed=elapsed, headers=headers, mute=mute, alfa_s=False, **kwargs)
         elif host == 'a':
             help_window.show_info('cf_2_01')
-        
+
         freequency(freequent_data)
-        
-        if filetools.exists(PATH_BL):
-            bl_data = jsontools.load(filetools.read(PATH_BL))
-        else:
-            bl_data = {}
-        bl_data[domain_full] = time.time()
-        if not debug: filetools.write(PATH_BL, jsontools.dump(bl_data))
+
+        if blacklist and blacklist_clear:
+            if filetools.exists(PATH_BL):
+                bl_data = jsontools.load(filetools.read(PATH_BL))
+            else:
+                bl_data = {}
+            bl_data[domain_full] = time.time()
+            if not debug: filetools.write(PATH_BL, jsontools.dump(bl_data))
 
     return resp
 
@@ -297,9 +298,15 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
             freequent_data[1] += 'KO'
         else:
             freequent_data[1] += 'KO_R'
-        
+
         check_assistant = alfa_assistant.open_alfa_assistant(getWebViewInfo=True, retry=True, assistantLatestVersion=False)
         if not isinstance(check_assistant, dict) and not retry:
+            import xbmcgui
+            window = xbmcgui.Window(10000) or None
+            if 'btdig' in url and len(window.getProperty("alfa_gateways")) > 5:
+                logger.error("Assistant no disponible: usa gateways")
+                return (data, resp) if not from_get_cl else resp
+
             alfa_assistant.close_alfa_assistant()
             time.sleep(2)
             check_assistant = alfa_assistant.open_alfa_assistant(getWebViewInfo=True, retry=True, assistantLatestVersion=False)
@@ -475,7 +482,7 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
         
     freequency(freequent_data)
 
-    if blacklist_clear and (not source or time.time() - elapsed > elapsed_max):
+    if blacklist and blacklist_clear and (not source or time.time() - elapsed > elapsed_max):
         if filetools.exists(PATH_BL):
             bl_data = jsontools.load(filetools.read(PATH_BL))
         else:

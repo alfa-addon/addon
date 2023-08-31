@@ -85,7 +85,7 @@ def get_channel_attr(channel_name, attr, item):
         return False
     def disabled_autoplay_show_option(channel, itemlist, text_color='yellow', thumbnail=None, fanart=None):
         return False
-    def disabled_autoplay_start(itemlist, item):
+    def disabled_autoplay_start(itemlist, item, user_server_list=[], user_quality_list=[]):
         return False
 
     autoplay.init = disabled_autoplay_init

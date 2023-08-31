@@ -25,6 +25,9 @@ list_servers = []
 forced_proxy_opt = 'ProxySSL'
 
 # https://pornktube.tv  https://www.pornktu.be/videos/  https://www.tubxporn.xxx  https://tubxporn.xxx/   https://www.pornky.com  https://www.joysporn.com
+
+#######################         error pag siguiente  en categorias formato "/c/10/#/" # pag
+
 canonical = {
              'channel': 'pornktube', 
              'host': config.get_setting("current_host", 'pornktube', default=''), 

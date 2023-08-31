@@ -1,0 +1,50 @@
+{
+  "active": true,
+  "find_videos": {
+    "ignore_urls": [],
+    "patterns": [
+      {
+        "pattern": "(https://streamwish.(?:com|to)/+e/+[A-z0-9]+)",
+        "url": "\\1"
+      },
+	  {
+		"pattern": "(https://embedwish.com/+e/+[A-z0-9]+)",
+        "url": "\\1"
+      }
+    ]
+  },
+  "free": true,
+  "id": {
+    "value": [
+      "streamwish"
+    ]
+  },
+  "name": "streamwish",
+  "settings": [
+    {
+      "default": false,
+      "enabled": true,
+      "id": "black_list",
+      "label": "@60654",
+      "type": "bool",
+      "visible": true
+    },
+    {
+      "default": 0,
+      "enabled": true,
+      "id": "favorites_servers_list",
+      "label": "@60655",
+      "lvalues": [
+        "No",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "type": "list",
+      "visible": false
+    }
+  ],
+  "thumbnail": "https://streamwish.com/wish/images/streamwish123.png"
+}

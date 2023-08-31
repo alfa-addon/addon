@@ -68,6 +68,7 @@ VIDEOLIBRARY_UPDATE = False
 
 # Se activa desde Test
 TEST_ON_AIR = False
+CACHING_DOMAINS = False
 
 # Activa DEBUG extendido cuando se extrae un Informe de error (log)
 DEBUG = config.get_setting('debug_report', default=False) if not TEST_ON_AIR else False
@@ -630,9 +631,9 @@ def blocking_error(url, req, proxy_data, **opt):
             print_DEBUG(url, proxy_data, label='BLOCKING', **opt)
             if proxy and 'ProxyWeb' in proxy: url += ' / %s' % opt.get('url_save', '')
             try:
-                logger.error('Error: %s, Url: %s, Datos: %s' % (code, url, data[:500]))
+                if not CACHING_DOMAINS: logger.error('Error: %s, Url: %s, Datos: %s' % (code, url, data[:500]))
             except:
-                logger.error('Error: %s, Url: %s, Datos: NULL' % (code, url))
+                if not CACHING_DOMAINS: logger.error('Error: %s, Url: %s, Datos: NULL' % (code, url))
 
     return resp
 
@@ -1315,10 +1316,10 @@ def downloadpage(url, **opt):
                         opt['canonical']['proxy_addr_forced'] = opt['proxy_addr_forced']
                         opt['canonical']['forced_proxy'] = opt['forced_proxy']
                     proxytools.add_domain_retried(domain, proxy__type='', delete='forced')
-                    logger.debug("CF Assistant reTRY without SSL... for domain: %s" % domain)
+                    if not CACHING_DOMAINS: logger.debug("CF Assistant reTRY without SSL... for domain: %s" % domain)
                     return downloadpage(opt['url_save'], **opt)
 
-                logger.debug("reTRY without SSL... for domain: %s" % domain)
+                if not CACHING_DOMAINS: logger.debug("reTRY without SSL... for domain: %s" % domain)
                 proxytools.add_domain_retried(domain, proxy__type='ProxyCF', delete='SSL')
                 return downloadpage(opt['url_save'], **opt)
 
@@ -1347,7 +1348,7 @@ def downloadpage(url, **opt):
                 opt['retries_cloudflare'] -= 1
                 if not "CF_save" in opt: opt["CF_save"] = opt["CF"] if "CF" in opt else None
                 if opt["CF_save"] is None: opt["CF"] = False if opt['retries_cloudflare'] > 0 else True
-                logger.debug("CF retry... for domain: %s, Retry: %s" % (domain, opt['retries_cloudflare']))
+                if not CACHING_DOMAINS: logger.debug("CF retry... for domain: %s, Retry: %s" % (domain, opt['retries_cloudflare']))
                 return downloadpage(opt['url_save'], **opt)
         
         # Retry con Assistant si falla proxy SSL
@@ -1359,7 +1360,7 @@ def downloadpage(url, **opt):
             domain = obtain_domain(url, sub=True)
             opt['post'] = opt['post_save']
             opt['retries_cloudflare'] = 1
-            logger.debug("CF Assistant TRY... for domain: %s" % domain)
+            if not CACHING_DOMAINS: logger.debug("CF Assistant TRY... for domain: %s" % domain)
             from lib.cloudscraper import cf_assistant
             req = cf_assistant.get_cl(opt, req)
             response_code = req.status_code
@@ -1377,7 +1378,7 @@ def downloadpage(url, **opt):
             if not PY3: opt['proxy_retries'] = 0
             if opt['retries_cloudflare'] > 0: time.sleep(1)
             opt['retries_cloudflare'] -= 1
-            logger.debug("CF Assistant retry... for domain: %s" % urlparse.urlparse(url)[1])
+            if not CACHING_DOMAINS: logger.debug("CF Assistant retry... for domain: %s" % urlparse.urlparse(url)[1])
             return downloadpage(url, **opt)
 
         # Si hay bloqueo "cf_v2" y no hay Alfa Assistant, se reintenta con Proxy
@@ -1516,7 +1517,7 @@ def downloadpage(url, **opt):
         if not opt.get('alfa_s', False) and not 'api.themoviedb' in url and not '//127.' in url:
             if not response['sucess'] or opt.get("hide_infobox") is None:
                 show_infobox(info_dict, force=True)
-            elif not opt.get("hide_infobox"):
+            elif not opt.get("hide_infobox") and not CACHING_DOMAINS:
                 show_infobox(info_dict)
 
         # Si hay error del proxy, refresca la lista y reintenta el numero indicada en proxy_retries
@@ -1754,7 +1755,7 @@ def build_response(HTTPResponse=False):
 def print_DEBUG(url, obj, label='', req={}, **opt):
 
     url_stat = ''
-    if DEBUG:
+    if DEBUG and not CACHING_DOMAINS:
         for exc in DEBUG_EXC:
             if exc in url: break
             if 'proxy' in label.lower():

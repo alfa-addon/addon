@@ -108,7 +108,7 @@
       "id": "include_in_newest_peliculas",
       "type": "bool",
       "label": "Incluir en Novedades - Peliculas",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },
@@ -116,7 +116,7 @@
       "id": "include_in_newest_4k",
       "type": "bool",
       "label": "Incluir en Novedades - 4K",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },
@@ -124,7 +124,7 @@
       "id": "include_in_newest_torrent",
       "type": "bool",
       "label": "Incluir en Novedades - Torrents",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },

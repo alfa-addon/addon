@@ -42,20 +42,22 @@ def get_video_url(page_url, video_password):
     except:
         matches = scrapertools.find_multiple_matches(data, '<source src="([^"]+)" type="video/mp4"')
         for url in matches:
-            url += "|Referer=%s" % page_url
-            if "justporn" in page_url:
-                url = urlparse.urljoin(page_url,url)
+            if not server in url:
+                url = urlparse.urljoin(page_url,url) #justporn
+            # if "justporn" in page_url:
+                # url = urlparse.urljoin(page_url,url)
             if not url.startswith("http"):
                 url = "http:%s" % url
+            url += "|Referer=%s" % page_url
             video_urls.append(["[%s] mp4" %(server), url])
         return video_urls
     for elem in matches:
         url = elem['src']
-        url += "|Referer=%s" % page_url
-        if "justporn" in page_url:
-            url = urlparse.urljoin(page_url,url)
+        if not server in url:
+            url = urlparse.urljoin(page_url,url) #justporn
         if not url.startswith("http"):
             url = "http:%s" % url
+        url += "|Referer=%s" % page_url
         video_urls.append(["[%s] mp4" %(server), url])
     return video_urls
 
