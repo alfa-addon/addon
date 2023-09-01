@@ -208,7 +208,7 @@ def novedades_episodios(item):
             season = 1
             episode = 1
         else:
-            season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, episode)
+            season, episode = renumbertools.numbered_for_trakt(item.channel, item.contentSerieName, 1, episode)
         infoLabels = {}
         try:
             infoLabels['season'] = int(season or 1)
@@ -331,7 +331,7 @@ def episodios(item):
         #url = '{}ver/{}/{}-{}'.format(host, episode[1], info[2], episode[0])
         url = '{}ver/{}-{}'.format(host, info[2], episode[0])
         season = 1
-        season, episodeRenumber = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, season, int(episode[0]))
+        season, episodeRenumber = renumbertools.numbered_for_trakt(item.channel, item.contentSerieName, season, int(episode[0]))
 
         try:
             infoLabels['season'] = int(season)

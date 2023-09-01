@@ -140,7 +140,7 @@ def config_item(item):
             write_data(channel, item.show, data)
 
 
-def numbered_for_tratk(channel, show, season, episode):
+def numbered_for_trakt(channel, show, season, episode):
     """
     Devuelve la temporada y episodio convertido para que se marque correctamente en tratk.tv
 

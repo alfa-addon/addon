@@ -295,7 +295,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             if len(name.split(pat)) > 1:
                 for j, pos in enumerate(name.split(pat)):
                     total_episode += 1
-                    season, episode = renumbertools.numbered_for_tratk(item.channel, 
+                    season, episode = renumbertools.numbered_for_trakt(item.channel, 
                                       item.contentSerieName, elem_json['season'], total_episode)
                     if len(name.split(pat)) == j+1:
                         elem_json['title'] += "{}x{:02d}".format(season, episode)
@@ -303,7 +303,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                         elem_json['title'] += "{}x{:02d}_".format(season, episode)
             else:
                 total_episode += 1
-                season, episode = renumbertools.numbered_for_tratk(item.channel, 
+                season, episode = renumbertools.numbered_for_trakt(item.channel, 
                                   item.contentSerieName, elem_json['season'], total_episode)
                 elem_json['title'] += "{}x{:02d}".format(season, episode)
 
