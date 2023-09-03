@@ -60,7 +60,7 @@ def context(item):
         _context = []
 
     if access():
-        dict_data = {"title": "RENUMERAR", "action": "config_item", "module": "renumbertools"}
+        dict_data = {"title": config.get_localized_string(80791), "action": "config_item", "module": "renumbertools"}
         _context.append(dict_data)
 
     return _context

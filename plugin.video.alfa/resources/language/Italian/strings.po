@@ -1,20 +1,15 @@
-# Kodi Media Center language file
-# strings 30000 thru 30999 reserved for plugins and plugin settings
-#
-msgid ""
-msgstr ""
-"Project-Id-Version: KODI Main\n"
-"Report-Msgid-Bugs-To: http://trac.kodi.tv/\n"
-"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2018-03-26 03:02+0200\n"
-"Language-Team: \n"
+"Project-Id-Version: Alfa add-on\n"
+"POT-Creation-Date: 2018-03-26 03:02+0200\n"
+"PO-Revision-Date: 2023-09-03 13:15-0600\n"
+"Language-Team: Alfa Development Group\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.0.4\n"
+"X-Generator: SistemaRayoXP's quick n' dirty scripts\n"
 "Last-Translator: MrTruth\n"
 "Last-Translator: Angedam\n"
+"Last-Translator: SistemaRayoXP\n"
 "Language: it_IT\n"
 
 msgctxt "#20000"
@@ -721,6 +716,14 @@ msgctxt "#60055"
 msgid "Error of provider configuration in BD."
 msgstr "Errore di configurazione del provider in BD."
 
+msgctxt "#60056"
+msgid "Videolibrary %s not configured"
+msgstr "Libreria di %s non configurata"
+
+msgctxt "#60057"
+msgid "Videolibrary %s configured"
+msgstr "Libreria di %s configurata"
+
 msgctxt "#60058"
 msgid "You need to restart Kodi for the changes to take effect."
 msgstr "E' necessario riavviare Kodi affinchè le modifiche abbiano effetto."
@@ -728,6 +731,10 @@ msgstr "E' necessario riavviare Kodi affinchè le modifiche abbiano effetto."
 msgctxt "#60059"
 msgid "Congratulations, Kodi's video library has been configured correctly."
 msgstr "Complimenti, la videoteca di Kodi è stata configurata correttamente."
+
+msgctxt "#60060"
+msgid "Alfa Auto-configuration"
+msgstr "Alfa autoconfigurazione"
 
 msgctxt "#60062"
 msgid "Adding movies to your video library..."
@@ -3077,18 +3084,6 @@ msgctxt "#70093"
 msgid "The Movie Database"
 msgstr "The Movie Database"
 
-msgctxt "#90001"
-msgid "TMDb TVShows Database"
-msgstr "TMDb TVShows Database"
-
-msgctxt "#90002"
-msgid "TMDb TVShows Database not present.\nInstall it now?"
-msgstr "TMDb TVShows Database\nLo scraper della serie MovieDB non è stato trovato.\nVuoi installarlo ora?"
-
-msgctxt "#90003"
-msgid "TMDb TVShows Database is not installed."
-msgstr "TMDb TVShows Database non installato."
-
 msgctxt "#70094"
 msgid "Select scraper for movies"
 msgstr "Seleziona provider info per i film"
@@ -3511,7 +3506,7 @@ msgstr "Vuoi annullare il processo?"
 
 msgctxt "#70200"
 msgid "Finishing and deleting data"
-msgstr Fine e cancellazione dati"
+msgstr "Fine e cancellazione dati"
 
 msgctxt "#70201"
 msgid "Mass Testing Tools"
@@ -3815,7 +3810,7 @@ msgstr "Rinomina"
 
 msgctxt "#70279"
 msgid "You can try downloading the 'libtorrent' module from Kodi or installing some addon like 'Quasar' or 'Torrenter', which will appear among the options in the pop-up when it appears when clicking on a torrent link. \n'Torrenter 'It's more complex but also more complete and it always works.'"
-msgstr "Puoi provare a scaricare il modulo 'libtorrent' da Kodi o installare alcuni addon come 'Quasar' o 'Torrenter', che appariranno tra le opzioni nel pop-up .Quando appare quando fai clic su un collegamento torrent. \n'Torrenter' È più complesso ma anche più completo e funziona sempre'".
+msgstr "Puoi provare a scaricare il modulo 'libtorrent' da Kodi o installare alcuni addon come 'Quasar' o 'Torrenter', che appariranno tra le opzioni nel pop-up .Quando appare quando fai clic su un collegamento torrent. \n'Torrenter' È più complesso ma anche più completo e funziona sempre'"."
 
 msgctxt "#70280"
 msgid "    -  Torrent Links don't work."
@@ -3857,11 +3852,10 @@ msgctxt "#70291"
 msgid "Error, during conversion"
 msgstr "Errore, in conversione"
 
-# Servers ---- 
 msgctxt "#70292"
 msgid "[%s] File no longer exist on this server."
 msgstr "[%s] Il file non è più presente nel server."
- 
+
 msgctxt "#70293"
 msgid "[%s] The file is processing or has been deleted."
 msgstr "[%s] Il file video è ancora in elaborazione o è stato rimosso."
@@ -3909,7 +3903,6 @@ msgstr "[%s] Questo server non funziona con la tua versione di Plex, prova ad ag
 msgctxt "#70304"
 msgid "[%s] This server requires updating python to version 2.7.9 or higher."
 msgstr "[%s] Questo server richiede la versione 2.7.9 (O Maggiore) di Python."
-# ============
 
 msgctxt "#70305"
 msgid "Search in channels"
@@ -4016,12 +4009,12 @@ msgid "Error in the user and/or password. Check your credentials"
 msgstr "Errore in username e/o password. Controlla le tue credenziali"
 
 msgctxt "#70331"
-msgid "Error during login. Check your credentials
+msgid "Error during login. Check your credentials"
 msgstr "Errore durante il login. Controlla le tue credenziali"
 
 msgctxt "#70332"
 msgid "My votes"
-msgstr "I miei voti
+msgstr "I miei voti"
 
 msgctxt "#70333"
 msgid "Add new list"
@@ -4076,7 +4069,7 @@ msgid "[Trakt] Remove %s from your collection"
 msgstr "[Trakt] Rimuovi %s dalla tua collezione"
 
 msgctxt "#70346"
-msgid "[Trakt] Add %s to your collection
+msgid "[Trakt] Add %s to your collection"
 msgstr "[Trakt] Aggiungi %s alla tua collezione"
 
 msgctxt "#70347"
@@ -4216,10 +4209,6 @@ msgid "Stalled"
 msgstr "In Pausa"
 
 msgctxt "#70381"
-msgid "Dropped"
-msgstr "Abbandonata"
-
-msgctxt "#70381"
 msgid "Myanimelist username and/or password blank"
 msgstr "Username e/o password di Myanimelist vuoti"
 
@@ -4342,10 +4331,6 @@ msgstr "Western"
 msgctxt "#70412"
 msgid "Drama"
 msgstr "Drammatico"
-
-msgctxt "#70413"
-msgid ""
-msgstr ""
 
 msgctxt "#70413"
 msgid "2. Enter this code on the page and click Allow:  %s"
@@ -4784,10 +4769,6 @@ msgid "No Filter"
 msgstr "Non Filtrare"
 
 msgctxt "#70523"
-msgid "No filter"
-msgstr "Non filtrare"
-
-msgctxt "#70523"
 msgid "%s: The data was restarted"
 msgstr "%s: I dati sono stati riavviati"
 
@@ -4936,7 +4917,7 @@ msgid "Movies by Genre"
 msgstr "Per genere"
 
 msgctxt "#70561"
-msgid "Search Similar
+msgid "Search Similar"
 msgstr "Cerca Simili"
 
 msgctxt "#70562"
@@ -5206,3 +5187,28 @@ msgstr "Lista dei desideri"
 msgctxt "#80788"
 msgid "Configure Wishlist"
 msgstr "Configura Lista dei desideri"
+
+msgctxt "#80789"
+msgid "External VPN"
+msgstr "VPN esterna"
+
+msgctxt "#80790"
+msgid "Are you using an external VPN?"
+msgstr "Stai utilizzando una VPN esterna?"
+
+msgctxt "#80791"
+msgid "Renumerate"
+msgstr "Rinumerare"
+
+msgctxt "#90001"
+msgid "TMDb TVShows Database"
+msgstr "TMDb TVShows Database"
+
+msgctxt "#90002"
+msgid "TMDb TVShows Database not present.\nInstall it now?"
+msgstr "TMDb TVShows Database\nLo scraper della serie MovieDB non è stato trovato.\nVuoi installarlo ora?"
+
+msgctxt "#90003"
+msgid "TMDb TVShows Database is not installed."
+msgstr "TMDb TVShows Database non installato."
+

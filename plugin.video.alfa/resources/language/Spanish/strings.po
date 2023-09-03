@@ -1,18 +1,12 @@
-# Kodi Media Center language file
-# strings 30000 thru 30999 reserved for plugins and plugin settings
-#
-msgid ""
-msgstr ""
-"Project-Id-Version: KODI Main\n"
-"Report-Msgid-Bugs-To: http://trac.kodi.tv/\n"
-"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2021-02-10 01:42-0600\n"
-"Language-Team: \n"
+"Project-Id-Version: Alfa add-on\n"
+"POT-Creation-Date: 2018-03-26 03:02+0200\n"
+"PO-Revision-Date: 2023-09-03 13:15-0600\n"
+"Language-Team: Alfa Development Group\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.0.4\n"
+"X-Generator: SistemaRayoXP's quick n' dirty scripts\n"
 "Last-Translator: MrTruth\n"
 "Last-Translator: Angedam\n"
 "Last-Translator: SistemaRayoXP\n"
@@ -1608,7 +1602,7 @@ msgstr "Cancelar"
 
 msgctxt "#60397"
 msgid "Confirm"
-msgstr "Confirmar
+msgstr "Confirmar"
 
 msgctxt "#60398"
 msgid " Settings Reset was successful!"
@@ -3090,18 +3084,6 @@ msgctxt "#70093"
 msgid "The Movie Database"
 msgstr "The Movie Database"
 
-msgctxt "#90001"
-msgid "TMDb TVShows Database"
-msgstr "TMDb TVShows Database"
-
-msgctxt "#90002"
-msgid "TMDb TVShows Database not present.\nInstall it now?"
-msgstr "TMDb TVShows Database\nNo se ha encontrado el scraper de series de TheMovieDB.\n¿Deseas instalarlo ahora?"
-
-msgctxt "#90003"
-msgid "TMDb TVShows Database is not installed."
-msgstr "TMDb TVShows Database no instalado."
-
 msgctxt "#70094"
 msgid "Select scraper for movies"
 msgstr "Selecciona el proveedor de información para las películas"
@@ -3858,10 +3840,6 @@ msgctxt "#70286"
 msgid "Configure Search"
 msgstr "Configurar Buscador"
 
-msgctxt "#70286"
-msgid "Configure Search"
-msgstr "Configurar Buscador"
-
 msgctxt "#70287"
 msgid "Configure VideoLibrary"
 msgstr "Configurar Videoteca"
@@ -3874,11 +3852,10 @@ msgctxt "#70291"
 msgid "Error, during conversion"
 msgstr "Error durante conversión"
 
-# Servers ---- 
 msgctxt "#70292"
 msgid "[%s] File no longer exist on this server."
 msgstr "[%s] El archivo ya no existe en el servidor."
- 
+
 msgctxt "#70293"
 msgid "[%s] The file is processing or has been deleted."
 msgstr "[%s] El archivo de video todavía se está procesando o se ha eliminado."
@@ -3926,7 +3903,6 @@ msgstr "[%s] Este conector no funciona con tu versión de Plex, intenta actualiz
 msgctxt "#70304"
 msgid "[%s] This server requires updating python to version 2.7.9 or higher."
 msgstr "[%s] Este conector requiere actualizar python a la versión 2.7.9 o superior."
-# ============
 
 msgctxt "#70305"
 msgid "Search in channels"
@@ -4231,10 +4207,6 @@ msgstr "Terminada"
 msgctxt "#70380"
 msgid "Stalled"
 msgstr "Pausa"
-
-msgctxt "#70381"
-msgid "Dropped"
-msgstr "Abandonada"
 
 msgctxt "#70381"
 msgid "Myanimelist username and/or password blank"
@@ -4700,10 +4672,6 @@ msgctxt "#70497"
 msgid " did not match."
 msgstr " no dio resultados."
 
-msgctxt "#70497"
-msgid " did not match."
-msgstr " no dio resultados."
-
 msgctxt "#70498"
 msgid "Producer: "
 msgstr "Productora: "
@@ -4980,6 +4948,10 @@ msgctxt "#70575"
 msgid "Modify starting from Latino"
 msgstr "Modificar partiendo de Latino"
 
+msgctxt "#70576"
+msgid "Modify starting from Italian"
+msgstr "Modificar partiendo de Italiano"
+
 msgctxt "#70577"
 msgid "Modify starting from "
 msgstr "Modificar partiendo de "
@@ -5223,3 +5195,20 @@ msgstr "VPN Externa"
 msgctxt "#80790"
 msgid "Are you using an external VPN?"
 msgstr "¿Está usando una VPN externa?"
+
+msgctxt "#80791"
+msgid "Renumerate"
+msgstr "Renumerar"
+
+msgctxt "#90001"
+msgid "TMDb TVShows Database"
+msgstr "TMDb TVShows Database"
+
+msgctxt "#90002"
+msgid "TMDb TVShows Database not present.\nInstall it now?"
+msgstr "TMDb TVShows Database\nNo se ha encontrado el scraper de series de TheMovieDB.\n¿Deseas instalarlo ahora?"
+
+msgctxt "#90003"
+msgid "TMDb TVShows Database is not installed."
+msgstr "TMDb TVShows Database no instalado."
+
