@@ -1,6 +1,6 @@
 "Project-Id-Version: Alfa add-on\n"
 "POT-Creation-Date: 2018-03-26 03:02+0200\n"
-"PO-Revision-Date: 2023-09-03 13:15-0600\n"
+"PO-Revision-Date: 2023-09-03 20:57-0600\n"
 "Language-Team: Alfa Development Group\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -4209,7 +4209,7 @@ msgid "Stalled"
 msgstr ""
 
 msgctxt "#70381"
-msgid "Myanimelist username and/or password blank"
+msgid "Dropped"
 msgstr ""
 
 msgctxt "#70382"
@@ -4254,6 +4254,10 @@ msgstr ""
 
 msgctxt "#70392"
 msgid "Rate with a [COLOR %s]%s[/ COLOR]"
+msgstr ""
+
+msgctxt "#70393"
+msgid "MyAnimeList blank username and/or password"
 msgstr ""
 
 msgctxt "#70394"
