@@ -138,8 +138,8 @@ class AlfaChannelHelper:
             self.ASSISTANT_VERSION = tuple()
         try:
             self.domains_updated = jsontools.load(window.getProperty("alfa_domains_updated") or '{}')
-            if not self.TEST_ON_AIR and not self.CACHING_DOMAINS and self.canonical.get('host') \
-                                    and self.canonical.get('host_alt') and self.canonical.get('host_black_list'):
+            if not self.TEST_ON_AIR and not self.CACHING_DOMAINS and 'host' in self.canonical \
+                                    and 'host_alt' in self.canonical and 'host_black_list' in self.canonical:
                 if self.channel in self.domains_updated and self.domains_updated[self.channel].get('host_alt'):
                     if self.host != self.domains_updated[self.channel]['host_alt'][0] or self.host != self.canonical['host_alt'][0]:
                         self.host = self.canonical['host'] = self.domains_updated[self.channel]['host_alt'][0]
@@ -148,10 +148,18 @@ class AlfaChannelHelper:
                             channel = __import__('channels.%s' % self.channel, None, None, ["channels.%s" % self.channel])
                             channel.host = self.host
                         self.canonical['host_black_list'] = self.domains_updated[self.channel]['host_black_list']
-                        if self.canonical['host_alt'][0] not in self.canonical['host_black_list']: 
+                        if self.canonical['host_alt'][0] not in self.canonical['host_black_list'] \
+                                                         and self.canonical['host_alt'][0] not in self.domains_updated[self.channel]['host_alt']: 
                             self.canonical['host_black_list'].insert(0, self.canonical['host_alt'][0])
                         del self.canonical['host_alt'][0]
                         self.canonical['host_alt'].insert(0, self.host)
+                        if len(self.domains_updated[self.channel]['host_alt']) > 1:
+                            for host_alt in self.domains_updated[self.channel]['host_alt']:
+                                if host_alt in self.canonical['host_alt']: continue
+                                self.canonical['host_alt'] += [host_alt]
+                        if 'host_alt' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['host_alt']
+                        if 'host_black_list' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['host_black_list']
+                        if self.domains_updated: self.canonical.update(self.domains_updated[self.channel])
                         if self.DEBUG: logger.debug('HOST_updated: %s TO %s' % (host, self.canonical))
         except Exception:
             self.domains_updated = {}
