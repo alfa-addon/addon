@@ -284,6 +284,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['url'] = elem.get("href", "")
             title = elem.find("li").get_text('|', strip=True).split('|')
             title[1] = scrapertools.find_single_match(title[1], '(\d+)')
+            # el argumento de episodio en numbered_for_trakt no es el total de episodios, sino el episodio actual
+            '''
             elem_json['season'] = item.contentSeason
             elem_json['episode'] = int(title[1])
             elem_json['title'] = ''
@@ -308,7 +310,10 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                 elem_json['title'] += "{}x{:02d}".format(season, episode)
 
             elem_json['title'] = "{} {}".format(elem_json['title'], name)
-
+            '''
+            elem_json['season'], elem_json['episode'] = renumbertools.numbered_for_trakt(item.channel, 
+                                                        item.contentSerieName, item.contentSeason, int(title[1]))
+            elem_json['title'] = title[2]                                     
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())
