@@ -21,6 +21,8 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
+######  Error 521: El servidor web esta caido    30 agosto 2023
+
 canonical = {
              'channel': 'pornvase', 
              'host': config.get_setting("current_host", 'pornvase', default=''), 
