@@ -39,14 +39,6 @@
         "VOSE",
         "LAT"
       ]
-    },
-	{
-      "id": "use_clone",
-      "type": "bool",
-      "label": "Utilizar clon (si no te cargan los enlaces)",
-      "default": false,
-      "enabled": true,
-      "visible": true
     }
   ]
 }

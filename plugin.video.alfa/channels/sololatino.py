@@ -358,9 +358,11 @@ def findvideos(item):
                 if not url or "short." in url:
                     continue
                 if "embedsito" in player_url:
-                    url = "https://embedsito.net/player/?id=%s" %url
-                    data = httptools.downloadpage(url, timeout=TIMEOUT, headers={"referer": item.url}).data
-                    url = BeautifulSoup(data, "html5lib").find("iframe")["src"]
+                    # url = "https://embedsito.net/player/?id=%s" %url
+                    # data = httptools.downloadpage(url, timeout=TIMEOUT, headers={"referer": item.url}).data
+                    # url = BeautifulSoup(data, "html5lib").find("iframe")["src"]
+                    url = scrapertools.find_single_match(elem.get("onclick", ""), "go_to_player\('([^']+)")
+                    url = base64.b64decode(url).decode('utf-8')
 
                 urls = process_url(url)
                 for url in urls:
@@ -467,6 +469,14 @@ def process_url(url):
         for i, u in enumerate(url):
             if not u.startswith("http"):
                 url[i] = '%s/%s' % (scrapertools.find_single_match(url_save, patron_host), u)
+    
+    elif "55553312.xyz" in url:
+        url_data = scrapertools.find_single_match(url, "[\w\d]+://[\w\d]+\.[\w\d]+/dl/\?(.+)=(.+)")
+        server_urls = servertools.get_server_parameters(url_data[0]).get("find_videos", {}).get("patterns", [])
+        if server_urls:
+            url = server_urls[0].get("url", "").replace('\\1', url_data[1])
+        else:
+            url = ""
 
     return [url] if isinstance(url, str) else url
 
