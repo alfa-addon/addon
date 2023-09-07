@@ -24,7 +24,7 @@
         "url": "\\1/"
       },
       {
-        "pattern": "(https://(?:www.|)fuckamouth.com/hdporn/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(http(?:s|)://(?:www.|)(?:fuckamouth|hd-porn|freehdporn|thehdporn).(?:com|co|xyz|ru)/hdporn/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

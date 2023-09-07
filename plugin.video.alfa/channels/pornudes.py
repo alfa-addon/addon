@@ -21,6 +21,7 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
+#       https://www.pornudes.com/     https://www.alluretube.com/
 canonical = {
              'channel': 'pornudes', 
              'host': config.get_setting("current_host", 'pornudes', default=''), 
@@ -40,7 +41,7 @@ language = []
 url_replace = []
 
 finds = {'find': {'find_all': [{'tag': ['div'],  'class': ['col-md-4']}]},
-         'categories': {'find_all': [{'tag': ['div'], 'class': ['col-md-4']}]}, 
+         'categories': {'find_all': [{'tag': ['div'], 'class': ['popular-tag']}]}, 
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 
@@ -54,6 +55,14 @@ finds = {'find': {'find_all': [{'tag': ['div'],  'class': ['col-md-4']}]},
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
+         'profile_labels': {
+                            # 'list_all_stime': dict([('find', [{'tag': ['div'], 'class': ['duration']}]),
+                                                    # ('get_text', [{'tag': '', 'strip': True, '@TEXT': '(?:\d+:\d+:\d+|\d+:\d+)'}])]),
+                            # 'list_all_quality': dict([('find', [{'tag': ['span'], 'class': ['hd-text-icon']}]),
+                                                      # ('get_text', [{'tag': '', 'strip': True}])]),
+                            'section_cantidad': dict([('find', [{'tag': ['div', 'span'], 'class': ['float-right', 'tag-counter']}]),
+                                                      ('get_text', [{'tag': '', 'strip': True, '@TEXT': '(\d+)'}])])
+                            },
          'controls': {'url_base64': False, 'cnt_tot': 24, 'reverse': False, 'profile': 'default'}, 
          'timeout': timeout}
 AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_path, movie_action='play', canonical=canonical, finds=finds, 
@@ -72,7 +81,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Mas comentado", action="list_all", url=host + "videos?o=md&t=m&page=1"))
     itemlist.append(Item(channel=item.channel, title="Favoritos", action="list_all", url=host + "videos?o=tf&t=m&page=1"))
     itemlist.append(Item(channel=item.channel, title="Mas largo", action="list_all", url=host + "videos?o=lg&t=m&page=1"))
-    itemlist.append(Item(channel=item.channel, title="Canal", action="section", url=host + "categories", extra="Categorias"))
+    itemlist.append(Item(channel=item.channel, title="Canal", action="section", url=host + "categories", extra="Canal"))
+    itemlist.append(Item(channel=item.channel, title="Categorias", action="section", url=host + "categories", extra="Categorias"))
     # itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     return itemlist
@@ -82,78 +92,18 @@ def section(item):
     logger.info()
     
     findS = finds.copy()
-    
     findS['url_replace'] = [['(\/videos\/[^$]+$)', r'\1?o=mr&page=1']]
     
-    return AlfaChannel.section(item, finds=findS, matches_post=section_matches, **kwargs)
-
-
-
-def section_matches(item, matches_int, **AHkwargs):
-    logger.info()
-    matches = []
-    
-    findS = AHkwargs.get('finds', finds)
-    logger.debug(matches_int[0])
-    for elem in matches_int:
-        elem_json = {}
-        
-        try:
-            
-            elem_json['url'] = elem.a.get("href", '')
-            elem_json['title'] = elem.img.get('alt', '')
-            if elem.img: elem_json['thumbnail'] = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
-                                                                                     or elem.img.get('data-src', '') \
-                                                                                     or elem.img.get('src', '')
-            elem_json['cantidad'] = elem.find('div', class_=['float-right']).get_text(strip=True)
-        
-        except:
-            logger.error(elem)
-            logger.error(traceback.format_exc())
-            continue
-        
-        if not elem_json['url']: continue
-        matches.append(elem_json.copy())
-    
-    return matches
-
+    if item.extra == "Canal":
+        findS['controls']['cnt_tot'] = 9999
+        findS['categories'] = {'find_all': [{'tag': ['div'], 'class': ['col-md-4']}]}
+    return AlfaChannel.section(item, finds=findS, **kwargs)
 
 
 def list_all(item):
     logger.info()
     
-    return AlfaChannel.list_all(item, matches_post=list_all_matches, **kwargs)
-
-
-def list_all_matches(item, matches_int, **AHkwargs):
-    logger.info()
-    matches = []
-    
-    findS = AHkwargs.get('finds', finds)
-    
-    for elem in matches_int:
-        elem_json = {}
-        
-        try:
-            elem_json['url'] = elem.a.get('href', '')
-            elem_json['title'] = elem.img.get('alt', '')
-            elem_json['thumbnail'] = elem.img.get('data-original', '') \
-                                     or elem.img.get('data-src', '') \
-                                     or elem.img.get('src', '')
-            elem_json['stime'] = elem.find('div', class_='duration').get_text(strip=True) if elem.find('div', class_='duration') else ''
-            if elem.find('span', class_='content-views'):
-                elem_json['views'] = elem.find('span', class_='content-views').get_text(strip=True)
-        
-        except:
-            logger.error(elem)
-            logger.error(traceback.format_exc())
-            continue
-        
-        if not elem_json['url']: continue
-        
-        matches.append(elem_json.copy())
-    
-    return matches
+    return AlfaChannel.list_all(item, **kwargs)
 
 
 def findvideos(item):

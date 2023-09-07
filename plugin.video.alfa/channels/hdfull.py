@@ -22,7 +22,7 @@ list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
 list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS
-forced_proxy_opt = ''
+forced_proxy_opt = 'ProxySSL'
 assistant = False
 
 # https://dominioshdfull.com/
@@ -30,14 +30,15 @@ assistant = False
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             'host_alt': ["https://hdfull.quest/"], 
+             "host_alt": ["https://hdfull.today/"], 
              'host_verification': '%slogin', 
-             'host_black_list': ["https://hdfull.today/", 'https://hdfull.sbs/', 'https://hdfull.org/', 
-                                 'https://hdfull.store/', 
-                                 'https://hdfull.life/', 'https://hdfull.digital/', 'https://hdfull.work/', 
-                                 'https://hdfull.video/', 'https://hdfull.cloud/', 'https://hdfull.wtf/', 
-                                 'https://hdfull.fun/', 'https://hdfull.lol/', 'https://hdfull.one/', 
-                                 'https://new.hdfull.one/', 'https://hdfull.top/', 'https://hdfull.bz/'],
+             "host_black_list": ["https://hdfull.quest/", 
+                                 "https://hdfull.icu/", "https://hdfull.sbs/", "https://hdfull.org/", 
+                                 "https://hdfull.store/", 
+                                 "https://hdfull.life/", "https://hdfull.digital/", "https://hdfull.work/", 
+                                 "https://hdfull.video/", "https://hdfull.cloud/", "https://hdfull.wtf/", 
+                                 "https://hdfull.fun/", "https://hdfull.lol/", "https://hdfull.one/", 
+                                 "https://new.hdfull.one/", "https://hdfull.top/", "https://hdfull.bz/"],
              'pattern': '<meta\s*property="og:url"\s*content="([^"]+)"', 
              'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 'expires': 365*24*60*60, 
              'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_if_assistant': True if assistant else False, 

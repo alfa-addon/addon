@@ -16,7 +16,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:ballzdeep|pornxpert|hoes|bigtitslust|mondetube|watchporn|faapy|pornvase|sortporn|4wank|porncaper|camstreams).(?:com|xxx|tube|to|tv)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:ballzdeep|pornxpert|hoes|bigtitslust|mondetube|watchporn|faapy|pornvase|sortporn|4wank|porncaper|camstreams|celebsroulette).(?:com|xxx|tube|to|tv)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -32,7 +32,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(http(?:s|)://(?:www.|)(?:camwhores|camwhorescloud|camwhoreshd|lesbianbliss|goodporn|sunporno|porntrex|tonicporn|whoreshub).(?:tv|com|org|to|lol)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(http(?:s|)://(?:www.|)(?:camwhores|camwhorescloud|camwhoreshd|lesbianbliss|goodporn|sunporno|porntrex|tonicporn|whoreshub|familyporn).(?:tv|com|org|to|lol)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -48,7 +48,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|my.|)(?:porn00|xmegadrive|uiporn|pornhat|familyporn|hobby).(?:org|tv|com|porn)/video(?:s|)/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|my.|)(?:porn00|xmegadrive|uiporn|pornhat|hobby).(?:org|tv|com|porn)/video(?:s|)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

@@ -17,7 +17,7 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-#  https://fuckamouth.com  http://freehdporn.ru  http://hd-porn.co  http://thehdporn.xyz/
+#  https://fuckamouth.com  http://freehdporn.xyz  http://hd-porn.co  http://thehdporn.xyz/
 canonical = {
              'channel': 'fuckamouth', 
              'host': config.get_setting("current_host", 'fuckamouth', default=''), 
@@ -89,15 +89,15 @@ def lista(item):
     patron += '<div class="thumb-stats pull-left">(.*?)<div class="thumb-stats pull-right">.*?'
     patron += '<span>([^>]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,thumbnail,scrapedtitle,quality,time in matches:
+    for url,thumbnail,scrapedtitle,quality,time in matches:
         if "HD" in quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (time, scrapedtitle)
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
         if not thumbnail.startswith("https"):
             thumbnail = "%s/%s" %(host,thumbnail)
-        url = scrapedurl.replace("http://hd-porn.co", host)
-        url = urlparse.urljoin(item.url,url)
+        # url = scrapedurl.replace("http://hd-porn.co", host)
+        # url = urlparse.urljoin(item.url,url)
         plot = ""
         action = "play"
         if logger.info() == False:

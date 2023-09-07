@@ -21,8 +21,8 @@ from lib import strptime_fix
 canonical = {
              'channel': 'hentaila', 
              'host': config.get_setting("current_host", 'hentaila', default=''), 
-             'host_alt': ["https://www3.hentaila.com"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www4.hentaila.com"], 
+             'host_black_list': ["https://www3.hentaila.com"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
