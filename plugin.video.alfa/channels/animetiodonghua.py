@@ -13,6 +13,8 @@ from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
+from modules import renumbertools
+
 IDIOMAS = AlfaChannelHelper.IDIOMAS_ANIME
 list_language = list(set(IDIOMAS.values()))
 list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
@@ -114,6 +116,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True)))
 
+    itemlist = renumbertools.show_option(item.channel, itemlist)
+
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
@@ -182,6 +186,9 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['episode'] = int(elem.find("span", class_="epx").get_text(strip=True).split(' ')[1])
                 elem_json['mediatype'] = 'episode'
 
+            elem_json['context'] = renumbertools.context(item)
+            elem_json['context'].extend(autoplay.context)
+
         except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -236,9 +243,12 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         try:
             elem_json['url'] = elem.a.get("href", "")
             elem_json['title'] = elem.find("div", class_="epl-title").get_text(strip=True)
-            elem_json['episode'] = int(elem.find("div", class_="epl-num").get_text(strip=True) or 1)
-            elem_json['season'] = get_title_season(soup)
+            episode = int(elem.find("div", class_="epl-num").get_text(strip=True) or 1)
+            season = get_title_season(soup)
             elem_json['language'] = item.language
+            
+            elem_json['season'], elem_json['episode'] = renumbertools.numbered_for_trakt(item.channel, 
+                                                        item.contentSerieName, season, episode)
 
         except Exception:
             logger.error(elem)

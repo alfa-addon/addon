@@ -428,6 +428,10 @@ def get_seasons(item):
             dict_temp) == 1:  # Sólo si hay una temporada
         return get_episodes(item)
     else:
+        # En ocasiones llega informacion del episodio en el item, lo que confunde a tmdb
+        # y crea una lista de episodios en vez de temporadas, borremosla
+        if "episode" in item.infoLabels:
+            del item.infoLabels["episode"]
 
         # TODO mostrar los episodios de la unica temporada "no vista", en vez de mostrar el Item "temporada X" previo
         # si está marcado "ocultar los vistos" en el skin, se ejecutaria esto
