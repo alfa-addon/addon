@@ -11,7 +11,7 @@ on:
 
   workflow_dispatch:
 
-# Set permissions for GitHub key 
+# Set permissions for GitHub key
 permissions: write-all
 
 jobs:
