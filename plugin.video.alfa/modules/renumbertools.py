@@ -18,10 +18,9 @@ except:
     xbmcgui = None
 
 from channelselector import get_thumb
-from platformcode import config, logger
-from core import jsontools
+from platformcode import config, logger, platformtools
+from core import jsontools, tmdb
 from core.item import Item
-from platformcode import platformtools
 
 TAG_TVSHOW_RENUMERATE = "TVSHOW_RENUMBER"
 TAG_SEASON_EPISODE = "season_episode"
@@ -60,7 +59,7 @@ def context(item):
         _context = []
 
     if access():
-        dict_data = {"title": "RENUMERAR", "action": "config_item", "module": "renumbertools"}
+        dict_data = {"title": config.get_localized_string(80791), "action": "config_item", "module": "renumbertools"}
         _context.append(dict_data)
 
     return _context
@@ -69,13 +68,13 @@ def context(item):
 def show_option(channel, itemlist):
     if access():
         itemlist.append(Item(module=__module__, title="[COLOR yellow]Configurar renumeración en series...[/COLOR]",
-                             action="load", from_channel=channel, thumbnail=get_thumb("setting_0.png")))
+                             action="load", channel=channel, thumbnail=get_thumb("setting_0.png")))
 
     return itemlist
 
 
 def load(item):
-    return mainlist(channel=item.from_channel)
+    return mainlist(channel=item.channel)
 
 
 def mainlist(channel):
@@ -101,7 +100,7 @@ def mainlist(channel):
         name = tvshow
         title = "Configurar [COLOR %s][%s][/COLOR]" % (tag_color, name)
 
-        itemlist.append(Item(module=__module__, action="config_item", title=title, show=name, from_channel=channel))
+        itemlist.append(Item(module=__module__, action="config_item", title=title, show=name, channel=channel))
 
     if len(itemlist) == 0:
         itemlist.append(Item(channel=channel, action="mainlist",
@@ -111,6 +110,18 @@ def mainlist(channel):
     return itemlist
 
 
+def get_data(channel, show):
+    dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
+    data = dict_series.get(show, {})
+    # logger.info(data, True)
+    if data:
+        data = data.get(TAG_SEASON_EPISODE, [])
+    else:
+        # vamos a generar datos por defecto para ir directamente al menu si no hay datos guardados
+        data = [[1, 0]]
+    return data
+
+
 def config_item(item):
     """
     muestra una serie renumerada para su configuración
@@ -118,29 +129,11 @@ def config_item(item):
     :param item: item
     :type item: Item
     """
-    logger.info("item %s" % item.tostring("\n"))
-    channel = item.channel
+    data = get_data(item.channel, item.show)
+    ventana = RenumberWindow('RenumberDialog.xml', config.get_runtime_path(), show=item.show, channel=item.channel, data=data)
+   
 
-    dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
-    data = dict_series.get(item.show, {})
-
-    if data:
-        data = data.get(TAG_SEASON_EPISODE, [])
-
-        ventana = RenumberWindow(show=item.show, channel=channel, data=data)
-        del ventana
-    else:
-        # tenemos información y devolvemos los datos añadidos para que se muestre en la ventana
-        if data:
-            return add_season(data)
-        # es la primera vez que se añaden datos (usando menú contextual) por lo que no devolvemos nada
-        # para evitar error al listar los items
-        else:
-            data = add_season(data)
-            write_data(channel, item.show, data)
-
-
-def numbered_for_tratk(channel, show, season, episode):
+def numbered_for_trakt(channel, show, season, episode):
     """
     Devuelve la temporada y episodio convertido para que se marque correctamente en tratk.tv
 
@@ -257,6 +250,33 @@ def add_season(data=None):
                 return [[int(season), int(episode)]]
 
 
+def find_tmdb_id(show):
+    otmdb = tmdb.Tmdb(texto_buscado=show, tipo='tv',
+                      idioma_busqueda=tmdb.tmdb_lang, year='-',
+                      include_adult=False)
+    return otmdb.get_id()
+
+
+def get_data_from_tmdb(tmdb_id):
+    data = [[1, 0]]
+    otmdb = tmdb.Tmdb(id_Tmdb=tmdb_id, tipo='tv',
+                      idioma_busqueda=tmdb.tmdb_lang,
+                      include_adult=False)
+
+    if int(otmdb.result['number_of_seasons']) == 1:
+        return data
+
+    if otmdb.result.get('seasons', {}):
+        nos = int(otmdb.result['number_of_seasons'])
+        ep_total = 0
+        for season in otmdb.result['seasons']:
+            sn = int(season['season_number'])
+            if sn > 0 and sn < nos:
+                ep_total += int(season['episode_count'])
+                data.append([sn + 1, ep_total])
+    return data
+
+
 def write_data(channel, show, data):
     # OBTENEMOS LOS DATOS DEL JSON
     dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
@@ -309,25 +329,27 @@ if xbmcgui:
     ID_BUTTON_DELETE = 3014
 
 
-    class RenumberWindow(xbmcgui.WindowDialog):
+    class RenumberWindow(xbmcgui.WindowXMLDialog):
         def __init__(self, *args, **kwargs):
             logger.debug()
-
+            '''
             #### Compatibilidad con Kodi 18 ####
             if config.get_platform(True)['num_version'] < 18:
                 if xbmcgui.__version__ == "1.2":
                     self.setCoordinateResolution(1)
                 else:
                     self.setCoordinateResolution(5)
-
+            '''
             self.show = kwargs.get("show")
             self.channel = kwargs.get("channel")
             self.data = kwargs.get("data")
+
             self.init = True
 
             self.mediapath = os.path.join(config.get_runtime_path(), 'resources', 'skins', 'Default', 'media')
             self.font = "font12"
-
+            # Esta parte es estatica, se ha movido al XML
+            '''
             window_bg = xbmcgui.ControlImage(320, 130, 600, 440,
                                              os.path.join(self.mediapath, 'Windows', 'DialogBack.png'))
             self.addControl(window_bg)
@@ -442,13 +464,23 @@ if xbmcgui:
                                                                                 'KeyboardKeyNF.png'),
                                                     alignment=ALIGN_CENTER)
             self.addControl(self.btn_delete)
-
+            '''
             self.controls = []
-            self.onInit()
-            self.setFocus(self.controls[0].edit_season)
             self.doModal()
 
+        def defineControls(self):
+            self.controls_bg = self.getControl(3005)
+            self.scroll_bg = self.getControl(3006)
+            self.scroll2_bg = self.getControl(3007)
+            self.check_update_internet = self.getControl(ID_CHECK_UPDATE_INTERNET)
+
         def onInit(self, *args, **kwargs):
+            self.defineControls()
+            self.setProperty("show", self.show)
+            self.tmdb_id = find_tmdb_id(self.show)
+            if not self.tmdb_id:
+                self.check_update_internet.setEnabled(False)
+
             try:
                 # listado temporada / episodios
                 pos_y = self.controls_bg.getY() + 10
@@ -558,21 +590,23 @@ if xbmcgui:
 
                 if len(self.data) > 5:
                     self.move_scroll()
+                    
+                self.setFocus(self.controls[0].edit_season)
 
             except Exception as Ex:
                 logger.error("HA HABIDO UNA HOSTIA %s" % Ex)
 
-        # def onClick(self, control_id):
-        #     pass
-        #
-        # def onFocus(self, control_id):
-        #     pass
-
         def onControl(self, control):
-            # logger.debug("%s" % control.getId())
-            control_id = control.getId()
+            pass
 
+        def onFocus(self, control_id):
+            pass
+
+        def onClick(self, control_id):
             if control_id == ID_BUTTON_OK:
+                for x, grupo in enumerate(self.controls):
+                    self.data[x][0] = int(self.controls[x].edit_season.getText())
+                    self.data[x][1] = int(self.controls[x].edit_episode.getText())
                 write_data(self.channel, self.show, self.data)
                 self.close()
             if control_id in [ID_BUTTON_CLOSE, ID_BUTTON_CANCEL]:
@@ -580,9 +614,16 @@ if xbmcgui:
             elif control_id == ID_BUTTON_DELETE:
                 self.close()
                 borrar(self.channel, self.show)
-            elif control_id == ID_BUTTON_ADD_SEASON:
-                # logger.debug("data que enviamos: {}".format(self.data))
-                data = add_season(self.data)
+            elif control_id in [ID_BUTTON_ADD_SEASON, ID_CHECK_UPDATE_INTERNET]:
+                if control_id == ID_CHECK_UPDATE_INTERNET:
+                    if self.check_update_internet.isSelected():
+                        data = get_data_from_tmdb(self.tmdb_id)
+                    else:
+                        data = get_data(self.channel, self.show)
+                else:
+                    # logger.debug("data que enviamos: {}".format(self.data))
+                    data = add_season(self.data)
+                
                 if data:
                     self.data = data
                 # logger.debug("data que recibimos: {}".format(self.data))
@@ -606,6 +647,7 @@ if xbmcgui:
                         self.onInit()
 
                         return
+
 
         def onAction(self, action):
             # logger.debug("%s" % action.getId())
@@ -634,9 +676,10 @@ if xbmcgui:
                 else:
                     if focus in [ID_BUTTON_ADD_SEASON, ID_BUTTON_INFO, ID_CHECK_UPDATE_INTERNET]:
                         if focus == ID_BUTTON_ADD_SEASON:
-                            self.setFocusId(ID_BUTTON_INFO)
-                            # TODO cambiar cuando se habilite la opcion de actualizar por internet
-                            # self.setFocusId(ID_CHECK_UPDATE_INTERNET)
+                            if self.tmdb_id:
+                                self.setFocusId(ID_CHECK_UPDATE_INTERNET)
+                            else:
+                                self.setFocusId(ID_BUTTON_INFO)
                         elif focus == ID_BUTTON_INFO:
                             self.setFocusId(ID_BUTTON_ADD_SEASON)
                         elif focus == ID_CHECK_UPDATE_INTERNET:
@@ -672,9 +715,10 @@ if xbmcgui:
                         if focus == ID_BUTTON_ADD_SEASON:
                             self.setFocusId(ID_BUTTON_INFO)
                         if focus == ID_BUTTON_INFO:
-                            self.setFocusId(ID_BUTTON_ADD_SEASON)
-                            # TODO cambiar cuando se habilite la opcion de actualizar por internet
-                            # self.setFocusId(ID_CHECK_UPDATE_INTERNET)
+                            if self.tmdb_id:
+                                self.setFocusId(ID_CHECK_UPDATE_INTERNET)
+                            else:
+                                self.setFocusId(ID_BUTTON_ADD_SEASON)
                         if focus == ID_CHECK_UPDATE_INTERNET:
                             self.setFocusId(ID_BUTTON_OK)
 
@@ -757,9 +801,7 @@ if xbmcgui:
 
                             return self.setFocus(self.controls[x + 1].btn_delete_season)
                         else:
-                            return self.setFocusId(ID_BUTTON_INFO)
-                            # TODO cambiar cuando se habilite la opcion de actualizar por internet
-                            # return self.setFocusId(ID_CHECK_UPDATE_INTERNET)
+                            return self.setFocusId(ID_CHECK_UPDATE_INTERNET) if self.tmdb_id else self.setFocusId(ID_BUTTON_INFO)
 
         def move_up(self, focus):
             # Si el foco está en uno de los tres botones medios, subimos el foco al último control del listado
@@ -783,9 +825,10 @@ if xbmcgui:
                 elif focus == ID_BUTTON_CANCEL:
                     self.setFocusId(ID_BUTTON_INFO)
                 elif focus == ID_BUTTON_DELETE:
-                    self.setFocusId(ID_BUTTON_INFO)
-                    # TODO cambiar cuando se habilite la opcion de actualizar por internet
-                    # self.setFocusId(ID_CHECK_UPDATE_INTERNET)
+                    if self.tmdb_id:
+                        self.setFocusId(ID_CHECK_UPDATE_INTERNET)
+                    else:
+                        self.setFocusId(ID_BUTTON_INFO)
             # nos movemos entre los elementos del listado
             else:
                 # Localizamos en el listado de controles el control que tiene el focus
@@ -813,9 +856,7 @@ if xbmcgui:
 
                             return self.setFocus(self.controls[x - 1].btn_delete_season)
                         else:
-                            return self.setFocusId(ID_BUTTON_DELETE)
-                            # TODO cambiar cuando se habilite la opcion de actualizar por internet
-                            # return self.setFocusId(ID_CHECK_UPDATE_INTERNET)
+                            return self.setFocusId(ID_CHECK_UPDATE_INTERNET) if self.tmdb_id else self.setFocusId(ID_BUTTON_DELETE)
 
         def scroll(self, position, movement):
             try:
@@ -884,7 +925,7 @@ if xbmcgui:
             text += "  - SEASON 1: EPISODE 48 --> [season 1, episode: 0]\n"
             text += "  - SEASON 2: EPISODE 48 --> [season 2, episode: 48]\n"
             text += "  - SEASON 3: EPISODE 54 --> [season 3, episode: 96 ([48=season2] + [48=season1])]\n"
-            text += "  - SEASON 4: EPISODE 175 --> [season 4: episode: 150 ([54=season3] + [48=season2] + [48=season3" \
+            text += "  - SEASON 4: EPISODE 175 --> [season 4: episode: 150 ([54=season3] + [48=season2] + [48=season1" \
                     "])][/COLOR]\n"
             text += "[COLOR green]\nEjemplo de serie que continua en la temporada de la original:\n"
             text += "\nFate/Zero 2nd Season:\n"
@@ -934,6 +975,8 @@ if xbmcgui:
         def __init__(self, *args, **kwargs):
             self.title = kwargs.get('title')
             self.text = kwargs.get('text')
+            self.action_exitkeys_id = [xbmcgui.ACTION_BACKSPACE, xbmcgui.ACTION_PREVIOUS_MENU,
+                                       xbmcgui.ACTION_NAV_BACK]
             self.doModal()
 
         def onInit(self):
@@ -950,7 +993,8 @@ if xbmcgui:
             pass
 
         def onAction(self, action):
-            self.close()
+            if action in self.action_exitkeys_id:
+                self.close()
 
             # TODO mirar retro-compatiblidad
             # class ControlEdit(xbmcgui.ControlButton):
