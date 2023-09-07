@@ -3480,7 +3480,7 @@ def login_mal(from_list=False):
                 password = bdec("dFlTakE3ekYzbng1")
                 generic = True
             else:
-                return False, config.get_localized_string(70381), user
+                return False, config.get_localized_string(70393), user
         
         data = httptools.downloadpage(urlparse.urljoin(host_mal, "login.php?from=%2F"), **kwargs).data
         if re.search(r'(?i)' + str(user), data) and not generic:
@@ -3498,7 +3498,7 @@ def login_mal(from_list=False):
             return False, config.get_localized_string(70330), user
         else:
             if generic:
-                return False, config.get_localized_string(70381), user
+                return False, config.get_localized_string(70393), user
             logger.info("Login correcto")
             return True, "", user
     except:
