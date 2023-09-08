@@ -13,6 +13,8 @@ from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
+from modules import renumbertools
+
 IDIOMAS = AlfaChannelHelper.IDIOMAS_ANIME
 list_language = list(set(IDIOMAS.values()))
 list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
@@ -114,6 +116,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True), c_type='search'))
 
+    itemlist = renumbertools.show_option(item.channel, itemlist)
+
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
@@ -194,6 +198,9 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['language'] = get_lang_from_str(elem_json['title'])
             elem_json['year'] = '-'
             elem_json['quality'] = 'HD'
+            
+            elem_json['context'] = renumbertools.context(item)
+            elem_json['context'].extend(autoplay.context)
 
         except Exception:
             logger.error(elem)
@@ -256,9 +263,9 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         try:
             season, episode = elem.find("div", class_="numerando").get_text(strip=True).split(' - ')
             if titleSeason == item.contentSeason and int(season) != item.contentSeason: continue
-            elem_json['season'] = titleSeason
             # logger.info("contentSeason %d, season %d, titleSeason %d" % (item.contentSeason, int(season or 1), titleSeason), True)
-            elem_json['episode'] = int(episode or 1)
+            elem_json['season'], elem_json['episode'] = renumbertools.numbered_for_trakt(item.channel, 
+                                                        item.contentSerieName, titleSeason, int(episode or 1))
             info = elem.find("div", class_="episodiotitle")
             elem_json['url'] = info.a.get("href", "")
             elem_json['title'] = info.a.get_text(strip=True)

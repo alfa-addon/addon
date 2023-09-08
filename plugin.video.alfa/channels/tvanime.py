@@ -393,7 +393,7 @@ def episodesxfolder(item):
         episode = scrapertools.find_single_match(scrapedurl, '.*?episodio-(\d+)')
         lang = item.language
         try:
-            season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, int(episode))
+            season, episode = renumbertools.numbered_for_trakt(item.channel, item.contentSerieName, 1, int(episode))
             season = int(season)
             episode = int(episode)
         except:

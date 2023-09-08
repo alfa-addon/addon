@@ -1,21 +1,22 @@
-# Kodi Media Center language file
-# strings 30000 thru 30999 reserved for plugins and plugin settings
-#
+"# Kodi Media Center language file
+# Addon Name: Alfa
+# Addon id: plugin.video.alfa
+# Addon Provider: Alfa Deveolpment Group
 msgid ""
 msgstr ""
-"Project-Id-Version: KODI Main\n"
-"Report-Msgid-Bugs-To: http://trac.kodi.tv/\n"
-"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2018-03-26 03:02+0200\n"
-"Language-Team: \n"
+Project-Id-Version: Alfa add-on\n"
+"POT-Creation-Date: 2018-03-26 03:02+0200\n"
+"PO-Revision-Date: 2023-09-07 15:52-0600\n"
+"Language-Team: Alfa Development Group\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.0.4\n"
+"X-Generator: SistemaRayoXP's quick n' dirty scripts\n"
 "Last-Translator: MrTruth\n"
 "Last-Translator: Angedam\n"
-"Language: en_EN\n"
+"Last-Translator: SistemaRayoXP\n"
+"Language: en\n"
 
 msgctxt "#20000"
 msgid "Alfa"
@@ -34,7 +35,7 @@ msgid "Enable debug logging:"
 msgstr ""
 
 msgctxt "#30004"
-msgid "Automatic update channels:"
+msgid "Update channels automatically"
 msgstr ""
 
 msgctxt "#30005"
@@ -78,11 +79,11 @@ msgid "Password:"
 msgstr ""
 
 msgctxt "#30017"
-msgid "Download path:"
+msgid "Downloads folder:"
 msgstr ""
 
 msgctxt "#30018"
-msgid "Download list path:"
+msgid "Downloads list folder:"
 msgstr ""
 
 msgctxt "#30019"
@@ -98,15 +99,15 @@ msgid "Play mode:"
 msgstr ""
 
 msgctxt "#30050"
-msgid "Server connection error"
+msgid "Couldn't connect with the server"
 msgstr ""
 
 msgctxt "#30051"
-msgid "Website error message (http code %d)"
+msgid "The website is not working properly (HTTP error %d)"
 msgstr ""
 
 msgctxt "#30055"
-msgid "Video not available"
+msgid "Video unavailable"
 msgstr ""
 
 msgctxt "#30057"
@@ -118,11 +119,11 @@ msgid "Try another server or channel"
 msgstr ""
 
 msgctxt "#30065"
-msgid "Unsopported Server"
+msgid "Unsupported server"
 msgstr ""
 
 msgctxt "#30067"
-msgid "Videolibrary path:"
+msgid "Videolibrary folder:"
 msgstr ""
 
 msgctxt "#30068"
@@ -150,7 +151,7 @@ msgid "Help"
 msgstr ""
 
 msgctxt "#30105"
-msgid "Removed from favorites"
+msgid "removed from favorites"
 msgstr ""
 
 msgctxt "#30108"
@@ -158,11 +159,11 @@ msgid "added to favorites"
 msgstr ""
 
 msgctxt "#30109"
-msgid "added to download list"
+msgid "added to downloads list"
 msgstr ""
 
 msgctxt "#30112"
-msgid "Enter title to search"
+msgid "Enter the title to search"
 msgstr ""
 
 msgctxt "#30118"
@@ -170,7 +171,7 @@ msgid "Channels"
 msgstr ""
 
 msgctxt "#30119"
-msgid "Choose a Category"
+msgid "Choose a category"
 msgstr ""
 
 msgctxt "#30121"
@@ -182,7 +183,7 @@ msgid "Movies"
 msgstr ""
 
 msgctxt "#30123"
-msgid "TV Shows"
+msgid "TV shows"
 msgstr ""
 
 msgctxt "#30124"
@@ -218,7 +219,7 @@ msgid "Direct"
 msgstr ""
 
 msgctxt "#30151"
-msgid "Watch the video"
+msgid "Watch video"
 msgstr ""
 
 msgctxt "#30153"
@@ -254,51 +255,51 @@ msgid "Square"
 msgstr ""
 
 msgctxt "#30300"
-msgid "Faster context menus"
+msgid "Faster context menus (may not work with some options)"
 msgstr ""
 
 msgctxt "#30501"
-msgid "Paths"
+msgid "Folders"
 msgstr ""
 
 msgctxt "#30974"
-msgid "Search in Channels"
+msgid "Search in channels"
 msgstr ""
 
 msgctxt "#30975"
-msgid "Movie Info"
+msgid "Movie info"
 msgstr ""
 
 msgctxt "#30976"
-msgid "TVShows - Airing Today"
+msgid "TV shows - Airing today"
 msgstr ""
 
 msgctxt "#30977"
-msgid "Last Episodes - On-Air"
+msgid "Last episodes - On-Air"
 msgstr ""
 
 msgctxt "#30978"
-msgid "New TVShows"
+msgid "New TV shows"
 msgstr ""
 
 msgctxt "#30979"
-msgid "Character Info"
+msgid "Character info"
 msgstr ""
 
 msgctxt "#30980"
-msgid "Search by Title"
+msgid "Search by title"
 msgstr ""
 
 msgctxt "#30981"
-msgid "Search by Person"
+msgid "Seach by person"
 msgstr ""
 
 msgctxt "#30982"
-msgid "Search by Company"
+msgid "Search by company"
 msgstr ""
 
 msgctxt "#30983"
-msgid "Now Playing"
+msgid "Now playing"
 msgstr ""
 
 msgctxt "#30984"
@@ -306,11 +307,11 @@ msgid "Popular"
 msgstr ""
 
 msgctxt "#30985"
-msgid "Top Rated"
+msgid "Top rated"
 msgstr ""
 
 msgctxt "#30986"
-msgid "Search by Collection"
+msgid "Search by collection"
 msgstr ""
 
 msgctxt "#30987"
@@ -318,15 +319,15 @@ msgid "Genre"
 msgstr ""
 
 msgctxt "#30988"
-msgid "Search by Year"
+msgid "Search by year"
 msgstr ""
 
 msgctxt "#30989"
-msgid "Search Similar Movies"
+msgid "Search similar movies"
 msgstr ""
 
 msgctxt "#30990"
-msgid "Search TV show"
+msgid "Search TV shows"
 msgstr ""
 
 msgctxt "#30991"
@@ -334,11 +335,11 @@ msgid "Library"
 msgstr ""
 
 msgctxt "#30992"
-msgid "Next Page"
+msgid "Next page"
 msgstr ""
 
 msgctxt "#30993"
-msgid "Looking for %s..."
+msgid "Searching %s..."
 msgstr ""
 
 msgctxt "#30994"
@@ -350,11 +351,11 @@ msgid "%d found so far: %s"
 msgstr ""
 
 msgctxt "#30996"
-msgid "Most Voted"
+msgid "Most voted"
 msgstr ""
 
 msgctxt "#30997"
-msgid "Academy Awards"
+msgid "Academy awards"
 msgstr ""
 
 msgctxt "#30998"
@@ -362,7 +363,7 @@ msgid "Shortcut"
 msgstr ""
 
 msgctxt "#30999"
-msgid "Add key to open Shortcut"
+msgid "Add key to open shortcut"
 msgstr ""
 
 msgctxt "#50000"
@@ -374,7 +375,7 @@ msgid "Today on TV"
 msgstr ""
 
 msgctxt "#50002"
-msgid "Latest News"
+msgid "Latest news"
 msgstr ""
 
 msgctxt "#50003"
@@ -386,19 +387,19 @@ msgid "Path: "
 msgstr ""
 
 msgctxt "#59970"
-msgid "Synchronization with Trakt started"
+msgid "Trakt sync started"
 msgstr ""
 
 msgctxt "#59971"
-msgid "Alfa Auto-configuration"
+msgid "Alfa auto-configuration"
 msgstr ""
 
 msgctxt "#59972"
-msgid "Search for: '%s' | Found: %d vídeos | Time: %2.f seconds"
+msgid "Searching: '%s' | Found: %d videos | Time: %2.f seconds"
 msgstr ""
 
 msgctxt "#59973"
-msgid "Search Cancelled"
+msgid "Search cancelled"
 msgstr ""
 
 msgctxt "#59974"
@@ -426,7 +427,7 @@ msgid "kids"
 msgstr ""
 
 msgctxt "#59980"
-msgid "Castilian"
+msgid "castilian"
 msgstr ""
 
 msgctxt "#59981"
@@ -438,31 +439,31 @@ msgid "torrent"
 msgstr ""
 
 msgctxt "#59983"
-msgid "%.2f%% - %.2f %s of %.2f %s a %.2f %s/s (%d/%d)"
+msgid "%.2f%% - %.2f %s of %.2f %s at %.2f %s/s (%d/%d)"
 msgstr ""
 
 msgctxt "#59985"
-msgid "Error in the channel "
+msgid "Error in channel"
 msgstr ""
 
 msgctxt "#59986"
-msgid "Error loading the server: %s\n"
+msgid "Error loading server: %s\n"
 msgstr ""
 
 msgctxt "#59987"
-msgid "Start downloading now?"
+msgid "Start download now?"
 msgstr ""
 
 msgctxt "#59988"
-msgid "Saving configuration..."
+msgid "Saving settings..."
 msgstr ""
 
 msgctxt "#59989"
-msgid "Please wait"
+msgid "Please wait a moment"
 msgstr ""
 
 msgctxt "#59990"
-msgid "Channels included in the search"
+msgid "Channels included in search"
 msgstr ""
 
 msgctxt "#59991"
@@ -474,15 +475,15 @@ msgid "None"
 msgstr ""
 
 msgctxt "#59993"
-msgid "Configuration -- Search"
+msgid "Search settings"
 msgstr ""
 
 msgctxt "#59994"
-msgid "Choose channels to include in your search"
+msgid "Select channels to include in search"
 msgstr ""
 
 msgctxt "#59995"
-msgid "Saved Searches"
+msgid "Saved searches"
 msgstr ""
 
 msgctxt "#59996"
@@ -498,15 +499,15 @@ msgid "Search by categories (advanced search)"
 msgstr ""
 
 msgctxt "#59999"
-msgid "Search for actor/actress"
+msgid "Search by actor/actress"
 msgstr ""
 
 msgctxt "#60000"
-msgid "Filter server (Black List)"
+msgid "Filter servers (blacklist)"
 msgstr ""
 
 msgctxt "#60001"
-msgid "No links available that meets the requirements of the Black list. Try again by changing the filter in 'Server Configuration"
+msgid "There are no links available that meet the requirements of your blacklist. Try changing your filters in the Server settings"
 msgstr ""
 
 msgctxt "#60003"
@@ -514,7 +515,7 @@ msgid "Connecting with %s"
 msgstr ""
 
 msgctxt "#60004"
-msgid "No connector for the server %s"
+msgid "No connector available for server %s"
 msgstr ""
 
 msgctxt "#60005"
@@ -534,27 +535,27 @@ msgid "Process completed"
 msgstr ""
 
 msgctxt "#60009"
-msgid "To watch a vide on %s you need<br/>an account on: %s"
+msgid "To watch a video on %s you need<br/>an account on: %s"
 msgstr ""
 
 msgctxt "#60010"
-msgid "All available links belongs to server on your black list.\nDo you want to show these links?"
+msgid "All available links belong to servers on your black list.\nDo you want to show these links?"
 msgstr ""
 
 msgctxt "#60011"
-msgid "Cache deleted"
+msgid "Cache cleared"
 msgstr ""
 
 msgctxt "#60012"
-msgid "No video to play"
+msgid "Nothing to play"
 msgstr ""
 
 msgctxt "#60013"
-msgid "This website seems to be unavailable, try later, if the problem persists, check with a browser: %s. If the web page is working correctly, please report the error on : https://alfa-addon.com"
+msgid "This website seems to be unavailable, try again later. If the problem persists, check within a browser: %s. If the web page is working correctly, please report the error on: https://alfa-addon.com"
 msgstr ""
 
 msgctxt "#60014"
-msgid "It may be due to a connection problem, the web page of the channel has changed its structure, or an internal error of alfa. To have more details, see the log file."
+msgid "An error has ocurred. It may be due to a connection problem, the channel's webpage changed its structure, or an internal Alfa error. For more details, see the log file."
 msgstr ""
 
 msgctxt "#60015"
@@ -562,11 +563,11 @@ msgid "Check the log for more details on the error."
 msgstr ""
 
 msgctxt "#60016"
-msgid "Segna film come non visto"
+msgid "Mark movie as unseen"
 msgstr ""
 
 msgctxt "#60017"
-msgid "Mark movie as not watched"
+msgid "Mark movie as seen"
 msgstr ""
 
 msgctxt "#60018"
@@ -578,23 +579,23 @@ msgid "Delete this movie"
 msgstr ""
 
 msgctxt "#60020"
-msgid "Mark tv series as not watched"
+msgid "Mark TV show as unseen"
 msgstr ""
 
 msgctxt "#60021"
-msgid "Mark tv series as watched"
+msgid "Mark TV show as seen"
 msgstr ""
 
 msgctxt "#60022"
-msgid "Automatically find new episodes: Disable"
+msgid "Stop searching new episodes automatically"
 msgstr ""
 
 msgctxt "#60023"
-msgid "Automatically find new episodes: Enable"
+msgid "Search new episodes automatically"
 msgstr ""
 
 msgctxt "#60024"
-msgid "Delete tv series/channel"
+msgid "Delete TV show/channel"
 msgstr ""
 
 msgctxt "#60025"
@@ -602,7 +603,7 @@ msgid "Delete tv series"
 msgstr ""
 
 msgctxt "#60026"
-msgid "Search for new episodes and update"
+msgid "Search new episodes and update videolibrary"
 msgstr ""
 
 msgctxt "#60027"
@@ -610,15 +611,15 @@ msgid "Season %s"
 msgstr ""
 
 msgctxt "#60028"
-msgid "Segna stagione come non vista"
+msgid "Mark season as seen"
 msgstr ""
 
 msgctxt "#60029"
-msgid "Mark season as not watched"
+msgid "Mark season as unseen"
 msgstr ""
 
 msgctxt "#60030"
-msgid "*All the seasons"
+msgid "All seasons"
 msgstr ""
 
 msgctxt "#60031"
@@ -626,19 +627,19 @@ msgid "Season %s Episode %s"
 msgstr ""
 
 msgctxt "#60032"
-msgid "Mark episode as not watched"
+msgid "Mark episode as unseen"
 msgstr ""
 
 msgctxt "#60033"
-msgid "Mark episode as watched"
+msgid "Mark episode as seen"
 msgstr ""
 
 msgctxt "#60034"
-msgid "Show only link %s"
+msgid "Show only links from %s"
 msgstr ""
 
 msgctxt "#60035"
-msgid "Show all the links"
+msgid "Show all links"
 msgstr ""
 
 msgctxt "#60036"
@@ -646,11 +647,11 @@ msgid "Episode %s"
 msgstr ""
 
 msgctxt "#60037"
-msgid "Tv series update ..."
+msgid "Updating TV show..."
 msgstr ""
 
 msgctxt "#60038"
-msgid "An error has occurred on alfa"
+msgid "An error has ocurred on Alfa"
 msgstr ""
 
 msgctxt "#60039"
@@ -662,27 +663,27 @@ msgid "Delete movie"
 msgstr ""
 
 msgctxt "#60041"
-msgid "Delete tv series"
+msgid "Delete TV show"
 msgstr ""
 
 msgctxt "#60042"
-msgid "Delete only the links of %s"
+msgid "Delete only links from %s"
 msgstr ""
 
 msgctxt "#60043"
-msgid "Delete %s links of channel %s"
+msgid "Deleted %s links from channel %s"
 msgstr ""
 
 msgctxt "#60044"
-msgid "Do you want really to delete '%s' from videolibrary?"
+msgid "Do you really want to delete '%s' from you videolibrary?"
 msgstr ""
 
 msgctxt "#60045"
-msgid "Sync with Trakt started"
+msgid "Trakt sync started"
 msgstr ""
 
 msgctxt "#60046"
-msgid "TheMovieDB not present.\nInstall it now?"
+msgid "TheMovieDB\nTheMovieDB movie information provider was not found.\nWould you like to install it now?"
 msgstr ""
 
 msgctxt "#60047"
@@ -690,7 +691,7 @@ msgid "The Movie Database is not installed."
 msgstr ""
 
 msgctxt "#60048"
-msgid "The TVDB not present.\nInstall it now?"
+msgid "TheTVDB\nTheTVDB TV show information provider was not found.\nWould you like to install it now?"
 msgstr ""
 
 msgctxt "#60049"
@@ -698,7 +699,7 @@ msgid "The TVDB is not installed."
 msgstr ""
 
 msgctxt "#60050"
-msgid "TheMovieDB not present.\nInstall it now?"
+msgid "TheMovieDB is not present.\nInstall it now?"
 msgstr ""
 
 msgctxt "#60051"
@@ -706,19 +707,19 @@ msgid "The Movie Database is not installed."
 msgstr ""
 
 msgctxt "#60052"
-msgid "Error on setting LibraryPath in BD"
+msgid "Error while setting LibraryPath in DB"
 msgstr ""
 
 msgctxt "#60053"
-msgid "Do you want to configure this scraper in italian as default option for the movies ?"
+msgid "Do you want to configure this add-on as the default option for movies?"
 msgstr ""
 
 msgctxt "#60054"
-msgid "Do you want to configure this scraper in italian as default option for the tv series ?"
+msgid "Do you want to configure this add-on as the default option for TV shows?"
 msgstr ""
 
 msgctxt "#60055"
-msgid "Error of provider configuration in BD."
+msgid "Error configuring the information provider in the database."
 msgstr ""
 
 msgctxt "#60056"
@@ -730,15 +731,15 @@ msgid "Videolibrary %s configured"
 msgstr ""
 
 msgctxt "#60058"
-msgid "You need to restart Kodi for the changes to take effect."
+msgid "You must restart Kodi for the changes to take effect."
 msgstr ""
 
 msgctxt "#60059"
-msgid "Congratulations, Kodi's video library has been configured correctly."
+msgid "Congratulations! Kodi videolibrary has been set-up correctly."
 msgstr ""
 
 msgctxt "#60060"
-msgid "Alfa Auto-configuration"
+msgid "Alfa auto-configuration"
 msgstr ""
 
 msgctxt "#60062"
@@ -746,59 +747,59 @@ msgid "Adding movies to your video library..."
 msgstr ""
 
 msgctxt "#60063"
-msgid "Error in adding movies to your video library..."
+msgid "Error adding movies to your videolibrary..."
 msgstr ""
 
 msgctxt "#60064"
-msgid "Adding Episodes to the Video Library..."
+msgid "Adding episodes to videolibrary"
 msgstr ""
 
 msgctxt "#60065"
-msgid "Added Episode to Video Library..."
+msgid "Episode added"
 msgstr ""
 
 msgctxt "#60066"
-msgid "ERROR, It has NOT been possible to add the video to the video library"
+msgid "Error: The movie couldn't be added to videolibrary"
 msgstr ""
 
 msgctxt "#60067"
-msgid "ERROR, tv series has NOT been added to videolibrary\nIt has NOT been possible to add no episode"
+msgid "Error: The TV show couldn't be added to videolibrary\nCouldn't get any episode"
 msgstr ""
 
 msgctxt "#60068"
-msgid "ERROR, tv series has NOT been added to videolibrary"
+msgid "Error: The TV show couldn't be added to videolibrary"
 msgstr ""
 
 msgctxt "#60069"
-msgid "ERRORE, tv series has NOT been added completely to videolibrary"
+msgid "Error: The TV show wasn't fully added to videolibrary"
 msgstr ""
 
 msgctxt "#60070"
-msgid "tv series has been added to videolibrary"
+msgid "The TV show has been added to videolibrary"
 msgstr ""
 
 msgctxt "#60071"
-msgid "Autoplay Configuration"
+msgid "Set-up Autoplay"
 msgstr ""
 
 msgctxt "#60072"
-msgid "It seems that links of %s are not working."
+msgid "It looks like the links from %s aren't working."
 msgstr ""
 
 msgctxt "#60073"
-msgid "Do you want to ignore all the links from this server?"
+msgid "Do you want to ignore all links from this server?"
 msgstr ""
 
 msgctxt "#60074"
-msgid "It's not possible to use AutoPlay"
+msgid "It was not possible to use AutoPlay"
 msgstr ""
 
 msgctxt "#60075"
-msgid "No coincidence"
+msgid "No matches"
 msgstr ""
 
 msgctxt "#60076"
-msgid "New quality/server available in configuration"
+msgid "New server/quality available in settings"
 msgstr ""
 
 msgctxt "#60077"
@@ -810,11 +811,11 @@ msgid "View the log for more information."
 msgstr ""
 
 msgctxt "#60079"
-msgid "AutoPlay (Turns AutoPlay On/Off)"
+msgid "AutoPlay (enables/disables automatic play)"
 msgstr ""
 
 msgctxt "#60080"
-msgid "AutoPlay Language (Optional)"
+msgid "AutoPlay language (optional)"
 msgstr ""
 
 msgctxt "#60081"
@@ -830,15 +831,15 @@ msgid "      Preferred Qualities"
 msgstr ""
 
 msgctxt "#60084"
-msgid "Preferred Quality %s"
+msgid "Preferred quality %s"
 msgstr ""
 
 msgctxt "#60085"
-msgid "   Priority (Indicates the order for AutoPlay)"
+msgid "   Priority (indicates order for AutoPlay)"
 msgstr ""
 
 msgctxt "#60086"
-msgid "It has been renamed to:"
+msgid "Renamed to:"
 msgstr ""
 
 msgctxt "#60087"
@@ -846,39 +847,39 @@ msgid "Unexpected error on channel %s"
 msgstr ""
 
 msgctxt "#60088"
-msgid "Enter URL or Torrent"
+msgid "Enter an URL"
 msgstr ""
 
 msgctxt "#60089"
-msgid "Enter the URL [Link to server/download]"
+msgid "Enter an URL [server/download link]"
 msgstr ""
 
 msgctxt "#60090"
-msgid "Enter the URL [Direct link to video]."
+msgid "Enter an URL [video direct link]"
 msgstr ""
 
 msgctxt "#60091"
-msgid "Enter the URL [Search for links in a URL]"
+msgid "Enter an URL [search for links in a page]"
 msgstr ""
 
 msgctxt "#60092"
-msgid "View Direct URL"
+msgid "View direct link"
 msgstr ""
 
 msgctxt "#60093"
-msgid "There is no compatible video in this URL"
+msgid "There are no compatible videos in this URL"
 msgstr ""
 
 msgctxt "#60200"
-msgid "Download..."
+msgid "Downloading..."
 msgstr ""
 
 msgctxt "#60201"
-msgid "Download starting..."
+msgid "Starting download..."
 msgstr ""
 
 msgctxt "#60202"
-msgid "Remaining time: %s"
+msgid "Time left: %s"
 msgstr ""
 
 msgctxt "#60203"
@@ -898,11 +899,11 @@ msgid "plugin"
 msgstr ""
 
 msgctxt "#60207"
-msgid "Download..."
+msgid "Downloading..."
 msgstr ""
 
 msgctxt "#60208"
-msgid "You can't download this video"
+msgid "This video can't be downloaded"
 msgstr ""
 
 msgctxt "#60209"
@@ -918,11 +919,11 @@ msgid "Missing %s"
 msgstr ""
 
 msgctxt "#60212"
-msgid "Check that rtmpdump is installed"
+msgid "Make sure that rtmp is installed"
 msgstr ""
 
 msgctxt "#60213"
-msgid "The RTMP download option is experimental"
+msgid "The RTMP downloads are still experimental"
 msgstr ""
 
 msgctxt "#60214"
@@ -938,7 +939,7 @@ msgid "addon"
 msgstr ""
 
 msgctxt "#60217"
-msgid "Download..."
+msgid "Downloading..."
 msgstr ""
 
 msgctxt "#60218"
@@ -946,15 +947,15 @@ msgid "%.2fMB/%.2fMB (%d%%) %.2f Kb/s %s missing "
 msgstr ""
 
 msgctxt "#60219"
-msgid "Copying the file"
+msgid "Copying file"
 msgstr ""
 
 msgctxt "#60220"
-msgid "Error while deleting the file"
+msgid "Error while deleting file"
 msgstr ""
 
 msgctxt "#60221"
-msgid "Error while deleting the directory"
+msgid "Error while deleting directory"
 msgstr ""
 
 msgctxt "#60222"
@@ -966,7 +967,7 @@ msgid "Enter another name"
 msgstr ""
 
 msgctxt "#60224"
-msgid "Complete information"
+msgid "Complete the information"
 msgstr ""
 
 msgctxt "#60225"
@@ -986,7 +987,7 @@ msgid "No information found for: %s"
 msgstr ""
 
 msgctxt "#60229"
-msgid "Enter the name of %s to search"
+msgid "Enter the name of the %s to search"
 msgstr ""
 
 msgctxt "#60230"
@@ -1030,7 +1031,7 @@ msgid "    Other ID"
 msgstr ""
 
 msgctxt "#60240"
-msgid "Images(urls):"
+msgid "Images (urls)"
 msgstr ""
 
 msgctxt "#60241"
@@ -1042,7 +1043,7 @@ msgid "    Thumbnail"
 msgstr ""
 
 msgctxt "#60243"
-msgid "Type of content"
+msgid "Content type"
 msgstr ""
 
 msgctxt "#60244"
@@ -1074,11 +1075,11 @@ msgid "Once done, click here!"
 msgstr ""
 
 msgctxt "#60251"
-msgid "Synchronize with Trakt. Do not close this window"
+msgid "Syncing with Trakt. Don't close this window"
 msgstr ""
 
 msgctxt "#60252"
-msgid "1. Enter the following URL: %s"
+msgid "1. Open the following URL: %s"
 msgstr ""
 
 msgctxt "#60253"
@@ -1102,7 +1103,7 @@ msgid "Error"
 msgstr ""
 
 msgctxt "#60258"
-msgid "Problem in the connection process"
+msgid "Error during linking process"
 msgstr ""
 
 msgctxt "#60259"
@@ -1110,7 +1111,7 @@ msgid "Account linked correctly"
 msgstr ""
 
 msgctxt "#60260"
-msgid "Problem in the connection process"
+msgid "Error during linking process"
 msgstr ""
 
 msgctxt "#60261"
@@ -1190,7 +1191,7 @@ msgid "Science fiction"
 msgstr ""
 
 msgctxt "#60282"
-msgid "Soap Opera"
+msgid "Soap opera"
 msgstr ""
 
 msgctxt "#60283"
@@ -1198,7 +1199,7 @@ msgid "Sport"
 msgstr ""
 
 msgctxt "#60284"
-msgid "Talk Show"
+msgid "Talk show"
 msgstr ""
 
 msgctxt "#60285"
@@ -1238,7 +1239,7 @@ msgid "Please wait..."
 msgstr ""
 
 msgctxt "#60294"
-msgid "Searching for TV Series Information"
+msgid "Searching TV show info"
 msgstr ""
 
 msgctxt "#60295"
@@ -1246,15 +1247,15 @@ msgid "Loading results..."
 msgstr ""
 
 msgctxt "#60296"
-msgid "Searching for TV Series Information"
+msgid "Searching TV show info"
 msgstr ""
 
 msgctxt "#60297"
-msgid "Find %s possible matches"
+msgid "Found %s possible matches"
 msgstr ""
 
 msgctxt "#60298"
-msgid "[%s]: Select the correct TV series"
+msgid "[%s]: Select the correct TV show"
 msgstr ""
 
 msgctxt "#60299"
@@ -1278,7 +1279,7 @@ msgid "The file already exists"
 msgstr ""
 
 msgctxt "#60304"
-msgid "The unzipped %s file already exists, or you want to overwrite it.?"
+msgid "The unzipped file %s already exists, do you want to overwrite it?"
 msgstr ""
 
 msgctxt "#60305"
@@ -1306,7 +1307,7 @@ msgid "Changes made in this section will not be saved."
 msgstr ""
 
 msgctxt "#60311"
-msgid "Download..."
+msgid "Downloading..."
 msgstr ""
 
 msgctxt "#60312"
@@ -1342,7 +1343,7 @@ msgid "Cancelled"
 msgstr ""
 
 msgctxt "#60320"
-msgid "Download in background cancelled"
+msgid "Background download cancelled"
 msgstr ""
 
 msgctxt "#60321"
@@ -1362,7 +1363,7 @@ msgid "You have %s seconds"
 msgstr ""
 
 msgctxt "#60325"
-msgid "Saved key"
+msgid "Key saved"
 msgstr ""
 
 msgctxt "#60326"
@@ -1370,7 +1371,7 @@ msgid "Restart Kodi to apply changes"
 msgstr ""
 
 msgctxt "#60327"
-msgid "Novelties"
+msgid "News"
 msgstr ""
 
 msgctxt "#60328"
@@ -1410,15 +1411,15 @@ msgid "Download in"
 msgstr ""
 
 msgctxt "#60337"
-msgid "alfa-MCT: No support adf.ly"
+msgid "alfa-MCT: adf.ly not supported"
 msgstr ""
 
 msgctxt "#60338"
-msgid "The script does not support URL reduction adf.ly."
+msgid "The script does not support adf.ly URL shortener"
 msgstr ""
 
 msgctxt "#60339"
-msgid "No supported servers found"
+msgid "No supported servers were found"
 msgstr ""
 
 msgctxt "#60342"
@@ -1426,15 +1427,15 @@ msgid "Download completed: "
 msgstr ""
 
 msgctxt "#60343"
-msgid "BMC-Kodi has closed the video."
+msgid "Kodi has closed the video."
 msgstr ""
 
 msgctxt "#60344"
-msgid "Continue with the session?"
+msgid "Continue with session?"
 msgstr ""
 
 msgctxt "#60345"
-msgid "alfa-MCT: List of videos"
+msgid "alfa-MCT: Videos list"
 msgstr ""
 
 msgctxt "#60346"
@@ -1450,7 +1451,7 @@ msgid "Information"
 msgstr ""
 
 msgctxt "#60349"
-msgid "Go to the Main Menu"
+msgid "Go to Main Menu"
 msgstr ""
 
 msgctxt "#60350"
@@ -1458,31 +1459,31 @@ msgid "[COLOR yellow]Search in other channels[/COLOR]"
 msgstr "[COLOR yellow]Search in other channels[/COLOR]"
 
 msgctxt "#60351"
-msgid "[COLOR 0xffccff00]Set as Homepage[/COLOR]"
+msgid "[COLOR 0xffccff00]Set as homepage[/COLOR]"
 msgstr ""
 
 msgctxt "#60352"
-msgid "Add TV Series to Videolibrary"
+msgid "Add TV show to videolibrary"
 msgstr ""
 
 msgctxt "#60353"
-msgid "Add Movie to Videolibrary"
+msgid "Add movie to videolibrary"
 msgstr ""
 
 msgctxt "#60354"
-msgid "Download Movie"
+msgid "Download movie"
 msgstr ""
 
 msgctxt "#60355"
-msgid "Download TV Series"
+msgid "Download TV show"
 msgstr ""
 
 msgctxt "#60356"
-msgid "Download Episode"
+msgid "Download episode"
 msgstr ""
 
 msgctxt "#60357"
-msgid "Download Season"
+msgid "Download season"
 msgstr ""
 
 msgctxt "#60358"
@@ -1490,7 +1491,7 @@ msgid "Open settings"
 msgstr ""
 
 msgctxt "#60359"
-msgid "Search Trailer"
+msgid "Search trailer"
 msgstr ""
 
 msgctxt "#60360"
@@ -1498,7 +1499,7 @@ msgid "[COLOR 0xffccff00]<Quick Menu>[/COLOR]"
 msgstr ""
 
 msgctxt "#60361"
-msgid "Super Favourites Menu"
+msgid "Super favourites menu"
 msgstr ""
 
 msgctxt "#60362"
@@ -1530,7 +1531,7 @@ msgid "Title:"
 msgstr ""
 
 msgctxt "#60378"
-msgid "Original Title:"
+msgid "Original title:"
 msgstr ""
 
 msgctxt "#60379"
@@ -1574,11 +1575,11 @@ msgid "Summary:"
 msgstr ""
 
 msgctxt "#60389"
-msgid "Videolibrary update...."
+msgid "Updating videolibrary...."
 msgstr ""
 
 msgctxt "#60390"
-msgid "AutoPlay Configuration"
+msgid "AutoPlay settings"
 msgstr ""
 
 msgctxt "#60391"
@@ -1586,7 +1587,7 @@ msgid "AutoPlay"
 msgstr ""
 
 msgctxt "#60392"
-msgid "\n\n\nTotal Reset of the addon %s.\n\n[COLOR red]Attention This function completely resets the addon.[/COLOR]"
+msgid "\n\n\nFull reset of the %s add-on.\n\n[COLOR red]Attention: This function completely resets the add-on.[/COLOR]"
 msgstr ""
 
 msgctxt "#60393"
@@ -1610,7 +1611,7 @@ msgid "Confirm"
 msgstr ""
 
 msgctxt "#60398"
-msgid " Settings Reset was successful!"
+msgid "Settings were resetted successfully!"
 msgstr ""
 
 msgctxt "#60399"
@@ -1634,7 +1635,7 @@ msgid "more than 2 Gb"
 msgstr ""
 
 msgctxt "#60404"
-msgid "Choose cache setting"
+msgid "Select cache settings"
 msgstr ""
 
 msgctxt "#60405"
@@ -1670,11 +1671,11 @@ msgid "Choose channels to include"
 msgstr ""
 
 msgctxt "#60413"
-msgid "[COLOR yellow]New Movie Search...[/COLOR]"
+msgid "[COLOR yellow]New movie search...[/COLOR]"
 msgstr ""
 
 msgctxt "#60414"
-msgid "[COLOR yellow]New search tv series...[/COLOR]"
+msgid "[COLOR yellow]New TV show search...[/COLOR]"
 msgstr ""
 
 msgctxt "#60415"
@@ -1690,7 +1691,7 @@ msgid "[COLOR red]Delete search history[/COLOR]"
 msgstr ""
 
 msgctxt "#60418"
-msgid "Choose channels to include in your search"
+msgid "Select channels to include in search"
 msgstr ""
 
 msgctxt "#60419"
@@ -1714,7 +1715,7 @@ msgid "Search"
 msgstr ""
 
 msgctxt "#60424"
-msgid "Searches key have been deleted correctly"
+msgid "Searches have been cleared correctly"
 msgstr ""
 
 msgctxt "#60425"
@@ -1726,7 +1727,7 @@ msgid "FILTER: Configure"
 msgstr ""
 
 msgctxt "#60427"
-msgid "FILTER: Adding '%s'"
+msgid "FILTER: Add '%s'"
 msgstr ""
 
 msgctxt "#60428"
@@ -1734,7 +1735,7 @@ msgid "FILTER: Delete '%s'"
 msgstr ""
 
 msgctxt "#60429"
-msgid "[COLOR %s]Filter configuration for TV series...[/COLOR]"
+msgid "[COLOR %s]TV shows filter settings...[/COLOR]"
 msgstr ""
 
 msgctxt "#60430"
@@ -1758,7 +1759,7 @@ msgid "Configure [COLOR %s][%s][/COLOR]%s"
 msgstr ""
 
 msgctxt "#60435"
-msgid "There are no filters, search for a TV series and click on the context menu 'FILTER: Configure'"
+msgid "No filters exist, search for a TV show and select 'FILTER: Configure' on the context menu"
 msgstr ""
 
 msgctxt "#60436"
@@ -1778,7 +1779,7 @@ msgid "Language"
 msgstr ""
 
 msgctxt "#60440"
-msgid "Permitted quality"
+msgid "Allowed quality"
 msgstr ""
 
 msgctxt "#60441"
@@ -1798,7 +1799,7 @@ msgid "FILTER DELETED"
 msgstr ""
 
 msgctxt "#60445"
-msgid "Error on saving on disk"
+msgid "Failed to save to disk"
 msgstr ""
 
 msgctxt "#60446"
@@ -1818,15 +1819,15 @@ msgid "    - Is it possible to enable/disable channels?"
 msgstr ""
 
 msgctxt "#60450"
-msgid "    - Is automatic synchronization with Trakt possible?"
+msgid "    - Is autosync with Trakt possible?"
 msgstr ""
 
 msgctxt "#60451"
-msgid "    - Is it possible to show all the results together in the global search?"
+msgid "    - Is it possible to show all results at once in the global search?"
 msgstr ""
 
 msgctxt "#60452"
-msgid "    - Links take too long to appear."
+msgid "    - Links take too long to show up."
 msgstr ""
 
 msgctxt "#60453"
@@ -1834,11 +1835,11 @@ msgid "    - The content search is not performed correctly."
 msgstr ""
 
 msgctxt "#60454"
-msgid "    - Some channels do not function properly."
+msgid "    - Some channel or channels don't work properly."
 msgstr ""
 
 msgctxt "#60455"
-msgid "    - The library does not update correctly."
+msgid "    - The videolibrary does not update correctly."
 msgstr ""
 
 msgctxt "#60456"
@@ -1870,7 +1871,7 @@ msgid "You may not have written the library path correctly in 'Settings>Preferen
 msgstr ""
 
 msgctxt "#60463"
-msgid "The channel site may not work. In case the site works you can report the problem on github."
+msgid "Maybe the channel's website doesn't work.\nIf the website works, you might not be the first\nto have the issue and the channel might be already fixed.\nYou can take a look at 'https://alfa-addon.com' (in Spanish) or at the\nGitHub repository (github.com/alfa-addon/addon).\nIf you don't find a fix for the channel you can report a\nproblem in the forum."
 msgstr ""
 
 msgctxt "#60464"
@@ -1878,7 +1879,7 @@ msgid "It is possible that you have updated Alfa recently and that the changes h
 msgstr ""
 
 msgctxt "#60465"
-msgid "Do you want access to these settings?"
+msgid "Do you want to access now to these settings?"
 msgstr ""
 
 msgctxt "#60466"
@@ -3089,18 +3090,6 @@ msgctxt "#70093"
 msgid "The Movie Database"
 msgstr ""
 
-msgctxt "#90001"
-msgid "TMDb TVShows Database"
-msgstr ""
-
-msgctxt "#90002"
-msgid "TMDb TVShows Database not present.\nInstall it now?"
-msgstr ""
-
-msgctxt "#90003"
-msgid "TMDb TVShows Database is not installed."
-msgstr ""
-
 msgctxt "#70094"
 msgid "Select scraper for movies"
 msgstr ""
@@ -3378,19 +3367,19 @@ msgid "Press to 'Clear cache' saved"
 msgstr ""
 
 msgctxt "#70164"
-msgid "Free First"
+msgid "Free servers first"
 msgstr ""
 
 msgctxt "#70165"
-msgid "Premium First"
+msgid "Premium servers first"
 msgstr ""
 
 msgctxt "#70166"
-msgid "Debriders First"
+msgid "Debrider servers first"
 msgstr ""
 
 msgctxt "#70167"
-msgid "Titles Options"
+msgid "Title options"
 msgstr ""
 
 msgctxt "#70168"
@@ -3737,21 +3726,13 @@ msgctxt "#70254"
 msgid "Internal Client"
 msgstr ""
 
-msgctxt "#70281"
-msgid "Do you want to show these links?"
-msgstr ""
-
-msgctxt "#70282"
-msgid "Searching in %s"
-msgstr ""
-
 msgctxt "#70255"
 msgid "Internal client - MCT"
 msgstr ""
 
 msgctxt "#70256"
 msgid "What client do you want to use to play torrent?"
-msgstr "Quale client vuoi usare per riprodurre il torrent?
+msgstr "Quale client vuoi usare per riprodurre il torrent?"
 
 msgctxt "#70257"
 msgid "Settings -- Torrent"
@@ -3877,11 +3858,10 @@ msgctxt "#70291"
 msgid "Error, during conversion"
 msgstr ""
 
-# Servers ---- 
 msgctxt "#70292"
 msgid "[%s] File no longer exist on this server."
 msgstr ""
- 
+
 msgctxt "#70293"
 msgid "[%s] The file is processing or has been deleted."
 msgstr ""
@@ -3929,7 +3909,6 @@ msgstr ""
 msgctxt "#70304"
 msgid "[%s] This server requires updating python to version 2.7.9 or higher."
 msgstr ""
-# ============
 
 msgctxt "#70305"
 msgid "Search in channels"
@@ -4036,7 +4015,7 @@ msgid "Error in the user and/or password. Check your credentials"
 msgstr ""
 
 msgctxt "#70331"
-msgid "Error during login. Check your credentials
+msgid "Error during login. Check your credentials"
 msgstr ""
 
 msgctxt "#70332"
@@ -4096,7 +4075,7 @@ msgid "[Trakt] Remove %s from your collection"
 msgstr ""
 
 msgctxt "#70346"
-msgid "[Trakt] Add %s to your collection
+msgid "[Trakt] Add %s to your collection"
 msgstr ""
 
 msgctxt "#70347"
@@ -4239,10 +4218,6 @@ msgctxt "#70381"
 msgid "Dropped"
 msgstr ""
 
-msgctxt "#70381"
-msgid "Myanimelist username and/or password blank"
-msgstr ""
-
 msgctxt "#70382"
 msgid "Currently watching"
 msgstr ""
@@ -4285,6 +4260,10 @@ msgstr ""
 
 msgctxt "#70392"
 msgid "Rate with a [COLOR %s]%s[/ COLOR]"
+msgstr ""
+
+msgctxt "#70393"
+msgid "MyAnimeList blank username and/or password"
 msgstr ""
 
 msgctxt "#70394"
@@ -4945,10 +4924,10 @@ msgstr ""
 
 msgctxt "#70560"
 msgid "Movies by Genre"
-msgstr "
+msgstr ""
 
 msgctxt "#70561"
-msgid "Search Similar
+msgid "Search Similar"
 msgstr ""
 
 msgctxt "#70562"
@@ -5080,7 +5059,7 @@ msgid "Download from channel"
 msgstr ""
 
 msgctxt "#70764"
-msgid "  - Enable experimental download system"
+msgid "  - Enable alternative download system"
 msgstr ""
 
 msgctxt "#80001"
@@ -5120,7 +5099,7 @@ msgid "Configure"
 msgstr ""
 
 msgctxt "#80610"
-msgid "Alfa Assistant Options"
+msgid "Alfa Assistant"
 msgstr ""
 
 msgctxt "#80611"
@@ -5132,7 +5111,7 @@ msgid "Manual IP"
 msgstr ""
 
 msgctxt "#80613"
-msgid "Would you like to automatically install the app if necesary?"
+msgid "Install app automatically (if necessary)"
 msgstr ""
 
 msgctxt "#80614"
@@ -5144,7 +5123,7 @@ msgid "URL for manual installation: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]
 msgstr ""
 
 msgctxt "#80616"
-msgid "Device root status:"
+msgid "Device with root access"
 msgstr ""
 
 msgctxt "#80740"
@@ -5156,11 +5135,11 @@ msgid "Conection timeout"
 msgstr ""
 
 msgctxt "#80750"
-msgid "Alfa Quick Fixes Management"
+msgid "Quickfixes:"
 msgstr ""
 
 msgctxt "#80751"
-msgid "Time between checks for Quick Fixes (in hours)"
+msgid "Time between checks for quickfixes (in hours)"
 msgstr ""
 
 msgctxt "#80752"
@@ -5168,7 +5147,7 @@ msgid "Show update notifications"
 msgstr ""
 
 msgctxt "#80760"
-msgid "My Links"
+msgid "My links"
 msgstr ""
 
 msgctxt "#80761"
@@ -5176,7 +5155,7 @@ msgid "Active List"
 msgstr ""
 
 msgctxt "#80770"
-msgid "Updates for Alfa related addons"
+msgid "Updates for other add-ons:"
 msgstr ""
 
 msgctxt "#80771"
@@ -5188,7 +5167,7 @@ msgid "Alternative method for accessing webs"
 msgstr ""
 
 msgctxt "#80781"
-msgid "Enable for Forced mode, disable for On-Demand mode"
+msgid "Enable forced mode (if disabled, on-demand mode is used)"
 msgstr ""
 
 msgctxt "#80782"
@@ -5196,7 +5175,7 @@ msgid "Ageing period for non-resolved domains"
 msgstr ""
 
 msgctxt "#80783"
-msgid "Deleted all %s links"
+msgid "Deleted all links from %s"
 msgstr ""
 
 msgctxt "#80784"
@@ -5204,11 +5183,11 @@ msgid "Search in MyAnimeList"
 msgstr ""
 
 msgctxt "#80785"
-msgid "Caching variables"
+msgid "Variable caching"
 msgstr ""
 
 msgctxt "#80786"
-msgid "Would you like Alfa to cache the most used variables in memory?"
+msgid "Cache the most used variables in memory"
 msgstr ""
 
 msgctxt "#80787"
@@ -5224,5 +5203,22 @@ msgid "External VPN"
 msgstr ""
 
 msgctxt "#80790"
-msgid "Are you using an external VPN?"
+msgid "I'm using an external VPN"
 msgstr ""
+
+msgctxt "#80791"
+msgid "Renumerate"
+msgstr ""
+
+msgctxt "#90001"
+msgid "TMDb TVShows Database"
+msgstr ""
+
+msgctxt "#90002"
+msgid "TMDb TVShows Database not present.\nInstall it now?"
+msgstr ""
+
+msgctxt "#90003"
+msgid "TMDb TVShows Database is not installed."
+msgstr ""
+

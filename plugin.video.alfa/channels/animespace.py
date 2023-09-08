@@ -215,7 +215,7 @@ def episodios(item):
     for episode in episodes:
         lang = 'VOSE'
         if item.contentSerieName:
-            season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, int(episode))
+            season, episode = renumbertools.numbered_for_trakt(item.channel, item.contentSerieName, 1, int(episode))
             title = "%sx%s - %s" % (season, str(episode).zfill(2),item.contentSerieName)
             infoLabels['season'] = season
             infoLabels['episode'] = episode

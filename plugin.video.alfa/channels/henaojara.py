@@ -13,6 +13,8 @@ from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
+from modules import renumbertools
+
 IDIOMAS = AlfaChannelHelper.IDIOMAS_ANIME
 list_language = list(set(IDIOMAS.values()))
 list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
@@ -108,6 +110,8 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True)))
+
+    itemlist = renumbertools.show_option(item.channel, itemlist)
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
@@ -213,6 +217,9 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if elem.find("div", class_=["Description"]): 
                 elem_json['plot'] = elem.find("div", class_=["Description"]).p.get_text(strip=True)
 
+            elem_json['context'] = renumbertools.context(item)
+            elem_json['context'].extend(autoplay.context)
+
         except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -274,9 +281,11 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['url'] = info.a.get("href", "")
             if not re.search(r'%sx\d+\/$' % str(item.contentSeason), elem_json['url']): continue
             elem_json['title'] = info.a.get_text(strip=True)
-            elem_json['episode'] = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
-            elem_json['season'] = titleSeason
-            
+            episode = int(elem.find("span", class_="Num").get_text(strip=True) or 1)
+
+            elem_json['season'], elem_json['episode'] = renumbertools.numbered_for_trakt(item.channel, 
+                                                        item.contentSerieName, titleSeason, episode)
+
             nextChapterDateRegex = r'(?i)\s*-\s*Proximo\s*Capitulo\:?\s*(\d+-[A-Za-z]+-\d+)'
             if re.search(nextChapterDateRegex, elem_json['title']):
                 nextChapterDate = scrapertools.find_single_match(elem_json['title'], nextChapterDateRegex)
