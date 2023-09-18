@@ -67,7 +67,7 @@ def context(item):
 
 def show_option(channel, itemlist):
     if access():
-        itemlist.append(Item(module=__module__, title="[COLOR yellow]Configurar renumeración en series...[/COLOR]",
+        itemlist.append(Item(module=__module__, title="[COLOR yellow]{}[/COLOR]".format(config.get_localized_string(70765)),
                              action="load", channel=channel, thumbnail=get_thumb("setting_0.png")))
 
     return itemlist
@@ -104,8 +104,7 @@ def mainlist(channel):
 
     if len(itemlist) == 0:
         itemlist.append(Item(channel=channel, action="mainlist",
-                             title="No se han encontrado series, busca una serie y pulsa en menú contextual "
-                                   "'RENUMERAR'"))
+                             title=config.get_localized_string(70766)))
 
     return itemlist
 
@@ -190,9 +189,8 @@ def numbered_for_trakt(channel, show, season, episode):
 
 def borrar(channel, show):
     logger.info()
-    heading = "¿Está seguro que desea eliminar renumeración?"
-    line1 = "Pulse 'Si' para eliminar la renumeración de [COLOR blue]%s[/COLOR], pulse 'No' o cierre la ventana " \
-            "para no hacer nada." % show.strip()
+    heading = config.get_localized_string(70767)
+    line1 = config.get_localized_string(70768).format(show.strip())
 
     if platformtools.dialog_yesno(heading, line1) == 1:
         dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
@@ -211,7 +209,7 @@ def borrar(channel, show):
 
 def add_season(data=None):
     logger.debug("data %s" % data)
-    heading = "Introduzca el número de la temporada"
+    heading = config.get_localized_string(70769)
     # default = 2
     # se reordena la lista
     list_season_episode = data
@@ -226,12 +224,12 @@ def add_season(data=None):
     season = platformtools.dialog_numeric(0, heading)  # , str(default))
     for element in list_season_episode:
         if int(season) == element[0]:
-            platformtools.dialog_notification("No se añade la temporada", "Ya existe, edíte la existente")
+            platformtools.dialog_notification(config.get_localized_string(70770), config.get_localized_string(70771))
             return
 
     # si hemos insertado un valor en la temporada
     if season != "" and int(season) >= 0:
-        heading = "Introduzca el número de episodio desde que empieza la temporada"
+        heading = config.get_localized_string(70772)
         # default = 0
         # if list_season_episode:
         #     for e in list_season_episode:
@@ -298,11 +296,11 @@ def write_data(channel, show, data):
 
     if result:
         if data:
-            message = "FILTRO GUARDADO"
+            message = config.get_localized_string(60446)
         else:
-            message = "FILTRO BORRADO"
+            message = config.get_localized_string(60444)
     else:
-        message = "Error al guardar en disco"
+        message = config.get_localized_string(60445)
 
     heading = show.strip()
     platformtools.dialog_notification(heading, message)
@@ -507,7 +505,8 @@ if xbmcgui:
                     pos_x = self.controls_bg.getX() + 15
                     label_season_w = 100
                     label_season = xbmcgui.ControlLabel(pos_x, pos_y + 3, label_season_w, 34,
-                                                        "Temporada:", font=self.font, textColor="0xFF2E64FE")
+                                                        config.get_localized_string(60385),
+                                                        font=self.font, textColor="0xFF2E64FE")
                     self.addControl(label_season)
                     label_season.setVisible(False)
 
@@ -539,7 +538,8 @@ if xbmcgui:
 
                     label_episode_w = 90
                     pos_x += edit_season.getWidth() + 60
-                    label_episode = xbmcgui.ControlLabel(pos_x, pos_y + 3, label_episode_w, 34, "Episodios:",
+                    label_episode = xbmcgui.ControlLabel(pos_x, pos_y + 3, label_episode_w, 34, 
+                                                         "{}:".format(config.get_localized_string(70362)),
                                                          font=self.font, textColor="0xFF2E64FE")
                     self.addControl(label_episode)
                     label_episode.setVisible(False)
@@ -562,7 +562,7 @@ if xbmcgui:
                     btn_delete_season_w = 120
                     btn_delete_season = xbmcgui.ControlButton(self.controls_bg.getX() + self.controls_bg.getWidth() -
                                                               btn_delete_season_w - 14, pos_y, btn_delete_season_w, 30,
-                                                              'Eliminar', font=self.font,
+                                                              config.get_localized_string(60437), font=self.font,
                                                               focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                                         'KeyboardKey.png'),
                                                               noFocusTexture=os.path.join(self.mediapath, 'Controls',
@@ -621,6 +621,9 @@ if xbmcgui:
                     else:
                         data = get_data(self.channel, self.show)
                 else:
+                    for x, grupo in enumerate(self.controls):
+                        self.data[x][0] = int(self.controls[x].edit_season.getText())
+                        self.data[x][1] = int(self.controls[x].edit_episode.getText())
                     # logger.debug("data que enviamos: {}".format(self.data))
                     data = add_season(self.data)
                 
@@ -916,24 +919,25 @@ if xbmcgui:
 
         @staticmethod
         def method_info():
-            title = "Información"
-            text = "La primera temporada que se añade siempre empieza en \"0\" episodios, la segunda temporada que se "
-            text += "añade empieza en el número total de episodios de la primera temporada, la tercera temporada será "
-            text += "la suma de los episodios de las temporadas previas y así sucesivamente.\n"
-            text += "[COLOR blue]\nEjemplo de serie divida en varias temporadas:\n"
-            text += "\nFairy Tail:\n"
-            text += "  - SEASON 1: EPISODE 48 --> [season 1, episode: 0]\n"
-            text += "  - SEASON 2: EPISODE 48 --> [season 2, episode: 48]\n"
-            text += "  - SEASON 3: EPISODE 54 --> [season 3, episode: 96 ([48=season2] + [48=season1])]\n"
-            text += "  - SEASON 4: EPISODE 175 --> [season 4: episode: 150 ([54=season3] + [48=season2] + [48=season1" \
-                    "])][/COLOR]\n"
-            text += "[COLOR green]\nEjemplo de serie que continua en la temporada de la original:\n"
-            text += "\nFate/Zero 2nd Season:\n"
-            text += "  - SEASON 1: EPISODE 12 --> [season 1, episode: 13][/COLOR]\n"
-
-            text += "[COLOR blue]\nEjemplo de serie que es la segunda temporada de la original:\n"
-            text += "\nFate/kaleid liner Prisma☆Illya 2wei!:\n"
-            text += "  - SEASON 1: EPISODE 12 --> [season 2, episode: 0][/COLOR]\n"
+            title = config.get_localized_string(30104)
+            # t = string de temporada, e = string de episodios
+            t , e = [config.get_localized_string(60385), config.get_localized_string(70362)]
+            text = config.get_localized_string(70773)
+            text += ":\n[COLOR blue]\n"
+            text += config.get_localized_string(70774)
+            text += ":\n\nFairy Tail:\n"
+            text += "  - {} 1, {}: 48 --> [{} 1, {}: 0]\n".format(t, e, t, e)
+            text += "  - {} 2, {}: 48 --> [{} 2, {}: 48]\n".format(t, e, t, e)
+            text += "  - {} 3, {}: 54 --> [{} 3, {}: 96 ([48={}2] + [48={}1])]\n".format(t, e, t, e, t, t)
+            text += "  - {} 4, {}: 175 --> [{} 4, {}: 150 ([54={}3] + [48={}2] + [48={}1])]".format(t, e, t, e, t, t, t)
+            text += "[/COLOR]\n[COLOR green]\n"
+            text += config.get_localized_string(70775)
+            text += ":\n\nFate/Zero 2nd Season:\n"
+            text += "  - {} 1, {}: 12 --> [{} 1, {}: 13][/COLOR]\n".format(t, e, t, e)
+            text += "[COLOR blue]\n"
+            text += config.get_localized_string(70776)
+            text += "\n\nFate/kaleid liner Prisma☆Illya 2wei!:\n"
+            text += "  - {} 1, {}: 12 --> [{} 2, {}: 0][/COLOR]\n".format(t, e, t, e)
 
             return TextBox("DialogTextViewer.xml", os.getcwd(), "Default", title=title, text=text)
 

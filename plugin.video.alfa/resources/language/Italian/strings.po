@@ -1,12 +1,12 @@
-"# Kodi Media Center language file
+# Kodi Media Center language file
 # Addon Name: Alfa
 # Addon id: plugin.video.alfa
 # Addon Provider: Alfa Deveolpment Group
 msgid ""
 msgstr ""
-Project-Id-Version: Alfa add-on\n"
+"Project-Id-Version: Alfa add-on\n"
 "POT-Creation-Date: 2018-03-26 03:02+0200\n"
-"PO-Revision-Date: 2023-09-07 15:52-0600\n"
+"PO-Revision-Date: 2023-09-10 23:43-0600\n"
 "Language-Team: Alfa Development Group\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -23,8 +23,8 @@ msgid "Alfa"
 msgstr "Alfa"
 
 msgctxt "#30001"
-msgid "Check for updates:"
-msgstr "Verifica aggiornamenti:"
+msgid "Updates"
+msgstr "Aggiornamenti"
 
 msgctxt "#30002"
 msgid "Enable adult mode:"
@@ -143,8 +143,8 @@ msgid "Favorites"
 msgstr "Preferiti"
 
 msgctxt "#30103"
-msgid "Global search"
-msgstr "Ricerca globale"
+msgid "Search"
+msgstr "Ricerca"
 
 msgctxt "#30104"
 msgid "Help"
@@ -412,7 +412,7 @@ msgstr "Sottotitolati"
 
 msgctxt "#59976"
 msgid "Latin"
-msgstr "Sudamericano"
+msgstr "Latino"
 
 msgctxt "#59977"
 msgid "4k"
@@ -1583,8 +1583,8 @@ msgid "AutoPlay settings"
 msgstr "Configurazione AutoPlay"
 
 msgctxt "#60391"
-msgid "AutoPlay"
-msgstr "AutoPlay"
+msgid "Autoplay"
+msgstr "Riproduzione automatica"
 
 msgctxt "#60392"
 msgid "\n\n\nFull reset of the %s add-on.\n\n[COLOR red]Attention: This function completely resets the add-on.[/COLOR]"
@@ -2411,8 +2411,8 @@ msgid "At the start of Kodi and once a day"
 msgstr "All'avvio di Kodi e una volta al giorno"
 
 msgctxt "#60606"
-msgid "    Wait before updating at startup of Kodi"
-msgstr "   Attendere prima di aggiornare all'avvio di Kodi"
+msgid "At Kodi startup, wait before updating"
+msgstr "Quando avvii Kodi, attendi prima dell'aggiornamento"
 
 msgctxt "#60607"
 msgid "When Kodi starts"
@@ -2439,12 +2439,12 @@ msgid "60 sec"
 msgstr "60 sec"
 
 msgctxt "#60613"
-msgid "    Begin scheduled update from"
+msgid "Start scheduled update from"
 msgstr "Inizia aggiornamento programmato a partire dalle"
 
 msgctxt "#60614"
-msgid "    Search for new episodes in active tv series"
-msgstr "   Cerca nuovi episodi nelle serie attive"
+msgid "Search for new episodes in TV shows"
+msgstr "Cerca nuovi episodi in serie"
 
 msgctxt "#60615"
 msgid "Never"
@@ -2459,8 +2459,8 @@ msgid "According to new episodes"
 msgstr "Secondo le uscite"
 
 msgctxt "#60618"
-msgid "    Search for content in"
-msgstr "   Esegui ricerca dei contenuti in"
+msgid "Search content in"
+msgstr "Cerca contenuti in"
 
 msgctxt "#60619"
 msgid "The folder of each tv series"
@@ -2483,24 +2483,24 @@ msgid "Pop-up window"
 msgstr "Finestra pop-up"
 
 msgctxt "#60624"
-msgid "    Maximum number of links to display (recommended for slow devices)"
-msgstr "   Numero massimo di link da visualizzare (consigliato per dispositivi lenti)"
+msgid "Max links to display (recommended for slow devices)"
+msgstr "Massimo di link da visualizzare (consigliato per dispositivi lenti)"
 
 msgctxt "#60625"
 msgid "All"
 msgstr "Tutti"
 
 msgctxt "#60626"
-msgid "    Sort by whitelist"
-msgstr "   Ordina per whitelist"
+msgid "Sort by whitelist order"
+msgstr "Ordina in base all'ordine della lista bianca"
 
 msgctxt "#60627"
-msgid "    Remove the channel name at the beginning"
-msgstr "   Rimuovi il nome del canale all'inizio"
+msgid "Remove channel name at the beginning"
+msgstr "Rimuovi il nome del canale all'inizio"
 
 msgctxt "#60628"
-msgid "    Pop-up window: Replace \'View in\' with \'[V]\' and \'Download in\' with \'[D]\'"
-msgstr "    Finestra pop-up: Sostituisci \'Vedi in\' con \'[V]\' e \'Scarica in\' con \'[D]\'"
+msgid "Replace 'View in' with '[V]' and 'Download in' with '[D]'"
+msgstr "Sostituisci 'Vedi in' con '[V]' e 'Scarica in' con '[D]'"
 
 msgctxt "#60629"
 msgid "Database location"
@@ -2515,20 +2515,20 @@ msgid "Remote"
 msgstr "Remota"
 
 msgctxt "#60632"
-msgid "    Server Name"
-msgstr "    Nome Server"
+msgid "Server address"
+msgstr "Indirizzo del server"
 
 msgctxt "#60633"
-msgid "    Server port"
-msgstr "   Porta del server"
+msgid "Server port"
+msgstr "Porta del server"
 
 msgctxt "#60634"
 msgid "Automatically mark as watched"
 msgstr "Segna automaticamente come visto"
 
 msgctxt "#60635"
-msgid "    Video viewing time"
-msgstr "   Tempo di visione del video"
+msgid "Minimum video viewing time"
+msgstr "Tempo di visione del video"
 
 msgctxt "#60636"
 msgid "0 seg"
@@ -2539,20 +2539,20 @@ msgid "Synchronizing with Trakt"
 msgstr "Sincronizzazione con Trakt"
 
 msgctxt "#60638"
-msgid "    After mark as watched the episode"
-msgstr "   Dopo aver segnato come visto l'episodio"
+msgid "Sync after marking the episode as watched"
+msgstr "Sincronizzare dopo aver contrassegnato l'episodio come visto"
 
 msgctxt "#60639"
-msgid "        Show notification"
-msgstr "       Mostra notifica"
+msgid "Show notification"
+msgstr "Mostra notifica"
 
 msgctxt "#60640"
-msgid "    On adding a TV series to the video library"
-msgstr "   All'aggiunta di una serie alla videoteca"
+msgid "Sync on adding a TV show to the videolibrary"
+msgstr "Sincronizza quando aggiungi una serie alla videoteca"
 
 msgctxt "#60641"
-msgid "        Wait until the tv series is added"
-msgstr "        Attendere finchè la serie sia aggiunta"
+msgid "Wait until the TV show is added"
+msgstr "Attendi l'aggiunta della serie"
 
 msgctxt "#60642"
 msgid "Show option \"All Seasons\"."
@@ -2591,16 +2591,16 @@ msgid "When you add content, you get information from:"
 msgstr "All'aggiunta dei contenuti,ottieni informazioni da:"
 
 msgctxt "#60651"
-msgid "    Movies:"
-msgstr "    Film:"
+msgid "Movies info provider"
+msgstr "Fornitore di informazioni sui film"
 
 msgctxt "#60652"
-msgid "    TV Series:"
-msgstr "    Serie TV:"
+msgid "TV shows info provider"
+msgstr "Fornitore di informazioni sulla serie"
 
 msgctxt "#60653"
-msgid "        If there are no results also search in English"
-msgstr "       Se non ci sono risultati cerca anche in inglese"
+msgid "If there are no results search also in English"
+msgstr "Se non ci sono risultati cerca anche in inglese"
 
 msgctxt "#60654"
 msgid "Include in blacklist"
@@ -3075,16 +3075,16 @@ msgid "Show only links of %s"
 msgstr "Mostra solo link di %s"
 
 msgctxt "#70090"
-msgid "    Exclude all streams with specific words"
+msgid "Exclude all streams with these words"
 msgstr "Escludi streams con specifiche parole"
 
 msgctxt "#70091"
-msgid "    Words"
+msgid "Words"
 msgstr "Parole"
 
 msgctxt "#70092"
-msgid "Add to videolibrary"
-msgstr "Aggiungere alla videoteca"
+msgid "New content"
+msgstr "Nuovo contenuto"
 
 msgctxt "#70093"
 msgid "The Movie Database"
@@ -3219,8 +3219,8 @@ msgid "Movie|Tv Shows|Anime|Children|Documentary|Horror|Castellan|Latin|Torrent"
 msgstr "Fim|Serie TV|Anime|Bambini|Documentari|Horror|Castigliano|Latino|Torrent"
 
 msgctxt "#70126"
-msgid "Visual Options"
-msgstr "Opzioni Vista"
+msgid "Presentation"
+msgstr "Presentazione"
 
 msgctxt "#70128"
 msgid "Infoplus visual option"
@@ -3311,8 +3311,8 @@ msgid "Others"
 msgstr "Altro"
 
 msgctxt "#70150"
-msgid "Movie/series info in contextual menu"
-msgstr "Info film/serie nel menu contestuale"
+msgid "Extended info"
+msgstr "Informazioni estese"
 
 msgctxt "#70151"
 msgid "Show Infoplus option:"
@@ -3327,8 +3327,8 @@ msgid "Buttons/Access keys (Changes require Kodi restart)"
 msgstr "Pulsanti/Chiavi di accesso (le modifiche richiedono il riavvio di Kodi)"
 
 msgctxt "#70154"
-msgid "TheMovieDB (obtains data from movies or series)"
-msgstr "TheMovieDB (ottieni dati dei film o series)"
+msgid "Info discovery"
+msgstr "Recupero di informazioni"
 
 msgctxt "#70155"
 msgid "Simultaneous searches (may cause instability)"
@@ -3359,8 +3359,8 @@ msgid "every 30 days"
 msgstr "ogni 30 giorni"
 
 msgctxt "#70162"
-msgid "Renew cache?"
-msgstr "Rinnovare la cache?"
+msgid "Renew cache"
+msgstr "Rinnovare la cache"
 
 msgctxt "#70163"
 msgid "Press to 'Clear cache' saved"
@@ -3379,16 +3379,16 @@ msgid "Debrider servers first"
 msgstr "Prima i server Debrider"
 
 msgctxt "#70167"
-msgid "Title options"
-msgstr "Opzioni per i Titoli"
+msgid "Titles"
+msgstr "Titoli"
 
 msgctxt "#70168"
 msgid "General"
 msgstr "Generale"
 
 msgctxt "#70169"
-msgid "Servers use"
-msgstr "Uso dei servers"
+msgid "Servers resolution"
+msgstr "Risoluzione del server"
 
 msgctxt "#70170"
 msgid "No"
@@ -3631,52 +3631,52 @@ msgid "File location"
 msgstr "Posizione dei files"
 
 msgctxt "#70230"
-msgid "  - Add completed downloads to the video library "
-msgstr "  - Aggiungi download completi alla videoteca"
+msgid "Add completed downloads to videolibrary"
+msgstr "Aggiungi i download completati alla videoteca"
 
 msgctxt "#70231"
-msgid "  - Move the downloaded file to the video library"
-msgstr "  - Sposta i files scaricati nella videoteca"
+msgid "Move the downloaded file to videolibrary"
+msgstr "Sposta i files scaricati nella videoteca"
 
 msgctxt "#70232"
-msgid "  - View files downloaded from downloads"
-msgstr "  - Visualizzare i files scaricati da Downloads"
+msgid "Enable downloads browser"
+msgstr "Abilita il browser di download"
 
 msgctxt "#70233"
-msgid "  - Size per block"
-msgstr "  - Dimensione per blocco"
+msgid "Block size"
+msgstr "Dimensione di blocco"
 
 msgctxt "#70234"
-msgid "  - Size by part"
-msgstr "  - Dimensione per parte"
+msgid "Part size"
+msgstr "Dimensione della parte"
 
 msgctxt "#70235"
-msgid "  - Maximum number of simultaneous connections"
-msgstr "  - Numero massimo di connnessioni simultanee"
+msgid "Maximum number of simultaneous connections"
+msgstr "Numero massimo di connessioni simultanee"
 
 msgctxt "#70236"
-msgid "  - Maximum number of parts in memory"
-msgstr "  - Numero massimo di parti in memoria"
+msgid "Max number of parts in memory"
+msgstr "Numero massimo di parti in memoria"
 
 msgctxt "#70237"
 msgid "Choice of the server"
 msgstr "Scelta del server"
 
 msgctxt "#70238"
-msgid "- Order of servers"
-msgstr "  - Ordine dei servers"
+msgid "Servers order"
+msgstr "Ordine dei servers"
 
 msgctxt "#70240"
-msgid "  - Preferred quality"
-msgstr "  - Qualità preferita"
+msgid "Preferred quality"
+msgstr "Qualità preferita"
 
 msgctxt "#70241"
 msgid "The highest"
 msgstr "La più alta"
 
 msgctxt "#70242"
-msgid "  - Choose the fastest servers"
-msgstr "  - Scegli i servers più veloci"
+msgid "Choose the fastest servers"
+msgstr "Scegli i servers più veloci"
 
 msgctxt "#70243"
 msgid "Download"
@@ -3691,8 +3691,8 @@ msgid "Reorder"
 msgstr "Riordina"
 
 msgctxt "#70246"
-msgid "  - Preferred language"
-msgstr "  - Lingua preferita"
+msgid "Preferred language"
+msgstr "Lingua preferita"
 
 msgctxt "#70247"
 msgid "Home page"
@@ -4931,8 +4931,8 @@ msgid "Search Similar"
 msgstr "Cerca Simili"
 
 msgctxt "#70562"
-msgid "Autoplay (Enable autoplay in all channels)"
-msgstr "Autoplay (Abilita autoplay in tutti i canali)"
+msgid "Enable AutoPlay on all supported channels"
+msgstr "Abilita AutoPlay su tutti i canali supportati"
 
 msgctxt "#70570"
 msgid "Search with current selection"
@@ -4995,7 +4995,7 @@ msgid "Hide server selection"
 msgstr "Nascondi la selezione del server"
 
 msgctxt "#70748"
-msgid "Go to the next episode"
+msgid "Watch the next episode"
 msgstr "Riproduci il prossimo episodio"
 
 msgctxt "#70749"
@@ -5015,11 +5015,11 @@ msgid "Do nothing"
 msgstr "Fare niente"
 
 msgctxt "#70753"
-msgid "Playback"
-msgstr "Riproduci"
+msgid "Playback actions"
+msgstr "Azioni durante il gioco"
 
 msgctxt "#70754"
-msgid "Compact Mode"
+msgid "Compact mode"
 msgstr "Modalità compatta"
 
 msgctxt "#70755"
@@ -5059,8 +5059,244 @@ msgid "Download from channel"
 msgstr "Scarica dal canale"
 
 msgctxt "#70764"
-msgid "  - Enable alternative download system"
-msgstr "  - Attivare un sistema di download alternativo"
+msgid "Enable advanced download system"
+msgstr "Abilita il sistema di download avanzato"
+
+msgctxt "#70765"
+msgid "Configure episode renumbering..."
+msgstr "Configura la rinumerazione degli episodi..."
+
+msgctxt "#70766"
+msgid "No series have been found, search for series and press 'Renumber' in the context menu."
+msgstr "Se non è stata trovata la serie, cercare una serie e premere 'Renumerar' nel menu contestuale."
+
+msgctxt "#70767"
+msgid "Are you sure you want to remove the renumbering?"
+msgstr "Sei sicuro di voler rimuovere la rinumerazione?"
+
+msgctxt "#70768"
+msgid "Press 'Yes' to remove renumbering from [COLOR blue]{}[/COLOR], press 'No' or close the window to do nothing."
+msgstr "Premi \"Sì\" per rimuovere la rinumerazione da [COLOR blue]{}[/COLOR], premi \"No\" o chiudi la finestra per non fare nulla."
+
+msgctxt "#70769"
+msgid "Enter the season number"
+msgstr "Inserisci il numero della stagione"
+
+msgctxt "#70770"
+msgid "Season has not been added"
+msgstr "La stagione non viene aggiunta"
+
+msgctxt "#70771"
+msgid "It already exists, edit the existing one"
+msgstr "Esiste già, modifica quello esistente"
+
+msgctxt "#70772"
+msgid "Enter the episode number from which the season starts"
+msgstr "Inserisci il numero dell'episodio da cui inizia la stagione"
+
+msgctxt "#70773"
+msgid "The first season that is added always starts at \"0\" episodes, the second season that is added starts at the total number of episodes of the first season, the third season will be the sum of the episodes of the previous seasons and so on."
+msgstr "La prima stagione che viene aggiunta inizia sempre da \"0\" episodi, la seconda stagione che viene aggiunta inizia dal numero totale di episodi della prima stagione, la terza stagione sarà la somma degli episodi delle stagioni precedenti e così su."
+
+msgctxt "#70774"
+msgid "Example of a series divided into several seasons"
+msgstr "Esempio di una serie divisa in più stagioni"
+
+msgctxt "#70775"
+msgid "Example of the first season of the sequel of a series that continues at the next chapter number in which the last season of the original series ends"
+msgstr "Esempio della prima stagione del seguito di una serie che continua nel capitolo successivo, numero in cui termina l'ultima stagione della serie originale"
+
+msgctxt "#70776"
+msgid "Example of the first season of the sequel of a series that begins with the first episode of the second season, as if it were the second season of the original series"
+msgstr "Esempio della prima stagione del seguito di una serie che inizia con il primo episodio della seconda stagione, come se fosse la seconda stagione della serie originale"
+
+msgctxt "#70777"
+msgid "Add Season"
+msgstr "Aggiungi Stagione"
+
+msgctxt "#70778"
+msgid "Use TMDB"
+msgstr "Utilizza TMDB"
+
+msgctxt "#70779"
+msgid "Behaviour"
+msgstr "Comportamento"
+
+msgctxt "#70780"
+msgid "Customization"
+msgstr "Personalizzazione"
+
+msgctxt "#70781"
+msgid "Media info"
+msgstr "Informazioni sui media"
+
+msgctxt "#70782"
+msgid "Debugging and more"
+msgstr "Debug e altro"
+
+msgctxt "#70783"
+msgid "Network"
+msgstr "Griglia"
+
+msgctxt "#70784"
+msgid "High"
+msgstr "Alta"
+
+msgctxt "#70785"
+msgid "Medium"
+msgstr "Media"
+
+msgctxt "#70786"
+msgid "Low"
+msgstr "Bassa"
+
+msgctxt "#70787"
+msgid "Debugging"
+msgstr "Depurazione"
+
+msgctxt "#70788"
+msgid "Show fixes report"
+msgstr "Mostra il rapporto sulle correzioni"
+
+msgctxt "#70789"
+msgid "Max number of years to search for news"
+msgstr "Massimo di anni per cercare novità"
+
+msgctxt "#70790"
+msgid "1 year"
+msgstr "1 anno"
+
+msgctxt "#70791"
+msgid "2 years"
+msgstr "2 anni"
+
+msgctxt "#70792"
+msgid "3 years"
+msgstr "3 anni"
+
+msgctxt "#70793"
+msgid "4 years"
+msgstr "4 anni"
+
+msgctxt "#70794"
+msgid "5 years"
+msgstr "5 anni"
+
+msgctxt "#70795"
+msgid "Unlimited"
+msgstr "Illimitato"
+
+msgctxt "#70796"
+msgid "Max threads for threaded search"
+msgstr "Numero massimo di thread per la ricerca simultanea"
+
+msgctxt "#70797"
+msgid "Playback"
+msgstr "Riproduzione"
+
+msgctxt "#70798"
+msgid "2 min"
+msgstr "2 minuti"
+
+msgctxt "#70799"
+msgid "5 min"
+msgstr "5 minuti"
+
+msgctxt "#70800"
+msgid "10 min"
+msgstr "10 minuti"
+
+msgctxt "#70801"
+msgid "15 min"
+msgstr "15 minuti"
+
+msgctxt "#70802"
+msgid "Add only last season when adding a TV show"
+msgstr "Aggiungi solo l'ultima stagione quando aggiungi una serie"
+
+msgctxt "#70803"
+msgid "Back up the videolibrary at this address"
+msgstr "Eseguire il backup della libreria video a questo indirizzo"
+
+msgctxt "#70804"
+msgid "Scan videolibrary after backup"
+msgstr "Scansionare la videoteca dopo il backup"
+
+msgctxt "#70805"
+msgid "HD 1080"
+msgstr "HD 1080"
+
+msgctxt "#70806"
+msgid "HD 720"
+msgstr "HD 720"
+
+msgctxt "#70807"
+msgid "View torrent manager download routes"
+msgstr "Visualizza i percorsi di download del gestore torrent"
+
+msgctxt "#70808"
+msgid "Quality priority of .torrents to download"
+msgstr "Priorità di qualità dei .torrent da scaricare"
+
+msgctxt "#70809"
+msgid "Parameters"
+msgstr "Parametri"
+
+msgctxt "#70810"
+msgid "Installation"
+msgstr "Installazione"
+
+msgctxt "#70811"
+msgid "Cache"
+msgstr "Cache"
+
+msgctxt "#70812"
+msgid "Check and repair video view marks"
+msgstr "Controllare e riparare i segni di visualizzazione del video"
+
+msgctxt "#70813"
+msgid "Actions when playback ends"
+msgstr "Azioni al termine della riproduzione"
+
+msgctxt "#70814"
+msgid "Backup"
+msgstr "Backup"
+
+msgctxt "#70815"
+msgid "Update content"
+msgstr "Aggiorna contenuto"
+
+msgctxt "#70816"
+msgid "This"
+msgstr "Questo"
+
+msgctxt "#70817"
+msgid "Other"
+msgstr "Altro"
+
+msgctxt "#70818"
+msgid "Yes"
+msgstr "Sì"
+
+msgctxt "#70819"
+msgid "No"
+msgstr "No"
+
+msgctxt "#70820"
+msgid "Verify"
+msgstr "Verificare"
+
+msgctxt "#70821"
+msgid "Create directories with lowercase letters"
+msgstr "Crea directory con lettere minuscole"
+
+msgctxt "#70822"
+msgid "Search for new premieres and suggestions (show notification)"
+msgstr "Cerca nuove première e suggerimenti (mostra notifica)"
+
+msgctxt "#70823"
+msgid "Times to search for new premieres per day"
+msgstr "Volte in cui cercare nuove anteprime al giorno"
 
 msgctxt "#80001"
 msgid "Secondary language for AutoPlay"
@@ -5115,12 +5351,12 @@ msgid "Install app automatically (if necessary)"
 msgstr "Installa l'app automaticamente (se necessario)"
 
 msgctxt "#80614"
-msgid "[COLOR limegreen][B]Select here[/B][/COLOR] to install/update Alfa Assistant now"
-msgstr "[COLOR limegreen][B]Seleziona qui[/B][/COLOR] per installare/aggiornare Alfa Assistant adesso"
+msgid "Install/update Alfa Assistant now"
+msgstr "Installare/aggiornare Alfa Assistant adesso"
 
 msgctxt "#80615"
-msgid "URL for manual installation: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Select here[/COLOR] if you have a browser"
-msgstr "URL per l'installazione manuale: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Fare clic su[/COLOR] se si dispone di un browser"
+msgid "Manual installation: https://bit.ly/2Zwpfzq (clicking here opens a browser, if found)"
+msgstr "Installazione manuale: https://bit.ly/2Zwpfzq (cliccando qui si apre un browser, se presente)"
 
 msgctxt "#80616"
 msgid "Device with root access"
@@ -5159,16 +5395,16 @@ msgid "Updates for other add-ons:"
 msgstr "Aggiornamenti per altri componenti aggiuntivi"
 
 msgctxt "#80771"
-msgid "Update Quasar to avoid errors"
-msgstr "Vuoi aggiornare Quasar per evitare errori?"
+msgid "Update Quasar through Alfa"
+msgstr "Aggiorna Quasar tramite Alfa"
 
 msgctxt "#80780"
 msgid "Alternative method for accessing webs"
 msgstr "Metodo alternativo per accedere ai siti web:"
 
 msgctxt "#80781"
-msgid "Enable forced mode (if disabled, on-demand mode is used)"
-msgstr "Abilita la modalità forzata (disabilitato utilizza la modalità su richiesta)"
+msgid "Enable alternative access on all webs"
+msgstr "Abilita l'accesso alternativo su tutti i siti Web"
 
 msgctxt "#80782"
 msgid "Ageing period for non-resolved domains"
@@ -5203,8 +5439,8 @@ msgid "External VPN"
 msgstr "VPN esterna"
 
 msgctxt "#80790"
-msgid "I'm using an external VPN"
-msgstr "Sto utilizzando una VPN esterna"
+msgid "Consider use of an external VPN"
+msgstr "Considerare l'uso di una VPN esterna"
 
 msgctxt "#80791"
 msgid "Renumerate"

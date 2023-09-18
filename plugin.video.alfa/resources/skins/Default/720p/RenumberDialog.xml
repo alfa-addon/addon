@@ -4,24 +4,24 @@
 		<effect type="zoom" start="80" end="100" time="300" tween="back" center="auto"/>
 		<effect type="fade" start="0" end="100" time="300" tween="cubic"/>
 	</animation>
-    <allowoverlays>false</allowoverlays>
-    <controls>
+	<allowoverlays>false</allowoverlays>
+	<controls>
 		<!-- window_bg -->
-        <control type="image" id="3001">
-            <posx>320</posx>
-            <posy>130</posy>
-            <width>600</width>
-            <height>440</height>
-            <texture>Windows/DialogBack.png</texture>
-        </control>
+		<control type="image" id="3001">
+			<posx>320</posx>
+			<posy>130</posy>
+			<width>600</width>
+			<height>440</height>
+			<texture>Windows/DialogBack.png</texture>
+		</control>
 		<!-- header_bg -->
 		<control type="image" id="3002">
-            <posx>320</posx>
-            <posy>138</posy>
-            <width>600</width>
-            <height>35</height>
-            <texture>Windows/dialogheader.png</texture>
-        </control>
+			<posx>320</posx>
+			<posy>138</posy>
+			<width>600</width>
+			<height>35</height>
+			<texture>Windows/dialogheader.png</texture>
+		</control>
 		<!-- btn_close -->
 		<control type="button" id="3003">
 			<posx>843</posx>
@@ -45,38 +45,38 @@
 		</control>
 		<!-- controls_bg -->
 		<control type="image" id="3005">
-            <posx>340</posx>
-            <posy>179</posy>
-            <width>562</width>
-            <height>260</height>
-            <texture>Windows/BackControls.png</texture>
-        </control>
+			<posx>340</posx>
+			<posy>179</posy>
+			<width>562</width>
+			<height>260</height>
+			<texture>Windows/BackControls.png</texture>
+		</control>
 		<!-- scroll_bg -->
 		<control type="image" id="3006">
-            <posx>895</posx>
-            <posy>179</posy>
-            <width>10</width>
-            <height>260</height>
-            <texture>Controls/ScrollBack.png</texture>
-        </control>
+			<posx>895</posx>
+			<posy>179</posy>
+			<width>10</width>
+			<height>260</height>
+			<texture>Controls/ScrollBack.png</texture>
+		</control>
 		<!-- scroll2_bg -->
 		<control type="image" id="3007">
-            <posx>895</posx>
-            <posy>179</posy>
-            <width>10</width>
-            <height>260</height>
-            <texture>Controls/ScrollBar.png</texture>
-        </control>
+			<posx>895</posx>
+			<posy>179</posy>
+			<width>10</width>
+			<height>260</height>
+			<texture>Controls/ScrollBar.png</texture>
+		</control>
 		<!-- btn_add_season -->
 		<control type="button" id="3008">
 			<posx>340</posx>
 			<posy>453</posy>
 			<width>165</width>
 			<height>30</height>
-			<label>Añadir Temporada</label>
+			<label>$ADDON[plugin.video.alfa 70777]</label>
 			<font>font12</font>
 			<align>center</align>
-            <aligny>center</aligny>
+			<aligny>center</aligny>
 			<texturefocus>Controls/KeyboardKey.png</texturefocus>
 			<texturenofocus>Controls/KeyboardKeyNF.png</texturenofocus>
 		</control>
@@ -86,10 +86,10 @@
 			<posy>453</posy>
 			<width>120</width>
 			<height>30</height>
-			<label>Información</label>
+			<label>$ADDON[plugin.video.alfa 30104]</label>
 			<font>font12</font>
 			<align>center</align>
-            <aligny>center</aligny>
+			<aligny>center</aligny>
 			<texturefocus>Controls/KeyboardKey.png</texturefocus>
 			<texturenofocus>Controls/KeyboardKeyNF.png</texturenofocus>
 		</control>
@@ -99,7 +99,7 @@
 			<posy>450</posy>
 			<width>235</width>
 			<height>34</height>
-			<label>Usar TMDB</label>
+			<label>$ADDON[plugin.video.alfa 70778]</label>
 			<font>font10</font>
 			<type>radiobutton</type>
 			<texturefocus>Controls/MenuItemFO.png</texturefocus>
@@ -112,23 +112,23 @@
 			<aligny>center</aligny>
 		</control>
 		<!-- hb_bg -->
-        <control type="image" id="3011">
-            <posx>340</posx>
-            <posy>496</posy>
-            <width>560</width>
-            <height>2</height>
-            <texture>Controls/ScrollBack.png</texture>
-        </control>
+		<control type="image" id="3011">
+			<posx>340</posx>
+			<posy>496</posy>
+			<width>560</width>
+			<height>2</height>
+			<texture>Controls/ScrollBack.png</texture>
+		</control>
 		<!-- btn_ok -->
 		<control type="button" id="3012">
 			<posx>388</posx>
 			<posy>511</posy>
 			<width>120</width>
 			<height>30</height>
-			<label>OK</label>
+			<label>$ADDON[plugin.video.alfa 70001]</label>
 			<font>font12</font>
 			<align>center</align>
-            <aligny>center</aligny>
+			<aligny>center</aligny>
 			<texturefocus>Controls/KeyboardKey.png</texturefocus>
 			<texturenofocus>Controls/KeyboardKeyNF.png</texturenofocus>
 		</control>
@@ -138,10 +138,10 @@
 			<posy>511</posy>
 			<width>120</width>
 			<height>30</height>
-			<label>Cancelar</label>
+			<label>$ADDON[plugin.video.alfa 70002]</label>
 			<font>font12</font>
 			<align>center</align>
-            <aligny>center</aligny>
+			<aligny>center</aligny>
 			<texturefocus>Controls/KeyboardKey.png</texturefocus>
 			<texturenofocus>Controls/KeyboardKeyNF.png</texturenofocus>
 		</control>
@@ -151,16 +151,16 @@
 			<posy>511</posy>
 			<width>120</width>
 			<height>30</height>
-			<label>Borrar</label>
+			<label>$ADDON[plugin.video.alfa 60437]</label>
 			<font>font12</font>
 			<align>center</align>
-            <aligny>center</aligny>
+			<aligny>center</aligny>
 			<texturefocus>Controls/KeyboardKey.png</texturefocus>
 			<texturenofocus>Controls/KeyboardKeyNF.png</texturenofocus>
 		</control>
-    </controls>
+	</controls>
 	<animation type="WindowClose">
-        <effect type="fade" start="100" end="0" time="200" tween="linear" ease="in"/>
-        <effect type="zoom" start="100" end="90" time="200" tween="back" ease="in" center="auto"/>
-    </animation>
+		<effect type="fade" start="100" end="0" time="200" tween="linear" ease="in"/>
+		<effect type="zoom" start="100" end="90" time="200" tween="back" ease="in" center="auto"/>
+	</animation>
 </window>

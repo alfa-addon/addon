@@ -1,12 +1,12 @@
-"# Kodi Media Center language file
+# Kodi Media Center language file
 # Addon Name: Alfa
 # Addon id: plugin.video.alfa
 # Addon Provider: Alfa Deveolpment Group
 msgid ""
 msgstr ""
-Project-Id-Version: Alfa add-on\n"
+"Project-Id-Version: Alfa add-on\n"
 "POT-Creation-Date: 2018-03-26 03:02+0200\n"
-"PO-Revision-Date: 2023-09-07 15:52-0600\n"
+"PO-Revision-Date: 2023-09-10 23:43-0600\n"
 "Language-Team: Alfa Development Group\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -23,8 +23,8 @@ msgid "Alfa"
 msgstr "Alfa"
 
 msgctxt "#30001"
-msgid "Check for updates:"
-msgstr "Cercar actualitzacions\n:"
+msgid "Updates"
+msgstr "Actualitzacions"
 
 msgctxt "#30002"
 msgid "Enable adult mode:"
@@ -143,7 +143,7 @@ msgid "Favorites"
 msgstr "Preferits"
 
 msgctxt "#30103"
-msgid "Global search"
+msgid "Search"
 msgstr "Cerca"
 
 msgctxt "#30104"
@@ -1583,8 +1583,8 @@ msgid "AutoPlay settings"
 msgstr "Configurar AutoPlay"
 
 msgctxt "#60391"
-msgid "AutoPlay"
-msgstr "AutoPlay"
+msgid "Autoplay"
+msgstr "Reproducció automàtica"
 
 msgctxt "#60392"
 msgid "\n\n\nFull reset of the %s add-on.\n\n[COLOR red]Attention: This function completely resets the add-on.[/COLOR]"
@@ -2411,8 +2411,8 @@ msgid "At the start of Kodi and once a day"
 msgstr "Al iniciar Kodi i al menys un cop al día"
 
 msgctxt "#60606"
-msgid "    Wait before updating at startup of Kodi"
-msgstr "S'està esperant l'actualització a l'inici de Kodi"
+msgid "At Kodi startup, wait before updating"
+msgstr "En iniciar Kodi, esperar abans dactualitzar"
 
 msgctxt "#60607"
 msgid "When Kodi starts"
@@ -2439,12 +2439,12 @@ msgid "60 sec"
 msgstr "60 seg"
 
 msgctxt "#60613"
-msgid "    Begin scheduled update from"
-msgstr "    Iniciar actualització programada a partir de les"
+msgid "Start scheduled update from"
+msgstr "Iniciar actualització programada des de les"
 
 msgctxt "#60614"
-msgid "    Search for new episodes in active tv series"
-msgstr "Cerqueu nous episodis en sèries de televisió actives"
+msgid "Search for new episodes in TV shows"
+msgstr "Buscar nous episodis en sèries"
 
 msgctxt "#60615"
 msgid "Never"
@@ -2459,8 +2459,8 @@ msgid "According to new episodes"
 msgstr "Segons la emissió"
 
 msgctxt "#60618"
-msgid "    Search for content in"
-msgstr "    Realitzar cerca de contingut a"
+msgid "Search content in"
+msgstr "Buscar contingut a"
 
 msgctxt "#60619"
 msgid "The folder of each tv series"
@@ -2483,24 +2483,24 @@ msgid "Pop-up window"
 msgstr "Finestra emergent"
 
 msgctxt "#60624"
-msgid "    Maximum number of links to display (recommended for slow devices)"
-msgstr "Nombre màxim d'enllaços a mostrar (recomanat per a dispositius lents)"
+msgid "Max links to display (recommended for slow devices)"
+msgstr "Màxim d'enllaços a mostrar (recomanat per a dispositius lents)"
 
 msgctxt "#60625"
 msgid "All"
 msgstr "Tots"
 
 msgctxt "#60626"
-msgid "    Sort by whitelist"
+msgid "Sort by whitelist order"
 msgstr "Ordenar per llista blanca"
 
 msgctxt "#60627"
-msgid "    Remove the channel name at the beginning"
+msgid "Remove channel name at the beginning"
 msgstr "Traieu el nom del canal al principi"
 
 msgctxt "#60628"
-msgid "    Pop-up window: Replace 'View in' with '[V]' and 'Download in' with '[D]'"
-msgstr "Finestra emergent: reemplaça \"Visualitza\" amb \"[V]\" i \"Descarrega\" amb \"[D]\"."
+msgid "Replace 'View in' with '[V]' and 'Download in' with '[D]'"
+msgstr "Reemplaça 'Visualitza' amb '[V]' i 'Descarrega' amb '[D]'"
 
 msgctxt "#60629"
 msgid "Database location"
@@ -2515,19 +2515,19 @@ msgid "Remote"
 msgstr "Remota"
 
 msgctxt "#60632"
-msgid "    Server Name"
-msgstr "    Nom Servidor"
+msgid "Server address"
+msgstr "Adreça del servidor"
 
 msgctxt "#60633"
-msgid "    Server port"
-msgstr "    Port Servidor"
+msgid "Server port"
+msgstr "Port del servidor"
 
 msgctxt "#60634"
 msgid "Automatically mark as watched"
 msgstr "Marca automàticament com es veu"
 
 msgctxt "#60635"
-msgid "    Video viewing time"
+msgid "Minimum video viewing time"
 msgstr "Temps de visualització del vídeo"
 
 msgctxt "#60636"
@@ -2539,20 +2539,20 @@ msgid "Synchronizing with Trakt"
 msgstr "Sincronització amb Trakt"
 
 msgctxt "#60638"
-msgid "    After mark as watched the episode"
-msgstr "Subcontractació que va veure l'episodi"
+msgid "Sync after marking the episode as watched"
+msgstr "Sincronitzar després de marcar l'episodi com a vist"
 
 msgctxt "#60639"
-msgid "        Show notification"
-msgstr "        Mostrar notificació"
+msgid "Show notification"
+msgstr "Mostrar notificació"
 
 msgctxt "#60640"
-msgid "    On adding a TV series to the video library"
-msgstr "En afegir una sèrie de televisió a la biblioteca de vídeo"
+msgid "Sync on adding a TV show to the videolibrary"
+msgstr "Sincronitza quan afegiu una sèrie a la videoteca"
 
 msgctxt "#60641"
-msgid "        Wait until the tv series is added"
-msgstr "Espereu fins que s'afegeixi la sèrie de televisió"
+msgid "Wait until the TV show is added"
+msgstr "Esperar que s'afegeixi la sèrie"
 
 msgctxt "#60642"
 msgid "Show option \"All Seasons\"."
@@ -2591,15 +2591,15 @@ msgid "When you add content, you get information from:"
 msgstr "Quan afegiu contingut, obteniu informació de:"
 
 msgctxt "#60651"
-msgid "    Movies:"
-msgstr "    Pel·lícules:"
+msgid "Movies info provider"
+msgstr "Proveïdor d'informació de pel·lícules"
 
 msgctxt "#60652"
-msgid "    TV Series:"
-msgstr "    Sèries:"
+msgid "TV shows info provider"
+msgstr "Proveïdor d'informació de sèries"
 
 msgctxt "#60653"
-msgid "        If there are no results also search in English"
+msgid "If there are no results search also in English"
 msgstr "Si no hi ha resultats, cerqueu-lo en anglès"
 
 msgctxt "#60654"
@@ -3075,16 +3075,16 @@ msgid "Show only links of %s"
 msgstr "Mostra només els enllaços de% s"
 
 msgctxt "#70090"
-msgid "    Exclude all streams with specific words"
-msgstr "       Excloeu tots els fluxos amb paraules específiques"
+msgid "Exclude all streams with these words"
+msgstr "Escludi tutti i contenuti con questi paraules"
 
 msgctxt "#70091"
-msgid "    Words"
-msgstr "    Etiquetes"
+msgid "Words"
+msgstr "Paraules"
 
 msgctxt "#70092"
-msgid "Add to videolibrary"
-msgstr "Afegeix a la biblioteca de llibres"
+msgid "New content"
+msgstr "Nou contingut"
 
 msgctxt "#70093"
 msgid "The Movie Database"
@@ -3219,8 +3219,8 @@ msgid "Movie|Tv Shows|Anime|Children|Documentary|Horror|Castellan|Latin|Torrent"
 msgstr "Pel·lícula | Espectacles de TV | Anime | Infantil | Documental | Horror | Castellà | Llatí | Torrent"
 
 msgctxt "#70126"
-msgid "Visual Options"
-msgstr "Opcions visuals"
+msgid "Presentation"
+msgstr "Presentació"
 
 msgctxt "#70128"
 msgid "Infoplus visual option"
@@ -3311,8 +3311,8 @@ msgid "Others"
 msgstr "Altres"
 
 msgctxt "#70150"
-msgid "Movie/series info in contextual menu"
-msgstr "Informació de pel·lícules / sèries en el menú contextual"
+msgid "Extended info"
+msgstr "Informació estesa"
 
 msgctxt "#70151"
 msgid "Show Infoplus option:"
@@ -3327,8 +3327,8 @@ msgid "Buttons/Access keys (Changes require Kodi restart)"
 msgstr "Botons / tecles d'accés (els canvis requereixen reiniciar Kodi)"
 
 msgctxt "#70154"
-msgid "TheMovieDB (obtains data from movies or series)"
-msgstr "TheMovieDB (obté dades de pel·lícules o sèries)"
+msgid "Info discovery"
+msgstr "Recuperació d'informació"
 
 msgctxt "#70155"
 msgid "Simultaneous searches (may cause instability)"
@@ -3359,8 +3359,8 @@ msgid "every 30 days"
 msgstr "cada 30 dia"
 
 msgctxt "#70162"
-msgid "Renew cache?"
-msgstr "Voleu restaurar la memòria cau?"
+msgid "Renew cache"
+msgstr "Renovar memòria cau"
 
 msgctxt "#70163"
 msgid "Press to 'Clear cache' saved"
@@ -3379,16 +3379,16 @@ msgid "Debrider servers first"
 msgstr "Primer els servidors debrider"
 
 msgctxt "#70167"
-msgid "Title options"
-msgstr "Opcions per a Títols"
+msgid "Titles"
+msgstr "Títols"
 
 msgctxt "#70168"
 msgid "General"
 msgstr "General"
 
 msgctxt "#70169"
-msgid "Servers use"
-msgstr "Us de servidors"
+msgid "Servers resolution"
+msgstr "Resolució de servidors"
 
 msgctxt "#70170"
 msgid "No"
@@ -3631,52 +3631,52 @@ msgid "File location"
 msgstr "Ubicació del fitxer"
 
 msgctxt "#70230"
-msgid "  - Add completed downloads to the video library "
-msgstr "     - Afegir  descàrregues complertes a la videoteca."
+msgid "Add completed downloads to videolibrary"
+msgstr "Afegir descàrregues completades a la videoteca"
 
 msgctxt "#70231"
-msgid "  - Move the downloaded file to the video library"
-msgstr "    - Mou el fitxer descarregat a la biblioteca de vídeos"
+msgid "Move the downloaded file to videolibrary"
+msgstr "Mou el fitxer descarregat a la videoteca"
 
 msgctxt "#70232"
-msgid "  - View files downloaded from downloads"
-msgstr "       - Veure fitxers descarregats de les baixades"
+msgid "Enable downloads browser"
+msgstr "Habilitar explorador de descàrregues"
 
 msgctxt "#70233"
-msgid "  - Size per block"
-msgstr "         - Mida per bloc"
+msgid "Block size"
+msgstr "Mida de bloc"
 
 msgctxt "#70234"
-msgid "  - Size by part"
-msgstr "     - Mida per part"
+msgid "Part size"
+msgstr "Mida de part"
 
 msgctxt "#70235"
-msgid "  - Maximum number of simultaneous connections"
-msgstr "      - Nombre màxim de connexions simultànies"
+msgid "Maximum number of simultaneous connections"
+msgstr "Nombre màxim de connexions simultànies"
 
 msgctxt "#70236"
-msgid "  - Maximum number of parts in memory"
-msgstr "    - Nombre màxim de parts de la memòria"
+msgid "Max number of parts in memory"
+msgstr "Nombre màxim de parts en memòria"
 
 msgctxt "#70237"
 msgid "Choice of the server"
 msgstr "   Elecció del servidor"
 
 msgctxt "#70238"
-msgid "- Order of servers"
-msgstr "     - Ordre dels servidors"
+msgid "Servers order"
+msgstr "Ordre dels servidors"
 
 msgctxt "#70240"
-msgid "  - Preferred quality"
-msgstr "  - Qualitat preferida"
+msgid "Preferred quality"
+msgstr "Qualitat preferida"
 
 msgctxt "#70241"
 msgid "The highest"
 msgstr "   El més alt"
 
 msgctxt "#70242"
-msgid "  - Choose the fastest servers"
-msgstr " - Trieu els servidors més ràpids"
+msgid "Choose the fastest servers"
+msgstr "Trieu els servidors més ràpids"
 
 msgctxt "#70243"
 msgid "Download"
@@ -3691,8 +3691,8 @@ msgid "Reorder"
 msgstr "Reordenar"
 
 msgctxt "#70246"
-msgid "  - Preferred language"
-msgstr "  - Idioma preferit"
+msgid "Preferred language"
+msgstr "Idioma preferit"
 
 msgctxt "#70247"
 msgid "Home page"
@@ -4939,8 +4939,8 @@ msgid "Search Similar"
 msgstr "Cerca similars"
 
 msgctxt "#70562"
-msgid "Autoplay (Enable autoplay on all supported channels)"
-msgstr "Autoplay (activa la reproducció automàtica a tots els canals compatibles)"
+msgid "Enable AutoPlay on all supported channels"
+msgstr "Habilitar AutoPlay a tots els canals suportats"
 
 msgctxt "#70570"
 msgid "Search with current selection"
@@ -5003,8 +5003,8 @@ msgid "Hide server selection"
 msgstr "Amaga la selecció del servidor"
 
 msgctxt "#70748"
-msgid "Go to the next episode"
-msgstr "Anar al següent episodi"
+msgid "Watch the next episode"
+msgstr "Veure el següent episodi"
 
 msgctxt "#70749"
 msgid "Seconds before notification"
@@ -5023,8 +5023,8 @@ msgid "Do nothing"
 msgstr "No fer res"
 
 msgctxt "#70753"
-msgid "Playback"
-msgstr "Reproducció"
+msgid "Playback actions"
+msgstr "Accions en reproduir"
 
 msgctxt "#70754"
 msgid "Compact mode"
@@ -5067,8 +5067,244 @@ msgid "Download from channel"
 msgstr "Descarregar des del canal"
 
 msgctxt "#70764"
-msgid "  - Enable alternative download system"
-msgstr "  - Activar sistema de descàrrega alternatiu"
+msgid "Enable advanced download system"
+msgstr "Habilitar sistema de descàrrega avançat"
+
+msgctxt "#70765"
+msgid "Configure episode renumbering..."
+msgstr "Configurar renumeració d'episodis..."
+
+msgctxt "#70766"
+msgid "No series have been found, search for series and press 'Renumber' in the context menu."
+msgstr "No s'han trobat sèries, busca una sèrie i pulsa 'Renumerar' al menú contextual."
+
+msgctxt "#70767"
+msgid "Are you sure you want to remove the renumbering?"
+msgstr "Esteu segur que voleu eliminar la renumeració?"
+
+msgctxt "#70768"
+msgid "Press 'Yes' to remove renumbering from [COLOR blue]{}[/COLOR], press 'No' or close the window to do nothing."
+msgstr "Premeu 'Si' per eliminar la renumeració de [COLOR blue]{}[/COLOR], premeu 'No' o tanqueu la finestra per no fer res."
+
+msgctxt "#70769"
+msgid "Enter the season number"
+msgstr "Introduïu el número de la temporada"
+
+msgctxt "#70770"
+msgid "Season has not been added"
+msgstr "No s'hi ha afegit la temporada"
+
+msgctxt "#70771"
+msgid "It already exists, edit the existing one"
+msgstr "Ja existeix, editeu l'existent"
+
+msgctxt "#70772"
+msgid "Enter the episode number from which the season starts"
+msgstr "Introduïu el número d'episodi des del que comença la temporada"
+
+msgctxt "#70773"
+msgid "The first season that is added always starts at \"0\" episodes, the second season that is added starts at the total number of episodes of the first season, the third season will be the sum of the episodes of the previous seasons and so on."
+msgstr "La primera temporada que s'afegeix sempre comença a \"0\" episodis, la segona temporada que s'afegeix comença al nombre total d'episodis de la primera temporada, la tercera temporada serà la suma dels episodis de les temporades prèvies i així successivament."
+
+msgctxt "#70774"
+msgid "Example of a series divided into several seasons"
+msgstr "Exemple d'una sèrie dividida en diverses temporades"
+
+msgctxt "#70775"
+msgid "Example of the first season of the sequel of a series that continues at the next chapter number in which the last season of the original series ends"
+msgstr "Exemple de la primera temporada de la seqüela d'una sèrie que continua al següent número de capítol en què acaba la darrera temporada de la sèrie original"
+
+msgctxt "#70776"
+msgid "Example of the first season of the sequel of a series that begins with the first episode of the second season, as if it were the second season of the original series"
+msgstr "Exemple de la primera temporada de la seqüela d'una sèrie que comença pel primer capítol de la segona temporada, com si fos la segona temporada de la sèrie original"
+
+msgctxt "#70777"
+msgid "Add Season"
+msgstr "Afegir Temporada"
+
+msgctxt "#70778"
+msgid "Use TMDB"
+msgstr "Utilitza TMDB"
+
+msgctxt "#70779"
+msgid "Behaviour"
+msgstr "Comportament"
+
+msgctxt "#70780"
+msgid "Customization"
+msgstr "Personalització"
+
+msgctxt "#70781"
+msgid "Media info"
+msgstr "Info de mitjans"
+
+msgctxt "#70782"
+msgid "Debugging and more"
+msgstr "Depuració i més"
+
+msgctxt "#70783"
+msgid "Network"
+msgstr "Xarxa"
+
+msgctxt "#70784"
+msgid "High"
+msgstr "Alta"
+
+msgctxt "#70785"
+msgid "Medium"
+msgstr "Mitja"
+
+msgctxt "#70786"
+msgid "Low"
+msgstr "Baixa"
+
+msgctxt "#70787"
+msgid "Debugging"
+msgstr "Depuració"
+
+msgctxt "#70788"
+msgid "Show fixes report"
+msgstr "Mostra informe de correccions"
+
+msgctxt "#70789"
+msgid "Max number of years to search for news"
+msgstr "Màxim d'anys per buscar novetats"
+
+msgctxt "#70790"
+msgid "1 year"
+msgstr "1 any"
+
+msgctxt "#70791"
+msgid "2 years"
+msgstr "2 anys"
+
+msgctxt "#70792"
+msgid "3 years"
+msgstr "3 anys"
+
+msgctxt "#70793"
+msgid "4 years"
+msgstr "4 anys"
+
+msgctxt "#70794"
+msgid "5 years"
+msgstr "5 anys"
+
+msgctxt "#70795"
+msgid "Unlimited"
+msgstr "Sense límit"
+
+msgctxt "#70796"
+msgid "Max threads for threaded search"
+msgstr "Màxim de fils per a cerca simultània"
+
+msgctxt "#70797"
+msgid "Playback"
+msgstr "Reproducció"
+
+msgctxt "#70798"
+msgid "2 min"
+msgstr "2 min"
+
+msgctxt "#70799"
+msgid "5 min"
+msgstr "5 min"
+
+msgctxt "#70800"
+msgid "10 min"
+msgstr "10 min"
+
+msgctxt "#70801"
+msgid "15 min"
+msgstr "15 min"
+
+msgctxt "#70802"
+msgid "Add only last season when adding a TV show"
+msgstr "Afegir només la darrera temporada en afegir una sèrie"
+
+msgctxt "#70803"
+msgid "Back up the videolibrary at this address"
+msgstr "Feu una còpia de seguretat de la videoteca en aquesta adreça"
+
+msgctxt "#70804"
+msgid "Scan videolibrary after backup"
+msgstr "Escanejar videoteca després de la còpia de seguretat"
+
+msgctxt "#70805"
+msgid "HD 1080"
+msgstr "HD 1080"
+
+msgctxt "#70806"
+msgid "HD 720"
+msgstr "HD 720"
+
+msgctxt "#70807"
+msgid "View torrent manager download routes"
+msgstr "Veure les rutes de descàrrega del gestor de torrents"
+
+msgctxt "#70808"
+msgid "Quality priority of .torrents to download"
+msgstr "Prioritat de qualitat de .torrents a descarregar"
+
+msgctxt "#70809"
+msgid "Parameters"
+msgstr "Paràmetres"
+
+msgctxt "#70810"
+msgid "Installation"
+msgstr "Instal·lació"
+
+msgctxt "#70811"
+msgid "Cache"
+msgstr "Memòria cau"
+
+msgctxt "#70812"
+msgid "Check and repair video view marks"
+msgstr "Verificar i reparar marques de visualització de vídeo"
+
+msgctxt "#70813"
+msgid "Actions when playback ends"
+msgstr "Accions en acabar la reproducció"
+
+msgctxt "#70814"
+msgid "Backup"
+msgstr "Còpia de seguretat"
+
+msgctxt "#70815"
+msgid "Update content"
+msgstr "Actualitzar contingut"
+
+msgctxt "#70816"
+msgid "This"
+msgstr "Aquest"
+
+msgctxt "#70817"
+msgid "Other"
+msgstr "Altre"
+
+msgctxt "#70818"
+msgid "Yes"
+msgstr "Sí"
+
+msgctxt "#70819"
+msgid "No"
+msgstr "No"
+
+msgctxt "#70820"
+msgid "Verify"
+msgstr "Verificar"
+
+msgctxt "#70821"
+msgid "Create directories with lowercase letters"
+msgstr "Crear directoris amb lletres en minúscules"
+
+msgctxt "#70822"
+msgid "Search for new premieres and suggestions (show notification)"
+msgstr "Buscar estrenes i suggeriments (mostrar notificació)"
+
+msgctxt "#70823"
+msgid "Times to search for new premieres per day"
+msgstr "Vegades a buscar noves estrenes al dia"
 
 msgctxt "#80001"
 msgid "Secondary language for AutoPlay"
@@ -5123,12 +5359,12 @@ msgid "Install app automatically (if necessary)"
 msgstr "Instal·lar aplicació automàticament (si cal)"
 
 msgctxt "#80614"
-msgid "[COLOR limegreen][B]Select here[/B][/COLOR] to install/update Alfa Assistant now"
-msgstr "[COLOR limegreen][B]Selecciona aquí[/B][/COLOR] per instal·lar/actualitzar Alfa Assistant ara"
+msgid "Install/update Alfa Assistant now"
+msgstr "Instal·lar/actualitzar Alfa Assistant ara"
 
 msgctxt "#80615"
-msgid "URL for manual installation: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Select here[/COLOR] if you have a browser"
-msgstr "URL per a instal·lació manual: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Cliqueu[/COLOR] si té browser"
+msgid "Manual installation: https://bit.ly/2Zwpfzq (clicking here opens a browser, if found)"
+msgstr "Instal·lació manual: https://bit.ly/2Zwpfzq (si feu clic aquí s'obre un navegador, si es troba)"
 
 msgctxt "#80616"
 msgid "Device with root access"
@@ -5167,16 +5403,16 @@ msgid "Updates for other add-ons:"
 msgstr "Actualitzacions per a altres complements"
 
 msgctxt "#80771"
-msgid "Update Quasar to avoid errors"
-msgstr "Vol actualitzar Quasar per evitar errors?"
+msgid "Update Quasar through Alfa"
+msgstr "Actualitzar Quasar mitjançant Alfa"
 
 msgctxt "#80780"
 msgid "Alternative method for accessing webs"
 msgstr "Mètode alternatiu d'accés a webs:"
 
 msgctxt "#80781"
-msgid "Enable forced mode (if disabled, on-demand mode is used)"
-msgstr "Activar mode forçat (desactivat utilitza el mode sota demanda)"
+msgid "Enable alternative access on all webs"
+msgstr "Habilitar accés alternatiu a totes les webs"
 
 msgctxt "#80782"
 msgid "Ageing period for non-resolved domains"
@@ -5211,8 +5447,8 @@ msgid "External VPN"
 msgstr "VPN externa"
 
 msgctxt "#80790"
-msgid "I'm using an external VPN"
-msgstr "Estic fent servir una VPN externa"
+msgid "Consider use of an external VPN"
+msgstr "Considerar l'ús de VPN externa"
 
 msgctxt "#80791"
 msgid "Renumerate"
