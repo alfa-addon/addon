@@ -22,6 +22,7 @@ from modules import autoplay
 list_quality = []
 list_servers = ['mixdrop']
 
+######          This website palimas.org/ is currently offline  8/9/2023
 canonical = {
              'channel': 'palimas', 
              'host': config.get_setting("current_host", 'palimas', default=''), 

@@ -38,14 +38,18 @@ def mainlist(item):
     itemlist.append(item.clone(title="Listas", action="categorias", url= host + "series/"))
     itemlist.append(item.clone(title="Canal", action="submenu", url=host + "channels/"))
     itemlist.append(item.clone(title="Categorias", action="categorias", url= host + "categories/"))
+    itemlist.append(item.clone(title="Buscar Clips", action="search"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = "%ssearch?q=%s" % (host,texto)
+    # texto = texto.replace(" ", "+")
+    if "Clips" in item.title:
+        item.url = "%ssearch?q=%s" % (host,texto.replace(" ", "+"))
+    else:
+        item.url = "%sporn-videos/%s" % (host,texto.replace(" ", "-"))  #?show=cumlouder or all
     try:
         return lista(item)
     except:
@@ -118,8 +122,9 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find('div', class_='listado-escenas').find_all('a', class_='muestra-escena')
     for elem in matches:
-        id = scrapertools.find_single_match(elem['onclick'], '(\d+)')    ### 
-        embed = "%sembed/%s/" %(host, id)
+        logger.debug()
+        # id = scrapertools.find_single_match(elem['onclick'], '(\d+)')    ### 
+        # embed = "%sembed/%s/" %(host, id)
         url = elem['href']
         title = elem.h2.text.strip()
         thumbnail = elem.img['data-src']
@@ -136,7 +141,7 @@ def lista(item):
         action = "play"
         if logger.info() == False:
             action = "findvideos"
-        itemlist.append(Item(channel = item.channel, action=action, title=title, url=embed, thumbnail=thumbnail,
+        itemlist.append(Item(channel = item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                              fanart=thumbnail, contentTitle=title,  plot=plot))
     next_page = soup.find("a", string=re.compile(r"^Next"))
     if next_page:
@@ -157,14 +162,16 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).data
-    pornstars = scrapertools.find_single_match(data,  "'pornStar': '([^']+)'")
-    pornstars = pornstars.split("|")
-    pornstar = ' & '.join(pornstars)
-    pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
-    lista = item.contentTitle.split()
-    lista.insert (3, pornstar)
-    item.contentTitle = ' '.join(lista)    
+    soup = create_soup(item.url)
+    if soup.find_all('a', href=re.compile(r"/girl/[a-z0-9-]+")):
+        pornstars = soup.find_all('a', href=re.compile(r"/girl/[a-z0-9-]+"))
+        for x, value in enumerate(pornstars):
+            pornstars[x] = value.get_text(strip=True)
+        pornstar = ' & '.join(pornstars)
+        pornstar = " [COLOR cyan]%s" % pornstar
+        lista = item.contentTitle.split('[/COLOR]')
+        lista.insert (2, pornstar)
+        item.contentTitle = '[/COLOR]'.join(lista)
     itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
