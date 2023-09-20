@@ -520,6 +520,8 @@ def autoplay_config(item):
     global autoplay_node
     dict_values = {}
     list_controls = []
+    if not item.from_channel:
+        item.from_channel = item.channel
     channel_parameters = channeltools.get_channel_parameters(item.from_channel)
     channel_name = channel_parameters['title']
 
