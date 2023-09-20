@@ -18,6 +18,8 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
+# https://sextubefun.com/   https://www.sunporno.com/   https://freehdporn.xxx/
+
 canonical = {
              'channel': 'sunporno', 
              'host': config.get_setting("current_host", 'sunporno', default=''), 
