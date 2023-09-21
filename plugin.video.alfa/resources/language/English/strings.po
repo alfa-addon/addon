@@ -1,12 +1,12 @@
-"# Kodi Media Center language file
+# Kodi Media Center language file
 # Addon Name: Alfa
 # Addon id: plugin.video.alfa
 # Addon Provider: Alfa Deveolpment Group
 msgid ""
 msgstr ""
-Project-Id-Version: Alfa add-on\n"
+"Project-Id-Version: Alfa add-on\n"
 "POT-Creation-Date: 2018-03-26 03:02+0200\n"
-"PO-Revision-Date: 2023-09-07 15:52-0600\n"
+"PO-Revision-Date: 2023-09-10 23:43-0600\n"
 "Language-Team: Alfa Development Group\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -23,7 +23,7 @@ msgid "Alfa"
 msgstr ""
 
 msgctxt "#30001"
-msgid "Check for updates:"
+msgid "Updates"
 msgstr ""
 
 msgctxt "#30002"
@@ -143,7 +143,7 @@ msgid "Favorites"
 msgstr ""
 
 msgctxt "#30103"
-msgid "Global search"
+msgid "Search"
 msgstr ""
 
 msgctxt "#30104"
@@ -1583,7 +1583,7 @@ msgid "AutoPlay settings"
 msgstr ""
 
 msgctxt "#60391"
-msgid "AutoPlay"
+msgid "Autoplay"
 msgstr ""
 
 msgctxt "#60392"
@@ -2411,7 +2411,7 @@ msgid "At the start of Kodi and once a day"
 msgstr ""
 
 msgctxt "#60606"
-msgid "    Wait before updating at startup of Kodi"
+msgid "At Kodi startup, wait before updating"
 msgstr ""
 
 msgctxt "#60607"
@@ -2439,11 +2439,11 @@ msgid "60 sec"
 msgstr ""
 
 msgctxt "#60613"
-msgid "    Begin scheduled update from"
+msgid "Start scheduled update from"
 msgstr ""
 
 msgctxt "#60614"
-msgid "    Search for new episodes in active tv series"
+msgid "Search for new episodes in TV shows"
 msgstr ""
 
 msgctxt "#60615"
@@ -2459,7 +2459,7 @@ msgid "According to new episodes"
 msgstr ""
 
 msgctxt "#60618"
-msgid "    Search for content in"
+msgid "Search content in"
 msgstr ""
 
 msgctxt "#60619"
@@ -2483,7 +2483,7 @@ msgid "Pop-up window"
 msgstr ""
 
 msgctxt "#60624"
-msgid "    Maximum number of links to display (recommended for slow devices)"
+msgid "Max links to display (recommended for slow devices)"
 msgstr ""
 
 msgctxt "#60625"
@@ -2491,15 +2491,15 @@ msgid "All"
 msgstr ""
 
 msgctxt "#60626"
-msgid "    Sort by whitelist"
+msgid "Sort by whitelist order"
 msgstr ""
 
 msgctxt "#60627"
-msgid "    Remove the channel name at the beginning"
+msgid "Remove channel name at the beginning"
 msgstr ""
 
 msgctxt "#60628"
-msgid "    Pop-up window: Replace \'View in\' with \'[V]\' and \'Download in\' with \'[D]\'"
+msgid "Replace 'View in' with '[V]' and 'Download in' with '[D]'"
 msgstr ""
 
 msgctxt "#60629"
@@ -2515,11 +2515,11 @@ msgid "Remote"
 msgstr ""
 
 msgctxt "#60632"
-msgid "    Server Name"
+msgid "Server address"
 msgstr ""
 
 msgctxt "#60633"
-msgid "    Server port"
+msgid "Server port"
 msgstr ""
 
 msgctxt "#60634"
@@ -2527,7 +2527,7 @@ msgid "Automatically mark as watched"
 msgstr ""
 
 msgctxt "#60635"
-msgid "    Video viewing time"
+msgid "Minimum video viewing time"
 msgstr ""
 
 msgctxt "#60636"
@@ -2539,19 +2539,19 @@ msgid "Synchronizing with Trakt"
 msgstr ""
 
 msgctxt "#60638"
-msgid "    After mark as watched the episode"
+msgid "Sync after marking the episode as watched"
 msgstr ""
 
 msgctxt "#60639"
-msgid "        Show notification"
+msgid "Show notification"
 msgstr ""
 
 msgctxt "#60640"
-msgid "    On adding a TV series to the video library"
+msgid "Sync on adding a TV show to the videolibrary"
 msgstr ""
 
 msgctxt "#60641"
-msgid "        Wait until the tv series is added"
+msgid "Wait until the TV show is added"
 msgstr ""
 
 msgctxt "#60642"
@@ -2591,15 +2591,15 @@ msgid "When you add content, you get information from:"
 msgstr ""
 
 msgctxt "#60651"
-msgid "    Movies:"
+msgid "Movies info provider"
 msgstr ""
 
 msgctxt "#60652"
-msgid "    TV Series:"
+msgid "TV shows info provider"
 msgstr ""
 
 msgctxt "#60653"
-msgid "        If there are no results also search in English"
+msgid "If there are no results search also in English"
 msgstr ""
 
 msgctxt "#60654"
@@ -3075,15 +3075,15 @@ msgid "Show only links of %s"
 msgstr ""
 
 msgctxt "#70090"
-msgid "    Exclude all streams with specific words"
+msgid "Exclude all streams with these words"
 msgstr ""
 
 msgctxt "#70091"
-msgid "    Words"
+msgid "Words"
 msgstr ""
 
 msgctxt "#70092"
-msgid "Add to videolibrary"
+msgid "New content"
 msgstr ""
 
 msgctxt "#70093"
@@ -3219,7 +3219,7 @@ msgid "Movie|Tv Shows|Anime|Children|Documentary|Horror|Castellan|Latin|Torrent"
 msgstr ""
 
 msgctxt "#70126"
-msgid "Visual Options"
+msgid "Presentation"
 msgstr ""
 
 msgctxt "#70128"
@@ -3311,7 +3311,7 @@ msgid "Others"
 msgstr ""
 
 msgctxt "#70150"
-msgid "Movie/series info in contextual menu"
+msgid "Extended info"
 msgstr ""
 
 msgctxt "#70151"
@@ -3327,7 +3327,7 @@ msgid "Buttons/Access keys (Changes require Kodi restart)"
 msgstr ""
 
 msgctxt "#70154"
-msgid "TheMovieDB (obtains data from movies or series)"
+msgid "Info discovery"
 msgstr ""
 
 msgctxt "#70155"
@@ -3359,7 +3359,7 @@ msgid "every 30 days"
 msgstr ""
 
 msgctxt "#70162"
-msgid "Renew cache?"
+msgid "Renew cache"
 msgstr ""
 
 msgctxt "#70163"
@@ -3379,7 +3379,7 @@ msgid "Debrider servers first"
 msgstr ""
 
 msgctxt "#70167"
-msgid "Title options"
+msgid "Titles"
 msgstr ""
 
 msgctxt "#70168"
@@ -3387,7 +3387,7 @@ msgid "General"
 msgstr ""
 
 msgctxt "#70169"
-msgid "Servers use"
+msgid "Servers resolution"
 msgstr ""
 
 msgctxt "#70170"
@@ -3631,31 +3631,31 @@ msgid "File location"
 msgstr ""
 
 msgctxt "#70230"
-msgid "  - Add completed downloads to the video library "
+msgid "Add completed downloads to videolibrary"
 msgstr ""
 
 msgctxt "#70231"
-msgid "  - Move the downloaded file to the video library"
+msgid "Move the downloaded file to videolibrary"
 msgstr ""
 
 msgctxt "#70232"
-msgid "  - View files downloaded from downloads"
+msgid "Enable downloads browser"
 msgstr ""
 
 msgctxt "#70233"
-msgid "  - Size per block"
+msgid "Block size"
 msgstr ""
 
 msgctxt "#70234"
-msgid "  - Size by part"
+msgid "Part size"
 msgstr ""
 
 msgctxt "#70235"
-msgid "  - Maximum number of simultaneous connections"
+msgid "Maximum number of simultaneous connections"
 msgstr ""
 
 msgctxt "#70236"
-msgid "  - Maximum number of parts in memory"
+msgid "Max number of parts in memory"
 msgstr ""
 
 msgctxt "#70237"
@@ -3663,11 +3663,11 @@ msgid "Choice of the server"
 msgstr ""
 
 msgctxt "#70238"
-msgid "- Order of servers"
+msgid "Servers order"
 msgstr ""
 
 msgctxt "#70240"
-msgid "  - Preferred quality"
+msgid "Preferred quality"
 msgstr ""
 
 msgctxt "#70241"
@@ -3675,7 +3675,7 @@ msgid "The highest"
 msgstr ""
 
 msgctxt "#70242"
-msgid "  - Choose the fastest servers"
+msgid "Choose the fastest servers"
 msgstr ""
 
 msgctxt "#70243"
@@ -3691,7 +3691,7 @@ msgid "Reorder"
 msgstr ""
 
 msgctxt "#70246"
-msgid "  - Preferred language"
+msgid "Preferred language"
 msgstr ""
 
 msgctxt "#70247"
@@ -4931,8 +4931,8 @@ msgid "Search Similar"
 msgstr ""
 
 msgctxt "#70562"
-msgid "Autoplay (Enable autoplay on all supported channels)"
-msgstr "Autoplay (Enable autoplay on all supported channels)"
+msgid "Enable AutoPlay on all supported channels"
+msgstr ""
 
 msgctxt "#70570"
 msgid "Search with current selection"
@@ -4995,7 +4995,7 @@ msgid "Hide server selection"
 msgstr ""
 
 msgctxt "#70748"
-msgid "Go to the next episode"
+msgid "Watch the next episode"
 msgstr ""
 
 msgctxt "#70749"
@@ -5015,7 +5015,7 @@ msgid "Do nothing"
 msgstr ""
 
 msgctxt "#70753"
-msgid "Playback"
+msgid "Playback actions"
 msgstr ""
 
 msgctxt "#70754"
@@ -5059,7 +5059,243 @@ msgid "Download from channel"
 msgstr ""
 
 msgctxt "#70764"
-msgid "  - Enable alternative download system"
+msgid "Enable advanced download system"
+msgstr ""
+
+msgctxt "#70765"
+msgid "Configure episode renumbering..."
+msgstr ""
+
+msgctxt "#70766"
+msgid "No series have been found, search for series and press 'Renumber' in the context menu."
+msgstr ""
+
+msgctxt "#70767"
+msgid "Are you sure you want to remove the renumbering?"
+msgstr ""
+
+msgctxt "#70768"
+msgid "Press 'Yes' to remove renumbering from [COLOR blue]{}[/COLOR], press 'No' or close the window to do nothing."
+msgstr ""
+
+msgctxt "#70769"
+msgid "Enter the season number"
+msgstr ""
+
+msgctxt "#70770"
+msgid "Season has not been added"
+msgstr ""
+
+msgctxt "#70771"
+msgid "It already exists, edit the existing one"
+msgstr ""
+
+msgctxt "#70772"
+msgid "Enter the episode number from which the season starts"
+msgstr "Enter the episode number from which the season starts"
+
+msgctxt "#70773"
+msgid "The first season that is added always starts at \"0\" episodes, the second season that is added starts at the total number of episodes of the first season, the third season will be the sum of the episodes of the previous seasons and so on."
+msgstr ""
+
+msgctxt "#70774"
+msgid "Example of a series divided into several seasons"
+msgstr ""
+
+msgctxt "#70775"
+msgid "Example of the first season of the sequel of a series that continues at the next chapter number in which the last season of the original series ends"
+msgstr ""
+
+msgctxt "#70776"
+msgid "Example of the first season of the sequel of a series that begins with the first episode of the second season, as if it were the second season of the original series"
+msgstr ""
+
+msgctxt "#70777"
+msgid "Add Season"
+msgstr ""
+
+msgctxt "#70778"
+msgid "Use TMDB"
+msgstr ""
+
+msgctxt "#70779"
+msgid "Behaviour"
+msgstr ""
+
+msgctxt "#70780"
+msgid "Customization"
+msgstr ""
+
+msgctxt "#70781"
+msgid "Media info"
+msgstr ""
+
+msgctxt "#70782"
+msgid "Debugging and more"
+msgstr ""
+
+msgctxt "#70783"
+msgid "Network"
+msgstr ""
+
+msgctxt "#70784"
+msgid "High"
+msgstr ""
+
+msgctxt "#70785"
+msgid "Medium"
+msgstr ""
+
+msgctxt "#70786"
+msgid "Low"
+msgstr ""
+
+msgctxt "#70787"
+msgid "Debugging"
+msgstr ""
+
+msgctxt "#70788"
+msgid "Show fixes report"
+msgstr ""
+
+msgctxt "#70789"
+msgid "Max number of years to search for news"
+msgstr ""
+
+msgctxt "#70790"
+msgid "1 year"
+msgstr ""
+
+msgctxt "#70791"
+msgid "2 years"
+msgstr ""
+
+msgctxt "#70792"
+msgid "3 years"
+msgstr ""
+
+msgctxt "#70793"
+msgid "4 years"
+msgstr ""
+
+msgctxt "#70794"
+msgid "5 years"
+msgstr ""
+
+msgctxt "#70795"
+msgid "Unlimited"
+msgstr ""
+
+msgctxt "#70796"
+msgid "Max threads for threaded search"
+msgstr ""
+
+msgctxt "#70797"
+msgid "Playback"
+msgstr ""
+
+msgctxt "#70798"
+msgid "2 min"
+msgstr ""
+
+msgctxt "#70799"
+msgid "5 min"
+msgstr ""
+
+msgctxt "#70800"
+msgid "10 min"
+msgstr ""
+
+msgctxt "#70801"
+msgid "15 min"
+msgstr ""
+
+msgctxt "#70802"
+msgid "Add only last season when adding a TV show"
+msgstr ""
+
+msgctxt "#70803"
+msgid "Back up the videolibrary at this address"
+msgstr ""
+
+msgctxt "#70804"
+msgid "Scan videolibrary after backup"
+msgstr ""
+
+msgctxt "#70805"
+msgid "HD 1080"
+msgstr ""
+
+msgctxt "#70806"
+msgid "HD 720"
+msgstr ""
+
+msgctxt "#70807"
+msgid "View torrent manager download routes"
+msgstr ""
+
+msgctxt "#70808"
+msgid "Quality priority of .torrents to download"
+msgstr ""
+
+msgctxt "#70809"
+msgid "Parameters"
+msgstr ""
+
+msgctxt "#70810"
+msgid "Installation"
+msgstr ""
+
+msgctxt "#70811"
+msgid "Cache"
+msgstr ""
+
+msgctxt "#70812"
+msgid "Check and repair video view marks"
+msgstr ""
+
+msgctxt "#70813"
+msgid "Actions when playback ends"
+msgstr ""
+
+msgctxt "#70814"
+msgid "Backup"
+msgstr ""
+
+msgctxt "#70815"
+msgid "Update content"
+msgstr ""
+
+msgctxt "#70816"
+msgid "This"
+msgstr ""
+
+msgctxt "#70817"
+msgid "Other"
+msgstr ""
+
+msgctxt "#70818"
+msgid "Yes"
+msgstr ""
+
+msgctxt "#70819"
+msgid "No"
+msgstr ""
+
+msgctxt "#70820"
+msgid "Verify"
+msgstr ""
+
+msgctxt "#70821"
+msgid "Create directories with lowercase letters"
+msgstr ""
+
+msgctxt "#70822"
+msgid "Search for new premieres and suggestions (show notification)"
+msgstr ""
+
+msgctxt "#70823"
+msgid "Times to search for new premieres per day"
 msgstr ""
 
 msgctxt "#80001"
@@ -5115,11 +5351,11 @@ msgid "Install app automatically (if necessary)"
 msgstr ""
 
 msgctxt "#80614"
-msgid "[COLOR limegreen][B]Select here[/B][/COLOR] to install/update Alfa Assistant now"
+msgid "Install/update Alfa Assistant now"
 msgstr ""
 
 msgctxt "#80615"
-msgid "URL for manual installation: [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]  [COLOR limegreen]Select here[/COLOR] if you have a browser"
+msgid "Manual installation: https://bit.ly/2Zwpfzq (clicking here opens a browser, if found)"
 msgstr ""
 
 msgctxt "#80616"
@@ -5159,7 +5395,7 @@ msgid "Updates for other add-ons:"
 msgstr ""
 
 msgctxt "#80771"
-msgid "Update Quasar to avoid errors"
+msgid "Update Quasar through Alfa"
 msgstr ""
 
 msgctxt "#80780"
@@ -5167,7 +5403,7 @@ msgid "Alternative method for accessing webs"
 msgstr ""
 
 msgctxt "#80781"
-msgid "Enable forced mode (if disabled, on-demand mode is used)"
+msgid "Enable alternative access on all webs"
 msgstr ""
 
 msgctxt "#80782"
@@ -5203,7 +5439,7 @@ msgid "External VPN"
 msgstr ""
 
 msgctxt "#80790"
-msgid "I'm using an external VPN"
+msgid "Consider use of an external VPN"
 msgstr ""
 
 msgctxt "#80791"

@@ -239,11 +239,9 @@ def simplify(string):
     string = string.strip()
 
     notilde = normalize(string)
-    try:
-        string = notilde.decode()
-    except:
-        pass
-    string = string.lower()
+    if not PY3 and isinstance(string, str):
+        notilde = notilde.decode('utf-8')
+    string = notilde.lower()
     #logger.debug('sale de simplify: %s' % string)
 
     return string
@@ -408,6 +406,133 @@ def set_lang(language):
              "no filtrar": ['no filtrar']
              }
 
+    iso_langs = {'af': ['af', 'afrikaans'],
+                 'am': ['am', 'amharic', 'አማርኛ', 'amarico'],
+                 'ar': ['ar', 'arabic', 'العربية', 'arabe'],
+                 'arn': ['arn', 'mapudungun'],
+                 'as': ['as', 'assamese', 'অসমীযা', 'assamais'],
+                 'az': ['az', 'azerbaijani', 'azərbaycanlı', 'azerbayano'],
+                 'ba': ['ba', 'bashkir', 'башҡорт'],
+                 'be': ['be', 'belarusian', 'беларуская', 'bieloruso'],
+                 'bg': ['bg', 'bulgarian', 'български', 'bulgaro'],
+                 'bn': ['bn', 'bengali', 'বাংলা'],
+                 'bo': ['bo', 'tibetan', 'བད་ཡག', 'tibetano'],
+                 'br': ['br', 'breton', 'brezhoneg'],
+                 'bs': ['bs', 'bosnian', 'bosanski', 'босански', 'bosnio'],
+                 'ca': ['ca', 'catalan', 'catala'],
+                 'ckb': ['ckb', 'kurdish', 'کوردی', 'kurdo'],
+                 'co': ['co', 'corsican', 'corsu', 'corso'],
+                 'cs': ['cs', 'czech', 'cestina', 'checo'],
+                 'cy': ['cy', 'welsh', 'cymraeg', 'gales'],
+                 'da': ['da', 'danish', 'dansk', 'danes'],
+                 'de': ['de', 'german', 'deutsch', 'aleman'],
+                 'dsb': ['dsb', 'sorbian', 'dolnoserbscina'],
+                 'dv': ['dv', 'dhivehi', 'ދވހބސ'],
+                 'el': ['el', 'greek', 'ελληνικα', 'griego'],
+                 'en': ['en', 'english', 'ingles'],
+                 'es': ['es', 'spanish', 'espanol', 'español', 'castilian', 'castellano'],
+                 'et': ['et', 'estonian', 'eesti', 'estonio'],
+                 'eu': ['eu', 'basque', 'euskara', 'vasco'],
+                 'fa': ['fa', 'persian', 'فارسى', 'persa'],
+                 'fi': ['fi', 'finnish', 'suomi', 'fines'],
+                 'fil': ['fil', 'filipino'],
+                 'fo': ['fo', 'faroese', 'føroyskt', 'feroes'],
+                 'fr': ['fr', 'french', 'francais', 'frances'],
+                 'fy': ['fy', 'frisian', 'frysk', 'frison'],
+                 'ga': ['ga', 'irish', 'gaeilge', 'irlandes'],
+                 'gd': ['gd', 'scottish', 'gaidhlig', 'escoces'],
+                 'gl': ['gl', 'galician', 'galego', 'gallego'],
+                 'gsw': ['gsw', 'swiss german', 'schweizerdeutsch', 'aleman de suiza'],
+                 'gu': ['gu', 'gujarati', 'ગજરાતી', 'guyarati'],
+                 'ha': ['ha', 'hausa', 'haussa'],
+                 'he': ['he', 'hebrew', 'עברית', 'hebreo'],
+                 'hi': ['hi', 'hindi', 'हिदी'],
+                 'hr': ['hr', 'croatian', 'hrvatski', 'croata'],
+                 'hsb': ['hsb', 'sorbian', 'hornjoserbscina', 'sorbio'],
+                 'hu': ['hu', 'hungarian', 'magyar', 'hungaro'],
+                 'hy': ['hy', 'armenian', 'հայերեն', 'armenio'],
+                 'id': ['id', 'indonesian', 'bahasa indonesia', 'indonesio', 'indones'],
+                 'ig': ['ig', 'igbo'],
+                 'ii': ['ii', 'sichuan yi', 'ꆈꌠꁱꂷ', 'yi de sichuan'],
+                 'is': ['is', 'icelandic', 'islenska', 'islandes'],
+                 'it': ['it', 'italian', 'italiano'],
+                 'iu': ['iu', 'ᐃᓄᒃᑎᑐᑦ', 'inuktitut'],
+                 'ja': ['ja', 'japanese', '日本語', 'japones'],
+                 'ka': ['ka', 'georgian', 'ქართული', 'georgiano'],
+                 'kk': ['kk', 'kazakh', 'қазақша', 'kazako'],
+                 'kl': ['kl', 'kalaallisut', 'groenlandes'],
+                 'km': ['km', 'ខមែរ', 'khmer'],
+                 'kn': ['kn', 'kannada', 'ಕನನಡ', 'canares'],
+                 'ko': ['ko', 'korean', '한국어', '韓國語', '조선말', '朝鮮말', 'coreano'],
+                 'kok': ['kok', 'konkani', 'कोकणी'],
+                 'ky': ['ky', 'kirghiz', 'кыргыз', 'kirghizo'],
+                 'lb': ['lb', 'luxembourgish', 'letzebuergesch', 'luxemburgues'],
+                 'lo': ['lo', 'lao', 'ລາວ', 'laosiano'],
+                 'lt': ['lt', 'lithuanian', 'lietuviu', 'lituano'],
+                 'lv': ['lv', 'latvian', 'latviesu', 'leton'],
+                 'mi': ['mi', 'maori', 'reo maori'],
+                 'mk': ['mk', 'macedonian', 'македонски јазик', 'macedonio'],
+                 'ml': ['ml', 'malayalam', 'മലയാളം', 'malabar'],
+                 'mn': ['mn', 'mongolian', 'монгол хэл', 'ᠮᠤᠨᠭᠭᠤᠯ ᠬᠡᠯᠡ', 'mongol'],
+                 'moh': ['moh', 'mohawk', "kanien'keha"],
+                 'mr': ['mr', 'marathi', 'मराठी', 'marath'],
+                 'ms': ['ms', 'malay', 'bahasa malaysia', 'malayo'],
+                 'mt': ['mt', 'maltese', 'malti', 'maltes'],
+                 'my': ['my', 'burmese', 'myanmar', 'birmano'],
+                 'nb': ['nb', 'norwegian bokmal', 'norsk', 'noruego'],
+                 'ne': ['ne', 'nepali', 'नपाली', 'nepali'],
+                 'nl': ['nl', 'dutch', 'nederlands', 'neerlandes', 'holandes'],
+                 'nn': ['nn', 'norwegian nynorsk', 'norsk', 'noruego nynorsk'],
+                 'no': ['no', 'norwegian', 'norsk', 'noruego'],
+                 'oc': ['oc', 'occitan', 'occitano'],
+                 'or': ['or', 'ଓଡଆ', 'oriya'],
+                 'pa': ['pa', 'ਪਜਾਬੀ', 'panjabi'],
+                 'pl': ['pl', 'polish', 'polski', 'polaco'],
+                 'prs': ['prs', 'درى', 'dari'],
+                 'ps': ['ps', 'pushto', 'پښتو', 'pashtun'],
+                 'pt': ['pt', 'portuguese', 'portugues'],
+                 'qu': ['qu', 'quechua', 'runasimi'],
+                 'quc': ['quc', "k'iche", "quiche"],
+                 'rm': ['rm', 'romansh', 'rumantsch'],
+                 'ro': ['ro', 'romanian', 'romana', 'rumano'],
+                 'ru': ['ru', 'russian', 'русскии', 'ruso'],
+                 'rw': ['rw', 'kinyarwanda'],
+                 'sa': ['sa', 'sanskrit', 'ससकत', 'sanscrito'],
+                 'sah': ['sah', 'yakut', 'саха'],
+                 'se': ['se', 'northern sami', 'davvisamegiella', 'sami septentrional'],
+                 'si': ['si', 'sinhala', 'සංහල', 'cingales'],
+                 'sk': ['sk', 'slovak', 'slovencina', 'eslovaco'],
+                 'sl': ['sl', 'slovenian', 'slovenski', 'esloveno'],
+                 'sma': ['sma', 'southern sami', 'aarjelsaemiengiele', 'sami meridional'],
+                 'smj': ['smj', 'lule sami', 'julevusamegiella', 'sami lule'],
+                 'smn': ['smn', 'inari sami', 'samikiela', 'sami inari'],
+                 'sms': ['sms', 'skolt sami', 'saam´kioll', 'sami skolt'],
+                 'sq': ['sq', 'albanian', 'shqipe', 'albanes'],
+                 'sr': ['sr', 'serbian', 'srpski', 'српски', 'serbio'],
+                 'st': ['st', 'southern sotho', 'sesotho sa leboa', 'sotho meridional'],
+                 'sv': ['sv', 'swedish', 'svenska', 'sueco'],
+                 'sw': ['sw', 'swahili', 'kiswahili', 'swahili'],
+                 'syc': ['syc', 'syriac', 'ܣܘܪܝܝܐ', 'siriaco'],
+                 'ta': ['ta', 'தமிழ', 'tamil'],
+                 'te': ['te', 'తలుగు', 'telugu'],
+                 'tg': ['tg', 'tajik', 'тоҷики', 'tajiko'],
+                 'th': ['th', 'thai', 'ไทย', 'tailandes'],
+                 'tk': ['tk', 'turkmen', 'turkmence', 'turkmeno'],
+                 'tn': ['tn', 'tswana', 'setswana', 'setchwana'],
+                 'tr': ['tr', 'turkish', 'turkce', 'turco'],
+                 'tt': ['tt', 'tatar', 'татарча', 'tataro'],
+                 'tzm': ['tzm', 'tamazight'],
+                 'ug': ['ug', 'uighur', 'يۇيغۇرچە', 'uiguro'],
+                 'uk': ['uk', 'ukrainian', 'украінська', 'ukranio', 'ucraniano'],
+                 'ur': ['ur', 'اردو', 'urdu'],
+                 'uz': ['uz', 'uzbek', "u'zbek", 'узбек', 'uzbeko'],
+                 'vi': ['vi', 'vietnamese', 'tieng viet', '㗂越', 'vietnamita'],
+                 'wo': ['wo', 'wolof'],
+                 'xh': ['xh', 'xhosa', 'isixhosa'],
+                 'yo': ['yo', 'yoruba'],
+                 'zh': ['zh', 'chinese', '中文', 'chino', 'mandarin'],
+                 'zu': ['zu', 'zulu', 'isizulu']}
+
     language = scrapertools.decodeHtmlentities(language)
     language = simplify(language)
 
@@ -419,6 +544,10 @@ def set_lang(language):
         if language in v:
             lang = "%s" % k
     #logger.debug('language after simplify: %s' % language)
+    if lang == "other":
+        for k, v in iso_langs.items():
+            if language in v:
+                lang = "%s" % k
 
     return lang
 

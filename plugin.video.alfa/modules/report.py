@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- Report module -*-
-# -*- Created for Alfa-addon -*-
-# -*- By the Alfa Develop Group -*-
+# -*- Created for Alfa add-on -*-
+# -*- By the Alfa Development Group -*-
 import os
 import sys
 import random
@@ -47,7 +47,7 @@ def mainlist(item):
         itemlist = []
         thumb_next = get_thumb("next.png")
         item = report_send(item)
-    
+
         # Se devuelve control con item.url actualizado, así aparecerá en el menú la URL del informe
         if item.url:
             from lib.generictools import call_browser
@@ -115,7 +115,7 @@ def mainlist(item):
                     url = urls['log_one_use']
                 )
             )
-            
+
             if item.one_use:
                 itemlist.append(
                     Item(
@@ -135,7 +135,7 @@ def mainlist(item):
                         title = 'ya que es de un solo uso',
                     )
                 )
-        
+
         return itemlist
 
 
@@ -168,6 +168,24 @@ def report_send(item, description=False, fatal=False):
     # que el LOG sea más pequeño.
 
     pastebin_list = {
+        'logsalfa': {
+            'active': True,
+            'host': 'https://logs.alfa-addon.com/',
+            'api_suffix': 'upload/',
+            'filename': 'logfile',
+            'post_data_1': {'user': 'kodi','pass': 'alfa'},
+            'post_data_2': '',
+            'method': 'requests',
+            'response_type': 'json',
+            'response_key': 'data',
+            'tag': '',
+            'max_size_mb': 256.0,
+            'timeout': 100,
+            'random_headers': False,
+            'host_return': 'log/',
+            'host_return_tail': '',
+            'headers': {'user': 'kodi','pass': 'alfa'}
+        },
         'hastebin': {
             'active': True,
             'host': 'https://hastebin.com/',
@@ -332,7 +350,7 @@ def report_send(item, description=False, fatal=False):
         },
         'anonfiles': {
             'active': True,
-            'host': 'https://api.anonfiles.com/upload',
+            'host': 'https://api.anonfiles.com/',
             'api_suffix': 'upload',
             'filename': 'random',
             'post_data_1': '',
@@ -359,7 +377,7 @@ def report_send(item, description=False, fatal=False):
     status = False
     msg = 'Servicio no disponible.  Inténtelo más tarde'
 
-    # De cada al futuro se permitira al usuario que introduzca una breve descripción del fallo que se añadirá al LOG
+    # De cara al futuro se permitirá al usuario que introduzca una breve descripción del fallo que se añadirá al LOG
     if description:
         description = platformtools.dialog_input('', 'Introduzca una breve descripción del fallo')
 
@@ -398,7 +416,7 @@ def report_send(item, description=False, fatal=False):
     for label_a, value_a in list(pastebin_list.items()):
         if label_a not in pastebin_list_last:
             pastebin_dir.append(label_a)
-    random.shuffle(pastebin_dir)
+    # random.shuffle(pastebin_dir)
     pastebin_dir.extend(pastebin_list_last)  # Estos servicios los dejamos los últimos
 
     # pastebin_dir = ['ghostbin']                                         # Para pruebas de un servicio
@@ -408,6 +426,11 @@ def report_send(item, description=False, fatal=False):
     for paste_name in pastebin_dir:
         paste_service = pastebin_list[paste_name]
 
+        # En un futuro hay que ver reintentar varias veces a nuestro sitio antes
+        # de probar con otro; por ahora limitamos a nuestro sitio como "prueba de estrés"
+        if not "alfa" in paste_name:
+            continue
+
         if not paste_service['active']:  # Si no esta activo el servidor, pasamos
             continue
         if paste_service['method'] == 'requests' and not requests_status:  # Si "requests" no esta activo, pasamos
@@ -415,10 +438,11 @@ def report_send(item, description=False, fatal=False):
 
         paste_host = paste_service['host']  # URL del servidor "pastebin"
         paste_sufix = paste_service['api_suffix']  # sufijo del API para el POST
-        paste_title = ''
 
         if paste_service['filename'] == 'random':
             paste_title = "LOG" + str(random.randrange(1, 999999999))  # Título del LOG
+        else:
+            paste_title = "kodi"
 
         paste_post1 = paste_service['post_data_1']  # Parte inicial del POST
         paste_post2 = paste_service['post_data_2']  # Parte secundaria del POST
@@ -493,7 +517,7 @@ def report_send(item, description=False, fatal=False):
             elif paste_type == 'requests':
                 # data = requests.post(paste_host, params=paste_params, files=paste_file,
                 #            timeout=paste_timeout)
-                data = httptools.downloadpage(paste_host, params=paste_params, file=log_data,
+                data = httptools.downloadpage(paste_host + paste_sufix, params=paste_params, file=log_data,
                                               file_name=paste_title + '.log', timeout=paste_timeout,
                                               random_headers=paste_random_headers, headers=paste_headers)
 

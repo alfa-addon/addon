@@ -500,7 +500,7 @@ def filterchannels(category, view="thumb_", alfa_s=True, settings=False):
 
     channelslist.sort(key=lambda item: item.title.lower().strip())
 
-    if category == "all":
+    if category == "all" and not appenddisabledchannels:
         # Si prefiere el banner, cambia ahora de idea
         if view == "banner_":
             thumbnail = get_thumb("url.png", "banner_")
