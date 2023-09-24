@@ -257,8 +257,10 @@ def render_items(itemlist, parent_item):
 
     if parent_item.channel == 'videolibrary':
         channel_param = channeltools.get_channel_parameters(parent_item.contentChannel)
-    else:
+    elif not parent_item.module:
         channel_param = channeltools.get_channel_parameters(parent_item.channel)
+    else:
+        channel_param = {}
 
     genre = False
     if 'nero' in parent_item.title:
@@ -284,7 +286,7 @@ def render_items(itemlist, parent_item):
 
     # Recorremos el itemlist
     categories_channel = []
-    if itemlist and itemlist[0].channel:
+    if itemlist and not itemlist[0].module and itemlist[0].channel:
         categories_channel = channeltools.get_channel_parameters(itemlist[0].channel.lower()).get('categories', [])
 
     temp_list = list()
@@ -297,7 +299,7 @@ def render_items(itemlist, parent_item):
         if item.unify or item.unify == False:
             use_unify = item.unify
         else:
-            if channel_param.get('adult', ''):
+            if channel_param.get('adult', False):
                 use_unify = False
             else:
                 use_unify = channel_param.get('force_unify', False) or config.get_setting('unify', default=False)
@@ -468,12 +470,14 @@ def render_items(itemlist, parent_item):
             else:
                 breadcrumb = 'Similares (%s)' % parent_item.contentSerieName
         else:
-            breadcrumb = 'Busqueda'
+            breadcrumb = config.get_localized_string(60329)
     else:
         if parent_item.category != '':
             breadcrumb = parent_item.category.capitalize()
-        else:
+        elif not parent_item.module:
             breadcrumb = channeltools.get_channel_parameters(parent_item.channel).get('title', '')
+        else:
+            breadcrumb = parent_item.title
 
     xbmcplugin.setPluginCategory(handle=PLUGIN_HANDLE, category=breadcrumb)
 
@@ -746,9 +750,9 @@ def set_infolabels(listitem, item, player=False):
                                        "imdb": item.infoLabels.get("imdb_id", 0),
                                        "tvdb": item.infoLabels.get("tvdb_id", 0)}, "imdb")
             else:
-                infotagvideo.setUniqueIDs({"tmdb": item.infoLabels.get("tmdb_id", 0),
-                                           "imdb": item.infoLabels.get("imdb_id", 0),
-                                           "tvdb": item.infoLabels.get("tvdb_id", 0)}, "imdb")
+                infotagvideo.setUniqueIDs(str({"tmdb": item.infoLabels.get("tmdb_id", 0),
+                                               "imdb": item.infoLabels.get("imdb_id", 0),
+                                               "tvdb": item.infoLabels.get("tvdb_id", 0)}), "imdb")
 
         except Exception:
             import traceback
@@ -764,7 +768,8 @@ def set_infolabels(listitem, item, player=False):
             for label_tag in item.infoLabels.keys():
                 try:
                     if infoLabels_dict[label_tag] != 'None':
-                        infoLabels_kodi[infoLabels_dict[label_tag]] = item.infoLabels[label_tag]
+                        key = infoLabels_dict[label_tag]
+                        infoLabels_kodi[key] = item.infoLabels[label_tag]
                 except Exception:
                     continue
 
@@ -780,10 +785,14 @@ def set_infolabels(listitem, item, player=False):
                     artists = item2list(infoLabels_kodi["artist"])
                     infotagvideo.setArtists(artists)
 
-                if infoLabels_kodi.get("castandrole", None) and isinstance(infoLabels_kodi["castandrole"], list):
-                    cast = [xbmc.Actor(actor, role) for actor, role in infoLabels_kodi["castandrole"]]
+                if infoLabels_kodi.get("castandrole", None) and \
+                        isinstance(infoLabels_kodi["castandrole"], list):
+                    cast = []
+                    for actor, role in infoLabels_kodi["castandrole"]:
+                        cast.append(xbmc.Actor(actor, role))
                     infotagvideo.setCast(cast)
-                elif infoLabels_kodi.get("cast", None) and isinstance(infoLabels_kodi["cast"], list):
+                elif infoLabels_kodi.get("cast", None) and \
+                        isinstance(infoLabels_kodi["cast"], list):
                     cast = [xbmc.Actor(x) for x in infoLabels_kodi["cast"]]
                     infotagvideo.setCast(cast)
 
@@ -914,19 +923,22 @@ def set_infolabels(listitem, item, player=False):
                     writers = item2list(infoLabels_kodi["writer"])
                     infotagvideo.setWriters(writers)
 
-                if infoLabels_kodi.get("year", None):
+                if infoLabels_kodi.get("year", None) and \
+                        isinstance(infoLabels_kodi["year"], int):
                     infotagvideo.setYear(infoLabels_kodi["year"])
 
             else:
                 listitem.setInfo("video", infoLabels_kodi)
 
         except Exception:
+            import traceback
+            logger.error(traceback.format_exc())
+            logger.error(item.infoLabels)
+            logger.error(infoLabels_kodi)
             if platform_version >= 20.0:
                 listitem.setInfo("video", item.infoLabels) # HACK: Solo en caso de excepción
             else:
                 listitem.setInfo("video", item.infoLabels)
-            logger.error(item.infoLabels)
-            logger.error(infoLabels_kodi)
 
     if player and not item.contentTitle:
         if platform_version >= 20.0:
