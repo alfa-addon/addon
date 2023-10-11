@@ -40,10 +40,6 @@ def get_video_url(page_url, user="", password="", video_password=""):
     flashvars = flashvars.replace('" + "', '' ).replace("\/", "/")
     videos = scrapertools.find_single_match(flashvars, '"mediaDefinitions":(.*?),"isVertical"')
     crypto = scrapertools.find_multiple_matches(flashvars, "(var\sra[a-z0-9]+=.+?);flash")
-    logger.debug(videos)
-    logger.debug(crypto)
-
-
     if not crypto:
         JSONData = json.load(videos)
         for elem in JSONData:

@@ -52,6 +52,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://streamdav.com/(?:e|v)/[A-z0-9-]+)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://sex3.com/[0-9-]+/)",
         "url": "\\1"
       },
