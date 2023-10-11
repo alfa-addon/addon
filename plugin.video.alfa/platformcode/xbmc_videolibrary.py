@@ -33,7 +33,7 @@ def mark_auto_as_watched(item):
         logger.info()
         # logger.debug("item:\n" + item.tostring('\n'))
 
-        condicion = config.get_setting("watched_setting", "videolibrary")
+        condicion = config.get_setting("videolibrary_watched_setting")
 
         time_limit = time.time() + 30
         while not platformtools.is_playing() and time.time() < time_limit:
@@ -72,13 +72,13 @@ def mark_auto_as_watched(item):
 
         # Sincronizacion silenciosa con Trakt
         if sync_with_trakt:
-            if config.get_setting("sync_trakt_watched", "videolibrary"):
+            if config.get_setting("videolibrary_trakt_sync_after_watching"):
                 sync_trakt_kodi()
 
                 # logger.debug("Fin del hilo")
 
     # Si esta configurado para marcar como visto
-    if config.get_setting("mark_as_watched", "videolibrary"):
+    if config.get_setting("videolibrary_mark_as_watched"):
         threading.Thread(target=mark_as_watched_subThread, args=[item]).start()
 
 
@@ -211,7 +211,7 @@ def sync_trakt_kodi(silent=True):
     # Para que la sincronizacion no sea silenciosa vale con silent=False
     if xbmc.getCondVisibility('System.HasAddon("script.trakt")'):
         notificacion = True
-        if (not config.get_setting("sync_trakt_notification", "videolibrary") and
+        if (not config.get_setting("videolibrary_trakt_sync_notification") and
                 platformtools.is_playing()):
             notificacion = False
 
@@ -313,7 +313,7 @@ def mark_season_as_watched_on_kodi(item, value=1):
 
     # Solo podemos marcar la temporada como vista en la BBDD de Kodi si la BBDD es local,
     # en caso de compartir BBDD esta funcionalidad no funcionara
-    if config.get_setting("db_mode", "videolibrary"):
+    if config.get_setting("videolibrary_xbmc_db_location"):
         return
 
     if value == 0:
@@ -396,7 +396,7 @@ def get_videos_watched_on_kodi(item, value=1, list_videos=False):
 
     # Solo podemos obtener los vídeos como vistos en la BBDD de Kodi si la BBDD es local,
     # en caso de compartir BBDD esta funcionalidad no funcionara
-    if config.get_setting("db_mode", "videolibrary"):
+    if config.get_setting("videolibrary_xbmc_db_location"):
         return
 
     request_season = ''
@@ -484,7 +484,7 @@ def mark_content_as_watched_on_alfa(path):
 
     # Solo podemos marcar el contenido como vista en la BBDD de Kodi si la BBDD es local,
     # en caso de compartir BBDD esta funcionalidad no funcionara
-    #if config.get_setting("db_mode", "videolibrary"):
+    #if config.get_setting("videolibrary_xbmc_db_location"):
     #    return
     
     path2 = ''
@@ -567,14 +567,14 @@ def get_data(payload):
     # Required header for XBMC JSON-RPC calls, otherwise you'll get a 415 HTTP response code - Unsupported media type
     headers = {'content-type': 'application/json'}
 
-    if config.get_setting("db_mode", "videolibrary"):
+    if config.get_setting("videolibrary_xbmc_db_location"):
         try:
             try:
-                xbmc_port = config.get_setting("xbmc_puerto", "videolibrary")
+                xbmc_port = config.get_setting("videolibrary_xbmc_db_port")
             except:
                 xbmc_port = 0
 
-            xbmc_json_rpc_url = "http://" + config.get_setting("xbmc_host", "videolibrary") + ":" + str(
+            xbmc_json_rpc_url = "http://" + config.get_setting("videolibrary_xbmc_db_host") + ":" + str(
                 xbmc_port) + "/jsonrpc"
             req = urllib2.Request(xbmc_json_rpc_url, data=jsontools.dump(payload), headers=headers)
             f = urllib2.urlopen(req)

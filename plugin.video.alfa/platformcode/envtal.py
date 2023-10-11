@@ -223,7 +223,7 @@ def get_environment():
         try:
             try:
                 environment['videolab_pelis_scraper'] = 'TMDB' 
-                environment['videolab_series_scraper'] = 'TMDB' if config.get_setting('scraper_tvshows', 'videolibrary', default=0) == 0 else 'TVDB'
+                environment['videolab_series_scraper'] = 'TMDB' if config.get_setting("videolibrary_tvshows_scraper", default=0) == 0 else 'TVDB'
                 folder_movies = config.get_setting("folder_movies")
                 folder_tvshows = config.get_setting("folder_tvshows")
                 folders = [folder_movies, folder_tvshows]
@@ -278,8 +278,8 @@ def get_environment():
             pass
         try:
             video_updates = ['No', 'Inicio', 'Una vez', 'Inicio+Una vez', 'Dos veces al día']
-            environment['videolab_update'] = str(video_updates[config.get_setting("update", "videolibrary")])
-            if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
+            environment['videolab_update'] = str(video_updates[config.get_setting("videolibrary_update")])
+            if config.get_setting("videolibrary_scan_after_backup", default=False):
                 environment['videolab_update'] += ' (Solo SCAN)'
         except:
             environment['videolab_update'] = '?'

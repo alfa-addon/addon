@@ -1068,8 +1068,8 @@ def reset_videolibrary_by_channel(inactive=True):
     ###### LISTA DE CANALES PARA SOBRESCRIBIR SU VIDEOTECA, o "*" PARA TODOS
     channels_list = []
 
-    if not channels_list or not config.get_setting("update", "videolibrary") or \
-                    config.get_setting("videolibrary_backup_scan", "videolibrary"):
+    if not channels_list or not config.get_setting("videolibrary_update") or \
+                    config.get_setting("videolibrary_scan_after_backup"):
         return
 
     try:
@@ -1166,8 +1166,8 @@ def clean_videolibrary_unused_channels():
     ###### LISTA DE CANALES PARA LIMPIAR SU VIDEOTECA, o "*" PARA TODOS
     channels_list = []
 
-    if not channels_list or not config.get_setting("update", "videolibrary") or \
-                    config.get_setting("videolibrary_backup_scan", "videolibrary"):
+    if not channels_list or not config.get_setting("videolibrary_update") or \
+                    config.get_setting("videolibrary_scan_after_backup"):
         return
 
     try:
