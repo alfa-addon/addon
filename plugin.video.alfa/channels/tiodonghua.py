@@ -383,7 +383,7 @@ def newest(categoria, **AHkwargs):
 
     item.title = "newest"
     item.category_new = "newest"
-    item.channel = channel
+    item.channel = canonical['channel']
 
     try:
         if categoria in ['anime']:
