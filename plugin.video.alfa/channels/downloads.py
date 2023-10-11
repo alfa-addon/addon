@@ -231,7 +231,7 @@ def mainlist(item):
                                           % remote_domain.capitalize(), thumbnail=get_thumb("on_the_air.png"),  
                                           remote_download={remote_domain: params}))
     
-    if not item.contentType == "tvshow" and config.get_setting("browser", "downloads") == True:
+    if not item.contentType == "tvshow" and config.get_setting("downloads_browser") == True:
         itemlist.insert(0, Item(channel=item.channel, action="browser", title='[COLOR gold][B]%s[/B][/COLOR]' 
                                 % config.get_localized_string(70222), thumbnail=get_thumb("search.png"),  
                                 url=DOWNLOAD_PATH, remote_download=remote_download))
@@ -337,7 +337,7 @@ def browser(item):
     
     torrent_dirs(item)
     torrent_paths = TORRENT_PATHS
-    if config.get_setting("torrent_paths", "downloads", default=True):
+    if config.get_setting("downloads_show_torrent_paths", default=True):
         torrent_paths_list = config.get_setting("torrent_paths_list", "downloads", default=[])
         if HOST != 'Local':
             torrent_paths_list = [['%s' % torrent_paths['TORR_client'].lower(), '%s' % torrent_paths[torrent_paths['TORR_client'].upper()]]]
@@ -1199,7 +1199,7 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
 def move_to_library(item, forced=False):
     logger.info()
     # Verificamos si se activó el ajuste "Añadir completados a videoteca"
-    if config.get_setting("library_add", "downloads") == True or forced == True:
+    if config.get_setting("downloads_library_add") == True or forced == True:
         download_path = item.downloadFilename
         item_library_path = filetools.join(config.get_videolibrary_path(), *filetools.split(item.downloadFilename))
         absolute_path = download_path
@@ -1214,7 +1214,7 @@ def move_to_library(item, forced=False):
         final_path = download_path
 
         # Si se activó el ajuste "Mover archivo descargado a videoteca", movemos el archivo
-        if config.get_setting("library_move", "downloads") == True:
+        if config.get_setting("downloads_library_move") == True:
             # Asignamos una ruta a la carpeta de pelis o series en videoteca según contentType
             if item.contentType == "movie":
                 item_library_path = filetools.join(config.get_videolibrary_path(),
@@ -1398,7 +1398,7 @@ def sort_method(item):
     quality_orders[2] = ["HD", "480P", "360P", "240P", "FULLHD", "BLURAY"]
     quality_orders[3] = ["480P", "360P", "240P", "BLURAY", "FULLHD", "HD"]
 
-    order_list_idiomas = lang_orders[int(config.get_setting("language", "downloads"))]
+    order_list_idiomas = lang_orders[int(config.get_setting("downloads_sort_servers_language"))]
     match_list_idimas = {"ES": ["CAST", "ESP", "Castellano", "Español", "Audio Español"],
                          "LAT": ["LAT", "Latino"],
                          "SUB": ["Subtitulo Español", "Subtitulado", "SUB"],
@@ -1406,7 +1406,7 @@ def sort_method(item):
                          "VOSE": ["VOSE"]}
 
     order_list_calidad = ["BLURAY", "FULLHD", "HD", "480P", "360P", "240P"]
-    order_list_calidad = quality_orders[int(config.get_setting("quality", "downloads"))]
+    order_list_calidad = quality_orders[int(config.get_setting("downloads_sort_servers_quality"))]
     match_list_calidad = {"BLURAY": ["BR", "BLURAY"],
                           "FULLHD": ["FULLHD", "FULL HD", "1080", "HD1080", "HD 1080"],
                           "HD": ["HD", "HD REAL", "HD 720", "720", "HDTV"],
@@ -1417,7 +1417,7 @@ def sort_method(item):
     value = (get_match_list(item.title, match_list_idimas, order_list_idiomas, ignorecase=True, only_ascii=True).index, \
              get_match_list(item.title, match_list_calidad, order_list_calidad, ignorecase=True, only_ascii=True).index)
 
-    if config.get_setting("server_speed", "downloads"):
+    if config.get_setting("downloads_sort_servers_speed"):
         value += tuple([get_server_position(item.server)])
 
     return value
@@ -1483,7 +1483,7 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                     play_items_torrent.append([play_item, size, quality])
                 
                 if play_items_torrent:
-                    size_order = config.get_setting('torrent_quality', channel='downloads', default=0)
+                    size_order = config.get_setting("torrent_quality", default=0)
                     if size_order:
                         play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it[1])))        # clasificamos
                         if size_order == 1 and len(play_items_torrent) > 2:             # Tomamos la segunda calidad
@@ -1560,7 +1560,7 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
 
             # Si hay enlaces torrent para clasificar, los clasificamos
             if play_items_torrent:
-                size_order = config.get_setting('torrent_quality', channel='downloads', default=0)
+                size_order = config.get_setting("torrent_quality", default=0)
                 if play_item.contentChannel not in blocked_channels:
                     if size_order:
                         play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it.size_torr)))         # clasificamos
@@ -1614,10 +1614,10 @@ def download_from_url(url, item):
 
     # Lanzamos la descarga
     d = Downloader(url, download_path, file_name,
-                   max_connections=1 + int(config.get_setting("max_connections", "downloads")),
-                   block_size=2 ** (17 + int(config.get_setting("block_size", "downloads"))),
-                   part_size=2 ** (20 + int(config.get_setting("part_size", "downloads"))),
-                   max_buffer=2 * int(config.get_setting("max_buffer", "downloads")))
+                   max_connections=1 + int(config.get_setting("downloads_max_connections")),
+                   block_size=2 ** (17 + int(config.get_setting("downloads_block_size"))),
+                   part_size=2 ** (20 + int(config.get_setting("downloads_part_size"))),
+                   max_buffer=2 * int(config.get_setting("downloads_max_buffer")))
     d.start_dialog('%s: %s' % (config.get_localized_string(60332), item.server.capitalize()))
 
     # Descarga detenida. Obtenemos el estado:
@@ -1866,7 +1866,7 @@ def download_from_best_server(item, silent=False):
     if not silent: progreso.update(100, config.get_localized_string(70183) + '\n' + config.get_localized_string(70181) % len(play_items) + '\n' + 
                     config.get_localized_string(70182))
 
-    if config.get_setting("server_reorder", "downloads") == 1:
+    if config.get_setting("downloads_sort_servers") == 1:
         play_items.sort(key=sort_method)
 
     if not silent and progreso.iscanceled():
@@ -2464,8 +2464,8 @@ def save_download(item, silent=False):
         torrent_params['lookup'] = False
         del item.from_action
         del item.from_channel
-        logger.debug('Activar descargas experimentales: ' + str(config.get_setting('enable_expermental_downloads', channel='downloads')))
-        if config.get_setting('enable_expermental_downloads', channel='downloads') == True:
+        logger.debug('Activar descargas experimentales: ' + str(config.get_setting("downloads_alternate_system")))
+        if config.get_setting("downloads_alternate_system") == True:
             # En videolibrary no se obtienen los canales en contentChannel, los buscamos manualmente
             if item.server != 'torrent' and item.sub_action != 'auto':
                 if item.channel == 'videolibrary':

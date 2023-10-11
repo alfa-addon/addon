@@ -17,7 +17,12 @@ from core.item import Item
 from core import tmdb, scrapertools, channeltools
 from channelselector import get_thumb, filterchannels
 from platformcode import logger, config
-from platformcode.platformtools import dialog_input, dialog_progress, show_channel_settings, dialog_select, dialog_numeric, dialog_ok
+from platformcode.platformtools import dialog_input
+from platformcode.platformtools import dialog_progress
+from platformcode.platformtools import show_channel_settings
+from platformcode.platformtools import dialog_select
+from platformcode.platformtools import dialog_numeric
+from platformcode.platformtools import dialog_ok
 
 import gc
 gc.disable()
@@ -134,7 +139,7 @@ def new_search(item):
     logger.info()
 
     itemlist = []
-    last_search = channeltools.get_channel_setting('Last_searched', 'search', '')
+    last_search = config.get_setting('search_remember_last', default='')
 
     searched_text = item.search_text or dialog_input(default=last_search, heading='')
     save_search(searched_text, item.tourl())
@@ -288,7 +293,7 @@ def channel_search(item):
             if mode == 'all' or (it.contentType and mode == it.contentType):
                 if not it.infoLabels or not item.text.lower() in it.title.lower():
                     continue
-                if config.get_setting('result_mode', 'search') != 0:
+                if config.get_setting('search_result_mode') != 0:
                     if config.get_localized_string(30992) not in it.title:
                         it.title += " " + ch_name
                         results.append(it)
@@ -302,7 +307,7 @@ def channel_search(item):
         if not grouped:
             continue
         # to_temp[key] = grouped
-        if config.get_setting('result_mode', 'search') == 0:
+        if config.get_setting('search_result_mode') == 0:
             if not config.get_setting('unify'):
                 title = ch_name + ' [COLOR yellow](' + str(len(grouped)) + ')[/COLOR]'
             else:
@@ -320,7 +325,7 @@ def channel_search(item):
     # send_to_temp(to_temp)
     if not config.get_setting('tmdb_active'): config.set_setting('tmdb_active', True)
     if item.mode == 'all':
-        if config.get_setting('result_mode', 'search') != 0:
+        if config.get_setting('search_result_mode') != 0:
             res_count = len(results)
         results = sorted(results, key=lambda it: it.title)
         results_statistic = config.get_localized_string(59972) % (item.title, res_count, time.time() - start)
@@ -392,6 +397,7 @@ def get_channels(item):
     channels_list = list()
     title_list = list()
     if not all_channels: all_channels = filterchannels('all')
+    all_channels = list(set(all_channels))
 
     for ch in all_channels:
         channel = ch.channel
@@ -434,7 +440,7 @@ def settings(item):
 
 def set_workers():
     list_mode=[None,1,2,4,6,8,16,24,32,64]
-    index = config.get_setting('thread_number', 'search')
+    index = config.get_setting('search_max_workers')
     return list_mode[index]
 
 def setting_channel_new(item):
@@ -792,9 +798,9 @@ def get_from_temp(item):
 
 def save_search(text, item_tourl):
     if text:
-        saved_searches_limit = int((10, 20, 30, 40)[int(config.get_setting("saved_searches_limit", "search"))])
+        saved_searches_limit = int((10, 20, 30, 40)[int(config.get_setting("search_save_limit"))])
 
-        current_saved_searches_list = config.get_setting("saved_searches_list", "search")
+        current_saved_searches_list = config.get_setting("search_saved_list")
         if current_saved_searches_list is None:
             saved_searches_list = []
         else:
@@ -809,16 +815,16 @@ def save_search(text, item_tourl):
 
         saved_searches_list.insert(0, {text: item_tourl})
 
-        config.set_setting("saved_searches_list", saved_searches_list[:saved_searches_limit], "search")
+        config.set_setting("search_saved_list", saved_searches_list[:saved_searches_limit])
 
 
 def clear_saved_searches(item):
-    config.set_setting("saved_searches_list", list(), "search")
+    config.set_setting("search_saved_list", list())
     dialog_ok(config.get_localized_string(60423), config.get_localized_string(60424))
 
 
 def get_saved_searches():
-    current_saved_searches_list = config.get_setting("saved_searches_list", "search")
+    current_saved_searches_list = config.get_setting("search_saved_list")
     if current_saved_searches_list is None:
         saved_searches_list = []
     else:

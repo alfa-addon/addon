@@ -257,8 +257,10 @@ def render_items(itemlist, parent_item):
 
     if parent_item.channel == 'videolibrary':
         channel_param = channeltools.get_channel_parameters(parent_item.contentChannel)
-    else:
+    elif not parent_item.module:
         channel_param = channeltools.get_channel_parameters(parent_item.channel)
+    else:
+        channel_param = {}
 
     genre = False
     if 'nero' in parent_item.title:
@@ -284,7 +286,7 @@ def render_items(itemlist, parent_item):
 
     # Recorremos el itemlist
     categories_channel = []
-    if itemlist and itemlist[0].channel:
+    if itemlist and not itemlist[0].module and itemlist[0].channel:
         categories_channel = channeltools.get_channel_parameters(itemlist[0].channel.lower()).get('categories', [])
 
     temp_list = list()
@@ -297,7 +299,7 @@ def render_items(itemlist, parent_item):
         if item.unify or item.unify == False:
             use_unify = item.unify
         else:
-            if channel_param.get('adult', ''):
+            if channel_param.get('adult', False):
                 use_unify = False
             else:
                 use_unify = channel_param.get('force_unify', False) or config.get_setting('unify', default=False)
@@ -384,8 +386,6 @@ def render_items(itemlist, parent_item):
         # Creamos el listitem
         if config.get_platform(True)['num_version'] >= 18.0:
             listitem = xbmcgui.ListItem(item.title, offscreen=True)
-            if config.get_platform(True)['num_version'] >= 20.0:
-                infotagvideo = xbmc.InfoTagVideo(offscreen=True)
         else:
             listitem = xbmcgui.ListItem(item.title)
 
@@ -470,12 +470,14 @@ def render_items(itemlist, parent_item):
             else:
                 breadcrumb = 'Similares (%s)' % parent_item.contentSerieName
         else:
-            breadcrumb = 'Busqueda'
+            breadcrumb = config.get_localized_string(60329)
     else:
         if parent_item.category != '':
             breadcrumb = parent_item.category.capitalize()
-        else:
+        elif not parent_item.module:
             breadcrumb = channeltools.get_channel_parameters(parent_item.channel).get('title', '')
+        else:
+            breadcrumb = parent_item.title
 
     xbmcplugin.setPluginCategory(handle=PLUGIN_HANDLE, category=breadcrumb)
 
@@ -732,65 +734,221 @@ def set_infolabels(listitem, item, player=False):
             logger.error(item.infoLabels)
     """
     infoLabels_kodi = {}
-    if config.get_platform(True)['num_version'] >= 20.0:
-        infotagvideo = xbmc.InfoTagVideo(offscreen=True)
+    platform_version = config.get_platform(True)['num_version']
+
+    if platform_version >= 20.0:
+        infotagvideo = listitem.getVideoInfoTag()
 
     if item.infoLabels:
         try:
-            if config.get_platform(True)['num_version'] < 18.0:
+            if platform_version < 18.0:
                 listitem.setUniqueIDs({"tmdb": item.infoLabels.get("tmdb_id", 0),
                                        "imdb": item.infoLabels.get("imdb_id", 0),
                                        "tvdb": item.infoLabels.get("tvdb_id", 0)})
-            elif config.get_platform(True)['num_version'] < 20.0:
+            elif platform_version < 20.0:
                 listitem.setUniqueIDs({"tmdb": item.infoLabels.get("tmdb_id", 0),
                                        "imdb": item.infoLabels.get("imdb_id", 0),
                                        "tvdb": item.infoLabels.get("tvdb_id", 0)}, "imdb")
-            else:                                                                               ### VERIFY
+            else:
                 infotagvideo.setUniqueIDs(str({"tmdb": item.infoLabels.get("tmdb_id", 0),
                                                "imdb": item.infoLabels.get("imdb_id", 0),
                                                "tvdb": item.infoLabels.get("tvdb_id", 0)}), "imdb")
-        except:
+
+        except Exception:
             import traceback
             logger.error(traceback.format_exc())
 
-        if 'mediatype' not in item.infoLabels:
-            item.infoLabels['mediatype'] = item.contentType
+        if not item.infoLabels.get("mediatype", None):
+            if item.contentType != 'list':
+                item.infoLabels["mediatype"] = item.contentType
+            else:
+                item.infoLabels["mediatype"] = "video"
+
         try:
-            for label_tag, label_value in list(item.infoLabels.items()):
+            for label_tag in item.infoLabels.keys():
                 try:
-                    #logger.debug(str(label_tag) + ': ' + str(infoLabels_dict[label_tag]))
                     if infoLabels_dict[label_tag] != 'None':
-                        infoLabels_kodi.update({infoLabels_dict[label_tag]: item.infoLabels[label_tag]})
-                except:
+                        key = infoLabels_dict[label_tag]
+                        infoLabels_kodi[key] = item.infoLabels[label_tag]
+                except Exception:
                     continue
 
-            # HACK: Arreglo para 'Invalid media type "list"'
-            # TODO: Investigar por qué no se puede arreglar antes
-            if infoLabels_kodi['mediatype'] == 'list':
-                infoLabels_kodi['mediatype'] = 'video'
+            if platform_version >= 20.0:
+                item2list = lambda x: x if isinstance(x, (list, tuple)) else [x]
+                
+                infotagvideo.setMediaType(infoLabels_kodi["mediatype"])
 
-            if config.get_platform(True)['num_version'] >= 20.0:
-                listitem.setInfo("video", infoLabels_kodi)                      ### TEMPORAL
+                if infoLabels_kodi.get("album", None):
+                    infotagvideo.setAlbum(infoLabels_kodi["album"])
+
+                if infoLabels_kodi.get("artist", None):
+                    artists = item2list(infoLabels_kodi["artist"])
+                    infotagvideo.setArtists(artists)
+
+                if infoLabels_kodi.get("castandrole", None) and \
+                        isinstance(infoLabels_kodi["castandrole"], list):
+                    cast = []
+                    for actor, role in infoLabels_kodi["castandrole"]:
+                        cast.append(xbmc.Actor(actor, role))
+                    infotagvideo.setCast(cast)
+                elif infoLabels_kodi.get("cast", None) and \
+                        isinstance(infoLabels_kodi["cast"], list):
+                    cast = [xbmc.Actor(x) for x in infoLabels_kodi["cast"]]
+                    infotagvideo.setCast(cast)
+
+                if infoLabels_kodi.get("code", None):
+                    infotagvideo.setProductionCode(infoLabels_kodi["code"])
+
+                if infoLabels_kodi.get("country", None):
+                    countries = item2list(infoLabels_kodi["country"])
+                    infotagvideo.setCountries(countries)
+
+                if infoLabels_kodi.get("dateadded", None):
+                    infotagvideo.setDateAdded(infoLabels_kodi["dateadded"])
+
+                if infoLabels_kodi.get("dbid", None):
+                    infotagvideo.setDbId(infoLabels_kodi["dbid"])
+
+                if infoLabels_kodi.get("director", None):
+                    directors = item2list(infoLabels_kodi["director"])
+                    infotagvideo.setDirectors(directors)
+
+                if infoLabels_kodi.get("duration", None):
+                    infotagvideo.setDuration(infoLabels_kodi["duration"])
+
+                if infoLabels_kodi.get("episode", None):
+                    infotagvideo.setEpisode(infoLabels_kodi["episode"])
+
+                # if infoLabels_kodi.get("episodio_air_date", None):
+                #     infotagvideo.setFirstAired(infoLabels_kodi["episodio_air_date"])
+
+                if infoLabels_kodi.get("episodeguide", None):
+                    infotagvideo.setEpisodeGuide(infoLabels_kodi["episodeguide"])
+
+                if infoLabels_kodi.get("genre", None):
+                    genres = item2list(infoLabels_kodi["genre"])
+                    infotagvideo.setGenres(genres)
+
+                if infoLabels_kodi.get("imdbnumber", None):
+                    infotagvideo.setIMDBNumber(infoLabels_kodi["imdbnumber"])
+
+                if infoLabels_kodi.get("lastplayed", None):
+                    infotagvideo.setLastPlayed(infoLabels_kodi["lastplayed"])
+
+                if infoLabels_kodi.get("mpaa", None):
+                    infotagvideo.setMpaa(infoLabels_kodi["mpaa"])
+
+                if infoLabels_kodi.get("originaltitle", None):
+                    infotagvideo.setOriginalTitle(infoLabels_kodi["originaltitle"])
+
+                if infoLabels_kodi.get("playcount", None):
+                    infotagvideo.setPlaycount(infoLabels_kodi["playcount"])
+
+                if infoLabels_kodi.get("plot", None):
+                    infotagvideo.setPlot(infoLabels_kodi["plot"])
+
+                if infoLabels_kodi.get("plotoutline", None):
+                    infotagvideo.setPlotOutline(infoLabels_kodi["plotoutline"])
+
+                if infoLabels_kodi.get("path", None):
+                    infotagvideo.setPath(infoLabels_kodi["path"])
+
+                if infoLabels_kodi.get("premiered", None):
+                    infotagvideo.setPremiered(infoLabels_kodi["premiered"])
+
+                if infoLabels_kodi.get("rating", None):
+                    infotagvideo.setRating(infoLabels_kodi["rating"])
+
+                if infoLabels_kodi.get("season", None):
+                    infotagvideo.setSeason(infoLabels_kodi["season"])
+
+                if infoLabels_kodi.get("set", None):
+                    infotagvideo.setSet(infoLabels_kodi["set"])
+
+                if infoLabels_kodi.get("setid", None):
+                    infotagvideo.setSetId(infoLabels_kodi["setid"])
+
+                if infoLabels_kodi.get("setoverview", None):
+                    infotagvideo.setSetOverview(infoLabels_kodi["setoverview"])
+
+                if infoLabels_kodi.get("showlink", None):
+                    showLinks = item2list(infoLabels_kodi["showlink"])
+                    infotagvideo.setShowLinks(showLinks)
+
+                if infoLabels_kodi.get("sortepisode", None):
+                    infotagvideo.setSortEpisode(infoLabels_kodi["sortepisode"])
+
+                if infoLabels_kodi.get("sortseason", None):
+                    infotagvideo.setSortSeason(infoLabels_kodi["sortseason"])
+
+                if infoLabels_kodi.get("sorttitle", None):
+                    infotagvideo.setSortTitle(infoLabels_kodi["sorttitle"])
+
+                if infoLabels_kodi.get("status", None):
+                    infotagvideo.setTvShowStatus(infoLabels_kodi["status"])
+
+                if infoLabels_kodi.get("studio", None):
+                    studios = item2list(infoLabels_kodi["studio"])
+                    infotagvideo.setStudios(studios)
+
+                if infoLabels_kodi.get("tag", None):
+                    tags = item2list(infoLabels_kodi["tag"])
+                    infotagvideo.setTags(tags)
+
+                if infoLabels_kodi.get("tagline", None):
+                    infotagvideo.setTagLine(infoLabels_kodi["tagline"])
+
+                if infoLabels_kodi.get("title", None):
+                    infotagvideo.setTitle(infoLabels_kodi["title"])
+
+                if infoLabels_kodi.get("top250", None):
+                    infotagvideo.setTop250(infoLabels_kodi["top250"])
+
+                if infoLabels_kodi.get("tracknumber", None):
+                    infotagvideo.setTrackNumber(infoLabels_kodi["tracknumber"])
+
+                if infoLabels_kodi.get("trailer", None):
+                    infotagvideo.setTrailer(infoLabels_kodi["trailer"])
+
+                if infoLabels_kodi.get("tvshowtitle", None):
+                    infotagvideo.setTvShowTitle(infoLabels_kodi["tvshowtitle"])
+
+                if infoLabels_kodi.get("userrating", None):
+                    infotagvideo.setUserRating(infoLabels_kodi["userrating"])
+
+                if infoLabels_kodi.get("votes", None):
+                    infotagvideo.setVotes(infoLabels_kodi["votes"])
+
+                if infoLabels_kodi.get("writer", None):
+                    writers = item2list(infoLabels_kodi["writer"])
+                    infotagvideo.setWriters(writers)
+
+                if infoLabels_kodi.get("year", None) and \
+                        isinstance(infoLabels_kodi["year"], int):
+                    infotagvideo.setYear(infoLabels_kodi["year"])
+
             else:
                 listitem.setInfo("video", infoLabels_kodi)
 
-        except:
-            if config.get_platform(True)['num_version'] >= 20.0:
-                listitem.setInfo("video", item.infoLabels)                      ### TEMPORAL
-            else:
-                listitem.setInfo("video", item.infoLabels)
+        except Exception:
+            import traceback
+            logger.error(traceback.format_exc())
             logger.error(item.infoLabels)
             logger.error(infoLabels_kodi)
+            if platform_version >= 20.0:
+                listitem.setInfo("video", item.infoLabels) # HACK: Solo en caso de excepción
+            else:
+                listitem.setInfo("video", item.infoLabels)
 
     if player and not item.contentTitle:
-        if config.get_platform(True)['num_version'] >= 20.0:
-            listitem.setInfo("video", {"Title": item.title})                    ### TEMPORAL
+        if platform_version >= 20.0:
+            infotagvideo.setTitle(item.title)
         else:
             listitem.setInfo("video", {"Title": item.title})
 
     elif not player:
-        if config.get_platform(True)['num_version'] >= 20.0:
-            listitem.setInfo("video", {"Title": item.title})                    ### TEMPORAL
+        if platform_version >= 20.0:
+            infotagvideo.setTitle(item.title)
         else:
             listitem.setInfo("video", {"Title": item.title})
 

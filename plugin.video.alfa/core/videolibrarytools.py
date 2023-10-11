@@ -218,7 +218,7 @@ def save_movie(item, silent=False):
     # progress dialog
     if not silent: p_dialog = platformtools.dialog_progress(config.get_localized_string(20000), config.get_localized_string(60062))
 
-    if config.get_setting("original_title_folder", "videolibrary") == 1 and item.infoLabels['originaltitle']:
+    if config.get_setting("videolibrary_original_title_in_content_folder") == 1 and item.infoLabels['originaltitle']:
         base_name = item.infoLabels['originaltitle']
     else:
         base_name = item.contentTitle
@@ -228,7 +228,7 @@ def save_movie(item, silent=False):
     else:
         base_name = filetools.validate_path(base_name.replace('/', '-'))
 
-    if config.get_setting("lowerize_title", "videolibrary") == 0:
+    if config.get_setting("videolibrary_lowercase_title_in_content_folder") == 0:
         base_name = base_name.lower()
 
     for raiz, subcarpetas, ficheros in filetools.walk(MOVIES_PATH):
@@ -319,7 +319,7 @@ def save_movie(item, silent=False):
                     from platformcode import xbmc_videolibrary
                     xbmc_videolibrary.update(FOLDER_MOVIES, '_scan_series')
                 # Si el usuario quiere un backup de la película (local o remoto), se toma la dirección/direcciones de destino y se copia
-                videolibrary_backup =  config.get_setting('videolibrary_backup', channel='videolibrary')
+                videolibrary_backup =  config.get_setting("videolibrary_backup")
                 if videolibrary_backup:
                     try:
                         import threading
@@ -392,7 +392,7 @@ def save_tvshow(item, episodelist, silent=False, overwrite=True, monitor=None):
                         + ' / ' + item.infoLabels['code'])
             return 0, 0, -1, path
 
-    if config.get_setting("original_title_folder", "videolibrary") == 1 and item.infoLabels['originaltitle']:
+    if config.get_setting("videolibrary_original_title_in_content_folder") == 1 and item.infoLabels['originaltitle']:
         base_name = item.infoLabels['originaltitle']
     elif item.infoLabels['tvshowtitle']:
         base_name = item.infoLabels['tvshowtitle']
@@ -406,7 +406,7 @@ def save_tvshow(item, episodelist, silent=False, overwrite=True, monitor=None):
     else:
         base_name = filetools.validate_path(base_name.replace('/', '-'))
 
-    if config.get_setting("lowerize_title", "videolibrary") == 0:
+    if config.get_setting("videolibrary_lowercase_title_in_content_folder") == 0:
         base_name = base_name.lower()
 
     for raiz, subcarpetas, ficheros in filetools.walk(TVSHOWS_PATH):
@@ -543,7 +543,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True, monito
     nostrm_episodelist = sorted(set(nostrm_episodelist))
     
     # Si solo se quiere al última temporada, averiguamos cuál es y la salvamos
-    if config.get_setting('last_season_only', 'videolibrary', default=False) or serie.infoLabels.get('last_season_only', False):
+    if config.get_setting("videolibrary_add_last_season_only", False):
         try:
             #episodelist = sorted(episodelist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))         #clasificamos
             season_last = 0
@@ -583,8 +583,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True, monito
     new_episodelist = []
     # Obtenemos el numero de temporada y episodio y descartamos los q no lo sean
     tags = []
-    if config.get_setting("enable_filter", "videolibrary"):
-        tags = [x.strip() for x in config.get_setting("filters", "videolibrary").lower().split(",")]
+    if config.get_setting("videolibrary_enable_filters"):
+        tags = [x.strip() for x in config.get_setting("videolibrary_filters")]
 
     for e in episodelist:
         if monitor and monitor.waitForAbort(0.1):
@@ -858,7 +858,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True, monito
                 from platformcode import xbmc_videolibrary
                 xbmc_videolibrary.update(FOLDER_TVSHOWS, '_scan_series')
             # Si el usuario quiere un backup de la serie (local o remoto), se toma la dirección/direcciones de destino y se copia lo nuevo
-            videolibrary_backup =  config.get_setting('videolibrary_backup', channel='videolibrary')
+            videolibrary_backup =  config.get_setting("videolibrary_backup")
             if videolibrary_backup:
                 try:
                     import threading
@@ -1275,9 +1275,9 @@ def add_tvshow(item, channel=None):
         logger.info("Se han añadido %s episodios de la serie %s a la videoteca" %
                     (insertados, item.show))
         if config.is_xbmc():
-            if config.get_setting("sync_trakt_new_tvshow", "videolibrary"):
+            if config.get_setting("videolibrary_trakt_sync_new_tvshows"):
                 from platformcode import xbmc_videolibrary
-                if config.get_setting("sync_trakt_new_tvshow_wait", "videolibrary"):
+                if config.get_setting("videolibrary_trakt_sync_new_tvshows_delay"):
                     # Comprobar que no se esta buscando contenido en la videoteca de Kodi
                     while xbmc.getCondVisibility('Library.IsScanningVideo()'):
                         xbmc.sleep(1000)

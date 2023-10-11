@@ -1318,7 +1318,7 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
     
     try:
         # Obtenemos el nombre base de la serie/película
-        if config.get_setting("original_title_folder", "videolibrary") == 1 and item.infoLabels['originaltitle']:
+        if config.get_setting("videolibrary_original_title_in_content_folder") == 1 and item.infoLabels['originaltitle']:
             base_name = item.infoLabels['originaltitle']
         elif item.infoLabels['tvshowtitle']:
             base_name = item.infoLabels['tvshowtitle']
@@ -1332,7 +1332,7 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
         else:
             base_name = filetools.validate_path(base_name.replace('/', '-'))
 
-        if config.get_setting("lowerize_title", "videolibrary") == 0:
+        if config.get_setting("videolibrary_lowercase_title_in_content_folder") == 0:
             base_name = base_name.lower()
 
         if item.contentType == 'movie':
@@ -1470,7 +1470,7 @@ def videolibray_populate_cached_torrents(url, torrent_file='', find=False, item=
                     return cached_torrents
 
         # Si está activada la opción de backup de la vidoeteca, se copian los cambios
-        videolibrary_backup =  config.get_setting('videolibrary_backup', channel='videolibrary')
+        videolibrary_backup =  config.get_setting("videolibrary_backup")
         if videolibrary_backup and res:
             try:
                 from core.videolibrarytools import videolibrary_backup_exec, read_nfo
@@ -2550,7 +2550,7 @@ def check_seen_torrents():
                 
                 # Si no viene de videoteca que crean item.strm_path y item.nfo
                 if not item.strm_path and filename and item.infoLabels['IMDBNumber']:
-                    if config.get_setting("original_title_folder", "videolibrary", debug=DEBUG) == 1 and item.infoLabels['originaltitle']:
+                    if config.get_setting("videolibrary_original_title_in_content_folder", debug=DEBUG) == 1 and item.infoLabels['originaltitle']:
                         base_name = item.infoLabels['originaltitle']
                     else:
                         if item.infoLabels['mediatype'] == 'movie':
@@ -2561,7 +2561,7 @@ def check_seen_torrents():
                         base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
                     else:
                         base_name = filetools.validate_path(base_name.replace('/', '-'))
-                    if config.get_setting("lowerize_title", "videolibrary", debug=DEBUG) == 0:
+                    if config.get_setting("videolibrary_lowercase_title_in_content_folder", debug=DEBUG) == 0:
                         base_name = base_name.lower()
                     path = ("%s [%s]" % (base_name, item.infoLabels['IMDBNumber'])).strip()
                     if item.infoLabels['mediatype'] == 'movie':

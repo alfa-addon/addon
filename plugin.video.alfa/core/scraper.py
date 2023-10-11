@@ -33,14 +33,14 @@ def find_and_set_infoLabels(item):
 
     # Obtener el Scraper por defecto de la configuracion segun el tipo de contenido
     if item.contentType == "movie":
-        scraper_actual = ['tmdb'][config.get_setting("scraper_movies", "videolibrary")]
+        scraper_actual = ['tmdb'][config.get_setting("videolibrary_movies_scraper")]
         tipo_contenido = config.get_localized_string(70283)
         title = item.contentTitle
         # Completar lista de opciones para este tipo de contenido
         list_opciones_cuadro.append(scrapers_disponibles['tmdb'])
 
     else:
-        scraper_actual = ['tmdb', 'tvdb'][config.get_setting("scraper_tvshows", "videolibrary")]
+        scraper_actual = ['tmdb', 'tvdb'][config.get_setting("videolibrary_tvshows_scraper")]
         tipo_contenido = "serie"
         title = item.contentSerieName
         # Completar lista de opciones para este tipo de contenido
@@ -267,9 +267,9 @@ def get_nfo(item, nfo_format='url_scraper'):
         
         default = 'true'
         if item.contentType == "movie":
-            scraper_actual = ['tmdb'][config.get_setting("scraper_movies", "videolibrary", default=0)]
+            scraper_actual = ['tmdb'][config.get_setting("videolibrary_movies_scraper", default=0)]
         else:
-            scraper_actual = ['tmdb', 'tvdb'][config.get_setting("scraper_tvshows", "videolibrary", default=0)]
+            scraper_actual = ['tmdb', 'tvdb'][config.get_setting("videolibrary_tvshows_scraper", default=0)]
         if item.infoLabels['tmdb_id']:
             if scraper_actual != 'tmdb': default = 'false'
             info_nfo += '<uniqueid type="tmdb" default="%s">%s</uniqueid>' % (default, item.infoLabels['tmdb_id'])
@@ -291,9 +291,9 @@ def get_nfo(item, nfo_format='url_scraper'):
         if not scraper:
             # Importamos el scraper
             if item.contentType == "movie":
-                scraper_actual = ['tmdb'][config.get_setting("scraper_movies", "videolibrary", default=0)]
+                scraper_actual = ['tmdb'][config.get_setting("videolibrary_movies_scraper", default=0)]
             else:
-                scraper_actual = ['tmdb', 'tvdb'][config.get_setting("scraper_tvshows", "videolibrary", default=0)]
+                scraper_actual = ['tmdb', 'tvdb'][config.get_setting("videolibrary_tvshows_scraper", default=0)]
             try:
                 scraper = __import__('core.%s' % scraper_actual, fromlist=["core.%s" % scraper_actual])
             except ImportError:
@@ -303,7 +303,7 @@ def get_nfo(item, nfo_format='url_scraper'):
 
 
 def sort_episode_list(episodelist):
-    scraper_actual = ['tmdb', 'tvdb'][config.get_setting("scraper_tvshows", "videolibrary")]
+    scraper_actual = ['tmdb', 'tvdb'][config.get_setting("videolibrary_tvshows_scraper")]
 
     if scraper_actual == "tmdb":
         episodelist.sort(key=lambda e: (int(e.contentSeason), int(e.contentEpisodeNumber)))
