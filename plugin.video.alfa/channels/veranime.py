@@ -13,6 +13,8 @@ from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
+from modules import renumbertools
+
 IDIOMAS = AlfaChannelHelper.IDIOMAS_ANIME
 list_language = list(set(IDIOMAS.values()))
 list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
@@ -108,6 +110,8 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True)))
+
+    itemlist = renumbertools.show_option(item.channel, itemlist)
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
@@ -209,7 +213,10 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['language'] = '*VOSE'
             if elem.find("div", class_=["texto", "contenido"]): 
                 elem_json['plot'] = elem.find("div", class_=["texto", "contenido"]).get_text(strip=True)
-        
+
+            elem_json['context'] = renumbertools.context(item)
+            elem_json['context'].extend(autoplay.context)
+
         except Exception:
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -275,6 +282,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                 elem_json['title'] = info.a.get_text(strip=True)
                 elem_json['season'] = item.contentSeason
                 elem_json['thumbnail'] = elem.img.get('data-src', '') or elem.img.get('src', '')
+                elem_json['season'], elem_json['episode'] = renumbertools.numbered_for_trakt(item.channel, 
+                                                            item.contentSerieName, elem_json['season'], elem_json['episode'])
 
             except Exception:
                 logger.error(elem)
@@ -352,7 +361,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                         elem_json['server'] = servers.get(elem_json['server'], elem_json['server'])
                         if not elem_json['server']: continue
                         
-                        elem_json['server'] = elem.find("span").get_text(strip=True)
+                        # elem_json['server'] = elem.find("span").get_text(strip=True)
 
                         elem_json['language'] = re.sub('\s+-.*', '', elem.find('p').get_text(strip=True))
                         elem_json['language'] = IDIOMAS.get(elem_json['language'].lower(), "VOSE")
@@ -408,7 +417,7 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
 
     try:
-        texto = texto.replace(" ", "+")
+        texto = AlfaChannel.do_quote(texto, '', plus=True)
         item.url = item.url + "?s=" + texto
 
         if texto:
@@ -423,3 +432,35 @@ def search(item, texto, **AHkwargs):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
+
+
+def newest(categoria, **AHkwargs):
+    logger.info()
+    kwargs.update(AHkwargs)
+
+    itemlist = []
+    item = Item()
+
+    item.title = "newest"
+    item.category_new = "newest"
+    item.channel = canonical['channel']
+
+    try:
+        if categoria in ['anime']:
+            item.url = host
+            item.c_type = 'episodios'
+            item.extra = "novedades"
+            item.action = "list_all"
+            itemlist = list_all(item)
+
+        if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
+            itemlist.pop()
+
+    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
+    except Exception:
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        logger.error(traceback.format_exc())
+        return []
+
+    return itemlist

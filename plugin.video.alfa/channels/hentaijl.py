@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel AnimeJL -*-
+# -*- Channel HentaiJL -*-
 # -*- Created for Alfa Addon -*-
 # -*- By DieFeM -*-
 
@@ -25,9 +25,9 @@ list_servers = ['uqload', 'voe', 'streamtape', 'doodstream', 'okru', 'streamlare
 forced_proxy_opt = 'ProxySSL'
 
 canonical = {
-             'channel': 'animejl', 
-             'host': config.get_setting("current_host", 'animejl', default=''), 
-             'host_alt': ["https://www.anime-jl.net/"], 
+             'channel': 'hentaijl', 
+             'host': config.get_setting("current_host", 'hentaijl', default=''), 
+             'host_alt': ["https://hentaijl.com/"], 
              'host_black_list': [],
              'pattern': '<ul\s*class="Menu">\s*<li\s*class="Current">\s*<a\s*href="([^"]+)"',
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
@@ -38,8 +38,8 @@ host = canonical['host'] or canonical['host_alt'][0]
 timeout = 15
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
-movie_path = 'animes?tipo[]=3&order=default'
-tv_path = 'animes?tipo[]=1&tipo[]=7&order=default'
+movie_path = 'directorio-hentai?tipo[]=3&order=default'
+tv_path = 'directorio-hentai?tipo[]=1&tipo[]=7&order=default'
 language = []
 url_replace = []
 
@@ -97,19 +97,19 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Últimos Episodios', url=host, action='list_all',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
 
-    itemlist.append(Item(channel=item.channel, title='Estrenos', url=host + 'animes?page=1&estado[]=2&order=updated', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Estrenos', url=host + 'directorio-hentai?page=1&estado[]=2&order=updated', action='list_all',
                          thumbnail=get_thumb('premieres', auto=True), extra='estrenos'))
 
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'animes?page=1&tipo[]=1&tipo[]=7&order=updated', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Hentai', url=host + 'directorio-hentai?page=1&tipo[]=1&tipo[]=7&order=updated', action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'animes?page=1&tipo[]=3&order=updated', action='list_all',
-                         thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
-
-    itemlist.append(Item(channel=item.channel, title='Ovas', url=host + 'animes?page=1&tipo[]=2&order=updated', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Latino', url=host + 'directorio-hentai?page=1&genre[]=71&order=updated', action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Categorías',  action='section', url=host + 'animes?page=1', 
+    itemlist.append(Item(channel=item.channel, title='JAV', url=host + 'directorio-hentai?page=1&tipo[]=2&order=updated', action='list_all',
+                         thumbnail=get_thumb('anime', auto=True), c_type='series'))
+
+    itemlist.append(Item(channel=item.channel, title='Categorías',  action='section', url=host + 'directorio-hentai?page=1', 
                          thumbnail=get_thumb('categories', auto=True), extra='categorías'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
@@ -141,7 +141,7 @@ def section_matches(item, matches_int, **AHkwargs):
         # logger.error(elem)
         elem_json = {}
         elem_json['title'] = elem.get_text(strip=True)
-        elem_json['url'] = '%sanimes?page=1&genre[]=%s&order=updated' % (host, elem.get('value', ''))
+        elem_json['url'] = '%sdirectorio-hentai?page=1&genre[]=%s&order=updated' % (host, elem.get('value', ''))
         matches.append(elem_json.copy())
     
     return matches
@@ -187,7 +187,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             else:
                 elem_json['title'] = elem.find("h3", class_="Title").get_text(strip=True)
                 elem_json['url'] = elem.find("article").a.get('href', '')
-                elem_json['mediatype'] = 'tvshow' if elem.find("span", class_="Type").get_text(strip=True) != "Pelicula" else 'movie'
+                elem_json['mediatype'] = 'tvshow'
                 
                 seasonPattern = '(?i)\s+(?:temporada|season)\s+(\d+)'
                 if re.search(seasonPattern, elem_json['title']):
@@ -195,14 +195,6 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     if elem_json['season'] > 1:
                         elem_json['title_subs'] = [' [COLOR %s][B]%s[/B][/COLOR] ' \
                                                   % (AlfaChannel.color_setting.get('movies', 'white'), 'Temporada %s' % elem_json['season'])]
-
-                if item.c_type == 'series' and elem_json['mediatype'] == 'movie':
-                    continue
-                if item.c_type == 'peliculas' and elem_json['mediatype'] == 'tvshow':
-                    continue
-
-                if elem_json['mediatype'] == 'movie':
-                    elem_json['action'] = 'seasons'
 
                 elem_json['plot'] = elem.find("div", class_=["Description"]).find_all("p")[2].get_text(strip=True)
                 elem_json['thumbnail'] = elem.find("figure").find("img").get("src", "")
@@ -273,13 +265,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         # logger.error(matches_int[x])
         
         try:
-            if item.contentType == 'movie':
-                index , language = movie_data.split('|')
-                episode = scrapertools.find_single_match(index, 'Película\s*(\d+)') or '1'
-                elem_json['title'] = 'Película %s' % episode
-                elem_json['language'] = language.strip()
-            else:
-                elem_json['title'] = 'Episodio %s' % episode
+            elem_json['title'] = 'Episodio %s' % episode
             elem_json['url'] = "%s/%s" % (item.url, url)
             elem_json['thumbnail'] = thumbnail
             
@@ -352,7 +338,7 @@ def search(item, texto, **AHkwargs):
     try:
         # https://docs.python.org/2/library/urllib.html#urllib.quote_plus (escapa los caracteres de la busqueda para usarlos en la URL)
         texto = AlfaChannel.do_quote(texto, '', plus=True) 
-        item.url = host + 'animes?page=1&q=' + texto
+        item.url = host + 'directorio-hentai?page=1&q=' + texto
 
         if texto:
             item.c_type = 'search'
@@ -366,38 +352,6 @@ def search(item, texto, **AHkwargs):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
-
-
-def newest(categoria, **AHkwargs):
-    logger.info()
-    kwargs.update(AHkwargs)
-
-    itemlist = []
-    item = Item()
-
-    item.title = "newest"
-    item.category_new = "newest"
-    item.channel = canonical['channel']
-
-    try:
-        if categoria in ['anime']:
-            item.url = host
-            item.c_type = 'episodios'
-            item.extra = "novedades"
-            item.action = "list_all"
-            itemlist = list_all(item)
-
-        if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
-            itemlist.pop()
-
-    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except Exception:
-        for line in sys.exc_info():
-            logger.error("{0}".format(line))
-        logger.error(traceback.format_exc())
-        return []
-
-    return itemlist
 
 
 def get_lang_from_str(string):

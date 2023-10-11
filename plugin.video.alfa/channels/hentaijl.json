@@ -1,0 +1,15 @@
+{
+  "id": "hentaijl",
+  "name": "HentaiJL",
+  "active": true,
+  "adult": true,
+  "language": ["cast", "lat"],
+  "thumbnail": "https://hentaijl.com/image/logo.png",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+  ]
+}
