@@ -9,6 +9,10 @@
       {
         "pattern": "mp4upload.com(?:/embed-|/)([A-Za-z0-9]+)",
         "url": "https://www.mp4upload.com/embed-\\1.html"
+      },
+      {
+        "pattern": "upload.do(?:/embed-|/)([A-Za-z0-9]+)",
+        "url": "https://upload.do/embed-\\1.html"
       }
     ]
   },

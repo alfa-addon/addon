@@ -6,10 +6,6 @@
       {
         "pattern": "(https://highstream.tv/[A-z0-9]+)",
         "url": "\\1"
-      },
-      {
-        "pattern": "https://streamwish.to/(?:e|d)/([A-z0-9]+)",
-        "url": "https://streamwish.to/e/\\1"
       }
     ]
   },

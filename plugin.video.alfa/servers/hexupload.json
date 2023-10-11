@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://hexupload.net/[A-z0-9]+)",
+        "pattern": "(https://hexupload.net/(?:embed-|)[A-z0-9]+)",
         "url": "\\1"
       }
     ]

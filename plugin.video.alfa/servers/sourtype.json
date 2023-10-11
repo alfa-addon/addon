@@ -20,8 +20,12 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:send|pornez).(?:cm|cam|net)/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)send.(?:cm|cam|net|site)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
+      },
+      {
+        "pattern": "https://pornez.(?:cm|cam|net|site)/([A-z0-9-]+(?:/|))",
+        "url": "https://pornez.site/\\1"
       },
       {
         "pattern": "(https://(?:www.|)canalporno.com/ver/[A-z0-9-]+(?:/|))",

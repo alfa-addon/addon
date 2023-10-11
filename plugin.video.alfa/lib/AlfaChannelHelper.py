@@ -13,6 +13,7 @@ import traceback
 import time
 import base64
 import ast
+import copy
 import xbmcgui
 window = xbmcgui.Window(10000) or None
 if not PY3: _dict = dict; from collections import OrderedDict as dict
@@ -56,6 +57,7 @@ LIST_QUALITY_MOVIES = ['BluRay', '1080p', 'HD', 'Rip', 'MicroHD', '720p', '2160p
 LIST_QUALITY_MOVIES_T = LIST_QUALITY_MOVIES
 LIST_QUALITY_MOVIES_A = ['1080p', '720p', 'HD', 'Rip', '2160p', '4K', 'CAM', 'TS']
 LIST_QUALITY_TVSHOW = ['HDTV-720p', 'HDTV', 'WEB-DL 1080p', '4KWebRip']
+SIZE_MATCHES = 5000
 
 
 class AlfaChannelHelper:
@@ -95,6 +97,7 @@ class AlfaChannelHelper:
         self.actualizar_titulos = actualizar_titulos
         self.canonical = canonical
         self.finds = finds
+        self.finds_updated = {}
         self.profile = self.finds.get('controls', {}).get('profile', DEFAULT)
         self.url_replace = url_replace
         self.Window_IsMedia = True
@@ -130,7 +133,7 @@ class AlfaChannelHelper:
         self.TEST_ON_AIR = self.httptools.TEST_ON_AIR
         self.CACHING_DOMAINS = self.httptools.CACHING_DOMAINS
         self.VIDEOLIBRARY_UPDATE = self.httptools.VIDEOLIBRARY_UPDATE
-        self.KWARGS = KWARGS.copy()
+        self.KWARGS = copy.deepcopy(KWARGS)
         try:
             self.ASSISTANT_VERSION = config.get_setting('assistant_version', default='').split('.')
             self.ASSISTANT_VERSION = tuple((int(self.ASSISTANT_VERSION[0]), int(self.ASSISTANT_VERSION[1]), int(self.ASSISTANT_VERSION[2])))
@@ -138,6 +141,10 @@ class AlfaChannelHelper:
             self.ASSISTANT_VERSION = tuple()
         try:
             self.domains_updated = jsontools.load(window.getProperty("alfa_domains_updated") or '{}')
+            if self.channel in self.domains_updated and 'finds' in self.domains_updated[self.channel]:
+                self.finds_updated = self.domains_updated[self.channel].pop('finds', '')
+                for key, value in self.finds_updated.items():
+                    self.finds_updated[key] = eval('%s' % value)
             if not self.TEST_ON_AIR and not self.CACHING_DOMAINS and 'host' in self.canonical \
                                     and 'host_alt' in self.canonical and 'host_black_list' in self.canonical:
                 if self.channel in self.domains_updated and self.domains_updated[self.channel].get('host_alt'):
@@ -203,9 +210,9 @@ class AlfaChannelHelper:
         if self.TEST_ON_AIR and not self.CACHING_DOMAINS:
             if "canonical" in kwargs: del kwargs["canonical"]
             if self.response_preferred_proxy_ip: kwargs['preferred_proxy_ip'] = self.response_preferred_proxy_ip
-            self.KWARGS = KWARGS.copy()
+            self.KWARGS = copy.deepcopy(KWARGS)
             self.KWARGS.update(kwargs)
-            kwargs = self.KWARGS.copy()
+            kwargs = copy.deepcopy(self.KWARGS)
         elif self.CACHING_DOMAINS:
             kwargs['alfa_s': True]
 
@@ -724,7 +731,7 @@ class AlfaChannelHelper:
         
         if DEBUG or not langs_out or langs_out == '*': 
             logger.debug('FINDS_get_language: %s; LANGS: %s' % (finds_lang_rgx, langs or lang_list))
-            if not langs_out or langs_out == '*': logger.debug('FINDS_get_language: ELEM: %s' % elem)
+            if not langs_out or langs_out == '*': logger.debug('FINDS_get_language: ELEM: %s' % str(elem)[:SIZE_MATCHES])
 
     def find_quality(self, elem_in, item):
         
@@ -849,7 +856,7 @@ class AlfaChannelHelper:
                 size_factor = size_name.get(size_list[1], 1)
                 s = size * size_factor
         except Exception:
-            pass
+            if isinstance(size, float):  s = size
 
         if self.DEBUG: logger.debug('SIZE: %s / %s' % (size, s))
         return s
@@ -880,7 +887,7 @@ class AlfaChannelHelper:
 
         from lib.generictools import get_torrent_size
         from core import filetools
-        if self.DEBUG: logger.debug('ELEM_IN: %s' % elem)
+        if self.DEBUG: logger.debug('ELEM_IN: %s' % str(elem)[:SIZE_MATCHES])
 
         finds_controls = finds.get('controls', {})
 
@@ -996,7 +1003,7 @@ class AlfaChannelHelper:
             item.emergency_urls[2].append(elem['url'])                          # guardamos la url o magnet inicial
             item.emergency_urls[3].append('#%s#%s' % (elem.get('quality', '') \
                                    or item.quality, elem['torrent_info']))      # Guardamos el torrent_info del .magnet
-            if self.DEBUG: logger.debug('ELEM_OUT_EMER: %s' % elem)
+            if self.DEBUG: logger.debug('ELEM_OUT_EMER: %s' % str(elem)[:SIZE_MATCHES])
             return elem
 
         elem['language'] = elem.get('language', item.language)
@@ -1044,7 +1051,7 @@ class AlfaChannelHelper:
             elem['action'] = "play"                                             # Visualizar vídeo
             elem['server'] = "torrent"                                          # Seridor Torrent
 
-        if self.DEBUG: logger.debug('ELEM_OUT: %s' % elem)
+        if self.DEBUG: logger.debug('ELEM_OUT: %s' % str(elem)[:SIZE_MATCHES])
         return elem
 
     def parse_finds_dict(self, soup, finds, year=False, next_page=False, c_type=''):
@@ -1324,7 +1331,7 @@ class AlfaChannelHelper:
                             json_match = {}
                             if json_match: json = {}
                             for json_field in json:
-                                json_all_work = json_all.copy()
+                                json_all_work = copy.deepcopy(json_all)
                                 key_org, key_des = json_field.split('|')
                                 key_org = key_org.split(',')
                                 for key_org_item in key_org:
@@ -1367,7 +1374,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if not matches_post and item.matches_post: matches_post = item.matches_post
 
         if not finds: finds = self.finds.copy()
+        finds.update(self.finds_updated)
         self.finds = finds.copy()
+        if self.DEBUG: logger.debug('FINDS: %s' % self.finds_updated)
         if self.DEBUG: logger.debug('FINDS: %s' % finds)
         finds_out = finds.get('find', {})
         if item.c_type == 'search' and finds.get('search', {}): finds_out = finds.get('search', {})
@@ -1379,7 +1388,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
         finds_controls = finds.get('controls', {})
         profile = self.profile = finds_controls.get('profile', self.profile)
 
-        AHkwargs = {'url': item.url, 'soup': item.matches or {}, 'finds': finds, 'kwargs': kwargs, 'function': 'list_all', 
+        AHkwargs = {'url': item.url, 'soup': item.matches or {}, 'finds': finds, 
+                    'kwargs': kwargs if kwargs.get('function', '') != 'find_seasons' else {}, 'function': 'list_all', 
                     'function_alt': kwargs.get('function', '')}
         AHkwargs['matches_post_list_all'] = matches_post or kwargs.pop('matches_post_list_all', None)
         AHkwargs['matches_post_section'] = kwargs.pop('matches_post_section', None)
@@ -1521,7 +1531,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                             self.last_page = 0
 
             AHkwargs['matches'] = matches
-            if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
+            if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)[:SIZE_MATCHES]))
 
             # Refrescamos variables posiblemente actualizadas en "matches_post"
             finds = self.finds.copy()
@@ -1554,7 +1564,10 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     if next_page_url_save == next_page_url:
                         next_page_url = ''
                         self.last_page = 0
-                    elif next_page_url: 
+                    elif next_page_url:
+                        for rgx_org, rgx_des in finds_next_page_rgx:
+                            if not 'next_page_url' in rgx_des or not scrapertools.find_single_match(self.next_page_url, rgx_org): continue
+                            next_page_url = re.sub(rgx_org, next_page_url, self.next_page_url.rstrip('/')).replace('//?', '/?')
                         next_page_url = self.urljoin(self.host, next_page_url)
                         self.last_page = 9999 if self.last_page in [0, 9999, 99999] else self.last_page
                     elif not next_page_url: 
@@ -1726,6 +1739,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 new_item.season_search = '*%s' % elem.get('season_search', '')
                 if elem.get('post', None): new_item.post = elem['post']
                 if elem.get('headers', None): new_item.headers = elem['headers']
+                if 'matches_cached' in elem: new_item.matches_cached = elem['matches_cached'][:]
+                if 'episode_list' in elem: new_item.episode_list = elem['episode_list'].copy()
 
                 try:
                     new_item.infoLabels['year'] = int(elem['year'])
@@ -1764,11 +1779,14 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     cnt_title += 1
 
                     if new_item and not new_item.matches and (new_item.url.startswith('magnet') or new_item.url.endswith('.torrent') \
-                                                 or elem.get('matches', [])):
+                                                 or elem.get('matches')):
                         new_item.matches = []
-                        new_item.matches.append(elem.get('matches', []) or elem.copy())
+                        if elem.get('matches') and isinstance(elem['matches'], list):
+                            new_item.matches = elem['matches'][:]
+                        else:
+                            new_item.matches.append(elem.get('matches', []) or elem.copy())
 
-                    #Ahora se filtra por idioma, si procede, y se pinta lo que vale
+                    # Ahora se filtra por idioma, si procede, y se pinta lo que vale
                     if filter_languages > 0 and self.list_language:             # Si hay idioma seleccionado, se filtra
                         itemlist = filtertools.get_link(itemlist, new_item, self.list_language, alfa_s=self.TEST_ON_AIR)
                     else:
@@ -1866,6 +1884,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         logger.info()
 
         if not finds: finds = self.finds.copy()
+        finds.update(self.finds_updated)
         self.finds = finds.copy()
         finds_out = finds.get('categories', {})
         finds_controls = finds.get('controls', {})
@@ -1951,7 +1970,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             return itemlist
 
         AHkwargs['matches'] = matches
-        if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
+        if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)[:SIZE_MATCHES]))
         
         # Refrescamos variables posiblemente actualizadas en "matches_post"
         finds = self.finds.copy()
@@ -2043,6 +2062,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         from core import tmdb
 
         if not finds: finds = self.finds.copy()
+        finds.update(self.finds_updated)
         self.finds = finds.copy()
         finds_out = finds.get('seasons', {})
         finds_season_num = finds.get('season_num', {})
@@ -2110,7 +2130,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if item.from_action: del item.from_action
         if item.from_channel: del item.from_channel
 
-        if item.matches:
+        if item.matches and not item.sub_action:
             matches = item.matches[:]
             del item.matches
         else:
@@ -2252,7 +2272,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             self.season_colapse = False
         
         AHkwargs['matches'] = matches
-        if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
+        if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)[:SIZE_MATCHES]))
 
         # Refrescamos variables posiblemente actualizadas en "matches_post"
         finds = self.finds.copy()
@@ -2341,6 +2361,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if item.filtertools: new_item.filtertools = item.filtertools
             if elem.get('next_episode_air_date', ''): new_item.infoLabels['next_episode_air_date_custom']  = elem['next_episode_air_date']
             if elem.get('password', ''): new_item.password = elem['password']
+            if 'matches_cached' in elem: new_item.matches_cached = elem['matches_cached'][:]
+            if 'episode_list' in elem: new_item.episode_list = elem['episode_list'].copy()
 
             new_item.url = self.do_url_replace(new_item.url, url_replace)
 
@@ -2446,6 +2468,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         from core import tmdb
 
         if not finds: finds = self.finds.copy()
+        finds.update(self.finds_updated)
         self.finds = finds.copy()
         finds_out = finds.get('episodes', {})
         finds_episode_num = finds.get('episode_num', [])
@@ -2585,7 +2608,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
 
         AHkwargs['matches'] = matches
-        if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
+        if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)[:SIZE_MATCHES]))
         
         for elem in matches:
             infolabels = item.infoLabels.copy()
@@ -2663,6 +2686,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if elem.get('action', ''): new_item.action = elem['action']
             if elem.get('next_episode_air_date', ''): new_item.infoLabels['next_episode_air_date_custom']  = elem['next_episode_air_date']
             if elem.get('password', ''): new_item.password = elem['password']
+            if 'matches_cached' in elem: new_item.matches_cached = elem['matches_cached'][:]
             
             if new_item.quality:
                 for clean_org, clean_des in finds.get('quality_clean', []):
@@ -2709,11 +2733,11 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     new_item.url = elem['url_episode']
                     del elem['url_episode']
                 new_item.matches = []
-                if elem.get('matches'):
+                if elem.get('matches') and isinstance(elem['matches'], list):
                     new_item.matches = elem['matches'][:]
                 else:
                     new_item.matches.append(elem.copy())
-            
+
             if new_item: itemlist.append(new_item.clone())
             #if self.DEBUG: logger.debug('EPISODES: %s' % new_item)
 
@@ -2736,8 +2760,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                 and new_item.contentEpisodeNumber == itemlist[-1].contentEpisodeNumber \
                                 and itemlist[-1].contentEpisodeNumber != 0:     # solo guardamos un episodio ...
                         if itemlist[-1].quality:
-                            if new_item.quality not in itemlist[-1].quality:
-                                itemlist[-1].quality += ", " + new_item.quality # ... pero acumulamos las calidades
+                            if new_item.quality.replace(BTDIGG_LABEL, '') not in itemlist[-1].quality:
+                                itemlist[-1].quality += ", %s" % new_item.quality   # ... pero acumulamos las calidades
                         else:
                             itemlist[-1].quality = new_item.quality
 
@@ -2809,6 +2833,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if not item.url_tvshow: item.url_tvshow = item.url
 
         if not finds: finds = self.finds.copy()
+        finds.update(self.finds_updated)
         self.finds = finds.copy()
         finds_out = finds.get('findvideos', {})
         finds_out_episodes = finds.get('episodes', {})
@@ -2999,7 +3024,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
 
         AHkwargs['matches'] = matches
-        if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
+        if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)[:SIZE_MATCHES]))
 
         # Si es un lookup para cargar las urls de emergencia en la Videoteca...
         if item.videolibray_emergency_urls:
@@ -3039,7 +3064,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     elem['title'] = 'torrent' if elem.get('server', '').lower() == 'torrent' else '%s'
 
                 # Tratamos las particulirades de los .torrents/magnets
-                if elem.get('btdig_in_use', False): btdig_in_use = elem['btdig_in_use']
+                if elem.get('btdig_in_use', False) or BTDIGG_LABEL in elem['quality']: btdig_in_use = elem['btdig_in_use'] = True
                 if elem.get('server', '').lower() == 'torrent' and manage_torrents:
                     elem = self.manage_torrents(item, elem, lang, soup, finds, **kwargs)
 
@@ -3058,6 +3083,14 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         # Si es un lookup para cargar las urls de emergencia en la Videoteca...
         if item.videolibray_emergency_urls:
+            if 'matches_cached' in item:
+                del item.matches_cached
+                if item.matches:
+                    for matches_cached in item.matches:
+                        if 'matches_cached' in matches_cached:
+                            del matches_cached['matches_cached']
+            if 'episode_list' in item:
+                del item.episode_list
             return item
 
         results.append([soup, options])
@@ -3217,6 +3250,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         if not matches_post and item.matches_post: matches_post = item.matches_post
 
         if not finds: finds = self.finds.copy()
+        finds.update(self.finds_updated)
         self.finds = finds.copy()
         if self.DEBUG: logger.debug('FINDS: %s' % finds)
         finds_out = finds.get('find', {})
@@ -3430,7 +3464,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                             self.last_page = 0
 
             AHkwargs['matches'] = matches
-            if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
+            if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)[:SIZE_MATCHES]))
 
             # Refrescamos variables posiblemente actualizadas en "matches_post"
             finds = self.finds.copy()
@@ -3454,7 +3488,10 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                     if next_page_url_save == next_page_url:
                         next_page_url = ''
                         self.last_page = 0
-                    elif next_page_url: 
+                    elif next_page_url:
+                        for rgx_org, rgx_des in finds_next_page_rgx:
+                            if not 'next_page_url' in rgx_des or not scrapertools.find_single_match(self.next_page_url, rgx_org): continue
+                            next_page_url = re.sub(rgx_org, next_page_url, self.next_page_url.rstrip('/')).replace('//?', '/?')
                         next_page_url = self.urljoin(self.host, next_page_url)
                         self.last_page = 9999 if self.last_page in [0, 9999, 99999] else self.last_page
                     elif not next_page_url: 
@@ -3661,6 +3698,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         self.Comment = Comment
 
         if not finds: finds = self.finds.copy()
+        finds.update(self.finds_updated)
         self.finds = finds.copy()
         finds_out = finds.get('categories', {})
         finds_next_page = finds.get('next_page', {})
@@ -3877,7 +3915,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                 return itemlist
 
             AHkwargs['matches'] = matches
-            if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
+            if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)[:SIZE_MATCHES]))
 
             # Refrescamos variables posiblemente actualizadas en "matches_post"
             finds = self.finds.copy()
@@ -3902,7 +3940,10 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                     if next_page_url_save == next_page_url:
                         next_page_url = ''
                         self.last_page = 0
-                    elif next_page_url: 
+                    elif next_page_url:
+                        for rgx_org, rgx_des in finds_next_page_rgx:
+                            if not 'next_page_url' in rgx_des or not scrapertools.find_single_match(self.next_page_url, rgx_org): continue
+                            next_page_url = re.sub(rgx_org, next_page_url, self.next_page_url.rstrip('/')).replace('//?', '/?')
                         next_page_url = self.urljoin(self.host, next_page_url)
                         self.last_page = 9999 if self.last_page in [0, 9999, 99999] else self.last_page
                     elif not next_page_url: 
@@ -4106,6 +4147,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         if not item.url_tvshow: item.url_tvshow = item.url
 
         if not finds: finds = self.finds.copy()
+        finds.update(self.finds_updated)
         self.finds = finds.copy()
         finds_out = finds.get('findvideos', {})
         finds_out_episodes = finds.get('episodes', {})
@@ -4242,7 +4284,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         url_base64 = finds_controls.get('url_base64', True)
 
         AHkwargs['matches'] = matches
-        if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)))
+        if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)[:SIZE_MATCHES]))
 
         for _lang in langs or ['CAST']:
             lang = _lang
@@ -4425,6 +4467,7 @@ class DooPlay(AlfaChannelHelper):
                                             'custom_pagination': False}, 
                                'timeout': 5}
 
+        self.finds_updated = {}
         self.url = self.movie_path = self.tv_path = self.movie_action = self.tv_action = ''
         self.timeout = finds.get('control', {}).get('timeout', 5)
         self.doo_url = "%swp-admin/admin-ajax.php" % self.host
@@ -4459,7 +4502,7 @@ class DooPlay(AlfaChannelHelper):
         self.TEST_ON_AIR = self.httptools.TEST_ON_AIR
         self.CACHING_DOMAINS = self.httptools.CACHING_DOMAINS
         self.VIDEOLIBRARY_UPDATE = self.httptools.VIDEOLIBRARY_UPDATE
-        self.KWARGS = KWARGS.copy()
+        self.KWARGS = copy.deepcopy(KWARGS)
         self.domains_updated = jsontools.load(window.getProperty("alfa_domains_updated") or '{}')
 
 
@@ -4493,7 +4536,7 @@ class DooPlay(AlfaChannelHelper):
         else:
             for elem in matches_int:
                 elem_json = {}
-                if self.DEBUG: logger.debug('MATCHES_int %s' % (str(elem)))
+                if self.DEBUG: logger.debug('MATCHES_int %s' % (str(elem)[:SIZE_MATCHES]))
 
                 if item.c_type == 'episodios':
                     sxe = self.parse_finds_dict(elem, finds.get('season_episode', {}), c_type=item.c_type)
@@ -4534,7 +4577,7 @@ class DooPlay(AlfaChannelHelper):
 
         matches = []
         finds = self.finds
-        if self.DEBUG: logger.debug('MATCHES_int %s' % (str(matches_int)))
+        if self.DEBUG: logger.debug('MATCHES_int %s' % (str(matches_int)[:SIZE_MATCHES]))
 
         for x, elem in enumerate(matches_int):
             elem_json = {}

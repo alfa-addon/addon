@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://filelions.(?:sx|to|in|live)/(?:e|d|v)/[a-z0-9]+)",
+        "pattern": "(https://filelions.(?:sx|to|in|live|online)/(?:e|d|v)/[a-z0-9]+)",
         "url": "\\1"
       },
       {
