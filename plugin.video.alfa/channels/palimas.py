@@ -22,7 +22,7 @@ from modules import autoplay
 list_quality = []
 list_servers = ['mixdrop']
 
-######          This website palimas.org/ is currently offline  8/9/2023
+
 canonical = {
              'channel': 'palimas', 
              'host': config.get_setting("current_host", 'palimas', default=''), 
@@ -41,10 +41,10 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "?view=latest&when=this-month"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "?view=most-viewed&when=this-month"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "?view=top-rated&when=this-month"))
-    itemlist.append(Item(channel=item.channel, title="1080-4K" , action="lista", url=host + "?view=1080p-4k&when=this-month"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "?view=latest&when=all-time"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "?view=most-viewed&when=all-time"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "?view=top-rated&when=all-time"))
+    itemlist.append(Item(channel=item.channel, title="1080-4K" , action="lista", url=host + "?view=1080p-4k&when=all-time"))
     # itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "channels"))
     itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars?view=top-rated"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories"))
@@ -126,6 +126,7 @@ def lista(item):
         title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (stime,quality,stitle)
         plot = ""
         url = urlparse.urljoin(host,url)
+        thumbnail = urlparse.urljoin(host,thumbnail)
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))
     next_page =""
@@ -150,6 +151,7 @@ def findvideos(item):
         post = "&video-player=%s" % player
         data = httptools.downloadpage(item.url, post = post).data
         url = scrapertools.find_single_match(data, ".src = '([^']+)'")
+        logger.debug(url)
         if url and not url.startswith("http"):
             url = "https:%s" % url
         if "api.gounlimited" in url:
