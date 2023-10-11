@@ -25,7 +25,10 @@ host = "https://www.sxyprn.com"
 # list_language = []
 list_servers = ['streamtape', 'Directo']
 list_quality = []
-
+            # https://www.sxyprn.com/popular/top-pop.html
+            # https://www.sxyprn.com/blog/all/0.html?fl=other&sm=latest
+# https://www.sxyprn.com/blog/all/0.html?sm=views                 https://www.sxyprn.com/popular/top-viewed.html?p=all
+# https://www.sxyprn.com/blog/all/0.html?fl=all&sm=orgasmic       https://www.sxyprn.com/orgasm/0
 
 def mainlist(item):
     logger.info()
@@ -33,9 +36,11 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     check = ""
 
-    itemlist.append(Item(channel=item.channel, title="Nuevos", action="lista", url=host + "/0.html?page=0"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos", action="findvideos", url=host + "/0.html?page=0&sm=views"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada", action="lista", url=host + "/0.html?page=0&sm=trending"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos", action="lista", url=host + "/blog/all/0.html?fl=other&sm=latest"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos", action="lista", url=host + "/popular/top-viewed.html?p=month"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada", action="lista", url=host + "/blog/all/0.html?sm=rating"))
+    itemlist.append(Item(channel=item.channel, title="Top", action="lista", url=host + "/popular/top-pop.html"))
+    itemlist.append(Item(channel=item.channel, title="Orgasmic", action="lista", url=host + "/blog/all/0.html?fl=all&sm=orgasmic"))
     itemlist.append(Item(channel=item.channel, title="Sitios", action="catalogo", url=host))
     itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
@@ -50,9 +55,9 @@ def mainlist(item):
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/0.html?page=0&op"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="findvideos", url=host + "/0.html?sm=views&page=0&op"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/0.html?sm=trending&page=0&op"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/blog/all/0.html?fl=all&sm=latest"))
+    # itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="findvideos", url=host + "/blog/all/0.html?fl=all&sm=latest"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/blog/all/0.html?fl=top&sm=latest"))
     itemlist.append(Item(channel=item.channel, title="Sitios" , action="catalogo", url=host + "?page=0&op"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "?page=0&op"))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", op=True))
@@ -129,9 +134,13 @@ def create_soup(url, referer=None, unescape=False):
 def lista(item):
     logger.info()
     itemlist = []
+    # url = "https://www.sxyprn.com/php/vo.php"
+    # soup = create_soup(url, referer=item.url)
+    # logger.debug(soup)
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='post_el_small')
     for elem in matches:
+        # logger.debug(elem)
         ext = ""
         time = ""
         quality = ""
@@ -139,21 +148,25 @@ def lista(item):
         url = elem.find('a', class_='post_time')['href']
         titulo = elem.find('a', class_='post_time')['title']
         thumbnail = elem.img
-        if thumbnail: 
+        if thumbnail.get("src", "" ): 
+            thumbnail = thumbnail['src']
+        else:
             thumbnail = thumbnail['data-src']
-            if "removed.png" in thumbnail: thumbnail = urlparse.urljoin(item.url,thumbnail)
+        if "removed.png" in thumbnail: thumbnail = urlparse.urljoin(item.url,thumbnail)
         titulo = re.sub("#\w+", "", titulo).strip()
         title = scrapertools.find_single_match(titulo, '(.*?)https')
         if not title:
             title = titulo.replace("Visit Hornyfanz.com ", "")
         if thumbnail and not "removed.png" in thumbnail:
-            time = elem.find('span', class_='duration_small').text.strip()
+            time = elem.find('span', class_='duration_small')
+            if time:
+                time = time.text.strip()
             quality = elem.find('span', class_='shd_small')
             if not thumbnail.startswith("https"):
                 thumbnail = "https:%s" % thumbnail
         # if not "EXTERNAL LINK" in time and item.check:
             # title = "[COLOR %s]%s[/COLOR]" % (item.check, title)
-        if "EXTERNAL LINK" in time:
+        if time and "EXTERNAL LINK" in time:
             time = ""
             ext = True
             ext1 = elem.find_all('a', class_='extlink')
@@ -169,9 +182,10 @@ def lista(item):
         url = urlparse.urljoin(item.url,url)
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, contentTitle = title,
                           thumbnail=thumbnail, fanart=thumbnail, ext=ext))
-    next_page = soup.find('div', class_='ctrl_sel')
-    if next_page and next_page.parent.find_next_sibling("a"):
-        next_page = next_page.parent.find_next_sibling("a")['href']
+    next_page = soup.find('div', class_='next_page')
+    logger.debug(next_page)
+    if next_page:
+        next_page = next_page.parent['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
         
@@ -184,15 +198,15 @@ def findvideos(item):
     logger.debug("ITEM: %s" % item)
     video_urls = []
     soup = create_soup(item.url)
-    if item.ext:
-        matches = soup.find_all('a', class_='extlink')
-        for elem in matches:
-            url = elem['href']
-            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
-        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    else:
+    # if item.ext:  post_el_small 
+    matches = soup.find('div', class_='post_el_post').find_all('a', class_='extlink')
+    logger.debug(matches)
+    for elem in matches:
+        url = elem['href']
+        itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+    if soup.find('span', class_='vidsnfo'):
         itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
-        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
     return itemlist
