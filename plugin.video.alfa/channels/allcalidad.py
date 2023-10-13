@@ -49,7 +49,7 @@ def mainlist(item):
     itemlist = []
     
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host + "/movies/page/", pagina = 1, thumbnail = get_thumb("newest", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos_years", url = host, extra = "Genero", thumbnail = get_thumb("genres", auto = True) ))
+    itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos_years", url = host, extra = "menu-item-object-category", thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = "Por año", action = "generos_years", url = host, extra = ">Año<", thumbnail = get_thumb("year", auto = True)))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host, thumbnail = get_thumb("search", auto = True)))
@@ -102,11 +102,10 @@ def generos_years(item):
     itemlist = []
     
     data = httptools.downloadpage(item.url, encoding=encoding, canonical=canonical).data
-    patron = '(?s)%s(.*?)<\/ul>\s*<\/div>' %item.extra
-    bloque = scrapertools.find_single_match(data, patron)
-    patron  = 'href="([^"]+)'
+    patron  = '(?ims)%s.*?' %item.extra
+    patron += 'href="([^"]+)'
     patron += '">([^<]+)'
-    matches = scrapertools.find_multiple_matches(bloque, patron)
+    matches = scrapertools.find_multiple_matches(data, patron)
     
     for url, titulo in matches:
         if not url.startswith("http"): url = host + url
