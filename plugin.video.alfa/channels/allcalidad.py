@@ -50,7 +50,7 @@ def mainlist(item):
     
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host + "/movies/page/", pagina = 1, thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos_years", url = host, extra = "menu-item-object-category", thumbnail = get_thumb("genres", auto = True) ))
-    itemlist.append(Item(channel = item.channel, title = "Por año", action = "generos_years", url = host, extra = ">Año<", thumbnail = get_thumb("year", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Por año", action = "generos_years", url = host, extra = "menu-item-object-release-year", thumbnail = get_thumb("year", auto = True)))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host, thumbnail = get_thumb("search", auto = True)))
     
@@ -88,7 +88,7 @@ def search(item, texto):
     logger.info()
     
     texto = texto.replace(" ", "+")
-    item.url = host + "/?s=" + texto
+    item.url = host + "wp-admin/admin-ajax.php" + texto
     item.extra = "busca"
     if texto != '':
         return peliculas(item)
@@ -112,7 +112,8 @@ def generos_years(item):
         itemlist.append(Item(channel = item.channel,
                              action = "peliculas",
                              title = titulo,
-                             url = url
+                             url = url + "/page/",
+                             pagina = 1,
                              ))
     return itemlist[::-1]
 
