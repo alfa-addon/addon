@@ -2102,10 +2102,10 @@ class DictionaryAllChannel(AlfaChannelHelper):
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
         forced_proxy_opt = finds_controls.get('forced_proxy_opt', None) or kwargs.pop('forced_proxy_opt', None)
 
-        last_season_only = config.get_setting('last_season_only', 'videolibrary', default=False)
+        last_season_only = config.get_setting("videolibrary_add_last_season_only", default=False)
         modo_ultima_temp = AHkwargs['modo_ultima_temp'] = last_season_only \
                                                           or config.get_setting('seleccionar_ult_temporadda_activa', item.channel, default=True)
-        no_pile_on_seasons = config.get_setting('no_pile_on_seasons', 'videolibrary', default=1)       
+        no_pile_on_seasons = config.get_setting("videolibrary_merge_seasons", default=1)
         self.season_colapse = config.get_setting('season_colapse', item.channel, default=True if no_pile_on_seasons <= 1 else False)
         if no_pile_on_seasons == 2: self.season_colapse = False
         if item.season_colapse == False: self.season_colapse = item.season_colapse

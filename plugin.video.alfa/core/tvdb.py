@@ -359,7 +359,7 @@ class Tvdb(object):
         if kwargs.get('tvdb_id', ''):
             # Busqueda por identificador tvdb
             self.__get_by_id(kwargs.get('tvdb_id', ''))
-            if not self.list_results and config.get_setting("tvdb_retry_eng", "videolibrary"):
+            if not self.list_results and config.get_setting("videolibrary_tvdb_english_fallback"):
                 from platformcode import platformtools
                 platformtools.dialog_notification(config.get_localized_string(60299) % DEFAULT_LANG,
                                                   config.get_localized_string(60302), sound=False)
@@ -369,7 +369,7 @@ class Tvdb(object):
         elif self.search_name:
             # Busqueda por texto
             self.__search(kwargs.get('search', ''), kwargs.get('imdb_id', ''), kwargs.get('zap2it_id', ''))
-            if not self.list_results and config.get_setting("tvdb_retry_eng", "videolibrary"):
+            if not self.list_results and config.get_setting("videolibrary_tvdb_english_fallback"):
                 from platformcode import platformtools
                 platformtools.dialog_notification(config.get_localized_string(60299) % DEFAULT_LANG,
                                                   config.get_localized_string(60302))

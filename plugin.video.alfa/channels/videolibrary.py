@@ -416,7 +416,7 @@ def get_seasons(item):
     # Menu contextual: Releer tvshow.nfo
     head_nfo, item_nfo = videolibrarytools.read_nfo(item.nfo)
 
-    if config.get_setting("no_pile_on_seasons", "videolibrary") == 2:  # Siempre
+    if config.get_setting("videolibrary_merge_seasons") == 2:  # Siempre
         return get_episodes(item)
 
     for f in ficheros:
@@ -424,7 +424,7 @@ def get_seasons(item):
             season = f.split('x')[0]
             dict_temp[season] = config.get_localized_string(60027) % season
 
-    if config.get_setting("no_pile_on_seasons", "videolibrary") == 1 and len(
+    if config.get_setting("videolibrary_merge_seasons") == 1 and len(
             dict_temp) == 1:  # Sólo si hay una temporada
         return get_episodes(item)
     else:
@@ -438,7 +438,7 @@ def get_seasons(item):
         #     se comprueba cada temporada en dict_temp si está visto.
         #          si hay una sola temporada y no_pile_on_seasons == 1, se devuelve get(episodios)
         #          si está todo visto, hacemos como actualmente <-- el else no se hace nada.. CREO
-        # if config.get_setting("no_pile_on_seasons", "videolibrary") == 1 and len(dict_temp_Visible) == 1:  # Sólo si hay una temporada
+        # if config.get_setting("videolibrary_merge_seasons") == 1 and len(dict_temp_Visible) == 1:  # Sólo si hay una temporada
 
         # Creamos un item por cada temporada
         for season, title in list(dict_temp.items()):
@@ -467,7 +467,7 @@ def get_seasons(item):
         if len(itemlist) > 1:
             itemlist = sorted(itemlist, key=lambda it: int(it.contentSeason))
 
-        if config.get_setting("show_all_seasons", "videolibrary"):
+        if config.get_setting("videolibrary_show_all_seasons_entry"):
             new_item = item.clone(action="get_episodes", title=config.get_localized_string(60030))
             new_item.infoLabels["playcount"] = 0
             itemlist.insert(0, new_item)
@@ -639,7 +639,7 @@ def findvideos(item):
             num_canales -= 1
 
     filtro_canal = ''
-    if num_canales > 1 and config.get_setting("ask_channel", "videolibrary"):
+    if num_canales > 1 and config.get_setting("videolibrary_ask_playback_channel"):
         opciones = [config.get_localized_string(70089) % k.capitalize() for k in list(list_canales.keys())]
         opciones.insert(0, config.get_localized_string(70083))
         if item_local:
@@ -772,7 +772,7 @@ def findvideos(item):
                 server.folder = False
 
             # Se añade el nombre del canal si se desea
-            if config.get_setting("quit_channel_name", "videolibrary") == 0:
+            if config.get_setting("videolibrary_remove_channel_name") == 0:
                 server.title = "%s: %s" % (nom_canal.capitalize(), server.title)
 
             #server.infoLabels = item_json.infoLabels
@@ -903,7 +903,7 @@ def verify_playcount_series(item, path):
     #logger.debug("item:\n" + item.tostring('\n'))
     
     #Si no ha hecho nunca la verificación, lo forzamos
-    estado = config.get_setting("verify_playcount", "videolibrary")
+    estado = config.get_setting("videolibrary_verify_playcount")
     if not estado or estado == False:
         estado = True                                                               #Si no ha hecho nunca la verificación, lo forzamos
     else:

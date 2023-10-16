@@ -166,14 +166,14 @@ def get_info(ignore_new_wish=False):
 
 
 def autoscan():
-    if not config.get_setting("autoscan", "info_popup"):
+    if not config.get_setting("wishlist_autoscan"):
         return
     else:
         help_window.show_info("infopopup", wait=False)
 
     monitor = xbmc.Monitor()
     hours = [8, 12, 24]
-    timer = config.get_setting("autoscan_timer", "info_popup")
+    timer = config.get_setting("wishlist_autoscan_timer")
 
     timer = hours[timer] * 3600
     while not monitor.abortRequested():
@@ -266,7 +266,7 @@ def check_db():
 def mainlist(item):
 
     itemlist = list()
-    status = config.get_setting("autoscan", item.channel)
+    status = config.get_setting("wishlist_autoscan")
 
     if not status:
         from platformcode import platformtools
@@ -274,7 +274,7 @@ def mainlist(item):
                                    "Para agregar elementos a esta sección necesitas activar la busqueda de estrenos y sugerencias."
                                    " Deseas activarla ahora?")
         if opt:
-            config.set_setting("autoscan", True, item.channel)
+            config.set_setting("wishlist_autoscan", True)
             Thread(target=autoscan).start()
     if not filetools.exists(db_path):
         return itemlist

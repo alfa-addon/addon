@@ -22,7 +22,7 @@ DEBUG = config.get_setting('debug_report', default=False)
 
 
 workers = [None, 1, 2, 4, 6, 8, 16, 24, 32, 64]
-max_workers = config.get_setting("max_workers", "news")
+max_workers = config.get_setting("news_max_workers")
 max_workers = workers[max_workers]
 all_channels = []
 
@@ -173,6 +173,7 @@ def get_channels(category, all=False):
     valid_channels = list()
 
     all_channels = channelselector.filterchannels('all', settings=False)
+    all_channels = list(set(all_channels))
 
     for ch in all_channels:
         channel = ch.channel
@@ -196,7 +197,7 @@ def get_channel_news(channel, category, all=False):
     if platformtools.is_playing():
         return channel, brand_new, category
 
-    news_range = config.get_setting("news_range", "news")
+    news_range = config.get_setting("news_range")
 
     if news_range == 5:
         news_range = 100

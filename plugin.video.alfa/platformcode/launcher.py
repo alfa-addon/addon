@@ -369,7 +369,7 @@ def run(item=None):
                                 "executing core method")
                     itemlist = servertools.find_video_items(item)
 
-                if config.get_setting("max_links", "videolibrary") != 0:
+                if config.get_setting("videolibrary_max_links") != 0:
                     itemlist = limit_itemlist(itemlist)
 
                 from platformcode import subtitletools
@@ -405,7 +405,7 @@ def run(item=None):
                 from core import channeltools
 
                 # last_search = ""
-                # last_search_active = config.get_setting("last_search", "search")
+                # last_search_active = config.get_setting("search_remember_last")
                 # if last_search_active:
                 #     try:
                 #         current_saved_searches_list = list(config.get_setting("saved_searches_list", "search"))
@@ -579,7 +579,7 @@ def limit_itemlist(itemlist):
     # logger.debug("Inlet itemlist size: %i" % len(itemlist))
 
     try:
-        opt = config.get_setting("max_links", "videolibrary")
+        opt = config.get_setting("videolibrary_max_links")
         if opt == 0:
             new_list = itemlist
         else:
@@ -628,7 +628,7 @@ def play_from_library(item):
     check_next_ep = nextep.check(item)
 
 
-    window_type = config.get_setting("window_type", "videolibrary")
+    window_type = config.get_setting("videolibrary_window_type")
 
     # y volvemos a lanzar kodi
     if xbmc.getCondVisibility('Window.IsMedia') and not window_type == 1:
@@ -666,11 +666,11 @@ def play_from_library(item):
                 itemlist = servertools.filter_servers(itemlist)'''
 
             # Se limita la cantidad de enlaces a mostrar
-            if config.get_setting("max_links", "videolibrary") != 0:
+            if config.get_setting("videolibrary_max_links") != 0:
                 itemlist = limit_itemlist(itemlist)
 
             # Se "limpia" ligeramente la lista de enlaces
-            if config.get_setting("replace_VD", "videolibrary") == 1:
+            if config.get_setting("videolibrary_shorter_window_texts") == 1:
                 itemlist = reorder_itemlist(itemlist)
 
 

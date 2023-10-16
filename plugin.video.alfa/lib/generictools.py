@@ -1362,15 +1362,15 @@ def AH_post_tmdb_seasons(self, item, itemlist, **AHkwargs):
 
     """
     #logger.debug(item)
-    #logger.debug(config.get_setting("no_pile_on_seasons", 'videolibrary'))
+    #logger.debug(config.get_setting("videolibrary_merge_seasons"))
     
     # Si no se quiere mostrar por temporadas, nos vamos...
-    if item.season_colapse == False or config.get_setting("no_pile_on_seasons", 'videolibrary') == 2 or len(itemlist) <= 1:
+    if item.season_colapse == False or config.get_setting("videolibrary_merge_seasons") == 2 or len(itemlist) <= 1:
         item.season_colapse = False                                             # Quitamos el indicador de listado por Temporadas
         return item, itemlist
     
     # Si no se quiere mostrar el título de TODAS las temporadas, nos vamos...
-    if not config.get_setting("show_all_seasons", 'videolibrary'):
+    if not config.get_setting("videolibrary_show_all_seasons_entry"):
         return item, itemlist
     
     format_tmdb_id(item)
@@ -1379,7 +1379,7 @@ def AH_post_tmdb_seasons(self, item, itemlist, **AHkwargs):
     matches = AHkwargs.get('matches', [])
     
     # Se muestra una entrada para listar todas los episodios
-    if itemlist and config.get_setting("show_all_seasons", 'videolibrary'):
+    if itemlist and config.get_setting("videolibrary_show_all_seasons_entry"):
         item_season = item.clone()
                                  
         item_season.season_colapse = False                                      # Quitamos el indicador de listado por Temporadas

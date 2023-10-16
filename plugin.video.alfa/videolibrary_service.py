@@ -176,7 +176,7 @@ def check_for_update(overwrite=True):
     httptools.VIDEOLIBRARY_UPDATE = True
 
     try:
-        if config.get_setting("update", "videolibrary") != 0 or overwrite:
+        if config.get_setting("videolibrary_update") != 0 or overwrite:
             config.set_setting("updatelibrary_last_check", hoy.strftime('%Y-%m-%d'), "videolibrary")
 
             heading = config.get_localized_string(60389)
@@ -223,7 +223,7 @@ def check_for_update(overwrite=True):
                     try:
                         estado = False
                         # Si no hemos hecho la verificación o no tiene playcount, entramos
-                        estado = config.get_setting("verify_playcount", "videolibrary")
+                        estado = config.get_setting("videolibrary_verify_playcount")
                         if not estado or estado == False or not serie.library_playcounts:       #Si no se ha pasado antes, lo hacemos ahora
                             serie, estado = videolibrary.verify_playcount_series(serie, path)   #También se pasa si falta un PlayCount por completo
                     except Exception:
@@ -268,7 +268,7 @@ def check_for_update(overwrite=True):
                         update_last = hoy
 
                     # si la serie esta activa ...
-                    if overwrite or config.get_setting("updatetvshows_interval", "videolibrary") == 0:
+                    if overwrite or config.get_setting("videolibrary_tvshows_update_mode") == 0:
                         # ... forzar actualizacion independientemente del intervalo
                         serie_actualizada = update(path, p_dialog, i, t, serie, overwrite)
                         if not serie_actualizada:
@@ -317,7 +317,7 @@ def check_for_update(overwrite=True):
                         res = videolibrarytools.write_nfo(tvshow_file, head_nfo, serie)
 
                     if serie_actualizada and not config.get_setting('cleanlibrary', 'videolibrary', default=False):
-                        if config.get_setting("search_new_content", "videolibrary") == 0:
+                        if config.get_setting("videolibrary_content_search_locations") == 0:
                             # Actualizamos la videoteca de Kodi: Buscar contenido en la carpeta de la serie
                             if config.is_xbmc():
                                 xbmc_videolibrary.update(folder=filetools.basename(path))
@@ -335,7 +335,7 @@ def check_for_update(overwrite=True):
             if estado_verify_playcount_series:                                  #Si se ha cambiado algún playcount, ...
                 estado = config.set_setting("verify_playcount", True, "videolibrary")   #... actualizamos la opción de Videolibrary
 
-            #if config.get_setting("search_new_content", "videolibrary") == 1 and update_when_finished:
+            #if config.get_setting("videolibrary_content_search_locations") == 1 and update_when_finished:
             if config.is_xbmc() and config.get_setting('cleanlibrary', 'videolibrary', default=False):
                 while xbmc.getCondVisibility('Library.IsScanningVideo()'):      # Se espera a que acabe
                     if monitor:
@@ -383,7 +383,7 @@ def check_for_update(overwrite=True):
     videolibrary.list_movies(item_dummy, silent=True)
     
     # Descarga los últimos episodios disponibles, si el canal lo permite
-    if config.get_setting("update", "videolibrary") != 0 or overwrite:
+    if config.get_setting("videolibrary_update") != 0 or overwrite:
         from channels import downloads
         downloads.download_auto(item_dummy)
 
@@ -396,7 +396,7 @@ def start(thread=True):
     else:
 
         update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000, 600000, 900000]
-        wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]
+        wait = update_wait[int(config.get_setting("videolibrary_update_wait"))]
         if wait > 0:
             if monitor:
                 if monitor.waitForAbort(wait/1000):
@@ -406,8 +406,8 @@ def start(thread=True):
                     return
                 xbmc.sleep(wait)
 
-        if config.get_setting("update", "videolibrary") not in [2, 4]:
-            if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
+        if config.get_setting("videolibrary_update") not in [2, 4]:
+            if config.get_setting("videolibrary_scan_after_backup", default=False):
                 try:
                     threading.Thread(target=scan_after_remote_update, args=('start',)).start()
                 except Exception:
@@ -450,7 +450,7 @@ def scan_after_remote_update(mode):
 
 
 def monitor_update():
-    update_setting = config.get_setting("update", "videolibrary")
+    update_setting = config.get_setting("videolibrary_update")
 
     # "Actualizar "Una sola vez al dia" o "al inicar Kodi y al menos una vez al dia" o "Dos veces al día"
 
@@ -463,8 +463,8 @@ def monitor_update():
         else:
             last_check = hoy - datetime.timedelta(days=1)
 
-        update_start = config.get_setting("everyday_delay", "videolibrary") * 4
-        update_start_2 = config.get_setting("everyday_delay_2", "videolibrary") * 4
+        update_start = config.get_setting("videolibrary_daily_update_delay") * 4
+        update_start_2 = config.get_setting("videolibrary_daily_update_delay_2") * 4
 
         # logger.info("Ultima comprobacion: %s || Fecha de hoy:%s || Hora actual: %s" %
         #             (last_check, hoy, datetime.datetime.now().hour))
@@ -477,7 +477,7 @@ def monitor_update():
                 logger.info("Inicio actualizacion programada para las %s h.: %s" % (update_start, datetime.datetime.now()))
             except Exception:
                 pass
-            if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
+            if config.get_setting("videolibrary_scan_after_backup", default=False):
                 scan_after_remote_update('clock')
             else:
                 check_for_update(overwrite=False)
@@ -543,9 +543,9 @@ if __name__ == "__main__":
         sys.exit()
 
     # Actualiza la videoteca de Alfa, con una espera inicial si se ha configurado
-    if config.get_setting("update", "videolibrary") not in [0, 2, 4]:
+    if config.get_setting("videolibrary_update") not in [0, 2, 4]:
         update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000, 600000, 900000]
-        wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]
+        wait = update_wait[int(config.get_setting("videolibrary_update_wait"))]
         if wait > 0:
             if monitor:
                 if monitor.waitForAbort(wait/1000):
@@ -555,8 +555,8 @@ if __name__ == "__main__":
                     sys.exit()
                 xbmc.sleep(wait)
 
-        if config.get_setting("update", "videolibrary") not in [0, 2, 4]:
-            if config.get_setting("videolibrary_backup_scan", "videolibrary", default=False):
+        if config.get_setting("videolibrary_update") not in [0, 2, 4]:
+            if config.get_setting("videolibrary_scan_after_backup", default=False):
                 try:
                     threading.Thread(target=scan_after_remote_update, args=('start',)).start()
                 except Exception:
