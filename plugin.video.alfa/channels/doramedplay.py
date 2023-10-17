@@ -135,7 +135,13 @@ def list_all(item):
 def seasons(item):
     logger.info()
 
-    return AlfaChannel.seasons(item, **kwargs)
+    findS = finds.copy()
+    findS['seasons']  = dict([('find', [{'tag': ['div'], 'id': ['seasons-serie']}]),
+                             ('find_all', [{'tag': ['div'], 'class': ['se-q']}])])
+    findS['episodes'] = dict([('find', [{'tag': ['div'], 'id': ['seasons-serie']}]),
+                                                 ('find_all', [{'tag': ['li']}])])
+
+    return AlfaChannel.seasons(item, finds=findS, **kwargs)
 
 
 def episodios(item):

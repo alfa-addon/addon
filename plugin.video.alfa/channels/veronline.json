@@ -1,36 +1,22 @@
 {
-  "id": "doramasflix",
-  "name": "Doramasflix",
+  "id": "veronline",
+  "name": "Veronline",
   "active": true,
   "adult": false,
-  "language": [
-    "cast",
-    "lat",
-    "vose",
-    "Coreano",
-    "Japonés",
-    "Mandarín",
-    "Tailandés",
-    "Filipino",
-    "Indonesio",
-    "Vietnamita",
-    "Portugués"
-  ],
-  "thumbnail": "https://i.imgur.com/t8rvNHg.png",
+  "language": ["cast", "lat", "vose"],
+  "thumbnail": "https://i.imgur.com/yaIpuxF.png",
   "banner": "",
   "fanart": "",
   "categories": [
     "tvshow",
-    "movie"
+    "anime"
   ],
-  "force_unify": true,
-  "version": 1,
   "settings": [
     {
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },
@@ -38,7 +24,7 @@
       "id": "include_in_newest_series",
       "type": "bool",
       "label": "Incluir en Novedades - Series",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },
@@ -51,19 +37,10 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "Subtitulado",
         "Latino",
         "Castellano",
-        "Coreano",
-        "Japonés",
-        "Mandarín",
-        "Tailandés",
-        "Filipino",
-        "Indonesio",
-        "Vietnamita",
-        "Portugués"
+        "VOSE"
       ]
     }
   ]
 }
-

@@ -3,7 +3,7 @@
   "name": "Estrenos Doramas",
   "active": true,
   "adult": false,
-  "language": ["VOSE","LAT"],
+  "language": ["lat", "vose"],
   "thumbnail": "https://www.estrenosdoramas.net/wp-content/uploads/2016/08/estrenos-doramasss-net3.png",
   "banner": "",
   "fanart": "",

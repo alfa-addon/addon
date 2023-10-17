@@ -530,7 +530,7 @@ def seasons(item):
 
     if item.contentSerieName != '' and config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
-            Item(channel=item.channel, title='[COLOR yellow]{}[/COLOR]'.format(config.get_localized_string(70092)), url=item.url,
+            Item(channel=item.channel, title=config.get_localized_string(70146), url=item.url,
                  slug=item.slug, action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
                  extra1='library'))
 
@@ -665,16 +665,16 @@ def findvideos(item):
             return itemlist
         # logger.info(json.dumps(data_json, indent=4), True)
         content_list = data_json['data']['detailEpisode']['links_online']
-    
+
     # logger.info(json.dumps(content_list, indent=4), True)
-    
+
     if not content_list:
         return itemlist
 
     languages = get_all_languages()
-    
+
     content_list = sorted(content_list, key=lambda x: x['lang'], reverse=True)
-    
+
     for video in content_list:
         itemlist.append(Item(channel=item.channel, title='%s', url=video['link'], action='play', quality='HD',
                              language=get_language_string(languages, video['lang']), infoLabels=item.infoLabels))
@@ -692,6 +692,11 @@ def findvideos(item):
     # Requerido para AutoPlay
 
     autoplay.start(itemlist, item)
+
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos' and not item.contentSerieName:
+        itemlist.append(Item(channel=item.channel, title=config.get_localized_string(70146),
+                             url=item.url, action="add_pelicula_to_library", extra="findvideos",
+                             contentTitle=item.contentTitle))
 
     return itemlist
 
@@ -1106,6 +1111,7 @@ def save_lang_data(lang_data):
 
 
 def reset_all_data():
+    logger.info()
     for node in [TAG_CUSTOM_FILTERS_CONTROLS,
                  TAG_CUSTOM_FILTERS_SETTINGS,
                  TAG_CUSTOM_FILTERS_DCONFIGS,

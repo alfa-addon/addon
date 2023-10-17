@@ -3,7 +3,7 @@
   "name": "AnimeJL",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["cast", "lat", "vose"],
   "thumbnail": "https://i.imgur.com/S6foTE9.png",
   "banner": "",
   "fanart": "",
