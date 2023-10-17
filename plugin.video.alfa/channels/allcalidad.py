@@ -25,7 +25,7 @@ canonical = {
              'channel': 'allcalidad', 
              'host': config.get_setting("current_host", 'allcalidad', default=''), 
              'host_alt': ["https://allcalidad.re"], 
-             'host_black_list': ["https://allcalidad.si", "https://allcalidad.ms", 
+             'host_black_list': ["https://allcalidad.si", "https://allcalidad.ms/", 
                                  "https://allcalidad.is", "https://allcalidad.ac"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -48,11 +48,11 @@ def mainlist(item):
     
     itemlist = []
     
-    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host + "/movies/page/", pagina = 1, thumbnail = get_thumb("newest", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host + "/movies/page/", extra="", pagina = 1, thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos_years", url = host, extra = "menu-item-object-category", thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = "Por año", action = "generos_years", url = host, extra = "menu-item-object-release-year", thumbnail = get_thumb("year", auto = True)))
     itemlist.append(Item(channel = item.channel, title = ""))
-    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host, thumbnail = get_thumb("search", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host, pagina=1, thumbnail = get_thumb("search", auto = True)))
     
     autoplay.show_option(item.channel, itemlist)
     
@@ -86,9 +86,10 @@ def newest(categoria):
 
 def search(item, texto):
     logger.info()
-    
     texto = texto.replace(" ", "+")
-    item.url = host + "wp-admin/admin-ajax.php" + texto
+    item.url = host + "page/"
+    item.busca = "?s=%s" %texto
+    item.pagina = 1
     item.extra = "busca"
     if texto != '':
         return peliculas(item)
@@ -122,8 +123,11 @@ def peliculas(item):
     logger.info()
     
     itemlist = []
-        
-    data = httptools.downloadpage(item.url + "%s" %item.pagina, encoding=encoding, canonical=canonical).data
+    if item.extra == "busca":
+        data = httptools.downloadpage(item.url + "%s%s" %(item.pagina, item.busca), encoding=encoding, canonical=canonical).data
+    else:
+        item.busca = ""
+        data = httptools.downloadpage(item.url + "%s" %item.pagina, encoding=encoding, canonical=canonical).data
     patron  = '(?ims)data-movie-id=.*?'
     patron += '<a href="([^"]+)".*?'
     patron += 'oldtitle="([^"]+)".*?'
@@ -151,7 +155,10 @@ def peliculas(item):
     url_pagina = scrapertools.find_single_match(data, 'class="page larger" href="([^"]+)')
     if url_pagina != "":
         paginax = "Pagina: %s" %(item.pagina + 1)
-        itemlist.append(Item(channel = item.channel, action = "peliculas", title = paginax, url = item.url, pagina = item.pagina + 1))
+        itemlist.append(Item(channel = item.channel, action = "peliculas", title = paginax, url = item.url, pagina = item.pagina + 1,
+                            extra=item.extra,
+                            busca=item.busca,
+))
     
     return itemlist
 
@@ -166,7 +173,6 @@ def findvideos(item):
     patron  = 'movieplay".*?'
     patron += 'data-src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
-    scrapertools.printMatches(matches)
     
     for url in matches:
         data = httptools.downloadpage(url).data
