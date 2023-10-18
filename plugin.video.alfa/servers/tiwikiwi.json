@@ -16,8 +16,16 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://luluvdo.com/(?:e|d|v)/[a-z0-9]+)",
+        "url": "\\1"
+      },
+      {
         "pattern": "https://vidello.net/(?:embed-|)([a-z0-9]+.html)",
         "url": "https://vidello.net/\\1"
+      },
+      {
+        "pattern": "https://vtbe.to/(?:embed-|)([a-z0-9]+.html)",
+        "url": "https://vtbe.to/\\1"
       },
       {
         "pattern": "(https://doodporn.xyz/(?:e|d)/[a-z0-9]+)",

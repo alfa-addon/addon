@@ -27,12 +27,13 @@ canonical = {
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-httptools.downloadpage(host, canonical=canonical).data
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
+    httptools.downloadpage(host, canonical=canonical).data
+    
     itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "api/v1/browse/react/?p=1"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "api/v1/tags/index?page=1"))
     return itemlist

@@ -42,24 +42,40 @@ def mainlist(item):
     itemlist = []
 
     autoplay.init(item.channel, list_servers, list_quality)
-
-    itemlist.append(Item(channel=item.channel, title="Nuevo" , action="lista", url=host + "adult/?filter=latest"))
-    itemlist.append(Item(channel=item.channel, title="Mas visto" , action="lista", url=host + "adult/?filter=most-viewed"))
-    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=host + "adult/?filter=popular"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=host + "adult/pornstars/"))
-    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host + "adult/studios/"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "adult/genres/"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + "adult/"))
+    
+    itemlist.append(Item(channel=item.channel, title="Escenas" , action="submenu", url=host + "xxxporn/"))
+    
+    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "?filter=latest"))
+    itemlist.append(Item(channel=item.channel, title="Mas visto" , action="lista", url=host + "?filter=most-viewed"))
+    itemlist.append(Item(channel=item.channel, title="Popular" , action="lista", url=host + "?filter=popular"))
+    itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="lista", url=host + "?filter=longest"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=host + "pornstars/"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host + "studios/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "genres/"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host ))
 
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
 
+def submenu(item):
+    logger.info()
+    itemlist = []
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=item.url + "?filter=latest"))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="lista", url=item.url + "?filter=most-viewed"))
+    itemlist.append(Item(channel=item.channel, title="Mas valorados" , action="lista", url=item.url + "?filter=popular"))
+    itemlist.append(Item(channel=item.channel, title="Mas Largo" , action="lista", url=item.url + "?filter=longest"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="categorias", url=item.url + "pornstars/"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=item.url + "studios/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "genres/"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url))
+    return itemlist
+
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/%s" % (item.url,texto)
+    item.url = "%s?s=%s&filter=latest" % (item.url,texto)
     try:
         return lista(item)
     except:
@@ -149,7 +165,8 @@ def findvideos(item):
     itemlist = []
     video_urls = []
     soup = create_soup(item.url)
-    pornstars = soup.find('div', id='video-about').find_all('a', href=re.compile("/pornstars/"))
+    pornstars = soup.find('div', id='video-actors').find_all('a', href=re.compile("/(:?pornstar|pornstars)/"))
+    logger.debug(pornstars)
     for x , value in enumerate(pornstars):
         pornstars[x] = value.text.strip()
     pornstar = ' & '.join(pornstars)

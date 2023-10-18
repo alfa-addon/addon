@@ -28,8 +28,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'cuevana2espanol', 
              'host': config.get_setting("current_host", 'cuevana2espanol', default=''), 
-             'host_alt': ["https://www.cuevana2espanol.icu/"], 
-             'host_black_list': ["https://cuevana2espanol.com/"], 
+             'host_alt': ["https://www.cuevana2espanol.net/"], 
+             'host_black_list': ["https://www.cuevana2espanol.icu/", "https://cuevana2espanol.com/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt,  
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

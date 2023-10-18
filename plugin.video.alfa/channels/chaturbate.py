@@ -29,23 +29,31 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
+# https://chaturbate.com/api/ts/roomlist/room-list/?enable_recommendations=false&genders=f&limit=90&offset=90
+# https://chaturbate.com/api/ts/hashtags/top_tags/?genders=s
+# https://chaturbate.com/api/ts/hashtags/tag-table-data/?sort=&page=1&g=f&limit=100
+
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel = item.channel, title="Mujeres" , action="lista", url=host + "female-cams/"))
-    itemlist.append(Item(channel = item.channel, title="Hombres" , action="lista", url=host + "male-cams/"))
-    itemlist.append(Item(channel = item.channel, title="Parejas" , action="lista", url=host + "couple-cams/"))
-    itemlist.append(Item(channel = item.channel, title="Trans" , action="lista", url=host + "trans-cams/"))
+    httptools.downloadpage(host, canonical=canonical).data
+    url_api= "%sapi/ts/roomlist/room-list/?enable_recommendations=false&genders=%s&limit=90&offset=0"
+    
+    itemlist.append(Item(channel = item.channel, title="Mujeres" , action="lista", url=url_api %(host, "f")))
+    itemlist.append(Item(channel = item.channel, title="Hombres" , action="lista", url=url_api %(host, "m")))
+    itemlist.append(Item(channel = item.channel, title="Parejas" , action="lista", url=url_api %(host, "c")))
+    itemlist.append(Item(channel = item.channel, title="Trans" , action="lista", url=url_api %(host, "t")))
     itemlist.append(Item(channel = item.channel, title="Categorias" , action="submenu"))
     return itemlist
 
 def submenu(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel = item.channel, title="Mujeres" , action="categorias", url=host + "tags/f/"))
-    itemlist.append(Item(channel = item.channel, title="Hombres" , action="categorias", url=host + "tags/m/"))
-    itemlist.append(Item(channel = item.channel, title="Parejas" , action="categorias", url=host + "tags/c/"))
-    itemlist.append(Item(channel = item.channel, title="Trans" , action="categorias", url=host + "tags/s/"))
+    url_tag = "%sapi/ts/hashtags/top_tags/?genders=%s"
+    itemlist.append(Item(channel = item.channel, title="Mujeres" , action="categorias", url=url_tag %(host, "f"), type="f"))
+    itemlist.append(Item(channel = item.channel, title="Hombres" , action="categorias", url=url_tag %(host, "m"), type="m"))
+    itemlist.append(Item(channel = item.channel, title="Parejas" , action="categorias", url=url_tag %(host, "c"), type="c"))
+    itemlist.append(Item(channel = item.channel, title="Trans" , action="categorias", url=url_tag %(host, "s"), type="t"))
     return itemlist
 
 
@@ -65,54 +73,29 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    matches = soup.find_all('div', class_='tag_row')
-    for elem in matches:
-        url = elem.a['href']
-        title = elem.a['title']
-        thumbnail = elem.img['src']
-        cantidad = elem.find('span', class_='rooms')
-        if cantidad:
-            title = "%s (%s)" % (title,cantidad.text.strip())
-        url = urlparse.urljoin(item.url,url)
-        thumbnail = urlparse.urljoin(item.url,thumbnail)
+    data = httptools.downloadpage(item.url, canonical=canonical).json
+    for elem in data['all_tags']:
+        title = elem
+        url = "%sapi/ts/roomlist/room-list/?enable_recommendations=false&genders=%s&hashtags=%s&limit=90&offset=0" %(host, item.type, elem)
+        thumbnail = ""
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
-    next_page = soup.find('li', class_='item-pagin is_last')
-    if next_page:
-        next_page = next_page.a['data-parameters'].replace(":", "=").split(";").replace("+from_albums", "")
-        next_page = "?%s&%s" % (next_page[0], next_page[1])
-        next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(Item(channel=item.channel, action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
+    itemlist.sort(key=lambda x: x.title)
     return itemlist
-
-
-def create_soup(url, referer=None, unescape=False):
-    logger.info()
-    if referer:
-        data = httptools.downloadpage(url, headers={'Referer': referer}, canonical=canonical).data
-    else:
-        data = httptools.downloadpage(url, canonical=canonical).data
-    if unescape:
-        data = scrapertools.unescape(data)
-    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
-    return soup
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url)
-    matches = soup.find_all('li', class_='room_list_room')
-    for elem in matches:
-        url = elem.a['href']
-        title = elem.a['data-room']
-        thumbnail = elem.img['src']
-        age = elem.find('span', class_='age').text.strip()
+    data = httptools.downloadpage(item.url, canonical=canonical).json
+    for elem in data['rooms']:
+        title = elem['username']
+        url = urlparse.urljoin(host,title)
+        age = elem['display_age']
+        thumbnail = elem['img']
         if age:
             title = "%s (%s)" % (title,age)
-        url = urlparse.urljoin(item.url,url)
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
         action = "play"
@@ -120,10 +103,11 @@ def lista(item):
             action = "findvideos"
         itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('a', class_='next')
-    if next_page:
-        next_page = next_page['href']
-        next_page = urlparse.urljoin(item.url,next_page)
+    total = data['total_count']
+    page = int(scrapertools.find_single_match(item.url, '&offset=([0-9]+)'))
+    next_page = (page+ 90)
+    if next_page < int(total):
+        next_page = re.sub(r"&offset=\d+", "&offset={0}".format(next_page), item.url)
         itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
@@ -131,7 +115,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).data
+    data = httptools.downloadpage(item.url).data
     data = data.replace("\\u0022" , '"').replace("\\u002D", "-")
     url = scrapertools.find_single_match(data, '"hls_source"\: "([^"]+)"')
     itemlist.append(Item(channel = item.channel, action="play", url=url))
@@ -141,7 +125,7 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).data
+    data = httptools.downloadpage(item.url).data
     data = data.replace("\\u0022" , '"').replace("\\u002D", "-")
     url = scrapertools.find_single_match(data, '"hls_source"\: "([^"]+)"')
     itemlist.append(Item(channel = item.channel, action="play", url=url, contentTitle=item.contentTitle))
