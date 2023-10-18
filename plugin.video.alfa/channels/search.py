@@ -139,7 +139,7 @@ def new_search(item):
     logger.info()
 
     itemlist = []
-    last_search = config.get_setting('search_remember_last', default='')
+    last_search = config.get_setting('search_last_searched', default='')
 
     searched_text = item.search_text or dialog_input(default=last_search, heading='')
     save_search(searched_text, item.tourl())
@@ -798,7 +798,7 @@ def get_from_temp(item):
 
 def save_search(text, item_tourl):
     if text:
-        saved_searches_limit = int((10, 20, 30, 40)[int(config.get_setting("search_save_limit"))])
+        saved_searches_limit = config.get_setting("search_save_limit")
 
         current_saved_searches_list = config.get_setting("search_saved_list")
         if current_saved_searches_list is None:

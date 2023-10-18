@@ -1,25 +1,14 @@
 {
-  "id": "doramasflix",
-  "name": "Doramasflix",
+  "id": "playhub",
+  "name": "Playhub",
   "active": true,
   "adult": false,
-  "language": [
-    "cast",
-    "lat",
-    "vose",
-    "Coreano",
-    "Japonés",
-    "Mandarín",
-    "Tailandés",
-    "Filipino",
-    "Indonesio",
-    "Vietnamita",
-    "Portugués"
-  ],
-  "thumbnail": "https://i.imgur.com/t8rvNHg.png",
+  "language": ["cast", "lat", "vose"],
+  "thumbnail": "https://i.imgur.com/Ujj9zuT.png",
   "banner": "",
   "fanart": "",
   "categories": [
+    "anime",
     "tvshow",
     "movie"
   ],
@@ -30,15 +19,31 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },
     {
       "id": "include_in_newest_series",
       "type": "bool",
-      "label": "Incluir en Novedades - Series",
-      "default": false,
+      "label": "Incluir en Novedades - Episodios de Series",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_anime",
+      "type": "bool",
+      "label": "Incluir en Novedades - Episodios de anime",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
       "enabled": true,
       "visible": true
     },
@@ -53,15 +58,7 @@
         "No filtrar",
         "Subtitulado",
         "Latino",
-        "Castellano",
-        "Coreano",
-        "Japonés",
-        "Mandarín",
-        "Tailandés",
-        "Filipino",
-        "Indonesio",
-        "Vietnamita",
-        "Portugués"
+        "Castellano"
       ]
     }
   ]

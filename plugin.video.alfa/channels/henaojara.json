@@ -3,7 +3,7 @@
   "name": "HenaoJara",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["cast", "lat", "vose"],
   "thumbnail": "https://i.imgur.com/huUiibv.png",
   "banner": "",
   "fanart": "",

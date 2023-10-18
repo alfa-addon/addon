@@ -13,8 +13,6 @@ from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
-from modules import renumbertools
-
 IDIOMAS = AlfaChannelHelper.IDIOMAS_ANIME
 list_language = list(set(IDIOMAS.values()))
 list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
@@ -115,8 +113,6 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
                          thumbnail=get_thumb("search", auto=True)))
 
-    itemlist = renumbertools.show_option(item.channel, itemlist)
-
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
@@ -203,8 +199,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['year'] = '-'
             elem_json['quality'] = 'HD'
 
-            elem_json['context'] = renumbertools.context(item)
-            elem_json['context'].extend(autoplay.context)
+            elem_json['context'] = autoplay.context
 
         except Exception:
             logger.error(elem)
@@ -269,8 +264,8 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['url'] = "%s/%s" % (item.url, url)
             elem_json['thumbnail'] = thumbnail
             
-            elem_json['season'], elem_json['episode'] = renumbertools.numbered_for_trakt(item.channel, 
-                                                        item.contentSerieName, titleSeason, episode)
+            elem_json['season'] = titleSeason
+            elem_json['episode'] = episode
         
         except Exception:
             logger.error(matches_int[x])

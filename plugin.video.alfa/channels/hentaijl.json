@@ -3,7 +3,7 @@
   "name": "HentaiJL",
   "active": true,
   "adult": true,
-  "language": ["cast", "lat"],
+  "language": ["*"],
   "thumbnail": "https://hentaijl.com/image/logo.png",
   "banner": "",
   "fanart": "",

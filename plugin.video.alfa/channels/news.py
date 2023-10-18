@@ -352,7 +352,7 @@ def setting_channel(item):
     import glob
 
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
-    channel_language = config.get_setting("channel_language", default="all")
+    channel_language = channelselector.LANGUAGES[config.get_setting("channel_language", default=0)]
 
     list_controls = []
     for infile in sorted(glob.glob(channels_path)):
