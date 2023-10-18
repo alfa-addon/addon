@@ -1019,9 +1019,10 @@ def verify_directories_created():
                     ["downloadpath", "downloads"],
                     ["downloadlistpath", "downloads/list"],
                     ["settings_path", "settings_channels"]]
-
+    library_path_exist = True
     for path, default in config_paths:
         saved_path = get_setting(path)
+        default_path = "special://profile/addon_data/plugin.video." + PLUGIN_NAME + "/" + default
 
         # videoteca
         if path == "videolibrarypath":
@@ -1031,30 +1032,37 @@ def verify_directories_created():
                     set_setting(path, saved_path)
 
         if not saved_path:
-            saved_path = "special://profile/addon_data/plugin.video." + PLUGIN_NAME + "/" + default
+            saved_path = default_path
             set_setting(path, saved_path)
 
         saved_path = translatePath(saved_path)
         if not filetools.exists(saved_path):
-            logger.debug("Creating %s: %s" % (path, saved_path))
-            filetools.mkdir(saved_path)
+            # Si el path es por defecto se puede crear, sinó podria ser una unidad desconectada, advertir al usuario.
+            if saved_path == default_path:
+                logger.debug("Creating %s: %s" % (path, saved_path))
+                filetools.mkdir(saved_path)
+            else:
+                from platformcode import platformtools
+                platformtools.dialog_notification(get_localized_string(60038), "No se ha podido acceder a {}. Verifique la ruta.".format(saved_path))
+                if path == "videolibrarypath":
+                    library_path_exist = False
 
-    config_paths = [["folder_movies", "CINE"],
-                    ["folder_tvshows", "SERIES"]]
+    if library_path_exist:
+        config_paths = [["folder_movies", "CINE"],
+                        ["folder_tvshows", "SERIES"]]
+        for path, default in config_paths:
+            saved_path = get_setting(path)
 
-    for path, default in config_paths:
-        saved_path = get_setting(path)
+            if not saved_path:
+                saved_path = default
+                set_setting(path, saved_path)
 
-        if not saved_path:
-            saved_path = default
-            set_setting(path, saved_path)
+            content_path = filetools.join(get_videolibrary_path(), saved_path)
+            if not filetools.exists(content_path):
+                logger.debug("Creating %s: %s" % (path, content_path))
 
-        content_path = filetools.join(get_videolibrary_path(), saved_path)
-        if not filetools.exists(content_path):
-            logger.debug("Creating %s: %s" % (path, content_path))
-
-            # si se crea el directorio
-            filetools.mkdir(content_path)
+                # si se crea el directorio
+                filetools.mkdir(content_path)
 
     try:
         # from core import scrapertools
