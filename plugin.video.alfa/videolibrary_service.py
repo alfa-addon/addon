@@ -537,7 +537,7 @@ if __name__ == "__main__":
         sys.exit()
 
     # Incializamos caching de variables
-    config.cache_init()
+    # config.cache_init()
 
     if monitor and monitor.waitForAbort(0.1):
         sys.exit()
