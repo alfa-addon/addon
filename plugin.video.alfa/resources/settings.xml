@@ -14,10 +14,10 @@
 
         <setting label="60391" type="lsep" />
         <setting id="autoplay" type="bool" label="70562" default="false" visible="true" />
-        <setting id="second_language" type="labelenum" lvalues="59992|70014|59976|70142|70143|70144"
-            values="No|CAST|LAT|VOSE|VOS|VO" label="80001" default="No" subsetting="true" />
-        <setting id="autoplay_qlty" type="labelenum" label="80002"
-            values="Alta|Media|Baja" lvalues="70784|70786|70785" default="0" subsetting="true" />
+        <setting id="second_language" type="enum" lvalues="59992|70014|59976|70142|70143|70144"
+            label="80001" default="0" subsetting="true" />
+        <setting id="autoplay_qlty" type="enum" label="80002"
+                lvalues="70784|70786|70785" default="Alta" subsetting="true" />
 
         <setting label="70753" type="lsep" />
         <setting id="default_action" type="enum" lvalues="30006|30007|30008|30009" label="30005"
@@ -98,14 +98,13 @@
 
     <category label="30118">
         <setting label="60439" type="lsep" />
-        <setting id="channel_language" type="labelenum" values="all|cast|lat"
-            lvalues="59991|70014|59976"
-            label="30019" default="all" />
+        <setting id="channel_language" type="enum" lvalues="59991|70014|59976"
+            label="30019" default="0" />
 
         <setting label="80510" type="lsep" />
         <setting id="frequents" type="bool" label="80511" default="false" />
-        <setting id="max_frequents" type="labelenum" label="80512"
-            values="5|10|15" default="5" visible="eq(-1,true)" subsetting="true" />
+        <setting id="max_frequents" type="slider" label="80512"
+            range="5,5,15" option="int" default="5" visible="eq(-1,true)" subsetting="true" />
         <setting id="frequents_folder" type="bool" label="80513" default="false" />
         <setting id="max_frequents_folder" type="slider" label="80514"
             range="0,10,50" option="int" default="0" visible="eq(-1,true)" subsetting="true" />
@@ -131,9 +130,10 @@
 
     <category label="30103">
         <setting label="30103" type="lsep" />
+        <setting id="search_last_searched" type="text" visible="false" />
         <setting id="search_remember_last" type="bool" label="60678" default="true" />
         <setting id="search_save_limit" label="60677" type="slider" option="int" range="10,10,40" default="10" />
-        <setting id="search_saved_list" label="60677" type="text" visible="false" />
+        <setting id="search_saved_list" type="text" visible="false" />
         <setting id="search_result_mode" label="60657" type="enum" lvalues="60675|60676" default="0" />
         <setting id="search_max_workers" label="70796" type="enum" values="auto|1|2|4|6|8|16|24|32|64"
             default="0" />
@@ -230,7 +230,7 @@
 
     <category label="30101">
         <setting label="1214" type="lsep" />
-        <setting id="downloads_browser" type="bool" label="70232" default="false" />
+        <setting id="downloads_browser" type="bool" label="70232" default="true" />
         <setting id="downloads_library_add" type="bool" label="70230" default="false" />
         <setting id="downloads_library_move" type="bool" label="70231" default="false" />
 
@@ -282,7 +282,7 @@
     <category label="80610">
         <setting label="70809" type="lsep" />
         <setting id="assistant_mode" label="80611" type="labelenum" values="este|otro"
-            lvalues="70816|70817" default="este" />
+            default="este" />
         <setting id="assistant_custom_address" label="80612" type="text" default="127.0.0.1"
             visible="eq(-1,1)" subsetting="true" />
         <setting id="cf_assistant_bl_expiration" label="80782" type="number" default="5" />
@@ -290,7 +290,7 @@
         <setting label="70810" type="lsep" />
         <setting id="assistant_flag_install" type="bool" label="80613" default="true" />
         <setting id="is_rooted_device" label="80616" type="labelenum"
-            values="check|rooted|no_rooted" lvalues="70818|70819|70820" default="check" />
+            values="check|rooted|no_rooted" default="check" />
         <setting id="assistant_auto_install" type="action" label="80614"
             action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAiZnVuY3Rpb24iLA0KICAgICJmb2xkZXIiOiAibGliIiwNCiAgICAiZnVuY3Rpb24iOiAiYWxmYV9hc3Npc3RhbnQiLA0KICAgICJtZXRob2QiOiAiaW5zdGFsbF9hbGZhX2Fzc2lzdGFudCIsDQogICAgIm9wdGlvbnMiOiAiYXV0byINCn0=)" />
         <setting id="assistant_manual_install" type="action" label="80615"
