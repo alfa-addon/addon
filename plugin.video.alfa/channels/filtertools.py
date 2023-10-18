@@ -11,6 +11,8 @@ from platformcode import config, logger
 from platformcode import platformtools
 from core import channeltools
 
+FILTER_LANGS = ["No", "CAST", "LAT", "VOSE", "VOS", "VO"]
+
 TAG_TVSHOW_FILTER = "TVSHOW_FILTER"
 TAG_NAME = "name"
 TAG_MEDIA = "media_type"
@@ -385,7 +387,7 @@ def get_links(list_item, item_in, list_language, list_quality=None, global_filte
         return list_item
 
 
-    second_lang = config.get_setting('second_language')
+    second_lang = FILTER_LANGS[config.get_setting('second_language')]
 
     #Ordena segun servidores favoritos, elima servers de blacklist y desactivados
     from core import servertools

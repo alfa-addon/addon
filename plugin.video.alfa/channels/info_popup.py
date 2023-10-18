@@ -173,7 +173,7 @@ def autoscan():
 
     monitor = xbmc.Monitor()
     hours = [8, 12, 24]
-    timer = config.get_setting("wishlist_autoscan_timer")
+    timer = config.get_setting("wishlist_autoscan_timer") - 1
 
     timer = hours[timer] * 3600
     while not monitor.abortRequested():

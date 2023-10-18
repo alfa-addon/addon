@@ -717,39 +717,39 @@ def get_setting(name, channel="", server="", default=None, caching_var=True, deb
         debug = False if debug == None else DEBUG if not debug and DEBUG else debug
         if debug: from platformcode import logger
 
-        if isinstance(caching_var, str):
-            # Borrado de la cache y verificado/borrado de settings.xml
-            if caching_var in ['reset', 'delete']:
-                if window:
-                    alfa_settings = json.loads(window.getProperty("alfa_settings"))
-                    alfa_settings = {}
-                    window.setProperty("alfa_settings", json.dumps(alfa_settings))
-                    if debug: logger.error('DROPING Cached SETTINGS')
-                if caching_var in ['delete']:
-                    if debug: logger.error('DELETE Settings XML')
-                    verify_settings_integrity()
-                caching_var = False
+        # if isinstance(caching_var, str):
+        #     # Borrado de la cache y verificado/borrado de settings.xml
+        #     if caching_var in ['reset', 'delete']:
+        #         if window:
+        #             alfa_settings = json.loads(window.getProperty("alfa_settings"))
+        #             alfa_settings = {}
+        #             window.setProperty("alfa_settings", json.dumps(alfa_settings))
+        #             if debug: logger.error('DROPING Cached SETTINGS')
+        #         if caching_var in ['delete']:
+        #             if debug: logger.error('DELETE Settings XML')
+        #             verify_settings_integrity()
+        #         caching_var = False
 
-        alfa_caching = bool(window.getProperty("alfa_caching"))
-        if alfa_caching and caching_var:
-            if not alfa_settings: alfa_settings = json.loads(window.getProperty("alfa_settings"))
-            if debug: logger.error('READ Cached SETTING NAME: %s: %s:' \
-                                                                    % (str(name).upper(), alfa_settings.get(name, default)))
-            # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
-            if not alfa_settings:
-                get_all_settings_addon()
-        if alfa_caching and caching_var and name not in str(alfa_no_caching_vars) \
-                        and alfa_settings.get(name, None) != None:
-            # Si el alfa_caching está activo y la variable cargada.  Si no, se cargan por el método tradicional
-            return get_setting_values(name, alfa_settings.get(name, default))
-        else:
-            # logger.info("get_setting reading main setting '"+name+"'")
-            value = __settings__.getSetting(name)
-            if debug: logger.error('READ File (Cache: %s) SETTING NAME: %s: %s:' \
-                                                                    % (str(alfa_caching and caching_var), str(name).upper(), value))
-            if not value:
-                return default
-            return get_setting_values(name, value, decode_var_=False)
+        # alfa_caching = bool(window.getProperty("alfa_caching"))
+        # if alfa_caching and caching_var:
+        #     if not alfa_settings: alfa_settings = json.loads(window.getProperty("alfa_settings"))
+        #     if debug: logger.error('READ Cached SETTING NAME: %s: %s:' \
+        #                                                             % (str(name).upper(), alfa_settings.get(name, default)))
+        #     # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
+        #     if not alfa_settings:
+        #         get_all_settings_addon()
+        # if alfa_caching and caching_var and name not in str(alfa_no_caching_vars) \
+        #                 and alfa_settings.get(name, None) != None:
+        #     # Si el alfa_caching está activo y la variable cargada.  Si no, se cargan por el método tradicional
+        #     return get_setting_values(name, alfa_settings.get(name, default))
+        # else:
+        # logger.info("get_setting reading main setting '"+name+"'")
+        value = __settings__.getSetting(name)
+        if debug: logger.error('READ File (Cache: %s) SETTING NAME: %s: %s:' \
+                                                                % (str(alfa_caching and caching_var), str(name).upper(), value))
+        if not value:
+            return default
+        return get_setting_values(name, value, decode_var_=False)
 
 
 def get_setting_values(name, value, decode_var_=True):
@@ -812,15 +812,15 @@ def set_setting(name, value, channel="", server="", debug=DEBUG):
         return servertools.set_server_setting(name, value, server, debug=debug)
     else:
         try:
-            debug = False if debug == None else DEBUG if not debug and DEBUG else debug
-            if debug: from platformcode import logger
-            alfa_caching = bool(window.getProperty("alfa_caching"))
-            if alfa_caching:
-                if not alfa_settings: alfa_settings = json.loads(window.getProperty("alfa_settings"))
-                if debug: logger.error('READ Cached SETTING NAME: %s: %s:' % (str(name).upper(), alfa_settings.get(name, None)))
-                # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
-                if not alfa_settings:
-                    get_all_settings_addon()
+            # debug = False if debug == None else DEBUG if not debug and DEBUG else debug
+            # if debug: from platformcode import logger
+            # alfa_caching = bool(window.getProperty("alfa_caching"))
+            # if alfa_caching:
+            #     if not alfa_settings: alfa_settings = json.loads(window.getProperty("alfa_settings"))
+            #     if debug: logger.error('READ Cached SETTING NAME: %s: %s:' % (str(name).upper(), alfa_settings.get(name, None)))
+            #     # Si el alfa_caching está activo, se usa la variable cargada.  Si no, se cargan por el método tradicional
+            #     if not alfa_settings:
+            #         get_all_settings_addon()
 
             if isinstance(value, bool):
                 if value:
@@ -832,29 +832,29 @@ def set_setting(name, value, channel="", server="", debug=DEBUG):
                 value = str(value)
 
             __settings__.setSetting(name, value)
-            if debug: logger.error('WRITE File (Cache; %s) SETTING NAME: %s: %s:' % (str(alfa_caching), str(name).upper(), value))
+            # if debug: logger.error('WRITE File (Cache; %s) SETTING NAME: %s: %s:' % (str(alfa_caching), str(name).upper(), value))
 
-            if name == 'caching':
-                if value_init:
-                    window.setProperty("alfa_caching", str(True))
-                    alfa_caching = True
-                else:
-                    window.setProperty("alfa_caching", '')
-                    alfa_caching = False
-                if not alfa_caching:
-                    alfa_settings = {}
-                    window.setProperty("alfa_settings", json.dumps(alfa_settings))
-                    if debug: logger.error('DROPING Cached SETTINGS: %s' % (str(name).upper(), value_init))
-            if alfa_caching and alfa_settings and alfa_settings.get(name, '') != value_init:
-                alfa_settings[name] = value_init
-                window.setProperty("alfa_settings", json.dumps(alfa_settings))
-                if debug: logger.error('SAVE Cached SETTING NAME: %s: %s:' % (str(name).upper(), alfa_settings[name]))
+            # if name == 'caching':
+            #     if value_init:
+            #         window.setProperty("alfa_caching", str(True))
+            #         alfa_caching = True
+            #     else:
+            #         window.setProperty("alfa_caching", '')
+            #         alfa_caching = False
+            #     if not alfa_caching:
+            #         alfa_settings = {}
+            #         window.setProperty("alfa_settings", json.dumps(alfa_settings))
+            #         if debug: logger.error('DROPING Cached SETTINGS: %s' % (str(name).upper(), value_init))
+            # if alfa_caching and alfa_settings and alfa_settings.get(name, '') != value_init:
+            #     alfa_settings[name] = value_init
+            #     window.setProperty("alfa_settings", json.dumps(alfa_settings))
+            #     if debug: logger.error('SAVE Cached SETTING NAME: %s: %s:' % (str(name).upper(), alfa_settings[name]))
 
         except Exception as ex:
-            alfa_settings = {}
-            window.setProperty("alfa_settings", json.dumps(alfa_settings))
-            if debug: logger.error('DROPING Cached SETTINGS: %s' % str(name).upper())
-            from platformcode import logger
+            # alfa_settings = {}
+            # window.setProperty("alfa_settings", json.dumps(alfa_settings))
+            # if debug: logger.error('DROPING Cached SETTINGS: %s' % str(name).upper())
+            # from platformcode import logger
             logger.error("Error al convertir '%s' no se guarda el valor \n%s" % (name, ex))
             return None
 
@@ -1019,9 +1019,10 @@ def verify_directories_created():
                     ["downloadpath", "downloads"],
                     ["downloadlistpath", "downloads/list"],
                     ["settings_path", "settings_channels"]]
-
+    library_path_exist = True
     for path, default in config_paths:
         saved_path = get_setting(path)
+        default_path = "special://profile/addon_data/plugin.video." + PLUGIN_NAME + "/" + default
 
         # videoteca
         if path == "videolibrarypath":
@@ -1031,30 +1032,37 @@ def verify_directories_created():
                     set_setting(path, saved_path)
 
         if not saved_path:
-            saved_path = "special://profile/addon_data/plugin.video." + PLUGIN_NAME + "/" + default
+            saved_path = default_path
             set_setting(path, saved_path)
 
         saved_path = translatePath(saved_path)
         if not filetools.exists(saved_path):
-            logger.debug("Creating %s: %s" % (path, saved_path))
-            filetools.mkdir(saved_path)
+            # Si el path es por defecto se puede crear, sinó podria ser una unidad desconectada, advertir al usuario.
+            if saved_path == default_path:
+                logger.debug("Creating %s: %s" % (path, saved_path))
+                filetools.mkdir(saved_path)
+            else:
+                from platformcode import platformtools
+                platformtools.dialog_notification(get_localized_string(60038), "No se ha podido acceder a {}. Verifique la ruta.".format(saved_path))
+                if path == "videolibrarypath":
+                    library_path_exist = False
 
-    config_paths = [["folder_movies", "CINE"],
-                    ["folder_tvshows", "SERIES"]]
+    if library_path_exist:
+        config_paths = [["folder_movies", "CINE"],
+                        ["folder_tvshows", "SERIES"]]
+        for path, default in config_paths:
+            saved_path = get_setting(path)
 
-    for path, default in config_paths:
-        saved_path = get_setting(path)
+            if not saved_path:
+                saved_path = default
+                set_setting(path, saved_path)
 
-        if not saved_path:
-            saved_path = default
-            set_setting(path, saved_path)
+            content_path = filetools.join(get_videolibrary_path(), saved_path)
+            if not filetools.exists(content_path):
+                logger.debug("Creating %s: %s" % (path, content_path))
 
-        content_path = filetools.join(get_videolibrary_path(), saved_path)
-        if not filetools.exists(content_path):
-            logger.debug("Creating %s: %s" % (path, content_path))
-
-            # si se crea el directorio
-            filetools.mkdir(content_path)
+                # si se crea el directorio
+                filetools.mkdir(content_path)
 
     try:
         # from core import scrapertools
@@ -1093,6 +1101,7 @@ def verify_directories_created():
 
 
 def verify_settings_integrity():
+    return # desactivado hasta posterior revisión
     # Comprobando la integridad de la estructura de Settings.xml
     global alfa_caching, alfa_settings
     

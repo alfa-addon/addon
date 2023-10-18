@@ -9,6 +9,8 @@ from core import channeltools
 from core.item import Item
 from platformcode import config, logger
 
+LANGUAGES = ['all', 'cast', 'lat']
+
 
 def getmainlist(view="thumb_"):
     logger.info()
@@ -255,7 +257,7 @@ def getchanneltypes(view="thumb_"):
     if config.get_setting("adult_mode") != 0:
         channel_types.append("adult")
 
-    channel_language = config.get_setting("channel_language", default="all")
+    channel_language = LANGUAGES[config.get_setting("channel_language", default=0)]
     logger.info("channel_language=%s" % channel_language)
 
     # Ahora construye el itemlist ordenadamente
@@ -339,7 +341,7 @@ def filterchannels(category, view="thumb_", alfa_s=True, settings=False):
         category = "all"
         appenddisabledchannels = True
 
-    channel_language = config.get_setting("channel_language", default="all")
+    channel_language = LANGUAGES[config.get_setting("channel_language", default=0)]
     logger.info("channel_language=%s" % channel_language)
 
     # Lee la lista de canales
