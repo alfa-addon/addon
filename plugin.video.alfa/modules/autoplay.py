@@ -130,8 +130,9 @@ def start(itemlist, item, user_server_list=[], user_quality_list=[]):
         status_language = config.get_setting("filter_languages", channel_id)
 
         # Guarda el valor actual de "Accion y Player Mode" en preferencias
+        actions = ["Alta", "Media", "Baja"]
         user_config_setting_action = config.get_setting("default_action")
-        user_forced_action = config.get_setting("autoplay_qlty")
+        user_forced_action = actions[config.get_setting("autoplay_qlty")]
 
         user_config_setting_player = config.get_setting("player_mode")
         # Habilita la accion "Ver en calidad alta o baja"(si el servidor devuelve más de una calidad p.e. gdrive)
