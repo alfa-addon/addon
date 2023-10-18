@@ -24,8 +24,9 @@ forced_proxy_opt = 'ProxyCF'
 canonical = {
              'channel': 'ennovelas', 
              'host': config.get_setting("current_host", 'ennovelas', default=''), 
-             'host_alt': ["https://f.ennovelas.net/"], 
-             'host_black_list': ["https://d.ennovelas.net/", "https://i.ennovelas.net/", "https://s.ennovelas.net/", "https://b.ennovelas.net/", 
+             'host_alt': ["https://v.ennovelas.net/"], 
+             'host_black_list': ['https://n.ennovelas.net/', 'https://t.ennovelas.net/', 'https://f.ennovelas.net/', 
+                                 "https://d.ennovelas.net/", "https://i.ennovelas.net/", "https://s.ennovelas.net/", "https://b.ennovelas.net/", 
                                  "https://a.ennovelas.net/", "https://e.ennovelas.net/", "https://ww.ennovelas.net/", 
                                  "https://w.ennovelas.net/", "https://www.zonevipz.com/", "https://www.ennovelas.com/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 

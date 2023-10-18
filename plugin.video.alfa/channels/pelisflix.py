@@ -31,9 +31,10 @@ list_servers = list(SERVER.values())
 canonical = {
              'channel': 'pelisflix', 
              'host': config.get_setting("current_host", 'pelisflix', default=''), 
-             'host_alt': ["https://pelisflix.codes/"], 
-             'host_black_list': ["https://pelisflix.mom/", "https://pelisflix.tools/", 
-                                 "https://pelisflix.quest/", "https://pelisflix.hair/", "https://pelisflix.store/", 
+             'host_alt': ["https://pelisflix.zone/"], 
+             'host_black_list': ['https://pelisflix.host/', 
+                                 'https://pelisflix.codes/', 'https://pelisflix.mom/', 'https://pelisflix.tools/', 
+                                 'https://pelisflix.quest/', 'https://pelisflix.hair/', 'https://pelisflix.store/'
                                  "https://pelis28.art/", "https://pelisflix2.fun/", "https://pelisflix.run/", 
                                  "https://pelisflix.pw/", "https://pelisflix.biz/", "https://ww2.pelisflix2.one/", 
                                  "https://pelisflix2.one/", "https://pelisflix.li/", "https://ww3.pelisflix2.one/"], 
@@ -53,6 +54,7 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
+    itemlist.append(item.clone(title="Estrenos" , action="lista", url= host + "categoria/pelis-estrenos-2022-2023", thumbnail=get_thumb("premieres", auto=True)))
     itemlist.append(item.clone(title="Peliculas" , action="lista", url= host + "peliculas-online/", thumbnail=get_thumb("movies", auto=True)))
     itemlist.append(item.clone(title="Genero" , action="categorias", url= host + "peliculas", thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(item.clone(title="Series", action="lista", url= host + "series-online/", thumbnail=get_thumb("tvshows", auto=True)))
@@ -213,14 +215,13 @@ def alpha_list(item):
 
 def lista(item):
     logger.info()
-    
     itemlist = []
-    
     soup = create_soup(item.url, referer=host)
     matches = soup.find_all("li", class_=re.compile(r"^post-\d+"))
-    
     for elem in matches:
+        logger.debug(elem)
         url = elem.a['href']
+        title = elem.h2.text.strip()
         thumbnail = elem.figure.img['data-src']
         # lg = elem.find(class_='Lg')
         # if lg:
@@ -233,12 +234,13 @@ def lista(item):
                     # lang = l['src']
                 # lang = scrapertools.find_single_match(lang,'/([A-z-]+).png')
                 # language.append(IDIOMAS.get(lang, lang))
-        year = elem.find(class_='Date')
+        year = elem.find(class_='date')
         if year:
             year = year.text
+            if year in title:
+                title = title.replace(year, "")
         else:
             year = elem.find(class_='Date')
-        title = elem.h2.text.strip()
         if year == '':
             year = '-'
         
@@ -270,10 +272,10 @@ def lista(item):
                 
                 itemlist[a].title = title
                 a -= 1
-    
-    next_page = soup.find('a', class_='current')
-    if next_page and next_page.find_next_sibling("a"):
-        next_page = next_page.find_next_sibling("a")['href']
+
+    next_page = soup.find('div', class_='nav-previous')
+    if next_page and next_page.find("a"):
+        next_page = next_page.a['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     
@@ -346,51 +348,34 @@ def episodios(item):
 
 def findvideos(item):
     logger.info()
-    import base64
     
     itemlist = []
     serv=[]
     
     soup = create_soup(item.url)
     matches = soup.find_all('button', class_='sgty')
-    if not matches:
-        data = soup.find('script', string=re.compile('var\s*playsss\s*='))
-        logger.error(data)
-        matches = jsontools.load(scrapertools.find_single_match(str(data), '\:(\{[^\}]+\})'))
-        logger.error(matches)
 
-    if isinstance(matches, dict):
-        for key, value in list(matches.items()):
-
-            url = base64.b64decode(value).decode('utf-8') +'?h='
-            server = ''
-            title = '%s'
-            lang = ''
-            logger.error(url)
-            if not "gounlimited" in server:
-                itemlist.append(item.clone(action="play", title=title, url=url, server=server.lower(), language=lang ))
-    else:
-        for elem in matches:
-            num= elem['data-key']
-            id= elem['data-id']
-            type = elem['data-typ']
-            if "movie" in type: type = "1"
-            else: type = "2"
-            prop = elem.find_all('span')[1].text.split()
-            lang= prop[0]
-            server = prop[-1]
-            if "•" in server:
-                server = elem.find('span', class_='nmopt').text.strip()
-            lang = IDIOMAS.get(lang, lang)
-            url = "%s?trembed=%s&trid=%s&trtype=%s"  %  (host,num,id, type)
-            server = SERVER.get(server.capitalize(), server.capitalize())
-            if not config.get_setting('unify') and not channeltools.get_channel_parameters(__channel__)['force_unify']:
-                title = "[%s] [COLOR darkgrey][%s][/COLOR]" %(server, lang)
-            else:
-                title = server
-            
-            if not "gounlimited" in server:
-                itemlist.append(item.clone(action="play", title=title, url=url, server=server.lower(), language=lang ))
+    for elem in matches:
+        num= elem['data-key']
+        id= elem['data-id']
+        type = elem['data-typ']
+        if "movie" in type: type = "1"
+        else: type = "2"
+        prop = elem.find_all('span')[1].text.split()
+        lang= prop[0]
+        server = prop[-1]
+        if "•" in server:
+            server = elem.find('span', class_='nmopt').text.strip()
+        lang = IDIOMAS.get(lang, lang)
+        url = "%s?trembed=%s&trid=%s&trtype=%s"  %  (host,num,id, type)
+        server = SERVER.get(server.capitalize(), server.capitalize())
+        if not config.get_setting('unify') and not channeltools.get_channel_parameters(__channel__)['force_unify']:
+            title = "[%s] [COLOR darkgrey][%s][/COLOR]" %(server, lang)
+        else:
+            title = server
+        
+        if not "gounlimited" in server:
+            itemlist.append(item.clone(action="play", title=title, url=url, server=server.lower(), language=lang ))
 
     itemlist.sort(key=lambda it: (it.language))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title.capitalize())

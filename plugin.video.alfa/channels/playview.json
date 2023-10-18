@@ -1,7 +1,7 @@
 {
   "id": "playview",
   "name": "Playview",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://s15.postimg.cc/pkcz7kda3/playview.png",

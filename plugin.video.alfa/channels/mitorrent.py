@@ -24,8 +24,9 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'mitorrent', 
              'host': config.get_setting("current_host", 'mitorrent', default=''), 
-             'host_alt': ['https://mitorrent.me/'], 
-             'host_black_list': ['https://startgaming.net/', 'https://mitorrent.eu/', 'https://mitorrent.org/'], 
+             'host_alt': ["https://mitorrent.mx/"], 
+             'host_black_list': ['https://mitorrent.me/', 
+                                 'https://startgaming.net/', 'https://mitorrent.eu/', 'https://mitorrent.org/'], 
              'status': '2023-03: En Search y Section no funciona la paginación en la web', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
