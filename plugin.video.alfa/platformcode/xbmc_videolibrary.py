@@ -234,6 +234,10 @@ def mark_content_as_watched_on_kodi(item, value=1):
     @param value: >0 para visto, 0 para no visto
     """
     logger.info()
+
+    if not config.get_setting("videolibrary_auto_sync_kodi"):
+        return
+
     # logger.debug("item:\n" + item.tostring('\n'))
     payload_f = ''
 
@@ -309,6 +313,10 @@ def mark_season_as_watched_on_kodi(item, value=1):
         @param value: >0 para visto, 0 para no visto
         """
     logger.info()
+
+    if not config.get_setting("videolibrary_auto_sync_kodi"):
+        return
+
     # logger.debug("item:\n" + item.tostring('\n'))
 
     # Solo podemos marcar la temporada como vista en la BBDD de Kodi si la BBDD es local,
@@ -392,6 +400,10 @@ def get_videos_watched_on_kodi(item, value=1, list_videos=False):
         @param Return: True si list_videos=False y todos tiene el estado "value".  Si list_videos=True, devuelve lista de vídeos
         """
     logger.info()
+
+    if not config.get_setting("videolibrary_auto_sync_kodi"):
+        return
+
     # logger.debug("item:\n" + item.tostring('\n'))
 
     # Solo podemos obtener los vídeos como vistos en la BBDD de Kodi si la BBDD es local,
@@ -465,15 +477,19 @@ def get_videos_watched_on_kodi(item, value=1, list_videos=False):
 
 
 def mark_content_as_watched_on_alfa(path):
-    from channels.videolibrary import check_season_playcount
-    from core.videolibrarytools import read_nfo, write_nfo
-    
     """
         marca toda la serie o película como vista o no vista en la Videoteca de Alfa basado en su estado en la Videoteca de Kodi
         @type str: path
         @param path: carpeta de contenido a marcar
-        """
+    """
     logger.info()
+
+    if not config.get_setting("videolibrary_auto_sync_kodi"):
+        return
+
+    from channels.videolibrary import check_season_playcount
+    from core.videolibrarytools import read_nfo, write_nfo
+
     #logger.debug("path: " + path)
     
     FOLDER_MOVIES = config.get_setting("folder_movies")
@@ -554,8 +570,8 @@ def mark_content_as_watched_on_alfa(path):
     res = write_nfo(path, head_nfo, item)
     
     #logger.debug(item)
-    
-    
+
+
 def get_data(payload):
     """
     obtiene la información de la llamada JSON-RPC con la información pasada en payload
@@ -613,6 +629,9 @@ def update(folder_content=config.get_setting("folder_tvshows"), folder=""):
     """
     logger.info(folder)
 
+    if not config.get_setting("videolibrary_auto_sync_kodi"):
+        return
+
     payload = {
         "jsonrpc": "2.0",
         "method": "VideoLibrary.Scan",
@@ -654,6 +673,10 @@ def clean(mostrar_dialogo=False):
     @type mostrar_dialogo: bool
     """
     logger.info()
+
+    if not config.get_setting("videolibrary_auto_sync_kodi"):
+        return
+
     payload = {"jsonrpc": "2.0", "method": "VideoLibrary.Clean", "id": 1,
                "params": {"showdialogs": mostrar_dialogo}}
     data = get_data(payload)

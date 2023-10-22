@@ -36,7 +36,7 @@
     <category label="70780">
         <setting label="70126" type="lsep" />
         <setting id="icon_set" type="action" label="80515" default="default"
-            action="RunPlugin(plugin://plugin.video.alfa/?action=function&amp;folder=channels&amp;function=setting&amp;method=icon_set_selector)" />
+            action="RunPlugin(plugin://plugin.video.alfa/?action=function&amp;folder=modules&amp;function=setting&amp;method=icon_set_selector)" />
         <setting id="thumbnail_type" type="enum" lvalues="30011|30012|30200" label="30010"
             default="2" />
         <setting id="video_thumbnail_type" type="enum" label="70131" lvalues="70132|70133"
@@ -226,6 +226,7 @@
         <setting id="videolibrary_kodi_flag" type="number" label="" default="0" visible="false" />
         <setting id="videolibrary_kodi" type="bool" label="70120" enable="lt(-1,2)+eq(0,false)"
             default="true" />
+        <setting id="videolibrary_auto_sync_kodi" type="bool" label="70824" default="true" />
     </category>
 
     <category label="30101">
