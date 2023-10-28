@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel AnimeSpace -*-
+# -*- Channel Doramasflix -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
