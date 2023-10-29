@@ -24,8 +24,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'allcalidad', 
              'host': config.get_setting("current_host", 'allcalidad', default=''), 
-             'host_alt': ["https://allcalidad.re"], 
-             'host_black_list': ["https://allcalidad.si", "https://allcalidad.ms/", 
+             'host_alt': ["https://allcalidad.re"],
+             'host_black_list': ["https://allcalidad.si", "https://allcalidad.ms/", "https://allcalidad.ms",
                                  "https://allcalidad.is", "https://allcalidad.ac"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -43,7 +43,7 @@ except:
 
 def mainlist(item):
     logger.info()
-    
+
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist = []
@@ -189,9 +189,8 @@ def findvideos(item):
                         url=url
                        ))
 
-    
-    
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
     # Requerido para FilterTools
