@@ -140,7 +140,7 @@ def new_search(item):
     logger.info()
 
     itemlist = []
-    last_search = config.get_setting('search_last_searched', default='')
+    last_search = str(config.get_setting('search_last_searched', default=''))
 
     searched_text = item.search_text or dialog_input(default=last_search, heading='')
     save_search(searched_text, item.tourl())
