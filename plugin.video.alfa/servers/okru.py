@@ -40,10 +40,20 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             continue
         video_urls.append([type + " [okru]", url])
 
-    if "okru.link" in page_url:
-        v = scrapertools.find_single_match(page_url, "t=(\w+)")
-        data = httptools.downloadpage("https://okru.link/details.php?v=" + v, **kwargs).json
-        url = data.get("file", '')
+    if "okru.link/v2" in page_url:
+        v = scrapertools.find_single_match(page_url, "t=([\w\.]+)")
+        logger.info("Intel22 %s" %v)
+        headers = {"Content-Type" : "application/x-www-form-urlencoded", "Referer" : page_url, "User-Agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"}
+        post = {"video" : v}
+        data = httptools.downloadpage("https://apizz.okru.link/decoding", post = post, headers = headers).data
+        logger.info("Intel11 %s" %data)
+        url = data.get("url", '')
         video_urls.append(["video [okru]", url])
+
+    if "okru.link/embed" in page_url:
+            v = scrapertools.find_single_match(page_url, "t=(\w+)")
+            data = httptools.downloadpage("https://okru.link/details.php?v=" + v, **kwargs).json
+            url = data.get("file", '')
+            video_urls.append(["video [okru]", url])
 
     return video_urls
