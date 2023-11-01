@@ -1107,7 +1107,7 @@ def redirect_url(video, channel=''):
             if video.referer:
                 video.referer = redirect_url(video.referer, video.channel)
         
-        elif channel and not video.startswith('magnet'):
+        elif channel and not video.startswith('magnet') and is_host_url(video, channel):
             try:
                 channel_host = ''
                 obj = __import__('channels.%s' % channel, fromlist=["channels.%s" % channel])
@@ -1130,6 +1130,13 @@ def redirect_url(video, channel=''):
         logger.error(traceback.format_exc())
     
     return video
+
+
+def is_host_url(url, channel):
+    # compureba que la url haya pertenecido a algun host del canal.
+    ch = __import__('channels.%s' % channel, fromlist=["channels.%s" % channel])
+    all_hosts = ch.canonical.get('host_black_list', []) + ch.canonical.get('host_alt', [])
+    return any(host in url for host in all_hosts)
 
 
 def add_movie(item):

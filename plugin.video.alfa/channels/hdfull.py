@@ -30,7 +30,7 @@ assistant = False
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hdfull.today/", "https://hdfull.quest/"], 
+             "host_alt": ["https://hd-full.one/", "https://hdfull.today/", "https://hdfull.quest/"], 
              'host_verification': '%slogin', 
              "host_black_list": [
                                  "https://hdfull.icu/", "https://hdfull.sbs/", "https://hdfull.org/", 

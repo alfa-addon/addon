@@ -107,7 +107,7 @@ def start(itemlist, item, user_server_list=[], user_quality_list=[]):
     except:
         active = is_active(item.channel)
 
-    if not channel_id in autoplay_node or not active:
+    if not channel_id in autoplay_node and not active:
         return itemlist
 
     # Agrega servidores y calidades que no estaban listados a autoplay_node
@@ -152,11 +152,11 @@ def start(itemlist, item, user_server_list=[], user_quality_list=[]):
         #       2: Solo servidores
         #       3: Solo calidades
         #       4: No ordenar
-        if (settings_node['custom_servers'] and settings_node['custom_quality']):
-            priority = settings_node['priority']  # 0: Servidores y calidades o 1: Calidades y servidores
-        elif settings_node['custom_servers']:
+        if (settings_node.get('custom_servers') and settings_node.get('custom_quality')):
+            priority = settings_node.get('custom_quality')  # 0: Servidores y calidades o 1: Calidades y servidores
+        elif settings_node.get('custom_servers'):
             priority = 2  # Solo servidores
-        elif settings_node['custom_quality']:
+        elif settings_node.get('custom_quality'):
             priority = 3  # Solo calidades
         else:
             priority = 4  # No ordenar
@@ -174,8 +174,10 @@ def start(itemlist, item, user_server_list=[], user_quality_list=[]):
         # Se guardan los textos de cada servidor y calidad en listas p.e. favorite_servers = ['openload',
         # 'streamcloud']
         for num in range(1, 4):
-            favorite_servers.append(channel_node['servers'][settings_node['server_%s' % num]].lower())
-            favorite_quality.append(channel_node['quality'][settings_node['quality_%s' % num]])
+            if channel_node.get('servers'):
+                favorite_servers.append(channel_node['servers'][settings_node['server_%s' % num]].lower())
+            if channel_node.get('quality'):
+                favorite_quality.append(channel_node['quality'][settings_node['quality_%s' % num]])
         favorite_servers += [s.lower() for s in user_server_list if s not in favorite_servers]
         favorite_quality += [s for s in user_quality_list if s not in favorite_quality]
         for s in favorite_quality[:]:
@@ -281,7 +283,7 @@ def start(itemlist, item, user_server_list=[], user_quality_list=[]):
 
         # Se prepara el plan b, en caso de estar activo se agregan los elementos no favoritos al final
         try:
-            plan_b = settings_node['plan_b']
+            plan_b = settings_node.get('plan_b')
         except:
             plan_b = True
         text_b = ''
@@ -492,7 +494,7 @@ def check_value(channel, itemlist):
         # Obtiene el nodo AUTOPLAY desde el json
         autoplay_node = jsontools.get_node_from_file('autoplay', 'AUTOPLAY')
 
-    channel_node = autoplay_node.get(channel)
+    channel_node = autoplay_node.get(channel, {})
 
     server_list = channel_node.get('servers')
     if not server_list:
