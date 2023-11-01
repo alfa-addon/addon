@@ -12,6 +12,7 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import time
+import json
 
 from core.item import Item
 from core import tmdb, scrapertools, channeltools
@@ -139,14 +140,15 @@ def new_search(item):
     logger.info()
 
     itemlist = []
-    last_search = config.get_setting('search_last_searched', default='')
+    last_search = str(config.get_setting('search_last_searched', default=''))
 
     searched_text = item.search_text or dialog_input(default=last_search, heading='')
     save_search(searched_text, item.tourl())
     if not searched_text:
         return
 
-    if searched_text != item.search_text: channeltools.set_channel_setting('Last_searched', searched_text, 'search')
+    if searched_text != item.search_text:
+        config.set_setting('search_last_searched', searched_text)
     searched_text = searched_text.replace("+", " ")
 
     if item.mode == 'person':
@@ -804,7 +806,7 @@ def save_search(text, item_tourl):
         if current_saved_searches_list is None:
             saved_searches_list = []
         else:
-            saved_searches_list = list(current_saved_searches_list)
+            saved_searches_list = json.loads(current_saved_searches_list)
 
         for n, sv in enumerate(saved_searches_list):
             if isinstance(sv, dict) and sv.get(text, ''):
@@ -815,11 +817,11 @@ def save_search(text, item_tourl):
 
         saved_searches_list.insert(0, {text: item_tourl})
 
-        config.set_setting("search_saved_list", saved_searches_list[:saved_searches_limit])
+        config.set_setting("search_saved_list", json.dumps(saved_searches_list[:saved_searches_limit]))
 
 
 def clear_saved_searches(item):
-    config.set_setting("search_saved_list", list())
+    config.set_setting("search_saved_list", json.dumps([]))
     dialog_ok(config.get_localized_string(60423), config.get_localized_string(60424))
 
 
@@ -828,6 +830,8 @@ def get_saved_searches():
     if current_saved_searches_list is None:
         saved_searches_list = []
     else:
-        saved_searches_list = list(current_saved_searches_list)
+        saved_searches_list = json.loads(current_saved_searches_list)
+    logger.debug(current_saved_searches_list)
+    logger.debug(saved_searches_list)
 
     return saved_searches_list
