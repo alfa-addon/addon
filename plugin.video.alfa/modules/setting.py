@@ -20,6 +20,7 @@ from platformcode import platformtools
 
 from core import httptools
 import re
+import json
 
 MODULE_NAME = "setting"
 
@@ -907,8 +908,11 @@ def icon_set_selector(item=None):
     platformtools.dialog_notification("Alfa", "Obteniendo iconos, por favor espere...")
     options = list()
     data = httptools.downloadpage("https://github.com/alfa-addon/media/tree/master/themes").data
-    patron = '<a class="js-navigation-open Link--primary" title="([^"]+)"'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    patron = '<script type="application/json" '
+    patron += 'data-target="react-app\.embeddedData">(.+?)</script>'
+    data = re.compile(patron, re.DOTALL).findall(data)[0]
+    data = json.loads(data)
+    matches = [x['name'] for x in data['payload']['tree']['items']]
 
     default = Item(
             plot = 'El tema por defecto de Alfa',
@@ -919,8 +923,8 @@ def icon_set_selector(item=None):
 
     for set_id in matches:
         logger.info(set_id)
-        path_demo = "https://github.com/alfa-addon/media/raw/master/themes/%s/thumb_channels_movie.png" % set_id
-        path_info = "https://github.com/alfa-addon/media/raw/master/themes/%s/README.md" % set_id
+        path_demo = "https://raw.githubusercontent.com/alfa-addon/media/master/themes/%s/thumb_channels_movie.png" % set_id
+        path_info = "https://raw.githubusercontent.com/alfa-addon/media/master/themes/%s/README.md" % set_id
         opt = Item(
                 plot = httptools.downloadpage(path_info).data,
                 title = set_id.title(),

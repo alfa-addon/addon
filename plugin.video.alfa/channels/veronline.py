@@ -308,7 +308,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
     for elem in matches_int:
         elem_json = {}
-        logger.error(elem)
+        # logger.error(elem)
 
         try:
             elem_json['url'] = elem.get('data-url', '')

@@ -44,6 +44,7 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
+home = 'zerotwo'
 
 def mainlist(item):
     logger.info()
@@ -58,7 +59,7 @@ def mainlist(item):
             channel = item.channel,
             thumbnail = get_thumb("channels_anime.png"),
             title = "Nuevos Capítulos",
-            url = host + 'nino'
+            url = host + home
         )
     )
 
@@ -78,7 +79,7 @@ def mainlist(item):
             channel = item.channel,
             thumbnail = get_thumb("channels_anime.png"),
             title = "Recientes",
-            url = host
+            url = host + home
         )
     )
 
@@ -399,6 +400,6 @@ def newest(categoria):
     itemlist = []
     item = Item()
     if categoria == 'anime':
-        item.url=host
+        item.url=host + home
         itemlist = new_episodes(item)
     return itemlist

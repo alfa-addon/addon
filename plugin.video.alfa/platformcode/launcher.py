@@ -31,6 +31,15 @@ def start():
     funciones que deseamos que se ejecuten nada mas abrir el plugin.
     """
     logger.info()
+    channel_language = config.get_setting("channel_language")
+    if isinstance(channel_language, str):
+        from channelselector import LANGUAGES
+        channel_language = channel_language.lower()
+        try:
+            channel_language = LANGUAGES.index(channel_language)
+        except ValueError:
+            channel_language = 0
+        config.set_setting("channel_language", channel_language)
     # if config.get_platform(True)['num_version'] >= 19:
     #     from core import filetools
     #     origin = filetools.join(config.get_runtime_path(), "resources", "settings_matrix.xml")
