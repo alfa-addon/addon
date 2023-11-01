@@ -34,6 +34,7 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
+timeout = 8
 
 def mainlist(item):
     logger.info()
@@ -64,7 +65,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).data
+    data = httptools.downloadpage(item.url, canonical=canonical, timeout=timeout).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="content.*?'
     patron += 'href="([^"]+)".*?'
@@ -82,7 +83,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).data
+    data = httptools.downloadpage(item.url, canonical=canonical, timeout=timeout).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="content">.*?'
     patron += 'href="([^"]+)" title="([^"]+)".*?'
