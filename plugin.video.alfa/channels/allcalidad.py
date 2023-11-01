@@ -175,7 +175,7 @@ def findvideos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     
     for url in matches:
-        data = httptools.downloadpage(url).data
+        data = httptools.downloadpage(url, canonical=canonical).data
         patron = "var url = '([^']+)'"
         url = scrapertools.find_single_match(data, patron)
         
