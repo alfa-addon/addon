@@ -45,8 +45,8 @@ list_servers = [
 canonical = {
              'channel': 'pelisplus', 
              'host': config.get_setting("current_host", 'pelisplus', default=''), 
-             'host_alt': ["https://pelisplus.lat"], 
-             'host_black_list': ["https://home.pelisplus.lat/", 
+             'host_alt': ["https://ww3.pelisplus.to/"], 
+             'host_black_list': ["https://home.pelisplus.lat/", "https://pelisplus.lat",
                                  "https://pelisplus.mov/", "https://pelisplus.ninja/", "https://www.pelisplus.lat/", 
                                  "https://www.pelisplus.me/", "https://pelisplushd.net/","https://pelisplushd.to/"], 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -63,7 +63,7 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url_todas = "listado-peliculas", 
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="sub_menu", url_todas = "peliculas", 
                          url_populares = "/tendencias/dia",
                          thumbnail=get_thumb('movies', auto=True)))
 
@@ -118,7 +118,7 @@ def list_all(item):
     logger.info()
     itemlist = list()
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, '(?is)card-body.*?Page navigation example')
     patron  = '(?is)<a class="Posters-link" href="([^"]+).*?'
     patron += 'srcSet="([^"]+).*?'
@@ -166,7 +166,7 @@ def seasons(item):
     logger.info()
 
     itemlist = list()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     patron  = 'data-toggle="tab"[^>]*.?[^<]+<!-- -->([^<])+'
     infoLabels = item.infoLabels
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -198,7 +198,7 @@ def episodios(item):
 
 def episodesxseasons(item):
     logger.info()
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, canonical=canonical).data
     itemlist = list()
     infoLabels = item.infoLabels
     season = infoLabels["season"]
@@ -228,7 +228,7 @@ def episodesxseasons(item):
 def section(item):
     logger.info()
     itemlist = list()
-    data = httptools.downloadpage(host).data
+    data = httptools.downloadpage(host, canonical=canonical).data
     bloque = scrapertools.find_single_match(data, "Generos(.*?)side-nav-header")
     patron  = '<a href="([^"]+)">'
     patron += '([^<]+)'
@@ -256,7 +256,7 @@ def findvideos(item):
             url = videos["result"]
                 
             if u"player.php" in url:
-                data = httptools.downloadpage(url).data
+                data = httptools.downloadpage(url, canonical=canonical).data
                 url = scrapertools.find_single_match(data, "var url = '([^']+)'")
             itemlist.append(Item(channel=item.channel, title='%s [%s]', url=url, action='play', language=idioma,
                 infoLabels=item.infoLabels))
@@ -289,26 +289,26 @@ def play(item):
         id = scrapertools.find_single_match(item.url, "id=(\w+)")
         token = scrapertools.find_single_match(item.url, "token=(\w+)")
         post = {"id" : id, "token" : token}
-        dd = httptools.downloadpage("https://cinestart.streams3.com/r.php", post = post, allow_redirect=False).url
+        dd = httptools.downloadpage("https://cinestart.streams3.com/r.php", post = post, allow_redirect=False, canonical=canonical).url
         v = scrapertools.find_single_match(dd, "t=(\w+)")
-        dd = httptools.downloadpage("https://cinestart.net/vr.php?v=%s" %v).json
+        dd = httptools.downloadpage("https://cinestart.net/vr.php?v=%s" %v, canonical=canonical).json
         item.url = dd["file"]
     if "apialfa.tomatomatela.com" in item.url:
-        data = httptools.downloadpage(item.url).data
+        data = httptools.downloadpage(item.url, canonical=canonical).data
         hostx = "https://apialfa.tomatomatela.com/ir/"
         item.url = hostx + scrapertools.find_single_match(data, 'id="link" href="([^"]+)')
-        data = httptools.downloadpage(item.url).data
+        data = httptools.downloadpage(item.url, canonical=canonical).data
         xvalue = scrapertools.find_single_match(data, 'name="url" value="([^"]+)')
         post = {"url" : xvalue}
-        item.url = httptools.downloadpage(hostx + "rd.php", follow_redirects=False, post=post).headers.get("location", "")
-        data = httptools.downloadpage("https:" + item.url).data
+        item.url = httptools.downloadpage(hostx + "rd.php", follow_redirects=False, post=post).headers.get("location", "", canonical=canonical)
+        data = httptools.downloadpage("https:" + item.url, canonical=canonical).data
         xvalue = scrapertools.find_single_match(data, 'name="url" value="([^"]+)')
         post = {"url" : xvalue}
-        item.url = httptools.downloadpage(hostx + "redirect_ddh.php", follow_redirects=False, post=post).headers.get("location", "")
+        item.url = httptools.downloadpage(hostx + "redirect_ddh.php", follow_redirects=False, post=post).headers.get("location", "", canonical=canonical)
         hash = scrapertools.find_single_match(item.url,"#(\w+)")
-        file = httptools.downloadpage("https://tomatomatela.com/details.php?v=%s" %hash).json
+        file = httptools.downloadpage("https://tomatomatela.com/details.php?v=%s" %hash, canonical=canonical).json
         item.url = file["file"]
-        dd = httptools.downloadpage(item.url, only_headers=True).data
+        dd = httptools.downloadpage(item.url, only_headers=True, canonical=canonical).data
     return [item]
 
 
