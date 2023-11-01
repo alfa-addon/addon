@@ -28,6 +28,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://porngrey.com/video/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)(?:severeporn|anon-v|myporntape).com/embed/\\w+)",
         "url": "\\1"
       },

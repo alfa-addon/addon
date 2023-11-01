@@ -18,7 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-# https://sextubefun.com/   https://www.sunporno.com/   https://freehdporn.xxx/
+# https://sextubefun.com/  https://iporntoo.com/  https://wanktv.com/  https://www.sunporno.com/   https://freehdporn.xxx/
 
 canonical = {
              'channel': 'sunporno', 

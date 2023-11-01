@@ -20,6 +20,14 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://xxk.mobi/video/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://www.(?:porndroids|superporn).com/(?:es/|)video/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)send.(?:cm|cam|net|site)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
