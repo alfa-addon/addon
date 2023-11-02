@@ -3,9 +3,11 @@
 # XBMC entry point
 # ------------------------------------------------------------
 
-
 import os
 import sys
+import patch
+
+patch.fix_path()
 
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -13,13 +15,6 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 from platformcode import config, logger
 
 logger.info("init...")
-
-new_path = []
-for path in sys.path:
-    if path.endswith("packages"):
-        continue
-    new_path.append(path)
-sys.path = new_path
 
 librerias = os.path.join(config.get_runtime_path(), 'lib')
 sys.path.append(librerias)

@@ -5,15 +5,12 @@
 
 import datetime, math, threading, traceback
 import sys
+import patch
+
+patch.fix_path()
+
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-new_path = []
-for path in sys.path:
-    if path.endswith("packages"):
-        continue
-    new_path.append(path)
-sys.path = new_path
 
 try:
     from platformcode import logger
