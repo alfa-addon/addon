@@ -3,11 +3,13 @@
 # Service for updating new episodes on library series
 # ------------------------------------------------------------
 
-import datetime, math, threading, traceback
 import sys
 import patch
 
 patch.fix_path()
+
+# Estúpido traceback no es built-in >:(
+import datetime, math, threading, traceback
 
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
