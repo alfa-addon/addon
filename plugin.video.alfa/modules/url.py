@@ -337,78 +337,97 @@ def list_storage(item):
 def btdigg(item):
     if not PY3: from lib.alfaresolver import find_alternative_link
     else: from lib.alfaresolver_py3 import find_alternative_link
+    from lib.generictools import search_btdigg_free_format_parse
     
     context = [{"title": "Copiar a Mis Torrents",
                 "action": "copy_file",
                 "module": "url"}]
     itemlist = []
     matches = []
+    torrent_params = {}
+    titles_search = []
+    title_search = []
 
+    if item.titles_search:
+        titles_search = item.titles_search
+        title_search = titles_search[0]
     if item.torrent_params:
         torrent_params = item.torrent_params
         del item.torrent_params
     else:
-        item.btdigg = url = platformtools.dialog_input(heading='Introduce criterios de búsqueda: título calidad [filtro A Filtro B ...]\r\n' + 
-                                                               'ej: silo HDTV [Cap.] ó silo 1080p Cap.110 [Cap.] ó volpina bluray [Esp]')
-        url = [item.btdigg]
-        contentTitle = []
-        if not item.btdigg: return itemlist
+        item.btdigg = url = item.texto or \
+                            platformtools.dialog_input(heading='Introduce criterios de búsqueda: ' + 
+                                          '[COLOR lime]título calidad |Orden [filtro A ...]' + 
+                                          ' [filtro CALIDAD ...] [filtro IDIOMA ...][/COLOR]\r\n' + 
+                                          'ej: [B]silo HDTV |0 [silo Cap.][/B] ó [B]silo 1080p Cap.110 [silo][/B] ó [B]volpina Esp[/B]')
+        
+        item.texto = item.btdigg
+        titles_search = search_btdigg_free_format_parse({}, item)
+        if titles_search and not torrent_params:
+            title_search = titles_search[0]
 
-        if '[' in item.btdigg:
-            contentTitle = scrapertools.find_single_match(item.btdigg, '\s*\[(.*?)[\]|$]').split(' ')
-            url = [scrapertools.find_single_match(item.btdigg, '(.*?)\s*\[')]
+            torrent_params = {
+                              'title_prefix': [title_search], 
+                              'contentType': 'free', 
+                              'quality_alt': title_search.get('quality_alt', ''), 
+                              'language_alt': title_search.get('language_alt', []), 
+                              'find_alt_link_next': 0, 
+                              'search_order': title_search['search_order'] if 'search_order' in title_search else 2
+                              }
 
-        torrent_params = {
-                          'title_prefix': [{'urls': url, 'checks': contentTitle}], 
-                          'quality_alt': [], 
-                          'language_alt': [], 
-                          'domain_alt': None,
-                          'find_alt_link_next': 0
-                          }
-
+    limit_search = title_search.get('limit_search', 2) * 1.5
+    
     if item.matches: 
         matches = item.matches
         del item.matches
 
-    if item.btdigg:
+    x = 0
+    while item.btdigg and x < limit_search:
         torrent_params = find_alternative_link(item, torrent_params=torrent_params, cache=True)
 
-    for elem in torrent_params['find_alt_link_result']:
-        item_local = item.clone()
-        #logger.error(elem)
-        
-        try:
-            scrapedtitle = config.decode_var(elem.get('title', ''))
+        for elem in torrent_params['find_alt_link_result']:
+            item_local = item.clone()
+            #logger.error(elem)
             
-            item_local.url = elem.get('url', '')
-            if item_local.url in str(matches): continue
-            item_local.server = 'torrent'
-            item_local.contentType = 'movie'
-            item_local.action = 'play'
-            item_local.quality = elem.get('quality', '')
-            item_local.language = elem.get('language', [])
-            item_local.torrent_info = '%s [MAGNET]: %s' % (elem.get('size', ''), 
-                                       scrapedtitle.replace('[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B] ', ''))
-            item_local.title = scrapedtitle.replace('[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B] ', '')
-            item_local.copytitle = item_local.title
-            item_local.contentTitle = '%s / %s' % (item.btdigg, item_local.title)
-            item_local.torrents_path = ''
-            item_local.infoLabels["tmdb_id"] = "111"
-            item_local.context=context
-            item_local.btdigg = True
-        
-        except:
-            logger.error(traceback.format_exc())
-            continue
+            try:
+                scrapedtitle = config.decode_var(elem.get('title', ''))
+                
+                item_local.url = elem.get('url', '')
+                if item_local.url in str(matches): continue
+                item_local.server = 'torrent'
+                item_local.contentType = elem.get('mediatype', '') or 'movie'
+                item_local.action = 'play'
+                item_local.quality = elem.get('quality', '')
+                item_local.language = elem.get('language', [])
+                item_local.torrent_info = '%s [MAGNET]: %s' % (elem.get('size', ''), 
+                                           scrapedtitle.replace('[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B] ', ''))
+                item_local.title = scrapedtitle.replace('[B][COLOR limegreen]BT[/COLOR][COLOR red]Digg[/COLOR][/B] ', '')
+                item_local.copytitle = item_local.title
+                item_local.contentTitle = '%s / %s' % (item.btdigg, item_local.title)
+                item_local.torrents_path = ''
+                item_local.infoLabels["tmdb_id"] = "111"
+                item_local.context=context
             
-        itemlist.append(item_local)
-        matches.append(elem)
+            except:
+                logger.error(traceback.format_exc())
+                continue
+                
+            itemlist.append(item_local)
+            matches.append(elem)
+        x += 1
+        if itemlist: 
+            x = 999
+            break
 
-    torrent_params['find_alt_link_result_total'] = []
-    if torrent_params['find_alt_link_next'] > 0 and itemlist:
-        itemlist.append(item.clone(action='btdigg', title=">> Página siguiente " 
-                        + str(torrent_params['find_alt_link_next']+1) + ' de ' + str(int(torrent_params['find_alt_link_found']/10)+1), 
-                        torrent_params=torrent_params, matches=matches)) 
+    if torrent_params: 
+        torrent_params['find_alt_link_result_total'] = []
+        if torrent_params['find_alt_link_next'] > 0 and itemlist:
+            itemlist.append(item.clone(action='btdigg', title=">> Página siguiente " 
+                            + str(torrent_params['find_alt_link_next']) + ' de ' 
+                            + str(int(torrent_params['find_alt_link_found']/10)+1), 
+                            torrent_params=torrent_params, matches=matches, 
+                            titles_search=titles_search)) 
+
     return itemlist
 
 
@@ -440,7 +459,15 @@ def copy_file(item):
     if not filetools.exists(MIS_TORRENT_BTDIGG_FOLDER):
         filetools.mkdir(MIS_TORRENT_BTDIGG_FOLDER)
         
-    path = filetools.join(MIS_TORRENT_BTDIGG_FOLDER, filetools.validate_path(item.copytitle)+'.magnet')
+    if item.contentSerieName:
+        title = '%s (%s) %sx%s [%s] [%s]' % (item.contentSerieName, item.infoLabels['year'], 
+                                             item.contentSeason, str(item.contentEpisodeNumber).zfill(2), 
+                                             item.quality.replace(config.BTDIGG_LABEL, ''), item.size)
+    elif item.contentTitle:
+        title = '%s (%s) [%s] [%s]' % (item.contentTitle, item.infoLabels['year'], item.quality.replace(config.BTDIGG_LABEL, ''), item.size)
+    else:
+        title = item.copytitle
+    path = filetools.join(MIS_TORRENT_BTDIGG_FOLDER, filetools.validate_path(title)+'.magnet')
     filetools.write(path, item.url, silent=True)
     
-    platformtools.dialog_notification('Copiando MAGNET', filetools.validate_path(item.copytitle)+'.magnet')
+    platformtools.dialog_notification('Copiando MAGNET', filetools.validate_path(title)+'.magnet')
