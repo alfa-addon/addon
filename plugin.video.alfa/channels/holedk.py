@@ -135,6 +135,9 @@ def findvideos(item):
         elif "tape" in ser:
             url = "https://streamtape.com/e/%s" % id
             itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+        elif "voe" in ser:
+            url = "https://voe.sx/e/%s" % id
+            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "ntu" in ser:
             continue
         else:

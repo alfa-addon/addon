@@ -1,10 +1,10 @@
 {
   "id": "mangovideo",
   "name": "mangovideo",
-  "active": false,
+  "active": true,
   "adult": true,
   "language": ["*"],
-  "thumbnail": "https://mangovideo.pw/images/logo.png",
+  "thumbnail": "https://i.postimg.cc/Qtx1XPL2/mangoporn-net.png",
   "banner": "",
   "fanart": "",
   "categories": [
