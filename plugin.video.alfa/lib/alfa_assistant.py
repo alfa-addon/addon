@@ -16,6 +16,7 @@ import base64
 import json
 import re
 import xbmc
+import xbmcgui
 import subprocess
 import time
 import os
@@ -30,6 +31,96 @@ from platformcode import config
 from platformcode import platformtools
 
 
+DEBUG = config.get_setting('debug_report', default=False)
+DATA_PATH = config.get_data_path()
+RUNTIME_PATH = config.get_runtime_path()
+ASSISTANT_SERVERS = []
+ASSISTANT_SERVERS_AGE = 0.0
+ASSISTANT_LOCAL = "127.0.0.1"
+ASSISTANT_SERVER = "http://%s" % ASSISTANT_LOCAL
+ASSISTANT_MODE = 'este'
+ASSISTANT_SERVER_PORT = 48884
+ASSISTANT_SERVER_PORT_PING = 48886
+URL_CALL = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT)
+URL_PING = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT_PING)
+isAlfaAssistantOpen = False
+window = None
+timer1 = 30
+timer2 = 5
+
+def check_assistant_servers(time1=timer1, time2=timer2):
+    global ASSISTANT_SERVERS, ASSISTANT_SERVERS_AGE, window, isAlfaAssistantOpen, URL_CALL, URL_PING
+    try:
+        window = xbmcgui.Window(10000)
+        ASSISTANT_SERVERS = window.getProperty("alfa_assistant_servers")
+        ASSISTANT_SERVERS_AGE = float(window.getProperty("alfa_assistant_servers_age") or 0.0)
+
+        if ASSISTANT_SERVERS:
+            ASSISTANT_SERVERS = eval(ASSISTANT_SERVERS)
+            if ASSISTANT_SERVERS_AGE < time.time():
+                ASSISTANT_SERVERS = []
+        if DEBUG: logger.debug('1: servers: %s / age: %s' % (ASSISTANT_SERVERS, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2)))
+
+        if not ASSISTANT_SERVERS:
+            ASSISTANT_SERVERS = config.get_setting("assistant_custom_address", default=ASSISTANT_LOCAL).split(',')
+            if not ASSISTANT_SERVERS[-1]: del ASSISTANT_SERVERS[-1]
+            window.setProperty("alfa_assistant_servers", str(ASSISTANT_SERVERS))
+            ASSISTANT_SERVERS_AGE = time.time() + time1*60
+            window.setProperty("alfa_assistant_servers_age", str(ASSISTANT_SERVERS_AGE))
+            if DEBUG: logger.debug('2: servers: %s / age: %s' % (ASSISTANT_SERVERS, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2)))
+
+        for x, server in enumerate(ASSISTANT_SERVERS):
+            ASSISTANT_SERVERS[x] = "http://%s" % server.replace('http://', '')
+
+        check_assistant_playing(time1=time1, time2=time2)
+        isAlfaAssistantOpen = False
+
+    except Exception:
+        window = None
+        ASSISTANT_SERVERS = []
+        ASSISTANT_SERVERS_AGE = 0.0
+        logger.error(traceback.format_exc())
+
+def check_assistant_playing(time1=timer1, time2=timer2):
+    global ASSISTANT_SERVERS, ASSISTANT_SERVERS_AGE, window, ASSISTANT_SERVER, ASSISTANT_MODE, isAlfaAssistantOpen, URL_CALL, URL_PING
+
+    try:
+        ASSISTANT_REMOTE = filetools.join(config.get_data_path(), 'assistant_remote_status_%s.json')
+        x = 0
+        change = False
+        ASSISTANT_SERVERS_save = ASSISTANT_SERVERS[:]
+        for server in ASSISTANT_SERVERS_save[:]:
+            if (not ASSISTANT_LOCAL in server and not filetools.exists(ASSISTANT_REMOTE % server.replace('http://', ''))) \
+                or (ASSISTANT_LOCAL in server and not xbmc.Player().isPlaying()):
+                x += 1
+                continue
+
+            change = True
+            if DEBUG: logger.debug('3: server: %s / playing: %s' % (server, xbmc.Player().isPlaying() if ASSISTANT_LOCAL in server \
+                                                                    else 'assistant_remote_status_%s.json' % server.replace('http://', '')))
+            if len(ASSISTANT_SERVERS) > 1:
+                del ASSISTANT_SERVERS[x]
+                window.setProperty("alfa_assistant_servers", str(ASSISTANT_SERVERS))
+                ASSISTANT_SERVERS_AGE = time.time() + time2*60
+                window.setProperty("alfa_assistant_servers_age", str(ASSISTANT_SERVERS_AGE))
+            else:
+                ASSISTANT_SERVERS_AGE = 0.0
+                window.setProperty("alfa_assistant_servers_age", str(ASSISTANT_SERVERS_AGE))
+
+        if ASSISTANT_SERVERS_save != ASSISTANT_SERVERS:
+            isAlfaAssistantOpen = False
+        ASSISTANT_SERVER = ASSISTANT_SERVERS[0] if ASSISTANT_SERVERS else "http://%s" % ASSISTANT_LOCAL
+        ASSISTANT_MODE = 'este' if ASSISTANT_LOCAL in ASSISTANT_SERVER else 'otro' or config.get_setting("assistant_mode").lower()
+        if config.get_setting("assistant_mode").lower() != ASSISTANT_MODE: config.set_setting("assistant_mode", ASSISTANT_MODE)
+        URL_CALL = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT)
+        URL_PING = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT_PING)
+        if DEBUG and change: logger.debug('4: servers: %s / age: %s' % (ASSISTANT_SERVERS, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2)))
+
+    except Exception:
+        logger.error(traceback.format_exc())
+
+check_assistant_servers()
+
 EXTRA_TIMEOUT = 10
 
 PLATFORM = config.get_system_platform()
@@ -37,10 +128,6 @@ VERBOSE = config.get_setting('addon_update_message', default=False)
 
 ASSISTANT_APP = 'com.alfa.alfamobileassistant'
 ASSISTANT_DESKTOP = 'alfa-desktop-assistant'
-ASSISTANT_SERVER = "http://127.0.0.1"
-ASSISTANT_SERVER_PORT = 48884
-ASSISTANT_SERVER_PORT_PING = 48886
-ASSISTANT_MODE = config.get_setting("assistant_mode")
 
 assistant_urls = ['https://raw.githubusercontent.com/alfa-addon/alfa-repo/master/downloads/assistant/', \
                   'https://gitlab.com/addon-alfa/alfa-repo/-/raw/master/downloads/assistant/']
@@ -64,14 +151,8 @@ if PLATFORM not in ['android', 'atv2'] and ASSISTANT_MODE == "este":
     else:
         assistant_urls = []
 
-isAlfaAssistantOpen = False
 debugGlobal = False
 
-if ASSISTANT_MODE == "otro":
-    if config.get_setting("assistant_custom_address"):
-        ASSISTANT_SERVER = "http://%s" % config.get_setting("assistant_custom_address")
-URL_CALL = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT)
-URL_PING = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT_PING)
 
 JS_CODE_CLICK_ON_VJS_BIG_PLAY_BUTTON = """
 ((() => { 
@@ -238,10 +319,11 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
                      getData = None, postData = None, getCookies = None, update = None, alfa_s = False, 
                      version = None, clearWebCache = False, removeAllCookies = False, hardResetWebView = False, 
                      keep_alive = False, returnWhenCookieNameFound = None, retryIfTimeout = False, mute = True, 
-                     urlParamRemoveAllCookies = False, useAdvancedWebView = False):
+                     urlParamRemoveAllCookies = False, useAdvancedWebView = False, retry=True):
     EXTRA_TIMEOUT_PLUS = 0
     debug = debug or debugGlobal
     if debug: alfa_s = False
+    global URL_PING, URL_CALL, ASSISTANT_SERVERS, ASSISTANT_SERVERS_AGE, ASSISTANT_SERVER, ASSISTANT_MODE
 
     if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit', 'terminate']:
         res = open_alfa_assistant(closeAfter, alfa_s=alfa_s)
@@ -334,18 +416,66 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
     if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit', 'terminate']:
         EXTRA_TIMEOUT_PLUS = 10 if timeout+EXTRA_TIMEOUT <= 10 else 0
         if not alfa_s: logger.info('##Assistant URL: %s - TIMEOUT: %s' % (serverCall, str(timeout+EXTRA_TIMEOUT)))
+
+    server_url = ASSISTANT_SERVER
+    if ASSISTANT_SERVERS_AGE < time.time():
+        check_assistant_servers(time1=timer1, time2=timer2)
+    else:
+        check_assistant_playing(time1=timer1, time2=timer2)
+    if server_url != ASSISTANT_SERVER:
+        serverCall = serverCall.replace(server_url, ASSISTANT_SERVER)
+    #if DEBUG: logger.info('##Assistant URL: %s - TIMEOUT: %s' % (serverCall[:200], str(timeout+EXTRA_TIMEOUT)))
     response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT+EXTRA_TIMEOUT_PLUS, alfa_s=alfa_s, 
                                       ignore_response_code=True, keep_alive=keep_alive, retry_alt=False, proxy_retries=0)
+
+    change = False
+    time1 = 15
+    time2 = 5
+    if not response.sucess and retry:
+        sucess = False
+        code = response.code
+        if DEBUG: logger.debug('A: servers: %s / age: %s' % (ASSISTANT_SERVERS, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2)))
+
+        for url in ASSISTANT_SERVERS[:]:
+            logger.error('B: server: %s / age: %s / code: %s' % (url, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2), str(code)))
+            ASSISTANT_SERVER = url
+            URL_PING = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT_PING)
+            URL_CALL = '%s:%s' % (ASSISTANT_SERVER, ASSISTANT_SERVER_PORT)
+            ASSISTANT_MODE = 'este' if ASSISTANT_LOCAL in ASSISTANT_SERVER else 'otro' or config.get_setting("assistant_mode").lower()
+            serverCall_PING = '%s/ping' % URL_PING
+
+            res = httptools.downloadpage(serverCall_PING, timeout=timeout+EXTRA_TIMEOUT+EXTRA_TIMEOUT_PLUS, alfa_s=True, 
+                                         ignore_response_code=True, keep_alive=keep_alive, retry_alt=False, proxy_retries=0)
+            sucess = res.sucess
+            code = res.code
+            if res.sucess:
+                if endpoint in ['ping', 'getWebViewInfo', 'quit', 'terminate']: response.data = res.data
+                break
+            if len(ASSISTANT_SERVERS) > 1:
+                del ASSISTANT_SERVERS[0]
+                change =  True
+
+        if window and change:
+            assistant_servers = []
+            for url in ASSISTANT_SERVERS:
+                assistant_servers += [url.replace('http://', '')]
+            window.setProperty("alfa_assistant_servers", str(assistant_servers))
+            ASSISTANT_SERVERS_AGE = time.time() + time2*60
+            window.setProperty("alfa_assistant_servers_age", str(ASSISTANT_SERVERS_AGE))
+            if config.get_setting("assistant_mode").lower() != ASSISTANT_MODE: config.set_setting("assistant_mode", ASSISTANT_MODE)
+        if DEBUG: logger.debug('C: servers: %s / res: %s / age: %s / code: %s' \
+                                % (ASSISTANT_SERVERS, sucess, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2), str(code)))
+    
     if not response.sucess and endpoint in ['ping', 'getWebViewInfo']:
         if not alfa_s: logger.info('##Assistant "%s" FALSE, timeout %s: %s' % (endpoint, timeout+EXTRA_TIMEOUT, serverCall), force=True)
     if not (response.sucess or response.data) and endpoint not in ['ping', 'getWebViewInfo', 'quit', 'terminate']:
         if retryIfTimeout: retryIfTimeout = response
         res = close_alfa_assistant(retryIfTimeout=retryIfTimeout)
         time.sleep(2)
-        if not res:
-            res = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
+
         if res:
-            serverCall = serverCall.replace('&cache=True', '&cache=False').replace('&clearWebCache=True', '&clearWebCache=False')
+            serverCall = serverCall.replace('&cache=True', '&cache=False').replace('&clearWebCache=True', '&clearWebCache=False')\
+                                   .replace(server_url, ASSISTANT_SERVER)
             if not alfa_s: logger.info('##Assistant retrying URL: ' + serverCall)
             response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT+EXTRA_TIMEOUT_PLUS, alfa_s=alfa_s, 
                                               ignore_response_code=True, keep_alive=keep_alive, retry_alt=False, proxy_retries=0)
@@ -360,6 +490,9 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
         if endpoint in ['update']:
             return data
         try:
+            if ':"sec-ch-ua' in data:
+                data = re.sub(',?{"name":"sec-ch-ua[^"]*"[^}]*},?]', ']', data)
+                data = re.sub('{"name":"sec-ch-ua[^"]*"[^}]*},?', '', data)
             data_ret = jsontools.load(data)
             if data_ret.get('assistantVersion', '') and '?' in data_ret['assistantVersion']: 
                 data_ret['assistantVersion'] = '0.0.01'
@@ -377,6 +510,9 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
         except:
             data_ret = data
             logger.error('##Assistant "%s" ERROR, timeout %s: %s' % (endpoint, timeout+EXTRA_TIMEOUT, str(data_ret)))
+            if ASSISTANT_SERVERS_AGE < time.time():
+                check_assistant_servers(time1=time1, time2=time2)
+            if DEBUG: logger.debug('D: servers: %s / age: %s' % (ASSISTANT_SERVERS, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2)))
         return data_ret
     else:
         data = ''
@@ -445,12 +581,15 @@ def getInlineRequestedHeaders(requestHeaders, namesExceptionList = None):
 ## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
 #
 def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assistantLatestVersion=True, alfa_s=False):
-    global isAlfaAssistantOpen
+    global isAlfaAssistantOpen, URL_PING, URL_CALL, ASSISTANT_SERVERS, ASSISTANT_SERVERS_AGE, ASSISTANT_SERVER, ASSISTANT_MODE
     version = 'alfa-mobile-assistant.version'
     if PLATFORM not in ['android', 'atv2']:
         version = ''
     res = False
     
+    if ASSISTANT_SERVERS_AGE < time.time():
+        check_assistant_servers(time1=timer1, time2=timer2)
+
     if not isAlfaAssistantOpen:
         try:
             if ASSISTANT_MODE == 'este':
@@ -459,22 +598,22 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assi
                     logger.error('##Assistant not installed or not available')
                     return False
 
-                logger.info('##Assistant Opening at %s' % ASSISTANT_SERVER, force=True)
+                logger.info('##Assistant Opening at %s (%s)' % (ASSISTANT_SERVER, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2)), force=True)
                 
-                ver_upd = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
+                ver_upd = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True, retry=False)
                 if closeAfter:
                     cmd = 'openAndQuit'
                 else:
                     cmd = 'open'
                 
                 if not ver_upd and (config.get_platform(True)['num_version'] >= 19 or \
-                                (config.get_platform(True)['num_version'] < 19 \
-                                and not xbmc.Player().isPlaying())):
+                                   (config.get_platform(True)['num_version'] < 19 \
+                                    and not xbmc.Player().isPlaying())):
                     res = execute_in_alfa_assistant_with_cmd(cmd)
 
                 for x in range(14):
                     time.sleep(1)
-                    res = get_generic_call('getWebViewInfo', timeout=1-EXTRA_TIMEOUT, alfa_s=True)
+                    res = get_generic_call('getWebViewInfo', timeout=1-EXTRA_TIMEOUT, alfa_s=True, retry=False)
                     if res:
                         if isinstance(res, dict):
                             check_webview_version(res.get('wvbVersion', ''))
@@ -483,7 +622,8 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assi
                             isAlfaAssistantOpen = res
                         else:
                             isAlfaAssistantOpen = res
-                        logger.info('##Assistant Opened @ %s. getWebViewInfo: %s' % (ASSISTANT_SERVER, res), force=True)
+                        logger.info('##Assistant Opened @ %s (%s). getWebViewInfo: %s' \
+                                     % (ASSISTANT_SERVER, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2), res), force=True)
                         break
                 else:
                     return False
@@ -498,7 +638,8 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assi
                         isAlfaAssistantOpen = res
                     else:
                         isAlfaAssistantOpen = res
-                    logger.info('##Assistant Opened @ %s. getWebViewInfo: %s' % (ASSISTANT_SERVER, res), force=True)
+                    logger.info('##Assistant Opened @ %s (%s). getWebViewInfo: %s'  \
+                                 % (ASSISTANT_SERVER, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2), res), force=True)
                 else:
                     if not retry:
                         platformtools.dialog_notification("ACTIVE Alfa Assistant en %s" % ASSISTANT_SERVER, 
@@ -526,7 +667,8 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False, assi
         return res
     
     else:
-        if not alfa_s: logger.info('##Assistant Already was Opened @ %s: %s' % (ASSISTANT_SERVER, str(isAlfaAssistantOpen)), force=True)
+        if not alfa_s: logger.info('##Assistant Already was Opened @ %s (%s): %s' \
+                                    % (ASSISTANT_SERVER, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2), str(isAlfaAssistantOpen)), force=True)
         return isAlfaAssistantOpen
 
 #
@@ -539,7 +681,7 @@ def close_alfa_assistant(retryIfTimeout=False):
 
     if is_alfa_installed():
         logger.info('##Assistant Close at ' + URL_PING, force=True)
-        res = get_generic_call('quit', timeout=1-EXTRA_TIMEOUT, alfa_s=True)
+        res = get_generic_call('quit', timeout=1-EXTRA_TIMEOUT, alfa_s=True, retry=False)
         
         if retryIfTimeout:
             try:
@@ -576,7 +718,7 @@ def check_webview_version(wvbVersion):
         return
 
     # Comparar la versión de WebView que tiene el Android donde reside la APP con la versión mínima adecuada
-    ver_min = 115
+    ver_min = 117
     
     wvbVersion_list = wvbVersion.split('.')
     wvbVersion_msg = config.get_setting('wvbVersion_msg', default=0)
@@ -652,7 +794,7 @@ def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank', wait=False, d
         if PLATFORM in ['windows', 'xbox']:
             creationflags = 0x08000000
             sufix = '.exe'
-        assistant_path = filetools.join(config.get_data_path(), 'assistant')
+        assistant_path = filetools.join(DATA_PATH, 'assistant')
         logs_path = filetools.join(assistant_path, 'temp', 'logs', ' ').strip()
         binary_path = ASSISTANT_DESKTOP+'.exe'
         command_path = filetools.join(assistant_path, 'runtime', 'so', PLATFORM, ' ').strip()
@@ -786,9 +928,9 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
                     pass
         if not config.get_setting('assistant_binary'): config.set_setting('assistant_binary', True)
 
-        if filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
+        if filetools.exists(filetools.join(DATA_PATH, 'alfa-mobile-assistant.version')):
             try:
-                version = filetools.read(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')).split('.')
+                version = filetools.read(filetools.join(DATA_PATH, 'alfa-mobile-assistant.version')).split('.')
                 if int(version[0]) > 1 or (int(version[0]) == 1 and int(version[1]) >= 3):
                     if not app_needed:
                         config.set_setting('assistant_binary', 'Ast%s' % version[1])
@@ -802,8 +944,8 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
         if not app_needed:
             return p
         
-        if not is_alfa_installed() or config.get_setting("assistant_mode") != 'este':
-            if not filetools.exists(filetools.join(config.get_data_path(), 'alfa-mobile-assistant.version')):
+        if not is_alfa_installed() or config.get_setting("assistant_mode").lower() != 'este':
+            if not filetools.exists(filetools.join(DATA_PATH, 'alfa-mobile-assistant.version')):
                 platformtools.dialog_notification("Estos addons necesitan Alfa Assistant: %s " % app_needed.rstrip(', '), 
                                 "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]", time=10000)
             
@@ -812,20 +954,20 @@ def execute_binary_from_alfa_assistant(function, cmd, wait=False, init=False, re
                 respuesta, app_name = install_alfa_assistant(update='check')
         return p
     
-    if not init and not isinstance(p, int) and config.get_setting("assistant_mode") != 'este':
+    if not init and not isinstance(p, int) and config.get_setting("assistant_mode").lower() != 'este':
         platformtools.dialog_notification("Este módulo necesita Alfa Assistant: %s" % cmd[0], 
                         "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]", time=10000)
         if config.get_setting('assistant_flag_install', default=True):
             time.sleep(10)
             respuesta, app_name = install_alfa_assistant(update='auto')
-        if not respuesta or config.get_setting("assistant_mode") != 'este':
+        if not respuesta or config.get_setting("assistant_mode").lower() != 'este':
             platformtools.dialog_notification("Estos módulo no se van a ejecutar: %s " % cmd[0], 
                         "Instale localmente desde [COLOR yellow]https://bit.ly/2Zwpfzq[/COLOR]", time=10000)
             time.sleep(10)
             p.returncode = 9
         return p
 
-    if (not init and isinstance(p, int)) or (not init and is_alfa_installed() and config.get_setting("assistant_mode") == 'este'):
+    if (not init and isinstance(p, int)) or (not init and is_alfa_installed() and config.get_setting("assistant_mode").lower() == 'este'):
         try:
             # Lets start the Assistant app
             USER_APP_URL = '%s:%s' % (ASSISTANT_SERVER, '48886')
@@ -1159,7 +1301,7 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
 def install_alfa_assistant(update=False, remote='', verbose=VERBOSE):
     if PLATFORM not in ['android', 'atv2'] and ASSISTANT_MODE == "este":
         return install_alfa_desktop_assistant(update=update, remote=remote, verbose=verbose)
-    
+
     if update:
         logger.info('update=%s' % str(update))
     # Si ya está instalada, devolvemos el control
@@ -1172,7 +1314,7 @@ def install_alfa_assistant(update=False, remote='', verbose=VERBOSE):
     forced_menu = False
     respuesta = False
     alfa_s = True
-    addons_path = config.get_runtime_path()
+    addons_path = RUNTIME_PATH
     if filetools.exists(filetools.join(addons_path, 'channels', 'custom.py')):
         alfa_s = False
 
@@ -1191,7 +1333,7 @@ def install_alfa_assistant(update=False, remote='', verbose=VERBOSE):
         if apk_files_alt and filetools.exists(apk_files_alt):
             apk_files = '%s/%s' % (apk_files_alt, app_name)
 
-    version_path = filetools.join(config.get_data_path(), version)
+    version_path = filetools.join(DATA_PATH, version)
     version_act = filetools.read(version_path, silent=True)
     if not version_act: version_act = '0.0.0'
     
@@ -1206,7 +1348,7 @@ def install_alfa_assistant(update=False, remote='', verbose=VERBOSE):
         else:
             filetools.remove(version_path, silent=True)
     # Mirarmos si la app está activa y obtenemos el nº de versión
-    version_dict = get_generic_call('getWebViewInfo', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
+    version_dict = get_generic_call('getWebViewInfo', timeout=2-EXTRA_TIMEOUT, alfa_s=True, retry=False if ASSISTANT_MODE == 'este' else True)
     if isinstance(version_dict, dict):
         version_app = version_dict.get('assistantVersion', '')
         try:
@@ -1483,11 +1625,11 @@ def install_alfa_assistant(update=False, remote='', verbose=VERBOSE):
                                 if error_cmd:
                                     if error_cmd.startswith('su:'): continue
                                     if update:
-                                        ver_upd = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
+                                        ver_upd = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True, retry=False)
                                         if not ver_upd:
                                             execute_in_alfa_assistant_with_cmd('open')  # activamos la app por si no se ha inicializado
                                             time.sleep(5)
-                                            ver_upd = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
+                                            ver_upd = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True, retry=False)
                                             execute_in_alfa_assistant_with_cmd('quit')
                                         if ver_upd == version_actual:
                                             logger.debug(str(error_cmd), force=True)
@@ -1530,7 +1672,7 @@ def install_alfa_assistant(update=False, remote='', verbose=VERBOSE):
                     execute_in_alfa_assistant_with_cmd('openAndQuit')           # activamos la app por si no se ha inicializado
                     time.sleep(5)
                 app_active = False
-                respuesta = get_generic_call(cmd, version=version_mod, alfa_s=alfa_s)
+                respuesta = get_generic_call(cmd, version=version_mod, alfa_s=alfa_s, retry=False)
         else:
             if app_active:
                 respuesta = get_generic_call(cmd, version=version_mod, alfa_s=alfa_s)
@@ -1619,7 +1761,7 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=VERBOSE):
     assistant_flag_install = config.get_setting('assistant_flag_install')
     alfa_s = True
     force_install = False                                                       # Instalación bajo demanda ?
-    addons_path = config.get_runtime_path()
+    addons_path = RUNTIME_PATH
     if filetools.exists(filetools.join(addons_path, 'channels', 'custom.py')):
         alfa_s = False
     respuesta = False
@@ -1629,9 +1771,9 @@ def install_alfa_desktop_assistant(update=False, remote='', verbose=VERBOSE):
     version_inst = filetools.read(install_path)
     zip_path = filetools.join(addons_path, 'tools', app_name+'.zip')
     if update and filetools.exists(zip_path): filetools.remove(zip_path, silent=True)
-    binary_path = filetools.join(config.get_data_path(), 'assistant')
+    binary_path = filetools.join(DATA_PATH, 'assistant')
     binary_exec = filetools.join(binary_path, app_name+'.exe')
-    version_actual_path = filetools.join(config.get_data_path(), version_name)
+    version_actual_path = filetools.join(DATA_PATH, version_name)
     if filetools.exists(version_actual_path) and not filetools.exists(binary_path):
         version_act = ''
         filetools.remove(version_actual_path, silent=False)

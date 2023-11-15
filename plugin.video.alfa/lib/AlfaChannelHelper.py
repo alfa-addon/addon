@@ -31,11 +31,20 @@ from modules import autoplay
 DEBUG = False
 BTDIGG = 'btdig'
 BTDIGG_URL = config.BTDIGG_URL
+BTDIGG_URL_SEARCH = '%ssearch_%s/' % (BTDIGG_URL, BTDIGG)
 BTDIGG_LABEL = config.BTDIGG_LABEL
-UNIFY_PRESET = config.get_setting("preset_style", default="Inicial")
-DEFAULT = 'default'
+PLOT_BTDIGG = 'Introduce criterios de búsqueda:\r\n' + \
+              '[COLOR lime]título calidad |Orden [filtro A Filtro B ...] [filtro CALIDAD ...] [filtro IDIOMA ...][/COLOR]\r\n' + \
+              'ej: [B]silo HDTV |0 [silo Cap.][/B]\r\nó [B]silo 1080p cap.110 [silo] [1080p][/B]\r\nó [B]volpina esp [volpina] [] [esp][/B]\r\n' + \
+              'ó [B]bill maher s21 h264 eztv [maher][/B]\r\nó [B]john oliver s10e16 h264 eztv [oliver] [1080p] [vo][/B]\r\n' + \
+              'ó [B]the voice uk 1080p eztv [voice tvshow][/B]'
+CONTEXT_TORRENT = [{"title": "Copiar a Mis Torrents",
+                    "action": "copy_file",
+                    "module": "url"}]
 DOMAIN_ALT = 'wolfmax4k'
 DOMAIN_ALT_S = 'wolfmax'
+DEFAULT = 'default'
+UNIFY_PRESET = config.get_setting("preset_style", default="Inicial")
 KWARGS = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': -1, 'forced_proxy_opt': None, 'cf_assistant': False}
 IDIOMAS = {'mx': 'Latino', 'dk': 'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb': 'VOSE', 
            'sub': 'VOSE', 'su': 'VOSE', 'eng': 'VOSE', "subtitulado": "VOSE", "usa": "VOSE", 
@@ -148,7 +157,8 @@ class AlfaChannelHelper:
             if not self.TEST_ON_AIR and not self.CACHING_DOMAINS and 'host' in self.canonical \
                                     and 'host_alt' in self.canonical and 'host_black_list' in self.canonical:
                 if self.channel in self.domains_updated and self.domains_updated[self.channel].get('host_alt'):
-                    if self.host != self.domains_updated[self.channel]['host_alt'][0] or self.host != self.canonical['host_alt'][0]:
+                    if self.host != self.domains_updated[self.channel]['host_alt'][0] or self.host != self.canonical['host_alt'][0] \
+                                    or self.domains_updated[self.channel]['host_alt'] != self.canonical['host_alt']:
                         self.host = self.canonical['host'] = self.domains_updated[self.channel]['host_alt'][0]
                         if config.get_setting("current_host", self.channel) != self.host:
                             config.set_setting("current_host", self.host, self.channel)
@@ -159,11 +169,14 @@ class AlfaChannelHelper:
                                                          and self.canonical['host_alt'][0] not in self.domains_updated[self.channel]['host_alt']: 
                             self.canonical['host_black_list'].insert(0, self.canonical['host_alt'][0])
                         del self.canonical['host_alt'][0]
-                        self.canonical['host_alt'].insert(0, self.host)
+                        if self.host not in self.canonical['host_alt']: self.canonical['host_alt'].insert(0, self.host)
                         if len(self.domains_updated[self.channel]['host_alt']) > 1:
                             for host_alt in self.domains_updated[self.channel]['host_alt']:
                                 if host_alt in self.canonical['host_alt']: continue
                                 self.canonical['host_alt'] += [host_alt]
+                            for host_alt in self.canonical['host_alt'][:]:
+                                if host_alt in self.canonical['host_black_list']:
+                                    self.canonical['host_alt'].remove(host_alt)
                         if 'host_alt' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['host_alt']
                         if 'host_black_list' in self.domains_updated[self.channel]: del self.domains_updated[self.channel]['host_black_list']
                         if self.domains_updated: self.canonical.update(self.domains_updated[self.channel])
@@ -173,7 +186,7 @@ class AlfaChannelHelper:
             logger.error(traceback.format_exc())
 
 
-    def create_soup(self, url, **kwargs):
+    def create_soup(self, url, item=Item(), **kwargs):
         """
         :param url: url destino
         :param kwargs: parametros que se usan en donwloadpage
@@ -921,7 +934,7 @@ class AlfaChannelHelper:
             if elem['url'] and not 'magnet:' in elem['url'] and not '.torrent' in elem['url']:
                 if host_torrent_referer: kwargs['referer'] = host_torrent_referer
                 kwargs['hide_infobox'] = True
-                torrent = self.create_soup(elem['url'], **kwargs)
+                torrent = self.create_soup(elem['url'], item=item, **kwargs)
                 if self.response.code in self.REDIRECTION_CODES:
                     elem['url'] = self.response.headers.get('Location', '')
                 elif self.response.url and ('magnet' in self.response.url or 'torrent' in self.response.url \
@@ -981,13 +994,13 @@ class AlfaChannelHelper:
             elem['size'] = size
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                        .replace('Mb', 'M·b').replace('.', ',')
-            elem['torrent_info'] += '%s, ' % size                                # Agregamos size
+            elem['torrent_info'] += '%s, ' % size                               # Agregamos size
             if elem.get('seeds'):
                 elem['torrent_info'] += 'Seeds: %s, ' %  elem['seeds']          # Agregamos seeds
         if elem['url'].startswith('magnet:') and 'magnet' not in elem['torrent_info'].lower():
             elem['torrent_info'] += ' Magnet'
         if elem['torrent_info']:
-            elem['torrent_info'] = elem['torrent_info'].strip().strip(',')
+            elem['torrent_info'] = elem['torrent_info'].replace('\u00b7', '·').strip().strip(',')
             if not item.unify:
                 elem['torrent_info'] = '[%s]' % elem['torrent_info']
 
@@ -1459,6 +1472,11 @@ class DictionaryAllChannel(AlfaChannelHelper):
         self.btdigg = finds.get('controls', {}).get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
         self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
         #if self.btdigg: self.cnt_tot = finds_controls.get('cnt_tot', 20)
+        if item.btdigg and item.c_type == 'search':
+            if 'matches' in  AHkwargs: del AHkwargs['matches']
+            item.btdigg = item.season_search = item.texto.replace('%20', ' ').replace('+', ' ').strip()
+            item.texto = '%s%s' % (BTDIGG_URL_SEARCH, item.texto)
+            item.matches = self.find_btdigg_list_all(item, matches, finds_controls.get('channel_alt', DOMAIN_ALT), **AHkwargs)
 
         self.next_page_url = next_page_url = item.url
         episodios = False
@@ -1474,7 +1492,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             cnt_match = 0                                                       # Contador de líneas procesadas de matches
             if not item.matches and next_page_url:                              # si no viene de una pasada anterior, descargamos
                 kwargs.update({'timeout': timeout_search, 'post': post, 'headers': headers, 'forced_proxy_opt': forced_proxy_opt})
-                soup = soup or self.create_soup(next_page_url, **kwargs)
+                soup = soup or self.create_soup(next_page_url, item=item, **kwargs)
 
                 itemlist = self.itemlist + itemlist
                 self.itemlist = []
@@ -1615,7 +1633,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                 if not scrapertools.find_single_match(url, rgx_org): continue
                                 url = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
                                              url.rstrip('/')).replace('//?', '/?')
-                            soup_last_page = self.create_soup(url, hide_infobox=True, **kwargs)
+                            soup_last_page = self.create_soup(url, item=item, hide_infobox=True, **kwargs)
                             self.last_page = int(self.parse_finds_dict(soup_last_page, finds_last_page, next_page=True, 
                                                                   c_type=item.c_type).lstrip('#'))
                     page_factor = float(len(matches)) / float(self.cnt_tot)
@@ -1921,7 +1939,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 matches.append({'url': url, 'title': genre})
         else:
             kwargs.update({'timeout': timeout, 'post': post, 'headers': headers, 'forced_proxy_opt': forced_proxy_opt})
-            soup = data or self.create_soup(item.url, **kwargs)
+            soup = data or self.create_soup(item.url, item=item, **kwargs)
 
             itemlist = self.itemlist + itemlist
             self.itemlist = []
@@ -2078,6 +2096,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         self.btdigg = finds_controls.get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
         self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
+        btdigg_contentSeason = 1
 
         AHkwargs = {'url': item.url, 'soup': soup, 'finds': finds, 'kwargs': kwargs, 'function': 'seasons'}
         AHkwargs['matches_post_list_all'] = kwargs.pop('matches_post_list_all', None)
@@ -2134,12 +2153,13 @@ class DictionaryAllChannel(AlfaChannelHelper):
             matches = item.matches[:]
             del item.matches
         else:
-            if BTDIGG in item.url:
+            if BTDIGG in item.url and not BTDIGG_URL_SEARCH in item.url:
                 AHkwargs['function'] = 'find_seasons'
                 AHkwargs['language'] = item.language or self.language
                 matches = self.do_seasons_search(item, matches, **AHkwargs)
                 AHkwargs['function'] = 'seasons'
                 if matches:
+                    if matches[0].get('season'): btdigg_contentSeason = matches[0]['season']
                     if not BTDIGG in matches[0]['url']:
                         item.url = matches[0]['url']
                         if 'btdig_in_use' in item: del item.btdig_in_use
@@ -2170,7 +2190,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     matches_seasons = matches = []
                 else:
                     kwargs.update({'timeout': timeout, 'post': post, 'headers': headers, 'forced_proxy_opt': forced_proxy_opt})
-                    soup = data or self.create_soup(item.url, **kwargs)
+                    soup = data or self.create_soup(item.url, item=item, **kwargs)
 
                     itemlist = self.itemlist + itemlist
                     self.itemlist = []
@@ -2250,9 +2270,14 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     matches = matches_post(item, matches_seasons, **AHkwargs)
 
             if self.btdigg:
+                if BTDIGG_URL_SEARCH in item.url:
+                    item.btdigg = item.season_search
+                    btdigg_contentSeason = AHkwargs['btdigg_contentSeason'] = item.contentSeason
+                    matches.append({'season': item.contentSeason, 'url': item.url, 'quality': item.quality, 
+                                    'language': item.language, 'matches_cached': item.matches_cached or []})
                 if (len(matches) < 1 and item.infoLabels.get('number_of_seasons', 1) > 1) or (len(matches) >= 1 \
                                      and matches[-1].get('season', 1) < item.infoLabels.get('number_of_seasons', 1)):
-                    AHkwargs['btdigg_contentSeason'] = 1
+                    AHkwargs['btdigg_contentSeason'] = btdigg_contentSeason
                 if 'matches' in AHkwargs: del AHkwargs['matches']
                 matches = self.find_btdigg_seasons(item, matches, finds_controls.get('domain_alt', DOMAIN_ALT), **AHkwargs)
 
@@ -2563,7 +2588,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 matches_episodes = matches = []
             else:
                 kwargs.update({'timeout': timeout, 'post': post, 'headers': headers, 'forced_proxy_opt': forced_proxy_opt})
-                soup = data or self.create_soup(item.url, **kwargs)
+                soup = data or self.create_soup(item.url, item=item, **kwargs)
 
                 itemlist = self.itemlist + itemlist
                 self.itemlist = []
@@ -2578,6 +2603,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 matches = matches_post(item, matches_episodes, **AHkwargs)
 
         if self.btdigg:
+            if BTDIGG_URL_SEARCH in item.url and item.matches_cached: matches = item.matches_cached[:]
             if 'matches' in AHkwargs: del AHkwargs['matches']
             matches = self.find_btdigg_episodes(item, matches, finds_controls.get('domain_alt', DOMAIN_ALT), **AHkwargs)
 
@@ -2687,6 +2713,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if elem.get('next_episode_air_date', ''): new_item.infoLabels['next_episode_air_date_custom']  = elem['next_episode_air_date']
             if elem.get('password', ''): new_item.password = elem['password']
             if 'matches_cached' in elem: new_item.matches_cached = elem['matches_cached'][:]
+            if BTDIGG_URL_SEARCH in item.url:
+                new_item.btdigg = item.btdigg
+                new_item.season_search = item.season_search
             
             if new_item.quality:
                 for clean_org, clean_des in finds.get('quality_clean', []):
@@ -2911,7 +2940,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             response.soup = soup
         else:
             kwargs.update({'timeout': timeout, 'post': post, 'headers': headers, 'forced_proxy_opt': forced_proxy_opt})
-            soup = self.create_soup(url, **kwargs) if not BTDIGG_URL in url else {}
+            soup = self.create_soup(url, item=item, **kwargs) if not BTDIGG_URL in url else {}
 
             itemlist = self.itemlist + itemlist
             self.itemlist = []
@@ -3063,7 +3092,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 if not 'title' in elem:
                     elem['title'] = 'torrent' if elem.get('server', '').lower() == 'torrent' else '%s'
 
-                # Tratamos las particulirades de los .torrents/magnets
+                # Tratamos las particularidades de los .torrents/magnets
                 if elem.get('btdig_in_use', False) or BTDIGG_LABEL in elem['quality']: btdig_in_use = elem['btdig_in_use'] = True
                 if elem.get('server', '').lower() == 'torrent' and manage_torrents:
                     elem = self.manage_torrents(item, elem, lang, soup, finds, **kwargs)
@@ -3166,6 +3195,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if elem.get('item_org', ''): new_item.item_org = elem['item_org']
             if elem.get('subtitle', ''): new_item.subtitle = elem['subtitle']
             if elem.get('context', []): new_item.context.extend(elem['context'])
+            if new_item.server == 'torrent': new_item.context.extend(CONTEXT_TORRENT)
             if elem.get('playcount', 0): new_item.infoLabels['playcount'] = elem['playcount']
             if elem.get('plot_extend', ''): new_item.infoLabels['plot_extend'] = elem['plot_extend']
             if 'plot_extend_show' in elem: new_item.plot_extend_show = elem['plot_extend_show']
@@ -3335,7 +3365,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
             cnt_match = 0                                                       # Contador de líneas procesadas de matches
             if not item.matches and next_page_url:                              # si no viene de una pasada anterior, descargamos
                 kwargs.update({'timeout': timeout_search, 'post': post, 'headers': headers, 'forced_proxy_opt': forced_proxy_opt})
-                soup = soup or self.create_soup(next_page_url, **kwargs)
+                soup = soup or self.create_soup(next_page_url, item=item, **kwargs)
 
                 itemlist = self.itemlist + itemlist
                 self.itemlist = []
@@ -3539,7 +3569,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                 if not scrapertools.find_single_match(url, rgx_org): continue
                                 url = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
                                              url.rstrip('/')).replace('//?', '/?')
-                            soup_last_page = self.create_soup(url, hide_infobox=True, **kwargs)
+                            soup_last_page = self.create_soup(url, item=item, hide_infobox=True, **kwargs)
                             self.last_page = int(self.parse_finds_dict(soup_last_page, finds_last_page, next_page=True, 
                                                                   c_type=item.c_type).lstrip('#'))
                     page_factor = float(len(matches)) / float(self.cnt_tot)
@@ -3792,7 +3822,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
             cnt_match = 0                                                       # Contador de líneas procesadas de matches
             if not item.matches and next_page_url:                              # si no viene de una pasada anterior, descargamos
                 kwargs.update({'timeout': timeout, 'post': post, 'headers': headers, 'forced_proxy_opt': forced_proxy_opt})
-                soup = data or self.create_soup(next_page_url, **kwargs)
+                soup = data or self.create_soup(next_page_url, item=item, **kwargs)
 
                 itemlist = self.itemlist + itemlist
                 self.itemlist = []
@@ -3995,7 +4025,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                 if not scrapertools.find_single_match(url, rgx_org): continue
                                 url = re.sub(rgx_org, rgx_des % str(finds_controls['force_find_last_page'][1]), 
                                              url.rstrip('/')).replace('//?', '/?')
-                            soup_last_page = self.create_soup(url, hide_infobox=True, **kwargs)
+                            soup_last_page = self.create_soup(url, item=item, hide_infobox=True, **kwargs)
                             self.last_page = int(self.parse_finds_dict(soup_last_page, finds_last_page, next_page=True, 
                                                                   c_type=item.c_type).lstrip('#'))
                     page_factor = float(len(matches)) / float(self.cnt_tot)
@@ -4193,7 +4223,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
             response.soup = soup
         else:
             kwargs.update({'timeout': timeout, 'post': post, 'headers': headers, 'forced_proxy_opt': forced_proxy_opt})
-            soup = self.create_soup(url, **kwargs)
+            soup = self.create_soup(url, item=item, **kwargs)
 
             itemlist = self.itemlist + itemlist
             self.itemlist = []

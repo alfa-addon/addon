@@ -287,6 +287,7 @@
         <setting id="assistant_custom_address" label="80612" type="text" default="127.0.0.1"
             visible="eq(-1,1)" subsetting="true" />
         <setting id="cf_assistant_bl_expiration" label="80782" type="number" default="5" />
+        <setting id="assistant_remote_status" label="60632" type="text" default="192.168.0.10|['Ruta_a_Kodi_cliente_remoto',]"/>
 
         <setting label="70810" type="lsep" />
         <setting id="assistant_flag_install" type="bool" label="80613" default="true" />

@@ -25,10 +25,10 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.party/", "https://dontorrent.in/", "https://verdetorrent.com/", 
-                          "https://tomadivx.net/", "https://todotorrents.net/"], 
-             'host_black_list': ['https://dontorrent.bond/',
-                                 'https://dontorrent.durban/', 'https://dontorrent.rodeo/', 'https://dontorrent.boston/', 'https://dontorrent.tokyo/', 
+             'host_alt': ["https://dontorrent.joburg/", "https://www2.dontorrent.fr/", "https://tomadivx.net/",
+                          "https://todotorrents.org/"], 
+             'host_black_list': ["https://dontorrent.party/", "https://dontorrent.durban/", "https://dontorrent.rodeo/",
+                                 "https://dontorrent.boston/", "https://dontorrent.tokyo/", "https://dontorrent.bond/",
                                  'https://dontorrent.nexus/', "https://dontorrent.quest/", "https://dontorrent.rsvp/", "https://dontorrent.hair/", 
                                  "https://dontorrent.foo/", "https://dontorrent.boo/", "https://dontorrent.day/", 
                                  "https://dontorrent.mov/", 'https://dontorrent.zip/', 'https://dontorrent.dad/', 
@@ -51,7 +51,8 @@ canonical = {
                                  'https://dontorrent.cab/', 'https://dontorrent.bet/', 'https://dontorrent.cx/', 
                                  'https://dontorrent.nl/', 'https://dontorrent.tel/', 'https://dontorrent.pl/', 
                                  'https://dontorrent.cat/', 'https://dontorrent.run/', 'https://dontorrent.wf/', 
-                                 'https://dontorrent.pm/', 'https://dontorrent.top/', 'https://dontorrent.re/'], 
+                                 'https://dontorrent.pm/', 'https://dontorrent.top/', "https://dontorrent.re/",
+                                 "https://todotorrents.net/", "https://verdetorrent.com/", "https://dontorrent.in/"], 
              'pattern_proxy': '<a[^>]*class="text-white[^"]+"\s*style="font-size[^"]+"\s*href="([^"]+)"[^>]*>\s*Descargar\s*<\/a>', 
              'proxy_url_test': 'pelicula/25159/The-Batman', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
@@ -95,7 +96,7 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['text-center']}]},
          'seasons': {},
          'season_num': dict([('find', [{'tag': ['a']}]), 
                              ('get_text', [{'tag': '', '@STRIP': True, '@TEXT': '(\d+)'}])]), 
-         'seasons_search_num_rgx': [['(?i)-(\d+)-(?:Temporada|Miniserie)', None], ['(?i)(?:Temporada|Miniserie)-(\d+)', None]], 
+         'seasons_search_num_rgx': [['(?i)-(\d+)-(?:Temporada|Miniserie)', None], ['(?i)(?:Temporada|Miniserie)-(\d+)(?:\W|$)', None]], 
          'seasons_search_qty_rgx': [['(?i)(?:Temporada|Miniserie)(?:-(.*?)(?:\.|\/|-$|$))', None]], 
          'episode_url': '', 
          'episodes': dict([('find', [{'tag': ['div'], 'class': ['card shadow-sm p-4']}]), 
@@ -154,6 +155,11 @@ def mainlist(item):
                          url=host, thumbnail=get_thumb("search.png"), c_type="search", 
                          category=categoria))
 
+    if config.get_setting('find_alt_search', channel) and config.get_setting('ar_ver', default=0) >= 1:
+        itemlist.append(Item(channel=item.channel, title=config.BTDIGG_LABEL + " búsqueda... (Pelis y Series)", action="search", 
+                             url=host, thumbnail=get_thumb("search.png"), c_type="search", 
+                             category=categoria, plot=AlfaChannelHelper.PLOT_BTDIGG, btdigg=True))
+
     itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", 
                          folder=False, thumbnail=get_thumb("next.png")))
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
@@ -193,6 +199,11 @@ def submenu(item):
         itemlist.append(Item(channel=item.channel, title='Buscar...', action="search", 
                              url=host, thumbnail=get_thumb("search.png"), 
                              c_type="search", category=categoria))
+
+        if config.get_setting('find_alt_search', channel) and config.get_setting('ar_ver', default=0) >= 1:
+            itemlist.append(Item(channel=item.channel, title=config.BTDIGG_LABEL + " búsqueda... (Pelis y Series)", action="search", 
+                                 url=host, thumbnail=get_thumb("search.png"), c_type="search", 
+                                 category=categoria, plot=AlfaChannelHelper.PLOT_BTDIGG, btdigg=True))
 
         itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
@@ -611,7 +622,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
                 if elem_json['url'].startswith('//'):
                     elem_json['url'] = 'https:%s' % elem_json['url']
                 elem_json['quality'] = '*%s' % (scrapertools.find_single_match(elem_json['url'], 
-                                               '[-|_]\(?\[?((?:HDTV\d{3,4}p|720p|1080p|HDTV)(?:[-|_]\d+p)?)').replace('_', '-'))
+                                               '[-|_]\(?\[?((?:HDTV\d{3,4}p|720p|1080p|HDTV)(?:[-|_]\d+p)?)').replace('_', '-') or item.quality)
 
             if x == 3:
                 if 'copiar' in td.a.get('title', ''):
@@ -720,6 +731,7 @@ def search(item, texto, **AHkwargs):
 
     try:
         if texto:
+            if item.btdigg: item.btdigg = texto
             item.url = item.referer = host + 'buscar/' + texto + '/page/1'
             item.c_type = "search"
             item.texto = texto
