@@ -107,7 +107,7 @@ def start(itemlist, item, user_server_list=[], user_quality_list=[]):
     except:
         active = is_active(item.channel)
 
-    if not channel_id in autoplay_node and not active:
+    if not channel_id in autoplay_node or not active:
         return itemlist
 
     # Agrega servidores y calidades que no estaban listados a autoplay_node
@@ -118,7 +118,7 @@ def start(itemlist, item, user_server_list=[], user_quality_list=[]):
     # Obtiene los ajustes de autoplay para este canal
     settings_node = channel_node.get('settings', {})
 
-    if get_setting('autoplay') or settings_node['active']:
+    if get_setting('autoplay') or settings_node.get('active'):
         url_list_valid = []
         autoplay_list = []
         autoplay_b = []
