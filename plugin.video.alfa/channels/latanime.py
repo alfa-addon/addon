@@ -449,7 +449,7 @@ def normalize_season(title):
     if re.search(normalize_pattern, title):
         # logger.info('Title: ' + title, True)
         for f, r in [['iii', 'S3'],['ii', 'S2'],['iv', 'S4'],
-                     ['primera temporada', 'S2'],['segunda temporada', 'S2'],['tercera temporada', 'S3'],
+                     ['primera temporada', 'S1'],['segunda temporada', 'S2'],['tercera temporada', 'S3'],
                      ['temporada 0', 'S0'],['temporada 1', 'S1'],['temporada 2', 'S2'],['temporada 3', 'S3'],['temporada 4', 'S4'],
                      ['2 temporada', 'S2'],['3 temporada', 'S3'],
                      ['first season', 'S1'],['second season', 'S2'],['third season', 'S3'],['fourth season', 'S4']]:
