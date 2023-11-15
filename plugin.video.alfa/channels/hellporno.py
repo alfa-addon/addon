@@ -47,7 +47,7 @@ def new_menu(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "1/?t=" + item.t))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/?t="+ item.t))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/?t="+ item.t, t=item.t))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", t=item.t))
     return itemlist
 
@@ -70,16 +70,17 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = scrapertools.find_single_match(data,'<div class="container">(.*?)<div id="aside">')
-    patron  = '<a href="([^"]+)">.*?'
-    patron += '<img src="([^"]+)" alt="([^"]+) - Porn videos">.*?'
-    patron += '<span>(\d+) videos</span>'
+    data = scrapertools.find_single_match(data,'categories</h2>(.*?)</ul>')
+    patron  = '<a href="([^"]+)">([^<]+)'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
+    for scrapedurl,scrapedtitle in matches:
+        scrapedurl += "?t=%s" %item.t
         scrapedplot = ""
-        scrapedtitle = "%s (%s)" % (scrapedtitle,cantidad)
-        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail , plot=scrapedplot) )
+        scrapedthumbnail = ""
+        # scrapedtitle = "%s (%s)" % (scrapedtitle,cantidad)
+        if not "/categories/" in scrapedurl:
+            itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
+                                  fanart=scrapedthumbnail, thumbnail=scrapedthumbnail , plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<a href="([^"]+)" class="next">Next page &raquo;</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)

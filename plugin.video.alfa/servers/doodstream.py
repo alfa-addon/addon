@@ -14,15 +14,19 @@ data = ""
 host = "https://dood.la"
 count = 3
 retries = count
-kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'CF': True, 'cf_assistant': False, 'ignore_response_code': True}
+forced_proxy_opt = 'ProxySSL'
+
+kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0,
+          'CF': True, 'cf_assistant': False, 'ignore_response_code': True}
 
 def test_video_exists(page_url):
     global data, retries
     
     # page_url = page_url.replace('/d/', '/e/')
     logger.info("(page_url='%s'; retry=%s)" % (page_url, retries))
-
+    
     response = httptools.downloadpage(page_url, **kwargs)
+    
     if '/d/' in page_url and scrapertools.find_single_match(response.data, ' <iframe src="([^"]+)"'):
         url = scrapertools.find_single_match(response.data, ' <iframe src="([^"]+)"')
         page_url = "%s%s" %(host,url)

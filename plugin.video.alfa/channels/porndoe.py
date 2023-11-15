@@ -40,14 +40,14 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host + "channels?sort=ranking"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "categories?sort=name"))
-    # itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search?keywords=%s" % (host,texto)
+    item.url = "%ssearch?keywords=%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -69,22 +69,28 @@ def categorias(item):
         matches =[]
         for elem in match1:
             matches.append(elem.parent)
-    else:
-        matches = soup.find_all('div', class_='ctl-item')
+    if "categories" in item.url:
+        matches = soup.find_all(href=re.compile(r"/category/"))
     if "pornstars" in item.url:
         matches = soup.find_all('div', class_='actors-list-item')
+
     for elem in matches:
         cantidad = ""
+        title = ""
         if "categories" in item.url:
-            url = elem.find(href=re.compile(r"/category/"))['href']
-            cantidad = elem.find('span', class_='ctl-count')
+            url = elem['href']
+            title = elem['title']
+            cantidad = elem.find('span')
         else:
-            url = elem.a['href']
+            if elem.find(href=re.compile(r"/channel-profile/")):
+                url = elem.find(href=re.compile(r"/channel-profile/"))['href']
+            else:
+                url = elem.a['href']
             cantidad = elem.find('span', class_='-grow')
-        title = elem.a['title']
+            title = elem.a['title']
         thumbnail  = elem.svg['data-src']
         if cantidad:
-            cantidad = cantidad.text.strip()
+            cantidad = cantidad.text.strip().replace(" Videos", "").replace(" videos", "")
             title = "%s (%s)" % (title, cantidad)
         url = url.replace("channel-profile", "channel-profile-videos")
         if "categories" in item.url:
@@ -122,10 +128,13 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='video-item')
     for elem in matches:
-        url = elem.a['href']
-        if "redirect" in url:
+        # logger.error(elem)
+        if "redirect" in elem.a['href']:
             continue
-        title = elem.find('a', class_='video-item-link')['title']
+        url = elem.a['href']
+        # id = elem.a['ng-pop-under']
+        # url = "%svideo/%s" %(host,id)
+        title = elem.find('a', class_='video-item-link')['aria-label']
         thumbnail = elem.svg['data-src']
         time = elem['data-duration']
         hd = elem['data-hd']
@@ -152,7 +161,7 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -160,6 +169,24 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=item.url))
+    
+    soup = create_soup(item.url).find('div', class_='vpp-section')
+    pornstars = soup.find_all('a', href=re.compile("/pornstars-profile/[A-z0-9-]+"))
+    for x , value in enumerate(pornstars):
+        pornstars[x] = value.text.strip()
+    pornstar = ' & '.join(pornstars)
+    pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+    plot = ""
+    if len(pornstars) <= 3:
+        lista = item.contentTitle.split()
+        if "HD" in item.title:
+            lista.insert (4, pornstar)
+        else:
+            lista.insert (2, pornstar)
+        item.contentTitle = ' '.join(lista)
+    else:
+        plot = pornstar
+    
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

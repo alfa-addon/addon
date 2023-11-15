@@ -6,6 +6,10 @@
       {
         "pattern": "porndoe.com/video(?:/embed|)/([0-9]+)",
         "url": "https://porndoe.com/video/\\1/a"
+      },
+      {
+        "pattern": "(porndoe.com/watch/[A-z0-9-]+)",
+        "url": "https://\\1"
       }
     ]
   },
