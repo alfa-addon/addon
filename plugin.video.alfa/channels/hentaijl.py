@@ -71,7 +71,8 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['ListAnimes']}]),
          'findvideos': dict([('find', [{'tag': ['script'], 'string': re.compile('var\s*video \s*=\s*\[')}]),
                              ('get_text', [{'tag': '', '@STRIP': True, '@TEXT_M': "video\[\d+\]\s*=\s*'([^']+)'", '@DO_SOUP': True}])]),
          'title_clean': [['(?i)Español|Latino', ''],
-                         ['(?i)\s*(?:temporada|season)\s*\d+', '']],
+                         ['(?i)\s*(?:temporada|season)\s*\d+', ''],
+                         ['(?i)\s+(?:\(|)Sin\s+Censura(?:\)|)', '']],
          'quality_clean': [],
          'language_clean': [], 
          'url_replace': [], 
@@ -172,8 +173,12 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 url = elem.a.get('href', '')
                 try:
                     elem_json['season'] = get_title_season(url)
-                    elem_json['episode'] = int(scrapertools.find_single_match(elem.a.find("span", class_="Capi").get_text(strip=True), '(?i)(?:Episodio|Capitulo)\s*(\d+)'))
-                except Exception:
+                    elem_json['episode'] = elem.a.find("span", class_="Capi").get_text(strip=True)
+                    elem_json['episode'] = scrapertools.find_single_match(elem_json['episode'], '(?i)(?:Episodio|Cap(?:i|í)tulo)\s+(\d+)')
+                    elem_json['episode'] = int(elem_json['episode'] or 1)
+                except Exception as error:
+                    # handle the exception
+                    logger.error("An exception occurred: {}".format(error))
                     elem_json['season'] = 1
                     elem_json['episode'] = 1
                 elem_json['mediatype'] = 'episode'
