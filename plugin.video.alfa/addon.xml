@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon id="plugin.video.alfa" name="Alfa" version="3.9.13" provider-name="Alfa Addon">
+<addon id="plugin.video.alfa" name="Alfa" version="3.9.14" provider-name="Alfa Addon">
 	<requires>
 		<import addon="script.module.requests"></import>
 		<import addon="script.module.beautifulsoup4" version="4.5.3"></import>
@@ -31,16 +31,16 @@
 		<source>https://github.com/alfa-addon/addon</source>
 		<news>[B]Estos son los cambios para esta versión:[/B]
 
-      [COLOR yellow][B]Arreglos[/B][/COLOR]
-      ¤ Allcalidad                                                ¤ Anime Fenix
-      ¤ Doramasflix                                            ¤ HDFull
-      ¤ Pelis Plus                                                 ¤ SeriesKao
-      ¤ Veronline                                                 ¤ +18
+      [B][COLOR blue]Arr[/COLOR][COLOR yellow]egl[/COLOR][COLOR lime]os[/COLOR][/B]
+      ¤ Don Torrent                           ¤ Doramasflix
+      ¤ HDFull                                    ¤ HentaiJL
+      ¤ PelisPlus                                 ¤ Playhub: Desactivado 
+      ¤ SeriesRetro                             ¤ +18
 	  
-      [COLOR yellow][B]Novedades[/B][/COLOR]
-	  ¤ Peliculasflix
+      [B][COLOR tomato]No[/COLOR][COLOR pink]ve[/COLOR][COLOR brown]da[/COLOR][COLOR purple]des[/COLOR][/B]
+      ¤ LatAnime
 	  
-	  Esta es una actualización de emergencia para correcciones con Linux.</news>
+      Los problemas de arranque en Linux deberían estar (mayormente) mitigados.</news>
 		<assets>
 			<icon>resources/icon.png</icon>
 			<fanart>resources/fanart.jpg</fanart>

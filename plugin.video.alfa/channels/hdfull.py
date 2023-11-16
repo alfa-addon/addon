@@ -30,9 +30,9 @@ assistant = False
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hd-full.one/", "https://hdfull.today/", "https://hdfull.quest/"], 
+             "host_alt": ["https://hd-full.im/", "https://hdfull.today/", "https://hdfull.quest/"], 
              'host_verification': '%slogin', 
-             "host_black_list": [
+             "host_black_list": ["https://hd-full.one/", 
                                  "https://hdfull.icu/", "https://hdfull.sbs/", "https://hdfull.org/", 
                                  "https://hdfull.store/", 
                                  "https://hdfull.life/", "https://hdfull.digital/", "https://hdfull.work/", 
@@ -1262,10 +1262,11 @@ def verify_domain_alt(url, post=None, headers={}, soup=False, json=False):
         canonical_alt = canonical.copy()
     
         for host_alt in canonical['host_alt']:
-            canonical_alt['host'] = [host_alt]
+            canonical_alt['host'] = host_alt
             canonical_alt['host_alt'] = [host_alt]
             page = AlfaChannel.create_soup(host_alt + url_rest, post=post, headers=headers, ignore_response_code=True, timeout=timeout, 
-                                           soup=soup, json=json, canonical=canonical_alt, alfa_s=True, proxy_retries=0, retries_cloudflare=0)
+                                           soup=soup, json=json, canonical=canonical_alt, alfa_s=True, proxy_retries=0, retries_cloudflare=0,
+                                           canonical_check=False)
             if page.sucess:
                 url = host_alt + url_rest
                 break

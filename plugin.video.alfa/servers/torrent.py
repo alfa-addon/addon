@@ -2102,54 +2102,70 @@ def update_control(item, function=''):
                     item_control.downloadProgress, item_control.downloadQueued, item_control.url))
 
 
-def set_assistant_remote_status(assistant_remote_status_paths):
+def set_assistant_remote_status():
     logger.info()
     
     isPlaying_status = True
-    remote_path = filetools.join('userdata', 'addon_data', 'plugin.video.alfa', 'assistant_remote_status.json')
+    remote_path = filetools.join('userdata', 'addon_data', 'plugin.video.alfa', 'assistant_remote_status_%s.json')
     remote_file = {'isPlaying': True}
 
     try:
-        if assistant_remote_status_paths.startswith('['):
-            assistant_remote_status_paths = eval(assistant_remote_status_paths)
-        else:
-            assistant_remote_status_paths = [assistant_remote_status_paths]
-
         if monitor:
             while not monitor.abortRequested():
-                if not xbmc.Player().isPlaying() and isPlaying_status:
-                    for client in assistant_remote_status_paths:
-                        path = filetools.join(client, remote_path)
-                        if 'smb:' in path or 'ftp:' in path or 'nfs:' in path: path.replace('\\', '/')
-                        filetools.remove(path, silent=True)
-                    isPlaying_status = False
+                assistant_remote_status_paths = config.get_setting('assistant_remote_status', default='')
+                if assistant_remote_status_paths and not 'Ruta_a_Kodi_cliente_remoto' in assistant_remote_status_paths:
 
-                if xbmc.Player().isPlaying() and not isPlaying_status:
-                    for client in assistant_remote_status_paths:
-                        path = filetools.join(client, remote_path)
-                        if 'smb:' in path or 'ftp:' in path or 'nfs:' in path: path.replace('\\', '/')
-                        filetools.write(path, jsontools.dump(remote_file))
-                    isPlaying_status = True
+                    info = assistant_remote_status_paths.split('|')
+                    assistant_remote_status_file = info[0]
+                    assistant_remote_status_paths = info[1]
+                    if assistant_remote_status_paths.startswith('['):
+                        assistant_remote_status_paths = eval(assistant_remote_status_paths)
+                    else:
+                        assistant_remote_status_paths = [assistant_remote_status_paths]
+
+                    if not xbmc.Player().isPlaying() and isPlaying_status:
+                        for client in assistant_remote_status_paths:
+                            path = filetools.join(client, remote_path % assistant_remote_status_file)
+                            if 'smb:' in path or 'ftp:' in path or 'nfs:' in path: path.replace('\\', '/')
+                            filetools.remove(path, silent=True)
+                        isPlaying_status = False
+
+                    if xbmc.Player().isPlaying() and not isPlaying_status:
+                        for client in assistant_remote_status_paths:
+                            path = filetools.join(client, remote_path % assistant_remote_status_file)
+                            if 'smb:' in path or 'ftp:' in path or 'nfs:' in path: path.replace('\\', '/')
+                            filetools.write(path, jsontools.dump(remote_file))
+                        isPlaying_status = True
 
                 if monitor.waitForAbort(15):                                    # ... cada 15"
                     break
                 
         else:
             while not xbmc.abortRequested:
+                assistant_remote_status_paths = config.get_setting('assistant_remote_status', default='')
+                if assistant_remote_status_paths and not 'Ruta_a_Kodi_cliente_remoto' in assistant_remote_status_paths:
 
-                if not xbmc.Player().isPlaying() and isPlaying_status:
-                    for client in assistant_remote_status_paths:
-                        path = filetools.join(client, remote_path)
-                        if 'smb:' in path or 'ftp:' in path or 'nfs:' in path: path.replace('\\', '/')
-                        filetools.remove(path, silent=True)
-                    isPlaying_status = False
+                    info = assistant_remote_status_paths.split('|')
+                    assistant_remote_status_file = info[0]
+                    assistant_remote_status_paths = info[1]
+                    if assistant_remote_status_paths.startswith('['):
+                        assistant_remote_status_paths = eval(assistant_remote_status_paths)
+                    else:
+                        assistant_remote_status_paths = [assistant_remote_status_paths]
 
-                if xbmc.Player().isPlaying() and not isPlaying_status:
-                    for client in assistant_remote_status_paths:
-                        path = filetools.join(client, remote_path)
-                        if 'smb:' in path or 'ftp:' in path or 'nfs:' in path: path.replace('\\', '/')
-                        filetools.write(path, jsontools.dump(remote_file))
-                    isPlaying_status = True
+                    if not xbmc.Player().isPlaying() and isPlaying_status:
+                        for client in assistant_remote_status_paths:
+                            path = filetools.join(client, remote_path % assistant_remote_status_file)
+                            if 'smb:' in path or 'ftp:' in path or 'nfs:' in path: path.replace('\\', '/')
+                            filetools.remove(path, silent=True)
+                        isPlaying_status = False
+
+                    if xbmc.Player().isPlaying() and not isPlaying_status:
+                        for client in assistant_remote_status_paths:
+                            path = filetools.join(client, remote_path % assistant_remote_status_file)
+                            if 'smb:' in path or 'ftp:' in path or 'nfs:' in path: path.replace('\\', '/')
+                            filetools.write(path, jsontools.dump(remote_file))
+                        isPlaying_status = True
                 
                 xbmc.sleep(15*1000)                                             # ... cada 15"
 
@@ -2180,7 +2196,7 @@ def mark_torrent_as_watched():
     try:
         assistant_remote_status_paths = config.get_setting('assistant_remote_status', default='')
         if assistant_remote_status_paths:
-            threading.Thread(target=set_assistant_remote_status, args=(assistant_remote_status_paths, )).start() 
+            threading.Thread(target=set_assistant_remote_status).start() 
     except Exception:
         logger.error(traceback.format_exc())
 
