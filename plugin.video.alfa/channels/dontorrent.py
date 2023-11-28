@@ -25,9 +25,10 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.joburg/", "https://www2.dontorrent.fr/", "https://tomadivx.net/",
+             'host_alt': ["https://dontorrent.nagoya/", "https://www2.dontorrent.fr/", "https://tomadivx.net/",
                           "https://todotorrents.org/"], 
-             'host_black_list': ["https://dontorrent.party/", "https://dontorrent.durban/", "https://dontorrent.rodeo/",
+             'host_black_list': ["https://dontorrent.wales/", "https://dontorrent.joburg/", 
+                                 "https://dontorrent.party/", "https://dontorrent.durban/", "https://dontorrent.rodeo/",
                                  "https://dontorrent.boston/", "https://dontorrent.tokyo/", "https://dontorrent.bond/",
                                  'https://dontorrent.nexus/', "https://dontorrent.quest/", "https://dontorrent.rsvp/", "https://dontorrent.hair/", 
                                  "https://dontorrent.foo/", "https://dontorrent.boo/", "https://dontorrent.day/", 
@@ -155,7 +156,7 @@ def mainlist(item):
                          url=host, thumbnail=get_thumb("search.png"), c_type="search", 
                          category=categoria))
 
-    if config.get_setting('find_alt_search', channel) and config.get_setting('ar_ver', default=0) >= 1:
+    if config.get_setting('find_alt_search', channel):
         itemlist.append(Item(channel=item.channel, title=config.BTDIGG_LABEL + " búsqueda... (Pelis y Series)", action="search", 
                              url=host, thumbnail=get_thumb("search.png"), c_type="search", 
                              category=categoria, plot=AlfaChannelHelper.PLOT_BTDIGG, btdigg=True))
@@ -164,7 +165,7 @@ def mainlist(item):
                          folder=False, thumbnail=get_thumb("next.png")))
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
                          thumbnail=get_thumb("setting_0.png")))
-    
+
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
     
     autoplay.show_option(item.channel, itemlist)
@@ -200,7 +201,7 @@ def submenu(item):
                              url=host, thumbnail=get_thumb("search.png"), 
                              c_type="search", category=categoria))
 
-        if config.get_setting('find_alt_search', channel) and config.get_setting('ar_ver', default=0) >= 1:
+        if config.get_setting('find_alt_search', channel):
             itemlist.append(Item(channel=item.channel, title=config.BTDIGG_LABEL + " búsqueda... (Pelis y Series)", action="search", 
                                  url=host, thumbnail=get_thumb("search.png"), c_type="search", 
                                  category=categoria, plot=AlfaChannelHelper.PLOT_BTDIGG, btdigg=True))
