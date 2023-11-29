@@ -1239,7 +1239,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
                                                   'module=downloads&action=save_download%s&from_channel=' % tc + channel_p +
                                                   '&from_action=' + item.action)))
                 # Descargar temporada
-                if item.contentType == "season" or parent_item.action in ["episodios", "episodesxseason"] or \
+                if item.contentType == "season" or parent_item.action in ["episodios", "episodesxseason", "seasons"] or \
                                                     (item.contentType == "episode" \
                                                     and item.server == 'torrent' and item.infoLabels[
                                                         'tmdb_id'] != 'None' and not item.channel_recovery):
