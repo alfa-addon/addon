@@ -170,14 +170,13 @@ def findvideos(item):
     encontrado = []
     
     data = httptools.downloadpage(item.url, encoding=encoding, forced_proxy_opt=forced_proxy_opt, canonical=canonical).data
-    patron  = 'movieplay".*?'
-    patron += 'data-src="([^"]+)"'
+    patron  = 'data-url="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     
     for url in matches:
-        data = httptools.downloadpage(url, canonical=canonical).data
-        patron = "var url = '([^']+)'"
-        url = scrapertools.find_single_match(data, patron)
+        # data = httptools.downloadpage(url, canonical=canonical).data
+        # patron = "var url = '([^']+)'"
+        # url = scrapertools.find_single_match(data, patron)
         
         itemlist.append(Item(
                         channel=item.channel,
