@@ -23,6 +23,7 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 from platformcode.logger import WebErrorException
+from platformcode import configurator
 
 
 def start():
@@ -50,10 +51,12 @@ def start():
     # Test if all the required directories are created
     #config.verify_directories_created()
     
+    if not config.get_setting('show_once'):
+        configurator.show_window()
+    
 
 def load_item():
     from modules import side_menu
-    from platformcode import configurator
 
     # Extract item from sys.argv
     if sys.argv[2]:
@@ -83,10 +86,6 @@ def load_item():
                 item.startpage = True
         else:
             item = Item(module="channelselector", action="getmainlist", viewmode="movie")
-    
-    if not config.get_setting('show_once'):
-        if config.verify_settings_integrity() and not config.get_setting('show_once'):
-            configurator.show_window()
 
     return item
 

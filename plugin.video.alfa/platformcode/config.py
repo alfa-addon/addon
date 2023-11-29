@@ -533,13 +533,6 @@ def get_system_platform():
 
 
 def get_all_settings_addon(caching_var=True):
-    global alfa_caching, alfa_settings
-    # Si los settings ya están cacheados, se usan.  Si no, se cargan por el método tradicional
-    if DEBUG: from platformcode import logger
-    if alfa_caching and caching_var and json.loads(window.getProperty("alfa_settings")):
-        if DEBUG: logger.error('READ ALL Cached Alfa SETTINGS')
-        return json.loads(window.getProperty("alfa_settings")).copy()
-
     # Lee el archivo settings.xml y retorna un diccionario con {id: value}
     inpath = os.path.join(get_data_path(), "settings.xml")
     if not os.path.exists(inpath):
@@ -559,43 +552,13 @@ def get_all_settings_addon(caching_var=True):
             setting = decode_var(setting_)
             ret[setting['@id']] = get_setting_values(setting['@id'], setting.get(tag, ''), decode_var_=False)
 
-        if DEBUG: logger.error('READ File ALL Alfa SETTINGS: alfa_caching: %s; caching_var: %s' % (alfa_caching, caching_var))
-        alfa_settings = ret.copy()
-        alfa_caching = False
-        if alfa_settings: alfa_caching = alfa_settings.get('caching', True)
-        if alfa_caching:
-            window.setProperty("alfa_caching", str(alfa_caching))
-        else:
-            window.setProperty("alfa_caching", '')
-        
     else:
-        alfa_caching = False
         from platformcode import logger
         logger.error(traceback.format_exc())
         # Verificar si hay problemas de permisos de acceso a userdata/alfa
         from core.filetools import file_info, listdir, dirname
         logger.error("Error al leer settings.xml: %s, ### Folder-info: %s, ### File-info: %s" % \
                     (inpath, file_info(dirname(inpath)), listdir(dirname(inpath), file_inf=True)))
-    
-    if not alfa_caching:
-        alfa_settings = {}
-        alfa_kodi_platform = {}
-        alfa_channels = {}
-        alfa_servers = {}
-        alfa_servers_jsons = {}
-        window.setProperty("alfa_system_platform", "")
-        window.setProperty("alfa_channels", json.dumps(alfa_channels))
-        window.setProperty("alfa_servers", json.dumps(alfa_servers))
-        window.setProperty("alfa_servers_jsons", json.dumps(alfa_servers_jsons))
-        window.setProperty("alfa_cookies", '')
-        window.setProperty("alfa_CF_list", '')
-        window.setProperty("alfa_videolab_movies_list", '')
-        window.setProperty("alfa_videolab_series_list", '')
-        window.setProperty("alfa_colors_file", json.dumps({}))
-        if DEBUG: logger.error('DROPING ALL Cached SETTINGS')
-    
-    window.setProperty("alfa_settings", json.dumps(alfa_settings))
-    if DEBUG: logger.error('SAVE ALL Cached Alfa SETTINGS')
 
     return ret
 
@@ -1060,9 +1023,8 @@ def verify_directories_created():
 
 
 def verify_settings_integrity():
-    return # desactivado hasta posterior revisión
+    return True # desactivado hasta posterior revisión
     # Comprobando la integridad de la estructura de Settings.xml
-    global alfa_caching, alfa_settings
     
     try:
         from platformcode import logger, platformtools
