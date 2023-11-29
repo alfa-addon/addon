@@ -25,14 +25,15 @@ IDIOMAS = {'Latino': 'Latino'}
 list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['fembed', 'streamtape', 'fastplay', 'gvideo', 'Jawcloud']
+forced_proxy_opt = 'ProxySSL'
 
-__channel__='allcalidad'
 
 canonical = {
              'channel': 'cuevana3video', 
              'host': config.get_setting("current_host", 'cuevana3video', default=''), 
-             'host_alt': ["https://ww2.cuevana3.ch/"], 
-             'host_black_list': ["https://www12.cuevana3.ch/",
+             'host_alt': ["https://cuevana3.ch/"], 
+             'host_black_list': ["https://cuevana3.sk/", 
+                                 "https://ww3.cuevana3.ch/", "https://ww2.cuevana3.ch/","https://www12.cuevana3.ch/",
                                  "https://www11.cuevana3.ch/", "https://www8.cuevana3.ch/", "https://www10.cuevana3.ch/", 
                                  "https://www7.cuevana3.ch/", "https://www6.cuevana3.ch/", "https://www5.cuevana3.ch/", 
                                  "https://www4.cuevana3.ch/", "https://www3.cuevana3.ch/", "https://www2.cuevana3.ch/", 
@@ -40,12 +41,13 @@ canonical = {
                                  "https://cuevana3.fm/", "https://www1.cuevana3.vc/", "https://cuevana3.vc/", 
                                  "https://www2.cuevana3.pe/", "https://www1.cuevana3.pe/", "https://cuevana3.pe/", 
                                  "https://www2.cuevana3.cx/", "https://www1.cuevana3.cx/"], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
 encoding = "utf-8"
+__channel__ = canonical['channel']
 __modo_grafico__ = config.get_setting('modo_grafico', __channel__, default=True)
 
 
@@ -434,16 +436,17 @@ def findvideos(item):
         for scrapedurl, scrapedtitle in matches:
             #if  "peliscloud" in scrapedtitle.lower(): continue
             if not scrapedurl.startswith("http"): scrapedurl = "https:" + scrapedurl
-
+            if "hydrax" in scrapedurl: continue
             itemlist.append(
                 item.clone(
                     action = "play",
                     language = lang,
                     server = "",
-                    title = scrapedtitle,
+                    title = "%s",
                     url = scrapedurl
                 )
             )
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
@@ -488,7 +491,7 @@ def play(item):
     item.thumbnail = item.contentThumbnail
     item.url = item.url.replace("embedsito.com","fembed.com").replace("pelispng.online","fembed.com")
 
-    if "pelisplay.cc" in item.url:
+    if "pelisplay" in item.url:
         data = httptools.downloadpage(item.url, headers={"Referer" : item.url}).data
         item.url = scrapertools.find_single_match(data, "file: '([^']+)")
         

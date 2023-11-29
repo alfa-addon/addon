@@ -24,7 +24,6 @@ forced_proxy_opt = 'ProxySSL'
 # https://xxxscenes.net  https://www.netflixporno.net   https://mangoporn.net   https://speedporn.net
 
 
-####################      FALTA ARREGLAR LOS AÑOS
 canonical = {
              'channel': 'mangovideo', 
              'host': config.get_setting("current_host", 'mangovideo', default=''), 
@@ -84,8 +83,8 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(Item(channel=item.channel, title="Peliculas" , action="list_all", url=host + "genres/porn-movies/page/1/"))
-    # itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=host + "adult/ratings/page/1/"))
-    itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=host + "adult/trending/page/1/"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=host + "/ratings/page/1/"))
+    itemlist.append(Item(channel=item.channel, title="Trending" , action="list_all", url=host + "/trending/page/1/"))
     itemlist.append(Item(channel=item.channel, title="Año" , action="section", url=host + "genres/porn-movies/page/1/" , extra="Año"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="section", url=host + "genres/porn-movies/page/1/" , extra="Canal"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "genres/porn-movies/page/1/", extra="Categorias"))
@@ -121,8 +120,8 @@ def section(item):
         findS['categories'] =  dict([('find', [{'tag': ['div'], 'class': ['menu-main-menu-container']}]), 
                                                ('find_all', [{'tag': ['a'], 'href': re.compile(r"/studios/[A-z0-9-]+")}])]) 
     if item.extra == 'Año':
-        findS['controls']['next_page'] = {}
-        findS['controls']['cnt_tot'] = 50
+        findS['next_page'] = {}
+        findS['controls']['cnt_tot'] = 9999
         findS['categories'] =  dict([('find', [{'tag': ['nav'], 'class': ['releases']}]), 
                                                ('find_all', [{'tag': ['li']}])]) 
 
@@ -157,16 +156,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
             elem_json['stime'] = elem.find(class_='duration').get_text(strip=True) if elem.find(class_='duration') else ''
             elem_json['premium'] = elem.find('i', class_='premiumIcon') \
                                      or elem.find('span', class_=['ico-private', 'premium-video-icon']) or ''
-            
-            # if elem.find('div', class_='videoDetailsBlock') \
-                                     # and elem.find('div', class_='videoDetailsBlock').find('span', class_='views'):
-                # elem_json['views'] = elem.find('div', class_='videoDetailsBlock')\
-                                    # .find('span', class_='views').get_text('|', strip=True).split('|')[0]
-            # elif elem.find('div', class_='views'):
-                # elem_json['views'] = elem.find('div', class_='views').get_text(strip=True) 
-            # elif elem.find('span', class_='video_count'):
-                # elem_json['views'] = elem.find('span', class_='video_count').get_text(strip=True)
-            
+        
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -198,13 +188,15 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             elem_json['url'] = elem
             elem_json['language'] = ''
             
-            # if elem.find('a',class_='video_channel'):
-                # elem_json['canal'] = elem.find('a',class_='video_channel').get_text(strip=True)
-            # pornstars = elem.find_all('li', class_="pstar")
-            # if pornstars:
-                # for x, value in enumerate(pornstars):
-                    # pornstars[x] = value.get_text(strip=True)
-                # elem_json['star'] = ' & '.join(pornstars)        
+            soup = AlfaChannel.create_soup(item.url, **kwargs)
+            pornstars = soup.find('div', class_='content').find_all('a', href=re.compile(r"/(?:cast|pornstar)/[A-z0-9-]+"))
+            if pornstars:
+                for x, value in enumerate(pornstars):
+                    pornstars[x] = value.get_text(strip=True)
+                pornstar = ', '.join(pornstars)
+                # elem_json['star'] = AlfaChannel.unify_custom('', item, {'play': pornstar})
+                elem_json['plot'] = pornstar
+        
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())

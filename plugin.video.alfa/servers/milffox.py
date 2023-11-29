@@ -17,11 +17,9 @@ def test_video_exists(page_url):
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    data = httptools.downloadpage(page_url).data
-    id = scrapertools.find_single_match(data, "'id': '(\d+)'")
-    url = "https://www.milffox.com/player/config.php?id=%s" %id
-    data = httptools.downloadpage(url).data
-    patron = '"video(?:_alt|)_url":"([^"]+)"'
+    # data = httptools.downloadpage(page_url).data
+    # patron = '"video(?:_alt|)_url":\s*"([^"]+)"'
+    patron = "video(?:_alt|)_url:\s*'([^']+)'"
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url in matches:
         url = url.replace("\/", "/")

@@ -8,7 +8,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|en.|)(?:fuqer|luxuretv|sextubefun|freehdporn).(?:com|xxx)/video(?:s|)/[A-z0-9-]+.html)",
+        "pattern": "(https://(?:www.|en.|)(?:fuqer|luxuretv|sextubefun|freehdporn|wanktv|iporntoo|hdporn-movies).(?:com|xxx)/video(?:s|)/[A-z0-9-]+.html)",
         "url": "\\1"
       },
       {
@@ -64,7 +64,15 @@
         "url": "\\1"
       },
      {
-        "pattern": "(https://(?:www.|)(?:yrprno|youcrazyx|trendyporn|yespornplease|hentaiprno|tubehentai|wetsins|pornyteen).(?:com|sexy)/video/[A-z0-9-]+.html)",
+        "pattern": "(https://(?:www.|)(?:tubehentai|wetsins|pornyteen).(?:com|sexy)/video/[A-z0-9-]+.html)",
+        "url": "\\1"
+      },
+     {
+        "pattern": "(https://(?:www.|)(?:yrprno|youcrazyx|trendyporn|yespornplease|hentaiprno|daftsextube).(?:com|sexy)/video/[A-z0-9-]+.html)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://www.trendyporn.com/embed/[0-9]+)",
         "url": "\\1"
       },
       {
