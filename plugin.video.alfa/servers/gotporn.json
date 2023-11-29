@@ -10,10 +10,6 @@
       {
         "pattern": "(https://yodbox.com/embed-[A-z0-9-]+.html)",
         "url": "\\1"
-      },
-      {
-        "pattern": "(https://mylust.com/videos/[0-9]+/[A-z0-9-]+/)",
-        "url": "\\1"
       }
     ]
   },

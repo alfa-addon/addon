@@ -20,7 +20,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:porngo|porncake|pornpapa|xxxfiles|fapguru|veryfreeporn|porntry|titshub|bigwank).(?:com|tv)/videos/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:porngo|porncake|pornpapa|xxxfiles|fapguru|veryfreeporn|porntry|titshub|bigwank|mylust).(?:com|tv)/videos/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1/"
       },
       {
