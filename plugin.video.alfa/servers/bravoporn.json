@@ -60,7 +60,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.tubewolf.com/movies/[A-z0-9-]+/)",
+        "pattern": "(https://www.(?:tubewolf|flyflv).com/movies/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
