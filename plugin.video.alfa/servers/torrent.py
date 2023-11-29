@@ -2913,7 +2913,7 @@ def analyze_torrent(item, rar_files, rar_control={}, magnet_retries=60, torrent_
         filetools.mkdir(cached_torrents_Alfa)
     if not torrent_paths: torrent_paths = torrent_dirs()
     torr_client = torrent_paths['TORR_client']
-    if item.downloadStatus in [2, 4]: magnet_retries = 30
+    if item.downloadStatus in [2, 4]: magnet_retries = 100
     if isinstance(item.downloadServer, dict):
         downloadServer = item.downloadServer.get('url', '')
     else:
