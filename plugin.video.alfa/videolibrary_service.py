@@ -491,20 +491,13 @@ def monitor_update():
 if __name__ == "__main__":
     # Se ejecuta en cada inicio
 
-    # modo adulto:
-    # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
-    # si es == 2 lo desactivamos.
-
     # Reseteamos caches por si se acaba de actualizar la versión de Alfa
     alfa_caching = config.cache_reset()
     
-    # Copia Custom code a las carpetas de Alfa desde la zona de Userdata
     from platformcode import custom_code
-    custom_code.verify_copy_folders()
     
     # Detecta la versión correcta de marshal
     if PY3:
-        from platformcode import custom_code
         custom_code.marshal_check()
     if config.get_platform(True)['num_version'] >= 17.0:
         if not PY3:
@@ -513,6 +506,10 @@ if __name__ == "__main__":
             from lib.alfaresolver_py3 import updated, update_now
         if not updated():
             update_now()
+
+    # modo adulto:
+    # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
+    # si es == 2 lo desactivamos.
     if config.get_setting("adult_mode") == 2:
         config.set_setting("adult_mode", 0)
 
@@ -544,8 +541,11 @@ if __name__ == "__main__":
     # Incializamos caching de variables
     # config.cache_init()
 
-    if monitor and monitor.waitForAbort(0.1):
-        sys.exit()
+    # if monitor and monitor.waitForAbort(0.1):
+    #     sys.exit()
+
+    # Copia Custom code a las carpetas de Alfa desde la zona de Userdata
+    custom_code.verify_copy_folders()
 
     # Actualiza la videoteca de Alfa, con una espera inicial si se ha configurado
     if config.get_setting("videolibrary_update") not in [0, 2, 4]:

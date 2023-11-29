@@ -15,7 +15,7 @@ from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_th
 
 from modules import renumbertools
 
-IDIOMAS = AlfaChannelHelper.IDIOMAS_ANIME
+IDIOMAS = {"Castellano": "Castellano", "Latino": "Latino", "Catalán": "Catalán", "VOSE": "VOSE"}
 list_language = list(set(IDIOMAS.values()))
 list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES
 list_quality_tvshow = AlfaChannelHelper.LIST_QUALITY_TVSHOW
