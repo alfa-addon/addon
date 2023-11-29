@@ -37,7 +37,7 @@ PLOT_BTDIGG = 'Introduce criterios de búsqueda:\r\n' + \
               '[COLOR lime]título calidad |Orden [filtro A Filtro B ...] [filtro CALIDAD ...] [filtro IDIOMA ...][/COLOR]\r\n' + \
               'ej: [B]silo HDTV |0 [silo Cap.][/B]\r\nó [B]silo 1080p cap.110 [silo] [1080p][/B]\r\nó [B]volpina esp [volpina] [] [esp][/B]\r\n' + \
               'ó [B]bill maher s21 h264 eztv [maher][/B]\r\nó [B]john oliver s10e16 h264 eztv [oliver] [1080p] [vo][/B]\r\n' + \
-              'ó [B]the voice uk 1080p eztv [voice tvshow][/B]'
+              'ó [B]the voice uk 1080p eztv [voice tvshow][/B]\r\nó [B]jimmy fallon web eztv [fallon tvshow][/B]\r\nó [B]the creator [creator][/B]'
 CONTEXT_TORRENT = [{"title": "Copiar a Mis Torrents",
                     "action": "copy_file",
                     "module": "url"}]
@@ -908,6 +908,8 @@ class AlfaChannelHelper:
         host_torrent_referer = finds_controls.get('host_torrent_referer', self.host_torrent)
         FOLDER = config.get_setting("folder_movies") if item.contentType == 'movie' else config.get_setting("folder_tvshows")
         size = ''
+        blacklist_links = ['enlacito.com']
+        url_domain = self.obtain_domain(elem.get('url', ''))
 
         if finds.get('torrent_params', {}):
             torrent_params = finds['torrent_params']
@@ -916,7 +918,7 @@ class AlfaChannelHelper:
                               'url': item.url,
                               'torrents_path': None, 
                               'local_torr': item.torrents_path, 
-                              'lookup': False, 
+                              'lookup': False if url_domain not in blacklist_links else True, 
                               'force': True, 
                               'data_torrent': True, 
                               'subtitles': True, 
@@ -928,7 +930,7 @@ class AlfaChannelHelper:
                               }
 
         # Puede ser necesario bajar otro nivel para encontrar la página
-        if elem.get('url', '') and not 'magnet:' in elem['url'] and not '.torrent' in elem['url']:
+        if elem.get('url', '') and not 'magnet:' in elem['url'] and not '.torrent' in elem['url'] and not url_domain in blacklist_links:
             if finds.get('controls', {}).get('url_base64', True):
                 elem['url'] = self.convert_url_base64(elem['url'], self.host_torrent, referer=host_torrent_referer, item=item)
             if elem['url'] and not 'magnet:' in elem['url'] and not '.torrent' in elem['url']:
@@ -1472,11 +1474,17 @@ class DictionaryAllChannel(AlfaChannelHelper):
         self.btdigg = finds.get('controls', {}).get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
         self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
         #if self.btdigg: self.cnt_tot = finds_controls.get('cnt_tot', 20)
+        if item.texto: item.texto = item.texto.replace('%20', ' ').replace('+', ' ').strip()
         if item.btdigg and item.c_type == 'search':
             if 'matches' in  AHkwargs: del AHkwargs['matches']
-            item.btdigg = item.season_search = item.texto.replace('%20', ' ').replace('+', ' ').strip()
+            item.btdigg = item.season_search = item.texto
             item.texto = '%s%s' % (BTDIGG_URL_SEARCH, item.texto)
             item.matches = self.find_btdigg_list_all(item, matches, finds_controls.get('channel_alt', DOMAIN_ALT), **AHkwargs)
+        elif item.c_type == 'search' and self.btdigg_search and ('|' in item.texto or '[' in item.texto):
+            item.season_search = item.texto
+            item.texto = item.texto.split('|')[0].strip() if '|' in item.texto else item.texto.split('[')[0].strip()
+            item.url = item.url.replace(scrapertools.find_single_match(item.url, '((?:\s|\+|%20)?[\[|\|].*?)(?:\/|\.|$)'), '')
+            AHkwargs['url'] = item.url
 
         self.next_page_url = next_page_url = item.url
         episodios = False
@@ -1805,7 +1813,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
                             new_item.matches.append(elem.get('matches', []) or elem.copy())
 
                     # Ahora se filtra por idioma, si procede, y se pinta lo que vale
-                    if filter_languages > 0 and self.list_language:             # Si hay idioma seleccionado, se filtra
+                    if filter_languages > 0 and self.list_language and not BTDIGG_URL_SEARCH in new_item.url \
+                                            and not BTDIGG_URL_SEARCH in item.url_tvshow:   # Si hay idioma seleccionado, se filtra
                         itemlist = filtertools.get_link(itemlist, new_item, self.list_language, alfa_s=self.TEST_ON_AIR)
                     else:
                         itemlist.append(new_item.clone())                       # Si no, se añade a la lista
@@ -1845,6 +1854,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     new_item.season_search = new_item.contentSerieName if new_item.contentType != 'movie' else new_item.contentTitle
                 else:
                     new_item.season_search = new_item.season_search.lstrip('*')
+                if ('|' in item.season_search or '[' in item.season_search) and not '|' in new_item.season_search \
+                                                                            and not  '[' in new_item.season_search:
+                    new_item.season_search += scrapertools.find_single_match(item.season_search, '(\s*[\[|\|][^$]+$)')
                 if not isinstance(new_item.infoLabels['year'], int):
                     new_item.infoLabels['year'] = str(new_item.infoLabels['year']).replace('-', '')
                 if new_item.broadcast:
@@ -2092,6 +2104,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         matches = list()
         matches_seasons = list()
         soup = {}
+        self.response = self.httptools.build_response(HTTPResponse=True)
         if not matches_post and item.matches_post: matches_post = item.matches_post
 
         self.btdigg = finds_controls.get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
@@ -2105,7 +2118,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         AHkwargs['matches_post_episodes'] = kwargs.pop('matches_post_episodes', None)
         AHkwargs['matches_post_get_video_options'] = kwargs.pop('matches_post_get_video_options', None)
 
-        logger.info('Serie: %s; Seasons_search: %s' % (item.contentSerieName, finds_seasons_search))
+        logger.info('Serie: %s; Seasons_search: %s' % (item.contentSerieName, item.season_search if finds_seasons_search else False))
 
         if self.DEBUG: logger.debug('FINDS_seasons: %s; FINDS_season_num: %s; FINDS_controls: %s' \
                                     % (finds_out, finds_season_num, finds_controls))
@@ -2153,11 +2166,15 @@ class DictionaryAllChannel(AlfaChannelHelper):
             matches = item.matches[:]
             del item.matches
         else:
+            kwargs_save = copy.deepcopy(kwargs)
+            AHkwargs_save = copy.deepcopy(AHkwargs)
             if BTDIGG in item.url and not BTDIGG_URL_SEARCH in item.url:
                 AHkwargs['function'] = 'find_seasons'
                 AHkwargs['language'] = item.language or self.language
                 matches = self.do_seasons_search(item, matches, **AHkwargs)
-                AHkwargs['function'] = 'seasons'
+                kwargs = copy.deepcopy(kwargs_save)
+                AHkwargs = copy.deepcopy(AHkwargs_save)
+                self.response = self.httptools.build_response(HTTPResponse=True)
                 if matches:
                     if matches[0].get('season'): btdigg_contentSeason = matches[0]['season']
                     if not BTDIGG in matches[0]['url']:
@@ -2179,7 +2196,11 @@ class DictionaryAllChannel(AlfaChannelHelper):
             elif finds_seasons_search and not BTDIGG in item.url:
                 AHkwargs['function'] = 'find_seasons'
                 AHkwargs['language'] = item.language or self.language
-                if not matches: matches = self.do_seasons_search(item, matches, **AHkwargs)
+                if not matches:
+                    matches = self.do_seasons_search(item, matches, **AHkwargs)
+                    kwargs = copy.deepcopy(kwargs_save)
+                    AHkwargs = copy.deepcopy(AHkwargs_save)
+                    self.response = self.httptools.build_response(HTTPResponse=True)
                 if matches_post and matches:
                     matches = matches_post(item, matches, **AHkwargs)
                 AHkwargs['function'] = 'seasons'
@@ -2272,6 +2293,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if self.btdigg:
                 if BTDIGG_URL_SEARCH in item.url:
                     item.btdigg = item.season_search
+                    if not item.contentSeason: item.contentSeason = 1
                     btdigg_contentSeason = AHkwargs['btdigg_contentSeason'] = item.contentSeason
                     matches.append({'season': item.contentSeason, 'url': item.url, 'quality': item.quality, 
                                     'language': item.language, 'matches_cached': item.matches_cached or []})
@@ -2322,7 +2344,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             elem['season'] = int(scrapertools.find_single_match(str(elem.get('season', '1')), '\d+') or '1')
             if item.infoLabels['number_of_seasons'] and elem['season'] > item.infoLabels['number_of_seasons']:
                 logger.error('TEMPORADA ERRONEA: WEB: %s; TMDB: %s' % (elem['season'], item.infoLabels['number_of_seasons']))
-                if finds_controls.get('season_TMDB_limit', True): continue
+                if finds_controls.get('season_TMDB_limit', True) and not BTDIGG_URL_SEARCH in item.url: continue
 
             elem['url'] = elem.get('url', item.url)
             if url_base64: elem['url'] = self.convert_url_base64(elem['url'], self.host, item=item)
@@ -2488,7 +2510,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
     def episodes(self, item, data='', action="findvideos", matches_post=None, postprocess=None, 
                  generictools=False, episodes_list={}, finds={}, **kwargs):
-        logger.info('Serie: %s; Season: %s/%s' % (item.contentSerieName, item.contentSeason, item.infoLabels['number_of_seasons']))
+        logger.info('Serie: %s; Season: %s/%s' % (item.season_search or item.contentSerieName, item.contentSeason, 
+                                                  item.infoLabels['number_of_seasons']))
         from lib.generictools import AH_post_tmdb_episodios, AH_find_videolab_status
         from core import tmdb
 
@@ -2713,9 +2736,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if elem.get('next_episode_air_date', ''): new_item.infoLabels['next_episode_air_date_custom']  = elem['next_episode_air_date']
             if elem.get('password', ''): new_item.password = elem['password']
             if 'matches_cached' in elem: new_item.matches_cached = elem['matches_cached'][:]
-            if BTDIGG_URL_SEARCH in item.url:
-                new_item.btdigg = item.btdigg
-                new_item.season_search = item.season_search
+            if BTDIGG_URL_SEARCH in item.url: new_item.btdigg = item.btdigg
+            if not new_item.season_search and item.season_search: new_item.season_search = item.season_search
             
             if new_item.quality:
                 for clean_org, clean_des in finds.get('quality_clean', []):
@@ -2850,9 +2872,10 @@ class DictionaryAllChannel(AlfaChannelHelper):
     def get_video_options(self, item, url, data='', langs=[], matches_post=None, postprocess=None, 
                           verify_links=False, generictools=False, findvideos_proc=False, finds={}, **kwargs):
         if item.contentType == 'movie':
-            logger.info('Movie: %s' % item.contentTitle)
+            logger.info('Movie: %s' % item.season_search or item.contentTitle)
         else:
-            logger.info('Serie: %s; Season: %s: Episode: %s' % (item.contentSerieName, item.contentSeason, item.contentEpisodeNumber))
+            logger.info('Serie: %s; Season: %s: Episode: %s' % (item.season_search or item.contentSerieName, 
+                                                                item.contentSeason, item.contentEpisodeNumber))
         if self.DEBUG: logger.debug('FINDS: %s' % finds)
         from lib.generictools import AH_post_tmdb_findvideos, AH_find_videolab_status
         from core import tmdb
@@ -3103,6 +3126,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if BTDIGG not in str(options) and 'torrent' in str(options) and 'ERROR' in str(options):
             for lang, elem in options:
                 if elem.get('server', '').lower() == 'torrent' and 'ERROR' not in elem.get('size', ''): break
+                if elem.get('server', '').lower() == 'torrent' and 'BLOQUEO' in elem.get('size', ''): AHkwargs['btdigg_lookup'] = True
             else:
                 if AHkwargs.get('matches'): del AHkwargs['matches']
                 matches_btdigg = self.find_btdigg_findvideos(item, [], finds_controls.get('domain_alt', DOMAIN_ALT), **AHkwargs)

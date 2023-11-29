@@ -47,8 +47,6 @@ from lib.alfa_assistant import execute_binary_from_alfa_assistant, open_alfa_ass
 
 
 def init():
-    logger.info()
-
     """
     Todo el código añadido al add-on se borra con cada actualización.  Esta función permite restaurarlo automáticamente con cada actualización.  Esto permite al usuario tener su propio código, bajo su responsabilidad, y restaurarlo al add-on cada vez que se actualiza.
     
@@ -83,6 +81,7 @@ def init():
         
     Tiempos:    Copiando 7 archivos de prueba, el proceso ha tardado una décima de segundo.
     """
+    logger.info()
 
     try:
         # TORREST: Modificaciones temporales
@@ -93,9 +92,6 @@ def init():
         
         # Se verifica si están bien las rutas a la videoteca
         config.verify_directories_created()
-        
-        # Se fuerzan los títulos inteligentes si no existen
-        force_intelligent_titles()
         
         # Se actualiza el Fanart de Alfa en función del calendario de holidays
         set_season_holidays()
