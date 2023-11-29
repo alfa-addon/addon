@@ -18,6 +18,7 @@ from core.item import Item
 from core import scrapertools
 from core import servertools
 from platformcode import config, logger
+from bs4 import BeautifulSoup
 
 # NO COGE CANONICAL
 canonical = {
@@ -169,6 +170,26 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url)) 
+    
+    data = httptools.downloadpage(item.url, canonical=canonical).data
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    if soup.find('div', class_="block-details").find_all('a', href=re.compile(r"/models/[A-z0-9-]+/")):
+        pornstars = soup.find('div', class_="block-details").find_all('a', href=re.compile(r"/models/[A-z0-9-]+/"))
+        for x, value in enumerate(pornstars):
+            pornstars[x] = value.get_text(strip=True)
+        pornstar = ' & '.join(pornstars)
+        pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+        plot = ""
+        if len(pornstars) <= 3:
+            lista = item.contentTitle.split()
+            if "[COLOR red]" in item.title:
+                lista.insert (5, pornstar)
+            else:
+                lista.insert (3, pornstar)
+            item.contentTitle = ' '.join(lista)
+        else:
+            plot = pornstar
+    
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=item.url, plot=plot)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist

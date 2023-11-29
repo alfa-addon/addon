@@ -9,3 +9,5 @@ test.py
 last_fix.json
 custom_code.json
 .vscode/settings.json
+
+plugin.video.alfa/servers/torrent.py

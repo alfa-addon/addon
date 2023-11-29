@@ -22,7 +22,7 @@ from modules import autoplay
 list_quality = []
 list_servers = ['mixdrop']
 
-
+ ###################   OUT 18/11/2023
 canonical = {
              'channel': 'palimas', 
              'host': config.get_setting("current_host", 'palimas', default=''), 
