@@ -5,7 +5,7 @@
 import re
 import base64
 import time
-from lib import js2py
+import js2py
 from core import httptools
 from core import scrapertools
 from platformcode import logger
