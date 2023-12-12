@@ -1462,7 +1462,7 @@ def downloadpage(url, **opt):
 
         if req.headers.get('Content-Encoding', '') == 'br':
             try:
-                from lib.brotlipython.brotlipython import brotlidec
+                from brotlipython import brotlidec
                 response['data'] = brotlidec(response['data'], [])
             except Exception as e:
                 response['data'] = ''
