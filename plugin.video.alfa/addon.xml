@@ -4,6 +4,10 @@
 		<import addon="script.module.requests"></import>
 		<import addon="script.module.beautifulsoup4" version="4.5.3"></import>
 		<import addon="script.module.html5lib" version="0.999.0"></import>
+        <import addon="script.module.js2py" />
+		<import addon="script.module.pyaes" />
+		<import addon="script.module.rijndael" />
+		<import addon="script.module.brotlipython" />
 		<import addon="script.alfa-update-helper" optional="true"></import>
 		<import addon="script.module.pyqrcode" optional="true"></import>
 	</requires>
@@ -20,26 +24,38 @@
 		<description lang="en">Browse web pages using Kodi to easily watch their video content.</description>
 		<description lang="es">Navega con Kodi por páginas web para ver sus videos de manera fácil.</description>
 		<description lang="it">Sfoglia le pagine web con Kodi per guardare facilmente i tuoi video.</description>
-		<description lang="pt">Navegue pelas páginas da web com Kodi para assistir seus vídeos facilmente.</description>
-		<disclaimer lang="ca">[COLOR red]Els propietaris i distribuïdors d'aquest complemento no proveeixen ni distribueixen cap contingut mostrat pel complemento ni tenen affiliación alguna amb els proveïdors de l'contingut.[/COLOR]</disclaimer>
-		<disclaimer lang="en">[COLOR red]The owners and submitters to this addon do not host or distribute any of the content displayed by these addons nor do they have any affiliation with the content providers.[/COLOR]</disclaimer>
-		<disclaimer lang="es">[COLOR red]Los propietarios y distribuidores de este addon no proveen ni distribuyen ningún contenido mostrado por el addon ni tienen affiliación alguna con los proveedores del contenido.[/COLOR]</disclaimer>
-		<disclaimer lang="it">[COLOR red]I proprietari e i distributori di questo addon aggiuntivo non forniscono o distribuiscono alcun contenuto visualizzato dal addon aggiuntivo né hanno alcuna affiliazione con i fornitori di contenuti.[/COLOR]</disclaimer>
-		<disclaimer lang="pt">[COLOR red]Os proprietários e distribuidores deste addon não fornecem ou distribuem qualquer conteúdo exibido pelo addon nem têm qualquer afiliação com os provedores de conteúdo.[/COLOR]</disclaimer>
+		<description lang="pt">Navegue pelas páginas da web com Kodi para assistir seus vídeos
+			facilmente.</description>
+		<disclaimer lang="ca">[COLOR red]Els propietaris i distribuïdors d'aquest complemento no
+			proveeixen ni distribueixen cap contingut mostrat pel complemento ni tenen affiliación
+			alguna amb els proveïdors de l'contingut.[/COLOR]</disclaimer>
+		<disclaimer lang="en">[COLOR red]The owners and submitters to this addon do not host or
+			distribute any of the content displayed by these addons nor do they have any affiliation
+			with the content providers.[/COLOR]</disclaimer>
+		<disclaimer lang="es">[COLOR red]Los propietarios y distribuidores de este addon no proveen
+			ni distribuyen ningún contenido mostrado por el addon ni tienen affiliación alguna con
+			los proveedores del contenido.[/COLOR]</disclaimer>
+		<disclaimer lang="it">[COLOR red]I proprietari e i distributori di questo addon aggiuntivo
+			non forniscono o distribuiscono alcun contenuto visualizzato dal addon aggiuntivo né
+			hanno alcuna affiliazione con i fornitori di contenuti.[/COLOR]</disclaimer>
+		<disclaimer lang="pt">[COLOR red]Os proprietários e distribuidores deste addon não fornecem
+			ou distribuem qualquer conteúdo exibido pelo addon nem têm qualquer afiliação com os
+			provedores de conteúdo.[/COLOR]</disclaimer>
 		<platform>all</platform>
 		<license>GNU GPL v3</license>
 		<source>https://github.com/alfa-addon/addon</source>
 		<news>[B]Estos son los cambios para esta versión:[/B]
 
-      [B][COLOR tomato]Arr[/COLOR][COLOR blue]egl[/COLOR][COLOR purple]os[/COLOR][/B]
-      ¤ Allcalidad                                ¤ Cuevana 3.video
-      ¤ Don Torrent                           ¤ +18
+			[B][COLOR tomato]Arr[/COLOR][COLOR blue]egl[/COLOR][COLOR purple]os[/COLOR][/B]
+			¤ Allcalidad ¤ Cuevana 3.video
+			¤ Don Torrent ¤ +18
 
-      ¤ La pantalla de bienvenida ya se muestra.
-      ¤ Más problemas con Linux solucionados
-	  
-      [B][COLOR tomato]No[/COLOR][COLOR yellow]ve[/COLOR][COLOR lime]da[/COLOR][COLOR purple]des[/COLOR][/B]
-      ¤ peliplayhd</news>
+			¤ La pantalla de bienvenida ya se muestra.
+			¤ Más problemas con Linux solucionados
+
+			[B][COLOR tomato]No[/COLOR][COLOR yellow]ve[/COLOR][COLOR lime]da[/COLOR][COLOR
+			purple]des[/COLOR][/B]
+			¤ peliplayhd</news>
 		<assets>
 			<icon>resources/icon.png</icon>
 			<fanart>resources/fanart.jpg</fanart>
