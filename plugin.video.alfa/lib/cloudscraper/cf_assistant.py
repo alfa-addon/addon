@@ -227,7 +227,7 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
                             cache=cache, clearWebCache=clearWebCache, 
                             elapsed=elapsed, headers=headers, mute=mute, alfa_s=False, **kwargs)
         elif host == 'a':
-            help_window.show_info('cf_2_01')
+            help_window.show_info('cf_2_01', wait=False)
 
         freequency(freequent_data)
 
@@ -478,7 +478,7 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
                         freequent_data[1] += 'C'
 
         elif host == 'a':
-            help_window.show_info('cf_2_01')
+            help_window.show_info('cf_2_01', wait=False)
         
     freequency(freequent_data)
 

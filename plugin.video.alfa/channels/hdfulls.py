@@ -238,7 +238,11 @@ def list_all_matches(item, matches_int, **AHkwargs):
 def seasons(item):
     logger.info()
 
-    return AlfaChannel.seasons(item, **kwargs)
+    findS = finds.copy()
+    if 'anim' in item.infoLabels['genre'].lower():
+        findS['controls']['season_TMDB_limit'] = False
+
+    return AlfaChannel.seasons(item, finds=findS, **kwargs)
 
 
 def episodios(item):
@@ -307,7 +311,6 @@ def findvideos(item):
             logger.info('Js_data DESCARGADO', force=True)
         else:
             logger.error('Js_data ERROR en DESCARGA')
-            return matches
         
         data_js = AlfaChannel.create_soup(data_js_url, soup=False, hide_infobox=True).data
         if data_js:
@@ -315,7 +318,6 @@ def findvideos(item):
             logger.info('Data_js DESCARGADO', force=True)
         else:
             logger.error('Data_js ERROR en DESCARGA')
-            return matches
 
     kwargs['matches_post_episodes'] = episodesxseason_matches
 

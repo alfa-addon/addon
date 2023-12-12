@@ -944,6 +944,13 @@ class AlfaChannelHelper:
                     elem['url'] = self.response.url
                     if scrapertools.find_single_match(str(self.response.data), '^d\d+:.*?\d+:'):
                         torrent_params['torrent_file'] = self.response.data
+                elif self.finds.get('find_torrents'):
+                    try:
+                        elem['url'] = self.parse_finds_dict(torrent, self.finds['find_torrents'])
+                        if isinstance(elem['url'], list): elem['url'] = elem['url'][0] if elem['url'] else ''
+                        if elem['url']: elem['url'] = elem['url'].get('href', '') or elem['url'].a.get('href', '')
+                    except Exception as e:
+                        logger.error('TORRENT error: %s en "%s"' % (str(e), str(elem['url'])))
                 elif torrent.a:
                     elem['url'] = torrent.a.get('href', '')
         
@@ -996,8 +1003,9 @@ class AlfaChannelHelper:
             elem['size'] = size
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                        .replace('Mb', 'M·b').replace('.', ',')
-            elem['torrent_info'] += '%s, ' % size                               # Agregamos size
-            if elem.get('seeds'):
+            if not 'mb' in elem['torrent_info'].lower() and not 'gb' in elem['torrent_info'].lower():
+                elem['torrent_info'] += '%s, ' % size                           # Agregamos size
+            if elem.get('seeds') and not 'Seeds' in elem['torrent_info']:
                 elem['torrent_info'] += 'Seeds: %s, ' %  elem['seeds']          # Agregamos seeds
         if elem['url'].startswith('magnet:') and 'magnet' not in elem['torrent_info'].lower():
             elem['torrent_info'] += ' Magnet'
@@ -1457,7 +1465,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         inicio = time.time()                                                    # Controlaremos que el proceso no exceda de un tiempo razonable
         fin = inicio + finds_controls.get('inicio', 5 if not item.extra == 'find_seasons' else 30)  # Después de este tiempo pintamos (segundos)
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)     # Timeout normal
-        timeout_search = timeout * 2                                            # Timeout para búsquedas
+        timeout_search = timeout * 2 if isinstance(timeout, (int, float)) else (timeout[0], timeout[1] * 2)     # Timeout para búsquedas
 
         host = finds_controls.get('host', self.host)
         self.doo_url = "%swp-admin/admin-ajax.php" % host
@@ -1854,8 +1862,10 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     new_item.season_search = new_item.contentSerieName if new_item.contentType != 'movie' else new_item.contentTitle
                 else:
                     new_item.season_search = new_item.season_search.lstrip('*')
-                if ('|' in item.season_search or '[' in item.season_search) and not '|' in new_item.season_search \
-                                                                            and not  '[' in new_item.season_search:
+                if '#' in item.season_search:
+                    new_item.season_search = item.season_search
+                elif ('|' in item.season_search or '[' in item.season_search) and not '|' in new_item.season_search \
+                                                                              and not '[' in new_item.season_search:
                     new_item.season_search += scrapertools.find_single_match(item.season_search, '(\s*[\[|\|][^$]+$)')
                 if not isinstance(new_item.infoLabels['year'], int):
                     new_item.infoLabels['year'] = str(new_item.infoLabels['year']).replace('-', '')
@@ -2504,7 +2514,11 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     try:
                         itemlist.extend(getattr(channel, "episodesxseason")(tempitem, **AHkwargs))
                     except Exception:
-                        itemlist.extend(getattr(channel, "episodesxseason")(tempitem))
+                        try:
+                            itemlist.extend(getattr(channel, "episodesxseason")(tempitem))
+                        except Exception:
+                            logger.error(tempitem)
+                            logger.error(traceback.format_exc())
 
         return itemlist
 
@@ -3363,7 +3377,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         inicio = time.time()                                                    # Controlaremos que el proceso no exceda de un tiempo razonable
         fin = inicio + finds_controls.get('inicio', 5)                          # Después de este tiempo pintamos (segundos)
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)     # Timeout normal
-        timeout_search = timeout * 2                                            # Timeout para búsquedas
+        timeout_search = timeout * 2 if isinstance(timeout, (int, float)) else (timeout[0], timeout[1] * 2)     # Timeout para búsquedas
 
         host = self.host = finds_controls.get('host', self.host)
         if item.chanel:
@@ -3814,7 +3828,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         inicio = time.time()                                                    # Controlaremos que el proceso no exceda de un tiempo razonable
         fin = inicio + finds_controls.get('inicio', 5)                          # Después de este tiempo pintamos (segundos)
         timeout = self.timeout = kwargs.pop('timeout', 0) or finds.get('timeout', self.timeout)     # Timeout normal
-        timeout_search = timeout * 2                                            # Timeout para búsquedas
+        timeout_search = timeout * 2 if isinstance(timeout, (int, float)) else (timeout[0], timeout[1] * 2)     # Timeout para búsquedas
 
         host = self.host = finds_controls.get('host', self.host)
         if item.chanel:

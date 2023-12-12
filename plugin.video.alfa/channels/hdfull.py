@@ -50,7 +50,7 @@ host_save = host
 host_thumb = 'https://hdfullcdn.cc/'
 _silence = config.get_setting('silence_mode', channel=canonical['channel'])
 
-timeout = 20
+timeout = (5, 20)
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = "pelicula/"
@@ -655,12 +655,16 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
 def seasons(item):
     logger.info()
-    
+
+    findS = finds.copy()
+    if 'anim' in item.infoLabels['genre'].lower():
+        findS['controls']['season_TMDB_limit'] = False
+
     if "###" in item.url:
         item.info = {item.url.split("###")[1].split(";")[0]: item.url.split("###")[1].split(";")[0]}
         item.url = item.url.split("###")[0]
 
-    return AlfaChannel.seasons(item, matches_post=seasons_matches, **kwargs)
+    return AlfaChannel.seasons(item, matches_post=seasons_matches, finds=findS, **kwargs)
 
 
 def seasons_matches(item, matches_int, **AHkwargs):
@@ -830,7 +834,6 @@ def findvideos(item):
             logger.info('Js_data DESCARGADO', force=True)
         else:
             logger.error('Js_data ERROR en DESCARGA')
-            return matches
         
         data_js = agrupa_datos(data_js_url, hide_infobox=True)
         if data_js:
@@ -838,7 +841,6 @@ def findvideos(item):
             logger.info('Data_js DESCARGADO', force=True)
         else:
             logger.error('Data_js ERROR en DESCARGA')
-            return matches
 
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=findvideos_matches, 
                                          verify_links=False, findvideos_proc=True, **kwargs)

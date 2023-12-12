@@ -799,7 +799,7 @@ def play(item):
     logger.info()
     # logger.debug("item:\n" + item.tostring('\n'))
 
-    if not item.contentChannel == "local":
+    if item.contentChannel != "local" and item.channel_recovery != 'url':
         channel = __import__('channels.%s' % item.contentChannel, fromlist=["channels.%s" % item.contentChannel])
         if hasattr(channel, "play"):
             itemlist = getattr(channel, "play")(item)
@@ -807,7 +807,7 @@ def play(item):
         else:
             itemlist = [item.clone()]
     else:
-        itemlist = [item.clone(url=item.url, server="local")]
+        itemlist = [item.clone(url=item.url, server=item.server or "local")]
 
     if not itemlist: return []
     # Para enlaces directo en formato lista

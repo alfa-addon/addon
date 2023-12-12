@@ -385,11 +385,11 @@ def get_platform(full_version=False):
     codename = {"10": "dharma", "11": "eden", "12": "frodo",
                 "13": "gotham", "14": "helix", "15": "isengard",
                 "16": "jarvis", "17": "krypton", "18": "leia",
-                "19": "matrix", "20": "nexus"}
+                "19": "matrix", "20": "nexus", "21": "omega"}
     code_db = {'10': 'MyVideos37.db', '11': 'MyVideos60.db', '12': 'MyVideos75.db',
                '13': 'MyVideos78.db', '14': 'MyVideos90.db', '15': 'MyVideos93.db',
                '16': 'MyVideos99.db', '17': 'MyVideos107.db', '18': 'MyVideos116.db',
-               '19': 'MyVideos119.db', '20': 'MyVideos121.db'}
+               '19': 'MyVideos119.db', '20': 'MyVideos121.db', '21': 'MyVideos122.db'}
 
     ret = alfa_kodi_platform.copy()
     if not ret:
