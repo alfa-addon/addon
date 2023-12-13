@@ -1824,7 +1824,7 @@ def AH_find_btdigg_list_all_from_channel_py(self, item, matches=[], matches_inde
                 else:
                     elem_cfg['url'] = elem_cfg['url'] % item.texto
 
-            soup = self.create_soup(elem_cfg['url'] + str(item.page), post=elem_cfg.get('post', None), timeout=channel.timeout*2, 
+            soup = self.create_soup(elem_cfg['url'] + str(item.page), post=elem_cfg.get('post', None), timeout=channel.timeout, 
                                     headers=headers, canonical=canonical_alt, alfa_s=True)
 
             if not self.response.sucess:
@@ -3947,6 +3947,10 @@ def get_torrent_size(url, **kwargs):
     if not url:
         torrent_params['size'] = 'ERROR'
         return torrent_params
+    try:
+        if isinstance(kwargs.get('timeout', 5), (tuple, list)): kwargs['timeout'] = kwargs['timeout'][1]
+    except:
+        kwargs['timeout'] = 5
     
     retry_CF = kwargs.get('retries_cloudflare', 2)
     if retry_CF < 0: torrent_params['torrents_path'] = 'CF_BLOCKED'

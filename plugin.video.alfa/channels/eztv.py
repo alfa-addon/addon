@@ -37,7 +37,7 @@ categoria = channel.capitalize()
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)     # Actualización sólo últ. Temporada?
 min_temp = modo_ultima_temp if not modo_ultima_temp else 'continue'
 
-timeout = config.get_setting('timeout_downloadpage', channel) * 2
+timeout = (5, (config.get_setting('timeout_downloadpage', channel) * 2))
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = "/peliculas/"
@@ -264,7 +264,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
     for elem in matches_int:
         elem_json = {}
-        logger.error(elem)
+        #logger.error(elem)
 
         try:
             info = elem.split(' -- ')
@@ -295,7 +295,6 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
         elem_json_list[sxe] = elem_json.copy()
 
-    logger.error(elem_json_list)
     for elem_links in matches_links:
         elem_json = {}
         #logger.error(elem_links)

@@ -69,7 +69,7 @@ host_torrent_referer = host
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)     # Actualización sólo últ. Temporada?
 min_temp = modo_ultima_temp if not modo_ultima_temp else 'continue'
 
-timeout = config.get_setting('timeout_downloadpage', channel)
+timeout = (5, config.get_setting('timeout_downloadpage', channel))
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = "/pelicula"

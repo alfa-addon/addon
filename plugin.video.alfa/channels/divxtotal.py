@@ -41,7 +41,7 @@ min_temp = modo_ultima_temp if not modo_ultima_temp else 'continue'
 movies_sufix = 'peliculas-hd/'
 series_sufix = 'series/'
 
-timeout = config.get_setting('timeout_downloadpage', channel) * 3
+timeout = (5, (config.get_setting('timeout_downloadpage', channel) * 3))
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = "/peliculas"
