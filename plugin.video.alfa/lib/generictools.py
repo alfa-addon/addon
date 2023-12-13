@@ -172,7 +172,7 @@ def js2py_conversion(data, url, domain_name='', channel='', size=10000, resp={},
     elif not 'Javascript is required' in data[:size]:
         return data if not resp else resp
     
-    from lib import js2py
+    import js2py
     from core import httptools
     global DEBUG, TEST_ON_AIR
     TEST_ON_AIR = httptools.TEST_ON_AIR
