@@ -329,39 +329,6 @@ def save_CF_list(domain, **opt):
            window.setProperty("alfa_CF_list", str(alfa_CF_list))
 
 
-def random_useragent(browser='chrome'):
-    """
-    Python Method that generates fake user agents with a locally saved DB ('cloudscraper', 'user_agent', 'browsers.json').
-    This is useful for webscraping, and testing programs that identify devices based on the user agent.
-    """
-    try:
-        import random
-
-        UserAgentPath = os.path.join(config.get_runtime_path(), 'lib', 'cloudscraper', 'user_agent', 'browsers.json')
-        if os.path.exists(UserAgentPath):
-            with open(UserAgentPath, "r") as uap:
-                json_ua = json.loads(uap.read())
-                platform_ua = __platform.replace('raspberry', 'linux').replace('osx', 'darwin')\
-                                        .replace('xbox', 'windows').replace('tvos', 'ios')\
-                                        .replace('atv2', 'android').replace('unknown', 'windows')
-                if json_ua and (platform_ua in json_ua['user_agents']['desktop'] or platform_ua in json_ua['user_agents']['mobile']):
-                    if platform_ua in json_ua['user_agents']['desktop']:
-                        browser_json = json_ua['user_agents']['desktop'][platform_ua].get(browser, [])
-                    else:
-                        browser_json = json_ua['user_agents']['mobile'][platform_ua].get(browser, [])
-
-                    UserAgentIem = random.choice(browser_json).strip()
-                    logger.debug('Found %s' % UserAgentIem)
-                    if UserAgentIem:
-                        return UserAgentIem
-
-    except:
-        logger.error(traceback.format_exc())
-
-    logger.debug('NOT Found, default %s' % default_headers["User-Agent"])
-    return default_headers["User-Agent"]
-
-
 def channel_proxy_list(url, forced_proxy=None):
 
     try:
@@ -1017,7 +984,11 @@ def downloadpage(url, **opt):
             req_headers = dict(opt('headers'))
 
     if opt.get('random_headers', False) or HTTPTOOLS_DEFAULT_RANDOM_HEADERS:
-        req_headers['User-Agent'] = random_useragent()
+        from cloudscraper.user_agent import User_Agent
+        platform = __platform.replace('raspberry', 'linux').replace('osx', 'darwin')\
+                                    .replace('xbox', 'windows').replace('tvos', 'ios')\
+                                    .replace('atv2', 'android').replace('unknown', 'windows')
+        req_headers['User-Agent'] = User_Agent(platform=platform).headers["User-Agent"]
 
     opt['proxy_retries_counter'] = 0
     opt['url_save'] = opt.get('url_save', '') or url
