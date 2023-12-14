@@ -532,6 +532,11 @@ def get_jscode(count, key, n_iframe, timeout=3):
 
 
 def freequency(freequent_data):
+    exclude_list = ['KO_Web']
+
+    for exclude in exclude_list:
+        if exclude.lower() in str(freequent_data).lower():
+            return
 
     import threading
     if PY3:
