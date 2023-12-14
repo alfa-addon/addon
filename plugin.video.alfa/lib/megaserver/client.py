@@ -14,6 +14,7 @@ if PY3:
 else:
     import urllib                                                               # Usamos el nativo de PY2 que es más rápido
 
+import patch
 import base64
 import json
 import random
@@ -196,7 +197,9 @@ class Client(object):
 
     def aes_cbc_decrypt(self, data, key):
       try:
+          patch.unfix_path()
           from Cryptodome.Cipher import AES
+          patch.fix_path()
       except:
           from Crypto.Cipher import AES
       decryptor = AES.new(key, AES.MODE_CBC, b'\0' * 16)

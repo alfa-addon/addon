@@ -76,6 +76,8 @@
 
         <setting label="30001" type="lsep" />
         <setting id="show_fixes" type="bool" label="70788" default="true" />
+        <setting id="addon_outdated_message" type="bool" label="70825"
+            default="true" />
         <setting id="addon_update_message" type="bool" label="80752"
             default="false" />
         <setting id="addon_update_timer" type="slider" range="0,6,24" option="int"

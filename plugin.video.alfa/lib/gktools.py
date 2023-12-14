@@ -231,12 +231,12 @@ def transforma_gsv(gsv, valor):
 # ----------------------------------
 
 def encode_rijndael(msg, IV, key):
-    from . import rijndael
+    import rijndael
     return rijndael.cbc_encrypt(msg, IV, key)
 
 
 def decode_rijndael(txt, preIV='b3512f4972d314da9', key='3e1a854e7d5835ab99d99a29afec8bbb'):
-    from . import rijndael
+    import rijndael
     msg = base64.b64decode(txt[:-15])
     IV = preIV + txt[-15:]
     deco = rijndael.cbc_decrypt(msg, IV, key)

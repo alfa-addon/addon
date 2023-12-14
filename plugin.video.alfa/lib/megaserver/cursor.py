@@ -7,6 +7,7 @@ from past.utils import old_div
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+import patch
 
 if PY3:
     import urllib.request as urllib2                                            # Es muy lento en PY2.  En PY3 es nativo
@@ -78,8 +79,10 @@ class Cursor(object):
     def prepare_decoder(self, offset):
         initial_value = self.initial_value + int(old_div(offset, 16))
         try:
+            patch.unfix_path()
             from Cryptodome.Cipher import AES
             from Cryptodome.Util import Counter
+            patch.fix_path()
         except:
             from Crypto.Cipher import AES
             from Crypto.Util import Counter

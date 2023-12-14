@@ -77,6 +77,7 @@ import os
 import errno
 import struct
 import traceback
+import patch
 
 from struct import pack, unpack, Struct
 from binascii import crc32, hexlify
@@ -114,10 +115,12 @@ except ImportError:
 # only needed for encryped headers
 try:
     try:
+        patch.unfix_path()
         from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import hashes
         from cryptography.hazmat.primitives.kdf import pbkdf2
+        patch.fix_path()
 
         class AES_CBC_Decrypt(object):
             """Decrypt API"""

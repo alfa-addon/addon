@@ -57,6 +57,7 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; VFS = False
 
+import patch
 import traceback
 from platformcode import logger, config
 from lib.alfa_assistant import execute_binary_from_alfa_assistant
@@ -81,11 +82,13 @@ AES = None
 # only needed for encrypted headers
 try:
     try:
+        patch.unfix_path()
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.ciphers import (
             Cipher, algorithms, modes,
         )
         _have_crypto = 1
+        patch.fix_path()
     except ImportError:
         from Crypto.Cipher import AES
         _have_crypto = 2
