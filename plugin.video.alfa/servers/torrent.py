@@ -21,6 +21,7 @@ import traceback
 import re
 import inspect
 import random
+import copy
 
 try:
     import xbmc
@@ -651,6 +652,10 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
     if not headers: headers = {}
     post = kwargs.pop('post', None)
     timeout = kwargs.pop('timeout', 10)
+    try:
+        if isinstance(timeout, (tuple, list)): timeout = timeout[1]
+    except:
+        timeout = 10
     proxy_retries = kwargs.pop('proxy_retries', 1)
     referer = kwargs.pop('referer', None)
     if referer:
@@ -1244,8 +1249,8 @@ def magnet2torrent(magnet, headers={}, downloadStatus=4):
                 url = '%s%s%s' % (url, btih, sufix)
 
             response = httptools.downloadpage(url, timeout=timeout, headers=headers, post=post, retry_alt=False, 
-                                              proxy_retries=0, proxy__test=False, alfa_s=True, set_tls=set_tls_VALUES['set_tls'], 
-                                              set_tls_min=set_tls_VALUES['set_tls_min'], 
+                                              proxy_retries=0, proxy__test=False, error_check=False, alfa_s=True, 
+                                              set_tls=set_tls_VALUES['set_tls'], set_tls_min=set_tls_VALUES['set_tls_min'], 
                                               retries_cloudflare=set_tls_VALUES['retries_cloudflare'])
             if not response.sucess:
                 logger.debug('ERROR: %s: Elapsed: %s' % (response.code, response.time_elapsed))
@@ -1577,7 +1582,9 @@ def get_tclient_data(folder, torr_client, port=65220, web='', action='', folder_
     if not torrent_paths: torrent_paths = torrent_dirs()
     torrest_verbs = torrent_paths.get('TORREST_verbs', {})
 
-    if not web:
+    if '%s' in web:
+        logger.error("ERROR en llamada: %s / %s: %s; folder: %s; \r\n%s" % (torr_client, action, str(web), folder, torrent_paths))
+    if not web or '%s' in web:
         web = 'http://127.0.0.1:%s/' % port
     if not web.endswith('/'):
         web = '%s:%s/' % (web, port)
@@ -1793,78 +1800,79 @@ def torrent_dirs():
     torrent_options.append(("Cliente interno BT", ""))
     torrent_options.append(("Cliente interno MCT", ""))
     torrent_options.extend(torrent_client_installed(show_tuple=True))
-    torrent_paths = {
-                     'TORR_opt': 0,
-                     'TORR_client': '',
-                     'TORR_libtorrent_path': '',
-                     'TORR_unrar_path': '',
-                     'TORR_background_download': True,
-                     'TORR_rar_unpack': True,
-                     'BT': '',
-                     'BT_url': '',
-                     'BT_torrents': '',
-                     'BT_buffer': '0',
-                     'BT_version': config.get_setting("libtorrent_version", server="torrent", default='/').split('/')[1] \
-                                                       if config.get_setting("libtorrent_version", server="torrent") else '',
-                     'MCT': '',
-                     'MCT_url': '',
-                     'MCT_torrents': '',
-                     'MCT_buffer': '0',
-                     'MCT_version': config.get_setting("libtorrent_version", server="torrent", default='/').split('/')[1] \
-                                                        if config.get_setting("libtorrent_version", server="torrent") else '',
-                     'QUASAR': '',
-                     'QUASAR_url': '',
-                     'QUASAR_torrents': '',
-                     'QUASAR_buffer': 0,
-                     'QUASAR_version': '',
-                     'QUASAR_port': 65251,
-                     'QUASAR_web': 'http://localhost:65251/',
-                     'ELEMENTUM': '',
-                     'ELEMENTUM_url': '',
-                     'ELEMENTUM_torrents': '',
-                     'ELEMENTUM_buffer': 0,
-                     'ELEMENTUM_version': '',
-                     'ELEMENTUM_memory_size': 0,
-                     'ELEMENTUM_port': 65220,
-                     'ELEMENTUM_web': 'http://localhost:',
-                     'TORRENTER': '',
-                     'TORRENTER_url': '',
-                     'TORRENTER_torrents': '',
-                     'TORRENTER_buffer': 0,
-                     'TORRENTER_version': '',
-                     'TORRENTER_web': '',
-                     'TORREST': '',
-                     'TORREST_url': '',
-                     'TORREST_torrents': '',
-                     'TORREST_buffer': 0,
-                     'TORREST_version': '',
-                     'TORREST_port': 61235,
-                     'TORREST_web': 'http://%s:',
-                     'TORREST_verbs_14': {
-                                       'add_torrent': ['GET', 'add/torrent?ignore_duplicate=true&download=true&uri=%s'],
-                                       'add_torrent_local': ['GET', 'add/torrent?ignore_duplicate=true&download=true'],
-                                       'add_magnet': ['GET', 'add/magnet?ignore_duplicate=true&download=true&uri=%s'],
-                                       'root': ['', 'torrents/'],
-                                       'list': ['GET', '?status=true'],
-                                       'stop': ['GET', '/remove?delete=false'],
-                                       'delete': ['GET', '/remove?delete=true'],
-                                       'pause': ['GET', '/pause'],
-                                       'resume': ['GET', '/resume'],
-                                       'download': ['GET', '/download']
-                                      },
-                     'TORREST_verbs': {
-                                       'add_torrent': ['POST', 'add/torrent?ignore_duplicate=true&download=true&uri=%s'],
-                                       'add_torrent_local': ['POST', 'add/torrent?ignore_duplicate=true&download=true'],
-                                       'add_magnet': ['POST', 'add/magnet?ignore_duplicate=true&download=true&uri=%s'],
-                                       'root': ['', 'torrents/'],
-                                       'list': ['GET', '?status=true'],
-                                       'stop': ['DELETE', '?delete=false'],
-                                       'delete': ['DELETE', '?delete=true'],
-                                       'pause': ['PUT', '/pause'],
-                                       'resume': ['PUT', '/resume'],
-                                       'download': ['PUT', '/download']
-                                      }
-                    }
+    torrent_paths_org = {
+                         'TORR_opt': 0,
+                         'TORR_client': '',
+                         'TORR_libtorrent_path': '',
+                         'TORR_unrar_path': '',
+                         'TORR_background_download': True,
+                         'TORR_rar_unpack': True,
+                         'BT': '',
+                         'BT_url': '',
+                         'BT_torrents': '',
+                         'BT_buffer': '0',
+                         'BT_version': config.get_setting("libtorrent_version", server="torrent", default='/').split('/')[1] \
+                                                           if config.get_setting("libtorrent_version", server="torrent") else '',
+                         'MCT': '',
+                         'MCT_url': '',
+                         'MCT_torrents': '',
+                         'MCT_buffer': '0',
+                         'MCT_version': config.get_setting("libtorrent_version", server="torrent", default='/').split('/')[1] \
+                                                            if config.get_setting("libtorrent_version", server="torrent") else '',
+                         'QUASAR': '',
+                         'QUASAR_url': '',
+                         'QUASAR_torrents': '',
+                         'QUASAR_buffer': 0,
+                         'QUASAR_version': '',
+                         'QUASAR_port': 65251,
+                         'QUASAR_web': 'http://localhost:65251/',
+                         'ELEMENTUM': '',
+                         'ELEMENTUM_url': '',
+                         'ELEMENTUM_torrents': '',
+                         'ELEMENTUM_buffer': 0,
+                         'ELEMENTUM_version': '',
+                         'ELEMENTUM_memory_size': 0,
+                         'ELEMENTUM_port': 65220,
+                         'ELEMENTUM_web': 'http://localhost:',
+                         'TORRENTER': '',
+                         'TORRENTER_url': '',
+                         'TORRENTER_torrents': '',
+                         'TORRENTER_buffer': 0,
+                         'TORRENTER_version': '',
+                         'TORRENTER_web': '',
+                         'TORREST': '',
+                         'TORREST_url': '',
+                         'TORREST_torrents': '',
+                         'TORREST_buffer': 0,
+                         'TORREST_version': '',
+                         'TORREST_port': 61235,
+                         'TORREST_web': 'http://%s:',
+                         'TORREST_verbs_14': {
+                                           'add_torrent': ['GET', 'add/torrent?ignore_duplicate=true&download=true&uri=%s'],
+                                           'add_torrent_local': ['GET', 'add/torrent?ignore_duplicate=true&download=true'],
+                                           'add_magnet': ['GET', 'add/magnet?ignore_duplicate=true&download=true&uri=%s'],
+                                           'root': ['', 'torrents/'],
+                                           'list': ['GET', '?status=true'],
+                                           'stop': ['GET', '/remove?delete=false'],
+                                           'delete': ['GET', '/remove?delete=true'],
+                                           'pause': ['GET', '/pause'],
+                                           'resume': ['GET', '/resume'],
+                                           'download': ['GET', '/download']
+                                          },
+                         'TORREST_verbs': {
+                                           'add_torrent': ['POST', 'add/torrent?ignore_duplicate=true&download=true&uri=%s'],
+                                           'add_torrent_local': ['POST', 'add/torrent?ignore_duplicate=true&download=true'],
+                                           'add_magnet': ['POST', 'add/magnet?ignore_duplicate=true&download=true&uri=%s'],
+                                           'root': ['', 'torrents/'],
+                                           'list': ['GET', '?status=true'],
+                                           'stop': ['DELETE', '?delete=false'],
+                                           'delete': ['DELETE', '?delete=true'],
+                                           'pause': ['PUT', '/pause'],
+                                           'resume': ['PUT', '/resume'],
+                                           'download': ['PUT', '/download']
+                                          }
+                        }
+    torrent_paths = copy.deepcopy(torrent_paths_org)
     
     try:
         torrent_paths['TORR_opt'] = int(config.get_setting("torrent_client", server="torrent", default=0, debug=DEBUG))
@@ -1943,7 +1951,7 @@ def torrent_dirs():
                 torrent_paths[torr_client.upper() + '_url'] = torr_client_url
             except Exception:
                 logger.error(traceback.format_exc(1))
-        elif torr_client in ['quasar', 'elementum']:
+        elif torr_client.lower() in ['quasar', 'elementum']:
             try:
                 if not __settings__: continue
                 torrent_paths[torr_client.upper()] = str(filetools.translatePath(__settings__.getSetting('download_path')))
@@ -1962,15 +1970,14 @@ def torrent_dirs():
                 if 'elementum' in torr_client.lower():
                     torrent_paths['ELEMENTUM_torrents'] = str(filetools.translatePath(__settings__.getSetting('torrents_path')))
                     torrent_paths['ELEMENTUM_port'] = __settings__.getSetting('remote_port')
-                    torrent_paths['ELEMENTUM_web'] = '%s%s/' % (torrent_paths['ELEMENTUM_web'], \
-                                str(torrent_paths['ELEMENTUM_port']))
+                    torrent_paths['ELEMENTUM_web'] = '%s%s/' % (torrent_paths['ELEMENTUM_web'], str(torrent_paths['ELEMENTUM_port']))
                     if __settings__.getSetting('download_storage') == '1':
                         torrent_paths['ELEMENTUM'] = 'Memory'
                         if __settings__.getSetting('memory_size'):
                             torrent_paths['ELEMENTUM_memory_size'] = __settings__.getSetting('memory_size')
             except Exception:
                 logger.error(traceback.format_exc(1))
-        elif torr_client in ['torrest']:
+        elif 'torrest' in torr_client.lower():
             try:
                 if not __settings__: continue
                 if __settings__.getSetting("show_bg_progress") == 'true':
@@ -1987,10 +1994,12 @@ def torrent_dirs():
                 torrent_paths[torr_client.upper() + '_url'] = torr_client_url
                 torrent_paths[torr_client.upper() + '_port'] = __settings__.getSetting('port')
                 try:
-                    torrent_paths[torr_client.upper() + '_web'] = '%s%s/' % (torrent_paths[torr_client.upper() + '_web'] \
-                                % __settings__.getSetting('service_ip'), str(torrent_paths[torr_client.upper() + '_port']))
+                    if '%s' in torrent_paths[torr_client.upper() + '_web']:
+                        torrent_paths[torr_client.upper() + '_web'] = '%s%s/' % ((torrent_paths[torr_client.upper() + '_web'] \
+                                      % __settings__.getSetting('service_ip')), str(torrent_paths[torr_client.upper() + '_port']))
                 except Exception:
-                    pass
+                    torrent_paths[torr_client.upper() + '_web'] = 'http://127.0.0.1:%s/' % str(torrent_paths[torr_client.upper() + '_port'])
+                    logger.error(traceback.format_exc())
 
                 ### TEMPORAL: migración de versión 0.0.14 a 0.0.15+ por cambio de API
                 try:
@@ -2003,6 +2012,7 @@ def torrent_dirs():
             except Exception:
                 logger.error(traceback.format_exc(1))
         else:
+            logger.error('ERROR en torr_client: %s' % torr_client)
             torrent_paths[torr_client.upper()] = ''
             torrent_paths[torr_client.upper() + '_torrents'] = ''
             torrent_paths[torr_client.upper() + '_buffer'] = 0
