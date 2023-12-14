@@ -25,9 +25,10 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.nagoya/", "https://www2.dontorrent.fr/", "https://tomadivx.net/",
+             'host_alt': ["https://dontorrent.cymru/", "https://www2.dontorrent.fr/", "https://tomadivx.net/",
                           "https://todotorrents.org/"], 
-             'host_black_list': ["https://dontorrent.wales/", "https://dontorrent.joburg/", 
+             'host_black_list': ["https://dontorrent.contact/", 
+                                 "https://dontorrent.nagoya/", "https://dontorrent.wales/", "https://dontorrent.joburg/", 
                                  "https://dontorrent.party/", "https://dontorrent.durban/", "https://dontorrent.rodeo/",
                                  "https://dontorrent.boston/", "https://dontorrent.tokyo/", "https://dontorrent.bond/",
                                  'https://dontorrent.nexus/', "https://dontorrent.quest/", "https://dontorrent.rsvp/", "https://dontorrent.hair/", 
@@ -68,7 +69,7 @@ host_torrent_referer = host
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)     # Actualización sólo últ. Temporada?
 min_temp = modo_ultima_temp if not modo_ultima_temp else 'continue'
 
-timeout = config.get_setting('timeout_downloadpage', channel)
+timeout = (5, config.get_setting('timeout_downloadpage', channel))
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = "/pelicula"

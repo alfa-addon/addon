@@ -247,7 +247,7 @@ def findvideos(item):
 #     return base64.b64encode(s.to_string().value)
     
 # def decode_url(data):
-#     from lib import js2py
+#     import js2py
 #     import re
 #     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
 #     js = scrapertools.find_single_match(data, '<script>(l.*?)</script>')

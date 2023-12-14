@@ -81,7 +81,7 @@ def uptostream(data):
     api_data = httptools.downloadpage(api_url).json
     js_code = api_data.get('data', '').get('sources', '')
     
-    from lib import js2py
+    import js2py
     
     context = js2py.EvalJs({'atob': atob})
     context.execute(js_code)

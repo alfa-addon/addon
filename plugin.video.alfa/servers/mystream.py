@@ -3,15 +3,10 @@
 # Conector mystream By Alfa development Group
 # --------------------------------------------------------
 
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
+import js2py
 from core import httptools
 from core import scrapertools
-from lib import js2py
 from platformcode import logger, config
-import re
 
 
 def test_video_exists(page_url):

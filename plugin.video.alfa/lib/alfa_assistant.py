@@ -324,6 +324,10 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
     debug = debug or debugGlobal
     if debug: alfa_s = False
     global URL_PING, URL_CALL, ASSISTANT_SERVERS, ASSISTANT_SERVERS_AGE, ASSISTANT_SERVER, ASSISTANT_MODE
+    try:
+        if isinstance(timeout, (tuple, list)): timeout = timeout[1]
+    except:
+        timeout = None
 
     if endpoint not in ['ping', 'getWebViewInfo', 'update', 'quit', 'terminate']:
         res = open_alfa_assistant(closeAfter, alfa_s=alfa_s)

@@ -24,8 +24,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'divxtotal', 
              'host': config.get_setting("current_host", 'divxtotal', default=''), 
-             'host_alt': ["https://www2.divxtotal.zip/"], 
-             'host_black_list': ["https://www1.divxtotal.zip/", "https://www.divxtotal.win/", 
+             'host_alt': ["https://www2.divxtotal.mov/"], 
+             'host_black_list': ["https://www2.divxtotal.zip/", "https://www1.divxtotal.zip/", "https://www.divxtotal.win/", 
                                  "https://www.divxtotal.wf/", "https://www.divxtotal.pl/", "https://www.divxtotal.cat/", 
                                  "https://www.divxtotal.fi/", "https://www.divxtotal.dev/", "https://www.divxtotal.ac/", 
                                  "https://www.divxtotal.re/", "https://www.divxtotal.pm/", "https://www.divxtotal.nl/"], 
@@ -41,7 +41,7 @@ min_temp = modo_ultima_temp if not modo_ultima_temp else 'continue'
 movies_sufix = 'peliculas-hd/'
 series_sufix = 'series/'
 
-timeout = config.get_setting('timeout_downloadpage', channel) * 3
+timeout = (5, (config.get_setting('timeout_downloadpage', channel) * 3))
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = "/peliculas"
