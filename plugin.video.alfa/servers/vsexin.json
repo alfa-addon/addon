@@ -4,18 +4,22 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:https:|)//mixdrop.(?:co|to|sx|bz|ch|\\w{2,4})/(?:e|f)/([A-z0-9]+)",
-        "url": "https://mixdrop.ag/e/\\1"
+        "pattern": "(https://vsex.in/[A-z0-9-]+.html)",
+        "url": "\\1"
       },
       {
-        "pattern": "(?:https:|)//(?:md3b0j6hj|mdbekjwqa).(?:com|\\w{2,4})/(?:e|f)/([A-z0-9]+)",
-        "url": "https://mdbekjwqa.pw/e/\\1"
+        "pattern": "https://vsex.in/index.php\\?newsid\\=([0-9]+)",
+        "url": "https://vsex.in/\\1-a.html"
+      },
+      {
+        "pattern": "(https://serakon.com/[A-z0-9-]+.html)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "mixdrop",
-  "name": "mixdrop",
+  "id": "vsexin",
+  "name": "vsexin",
   "settings": [
     {
       "default": false,
@@ -42,5 +46,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/MTL1pPdr/mixdrop.png"
+  "thumbnail": ""
 }

@@ -39,7 +39,7 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, action="series", title="Novedades",
+    itemlist.append(Item(channel=item.channel, action="series", title="Ultimos capitulos",
                          url=urlparse.urljoin(host, "archivos/h2/"), extra="novedades"))
     itemlist.append(Item(channel=item.channel, action="generos", title="Por géneros", url=host))
     itemlist.append(Item(channel=item.channel, action="series", title="Sin Censura",
@@ -82,13 +82,13 @@ def series(item):
     pattern = "<div class='wp-pagenavi'(.*?)</div>"
     pagination = scrapertools.find_single_match(data, pattern)
 
-    pattern = '<div class="col-xs-12 col-md-12 col-lg-9px-3"><ul>(.*?)</ul><div class="clearfix">'
+    pattern = '<div class="col-xs-12 col-md-12 col-lg-9\s*px-3">.*?<ul>(.*?)</ul>'
     data = scrapertools.find_single_match(data, pattern)
 
     pattern = '<a href="([^"]+)".*?<img src="([^"]+)" title="([^"]+)"'
     matches = re.compile(pattern, re.DOTALL).findall(data)
 
-    if item.extra == "novedades":
+    if "/h2" in item.url:
         action = "findvideos"
     else:
         action = "episodios"
@@ -141,26 +141,27 @@ def findvideos(item):
     data = httptools.downloadpage(item.url, canonical=canonical).data
     video_urls = []
     down_urls = []
+    
     patron = '<(?:iframe)?(?:IFRAME)?\s*(?:src)?(?:SRC)?="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
-
     for url in matches:
         if 'goo.gl' in url or 'tinyurl' in url:
             video = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers["location"]
             video_urls.append(video)
         else:
             video_urls.append(url)
+    
     paste = scrapertools.find_single_match(data, 'https://gpaste.us/([a-zA-Z0-9]+)')
     if paste:
         try:
             new_data = httptools.downloadpage('https://gpaste.us/'+paste).data
-
             bloq = scrapertools.find_single_match(new_data, 'id="input_text">(.*?)</div>')
             matches = bloq.split('<br>')
             for url in matches:
                 down_urls.append(url)
         except:
             pass
+    
     video_urls.extend(down_urls)
     from core import servertools
     itemlist = servertools.find_video_items(data=",".join(video_urls))
@@ -172,5 +173,5 @@ def findvideos(item):
     itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
-
+    
     return itemlist

@@ -22,8 +22,10 @@ from bs4 import BeautifulSoup
 list_quality = ['default']
 list_servers = ['mangovideo']
 
-#  https://pandamovies.pw  'https://watchpornfree.info'   'https://xxxparodyhd.net'  
-#  https://www.netflixporno.net  https://xxxscenes.net  playpornx  https://pornkino.cc/  https://streamporn.pw/
+#  https://mangoporn.net   
+#  https://pandamovies.pw/ & https://xxxparodyhd.net & https://streamporn.pw/ & https://streamporn.li 
+#  https://www.netflixporno.net & https://watchpornfree.info & https://losporn.org/ 
+#  https://xxxscenes.net & https://watchfreexxx.net/ & https://speedporn.net &https://pornkino.cc/
 canonical = {
              'channel': 'pandamovie', 
              'host': config.get_setting("current_host", 'pandamovie', default=''), 

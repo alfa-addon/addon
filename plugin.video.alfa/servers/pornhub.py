@@ -12,17 +12,22 @@ else:
     import urlparse                                             # Usamos el nativo de PY2 que es más rápido
 
 import re
+import time
 from core import httptools
 from core import scrapertools
 from platformcode import logger
 from core import jsontools as json
+
+count = 4
+retries = count
 
 kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 'cf_assistant': False}
 
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    response = httptools.downloadpage(page_url, **kwargs)
+    headers = {'Referer': page_url}
+    response = httptools.downloadpage(page_url, headers=headers, **kwargs)
     data = response.data
     if not response.sucess or "Not Found" in data or "flagged for  " in data or "Video Disabled" in data or "<div class=\"removed\">" in data or "is unavailable" in data:
         return False, "[pornhub] El fichero no existe o ha sido borrado"
@@ -32,7 +37,9 @@ def test_video_exists(page_url):
 
 
 def get_video_url(page_url, user="", password="", video_password=""):
-    logger.info("(page_url='%s')" % page_url)
+    global retries
+    # retries = count
+    logger.info("(page_url='%s'; retry=%s)" % (page_url, retries))
     video_urls = []
     headers = {'Referer': page_url}
     data = httptools.downloadpage(page_url, headers=headers, **kwargs).data
@@ -41,6 +48,12 @@ def get_video_url(page_url, user="", password="", video_password=""):
     videos = scrapertools.find_single_match(flashvars, '"mediaDefinitions":(.*?),"isVertical"')
     crypto = scrapertools.find_multiple_matches(flashvars, "(var\sra[a-z0-9]+=.+?);flash")
     if not crypto:
+        if not scrapertools.find_single_match(videos, (".m3u8\?validfrom\=")) and retries >= 0:
+            retries -= 1
+            if retries >= 0:
+                time.sleep(count - retries)
+                return get_video_url(page_url)
+        
         JSONData = json.load(videos)
         for elem in JSONData:
             url = elem['videoUrl']

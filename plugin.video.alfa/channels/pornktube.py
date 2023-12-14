@@ -21,9 +21,7 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
-# https://tubxporn.xxx  https://pornky.com  https://pornktube.tv  https://joysporn.com
-
-#######################       last_page  error pag siguiente  en categorias formato "/c/10/#/" # pag
+# https://tubxporn.xxx  https://pornky.com  https://pornktube.tv  https://wwv.joysporn.sex/
 
 canonical = {
              'channel': 'pornktube', 
@@ -90,7 +88,7 @@ def section(item):
     logger.info()
     
     findS = finds.copy()
-    findS['url_replace'] = [['(\/(?:c)\/[^$]+$)', r'\1']]
+    findS['url_replace'] = [['($)', '1/']]
     
     return AlfaChannel.section(item, finds=findS, **kwargs)
 
