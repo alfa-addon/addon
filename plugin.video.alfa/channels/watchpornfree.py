@@ -22,8 +22,10 @@ from modules import autoplay
 list_quality = []
 list_servers = ['mangovideo']
 
-# https://playpornfree.org/   https://streamporn.pw/  https://mangoporn.net/   https://watchfreexxx.net/   https://losporn.org/  
-# https://watchpornfree.info   https://xxxparodyhd.net      playpornx https://xxxstreams.me/  https://speedporn.net/
+#  https://mangoporn.net   
+#  https://pandamovies.pw/ & https://xxxparodyhd.net & https://streamporn.pw/ & https://streamporn.li 
+#  https://www.netflixporno.net & https://watchpornfree.info & https://losporn.org/ 
+#  https://xxxscenes.net & https://watchfreexxx.net/ & https://speedporn.net &https://pornkino.cc/
 canonical = {
              'channel': 'watchpornfree', 
              'host': config.get_setting("current_host", 'watchpornfree', default=''), 

@@ -9,7 +9,7 @@
       },
       {
         "pattern": "http(?:s|)://(?:dooood|ds2play).(?:watch|to|so|com|cx|la|ws|sh|pm|wf|re|yt)/(?:e|d)/([a-z0-9#]+)",
-        "url": "https:/ds2play.com/e/\\1"
+        "url": "https://ds2play.com/e/\\1"
       }
     ]
   },

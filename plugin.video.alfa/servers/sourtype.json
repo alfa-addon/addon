@@ -12,8 +12,12 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:justporn|pulpo69|fapmeifyoucan).(?:com|net)/video/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:justporn|pulpo69).(?:com|net)/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:www.|)fapmeifyoucan.net/video/[A-z0-9-]+(?:/|))",
+        "url": "\\1/resolve"
       },
       {
         "pattern": "(https://(?:www.|)porn300.com(?:/es|)/video/[A-z0-9-]+(?:/|))",
@@ -29,6 +33,10 @@
       },
       {
         "pattern": "(https://(?:www.|)send.(?:cm|cam|net|site)/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://pornez.site/wp-content/plugins/clean-tube-player/public/player-x.php\\?q\\=[A-z0-9-=]+)",
         "url": "\\1"
       },
       {

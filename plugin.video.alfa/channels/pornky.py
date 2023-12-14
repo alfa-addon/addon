@@ -21,7 +21,7 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
-# https://tubxporn.xxx  https://pornky.com  https://pornktube.tv  https://joysporn.com
+# https://tubxporn.xxx  https://pornky.com  https://pornktube.tv  https://wwv.joysporn.sex/
 
 canonical = {
              'channel': 'pornky', 

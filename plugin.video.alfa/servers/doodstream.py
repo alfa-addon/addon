@@ -26,7 +26,6 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s'; retry=%s)" % (page_url, retries))
     
     response = httptools.downloadpage(page_url, **kwargs)
-    
     if '/d/' in page_url and scrapertools.find_single_match(response.data, ' <iframe src="([^"]+)"'):
         url = scrapertools.find_single_match(response.data, ' <iframe src="([^"]+)"')
         page_url = "%s%s" %(host,url)
@@ -51,7 +50,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = list()
     label = scrapertools.find_single_match(data, r'type:\s*"video/([^"]+)"')
     js_code = scrapertools.find_single_match(data, ("(function\s?makePlay.*?;})"))
-
+   
     js_code = re.sub(r"\+Date.now\(\)", '', js_code)
     js = js2py.eval_js(js_code)
     makeplay = js() + str(int(time.time()*1000))
