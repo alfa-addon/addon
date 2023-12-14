@@ -2363,7 +2363,7 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                             else:
                                 elem_json['title'] = re.sub(clean_org, clean_des, elem_json['title']).strip()
                         elem_json['title'] = elem_json['title'].replace('- ', '')
-                        if scrapertools.find_single_match(elem_json['title'], patron_year):
+                        if scrapertools.find_single_match(elem_json['title'], '.+?'+patron_year):
                             elem_json['year'] = scrapertools.find_single_match(elem_json['title'], patron_year) or '-'
                             elem_json['title'] = re.sub(patron_year, '', elem_json['title']).strip()
                         title = scrapertools.slugify(elem_json.get('title', ''), strict=False, convert=convert).strip().lower().replace(' ', '_')
@@ -2788,7 +2788,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     elem_json['title'] = elem_json['title'].replace(':', '')
                     if title in cached[contentType]: continue
 
-                    if scrapertools.find_single_match(elem_json['title'], patron_year):
+                    if scrapertools.find_single_match(elem_json['title'], '.+?'+patron_year):
                         elem_json['year'] = scrapertools.find_single_match(elem_json['title'], patron_year) or '-'
                         elem_json['title'] = re.sub(patron_year, '', elem_json['title']).strip()
                     elem_json['season'] = season_low = int(scrapertools.find_single_match(elem_show['title'], patron_sea))
