@@ -411,7 +411,8 @@ def verify_script_alfa_update_helper(silent=True, emergency=False, github_url=''
                     if ADDON_VERSION_NUM == new_version_num: break
                     if monitor: monitor.waitForAbort(2)
                     else: time.sleep(2)
-                if ADDON_VERSION_NUM < new_version_num or emergency:
+                if config.get_setting('addon_outdated_message', default=True) and \
+                        ADDON_VERSION_NUM < new_version_num or emergency:
                     logger.info("Notifying obsolete version %s ==> %s" % (str(ADDON_VERSION_NUM), str(new_version_num)), force=True)
                     platformtools.dialog_notification("Alfa: versión oficial: [COLOR hotpink][B]%s[/B][/COLOR]" % str(new_version_num), \
                             "[COLOR yellow]Tienes una versión obsoleta: [B]%s[/B][/COLOR]" % str(ADDON_VERSION_NUM))
