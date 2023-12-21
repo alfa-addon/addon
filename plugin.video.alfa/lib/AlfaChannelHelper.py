@@ -138,7 +138,7 @@ class AlfaChannelHelper:
         self.OPENSSL_VERSION = self.httptools.OPENSSL_VERSION
         self.ssl_version = self.httptools.ssl_version
         self.ssl_context = self.httptools.ssl_context
-        self.patron_local_torrent = '(?i)(?:(?:\\\|\/)[^\[]+\[\w+\](?:\\\|\/)[^\[]+\[\w+\]_\d+\.torrent|magnet\:)'
+        self.patron_local_torrent = r'(?i)(?:(?:\\\|\/)[^\[]+\[\w+\](?:\\\|\/)[^\[]+\[\w+\]_\d+\.torrent|magnet\:)'
         self.TEST_ON_AIR = self.httptools.TEST_ON_AIR
         self.CACHING_DOMAINS = self.httptools.CACHING_DOMAINS
         self.VIDEOLIBRARY_UPDATE = self.httptools.VIDEOLIBRARY_UPDATE
@@ -271,8 +271,8 @@ class AlfaChannelHelper:
             if not response.url.startswith('http'):
                 logger.error('WRONG response.url: %s / %s' % (url, response.url))
             else:
-                if not scrapertools.find_single_match(url, '(page\/\d+\/?)'):
-                    self.url = '%s%s' % (response.url, scrapertools.find_single_match(url, '(page\/\d+\/?)'))
+                if not scrapertools.find_single_match(url, r'(page\/\d+\/?)'):
+                    self.url = '%s%s' % (response.url, scrapertools.find_single_match(url, r'(page\/\d+\/?)'))
                 else:
                     self.url = response.url
 
@@ -325,11 +325,11 @@ class AlfaChannelHelper:
     def define_content_type(self, new_item, item, contentType=''):
 
         if new_item.infoLabels.get("year", '') and str(new_item.infoLabels["year"]) in new_item.title and len(new_item.title) > 4:
-            new_item.title = re.sub("\(|\)|%s" % str(new_item.infoLabels["year"]), "", new_item.title).strip()
+            new_item.title = re.sub(r"\(|\)|%s" % str(new_item.infoLabels["year"]), "", new_item.title).strip()
 
         if new_item.contentType == 'episode': 
-            new_item.title = re.sub('(?i)\s*temp\w*\s*\d+\s*(?:epi\w*|cap\w*)\s*\d+\s*', '', new_item.title)
-            if not new_item.contentSerieName: new_item.contentSerieName = re.sub('\s*\d+x\d+\s*(?:\s*-\s*)?', '', new_item.title)
+            new_item.title = re.sub(r'(?i)\s*temp\w*\s*\d+\s*(?:epi\w*|cap\w*)\s*\d+\s*', '', new_item.title)
+            if not new_item.contentSerieName: new_item.contentSerieName = re.sub(r'\s*\d+x\d+\s*(?:\s*-\s*)?', '', new_item.title)
             new_item.action = self.movie_action
 
         elif contentType != 'tvshow' and ((self.movie_path in new_item.url and not self.tv_path in new_item.url) \
@@ -381,7 +381,7 @@ class AlfaChannelHelper:
         if not color:
             return default
         
-        color = scrapertools.find_single_match(color, '\](\w+)\[')
+        color = scrapertools.find_single_match(color, r'\](\w+)\[')
         
         return color or default
 
@@ -611,7 +611,7 @@ class AlfaChannelHelper:
 
             if page_num and page_num > 0 and page_num <= last_page_print:
                 finds_controls = self.finds.get('controls', {})
-                finds_next_page_rgx = self.finds.get('next_page_rgx') if self.finds.get('next_page_rgx') else [['page\/\d+\/', 'page/%s/']]
+                finds_next_page_rgx = self.finds.get('next_page_rgx') if self.finds.get('next_page_rgx') else [[r'page\/\d+\/', 'page/%s/']]
                 
                 item.curr_page = int(page_num / float(item.page_factor))
                 item.cnt_tot_match = float(item.curr_page * float(item.page_factor) * finds_controls.get('cnt_tot', 20))
@@ -675,7 +675,7 @@ class AlfaChannelHelper:
 
             elif elem.get('page'):
                 title_colored += color_tag % (page, title)
-                title_colored = re.sub('(\d+)', color_tag.strip() % (text, r'\1'), title_colored)
+                title_colored = re.sub(r'(\d+)', color_tag.strip() % (text, r'\1'), title_colored)
             
             elif elem.get('play'):
                 title_colored += color_tag % (star, elem.get('play'))
@@ -716,7 +716,7 @@ class AlfaChannelHelper:
         langs = []
         elem_json['language'] = '*'
         finds_out = self.finds.get('get_language', {})
-        finds_lang_rgx = self.finds.get('get_language_rgx', '(?:flags\/|-)(\w+)\.(?:png|jpg|jpeg|webp)')
+        finds_lang_rgx = self.finds.get('get_language_rgx', r'(?:flags\/|-)(\w+)\.(?:png|jpg|jpeg|webp)')
 
         try:
             if finds_out:
@@ -797,7 +797,7 @@ class AlfaChannelHelper:
                 quality += ', 3D'
             quality = quality.replace('-', ' ').replace('_', ' ').replace('bluray', 'BluRay').replace('Bluray', 'BluRay').replace('BLURAY', 'BluRay')
 
-        if 'dual' in quality.lower(): quality = re.sub('(?i)\s*dual', '', quality)
+        if 'dual' in quality.lower(): quality = re.sub(r'(?i)\s*dual', '', quality)
         if 'digg' in elem.get('quality', '').lower() and 'digg' not in quality.lower(): quality += BTDIGG_LABEL
 
         if self.DEBUG: logger.debug('find_QUALITY: %s' % quality)
@@ -940,9 +940,9 @@ class AlfaChannelHelper:
                 if self.response.code in self.REDIRECTION_CODES:
                     elem['url'] = self.response.headers.get('Location', '')
                 elif self.response.url and ('magnet' in self.response.url or 'torrent' in self.response.url \
-                                             or scrapertools.find_single_match(str(self.response.data), '^d\d+:.*?\d+:')):
+                                             or scrapertools.find_single_match(str(self.response.data), r'^d\d+:.*?\d+:')):
                     elem['url'] = self.response.url
-                    if scrapertools.find_single_match(str(self.response.data), '^d\d+:.*?\d+:'):
+                    if scrapertools.find_single_match(str(self.response.data), r'^d\d+:.*?\d+:'):
                         torrent_params['torrent_file'] = self.response.data
                 elif self.finds.get('find_torrents'):
                     try:
@@ -1098,7 +1098,7 @@ class AlfaChannelHelper:
 
         try:
             for x, (level_, block) in enumerate(finds.items()):
-                level = re.sub('\d+', '', level_)
+                level = re.sub(r'\d+', '', level_)
                 for y, f in enumerate(block):
                     levels = {'find': [match.find, match.find_all], 
                               'find_all': [match.find, match.find_all], 
@@ -1404,7 +1404,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         finds_out = finds.get('find', {})
         if item.c_type == 'search' and finds.get('search', {}): finds_out = finds.get('search', {})
         finds_next_page = finds.get('next_page', {})
-        finds_next_page_rgx = finds.get('next_page_rgx') if finds.get('next_page_rgx') else [['page\/\d+\/', 'page/%s/']]
+        finds_next_page_rgx = finds.get('next_page_rgx') if finds.get('next_page_rgx') else [[r'page\/\d+\/', 'page/%s/']]
         finds_last_page = finds.get('last_page', {})
         finds_year = finds.get('year', {})
         finds_season_episode = finds.get('season_episode', {})
@@ -1491,7 +1491,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         elif item.c_type == 'search' and self.btdigg_search and ('|' in item.texto or '[' in item.texto):
             item.season_search = item.texto
             item.texto = item.texto.split('|')[0].strip() if '|' in item.texto else item.texto.split('[')[0].strip()
-            item.url = item.url.replace(scrapertools.find_single_match(item.url, '((?:\s|\+|%20)?[\[|\|].*?)(?:\/|\.|$)'), '')
+            item.url = item.url.replace(scrapertools.find_single_match(item.url, r'((?:\s|\+|%20)?[\[|\|].*?)(?:\/|\.|$)'), '')
             AHkwargs['url'] = item.url
 
         self.next_page_url = next_page_url = item.url
@@ -1866,7 +1866,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                     new_item.season_search = item.season_search
                 elif ('|' in item.season_search or '[' in item.season_search) and not '|' in new_item.season_search \
                                                                               and not '[' in new_item.season_search:
-                    new_item.season_search += scrapertools.find_single_match(item.season_search, '(\s*[\[|\|][^$]+$)')
+                    new_item.season_search += scrapertools.find_single_match(item.season_search, r'(\s*[\[|\|][^$]+$)')
                 if not isinstance(new_item.infoLabels['year'], int):
                     new_item.infoLabels['year'] = str(new_item.infoLabels['year']).replace('-', '')
                 if new_item.broadcast:
@@ -2055,8 +2055,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if finds_controls.get('mediatype', ''): new_item.contentType = finds_controls['mediatype']
             if finds_controls.get('action', ''): new_item.action = finds_controls['action']
             if elem.get('action', ''): new_item.action = elem['action']
-            if year and scrapertools.find_single_match(new_item.title, '\d{4}'):
-                new_item.infoLabels = {'year': int(scrapertools.find_single_match(new_item.title, '\d{4}'))}
+            if year and scrapertools.find_single_match(new_item.title, r'\d{4}'):
+                new_item.infoLabels = {'year': int(scrapertools.find_single_match(new_item.title, r'\d{4}'))}
             
             if elem.get('quality', ''):
                 new_item.quality = elem['quality']
@@ -2195,7 +2195,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 for elem in seasons_list:
                     elem_json = {}
 
-                    elem_json['season'] = int(scrapertools.find_single_match(str(elem.get('season', '1')), '\d+') or '1')
+                    elem_json['season'] = int(scrapertools.find_single_match(str(elem.get('season', '1')), r'\d+') or '1')
                     elem_json['url'] = self.urljoin(self.host, elem.get('url', item.url))
                     elem_json['post'] = elem.get('post', None)
                     elem_json['headers'] = elem.get('headers', None)
@@ -2254,7 +2254,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                                                 elem_json['season'] = int(elem["value"])
                                             except Exception:
                                                 try:
-                                                    find_seasons_search_num_rgx = '(?i)(?:Temp|Season)[^\d]*(\d{1,2})'
+                                                    find_seasons_search_num_rgx = r'(?i)(?:Temp|Season)[^\d]*(\d{1,2})'
                                                     elem_json['season'] = scrapertools.find_single_match(str(elem), find_seasons_search_num_rgx)
                                                 except Exception:
                                                     elem_json['season'] = 1
@@ -2351,7 +2351,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
 
         for elem in matches:
-            elem['season'] = int(scrapertools.find_single_match(str(elem.get('season', '1')), '\d+') or '1')
+            elem['season'] = int(scrapertools.find_single_match(str(elem.get('season', '1')), r'\d+') or '1')
             if item.infoLabels['number_of_seasons'] and elem['season'] > item.infoLabels['number_of_seasons']:
                 logger.error('TEMPORADA ERRONEA: WEB: %s; TMDB: %s' % (elem['season'], item.infoLabels['number_of_seasons']))
                 if finds_controls.get('season_TMDB_limit', True) and not BTDIGG_URL_SEARCH in item.url: continue
@@ -2534,7 +2534,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         self.finds = finds.copy()
         finds_out = finds.get('episodes', {})
         finds_episode_num = finds.get('episode_num', [])
-        do_episode_clean = finds.get('episode_clean') if finds.get('episode_clean') else [['(?i)\s*\d+x\d+', '']]
+        do_episode_clean = finds.get('episode_clean') if finds.get('episode_clean') else [[r'(?i)\s*\d+x\d+', '']]
         finds_controls = finds.get('controls', {})
         profile = self.profile = finds_controls.get('profile', self.profile)
         itemlist = list()
@@ -2584,7 +2584,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         max_nfo = 0
         y = []
         if modo_ultima_temp and item.library_playcounts:                        # Averiguar cuantas temporadas hay en Videoteca
-            patron = 'season (\d+)'
+            patron = r'season (\d+)'
             matches = re.compile(patron, re.DOTALL).findall(str(item.library_playcounts))
             for x in matches:
                 y += [int(x)]
@@ -2601,7 +2601,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 elem_json = {}
 
                 elem_json['season'] = elem.get('season', item.contentSeason)
-                elem_json['episode'] = int(scrapertools.find_single_match(str(elem.get('episode', '1')), '\d+') or '1')
+                elem_json['episode'] = int(scrapertools.find_single_match(str(elem.get('episode', '1')), r'\d+') or '1')
                 elem_json['url'] = elem.get('url', '')
                 if not elem.get('url', ''): continue
                 elem_json['url'] = self.urljoin(self.host, elem['url'])
@@ -2692,7 +2692,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                         infolabels["episode"] = int(scrapertools.find_single_match(elem.get('title', ''), episode_num))
                         break
                 else:
-                    infolabels["episode"] = int(scrapertools.find_single_match(str(elem.get('episode', '1')), '\d+') or '1')
+                    infolabels["episode"] = int(scrapertools.find_single_match(str(elem.get('episode', '1')), r'\d+') or '1')
 
             if isinstance(do_episode_clean, list):
                 for clean_org, clean_des in do_episode_clean:
@@ -3323,7 +3323,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         if self.DEBUG: logger.debug('FINDS: %s' % finds)
         finds_out = finds.get('find', {})
         finds_next_page = finds.get('next_page', {})
-        finds_next_page_rgx = finds.get('next_page_rgx') if finds.get('next_page_rgx') else [['page\/\d+\/', 'page/%s/']]
+        finds_next_page_rgx = finds.get('next_page_rgx') if finds.get('next_page_rgx') else [[r'page\/\d+\/', 'page/%s/']]
         finds_last_page = finds.get('last_page', {})
         finds_year = finds.get('year', {})
         finds_season_episode = finds.get('season_episode', {})
@@ -3444,8 +3444,8 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                                               and 'duration' in text):
                                         elem_json['stime'] = self.do_soup(elem.find(text=lambda text: isinstance(text, self.Comment) \
                                                                           and 'duration' in text)).find(class_='duration').get_text(strip=True)
-                                    if not elem_json['stime'] and elem.find(string=re.compile('\d{2}:\d{2}$')):
-                                        elem_json['stime'] = elem.find(string=re.compile('(\d{2}:\d{2}$)')).replace("duration: ", "")
+                                    if not elem_json['stime'] and elem.find(string=re.compile(r'\d{2}:\d{2}$')):
+                                        elem_json['stime'] = elem.find(string=re.compile(r'(\d{2}:\d{2}$)')).replace("duration: ", "")
                                     if elem.find('span', class_=['hd-thumbnail', 'is-hd']):
                                         elem_json['quality'] = elem.find('span', class_=['hd-thumbnail', 'is-hd']).get_text(strip=True)
                                     elif elem.find(text=lambda text: isinstance(text, self.Comment) and 'hd' in text):
@@ -3770,7 +3770,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
         self.finds = finds.copy()
         finds_out = finds.get('categories', {})
         finds_next_page = finds.get('next_page', {})
-        finds_next_page_rgx = finds.get('next_page_rgx') if finds.get('next_page_rgx') else [['page\/\d+\/', 'page/%s/']]
+        finds_next_page_rgx = finds.get('next_page_rgx') if finds.get('next_page_rgx') else [[r'page\/\d+\/', 'page/%s/']]
         finds_last_page = finds.get('last_page', {})
         finds_controls = finds.get('controls', {})
         profile = self.profile = finds_controls.get('profile', self.profile)
@@ -3912,8 +3912,8 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                 try:
                                     for x in range(5):
                                         cantidad = elem_json['cantidad']
-                                        if scrapertools.find_single_match(str(elem_json['cantidad']), "\d+"):
-                                            elem_json['cantidad'] = scrapertools.find_single_match(str(elem_json['cantidad']), "(\d+)")
+                                        if scrapertools.find_single_match(str(elem_json['cantidad']), r"\d+"):
+                                            elem_json['cantidad'] = scrapertools.find_single_match(str(elem_json['cantidad']), r"(\d+)")
                                             break
                                         elem_json['cantidad'] = elem_json['cantidad'].parent
                                     else:
@@ -3929,7 +3929,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                 elem_json['cantidad'] = self.do_soup(elem.find(text=lambda text: isinstance(text, self.Comment) \
                                                                      and 'videos' in text)).find(class_='videos').get_text(strip=True)
                             if elem_json.get('cantidad'):
-                                elem_json['cantidad'] = scrapertools.find_single_match(elem_json['cantidad'], "(\d+)")
+                                elem_json['cantidad'] = scrapertools.find_single_match(elem_json['cantidad'], r"(\d+)")
                             if elem.a:
                                 elem_json['title'] = elem.a.get('data-mxptext', '') or elem.a.get('title', '') \
                                                                                     or (elem.img.get('alt', '') if elem.img else '') \
@@ -4498,21 +4498,21 @@ class DooPlay(AlfaChannelHelper):
                                                    ('find_all', [{'tag': ['li']}])]), 
                                'search': {'find_all': [{'tag': ['div'], 'class': ['result-item']}]}, 
                                'get_language': {'find_all': [{'tag': ['span'], 'class': ['flag']}]}, 
-                               'get_language_rgx': '(?:flags\/|-)(\w+)\.(?:png|jpg|jpeg|webp)', 
+                               'get_language_rgx': r'(?:flags\/|-)(\w+)\.(?:png|jpg|jpeg|webp)', 
                                'get_quality': dict([('find', [{'tag': ['span'], 'class': ['quality']}]), 
                                                     ('get_text', [{'strip': True}])]), 
                                'get_quality_rgx': '', 
                                'next_page': {}, 
-                               'next_page_rgx': [['\/page\/\d+', '/page/%s/']], 
+                               'next_page_rgx': [[r'\/page\/\d+', '/page/%s/']], 
                                'last_page': dict([('find', [{'tag': ['div'], 'class': ['pagination']}, 
                                                             {'tag': ['span']}]), 
-                                                  ('get_text', [{'@TEXT': '(?i)\d+\s*de\s*(\d+)'}])]), 
+                                                  ('get_text', [{'@TEXT': r'(?i)\d+\s*de\s*(\d+)'}])]), 
                                'year': dict([('find', [{'tag': ['div'], 'class': ['metadata', 'meta']}]), 
                                              ('get_text',[{'tag': '|', 'strip': True}] )]), 
-                               'season_episode': {'find': [{'tag': ['img'], '@ARG': 'alt', '@TEXT': '(?i)(\d+x\d+)'}]}, 
+                               'season_episode': {'find': [{'tag': ['img'], '@ARG': 'alt', '@TEXT': r'(?i)(\d+x\d+)'}]}, 
                                'seasons': dict([('find', [{'tag': ['div'], 'id': ['seasons']}]), 
                                                 ('find_all', [{'tag': ['div'], 'class': ['se-q']}])]), 
-                               'season_num': {'find': [{'tag': ['span'], 'class': ['se-t'], '@TEXT': '(\d+)'}]}, 
+                               'season_num': {'find': [{'tag': ['span'], 'class': ['se-t'], '@TEXT': r'(\d+)'}]}, 
                                'episode_url': '', 
                                'episodes': dict([('find', [{'tag': ['div'], 'id': ['seasons']}]), 
                                                  ('find_all', [{'tag': ['li']}])]), 
@@ -4525,7 +4525,7 @@ class DooPlay(AlfaChannelHelper):
                                                              {'tag': ['ul'], 'class': ['options']}]), 
                                                    ('find_all', [{'tag': 'li'}])]), 
                                'title_clean': [['(?i)TV|Online|(4k-hdr)|(fullbluray)|4k| - 4k|(3d)|miniserie', ''],
-                                              ['[\(|\[]\s*[\)|\]]', ''], ['(?i)\s+sub|\s+spn|\s+\(+en\s+emisi.n\)+|\s+s2|\s+eng|\s+espa\w+', '']],
+                                              [r'[\(|\[]\s*[\)|\]]', ''], [r'(?i)\s+sub|\s+spn|\s+\(+en\s+emisi.n\)+|\s+s2|\s+eng|\s+espa\w+', '']],
                                'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real', ''], 
                                                  ['extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
                                'language_clean': [], 
@@ -4614,14 +4614,14 @@ class DooPlay(AlfaChannelHelper):
                     elem_json['year'] = '-'
 
                 elem_json['url'] = elem.a.get('href', '')
-                elem_json['title'] = re.sub('(?i)\(*en emisi.n\)*', '', elem.img.get('alt', '')).strip() if item.c_type != 'episodios' \
+                elem_json['title'] = re.sub(r'(?i)\(*en emisi.n\)*', '', elem.img.get('alt', '')).strip() if item.c_type != 'episodios' \
                                                              else elem.img.get('alt', '').replace(sxe, '').strip()
                 elem_json['quality'] = '*%s' % self.parse_finds_dict(elem, finds.get('get_quality', {}), c_type=item.c_type)
                 elem_json['thumbnail'] = elem.img.get('data-src', '') or elem.img.get('src', '')
                 if ('tmdb' in elem_json['thumbnail'] or 'imdb' in elem_json['thumbnail']) and '=http' in elem_json['thumbnail']:
-                    elem_json['thumbnail'] = scrapertools.find_single_match(self.do_unquote(elem_json['thumbnail']), '=(.*?)(?:&|$)')
+                    elem_json['thumbnail'] = scrapertools.find_single_match(self.do_unquote(elem_json['thumbnail']), r'=(.*?)(?:&|$)')
                 if '/http' in elem_json['thumbnail']:
-                    elem_json['thumbnail'] = scrapertools.find_single_match(self.do_unquote(elem_json['thumbnail']), '\/(http.*?)(?:&|$)')
+                    elem_json['thumbnail'] = scrapertools.find_single_match(self.do_unquote(elem_json['thumbnail']), r'\/(http.*?)(?:&|$)')
                 elem_json['year'] = self.parse_finds_dict(elem, finds.get('year', {}), year=True, c_type=item.c_type).split('|')
                 elem_json['year'] = elem_json['year'][1] if (len(elem_json['year']) >= 3 and len(elem_json['year'][1]) == 4) \
                                     else elem_json['year'][0] if (len(elem_json['year']) >= 2 and len(elem_json['year'][0]) == 4) \
