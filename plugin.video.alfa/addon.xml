@@ -56,8 +56,8 @@
             ‣ Migración de módulos a dependencias
             ‣ Prueba de parche final con Linux</news>
         <assets>
-            <icon>resources/icon.png</icon>
-            <fanart>resources/fanart.jpg</fanart>
+            <icon>resources/icon_christmas.png</icon>
+            <fanart>resources/fanart_navidad.jpg</fanart>
             <screenshot>resources/media/screenshots/1.jpg</screenshot>
             <screenshot>resources/media/screenshots/2.jpg</screenshot>
             <screenshot>resources/media/screenshots/3.jpg</screenshot>
