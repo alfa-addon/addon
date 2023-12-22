@@ -24,15 +24,15 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'cuevana2', 
              'host': config.get_setting("current_host", 'cuevana2', default=''), 
-             'host_alt': ["https://www.cuevana2.icu/"], 
-             'host_black_list': ["https://ww2.cuevana2.biz/", "https://cuevana2.biz/", 
+             'host_alt': ["https://www.cuevana2.run/"], 
+             'host_black_list': ["https://www.cuevana2.icu/", "https://ww2.cuevana2.biz/", "https://cuevana2.biz/", 
                                  "https://www.cuevana2.info/", "https://www.cuevana2.biz/", "https://cuevana2.io/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-timeout = 5
+timeout = (5, 10)
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = "/pelicula"
@@ -304,7 +304,7 @@ def play(item):
     logger.info()
     
     kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': -1, 'cf_assistant': False, 'follow_redirects': True, 
-              'headers': {'Referer': host}, 'CF': False, 'canonical': {}}
+              'headers': {'Referer': host}, 'CF': False, 'canonical': {}, 'timeout': timeout}
     item.setMimeType = 'application/vnd.apple.mpegurl'
 
     soup = AlfaChannel.create_soup(item.url, **kwargs)
