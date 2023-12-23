@@ -2752,7 +2752,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         else:
                             if DEBUG: logger.debug('Error en PATRON: %s / %s' % (elem.get('title', '').replace(btdigg_label_B, ''), patron_title))
                             continue
-                        title = title.replace('- ', '')
+                        title = title.replace('- ', '').replace('.', ' ')
                         if title in str(cached[contentType]): continue
 
                     cached[contentType].append(elem.copy())
@@ -2787,7 +2787,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     else:
                         if DEBUG: logger.debug('Error en PATRON: %s / %s' % (elem_show.get('title', '').replace(btdigg_label_B, ''), patron_title))
                         continue
-                    elem_json['title'] = elem_json['title'].replace('- ', '')
+                    elem_json['title'] = elem_json['title'].replace('- ', '').replace('.', ' ')
                     elem_json['title'] = scrapertools.htmlclean(elem_json['title']).strip()
                     elem_json['title'] = elem_json['title'].replace("á", "a").replace("é", "e").replace("í", "i")\
                                                            .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
@@ -2955,12 +2955,14 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     else:
                                         if DEBUG: logger.debug('Error en PATRON: %s / %s' % (elem_episode['title'], patron_title))
                                         continue
-                                    elem_episode['url'] = elem_json['url']
-                                    elem_episode['mediatype'] = 'episode'
-                                    if item.infoLabels['tmdb_id']: elem_episode['tmdb_id'] = item.infoLabels['tmdb_id']
+                                    elem_episode['title'] = elem_episode['title'].replace('- ', '').replace('.', ' ')
+                                    elem_episode['title'] = scrapertools.htmlclean(elem_episode['title']).strip()
                                     if elem_episode['title'].lower() != elem_json['title'].lower(): 
                                         if DEBUG: logger.debug('Error en TÍTULO: %s / %s' % (elem_episode['title'], elem_json['title']))
                                         continue
+                                    elem_episode['url'] = elem_json['url']
+                                    elem_episode['mediatype'] = 'episode'
+                                    if item.infoLabels['tmdb_id']: elem_episode['tmdb_id'] = item.infoLabels['tmdb_id']
 
                                     elem_header = elem_episode.copy()
                                     elem_episode['url'] = elem.get('url', '')
