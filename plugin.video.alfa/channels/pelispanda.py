@@ -26,8 +26,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'pelispanda', 
              'host': config.get_setting("current_host", 'pelispanda', default=''), 
-             'host_alt': ['https://pelispanda.win/'], 
-             'host_black_list': ['https://pelispanda.re/', 'https://pelispanda.com/'], 
+             'host_alt': ['https://pelispanda.org/'], 
+             'host_black_list': ['https://pelispanda.win/', 'https://pelispanda.re/', 'https://pelispanda.com/'], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

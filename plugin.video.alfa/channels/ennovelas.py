@@ -24,8 +24,9 @@ forced_proxy_opt = 'ProxyCF'
 canonical = {
              'channel': 'ennovelas', 
              'host': config.get_setting("current_host", 'ennovelas', default=''), 
-             'host_alt': ["https://v.ennovelas.net/"], 
-             'host_black_list': ['https://n.ennovelas.net/', 'https://t.ennovelas.net/', 'https://f.ennovelas.net/', 
+             'host_alt': ["https://m.ennovelas.net/"], 
+             'host_black_list': ['https://u.ennovelas.net/', 'https://o.ennovelas.net/',
+                                 'https://v.ennovelas.net/', 'https://n.ennovelas.net/', 'https://t.ennovelas.net/', 'https://f.ennovelas.net/', 
                                  "https://d.ennovelas.net/", "https://i.ennovelas.net/", "https://s.ennovelas.net/", "https://b.ennovelas.net/", 
                                  "https://a.ennovelas.net/", "https://e.ennovelas.net/", "https://ww.ennovelas.net/", 
                                  "https://w.ennovelas.net/", "https://www.zonevipz.com/", "https://www.ennovelas.com/"], 
@@ -94,7 +95,7 @@ def mainlist(item):
                          url=host + "movies/", c_type='peliculas', thumbnail=get_thumb("movies", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Novelas", action="list_all", 
-                         url=host + "novelas/", c_type='series', thumbnail=get_thumb("tvshows", auto=True)))
+                         url=host + "telenovelas/", c_type='series', thumbnail=get_thumb("tvshows", auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Nuevos Episodios[/COLOR]" , action="list_all", 
                          url= host + "episodes/", c_type='episodios', thumbnail=get_thumb('new_episodes', auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Países[/COLOR]" , action="section", 
@@ -297,7 +298,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
                     if not elem_json.get('url', ''): continue
                     if elem_json['url'].startswith('//'): elem_json['url'] = 'https:%s' % elem_json['url']
-                    if 'ennovelas' in elem_json['url'] or 'lvturbo' in elem_json['url'] or 'vidmoly' in elem_json['url'] \
+                    if 'ennovelas' in elem_json['url'] or 'lvturbo' in elem_json['url'] or 'novelas360' in elem_json['url'] \
                                                        or 'sbface' in elem_json['url']:
                         logger.debug('Servidor no soportado: %s' % elem_json['url'])
                         continue

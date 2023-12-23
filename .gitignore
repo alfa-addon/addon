@@ -11,3 +11,5 @@ custom_code.json
 .vscode/settings.json
 
 plugin.video.alfa/servers/torrent.py
+
+plugin.video.alfa/channels/hdfull.py

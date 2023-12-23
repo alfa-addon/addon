@@ -46,6 +46,8 @@ def get_video_url(page_url, video_password):
             quality = elem['label']
         if elem.get("quality", ""):
             quality = elem['quality']
+        if elem.get("size", ""):
+            quality = elem['size']
         if "sd" in quality.lower(): quality = "480p"
         if "hd" in quality.lower(): quality = "720p"
         if "lq" in quality.lower(): quality = "360p"

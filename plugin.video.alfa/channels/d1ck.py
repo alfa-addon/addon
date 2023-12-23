@@ -56,8 +56,7 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['preview']}]},
                            ['/\d+', '/%s/'], ['&page=\d+', '&page=%s'], ['\?page=\d+', '?page=%s'], ['\/page\/\d+\/', '/page/%s/']], 
          'last_page': {},
          'plot': {}, 
-         'findvideos': dict([('find', [{'tag': ['li'], 'class': 'link-tabs-container', '@ARG': 'href'}]),
-                             ('find_all', [{'tag': ['a'], '@ARG': 'href'}])]),
+         'findvideos': {},
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
@@ -90,6 +89,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Pornn" , action="submenu", url="https://pornn.com/", chanel="pornn", thumbnail="https://i.postimg.cc/9FRRCKH2/pornn.png"))
     itemlist.append(Item(channel=item.channel, title="RolePlayers" , action="submenu", url="https://roleplayers.co/", chanel="roleplayers", thumbnail="https://i.postimg.cc/t4GM50XC/roleplayers.png"))
     itemlist.append(Item(channel=item.channel, title="TeenAnal" , action="submenu", url="https://teenanal.co/", chanel="teenanal", thumbnail="https://i.postimg.cc/pLZM5VDt/teenanal.png"))
+    itemlist.append(Item(channel=item.channel, title="Udvl" , action="submenu", url="https://udvl.com/", chanel="udvl", thumbnail="https://i.postimg.cc/h4HKfq00/udvl.png"))
     itemlist.append(Item(channel=item.channel, title="WankTank" , action="submenu", url="https://wanktank.co/", chanel="wanktank", thumbnail="https://i.postimg.cc/GtQxJfz9/wanktank.png"))
 
     return itemlist
@@ -149,8 +149,11 @@ def play(item):
     AlfaChannel.host = config.get_setting("current_host", item.chanel, default=host)
     AlfaChannel.canonical.update({'channel': item.chanel, 'host': AlfaChannel.host, 'host_alt': [AlfaChannel.host]})
     
-    soup = AlfaChannel.create_soup(item.url, **kwargs)
-    url = soup.find('div', class_='player-holder').iframe['src']
+    if "udvl" in item.url:
+        url = item.url
+    else:
+        soup = AlfaChannel.create_soup(item.url, **kwargs)
+        url = soup.find('div', class_='player-holder').iframe['src']
     
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())

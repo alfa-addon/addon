@@ -32,6 +32,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://redporn.porn/[0-9]+)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://es.anyporn.com/[0-9]+/)",
         "url": "\\1"
       },
@@ -40,7 +44,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:xfreehd|tubewolf|sextvx|pornxp).(?:com|net)/(?:es/|)(?:video|videos|embed)/[0-9]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:xfreehd|tubewolf|sextvx|pornxp|sxyprnxxx).(?:com|net)/(?:es/|)(?:video|videos|embed)/[0-9]+(?:/|))",
         "url": "\\1"
       },
       {
