@@ -144,7 +144,7 @@
         "url": "https://www.sexvid.xxx/\\1"
       },
       {
-        "pattern": "(https://freshporno.net/videos/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://freshporno.net/(?:videos|embed)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

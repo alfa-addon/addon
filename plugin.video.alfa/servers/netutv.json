@@ -20,7 +20,7 @@
         "url": "http://hqq.tv/player/hash.php?hash=\\1"
       },
       {
-        "pattern": "(?:hqq|waaw|netu|waaw1|xz6).(?:to|tv|top)",
+        "pattern": "(?:hqq|waaw|netu|waaw1|xz6|pbtube).(?:to|tv|top|co)",
         "url": "http://hqq.tv/player/hash.php?hash=\\1"
       },
       {
