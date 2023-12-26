@@ -36,6 +36,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://onlineporno.cc/video[0-9]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://familyporn.tv/video(?:s|)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
