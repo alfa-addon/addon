@@ -82,13 +82,17 @@ def mainlist(item):
     
     itemlist.append(Item(channel=item.channel, title="18yos" , action="submenu", url="https://18yos.co/", chanel="18yos", thumbnail="https://i.postimg.cc/13RpPMBr/18yos.png"))
     itemlist.append(Item(channel=item.channel, title="Boombj" , action="submenu", url="https://boombj.com/", chanel="boombj", thumbnail="https://i.postimg.cc/NMxsg8pR/boombj.png"))
+    itemlist.append(Item(channel=item.channel, title="Cuteasian" , action="submenu", url="https://cuteasians.co/", chanel="cuteasian", thumbnail="https://i.postimg.cc/zXNzfb89/cuteasians.png"))
     itemlist.append(Item(channel=item.channel, title="D1ck" , action="submenu", url="https://d1ck.co/", chanel="d1ck", thumbnail="https://i.postimg.cc/59DzCVYv/d1ck.png"))
+    itemlist.append(Item(channel=item.channel, title="FH" , action="submenu", url="https://fapharder.com/", chanel="FH", thumbnail="https://i.postimg.cc/fbpqRdnX/fapharder.png"))
     itemlist.append(Item(channel=item.channel, title="Faphard" , action="submenu", url="https://faphard.co/", chanel="faphard", thumbnail="https://i.postimg.cc/13jTxgSM/Faphard.png"))
     itemlist.append(Item(channel=item.channel, title="F1ix" , action="submenu", url="https://f1ix.com/", chanel="f1ix", thumbnail="https://i.postimg.cc/dtrsWYKh/f1ix.png"))
-    itemlist.append(Item(channel=item.channel, title="Pornrz" , action="submenu", url="https://pornrz.com/", chanel="pornrz", thumbnail="https://i.postimg.cc/LX19cG4m/pornrz.png"))
     itemlist.append(Item(channel=item.channel, title="Pornn" , action="submenu", url="https://pornn.com/", chanel="pornn", thumbnail="https://i.postimg.cc/9FRRCKH2/pornn.png"))
+    itemlist.append(Item(channel=item.channel, title="Pornrz" , action="submenu", url="https://pornrz.com/", chanel="pornrz", thumbnail="https://i.postimg.cc/LX19cG4m/pornrz.png"))
+    itemlist.append(Item(channel=item.channel, title="Pornry" , action="submenu", url="https://pornry.com/", chanel="pornry", thumbnail="https://i.postimg.cc/cLrQL47G/pornry.png"))
     itemlist.append(Item(channel=item.channel, title="RolePlayers" , action="submenu", url="https://roleplayers.co/", chanel="roleplayers", thumbnail="https://i.postimg.cc/t4GM50XC/roleplayers.png"))
     itemlist.append(Item(channel=item.channel, title="TeenAnal" , action="submenu", url="https://teenanal.co/", chanel="teenanal", thumbnail="https://i.postimg.cc/pLZM5VDt/teenanal.png"))
+    itemlist.append(Item(channel=item.channel, title="TwistedNuts" , action="submenu", url="https://twistednuts.com/", chanel="twistednuts", thumbnail="https://i.postimg.cc/KcHwY4Bm/twistednuts.png"))
     itemlist.append(Item(channel=item.channel, title="Udvl" , action="submenu", url="https://udvl.com/", chanel="udvl", thumbnail="https://i.postimg.cc/h4HKfq00/udvl.png"))
     itemlist.append(Item(channel=item.channel, title="WankTank" , action="submenu", url="https://wanktank.co/", chanel="wanktank", thumbnail="https://i.postimg.cc/GtQxJfz9/wanktank.png"))
 

@@ -28,6 +28,9 @@
         "url": "https://vidello.net/\\1"
       },
       {
+        "pattern": "https://pbflux.com/(?:embed-|)([a-z0-9]+.html)",
+        "url": "https://pbflux.com/\\1"
+      },      {
         "pattern": "https://vtbe.to/(?:embed-|)([a-z0-9]+.html)",
         "url": "https://vtbe.to/\\1"
       },

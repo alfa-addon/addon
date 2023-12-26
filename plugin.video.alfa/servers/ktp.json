@@ -28,7 +28,11 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.inxxx.com/v/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://www.inxxx.com/v/[A-z0-9-.]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://trahkino.(?:cc|me)/(?:embed|video)/[0-9]+(?:/|))",
         "url": "\\1"
       },
       {
