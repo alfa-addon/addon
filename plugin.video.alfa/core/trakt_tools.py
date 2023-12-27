@@ -209,8 +209,6 @@ def get_trakt_watched(id_type, mediatype, update=False):
 
 def trakt_check(itemlist):
     id_result = ''
-    # check = u'\u221a'
-    check = 'v'
     synced = False
     try:
         for item in itemlist:
@@ -232,7 +230,7 @@ def trakt_check(itemlist):
                     id_result = get_trakt_watched(id_type, mediatype)
                 if info['mediatype'] == 'movie':
                     if info[id_type + '_id'] in id_result:
-                        item.title = '[COLOR limegreen][%s][/COLOR] %s' % (check, item.title)
+                        item.infoLabels['playcount'] = 1
 
                 elif info['mediatype'] == 'episode':
                     if info[id_type + '_id'] in id_result:
@@ -247,8 +245,7 @@ def trakt_check(itemlist):
                                     season_watched = id_result[id][season]
 
                                     if episode in season_watched:
-                                        item.title = '[B][COLOR limegreen][[I]%s[/I]][/COLOR][/B] %s' % (check,
-                                                                                                         item.title)
+                                        item.infoLabels['playcount'] = 1
             else:
                 break
     except:
