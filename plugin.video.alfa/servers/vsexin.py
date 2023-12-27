@@ -25,8 +25,12 @@ def test_video_exists(page_url):
     global data
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
+    # https://69x.online/e/RktydXFBWVNKYUZIUDRKenNlenN4dz09  NETU
+    if '/69x' in page_url:
+        return False, "[vsexin] Servidor no soportado"
     if response.code == 404 or "<h2>WE ARE SORRY</h2>" in data or '<title>404 Not Found</title>' in data:
         return False, "[vsexin] El fichero no existe o ha sido borrado"
+
     return True, ""
 
 

@@ -129,7 +129,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
     for elem in matches_int:
         elem_json = {}
         try:
-            elem_json['url'] = elem.a.get("href", '')
+            elem_json['url'] = elem.a.get("href", '').replace('interstice-ad?path=/', '')
             elem_json['title'] = elem.h3.get_text(strip=True)
             if elem.img: elem_json['thumbnail'] = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
                                                                                      or elem.img.get('data-src', '') \

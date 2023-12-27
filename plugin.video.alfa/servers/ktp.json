@@ -28,7 +28,19 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://www.inxxx.com/v/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://www.inxxx.com/v/[A-z0-9-.]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://trahkino.(?:cc|me)/(?:embed|video)/[0-9]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://onlineporno.cc/video[0-9]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://familyporn.tv/video(?:s|)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -40,11 +52,15 @@
         "url": "\\1"
       },
       {
-        "pattern": "(http(?:s|)://(?:www.|)(?:camwhores|camwhorescloud|camwhoreshd|lesbianbliss|goodporn|porntrex|tonicporn|whoreshub|familyporn).(?:tv|com|org|to|lol)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(http(?:s|)://(?:www.|)(?:camwhores|camwhorescloud|camwhoreshd|lesbianbliss|goodporn|porntrex|tonicporn|whoreshub).(?:tv|com|org|to|lol)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
         "pattern": "(http(?:s|)://www.(?:camwhores|camwhoreshd|camvideos|cwtvembeds|lesbianbliss).(?:tv|com|org)/embed/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(http(?:s|)://(?:www.|)(?:ezporn|fullporno|pornwex|cremz|4wank).(?:tv|com|org|to|lol)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -132,7 +148,7 @@
         "url": "https://www.sexvid.xxx/\\1"
       },
       {
-        "pattern": "(https://freshporno.net/videos/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://freshporno.net/(?:videos|embed)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

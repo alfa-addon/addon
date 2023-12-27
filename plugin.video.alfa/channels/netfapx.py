@@ -160,6 +160,8 @@ def play(item):
     item.contentTitle = ' '.join(lista)    
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     url = scrapertools.find_single_match(data, 'source: "([^"]+)"')
+    if not url:
+        url = scrapertools.find_single_match(data, '<source src="([^"]+)" type="video/mp4"')
     url += "|ignore_response_code=True"
     itemlist.append(Item(channel=item.channel, action="play", timeout=30, url=url, contentTitle=item.contentTitle))
     return itemlist

@@ -1,7 +1,7 @@
 {
   "id": "pelisflix",
   "name": "Pelisflix",
-  "active": false,
+  "active": true,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://i.postimg.cc/FH4DKWQq/pelisflix.png",

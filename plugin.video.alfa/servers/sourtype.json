@@ -32,6 +32,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://momzr.com/videos/[0-9]+/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)send.(?:cm|cam|net|site)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
@@ -81,6 +85,14 @@
       },
       {
         "pattern": "(https://www.trendyporn.com/embed/[0-9]+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:zzztube|bestpornstars|24porn|bigfuck).(?:tv|xxx|com)/(?:video/|)[0-9]+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://www.fucktube4k.com/[A-z0-9-]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
