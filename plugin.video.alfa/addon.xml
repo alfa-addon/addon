@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon id="plugin.video.alfa" name="Alfa" version="3.9.16" provider-name="Alfa Addon">
+<addon id="plugin.video.alfa" name="Alfa" version="3.9.17" provider-name="Alfa Addon">
     <requires>
         <import addon="script.module.requests" />
         <import addon="script.module.beautifulsoup4" version="4.5.3" />
@@ -45,19 +45,19 @@
         <platform>all</platform>
         <license>GNU GPL v3</license>
         <source>https://github.com/alfa-addon/addon</source>
-        <news>[B]Estos son los cambios para esta versión:[/B]
+        <news>¡Felices fiestas a todos!
+
+            [B]Estos son los cambios para esta versión:[/B]
 
             [B]Arreglos[/B]
-            ‣ DivxTotal                           ‣ Don Torrent
-            ‣ Eztv                                    ‣ Gran Torrent
-            ‣ HDFull                                ‣ HDFullS
-            ‣ +18
-
-            ‣ Migración de módulos a dependencias
-            ‣ Prueba de parche final con Linux</news>
+            ⁍ Cinecalidad                            ⁍ Cuevana2 
+            ⁍ DivxTotal                                ⁍ Ennovelas
+            ⁍ Don Torrent                           ⁍ HDFull
+            ⁍ Pelisflix: Revivido                   ⁍ Pelispanda
+            ⁍ +18</news>
         <assets>
-            <icon>resources/icon.png</icon>
-            <fanart>resources/fanart.jpg</fanart>
+            <icon>resources/icon_christmas.png</icon>
+            <fanart>resources/fanart_navidad.jpg</fanart>
             <screenshot>resources/media/screenshots/1.jpg</screenshot>
             <screenshot>resources/media/screenshots/2.jpg</screenshot>
             <screenshot>resources/media/screenshots/3.jpg</screenshot>
