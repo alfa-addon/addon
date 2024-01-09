@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "https://x08.online/(?:e|d)/([a-z0-9]+)",
+        "pattern": "https://x08.(?:online||\\w{2,4})/(?:e|d)/([a-z0-9]+)",
         "url": "https://filemoon.to/e/\\1"
       },
       {
@@ -20,7 +20,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:luluvdo|lulustream).com/(?:e|d|v)/[a-z0-9]+)",
+        "pattern": "(https://(?:luluvdo|lulustream|videohb).(?:com|net)/(?:e|d|v)/[a-z0-9]+)",
         "url": "\\1"
       },
       {

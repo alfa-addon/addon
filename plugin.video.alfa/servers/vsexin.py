@@ -26,8 +26,6 @@ def test_video_exists(page_url):
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
     # https://69x.online/e/RktydXFBWVNKYUZIUDRKenNlenN4dz09  NETU
-    if '/69x' in page_url:
-        return False, "[vsexin] Servidor no soportado"
     if response.code == 404 or "<h2>WE ARE SORRY</h2>" in data or '<title>404 Not Found</title>' in data:
         return False, "[vsexin] El fichero no existe o ha sido borrado"
 
@@ -38,13 +36,14 @@ def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     soup = create_soup(page_url)
-    # https://69x.online/e/RktydXFBWVNKYUZIUDRKenNlenN4dz09  NETU
-    # if "69x" in soup.iframe['src']:
-        # soup = create_soup(page_url)
     data = create_soup(soup.iframe['src'])
     url = data.meta['content']
     url = scrapertools.find_single_match(url, 'url=([^"]+)')
+    # logger.debug(url)
+    # if '69x.' in url:
+        # return False, "[vsexin] Servidor no soportado"
     server = servertools.get_server_from_url(url)
+    logger.debug(server)
     video_url = servertools.resolve_video_urls_for_playing(server, url)
     if not video_url:
         platformtools.dialog_ok("sdefxcloud: Error", "Error en el servidor: %s" %server)

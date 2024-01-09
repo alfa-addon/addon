@@ -18,7 +18,38 @@ from channelselector import get_thumb
 
 
 IDIOMAS = {'lat': 'LAT', 'esp': 'CAST', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
-SERVIDORES = {'11': 'clipwatching', '57': 'aparatcam', '12': 'gamovideo', '56': 'doodstream', '4': 'upstream', '5': 'cloudvideo', '55': 'okru', '12': 'powvideo', '2': 'streamplay', '50': 'fembed'}
+
+# <option value="9204">USERLOAD</option><option value="8591">UPLOADHUB</option><option value="18">FILEFOX</option>
+# <option value="6186">STREAMRUBY</option><option value="653">ROSEFILE</option>
+# <option value="714"><SPAN STYLE="FONT-WEIGHT: 700;FONT-SIZE: 18PX;COLOR:#FFD699">RECOMENDADO</SPAN></option>
+# <option value="22">MEXA</option><option value="1001">FASTCLICK</option><option value="1002">DROPAPK</option>
+# <option value="27">NITROFLARE</option><option value="34">ROCKFILE</option><option value="24">KATFILE</option>
+# <option value="62">STREAMABLE</option><option value="64">ABCVIDEO</option>
+# <option value="66">DDOWNLOAD</option><option value="999">ALTERNATIVO</option>
+
+# <option value="1">POWVIDEO</option><option value="1000">POWVIDEO</option><option value="7701">FILEMOON</option><option value="9201">VOE</option>
+# <option value="7561">STREAMWISH</option><option value="153">FILELIONS</option><option value="1195">STREAMVID</option>
+# <option value="6183">VTUBE</option><option value="6187">VEMBED</option><option value="901">DIRECTO</option>
+# <option value="2">STREAMPLAY</option><option value="70">STREAMPLAY</option><option value="10">RAPIDGATOR</option>
+# <option value="4">UPSTREAM</option><option value="5">CLOUDVIDEO</option><option value="12">GAMOVIDEO</option>
+# <option value="14">VIDLOX</option><option value="7565">MP4UPLOAD</option><option value="9202">ZPLAYER</option>
+# <option value="15">MIXDROP</option><option value="1010">MIXDROP</option><option value="8">FILEFACTORY</option>
+# <option value="23">1FICHIER</option><option value="45">WAAW</option><option value="51">STREAMTAPE</option>
+# <option value="52">MEGA</option><option value="55">OKRU</option><option value="56">DOODSTREAM</option>
+# <option value="57">EVOLOAD</option><option value="6656">VIDMOLY</option><option value="54">YOURUPLOAD</option>
+# <option value="31">VIDOZA</option><option value="32">TURBOBIT</option><option value="38">CLICKNUPLOAD</option>
+# <option value="65">HEXUPLOAD</option><option value="53">UQLOAD</option>
+
+
+
+SERVIDORES = {'11': 'clipwatching', '57': 'evoload', '12': 'gamovideo', '56': 'doodstream', '54': 'yourupload',
+              '4': 'upstream', '5': 'cloudvideo', '55': 'okru', '1': 'powvideo', '2': 'streamplay',
+              '70': 'streamplay', '15': 'mixdrop', '1010': 'mixdrop', '14': 'vidlox', '7565': 'mp4upload',
+              '50': 'fembed', '6656': 'vidmoly', '45': 'netu', '51': 'streamtape', '9201': 'voe',
+              '7701': 'tiwikiwi','6183': 'playtube', '7561': 'streamwish', '153': 'tiwikiwi', '10': 'rapidgator',
+              '1195': 'streamvid', '6187': 'vidguard', '9202': 'zplayer', '8': 'filefactory', '23': '1fichier',
+              '52': 'mega', '31': 'vidoza', '32': 'turbobit', '38': 'clicknupload', '65': 'hexupload',
+              '53': 'uqload'}
 
 list_language = list(IDIOMAS.values())
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP']
@@ -478,18 +509,19 @@ def findvideos(item):
     if not soup: return []
     items = []
     linklists = soup.findAll('div', class_='linkSorter')
-    items.extend(soup.find('div', class_='contEP contepID_1 contEP_A').find('div', class_='innerSelector').find_all('div', class_="playerItem"))
-
+    # items.extend(soup.find('div', class_='contEP contepID_1 contEP_A').find('div', class_='innerSelector').find_all('div', class_="playerItem"))
     for lst in linklists:
         items.extend(lst.find_all('li'))
-
     for li in items:
+        
         language = IDIOMAS.get(li.get('data-lang', '').lower(), '')
         quality = li.get('data-quality', '')
 
         if quality:
             server = SERVIDORES.get(li.get('data-provider', '').lower(), '')
             url = li.find('a')['href']
+
+
 
         else:
             data = li.find('div', class_='meta')
