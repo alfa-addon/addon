@@ -230,8 +230,8 @@ def findvideos(item):
     matches = soup.find_all("li", role="presentation") #re.compile(r"^pitem\d+")
     for elem in matches:
         url = elem['data-server']
-        url = base64.b64decode(url).decode('utf-8')
-        data = httptools.downloadpage(url, canonical=canonical).data
+        url = base64.b64encode(url.encode("utf-8")).decode('utf-8')
+        data = httptools.downloadpage(host + "/player/" + url, canonical=canonical).data
         url = scrapertools.find_single_match(data,"(?i)Location.href = '([^']+)'")
         if "up.asdasd" in url:
             url = "https://netu.to/"
