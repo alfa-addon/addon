@@ -21,25 +21,25 @@ else:
 import re
 import time
 
+from core import httptools
+from platformcode import logger
+
 PATTERN_EPISODE_TITLE = '(?i)(\d+x\d+\s*(?:-\s*)?)?(?:episod(?:e|io)|cap.tulo)\s*\d*\s*(?:\[\d{4}\]\s*)?(?:\[\d{1,2}.\d{1,2}\]\s*)?'
 
 
 def get_header_from_response(url, header_to_get="", post=None, headers=None):
-    from core import httptools
     header_to_get = header_to_get.lower()
     response = httptools.downloadpage(url, post=post, headers=headers, only_headers=True)
     return response.headers.get(header_to_get)
 
 
 def read_body_and_headers(url, post=None, headers=None, follow_redirects=False, timeout=None):
-    from core import httptools
     response = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=follow_redirects,
                                       timeout=timeout)
     return response.data, response.headers
 
 
 def printMatches(matches):
-    from platformcode import logger
     i = 0
     for match in matches:
         logger.info("%d %s" % (i, match))
@@ -92,7 +92,6 @@ def unescape(text):
                 return text
 
             except ValueError:
-                from platformcode import logger
                 logger.error("error de valor")
                 pass
         else:
@@ -106,7 +105,6 @@ def unescape(text):
                 if PY3 and isinstance(text, bytes):
                     text = text.decode("utf-8")
             except KeyError:
-                from platformcode import logger
                 logger.error("keyerror: %s" % str(text))
                 pass
             except Exception:
@@ -311,7 +309,7 @@ def slugify(title, strict=True, convert=[]):
     title = title.replace("ù", "u")
     title = title.replace("ç", "c")
     title = title.replace("Ç", "C")
-    title = title.replace("Ñ", "ñ")
+    title = title.replace("Ñ", "n")
     title = title.replace("ñ", "n")
     title = title.replace("/", "-")
     title = title.replace("&amp;", "&")
@@ -407,19 +405,14 @@ def normalize(string):
     return normal
 
 def remove_format(string):
-    #from platformcode import logger
-    #logger.info()
     string = string.rstrip()
     string = re.sub(r'(\[|\[\/)(?:color|COLOR|b|B|i|I).*?\]', '', string)
     string = re.sub(r'\:|\.|\-|\_|\,|\¿|\?|\¡|\!|\"|\'|\&', ' ', string)
     string = re.sub(r'\(.*?\).*|\[.*?\].*', ' ', string)
     string = re.sub(r'\s+', ' ', string).strip()
-    #logger.debug('sale de remove: %s' % string)
     return string
 
 def simplify(title, year):
-    #from platformcode import logger
-    
     if not year or year == '-':
         year = find_single_match(title, r"^.+?\s*(?:(\(\d{4}\)$|\[\d{4}\]))")
         if year:
@@ -452,7 +445,6 @@ def get_season_and_episode(title):
     @rtype: str
     @return: Numero de temporada y episodio en formato "1x01" o cadena vacia si no se han encontrado
     """
-    #from platformcode import logger
     filename = ""
 
     patrons = ["(\d+)\s*[x-]\s*(\d+)", "(\d+)\s*×\s*(\d+)", "(?:s|t)(\d+) ?e(\d+)",
