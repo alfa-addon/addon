@@ -34,6 +34,11 @@ __language__ = __settings__.getLocalizedString
 __kodi_version__ = {}
 __system_platform__ = ""
 
+
+def cache_reset(*args, **kwargs):
+    pass
+
+
 def translatePath(path):
     """
     Kodi 19: xbmc.translatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.translatePath instead.
@@ -442,7 +447,7 @@ def open_settings():
             xbmc_videolibrary.ask_set_content(2, silent=True)
 
 
-def get_setting(name, channel="", server="", default=None):
+def get_setting(name, channel="", server="", default=None, debug=False):
     """
     Retorna el valor de configuracion del parametro solicitado.
 
@@ -488,11 +493,7 @@ def get_setting(name, channel="", server="", default=None):
     # Global setting
     else:
         # logger.info("get_setting reading main setting '"+name+"'")
-        if get_platform(True)['num_version'] >= 20.0:
-            settings = __settings__.getSettings()
-            value = settings.getString(name)
-        else:
-            value = __settings__.getSetting(name)
+        value = __settings__.getSetting(name)
         if not value:
             return default
         return get_setting_values(name, value)
