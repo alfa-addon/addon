@@ -14,7 +14,7 @@ from platformcode import logger
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    referer = re.sub(r"player-", "embed-", page_url)
+    # referer = re.sub(r"player-", "embed-", page_url)
     global data
     data = httptools.downloadpage(page_url, headers={'Referer': referer}).data
     if data == "File was deleted":

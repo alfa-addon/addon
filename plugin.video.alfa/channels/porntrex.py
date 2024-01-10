@@ -173,13 +173,14 @@ def play(item):
     
     data = httptools.downloadpage(item.url, canonical=canonical).data
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+    plot = ""
+    
     if soup.find('div', class_="block-details").find_all('a', href=re.compile(r"/models/[A-z0-9-]+/")):
         pornstars = soup.find('div', class_="block-details").find_all('a', href=re.compile(r"/models/[A-z0-9-]+/"))
         for x, value in enumerate(pornstars):
             pornstars[x] = value.get_text(strip=True)
         pornstar = ' & '.join(pornstars)
         pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
-        plot = ""
         if len(pornstars) <= 3:
             lista = item.contentTitle.split()
             if "[COLOR red]" in item.title:
@@ -187,6 +188,7 @@ def play(item):
             else:
                 lista.insert (3, pornstar)
             item.contentTitle = ' '.join(lista)
+        
         else:
             plot = pornstar
     

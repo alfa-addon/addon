@@ -1,11 +1,11 @@
 {
-  "active": false,
+  "active": true,
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "gamovideo.com/(?:embed-|)([a-z0-9]+)",
-        "url": "http://gamovideo.com/embed-\\1.html"
+        "pattern": "gamovideo.(?:net|com)/(?:embed-|)([a-z0-9]+)",
+        "url": "https://gamovideo.com/\\1"
       }
     ]
   },

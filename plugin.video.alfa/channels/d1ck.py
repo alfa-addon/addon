@@ -24,6 +24,7 @@ forced_proxy_opt = 'ProxySSL'
 
 # https://d1ck.co/   https://faphard.co/   https://f1ix.com/ https://pornrz.com/  https://pornn.co/
 # https://18yos.co/   https://boombj.com/  https://roleplayers.co/   https://teenanal.co/  https://wanktank.co/
+# https://amateurporntape.com/  https://amateurporngirlfriends.com/
 
 canonical = {
              'channel': 'd1ck', 
@@ -79,8 +80,9 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    
     itemlist.append(Item(channel=item.channel, title="18yos" , action="submenu", url="https://18yos.co/", chanel="18yos", thumbnail="https://i.postimg.cc/13RpPMBr/18yos.png"))
+    itemlist.append(Item(channel=item.channel, title="amateurporngirlfriends" , action="submenu", url="https://amateurporngirlfriends.com/", chanel="amateurporngirlfriends", thumbnail="https://i.postimg.cc/kG3RCpcH/amateurporngirlfriends.png"))
+    itemlist.append(Item(channel=item.channel, title="amateurporntape" , action="submenu", url="https://amateurporntape.com/", chanel="amateurporntape", thumbnail="https://i.postimg.cc/rsNskFzd/amateurporntape.png"))
     itemlist.append(Item(channel=item.channel, title="Boombj" , action="submenu", url="https://boombj.com/", chanel="boombj", thumbnail="https://i.postimg.cc/NMxsg8pR/boombj.png"))
     itemlist.append(Item(channel=item.channel, title="Cuteasian" , action="submenu", url="https://cuteasians.co/", chanel="cuteasian", thumbnail="https://i.postimg.cc/zXNzfb89/cuteasians.png"))
     itemlist.append(Item(channel=item.channel, title="D1ck" , action="submenu", url="https://d1ck.co/", chanel="d1ck", thumbnail="https://i.postimg.cc/59DzCVYv/d1ck.png"))

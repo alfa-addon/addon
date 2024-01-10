@@ -20,8 +20,8 @@
         "url": "http://hqq.tv/player/hash.php?hash=\\1"
       },
       {
-        "pattern": "(?:hqq|waaw|netu|waaw1|xz6|pbtube).(?:to|tv|top|co)",
-        "url": "http://hqq.tv/player/hash.php?hash=\\1"
+        "pattern": "(?:hqq|waaw|netu|waaw1|xz6|pbtube|69x|goo).(?:to|tv|top|co|online|gl)",
+        "url": "http://hqq.tv/player/hash.php?hash=bGtBd0FlU081aExMb"
       },
       {
         "pattern": "https://vidxhot.(?:com|net)/e/([A-z0-9]+)",

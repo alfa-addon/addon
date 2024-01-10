@@ -10,7 +10,9 @@ def test_video_exists(page_url):
     response = httptools.downloadpage(page_url)
     global data
     data = response.data
-    if "Video not found" in data or "This video was deleted" in data or "access restricted" in data:
+    if "Video not found" in data or "This video was deleted" in data \
+        or "acceso restringido" in data \
+        or "access restricted" in data:
         return False, "[xhamster] El fichero no existe o ha sido borrado"
     return True, ""
 

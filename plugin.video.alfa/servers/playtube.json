@@ -16,7 +16,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "https://vtube.to/(?:embed-|)([A-z0-9]+).html",
+        "pattern": "https://(?:vtube|vtbe).(?:to|network)/(?:embed-|)([A-z0-9]+).html",
         "url": "https://vtube.to/\\1.html"
       }
       ]
