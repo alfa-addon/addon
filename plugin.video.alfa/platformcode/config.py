@@ -13,13 +13,11 @@ import os
 import re
 import time
 import json
-import threading
 import traceback
 
 import xbmc
 import xbmcaddon
 import xbmcvfs
-import xbmcgui
 
 PLUGIN_NAME = "alfa"
 DEBUG = False
@@ -33,174 +31,12 @@ BTDIGG_POST = '[B]Canal potenciado con [COLOR limegreen]BT[/COLOR][COLOR red]Dig
 __settings__ = xbmcaddon.Addon(id="plugin.video.{}".format(PLUGIN_NAME))
 __language__ = __settings__.getLocalizedString
 
-""" CACHING ALFA PARAMETERS """
-alfa_caching = False
-alfa_system_platform = ''
-alfa_kodi_platform = {}
-alfa_settings = {}
-alfa_channels = {}
-alfa_servers = {}
-alfa_servers_jsons = {}
-alfa_no_caching_vars = []
-window = None
-
-try:
-    window = xbmcgui.Window(10000)  # Home
-    alfa_caching = bool(window.getProperty("alfa_caching"))
-    if not alfa_caching:
-        window.setProperty("alfa_system_platform", alfa_system_platform)
-        window.setProperty("alfa_settings", json.dumps(alfa_settings))
-        window.setProperty("alfa_channels", json.dumps(alfa_channels))
-        window.setProperty("alfa_servers", json.dumps(alfa_servers))
-        window.setProperty("alfa_servers_jsons", json.dumps(alfa_servers_jsons))
-        window.setProperty("alfa_cookies", '')
-        window.setProperty("alfa_CF_list", '')
-        window.setProperty("alfa_videolab_movies_list", '')
-        window.setProperty("alfa_videolab_series_list", '')
-        window.setProperty("alfa_colors_file", json.dumps({}))
-except:
-    alfa_caching = False
-    alfa_system_platform = ''
-    alfa_kodi_platform = {}
-    alfa_settings = {}
-    alfa_channels = {}
-    alfa_servers = {}
-    alfa_servers_jsons = {}
-    window = None
-    from platformcode import logger
-    logger.error(traceback.format_exc())
+__kodi_version__ = {}
+__system_platform__ = ""
 
 
-class CacheInit(xbmc.Monitor, threading.Thread):
-    def __init__(self, *args, **kwargs):
-        global window, __settings__, alfa_caching, alfa_system_platform, alfa_kodi_platform, \
-                                     alfa_settings, alfa_channels, alfa_servers, alfa_servers_jsons
-        xbmc.Monitor.__init__(self)
-        threading.Thread.__init__(self)
-
-        alfa_caching = __settings__.getSetting('caching')
-        # Si no existe el archivo settings.xml, llama a Kodi .setSetting para forzar la creación de un archivo con valores por defecto
-        if alfa_caching == 'true' or alfa_caching == None:
-            alfa_caching = True
-            __settings__.setSetting('caching', 'true')
-            window.setProperty("alfa_caching", str(alfa_caching))
-        else:
-            alfa_caching = False
-            __settings__.setSetting('caching', 'false')
-            window.setProperty("alfa_caching", '')
-        if alfa_caching:
-            alfa_system_platform = get_system_platform()
-            alfa_kodi_platform = get_platform(full_version=True)
-            alfa_settings = get_all_settings_addon()
-            alfa_channels = {}
-            alfa_servers = {}
-            alfa_servers_jsons = {}
-            window.setProperty("alfa_system_platform", alfa_system_platform)
-            window.setProperty("alfa_settings", json.dumps(alfa_settings))
-            window.setProperty("alfa_channels", json.dumps(alfa_channels))
-            window.setProperty("alfa_servers", json.dumps(alfa_servers))
-            window.setProperty("alfa_servers_jsons", json.dumps(alfa_servers_jsons))
-            window.setProperty("alfa_cookies", '')
-            window.setProperty("alfa_CF_list", '')
-            window.setProperty("alfa_videolab_movies_list", '')
-            window.setProperty("alfa_videolab_series_list", '')
-            styles_path = os.path.join(get_runtime_path(), 'resources', 'color_styles.json')
-            with open(styles_path, "r") as cf:
-                window.setProperty("alfa_colors_file", cf.read())
-        window.setProperty("CAPTURE_THRU_BROWSER_in_use", '')
-
-
-    def run(self):
-        timer = 3600
-
-        while not self.abortRequested():                                        # Loop infinito hasta cancelar Kodi
-            window.setProperty("alfa_channels", json.dumps({}))                 # Limpiamos esta variable por si ha crecido mucho
-            window.setProperty("alfa_servers", json.dumps({}))                  # Limpiamos esta variable por si ha crecido mucho
-            if self.waitForAbort(timer):                                        # Espera el tiempo programado o hasta que cancele Kodi
-                break                                                           # Cancelación de Kodi, salimos
-
-    def onSettingsChanged(self):                                                # Si se modifican los ajuste de Alfa, se activa esta función
-        global window, __settings__, alfa_settings, alfa_caching
-        settings_pre = alfa_settings.copy() or None
-        alfa_caching = __settings__.getSetting('caching')
-        if alfa_caching == 'true' or alfa_caching == None:
-            alfa_caching = True
-            window.setProperty("alfa_caching", str(alfa_caching))
-        else:
-            alfa_caching = False
-            window.setProperty("alfa_caching", "")
-
-        return open_settings(settings_pre=settings_pre)
-
-
-def cache_init():
-    global alfa_caching, alfa_settings
-
-    # Lanzamos en Servicio de actualización de FIXES
-    try:
-        monitor = CacheInit()                                                   # Creamos una clase con un Thread independiente, hasta el fin de Kodi
-        monitor.start()
-        time.sleep(2)                                                           # Dejamos terminar inicialización...
-    except:                                                                     # Si hay problemas de threading, nos vamos
-        alfa_caching = False
-        alfa_settings = {}
-        from platformcode import logger
-        logger.error(traceback.format_exc())
-        try:
-            window.setProperty("alfa_caching", '')
-            window.setProperty("alfa_settings", json.dumps(alfa_settings))
-        except:
-            pass
-
-
-def cache_reset(action='OFF', label=''):
-    try:
-        global window, __settings__, alfa_caching, alfa_system_platform, alfa_kodi_platform, \
-                                     alfa_settings, alfa_channels, alfa_servers, alfa_servers_jsons
-        from platformcode import logger
-        logger.info("action='%s', label='%s'" % (action, label), force=True)
-
-        if not window: 
-            return alfa_caching
-
-        alfa_caching = bool(window.getProperty("alfa_caching"))
-
-        if label:
-            window.setProperty(label, '')
-
-        else:
-            if action == 'OFF':
-                alfa_caching = False
-                window.setProperty("alfa_caching", '')
-            alfa_system_platform = ''
-            alfa_settings = {}
-            alfa_channels = {}
-            alfa_servers = {}
-            alfa_servers_jsons = {}
-            window.setProperty("alfa_system_platform", alfa_system_platform)
-            window.setProperty("alfa_settings", json.dumps(alfa_settings))
-            window.setProperty("alfa_channels", json.dumps(alfa_channels))
-            window.setProperty("alfa_servers", json.dumps(alfa_servers))
-            window.setProperty("alfa_servers_jsons", json.dumps(alfa_servers_jsons))
-            window.setProperty("alfa_cookies", '')
-            window.setProperty("alfa_CF_list", '')
-            window.setProperty("alfa_videolab_movies_list", '')
-            window.setProperty("alfa_videolab_series_list", '')
-            window.setProperty("alfa_colors_file", json.dumps({}))
-            window.setProperty("CAPTURE_THRU_BROWSER_in_use", '')
-            if action == 'ON': 
-                alfa_caching = __settings__.getSetting('caching')
-                if alfa_caching == 'true' or alfa_caching == None:
-                    alfa_caching = True
-                    window.setProperty("alfa_caching", str(alfa_caching))
-                else:
-                    alfa_caching = False
-                    window.setProperty("alfa_caching", "")
-    except:
-        from platformcode import logger
-        logger.error(traceback.format_exc())
-    
-    return alfa_caching
+def cache_reset(*args, **kwargs):
+    pass
 
 
 def translatePath(path):
@@ -261,7 +97,7 @@ def decode_var(value, trans_none='', decode_var_=True):
         return newdct
     elif isinstance(value, unicode):
         value = value.encode("utf8")
-    elif not PY3 and isinstance(value, basestring):
+    elif not PY3 and isinstance(value, (str, unicode)):
         value = unicode(value, "utf8", "ignore").encode("utf8")
     
     if PY3 and isinstance(value, bytes):
@@ -297,8 +133,8 @@ def get_addon_version(with_fix=True, from_xml=False):
 
 def get_addon_version_fix():
     try:
-        last_fix_json = os.path.join(get_runtime_path(),
-                                     'last_fix.json')  # información de la versión fixeada del usuario
+        # información de la versión fixeada del usuario
+        last_fix_json = os.path.join(get_runtime_path(), 'last_fix.json') 
         if os.path.exists(last_fix_json):
             with open(last_fix_json, 'rb') as f:
                 data = f.read()
@@ -340,8 +176,7 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
             for addon in xml["addons"]["addon"]:
                 versiones[addon["@id"]] = addon["@version"]
             versiones['url'] = url
-            response = httptools.downloadpage(url + xml_repo + '.md5', timeout=5, ignore_response_code=True,
-                                              alfa_s=True)
+            response = httptools.downloadpage(url + xml_repo + '.md5', timeout=5, ignore_response_code=True, alfa_s=True)
 
             if response.code == 200 and response.data:
                 versiones['repository.alfa-addon.md5'] = response.data
@@ -367,7 +202,6 @@ def get_versions_from_repo(urls=[], xml_repo='addons.xml'):
 
 
 def get_platform(full_version=False):
-    global alfa_kodi_platform
     """
         Devuelve la información la version de xbmc o kodi sobre el que se ejecuta el plugin
 
@@ -381,7 +215,7 @@ def get_platform(full_version=False):
             'plaform': (str) esta compuesto por "kodi-" o "xbmc-" mas el nombre de la version segun corresponda.
         Si el parametro full_version es False (por defecto) se retorna el valor de la clave 'plaform' del diccionario anterior.
     """
-    ret = {}
+    global __kodi_version__
     codename = {"10": "dharma", "11": "eden", "12": "frodo",
                 "13": "gotham", "14": "helix", "15": "isengard",
                 "16": "jarvis", "17": "krypton", "18": "leia",
@@ -391,24 +225,21 @@ def get_platform(full_version=False):
                '16': 'MyVideos99.db', '17': 'MyVideos107.db', '18': 'MyVideos116.db',
                '19': 'MyVideos119.db', '20': 'MyVideos121.db', '21': 'MyVideos122.db'}
 
-    ret = alfa_kodi_platform.copy()
-    if not ret:
+    if not __kodi_version__:
         num_version = xbmc.getInfoLabel('System.BuildVersion')
         num_version = re.match("\d+\.\d+", num_version).group(0)
-        ret['name_version'] = codename.get(num_version.split('.')[0], num_version)
-        ret['video_db'] = code_db.get(num_version.split('.')[0], "")
-        ret['num_version'] = float(num_version)
-        if ret['num_version'] < 14:
-            ret['platform'] = "xbmc-" + ret['name_version']
+        __kodi_version__['name_version'] = codename.get(num_version.split('.')[0], num_version)
+        __kodi_version__['video_db'] = code_db.get(num_version.split('.')[0], "")
+        __kodi_version__['num_version'] = float(num_version)
+        if __kodi_version__['num_version'] < 14:
+            __kodi_version__['platform'] = "xbmc-" + __kodi_version__['name_version']
         else:
-            ret['platform'] = "kodi-" + ret['name_version']
-
-        alfa_kodi_platform = ret.copy()
+            __kodi_version__['platform'] = "kodi-" + __kodi_version__['name_version']
 
     if full_version:
-        return ret
+        return __kodi_version__
     else:
-        return ret['platform']
+        return __kodi_version__['platform']
 
 
 def is_xbmc():
@@ -488,16 +319,15 @@ def get_videolibrary_support():
 
 
 def get_system_platform():
-    global alfa_system_platform
     """
     Function: To recover the platform on which xbmc runs
     Credits to the original author (unknown)
 
     NOTE: Expensive operation, if reused, keep it in a temp var
     """
-    if alfa_caching and not alfa_system_platform:
-        alfa_system_platform = str(window.getProperty("alfa_system_platform"))
-    if alfa_system_platform == "":
+    global __system_platform__
+
+    if __system_platform__ == "":
 
         if xbmc.getCondVisibility("System.Platform.Android"):
             platform = 'android'
@@ -524,24 +354,21 @@ def get_system_platform():
         else:
             platform = 'unknown'
 
-        alfa_system_platform = platform
-        if alfa_caching:
-            window.setProperty("alfa_system_platform", alfa_system_platform)
-            if DEBUG: from platformcode import logger; logger.error('SAVE Cache "alfa_system_platform": %s:' % (alfa_system_platform))
+        __system_platform__ = platform
 
-    return alfa_system_platform
+    return __system_platform__
 
 
-def get_all_settings_addon(caching_var=True):
+def get_all_settings_addon():
     # Lee el archivo settings.xml y retorna un diccionario con {id: value}
     inpath = os.path.join(get_data_path(), "settings.xml")
     if not os.path.exists(inpath):
         # Si no existe el archivo settings.xml, llama a Kodi .setSetting para forzar la creación de un archivo con valores por defecto
-        __settings__.setSetting('caching', 'true')
+        set_setting("caching", True)
         time.sleep(1)
         if not os.path.exists(inpath):
             # Comprobamos si Kodi ha generado un archivo settings.xml accesible.  Si no es así, se cancela el cacheo y el menú de bienvenida (Apple TV)
-            __settings__.setSetting('show_once', 'true')
+            set_setting("show_once", True)
 
     xml = get_xml_content(inpath)
     ret = {}
@@ -563,74 +390,64 @@ def get_all_settings_addon(caching_var=True):
     return ret
 
 
-def open_settings(settings_pre={}):
-    global alfa_settings
-    if isinstance(settings_pre, dict) and not settings_pre:
-        settings_pre = get_all_settings_addon()
-        __settings__.openSettings()
-        time.sleep(1)
-    alfa_settings = {}
-    window.setProperty("alfa_settings", json.dumps(alfa_settings))
-    settings_post = get_all_settings_addon(caching_var=False)
-    if not settings_pre:
-        settings_pre = settings_post.copy()
+def open_settings():
+    settings_pre = get_all_settings_addon()
+    __settings__.openSettings()
+    settings_post = get_all_settings_addon()
+
 
     # cb_validate_config (util para validar cambios realizados en el cuadro de dialogo)
-    if settings_post:
+    if settings_post.get('adult_aux_intro_password', None):
+        # Hemos accedido a la seccion de Canales para adultos
+        from platformcode import platformtools
+        if 'adult_password' not in settings_pre:
+            adult_password = set_setting('adult_password', '0000')
+        else:
+            adult_password = settings_pre['adult_password']
 
-        if settings_post.get('adult_aux_intro_password', None):
-            # Hemos accedido a la seccion de Canales para adultos
-            from platformcode import platformtools
-            if 'adult_password' not in settings_pre:
-                adult_password = set_setting('adult_password', '0000')
-            else:
-                adult_password = settings_pre['adult_password']
+        if settings_post['adult_aux_intro_password'] == adult_password:
+            # La contraseña de acceso es correcta
+            set_setting("adult_mode", settings_post.get("adult_mode", 1))
+            set_setting("adult_request_password", settings_post.get("adult_request_password", True))
 
-            if settings_post['adult_aux_intro_password'] == adult_password:
-                # La contraseña de acceso es correcta
-                set_setting("adult_mode", settings_post.get("adult_mode", 1))
-                set_setting("adult_request_password", settings_post.get("adult_request_password", True))
-
-                # Cambio de contraseña
-                if settings_post.get('adult_aux_new_password1', ''):
-                    if settings_post['adult_aux_new_password1'] == settings_post.get('adult_aux_new_password2', ''):
-                        set_setting('adult_password', settings_post['adult_aux_new_password1'])
-
-                    else:
-                        platformtools.dialog_ok(get_localized_string(60305),
-                                                get_localized_string(60306),
-                                                get_localized_string(60307))
-
-            else:
-                platformtools.dialog_ok(get_localized_string(60305), get_localized_string(60309),
-                                        get_localized_string(60310))
-
-                # Deshacer cambios
-                set_setting("adult_mode", settings_pre.get("adult_mode", 0))
-                set_setting("adult_request_password", settings_pre.get("adult_request_password", True))
-
-            # Borramos settings auxiliares
-            set_setting('adult_aux_intro_password', '')
-            set_setting('adult_aux_new_password1', '')
-            set_setting('adult_aux_new_password2', '')
-
-        # si se ha cambiado la ruta de la videoteca llamamos a comprobar directorios para que lo cree y pregunte
-        # automaticamente si configurar la videoteca
-        if settings_pre.get("videolibrarypath", None) != settings_post.get("videolibrarypath", None) or \
-                settings_pre.get("folder_movies", None) != settings_post.get("folder_movies", None) or \
-                settings_pre.get("folder_tvshows", None) != settings_post.get("folder_tvshows", None):
-            verify_directories_created()
+            # Cambio de contraseña
+            if settings_post['adult_aux_new_password1']:
+                if settings_post['adult_aux_new_password1'] == settings_post['adult_aux_new_password2']:
+                    set_setting('adult_password', settings_post['adult_aux_new_password1'])
+                else:
+                    platformtools.dialog_ok(get_localized_string(60305),
+                                            get_localized_string(60306),
+                                            get_localized_string(60307))
 
         else:
-            # si se ha puesto que se quiere autoconfigurar y se había creado el directorio de la videoteca
-            if not settings_pre.get("videolibrary_kodi", None) and settings_post.get("videolibrary_kodi", None) \
-                    and settings_post.get("videolibrary_kodi_flag", None) == 1:
-                from platformcode import xbmc_videolibrary
-                xbmc_videolibrary.ask_set_content(2, silent=True)
+            platformtools.dialog_ok(get_localized_string(60305), get_localized_string(60309),
+                                    get_localized_string(60310))
+
+            # Deshacer cambios
+            set_setting("adult_mode", settings_pre.get("adult_mode", 0))
+            set_setting("adult_request_password", settings_pre.get("adult_request_password", True))
+
+        # Borramos settings auxiliares
+        set_setting('adult_aux_intro_password', '')
+        set_setting('adult_aux_new_password1', '')
+        set_setting('adult_aux_new_password2', '')
+
+    # si se ha cambiado la ruta de la videoteca llamamos a comprobar directorios para que lo cree y pregunte
+    # automaticamente si configurar la videoteca
+    if settings_pre.get("videolibrarypath", None) != settings_post.get("videolibrarypath", None) or \
+            settings_pre.get("folder_movies", None) != settings_post.get("folder_movies", None) or \
+            settings_pre.get("folder_tvshows", None) != settings_post.get("folder_tvshows", None):
+        verify_directories_created()
+
+    else:
+        # si se ha puesto que se quiere autoconfigurar y se había creado el directorio de la videoteca
+        if not settings_pre.get("videolibrary_kodi", None) and settings_post.get("videolibrary_kodi", None) \
+                and settings_post.get("videolibrary_kodi_flag", None) == 1:
+            from platformcode import xbmc_videolibrary
+            xbmc_videolibrary.ask_set_content(2, silent=True)
 
 
-def get_setting(name, channel="", server="", default=None, caching_var=True, debug=DEBUG):
-    global alfa_settings
+def get_setting(name, channel="", server="", default=None, debug=False):
     """
     Retorna el valor de configuracion del parametro solicitado.
 
@@ -661,8 +478,7 @@ def get_setting(name, channel="", server="", default=None, caching_var=True, deb
     if channel:
         # logger.info("get_setting reading channel setting '"+name+"' from channel json")
         from core import channeltools
-        debug = False if debug == None else DEBUG_JSON if debug == DEBUG else debug
-        value = channeltools.get_channel_setting(name, channel, default, caching_var=caching_var, debug=debug)
+        value = channeltools.get_channel_setting(name, channel, default)
         # logger.info("get_setting -> '"+repr(value)+"'")
         return value
 
@@ -670,8 +486,7 @@ def get_setting(name, channel="", server="", default=None, caching_var=True, deb
     elif server:
         # logger.info("get_setting reading server setting '"+name+"' from server json")
         from core import servertools
-        debug = False if debug == None else DEBUG_JSON if debug == DEBUG else debug
-        value = servertools.get_server_setting(name, server, default, caching_var=caching_var, debug=debug)
+        value = servertools.get_server_setting(name, server, default)
         # logger.info("get_setting -> '"+repr(value)+"'")
         return value
 
@@ -681,26 +496,7 @@ def get_setting(name, channel="", server="", default=None, caching_var=True, deb
         value = __settings__.getSetting(name)
         if not value:
             return default
-        # Translate Path if start with "special://"
-        if value.startswith("special://") and "videolibrarypath" not in name:
-            value = translatePath(value)
-
-        # hack para devolver el tipo correspondiente
-        if value == "true":
-            return True
-        elif value == "false":
-            return False
-        else:
-            # special case return as str
-            if name in ["adult_password", "adult_aux_intro_password", "adult_aux_new_password1",
-                        "adult_aux_new_password2"]:
-                return value
-            else:
-                try:
-                    value = int(value)
-                except ValueError:
-                    pass
-                return value
+        return get_setting_values(name, value)
 
 
 def get_setting_values(name, value, decode_var_=True):
@@ -727,8 +523,7 @@ def get_setting_values(name, value, decode_var_=True):
             return decode_var(value, decode_var_)
 
 
-def set_setting(name, value, channel="", server="", debug=DEBUG):
-    global alfa_settings
+def set_setting(name, value, channel="", server=""):
     """
     Fija el valor de configuracion del parametro indicado.
 
@@ -752,15 +547,12 @@ def set_setting(name, value, channel="", server="", debug=DEBUG):
     'value' en caso de que se haya podido fijar el valor y None en caso contrario
 
     """
-    value_init = value
     if channel:
         from core import channeltools
-        debug = False if debug == None else DEBUG_JSON if not debug and DEBUG_JSON else debug
-        return channeltools.set_channel_setting(name, value, channel, debug=debug)
+        return channeltools.set_channel_setting(name, value, channel)
     elif server:
         from core import servertools
-        debug = False if debug == None else DEBUG_JSON if not debug and DEBUG_JSON else debug
-        return servertools.set_server_setting(name, value, server, debug=debug)
+        return servertools.set_server_setting(name, value, server)
     else:
         try:
             if isinstance(value, bool):
@@ -795,55 +587,34 @@ def get_kodi_setting(name, total=False):
     @rtype: any
 
     """
+    request = {
+        "jsonrpc": "2.0",
+        "method": "",
+        "params": {},
+        "id": 1,
+    }
+    if total:
+        request["method"] = "Settings.GetSettings"
+        response = json.loads(xbmc.executeJSONRPC(json.dumps(request)))
 
-    # Global Kodi setting
-    inpath = os.path.join(translatePath('special://masterprofile/'), "guisettings.xml")
-    ret = {}
-
-    xml = get_xml_content(inpath)
-    
-    if not xml:
-        try:
-            from platformcode import logger
-            logger.error(traceback.format_exc())
-            # Verificar si hay problemas de permisos de acceso a userdata
-            from core.filetools import file_info, listdir, dirname
-            logger.error("Error al leer guisettings.xml: %s, ### Folder-info: %s, ### File-info: %s" % \
-                         (inpath, file_info(dirname(inpath)), listdir(dirname(inpath), file_inf=True)))
-        except:
-            pass
-
+        result = {}
+        if "result" in response and not "error" in response:
+            response = response["result"]
+            for setting in response.get("settings", []):
+                setting_id = setting["id"]
+                result[setting_id] = get_kodi_setting(setting_id)
     else:
-        try:
-            if "'@version': '2'" in str(xml) or "u'@version', u'2'" in str(xml):
-                for setting in xml['settings']['setting']:
-                    ret[setting['@id']] = get_setting_values(setting['@id'], setting.get('#text', ''), decode_var_=False)
-                    if setting['@id'] == name and not total:
-                        return ret[setting['@id']]
-            else:
-                # Kodi <= 17
-                sub_setting = name.split('.')[0]
-                name_setting = name.split('.')[1]
-                for setting in xml['settings'][sub_setting].items():
-                    value = decode_var(setting)
-                    key = '%s.%s' % (sub_setting, value[0])
-                    if isinstance(value[1], dict):
-                        ret[key] = get_setting_values(name_setting, value[1].get('#text', ''), decode_var_=False)
-                    else:
-                        ret[key] = get_setting_values(name_setting, value[1], decode_var_=False)
-                    if value[0] == name_setting and not total:
-                        return ret[key]
+        request["method"] = "Settings.GetSettingValue"
+        request["params"] = {"setting": name}
+        response = json.loads(xbmc.executeJSONRPC(json.dumps(request)))
 
-        except:
-            from platformcode import logger
-            logger.error(traceback.format_exc())
-            # Verificar si hay problemas de permisos de acceso a userdata
-            logger.error("Error al leer Guisettings.xml: %s; XML: %s" % (inpath, str(xml)))
+        if "result" in response and not "error" in response:
+            response = response["result"]
+            result = response["value"]
+        else:
+            result = None
 
-    if not total:
-        return None
-    else:
-        return ret
+    return result
 
 
 def get_localized_string(code):
@@ -1023,173 +794,6 @@ def verify_directories_created():
 
 
 def verify_settings_integrity():
-    return True # desactivado hasta posterior revisión
-    # Comprobando la integridad de la estructura de Settings.xml
-    
-    try:
-        from platformcode import logger, platformtools
-        
-        inpath = os.path.join(get_data_path(), "settings.xml")
-        outpath = os.path.join(get_data_path(), "settings_bak.json")
-
-        # Leemos el settings.xml
-        try:
-            with open(inpath, "rb") as infile:
-                data = infile.read()
-                if not PY3:
-                    data = data.encode("utf-8", "ignore")
-                elif PY3 and isinstance(data, (bytes, bytearray)):
-                    data = "".join(chr(x) for x in data)
-        except:
-            data = ''
-        
-        if data:
-            try:
-                import xmltodict
-                if xmltodict.parse(data):
-                    # Si ya existe el settings_bak.json de una pasada anterior, lo restauramos
-                    if os.path.exists(outpath):
-                        return verify_settings_integrity_json(outpath)
-                    logger.info('ALFA Settings.xml CORRECTO', force=True)
-                    return True
-                raise
-            except:
-                pass
-
-        # Si ya existe el settings_bak.json de una pasada anterior, lo restauramos
-        if not data and os.path.exists(outpath):
-            return verify_settings_integrity_json(outpath)
-        
-        # Corrupción en Settings.xml: limpiamos y cancelamos la caché
-        logger.error('CORRUPCIÓN en ALFA Settings.xml, regenerando: %s' % str(data))
-        
-        # Limpiamos la caché
-        try:
-            alfa_caching = False
-            alfa_settings = {}
-            window.setProperty("alfa_caching", '')
-            window.setProperty("alfa_settings", json.dumps(alfa_settings))
-        except:
-            pass
-        
-        # Borramos el archivo Settings.xml de Alfa
-        try:
-            if os.path.exists(inpath):
-                os.remove(inpath)
-            if os.path.exists(outpath):
-                os.remove(outpath)
-        except:
-            logger.error(traceback.format_exc())
-            # Pedimos al usuario que reinstale Alfa
-            
-            platformtools.dialog_notification('Corrupción del archivo de Ajustes de Alfa', 
-                                              'No podemos repararlo.  Desinstale Alfa por completo y reintálelo de nuevo', time=10000)
-            return False
-        
-        # Salvamos para el nuevo settings.xml todas la estiquetas accesibles del anterior settings.xml corrupto
-        try:
-            matches = re.compile('<setting\s*id="([^"]*)"\s*value="([^"]*)"', re.DOTALL).findall(data)
-            if not matches:
-                matches = re.compile('<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/', re.DOTALL).findall(data)
-        except:
-            matches = []
-            logger.error(traceback.format_exc())
-        ret = {}
-        for _id, value in matches:
-            ret[_id] = decode_var(value)
-        try:
-            ret['xml_repaired'] = str(int(ret['xml_repaired']) + 1)
-        except:
-            ret['xml_repaired'] = '1'
-        try:
-            data = json.dumps(ret)
-            with open(outpath, "wb") as outfile:
-                if PY3 and isinstance(data, str):
-                    data = bytes(list(ord(x) for x in data))
-                outfile.write(data)
-        except:
-            logger.error(traceback.format_exc())
-            try:
-                if os.path.exists(outpath):
-                    os.remove(outpath)
-            except:
-                pass
-            
-            # Pedimos al usuario que revise los settings actuales
-            platformtools.dialog_notification('Corrupción del archivo de Ajustes de Alfa', 
-                                              'Introduzca de nuevo los ajustes de Alfa y reinicie Kodi', time=10000)
-            time.sleep(1)
-            __settings__.openSettings()
-    except:
-        logger.error(traceback.format_exc())
-    
-    return False
-
-
-def verify_settings_integrity_json(outpath=None):
-    # Migramos al nuevo settings.xml todas la estiquetas accesibles del anterior settings.xml corrupto
-    global alfa_caching, alfa_settings
-    
-    try:
-        from platformcode import logger, platformtools
-
-        inpath = os.path.join(get_data_path(), "settings.xml")
-        if not outpath:
-            outpath = os.path.join(get_data_path(), "settings_bak.json")
-        logger.info(outpath, force=True)
-        if not os.path.exists(inpath):
-            # Provocamos que Kodi genere el default settings.xml
-            __settings__.setSetting('show_once', 'false')
-            time.sleep(1)
-            if not os.path.exists(inpath):
-                logger.error('Falta settings.xml')
-                return False
-        if not os.path.exists(outpath):
-            logger.error('Falta settings_bak.json')
-            return False
-        
-        # Leemos el settings_bak.json
-        try:
-            with open(outpath, "rb") as outfile:
-                data = outfile.read()
-                if not PY3:
-                    data = data.encode("utf-8", "ignore")
-                elif PY3 and isinstance(data, (bytes, bytearray)):
-                    data = "".join(chr(x) for x in data)
-            ret = json.loads(data)
-        except:
-            ret = {}
-            logger.error(traceback.format_exc())
-        try:
-            os.remove(outpath)
-        except:
-            logger.error(traceback.format_exc())
-
-        # Actualizamos el settings.xml por defecto con los parámetros anteriores accesibles
-        for _id, value in list(ret.items()):
-            try:
-                __settings__.setSetting(_id, str(value))
-                logger.info('Recuperando "%s": "%s"' % (_id, str(value)), force=True)
-            except:
-                logger.error('Parámetro no rescatado "%s": "%s"' % (_id, str(value)))
-        
-        # Limpiamos la caché
-        try:
-            alfa_caching = False
-            alfa_settings = {}
-            window.setProperty("alfa_caching", '')
-            window.setProperty("alfa_settings", json.dumps(alfa_settings))
-        except:
-            pass
-        
-        # Pedimos al usuario que revise los settings actuales
-        platformtools.dialog_notification('Corrupción del archivo de Ajustes de Alfa', 
-                                          'Verifique los ajustes de Alfa y reinicie Kodi', time=10000)
-        time.sleep(1)
-        __settings__.openSettings()
-    except:
-        logger.error(traceback.format_exc())
-    
     return True
 
 
@@ -1240,12 +844,10 @@ def get_xml_content(xml_file, content='', retry=False):
 
 def importer(module):
     try:
-        # from core import scrapertools, filetools
         from core import filetools
         path = os.path.join(xbmcaddon.Addon(module).getAddonInfo("path"))
         ad = filetools.read(filetools.join(path, "addon.xml"), silent=True)
         if ad:
-            # lib_path = scrapertools.find_single_match(ad, 'library="([^"]+)"')
             lib_path = re.search('library="([^"]+)"', ad).group(1)
             sys.path.append(os.path.join(path, lib_path))
     except:

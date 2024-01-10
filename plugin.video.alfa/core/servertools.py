@@ -28,26 +28,14 @@ import traceback
 from core import filetools
 from core import httptools
 from core import jsontools
+from core import scrapertools
 from core.item import Item
-from platformcode import config, logger
+from platformcode import config, logger, platformtools
 
 IGNORE_NULL_LABELS = []
 dict_servers_parameters = {}
 proxy_channel_bloqued = {}
 patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?([\w|\-\d]+\.(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+\.?)?(?:[\w|\-\d]+))(?:\/|\?|$)'
-
-""" CACHING SERVERS PARAMETERS """
-alfa_caching = False
-alfa_servers = {}
-alfa_servers_jsons = {}
-kodi = True
-try:
-    import xbmcgui
-    import json
-    window = xbmcgui.Window(10000)                                              # Home
-except:
-    kodi = False
-DEBUG = config.DEBUG_JSON
 
 
 def find_video_items(item=None, data=None):
@@ -65,8 +53,6 @@ def find_video_items(item=None, data=None):
     @rtype: list
     """
     logger.info()
-    from core import httptools
-    
     itemlist = []
 
     # Descarga la página
@@ -187,8 +173,7 @@ def findvideos(data, skip=False):
             break
     if config.get_setting("filter_servers") == False:  is_filter_servers = False
     if not devuelve and is_filter_servers:
-        from platformcode.platformtools import dialog_ok
-        dialog_ok(config.get_localized_string(60000), config.get_localized_string(60001))
+        platformtools.dialog_ok(config.get_localized_string(60000), config.get_localized_string(60001))
 
     return devuelve
 
@@ -233,7 +218,6 @@ def get_server_from_url(url):
 def parse_hls(video_urls, server):
     logger.info()
     from core import scrapertools
-    from core import httptools
 
     hs = ''
     new_video_urls = list()
@@ -288,7 +272,6 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
     @rtype: list
     """
     logger.info("Server: %s, Url: %s" % (server, url))
-    from core import httptools
 
     server = server.lower()
 
@@ -500,7 +483,7 @@ def is_server_enabled(server, domain=''):
         if domain in proxy_channel_bloqued:
             logger.info('Server en PROXY: %s, Dominio: %s' % (server, domain), force=True)
             return False
-            
+
     if server_parameters.get("active", False) == True:
         if not config.get_setting("hidepremium"):
             return True
@@ -564,38 +547,16 @@ def get_server_parameters(server):
     return dict_servers_parameters[server]
 
 
-def get_server_json(server_name, debug=DEBUG):
+def get_server_json(server_name):
     # logger.info("server_name=" + server_name)
-    global alfa_caching, alfa_servers_jsons
-    
-    server_json = {}
-    
     try:
-        if kodi:
-            alfa_caching = bool(window.getProperty("alfa_caching"))
-            if alfa_caching:
-                try:
-                    if not alfa_servers_jsons: alfa_servers_jsons = json.loads(window.getProperty("alfa_servers_jsons"))
-                    server_json = alfa_servers_jsons.get(server_name, {}).copy()
-                    if debug and server_json: logger.error('READ Cached SERVER_JSON: %s %s' % (server_name.upper(), server_json))
-                except:
-                    server_json = {}
-                    logger.error(traceback.format_exc())
-        
-        if not server_json:
-            server_path = filetools.join(config.get_runtime_path(), "servers", server_name + ".json")
-            if not filetools.exists(server_path):
-                server_path = filetools.join(config.get_runtime_path(), "servers", "debriders", server_name + ".json")
+        server_path = filetools.join(config.get_runtime_path(), "servers", server_name + ".json")
+        if not filetools.exists(server_path):
+            server_path = filetools.join(config.get_runtime_path(), "servers", "debriders", server_name + ".json")
 
-            # logger.info("server_path=" + server_path)
-            server_json = jsontools.load(filetools.read(server_path))
-            if debug or not server_json: logger.error('READ File (Cache: %s) SERVER_JSON: %s: %s' \
-                                                       % (str(alfa_caching).upper(), server_name.upper(),  server_json))
-            # logger.info("server_json= %s" % server_json)
-            if kodi and alfa_caching:
-                alfa_servers_jsons.update({server_name: server_json.copy()})
-                window.setProperty("alfa_servers_jsons", json.dumps(alfa_servers_jsons))
-                if debug: logger.error('SAVE Cached SERVER_JSON: %s: %s' % (server_name.upper(), server_json))
+        # logger.info("server_path=" + server_path)
+        server_json = jsontools.load(filetools.read(server_path))
+        # logger.info("server_json= %s" % server_json)
 
     except Exception as ex:
         template = "An exception of type %s occured. Arguments:\n%r"
@@ -625,8 +586,7 @@ def get_server_controls_settings(server_name):
     return list_controls, dict_settings
 
 
-def get_server_setting(name, server, default=None, caching_var=True, debug=DEBUG):
-    global alfa_caching, alfa_servers
+def get_server_setting(name, server, default=None):
     """
         Retorna el valor de configuracion del parametro solicitado.
 
@@ -648,19 +608,7 @@ def get_server_setting(name, server, default=None, caching_var=True, debug=DEBUG
         @return: El valor del parametro 'name'
         @rtype: any
 
-    """
-    module = ''
-    if debug:
-        import inspect
-        module = inspect.getmodule(inspect.currentframe().f_back.f_back)
-        if module == None:
-            module = "None"
-        else:
-            module = module.__name__
-        function = inspect.currentframe().f_back.f_back.f_code.co_name
-        if '<module>' in function: function = 'mainlist'
-        module = ' [%s.%s]' % (module, function)
-    
+        """
     # Creamos la carpeta si no existe
     if not filetools.exists(filetools.join(config.get_data_path(), "settings_servers")):
         filetools.mkdir(filetools.join(config.get_data_path(), "settings_servers"))
@@ -668,48 +616,14 @@ def get_server_setting(name, server, default=None, caching_var=True, debug=DEBUG
     file_settings = filetools.join(config.get_data_path(), "settings_servers", server + "_data.json")
     dict_settings = {}
     dict_file = {}
-
-    if isinstance(caching_var, str):
-        # Borrado de cache de un servidor y borrado de .json
-        if caching_var in ['reset', 'delete']:
-            if kodi:
-                alfa_servers = json.loads(window.getProperty("alfa_servers"))
-                if server in alfa_servers.keys():
-                    if debug: logger.error('RESET Cached SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
-                    del alfa_servers[server]
-                    window.setProperty("alfa_servers", json.dumps(alfa_servers))
-            if caching_var in ['delete']:
-                if debug: logger.error('DELETE Server JSON: %s%s' % (server.upper(), module))
-                filetools.remove(file_settings, silent=True)
-            caching_var = False
-
-    if kodi and caching_var:
-        alfa_caching = bool(window.getProperty("alfa_caching"))
-        if not alfa_servers: alfa_servers = json.loads(window.getProperty("alfa_servers"))
-        dict_file = alfa_servers.get(server, {}).copy()
-        if debug and dict_file: logger.error('READ Cached SERVER: %s%s, NAME: %s: %s:' % (server.upper(), module, str(name).upper(), dict_file))
-    if alfa_caching and caching_var and dict_file:
-        dict_settings = alfa_servers[server].get('settings', {}).copy()
-        if dict_settings.get(name, ''):
-            dict_settings[name] = config.decode_var(dict_settings[name])
-            #logger.error('%s, %s: A: %s - D: %s' % (name, server, [alfa_servers[server][name]], [config.decode_var(dict_settings[name])]))
-    
-    if not dict_file and filetools.exists(file_settings):
-        # Obtenemos configuracion guardada de ../settings/server_data.json
+    if filetools.exists(file_settings):
+        # Obtenemos configuracion guardada de ../settings/channel_data.json
         try:
             dict_file = jsontools.load(filetools.read(file_settings))
-            if debug or not dict_file: logger.error('READ File (Cache: %s) SERVER: %s%s, NAME: %s: %s:' \
-                                                     % (str(caching_var and alfa_caching).upper(), server.upper(), 
-                                                        module, str(name).upper(), dict_file))
             if isinstance(dict_file, dict) and 'settings' in dict_file:
                 dict_settings = dict_file['settings']
-                if alfa_caching:
-                    alfa_servers.update({server: dict_file.copy()})
-                    if debug: logger.error('SAVE Cached SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
-                    window.setProperty("alfa_servers", json.dumps(alfa_servers))
         except EnvironmentError:
-            logger.error("ERROR al leer el archivo: %s, parámetro: %s" % (file_settings, name))
-            logger.error(filetools.file_info(file_settings))
+            logger.info("ERROR al leer el archivo: %s" % file_settings)
 
     if not dict_settings or name not in dict_settings:
         # Obtenemos controles del archivo ../servers/server.json
@@ -717,108 +631,46 @@ def get_server_setting(name, server, default=None, caching_var=True, debug=DEBUG
             list_controls, default_settings = get_server_controls_settings(server)
         except:
             default_settings = {}
-        #if name in default_settings:  # Si el parametro existe en el server.json creamos el server_data.json
-        default_settings.update(dict_settings)
-        dict_settings = default_settings.copy()
-        if name not in dict_settings:
-            dict_settings[name] = default
-        dict_file['settings'] = dict_settings.copy()
-        
-        if alfa_caching:
-            alfa_servers.update({server: dict_file.copy()})
-            if debug: logger.error('SAVE Cached from Default SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
-            window.setProperty("alfa_servers", json.dumps(alfa_servers))
-        dict_file['settings'] = dict_settings
-        
-        # Creamos el archivo ../settings/cserver_data.json
-        if name not in IGNORE_NULL_LABELS or (name in IGNORE_NULL_LABELS and dict_settings[name] != None):
-            for label in IGNORE_NULL_LABELS:
-                if label in dict_file['settings'] and dict_file['settings'][label] == None: del dict_file['settings'][label]
-            json_data = jsontools.dump(dict_file)
-            if debug: logger.error('WRITE File SERVER: %s%s: %s:' % (server.upper(), module, json_data))
-            if not filetools.write(file_settings, json_data, silent=True):
-                logger.error("ERROR al salvar el parámetro: %s en el archivo: %s" % (name, file_settings))
-                logger.error(filetools.file_info(file_settings))
+        if name in default_settings:  # Si el parametro existe en el server.json creamos el server_data.json
+            default_settings.update(dict_settings)
+            dict_settings = default_settings
+            dict_file['settings'] = dict_settings
+            # Creamos el archivo ../settings/channel_data.json
+            if not filetools.write(file_settings, jsontools.dump(dict_file)):
+                logger.info("ERROR al salvar el archivo: %s" % file_settings)
 
     # Devolvemos el valor del parametro local 'name' si existe, si no se devuelve default
     return dict_settings.get(name, default)
 
 
-def set_server_setting(name, value, server, retry=False, debug=DEBUG):
-    global alfa_caching, alfa_servers
-    
-    module = ''
-    if debug:
-        import inspect
-        module = inspect.getmodule(inspect.currentframe().f_back.f_back)
-        if module == None:
-            module = "None"
-        else:
-            module = module.__name__
-        function = inspect.currentframe().f_back.f_back.f_code.co_name
-        module = ' [%s.%s]' % (module, function)
-    
+def set_server_setting(name, value, server):
     # Creamos la carpeta si no existe
     if not filetools.exists(filetools.join(config.get_data_path(), "settings_servers")):
         filetools.mkdir(filetools.join(config.get_data_path(), "settings_servers"))
 
     file_settings = filetools.join(config.get_data_path(), "settings_servers", server + "_data.json")
     dict_settings = {}
-    dict_file = {}
+    dict_file = None
 
-    if kodi:
-        alfa_caching = bool(window.getProperty("alfa_caching"))
-    if alfa_caching:
-        if not alfa_servers: alfa_servers = json.loads(window.getProperty("alfa_servers"))
-        dict_file = alfa_servers.get(server, {}).copy()
-        if dict_file:
-            dict_settings = alfa_servers[server].get('settings', {}).copy()
-            if debug: logger.error('READ Cached SERVER: %s%s, NAME: %s: %s:' % (server.upper(), module, str(name).upper(), dict_file))
-
-    if not dict_file and filetools.exists(file_settings):
-        # Obtenemos configuracion guardada de ../settings/server_data.json
+    if filetools.exists(file_settings):
+        # Obtenemos configuracion guardada de ../settings/channel_data.json
         try:
             dict_file = jsontools.load(filetools.read(file_settings))
-            if debug or not dict_file: logger.error('READ File (Cache: %s) SERVER: %s%s, NAME: %s: %s:' \
-                                                     % (str(alfa_caching).upper(), server.upper(), module, str(name).upper(), dict_file))
-            if dict_file: dict_settings = dict_file.get('settings', {})
+            dict_settings = dict_file.get('settings', {})
         except EnvironmentError:
-            logger.error("ERROR al leer el archivo: %s, parámetro: %s" % (file_settings, name))
-            logger.error(filetools.file_info(file_settings))
+            logger.info("ERROR al leer el archivo: %s" % file_settings)
 
-    if 'settings' in dict_file and isinstance(dict_file, dict):
-        for label in IGNORE_NULL_LABELS:
-            if label in dict_settings and dict_settings[label] == None: del dict_settings[label]
-        dict_settings[name] = value
-        dict_file['settings'] = dict_settings.copy()
-    else:
-        get_server_setting(name, server, caching_var=False, debug=debug)
-        if not retry: return set_server_setting(name, value, server, retry=True, debug=debug)
-
-    if alfa_caching:
-        alfa_caching = bool(window.getProperty("alfa_caching"))
-        if alfa_caching:
-            alfa_servers.update({server: dict_file.copy()})
-            if debug: logger.error('SAVE Cached SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers[server]))
-            window.setProperty("alfa_servers", json.dumps(alfa_servers))
-        else:
-            alfa_servers = {}
-            if debug: logger.error('DROP Cached SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers))
-            window.setProperty("alfa_servers", json.dumps(alfa_servers))
+    dict_settings[name] = value
 
     # comprobamos si existe dict_file y es un diccionario, sino lo creamos
-    if not dict_file:
+    if dict_file is None or not dict_file:
         dict_file = {}
 
+    dict_file['settings'] = dict_settings
+
     # Creamos el archivo ../settings/server_data.json
-    json_data = jsontools.dump(dict_file)
-    if debug: logger.error('WRITE File SERVER: %s%s: %s:' % (server.upper(), module, json_data))
-    if not filetools.write(file_settings, json_data, silent=True):
-        logger.error("ERROR al salvar el parámetro: %s en el archivo: %s" % (name, file_settings))
-        logger.error(filetools.file_info(file_settings))
-        alfa_servers = {}
-        if debug: logger.error('DROP Cached SERVER: %s%s: %s:' % (server.upper(), module, alfa_servers))
-        window.setProperty("alfa_servers", json.dumps(alfa_servers))
+    if not filetools.write(file_settings, jsontools.dump(dict_file)):
+        logger.info("ERROR al salvar el archivo: %s" % file_settings)
         return None
 
     return value
@@ -888,9 +740,6 @@ def filter_servers(servers_list):
     u objetos Item. En cuyo caso es necesario q tengan un atributo item.server del tipo str.
     :return: Lista del mismo tipo de objetos que servers_list filtrada en funcion de la Lista Negra.
     """
-    from platformcode.platformtools import dialog_yesno
-    from core.scrapertools import find_single_match
-
     #Eliminamos los inactivos
     if servers_list:
         #servers_list = [i for i in servers_list if not i.server or is_server_enabled(i.server, url=domain)]
@@ -899,7 +748,7 @@ def filter_servers(servers_list):
         for i in servers_list:
             if i.server:
                 channel = i.contentChannel if i.contentChannel and i.contentChannel not in ['list', 'videolibrary'] else i.channel
-                domain = find_single_match(i.url, patron_domain)
+                domain = scrapertools.find_single_match(i.url, patron_domain)
                 if domain and domain in config.get_setting('current_host', channel=channel, default=''): domain = ''
                 if not is_server_enabled(i.server, domain=domain): continue
             servers_list_alt.append(i)
@@ -912,9 +761,9 @@ def filter_servers(servers_list):
             servers_list_filter = [x for x in servers_list if not config.get_setting("black_list", server=x)]
 
         # Si no hay enlaces despues de filtrarlos
-        if servers_list_filter or not dialog_yesno(config.get_localized_string(60000),
-                                                   config.get_localized_string(60010),
-                                                   config.get_localized_string(70281)):
+        if servers_list_filter or not platformtools.dialog_yesno(config.get_localized_string(60000),
+                                                                 config.get_localized_string(60010),
+                                                                 config.get_localized_string(70281)):
             servers_list = servers_list_filter
     
     if config.get_setting("favorites_servers") == True:
@@ -948,8 +797,6 @@ def check_video_link(url, server, timeout=3):
     :param url, server: Link y servidor
     :return: str(2) '??':No se ha podido comprobar. 'Ok':Parece que el link funciona. 'NO':Parece que no funciona.
     """
-    from core import httptools
-    
     try:
         server_module = __import__('servers.%s' % server, None, None, ["servers.%s" % server])
     except:
@@ -971,6 +818,7 @@ def check_video_link(url, server, timeout=3):
         except:
             logger.info("[check_video_link] No se puede comprobar ahora! %s %s" % (server, url))
             resultado = "??"
+            import traceback
             logger.error(traceback.format_exc())
 
         finally:
