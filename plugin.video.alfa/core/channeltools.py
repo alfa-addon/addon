@@ -4,9 +4,6 @@
 # ------------------------------------------------------------
 
 from __future__ import absolute_import
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 from . import jsontools
 from core.item import Item
@@ -15,18 +12,6 @@ from platformcode import config, logger
 DEFAULT_UPDATE_URL = "/channels/"
 IGNORE_NULL_LABELS = ['enabled', 'auto_download_new', 'emergency_urls']
 dict_channels_parameters = dict()
-
-""" CACHING CHANNELS PARAMETERS """
-alfa_caching = False
-alfa_channels = {}
-kodi = True
-try:
-    import xbmcgui
-    import json
-    window = xbmcgui.Window(10000)                                              # Home
-except:
-    kodi = False
-DEBUG = config.DEBUG_JSON
 
 
 def has_attr(channel_name, attr):
@@ -52,7 +37,7 @@ def has_attr(channel_name, attr):
             channel = __import__('channels.%s' % channel_name, None, None, ["channels.%s" % channel_name])
             if hasattr(channel, attr):
                 existe = True
-        except:
+        except Exception:
             pass
     else:
         return None
@@ -113,12 +98,8 @@ def is_adult(channel_name):
 
 
 def is_enabled(channel_name):
-    
-    retn = get_channel_parameters(channel_name)["active"] and (get_channel_setting("enabled", channel=channel_name, default=True) \
-                                                          or ("enabled" in IGNORE_NULL_LABELS and get_channel_setting("enabled", 
-                                                          channel=channel_name) == None))
-    logger.info("channel_name=%s: %s" % (channel_name, retn))
-    return retn
+    logger.info("channel_name=" + channel_name)
+    return get_channel_parameters(channel_name)["active"] and get_channel_setting("enabled", channel=channel_name, default=True)
 
 
 def get_channel_parameters(channel_name, settings=False):
@@ -229,8 +210,7 @@ def get_channel_controls_settings(channel_name):
     return list_controls, dict_settings
 
 
-def get_channel_setting(name, channel, default=None, caching_var=True, debug=DEBUG):
-    global alfa_caching, alfa_channels
+def get_channel_setting(name, channel, default=None):
     from . import filetools
     """
     Retorna el valor de configuracion del parametro solicitado.
@@ -254,60 +234,16 @@ def get_channel_setting(name, channel, default=None, caching_var=True, debug=DEB
     @rtype: any
 
     """
-    module = ''
-    if debug:
-        import inspect
-        module = inspect.getmodule(inspect.currentframe().f_back.f_back)
-        if module == None:
-            module = "None"
-        else:
-            module = module.__name__
-        function = inspect.currentframe().f_back.f_back.f_code.co_name
-        if '<module>' in function: function = 'mainlist'
-        module = ' [%s.%s]' % (module, function)
-    
     file_settings = filetools.join(config.get_data_path(), "settings_channels", channel + "_data.json")
     dict_settings = {}
     dict_file = {}
-
-    if isinstance(caching_var, str):
-        # Borrado de cache de un canal y borrado de .json
-        if caching_var in ['reset', 'delete']:
-            if kodi:
-                alfa_channels = json.loads(window.getProperty("alfa_channels"))
-                if channel in alfa_channels.keys():
-                    if debug: logger.error('RESET Cached CHANNEL: %s%s: %s:' % (channel.upper(), module, alfa_channels[channel]))
-                    del alfa_channels[channel]
-                    window.setProperty("alfa_channels", json.dumps(alfa_channels))
-            if caching_var in ['delete']:
-                if debug: logger.error('DELETE Channel JSON: %s%s' % (channel.upper(), module))
-                filetools.remove(file_settings, silent=True)
-            caching_var = False
     
-    if kodi and caching_var:
-        alfa_caching = bool(window.getProperty("alfa_caching"))
-        if not alfa_channels: alfa_channels = json.loads(window.getProperty("alfa_channels"))
-        dict_file = alfa_channels.get(channel, {}).copy()
-        if debug and dict_file: logger.error('READ Cached CHANNEL: %s%s, NAME: %s: %s:' % (channel.upper(), module, str(name).upper(), dict_file))
-    if alfa_caching and caching_var and dict_file:
-        dict_settings = alfa_channels[channel].get('settings', {}).copy()
-        if dict_settings.get(name, ''):
-            dict_settings[name] = config.decode_var(dict_settings[name])
-            #logger.error('%s, %s: A: %s - D: %s' % (name, channel, [alfa_channels[channel][name]], [config.decode_var(dict_settings[name])]))
-
-    if not dict_file and filetools.exists(file_settings):
+    if filetools.exists(file_settings):
         # Obtenemos configuracion guardada de ../settings/channel_data.json
         try:
             dict_file = jsontools.load(filetools.read(file_settings))
-            if debug or not dict_file: logger.error('READ File (Cache: %s) CHANNEL: %s%s, NAME: %s: %s:' \
-                                                     % (str(caching_var and alfa_caching).upper(), channel.upper(), 
-                                                        module, str(name).upper(), dict_file))
             if isinstance(dict_file, dict) and 'settings' in dict_file:
                 dict_settings = dict_file['settings']
-                if alfa_caching:
-                    alfa_channels.update({channel: dict_file.copy()})
-                    if debug: logger.error('SAVE Cached CHANNEL: %s%s: %s:' % (channel.upper(), module, alfa_channels[channel]))
-                    window.setProperty("alfa_channels", json.dumps(alfa_channels))
         except EnvironmentError:
             logger.error("ERROR al leer el archivo: %s, parámetro: %s" % (file_settings, name))
             logger.error(filetools.file_info(file_settings))
@@ -316,28 +252,15 @@ def get_channel_setting(name, channel, default=None, caching_var=True, debug=DEB
         # Obtenemos controles del archivo ../channels/channel.json
         try:
             list_controls, default_settings = get_channel_controls_settings(channel)
-        except:
+        except Exception:
             default_settings = {}
 
-        if debug: logger.error('READ Name CHANNEL: %s%s, NAME: %s:' % (channel.upper(), module, str(name).upper()))
-        #if name in default_settings or not dict_settings:           # Si el parametro existe en el channel.json creamos el channel_data.json
-        default_settings.update(dict_settings)
-        dict_settings = default_settings.copy()
-        if name not in dict_settings:
-            dict_settings[name] = default
-        dict_file['settings'] = dict_settings.copy()
-        
-        if alfa_caching:
-            alfa_channels.update({channel: dict_file.copy()})
-            if debug: logger.error('SAVE Cached from Default CHANNEL: %s%s: %s:' % (channel.upper(), module, alfa_channels[channel]))
-            window.setProperty("alfa_channels", json.dumps(alfa_channels))
-
-        # Creamos el archivo ../settings/channel_data.json
-        if name not in IGNORE_NULL_LABELS or (name in IGNORE_NULL_LABELS and dict_settings[name] != None):
-            for label in IGNORE_NULL_LABELS:
-                if label in dict_file['settings'] and dict_file['settings'][label] == None: del dict_file['settings'][label]
+        if name in default_settings:  # Si el parametro existe en el channel.json creamos el channel_data.json
+            default_settings.update(dict_settings)
+            dict_settings = default_settings
+            dict_file['settings'] = dict_settings
+            # Creamos el archivo ../settings/channel_data.json
             json_data = jsontools.dump(dict_file)
-            if debug: logger.error('WRITE File CHANNEL: %s%s: %s:' % (channel.upper(), module, json_data))
             if not filetools.write(file_settings, json_data, silent=True):
                 logger.error("ERROR al salvar el parámetro: %s en el archivo: %s" % (name, file_settings))
                 logger.error(filetools.file_info(file_settings))
@@ -346,8 +269,7 @@ def get_channel_setting(name, channel, default=None, caching_var=True, debug=DEB
     return dict_settings.get(name, default)
 
 
-def set_channel_setting(name, value, channel, retry=False, debug=DEBUG):
-    global alfa_caching, alfa_channels
+def set_channel_setting(name, value, channel):
     from . import filetools
     """
     Fija el valor de configuracion del parametro indicado.
@@ -370,78 +292,37 @@ def set_channel_setting(name, value, channel, retry=False, debug=DEBUG):
     @rtype: str, None
 
     """
-    module = ''
-    if debug:
-        import inspect
-        module = inspect.getmodule(inspect.currentframe().f_back.f_back)
-        if module == None:
-            module = "None"
-        else:
-            module = module.__name__
-        function = inspect.currentframe().f_back.f_back.f_code.co_name
-        module = ' [%s.%s]' % (module, function)
-    
     # Creamos la carpeta si no existe
     if not filetools.exists(filetools.join(config.get_data_path(), "settings_channels")):
         filetools.mkdir(filetools.join(config.get_data_path(), "settings_channels"))
 
     file_settings = filetools.join(config.get_data_path(), "settings_channels", channel + "_data.json")
     dict_settings = {}
-    dict_file = {}
 
-    if kodi:
-        alfa_caching = bool(window.getProperty("alfa_caching"))
-    if alfa_caching:
-        if not alfa_channels: alfa_channels = json.loads(window.getProperty("alfa_channels"))
-        dict_file = alfa_channels.get(channel, {}).copy()
-        if dict_file:
-            dict_settings = alfa_channels[channel].get('settings', {}).copy()
-            if debug: logger.error('READ Cached CHANNEL: %s%s, NAME: %s: %s:' % (channel.upper(), module, str(name).upper(), dict_file))
-    
-    if not dict_file and filetools.exists(file_settings):
+    dict_file = None
+
+    if filetools.exists(file_settings):
         # Obtenemos configuracion guardada de ../settings/channel_data.json
         try:
             dict_file = jsontools.load(filetools.read(file_settings))
-            if debug or not dict_file: logger.error('READ File (Cache: %s) CHANNEL: %s%s, NAME: %s: %s:' \
-                                                     % (str(alfa_caching).upper(), channel.upper(), module, str(name).upper(), dict_file))
-            if dict_file: dict_settings = dict_file.get('settings', {})
+            dict_settings = dict_file.get('settings', {})
         except EnvironmentError:
             logger.error("ERROR al leer el archivo: %s, parámetro: %s" % (file_settings, name))
             logger.error(filetools.file_info(file_settings))
 
-    if 'settings' in dict_file and isinstance(dict_file, dict):
-        for label in IGNORE_NULL_LABELS:
-            if label in dict_settings and dict_settings[label] == None: del dict_settings[label]
-        dict_settings[name] = value
-        dict_file['settings'] = dict_settings.copy()
-    else:
-        get_channel_setting(name, channel, caching_var=False, debug=debug)
-        if not retry: return set_channel_setting(name, value, channel, retry=True, debug=debug)
+    dict_settings[name] = value
 
-    if alfa_caching:
-        alfa_caching = bool(window.getProperty("alfa_caching"))
-        if alfa_caching:
-            alfa_channels.update({channel: dict_file.copy()})
-            if debug: logger.error('SAVE Cached CHANNEL: %s%s: %s:' % (channel.upper(), module, alfa_channels[channel]))
-            window.setProperty("alfa_channels", json.dumps(alfa_channels))
-        else:
-            alfa_channels = {}
-            if debug: logger.error('DROP Cached CHANNEL: %s%s: %s:' % (channel.upper(), module, alfa_channels))
-            window.setProperty("alfa_channels", json.dumps(alfa_channels))
-
-    # comprobamos si existe dict_file, sino lo creamos
-    if not dict_file:
+    # comprobamos si existe dict_file y es un diccionario, sino lo creamos
+    if dict_file is None or not dict_file:
         dict_file = {}
+
+    dict_file['settings'] = dict_settings
 
     # Creamos el archivo ../settings/channel_data.json
     json_data = jsontools.dump(dict_file)
-    if debug: logger.error('WRITE File CHANNEL: %s%s: %s:' % (channel.upper(), module, json_data))
     if not filetools.write(file_settings, json_data, silent=True):
         logger.error("ERROR al salvar el parámetro: %s en el archivo: %s" % (name, file_settings))
         logger.error(filetools.file_info(file_settings))
-        alfa_channels = {}
-        if debug: logger.error('DROP Cached CHANNEL: %s%s: %s:' % (channel.upper(), module, alfa_channels))
-        window.setProperty("alfa_channels", json.dumps(alfa_channels))
         return None
 
     return value

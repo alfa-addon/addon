@@ -575,7 +575,6 @@ def check_update_to_others(verbose=False, app=True):
             if os.path.exists(os.path.join(out_folder, ALFA_DEPENDENCIES)):
                 os.remove(os.path.join(out_folder, ALFA_DEPENDENCIES))
 
-        config.verify_settings_integrity()
         from platformcode.custom_code import set_season_holidays
         set_season_holidays()
 
