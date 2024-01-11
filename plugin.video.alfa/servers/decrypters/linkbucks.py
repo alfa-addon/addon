@@ -11,7 +11,7 @@ if PY3:
 else:
     import urllib                                               # Usamos el nativo de PY2 que es más rápido
 
-from core import scrapertools
+from core import scrapertools, httptools
 from platformcode import logger
 
 
@@ -27,7 +27,7 @@ def get_long_url(short_url):
     url = "http://linkdecrypter.com/"
 
     # Parche porque python no parece reconocer bien la cabecera phpsessid
-    body, response_headers = scrapertools.read_body_and_headers(url, post=post, headers=request_headers)
+    body, response_headers = httptools.read_body_and_headers(url, post=post, headers=request_headers)
     location = ""
     n = 1
     while True:
@@ -38,7 +38,7 @@ def get_long_url(short_url):
                 cookie_value = scrapertools.scrapertools.find_single_match(value, '.*?\=(.*?)\;')
                 request_headers.append(["Cookie", cookie_name + "=" + cookie_value])
 
-        body, response_headers = scrapertools.read_body_and_headers(url, headers=request_headers)
+        body, response_headers = httptools.read_body_and_headers(url, headers=request_headers)
         logger.info("body=" + body)
 
         try:

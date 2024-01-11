@@ -49,7 +49,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         headers.append(['User-Agent',
                         'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; es-ES; rv:1.9.2.12) Gecko/20101026 Firefox/3.6.12'])
         headers.append(['Cookie', cookie])
-        filename = scrapertools.get_header_from_response(page_url, header_to_get="Content-Disposition")
+        filename = httptools.get_header_from_response(page_url, header_to_get="Content-Disposition")
         logger.info("filename=" + filename)
 
         # Construye la URL final para Kodi

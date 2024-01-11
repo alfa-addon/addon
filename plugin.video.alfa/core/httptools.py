@@ -141,6 +141,18 @@ except:
     logger.error(traceback.format_exc())
 
 
+def get_header_from_response(url, header_to_get="", post=None, headers=None):
+    header_to_get = header_to_get.lower()
+    response = downloadpage(url, post=post, headers=headers, only_headers=True)
+    return response.headers.get(header_to_get)
+
+
+def read_body_and_headers(url, post=None, headers=None, follow_redirects=False, timeout=None):
+    response = downloadpage(url, post=post, headers=headers, follow_redirects=follow_redirects,
+                                      timeout=timeout)
+    return response.data, response.headers
+
+
 def get_user_agent(quoted=False):
     # Devuelve el user agent global para ser utilizado cuando es necesario para la url.
     
