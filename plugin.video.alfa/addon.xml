@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon id="plugin.video.alfa" name="Alfa" version="3.9.18" provider-name="Alfa Addon">
+<addon id="plugin.video.alfa" name="Alfa" version="3.9.19" provider-name="Alfa Addon">
     <requires>
         <import addon="script.module.requests" />
         <import addon="script.module.beautifulsoup4" version="4.5.3" />
@@ -52,7 +52,10 @@
             [B]Arreglos[/B]
             ⦿ Don Torrent                            ⦿ Pelis Plus
             ⦿ PlayDede                               ⦿ Pelisflix: desactivado
-            ⦿ +18</news>
+            ⦿ +18
+            
+            Esta actualización de emergencia debería solucionar errores en Kodi 18
+        </news>
         <assets>
             <icon>resources/icon.png</icon>
             <fanart>resources/fanart.jpg</fanart>
