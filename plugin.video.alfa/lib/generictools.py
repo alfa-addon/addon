@@ -1863,6 +1863,7 @@ def AH_find_btdigg_list_all_from_channel_py(self, item, matches=[], matches_inde
                     elem_json['url'] = elem.a.get("href", "")
                     elem_json['title'] = elem.find('div', class_='card-body').find('h3', class_='title').get_text(strip=True)
                     elem_json['year'] = scrapertools.find_single_match(elem_json['title'], r'\((\d{4})\)') or '-'
+                    if elem_json['year'] in ['720', '1080', '2160']: elem_json['year'] = '-'
                     elem_json['thumbnail'] = elem.find('img').get("src", "")
                     if elem_json['thumbnail'].startswith('//'): elem_json['thumbnail'] = 'https:%s' % elem_json['thumbnail']
                     elem_json['quality'] = elem.find('div', class_='quality').get_text(strip=True)
@@ -1897,6 +1898,7 @@ def AH_find_btdigg_list_all_from_channel_py(self, item, matches=[], matches_inde
                     elem_json['url'] = self.urljoin(host_alt, elem.get('guid', ''))
                     elem_json['title'] = scrapertools.find_single_match(elem.get('torrentName', ''), r'(.*?)\[').strip()
                     elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem_json['title']), '.+?'+patron_year) or '-'
+                    if elem_json['year'] in ['720', '1080', '2160']: elem_json['year'] = '-'
                     elem_json['thumbnail'] = self.urljoin(host_alt, elem.get('imagen', ''))
                     elem_json['quality'] = elem.get('calidad', '')
                     elem_json['quality'] = elem_json['quality'].replace('creeener', 'creener')\
@@ -2360,6 +2362,7 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
 
                         elem_json['title'] = elem.get('title', '').replace(btdigg_label_B, '')
                         elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem_json['title']), '.+?'+patron_year) or '-'
+                        if elem_json['year'] in ['720', '1080', '2160']: elem_json['year'] = '-'
                         if scrapertools.find_single_match(elem_json['title'], patron_title).strip():
                             elem_json['title'] = scrapertools.find_single_match(elem_json['title'], patron_title).strip()
                         elif scrapertools.find_single_match(elem_json['title'], patron_title_b).strip():
@@ -2780,6 +2783,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     if elem_show.get('season_search', ''): elem_json['season_search'] = elem_show['season_search']
                     elem_json['title'] = elem_show.get('title', '').replace(btdigg_label_B, '')
                     elem_json['year'] = scrapertools.find_single_match(re.sub(r'(?i)cap\.\d+', '', elem_json['title']), '.+?'+patron_year) or '-'
+                    if elem_json['year'] in ['720', '1080', '2160']: elem_json['year'] = '-'
                     if scrapertools.find_single_match(elem_json['title'], patron_title).strip():
                         elem_json['title'] = scrapertools.find_single_match(elem_json['title'], patron_title).strip()
                     elif scrapertools.find_single_match(elem_json['title'], patron_title_b).strip():
@@ -3072,9 +3076,9 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
 
     logger.debug('contentSeason: %s; season_high: %s; number_of_seasons: %s' \
                   % (contentSeason, season_high, item.infoLabels['number_of_seasons']))
-    if (item.infoLabels['number_of_seasons'] in season_high and contentSeason == 0) \
+    if (item.infoLabels.get('number_of_seasons', 0) in season_high and contentSeason == 0) \
                          or (contentSeason > 0 and contentSeason in season_high \
-                         and season_high[-1] >= item.infoLabels['number_of_seasons']):
+                         and season_high[-1] >= item.infoLabels.get('number_of_seasons', item.contentSeason or 99)):
         return matches
 
     try:
@@ -3381,7 +3385,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
         else: from lib.alfaresolver_py3 import find_alternative_link
 
         if BTDIGG_URL_SEARCH in item.url_tvshow and not item.library_playcounts and (epis_index.get(last_episode_to_air, []) \
-                                                                                     or item.contentSeason > item.infoLabels['number_of_seasons']):
+                                                or item.contentSeason > item.infoLabels.get('number_of_seasons', 99)):
             return matches
         if not channel_py_strict and not l_p_missing:
             sxe_max = '%sx%s' % (item.infoLabels['number_of_seasons'], str(episode_max).zfill(2))

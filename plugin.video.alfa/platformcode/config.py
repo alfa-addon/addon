@@ -225,6 +225,7 @@ def get_platform(full_version=False):
                '16': 'MyVideos99.db', '17': 'MyVideos107.db', '18': 'MyVideos116.db',
                '19': 'MyVideos119.db', '20': 'MyVideos121.db', '21': 'MyVideos122.db'}
 
+    from platformcode import logger
     if not __kodi_version__:
         num_version = xbmc.getInfoLabel('System.BuildVersion')
         num_version = re.match("\d+\.\d+", num_version).group(0)
@@ -237,9 +238,9 @@ def get_platform(full_version=False):
             __kodi_version__['platform'] = "kodi-" + __kodi_version__['name_version']
 
     if full_version:
-        return __kodi_version__
+        return __kodi_version__.copy()
     else:
-        return __kodi_version__['platform']
+        return __kodi_version__.copy()['platform']
 
 
 def is_xbmc():
