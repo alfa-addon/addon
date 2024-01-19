@@ -1,0 +1,40 @@
+{
+  "id": "pelispedia",
+  "name": "Pelispedia",
+  "active": true,
+  "adult": false,
+  "language": ["lat", "cast"],
+  "thumbnail": "https://i.postimg.cc/gk3r1SXF/PELISPEDIA1-0.png",
+  "banner": "",
+  "fanart": "",
+  "categories": [
+    "tvshow",
+    "movie",
+    "vos"
+  ],
+  "force_unify": true,
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": false,
+      "visible": false
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "CAST",
+        "LAT",
+        "VOSE"
+      ]
+    }
+  ]
+}

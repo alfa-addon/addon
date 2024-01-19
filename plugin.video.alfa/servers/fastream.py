@@ -3,6 +3,11 @@
 # Conector Fastream By Alfa Development Group
 # --------------------------------------------------------
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+import re
 from core import httptools, scrapertools
 from platformcode import config, logger
 from lib import jsunpack
@@ -53,6 +58,7 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
+    video_urls = []
     # logger.info("url1={}".format(page_url))
     # if '|' in page_url:
         # page_url, referer = page_url.split("|", 1)
@@ -61,13 +67,17 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
     unpacked = jsunpack.unpack(packed)
     data = scrapertools.find_single_match(unpacked, "(?is)sources.+?\[(.+?)\]")
-
-    video_urls = []
-    pattern = 'file:"([^"]+)"'
-    matches = scrapertools.find_multiple_matches(data, pattern)
-    for url in matches:
-        if 'referer' in locals():
-            url += "|Referer={}".format(referer)
-        logger.info(url)
-        video_urls.append(['.m3u8 [fastream]', url])
+    
+    m3u = scrapertools.find_single_match(data, 'file:"([^"]+)"')
+    data = httptools.downloadpage(m3u).data
+    if PY3 and isinstance(data, bytes): data = data.decode()
+    patron = 'RESOLUTION=\d+x(\d+),.*?'
+    patron += 'URI="([^"]+)"'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for quality,url in matches:
+        url = url.replace("iframes", "index")
+        url = urlparse.urljoin(m3u,url)
+        video_urls.append(['[fastream] .m3u8 %sp' %quality, url])
+    video_urls.sort(key=lambda item: int( re.sub("\D", "", item[0])))
+    
     return video_urls
