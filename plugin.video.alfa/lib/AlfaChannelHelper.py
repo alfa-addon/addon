@@ -107,6 +107,7 @@ class AlfaChannelHelper:
         self.canonical = canonical
         self.finds = finds
         self.finds_updated = {}
+        self.finds_controls_updated = {}
         self.profile = self.finds.get('controls', {}).get('profile', DEFAULT)
         self.url_replace = url_replace
         self.Window_IsMedia = True
@@ -151,9 +152,14 @@ class AlfaChannelHelper:
         try:
             self.domains_updated = jsontools.load(window.getProperty("alfa_domains_updated") or '{}')
             if self.channel in self.domains_updated and 'finds' in self.domains_updated[self.channel]:
-                self.finds_updated = self.domains_updated[self.channel].pop('finds', '')
-                for key, value in self.finds_updated.items():
-                    self.finds_updated[key] = eval('%s' % value)
+                finds_updated = self.domains_updated[self.channel].pop('finds', '')
+                for key, value in finds_updated.items():
+                    if key not in ['controls']:
+                        self.finds_updated[key] = eval('%s' % value)
+                    else:
+                        for key_c, value_c in finds_updated[key].items():
+                            self.finds_controls_updated[key_c] = eval('%s' % value_c)
+
             if not self.TEST_ON_AIR and not self.CACHING_DOMAINS and 'host' in self.canonical \
                                     and 'host_alt' in self.canonical and 'host_black_list' in self.canonical:
                 if self.channel in self.domains_updated and (self.domains_updated[self.channel].get('host_alt') \
@@ -1403,8 +1409,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         if not finds: finds = self.finds.copy()
         finds.update(self.finds_updated)
+        finds['controls'].update(self.finds_controls_updated)
         self.finds = finds.copy()
-        if self.DEBUG: logger.debug('FINDS: %s' % self.finds_updated)
+        if self.DEBUG: logger.debug('FINDS: %s; %s' % (self.finds_updated, self.finds_controls_updated))
         if self.DEBUG: logger.debug('FINDS: %s' % finds)
         finds_out = finds.get('find', {})
         if item.c_type == 'search' and finds.get('search', {}): finds_out = finds.get('search', {})
@@ -1933,6 +1940,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         if not finds: finds = self.finds.copy()
         finds.update(self.finds_updated)
+        finds['controls'].update(self.finds_controls_updated)
         self.finds = finds.copy()
         finds_out = finds.get('categories', {})
         finds_controls = finds.get('controls', {})
@@ -2113,6 +2121,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         if not finds: finds = self.finds.copy()
         finds.update(self.finds_updated)
+        finds['controls'].update(self.finds_controls_updated)
         self.finds = finds.copy()
         finds_out = finds.get('seasons', {})
         finds_season_num = finds.get('season_num', {})
@@ -2543,6 +2552,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         if not finds: finds = self.finds.copy()
         finds.update(self.finds_updated)
+        finds['controls'].update(self.finds_controls_updated)
         self.finds = finds.copy()
         finds_out = finds.get('episodes', {})
         finds_episode_num = finds.get('episode_num', [])
@@ -2914,6 +2924,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
 
         if not finds: finds = self.finds.copy()
         finds.update(self.finds_updated)
+        finds['controls'].update(self.finds_controls_updated)
         self.finds = finds.copy()
         finds_out = finds.get('findvideos', {})
         finds_out_episodes = finds.get('episodes', {})
@@ -3335,6 +3346,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
 
         if not finds: finds = self.finds.copy()
         finds.update(self.finds_updated)
+        finds['controls'].update(self.finds_controls_updated)
         self.finds = finds.copy()
         if self.DEBUG: logger.debug('FINDS: %s' % finds)
         finds_out = finds.get('find', {})
@@ -3783,6 +3795,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
 
         if not finds: finds = self.finds.copy()
         finds.update(self.finds_updated)
+        finds['controls'].update(self.finds_controls_updated)
         self.finds = finds.copy()
         finds_out = finds.get('categories', {})
         finds_next_page = finds.get('next_page', {})
@@ -4232,6 +4245,7 @@ class DictionaryAdultChannel(AlfaChannelHelper):
 
         if not finds: finds = self.finds.copy()
         finds.update(self.finds_updated)
+        finds['controls'].update(self.finds_controls_updated)
         self.finds = finds.copy()
         finds_out = finds.get('findvideos', {})
         finds_out_episodes = finds.get('episodes', {})
@@ -4552,6 +4566,7 @@ class DooPlay(AlfaChannelHelper):
                                'timeout': 5}
 
         self.finds_updated = {}
+        self.finds_controls_updated = {}
         self.url = self.movie_path = self.tv_path = self.movie_action = self.tv_action = ''
         self.timeout = finds.get('control', {}).get('timeout', 5)
         self.doo_url = "%swp-admin/admin-ajax.php" % self.host
