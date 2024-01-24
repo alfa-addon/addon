@@ -121,7 +121,7 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['text-center']}]},
          'url_replace': [], 
          'controls': {'min_temp': min_temp, 'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 15, 
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': True, 
-                      'host_torrent': host_torrent, 'btdigg': True, 'duplicates': [], 'dup_list': 'title', 
+                      'host_torrent': host_torrent, 'btdigg': True, 'btdigg_search': True, 'duplicates': [], 'dup_list': 'title', 
                       'force_find_last_page': [5, 999, 'url'], 'btdigg_quality_control': True},
          'timeout': timeout}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 

@@ -2195,6 +2195,7 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
     matches_len = len(matches_btdigg)
 
     controls = self.finds.get('controls', {}) if self else {}
+    btdigg_search = controls.get('btdigg_search', True)
     disable_cache = True
     quality_control = AHkwargs.get('btdigg_quality_control', controls.get('btdigg_quality_control', False))
     if item.btdigg: quality_control = False
@@ -3037,6 +3038,7 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
     ASSISTANT_REMOTE = True if config.get_setting("assistant_mode").lower() == 'otro' else False
 
     controls = self.finds.get('controls', {})
+    btdigg_search = controls.get('btdigg_search', True)
     url = AHkwargs.pop('url', item.url)
     contentSeason = AHkwargs.pop('btdigg_contentSeason', controls.get('btdigg_contentSeason', 0))
     disable_cache = True if (not 'btdigg_cache' in AHkwargs  and not 'btdigg_cache' in controls) else \
@@ -3079,6 +3081,9 @@ def AH_find_btdigg_seasons(self, item, matches=[], domain_alt=channel_py, **AHkw
     if (item.infoLabels.get('number_of_seasons', 0) in season_high and contentSeason == 0) \
                          or (contentSeason > 0 and contentSeason in season_high \
                          and season_high[-1] >= item.infoLabels.get('number_of_seasons', item.contentSeason or 99)):
+        return matches
+
+    if not btdigg_search:
         return matches
 
     try:
@@ -3249,6 +3254,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
     ASSISTANT_REMOTE = True if config.get_setting("assistant_mode", default="").lower() == 'otro' else False
 
     controls = self.finds.get('controls', {})
+    btdigg_search = controls.get('btdigg_search', True)
     contentSeason = AHkwargs.pop('btdigg_contentSeason', controls.get('btdigg_contentSeason', 0))
     disable_cache = True if str(item.infoLabels['number_of_seasons']) == '1' else \
                     not AHkwargs.pop('btdigg_cache', controls.get('btdigg_cache', True))
@@ -3372,6 +3378,9 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
 
             except Exception:
                 logger.error(traceback.format_exc())
+
+    if not btdigg_search:
+        return matches
 
     try:
         if canonical.get('global_search_cancelled', False) or (config.GLOBAL_SEARCH_CANCELLED \
@@ -3548,6 +3557,7 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
     ASSISTANT_REMOTE = True if config.get_setting("assistant_mode").lower() == 'otro' else False
     
     controls = self.finds.get('controls', {}) if self else {}
+    btdigg_search = controls.get('btdigg_search', True)
     contentSeason = AHkwargs.pop('btdigg_contentSeason', controls.get('btdigg_contentSeason', 0))
     disable_cache = True if (not 'btdigg_cache' in AHkwargs  and not 'btdigg_cache' in controls) else \
                     not AHkwargs.pop('btdigg_cache', controls.get('btdigg_cache', True))
@@ -3593,7 +3603,11 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                                 if not matches_cached.get('language', []): matches_cached['language'] = item.language or ['CAST']
                                 matches.append(matches_cached.copy())
 
-    if found or AHkwargs.pop('btdigg_lookup', False) or (item.matches and item.channel != 'videolibrary' and item.contentChannel != 'videolibrary' and item.from_channel != 'videolibrary'):
+    if found or AHkwargs.pop('btdigg_lookup', False) or (item.matches and item.channel != 'videolibrary' \
+                                                     and item.contentChannel != 'videolibrary' and item.from_channel != 'videolibrary'):
+        return matches
+
+    if not btdigg_search:
         return matches
 
     if matches and isinstance(matches[0], list):

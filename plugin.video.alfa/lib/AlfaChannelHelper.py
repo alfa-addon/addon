@@ -1485,7 +1485,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if not filter_languages: filter_languages = 0
 
         self.btdigg = finds.get('controls', {}).get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
-        self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
+        self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
+                                         and config.get_setting('find_alt_search', item.channel, default=False)
         #if self.btdigg: self.cnt_tot = finds_controls.get('cnt_tot', 20)
         if item.texto: item.texto = item.texto.replace('%20', ' ').replace('+', ' ').strip()
         if item.btdigg and item.c_type == 'search':
@@ -1592,8 +1593,10 @@ class DictionaryAllChannel(AlfaChannelHelper):
             idioma_busqueda_org = idioma_busqueda
             idioma_busqueda_save = ''
             idioma_busqueda_VO = IDIOMAS_TMDB[2]                                # Idioma para VO: Local,VO
-            self.btdigg = finds.get('controls', {}).get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
-            self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
+            self.btdigg = finds.get('controls', {}).get('btdigg', False) \
+                                             and config.get_setting('find_alt_link_option', item.channel, default=False)
+            self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
+                                             and config.get_setting('find_alt_search', item.channel, default=False)
 
             # Buscamos la próxima página
             if soup:
@@ -1959,7 +1962,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
         forced_proxy_opt = finds_controls.get('forced_proxy_opt', None) or kwargs.pop('forced_proxy_opt', None)
 
         self.btdigg = finds.get('controls', {}).get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
-        self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
+        self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
+                                         and config.get_setting('find_alt_search', item.channel, default=False)
 
         if section_list:
             for genre, url in list(section_list.items()):
@@ -2027,7 +2031,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
         headers = item.headers or finds_controls.get('headers', {}) or headers
         url_replace = self.url_replace = self.finds.get('url_replace', []) or self.url_replace
         self.btdigg = finds.get('controls', {}).get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
-        self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
+        self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
+                                         and config.get_setting('find_alt_search', item.channel, default=False)
         
         for elem in matches:
             if not elem.get('url'): continue
@@ -2123,7 +2128,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if not matches_post and item.matches_post: matches_post = item.matches_post
 
         self.btdigg = finds_controls.get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
-        self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
+        self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
+                                         and config.get_setting('find_alt_search', item.channel, default=False)
         btdigg_contentSeason = 1
 
         AHkwargs = {'url': item.url, 'soup': soup, 'finds': finds, 'kwargs': kwargs, 'function': 'seasons'}
@@ -2353,7 +2359,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
         idioma_busqueda_save = ''
         idioma_busqueda_VO = IDIOMAS_TMDB[2]                                    # Idioma para VO: Local,VO
         self.btdigg = finds.get('controls', {}).get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
-        self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
+        self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
+                                         and config.get_setting('find_alt_search', item.channel, default=False)
 
         for elem in matches:
             elem['season'] = int(scrapertools.find_single_match(str(elem.get('season', '1')), r'\d+') or '1')
@@ -2549,7 +2556,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if not matches_post and item.matches_post: matches_post = item.matches_post
 
         self.btdigg = finds_controls.get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
-        self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
+        self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
+                                         and config.get_setting('find_alt_search', item.channel, default=False)
 
         AHkwargs = {'url': item.url, 'soup': soup, 'kwargs': kwargs, 'finds': finds, 'function': 'episodes'}
         AHkwargs['matches_post_list_all'] = kwargs.pop('matches_post_list_all', None)
@@ -2673,7 +2681,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
         idioma_busqueda_save = ''
         idioma_busqueda_VO = IDIOMAS_TMDB[2]                                    # Idioma para VO: Local,VO
         self.btdigg = finds.get('controls', {}).get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
-        self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
+        self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
+                                         and config.get_setting('find_alt_search', item.channel, default=False)
 
         AHkwargs['matches'] = matches
         if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)[:SIZE_MATCHES]))
@@ -2922,7 +2931,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
         matches_post_episodes = None
 
         self.btdigg = finds_controls.get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
-        self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
+        self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
+                                         and config.get_setting('find_alt_search', item.channel, default=False)
         btdig_in_use = False
 
         AHkwargs = {'url': item.url, 'soup': soup, 'finds': finds, 'kwargs': kwargs, 'function': 'get_video_options', 'videolibrary': False}
@@ -3092,7 +3102,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
         url_replace = self.url_replace = self.finds.get('url_replace', []) or self.url_replace
         url_base64 = finds_controls.get('url_base64', True)
         self.btdigg = finds.get('controls', {}).get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
-        self.btdigg_search = self.btdigg and config.get_setting('find_alt_search', item.channel, default=False)
+        self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
+                                         and config.get_setting('find_alt_search', item.channel, default=False)
 
         AHkwargs['matches'] = matches
         if self.DEBUG: logger.debug('MATCHES (%s/%s): %s' % (len(matches), len(str(matches)), str(matches)[:SIZE_MATCHES]))
