@@ -8,7 +8,7 @@
         "url": "https://ds2play.com/e/\\1"
       },
       {
-        "pattern": "http(?:s|)://(?:dooood|ds2play|d0o0d|do0od).(?:watch|to|so|com|cx|la|ws|sh|pm|wf|re|yt)/(?:e|d)/([a-z0-9#]+)",
+        "pattern": "http(?:s|)://(?:dooood|ds2play|d0o0d|do0od|ds2video).(?:watch|to|so|com|cx|la|ws|sh|pm|wf|re|yt)/(?:e|d)/([a-z0-9#]+)",
         "url": "https://ds2play.com/e/\\1"
       }
     ]
