@@ -347,122 +347,6 @@ if xbmcgui:
             self.mediapath = os.path.join(config.get_runtime_path(), 'resources', 'skins', 'Default', 'media')
             self.font = "font12"
             # Esta parte es estatica, se ha movido al XML
-            '''
-            window_bg = xbmcgui.ControlImage(320, 130, 600, 440,
-                                             os.path.join(self.mediapath, 'Windows', 'DialogBack.png'))
-            self.addControl(window_bg)
-
-            header_bg = xbmcgui.ControlImage(window_bg.getX(), window_bg.getY() + 8, window_bg.getWidth(), 35,
-                                             os.path.join(self.mediapath, 'Windows', 'dialogheader.png'))
-            self.addControl(header_bg)
-
-            btn_close_w = 64
-            self.btn_close = xbmcgui.ControlButton(window_bg.getX() + window_bg.getWidth() - btn_close_w - 13,
-                                                   header_bg.getY() + 6, btn_close_w, 30, '',
-                                                   focusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                             'DialogCloseButton-focus.png'),
-                                                   noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                               'DialogCloseButton.png'))
-            self.addControl(self.btn_close)
-
-            header_title_x = window_bg.getX() + 20
-            header_title = xbmcgui.ControlFadeLabel(header_title_x, header_bg.getY() + 5, self.btn_close.getX() -
-                                                    header_title_x, 30, font="font12_title", textColor="0xFFFFA500",
-                                                    _alignment=ALIGN_CENTER)
-            self.addControl(header_title)
-            header_title.addLabel(self.show)
-
-            self.controls_bg = xbmcgui.ControlImage(window_bg.getX() + 20, header_bg.getY() + header_bg.getHeight() + 6,
-                                                    562, 260,
-                                                    os.path.join(self.mediapath, 'Windows', 'BackControls.png'))
-            self.addControl(self.controls_bg)
-
-            self.scroll_bg = xbmcgui.ControlImage(window_bg.getX() + window_bg.getWidth() - 25, self.controls_bg.getY(),
-                                                  10,
-                                                  self.controls_bg.getHeight(), os.path.join(self.mediapath, 'Controls',
-                                                                                             'ScrollBack.png'))
-            self.addControl(self.scroll_bg)
-            self.scroll_bg.setVisible(False)
-
-            self.scroll2_bg = xbmcgui.ControlImage(window_bg.getX() + window_bg.getWidth() - 25,
-                                                   self.controls_bg.getY(),
-                                                   10, self.controls_bg.getHeight(), os.path.join(self.mediapath,
-                                                                                                  'Controls',
-                                                                                                  'ScrollBar.png'))
-            self.addControl(self.scroll2_bg)
-            self.scroll2_bg.setVisible(False)
-
-            btn_add_season = xbmcgui.ControlButton(window_bg.getX() + 20, self.controls_bg.getY() +
-                                                   self.controls_bg.getHeight() + 14, 165, 30, 'Añadir Temporada',
-                                                   font=self.font, focusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                                             'KeyboardKey.png'),
-                                                   noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                               'KeyboardKeyNF.png'),
-                                                   alignment=ALIGN_CENTER)
-            self.addControl(btn_add_season)
-
-            self.btn_info = xbmcgui.ControlButton(window_bg.getX() + 210, btn_add_season.getY(), 120, 30, 'Información',
-                                                  font=self.font, focusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                                            'KeyboardKey.png'),
-                                                  noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                              'KeyboardKeyNF.png'),
-                                                  alignment=ALIGN_CENTER)
-            self.addControl(self.btn_info)
-
-            check_update_internet_w = 235
-            # Versiones antiguas no admite algunas texturas
-            if xbmcgui.__version__ in ["1.2", "2.0"]:
-                self.check_update_internet = xbmcgui.ControlRadioButton(
-                    window_bg.getX() + window_bg.getWidth() - check_update_internet_w - 20, btn_add_season.getY() - 3,
-                    check_update_internet_w, 34, "Actualizar desde Internet:", font=self.font,
-                    focusTexture=os.path.join(self.mediapath, 'Controls', 'MenuItemFO.png'),
-                    noFocusTexture=os.path.join(self.mediapath, 'Controls', 'MenuItemNF.png'))
-            else:
-                self.check_update_internet = xbmcgui.ControlRadioButton(
-                    window_bg.getX() + window_bg.getWidth() - check_update_internet_w - 20, btn_add_season.getY() - 3,
-                    check_update_internet_w, 34, "Actualizar desde Internet:", font=self.font,
-                    focusTexture=os.path.join(self.mediapath, 'Controls', 'MenuItemFO.png'),
-                    noFocusTexture=os.path.join(self.mediapath, 'Controls', 'MenuItemNF.png'),
-                    focusOnTexture=os.path.join(self.mediapath, 'Controls', 'radiobutton-focus.png'),
-                    noFocusOnTexture=os.path.join(self.mediapath, 'Controls', 'radiobutton-focus.png'),
-                    focusOffTexture=os.path.join(self.mediapath, 'Controls', 'radiobutton-nofocus.png'),
-                    noFocusOffTexture=os.path.join(self.mediapath, 'Controls', 'radiobutton-nofocus.png'))
-
-            self.addControl(self.check_update_internet)
-            self.check_update_internet.setEnabled(False)
-
-            hb_bg = xbmcgui.ControlImage(window_bg.getX() + 20, btn_add_season.getY() + btn_add_season.getHeight() + 13,
-                                         window_bg.getWidth() - 40, 2,
-                                         os.path.join(self.mediapath, 'Controls', 'ScrollBack.png'))
-            self.addControl(hb_bg)
-
-            self.btn_ok = xbmcgui.ControlButton(window_bg.getX() + 68, hb_bg.getY() + hb_bg.getHeight() + 13, 120, 30,
-                                                'OK', font=self.font,
-                                                focusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                          'KeyboardKey.png'),
-                                                noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                            'KeyboardKeyNF.png'),
-                                                alignment=ALIGN_CENTER)
-            self.addControl(self.btn_ok)
-
-            self.btn_cancel = xbmcgui.ControlButton(self.btn_info.getX() + 30, self.btn_ok.getY(), 120, 30, 'Cancelar',
-                                                    font=self.font,
-                                                    focusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                              'KeyboardKey.png'),
-                                                    noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                                'KeyboardKeyNF.png'),
-                                                    alignment=ALIGN_CENTER)
-            self.addControl(self.btn_cancel)
-
-            self.btn_delete = xbmcgui.ControlButton(self.btn_cancel.getX() + self.btn_cancel.getWidth() + 50,
-                                                    self.btn_ok.getY(), 120, 30, 'Borrar', font=self.font,
-                                                    focusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                              'KeyboardKey.png'),
-                                                    noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                                'KeyboardKeyNF.png'),
-                                                    alignment=ALIGN_CENTER)
-            self.addControl(self.btn_delete)
-            '''
             self.controls = []
             self.doModal()
 
@@ -530,6 +414,7 @@ if xbmcgui:
                                                                                   'MenuItemNF.png'))
                     self.addControl(edit_season)
                     edit_season.setText(str(e[0]))
+                    edit_season.setType(xbmcgui.INPUT_TYPE_NUMBER, "Temporada:")
                     # edit_season.setLabel("Temporada:", font=self.font, textColor="0xFF2E64FE")
                     edit_season.setPosition(pos_x, pos_y - 2)
                     edit_season.setWidth(25)
@@ -553,6 +438,7 @@ if xbmcgui:
                                                                                    'MenuItemNF.png'))
                     self.addControl(edit_episode)
                     edit_episode.setText(str(e[1]))
+                    edit_episode.setType(xbmcgui.INPUT_TYPE_NUMBER, "Episodios:")
                     # edit_episode.setLabel("Episodios:", font=self.font, textColor="0xFF2E64FE")
                     edit_episode.setPosition(pos_x, pos_y - 2)
                     edit_episode.setWidth(40)
@@ -594,7 +480,8 @@ if xbmcgui:
                 self.setFocus(self.controls[0].edit_season)
 
             except Exception as Ex:
-                logger.error("HA HABIDO UNA HOSTIA %s" % Ex)
+                import traceback
+                logger.error("HA HABIDO UNA HOSTIA %s" % traceback.format_exc())
 
         def onControl(self, control):
             pass
@@ -648,6 +535,11 @@ if xbmcgui:
                         del self.data[x]
                         # logger.debug("D data %s" % self.data)
                         self.onInit()
+                        if self.controls:
+                            control_id = self.controls[-1].btn_delete_season.getId()
+                        else:
+                            control_id = ID_BUTTON_ADD_SEASON
+                        self.setFocus(self.getControl(control_id))
 
                         return
 
