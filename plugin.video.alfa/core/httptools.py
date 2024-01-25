@@ -1271,7 +1271,7 @@ def downloadpage(url, **opt):
                                                     and ', Proxy Web' in proxy_data.get('stat', '') \
                                                     and proxy_data.get('web_name') == 'croxyproxy.com' \
                                                     and opt.get('error_check', True):
-            update_alfa_domain_web_list(url, 'Timeout=%s' % opt['timeout'], proxy_data, **opt)
+            update_alfa_domain_web_list(url, 'Timeout=%s' % str(opt['timeout']), proxy_data, **opt)
 
             if not alfa_domain_web_list or not alfa_domain_web_list.get(proxy_data.get('web_name', ''), []):
                 from core import filetools
