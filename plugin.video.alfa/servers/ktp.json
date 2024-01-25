@@ -60,7 +60,11 @@
         "url": "\\1"
       },
       {
-        "pattern": "(http(?:s|)://(?:www.|)(?:ezporn|fullporno|pornwex|cremz|4wank|xxam|faptor|crazyporn).(?:tv|com|org|to|lol|xxx)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(http(?:s|)://(?:www.|)(?:ezporn|fullporno|pornwex|cremz|4wank|xxam|faptor|crazyporn|porndr|pornkinky|pornbimbo).(?:tv|com|org|to|lol|xxx)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(http(?:s|)://(?:www.|)(?:sloppyfans|nudes7|hornyfap|mypornhere|asianviralhub|viralpornhub|amateurest|in35|thothub|thothd).(?:tv|com|org|to|lol|xxx)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

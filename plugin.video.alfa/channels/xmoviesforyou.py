@@ -45,7 +45,7 @@ finds = {'find': {'find_all': [{'tag': ['article']}]},
          'get_quality': {}, 
          'get_quality_rgx': '', 
          'next_page': {},
-         'next_page_rgx': [['\?page=\d+', '?page=%s'], ['\/page\/\d+\/', '/page/%s/'], ['&from_videos=\d+', '&from_videos=%s'], ['&from=\d+', '&from=%s']], 
+         'next_page_rgx': [['\/page\/\d+', '/page/%s']], 
          'last_page': dict([('find', [{'tag': ['div'], 'class': ['pagination']}]), 
                             ('find_all', [{'tag': ['a'], '@POS': [-2], 
                                            '@ARG': 'href', '@TEXT': 'page/(\d+)'}])]), 
@@ -70,7 +70,7 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=host ))
+    itemlist.append(Item(channel=item.channel, title="Nuevas" , action="list_all", url=host + "page/1"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     
     autoplay.show_option(item.channel, itemlist)
@@ -106,6 +106,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     findS = AHkwargs.get('finds', finds)
     srv_ids = {"Doodstream": "Doodstream",
                "dooood": "Doodstream",
+               "ds2play": "Doodstream",
                "Streamtape": "Streamtape ",
                "streamSB": "Streamsb",
                "VOE": "voe",
@@ -138,7 +139,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%s?s=%s" % (host, texto.replace(" ", "+"))
+    item.url = "%spage/1/?s=%s" % (host, texto.replace(" ", "+"))
     
     try:
         if texto:
