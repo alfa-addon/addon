@@ -432,7 +432,7 @@ def filterchannels(category, view="thumb_", alfa_s=True, settings=False):
             if channel_parameters["req_assistant"]:
                 channel_parameters["title"] = "{} [COLOR=yellow](requiere Assistant)[/COLOR]".format(channel_parameters["title"])
 
-            channel_info = set_channel_info(channel_parameters, alfa_s=alfa_s)
+            channel_info = set_channel_info(channel_parameters)
 
             # Si ha llegado hasta aquí, lo añade
             frequency = channeltools.get_channel_setting("frequency", channel_parameters["channel"], 0) \

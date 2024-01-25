@@ -410,21 +410,10 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
         c["upBtn"] = upBtn
 
     def add_control_text(self, c):
-        if xbmcgui.ControlEdit == ControlEdit:
-            control = xbmcgui.ControlEdit(0, -100, self.controls_width, self.height_control,
-                                          c["label"], os.path.join(self.mediapath, 'Controls', 'MenuItemFO.png'),
-                                          os.path.join(self.mediapath, 'Controls', ''),
-                                          0, textColor=c["color"],
-                                          font=self.font, isPassword=c["hidden"], window=self)
-
-        elif xbmcgui.__version__.startswith('3.'):
-            control = xbmcgui.ControlEdit(0, -100, self.controls_width, self.height_control,
-                                          c["label"], self.font, c["color"], '', 4)
-        else:
-            control = xbmcgui.ControlEdit(0, -100, self.controls_width, self.height_control,
-                                          c["label"], self.font, c["color"], '', 4, isPassword=c["hidden"],
-                                          focusTexture=os.path.join(self.mediapath, 'Controls', 'MenuItemFO.png'),
-                                          noFocusTexture=os.path.join(self.mediapath, 'Controls', ''))
+        control = xbmcgui.ControlEdit(0, -100, self.controls_width, self.height_control,
+                                      c["label"], font=self.font, textColor=c["color"], _alignment=4,
+                                      focusTexture=os.path.join(self.mediapath, 'Controls', 'MenuItemFO.png'),
+                                      noFocusTexture=os.path.join(self.mediapath, 'Controls', ''))
 
         self.addControl(control)
 
@@ -438,38 +427,30 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
         # control.setText(self.values[c["id"]])
         control.setWidth(self.controls_width)
         control.setHeight(self.height_control)
+        
+        if c["hidden"]:
+            control.setType(xbmcgui.INPUT_TYPE_PASSWORD, c["label"])
+        else:
+            control.setType(xbmcgui.INPUT_TYPE_TEXT, c["label"])
 
         c["control"] = control
 
     def add_control_bool(self, c):
-        # Versiones antiguas no admite algunas texturas
-        # if xbmcgui.__version__ in ["3.0", "3.0.0"]:
-            # control = xbmcgui.ControlRadioButton(0 - 10, -100, self.controls_width + 10, self.height_control,
-                                                 # label=c["label"], font=self.font, textColor=c["color"])
-        # elif xbmcgui.__version__ in ["1.2", "2.0"]:
-        if xbmcgui.__version__ in ["1.2", "2.0"]:
-            control = xbmcgui.ControlRadioButton(0 - 10, -100, self.controls_width + 10, self.height_control,
-                                                 label=c["label"], font=self.font, textColor=c["color"],
-                                                 focusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                           'MenuItemFO.png'),
-                                                 noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                             ''))
-        else:
-            control = xbmcgui.ControlRadioButton(0 - 10, -100, self.controls_width + 10,
-                                                 self.height_control, label=c["label"], font=self.font,
-                                                 textColor=c["color"],
-                                                 focusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                           'MenuItemFO.png'),
-                                                 noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                             ''),
-                                                 focusOnTexture=os.path.join(self.mediapath, 'Controls',
-                                                                             'radiobutton-focus.png'),
-                                                 noFocusOnTexture=os.path.join(self.mediapath, 'Controls',
-                                                                               'radiobutton-focus.png'),
-                                                 focusOffTexture=os.path.join(self.mediapath, 'Controls',
-                                                                              'radiobutton-nofocus.png'),
-                                                 noFocusOffTexture=os.path.join(self.mediapath, 'Controls',
-                                                                                'radiobutton-nofocus.png'))
+        control = xbmcgui.ControlRadioButton(0 - 10, -100, self.controls_width + 10,
+                                                self.height_control, label=c["label"], font=self.font,
+                                                textColor=c["color"],
+                                                focusTexture=os.path.join(self.mediapath, 'Controls',
+                                                                        'MenuItemFO.png'),
+                                                noFocusTexture=os.path.join(self.mediapath, 'Controls',
+                                                                            ''),
+                                                focusOnTexture=os.path.join(self.mediapath, 'Controls',
+                                                                            'radiobutton-focus.png'),
+                                                noFocusOnTexture=os.path.join(self.mediapath, 'Controls',
+                                                                            'radiobutton-focus.png'),
+                                                focusOffTexture=os.path.join(self.mediapath, 'Controls',
+                                                                            'radiobutton-nofocus.png'),
+                                                noFocusOffTexture=os.path.join(self.mediapath, 'Controls',
+                                                                            'radiobutton-nofocus.png'))
 
         self.addControl(control)
 
