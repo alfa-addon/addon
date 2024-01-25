@@ -92,7 +92,7 @@ finds = {'find': dict([('find', [{'tag': ['table'], 'class': ['table']}]),
          'url_replace': [], 
          'controls': {'duplicates': [], 'min_temp': min_temp, 'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 15, 
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
-                      'host_torrent': host, 'btdigg': True},
+                      'host_torrent': host, 'btdigg': True, 'btdigg_search': True},
          'timeout': timeout}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
                                    idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 

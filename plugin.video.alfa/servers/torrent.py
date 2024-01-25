@@ -1875,14 +1875,14 @@ def torrent_dirs():
     torrent_paths = copy.deepcopy(torrent_paths_org)
     
     try:
-        torrent_paths['TORR_opt'] = int(config.get_setting("torrent_client", server="torrent", default=0, debug=DEBUG))
+        torrent_paths['TORR_opt'] = int(config.get_setting("torrent_client", server="torrent", default=0))
     except Exception:
         from platformcode import custom_code
         custom_code.verify_data_jsons(json_file='torrent_data.json')
         try:
-            if config.get_setting("torrent_client", server="torrent", default=0, debug=DEBUG) == None:
-                config.set_setting("torrent_client", 0, server="torrent", debug=DEBUG)
-            torrent_paths['TORR_opt'] = int(config.get_setting("torrent_client", server="torrent", default=0, debug=DEBUG))
+            if config.get_setting("torrent_client", server="torrent", default=0) == None:
+                config.set_setting("torrent_client", 0, server="torrent")
+            torrent_paths['TORR_opt'] = int(config.get_setting("torrent_client", server="torrent", default=0))
         except Exception:
             torrent_paths['TORR_opt'] = 0
             torrent_json_path = filetools.join(config.get_data_path(), 'settings_servers', 'torrent_data.json')
@@ -1895,12 +1895,12 @@ def torrent_dirs():
         torrent_paths['TORR_client'] = scrapertools.find_single_match(torrent_options[torrent_paths['TORR_opt']-1][0], ':\s*(\w+)').lower()
     if torrent_paths['TORR_opt'] == 1: torrent_paths['TORR_client'] = 'BT'
     if torrent_paths['TORR_opt'] == 2: torrent_paths['TORR_client'] = 'MCT'
-    torrent_paths['TORR_libtorrent_path'] = config.get_setting("libtorrent_path", server="torrent", default='', debug=DEBUG)
-    torrent_paths['TORR_unrar_path'] = config.get_setting("unrar_path", server="torrent", default='', debug=DEBUG)
-    torrent_paths['TORR_background_download'] = config.get_setting("mct_background_download", server="torrent", default=True, debug=DEBUG)
-    torrent_paths['TORR_rar_unpack'] = config.get_setting("mct_rar_unpack", server="torrent", default=True, debug=DEBUG)
+    torrent_paths['TORR_libtorrent_path'] = config.get_setting("libtorrent_path", server="torrent", default='')
+    torrent_paths['TORR_unrar_path'] = config.get_setting("unrar_path", server="torrent", default='')
+    torrent_paths['TORR_background_download'] = config.get_setting("mct_background_download", server="torrent", default=True)
+    torrent_paths['TORR_rar_unpack'] = config.get_setting("mct_rar_unpack", server="torrent", default=True)
     torr_client = ''
-    downloadpath = config.get_setting("downloadpath", default='', debug=DEBUG)
+    downloadpath = config.get_setting("downloadpath", default='')
     
     for torr_client_g, torr_client_url in torrent_options:
         # Localizamos el path de descarga del .torrent y la carpeta de almacenamiento de los archivos .torrent
@@ -1921,23 +1921,23 @@ def torrent_dirs():
                 logger.error(traceback.format_exc())
         if torr_client == 'BT':
             try:
-                if not config.get_setting("bt_download_path", server="torrent", default='', debug=DEBUG) and downloadpath:
-                    config.set_setting("bt_download_path", downloadpath, server="torrent", debug=DEBUG)
+                if not config.get_setting("bt_download_path", server="torrent", default='') and downloadpath:
+                    config.set_setting("bt_download_path", downloadpath, server="torrent")
                 torrent_paths['BT'] = filetools.join(str(config.get_setting("bt_download_path", \
-                            server="torrent", default='', debug=DEBUG)), 'BT-torrents')
+                            server="torrent", default='')), 'BT-torrents')
                 torrent_paths['BT_torrents'] = filetools.join(torrent_paths['BT'], '.cache')
-                torrent_paths['BT_buffer'] = config.get_setting("bt_buffer", server="torrent", default="50", debug=DEBUG)
+                torrent_paths['BT_buffer'] = config.get_setting("bt_buffer", server="torrent", default="50")
             except Exception:
                 logger.error(traceback.format_exc(1))
         elif torr_client == 'MCT':
             try:
-                if not config.get_setting("mct_download_path", server="torrent", default='', debug=DEBUG) and downloadpath:
-                    config.set_setting("mct_download_path", downloadpath, server="torrent", debug=DEBUG)
+                if not config.get_setting("mct_download_path", server="torrent", default='') and downloadpath:
+                    config.set_setting("mct_download_path", downloadpath, server="torrent")
                 torrent_paths['MCT'] = filetools.join(str(config.get_setting("mct_download_path", \
-                            server="torrent", default='', debug=DEBUG)), 'MCT-torrent-videos')
+                            server="torrent", default='')), 'MCT-torrent-videos')
                 torrent_paths['MCT_torrents'] = filetools.join(str(config.get_setting("mct_download_path", \
-                            server="torrent", default='', debug=DEBUG)), 'MCT-torrents')
-                torrent_paths['MCT_buffer'] = config.get_setting("mct_buffer", server="torrent", default="50", debug=DEBUG)
+                            server="torrent", default='')), 'MCT-torrents')
+                torrent_paths['MCT_buffer'] = config.get_setting("mct_buffer", server="torrent", default="50")
             except Exception:
                 logger.error(traceback.format_exc(1))
         elif 'torrenter' in torr_client.lower():
@@ -2315,7 +2315,7 @@ def restart_unfinished_downloads():
             while not monitor.abortRequested():
 
                 torrent_paths = torrent_dirs()
-                DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath", debug=DEBUG)
+                DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath")
                 LISTDIR = sorted(filetools.listdir(DOWNLOAD_LIST_PATH))
 
                 for fichero in LISTDIR:
@@ -2379,7 +2379,7 @@ def restart_unfinished_downloads():
                         
                         if item.downloadStatus in [1, 3]:
                             continue
-                        if item.server != 'torrent' and config.get_setting("DOWNLOADER_in_use", "downloads", debug=DEBUG):
+                        if item.server != 'torrent' and config.get_setting("DOWNLOADER_in_use", "downloads"):
                             continue
                         if torr_client not in ['BT', 'MCT', 'TORRENTER', 'QUASAR', 'ELEMENTUM', 'TORREST'] and item.downloadProgress != 0:
                             continue
@@ -2407,7 +2407,7 @@ def restart_unfinished_downloads():
                                     item.downloadServer['url'] = new_torrent_url
                                     item.url = new_torrent_url
 
-                            if not config.get_setting("LIBTORRENT_in_use", server="torrent", default=False, debug=DEBUG) or item.server != 'torrent':
+                            if not config.get_setting("LIBTORRENT_in_use", server="torrent", default=False) or item.server != 'torrent':
                                 try:
                                     if isinstance(item.downloadProgress, (int, float)):
                                         item.downloadProgress += 1
@@ -2452,9 +2452,9 @@ def restart_unfinished_downloads():
                         if xbmc.abortRequested: 
                             return
                         xbmc.sleep(5*1000)
-                    if config.get_setting("RESTART_DOWNLOADS", "downloads", default=False, debug=DEBUG):    # ... a menos que se active externamente
+                    if config.get_setting("RESTART_DOWNLOADS", "downloads", default=False):    # ... a menos que se active externamente
                         logger.info('RESTART_DOWNLOADS Activado externamente')
-                        config.set_setting("RESTART_DOWNLOADS", False, "downloads", debug=DEBUG) 
+                        config.set_setting("RESTART_DOWNLOADS", False, "downloads") 
                         break
     except Exception:
         logger.error(traceback.format_exc())
@@ -2521,13 +2521,13 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
         if item.referer: referer = item.referer
         if item.post: post = item.post
 
-        download_path = config.get_setting('downloadpath', default='', debug=DEBUG)
+        download_path = config.get_setting('downloadpath', default='')
         videolibrary_path = config.get_videolibrary_path()
         videolibrary_path_local = videolibrary_path
         if item.contentType == 'movie':
-            folder = config.get_setting("folder_movies", debug=DEBUG)           # películas
+            folder = config.get_setting("folder_movies")                        # películas
         else:
-            folder = config.get_setting("folder_tvshows", debug=DEBUG)          # o series
+            folder = config.get_setting("folder_tvshows")                       # o series
         
         if scrapertools.find_single_match(videolibrary_path,'(^\w+:\/\/)'):     # Si es una conexión REMOTA, usamos userdata local
             videolibrary_path_local = config.get_data_path()
@@ -2584,10 +2584,10 @@ def check_seen_torrents():
         
         global torrent_paths
         if not torrent_paths: torrent_paths = torrent_dirs()
-        DOWNLOAD_PATH_ALFA = config.get_setting("downloadpath", debug=DEBUG)
-        DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath", debug=DEBUG)
-        MOVIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies", debug=DEBUG))
-        SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows", debug=DEBUG))
+        DOWNLOAD_PATH_ALFA = config.get_setting("downloadpath")
+        DOWNLOAD_LIST_PATH = config.get_setting("downloadlistpath")
+        MOVIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
+        SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
         LISTDIR = sorted(filetools.listdir(DOWNLOAD_LIST_PATH))
         nun_records = 0
         
@@ -2611,7 +2611,7 @@ def check_seen_torrents():
                 
                 # Si no viene de videoteca que crean item.strm_path y item.nfo
                 if not item.strm_path and filename and item.infoLabels['IMDBNumber']:
-                    if config.get_setting("videolibrary_original_title_in_content_folder", debug=DEBUG) == 1 and item.infoLabels['originaltitle']:
+                    if config.get_setting("videolibrary_original_title_in_content_folder") == 1 and item.infoLabels['originaltitle']:
                         base_name = item.infoLabels['originaltitle']
                     else:
                         if item.infoLabels['mediatype'] == 'movie':
@@ -2622,7 +2622,7 @@ def check_seen_torrents():
                         base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
                     else:
                         base_name = filetools.validate_path(base_name.replace('/', '-'))
-                    if config.get_setting("videolibrary_lowercase_title_in_content_folder", debug=DEBUG) == 0:
+                    if config.get_setting("videolibrary_lowercase_title_in_content_folder") == 0:
                         base_name = base_name.lower()
                     path = ("%s [%s]" % (base_name, item.infoLabels['IMDBNumber'])).strip()
                     if item.infoLabels['mediatype'] == 'movie':

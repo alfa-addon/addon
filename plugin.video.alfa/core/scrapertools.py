@@ -21,22 +21,9 @@ else:
 import re
 import time
 
-from core import httptools
 from platformcode import logger
 
 PATTERN_EPISODE_TITLE = '(?i)(\d+x\d+\s*(?:-\s*)?)?(?:episod(?:e|io)|cap.tulo)\s*\d*\s*(?:\[\d{4}\]\s*)?(?:\[\d{1,2}.\d{1,2}\]\s*)?'
-
-
-def get_header_from_response(url, header_to_get="", post=None, headers=None):
-    header_to_get = header_to_get.lower()
-    response = httptools.downloadpage(url, post=post, headers=headers, only_headers=True)
-    return response.headers.get(header_to_get)
-
-
-def read_body_and_headers(url, post=None, headers=None, follow_redirects=False, timeout=None):
-    response = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=follow_redirects,
-                                      timeout=timeout)
-    return response.data, response.headers
 
 
 def printMatches(matches):

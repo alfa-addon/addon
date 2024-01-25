@@ -112,7 +112,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
     # -- Necesario para algunas webs ----------------------------
     if not url.endswith(".torrent") and not url.startswith("magnet"):
         #t_file = httptools.downloadpage(url, follow_redirects=False).headers["location"]
-        t_file = scrapertools.get_header_from_response(url, header_to_get="location")
+        t_file = httptools.get_header_from_response(url, header_to_get="location")
         if t_file:
             if len(t_file) > 0:
                 url = t_file
