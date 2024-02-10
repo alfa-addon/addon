@@ -700,9 +700,10 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 elem_json['quality'] = elem.find('b', class_='bold', string=re.compile('Formato:'))\
                                            .find_previous('p').get_text('|', strip=True).split('|')[1]
 
-                if  elem.find('b', class_='bold', string=re.compile('Clave:')):
-                    elem_json['password'] = elem.find('b', class_='bold', string=re.compile('Clave:'))\
-                                                .find_previous('p').get('data-clave', '')
+                if  elem.find('b', class_='bold', string=re.compile('Clave:\s*')):
+                    elem_json['password'] = elem.find('b', class_='bold', string=re.compile('Clave:\s*'))\
+                                                .find_next('a').get('data-content', '')
+                    elem_json['password'] = item.password = scrapertools.find_single_match(elem_json['password'], "value='([^']+)'")
             except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())

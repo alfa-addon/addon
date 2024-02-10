@@ -2981,6 +2981,9 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     elem_episode['size'] = elem.get('size', '').replace(btdigg_label_B, '')\
                                                                                .replace('\xa0', ' ')\
                                                                                .replace('[COLOR magenta][B]RAR-[/B][/COLOR]', '')
+                                    if elem.get('password', {}):
+                                        elem_episode['password'] = elem['password']
+                                    
                                     y += 1
                                 except Exception:
                                     logger.error('Error en EPISODIO: %s' % elem)
@@ -3517,7 +3520,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                         if elem.get('season_search', ''): elem_json['season_search'] = elem['season_search']
                         if '#' in item.season_search: elem_json['season_search'] = item.season_search
                         elem_json['quality'] = '%s%s' % (elem_json['quality'], btdigg_label)
-                        elem_json['size'] = elem.get('size', '').replace(btdigg_label_B, '').replace('[COLOR magenta][B]RAR-[/B][/COLOR]', '')\
+                        elem_json['size'] = elem.get('size', '').replace(btdigg_label_B, '')\
                                                                 .replace('\xa0', ' ')
                         elem_json['torrent_info'] = elem_json['size']
                         elem_json['torrent_info'] += ' (%s)' % (alias_in or scrapertools.find_single_match(elem.get('title', '')\
@@ -3526,6 +3529,15 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                         elem_json['title'] = ''
                         elem_json['server'] = 'torrent'
                         elem_json['btdig_in_use'] = True
+
+                        if elem.get('password', {}) or str(elem.get('password', '')) == 'Contraseña DESCONOCIDA':
+                            for elem_pass in matches:
+                                if elem_pass['season'] == elem_json['season'] and elem_pass['episode'] == elem_json['episode'] \
+                                                                              and elem_pass.get('password'):
+                                    elem_json['password'] = elem_pass['password']
+                                    break
+                            else:
+                                elem_json['password'] = 'Contraseña DESCONOCIDA'
 
                         if elem_json['episode'] in epis_index:
                             matches.append(elem_json.copy())
@@ -3744,6 +3756,15 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                                                                 .replace('[COLOR magenta][B]RAR-[/B][/COLOR]', '')
                         elem_json['server'] = 'torrent'
                         elem_json['btdig_in_use'] = True
+
+                        if elem.get('password', {}) or str(elem.get('password', '')) == 'Contraseña DESCONOCIDA':
+                            for elem_pass in matches:
+                                if elem_pass['season'] == elem_json['season'] and elem_pass['episode'] == elem_json['episode'] \
+                                                                              and elem_pass.get('password'):
+                                    elem_json['password'] = elem_pass['password']
+                                    break
+                            else:
+                                elem_json['password'] = 'Contraseña DESCONOCIDA'
 
                         matches.append(elem_json.copy())
 
