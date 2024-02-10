@@ -44,7 +44,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
     itemlist.append(Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "pornstars/"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host ))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags/" ))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "xnxx-tags/" ))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
@@ -85,19 +85,20 @@ def categorias(item):
 def canal(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="BangBros" , action="lista", url=host + "/bangbros/"))
+    # itemlist.append(Item(channel=item.channel, title="BangBros" , action="lista", url=host + "/bangbros/"))
     itemlist.append(Item(channel=item.channel, title="Brazzers" , action="lista", url=host + "/brazzers/"))
     itemlist.append(Item(channel=item.channel, title="Reality Kings" , action="lista", url=host + "/reality-kings/"))
-    soup = create_soup(item.url)
-    matches = soup.find('div', class_='text-center').find_all('a', href=re.compile(r"^https://yespornpleasexxx.com/")) #.select('a[href^="https://yespornpleasexxx.com/"]')
-    for elem in matches:
-        url = elem['href']
-        title = elem.text.strip()
-        thumbnail = ""
-        plot = ""
-        if not "tag" in url:
-            itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
-                                 fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
+    itemlist.append(Item(channel=item.channel, title="SexMex" , action="lista", url=host + "/sexmex/"))
+    # soup = create_soup(item.url)
+    # matches = soup.find('div', class_='text-center').find_all('a', href=re.compile(r"^https://yespornpleasexxx.com/")) #.select('a[href^="https://yespornpleasexxx.com/"]')
+    # for elem in matches:
+        # url = elem['href']
+        # title = elem.text.strip()
+        # thumbnail = ""
+        # plot = ""
+        # if not "tag" in url:
+            # itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
+                                 # fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
     return itemlist
 
 
@@ -117,7 +118,7 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('div', class_='post-preview-styling')
+    matches = soup.find_all('article', class_=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
@@ -129,9 +130,9 @@ def lista(item):
         plot = ""
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
-    next_page = soup.find('a', class_='next')
-    if next_page:
-        next_page = next_page['href']
+    next_page = soup.find('a', class_='current')
+    if next_page and next_page.parent.find_next_sibling("li"):
+        next_page = next_page.parent.find_next_sibling("li").a['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -145,7 +146,7 @@ def findvideos(item):
     if soup.find('div', class_='iframe-container'):
         matches.append(soup.find('div', class_='iframe-container'))
     for elem in matches:
-        url = elem.iframe['data-litespeed-src']
+        url = elem.iframe['src']
         if "player-x.php?" in url:
             url = url.split("q=")
             url = url[-1]
