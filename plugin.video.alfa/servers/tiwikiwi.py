@@ -25,7 +25,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     # enc_data = scrapertools.find_single_match(data, "type='text/javascript'>(eval.*?)?\s+</script>")
     enc_data = scrapertools.find_multiple_matches(data, "text/javascript(?:'|\")>(eval.*?)</script>")
-    logger.debug(enc_data)
+    # logger.debug(enc_data)
     dec_data = jsunpack.unpack(enc_data[-1])
     # sources = 'file:"([^"]+)",label:"([^"]+)"'
     sources = 'sources\:\[\{(?:file|src):"([^"]+)"'

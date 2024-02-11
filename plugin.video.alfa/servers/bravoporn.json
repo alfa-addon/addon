@@ -28,7 +28,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)freeuseporn.com/video/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:freeuseporn|pornharlot).com/video/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

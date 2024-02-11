@@ -1,7 +1,7 @@
 {
   "id": "pelkex",
   "name": "Pelkex",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://newpelis.org/wp-content/themes/allcalidad/assets/images/logoss.png",
