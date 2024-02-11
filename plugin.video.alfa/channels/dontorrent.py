@@ -25,9 +25,10 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.yokohama/", "https://www2.dontorrent.fr/", "https://tomadivx.net/",
+             'host_alt': ["https://dontorrent.band/", "https://www2.dontorrent.fr/", "https://tomadivx.net/",
                           "https://todotorrents.org/"], 
-             'host_black_list': ["https://dontorrent.capetown/", "https://dontorrent.cymru/", "https://dontorrent.contact/", 
+             'host_black_list': ["https://dontorrent.makeup/", "https://dontorrent.yokohama/", 
+                                 "https://dontorrent.capetown/", "https://dontorrent.cymru/", "https://dontorrent.contact/", 
                                  "https://dontorrent.nagoya/", "https://dontorrent.wales/", "https://dontorrent.joburg/", 
                                  "https://dontorrent.party/", "https://dontorrent.durban/", "https://dontorrent.rodeo/",
                                  "https://dontorrent.boston/", "https://dontorrent.tokyo/", "https://dontorrent.bond/",
@@ -699,9 +700,10 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                 elem_json['quality'] = elem.find('b', class_='bold', string=re.compile('Formato:'))\
                                            .find_previous('p').get_text('|', strip=True).split('|')[1]
 
-                if  elem.find('b', class_='bold', string=re.compile('Clave:')):
-                    elem_json['password'] = elem.find('b', class_='bold', string=re.compile('Clave:'))\
-                                                .find_previous('p').get('data-clave', '')
+                if  elem.find('b', class_='bold', string=re.compile('Clave:\s*')):
+                    elem_json['password'] = elem.find('b', class_='bold', string=re.compile('Clave:\s*'))\
+                                                .find_next('a').get('data-content', '')
+                    elem_json['password'] = item.password = scrapertools.find_single_match(elem_json['password'], "value='([^']+)'")
             except Exception:
                 logger.error(elem)
                 logger.error(traceback.format_exc())

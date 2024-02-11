@@ -410,7 +410,8 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
-    pass_list = item.password or {}
+    soup = AHkwargs.get('soup', [])
+    if soup.find('h4'): item.password = soup.find('h4').find_next('input').get('value', '')
 
     for elem in matches_int:
         elem_json = {}
@@ -423,7 +424,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             
                 if x == 2:
                     elem_json['quality'] = '*%s' % td.get_text(strip=True)
-                    
+
                 if x == 3:
                     elem_json['url'] = td.a.get('href', '')
 
@@ -434,7 +435,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
         elem_json['server'] = 'torrent'
         elem_json['size'] = ''
         elem_json['torrent_info'] = elem_json.get('torrent_info', '')
-        elem_json['password'] = pass_list.get(elem_json['quality'].replace('*', ''), '')
+        elem_json['password'] = item.password
 
         if not elem_json.get('url', ''): 
             continue
