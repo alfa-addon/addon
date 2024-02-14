@@ -2264,6 +2264,9 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                             matches_index[key]['quality'] += found_item['quality'] if not matches_index[key]['quality'] \
                                                                                    else ', %s' % found_item['quality']
                         continue
+                    if found_item.get('password', {}) and isinstance(found_item['password'], dict): 
+                        found_item['password'] = 'Contraseña DESCONOCIDA'
+                        found_item['password'] = find_rar_password(found_item)
                     matches_index.update({key: {'title': found_item['title'], 'mediatype': found_item['mediatype'], 
                                                 'quality': found_item['quality'], 'matches_cached': [], 'episode_list': {}}})
                     matches_btdigg.append(found_item)
@@ -2401,6 +2404,25 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                         if elem.get('title_subs'): elem_json['title_subs'] = elem['title_subs']
                         if elem.get('season_search', ''): elem_json['season_search'] = elem['season_search']
                         if item.btdigg: elem_json['btdigg'] = elem_json['season_search'] = item.btdigg
+
+                        if (elem.get('password', {}) and isinstance(elem['password'], dict)) \
+                                                     or str(elem.get('password', '')) == 'Contraseña DESCONOCIDA':
+                            elem['password'] = elem_json['password'] = 'Contraseña DESCONOCIDA'
+                            elem_json['password'] = find_rar_password(elem_json)
+                            if str(elem_json.get('password', '')) == 'Contraseña DESCONOCIDA':
+                                for elem_pass in matches_btdigg:
+                                    if elem_pass.get('mediatype', '') in ['movie'] and elem_pass.get('password', ''):
+                                        elem_json['password'] = elem_pass.get('password', '')
+                                        break
+                                    if elem_pass.get('season', 0) == elem_json.get('season', -1) \
+                                                                     and elem_pass.get('episode', 0) == elem_json.get('episode', -1) \
+                                                                     and elem_pass.get('password'):
+                                        elem_json['password'] = elem_pass['password']
+                                        break
+                                else:
+                                    elem_json['password'] = elem['password']
+                        elif elem.get('password'):
+                            elem_json['password'] = elem['password']
 
                         language = elem_json['language'][:]
                         if 'DUAL' in language and len(language) > 1: language.remove('DUAL')
@@ -2981,6 +3003,9 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     elem_episode['size'] = elem.get('size', '').replace(btdigg_label_B, '')\
                                                                                .replace('\xa0', ' ')\
                                                                                .replace('[COLOR magenta][B]RAR-[/B][/COLOR]', '')
+                                    if elem.get('password', {}):
+                                        elem_episode['password'] = elem['password']
+                                    
                                     y += 1
                                 except Exception:
                                     logger.error('Error en EPISODIO: %s' % elem)
@@ -3305,6 +3330,20 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                                 if not matches_cached.get('url'): continue
                                 found = True
                                 if matches_cached['url'] in str(matches): continue
+                                if (matches_cached.get('password', {}) and isinstance(matches_cached['password'], dict)) \
+                                                                       or str(matches_cached.get('password', '')) == 'Contraseña DESCONOCIDA':
+                                    matches_cached['password'] = 'Contraseña DESCONOCIDA'
+                                    matches_cached['password'] = find_rar_password(matches_cached)
+                                    if str(matches_cached.get('password', '')) == 'Contraseña DESCONOCIDA':
+                                        for elem_pass in matches:
+                                            if elem_pass.get('mediatype', '') in ['movie'] and elem_pass.get('password', ''):
+                                                matches_cached['password'] = elem_pass.get('password', '')
+                                                break
+                                            if elem_pass.get('season', 0) == matches_cached.get('season', -1) \
+                                                                             and elem_pass.get('episode', 0) == matches_cached.get('episode', -1) \
+                                                                             and elem_pass.get('password'):
+                                                matches_cached['password'] = elem_pass['password']
+                                                break
                                 matches_cached['quality'] = '%s%s' % (matches_cached['quality'], btdigg_label)
                                 if not matches_cached.get('language', []): matches_cached['language'] = item.language or ['CAST']
                                 matches_cached['matches_cached'] = []
@@ -3517,7 +3556,7 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                         if elem.get('season_search', ''): elem_json['season_search'] = elem['season_search']
                         if '#' in item.season_search: elem_json['season_search'] = item.season_search
                         elem_json['quality'] = '%s%s' % (elem_json['quality'], btdigg_label)
-                        elem_json['size'] = elem.get('size', '').replace(btdigg_label_B, '').replace('[COLOR magenta][B]RAR-[/B][/COLOR]', '')\
+                        elem_json['size'] = elem.get('size', '').replace(btdigg_label_B, '')\
                                                                 .replace('\xa0', ' ')
                         elem_json['torrent_info'] = elem_json['size']
                         elem_json['torrent_info'] += ' (%s)' % (alias_in or scrapertools.find_single_match(elem.get('title', '')\
@@ -3526,6 +3565,23 @@ def AH_find_btdigg_episodes(self, item, matches=[], domain_alt=channel_py, **AHk
                         elem_json['title'] = ''
                         elem_json['server'] = 'torrent'
                         elem_json['btdig_in_use'] = True
+
+                        if (elem.get('password', {}) and isinstance(elem['password'], dict)) \
+                                                     or str(elem.get('password', '')) == 'Contraseña DESCONOCIDA':
+                            elem['password'] = elem_json['password'] = 'Contraseña DESCONOCIDA'
+                            elem_json['password'] = find_rar_password(elem_json)
+                            if str(elem_json.get('password', '')) == 'Contraseña DESCONOCIDA':
+                                for elem_pass in matches:
+                                    if elem_pass.get('mediatype', '') in ['movie'] and elem_pass.get('password', ''):
+                                        elem_json['password'] = elem_pass.get('password', '')
+                                        break
+                                    if elem_pass.get('season', 0) == elem_json.get('season', -1) \
+                                                                     and elem_pass.get('episode', 0) == elem_json.get('episode', -1) \
+                                                                     and elem_pass.get('password'):
+                                        elem_json['password'] = elem_pass['password']
+                                        break
+                        elif elem.get('password'):
+                            elem_json['password'] = elem['password']
 
                         if elem_json['episode'] in epis_index:
                             matches.append(elem_json.copy())
@@ -3599,6 +3655,20 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                                 if not matches_cached.get('url'): continue
                                 found = True
                                 if matches_cached['url'] in str(matches): continue
+                                if (matches_cached.get('password', {}) and isinstance(matches_cached['password'], dict)) \
+                                                                       or str(matches_cached.get('password', '')) == 'Contraseña DESCONOCIDA':
+                                    matches_cached['password'] = 'Contraseña DESCONOCIDA'
+                                    matches_cached['password'] = find_rar_password(matches_cached)
+                                    if str(matches_cached.get('password', '')) == 'Contraseña DESCONOCIDA':
+                                        for elem_pass in matches:
+                                            if elem_pass.get('mediatype', '') in ['movie'] and elem_pass.get('password', ''):
+                                                matches_cached['password'] = elem_pass.get('password', '')
+                                                break
+                                            if elem_pass.get('season', 0) == matches_cached.get('season', -1) \
+                                                                             and elem_pass.get('episode', 0) == matches_cached.get('episode', -1) \
+                                                                             and elem_pass.get('password'):
+                                                matches_cached['password'] = elem_pass['password']
+                                                break
                                 matches_cached['quality'] = '%s%s' % (matches_cached['quality'], btdigg_label)
                                 if not matches_cached.get('language', []): matches_cached['language'] = item.language or ['CAST']
                                 matches.append(matches_cached.copy())
@@ -3745,6 +3815,23 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                         elem_json['server'] = 'torrent'
                         elem_json['btdig_in_use'] = True
 
+                        if (elem.get('password', {}) and isinstance(elem['password'], dict)) \
+                                                     or str(elem.get('password', '')) == 'Contraseña DESCONOCIDA':
+                            elem['password'] = elem_json['password'] = 'Contraseña DESCONOCIDA'
+                            elem_json['password'] = find_rar_password(elem_json)
+                            if str(elem_json.get('password', '')) == 'Contraseña DESCONOCIDA':
+                                for elem_pass in matches:
+                                    if elem_pass.get('mediatype', '') in ['movie'] and elem_pass.get('password', ''):
+                                        elem_json['password'] = elem_pass.get('password', '')
+                                        break
+                                    if elem_pass.get('season', 0) == elem_json.get('season', -1) \
+                                                                     and elem_pass.get('episode', 0) == elem_json.get('episode', -1) \
+                                                                     and elem_pass.get('password'):
+                                        elem_json['password'] = elem_pass['password']
+                                        break
+                        elif elem.get('password'):
+                            elem_json['password'] = elem['password']
+
                         matches.append(elem_json.copy())
 
                     except Exception:
@@ -3762,6 +3849,47 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
 
 def find_rar_password(item):
     logger.info()
+
+    patron_title = r'(?i)(.*?)\s*(?:-*\s*temp|\(|\[)'
+    patron_title_b = r'(?i)(.*?)\s*(?:-*\s*temp|\(|\[|\s+-)'
+
+    try:
+        if isinstance(item, dict): 
+            if not item.get('password'):
+                return item.get('password', '')
+
+            if len(window.getProperty("alfa_cached_passwords")) < 5:
+                if not PY3: from lib.alfaresolver import get_cached_files
+                else: from lib.alfaresolver_py3 import get_cached_files
+                window.setProperty("alfa_cached_passwords", jsontools.dump(get_cached_files('password'), **kwargs_json))
+
+            alfa_cached_passwords = jsontools.load(window.getProperty("alfa_cached_passwords") or '{}')
+
+            key = sxe = ''
+            if item.get('mediatype', '') != 'movie':
+                sxe = '%sx%s' % (item.get('season', 0), item.get('episode', 0))
+                key = item.get('tmdb_id', item.get('title', '').replace('- ', ''))
+            else:
+                sxe = 'movie'
+                key = item.get('title', '').lower()
+                if scrapertools.find_single_match(item.get('title', '').replace(btdigg_label_B, ''), patron_title).strip():
+                    key = scrapertools.find_single_match(item['title'].replace(btdigg_label_B, ''), patron_title).strip()\
+                                      .replace('- ', '').lower()
+                elif scrapertools.find_single_match(item.get('title', '').replace(btdigg_label_B, ''), patron_title_b).strip():
+                    key = scrapertools.find_single_match(item['title'].replace(btdigg_label_B, ''), patron_title_b).strip()\
+                                      .replace('- ', '').lower()
+
+            if key and sxe and key in alfa_cached_passwords and sxe in alfa_cached_passwords[key]:
+                if not isinstance(alfa_cached_passwords[key][sxe]['password'], dict) \
+                                                     and str(alfa_cached_passwords[key][sxe]['password']) != 'Contraseña DESCONOCIDA':
+                    item['password'] = alfa_cached_passwords[key][sxe]['password']
+
+            return item.get('password', '')
+    except Exception:
+        logger.error(traceback.format_exc())
+        return item.get('password', '')
+
+
     from core import httptools
     
     try:

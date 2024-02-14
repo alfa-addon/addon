@@ -429,6 +429,7 @@ def verify_emergency_update(proxy_only=False):
     proxyCF = ''
     proxySSL = ''
     gateways = ''
+    password = ''
     
     try:
         if not PY3: from lib import alfaresolver
@@ -445,7 +446,9 @@ def verify_emergency_update(proxy_only=False):
                         proxySSL = fix_version__[4]
                     if len(fix_version__) >= 6:
                         gateways = fix_version__[5]
-                    parse_emergency_proxies(proxyCF, proxySSL, gateways)
+                    if len(fix_version__) >= 7:
+                        password = fix_version__[6]
+                    parse_emergency_proxies(proxyCF, proxySSL, gateways, password)
                     if proxy_only: break
 
                 if verify_addon_version(CURRENT_VERSION, addon_version):
@@ -520,13 +523,14 @@ def parse_emergency_update(updates_url, github_url):
     return url
 
 
-def parse_emergency_proxies(proxyCF, proxySSL, gateways):
+def parse_emergency_proxies(proxyCF, proxySSL, gateways, password):
 
     try:
         import xbmcgui
         window = xbmcgui.Window(10000)
         window.setProperty("alfa_gateways", gateways)
-        logger.info('Gateways: %s' % window.getProperty("alfa_gateways"))
+        window.setProperty("alfa_password", password)
+        logger.info('Gateways: %s / Password: %s' % (window.getProperty("alfa_gateways"), window.getProperty("alfa_password")))
     except Exception:
         logger.error(traceback.format_exc())
     
