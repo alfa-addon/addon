@@ -24,8 +24,9 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'divxtotal', 
              'host': config.get_setting("current_host", 'divxtotal', default=''), 
-             'host_alt': ["https://www2.divxtotal.mov/"], 
-             'host_black_list': ["https://www2.divxtotal.zip/", "https://www1.divxtotal.zip/", "https://www.divxtotal.win/", 
+             'host_alt': ["https://www3.divxtotal.mov/"], 
+             'host_black_list': ["https://www2.divxtotal.mov/", 
+                                 "https://www2.divxtotal.zip/", "https://www1.divxtotal.zip/", "https://www.divxtotal.win/", 
                                  "https://www.divxtotal.wf/", "https://www.divxtotal.pl/", "https://www.divxtotal.cat/", 
                                  "https://www.divxtotal.fi/", "https://www.divxtotal.dev/", "https://www.divxtotal.ac/", 
                                  "https://www.divxtotal.re/", "https://www.divxtotal.pm/", "https://www.divxtotal.nl/"], 
@@ -176,7 +177,7 @@ def submenu(item):
         #logger.error(elem)
 
         title = '[B]%s[/B]' % elem.a.get_text(strip=True).title()
-        url = AlfaChannel.urljoin(host, elem.a.get('href', ''))
+        url = AlfaChannel.urljoin(host, elem.a.get('href', '')).replace('hd-5/', 'hd/')
         contentType = 'movie' if item.c_type == "peliculas" else 'tvshow'
 
         if item.title in title:
