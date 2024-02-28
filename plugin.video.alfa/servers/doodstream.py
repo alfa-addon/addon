@@ -11,13 +11,14 @@ from core import scrapertools
 from platformcode import logger
 
 data = ""
-host = "https://dood.la"
-count = 3
+host = "https://d0000d.com"    #"https://dood.la"
+count = 5
 retries = count
 forced_proxy_opt = 'ProxySSL'
 
 kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0,
           'CF': True, 'cf_assistant': False, 'ignore_response_code': True}
+
 
 def test_video_exists(page_url):
     global data, retries
@@ -26,6 +27,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s'; retry=%s)" % (page_url, retries))
     
     response = httptools.downloadpage(page_url, **kwargs)
+    
     if '/d/' in page_url and scrapertools.find_single_match(response.data, ' <iframe src="([^"]+)"'):
         url = scrapertools.find_single_match(response.data, ' <iframe src="([^"]+)"')
         page_url = "%s%s" %(host,url)
@@ -49,12 +51,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
     video_urls = list()
     label = scrapertools.find_single_match(data, r'type:\s*"video/([^"]+)"')
-    js_code = scrapertools.find_single_match(data, ("(function\s?makePlay.*?;})"))
-   
-    js_code = re.sub(r"\+Date.now\(\)", '', js_code)
+    js_code = scrapertools.find_single_match(data, ("(function\s?makePlay.*?})"))
+    js_code = re.sub(r"\s+\+\s+Date.now\(\)", '', js_code)
     js = js2py.eval_js(js_code)
     makeplay = js() + str(int(time.time()*1000))
-
+    
     base_url = scrapertools.find_single_match(data, r"\$.get\('(/pass[^']+)'")
     new_data = httptools.downloadpage("%s%s" % (host, base_url), add_referer=True, **kwargs).data
     
@@ -64,9 +65,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         new_data = httptools.downloadpage("%s%s" % (host, base_url), add_referer=True, **kwargs).data
         if retries < 0:
             return video_urls
-
+    
     new_data = re.sub(r'\s+', '', new_data)
     url = new_data + makeplay + "|Referer=%s" % page_url
     video_urls.append(['%s [doodstream]' % label, url])
-
+    
     return video_urls

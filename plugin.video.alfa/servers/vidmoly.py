@@ -17,7 +17,8 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     response = httptools.downloadpage(page_url)
     data = response.data
-    if response.code == 404 or "Please wait" in data:
+    logger.debug(data)
+    if response.code == 404 or "Please wait" in data or "/notice.php" in data:
         return False, "[vidmoly] El archivo no existe o ha sido borrado"
     return True, ""
 

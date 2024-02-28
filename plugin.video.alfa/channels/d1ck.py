@@ -44,31 +44,30 @@ tv_path = ''
 language = []
 url_replace = []
 
-finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['preview']}]},
-         'categories': {'find_all': [{'tag': ['div'], 'class': ['preview']}]},
+finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['item', 'preview']}]},
+         'categories': {'find_all': [{'tag': ['div'], 'class': ['item','preview']}]},
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 
-         'next_page': dict([('find', [{'tag': ['ul'], 'class': ['pages']}]),
-                            ('find_all', [{'tag': ['a'], '@POS': [-1], '@ARG': 'href'}])]), 
-         # 'next_page': dict([('find', [{'tag': ['ul'], 'class': ['pages']}]),
-                            # ('find_all', [{'tag': ['a'], '@POS': [-1], '@ARG': 'data-parameters', '@TEXT': ':(\d+)'}])]), 
+         'next_page': {},
          'next_page_rgx': [['&from_videos=\d+', '&from_videos=%s'], ['&from=\d+', '&from=%s'], 
                            ['/\d+', '/%s/'], ['&page=\d+', '&page=%s'], ['\?page=\d+', '?page=%s'], ['\/page\/\d+\/', '/page/%s/']], 
-         'last_page': {},
+         'last_page':dict([('find', [{'tag': ['div'], 'class': ['pagination']}]),
+                           ('find_all', [{'tag': ['a'], '@POS': [-2], '@ARG': 'data-parameters', '@TEXT': ':(\d+)'}])]), 
          'plot': {}, 
          'findvideos': {},
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
-         'profile_labels': {'list_all_stime': dict([('find', [{'tag': ['div'], 'class': ['dur']}]),
+         'profile_labels': {
+                            'list_all_stime': dict([('find', [{'tag': ['div'], 'class': ['time']}]),
                                                     ('get_text', [{'strip': True}])]),
                             # 'list_all_quality': dict([('find', [{'tag': ['span'], 'class': ['hd']}]),
                                                       # ('get_text', [{'strip': True}])]),
-                            'section_cantidad': dict([('find', [{'tag': ['div'], 'class': ['dur']}]),
+                            'section_cantidad': dict([('find', [{'tag': ['div'], 'class': ['thumb-item']}]),
                                                       ('get_text', [{'strip': True}])])
                            },
-         'controls': {'url_base64': False, 'cnt_tot': 40, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
+         'controls': {'url_base64': False, 'cnt_tot': 20, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
          'timeout': timeout}
 AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_path, movie_action='play', canonical=canonical, finds=finds, 
                                      idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -122,9 +121,10 @@ def section(item):
     logger.info()
 
     findS = finds.copy()
+    findS['url_replace'] = [['(\/(?:categories|channels|models|pornstars)\/[^$]+$)', r'\1?sort_by=post_date&from=1']]
 
-    if item.extra == "Categorias":
-        findS['url_replace'] = [[host, '%scategories/' % host], ['($)', '1/']]
+    # if item.extra == "Categorias":
+        # findS['url_replace'] = [[host, '%scategories/' % host], ['($)', '1/']]
 
     return AlfaChannel.section(item, finds=findS, **kwargs)
 
@@ -160,7 +160,6 @@ def play(item):
     else:
         soup = AlfaChannel.create_soup(item.url, **kwargs)
         url = soup.find('div', class_='player-holder').iframe['src']
-    
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
