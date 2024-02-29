@@ -16,7 +16,7 @@
         "url": "https://filemoon.to/e/\\1"
       },
       {
-        "pattern": "(https://(?:filelions|fviplions|azipcdn).(?:sx|to|in|live|online|com|live)/(?:e|d|v|f)/[a-z0-9]+)",
+        "pattern": "(https://(?:filelions|fviplions|azipcdn).(?:sx|to|in|live|online|com|live|top)/(?:e|d|v|f)/[a-z0-9]+)",
         "url": "\\1"
       },
       {
