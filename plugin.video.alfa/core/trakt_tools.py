@@ -15,6 +15,7 @@ from platformcode import config
 from platformcode import logger
 from threading import Thread
 
+API_HOST = "https://api.trakt.tv"
 client_id = "c40ba210716aee87f6a9ddcafafc56246909e5377b623b72c15909024448e89d"
 client_secret = "999164f25832341f0214453bb11c915adb18e9490d6b5e9a707963a5a1bee43e"
 kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
@@ -31,7 +32,7 @@ def auth_trakt():
         post = {'client_id': client_id}
         post = jsontools.dump(post)
         # Se solicita url y código de verificación para conceder permiso a la app
-        url = "http://api-v2launch.trakt.tv/oauth/device/code"
+        url = API_HOST + "/oauth/device/code"
         #data = httptools.downloadpage(url, post=post, headers=headers, replace_headers=True, **kwargs).data
         data = httptools.downloadpage(url, post=post, headers=headers, **kwargs).data
         data = jsontools.load(data)
@@ -63,13 +64,13 @@ def token_trakt(item):
     try:
         if item.extra == "renew":
             refresh = config.get_setting("refresh_token_trakt", "trakt")
-            url = "https://api.trakt.tv/oauth/token"
+            url = API_HOST + "/oauth/token"
             post = {'refresh_token': refresh, 'client_id': client_id, 'client_secret': client_secret,
                     'redirect_uri': 'urn:ietf:wg:oauth:2.0:oob', 'grant_type': 'refresh_token'}
             data = httptools.downloadpage(url, post=post, **kwargs).data
             data = jsontools.load(data)
         elif item.action == "token_trakt":
-            url = "https://api-v2launch.trakt.tv/oauth/device/token"
+            url = API_HOST + "/oauth/device/token"
             post = "code=%s&client_id=%s&client_secret=%s" % (item.device_code, client_id, client_secret)
             data = httptools.downloadpage(url, post=post, headers=headers, **kwargs).data
             data = jsontools.load(data)
@@ -89,7 +90,7 @@ def token_trakt(item):
                         config.set_setting("trakt_sync", False)
                         return
 
-                    url = "http://api-v2launch.trakt.tv/oauth/device/token"
+                    url = API_HOST + "/oauth/device/token"
                     post = {'code': item.device_code, 'client_id': client_id, 'client_secret': client_secret}
                     post = jsontools.dump(post)
                     data = httptools.downloadpage(url, post=post, headers=headers, **kwargs).data
@@ -171,7 +172,7 @@ def get_trakt_watched(id_type, mediatype, update=False):
                                ['trakt-api-version', '2']]
                     if token_auth:
                         headers.append(['Authorization', "Bearer %s" % token_auth])
-                        url = "https://api.trakt.tv/sync/watched/%s" % mediatype
+                        url = API_HOST + "/sync/watched/%s" % mediatype
                         data = httptools.downloadpage(url, headers=headers, **kwargs)
                         if data.code == 401:
                             token_trakt(Item(extra="renew"))
