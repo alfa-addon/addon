@@ -27,7 +27,8 @@ canonical = {
              'channel': 'entrepeliculasyseries', 
              'host': config.get_setting("current_host", 'entrepeliculasyseries', default=''), 
              'host_alt': ["https://entrepeliculasyseries.nz/"], 
-             'host_black_list': ['https://entrepeliculasyseries.pro/', 'https://entrepeliculasyseries.nu/'],   
+             'host_black_list': ["https://entrepeliculasyseries.com/", 
+                                 "https://entrepeliculasyseries.pro/", "https://entrepeliculasyseries.nu/"],   
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True, 'search_active': None
             }

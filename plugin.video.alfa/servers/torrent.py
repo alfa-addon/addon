@@ -3653,6 +3653,9 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
 
         # Analizamos si es necesaria una contraseña, que debería estar en item.password
         if archive.needs_password():
+            from lib.generictools import find_rar_password
+            password = item.password = find_rar_password(item)
+            rar_control = update_rar_control(erase_file_path, password=password, status='UnRARing: Password update')
             if not password:
                 pass_path = filetools.split(file_path)[0]
                 password = last_password_search(pass_path, erase_file_path)

@@ -1026,6 +1026,9 @@ class AlfaChannelHelper:
                 elem['torrent_info'] = '[%s]' % elem['torrent_info']
 
         # Si tiene contraseña, la guardamos y la pintamos
+        if 'RAR-' in elem['torrent_info']:
+            from lib.generictools import find_rar_password
+            elem['password'] = item.password = find_rar_password(item)
         if elem.get('password', '') or (item.password if not isinstance(item.password, _dict) else ''):
             elem['password'] = item.password = elem.get('password', '') or item.password
             elem['torrent_info'] += " -[COLOR magenta] Contraseña: [/COLOR]'%s'" % elem['password']

@@ -411,7 +411,12 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     matches = []
     findS = AHkwargs.get('finds', finds)
     soup = AHkwargs.get('soup', [])
-    if soup.find('h4'): item.password = soup.find('h4').find_next('input').get('value', '')
+    if soup.find('h4'): 
+        sxe = ''
+        if item.contentType in ['episode']:
+            sxe = '%sx%s' % (item.contentSeason, str(item.contentEpisodeNumber).zfill(2))
+        if sxe in str(soup.find('h4')):
+            item.password = soup.find('h4').find_next('input').get('value', '')
 
     for elem in matches_int:
         elem_json = {}
