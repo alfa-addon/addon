@@ -23,12 +23,15 @@ from lib import alfa_assistant
 list_quality = ['default']
 list_servers = ['gounlimited']
 
+forced_proxy_opt = 'ProxySSL'
+
 canonical = {
              'channel': 'porndish', 
              'host': config.get_setting("current_host", 'porndish', default=''), 
              'host_alt': ["https://www.porndish.com"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
+             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -46,9 +49,9 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
-
+    
     autoplay.show_option(item.channel, itemlist)
-
+    
     return itemlist
 
 

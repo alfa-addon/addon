@@ -33,13 +33,14 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-timeout = 5
+timeout = 30
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = ''
 tv_path = ''
 language = []
 url_replace = []
+
 
 finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['videos_list']}]),
                        ('find_all', [{'tag': ['div'], 'class': ['item']}])]),

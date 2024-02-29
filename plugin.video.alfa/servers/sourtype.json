@@ -76,6 +76,10 @@
         "url": "\\1"
       },
      {
+        "pattern": "(https://(?:www.|)vlxxx.(?:com|porn)(?:/blog|)/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+     {
         "pattern": "(https://(?:www.|)(?:tubehentai|wetsins|pornyteen).(?:com|sexy)/video/[A-z0-9-]+.html)",
         "url": "\\1"
       },
