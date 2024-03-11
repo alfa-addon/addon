@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- Channel SoloLatino -*-
 # -*- Created for Alfa-addon -*-
-# -*- By the Alfa Develop Group -*-
+# -*- By the Alfa Development Group -*-
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -352,17 +352,17 @@ def findvideos(item):
 
             for elem in matches:
                 if not elem.has_attr("data-r"):
-                    url = scrapertools.find_single_match(elem.get("onclick", ""), "go_to_player\('([^']+)")
+                    url = scrapertools.find_single_match(elem.get("onclick", ""), "go_to_player(?:Vast)?\('([^']+)")
                 else:
                     url = base64.b64decode(elem["data-r"]).decode('utf-8')
                 if not url or "short." in url:
                     continue
-                if "embedsito" in player_url:
-                    # url = "https://embedsito.net/player/?id=%s" %url
-                    # data = httptools.downloadpage(url, timeout=TIMEOUT, headers={"referer": item.url}).data
-                    # url = BeautifulSoup(data, "html5lib").find("iframe")["src"]
-                    url = scrapertools.find_single_match(elem.get("onclick", ""), "go_to_player\('([^']+)")
-                    url = base64.b64decode(url).decode('utf-8')
+                # if "embedsito" in player_url:
+                #     # url = "https://embedsito.net/player/?id=%s" %url
+                #     # data = httptools.downloadpage(url, timeout=TIMEOUT, headers={"referer": item.url}).data
+                #     # url = BeautifulSoup(data, "html5lib").find("iframe")["src"]
+                #     url = scrapertools.find_single_match(elem.get("onclick", ""), "go_to_player\('([^']+)")
+                #     url = base64.b64decode(url).decode('utf-8')
 
                 urls = process_url(url)
                 for url in urls:

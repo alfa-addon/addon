@@ -10,7 +10,8 @@
   "categories": [
     "movie",
     "tvshow",
-    "vos"
+    "vos",
+    "anime"
   ],
   "force_unify": true,
   "settings": [
