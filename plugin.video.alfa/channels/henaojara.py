@@ -322,10 +322,24 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     logger.info()
 
     matches = []
+
     findS = AHkwargs.get('finds', finds)
 
-    for elem in matches_int:
+    def add_match(url):
+        url = check_hjstream(url)
+        # logger.info(iframeUrl, True)
+        uriData = AlfaChannel.urlparse(url)
+        if re.search(r'hqq|netuplayer|krakenfiles|hj.henaojara.com|streamhj.top', uriData.hostname, re.IGNORECASE):
+            return
         elem_json = {}
+        elem_json['url'] = url
+        elem_json['title'] = '%s'
+        elem_json['language'] = item.language
+        elem_json['quality'] = 'HD'
+        if not elem_json.get('url'): return
+        matches.append(elem_json.copy())
+
+    for elem in matches_int:
         # logger.error(elem)
 
         try:
@@ -350,19 +364,12 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             iframeUrl = iframe.get('src', '')
 
             if iframeUrl != "":
-                iframeUrl = check_hjstream(iframeUrl)
-                # logger.info(iframeUrl, True)
-                uriData = AlfaChannel.urlparse(iframeUrl)
-                if re.search(r'hqq|netuplayer|krakenfiles|hj.henaojara.com|streamhj.top', uriData.hostname, re.IGNORECASE):
-                    continue
-
-                elem_json['url'] = iframeUrl
-                elem_json['title'] = '%s'
-                elem_json['language'] = item.language
-                elem_json['quality'] = 'HD'
-
-            if not elem_json.get('url'): continue
-            matches.append(elem_json.copy())
+                if "multiplayer" in iframeUrl:
+                    videos = multiplayer_findvideos(iframeUrl)
+                    for url in videos:
+                        add_match(url)
+                else:
+                    add_match(iframeUrl)
 
         except Exception:
             logger.error(elem)
@@ -484,3 +491,8 @@ def get_title_season(url, soup):
             season = int(scrapertools.find_single_match(season_name, seasonPattern))
 
     return season
+
+def multiplayer_findvideos(url):
+    kwargs["soup"] = False
+    data = AlfaChannel.create_soup(url, hide_infobox=True, **kwargs)
+    return scrapertools.find_multiple_matches(data.data, r'loadVideo\(\'(.*?)\'\)')
