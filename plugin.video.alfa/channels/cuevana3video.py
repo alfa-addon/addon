@@ -32,7 +32,7 @@ canonical = {
              'channel': 'cuevana3video', 
              'host': config.get_setting("current_host", 'cuevana3video', default=''), 
              'host_alt': ["https://cuevana3.ch/"], 
-             'host_black_list': ["https://cuevana3.sk/", 
+             'host_black_list': ["https://pelisplay.info/", "https://cuevana3.sk/", 
                                  "https://ww3.cuevana3.ch/", "https://ww2.cuevana3.ch/","https://www12.cuevana3.ch/",
                                  "https://www11.cuevana3.ch/", "https://www8.cuevana3.ch/", "https://www10.cuevana3.ch/", 
                                  "https://www7.cuevana3.ch/", "https://www6.cuevana3.ch/", "https://www5.cuevana3.ch/", 
@@ -435,7 +435,7 @@ def findvideos(item):
 
         for scrapedurl, scrapedtitle in matches:
             #if  "peliscloud" in scrapedtitle.lower(): continue
-            if  "pelisplay" in in scrapedurl: continue  # Son los mismos server que los que muestra la web
+            if  "pelisplay" in scrapedurl: continue  # Son los mismos server que los que muestra la web
             if not scrapedurl.startswith("http"): scrapedurl = "https:" + scrapedurl
             if "hydrax" in scrapedurl: continue
             # if "pelisplay" in scrapedurl:             # Da los mismos server que los que muestra lña web
@@ -506,10 +506,9 @@ def play(item):
     item.url = item.url.replace("embedsito.com","fembed.com").replace("pelispng.online","fembed.com")
 
     if "pelisplay" in item.url:
-        data = httptools.downloadpage(item.url, headers={"Referer" : item.url}, forced_proxy_opt='ProxyCF', canonical=canonical).data
-        item.url = scrapertools.find_single_match(data, '<iframe id="embedvideo" src="([^"]+)"')
-        logger.debug(item.url)
-
+        data = httptools.downloadpage(item.url, headers={"Referer" : item.url}).data
+        item.url = scrapertools.find_single_match(data, "file: '([^']+)")
+        
     if "hydrax.net" in item.url:
         data = httptools.downloadpage(item.url, headers={"Referer" : item.url}).data
         v = scrapertools.find_single_match(item.url, 'v=(\w+)')
