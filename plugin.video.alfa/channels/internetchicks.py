@@ -32,7 +32,7 @@ canonical = {
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-timeout = 15
+timeout = 30
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = ''
