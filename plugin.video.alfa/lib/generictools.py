@@ -2444,6 +2444,8 @@ def AH_find_btdigg_list_all_from_BTDIGG(self, item, matches=[], matches_index={}
                                     matches_index[key]['quality'] += ', %s' % quality
                                     if DEBUG: logger.debug('QUALITY added: %s / %s' % (key, quality))
                                 matches_index[key]['matches_cached'].append(elem_json.copy())
+                            if elem_json['title'] not in str(matches_btdigg):
+                                matches_btdigg.append(elem_json_save.copy())
                             continue
 
                         item.btdig_in_use =  True

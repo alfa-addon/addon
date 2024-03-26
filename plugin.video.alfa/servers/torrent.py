@@ -115,7 +115,7 @@ if config.get_setting('torrent_client', server='torrent', default=0) == 0 \
           and filetools.exists(filetools.join(config.get_data_path(), 'settings_servers', 'torrent_data_bk.json')):
     filetools.copy(filetools.join(config.get_data_path(), 'settings_servers', 'torrent_data_bk.json'), 
                    filetools.join(config.get_data_path(), 'settings_servers', 'torrent_data.json'))
-    torrent_client = config.get_setting('torrent_client', server='torrent', caching_var='reset', default=0)
+    torrent_client = config.get_setting('torrent_client', server='torrent', default=0)
 
 
 # Returns an array of possible video url's from the page_url
