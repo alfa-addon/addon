@@ -18,27 +18,20 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-forced_proxy_opt = 'ProxySSL'
-
 canonical = {
              'channel': 'bongacams', 
              'host': config.get_setting("current_host", 'bongacams', default=''), 
-             'host_alt': ["https://es.bongacams.com/"], 
+             'host_alt': ["https://bongacams.com/"], 
              'host_black_list': [], 
-             # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             # 'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
-hosta = "%stools/listing_v3.php?livetab=%s&online_only=true&offset=0&can_pin_models=true&limit=40"
-
+hosta = "%stools/listing_v3.php?livetab=%s&online_only=true&offset=0&can_pin_models=true&limit=40"  
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    url = "https://www.deviants.com/search/?sort_by=post_date&from=01"
-    soup = create_soup(url)
-    logger.debug(soup)
     # httptools.downloadpage(host, canonical=canonical).data ### Esta en categorias
     itemlist.append(Item(channel = item.channel, title="Female" , action="lista", url=hosta %(host, "female")))
     itemlist.append(Item(channel = item.channel, title="Couples" , action="lista", url=hosta % (host, "couples")))
@@ -71,7 +64,6 @@ def categorias(item):
         cantidad = elem.find('span', class_='hbd_s_live')
         if cantidad:
             title = "%s %s" % (cat,cantidad.text.strip())
-            # https://es.bongacams.com/tools/listing_v3.php?livetab=female&offset=0&limit=72&category=big-tits
         url = "%stools/listing_v3.php?livetab=%s&online_only=true&offset=0&can_pin_models=true&category=%s&limit=40" %(host,"female", cat)
         thumbnail = ""
         plot = ""
@@ -95,7 +87,7 @@ def create_soup(url, referer=None, unescape=False):
 def lista(item):
     logger.info()
     itemlist = []
-    headers={'X-Requested-With' : 'XMLHttpRequest', 'Referer': host}
+    headers={'X-Requested-With' : 'XMLHttpRequest'}
     data = httptools.downloadpage(item.url, headers=headers, canonical=canonical).json
     for elem in data['models']:
         plot= ""
