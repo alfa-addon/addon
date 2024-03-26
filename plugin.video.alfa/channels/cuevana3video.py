@@ -435,8 +435,22 @@ def findvideos(item):
 
         for scrapedurl, scrapedtitle in matches:
             #if  "peliscloud" in scrapedtitle.lower(): continue
+            if  "pelisplay" in in scrapedurl: continue  # Son los mismos server que los que muestra la web
             if not scrapedurl.startswith("http"): scrapedurl = "https:" + scrapedurl
             if "hydrax" in scrapedurl: continue
+            # if "pelisplay" in scrapedurl:             # Da los mismos server que los que muestra lña web
+                # data = httptools.downloadpage(scrapedurl, headers={"Referer" : item.url}, forced_proxy_opt='ProxyCF', canonical=canonical).data
+                # matches = scrapertools.find_multiple_matches(data, 'data-video="([^"]+)"')
+                # for scrapedurl in matches:
+                    # itemlist.append(
+                        # item.clone(
+                            # action = "play",
+                            # language = lang,
+                            # server = "",
+                            # title = "%s",
+                            # url = scrapedurl
+                        # )
+                    # )
             itemlist.append(
                 item.clone(
                     action = "play",
@@ -492,9 +506,10 @@ def play(item):
     item.url = item.url.replace("embedsito.com","fembed.com").replace("pelispng.online","fembed.com")
 
     if "pelisplay" in item.url:
-        data = httptools.downloadpage(item.url, headers={"Referer" : item.url}).data
-        item.url = scrapertools.find_single_match(data, "file: '([^']+)")
-        
+        data = httptools.downloadpage(item.url, headers={"Referer" : item.url}, forced_proxy_opt='ProxyCF', canonical=canonical).data
+        item.url = scrapertools.find_single_match(data, '<iframe id="embedvideo" src="([^"]+)"')
+        logger.debug(item.url)
+
     if "hydrax.net" in item.url:
         data = httptools.downloadpage(item.url, headers={"Referer" : item.url}).data
         v = scrapertools.find_single_match(item.url, 'v=(\w+)')
