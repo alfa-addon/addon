@@ -116,7 +116,7 @@
         "url": "https://frprn.com/videos/\\1/"
       },
       {
-        "pattern": "(https://(?:www.|)(?:ok|perfectgirls|pornstars).(?:xxx|tube)/video(?:s|)/[0-9]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:perfectgirls|pornstars).(?:xxx|tube)/video(?:s|)/[0-9]+(?:/|))",
         "url": "\\1"
       },
       {

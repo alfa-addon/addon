@@ -23,8 +23,8 @@ canonical = {
              'host': config.get_setting("current_host", 'bongacams', default=''), 
              'host_alt': ["https://bongacams.com/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
-             'CF': False, 'CF_test': False, 'alfa_s': True
+             # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
+             # 'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 hosta = "%stools/listing_v3.php?livetab=%s&online_only=true&offset=0&can_pin_models=true&limit=40"  
