@@ -295,8 +295,8 @@ def play(item):
               'CF': False, 'cf_assistant': False, 'canonical': {}}
     
     try:
-        data = AlfaChannel.create_soup(item.url, forced_proxy_opt=forced_proxy_opt, **kwargs).find("script")
-        data = url = scrapertools.find_single_match(str(data), "url\s*=\s*'([^']+)'")
+        data = AlfaChannel.create_soup(item.url, forced_proxy_opt=forced_proxy_opt, **kwargs)
+        data = url = scrapertools.find_single_match(str(data), "var\s*url\s*=\s*'([^']+)'")
         
         if not data.startswith('http'):
             base_url = "%sr.php" % host
