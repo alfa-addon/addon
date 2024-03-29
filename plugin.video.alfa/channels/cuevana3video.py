@@ -32,7 +32,7 @@ canonical = {
              'channel': 'cuevana3video', 
              'host': config.get_setting("current_host", 'cuevana3video', default=''), 
              'host_alt': ["https://cuevana3.ch/"], 
-             'host_black_list': ["https://cuevana3.sk/", 
+             'host_black_list': ["https://pelisplay.info/", "https://cuevana3.sk/", 
                                  "https://ww3.cuevana3.ch/", "https://ww2.cuevana3.ch/","https://www12.cuevana3.ch/",
                                  "https://www11.cuevana3.ch/", "https://www8.cuevana3.ch/", "https://www10.cuevana3.ch/", 
                                  "https://www7.cuevana3.ch/", "https://www6.cuevana3.ch/", "https://www5.cuevana3.ch/", 
@@ -435,8 +435,22 @@ def findvideos(item):
 
         for scrapedurl, scrapedtitle in matches:
             #if  "peliscloud" in scrapedtitle.lower(): continue
+            if  "pelisplay" in scrapedurl: continue  # Son los mismos server que los que muestra la web
             if not scrapedurl.startswith("http"): scrapedurl = "https:" + scrapedurl
             if "hydrax" in scrapedurl: continue
+            # if "pelisplay" in scrapedurl:             # Da los mismos server que los que muestra lña web
+                # data = httptools.downloadpage(scrapedurl, headers={"Referer" : item.url}, forced_proxy_opt='ProxyCF', canonical=canonical).data
+                # matches = scrapertools.find_multiple_matches(data, 'data-video="([^"]+)"')
+                # for scrapedurl in matches:
+                    # itemlist.append(
+                        # item.clone(
+                            # action = "play",
+                            # language = lang,
+                            # server = "",
+                            # title = "%s",
+                            # url = scrapedurl
+                        # )
+                    # )
             itemlist.append(
                 item.clone(
                     action = "play",
