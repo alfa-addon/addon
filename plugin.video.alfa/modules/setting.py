@@ -36,14 +36,6 @@ def mainlist(item):
                          thumbnail=get_thumb("channels.png")))
     itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60538), action="menu_servers", folder=True,
                          thumbnail=get_thumb("on_the_air.png")))
-    itemlist.append(Item(module="search", title=config.get_localized_string(60540), action="opciones", folder=True,
-                         thumbnail=get_thumb("search.png")))
-    itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(60541), action="channel_config",
-                         config="downloads", folder=True, thumbnail=get_thumb("downloads.png")))
-
-    if config.get_videolibrary_support():
-        itemlist.append(Item(module="videolibrary", title=config.get_localized_string(60542), action="channel_config",
-                             folder=True, thumbnail=get_thumb("videolibrary.png")))
 
     if config.is_xbmc():
         itemlist.append(Item(module=MODULE_NAME, title=config.get_localized_string(70253), action="setting_torrent",
