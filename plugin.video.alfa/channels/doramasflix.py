@@ -523,10 +523,10 @@ def seasons(item):
         url = episode['_id']
         thumbnail = tmdb_thumb_path.format(episode['still_path'])
         infoLabels['filtro'] = episode['still_path']
-        itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.contentSerieName, url=url,
-                             thumbnail=thumbnail, action='findvideos', language=item.language, infoLabels=infoLabels))
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', 
+                             infoLabels=infoLabels, contentType='episode'))
 
-    tmdb.set_infoLabels_itemlist(itemlist, force_no_year=True)
+    tmdb.set_infoLabels_itemlist(itemlist, True)
 
     if item.contentSerieName != '' and config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
