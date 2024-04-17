@@ -671,10 +671,8 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
     t_hash = ''
     url_save = url
     url_set = filetools.encode(url.split('?')[0])
-    if '.php?' in url: 
+    if '.php?' in url or '?id=' in url: 
         url_set = filetools.encode(url.split('?')[1])
-    else:
-        url_set = filetools.encode(url.split('?')[0])
     subtitle_path = ''
     PK = 'PK'
     if PY3: PK = bytes(PK, 'utf-8')

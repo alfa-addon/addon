@@ -26,8 +26,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'pelitorrent', 
              'host': config.get_setting("current_host", 'pelitorrent', default=''), 
-             'host_alt': ["https://www.pelitorrent.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://pelitorrent.com/"], 
+             'host_black_list': ["https://pelitorrent.xyz/", "https://www.pelitorrent.com/"], 
              'pattern': "<link\s*rel='stylesheet'\s*id='menu-icons-extra-css'\s*href='([^']+)'", 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -92,7 +92,7 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['aa-cn']}]),
          'controls': {'min_temp': min_temp, 'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 24, 
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
                       'host_torrent': host_torrent, 'duplicates': [], 'join_dup_episodes': False},
-         'timeout': timeout}
+         'timeout': timeout * 5}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
                                    idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
                                    list_quality_movies=list_quality_movies, list_quality_tvshow=list_quality_tvshow, 
@@ -156,13 +156,18 @@ def sub_menu(item):
                              thumbnail=get_thumb('channels_tvshow.png'), c_type='series', extra=item.extra))
 
     if item.c_type in ['peliculas', 'series']:
+        itemlist.append(Item(channel=item.channel, title='Todas las %s' % item.c_type.title(), 
+                             url=host + 'torrents-%s/' % item.c_type, action='list_all',
+                             thumbnail=item.thumbnail, c_type=item.c_type))
+
         itemlist.append(Item(channel=item.channel, title='Más Vistas', 
                              url=AlfaChannel.doo_url, post='action=action_tr_movie_category&limit=48&post=%s&cate=all&mode=2' % c_type, 
                              action='list_all', thumbnail=item.thumbnail, c_type=item.c_type, extra='vistas'))
 
-        itemlist.append(Item(channel=item.channel, title='Todas las %s' % item.c_type.title(), 
-                             url=host + 'torrents-%s/' % item.c_type, action='list_all',
-                             thumbnail=item.thumbnail, c_type=item.c_type))
+        if item.c_type in ['peliculas']:
+            itemlist.append(Item(channel=item.channel, title='Clásicas', 
+                                 url=host + '%s/cine-clasico/' % item.c_type, action='list_all',
+                                 thumbnail=item.thumbnail, c_type=item.c_type))
 
         itemlist.append(Item(channel=item.channel, title=' - [COLOR paleturquoise]Por Género[/COLOR]', 
                              url=host, action='section',
@@ -355,7 +360,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
     for elem in matches_int:
         elem_json = {}
-        #logger.error(elem)
+        logger.error(elem)
 
         try:
             sxe = elem.find('span', class_='num-epi').get_text(strip=True).split('x')
@@ -370,7 +375,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             if item.infoLabels['tmdb_id'] and host in elem_json['thumbnail'] \
                                           and item.infoLabels['number_of_seasons'] == elem_json['season'] \
                                           and (elem_json['episode'] > last_episode_to_air \
-                                               or elem.find('img').get('alt', '') in ['', 'Image '] \
+                                               #or elem.find('img').get('alt', '') in ['', 'Image '] \
                                                or 'noimg' in elem_json['thumbnail']):
                 continue
 
