@@ -502,37 +502,55 @@ def seasons(item):
     clean_up_seasons(data_json['data']['listSeasons'])
     
     if not item.contentSeason and len(data_json['data']['listSeasons']) > 1:
-        for season in data_json['data']['listSeasons']:
-            new_item = item.clone(
-                    contentSeason=season['season_number'], 
-                    title=(config.get_localized_string(60027) % season['season_number']) if season['season_number'] > 0 else config.get_localized_string(70483),
-                    contentPlot=season['overview'], 
-                    thumbnail=tmdb_thumb_path.format(season['poster_path']), 
-                    contentType='season'
-                )
+        try:
+            for season in data_json['data']['listSeasons']:
+                new_item = item.clone(
+                        contentSeason=season['season_number'], 
+                        title=(config.get_localized_string(60027) % season['season_number']) if season['season_number'] > 0 else config.get_localized_string(70483),
+                        contentPlot=season['overview'], 
+                        thumbnail=tmdb_thumb_path.format(season['poster_path']), 
+                        contentType='season'
+                    )
 
-            itemlist.append(new_item)
-        
+                itemlist.append(new_item)
+        except:
+            pass
+
         return itemlist
 
-    infoLabels = item.infoLabels
-    for episode in data_json['data']['listEpisodes']:
-        infoLabels['season'] = episode['season_number']
-        infoLabels['episode'] = episode['episode_number']
-        title = "{}x{} {}".format(infoLabels['season'], infoLabels['episode'], item.contentSerieName)
-        url = episode['_id']
-        thumbnail = tmdb_thumb_path.format(episode['still_path'])
-        infoLabels['filtro'] = episode['still_path']
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos', 
-                             infoLabels=infoLabels, contentType='episode'))
+    infoLabels = item.infoLabels.copy()
+    try:
+        for episode in data_json['data']['listEpisodes']:
+            infoLabels['season'] = int(episode['season_number']) or 1
+            infoLabels['episode'] = int(episode['episode_number']) or 1
+            title = "{0}x{1} Episodio {1}".format(infoLabels['season'], infoLabels['episode'])
+            url = episode['_id']
+            new_item = Item(
+                channel = item.channel,
+                title = title,
+                url = url,
+                action = 'findvideos',
+                infoLabels = infoLabels,
+                contentType = 'episode'
+            )
+            itemlist.append(new_item)
+    except:
+        pass
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
-    if item.contentSerieName != '' and config.get_videolibrary_support() and len(itemlist) > 0:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.videolibrary:
         itemlist.append(
-            Item(channel=item.channel, title=config.get_localized_string(70146), url=item.url,
-                 slug=item.slug, action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
-                 extra1='library'))
+            Item(
+                action = "add_serie_to_library",
+                channel = item.channel,
+                contentSerieName = item.contentSerieName,
+                extra = "episodios",
+                title = config.get_localized_string(70146),
+                url = item.url,
+                slug = item.slug
+            )
+        )
 
     return itemlist
 
