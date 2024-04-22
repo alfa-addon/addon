@@ -2657,6 +2657,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
     try:
         titles_search = ast.literal_eval(window.getProperty("alfa_cached_btdigg_movie"))
         window.setProperty("alfa_cached_btdigg_movie", "")
+        config.set_setting('btdigg_status', False, server='torrent')
     except Exception as e:
         logger.error('ERROR en titles_search: %s / %s' % (window.getProperty("alfa_cached_btdigg_movie"), str(e)))
         titles_search = [{'urls': ['%sesp ' + channel_py], 'checks': ['Cast', 'Esp', 'Spanish', '%s' \
@@ -3054,6 +3055,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                 if not cached[contentType][title].get('episode_list', {}):
                     del cached[contentType][title]
 
+        config.set_setting('btdigg_status', False, server='torrent')
         if not window.getProperty("alfa_cached_btdigg_episode"):
             window.setProperty("alfa_cached_btdigg_episode", jsontools.dump(cached['episode'], **kwargs_json))
         if not cached['episode']:
