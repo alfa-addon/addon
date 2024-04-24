@@ -115,7 +115,7 @@ if config.get_setting('torrent_client', server='torrent', default=0) == 0 \
           and filetools.exists(filetools.join(config.get_data_path(), 'settings_servers', 'torrent_data_bk.json')):
     filetools.copy(filetools.join(config.get_data_path(), 'settings_servers', 'torrent_data_bk.json'), 
                    filetools.join(config.get_data_path(), 'settings_servers', 'torrent_data.json'))
-    torrent_client = config.get_setting('torrent_client', server='torrent', caching_var='reset', default=0)
+    torrent_client = config.get_setting('torrent_client', server='torrent', default=0)
 
 
 # Returns an array of possible video url's from the page_url
@@ -671,10 +671,8 @@ def caching_torrents(url, torrent_params={}, retry=False, **kwargs):
     t_hash = ''
     url_save = url
     url_set = filetools.encode(url.split('?')[0])
-    if '.php?' in url: 
+    if '.php?' in url or '?id=' in url: 
         url_set = filetools.encode(url.split('?')[1])
-    else:
-        url_set = filetools.encode(url.split('?')[0])
     subtitle_path = ''
     PK = 'PK'
     if PY3: PK = bytes(PK, 'utf-8')

@@ -123,7 +123,7 @@ def lista(item):
         url = elem.a['href']
         title = elem.a['title']
         thumbnail = elem.img['src']
-        if "base64" in thumbnail:
+        if "base64" in thumbnail or ".gif" in thumbnail:
             thumbnail = elem.img['data-src']
         time = elem.find('p').text.strip()
         title = "[COLOR yellow]%s[/COLOR] %s" % (time,title)

@@ -27,13 +27,13 @@ canonical = {
              'channel': 'pornomovies', 
              'host': config.get_setting("current_host", 'pornomovies', default=''), 
              'host_alt': ["https://www.pornomovies.com/"], 
-             'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             'host_black_list': ["https://www.onlyscoop.com/"], 
+             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-timeout = 5
+timeout = 30
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = ''
@@ -89,8 +89,13 @@ def section(item):
     logger.info()
     soup = AlfaChannel.create_soup(item.url, **kwargs)
     logger.debug(soup)
-
+    
     findS = finds.copy()
+    findS['url_replace'] = [['(\/(?:categories|sites|models)\/[^$]+$)', r'\1?sort_by=post_date&from=1']]
+    
+    findS['controls']['cnt_tot'] = 20
+    if item.extra == 'Categorias':
+        findS['controls']['cnt_tot'] = 40
     
     # if item.extra == 'Canal':
         # findS['profile_labels'] = {'section_thumbnail': dict([('find', [{'tag': ['div'], 'class': ['brand_image']}, {'tag': ['img'], '@ARG': 'src'}])])}
@@ -100,6 +105,11 @@ def section(item):
 
 def list_all(item):
     logger.info()
+    
+    findS = finds.copy()
+    
+    if item.extra != 'Categorias':
+        findS['controls']['cnt_tot'] = 10
 
     return AlfaChannel.list_all(item, **kwargs)
 

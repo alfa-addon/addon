@@ -19,6 +19,7 @@ list_quality = []
 list_quality_movies = []
 list_quality_tvshow = []
 list_servers = []
+
 forced_proxy_opt = 'ProxySSL'
 
 
@@ -27,7 +28,7 @@ canonical = {
              'host': config.get_setting("current_host", 'internetchicks', default=''), 
              'host_alt': ["https://internetchicks.com/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -46,12 +47,15 @@ finds = {'find': {'find_all': [{'tag': ['article'], 'class':  re.compile(r"^post
          'get_quality': {}, 
          'get_quality_rgx': '', 
          'next_page': {},
-         'next_page_rgx': [['\/page\/\d+', '/page/%s/']], #['\/\d+', '/%s'], ['&page=\d+', '&page=%s'], 
+         'next_page_rgx': [['\/page\/\d+', '/page/%s/']],
          'last_page': dict([('find', [{'tag': ['div'], 'class': ['pagination']}]), 
                             ('find_all', [{'tag': ['a'], '@POS': [-2], 
                                            '@ARG': 'href', '@TEXT': '(?:page/|=)(\d+)'}])]), 
          'plot': {}, 
-         'findvideos':  {'find_all': [{'tag': ['button'], 'class':  ['button_choice_server']}]},
+         'findvideos': dict([('find', [{'tag': ['article']}]), 
+                             ('find_all', [{'tagOR': ['button'], 'onclick': True, 'class': 'button_choice_server'},
+                                           {'tag': ['iframe'], 'src': True}])]),
+
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
@@ -73,6 +77,7 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
+    itemlist.append(Item(channel=item.channel, title="findvideos" , action="findvideos", url="https://internetchicks.com/kate-kuray-already-experienced-teenagers-manyvids-video-leaked/"))
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "page/1/"))
     itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "actresses", extra="PornStar"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/", extra="Categorias"))
@@ -117,11 +122,15 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     for elem in matches_int:
         elem_json = {}
         logger.error(elem)
-
+        
         try:
-            url = elem['onclick']
-            logger.debug(url)
-            elem_json['url'] = scrapertools.find_single_match(url, "\('([^']+)'")
+            if elem.get('src', '')and not "about:blank" in elem['src']:
+                url = elem['src']
+            else:
+                url = elem['onclick']
+                url = scrapertools.find_single_match(url, "\('([^']+)'")
+
+            elem_json['url'] = url
             elem_json['language'] = ''
 
         except:
