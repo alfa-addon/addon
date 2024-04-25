@@ -2657,6 +2657,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
     try:
         titles_search = ast.literal_eval(window.getProperty("alfa_cached_btdigg_movie"))
         window.setProperty("alfa_cached_btdigg_movie", "")
+        config.set_setting('btdigg_status', False, server='torrent')
     except Exception as e:
         logger.error('ERROR en titles_search: %s / %s' % (window.getProperty("alfa_cached_btdigg_movie"), str(e)))
         titles_search = [{'urls': ['%sesp ' + channel_py], 'checks': ['Cast', 'Esp', 'Spanish', '%s' \
@@ -3054,6 +3055,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                 if not cached[contentType][title].get('episode_list', {}):
                     del cached[contentType][title]
 
+        config.set_setting('btdigg_status', False, server='torrent')
         if not window.getProperty("alfa_cached_btdigg_episode"):
             window.setProperty("alfa_cached_btdigg_episode", jsontools.dump(cached['episode'], **kwargs_json))
         if not cached['episode']:
@@ -3615,19 +3617,20 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
     language_alt = []
     found = False
     BTDIGG_SEARCH_STAT = False
+    matches_cached = {}
 
     if item.matches_cached:
         for matches_cached in item.matches_cached:
             if matches_cached.get('url') and matches_cached['url'] in str(matches): continue
-            if not item.password or (isinstance(item.password, dict) or str(item.password) == 'Contraseña DESCONOCIDA') \
-                                 and matches_cached.get('password', {}):
+            if (not item.password or isinstance(item.password, dict) or str(item.password) == 'Contraseña DESCONOCIDA') \
+                                  and matches_cached.get('password', {}):
                 item.password = matches_cached.get('password', {})
             matches.append(matches_cached.copy())
             found = True
     elif 'matches_cached' in item:
         for matches_cached in (item.matches or []):
-            if not item.password or (isinstance(item.password, dict) or str(item.password) == 'Contraseña DESCONOCIDA') \
-                                 and matches_cached.get('password', {}):
+            if (not item.password or isinstance(item.password, dict) or str(item.password) == 'Contraseña DESCONOCIDA') \
+                                  and matches_cached.get('password', {}):
                 item.password = matches_cached.get('password', {})
         found = True
     elif BTDIGG_URL_SEARCH not in item.url and BTDIGG_URL_SEARCH not in item.url_tvshow:
@@ -3637,8 +3640,8 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
             if found_item and found_item.get('matches_cached'):
                 for matches_cached in found_item['matches_cached']:
                     if matches_cached.get('url') and matches_cached['url'] in str(matches): continue
-                    if not item.password or (isinstance(item.password, dict) or str(item.password) == 'Contraseña DESCONOCIDA') \
-                                         and matches_cached.get('password', {}):
+                    if (not item.password or isinstance(item.password, dict) or str(item.password) == 'Contraseña DESCONOCIDA') \
+                                          and matches_cached.get('password', {}):
                         item.password = matches_cached.get('password', {})
                     matches.append(matches_cached.copy())
                     found = True
@@ -3657,8 +3660,8 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                                 if not matches_cached.get('url'): continue
                                 found = True
                                 if matches_cached['url'] in str(matches): continue
-                                if not item.password or (isinstance(item.password, dict) or str(item.password) == 'Contraseña DESCONOCIDA') \
-                                                     and matches_cached.get('password', {}):
+                                if (not item.password or isinstance(item.password, dict) or str(item.password) == 'Contraseña DESCONOCIDA') \
+                                                      and matches_cached.get('password', {}):
                                     item.password = matches_cached.get('password', {})
                                 matches_cached['quality'] = '%s%s' % (matches_cached['quality'], btdigg_label)
                                 if not matches_cached.get('language', []): matches_cached['language'] = item.language or ['CAST']
@@ -3822,8 +3825,8 @@ def AH_find_btdigg_findvideos(self, item, matches=[], domain_alt=channel_py, **A
                                         break
                         elif elem.get('password'):
                             elem_json['password'] = elem['password']
-                        if not item.password or (isinstance(item.password, dict) or str(item.password) == 'Contraseña DESCONOCIDA') \
-                                             and matches_cached.get('password', {}):
+                        if (not item.password or isinstance(item.password, dict) or str(item.password) == 'Contraseña DESCONOCIDA') \
+                                              and matches_cached.get('password', {}):
                             item.password = matches_cached.get('password', {})
 
                         matches.append(elem_json.copy())
@@ -3985,7 +3988,7 @@ def get_torrent_size(url, **kwargs):
             raise ValueError
         return data
 
-    # Móludo principal: iniciamos diccionario de variables
+    # Módulo principal: iniciamos diccionario de variables
     torrent_params = kwargs.pop('torrent_params', {})
     torrent_params['url'] = url or torrent_params.get('url', '')
     torrent_params['torrents_path'] = torrent_params.get('torrents_path', '')
@@ -4012,6 +4015,13 @@ def get_torrent_size(url, **kwargs):
     torrent_params['find_alt_link_result'] = []
     torrent_params['find_alt_link_found'] = 0
     torrent_params['find_alt_link_next'] = 0
+    
+    # Google drive?
+    drive_url = kwargs.get('drive_url', '') or 'https://drive.usercontent.google.com/u/0/uc?id=%s&export=download'
+    if 'drive.google.com' in torrent_params['url']:
+        if scrapertools.find_single_match(torrent_params['url'], r'\/\w\/(.*?)\/view\?'):
+            torrent_params['url'] = url = drive_url % scrapertools.find_single_match(url, r'\/\w\/(.*?)\/view\?')
+    
     if not url:
         torrent_params['size'] = 'ERROR'
         return torrent_params

@@ -24,8 +24,8 @@ forced_proxy_opt = 'ProxyCF'
 canonical = {
              'channel': 'ennovelas', 
              'host': config.get_setting("current_host", 'ennovelas', default=''), 
-             'host_alt': ["https://m.ennovelas.net/"], 
-             'host_black_list': ['https://u.ennovelas.net/', 'https://o.ennovelas.net/',
+             'host_alt': ["https://ennovelas.io/"], 
+             'host_black_list': ["https://k.ennovelas.net/", "https://m.ennovelas.net/", 'https://u.ennovelas.net/', 'https://o.ennovelas.net/',
                                  'https://v.ennovelas.net/', 'https://n.ennovelas.net/', 'https://t.ennovelas.net/', 'https://f.ennovelas.net/', 
                                  "https://d.ennovelas.net/", "https://i.ennovelas.net/", "https://s.ennovelas.net/", "https://b.ennovelas.net/", 
                                  "https://a.ennovelas.net/", "https://e.ennovelas.net/", "https://ww.ennovelas.net/", 
@@ -95,7 +95,7 @@ def mainlist(item):
                          url=host + "movies/", c_type='peliculas', thumbnail=get_thumb("movies", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Novelas", action="list_all", 
-                         url=host + "telenovelas/", c_type='series', thumbnail=get_thumb("tvshows", auto=True)))
+                         url=host + "novelas-completas/", c_type='series', thumbnail=get_thumb("tvshows", auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Nuevos Episodios[/COLOR]" , action="list_all", 
                          url= host + "episodes/", c_type='episodios', thumbnail=get_thumb('new_episodes', auto=True)))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Países[/COLOR]" , action="section", 
@@ -257,6 +257,11 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     findS = AHkwargs.get('finds', finds)
     kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore_response_code': True, 
               'timeout': 5, 'cf_assistant': False, 'canonical': {}}
+    vid = ''
+    themeDir = ''
+    themeDir_sufix = '/temp/ajax/iframe%s.php?id=%s&video=%s'
+    themeDir_sufix_pelis = '&serverId=%s'
+    
 
     for elem_ini in matches_int:
         #logger.error(elem_ini)
@@ -268,7 +273,10 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             post = 'watch=%s&submit=' % elem_ini.input.get('value', '') if elem_ini.input else None
             matches_alt = []
 
-            soup = AlfaChannel.create_soup(url, post=post, headers={'Referer': host}, **kwargs)
+            soup = AlfaChannel.create_soup(url, post=post, headers={'Referer': item.url}, **kwargs)
+            vid = scrapertools.find_single_match(str(soup), '<link\s*rel\s*=\s*"shortlink"\s*href="[^\?]+\?p=(\d+)"') \
+                  or scrapertools.find_single_match(str(soup), '<link\s*href="[^\?]+\?p=(\d+)"\s*rel\s*=\s*"shortlink"')
+            themeDir = scrapertools.find_single_match(str(soup), '<script>\s*var\s*themeDir\s*=\s*"([^"]+)"')
 
             if soup.find('div', id="btnServers"):
                 try:
@@ -278,7 +286,8 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                     pass
             
             if not matches_alt and (soup.find('ul', class_="serversList") or soup.find('div', class_="watch")):
-                matches_alt = soup.find('ul', class_="serversList").find_all('li') or soup.find('div', class_="watch").find_all('iframe')
+                matches_alt = soup.find('div', class_="watch").find_all('iframe')
+                matches_alt += soup.find('ul', class_="serversList").find_all('li')
 
             for elem in matches_alt:
                 elem_json = {}
@@ -289,17 +298,25 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
                         elem_json['url'] = elem
                         if elem_json['url'] in str(matches): continue
 
-                    else:
+                    elif elem.get('data-ezsrc', '') or elem.get('data-server', '') or elem.get('src', ''):
+                        elem_json['url'] = elem.get('data-ezsrc', '') or elem.get('data-server', '') or elem.get('src', '')
                         if elem.get('data-server', ''):
-                            elem_json['url'] = elem.get('data-server', '')
                             elem_json['url'] = scrapertools.find_single_match(elem_json['url'], "src='([^']+)'")
-                        else:
-                            elem_json['url'] = elem.get('src', '')
+                    
+                    elif elem.get('onclick', ''):
+                        if elem.get_text(strip=True) in str(matches): continue
+                        vseq = scrapertools.find_single_match(elem['onclick'], '[^\(]+\(this\.id\,(\d+)')
+                        vurl = themeDir + themeDir_sufix % ('2' if item.contentType == 'movie' else '', vid, vseq)
+                        if scrapertools.find_single_match(elem['onclick'], '[^\(]+\(this\.id\,\d+\,(\d+)'):
+                            vurl += themeDir_sufix_pelis % scrapertools.find_single_match(elem['onclick'], '[^\(]+\(this\.id\,\d+\,(\d+)')
+                        vsoup = AlfaChannel.create_soup(vurl, headers={'Referer': url, 'X-Requested-With': 'XMLHttpRequest'}, **kwargs)
+                        if vsoup.iframe: elem_json['url'] = vsoup.iframe.get('src', '')
 
                     if not elem_json.get('url', ''): continue
                     if elem_json['url'].startswith('//'): elem_json['url'] = 'https:%s' % elem_json['url']
                     if 'ennovelas' in elem_json['url'] or 'lvturbo' in elem_json['url'] or 'novelas360' in elem_json['url'] \
-                                                       or 'sbface' in elem_json['url']:
+                                                       or 'sbface' in elem_json['url'] or 'jodwish' in elem_json['url'] \
+                                                       or 'plustream' in elem_json['url']:
                         logger.debug('Servidor no soportado: %s' % elem_json['url'])
                         continue
 
