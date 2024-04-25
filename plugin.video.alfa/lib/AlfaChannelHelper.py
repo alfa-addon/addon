@@ -3169,8 +3169,10 @@ class DictionaryAllChannel(AlfaChannelHelper):
         # Si hay errores en todos los .torrent, se reintenta con BTDigg
         if BTDIGG not in str(options) and 'torrent' in str(options) and 'ERROR' in str(options):
             for lang, elem in options:
-                if elem.get('server', '').lower() == 'torrent' and 'ERROR' not in elem.get('size', ''): break
-                if elem.get('server', '').lower() == 'torrent' and 'BLOQUEO' in elem.get('size', ''): AHkwargs['btdigg_lookup'] = True
+                if elem.get('server', '').lower() == 'torrent':
+                    if 'ERROR' not in elem.get('size', ''): break
+                    if 'ERROR' in elem.get('size', '') and not self.btdigg_search:  AHkwargs['btdigg_lookup'] = True
+                    if 'BLOQUEO' in elem.get('size', ''): AHkwargs['btdigg_lookup'] = True
             else:
                 if AHkwargs.get('matches'): del AHkwargs['matches']
                 matches_btdigg = self.find_btdigg_findvideos(item, [], finds_controls.get('domain_alt', DOMAIN_ALT), **AHkwargs)
