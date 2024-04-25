@@ -22,12 +22,13 @@ list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
 # https://tubxporn.xxx  https://pornky.com  https://pornktube.tv  https://wwv.joysporn.sex/
+# https://www.pornky.club/ https://www.pornktube.club/  https://tubxporn.club/ https://joysporn.club/
 
 canonical = {
              'channel': 'pornky', 
              'host': config.get_setting("current_host", 'pornky', default=''), 
-             'host_alt': ["https://www.pornky.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www.pornky.club/"], 
+             'host_black_list': ["https://www.pornky.com/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

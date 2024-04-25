@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://www.youjizz.com/videos/embed/\\d+)",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://www.youjizz.com/videos/[A-z0-9-.,\\(\\)]+.html)",
-        "url": "\\1"
+        "pattern": "https://vidhidepro.com/(?:f|v)/([A-z0-9]+)",
+        "url": "https://vidhidepro.com/v/\\1"
       }
     ]
   },
   "free": true,
-  "id": "youjizz",
-  "name": "youjizz",
+  "id": "vidhidepro",
+  "name": "vidhidepro",
   "settings": [
     {
       "default": false,
@@ -42,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": ""
+  "thumbnail": "https://i.postimg.cc/MGwqD87f/vidhidepro.png"
 }

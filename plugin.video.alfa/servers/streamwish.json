@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://(?:streamwish|embedwish|wishfast|sfastwish|wishembed|cdnwish|obeywish|flastwish).(?:com|to|top|\\w{2,4})/+(?:e/+|)([A-z0-9]+)",
+        "pattern": "https://(?:streamwish|embedwish|wishfast|sfastwish|wishembed|cdnwish|obeywish|flastwish|jodwish).(?:com|to|top|\\w{2,4})/+(?:e/+|)([A-z0-9]+)",
         "url": "https://streamwish.to/e/\\1"
       }
     ]

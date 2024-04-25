@@ -24,14 +24,14 @@ list_quality = ['default']
 list_servers = ['gounlimited']
 
 forced_proxy_opt = 'ProxySSL'
+timeout = 30
 
 canonical = {
              'channel': 'porndish', 
              'host': config.get_setting("current_host", 'porndish', default=''), 
              'host_alt': ["https://www.porndish.com"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
-             # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
+             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -155,12 +155,17 @@ def findvideos(item):
     soup = create_soup(item.url)
     if not soup:
         return itemlist
-    soup = soup.find('div', class_='entry-content')
+    # soup = soup.find('div', class_='entry-content')
+    soup = soup.find('div', class_='entry-inner')
     matches = soup.find_all('iframe')
     for elem in matches:
         url = elem['src']
         if "gif" in url:
             url = elem['data-src']
+        itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=url)) 
+    if soup.button:
+        data = soup.find_all('script')[1]
+        url =  scrapertools.find_single_match(str(data), '(?:src|SRC)="([^"]+)"')
         itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.title, url=url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     # Requerido para AutoPlay

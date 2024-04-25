@@ -4,15 +4,15 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:www.|vwv.|)(?:pornktube|pornky|tubxporn).(?:tv|com|vip|xxx)/(?:videos|vid)/[0-9]+/[A-z0-9-]+/)",
+        "pattern": "(https://(?:www.|vwv.|)(?:pornktube|pornky|tubxporn).(?:tv|com|vip|xxx|club)/(?:videos|vid)/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|wwv.|)joysporn.sex/view/[0-9]+)",
+        "pattern": "(https://(?:www.|wwv.|)joysporn.club/view/[0-9]+)",
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|vwv.|)pornktube.com/view/[0-9]+(?:/|))",
+        "pattern": "(https://(?:www.|vwv.|)pornktube.club/view/[0-9]+(?:/|))",
         "url": "\\1"
       }
     ]

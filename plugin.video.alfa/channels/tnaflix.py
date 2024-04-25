@@ -36,8 +36,8 @@ def mainlist(item):
     itemlist.append(item.clone(title="Nuevas" , action="lista", url=host + "new/?d=all&period=all"))
     itemlist.append(item.clone(title="Popular" , action="lista", url=host + "popular/?d=all&period=all"))
     itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "toprated/?d=all&period=month"))
-    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "channels/all/top-rated/1/all"))
-    itemlist.append(item.clone(title="PornStars" , action="categorias", url=host + "pornstars"))
+    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "channels?page=1"))
+    itemlist.append(item.clone(title="PornStars" , action="categorias", url=host + "pornstars?page=1"))
     itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
@@ -60,20 +60,22 @@ def catalogo(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).data
-    patron  = '<div class="vidcountSp">(\d+)</div>.*?'
-    patron  += '<a class="categoryTitle channelTitle" href="([^"]+)" title="([^"]+)">.*?'
-    patron  += 'data-original="([^"]+)"'
+    patron = '<a class="thumb.*?' 
+    patron += 'href="([^"]+)">.*?'
+    patron  += 'thumb-title">([^>]+)<.*?'
+    patron += 'src="([^"]+)".*?'
+    patron  += '</i>([^<]+)'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for cantidad,scrapedurl,scrapedtitle,scrapedthumbnail in matches:
+    for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         title = "%s (%s)" % (scrapedtitle,cantidad)
         scrapedplot = ""
         itemlist.append(item.clone(action="lista", title=title, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
-    next_page_url = scrapertools.find_single_match(data,'<a class="llNav" href="([^"]+)">')
+    next_page_url = scrapertools.find_single_match(data,'pagination-next">.*?href="([^"]+)">')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append(item.clone(action="catalogo" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append(item.clone(action="catalogo" , title="[COLOR blue]Página Siguiente >>[/COLOR]",  url=next_page_url , folder=True) )
     return itemlist
 
 
@@ -82,14 +84,13 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    if "pornstars" in item.url:
-        data = scrapertools.find_single_match(data,'</i> Hall Of Fame Pornstars</h1>(.*?)</section>')
-    patron  = '<a class="thumb" href="([^"]+)">.*?'
-    patron += '<img src="([^"]+)".*?'
-    patron += '<div class="vidcountSp">(.*?)</div>.*?'
-    patron += '<a class="categoryTitle".*?>([^"]+)</a>'
+    patron = '<a class="thumb.*?' 
+    patron += 'href="([^"]+)">.*?'
+    patron += 'src="([^"]+)".*?'
+    patron  += 'thumb-title">([^>]+)<.*?'
+    patron  += '</i>([^<]+)'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,cantidad,scrapedtitle in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         if not scrapedthumbnail.startswith("https"):
             scrapedthumbnail = "https:%s" % scrapedthumbnail
@@ -101,7 +102,7 @@ def categorias(item):
         scrapedtitle = "%s (%s)" % (scrapedtitle,cantidad)
         itemlist.append(item.clone(action="lista", title=scrapedtitle , url=scrapedurl ,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail , plot=scrapedplot) )
-    next_page_url = scrapertools.find_single_match(data,'<a class="llNav" href="([^"]+)">')
+    next_page_url = scrapertools.find_single_match(data,'pagination-next">.*?href="([^"]+)">')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
         itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page_url , folder=True) )
@@ -113,8 +114,11 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<a class=\'thumb no_ajax\' href=\'.*?/video(\d+).*?'
-    patron += 'data-original=\'(.*?)\' alt="([^"]+)"><div class=\'videoDuration\'>([^<]+)</div>(.*?)<div class=\'watchedInfo'
+    patron = '<a class="thumb.*?' 
+    patron += 'href=".*?/video(\d+).*?'
+    patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
+    patron += 'video-duration">([^<]+)</div>.*?'
+    patron += 'max-quality">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,duracion,quality in matches:
         url = "https://player.tnaflix.com/video/%s" %scrapedurl
@@ -130,7 +134,7 @@ def lista(item):
             action = "findvideos"
         itemlist.append(item.clone(action=action, title=title , url=url, thumbnail=thumbnail,
                              fanart=thumbnail, plot=plot, contentTitle = contentTitle))
-    next_page_url = scrapertools.find_single_match(data,'<a class="llNav" href="([^"]+)">')
+    next_page_url = scrapertools.find_single_match(data,'pagination-next">.*?href="([^"]+)">')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page_url) )

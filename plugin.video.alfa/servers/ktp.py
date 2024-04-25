@@ -60,7 +60,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         patron += 'postfix:\s*(?:\'|")([^\,]+)(?:\'|")'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url, quality in matches:
-        if not "?login" in url and not "signup" in url and ".mp4" in url:
+        if not "?login" in url and not "signup" in url and not "_preview" in url and ".mp4" in url:
             if "function/" in url:
                 url = decode(url, license_code)
             elif url.startswith("/get_file/"):

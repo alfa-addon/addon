@@ -24,7 +24,7 @@ forced_proxy_opt = 'ProxySSL'
 ''' CANAL ANTIGUA OUT pages
     gameofporn  veporns  https://www.veporno.net  https://www.fxporn.net      http://www.veporns.com    '''
 
-#  https://veporn.com/  https://pornoflix.com/  https://ultrahorny.com/
+#  https://veporn.com/  https://pornoflix.com/  https://ultrahorny.com/   https://eporner.xxx/
 
 canonical = {
              'channel': 'ultrahorny', 
@@ -44,14 +44,14 @@ tv_path = ''
 language = []
 url_replace = []
 
-finds = {'find': {'find_all': [{'tag': ['li'], 'class':['ficevi']}]},
-         'categories': {'find_all': [{'tag': ['div', 'li'], 'class': ['taxonomy-item', 'performer-item']}]}, 
+finds = {'find': {'find_all': [{'tag': ['article'], 'class':['loop-post']}]},
+         'categories': {'find_all': [{'tag': ['div', 'article'], 'class': ['ctgr', 'pstr']}]}, 
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 
          'next_page': {},
          'next_page_rgx': [['\/page\/\d+', '/page/%s/'], ['&page=\d+', '&page=%s']], 
-         'last_page': dict([('find', [{'tag': ['ul', 'div'], 'class': ['page-numbers', 'pagination']}]), 
+         'last_page': dict([('find', [{'tag': ['div'], 'class': ['nav-links']}]), 
                             ('find_all', [{'tag': ['a'], '@POS': [-2], '@ARG': 'href', '@TEXT': 'page/(\d+)'}])]), 
          'plot': {}, 
          'findvideos': {},
@@ -70,12 +70,12 @@ def mainlist(item):
 
     itemlist = []
     
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "?order=newest", curr_page=0, last_page=9999))
-    itemlist.append(Item(channel=item.channel, title="Mas visto" , action="list_all", url=host + "?order=views", curr_page=0, last_page=9999))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=host + "?order=rating", curr_page=0, last_page=9999))
-    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="list_all", url=host + "?order=comments", curr_page=0, last_page=9999))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=host + "?order=longest", curr_page=0, last_page=9999))
-    itemlist.append(Item(channel=item.channel, title="Pornstars", action="section", url=host + "pornstar/", extra="Pornstar"))
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "?order=newest"))
+    itemlist.append(Item(channel=item.channel, title="Mas visto" , action="list_all", url=host + "?order=views"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=host + "?order=rating"))
+    itemlist.append(Item(channel=item.channel, title="Mas comentado" , action="list_all", url=host + "?order=comments"))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=host + "?order=longest"))
+    itemlist.append(Item(channel=item.channel, title="Pornstars", action="section", url=host + "pornstars/page/1", extra="Pornstar"))
     itemlist.append(Item(channel=item.channel, title="Categorias", action="section", url=host + "categories/", extra="Categorias"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
@@ -84,14 +84,14 @@ def mainlist(item):
 
 def section(item):
     logger.info()
-
+    
     findS = finds.copy()
-
+    
     if "Categorias" in item.extra:
         findS['controls']['cnt_tot'] = 9999
-
-    findS['url_replace'] = [['(\/[^$]+$)', r'\1?order=newest&page=1']]
-
+    if "Pornstar" in item.extra:
+        findS['controls']['cnt_tot'] = 40
+    
     return AlfaChannel.section(item, finds=findS, matches_post=section_matches, **kwargs)
 
 
@@ -112,7 +112,8 @@ def section_matches(item, matches_int, **AHkwargs):
             if elem.img: elem_json['thumbnail'] = elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
                                                                                      or elem.img.get('data-src', '') \
                                                                                      or elem.img.get('src', '')
-            elem_json['cantidad'] = elem.find(class_=['count', 'number']).get_text(strip=True)
+            elem_json['cantidad'] = elem.p.get_text(strip=True)
+            # elem_json['cantidad'] = elem.find(class_=['fwb']).get_text(strip=True)
         
         except:
             logger.error(elem)
@@ -127,14 +128,9 @@ def section_matches(item, matches_int, **AHkwargs):
 
 def list_all(item):
     logger.info()
-
+    
     findS = finds.copy()
-
-    if item.extra not in ["Pornstar", "Categorias", "Search"]:
-        findS['controls'].update({'force_find_last_page': [0, 0, 'post']})
-        findS['last_page'] = {}
-        findS['next_page_rgx'] = [['&offset=\d+', '&offset=%s']]
-
+    
     return AlfaChannel.list_all(item, finds=findS, matches_post=list_all_matches, **kwargs)
 
 
@@ -149,14 +145,15 @@ def list_all_matches(item, matches_int, **AHkwargs):
         
         try:
             elem_json['url'] = elem.a.get('href', '')
-            elem_json['title'] = elem.a.get('title', '') \
-                                 or elem.a.get_text(strip=True) \
-                                 or (elem.img.get('alt', '') if elem.img else '')
+            elem_json['title'] = elem.h2.get_text(strip=True)
+            # elem_json['title'] = elem.a.get('title', '') \
+                                 # or elem.a.get_text(strip=True) \
+                                 # or (elem.img.get('alt', '') if elem.img else '')
             elem_json['thumbnail'] = elem.img.get('data-original', '') \
                                      or elem.img.get('data-src', '') \
                                      or elem.img.get('src', '')
-            elem_json['stime'] = elem.find('em', class_='time_thumb').get_text(strip=True)
-            elem_json['quality'] = elem.find('div', title='Quality').get_text(strip=True) if elem.find('div', title='Quality') else ''
+            elem_json['stime'] = elem.find('i', class_='fa-clock').parent.get_text(strip=True)
+            # elem_json['quality'] = elem.find('div', title='Quality').get_text(strip=True) if elem.find('div', title='Quality') else ''
         
         except:
             logger.error(elem)
@@ -165,11 +162,6 @@ def list_all_matches(item, matches_int, **AHkwargs):
         
         if not elem_json['url']: continue
         matches.append(elem_json.copy())
-    
-    # Paginado especial
-    if item.extra not in ["Pornstar", "Categorias", "Search"]:
-        item.url = AlfaChannel.doo_url                                          # host + wp-admin/admin-ajax.php
-        item.post = 'action=action_load_video&offset=1'
     
     return matches
 
@@ -193,13 +185,12 @@ def play(item):
     pornstar = ' & '.join(pornstars)
     pornstar = AlfaChannel.unify_custom('', item, {'play': pornstar})
     lista = item.contentTitle.split('[/COLOR]')
-    logger.debug(lista)
     pornstar = pornstar.replace('[/COLOR]', '')
     pornstar = ' %s' %pornstar
     lista.insert (1, pornstar)
     item.contentTitle = '[/COLOR]'.join(lista)
     
-    url = soup.find('div', class_='video-container').iframe['src']
+    url = soup.find('div', class_='bx-video').iframe['src']
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     
@@ -210,7 +201,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
     
-    item.url = "%s?s=%s&order=newest&page=1" % (host, texto.replace(" ", "+"))
+    item.url = "%spage/1/?s=%s" % (host, texto.replace(" ", "+"))
     
     try:
         if texto:
