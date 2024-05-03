@@ -24,8 +24,8 @@ list_servers = ['uqload', 'voe', 'streamtape', 'doodstream', 'okru', 'streamlare
 canonical = {
              'channel': 'veronline', 
              'host': config.get_setting("current_host", 'veronline', default=''), 
-             'host_alt': ['https://www.veronline.cc/'], 
-             'host_black_list': [], 
+             'host_alt': ['https://www.veronline.sh/'], 
+             'host_black_list': ['https://www.veronline.cc/'],
              # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              # 'CF': False, 'CF_test': False, 'alfa_s': True
              }
@@ -274,7 +274,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['url'] = elem.a.get("href", "")
             elem_json['title'] = elem.a.span.get_text(strip=True)
             elem_json['season'] = (item.contentSeason or 1)
-            elem_json['episode'] = int(elem_json['title'].replace('Episodio ','') or 1)
+            elem_json['episode'] = int(scrapertools.find_single_match(elem_json['title'], r'\d+') or 1)
 
         except Exception:
             logger.error(elem)
