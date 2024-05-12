@@ -2666,10 +2666,11 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                                              % channel_py.replace('4k', '')], 'contentType': 'movie', 'limit_search': 3}, 
                          {'urls': ['%sHDTV 720p ' + channel_py], 'checks': ['Cap.'], 'contentType': 'tvshow', 'limit_search': 7}, 
                          {'urls': ['%sHDTV 720p'], 'checks': ['Cap.'], 'contentType': 'tvshow', 'limit_search': 3}, 
-                         {'urls': ['%s ' + channel_py], 'checks': ['Cap.'], 'contentType': 'episode', 'limit_search': 5}, 
-                         {'urls': ['%s Temporada #!'], 'checks': ['Cap.'], 'contentType': 'episode', 'limit_search': 5}]
+                         {'urls': ['%s ' + channel_py], 'checks': ['Cap.'], 'contentType': 'episode', 'limit_search': 5, 'error_reset': 5}, 
+                         {'urls': ['%s Temporada #!'], 'checks': ['Cap.'], 'contentType': 'episode', 'limit_search': 5, 'error_reset': 5}]
     titles_search_save = copy.deepcopy(titles_search)
 
+    error_reset_time = time.time()
     btdigg_entries = 15
     disable_cache = True
     torrent_params = {}
@@ -2903,6 +2904,10 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         limit_search = title_search.get('limit_search', 1)
                         if contentType != title_search.get('contentType', ''): continue
                         if limit_search <= 0: continue
+                        if (error_reset_time + title_search.get('error_reset', 5)*60) < time.time():
+                            error_reset_time = time.time()
+                            config.set_setting('btdigg_status', False, server='torrent')
+                            logger.info('##### btdigg_status RESET: %s min.' % title_search.get('error_reset', 5), force=True)
 
                         for x_url, url in enumerate(title_search['urls']):
                             if 'Temporada' in url: 
