@@ -73,27 +73,30 @@ def catalogo(item):
     itemlist = []
     soup = create_soup(item.url)
     if "pornstars" in item.url:
-        matches = soup.find_all('div', class_='pornstar-thumb-container')
+        matches = soup.find_all('div', class_='root-4fca8')
     else:
-        matches = soup.find_all('div', class_='channel-thumb-container')
+        matches = soup.find_all('div', class_='root-02a1b')
     for elem in matches:
         url = elem.a['href']
         title = elem.img['alt']
-        thumbnail = elem.img['src']
-        if elem.find('div', class_='videos'):   
-            cantidad = elem.find('div', class_='videos').text.strip()
+        if elem.find('a', class_='site-02a1b'):   
+            thumbnail = elem.find('a', class_='site-02a1b')['style']
+            thumbnail = scrapertools.find_single_match(thumbnail, '(http.*?.jpg)')
+            cantidad = elem.find('div', class_='count-02a1b').text.strip()
         else:
-            cantidad = elem.find('div', class_='channel-thumb-container__info-videos').text.strip()
+            thumbnail = elem.img['src']
+            cantidad = elem.find('div', class_='videos-4fca8').text.strip()
         if cantidad:
             title = "%s (%s)" % (title,cantidad)
         url = urlparse.urljoin(item.url,url)
+        url += "/newest"
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
-    next_page = soup.find('li', class_='next')
+    next_page = soup.find('a', class_='prev-next-list-link--next')
     if next_page:
-        next_page = next_page.a['href']
+        next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(Item(channel=item.channel, action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
@@ -117,13 +120,18 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='thumb-list__item')
     for elem in matches:
-        if "thumb-plug" in elem['class']:
+        if "Not available in " in elem.text: #Geolocalizacion
+            continue
+        if "Solo para el dueño" in elem.a.text: #Solo para el dueño
             continue
         url = elem.a['href']
         title = elem.img['alt']
         # title = elem.find('a', class_='video-thumb-info__name role-pop').text.strip() 
         thumbnail = elem.img['src']
-        time = elem.find('div', class_='thumb-image-container__duration').text.strip()
+        time = elem.find('div', class_='thumb-image-container__duration')
+        if not time: # purga moment
+            continue
+        time = time.text.strip()
         quality = ""
         if elem.find('i', class_='thumb-image-container__icon--hd'): quality = "HD"
         if elem.find('i', class_='thumb-image-container__icon--uhd'): quality = "4K"

@@ -20,7 +20,7 @@ from platformcode import logger
 from lib.kt_player import decode
 
 kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'ignore_response_code': True, 'cf_assistant': False}
-
+# kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'ignore_response_code': True, 'cf_assistant': False}
 
 def test_video_exists(page_url):
     
@@ -59,6 +59,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         patron = 'video_url:\s*(?:\'|")([^\,]+)(?:\'|").*?'
         patron += 'postfix:\s*(?:\'|")([^\,]+)(?:\'|")'
     matches = re.compile(patron,re.DOTALL).findall(data)
+    logger.debug(matches)
     for url, quality in matches:
         if not "?login" in url and not "signup" in url and not "_preview" in url and ".mp4" in url:
             if "function/" in url:

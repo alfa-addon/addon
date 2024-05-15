@@ -19,14 +19,14 @@ from core import httptools
 from bs4 import BeautifulSoup
 
 forced_proxy_opt = 'ProxySSL'
-timeout = 30
+timeout = 45
 
 canonical = {
              'channel': 'spankbang', 
              'host': config.get_setting("current_host", 'spankbang', default=''), 
              'host_alt': ["https://es.spankbang.com/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 4, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -118,7 +118,7 @@ def create_soup(url, referer=None, unescape=False):
 def lista(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url).find('main', id='container')
+    soup = create_soup(item.url).find('div', class_='results')
     matches = soup.find_all('div', id=re.compile(r"^v_id_\d+"))
     for elem in matches:
         url = elem.a['href']
