@@ -19,19 +19,23 @@ list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES_A
 list_quality_tvshow = []
 list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
+
 forced_proxy_opt = 'ProxySSL'
+
+# Certificado SSL >> proxy  resuelve mal KTP
 
 canonical = {
              'channel': 'cambox', 
              'host': config.get_setting("current_host", 'cambox', default=''), 
              'host_alt': ["https://camstreams.tv/"], 
              'host_black_list': ["https://cambox.to/"], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 3, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-timeout = 5
+timeout = 30
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = ''

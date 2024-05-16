@@ -34,7 +34,6 @@ host = canonical['host'] or canonical['host_alt'][0]
 
         #NETU  CloudflareChallengeError: Detected a Cloudflare version 2 Captcha challenge
 
-
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -137,6 +136,9 @@ def findvideos(item):
             itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "voe" in ser:
             url = "https://voe.sx/e/%s" % id
+            itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
+        elif "mix" in ser:
+            url = "https://mixdrop.is/e/%s" % id
             itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.title, url=url))
         elif "ntu" in ser:
             continue

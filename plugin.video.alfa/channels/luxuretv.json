@@ -1,7 +1,7 @@
 {
   "id": "luxuretv",
   "name": "luxuretv",
-  "active": true,
+  "active": false,
   "adult": true,
   "language": ["*"],
   "thumbnail": "https://en.luxuretv.com/images/logo.png",

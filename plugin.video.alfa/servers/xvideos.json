@@ -8,7 +8,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(www.xvideos.com/video[0-9]+)",
+        "pattern": "(www.xvideos.com/video[A-z0-9.]+)",
         "url": "https://\\1/a"
       },
       {

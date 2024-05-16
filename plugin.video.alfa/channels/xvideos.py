@@ -110,17 +110,19 @@ def catalogo(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.find(class_='profile-name')
-        if "Canal" in item.title:
+        if "channels" in item.url:
             strong = title.strong.text
             title= title.text.replace("%s" %strong, "").strip()
         else:
             title= title.a.text.strip()
-        thumbnail = elem.script.text.strip()
-        thumbnail = scrapertools.find_single_match(thumbnail, 'src="([^"]+)"')
+        # thumbnail = elem.script.text #no lo convierte en texto
+        thumbnail = scrapertools.find_single_match(elem.a.text, 'src="([^"]+)"')
         cantidad = elem.find('span', class_='with-sub')
         if cantidad:
             title = "%s (%s)" % (title,cantidad.text.strip())
-        url = urlparse.urljoin(item.url,url)
+        if "channels" in item.url:
+            url = "channels/%s" %url 
+        url = urlparse.urljoin(host,url)
         if "/gay" in url or "/shemale" in url:
             url = url.replace("/gay", "/videos/new/gay/0").replace("/shemale", "/videos/new/shemale/0")
         else:
@@ -154,13 +156,16 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', id=re.compile(r"^video_\d+"))
     for elem in matches:
-        url = elem.a['href']
+        url = elem.a['href'].replace("THUMBNUM", "")
         id = elem['data-id']
         if "/search-video/" in url:
-            url = "%s/video%s/a" %(host,id)
+            # url = "%svideo%s/a" %(host,id)
+            url = urlparse.urljoin(host,url)
         if "/prof-video-click/" in url:
-            url = scrapertools.find_single_match(str(url), '/(\d+/[A-z0-9_]+)')
-            url = "/video%s" %url
+            id = url.split("/")
+            url = "/video.%s/a" %id[-2]
+            # url = scrapertools.find_single_match(str(url), '/(\d+/[A-z0-9_]+)')
+            # url = "/video%s" %url
         title = elem.find('p', class_='title').a['title']
         thumbnail = elem.img['data-src']
         thumbnail = thumbnail.replace("THUMBNUM.", "9.")
@@ -194,7 +199,9 @@ def listados(item):
     itemlist = []
     data = httptools.downloadpage(item.url, canonical=canonical).json
     for Video in  data["videos"]:
-        url = Video["u"]
+        url = Video["u"]  #redirecciona
+        # id = Video["id"]
+        # url = "%svideo%s" %(host,id)  No funciona en pornstars
         title = Video["tf"]
         duration = Video["d"]
         thumbnail =  Video["i"]
@@ -209,9 +216,10 @@ def listados(item):
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (duration, title)
         thumbnail = thumbnail.replace("\/", "/")
-        url = scrapertools.find_single_match(url, '/(\d+/[A-z0-9_-]+)')
-        url = "/video%s" %url
-        url = urlparse.urljoin(item.url,url)
+        # id = scrapertools.find_single_match(url, '/(\d+/[A-z0-9_-]+)')
+        id = url.split("/")
+        url = "/video.%s/a" %id[-2].replace('video.','')
+        url = urlparse.urljoin(host,url)
         plot = ""
         quality = ""
         action = "play"
@@ -241,6 +249,29 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url))
+    if "/search-video/" in item.url:
+        item.url = httptools.downloadpage(item.url).url
+    
+    soup = create_soup(item.url)
+    # pornstars = soup.find_all('a', href=re.compile("/models/[A-z0-9-]+/"))
+    pornstars = soup.find_all('li', class_="model")
+    for x , value in enumerate(pornstars):
+        pornstars[x] = value.text.strip()
+    pornstar = ' & '.join(pornstars)
+    pornstar = "[COLOR cyan]%s[/COLOR]" % pornstar
+    plot = ""
+    if len(pornstars) <= 3:
+        lista = item.contentTitle.split('[/COLOR]')
+        pornstar = pornstar.replace('[/COLOR]', '')
+        pornstar = ' %s' %pornstar
+        if "[COLOR red]" in item.title:
+            lista.insert (4, pornstar)
+        else:
+            lista.insert (2, pornstar)
+        item.contentTitle = '[/COLOR]'.join(lista)
+    else:
+        plot = pornstar
+    
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=item.url, plot=plot ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
