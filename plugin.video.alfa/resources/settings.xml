@@ -210,7 +210,7 @@
             enable="eq(-1,1)" subsetting="true" />
 
         <setting label="30501" type="lsep" />
-        <setting id="videolibrarypath" type="folder" label="30067" default="" />
+        <setting id="videolibrarypath" type="action" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAiZnVuY3Rpb24iLA0KICAgICJmb2xkZXIiOiAicGxhdGZvcm1jb2RlIiwNCiAgICAiZnVuY3Rpb24iOiAicGxhdGZvcm10b29scyIsDQogICAgIm1ldGhvZCI6ICJkaWFsb2dfc2V0X3BhdGgiLA0KICAgICJvcHRpb25zIjogWyJ2aWRlb2xpYnJhcnlwYXRoIiwgMzAwNjddDQp9=)" label="30067" />
         <setting id="folder_tvshows" type="text" label="70118" default="SERIES" />
         <setting id="folder_movies" type="text" label="70119" default="CINE" />
         <setting id="videolibrary_xbmc_db_location" type="enum" label="60629"
@@ -250,8 +250,8 @@
             enable="eq(-3,1)" subsetting="true" />
 
         <setting label="30501" type="lsep" />
-        <setting id="downloadpath" type="folder" label="30017" default="" />
-        <setting id="downloadlistpath" type="folder" label="30018" default="" />
+        <setting id="downloadpath" type="action" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAiZnVuY3Rpb24iLA0KICAgICJmb2xkZXIiOiAicGxhdGZvcm1jb2RlIiwNCiAgICAiZnVuY3Rpb24iOiAicGxhdGZvcm10b29scyIsDQogICAgIm1ldGhvZCI6ICJkaWFsb2dfc2V0X3BhdGgiLA0KICAgICJvcHRpb25zIjogWyJkb3dubG9hZHBhdGgiLCAzMDAxN10NCn0=)" label="30017" />
+        <setting id="downloadlistpath" type="action" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAiZnVuY3Rpb24iLA0KICAgICJmb2xkZXIiOiAicGxhdGZvcm1jb2RlIiwNCiAgICAiZnVuY3Rpb24iOiAicGxhdGZvcm10b29scyIsDQogICAgIm1ldGhvZCI6ICJkaWFsb2dfc2V0X3BhdGgiLA0KICAgICJvcHRpb25zIjogWyJkb3dubG9hZGxpc3RwYXRoIiwgMzAwMThdDQp9=)" label="30018" />
 
         <setting label="70015" type="lsep" />
         <setting id="downloads_show_torrent_paths" type="bool" label="70807" default="true" />
