@@ -982,7 +982,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
     """
     Función para generar los menus contextuales.
         1. Partiendo de los datos de item.context
-             a. Metodo antiguo item.context tipo str separando las opciones por "|" (ejemplo: item.context = "1|2|3")
+            a. Metodo antiguo item.context tipo str separando las opciones por "|" (ejemplo: item.context = "1|2|3")
                 (solo predefinidos)
             b. Metodo list: item.context es un list con las diferentes opciones del menu:
                 - Predefinidos: Se cargara una opcion predefinida con un nombre.
@@ -1053,6 +1053,9 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
             else:
                 context_commands.append(
                     (command["title"], "RunPlugin(%s?%s)" % (sys.argv[0], item_from_url.clone(**command).tourl())))
+
+    if "Container.Refresh" not in str(context_commands):
+        context_commands.append(("[B][COLOR grey]%s[/COLOR][/B]" % config.get_localized_string(70815), "Container.Refresh"))
 
     # No añadir más opciones predefinidas si se está dentro de Alfavoritos
     if parent_item.module in ['alfavorites', 'info_popup']:
