@@ -143,6 +143,31 @@ def dialog_browse(_type, heading, shares='files', default=""):
     return d
 
 
+def dialog_set_path(args):
+    setting, heading = args
+    if isinstance(heading, int):
+        heading = config.get_localized_string(heading)
+    if not isinstance(heading, str):
+        heading = "Kodi"
+    d = dialog_browse(3, heading)
+    if d == '':
+        return False 
+    from core import filetools
+    profile_full_path = filetools.translatePath("special://profile")
+    if config.get_system_platform() in 'windows':
+        d = d.lower()
+        profile_full_path = profile_full_path.lower()
+    if d.startswith(profile_full_path):
+        try:
+            profile = d[:].replace(profile_full_path, '')
+            profile = os.path.join("special://profile", profile)
+            profile = filetools.validatePath(profile)
+            d = profile
+        except Exception as error:
+            logger.error("Exception: {}".format(error))
+    config.set_setting(setting, d)
+
+
 def dialog_qr_message(heading="", message="", qrdata=""):
     from platformcode.custom_code import check_addon_installed
     if not check_addon_installed('script.module.pyqrcode'):
@@ -957,7 +982,7 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
     """
     Función para generar los menus contextuales.
         1. Partiendo de los datos de item.context
-             a. Metodo antiguo item.context tipo str separando las opciones por "|" (ejemplo: item.context = "1|2|3")
+            a. Metodo antiguo item.context tipo str separando las opciones por "|" (ejemplo: item.context = "1|2|3")
                 (solo predefinidos)
             b. Metodo list: item.context es un list con las diferentes opciones del menu:
                 - Predefinidos: Se cargara una opcion predefinida con un nombre.
@@ -1028,6 +1053,9 @@ def set_context_commands(item, item_url, parent_item, categories_channel=[], **k
             else:
                 context_commands.append(
                     (command["title"], "RunPlugin(%s?%s)" % (sys.argv[0], item_from_url.clone(**command).tourl())))
+
+    if "Container.Refresh" not in str(context_commands):
+        context_commands.append(("[B][COLOR grey]%s[/COLOR][/B]" % config.get_localized_string(70815), "Container.Refresh"))
 
     # No añadir más opciones predefinidas si se está dentro de Alfavoritos
     if parent_item.module in ['alfavorites', 'info_popup']:

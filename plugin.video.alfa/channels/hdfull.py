@@ -14,7 +14,7 @@ from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
 import ast
-from platformcode.platformtools import dialog_notification, dialog_ok, itemlist_refresh, show_channel_settings
+from platformcode.platformtools import dialog_notification, dialog_ok, itemlist_refresh, itemlist_update, show_channel_settings
 
 IDIOMAS = AlfaChannelHelper.IDIOMAS_T
 list_language = list(set(IDIOMAS.values()))
@@ -30,9 +30,10 @@ assistant = False
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hd-full.vip/", "https://hdfull.today/", "https://hdfull.quest/"], 
+             "host_alt": ["https://hd-full.me/", "https://hdfull.today/", "https://hdfull.quest/"], 
              'host_verification': '%slogin', 
-             "host_black_list": ["https://hd-full.lol/", "https://hd-full.co/", "https://hd-full.biz/", 
+             "host_black_list": ["https://hd-full.vip/", 
+                                 "https://hd-full.lol/", "https://hd-full.co/", "https://hd-full.biz/", 
                                  "https://hd-full.in/", "https://hd-full.im/", "https://hd-full.one/", 
                                  "https://hdfull.icu/", "https://hdfull.sbs/", "https://hdfull.org/", 
                                  "https://hdfull.store/", 
@@ -100,7 +101,7 @@ finds = {'find': dict([('find', [{'tag': ['div'], 'class': ['container-flex', 'm
          'url_replace': [], 
          'controls': {'duplicates': [], 'min_temp': False, 'url_base64': False, 'add_video_to_videolibrary': True, 'cnt_tot': 20, 
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
-                      'IDIOMAS_TMDB': {0: 'es', 1: 'ja', 2: 'es'}, 'jump_page': True}, 
+                      'IDIOMAS_TMDB': {0: 'es', 1: 'ja', 2: 'es'}, 'jump_page': True, 'timer': 15}, 
          'timeout': timeout}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
                                    idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -134,6 +135,7 @@ credentials_req = True
 js_url = AlfaChannel.urljoin(host, "templates/hdfull/js/jquery.hdfull.view.min.js")
 data_js_url = AlfaChannel.urljoin(host, "js/providers.js")
 patron_sid = r"<input\s*type='hidden'\s*name='__csrf_magic'\s*value=\"([^\"]+)\"\s*\/>"
+timer = AlfaChannel.finds['controls']['timer']
 
 try:
     window = None
@@ -144,13 +146,19 @@ try:
     js_data = window.getProperty("AH_hdfull_js_data")
     data_js = window.getProperty("AH_hdfull_data_js")
     just_logout = window.getProperty("AH_hdfull_just_logout")
+    login_age = float(window.getProperty("AH_hdfull_login_age") or -0.0)
     if window.getProperty("AH_hdfull_domain"):
-        host_alt = window.getProperty("AH_hdfull_domain")
-        if host_alt != host or host_alt != canonical['host_alt'][0]:
-            host = host_save = host_alt
-            if host_alt not in canonical['host_alt']: canonical['host_alt'] = [host_alt] + canonical['host_alt']
+        _host_alt_ = window.getProperty("AH_hdfull_domain")
+        if _host_alt_ in canonical['host_black_list']:
+            host = host_save = _host_alt_ = canonical['host_alt'][0]
+            window.setProperty("AH_hdfull_domain", "")
+            window.setProperty("AH_hdfull_login_age", "")
+            login_age = -0.0
+        elif _host_alt_ != host or _host_alt_ != canonical['host_alt'][0]:
+            host = host_save = _host_alt_
+            if _host_alt_ not in canonical['host_alt']: canonical['host_alt'] = [_host_alt_] + canonical['host_alt']
             for host_alt_ in canonical['host_alt'][:]:
-                if host_alt_ == host_alt: break
+                if host_alt_ == _host_alt_: break
                 if host_alt_ not in canonical['host_black_list']: canonical['host_black_list'] += [host_alt_]
                 if host_alt_ in canonical['host_alt']: canonical['host_alt'].remove(host_alt_)
         if config.get_setting("current_host", canonical['channel'], default='') != host:
@@ -161,12 +169,14 @@ except Exception:
     js_data = ''
     data_js = ''
     just_logout = ''
+    login_age = -0.0
     try:
         window.setProperty("AH_hdfull_user_status", jsontools.dump(user_status, silence=True))
         window.setProperty("AH_hdfull_sid", sid)
         window.setProperty("AH_hdfull_js_data", js_data)
         window.setProperty("AH_hdfull_data_js", data_js)
         window.setProperty("AH_hdfull_just_logout", str(just_logout))
+        window.setProperty("AH_hdfull_login_age", "")
         window.setProperty("AH_hdfull_domain", "")
     except Exception:
         logger.error(traceback.format_exc())
@@ -179,7 +189,7 @@ def mainlist(item):
     itemlist = []
 
     just_logout = window.getProperty("AH_hdfull_just_logout") or config.get_setting("just_logout", channel=canonical['channel'])
-    verify_credentials(force_login=False if just_logout else True)
+    verify_credentials(force_login=False if just_logout else 'timer')
     if debug: logger.debug('just_logout: %s, account: %s, sid: %s, user_status: %s' % (just_logout, account, sid, user_status))
     if just_logout:
         just_logout = ''
@@ -199,7 +209,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="sub_menu_series", title="Series", url=host,
                          thumbnail=get_thumb("channels_tvshow.png"), c_type="series", text_bold=True, plot=plot))
     if account:
-        itemlist.append(Item(channel=item.channel, action="list_all", extra="episodios",
+        itemlist.append(Item(channel=item.channel, action="list_all", extra="episodios_menu",
                              title="    - [COLOR orange]Para Ver[/COLOR]",
                              url=AlfaChannel.urljoin(host, "a/my"), post="target=shows&action=watch&start=0&limit=%s", 
                              thumbnail=get_thumb("videolibrary.png"), c_type="episodios", plot=plot))
@@ -423,6 +433,8 @@ def section(item):
 
     findS = finds.copy()
 
+    verify_credentials(force_login='timer')
+
     if item.extra in ['Género']:
         findS['categories'] = dict([('find_all', [{'tag': ['li'], 'class': ['dropdown'], '@POS': [2 if item.c_type == 'series' else 3]}, 
                                                   {'tag': ['a']}])])
@@ -446,9 +458,9 @@ def list_all(item):
 
     findS = finds.copy()
 
-    verify_credentials(force_login=not account)
+    verify_credentials(force_login='timer')
 
-    if item.extra in ["items_usuario", "listas", "episodios"]:
+    if item.extra in ["items_usuario", "listas", "episodios", "episodios_menu"]:
         findS['find'] = dict([('find', [{'tag': ['body']}]), 
                               ('get_text', [{'tag': '', '@STRIP': False, '@JSON': 'DEFAULT'}])])
         findS['controls'].update({'cnt_tot': cnt_tot_episodios if item.c_type == 'episodios' else cnt_tot_items_usuario, 
@@ -458,6 +470,13 @@ def list_all(item):
         if str(cnt_tot_episodios) not in item.post and str(cnt_tot_items_usuario) not in item.post: 
             item.post = item.post % findS['controls']['cnt_tot']
         item.post = re.sub(r'&start=\d+', '&start=%s' % ((item.curr_page - 1) * findS['controls']['cnt_tot']), item.post)
+
+        if item.extra in ["episodios_menu"]:
+            item.extra = "episodios"
+            AlfaChannel.itemlist.append(Item(channel=item.channel, action="list_all", extra="items_usuario",
+                                        title="[COLOR orange]Siguiendo[/COLOR]", text_bold=True, plot=item.plot, 
+                                        url=AlfaChannel.urljoin(host, "a/my"), post="target=shows&action=following&start=0&limit=%s", 
+                                        thumbnail=get_thumb("channels_tvshow.png"), c_type="series"))
 
     elif item.extra in ['Alfabético']:
         findS['controls'].update({'custom_pagination': True, 'jump_page': True})
@@ -658,6 +677,9 @@ def seasons(item):
     logger.info()
 
     findS = finds.copy()
+
+    verify_credentials(force_login='timer', force_check=False)
+
     if 'anim' in item.infoLabels['genre'].lower():
         findS['controls']['season_TMDB_limit'] = False
 
@@ -718,7 +740,7 @@ def episodios(item):
     logger.info()
 
     itemlist = []
-    verify_credentials(force_login=True, force_check=False)
+    verify_credentials(force_login='timer', force_check=False)
 
     templist = seasons(item)
 
@@ -730,6 +752,8 @@ def episodios(item):
 
 def episodesxseason(item, **AHkwargs):
     logger.info()
+
+    verify_credentials(force_login='timer', force_check=False)
 
     kwargs['matches_post_get_video_options'] = findvideos_matches
     item.url = AlfaChannel.urljoin(host, "a/episodes")
@@ -813,7 +837,7 @@ def findvideos(item):
     logger.info()
     global js_data, data_js
 
-    verify_credentials(force_login=True if item.contentChannel == 'videolibrary' else not account)
+    verify_credentials(force_login='timer')
 
     kwargs['matches_post_episodes'] = episodesxseason_matches
 
@@ -911,12 +935,13 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
         if 'clicknupload' in elem_json['url']: continue
 
         matches.append(elem_json.copy())
-    
+
     return matches, langs
 
 
 def play(item):
-    global user_status, account, sid
+
+    verify_credentials(force_login='timer', force_check=False)
     
     if "###" in item.url:
         item.info = {item.url.split("###")[1].split(";")[0]: item.url.split("###")[1].split(";")[0]}
@@ -927,6 +952,7 @@ def play(item):
         
         data = agrupa_datos(AlfaChannel.urljoin(host, "a/status"), post=post, hide_infobox=True)
         check_user_status(reset=True)
+        screen_refresh()
     
     devuelve = servertools.findvideosbyserver(item.url, item.server)
     
@@ -939,14 +965,6 @@ def play(item):
             item.server = devuelve[0][2]
     item.thumbnail = item.contentThumbnail
 
-    #Forzar Login después de la reproducción
-    account = False
-    config.set_setting("logged", account, channel=canonical['channel'])
-    sid = ''
-    if window: window.setProperty("AH_hdfull_sid", sid)
-    user_status = {}
-    if window: window.setProperty("AH_hdfull_user_status", jsontools.dump(user_status))
-    
     return [item]
 
 
@@ -968,7 +986,7 @@ def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)
 
-    verify_credentials(force_login=True)
+    verify_credentials(force_login='timer')
 
     try:
         texto = texto.replace(" ", "+")
@@ -995,7 +1013,7 @@ def search(item, texto, **AHkwargs):
 
 """ CREDENTIALS MANAGEMENT """
 def verify_credentials(force_login=True, force_check=True):
-    global account, credentials_req, user_, pass_, sid, user_status
+    global credentials_req, user_, pass_
     
     if debug: logger.debug('SID: %s; Account: %s; just_logout: %s; force_login: %s; force_check: %s; credentials: %s; credentials_req: %s' \
                             % (True if sid else False, account, just_logout, force_login, force_check, 
@@ -1003,12 +1021,7 @@ def verify_credentials(force_login=True, force_check=True):
 
     credentials = True if user_ and pass_ else False
     if not credentials:
-        account = False
-        config.set_setting("logged", account, channel=canonical['channel'])
-        sid = ''
-        if window: window.setProperty("AH_hdfull_sid", sid)
-        user_status = {}
-        if window: window.setProperty("AH_hdfull_user_status", jsontools.dump(user_status))
+        force_login_next()
         logger.info('NO LOGIN credentials', force=True)
         
         if credentials_req and force_check:
@@ -1030,22 +1043,21 @@ def verify_credentials(force_login=True, force_check=True):
                                                                               channel=canonical['channel'], default=''))), 
                                                                               str(type(config.get_setting('hdfullpassword', 
                                                                               channel=canonical['channel'], default=''))), setting))
+                force_login_next()
                 user_ = ''
                 pass_ = ''
-                account = False
                 config.set_setting('hdfulluser', user_, channel=canonical['channel'])
                 config.set_setting('hdfullpassword', pass_, channel=canonical['channel'])
-                config.set_setting('logged', account, channel=canonical['channel'])
 
             credentials = True if user_ and pass_ else False
-            if credentials and force_login: login()
-            
+
             if not credentials:
                 if not _silence:
                     dialog_notification("Falta usuario o contraseña", "Revise sus datos en la configuración del canal", sound=False)
                 credentials_req = False
                 logger.info('NO credentials for LOGIN', force=True)
 
+    if credentials and force_login == 'timer': check_login_age(force_check=force_check)
     elif credentials and force_login: login()
 
     return credentials
@@ -1089,15 +1101,37 @@ def check_login_status(data):
             config.set_setting("logged", account, channel=canonical['channel'])
         return account
     
+    force_login_next()
+    
+    return account
+
+def check_login_age(force_check=True):
+    global login_age
+    
+    time_now = time.time()
+    time_left = -0.0 if not login_age else (login_age - time_now)
+
+    if time_left <= 0.0:
+        logger.debug('Login TIMED OUT: %s m. / %s m.' % (timer, round(time_left/60, 2)))
+        force_login_next()
+        login(force_check=force_check)
+    else:
+        logger.debug('Login TIME LEFT: %s m. / %s m.' % (timer, round(time_left/60, 2)))
+
+def force_login_next():
+    global sid, account, user_status, login_age
+
     account = False
     config.set_setting("logged", account, channel=canonical['channel'])
     sid = ''
     if window: window.setProperty("AH_hdfull_sid", sid)
-    
-    return account
+    user_status = {}
+    if window: window.setProperty("AH_hdfull_user_status", jsontools.dump(user_status))
+    login_age = ''
+    if window: window.setProperty("AH_hdfull_login_age", str(login_age))
 
 def login(data='', alfa_s=False, force_check=True, retry=False):
-    global sid, account
+    global sid, account, login_age
 
     if data:
         sid = AlfaChannel.do_quote(scrapertools.find_single_match(data, patron_sid), plus=False)
@@ -1113,11 +1147,14 @@ def login(data='', alfa_s=False, force_check=True, retry=False):
         if window: window.setProperty("AH_hdfull_sid", sid)
 
     if check_login_status(data):
+        login_age = time.time() + timer*60
+        window.setProperty("AH_hdfull_login_age", str(login_age))
         check_user_status()
         logger.info('LOGGED IN', force=True)
         return True
 
     elif not verify_credentials(force_login=False, force_check=force_check):
+        force_login_next()
         return False
 
     else:
@@ -1130,6 +1167,7 @@ def login(data='', alfa_s=False, force_check=True, retry=False):
                 logger.error('NO SID: RETRY: %s' % str(data))
                 return login(force_check=force_check, retry=True)
             logger.error('NO SID: %s' % str(data))
+            force_login_next()
             return False
 
         post = '__csrf_magic=%s&username=%s&password=%s&action=login' % (sid, user_, pass_)
@@ -1152,16 +1190,19 @@ def login(data='', alfa_s=False, force_check=True, retry=False):
                 if not config.get_setting("logged", channel=canonical['channel']):
                     config.set_setting("logged", account, channel=canonical['channel'])
                 logger.info('Just LOGGED', force=True)
+                login_age = time.time() + timer*60
+                window.setProperty("AH_hdfull_login_age", str(login_age))
                 check_user_status(reset=True)
                 return True
         
         logger.info('Error on LOGIN: %s' % str(new_data), force=True)
         if not _silence:
             dialog_notification("No se pudo realizar el login", "Revise sus datos en la configuración del canal", sound=False)
+        force_login_next()
         return False
 
 def logout(item):
-    global just_logout, account, user_status, sid, js_data, data_js, user_, pass_
+    global just_logout, js_data, data_js
     logger.info('LOGGED OFF', force=True)
     
     # Logoff en la web
@@ -1175,16 +1216,11 @@ def logout(item):
     dict_cookie = {"domain": '.'+domain, 'expires': 0}
     AlfaChannel.httptools.set_cookies(dict_cookie)
 
-    account = False
-    config.set_setting("logged", account, channel=canonical['channel'])
-    user_status = {}
-    sid = ''
+    force_login_next()
     js_data = ''
     data_js = ''
     just_logout = True
     if window:
-        window.setProperty("AH_hdfull_user_status", jsontools.dump(user_status))
-        window.setProperty("AH_hdfull_sid", sid)
         window.setProperty("AH_hdfull_js_data", js_data)
         window.setProperty("AH_hdfull_data_js", data_js)
         window.setProperty("AH_hdfull_just_logout", str(just_logout))
@@ -1198,7 +1234,6 @@ def logout(item):
     return [item]
 
 def agrupa_datos(url, post=None, referer=True, soup=False, json=False, force_check=False, force_login=True, alfa_s=False, hide_infobox=False):
-    global account, sid, user_status
 
     headers = {'Referer': host}
     if 'episodes' in url or 'buscar' in url:
@@ -1212,27 +1247,16 @@ def agrupa_datos(url, post=None, referer=True, soup=False, json=False, force_che
                                    soup=False, json=False, canonical=canonical, hide_infobox=hide_infobox, alfa_s=alfa_s)
 
     if page.sucess and page.host and host_save not in page.host:
-        account = False
-        config.set_setting("logged", account, channel=canonical['channel'])
-        sid = ''
-        if window: window.setProperty("AH_hdfull_sid", sid)
-        user_status = {}
-        if window: window.setProperty("AH_hdfull_user_status", jsontools.dump(user_status))
+        force_login_next()
         url = page.url_new
         if window: window.setProperty("AH_hdfull_domain", AlfaChannel.host)
         return agrupa_datos(url, post=post, referer=referer, alfa_s=alfa_s, hide_infobox=hide_infobox, 
                             json=json, force_check=force_check, force_login=True)
 
     if not page.sucess:
-        account = False
-        config.set_setting("logged", account, channel=canonical['channel'])
+        force_login_next()
         config.set_setting("current_host", '', channel=canonical['channel'])
-        sid = ''
-        if window: window.setProperty("AH_hdfull_sid", sid)
-        user_status = {}
-        if window: 
-            window.setProperty("AH_hdfull_user_status", jsontools.dump(user_status))
-            window.setProperty("AH_hdfull_domain", "")
+        if window: window.setProperty("AH_hdfull_domain", "")
         return {} if json else ''
 
     #dict_cookie = {'name': 'language' % AlfaChannel.obtain_domain(url), 'value': 'es', 'domain': AlfaChannel.response_preferred_proxy_ip.replace('https://', '.'), 'domain_initial_dot': True}
@@ -1391,8 +1415,18 @@ def set_status__(item):
     check_user_status(reset=True)
     if debug: logger.debug('Post: %s' % post)
 
+    screen_refresh()
+
     title = title % agreg
     dialog_ok(item.contentSerieName or item.contentTitle, title)
+
+def screen_refresh(item={}, replace=False):
+
+    if not item:
+        itemlist_refresh()
+
+    else:
+        itemlist_update(item, replace=replace)
 
 def get_status(status, elem, mediatype=''):
     

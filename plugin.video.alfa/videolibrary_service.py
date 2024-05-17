@@ -485,7 +485,9 @@ def monitor_update():
             if config.get_setting("videolibrary_scan_after_backup", default=False):
                 scan_after_remote_update('clock')
             else:
+                config.set_setting('btdigg_status', False, server='torrent')
                 check_for_update(overwrite=False)
+                config.set_setting('btdigg_status', False, server='torrent')
 
 
 if __name__ == "__main__":

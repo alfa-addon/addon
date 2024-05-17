@@ -3470,8 +3470,9 @@ class DictionaryAdultChannel(AlfaChannelHelper):
                                                          or (elem.find(class_='title').get_text(strip=True) if elem.find(class_='title') else '') \
                                                          or (elem.img.get('alt', '') if elem.img else '')
                                     elem_json['thumbnail'] = (elem.img.get('data-thumb_url', '') or elem.img.get('data-original', '') \
-                                                             or elem.img.get('data-src', '') \
+                                                             or elem.img.get('data-lazy-src', '') or elem.img.get('data-src', '') \
                                                              or elem.img.get('src', '')) if elem.img else ''
+                                    elem_json['thumbnail'] += "|verifypeer=false"
                                     elem_json['stime'] = elem.find(class_='duration').get_text(strip=True) if elem.find(class_='duration') else ''
                                     if not elem_json['stime'] and elem.find(text=lambda text: isinstance(text, self.Comment) \
                                                               and 'duration' in text):
