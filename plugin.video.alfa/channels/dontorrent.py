@@ -376,6 +376,8 @@ def list_all_matches(item, matches_int, **AHkwargs):
                         elem_json['url'] = '/%s' % elem_json['url']
                     if (movie_path not in elem_json['url'] and tv_path not in elem_json['url'] \
                                    and docu_path not in elem_json['url']) or tienda_path in elem_json['url']: continue
+                    if item.c_type == 'peliculas' and tv_path in elem_json['url']: continue
+                    if item.c_type == 'series' and movie_path in elem_json['url']: continue
                     #logger.error(elem_a)
                     
                     elem_json['title'] = elem_a.get_text(strip=True)
@@ -389,6 +391,9 @@ def list_all_matches(item, matches_int, **AHkwargs):
                     elif tv_path in elem_json['url']:
                         elem_json['quality'] = scrapertools.find_single_match(elem_json['title'], r'\[([^\]]+)\]')
                         elem_json['quality'] = 'HDTV-720p' if '720p' in elem_json['quality'] else 'HDTV'
+
+                    if item.c_type == 'peliculas' and item.infoLabels["year"] and not elem_json.get('year'):
+                        elem_json['year'] = item.infoLabels["year"]
 
                 except Exception:
                     logger.error(elem_a)
@@ -763,6 +768,9 @@ def newest(categoria, **AHkwargs):
     item.title = "newest"
     item.category_new = "newest"
     item.channel = channel
+    if not item.infoLabels["year"]:
+        import datetime
+        item.infoLabels["year"] = datetime.datetime.now().year
 
     try:
         if categoria in ['peliculas', 'series']:

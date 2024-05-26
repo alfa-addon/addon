@@ -173,7 +173,7 @@
       "visible": true
     },
     {
-      "id": "include_in_newest_Anime",
+      "id": "include_in_newest_anime",
       "type": "bool",
       "label": "Incluir en Novedades - anime",
       "default": false,

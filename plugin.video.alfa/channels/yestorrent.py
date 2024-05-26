@@ -128,7 +128,7 @@ def mainlist(item):
     
     if channel not in [clone_channels[0]]:
         itemlist.append(Item(channel=item.channel, title="Animes", action="submenu", 
-                url=host, thumbnail=thumb_animes, extra='Anime', c_type="series"))
+                url=host, thumbnail=thumb_animes, extra='anime', c_type="series"))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
                 url=host, thumbnail=thumb_buscar, c_type="search"))
@@ -162,7 +162,7 @@ def submenu(item):
 
     if item.c_type == 'peliculas':
         findS = {'find': [{'tag': ['a'], 'class': ['header__nav-link'], 'string': re.compile('(?i)Pel.culas'), '@ARG': 'href'}]}
-    elif item.extra == 'Anime':
+    elif item.extra == 'anime':
         findS = {'find': [{'tag': ['a'], 'class': ['header__nav-link'], 'string': re.compile('(?i)Animes'), '@ARG': 'href'}]}
         sufix = ''
     else:
@@ -211,8 +211,8 @@ def list_all_matches(item, matches_int, **AHkwargs):
         
         elem_json['url'] = elem.a.get('href', '')
         if item.c_type == 'peliculas' and (tv_path in elem_json['url'] or anime_path in elem_json['url']): continue
-        if item.extra == 'Anime' and anime_path not in elem_json['url']: continue
-        if item.c_type in ['series', 'documentales'] and item.extra != 'Anime' and tv_path not in elem_json['url']: continue
+        if item.extra == 'anime' and anime_path not in elem_json['url']: continue
+        if item.c_type in ['series', 'documentales'] and item.extra != 'anime' and tv_path not in elem_json['url']: continue
         for promo in ['netflix', 'disney', 'diney', 'hbo', 'spotify']:
             if promo in elem_json['url']:
                 promos = True
@@ -229,12 +229,14 @@ def list_all_matches(item, matches_int, **AHkwargs):
         if channel in [clone_channels[2]]: elem_json['quality'] = '*'
         if item.extra == 'Idioma': elem_json['language'] = item.title.lower()
 
+        if item.c_type == 'peliculas' and item.infoLabels["year"] and not elem_json.get('year'): elem_json['year'] = item.infoLabels["year"]
+
         if item.c_type == 'search' and tv_path not in elem_json['url'] and anime_path not in elem_json['url']:
             elem_json['mediatype'] = 'movie'
         
         matches.append(elem_json.copy())
         
-        if item.extra in ['Idioma', 'Anime']: AlfaChannel.filter_languages = 0
+        if item.extra in ['Idioma', 'anime']: AlfaChannel.filter_languages = 0
     
     return matches
 
@@ -456,13 +458,17 @@ def newest(categoria, **AHkwargs):
     item.title = "newest"
     item.category_new = "newest"
     item.channel = channel
+    if not item.infoLabels["year"]:
+        import datetime
+        item.infoLabels["year"] = datetime.datetime.now().year
     
     try:
         if categoria in ['peliculas', 'latino', 'torrent']:
             item.url = host + "peliculas/"
             if channel in [clone_channels[0]]:
                 item.url = host + "Descargar-peliculas-completas%s/" % sufix
-            item.extra = "peliculas"
+            item.c_type = 'peliculas'
+            item.extra = categoria
             item.extra2 = "novedades"
             item.action = "list_all"
             itemlist.extend(list_all(item))
@@ -470,10 +476,11 @@ def newest(categoria, **AHkwargs):
         if len(itemlist) > 0 and ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
         
-        if categoria in ['series', 'latino', 'torrent']:
-            item.category_new= 'newest'
-            item.url = host + "series/"
-            item.extra = "series"
+        if categoria in ['series', 'anime']:
+            item.category_new = "newest"
+            item.url = host + ("series/" if categoria not in ['anime'] else "animes/")
+            item.c_type = 'series'
+            item.extra = categoria
             item.extra2 = "novedades"
             item.action = "list_all"
             itemlist.extend(list_all(item))
