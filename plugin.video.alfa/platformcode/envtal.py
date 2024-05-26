@@ -50,6 +50,7 @@ def get_environment():
         PLATFORM = config.get_system_platform()
         
         environment = config.get_platform(full_version=True)
+        PLATFORM_full = environment.copy()
         environment['num_version'] = str(environment['num_version'])
         environment['python_version'] = '%s (%s, %s)' % (str(platform.python_version()), \
                     str(sys.api_version), str(platform.python_implementation()))
@@ -184,19 +185,25 @@ def get_environment():
             environment['kodi_buffer'] = '20'
             environment['kodi_bmode'] = '0'
             environment['kodi_rfactor'] = '4.0'
-            if filetools.exists(filetools.join("special://userdata", "advancedsettings.xml")):
-                advancedsettings = filetools.read(filetools.join("special://userdata", 
-                                "advancedsettings.xml")).split('\n')
-                for label_a in advancedsettings:
-                    if 'memorysize' in label_a:
-                        environment['kodi_buffer'] = str(old_div(int(scrapertools.find_single_match
-                                (label_a, '>(\d+)<\/')), 1024**2))
-                    if 'buffermode' in label_a:
-                        environment['kodi_bmode'] = str(scrapertools.find_single_match
-                                (label_a, '>(\d+)<\/'))
-                    if 'readfactor' in label_a:
-                        environment['kodi_rfactor'] = str(scrapertools.find_single_match
-                                (label_a, '>(.*?)<\/'))
+            if PLATFORM_full['num_version'] < 21:
+                if filetools.exists(filetools.join("special://userdata", "advancedsettings.xml")):
+                    advancedsettings = filetools.read(filetools.join("special://userdata", 
+                                    "advancedsettings.xml")).split('\n')
+                    for label_a in advancedsettings:
+                        if 'memorysize' in label_a:
+                            environment['kodi_buffer'] = str(old_div(int(scrapertools.find_single_match
+                                    (label_a, '>(\d+)<\/')), 1024**2))
+                        if 'buffermode' in label_a:
+                            environment['kodi_bmode'] = str(scrapertools.find_single_match
+                                    (label_a, '>(\d+)<\/'))
+                        if 'readfactor' in label_a:
+                            environment['kodi_rfactor'] = str(scrapertools.find_single_match
+                                    (label_a, '>(.*?)<\/'))
+            else:
+                environment['kodi_buffer'] = str(config.get_kodi_setting('filecache.memorysize')) or environment['kodi_buffer']
+                environment['kodi_bmode'] = str(config.get_kodi_setting('filecache.buffermode')) or environment['kodi_bmode']
+                environment['kodi_rfactor'] = '%s / Chunksize: %s KB' % (str((config.get_kodi_setting('filecache.readfactor') or 400) / 100),
+                                                                str(int((config.get_kodi_setting('filecache.chunksize') or 131072) / 1024)))
         except:
             pass
         
@@ -354,7 +361,7 @@ def get_environment():
                 try:
                     __settings__ = xbmcaddon.Addon(id="plugin.video.torrest")
                     cliente['Platform'] += ': %s: %s:%s' % (str(__settings__.getSetting("service_enabled")), \
-                                    str(__settings__.getSetting("service_ip")), str(__settings__.getSetting("port")))
+                                    str(__settings__.getSetting("service_ip") or 'ERROR.127.0.0.1'), str(__settings__.getSetting("port")))
                 except:
                     pass
                 #cliente['Options'] = str(filetools.read(filetools.join('special://masterprofile', \
@@ -381,6 +388,7 @@ def get_environment():
                     cliente['D_load_Path'] = cliente['D_load_Path_perm']
                     del cliente['D_load_Path_perm']
             environment['torrent_list'].append(cliente)
+            logger.error(cliente)
 
         environment['proxy_active'] = ''
         try:

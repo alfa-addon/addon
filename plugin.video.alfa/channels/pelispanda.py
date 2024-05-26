@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channels Magnetpelis, Pelispanda, Yestorrent -*-
+# -*- Channels Pelispanda, Yestorrent, Hacktorrent -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -13,7 +13,7 @@ from AlfaChannelHelper import DictionaryAllChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
-# Canal común con Cinetorrent(muerto), Magnetpelis (muerto), Pelispanda, Yestorrent
+# Canal común con Pelispanda, Yestorrent
 
 IDIOMAS = AlfaChannelHelper.IDIOMAS_T
 list_language = list(set(IDIOMAS.values()))
@@ -37,14 +37,16 @@ categoria = channel.capitalize()
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)     # Actualización sólo últ. Temporada?
 min_temp = modo_ultima_temp if not modo_ultima_temp else 'continue'
 
-weirdo_channels = ['yestorrent']
-sufix = '-y002/' if channel in weirdo_channels else ''
+clone_channels = ['yestorrent', 'pelispanda', 'hacktorrent']
+weirdo_channels = [clone_channels[0]]
+sufix = '-y002' if channel in weirdo_channels else ''
 
 timeout = config.get_setting('timeout_downloadpage', channel)
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
-movie_path = "/torrent"
+movie_path = "/peliculas"
 tv_path = '/series'
+anime_path = '/animes'
 language = ['LAT']
 url_replace = []
 
@@ -60,8 +62,8 @@ finds = {'find': {'find_all': [{'tag': ['div'], 'class': ['col-6 col-sm-4 col-lg
          'next_page_rgx': [['\/page\/\d+', '/page/%s/']], 
          'last_page': dict([('find', [{'tag': ['ul'], 'class': ['pagination']}, 
                                       {'tag': ['a'], 'class': ['next page-numbers']}]), 
-                           ('find_previous', [{'tag': ['a'], 'class': ['page-numbers']}]), 
-                           ('get_text', [{'@TEXT': '(\d+)'}])]), 
+                            ('find_previous', [{'tag': ['a'], 'class': ['page-numbers']}]), 
+                            ('get_text', [{'@TEXT': '(\d+)'}])]), 
          'year': {}, 
          'season_episode': {}, 
          'seasons': {'find_all': [{'tag': ['div'], 'class': ['card-header']}]}, 
@@ -96,6 +98,7 @@ def mainlist(item):
     
     thumb_pelis = get_thumb("channels_movie.png")
     thumb_series = get_thumb("channels_tvshow.png")
+    thumb_animes = get_thumb("channels_anime.png")
     thumb_genero = get_thumb("genres.png")
     thumb_anno = get_thumb("years.png")
     thumb_calidad = get_thumb("top_rated.png")
@@ -111,17 +114,21 @@ def mainlist(item):
                 url=host, thumbnail=thumb_genero, extra='Genero', c_type="peliculas"))
     itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Año[/COLOR]", action="section", 
                 url=host, thumbnail=thumb_anno, extra='A.O', c_type="peliculas"))
-    if channel not in ['magnetpelis']:
-        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Calidad[/COLOR]", action="section", 
+    itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Calidad[/COLOR]", action="section", 
                 url=host, thumbnail=thumb_calidad, extra='CALIDAD', c_type="peliculas"))
-    if channel in weirdo_channels:
+    if channel not in [clone_channels[1]]:
         itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Idiomas[/COLOR]", action="section", 
                 url=host, thumbnail=thumb_calidad, extra='Idioma', c_type="peliculas"))
     
     itemlist.append(Item(channel=item.channel, title="Series", action="submenu", 
                 url=host, thumbnail=thumb_series, c_type="series"))
-    itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Año[/COLOR]", action="section", 
-                url=host, thumbnail=thumb_anno, extra='A.O', c_type="series"))
+    if channel not in [clone_channels[0]]:
+        itemlist.append(Item(channel=item.channel, title=" - [COLOR paleturquoise]Por Año[/COLOR]", action="section",
+                    url=host, thumbnail=thumb_anno, extra='A.O', c_type="series"))
+    
+    if channel not in [clone_channels[0]]:
+        itemlist.append(Item(channel=item.channel, title="Animes", action="submenu", 
+                url=host, thumbnail=thumb_animes, extra='Anime', c_type="series"))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
                 url=host, thumbnail=thumb_buscar, c_type="search"))
@@ -154,9 +161,12 @@ def submenu(item):
     itemlist = []
 
     if item.c_type == 'peliculas':
-        findS = {'find': [{'tag': ['a'], 'class': ['header__nav-link'], 'string': re.compile('Pel.culas'), '@ARG': 'href'}]}
+        findS = {'find': [{'tag': ['a'], 'class': ['header__nav-link'], 'string': re.compile('(?i)Pel.culas'), '@ARG': 'href'}]}
+    elif item.extra == 'Anime':
+        findS = {'find': [{'tag': ['a'], 'class': ['header__nav-link'], 'string': re.compile('(?i)Animes'), '@ARG': 'href'}]}
+        sufix = ''
     else:
-        findS = {'find': [{'tag': ['a'], 'class': ['header__nav-link'], 'string': re.compile('Series'), '@ARG': 'href'}]}
+        findS = {'find': [{'tag': ['a'], 'class': ['header__nav-link'], 'string': re.compile('(?i)Series'), '@ARG': 'href'}]}
         sufix = ''
 
     soup = AlfaChannel.create_soup(item.url, **kwargs)
@@ -172,7 +182,7 @@ def section(item):
     
     findS['controls'] = {
                          'year': True if item.extra in ['A.O'] else False,
-                         'reverse': True if channel in weirdo_channels and item.extra in ['A.O'] else False
+                         'reverse': True if channel not in [clone_channels[1]] and item.extra in ['A.O'] else False
                         }
     findS['categories'] = dict([('find', [{'tag': ['a'], 'class': ['dropdown-toggle header__nav-link'], 
                                                          'string': re.compile('(?i)%s' % item.extra)}]), 
@@ -196,11 +206,13 @@ def list_all_matches(item, matches_int, **AHkwargs):
 
     for elem in matches_int:
         elem_json = {}
+        #logger.error(elem)
         promos = False
         
         elem_json['url'] = elem.a.get('href', '')
-        if item.c_type == 'peliculas' and tv_path in elem_json['url']: continue
-        if item.c_type in ['series', 'documentales'] and tv_path not in elem_json['url']: continue
+        if item.c_type == 'peliculas' and (tv_path in elem_json['url'] or anime_path in elem_json['url']): continue
+        if item.extra == 'Anime' and anime_path not in elem_json['url']: continue
+        if item.c_type in ['series', 'documentales'] and item.extra != 'Anime' and tv_path not in elem_json['url']: continue
         for promo in ['netflix', 'disney', 'diney', 'hbo', 'spotify']:
             if promo in elem_json['url']:
                 promos = True
@@ -214,12 +226,15 @@ def list_all_matches(item, matches_int, **AHkwargs):
             if elem_json['quality'].lower() != 'x': elem_json['title_subs'] = [elem_json['quality'].lower().replace('*', '')]
             elem_json['quality'] = '*'
         elem_json['language'] = elem_json['quality']
+        if channel in [clone_channels[2]]: elem_json['quality'] = '*'
         if item.extra == 'Idioma': elem_json['language'] = item.title.lower()
 
-        if item.c_type == 'search' and tv_path not in elem_json['url']:
+        if item.c_type == 'search' and tv_path not in elem_json['url'] and anime_path not in elem_json['url']:
             elem_json['mediatype'] = 'movie'
         
         matches.append(elem_json.copy())
+        
+        if item.extra in ['Idioma', 'Anime']: AlfaChannel.filter_languages = 0
     
     return matches
 
@@ -258,6 +273,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
     matches = []
     findS = AHkwargs.get('finds', finds)
+    if anime_path in item.url: AlfaChannel.filter_languages = 0
 
     for elem_season in matches_int:
         season = int(scrapertools.find_single_match(elem_season.span.text, '\d+') or '1')
@@ -265,6 +281,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         
         for elem in elem_season.find_all('tr'):
             elem_json = {}
+            #logger.error(elem)
             
             elem_json['server'] = 'torrent'
             elem_json['size'] = ''
@@ -272,10 +289,20 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['season'] = item.infoLabels['season']
 
             for x, td in enumerate(elem.find_all('td')):
-                if x == 0: elem_json['episode'] = int(scrapertools.find_single_match(str(td.get_text()), '\d+') or '1')
-                if x == 1: elem_json['quality'] = '*%s' % td.get_text()
-                if x == 2: elem_json['language'] = '*%s' % td.get_text()
-                if x == 5: elem_json['url'] = td.a.get('href', '')
+                #logger.error(td)
+                try:
+                    if x == 0: elem_json['episode'] = int(scrapertools.find_single_match(str(td.get_text(strip=True)), '\d+') or '1')
+                    if x == 1: elem_json['quality'] = '*%s' % td.get_text(strip=True)
+                    if x == 2 and ('MB' in td.get_text(strip=True) or 'GB' in td.get_text(strip=True)):
+                        elem_json['torrent_info'] = td.get_text(strip=True)
+                    elif x == 2: elem_json['language'] = '*%s' % td.get_text(strip=True)
+                    if x == 4 and ('MB' in td.get_text(strip=True) or 'GB' in td.get_text(strip=True)):
+                        elem_json['torrent_info'] = td.get_text(strip=True)
+                    elif x == 4 and not elem_json.get('language'): elem_json['language'] = '*%s' % td.get_text(strip=True)
+                    if x in [5, 6] and td.a: elem_json['url'] = td.a.get('href', '')
+
+                except Exception:
+                    continue
 
             if not elem_json.get('url', ''): 
                 continue
@@ -304,6 +331,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     if videolibrary:
         for x, (episode_num, _scrapedserver, _scrapedquality, _scrapedlanguage, scrapedsize, scrapedurl) in enumerate(matches_int):
             elem_json = {}
+            #logger.error(elem)
 
             if item.infoLabels['mediatype'] in ['episode']:
                 elem_json['season'] = item.infoLabels['season']
@@ -331,25 +359,36 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
             x = 0
             
             for td in elem.find_all('td'):
-                if item.infoLabels['mediatype'] in ['movie']:
-                    if x == 0:
-                        if len(elem.find_all('td')) < 7:
-                            elem_json['server'] = 'torrent'
-                            x += 1
-                        else:
-                            elem_json['server'] = 'torrent' if td.get_text().lower() in ['t', 'torrent', 'array'] else 'directo'
-                    if x == 1: elem_json['quality'] = '*%s' % td.get_text()
-                    if x == 2: elem_json['language'] = '*%s' % td.get_text()
-                    if x == 4: elem_json['torrent_info'] =  td.get_text().replace('-', '')
-                    if x == 6: elem_json['url'] = td.a.get('href', '')
-                else:
-                    elem_json['season'] = item.infoLabels['season']
-                    if x == 0: elem_json['episode'] = int(scrapertools.find_single_match(str(td.get_text()), '\d+') or '1')
-                    if x == 1: elem_json['quality'] = '*%s' % td.get_text()
-                    if x == 2: elem_json['language'] = '*%s' % td.get_text()
-                    if x == 5: elem_json['url'] = td.a.get('href', '')
-                    elem_json['server'] = 'torrent'
-                    elem_json['torrent_info'] = ''
+                #logger.error(td)
+                try:
+                    if item.infoLabels['mediatype'] in ['movie']:
+                        if x == 0:
+                            if len(elem.find_all('td')) < 7 and 'torrent' not in td.get_text(strip=True):
+                                elem_json['server'] = 'torrent'
+                                x += 1
+                            else:
+                                elem_json['server'] = 'torrent' if td.get_text(strip=True).lower() in ['t', 'torrent', 'utorrent', 'array'] \
+                                                                                                   else 'directo'
+                        if x == 1: elem_json['quality'] = '*%s' % td.get_text(strip=True)
+                        if x == 2: elem_json['language'] = '*%s' % td.get_text(strip=True)
+                        if x == 4: elem_json['torrent_info'] =  td.get_text(strip=True).replace('-', '')
+                        if x in [5, 6] and td.a: elem_json['url'] = td.a.get('href', '')
+                    else:
+                        elem_json['season'] = item.infoLabels['season']
+                        if x == 0: elem_json['episode'] = int(scrapertools.find_single_match(str(td.get_text(strip=True)), '\d+') or '1')
+                        if x == 1: elem_json['quality'] = '*%s' % td.get_text(strip=True)
+                        if x == 2 and ('MB' in td.get_text(strip=True) or 'GB' in td.get_text(strip=True)):
+                            elem_json['torrent_info'] = td.get_text(strip=True)
+                        elif x == 2: elem_json['language'] = '*%s' % td.get_text(strip=True)
+                        if x == 4 and ('MB' in td.get_text(strip=True) or 'GB' in td.get_text(strip=True)):
+                            elem_json['torrent_info'] = td.get_text(strip=True)
+                        elif x == 4 and not elem_json.get('language'): elem_json['language'] = '*%s' % td.get_text(strip=True)
+                        if x in [5, 6] and td.a: elem_json['url'] = td.a.get('href', '')
+
+                except Exception:
+                    x += 1
+                    continue
+
                 x += 1
 
             if not elem_json.get('url', ''): 
@@ -388,9 +427,10 @@ def search(item, texto, **AHkwargs):
     kwargs.update(AHkwargs)
 
     texto = texto.replace(" ", "+")
+    busq = '?s=%s' if channel in [clone_channels[2]] else 'buscar/?buscar=%s'
     
     try:
-        item.url = host + 'buscar/?buscar=%s' % texto
+        item.url = host + busq % texto
         item.extra = 'search'
 
         if texto:
@@ -399,7 +439,7 @@ def search(item, texto, **AHkwargs):
             return list_all(item)
         else:
             return []
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         logger.error(traceback.format_exc(1))
@@ -420,7 +460,7 @@ def newest(categoria, **AHkwargs):
     try:
         if categoria in ['peliculas', 'latino', 'torrent']:
             item.url = host + "peliculas/"
-            if channel in weirdo_channels:
+            if channel in [clone_channels[0]]:
                 item.url = host + "Descargar-peliculas-completas%s/" % sufix
             item.extra = "peliculas"
             item.extra2 = "novedades"
@@ -442,7 +482,7 @@ def newest(categoria, **AHkwargs):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
+    except Exception:
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         logger.error(traceback.format_exc(1))

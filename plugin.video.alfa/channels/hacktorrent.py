@@ -24,10 +24,10 @@ list_servers = AlfaChannelHelper.LIST_SERVERS_T
 forced_proxy_opt = 'ProxySSL'
 
 canonical = {
-             'channel': 'yestorrent', 
-             'host': config.get_setting("current_host", 'yestorrent', default=''), 
-             'host_alt': ['https://yestorrent.org/'], 
-             'host_black_list': ['https://yestorrent.cx/'], 
+             'channel': 'hacktorrent',
+             'host': config.get_setting("current_host", 'hacktorrent', default=''),
+             'host_alt': ['https://hacktorrent.men/'],
+             'host_black_list': [],
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

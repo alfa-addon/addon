@@ -96,6 +96,7 @@ class AlfaChannelHelper:
         self.tv_action = tv_action
         self.forced_proxy_opt = forced_proxy_opt
         self.list_language = list_language
+        self.filter_languages = 0
         self.list_servers = list_servers or LIST_SERVERS
         self.list_quality_movies = list_quality_movies or LIST_QUALITY_MOVIES
         self.list_quality_tvshow = list_quality_tvshow or LIST_QUALITY_TVSHOW
@@ -1489,10 +1490,10 @@ class DictionaryAllChannel(AlfaChannelHelper):
         headers = item.headers or kwargs.pop('headers', None) or finds_controls.get('headers', {})
         forced_proxy_opt = finds_controls.get('forced_proxy_opt', None) or kwargs.pop('forced_proxy_opt', None)
 
-        filter_languages = config.get_setting('filter_languages', item.channel, default=0)
+        self.filter_languages = config.get_setting('filter_languages', item.channel, default=0)
         modo_grafico = config.get_setting('modo_grafico', item.channel, default=True)
         idioma_busqueda = 0
-        if not filter_languages: filter_languages = 0
+        if not self.filter_languages: self.filter_languages = 0
 
         self.btdigg = finds.get('controls', {}).get('btdigg', False) and config.get_setting('find_alt_link_option', item.channel, default=False)
         self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
@@ -1839,8 +1840,8 @@ class DictionaryAllChannel(AlfaChannelHelper):
                             new_item.matches.append(elem.get('matches', []) or elem.copy())
 
                     # Ahora se filtra por idioma, si procede, y se pinta lo que vale
-                    if filter_languages > 0 and self.list_language and not BTDIGG_URL_SEARCH in new_item.url \
-                                            and not BTDIGG_URL_SEARCH in item.url_tvshow:   # Si hay idioma seleccionado, se filtra
+                    if self.filter_languages > 0 and self.list_language and not BTDIGG_URL_SEARCH in new_item.url \
+                                                 and not BTDIGG_URL_SEARCH in item.url_tvshow:   # Si hay idioma seleccionado, se filtra
                         itemlist = filtertools.get_link(itemlist, new_item, self.list_language, alfa_s=self.TEST_ON_AIR)
                     else:
                         itemlist.append(new_item.clone())                       # Si no, se añade a la lista
@@ -2175,11 +2176,11 @@ class DictionaryAllChannel(AlfaChannelHelper):
         if no_pile_on_seasons == 2: self.season_colapse = False
         if item.season_colapse == False: self.season_colapse = item.season_colapse
         AHkwargs['season_colapse'] = self.season_colapse
-        filter_languages = config.get_setting('filter_languages', item.channel, default=0)
+        self.filter_languages = config.get_setting('filter_languages', item.channel, default=0)
         modo_grafico = True if (item.library_urls or finds_seasons_search or self.btdigg ) \
                                 else config.get_setting('modo_grafico', item.channel, default=True)
         idioma_busqueda = 0
-        if not filter_languages: filter_languages = 0
+        if not self.filter_languages: self.filter_languages = 0
 
         item.context = []
         item.context = filtertools.context(item, self.list_language, self.list_quality_tvshow)
@@ -2595,10 +2596,10 @@ class DictionaryAllChannel(AlfaChannelHelper):
         modo_ultima_temp = AHkwargs['modo_ultima_temp'] = config.get_setting('seleccionar_ult_temporadda_activa', item.channel, default=True)
         self.season_colapse = config.get_setting('season_colapse', item.channel, default=True)
         if item.season_colapse == False: self.season_colapse = item.season_colapse
-        filter_languages = config.get_setting('filter_languages', item.channel, default=0)
+        self.filter_languages = config.get_setting('filter_languages', item.channel, default=0)
         modo_grafico = True if self.btdigg else config.get_setting('modo_grafico', item.channel, default=True)
         idioma_busqueda = 0
-        if not filter_languages: filter_languages = 0
+        if not self.filter_languages: self.filter_languages = 0
 
         item.context = []
         item.context = filtertools.context(item, self.list_language, self.list_quality_tvshow)
@@ -2970,9 +2971,9 @@ class DictionaryAllChannel(AlfaChannelHelper):
         url_replace = self.url_replace = self.finds.get('url_replace', [])
         manage_torrents = finds_controls.get('manage_torrents', True)
 
-        filter_languages = config.get_setting('filter_languages', item.channel, default=0)
+        self.filter_languages = config.get_setting('filter_languages', item.channel, default=0)
         modo_grafico = True if self.btdigg else config.get_setting('modo_grafico', item.channel, default=True)
-        if not filter_languages: filter_languages = 0
+        if not self.filter_languages: self.filter_languages = 0
         IDIOMAS_TMDB = finds_controls.get('IDIOMAS_TMDB', {}) or self.IDIOMAS_TMDB
         idioma_busqueda = IDIOMAS_TMDB[config.get_setting('modo_grafico_lang', item.channel, default=0)]    # Idioma base para TMDB
         if not idioma_busqueda: idioma_busqueda = 0

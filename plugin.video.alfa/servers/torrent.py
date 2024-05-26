@@ -1984,6 +1984,7 @@ def torrent_dirs():
                     __settings__.setSetting("metadata_timeout", '120')          # Max timeout for Magnets
                     __settings__.setSetting("s:check_available_space", "false") # No comprobar espacio disponible hasta que lo arreglen
                 
+                service_ip = __settings__.getSetting('service_ip') or '127.0.0.1'
                 torrent_paths[torr_client.upper()] = str(filetools.translatePath(__settings__.getSetting('s:download_path')))
                 torrent_paths[torr_client.upper() + '_torrents'] = str(filetools.translatePath(__settings__.getSetting('s:torrents_path')))
                 if not torrent_paths[torr_client.upper() + '_torrents']:
@@ -1992,11 +1993,14 @@ def torrent_dirs():
                 torrent_paths[torr_client.upper() + '_url'] = torr_client_url
                 torrent_paths[torr_client.upper() + '_port'] = __settings__.getSetting('port')
                 try:
-                    if '%s' in torrent_paths[torr_client.upper() + '_web']:
+                    if '%s' in torrent_paths[torr_client.upper() + '_web'] \
+                            or '//:' in torrent_paths[torr_client.upper() + '_web'] \
+                            or not torrent_paths[torr_client.upper() + '_web']:
                         torrent_paths[torr_client.upper() + '_web'] = '%s%s/' % ((torrent_paths[torr_client.upper() + '_web'] \
-                                      % __settings__.getSetting('service_ip')), str(torrent_paths[torr_client.upper() + '_port']))
+                                      % service_ip or '127.0.0.1'), str(torrent_paths[torr_client.upper() + '_port']))
                 except Exception:
-                    torrent_paths[torr_client.upper() + '_web'] = 'http://127.0.0.1:%s/' % str(torrent_paths[torr_client.upper() + '_port'])
+                    torrent_paths[torr_client.upper() + '_web'] = 'http://%s:%s/' % (service_ip or '127.0.0.1', \
+                                                                                     str(torrent_paths[torr_client.upper() + '_port']))
                     logger.error(traceback.format_exc())
 
                 ### TEMPORAL: migración de versión 0.0.14 a 0.0.15+ por cambio de API
