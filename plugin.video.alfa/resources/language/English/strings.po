@@ -4067,7 +4067,7 @@ msgid "[Trakt] Remove %s from your watchlist"
 msgstr ""
 
 msgctxt "#70344"
-msgid "Add to %s your watchlist""
+msgid "Add to %s your watchlist"
 msgstr ""
 
 msgctxt "#70345"
@@ -4691,7 +4691,7 @@ msgid "Genre: "
 msgstr ""
 
 msgctxt "#70500"
-msgid "Notification([COLOR red][B]Update Kodi to its latest version[/B][/COLOR], [COLOR skyblue]for best info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")"
+msgid "Notification([COLOR red][B]Update Kodi to its latest version[/B][/COLOR], [COLOR skyblue]for best info[/COLOR],8000, \"http://i.imgur.com/mHgwcn3.png\")"
 msgstr ""
 
 msgctxt "#70501"

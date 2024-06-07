@@ -1836,7 +1836,7 @@ msgstr "    - La búsqueda de contenido no se hace correctamente."
 
 msgctxt "#60454"
 msgid "    - Some channel or channels don't work properly."
-msgstr "    - Algún canal no funciona correctamente.""
+msgstr "    - Algún canal no funciona correctamente."
 
 msgctxt "#60455"
 msgid "    - The videolibrary does not update correctly."
