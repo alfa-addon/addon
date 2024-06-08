@@ -388,7 +388,6 @@ def get_environment():
                     cliente['D_load_Path'] = cliente['D_load_Path_perm']
                     del cliente['D_load_Path_perm']
             environment['torrent_list'].append(cliente)
-            logger.error(cliente)
 
         environment['proxy_active'] = ''
         try:
