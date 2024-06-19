@@ -16,6 +16,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://(?:www.|)(?:bingato|sexmex|taboodude).(?:com|net|to)/(?:item|video)/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)fapmeifyoucan.net/video/[A-z0-9-]+(?:/|))",
         "url": "\\1/resolve"
       },
@@ -26,6 +30,10 @@
       {
         "pattern": "(https://xxk.mobi/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
+      },
+      {
+        "pattern": "(titfap.com/video/[A-z0-9-]+(?:/|))",
+        "url": "https://\\1"
       },
       {
         "pattern": "(https://www.(?:porndroids|superporn).com/(?:es/|)video/[A-z0-9-]+(?:/|))",

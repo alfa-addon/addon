@@ -34,7 +34,8 @@ canonical = {
              'host': config.get_setting("current_host", 'fullseriehd', default=''), 
              'host_alt': ["https://megaxserie.me/"], 
              'host_black_list': ["https://megaserie.me/", "https://megaserie.net/"], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_stat': True, 
+             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
+             # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'CF_stat': True, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
@@ -387,6 +388,8 @@ def findvideos(item):
             url = url['data-src']
             info = info.find('span', class_='server').text.split('-')
             srv = info[0].strip()
+            if "Vidhidepre" in srv:
+                srv = "Vidhidepro"
             lang = info[1].strip()
             infoLabels = item.infoLabels
             lang = IDIOMAS.get(lang, lang)
@@ -472,7 +475,6 @@ def play(item):
         if not item.server: itemlist = servertools.get_servers_itemlist(itemlist)
         
         return itemlist
-    
     url = create_soup(item.url).find("div", class_="Video").iframe["src"]
     if 'Gdri.php' in url:
         url = scrapertools.find_single_match(url, 'v=([A-z0-9-_=]+)')

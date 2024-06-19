@@ -4,8 +4,8 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://vidhidepro.com/(?:f|v)/([A-z0-9]+)",
-        "url": "https://vidhidepro.com/v/\\1"
+        "pattern": "https://vidhide(?:pro|pre|vip|).com/(?:f|v|embed|d)/([A-z0-9]+)",
+        "url": "https://vidhidevip.com/v/\\1"
       }
     ]
   },
