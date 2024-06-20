@@ -1,10 +1,10 @@
 {
-  "id": "pelispanda",
-  "name": "Pelispanda",
+  "id": "hacktorrent",
+  "name": "Hacktorrent",
   "active": true,
   "adult": false,
-  "language": ["lat"],
-  "thumbnail": "https://i.postimg.cc/XrXRftSh/pelispanda.png",
+  "language": ["lat", "cast"],
+  "thumbnail": "https://hacktorrent.men/wp-content/uploads/2022/02/hacktorrent.png",
   "banner": "",
   "fanart": "",
   "categories": [
@@ -16,7 +16,7 @@
   ],
   "settings": [
     {
-      "default": false, 
+      "default": true, 
       "enabled": true, 
       "id": "include_in_global_search", 
       "label": "Incluir en busqueda global", 
@@ -152,7 +152,7 @@
       "id": "include_in_newest_peliculas",
       "type": "bool",
       "label": "Incluir en Novedades - Peliculas",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },
@@ -160,7 +160,7 @@
       "id": "include_in_newest_series",
       "type": "bool",
       "label": "Incluir en Novedades - Series",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },
@@ -168,15 +168,15 @@
       "id": "include_in_newest_latino",
       "type": "bool",
       "label": "Incluir en Novedades - Latino",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },
     {
       "id": "include_in_newest_anime",
       "type": "bool",
-      "label": "Incluir en Novedades - anime",
-      "default": false,
+      "label": "Incluir en Novedades - Episodios de anime",
+      "default": true,
       "enabled": true,
       "visible": true
     },
@@ -184,7 +184,7 @@
       "id": "include_in_newest_torrent",
       "type": "bool",
       "label": "Incluir en Novedades - Torrent",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     }
