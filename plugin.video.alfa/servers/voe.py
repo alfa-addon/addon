@@ -31,8 +31,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     if not video_srcs:
         bloque = scrapertools.find_single_match(data, "sources.*?\}")
         video_srcs = scrapertools.find_multiple_matches(bloque, ": '([^']+)")
+        
     if video_srcs:
         for url in video_srcs:
+            if url.startswith("aHR0"):
+                url = base64.b64decode(url).decode("utf-8")
             video_urls.append([" [Voe]", url])
     else:
         try:

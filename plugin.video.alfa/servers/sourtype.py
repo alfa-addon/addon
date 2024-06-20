@@ -16,7 +16,8 @@ from bs4 import BeautifulSoup
 
 forced_proxy_opt = 'ProxySSL'
 
-kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'ignore_response_code': True, 'cf_assistant': False}
+# kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'ignore_response_code': True, 'cf_assistant': False}
+kwargs = {'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
 
 
 def test_video_exists(page_url):
@@ -25,7 +26,7 @@ def test_video_exists(page_url):
     server = scrapertools.get_domain_from_url(page_url).split(".")[-2]
     logger.debug(server)
     if "send" in server:
-        data = httptools.downloadpage(page_url, timeout=20, **kwargs).data
+        data = httptools.downloadpage(page_url, **kwargs).data
     response = httptools.downloadpage(page_url, **kwargs)
     data = response.data
     data = data.replace('\\u003C', '<').replace('\\u0022', '"').replace('\\u003E', '>').replace('\/', '/') # fapmeifyoucan entrega json

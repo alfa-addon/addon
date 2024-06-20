@@ -12,6 +12,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "https://moonembed.(?:sx|to|in|top|nl|xyz)/(?:e|d)/([a-z0-9]+)",
+        "url": "https://filemoon.to/e/\\1"
+      },
+      {
         "pattern": "https://x08.(?:online||\\w{2,4})/(?:e|d)/([a-z0-9]+)",
         "url": "https://filemoon.to/e/\\1"
       },
@@ -20,8 +24,12 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:luluvdo|lulustream|videohb).(?:com|net)/(?:e|d|v)/[a-z0-9]+)",
+        "pattern": "(https://videohb.(?:com|net)/(?:e|d|v)/[a-z0-9]+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "https://media.cm/(?:d/|)([a-z0-9]+)",
+        "url": "https://media.cm/\\1"
       },
       {
         "pattern": "https://vidello.net/(?:embed-|)([a-z0-9]+.html)",

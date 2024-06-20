@@ -150,9 +150,9 @@ def list_all_matches(item, matches_int, **AHkwargs):
             id = elem["file"]['id']
             th2= elem["fc_facts"][0]['fc_thumbs']
             stime = elem["file"]["fl_duration"]
-            stuff = elem["file"]["stuff"]
-            if stuff.get("sf_name", ""):
-                title = stuff["sf_name"]
+            stuff = elem["file"]["data"][0]
+            if stuff.get("cd_value", ""):
+                title = stuff["cd_value"]
             else:
                 title = id
             

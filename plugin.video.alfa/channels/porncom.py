@@ -99,7 +99,8 @@ def lista(item):
     soup = create_soup(item.url).find('main', class_='container-fluid')
     matches = soup.find_all('div', class_='list-global__item')
     for elem in matches:
-        if elem.has_attr('data-adch'):
+        
+        if elem.has_attr('data-adch') or elem.ins:
             continue
         url = elem.a['href']
         title = elem.a['title']
