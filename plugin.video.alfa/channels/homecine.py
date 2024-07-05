@@ -25,8 +25,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'homecine', 
              'host': config.get_setting("current_host", 'homecine', default=''), 
-             'host_alt': ["https://homecine.tv/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www3.homecine.tv/"], 
+             'host_black_list': ["https://homecine.tv/"], 
              'pattern': '<div\s*class="header-logo">[^>]*href="([^"]+)"', 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
