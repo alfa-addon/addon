@@ -40,7 +40,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         for url in video_srcs:
             if url.startswith("aHR0"):
                 url = base64.b64decode(url).decode("utf-8")
-                logger.info(url, True)
             video_urls.append([" [Voe]", url])
     else:
         try:
