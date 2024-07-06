@@ -31,9 +31,7 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    logger.info(data, True)
     video_srcs = scrapertools.find_multiple_matches(data, r"(?:mp4|hls)': '([^']+)'")
-    logger.info(video_srcs, True)
     if not video_srcs:
         bloque = scrapertools.find_single_match(data, "sources.*?\}")
         video_srcs = scrapertools.find_multiple_matches(bloque, ": '([^']+)")
