@@ -72,7 +72,7 @@ finds = {'find': dict([('find', [{'tag': ['ul'], 'class': ['ListAnimes']}]),
          'plot': {}, 
          'findvideos': dict([('find', [{'tag': ['script'], 'string': re.compile('var\s*video \s*=\s*\[')}]),
                              ('get_text', [{'tag': '', '@STRIP': True, '@TEXT_M': "video\[\d+\]\s*=\s*'([^']+)'", '@DO_SOUP': True}])]),
-         'title_clean': [['(?i)Español|Latino', ''],
+         'title_clean': [['(?i)Español|Latino|Castellano|Audio', ''],
                          ['(?i)\s*(?:temporada|season)\s*\d+', '']],
          'quality_clean': [],
          'language_clean': [], 
@@ -274,7 +274,10 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         
         try:
             if item.contentType == 'movie':
-                index , language = movie_data.split('|')
+                if re.search(r"\|| / ", movie_data):
+                    index, language = re.split(r"\|| / ", movie_data, maxsplit=1)
+                else:
+                    index, language = movie_data, item.language
                 episode = scrapertools.find_single_match(index, 'Película\s*(\d+)') or '1'
                 elem_json['title'] = 'Película %s' % episode
                 elem_json['language'] = language.strip()
@@ -404,7 +407,7 @@ def get_lang_from_str(string):
 
     if 'latino' in string.lower():
         lang = 'Latino'
-    elif 'español' in string.lower():
+    elif 'español' in string.lower() or 'castellano' in string.lower():
         lang = 'Castellano'
     else:
         lang = 'VOSE'
