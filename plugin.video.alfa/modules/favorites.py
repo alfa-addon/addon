@@ -34,9 +34,10 @@ def mainlist(item):
 
     for name, thumb, data in read_favourites():
         if "plugin://plugin.video.%s/?" % config.PLUGIN_NAME in data:
-            url = scrapertools.find_single_match(data, 'plugin://plugin.video.%s/\?([^;]*)' % config.PLUGIN_NAME) \
-                .replace("&quot", "")
-
+            # Windows usa la entidad html &quot; para las comillas, Android no. 
+            # Así que me aseguro de decodificar las comillas para normalizar.
+            data = data.replace("&quot;", '"')
+            url = scrapertools.find_single_match(data, 'plugin://plugin.video.%s/\?([^"]*)' % config.PLUGIN_NAME)
             item = Item().fromurl(url)
             item.title = name
             item.thumbnail = thumb
