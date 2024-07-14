@@ -22,7 +22,7 @@ def test_video_exists(page_url):
     if "Not found" in data or "File is no longer available" in data or "Error 404" in data:
         return False, "[Voe] El fichero no existe o ha sido borrado"
 
-    if "erikcoldperson.com" in data:
+    if "permanentToken" in data:
         match = scrapertools.find_single_match(data, "(?i)window\.location\.href\s*=\s*'([^']+)'")
         data = httptools.downloadpage(match).data
     return True, ""
