@@ -24,7 +24,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://videohb.(?:com|net)/(?:e|d|v)/[a-z0-9]+)",
+        "pattern": "(https://videohb.(?:com|net|org|\\w{2,4})/(?:e|d|v)/[a-z0-9]+)",
         "url": "\\1"
       },
       {
@@ -41,6 +41,10 @@
       },      {
         "pattern": "https://vtbe.to/(?:embed-|)([a-z0-9]+.html)",
         "url": "https://vtbe.to/\\1"
+      },
+      {
+        "pattern": "(https://tubexplayer.com/embed-[a-z0-9]+)",
+        "url": "\\1.html"
       },
       {
         "pattern": "https://vtbe.to/embed-d/([a-z0-9]+)",
