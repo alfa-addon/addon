@@ -21,6 +21,7 @@ list_quality = list_quality_movies + list_quality_tvshow
 list_servers = AlfaChannelHelper.LIST_SERVERS_A
 forced_proxy_opt = 'ProxySSL'
 
+
 canonical = {
              'channel': 'americass', 
              'host': config.get_setting("current_host", 'americass', default=''), 
@@ -186,13 +187,17 @@ def play(item):
             if not txt.lower() in pornstar.lower():
                 pornstar = "%s & %s" %(txt,pornstar)
             item.contentTitle = re.sub(r"%s][^\[]+"  % color, "%s]{0}".format(pornstar) % color, item.contentTitle)
-    
-    url = "%s/resolve"  %item.url
-    kwargs['soup'] = False
-    kwargs['json'] = True
-    data = AlfaChannel.create_soup(url, **kwargs)['template']
-    url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
-    itemlist.append(Item(channel=item.channel, action="play", server= "directo", contentTitle = item.contentTitle, url=url))
+    if soup.find('div', id='video-container'):
+        url = soup.find('div', id='video-container').iframe['src']
+        itemlist.append(Item(channel=item.channel, action="play", title= "%s" , contentTitle=item.contentTitle, url=url)) 
+        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
+    else:
+        url = "%s/resolve"  %item.url
+        kwargs['soup'] = False
+        kwargs['json'] = True
+        data = AlfaChannel.create_soup(url, **kwargs)['template']
+        url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
+        itemlist.append(Item(channel=item.channel, action="play", server= "directo", contentTitle = item.contentTitle, url=url))
     
     return itemlist
 

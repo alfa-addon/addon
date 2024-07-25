@@ -24,8 +24,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'seriesantiguas', 
              'host': config.get_setting("current_host", 'seriesantiguas', default=''), 
-             'host_alt': ["https://www.seriesantiguas.com/"], 
-             'host_black_list': ["https://seriesantiguas.com/"], 
+             'host_alt': ["https://seriesantiguas.tv/"], 
+             'host_black_list': ["https://www.seriesantiguas.com/","https://seriesantiguas.com/"], 
              'pattern': ['<a\s*href="([^"]+)"[^>]*>\s*(?:Principal|M.s\s*vistas)\s*<\/a>'], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True

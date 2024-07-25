@@ -72,6 +72,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://(?:www.|)tabooporn.to/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(vagina.nl/sexfilms/view/[A-z0-9-]+(?:/|))",
         "url": "https://en.\\1"
       },

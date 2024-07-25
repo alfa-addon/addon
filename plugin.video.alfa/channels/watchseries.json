@@ -1,7 +1,7 @@
 {
   "id": "watchseries",
   "name": "WatchSeries",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": [],
   "thumbnail": "https://i.postimg.cc/ph7Jf03H/new-logo.png",

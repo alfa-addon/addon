@@ -25,6 +25,7 @@ list_servers = []
 # https://playpornfree.org/   https://streamporn.pw/  https://mangoporn.net/   https://watchfreexxx.net/   https://losporn.org/  https://xxxstreams.me/  https://speedporn.net/
 # pandamovie https://watchpornfree.info  https://xxxparodyhd.net  http://www.veporns.com  http://streamporno.eu
 # https://www.netflixporno.net   https://xxxscenes.net   https://mangoporn.net   https://speedporn.net
+
 canonical = {
              'channel': 'playpornx', 
              'host': config.get_setting("current_host", 'playpornx', default=''), 
@@ -142,13 +143,16 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='video-block')
     for elem in matches:
+        thumbnail = ""
         url = elem.a['href']
         title = elem.find(class_='title').text.strip()
-        if elem.img:
+        if elem.img.get('data-src', ''):
             thumbnail = elem.img['data-src']
-        else:
-            thumbnail = ""
-        year = elem.find(class_='duration').text.strip()
+        elif elem.img.get('src', ''):
+            thumbnail = elem.img['src']
+        time = elem.find(class_='duration')
+        if time:
+            title = "[COLOR yellow]%s[/COLOR] %s" % (time.text.strip(),title)
         plot = ""
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
@@ -166,7 +170,6 @@ def findvideos(item):
     video_urls = []
     soup = create_soup(item.url)
     pornstars = soup.find('div', id='video-actors').find_all('a', href=re.compile("/(:?pornstar|pornstars)/"))
-    logger.debug(pornstars)
     for x , value in enumerate(pornstars):
         pornstars[x] = value.text.strip()
     pornstar = ' & '.join(pornstars)

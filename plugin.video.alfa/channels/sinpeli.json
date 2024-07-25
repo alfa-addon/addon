@@ -1,7 +1,7 @@
 {
   "id": "sinpeli",
   "name": "SinPeli",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://www.sinpeli.com/wp-content/uploads/2020/04/sinpeli-logo-01.png",
