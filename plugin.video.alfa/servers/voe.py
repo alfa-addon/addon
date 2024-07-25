@@ -21,13 +21,17 @@ def test_video_exists(page_url):
 
     if "Not found" in data or "File is no longer available" in data or "Error 404" in data:
         return False, "[Voe] El fichero no existe o ha sido borrado"
+
+    if "permanentToken" in data:
+        match = scrapertools.find_single_match(data, "(?i)window\.location\.href\s*=\s*'([^']+)'")
+        data = httptools.downloadpage(match).data
     return True, ""
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    video_srcs = scrapertools.find_multiple_matches(data, r"mp4': '([^']+)'")
+    video_srcs = scrapertools.find_multiple_matches(data, r"(?:mp4|hls)': '([^']+)'")
     if not video_srcs:
         bloque = scrapertools.find_single_match(data, "sources.*?\}")
         video_srcs = scrapertools.find_multiple_matches(bloque, ": '([^']+)")
