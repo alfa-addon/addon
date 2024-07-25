@@ -480,8 +480,8 @@ def render_items(itemlist, parent_item):
     elif parent_item.viewType:
         xbmcplugin.setContent(PLUGIN_HANDLE, parent_item.viewType)
 
-    elif parent_item.module in ["alfavorites", "favorites", "news", "search"]:
-        if parent_item.action != "mainlist" or parent_item.module == "favorites":
+    elif parent_item.module in ["alfavorites", "news", "search"]:
+        if parent_item.action != "mainlist":
             xbmcplugin.setContent(PLUGIN_HANDLE, "movies")
 
     elif not parent_item.module and parent_item.action != "mainlist":  # ... o segun el canal
