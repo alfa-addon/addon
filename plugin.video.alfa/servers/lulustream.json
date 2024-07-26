@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://(?:streamwish|embedwish|wishfast|sfastwish|wishembed|cdnwish|obeywish|flastwish|jodwish|swdyu|strwish|swhoi).(?:com|to|top|\\w{2,4})/+(?:e/+|)([A-z0-9]+)",
-        "url": "https://streamwish.to/e/\\1"
+        "pattern": "https://(?:luluvdo|lulustream).com/(?:e|d)/([A-z0-9]+)",
+        "url": "https://luluvdo.com/e/\\1"
       }
     ]
   },
   "free": true,
-  "id": {
-    "value": [
-      "streamwish"
-    ]
-  },
-  "name": "streamwish",
+  "id": "lulustream",
+  "name": "lulustream",
   "settings": [
     {
       "default": false,
@@ -42,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://streamwish.com/wish/images/streamwish123.png"
+  "thumbnail": "https://i.postimg.cc/2yjH4qgK/lulustream.png"
 }

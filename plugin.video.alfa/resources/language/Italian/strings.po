@@ -3816,7 +3816,7 @@ msgstr "Rinomina"
 
 msgctxt "#70279"
 msgid "You can try downloading the 'libtorrent' module from Kodi or installing some addon like 'Quasar' or 'Torrenter', which will appear among the options in the pop-up when it appears when clicking on a torrent link. \n'Torrenter 'It's more complex but also more complete and it always works.'"
-msgstr "Puoi provare a scaricare il modulo 'libtorrent' da Kodi o installare alcuni addon come 'Quasar' o 'Torrenter', che appariranno tra le opzioni nel pop-up .Quando appare quando fai clic su un collegamento torrent. \n'Torrenter' È più complesso ma anche più completo e funziona sempre'"."
+msgstr "Puoi provare a scaricare il modulo 'libtorrent' da Kodi o installare alcuni addon come 'Quasar' o 'Torrenter', che appariranno tra le opzioni nel pop-up .Quando appare quando fai clic su un collegamento torrent. \n'Torrenter' È più complesso ma anche più completo e funziona sempre'."
 
 msgctxt "#70280"
 msgid "    -  Torrent Links don't work."
@@ -4067,7 +4067,7 @@ msgid "[Trakt] Remove %s from your watchlist"
 msgstr "[Trakt] Rimuovi %s dalla tua watchlist"
 
 msgctxt "#70344"
-msgid "Add to %s your watchlist""
+msgid "Add to %s your watchlist"
 msgstr "[Trakt] Aggiungi %s alla tua watchlist"
 
 msgctxt "#70345"
@@ -4691,8 +4691,8 @@ msgid "Genre: "
 msgstr "Genere: "
 
 msgctxt "#70500"
-msgid "Notification([COLOR red][B]Update Kodi to its latest version[/B][/COLOR], [COLOR skyblue]for best info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")"
-msgstr "Notifica([COLOR red][B]Aggiorna Kodi alla sua ultima versione[/B][/COLOR], [COLOR skyblue]per migliori info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")"
+msgid "Notification([COLOR red][B]Update Kodi to its latest version[/B][/COLOR], [COLOR skyblue]for best info[/COLOR],8000, \"http://i.imgur.com/mHgwcn3.png\")"
+msgstr "Notifica([COLOR red][B]Aggiorna Kodi alla sua ultima versione[/B][/COLOR], [COLOR skyblue]per migliori info[/COLOR],8000, \"http://i.imgur.com/mHgwcn3.png\")"
 
 msgctxt "#70501"
 msgid "Search did not match (%s)"

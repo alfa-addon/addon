@@ -56,7 +56,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(http(?:s|)://(?:www.|)(?:camwhores|camwhorescloud|camwhoreshd|lesbianbliss|goodporn|porntrex|tonicporn|whoreshub).(?:tv|com|org|to|lol)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(http(?:s|)://(?:www.|)(?:camwhores|camwhorescloud|camwhoreshd|lesbianbliss|goodporn|porntrex|tonicporn|porn2all|whoreshub).(?:tv|com|org|to|lol)/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -80,7 +80,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|my.|)(?:porn00|xmegadrive|uiporn|pornhat|hobby).(?:org|tv|com|porn)/video(?:s|)/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|my.|)(?:porn00|xmegadrive|uiporn|pornhat|pornxbox|hobby).(?:org|tv|com|porn)/video(?:s|)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -88,7 +88,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://pornox.hu/porno/[0-9]+/[A-z0-9-.]+(?:/|))",
+        "pattern": "(https://pornox.hu/(?:porno|video)/[0-9]+/[A-z0-9-.]+(?:/|))",
         "url": "\\1"
       },
       {

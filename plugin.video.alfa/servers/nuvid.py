@@ -21,7 +21,8 @@ def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     url= "https://www.%s.com/player_config_json/?vid=%s&aid=0&domain_id=0&embed=0&ref=null&check_speed=0" %(server,vid)
-    data = httptools.downloadpage(url).data
+    headers={'Referer': page_url, 'Accept': 'application/json, text/javascript, */*; q=0.01'}
+    data = httptools.downloadpage(url, headers=headers).data
     data = scrapertools.find_single_match(data, '"files":(.*?)"quality"')
     patron  = '"([lh])q":"([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)

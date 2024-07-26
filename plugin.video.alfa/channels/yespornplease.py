@@ -118,11 +118,13 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('article', class_=re.compile(r"^post-\d+"))
+    matches = soup.find_all('div', class_=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
-        thumbnail = elem.img['src']
+        thumbnail= ""
+        if elem.img:
+            thumbnail = elem.img['src']
         if "base64" in thumbnail or ".gif" in thumbnail:
             thumbnail = elem.img['data-src']
         time = elem.find('p').text.strip()
@@ -130,9 +132,9 @@ def lista(item):
         plot = ""
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail , plot=plot) )
-    next_page = soup.find('a', class_='current')
-    if next_page and next_page.parent.find_next_sibling("li"):
-        next_page = next_page.parent.find_next_sibling("li").a['href']
+    next_page = soup.find('a', class_='next')
+    if next_page:
+        next_page = next_page['href']
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist

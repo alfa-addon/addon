@@ -28,8 +28,8 @@ forced_proxy_opt = 'ProxyCF'
 canonical = {
              'channel': 'mirapeliculas', 
              'host': config.get_setting("current_host", 'mirapeliculas', default=''), 
-             'host_alt': ["https://mirapeliculasde.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://ww2.dipelis.com/"], 
+             'host_black_list': ["https://mirapeliculasde.com/"], 
              'pattern': '<link\s*rel="[^>]*icon"[^>]+href="([^"]+)"', 
              'set_tls': True, 'set_tls_min': False, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -51,9 +51,9 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(item.clone(title="Novedades", action="lista", url= host, language=[]))
-    itemlist.append(item.clone(title="Castellano", action="lista", url= host + "repelis/castellano/", language=['CAST']))
-    itemlist.append(item.clone(title="Latino", action="lista", url= host + "repelis/latino/", language=['LAT']))
-    itemlist.append(item.clone(title="Subtituladas", action="lista", url= host + "repelis/subtituladas/", language=['VOSE']))
+    itemlist.append(item.clone(title="Castellano", action="lista", url= host + "ver/castellano/", language=['CAST']))
+    itemlist.append(item.clone(title="Latino", action="lista", url= host + "ver/latino/", language=['LAT']))
+    itemlist.append(item.clone(title="Subtituladas", action="lista", url= host + "ver/subtituladas/", language=['VOSE']))
     itemlist.append(item.clone(title="Categorias", action="categorias", url= host, language=[]))
     itemlist.append(item.clone(title="Buscar", action="search", language=[]))
     
@@ -143,26 +143,23 @@ def findvideos(item):
     itemlist = []
     
     data = httptools.downloadpage(item.url, canonical=canonical).data
-
-    patron = '<td><a rel="nofollow" href=.*?'
-    patron += '<td>([^<]+)</td>.*?'
-    patron += '<td>([^<]+)</td>.*?'
-    patron += '<img src=".*?=([^"]+)"'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    if not matches:
-        patron = '>Reproducir<\/a>\s*<\/td>\s*<td>(\w+)<\/td>\s*<td>([^<]+)<\/td>\s*'
-        patron += '<td>\s*<img\s*src="[^\?]+\?domain=([^"]+)"'
-        matches = scrapertools.find_multiple_matches(data, patron)
     
-    for lang, calidad, url  in matches:
-        if lang in IDIOMAS:
-            lang = IDIOMAS[lang]
-        if not config.get_setting('unify'):
-            title =  '[COLOR red] %s [/COLOR] (%s)' % (calidad , lang)
+    patron = '<li data-id="\d+">([^<]+)<'
+    idioma = scrapertools.find_multiple_matches(data, patron)
+    video_urls = scrapertools.find_multiple_matches(data, "e\[\d+\]='([^']+)'")
+    for video, lang in zip(video_urls, idioma): 
+        if "|" in video:
+            video = video.split("|")
+            srv = video[1]
+            id = video[0]
+            if "1" in srv: url = "https://swdyu.com/e/%s" %id
+            if "2" in srv: url = "https://filemoon.sx/e/%s" %id
+            if "3" in srv: url = "https://d000d.com/e/%s" %id
+            if "4" in srv: url = "https://mixdrop.ag/e/%s" %id
         else:
-            title = ''
+            url = video
         
-        itemlist.append(item.clone(action="play", title='%s'+title, url=url, language=lang, quality=calidad))
+        itemlist.append(item.clone(action="play", title='%s', url=url, language=lang))
     
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     

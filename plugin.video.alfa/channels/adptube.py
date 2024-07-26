@@ -24,8 +24,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'adptube', 
              'host': config.get_setting("current_host", 'adptube', default=''), 
-             'host_alt': ["https://www.adptube.com/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://adptube.com/"], 
+             'host_black_list': ["https://www.adptube.com/"], 
              'pattern': ['base href="([^"]+)"'], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True

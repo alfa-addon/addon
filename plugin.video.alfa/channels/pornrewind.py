@@ -24,12 +24,13 @@ canonical = {
              'host': config.get_setting("current_host", 'pornrewind', default=''), 
              'host_alt': ["https://www.pornrewind.com/"], 
              'host_black_list': [], 
-             'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
+             # 'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 3, 'cf_assistant': False, 
+             'set_tls': False, 'set_tls_min': False, 'retries_cloudflare': 5, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-# Pagina en grogui
+# Videos que no existen.
 
 def mainlist(item):
     logger.info()
@@ -80,6 +81,7 @@ def lista(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,scrapedtime in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
+        logger.debug(url)
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
@@ -114,9 +116,10 @@ def findvideos(item):
 def play(item):
     logger.info(item)
     itemlist = []
-    data = httptools.downloadpage(item.url, canonical=canonical).data
+    data = httptools.downloadpage(item.url).data
+    logger.debug(data)
     data= scrapertools.find_single_match(data, '<div class="player">(.*?)<div class="media-info">')
-    patron = '<(?:IFRAME SRC|iframe src)="([^"]+)"'
+    patron = '<(?:IFRAME SRC|iframe src|source src)="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl in matches:
         url=scrapedurl

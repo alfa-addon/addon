@@ -298,6 +298,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
     matches = []
     findS = AHkwargs.get('finds', finds)
     soup = AHkwargs.get('soup', {})
+    logger.debug(matches_int)
 
     for elem in matches_int:
         elem_json = {}
@@ -305,6 +306,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
         try:
             elem_json['url'] = elem.iframe.get('src', '') or elem.get_text(strip=True)
+            elem_json['url'] = AlfaChannel.do_unquote(elem_json['url'])
             elem_json['server'] = ''
             elem_json['title'] = '%s'
 
