@@ -166,7 +166,7 @@ def get_source(url, soup=False, unescape=False, ignore_response_code= True, **op
     if alfa_assistant.open_alfa_assistant():
         response = alfa_assistant.get_source_by_page_finished(url, 5, closeAfter=True)
         if not response:
-            platformtools.dialog_ok("Alfa Assistant: Error", "ACTIVE la app Alfa Assistant para continuar")
+            platformtools.dialog_ok("Alfa Assistant: Error", "No se recibió respuesta de Alfa Assistant, vuelva a intentarlo.")
             return False
         if isinstance(response, dict):
             data = get_source_by_url(response['htmlSources'], url)
@@ -174,6 +174,7 @@ def get_source(url, soup=False, unescape=False, ignore_response_code= True, **op
             if not data:
                 return False
     else:
+        platformtools.dialog_ok("Alfa Assistant: Error", "No se recibió respuesta de Alfa Assistant, vuelva a intentarlo.")
         return False
 
     if 'Javascript is required' in data:
@@ -431,7 +432,9 @@ def episodesxseasons(item):
             info = epi.find("div", class_="episodiotitle")
             url = info.a["href"]
             epi_name = info.a.text
-            epi_num = int(epi.find("div", class_="numerando").text.split(" - ")[1] or 1)
+            #fix: temporada x episodio estilo "3x8.5", por la necesidad de convertirlo a int y no sobreescribir capitulo 3x8
+            #3x8.5 será 3x85
+            epi_num = int(str(epi.find("div", class_="numerando").text.split(" - ")[1]).replace('.','')) or 1
             infoLabels["episode"] = epi_num
             infoLabels["mediatype"] = 'episode'
             title = "%sx%s - %s" % (season, epi_num, epi_name)
