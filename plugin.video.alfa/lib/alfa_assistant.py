@@ -497,6 +497,7 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
             if ':"sec-ch-ua' in data:
                 data = re.sub(',?{"name":"sec-ch-ua[^"]*"[^}]*},?]', ']', data)
                 data = re.sub('{"name":"sec-ch-ua[^"]*"[^}]*},?', '', data)
+            data = data.replace('},]','}]')
             data_ret = jsontools.load(data)
             if data_ret.get('assistantVersion', '') and '?' in data_ret['assistantVersion']: 
                 data_ret['assistantVersion'] = '0.0.01'
