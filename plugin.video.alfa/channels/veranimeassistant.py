@@ -164,7 +164,11 @@ def get_source(url, soup=False, unescape=False, ignore_response_code= True, **op
     opt['ignore_response_code'] = ignore_response_code
 
     if alfa_assistant.open_alfa_assistant():
-        response = alfa_assistant.get_source_by_page_finished(url, 5, closeAfter=True)
+        # Se desactiva el cache pues las respuestas fallidas
+        # son bastante frecuentes y con el cache permanecen durante 24 horas.
+        # Además nuevas entradas (capítulos/series/películas) podrían 
+        # ser añadidas en ese periodo.
+        response = alfa_assistant.get_source_by_page_finished(url, 5, closeAfter=True, disableCache=True)
         if not response:
             platformtools.dialog_ok("Alfa Assistant: Error", "No se recibió respuesta de Alfa Assistant, vuelva a intentarlo.")
             return False
