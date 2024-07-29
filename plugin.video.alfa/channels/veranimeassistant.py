@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel VerAnime -*-
+# -*- Channel VerAnime Assistant -*-
 # -*- Created for Alfa Addon -*-
 # -*- By the Alfa Development Group -*-
 
@@ -20,18 +20,20 @@ from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from platformcode import config, logger, unify, platformtools
 from channels import filtertools
-from modules import autoplay
+from modules import autoplay, renumbertools
 from lib import alfa_assistant
 from core.jsontools import json
 
 IDIOMAS = {"audio castellano": "CAST", "audio latino": "LAT", "subtitulado": "VOSE"}
 list_language = list(IDIOMAS.values())
-list_quality = []
-list_servers = ["aparatcam", "streamtape", "fembed", "mixdrop", "doodstream", "clipwatching"]
+list_quality_movies = ['HD']
+list_quality_tvshow = list_quality_movies
+list_quality = list_quality_movies
+list_servers = ['uqload', 'streamwish', 'voe', 'tiwikiwi', 'mixdrop', 'mp4upload', 'gameovideo', 'streamtape', 'doodstream', 'streamlare']
 forced_proxy_opt = 'ProxyCF'
 
 canonical = {
-             'channel': 'veranime', 
+             'channel': 'veranimeassistant', 
              'host': config.get_setting("current_host", 'veranimeassistant', default=''), 
              'host_alt': ["https://ww3.animeonline.ninja/"], 
              'host_black_list': ["https://ww2.animeonline.ninja/", "https://www1.animeonline.ninja/"], 
@@ -51,108 +53,59 @@ def mainlist(item):
     itemlist = list()
     
     autoplay.init(item.channel, list_servers, list_quality)
-
-    itemlist.append(
-        Item(
-            action = "latest",
-            channel = item.channel,
-            thumbnail = get_thumb("new episodes", auto=True),
-            title = "Últimos Capitulos",
-            url = "%s%s" % (host, 'episodio/')
-        )
-    )
     
-    itemlist.append(
-        Item(
-            action = "list_all",
-            channel = item.channel,
-            thumbnail = get_thumb("anime", auto=True),
-            title = "Series",
-            url = "%s%s" % (host, "online/"),
-        )
-    )
-
-    itemlist.append(
-        Item(
-            action = "list_all",
-            channel = item.channel,
-            thumbnail = get_thumb("movies", auto=True),
-            title = "Peliculas",
-            url = "%s%s" % (host, "pelicula/")
-        )
-    )
-
-    itemlist.append(
-        Item(
-            action ="list_all",
-            channel = item.channel,
-            thumbnail = get_thumb("movies", auto=True),
-            title = "Live Action",
-            url = "%s%s" % (host, "genero/live-action/")
-        )
-    )
-
-    itemlist.append(
-        Item(
-            action ="list_all",
-            channel = item.channel,
-            thumbnail = get_thumb("lat", auto=True),
-            title = "Latino",
-            url = "%s%s" % (host, "genero/audio-latino/")
-        )
-    )
-
-    itemlist.append(
-        Item(
-            action = "list_all",
-            channel = item.channel,
-            thumbnail = get_thumb("cast", auto=True),
-            title = "Castellano",
-            url = "%s%s" % (host, "genero/anime-castellano/")
-        )
-    )
-
-    itemlist.append(
-        Item(
-            action = "list_all",
-            channel = item.channel,
-            thumbnail = get_thumb("quality", auto=True),
-            title = "Blu-Ray/DVD",
-            url = "%s%s" % (host, "genero/blu-ray-dvd/")
-        )
-    )
-
-    itemlist.append(
-        Item(
-            action = "list_all",
-            channel = item.channel,
-            thumbnail = get_thumb("more watched", auto=True),
-            title = "Más Vistas",
-            url = "%s%s" % (host, "tendencias/")
-        )
-    )
-
-    itemlist.append(
-        Item(
-            action = "list_all",
-            channel = item.channel,
-            thumbnail = get_thumb("more voted", auto=True),
-            title = "Mejor Valoradas",
-            url = host + "ratings/"
-        )
-    )
+    itemlist.append(Item(channel=item.channel, title='Últimos Capitulos', url=host + 'episodio/', action='list_all',
+                         thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
     
-    itemlist.append(
-        Item(
-            action = "search",
-            channel = item.channel,
-            thumbnail = get_thumb("search", auto=True),
-            title = "Buscar...",
-            url = "%s%s" % (host, "?s=")
-        )
-    )
+    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'online/', action='list_all',
+                         thumbnail=get_thumb('anime', auto=True), c_type='series'))
+    
+    itemlist.append(Item(channel=item.channel, title='Peliculas', url=host + 'pelicula/', action='list_all',
+                         thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
+
+    itemlist.append(Item(channel=item.channel, title='Categorías',  action='sub_menu', url=host, 
+                         thumbnail=get_thumb('categories', auto=True), c_type='series'))
+
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host,
+                         thumbnail=get_thumb("search", auto=True)))
+
+    itemlist = renumbertools.show_option(item.channel, itemlist)
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
     autoplay.show_option(item.channel, itemlist)
+
+    return itemlist
+
+
+def sub_menu(item):
+    logger.info()
+
+    itemlist = list()
+
+    itemlist.append(Item(channel=item.channel, title='Live Action', url=host + 'genero/live-action/', action='list_all',
+                         thumbnail=get_thumb('anime', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title='Latino', url=host + "genero/audio-latino/", action='list_all',
+                         thumbnail=get_thumb('lat', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title='Castellano', url=host + "genero/anime-castellano/", action='list_all',
+                         thumbnail=get_thumb('cast', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title='Blu-Ray/DVD', url=host + "genero/blu-ray-dvd/", action='list_all',
+                         thumbnail=get_thumb('quality', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title='Año', url=host + "release/", action='section',
+                         thumbnail=get_thumb('year', auto=True), extra='Año'))
+
+    itemlist.append(Item(channel=item.channel, title='Sin Censura', url=host + "genero/sin-censura/", action='list_all',
+                         thumbnail=get_thumb('adults', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title='Más Vistas', url=host + "tendencias/", action='list_all',
+                         thumbnail=get_thumb('more watched', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title='Mejor Valoradas', url=host + "ratings/", action='list_all',
+                         thumbnail=get_thumb('more voted', auto=True)))
 
     return itemlist
 
@@ -253,6 +206,10 @@ def list_all(item):
             new_item.action = "findvideos"
             new_item.contentTitle = title
             new_item.contentType = 'movie'
+
+        new_item.context = filtertools.context(new_item, list_language, list_quality)
+        new_item.context = renumbertools.context(new_item)
+        new_item.context.extend(autoplay.context)
 
         itemlist.append(new_item)
 
@@ -442,6 +399,8 @@ def episodesxseasons(item):
             infoLabels["episode"] = epi_num
             infoLabels["mediatype"] = 'episode'
             title = "%sx%s - %s" % (season, epi_num, epi_name)
+            infoLabels['season'], infoLabels['episode'] = renumbertools.numbered_for_trakt(item.channel, 
+                                                          item.contentSerieName, infoLabels['season'], infoLabels['episode'])
 
             itemlist.append(
                 Item(
@@ -625,10 +584,14 @@ def search_results(item):
             new_item.action = "seasons"
             new_item.contentSerieName = title
             new_item.contentType = 'tvshow'
+            new_item.context = renumbertools.context(new_item)
         else:
             new_item.action = "findvideos"
             new_item.contentTitle = title
             new_item.contentType = 'movie'
+
+        new_item.context = filtertools.context(new_item, list_language, list_quality)
+        new_item.context.extend(autoplay.context)
 
         itemlist.append(new_item)
 
@@ -642,7 +605,7 @@ def search(item, texto):
     
     try:
         texto = texto.replace(" ", "+")
-        item.url = item.url + texto
+        item.url = item.url + "?s=" + texto
         item.first = 0
         if texto != "":
             return search_results(item)
@@ -678,13 +641,11 @@ def play(item):
 
 
 def get_tags(page, sname):
-    
+    logger.info()
     tags = ""
     title = page.find("title").text
-    logger.error('%s(.*?)Veranime' % sname)
-    
+    # logger.error('%s(.*?)Veranime' % sname)
     match = scrapertools.find_single_match(title, r'%s\s*(.*?)\|' % sname)
     if match:
         tags = '[COLOR gold]%s[/COLOR]' % match
-
     return tags
