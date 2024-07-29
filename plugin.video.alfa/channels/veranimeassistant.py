@@ -54,7 +54,7 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title='Últimos Capitulos', url=host + 'episodio/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Últimos Capitulos', url=host + 'episodio/', action='latest',
                          thumbnail=get_thumb('new episodes', auto=True), c_type='episodios'))
     
     itemlist.append(Item(channel=item.channel, title='Series', url=host + 'online/', action='list_all',
@@ -121,13 +121,13 @@ def get_source(url, soup=False, unescape=False, ignore_response_code= True, **op
         # son bastante frecuentes y con el cache permanecen durante 24 horas.
         # Además nuevas entradas (capítulos/series/películas) podrían 
         # ser añadidas en ese periodo.
-        response = alfa_assistant.get_source_by_page_finished(url, 5, closeAfter=True, disableCache=True)
+        response = alfa_assistant.get_source_by_page_finished(url, 1, closeAfter=True, disableCache=True)
         if not response:
             platformtools.dialog_ok("Alfa Assistant: Error", "No se recibió respuesta de Alfa Assistant, vuelva a intentarlo.")
             return False
         if isinstance(response, dict):
             data = get_source_by_url(response['htmlSources'], url)
-            # logger.info(data, True)
+            # logger.info(response['htmlSources'], True)
             if not data:
                 return False
     else:
@@ -320,7 +320,10 @@ def seasons(item):
     infoLabels = item.infoLabels
 
     for elem in matches:
-        season = int(elem.find("span", class_="se-t").text or 1)
+        try:
+            season = int(elem.find("span", class_="se-t").text)
+        except Exception:
+            season = 1
         title = "Temporada %s" % (season)
         infoLabels["season"] = season
         infoLabels["mediatype"] = 'season'
@@ -382,7 +385,12 @@ def episodesxseasons(item):
     season = infoLabels["season"]
 
     for elem in matches:
-        if elem.find("span", class_="se-t").text != str(season): continue
+        try:
+            elemseason = int(elem.find("span", class_="se-t").text)
+        except Exception:
+            elemseason = 1
+        
+        if elemseason != season: continue
 
         epi_list = elem.find("ul", class_="episodios")
 
@@ -474,7 +482,6 @@ def findvideos(item):
             new_soup = new_soup.find("div", class_="OptionsLangDisp")
             
             resultset = new_soup.find_all("li") if new_soup else []
-            resultset = new_soup.find_all("li") if new_soup else []
 
             for elem in resultset:
                 url = elem["onclick"]
@@ -509,7 +516,7 @@ def findvideos(item):
                             url = url,
                         )
                     )
-
+            break
         else:    
             itemlist.append(
                 Item(
