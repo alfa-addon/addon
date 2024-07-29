@@ -174,7 +174,7 @@ def get_source(url, soup=False, unescape=False, ignore_response_code= True, **op
             return False
         if isinstance(response, dict):
             data = get_source_by_url(response['htmlSources'], url)
-            logger.info(data, True)
+            # logger.info(data, True)
             if not data:
                 return False
     else:
