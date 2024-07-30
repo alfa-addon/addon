@@ -7,22 +7,24 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+if PY3:
+    import urllib.parse as urllib
+else:
+    import urllib
+
 import re
-import codecs
 import base64
 
-from core import tmdb
-from core import httptools
+from modules import autoplay, renumbertools
+from platformcode import config, logger, unify, platformtools
+from core import tmdb, httptools, servertools, scrapertools
 from core.item import Item
-from core import servertools
-from core import scrapertools
+from core.jsontools import json
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
-from platformcode import config, logger, unify, platformtools
 from channels import filtertools
-from modules import autoplay, renumbertools
 from lib import alfa_assistant
-from core.jsontools import json
+
 
 IDIOMAS = {"audio castellano": "CAST", "audio latino": "LAT", "subtitulado": "VOSE"}
 list_language = list(IDIOMAS.values())
@@ -31,6 +33,7 @@ list_quality_tvshow = list_quality_movies
 list_quality = list_quality_movies
 list_servers = ['uqload', 'streamwish', 'voe', 'tiwikiwi', 'mixdrop', 'mp4upload', 'gameovideo', 'streamtape', 'doodstream', 'streamlare']
 forced_proxy_opt = 'ProxyCF'
+
 
 canonical = {
              'channel': 'veranimeassistant', 
@@ -83,23 +86,11 @@ def sub_menu(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Live Action', url=host + 'genero/live-action/', action='list_all',
-                         thumbnail=get_thumb('anime', auto=True)))
-
     itemlist.append(Item(channel=item.channel, title='Latino', url=host + "genero/audio-latino/", action='list_all',
                          thumbnail=get_thumb('lat', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title='Castellano', url=host + "genero/anime-castellano/", action='list_all',
                          thumbnail=get_thumb('cast', auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title='Blu-Ray/DVD', url=host + "genero/blu-ray-dvd/", action='list_all',
-                         thumbnail=get_thumb('quality', auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title='Año', url=host + "release/", action='section',
-                         thumbnail=get_thumb('year', auto=True), extra='Año'))
-
-    itemlist.append(Item(channel=item.channel, title='Sin Censura', url=host + "genero/sin-censura/", action='list_all',
-                         thumbnail=get_thumb('adults', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title='Más Vistas', url=host + "tendencias/", action='list_all',
                          thumbnail=get_thumb('more watched', auto=True)))
@@ -107,31 +98,40 @@ def sub_menu(item):
     itemlist.append(Item(channel=item.channel, title='Mejor Valoradas', url=host + "ratings/", action='list_all',
                          thumbnail=get_thumb('more voted', auto=True)))
 
+    itemlist.append(Item(channel=item.channel, title='Live Action', url=host + 'genero/live-action/', action='list_all',
+                         thumbnail=get_thumb('anime', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title='Blu-Ray/DVD', url=host + "genero/blu-ray-dvd/", action='list_all',
+                         thumbnail=get_thumb('quality', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title='Sin Censura', url=host + "genero/sin-censura/", action='list_all',
+                         thumbnail=get_thumb('adults', auto=True)))
+
     return itemlist
 
 
 def get_source(url, soup=False, unescape=False, ignore_response_code= True, **opt):
     logger.info()
-    data = ''
+    data = False
     opt['canonical'] = canonical
     opt['ignore_response_code'] = ignore_response_code
-
     if alfa_assistant.open_alfa_assistant():
         # Se desactiva el cache pues las respuestas fallidas
         # son bastante frecuentes y con el cache permanecen durante 24 horas.
         # Además nuevas entradas (capítulos/series/películas) podrían 
         # ser añadidas en ese periodo.
         response = alfa_assistant.get_source_by_page_finished(url, 1, closeAfter=True, disableCache=True)
-        if not response:
-            platformtools.dialog_ok("Alfa Assistant: Error", "No se recibió respuesta de Alfa Assistant, vuelva a intentarlo.")
-            return False
-        if isinstance(response, dict):
+        if response and isinstance(response, dict):
             data = get_source_by_url(response['htmlSources'], url)
-            # logger.info(response['htmlSources'], True)
-            if not data:
-                return False
+            if not data or 'challenges.cloudflare.com' in data:
+                response = alfa_assistant.get_source_by_page_finished(url, 5, closeAfter=True, disableCache=True)
+                if response and isinstance(response, dict):
+                    data = get_source_by_url(response['htmlSources'], url)
+
+        if not data:
+            platformtools.dialog_ok("Alfa Assistant: Error", "Assistant no pudo acceder a la web, vuelva a intentarlo mas tarde.")
+            return False
     else:
-        platformtools.dialog_ok("Alfa Assistant: Error", "No se recibió respuesta de Alfa Assistant, vuelva a intentarlo.")
         return False
 
     if 'Javascript is required' in data:
@@ -146,7 +146,7 @@ def get_source(url, soup=False, unescape=False, ignore_response_code= True, **op
 
 
 def get_source_by_url(sources, url):
-    data = ''
+    data = False
     if not sources:
         return data
     try:
@@ -611,10 +611,9 @@ def search(item, texto):
     logger.info()
     
     try:
-        texto = texto.replace(" ", "+")
-        item.url = item.url + "?s=" + texto
-        item.first = 0
         if texto != "":
+            item.first = 0
+            item.url = "{}?s={}".format(item.url, urllib.quote_plus(texto))
             return search_results(item)
         else:
             return []
