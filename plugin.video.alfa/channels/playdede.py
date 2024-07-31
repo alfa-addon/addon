@@ -10,11 +10,18 @@ import datetime
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+if PY3:
+    import urllib.parse as urllib
+else:
+    import urllib
+
 from bs4 import BeautifulSoup
 from core import httptools, jsontools, scrapertools, servertools, tmdb
 from core.item import Item
 from platformcode import config, logger, platformtools, unify
 from channelselector import get_thumb
+from channels import filtertools
+from modules import autoplay
 
 
 IDIOMAS = {'lat': 'LAT', 'esp': 'CAST', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
@@ -53,6 +60,7 @@ SERVIDORES = {'11': 'clipwatching', '57': 'evoload', '12': 'gamovideo', '56': 'd
 
 list_language = list(IDIOMAS.values())
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP']
+list_quality_tvshow = list_quality_movies = list_quality
 list_servers = list(SERVIDORES.values())
 host = "https://playdede.eu/"
 assistant = config.get_setting('assistant_version', default='') and not httptools.channel_proxy_list(host)
@@ -143,14 +151,9 @@ def login():
 def logout(item):
     logger.info()
 
-    if PY3:
-        import urllib.parse as urlparse
-    else:
-        import urlparse
-
     # Borramos las cookies
     try:
-        domain = urlparse.urlparse(host).netloc
+        domain = urllib.urlparse(host).netloc
         httptools.cj.clear(domain)
         httptools.save_cookies()
     except Exception:
@@ -189,12 +192,12 @@ def mainlist(item):
         )
 
     else:
+        autoplay.init(item.channel, list_servers, list_quality)
         itemlist.append(
             Item(
                 action = "list_all",
                 channel = item.channel,
                 fanart = item.fanart,
-                list_type = 'movies',
                 thumbnail = get_thumb("movies", auto=True),
                 title = "Películas",
                 url = "{}peliculas/".format(host),
@@ -206,7 +209,6 @@ def mainlist(item):
                 action = "list_all",
                 channel = item.channel,
                 fanart = item.fanart,
-                list_type = 'tvshows',
                 thumbnail = get_thumb("tvshows", auto=True),
                 title = "Series",
                 url = "{}series/".format(host),
@@ -218,7 +220,6 @@ def mainlist(item):
                 action = "list_all",
                 channel = item.channel,
                 fanart = item.fanart,
-                list_type = 'tvshows',
                 thumbnail = get_thumb("animacion", auto=True),
                 title = "Animación",
                 url = "{}animes/".format(host),
@@ -243,7 +244,7 @@ def mainlist(item):
                 fanart = item.fanart,
                 thumbnail = get_thumb("search", auto=True),
                 title = "Buscar",
-                url = "{}search/?s=".format(host),
+                url = host,
                 viewType = "movies"
             )
         )
@@ -267,6 +268,8 @@ def mainlist(item):
                 thumbnail = get_thumb("setting_0.png")
             )
         )
+        itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
+        autoplay.show_option(item.channel, itemlist)
     return itemlist
 
 
@@ -294,25 +297,28 @@ def genres(item):
     items = soup.find("div", id="movidyMain").find_all("article")
 
     for article in items:
-        data = article.find("a", attrs={"up-target": "body"})
-        fanart = article.find(class_="postersMov").find_all("img")[1]['src']
-        thumb = article.find(class_="postersMov").find("img")['src']
-        title = data.find("h2").text
-        plot = "[COLOR=green]Creado por:[/COLOR] {}\n[COLOR=red]Corazones:[/COLOR] {}".format(article.find(class_="kcdirs").span.text, article.find("div", class_="createdbyT").span.text)
-        url = data['href']
-        url = "{}%s".format(host) % url
+        try:
+            data = article.find("a", attrs={"up-target": "body"})
+            fanart = article.find(class_="postersMov").find_all("img")[1]['src']
+            thumb = article.find(class_="postersMov").find("img")['src']
+            title = data.find("h2").text
+            plot = "[COLOR=green]Creado por:[/COLOR] {}\n[COLOR=red]Corazones:[/COLOR] {}".format(article.find(class_="kcdirs").span.text, article.find("div", class_="createdbyT").span.text)
+            url = data['href']
+            url = "{}%s".format(host) % url
 
-        it = item.clone(
-                action = "list_all",
-                fanart = fanart,
-                plot = plot,
-                thumbnail = thumb,
-                title = title,
-                tmdb = False,
-                url = url
-            )
+            it = item.clone(
+                    action = "list_all",
+                    fanart = fanart,
+                    plot = plot,
+                    thumbnail = thumb,
+                    title = title,
+                    tmdb = False,
+                    url = url
+                )
 
-        itemlist.append(it)
+            itemlist.append(it)
+        except Exception:
+            pass
 
     btnnext = soup.find("div", class_="pagPlaydede")
     
@@ -332,7 +338,6 @@ def list_all(item):
 
     itemlist = []
     soup = get_source(item.url, soup=True)
-    if not soup: return []
 
     if not soup:
         platformtools.dialog_notification("Cambio de estructura", "Reporta el error desde el menú principal", sound=False)
@@ -366,26 +371,26 @@ def list_all(item):
                 url = url
             )
 
-        if item.list_type and item.list_type in ['movies', 'tvshows']:
-            list_type = item.list_type
+        it.context = filtertools.context(it, list_language, list_quality)
+        it.context.extend(autoplay.context)
 
-        elif item.viewType and item.list_type in ['movies', 'tvshows']:
-            list_type = item.list_type
+
+        if 'serie' in it.url or 'anime' in it.url:
+            c_type = 'tvshows'
+
+        elif 'pelicula' in it.url:
+            c_type = 'movies'
 
         else:
-            if 'serie' in it.url or 'anime' in it.url:
-                list_type = 'tvshows'
+            c_type = 'tvshows'
 
-            elif 'pelicula' in it.url:
-                list_type = 'movies'
-
-        if list_type == 'tvshows':
+        if c_type == 'tvshows':
             it.action = 'seasons'
             it.contentSerieName = title
             it.contentType = 'tvshow'
             it.viewType = 'episodes'
 
-        elif list_type == 'movies':
+        elif c_type == 'movies':
             it.contentTitle = title
             it.contentType = 'movie'
             it.viewType = 'movies'
@@ -412,8 +417,7 @@ def search(item, texto):
 
     try:
         if texto:
-            texto = scrapertools.slugify(texto).replace('-', '+')
-            item.url = '{}{}'.format(item.url, texto)
+            item.url = '{}search/?s={}'.format(host, urllib.quote_plus(texto))
 
             return list_all(item)
 
@@ -562,6 +566,12 @@ def findvideos(item):
                 url = url
             )
         )
+    
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
 
     return itemlist
 

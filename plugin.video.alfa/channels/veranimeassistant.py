@@ -175,6 +175,9 @@ def list_all(item):
     else:
         matches = soup.find("div", id="archive-content")
     
+    if not matches:
+        return itemlist
+    
     for elem in matches.find_all("article", id=re.compile(r"^post-\d+")):
 
         info_1 = elem.find("div", class_="poster")
@@ -316,6 +319,9 @@ def seasons(item):
     soup = page.find("div", id="seasons")
 
     matches = soup.find_all("div", class_="se-c")
+    
+    if not matches:
+        return itemlist
 
     infoLabels = item.infoLabels
 
@@ -380,7 +386,15 @@ def episodesxseasons(item):
         return itemlist
 
     soup = soup.find("div", id="seasons")
+    
+    if not soup:
+        return itemlist
+    
     matches = soup.find_all("div", class_="se-c")
+    
+    if not matches:
+        return itemlist
+    
     infoLabels = item.infoLabels
     season = infoLabels["season"]
 
