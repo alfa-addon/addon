@@ -32,8 +32,9 @@ list_quality_movies = ['HD']
 list_quality_tvshow = list_quality_movies
 list_quality = list_quality_movies
 list_servers = ['uqload', 'streamwish', 'voe', 'tiwikiwi', 'mixdrop', 'mp4upload', 'gameovideo', 'streamtape', 'doodstream', 'streamlare']
-forced_proxy_opt = 'ProxyCF'
+DEBUG = config.get_setting('debug', default=False)
 
+forced_proxy_opt = 'ProxyCF'
 
 canonical = {
              'channel': 'veranimeassistant', 
@@ -46,8 +47,6 @@ canonical = {
             }
 
 host = canonical['host'] or canonical['host_alt'][0]
-patron_domain = '(?:http.*\:)?\/\/(?:.*ww[^\.]*)?\.?(?:[^\.]+\.)?([\w|\-]+\.\w+)(?:\/|\?|$)'
-domain = scrapertools.find_single_match(host, patron_domain)
 
 
 def mainlist(item):
@@ -110,53 +109,73 @@ def sub_menu(item):
     return itemlist
 
 
-def get_source(url, soup=False, unescape=False, ignore_response_code= True, **opt):
+def get_source(url, soup=False, try_saidochesto=False):
     logger.info()
     data = False
-    opt['canonical'] = canonical
-    opt['ignore_response_code'] = ignore_response_code
-    if alfa_assistant.open_alfa_assistant():
-        # Se desactiva el cache pues las respuestas fallidas
-        # son bastante frecuentes y con el cache permanecen durante 24 horas.
-        # Además nuevas entradas (capítulos/series/películas) podrían 
-        # ser añadidas en ese periodo.
-        response = alfa_assistant.get_source_by_page_finished(url, 1, closeAfter=True, disableCache=True)
+    
+    if host in url:
+        response = alfa_assistant.get_source_by_page_finished(url, 1, closeAfter=True, disableCache=True, debug=DEBUG)
         if response and isinstance(response, dict):
-            data = get_source_by_url(response['htmlSources'], url)
-            if not data or 'challenges.cloudflare.com' in data:
-                response = alfa_assistant.get_source_by_page_finished(url, 5, closeAfter=True, disableCache=True)
-                if response and isinstance(response, dict):
-                    data = get_source_by_url(response['htmlSources'], url)
-
-        if not data:
-            platformtools.dialog_ok("Alfa Assistant: Error", "Assistant no pudo acceder a la web, vuelva a intentarlo mas tarde.")
-            return False
+            challenge_url = get_value_by_url(response['urlsVisited'], 'https://challenges.cloudflare.com', returnkey='url', partial=True, decode=False)
+            if challenge_url:
+                # logger.error(challenge_url)
+                response = alfa_assistant.get_urls_by_page_finished('about:blank', 1, closeAfter=True, removeAllCookies=True, debug=DEBUG)
+                cf_cookie = 'https://ww3.animeonline.ninja|cf_clearance|https://animeonline.ninja|cf_clearance'
+                response = alfa_assistant.get_urls_by_page_finished('{}peticiones/'.format(host), 10, closeAfter=True, disableCache=True, 
+                                                                    clearWebCache=True, returnWhenCookieNameFound=cf_cookie, getCookies=True, debug=DEBUG)
+                if response and isinstance(response, dict) and 'cf_clearance' in str(response['cookies']):
+                    # logger.error(response['cookies'])
+                    return get_source(url=url, soup=soup, try_saidochesto=try_saidochesto)
+            else:
+                if try_saidochesto:
+                    saidochesto_url = get_value_by_url(response['urlsVisited'], 'https://saidochesto.top', returnkey='url', partial=True, decode=False)
+                    if saidochesto_url:
+                        # logger.error(saidochesto_url)
+                        return saidochesto_url
+                    else:
+                        data = get_value_by_url(response['htmlSources'], url)
+                else:
+                    data = get_value_by_url(response['htmlSources'], url)
     else:
+        if 'saidochesto.top' in url:
+            response = httptools.downloadpage(url)
+            if response.code == 200:
+                data = response.data
+        else:
+            response = alfa_assistant.get_source_by_page_finished(url, 1, closeAfter=True, debug=DEBUG)
+            if response and isinstance(response, dict):
+                data = get_value_by_url(response['htmlSources'], url)
+
+    if not data:
+        platformtools.dialog_notification("Alfa Assistant: Error", "Assistant no pudo acceder a la web, vuelva a intentarlo mas tarde.")
         return False
 
-    if 'Javascript is required' in data:
-        from lib import generictools
-        data = generictools.js2py_conversion(data, url, domain_name='.%s' % domain, 
-                                             channel=canonical['channel'], headers=opt.get('headers', {}))
     # logger.info(data, True)
-    data = scrapertools.unescape(data) if unescape else data
     data = BeautifulSoup(data, "html5lib", from_encoding="utf-8") if soup else data
 
     return data
 
 
-def get_source_by_url(sources, url):
+def get_value_by_url(sources, url, returnkey='source', partial=False, decode=True):
     data = False
     if not sources:
         return data
     try:
         if PY3:
-            data = next(filter(lambda source: source['url'] == url, sources))['source']
+            if partial:
+                data = next(filter(lambda source: url in source['url'], sources))[returnkey]
+            else:
+                data = next(filter(lambda source: source['url'] == url, sources))[returnkey]
         else:
-            data = filter(lambda source: source['url'] == url, sources)[0]['source']
-        data = base64.b64decode(data).decode("utf-8")
+            if partial:
+                data = filter(lambda source: url in source['url'], sources)[0][returnkey]
+            else:
+                data = filter(lambda source: source['url'] == url, sources)[0][returnkey]
+
+        if decode:
+            data = base64.b64decode(data).decode("utf-8") 
     except:
-        logger.error("The url could not be found in the response sources.")
+        pass
     
     return data
 
@@ -444,94 +463,38 @@ def findvideos(item):
     
     itemlist = list()
     itemlist2 = list()
-    servers = {'fcom': 'fembed', 'dood': 'doodstream', 
-                'hqq': '', 'youtube': '', 'saruch': '',
-                'supervideo': '', 'aparat': 'aparatcam'}
-    headers = {"Referer": host}
+    response = get_source(item.url, soup=True, try_saidochesto=True)
 
-    soup = get_source(item.url, soup=True)
-    if not soup:
+    if not response:
         return itemlist
 
-    matches = soup.find("ul", id="playeroptionsul")
-    if not matches:
-        return itemlist
+    if isinstance(response, str):
+        soup = get_source(response, soup=True)
+        itemlist2.extend(do_saidochesto(item, soup))
+    else:
+        servers = {'fcom': 'fembed', 'dood': 'doodstream', 
+                    'hqq': '', 'youtube': '', 'saruch': '',
+                    'supervideo': '', 'aparat': 'aparatcam'}
+        
+        matches = response.find("ul", id="playeroptionsul")
+        if not matches:
+            return itemlist
 
-    for elem in matches.find_all("li"):
-        server = elem.find("span", class_="server").text
-        server = re.sub(r"\.\w{2,4}", "", server.lower())
-        server = servers.get(server, server)
+        for elem in matches.find_all("li"):
+            server = elem.find("span", class_="server").text
+            server = re.sub(r"\.\w{2,4}", "", server.lower())
+            server = servers.get(server, server)
 
-        if not server:
-            continue
-
-        eplang = elem.find('span', class_='title').text
-        eplang = re.sub(r'SERVER \d+ ', '', eplang)
-        language = IDIOMAS.get(eplang.lower(), "VOSE")
-        title = '%s [%s]' % (server.capitalize(), language)
-        server = elem.find('span', class_='server')
-        server = server.text if server else ''
-
-        # Sistema movidy
-        # NOTE: De vez en cuando cambian entre un sistema de la API REST
-        # de WordPress, y uno de iframes, mantener el código comentado aquí
-        if server == 'saidochesto.top':
-            # players = soup.find("li", id=re.compile(r"player-option-\d+"))
-            # doo_url = players.find("iframe")["src"]
-            doo_url = "{}wp-json/dooplayer/v1/post/{}?type={}&source={}".format(
-                host, elem["data-post"], elem["data-type"], elem["data-nume"])
-            
-            data = get_source(doo_url, soup=True, headers=headers)
-            if not data:
+            if not server:
                 continue
-            data = json.loads(data.find("pre").text)
-            
-            url = data.get("embed_url", "")
-            # url = players.find("iframe")["src"]
-            
-            new_soup = get_source(url, soup=True)
-            if not new_soup:
-                continue
-            
-            new_soup = new_soup.find("div", class_="OptionsLangDisp")
-            
-            resultset = new_soup.find_all("li") if new_soup else []
 
-            for elem in resultset:
-                url = elem["onclick"]
-                url = scrapertools.find_single_match(url, r"\('([^']+)")
+            eplang = elem.find('span', class_='title').text
+            eplang = re.sub(r'SERVER \d+ ', '', eplang)
+            language = IDIOMAS.get(eplang.lower(), "VOSE")
+            title = '%s [%s]' % (server.capitalize(), language)
+            server = elem.find('span', class_='server')
+            server = server.text if server else ''
 
-                if "cloudemb.com" in url: continue
-
-                server = elem.find("span").text
-                lang = elem.find("p").text
-
-                server = re.sub(r"\.\w{2,4}", "", server.lower())
-                server = servers.get(server, server)
-                if not server:
-                    continue
-
-                lang = re.sub(' -.*', '', lang)
-                language = IDIOMAS.get(lang.lower(), "VOSE")
-
-                stitle = unify.add_languages("", language)
-
-                if not "multiserver" in eplang.lower():
-                    stitle = ": %s %s" % (eplang.title(), stitle)
-
-                if url:
-                    itemlist2.append(
-                        Item(
-                            action = "play",
-                            channel = item.channel,
-                            infoLabels = item.infoLabels,
-                            language = language,
-                            title = '%s' + stitle,
-                            url = url,
-                        )
-                    )
-            break
-        else:    
             itemlist.append(
                 Item(
                     action = "play",
@@ -576,6 +539,36 @@ def findvideos(item):
 
     return itemlist
 
+
+def do_saidochesto(item, soup):
+    logger.info()
+
+    itemlist = list()
+
+    soup = soup.find("div", class_="OptionsLangDisp")
+    resultset = soup.find_all("li") if soup else []
+
+    for elem in resultset:
+        url = elem["onclick"]
+        url = scrapertools.find_single_match(url, r"\('([^']+)")
+
+        language = elem.find("p").text
+        language = re.sub(' -.*', '', language)
+        language = IDIOMAS.get(language.lower(), "VOSE")
+
+        if url:
+            itemlist.append(
+                Item(
+                    action = "play",
+                    channel = item.channel,
+                    infoLabels = item.infoLabels,
+                    language = language,
+                    title = '%s',
+                    url = url,
+                )
+            )
+
+    return itemlist
 
 def search_results(item):
     logger.info()

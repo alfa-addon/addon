@@ -498,6 +498,20 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
                 data = re.sub(',?{"name":"sec-ch-ua[^"]*"[^}]*},?]', ']', data)
                 data = re.sub('{"name":"sec-ch-ua[^"]*"[^}]*},?', '', data)
             data = data.replace('},]','}]')
+            
+            # Escapamos comillas dentro de comillas en valores para poder parsear json
+            # {"name":"foo", "value":"bar1"bar2""} >>> {"name":"foo", "value":"bar1\"bar2\""}
+            s_pat = r'":"(.*?)"((?:,|\}))'
+            pat = re.compile(s_pat)
+
+            def escapa_comillas(match):
+                s1 = match.group(1)
+                s2 = match.group(2)
+                s1 = s1.replace('"', '\\"')
+                return '":"{}"{}'.format(s1, s2)
+
+            data = re.sub(pat, escapa_comillas, data)
+
             data_ret = jsontools.load(data)
             if data_ret.get('assistantVersion', '') and '?' in data_ret['assistantVersion']: 
                 data_ret['assistantVersion'] = '0.0.01'
