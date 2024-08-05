@@ -128,7 +128,7 @@ def get_source(url, soup=False, try_saidochesto=False):
                     return get_source(url=url, soup=soup, try_saidochesto=try_saidochesto)
             else:
                 if try_saidochesto:
-                    saidochesto_url = get_value_by_url(response['urlsVisited'], 'https://saidochesto.top', returnkey='url', partial=True, decode=False)
+                    saidochesto_url = get_value_by_url(response['urlsVisited'], 'https://saidochesto.top/embed.php?id=', returnkey='url', partial=True, decode=False)
                     if saidochesto_url:
                         # logger.error(saidochesto_url)
                         return saidochesto_url
