@@ -123,7 +123,7 @@ def get_source(url, soup=False, try_saidochesto=False):
                 cf_cookie = 'https://ww3.animeonline.ninja|cf_clearance|https://animeonline.ninja|cf_clearance'
                 response = alfa_assistant.get_urls_by_page_finished('{}peticiones/'.format(host), 10, closeAfter=True, disableCache=True, 
                                                                     clearWebCache=True, returnWhenCookieNameFound=cf_cookie, getCookies=True, debug=DEBUG)
-                if response and isinstance(response, dict) and 'cf_clearance' in str(response['cookies']):
+                if response and isinstance(response, dict): # and 'cf_clearance' in str(response['cookies']):
                     # logger.error(response['cookies'])
                     return get_source(url=url, soup=soup, try_saidochesto=try_saidochesto)
             else:
@@ -173,7 +173,7 @@ def get_value_by_url(sources, url, returnkey='source', partial=False, decode=Tru
                 data = filter(lambda source: source['url'] == url, sources)[0][returnkey]
 
         if decode:
-            data = base64.b64decode(data).decode("utf-8") 
+            data = base64.b64decode(data).decode('utf-8', 'ignore')
     except:
         pass
     
