@@ -26,13 +26,19 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
-    # enc_data = scrapertools.find_single_match(data, "type='text/javascript'>(eval.*?)?\s+</script>")
-    enc_data = scrapertools.find_multiple_matches(data, "text/javascript(?:'|\")>(eval.*?)</script>")
-    # logger.debug(enc_data)
-    dec_data = jsunpack.unpack(enc_data[-1])
+    try:
+        # enc_data = scrapertools.find_single_match(data, "type='text/javascript'>(eval.*?)?\s+</script>")
+        enc_data = scrapertools.find_multiple_matches(data, "text/javascript(?:'|\")>(eval.*?)</script>")
+        # logger.debug(enc_data)
+        dec_data = jsunpack.unpack(enc_data[-1])
+    except Exception:
+        dec_data = data
     # sources = 'file:"([^"]+)",label:"([^"]+)"'
-    sources = 'sources\:\[\{(?:file|src):"([^"]+)"'
-    matches = re.compile(sources, re.DOTALL).findall(dec_data)
-    for url in matches:
-        video_urls.append(['[%s] m3u' %server , url])
+    sources = 'sources\:\s*\[\{(?:file|src):"([^"]+)"'
+    try:
+        matches = re.compile(sources, re.DOTALL).findall(dec_data)
+        for url in matches:
+            video_urls.append(['[%s] m3u' %server , url])
+    except Exception:
+        pass
     return video_urls
