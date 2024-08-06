@@ -114,7 +114,7 @@ def get_source(url, soup=False, try_saidochesto=False):
     data = False
     
     if host in url:
-        response = alfa_assistant.get_source_by_page_finished(url, 1, closeAfter=True, disableCache=True, debug=DEBUG)
+        response = alfa_assistant.get_source_by_page_finished(url, 3, closeAfter=True, disableCache=True, debug=DEBUG)
         if response and isinstance(response, dict):
             challenge_url = get_value_by_url(response['urlsVisited'], 'https://challenges.cloudflare.com', returnkey='url', partial=True, decode=False)
             if challenge_url:
@@ -128,6 +128,7 @@ def get_source(url, soup=False, try_saidochesto=False):
                     return get_source(url=url, soup=soup, try_saidochesto=try_saidochesto)
             else:
                 if try_saidochesto:
+                    # logger.error(response['urlsVisited'])
                     saidochesto_url = get_value_by_url(response['urlsVisited'], 'https://saidochesto.top/embed.php?id=', returnkey='url', partial=True, decode=False)
                     if saidochesto_url:
                         # logger.error(saidochesto_url)
@@ -487,25 +488,31 @@ def findvideos(item):
 
             if not server:
                 continue
-
+            
             eplang = elem.find('span', class_='title').text
             eplang = re.sub(r'SERVER \d+ ', '', eplang)
             language = IDIOMAS.get(eplang.lower(), "VOSE")
             title = '%s [%s]' % (server.capitalize(), language)
             server = elem.find('span', class_='server')
             server = server.text if server else ''
+            
+            try:
+                url = elem.find("iframe")["src"]
+            except Exception as e:
+                logger.error(e)
+                url = ""
 
-            itemlist.append(
-                Item(
-                    action = "play",
-                    channel = item.channel,
-                    headers = headers,
-                    infoLabels = item.infoLabels,
-                    language = language,
-                    server = server,
-                    title = title,
-                    url = doo_url
-                )
+            if url:
+                itemlist.append(
+                    Item(
+                        action = "play",
+                        channel = item.channel,
+                        infoLabels = item.infoLabels,
+                        language = language,
+                        server = server,
+                        title = title,
+                        url = url
+                    )
             )
 
     if itemlist2:
