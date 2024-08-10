@@ -517,7 +517,8 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 if elem_json['mediatype'] == 'tvshow' and not elem.get('shows', ''): continue
                 if elem_json['mediatype'] == 'movie' and not elem.get('movies', ''): continue
                 elem_json['title'] = elem.get('title', '')
-                elem_json['url'] = AlfaChannel.urljoin(host, 'lista/' + (elem.get('permalink', '') or elem.get('perma', '')))
+                elem_json['url'] = AlfaChannel.urljoin(host, 'lista/' + (elem.get('permalink', '') or elem.get('perma', '')) \
+                                                       + '-' + elem.get('id', '1'))
                 elem_json['list_info'] = {elem.get('id', '1'): elem.get('id', '1')}
                 elem_json['action'] = 'list_all'
                 elem_json['extra'] = 'listas_res'
