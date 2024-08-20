@@ -40,20 +40,18 @@ language = []
 url_replace = []
 
 
-finds = {'find': {'find_all': [{'tag': ['div'], 'id': re.compile(r"^post-\d+")}]},
+finds = {'find': {'find_all': [{'tag': ['article'], 'id': re.compile(r"^post-\d+")}]},
          'categories': {'find_all': [{'tag': ['a'], 'href': re.compile(r"/category/[A-z0-9-]+")}]}, 
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 
          'next_page': {},
          'next_page_rgx': [['\/page\/\d+', '/page/%s']], 
-         'last_page': dict([('find', [{'tag': ['div'], 'class': ['wp-pagenavi']}]), 
+         'last_page': dict([('find', [{'tag': ['div'], 'class': ['pagination']}]), 
                             ('find_all', [{'tag': ['a'], '@POS': [-1],
                             '@ARG': 'href', '@TEXT': '\/page\/(\d+)'}])]), 
          'plot': {}, 
-         'findvideos': dict([('find', [{'tag': ['div'], 'class': ['entry-content']}]),
-                             ('find_all', [{'tag': ['iframe'], '@ARG': 'src'}])]), 
-         'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
+         'findvideos': {},
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
          'controls': {'url_base64': False, 'cnt_tot': 24, 'reverse': False, 'profile': 'default'}, 
@@ -90,35 +88,7 @@ def section(item):
 def list_all(item):
     logger.info()
     
-    return AlfaChannel.list_all(item, matches_post=list_all_matches, **kwargs)
-
-
-def list_all_matches(item, matches_int, **AHkwargs):
-    logger.info()
-    
-    matches = []
-    findS = AHkwargs.get('finds', finds)
-    
-    for elem in matches_int:
-        elem_json = {}
-        
-        try:
-            elem_json['url'] = elem.a.get('href', '')
-            elem_json['title'] = elem.a.get('title', '')
-            elem_json['thumbnail'] = elem.img.get('data-original', '') \
-                                     or elem.img.get('data-src', '') \
-                                     or elem.img.get('src', '')
-            elem_json['action'] = 'findvideos'
-        
-        except:
-            logger.error(elem)
-            logger.error(traceback.format_exc())
-            continue
-        
-        if not elem_json['url']: continue
-        matches.append(elem_json.copy())
-    
-    return matches
+    return AlfaChannel.list_all(item, **kwargs)
 
 
 def findvideos(item):
@@ -126,6 +96,18 @@ def findvideos(item):
     
     return AlfaChannel.get_video_options(item, item.url, data='', matches_post=None, 
                                          verify_links=False, findvideos_proc=True, **kwargs)
+
+
+def play(item):
+    logger.info()
+    itemlist = []
+    
+    soup = AlfaChannel.create_soup(item.url, **kwargs)
+    if soup.find('div', class_='responsive-player').find(re.compile("(?:iframe|source)")):
+        url = soup.find('div', class_='responsive-player').find(re.compile("(?:iframe|source)"))['src']
+    itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
 
 
 def search(item, texto, **AHkwargs):

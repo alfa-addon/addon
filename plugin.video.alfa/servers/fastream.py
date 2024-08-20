@@ -66,6 +66,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
     unpacked = jsunpack.unpack(packed)
+    logger.debug(unpacked)
     data = scrapertools.find_single_match(unpacked, "(?is)sources.+?\[(.+?)\]")
     
     m3u = scrapertools.find_single_match(data, 'file:"([^"]+)"')

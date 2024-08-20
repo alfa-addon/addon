@@ -18,13 +18,12 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-#        
 
 canonical = {
              'channel': 'muchoporno', 
              'host': config.get_setting("current_host", 'muchoporno', default=''), 
-             'host_alt': ["https://www.pornburst.xxx/","https://www.muchoporno.xxx/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://www.pornburst.xxx/"], 
+             'host_black_list': ["https://www.muchoporno.xxx/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
