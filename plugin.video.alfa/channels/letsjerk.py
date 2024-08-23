@@ -17,7 +17,11 @@ from core.item import Item
 from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
+
 # https://letsjerk.tv https://letsjerk.to
+
+                         #  FALTA SERVER https://swiftload.io/e/cfopffhm377
+
 canonical = {
              'channel': 'letsjerk', 
              'host': config.get_setting("current_host", 'letsjerk', default=''), 
