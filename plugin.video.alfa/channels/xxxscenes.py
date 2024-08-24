@@ -40,14 +40,33 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
+    itemlist.append(Item(channel=item.channel, title="Peliculas" , action="submenu", url=host + "xxxmovies/"))
+
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "page/1?filter=latest"))
     itemlist.append(Item(channel=item.channel, title="Mas visto" , action="lista", url=host + "page/1?filter=most-viewed"))
     itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "page/1?filter=popular"))
     itemlist.append(Item(channel=item.channel, title="Pornstar" , action="categorias", url=host + "pornstars"))
     itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=host + "studios"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "genres"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", url=host, action="search"))
 
+    autoplay.show_option(item.channel, itemlist)
+
+    return itemlist
+
+def submenu(item):
+    logger.info()
+    itemlist = []
+    
+    autoplay.init(item.channel, list_servers, list_quality)
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="lista", url=item.url + "page/1?filter=latest"))
+    itemlist.append(Item(channel=item.channel, title="Mas visto" , action="lista", url=item.url + "page/1?filter=most-viewed"))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="lista", url=item.url + "page/1?filter=popular"))
+    itemlist.append(Item(channel=item.channel, title="Pornstar" , action="categorias", url=item.url + "pornstars"))
+    itemlist.append(Item(channel=item.channel, title="Canal" , action="canal", url=item.url + "studios"))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="categorias", url=item.url + "genres"))
+    itemlist.append(Item(channel=item.channel, title="Buscar", url=item.url, action="search"))
+    
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
@@ -56,7 +75,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%ssearch/%s" % (host,texto)
+    item.url = "%ssearch/%s" % (item.url,texto)
     try:
         return lista(item)
     except:
@@ -88,7 +107,9 @@ def categorias(item):
         url = elem.a['href']
         title = elem.find(class_='title').text.strip()
         cantidad = elem.find(class_='video-datas').text.strip()
-        thumbnail = elem.img['data-src']
+        thumbnail = ""
+        if elem.img.get('src', ''):
+            thumbnail = elem.img['src']
         if cantidad:
             title = "%s (%s)" % (title,cantidad)
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, fanart=thumbnail, thumbnail=thumbnail) )
@@ -118,11 +139,12 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='video-block')
     for elem in matches:
-        logger.debug(elem)
         url = elem.a['href']
         title = elem.find(class_='title').text.strip()
         time = elem.find(class_='duration')
-        thumbnail = elem.img['data-src']
+        thumbnail = ""
+        if elem.img.get('src', ''):
+            thumbnail = elem.img['src']
         if time:
             title = "[COLOR yellow]%s[/COLOR] %s" % (time.text.strip(),title)
         plot = ""

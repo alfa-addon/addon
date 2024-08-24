@@ -18,11 +18,12 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
+
 canonical = {
              'channel': 'porn4days', 
              'host': config.get_setting("current_host", 'porn4days', default=''), 
-             'host_alt': ["https://porn4days.red/"], 
-             'host_black_list': ["https://porn4days.biz/"], 
+             'host_alt': ["https://porn4days.blue/"], 
+             'host_black_list': ["https://porn4days.red/", "https://porn4days.biz/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -125,7 +126,7 @@ def lista(item):
             action = "findvideos"
         itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('a', rel='next')
+    next_page = soup.find(class_='pagination').find_all('a')[-1]
     if next_page:
         next_page = next_page['href']
         # if "/?s=" in item.url and not"/search/" in next_page:

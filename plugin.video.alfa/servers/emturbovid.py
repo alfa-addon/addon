@@ -31,12 +31,15 @@ def test_video_exists(page_url):
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    patron = "urlPlay\s*=\s*'([^']+)'"
+    if "emturbovid" in page_url:
+        patron = "urlPlay\s*=\s*'([^')]+)'"
+    else:
+        patron = 'urlPlay\s*=\s*"([^")]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url in matches:
         if not server in url:
             url = urlparse.urljoin(page_url,url)
         url += "|Referer=%s" %server
-        video_urls.append(['[Emturbovid]', url])
+        video_urls.append(['[%s]' %server.split(".")[-2], url])
     return video_urls
 

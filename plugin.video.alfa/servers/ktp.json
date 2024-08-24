@@ -8,7 +8,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|v.|)(?:fetishshrine|javbangers|fapnado|xozilla|camwhoresbay|pornrewind|megatube|zbporn|momvids|wankoz|4kporn|freeporn8|porndictator|fapster|rat|pornwhite|pornicom|hqbang|homemade|ebony8|bobs-tuber|pornditt|filtercams).(?:com|xxx)/(?:video|videos)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|v.|)(?:fetishshrine|javbangers|fapnado|xozilla|camwhoresbay|pornrewind|megatube|zbporn|momvids|wankoz|4kporn|freeporn8|porndictator|fapster|rat|pornwhite|pornicom|hqbang|homemade|ebony8|pornditt|filtercams).(?:com|xxx)/(?:video|videos)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -80,7 +80,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|my.|)(?:porn00|xmegadrive|uiporn|pornhat|pornxbox|hobby).(?:org|tv|com|porn)/video(?:s|)/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|my.|)(?:porn00|xmegadrive|uiporn|pornhat|pornxbox|porn2best|hobby).(?:org|tv|com|porn)/video(?:s|)/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -193,6 +193,10 @@
       },
       {
         "pattern": "(https://xcafe.com/[0-9]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://(?:rt.|)bobs-tuber.live/videos/[0-9-]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

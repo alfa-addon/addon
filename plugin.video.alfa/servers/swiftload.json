@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://emturbovid.com/t/[A-z0-9-]+)",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://streamsilk.com/p/[A-z0-9-]+)",
-        "url": "\\1"
+        "pattern": "https://swiftload.io/(?:e|d)/([A-z0-9-]+)",
+        "url": "https://swiftload.io/d/\\1"
       }
     ]
   },
   "free": true,
-  "id": "emturbovid",
-  "name": "emturbovid",
+  "id": "swiftload",
+  "name": "swiftload",
   "settings": [
     {
       "default": false,
@@ -42,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://turboviplay.com/frontend/images/logo1.png"
+  "thumbnail": "https://i.postimg.cc/1RvfWX7x/swiftload.png"
 }

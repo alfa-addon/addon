@@ -24,7 +24,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://videohb.(?:com|net|org|\\w{2,4})/(?:e|d|v)/[a-z0-9]+)",
+        "pattern": "(https://(?:videohb|wishonly).(?:com|net|org|\\w{2,4})/(?:e|d|v)/[a-z0-9]+)",
         "url": "\\1"
       },
       {
