@@ -1872,8 +1872,6 @@ def play_torrent(item, xlistitem, mediaurl):
 
     # Opciones disponibles para Reproducir torrents
     torrent_options = list()
-    torrent_options.append(["Cliente interno (necesario libtorrent) BT"])
-    torrent_options.append(["Cliente interno MCT (necesario libtorrent)"])
 
     torrent_options.extend(torrent_client_installed(show_tuple=True))
 

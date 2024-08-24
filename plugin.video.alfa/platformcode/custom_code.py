@@ -299,7 +299,6 @@ def verify_script_alfa_update_helper(silent=True, emergency=False, github_url=''
     if emergency:
         alfa_repo[3] = 'F'
         alfa_helper[3] = 'F'
-        torrest_repo[3] = 'F'
     
     try:
         versiones = config.get_versions_from_repo()
@@ -311,7 +310,7 @@ def verify_script_alfa_update_helper(silent=True, emergency=False, github_url=''
     if not versiones:
         return
     
-    repos = [futures_script, alfa_repo, torrest_repo]
+    repos = [futures_script, alfa_repo]
     # Comprobamos si hay acceso a Github
     if not 'github' in versiones.get('url', '') or bool(xbmc.getCondVisibility("System.HasAddon(%s)" % alfa_helper[0])):
         repos += [alfa_helper]
@@ -380,7 +379,6 @@ def verify_script_alfa_update_helper(silent=True, emergency=False, github_url=''
     if versiones.get('addons_db', ''):
         
         repos = [(alfa_repo[0], alfa_repo[0]), (alfa_repo[0], ADDON_NAME), (alfa_repo[0], alfa_helper[0]), \
-                    (torrest_repo[0], torrest_repo[0]), (torrest_repo[0], torrest_addon[0]), \
                     ('repository.xbmc.org', futures_script[0].replace(repos_dir, ''))]
         try:
             for repo, addon in repos:
