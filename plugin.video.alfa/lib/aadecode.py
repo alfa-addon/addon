@@ -1,19 +1,30 @@
 # -*- coding: utf-8 -*-
+# Modified by jsergio, gujal
 
-from core.scrapertools import *
+
+import re
+import six
 
 
-def decode(text):
-    text = re.sub(r"\s+|/\*.*?\*/", "", text)
-    data = text.split("+(ﾟДﾟ)[ﾟoﾟ]")[1]
-    chars = data.split("+(ﾟДﾟ)[ﾟεﾟ]+")[1:]
+def decode(text, alt=False):
+    text = re.sub(r"\s+|/\*.*?\*/", "", six.ensure_str(text))
+    if alt:
+        data = text.split("+(ﾟɆﾟ)[ﾟoﾟ]")[1]
+        chars = data.split("+(ﾟɆﾟ)[ﾟεﾟ]+")[1:]
+        char1 = "ღ"
+        char2 = "(ﾟɆﾟ)[ﾟΘﾟ]"
+    else:
+        data = text.split("+(ﾟДﾟ)[ﾟoﾟ]")[1]
+        chars = data.split("+(ﾟДﾟ)[ﾟεﾟ]+")[1:]
+        char1 = "c"
+        char2 = "(ﾟДﾟ)['0']"
 
     txt = ""
     for char in chars:
         char = char \
             .replace("(oﾟｰﾟo)", "u") \
-            .replace("c", "0") \
-            .replace("(ﾟДﾟ)['0']", "c") \
+            .replace(char1, "0") \
+            .replace(char2, "c") \
             .replace("ﾟΘﾟ", "1") \
             .replace("!+[]", "1") \
             .replace("-~", "1+") \
@@ -23,15 +34,18 @@ def decode(text):
             .replace("(+", "(")
         char = re.sub(r'\((\d)\)', r'\1', char)
 
-        c = "";
+        c = ""
         subchar = ""
         for v in char:
             c += v
             try:
-                x = c; subchar += str(eval(x)); c = ""
+                x = c
+                subchar += str(eval(x))
+                c = ""
             except:
                 pass
-        if subchar != '': txt += subchar + "|"
+        if subchar != '':
+            txt += subchar + "|"
     txt = txt[:-1].replace('+', '')
 
     txt_result = "".join([chr(int(n, 8)) for n in txt.split('|')])
@@ -45,11 +59,14 @@ def toStringCases(txt_result):
     if ".toString(" in txt_result:
         if "+(" in txt_result:
             m3 = True
-            sum_base = "+" + find_single_match(txt_result, ".toString...(\d+).")
-            txt_pre_temp = find_multiple_matches(txt_result, "..(\d),(\d+).")
+            try:
+                sum_base = "+" + re.search(r".toString...(\d+).", txt_result, re.DOTALL).groups(1)
+            except:
+                sum_base = ""
+            txt_pre_temp = re.findall(r"..(\d),(\d+).", txt_result, re.DOTALL)
             txt_temp = [(n, b) for b, n in txt_pre_temp]
         else:
-            txt_temp = find_multiple_matches(txt_result, '(\d+)\.0.\w+.([^\)]+).')
+            txt_temp = re.findall(r'(\d+)\.0.\w+.([^\)]+).', txt_result, re.DOTALL)
         for numero, base in txt_temp:
             code = toString(int(numero), eval(base + sum_base))
             if m3:

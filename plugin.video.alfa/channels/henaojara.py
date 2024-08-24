@@ -99,10 +99,10 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Últimos Animes', url=host, action='list_all',
                          thumbnail=get_thumb('newest', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'ver/category/categorias/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Series', url=host + 'veronline/category/categorias/', action='list_all',
                          thumbnail=get_thumb('anime', auto=True), c_type='series'))
 
-    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'ver/category/pelicula/', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Películas', url=host + 'veronline/category/pelicula/', action='list_all',
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
     itemlist.append(Item(channel=item.channel, title='Categorías',  action='section', url=host, 
