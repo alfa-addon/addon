@@ -203,45 +203,59 @@ def channel_search(item):
     from concurrent import futures
 
     start = time.time()
-    searching = list()
-    searching_titles = list()
+    preliminary_results = dict()
     results = list()
     valid = list()
-    ch_list = dict()
     mode = item.mode
     max_results = 10
     item.text = item.contentSerieName or item.contentTitle or item.text
 
     searched_id = item.infoLabels['tmdb_id']
 
-    channel_list, channel_titles = get_channels(item)
+    channel_ids, channel_names = get_channels(item)
 
-    searching += channel_list
-    searching_titles += channel_titles
-    cnt = 0
-    tm = 20 + len(channel_titles)
+    searched_channels = dict(zip(channel_ids, channel_names))
+    completed_cnt = 0
+    total_channels = len(channel_ids)
+    # tm = 20 + len(channel_names)
 
-    progress = dialog_progress(config.get_localized_string(30993) % item.title, config.get_localized_string(70744) % len(channel_list), 
-                               str(searching_titles))
+    message = config.get_localized_string(70744) % str(total_channels)
+    message = '%s\n(%s)' % (message, ", ".join(searched_channels.values()))
+    progress = dialog_progress(config.get_localized_string(30993) % '"{}"'.format(item.title), message)
     config.set_setting('tmdb_active', False)
 
     with futures.ThreadPoolExecutor(max_workers=set_workers()) as executor:
-        c_results = [executor.submit(get_channel_results, ch, item) for ch in channel_list]
+        tasks = [executor.submit(get_channel_results, ch, item) for ch in channel_ids]
 
         try:
-            for res in futures.as_completed(c_results, timeout=tm):
-                cnt += 1
-                finished = res.result()[0]
-                if res.result()[1]:
-                    ch_list[res.result()[0]] = res.result()[1]
+            while completed_cnt < total_channels and not progress.iscanceled():
+                completed_id = ""
+                for task in tasks:
+                    if task.done():
+                        result = task.result()
+                        if result[1]:
+                            completed_cnt += 1
+                            completed_id = result[0]
+                            preliminary_results[completed_id] = result[1]
+
+                if searched_channels.get(completed_id):
+                    searched_channels.pop(completed_id)
+                    percent = (completed_cnt * 100) // total_channels
+                    message = config.get_localized_string(70744) % str(total_channels - completed_cnt)
+                    message = '%s\n(%s)' % (message, ", ".join(searched_channels.values()))
+                    progress.update(percent, message)
 
                 if progress.iscanceled():
+                    if sys.version_info >= (3, 8):
+                        executor.shutdown(wait=False, cancel_futures=True)
+                    else:
+                        executor.shutdown(wait=False)
+                        for f in tasks:
+                            f.cancel()
                     raise Exception('## Búsqueda global cancelada por el usuario')
-                if finished in searching:
-                    searching_titles.remove(searching_titles[searching.index(finished)])
-                    searching.remove(finished)
-                    progress.update(old_div((cnt * 100), len(channel_list)), config.get_localized_string(70744) % str(len(channel_list) - cnt)
-                                     + '\n' + str(searching_titles) + '\n' + ' ' + '\n' + ' ' + '\n' + ' ')
+                
+                time.sleep(0.2)
+
         except Exception as err_msg:
             logger.error('Error "%s"' % (err_msg))
             executor.shutdown(wait=False)
@@ -255,17 +269,17 @@ def channel_search(item):
 
     progress.close()
 
-    cnt = 0
+    completed_cnt = 0
     progress = dialog_progress(config.get_localized_string(30993) % item.title, config.get_localized_string(60295),
                                config.get_localized_string(60293))
 
     if not config.get_setting('tmdb_active'): config.set_setting('tmdb_active', True)
     res_count = 0
-    for key, value in list(ch_list.items()):
-        ch_name = channel_titles[channel_list.index(key)]
+    for key, value in list(preliminary_results.items()):
+        ch_name = channel_names[channel_ids.index(key)]
         grouped = list()
-        cnt += 1
-        progress.update(old_div((cnt * 100), len(ch_list)), config.get_localized_string(60295) \
+        completed_cnt += 1
+        progress.update(old_div((completed_cnt * 100), len(preliminary_results)), config.get_localized_string(60295) \
                         + '\n' + config.get_localized_string(60293))
         if len(value) <= max_results and item.mode != 'all':
             if len(value) == 1:
