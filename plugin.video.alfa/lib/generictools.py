@@ -2611,6 +2611,7 @@ def AH_find_btdigg_list_all(self, item, matches=[], channel_alt=channel_py, titl
         logger.error(traceback.format_exc())
 
     for elem_json in matches:
+        if not elem_json.get('url'): elem_json['url'] = '%s_btdig/%s' % (btdigg_url, elem_json.get('title', '').replace(' ', '-').lower().strip())
         language = elem_json.get('language', [])
         if not language or '*' in str(language): language = ['CAST']
         if 'DUAL' in language and len(language) > 1: language.remove('DUAL')
