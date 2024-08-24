@@ -49,14 +49,12 @@
     [B]Estos son los cambios para esta versión:[/B]
 
     [B]Arreglos[/B]
-    • +18                         • AnimeJL                   • Don Torrent
-    • DoramasYT            • EstrenosCinesaa   • Estrenos Doramas
-    • FullSerieHD           • HDFull                       • HomeCine
-    • PeliPlayHD             • Pelisflix                    • Playdede
-    • Series Antiguas    • Seriesflix                 • Tio Donghua
+    • +18                           • Don Torrent             • DoramasYT
+    • Gran Torrent           • HDFull                       • HenaoJara
+    • Playdede
 
-    [COLOR red][B]Desactivados[/B][/COLOR]
-    • Anime TioDonghua   • Sinpeli                • WatchSeries</news>
+    [B]Novedades[/B]
+    • Ver Anime Assistant</news>
         <assets>
             <icon>resources/icon.png</icon>
             <fanart>resources/fanart.jpg</fanart>
