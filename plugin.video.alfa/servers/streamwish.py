@@ -6,6 +6,7 @@ import re
 from core import httptools
 from core import scrapertools
 from platformcode import logger
+from lib import jsunpack
 import sys
 
 PY3 = False
@@ -25,7 +26,14 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
-    m3u8_source = scrapertools.find_single_match(data, '\{file:"([^"]+)"\}')
+    try:
+        pack = scrapertools.find_single_match(data, 'p,a,c,k,e,d.*?</script>')
+        unpacked = jsunpack.unpack(pack)
+    except Exception as e:
+        logger.error(e)
+        unpacked = data
+
+    m3u8_source = scrapertools.find_single_match(unpacked, '\{file:"([^"]+)"\}')
     video_urls.append(['m3u8 [streamwish]', m3u8_source])
 
     # mp4_sources = re.compile('\{file:"([^"]+)",label:"([^"]+)"', re.DOTALL).findall(data)

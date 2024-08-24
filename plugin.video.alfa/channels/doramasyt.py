@@ -133,7 +133,7 @@ def list_all(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find_all("li", class_="col mb-3 ficha_efecto")
+    matches = soup.find_all("li", class_="col mb-5 ficha_efecto")
 
     for elem in matches:
         try:

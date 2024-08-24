@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon id="plugin.video.alfa" name="Alfa" version="3.9.27" provider-name="Alfa Addon">
+<addon id="plugin.video.alfa" name="Alfa" version="3.9.28" provider-name="Alfa Addon">
     <requires>
         <import addon="script.module.requests" />
         <import addon="script.module.beautifulsoup4" version="4.5.3" />
@@ -49,14 +49,12 @@
     [B]Estos son los cambios para esta versión:[/B]
 
     [B]Arreglos[/B]
-    • +18                         • AnimeJL                   • Don Torrent
-    • DoramasYT            • EstrenosCinesaa   • Estrenos Doramas
-    • FullSerieHD           • HDFull                       • HomeCine
-    • PeliPlayHD             • Pelisflix                    • Playdede
-    • Series Antiguas    • Seriesflix                 • Tio Donghua
+    • +18                           • Don Torrent             • DoramasYT
+    • Gran Torrent           • HDFull                       • HenaoJara
+    • Playdede
 
-    [COLOR red][B]Desactivados[/B][/COLOR]
-    • Anime TioDonghua   • Sinpeli                • WatchSeries</news>
+    [B]Novedades[/B]
+    • Ver Anime Assistant</news>
         <assets>
             <icon>resources/icon.png</icon>
             <fanart>resources/fanart.jpg</fanart>

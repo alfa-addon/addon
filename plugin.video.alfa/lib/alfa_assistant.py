@@ -497,6 +497,21 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
             if ':"sec-ch-ua' in data:
                 data = re.sub(',?{"name":"sec-ch-ua[^"]*"[^}]*},?]', ']', data)
                 data = re.sub('{"name":"sec-ch-ua[^"]*"[^}]*},?', '', data)
+            data = data.replace('},]','}]')
+            
+            # Escapamos comillas dentro de comillas en valores para poder parsear json
+            # {"name":"foo", "value":"bar1"bar2""} >>> {"name":"foo", "value":"bar1\"bar2\""}
+            s_pat = r'":"(.*?)"((?:,|\}))'
+            pat = re.compile(s_pat)
+
+            def escapa_comillas(match):
+                s1 = match.group(1)
+                s2 = match.group(2)
+                s1 = s1.replace('"', '\\"')
+                return '":"{}"{}'.format(s1, s2)
+
+            data = re.sub(pat, escapa_comillas, data)
+
             data_ret = jsontools.load(data)
             if data_ret.get('assistantVersion', '') and '?' in data_ret['assistantVersion']: 
                 data_ret['assistantVersion'] = '0.0.01'
@@ -1305,6 +1320,14 @@ def binary_stat(p, action, retry=False, init=False, app_response={}):
 def install_alfa_assistant(update=False, remote='', verbose=VERBOSE):
     if PLATFORM not in ['android', 'atv2'] and ASSISTANT_MODE == "este":
         return install_alfa_desktop_assistant(update=update, remote=remote, verbose=verbose)
+    
+    if ASSISTANT_MODE == "otro":
+        version_dict = get_generic_call('getWebViewInfo', timeout=2, alfa_s=True, retry=True)
+        if isinstance(version_dict, dict):
+            # Devuelve la version 0.0.0 de wvbVersion cuando es Assistant Desktop.
+            # A falta de una función especifica que resuelva el tipo de assistant o sistema operativo.
+            if version_dict.get('wvbVersion', '') == '0.0.0':
+                return install_alfa_desktop_assistant(update=update, remote=remote, verbose=verbose)
 
     if update:
         logger.info('update=%s' % str(update))
@@ -1756,6 +1779,10 @@ def install_alfa_assistant(update=False, remote='', verbose=VERBOSE):
 #
 def install_alfa_desktop_assistant(update=False, remote='', verbose=VERBOSE):
     
+    if ASSISTANT_MODE == "otro":
+        logger.info("{} actualización remota no implementada.".format(ASSISTANT_DESKTOP))
+        return '0.0.01', ASSISTANT_DESKTOP
+
     platform = PLATFORM
     if update:
         logger.info('update=%s' % str(update))

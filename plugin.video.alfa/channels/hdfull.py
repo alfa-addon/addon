@@ -30,9 +30,10 @@ assistant = False
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hd-full.life/", "https://hdfull.today/", "https://hdfull.quest/"], 
+             "host_alt": ["https://hd-full.sbs/", "https://hdfull.today/", "https://hdfull.quest/"], 
              'host_verification': '%slogin', 
-             "host_black_list": ["https://hd-full.fit/", "https://hd-full.me/", "https://hd-full.vip/", 
+             "host_black_list": ["https://hd-full.life/", 
+                                 "https://hd-full.fit/", "https://hd-full.me/", "https://hd-full.vip/", 
                                  "https://hd-full.lol/", "https://hd-full.co/", "https://hd-full.biz/", 
                                  "https://hd-full.in/", "https://hd-full.im/", "https://hd-full.one/", 
                                  "https://hdfull.icu/", "https://hdfull.sbs/", "https://hdfull.org/", 
@@ -516,7 +517,8 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 if elem_json['mediatype'] == 'tvshow' and not elem.get('shows', ''): continue
                 if elem_json['mediatype'] == 'movie' and not elem.get('movies', ''): continue
                 elem_json['title'] = elem.get('title', '')
-                elem_json['url'] = AlfaChannel.urljoin(host, 'lista/' + (elem.get('permalink', '') or elem.get('perma', '')))
+                elem_json['url'] = AlfaChannel.urljoin(host, 'lista/' + (elem.get('permalink', '') or elem.get('perma', '')) \
+                                                       + '-' + elem.get('id', '1'))
                 elem_json['list_info'] = {elem.get('id', '1'): elem.get('id', '1')}
                 elem_json['action'] = 'list_all'
                 elem_json['extra'] = 'listas_res'
