@@ -233,17 +233,19 @@ def channel_search(item):
                 for task in tasks:
                     if task.done():
                         result = task.result()
-                        if result[1]:
+                        completed_id = result[0]
+                        if searched_channels.get(completed_id):
+                            searched_channels.pop(completed_id)
+                            if isinstance(result[1], list):
+                                preliminary_results[completed_id] = result[1]
+                            else:
+                                preliminary_results[completed_id] = []
                             completed_cnt += 1
-                            completed_id = result[0]
-                            preliminary_results[completed_id] = result[1]
 
-                if searched_channels.get(completed_id):
-                    searched_channels.pop(completed_id)
-                    percent = (completed_cnt * 100) // total_channels
-                    message = config.get_localized_string(70744) % str(total_channels - completed_cnt)
-                    message = '%s\n(%s)' % (message, ", ".join(searched_channels.values()))
-                    progress.update(percent, message)
+                percent = (completed_cnt * 100) // total_channels
+                message = config.get_localized_string(70744) % str(total_channels - completed_cnt)
+                message = '%s\n(%s)' % (message, ", ".join(searched_channels.values()))
+                progress.update(percent, message)
 
                 if progress.iscanceled():
                     if sys.version_info >= (3, 8):
