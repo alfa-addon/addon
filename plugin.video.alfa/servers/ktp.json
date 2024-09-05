@@ -164,6 +164,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://(?:kojka|pornheal).com/(?:videos|embed)/[0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://pornwild.to(?:/es|)/embed/\\w+(?:/|))",
         "url": "\\1"
       },
