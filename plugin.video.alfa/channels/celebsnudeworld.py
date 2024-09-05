@@ -43,8 +43,8 @@ language = []
 url_replace = []
 
 
-finds = {'find': {'find_all': [{'tag': ['li'],  'id': re.compile(r"^(?:video|movies)-\d+")}]},
-         'categories': {'find_all': [{'tag': ['li'], 'id': re.compile(r"^(?:video-category|movies|model)-\d+")}]}, 
+finds = {'find': {'find_all': [{'tag': ['div', 'li'],  'id': re.compile(r"^(?:video|movies)-\d+")}]},
+         'categories': {'find_all': [{'tag': ['div', 'li'], 'id': re.compile(r"^(?:video-category|movies|model|category)-\d+")}]}, 
          'search': {}, 
          'get_quality': {}, 
          'get_quality_rgx': '', 

@@ -84,6 +84,10 @@
         "url": "https://www.pornheed.com/embed/\\1"
       },
       {
+        "pattern": "https://(?:www.|)celebsnudeworld.com/([0-9]+)",
+        "url": "https://celebsnudeworld.com/embed/\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)(?:anysex|fapality).com/[0-9]+/)",
         "url": "\\1"
       },

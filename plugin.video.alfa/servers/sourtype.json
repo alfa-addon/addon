@@ -131,8 +131,8 @@
         "pattern": "(https://(?:www.|)biguz.net/(?:watch.php|video/)\\?id=[0-9]+&name=[A-z0-9-]+)",
         "url": "\\1"
       },
-     {
-        "pattern": "(https://(?:www.|)pornovideow.com/content_video/[A-z0-9-]+(?:/|))",
+      {
+        "pattern": "(https://draftsex.porn/video/[A-z0-9-]+.html)",
         "url": "\\1"
       },
       {

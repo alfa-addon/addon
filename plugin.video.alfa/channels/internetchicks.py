@@ -77,7 +77,6 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(Item(channel=item.channel, title="findvideos" , action="findvideos", url="https://internetchicks.com/kate-kuray-already-experienced-teenagers-manyvids-video-leaked/"))
     itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "page/1/"))
     itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "actresses", extra="PornStar"))
     itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/", extra="Categorias"))
