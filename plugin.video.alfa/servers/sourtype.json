@@ -68,10 +68,6 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)eroticmv.com/[A-z0-9-]+(?:/|))",
-        "url": "\\1"
-      },
-      {
         "pattern": "(https://(?:www.|)tabooporn.to/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
