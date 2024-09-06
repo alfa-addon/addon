@@ -25,8 +25,9 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.email/", "https://www12.dontorrent.link/", "https://tomadivx.net/",
-                          "https://todotorrents.org/"], 
+             'host_alt': ["https://dontorrent.email/", "https://elitedivx.net/", "https://lilatorrent.com/", 
+                          "https://mastorrents.net/", "https://reinventorrent.org/", "https://todotorrents.org/", 
+                          "https://www13.dontorrent.link/", "https://tomadivx.net/"], 
              'host_black_list': ["https://dontorrent.date/", 
                                  "https://dontorrent.earth/", "https://dontorrent.cricket/", "https://dontorrent.dance/", 
                                  "https://dontorrent.cologne/", "https://dontorrent.city/", "https://dontorrent.esq/", 
