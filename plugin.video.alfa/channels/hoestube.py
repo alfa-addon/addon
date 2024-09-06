@@ -54,22 +54,11 @@ finds = {'find':  dict([('find', [{'tag': ['div'], 'class': ['video-list', 'list
                             ('find_all', [{'tag': ['a'], '@POS': [-1], 
                                            '@ARG': 'data-max-queries', '@TEXT': '(\d+)'}])]), 
          'plot': {}, 
-         'findvideos': dict([('find', [{'tag': ['li'], 'class': 'link-tabs-container', '@ARG': 'href'}]),
-                             ('find_all', [{'tag': ['a'], '@ARG': 'href'}])]),
+         'findvideos': {},
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
          'profile_labels': {
-                            # 'list_all_stime': {'find': [{'tag': ['span'], 'class': ['is-hd'], '@TEXT': '(\d+:\d+)' }]},
-                            # 'list_all_stime': dict([('find', [{'tag': ['span'], 'class': ['thumb_label-time']}]),
-                                                    # ('get_text', [{'tag': '', 'strip': True}])]),
-                            # 'list_all_quality': {'find': [{'tag': ['span'], 'class': ['is-hd'],  '@ARG': 'class',  '@TEXT': '(hd)' }]},
-                            # 'list_all_quality': dict([('find', [{'tag': ['span'], 'class': ['is-hd']}]),
-                                                      # ('get_text', [{'tag': '', 'strip': True}])]),
-                            # 'list_all_premium': dict([('find', [{'tag': ['span'], 'class': ['ico-private']}]),
-                                                       # ('get_text', [{'tag': '', 'strip': True}])]),
-                            # 'section_cantidad': dict([('find', [{'tag': ['span', 'div'], 'class': ['videos', 'column']}]),
-                                                      # ('get_text', [{'tag': '', 'strip': True, '@TEXT': '(\d+)'}])])
                             },
          'controls': {'url_base64': False, 'cnt_tot': 26, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
          'timeout': timeout}
@@ -106,8 +95,7 @@ def section(item):
 
 def list_all(item):
     logger.info()
-    soup = AlfaChannel.create_soup(item.url, **kwargs)
-    logger.debug(soup)
+    
     return AlfaChannel.list_all(item, **kwargs)
 
 
