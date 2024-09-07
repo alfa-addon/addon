@@ -52,14 +52,11 @@ finds = {'find':  dict([('find', [{'tag': ['div'], 'id': ['list_videos_videos_li
          'next_page_rgx': [['&from_videos=\d+', '&from_videos=%s'], ['&from=\d+', '&from=%s']], 
          'last_page': {}, 
          'plot': {}, 
-         'findvideos': dict([('find', [{'tag': ['li'], 'class': 'link-tabs-container', '@ARG': 'href'}]),
-                             ('find_all', [{'tag': ['a'], '@ARG': 'href'}])]),
+         'findvideos': {},
          'title_clean': [['[\(|\[]\s*[\)|\]]', ''],['(?i)\s*videos*\s*', '']],
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
          'profile_labels': {
-                            # 'list_all_stime': dict([('find', [{'tag': ['span'], 'class': ['thumb_label-time']}]),
-                                                    # ('get_text', [{'tag': '', 'strip': True}])]),
                             'list_all_thumbnail': {'find': [{'tag': ['img'], '@ARG': 'data-webp'}]}, 
                             'list_all_canal': dict([('find', [{'tag': ['a'], 'class': ['site']}]),
                                                     ('get_text', [{'tag': '', 'strip': True}])]), # FALTA incluir en AH External Labels
