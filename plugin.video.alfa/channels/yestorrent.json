@@ -1,7 +1,7 @@
 {
   "id": "yestorrent",
   "name": "Yestorrent",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://i.postimg.cc/rF6Qqprj/Yestorrent.png",

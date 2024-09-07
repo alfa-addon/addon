@@ -19,7 +19,7 @@ def test_video_exists(page_url):
     data = httptools.downloadpage(page_url).data
     msg_error = scrapertools.find_single_match(data, "<li class='no-side-margin'>([^<]+)</li>")
 
-    if "no longer available!" in msg_error:
+    if "no longer available!" in msg_error or "File not found" in data:
         return False, "[Megaup] El fichero no existe o ha sido borrado"
     elif msg_error:
         return False, "[Megaup] %s" % msg_error

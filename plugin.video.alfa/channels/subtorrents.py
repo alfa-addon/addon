@@ -24,8 +24,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'subtorrents', 
              'host': config.get_setting("current_host", 'subtorrents', default=''), 
-             'host_alt': ['https://www.subtorrents.eu/'], 
-             'host_black_list': ['https://www.subtorrents.re/', 'https://www.subtorrents.do/'], 
+             'host_alt': ['https://www1.subtorrents.zip/'], 
+             'host_black_list': ['https://www.subtorrents.eu/', 'https://www.subtorrents.re/', 'https://www.subtorrents.do/'], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }

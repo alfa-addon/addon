@@ -356,7 +356,7 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
         
         try:
             elem_json['url'] = elem.get('href', '').replace(' ', '%20')
-            if 'subtitles' in elem_json['url']:
+            if 'subtitle' in elem_json['url']:
                 if not item.subtitle: item.subtitle = []
                 item.subtitle += [elem_json['url']]
                 continue
