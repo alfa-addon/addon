@@ -256,7 +256,9 @@ def get_progress(item):
     
     torrent_dirs(item)
     torrent_paths = TORRENT_PATHS
-    torr_client = torrent_paths['TORR_client'].lower()
+    torr_client = scrapertools.find_single_match(item.downloadFilename, '\:\s*(\w+)\:').lower() or torrent_paths['TORR_client'].lower()
+    torrent_paths['TORR_client'] = TORRENT_PATHS['TORR_client'] = torr_client
+
     if torr_client not in ['torrest', 'quasar', 'elementum']:
         return item.downloadProgress
     
@@ -290,6 +292,8 @@ def torrent_dirs(item):
     if item.remote_download: change_to_remote(item, lookup=True)
 
     torr_client = TORRENT_PATHS['TORR_client']
+    if not torr_client and item.sub_action == 'auto':
+        torr_client = TORRENT_PATHS['TORR_client'] = TORRENT_PATHS['TORR_client_bkg']
     if DOWNLOAD_PATH_TORRENT:
         TORRENT_PATHS[torr_client.upper()] = DOWNLOAD_PATH_TORRENT
     if DOWNLOAD_PATH_TORRENT_TORRENTS:
@@ -1124,65 +1128,6 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
                                                                 port=torrent_paths.get(torr_client.upper()+'_port', 0), action=action, 
                                                                 web=DOWNLOAD_HOST or torrent_paths.get(torr_client.upper()+'_web', ''), 
                                                                 folder_new=folder_new, item=item)
-        
-    # Detiene y borra la sesion de los clientes Internos
-    if torr_client in ['BT', 'MCT']:
-        if item.downloadServer and 'url' in str(item.downloadServer) and not item.downloadServer['url'].startswith('http'): 
-            filebase = filetools.basename(item.downloadServer['url']).upper()
-        elif item.url and not item.url.startswith('http') and not item.url.startswith('magnet:'):
-            filebase = filetools.basename(item.url).upper()
-        elif item.url_control and not item.url_control.startswith('http'):
-            filebase = filetools.basename(item.url_control).upper()
-        if filebase:
-            filebase = filebase.replace('.TORRENT', '.torrent')
-            file = filetools.join(torrent_paths[torr_client+'_torrents'], filebase)
-            if filetools.exists(file):
-                if action == 'reset':
-                    res = filetools.rename(file, filetools.basename(file).replace('.TORRENT', '.reset')\
-                                        .replace('.torrent', '.reset'), strict=True, silent=True)
-                elif action == 'pause':
-                    res = filetools.rename(file, filetools.basename(file).replace('.TORRENT', '.pause')\
-                                        .replace('.torrent', '.pause'), strict=True, silent=True)
-                else:
-                    res = filetools.remove(file, silent=True)
-                
-                if not res:
-                    logger.error('ERROR Renombrando a -%s- el .torrent %s' % (action, filetools.listdir(filetools.dirname(file))))
-                else:
-                    #Espera a que el gestor termine de borrar la sesion (timing...)            
-                    time.sleep(5)
-                    file_torrent = filetools.basename(file).split('.')[0]
-                    for x in range(30):
-                        for file_act in filetools.listdir(torrent_paths[torr_client+'_torrents']):
-                            if file_torrent in file_act:
-                                time.sleep(1)
-                                break
-                        else:
-                            break
-
-                    # Borra el torrent (debería haberlo hecho el gestor de torrent...)
-                    if action in ['reset', 'pause']:
-                        res = filetools.remove(file.replace('.TORRENT', '.RESET').replace('.torrent', '.reset'), silent=True)
-                        res = filetools.remove(file.replace('.TORRENT', '.PAUSE').replace('.torrent', '.pause'), silent=True)
-
-        downloadFilename = scrapertools.find_single_match(item.downloadFilename, '\:\w+\:\s*(.*?)$')
-        if downloadFilename and delete_RAR and action != 'pause':
-            if downloadFilename.startswith('\\') or downloadFilename.startswith('/'):
-                downloadFilename = downloadFilename[1:]
-            downloadFolder = filetools.dirname(downloadFilename)
-            if '\\' in downloadFolder:
-                downloadFolder = downloadFolder.split('\\')[0]
-            elif '/' in downloadFolder:
-                downloadFolder = downloadFolder.split('/')[0]
-            if downloadFolder:
-                if filetools.isdir(filetools.join(torrent_paths[torr_client], downloadFolder)):
-                    filetools.rmdirtree(filetools.join(torrent_paths[torr_client], downloadFolder), silent=True)
-                else:
-                    filetools.remove(filetools.join(torrent_paths[torr_client], downloadFolder), silent=True)
-            elif downloadFilename:
-                filetools.remove(filetools.join(torrent_paths[torr_client], downloadFilename), silent=True)
-                
-        config.set_setting("LIBTORRENT_in_use", False, server="torrent")        # Marcamos Libtorrent como disponible
 
     # Vuelve a actualizar el .json de control después de que el gestor de torrent termine su función (timing...)
     time.sleep(1)

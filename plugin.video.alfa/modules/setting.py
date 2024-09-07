@@ -91,44 +91,25 @@ def channel_config(item):
 def setting_torrent(item):
     logger.info()
 
-    LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default="")
-    LIBTORRENT_ERROR = config.get_setting("libtorrent_error", server="torrent", default="")
-    default = config.get_setting("torrent_client", server="torrent", default=0) or 0
-    BUFFER = config.get_setting("mct_buffer", server="torrent", default="50")
-    DOWNLOAD_PATH = config.get_setting("mct_download_path", server="torrent", default=config.get_setting("downloadpath"))
-    if not DOWNLOAD_PATH: DOWNLOAD_PATH = filetools.join(config.get_data_path(), 'downloads')
+    default = config.get_setting("torrent_client", server="torrent", default=0)
     BACKGROUND = config.get_setting("mct_background_download", server="torrent", default=True)
     RAR = config.get_setting("mct_rar_unpack", server="torrent", default=True)
-    DOWNLOAD_LIMIT = config.get_setting("mct_download_limit", server="torrent", default="")
-    BUFFER_BT = config.get_setting("bt_buffer", server="torrent", default="50")
-    DOWNLOAD_PATH_BT = config.get_setting("bt_download_path", server="torrent", default=config.get_setting("downloadpath"))
-    if not DOWNLOAD_PATH_BT: DOWNLOAD_PATH_BT = filetools.join(config.get_data_path(), 'downloads')
     MAGNET2TORRENT = config.get_setting("magnet2torrent", server="torrent", default=False)
     CAPTURE_THRU_ROWSER_PATH = config.get_setting("capture_thru_browser_path", server="torrent", default="")
     ALLOW_SEEDING = config.get_setting('allow_seeding', server='torrent', default=True)
 
-    torrent_options = [config.get_localized_string(30006), config.get_localized_string(70254), config.get_localized_string(70255)]
+    torrent_options = [config.get_localized_string(30006)]
     torrent_options.extend(platformtools.torrent_client_installed())
-    if len(torrent_options) < default+1: default = 0
-    
+    if default > len(torrent_options) - 1:
+        if len(torrent_options) - 1 > 0:
+            if default > 2: default = default -2
+            else: default = len(torrent_options)
+            if default > len(torrent_options): default = len(torrent_options)
+            config.set_setting("torrent_client", default, server="torrent")
+        else:
+            default = 0
 
     list_controls = [
-        {
-            "id": "libtorrent_path",
-            "type": "text",
-            "label": "Libtorrent path",
-            "default": LIBTORRENT_PATH,
-            "enabled": True,
-            "visible": False
-        },
-        {
-            "id": "libtorrent_error",
-            "type": "text",
-            "label": "libtorrent error",
-            "default": LIBTORRENT_ERROR,
-            "enabled": True,
-            "visible": False
-        },
         {
             "id": "list_torrent",
             "type": "list",
@@ -137,46 +118,6 @@ def setting_torrent(item):
             "enabled": True,
             "visible": True,
             "lvalues": torrent_options
-        },
-        {
-            "id": "mct_buffer",
-            "type": "text",
-            "label": "MCT - Tamaño del Buffer a descargar antes de la reproducción",
-            "default": BUFFER,
-            "enabled": True,
-            "visible": "eq(-1,%s)" % torrent_options[2]
-        },
-        {
-            "id": "mct_download_path",
-            "type": "text",
-            "label": "MCT - Ruta de la carpeta de descarga",
-            "default": DOWNLOAD_PATH,
-            "enabled": True,
-            "visible": "eq(-2,%s)" % torrent_options[2]
-        },
-        {
-            "id": "bt_buffer",
-            "type": "text",
-            "label": "BT - Tamaño del Buffer a descargar antes de la reproducción",
-            "default": BUFFER_BT,
-            "enabled": True,
-            "visible": "eq(-3,%s)" % torrent_options[1]
-        },
-        {
-            "id": "bt_download_path",
-            "type": "text",
-            "label": "BT - Ruta de la carpeta de descarga",
-            "default": DOWNLOAD_PATH_BT,
-            "enabled": True,
-            "visible": "eq(-4,%s)" % torrent_options[1]
-        },
-        {
-            "id": "mct_download_limit",
-            "type": "text",
-            "label": "Límite (en Kb's) de la velocidad de descarga en segundo plano (NO afecta a RAR)",
-            "default": DOWNLOAD_LIMIT,
-            "enabled": True,
-            "visible": "eq(-5,%s) | eq(-5,%s)" % (torrent_options[1], torrent_options[2])
         },
         {
             "id": "mct_rar_unpack",
@@ -231,20 +172,10 @@ def setting_torrent(item):
 def save_setting_torrent(item, dict_data_saved):
     if dict_data_saved and "list_torrent" in dict_data_saved:
         config.set_setting("torrent_client", dict_data_saved["list_torrent"], server="torrent")
-    if dict_data_saved and "mct_buffer" in dict_data_saved:
-        config.set_setting("mct_buffer", dict_data_saved["mct_buffer"], server="torrent")
-    if dict_data_saved and "mct_download_path" in dict_data_saved:
-        config.set_setting("mct_download_path", dict_data_saved["mct_download_path"], server="torrent")
     if dict_data_saved and "mct_background_download" in dict_data_saved:
         config.set_setting("mct_background_download", dict_data_saved["mct_background_download"], server="torrent")
     if dict_data_saved and "mct_rar_unpack" in dict_data_saved:
         config.set_setting("mct_rar_unpack", dict_data_saved["mct_rar_unpack"], server="torrent")
-    if dict_data_saved and "mct_download_limit" in dict_data_saved:
-        config.set_setting("mct_download_limit", dict_data_saved["mct_download_limit"], server="torrent")
-    if dict_data_saved and "bt_buffer" in dict_data_saved:
-        config.set_setting("bt_buffer", dict_data_saved["bt_buffer"], server="torrent")
-    if dict_data_saved and "bt_download_path" in dict_data_saved:
-        config.set_setting("bt_download_path", dict_data_saved["bt_download_path"], server="torrent")
     if dict_data_saved and "magnet2torrent" in dict_data_saved:
         config.set_setting("magnet2torrent", dict_data_saved["magnet2torrent"], server="torrent")
     if dict_data_saved and "capture_thru_browser_path" in dict_data_saved:
