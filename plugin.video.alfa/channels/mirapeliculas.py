@@ -17,7 +17,7 @@ from platformcode import config, logger, platformtools
 from core.item import Item
 from core import httptools, scrapertools, jsontools, tmdb
 from core import servertools
-from channels import filtertools
+from modules import filtertools
 
 IDIOMAS = {'Latino': 'LAT', 'Español': 'ESP', 'Subtitulado': 'VOSE'}
 list_language = list(IDIOMAS.values())

@@ -119,7 +119,7 @@ def buscartrailer(item, trailers=[]):
         select.doModal()
 
         if item.current != "" and item.current >= 0:
-            from channels import info_popup
+            from modules import info_popup
             info_popup.show_popup(item, ignore_new_wish=True)
 
         if item.windowed:

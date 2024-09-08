@@ -20,7 +20,7 @@ from core import httptools, jsontools, scrapertools, servertools, tmdb
 from core.item import Item
 from platformcode import config, logger, platformtools, unify
 from channelselector import get_thumb
-from channels import filtertools
+from modules import filtertools
 from modules import autoplay
 
 

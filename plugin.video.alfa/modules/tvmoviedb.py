@@ -163,7 +163,7 @@ def busqueda(item):
     new_item = Item(title=item.contentTitle, text=item.contentTitle.replace("+", " "), mode=item.contentType,
          infoLabels=item.infoLabels)
 
-    from channels import search
+    from modules import search
     return search.channel_search(new_item)
 
 
@@ -2243,7 +2243,7 @@ def imagenes(item):
             return itemlist
 
     if item.images:
-        from channels import infoplus
+        from modules import infoplus
         for key, value in list(item.images.items()):
             if key == "tmdb" and "Tmdb" in item.title:
                 if item.folder:

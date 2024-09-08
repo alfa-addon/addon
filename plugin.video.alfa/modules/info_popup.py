@@ -17,7 +17,7 @@ import sqlite3
 import datetime
 import xbmc
 import xbmcgui
-from channels import news
+from modules import news
 from lib import strptime_fix
 from concurrent import futures
 from threading import Thread

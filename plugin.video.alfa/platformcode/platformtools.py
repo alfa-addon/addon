@@ -1685,7 +1685,7 @@ def set_opcion(item, seleccion, opciones, video_urls):
 
     # "Descargar"
     elif config.get_localized_string(30153) in opciones[seleccion]:
-        from channels import downloads
+        from modules import downloads
         if item.contentType == "list" or item.contentType == "tvshow":
             item.contentType = "video"
         item.play_menu = True

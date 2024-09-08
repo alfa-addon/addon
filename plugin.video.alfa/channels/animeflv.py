@@ -16,7 +16,7 @@ import re
 
 from modules import renumbertools
 from modules import autoplay
-from channels import filtertools
+from modules import filtertools
 from core import httptools
 from core import jsontools
 from core import servertools
