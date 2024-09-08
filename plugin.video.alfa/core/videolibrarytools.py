@@ -1301,7 +1301,7 @@ def add_tvshow(item, channel=None):
                 serie.sub_action = 'auto'
                 serie.add_videolibrary = True
                 serie.category = itemlist[0].category
-                from channels import downloads
+                from modules import downloads
                 downloads.save_download(serie, silent=True)
                 if serie.sub_action: del serie.sub_action
                 while xbmc.getCondVisibility('Library.IsScanningVideo()'):

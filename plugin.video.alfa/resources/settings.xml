@@ -255,6 +255,8 @@
 
         <setting label="70015" type="lsep" />
         <setting id="downloads_show_torrent_paths" type="bool" label="70807" default="true" />
+        <setting id="downloads_move_to_remote" type="text" visible="false" />
+        <setting id="downloads_torrent_paths_list" type="text" visible="false" />
         <setting id="torrent_quality" type="enum" label="70808" lvalues="70785|70784|70241"
             default="0" />
         <setting id="downloads_block_size" label="70233" type="enum"

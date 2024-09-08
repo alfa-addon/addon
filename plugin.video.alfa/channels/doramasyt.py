@@ -16,7 +16,7 @@ if sys.version_info[0] >= 3:
     unichr = chr
     long = int
 
-from channels import filtertools
+from modules import filtertools
 from bs4 import BeautifulSoup
 from core import httptools
 from core import scrapertools

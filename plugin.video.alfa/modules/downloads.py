@@ -342,7 +342,7 @@ def browser(item):
     torrent_dirs(item)
     torrent_paths = TORRENT_PATHS
     if config.get_setting("downloads_show_torrent_paths", default=True):
-        torrent_paths_list = config.get_setting("torrent_paths_list", "downloads", default=[])
+        torrent_paths_list = config.get_setting("downloads_torrent_paths_list", default=[])
         if HOST != 'Local':
             torrent_paths_list = [['%s' % torrent_paths['TORR_client'].lower(), '%s' % torrent_paths[torrent_paths['TORR_client'].upper()]]]
     else:
@@ -814,7 +814,7 @@ def download_auto(item, start_up=False):
     logger.info('start_up: %s' % str(start_up))
     
     second_pass = False
-    move_to_remote = config.get_setting("move_to_remote", "downloads", default=[])
+    move_to_remote = config.get_setting("downloads_move_to_remote", default=[])
     filelist = sorted(filetools.listdir(DOWNLOAD_LIST_PATH))
     
     for fichero in filelist:
@@ -1993,7 +1993,7 @@ def get_episodes(item):
             del item.nfo
 
     # Miramos si los episodio se van a mover a un site remoto, con lo que no pueden usar archivos locales
-    move_to_remote = config.get_setting("move_to_remote", "downloads", default=[])
+    move_to_remote = config.get_setting("downloads_move_to_remote", default=[])
     for serie, address in move_to_remote:
         if serie.lower() in item.contentSerieName.lower():                      # Si está en la lista es que es remoto
             remote = True
@@ -2203,7 +2203,7 @@ def get_episodes(item):
                         for x, emerg_url in enumerate(episode.emergency_urls[0]):
                             epis_filter.append(episode.clone(url=emerg_url, emergency_urls=[], matches=[], order=x, 
                                                              quality=scrapertools.find_single_match(episode.emergency_urls[3][x], '^#(.*?)#')))
-                        from channels import filtertools
+                        from modules import filtertools
                         for filter_param in episode.context:
                             if not isinstance(filter_param, dict): continue
                             if 'list_language' in filter_param:
@@ -2317,7 +2317,7 @@ def get_episodes(item):
         logger.error(traceback.format_exc(1))
 
     if item.add_videolibrary:
-        from channels import filtertools
+        from modules import filtertools
         channel = None
         try:
             channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])

@@ -25,7 +25,7 @@ from core import jsontools
 from core.item import Item
 from platformcode import config
 from platformcode import logger
-from channels import filtertools
+from modules import filtertools
 from modules import autoplay
 
 DEBUG = False

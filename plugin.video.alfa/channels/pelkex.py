@@ -18,7 +18,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 from modules import autoplay
-from channels import filtertools
+from modules import filtertools
 from bs4 import BeautifulSoup
 
 list_language = ["LAT"]

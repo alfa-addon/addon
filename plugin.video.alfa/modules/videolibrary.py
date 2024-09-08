@@ -619,7 +619,7 @@ def findvideos(item):
                 from servers import torrent
                 special = scrapertools.find_single_match(item_json.url, ':(.+?):').upper()
                 if 'downloads' in special.lower():
-                    from channels import downloads
+                    from modules import downloads
                     item_json.url = filetools.join(downloads.DOWNLOAD_PATH, (re.sub('(?is):(.+?):\s?', '', item_json.url)))
                 elif 'videolibrary' in special.lower():
                     item_json.url = filetools.join(config.get_videolibrary_path(), (re.sub('(?is):(.+?):\s?', '', item_json.url)))
@@ -713,7 +713,7 @@ def findvideos(item):
         try:
             # FILTERTOOLS
             if item_json.contentType != 'movie':
-                from channels import filtertools
+                from modules import filtertools
                 filtertools.get_season_search(item_json)
             # si el canal tiene filtro se le pasa el nombre que tiene guardado para que filtre correctamente.
             if "list_language" in item_json:
@@ -886,7 +886,7 @@ def update_tvshow(item):
     for channel, url in list(it.library_urls.items()):
         channel_f = generictools.verify_channel(channel)
         if config.get_setting('auto_download_new', channel_f):
-            from channels import downloads
+            from modules import downloads
             downloads.download_auto(it)
             break
 

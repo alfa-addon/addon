@@ -16,7 +16,7 @@ from platformcode import config, logger, platformtools
 from core.item import Item
 from core import httptools, scrapertools, jsontools, tmdb
 from core import servertools, channeltools
-from channels import filtertools
+from modules import filtertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 

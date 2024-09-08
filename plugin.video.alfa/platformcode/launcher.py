@@ -132,7 +132,7 @@ def monkey_patch_modules(item):
 
 
 def run(item=None):
-    from channels import downloads
+    from modules import downloads
     import channelselector
 
     logger.info()
@@ -402,7 +402,7 @@ def run(item=None):
 
             # Special action for downloading all episodes from a serie
             elif item.action == "download_all_episodes":
-                from channels import downloads
+                from modules import downloads
                 item.action = item.extra
                 del item.extra
                 downloads.save_download(item)
@@ -620,7 +620,7 @@ def play_from_library(item):
     from time import sleep, time
     from modules import nextep
     from modules import autoplay
-    from channels import videolibrary
+    from modules import videolibrary
 
     # Intentamos reproducir una imagen (esto no hace nada y ademas no da error)
     xbmcplugin.setResolvedUrl(int(sys.argv[1]), True,

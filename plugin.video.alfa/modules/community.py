@@ -19,7 +19,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import logger, config, platformtools
 from modules import autoplay
-from channels import filtertools
+from modules import filtertools
 
 list_data = {}
 
