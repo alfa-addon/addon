@@ -22,7 +22,7 @@ from core.item import Item
 from core.jsontools import json
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
-from channels import filtertools
+from modules import filtertools
 from lib import alfa_assistant
 
 

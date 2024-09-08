@@ -12,7 +12,7 @@ else:
 import re
 
 from modules import autoplay
-from channels import filtertools
+from modules import filtertools
 from core import httptools
 from core import scrapertools
 from core import servertools

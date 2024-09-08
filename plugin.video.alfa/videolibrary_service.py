@@ -46,7 +46,7 @@ def update(path, p_dialog, i, t, serie, overwrite, redir=True):
     from core import filetools
     from core import channeltools, videolibrarytools
     from platformcode import platformtools
-    from channels import videolibrary
+    from modules import videolibrary
     from lib.generictools import verify_channel
     if config.is_xbmc():
         from platformcode import xbmc_videolibrary
@@ -141,7 +141,7 @@ def update(path, p_dialog, i, t, serie, overwrite, redir=True):
                 config.set_setting("search_new_content", 1, "videolibrary")     # Escaneamos a final todas la series
                 serie_d.sub_action = 'auto'
                 serie_d.category = itemlist[0].category
-                from channels import downloads
+                from modules import downloads
                 downloads.save_download(serie_d, silent=True)
             
             # Limpiamos restos del canal anterior
@@ -169,7 +169,7 @@ def check_for_update(overwrite=True):
     from core import filetools, httptools
     from core import channeltools, videolibrarytools
     from platformcode import platformtools
-    from channels import videolibrary
+    from modules import videolibrary
     if config.is_xbmc():
         from platformcode import xbmc_videolibrary
     
@@ -389,7 +389,7 @@ def check_for_update(overwrite=True):
     
     # Descarga los últimos episodios disponibles, si el canal lo permite
     if config.get_setting("videolibrary_update") != 0 or overwrite:
-        from channels import downloads
+        from modules import downloads
         downloads.download_auto(item_dummy)
 
 
@@ -582,7 +582,7 @@ if __name__ == "__main__":
         sys.exit()
 
     # Busqueda de estrenos
-    from channels import info_popup
+    from modules import info_popup
     info_popup.autoscan()
 
     # Se ejecuta ciclicamente

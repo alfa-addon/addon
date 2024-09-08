@@ -29,7 +29,7 @@ from platformcode import logger, config, platformtools, xbmc_videolibrary
 from servers.torrent import torrent_dirs
 
 from channelselector import LANGUAGES
-from channels.filtertools import FILTER_LANGS
+from modules.filtertools import FILTER_LANGS
 
 if PY3:
     FF = b'\n'

@@ -107,7 +107,7 @@ def faq(item):
                                                "de la videoteca'.",
                                                "¿Deseas acceder a dichos ajustes?")
         if respuesta == 1:
-            from channels import videolibrary
+            from modules import videolibrary
             videolibrary.channel_config(Item(module='videolibrary'))
 
     elif item.extra == "tiempo_enlaces":
@@ -118,7 +118,7 @@ def faq(item):
                                                "de la videoteca'.",
                                                "¿Deseas acceder a dichos ajustes?")
         if respuesta == 1:
-            from channels import videolibrary
+            from modules import videolibrary
             videolibrary.channel_config(Item(module='videolibrary'))
 
     elif item.extra == "prob_busquedacont":
@@ -187,7 +187,7 @@ def faq(item):
                                                "'Otros ajustes'.",
                                                "¿Deseas acceder a ahora dichos ajustes?")
         if respuesta == 1:
-            from channels import search
+            from modules import search
             search.settings("")
 
     elif item.extra == "report_error":

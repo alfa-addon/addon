@@ -9,7 +9,7 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 from channelselector import get_thumb
 from modules import autoplay
-from channels import filtertools
+from modules import filtertools
 from core import httptools
 from core import scrapertools
 from core import servertools

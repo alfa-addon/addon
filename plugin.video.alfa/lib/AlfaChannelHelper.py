@@ -25,7 +25,7 @@ from core import jsontools
 from core.item import Item
 from platformcode import config
 from platformcode import logger
-from channels import filtertools
+from modules import filtertools
 from modules import autoplay
 
 DEBUG = False
@@ -2445,6 +2445,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if elem.get('password', ''): new_item.password = elem['password']
             if 'matches_cached' in elem: new_item.matches_cached = elem['matches_cached'][:]
             if 'episode_list' in elem: new_item.episode_list = elem['episode_list'].copy()
+            if elem.get('playcount', 0): new_item.infoLabels['playcount'] = elem['playcount']
 
             new_item.url = self.do_url_replace(new_item.url, url_replace)
 
