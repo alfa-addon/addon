@@ -329,7 +329,7 @@ def findvideos(item):
         player_url = player_url.replace("https://animekao.club/video/", "https://kaocentro.net/video/")
         
         if not player_url.startswith("https://re.") and not player_url.startswith("https://kaocentro.net/video/") \
-                                                    and not player_url.startswith("https://embedsito."):
+           and not player_url.startswith("https://embedsito.") and not player_url.startswith("https://xupalace.org"):
             urls = process_url(player_url)
             for url in urls:
                 if not url:
@@ -390,12 +390,7 @@ def findvideos(item):
 def process_url(url):
     logger.info()
     
-    if "xupalace.org" in url:
-        data = httptools.downloadpage(url, timeout=TIMEOUT, add_referer=True, follow_redirects=False).data
-        patron = "go_to_playerVast\('([^']+)"
-        url = re.compile(patron, re.DOTALL).findall(data)
-
-    elif "animekao.club/player.php" in url:
+    if "animekao.club/player.php" in url:
         url = url.replace("animekao.club/player.php?x", "player.premiumstream.live/player.php?id")
 
     elif "animekao.club/play.php" in url:
