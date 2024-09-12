@@ -243,9 +243,13 @@ def channel_search(item):
                             completed_cnt += 1
 
                 percent = (completed_cnt * 100) // total_channels
-                message = config.get_localized_string(70744) % str(total_channels - completed_cnt)
-                message = '%s\n(%s)' % (message, ", ".join(searched_channels.values()))
-                progress.update(percent, message)
+                text1 = config.get_localized_string(70744) % str(total_channels - completed_cnt)
+                text2 = "({0})".format(", ".join(searched_channels.values()))
+                
+                if PY3:
+                    progress.update(percent, "{0}\n{1}".format(text1, text2))
+                else:
+                    progress.update(percent, text1, text2, ' ')
 
                 if progress.iscanceled():
                     if sys.version_info >= (3, 8):
