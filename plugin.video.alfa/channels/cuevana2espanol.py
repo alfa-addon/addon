@@ -11,16 +11,17 @@ from channelselector import get_thumb
 from modules import autoplay
 from modules import filtertools
 from core import httptools
+from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
-IDIOMAS = {'Latino': 'Latino',"espanol":"Español","Subtitulado":"Subtitulado"}
-list_language = list(IDIOMAS.values())
 list_quality = []
-list_servers = ['fembed', 'streamtape', 'gvideo', 'Jawcloud']
+list_servers_black = {"netu"}
+list_serversx = {'filemoon' : 'tiwikiwi', 'vidhide' : 'vidhidepro'}
+list_servers = ['streamwish', 'tiwikiwi', 'voes', 'doodstream', 'streamtape', 'plushstream', 'vidhide']
 forced_proxy_opt = 'ProxySSL'
 
 canonical = {
@@ -56,7 +57,7 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=host+'archives/movies/page/', 
+    itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=host+'archives/movies/', 
                          thumbnail=get_thumb('movies', auto=True), c_type='peliculas'))
 
     itemlist.append(Item(channel=item.channel, title='Series',  action='sub_menu', url=host+'archives/series', 
@@ -75,16 +76,16 @@ def sub_menu(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title='Últimas', url=item.url, action='list_all', pagina=1,
+    itemlist.append(Item(channel=item.channel, title='Últimas', url=item.url + "page/", action='list_all', pagina=1,
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-    itemlist.append(Item(channel=item.channel, title='Estrenos', url=item.url+'/releases', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Estrenos', url=item.url+'releases/page/', action='list_all', pagina=1, 
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-    itemlist.append(Item(channel=item.channel, title='Tendencias Semana', url=item.url+'/top/week', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Top Semana', url=item.url+'top/week/page/', action='list_all', pagina=1, 
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
 
-    itemlist.append(Item(channel=item.channel, title='Tendencias Día', url=item.url+'/top/day', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Top Día', url=item.url+'top/day/page/', action='list_all', pagina=1,
                          thumbnail=get_thumb('all', auto=True), c_type=item.c_type))
     
     if item.c_type == 'peliculas':
@@ -99,6 +100,20 @@ def sub_menu(item):
 
 def section(item):
     logger.info()
+    itemlist = []
+    
+    data = httptools.downloadpage(host + "_next/static/chunks/170-ffbd7aad7b82d5af.js", encoding="unicode_escape").data
+    logger.info("Intel11 %s" %data)
+    data = data.decode('unicode_escape')
+    patron = 'href:"(/genres/.+?)".+?children:"(.+?)"'
+    logger.info("patron: %s" %(type(patron)))
+    logger.info("data: %s" %type(data))
+    matches = scrapertools.find_multiple_matches(data, patron)
+    scrapertools.printMatches(matches)
+    
+    for url, title in matches:
+        itemlist.append(Item(channel=item.channel, title=title, action='list_all', url=host+url, pagina=1,
+                             thumbnail=get_thumb('episodes', auto=True) ))
 
     genres = {'Acción': 'genres/accion/', 
               'Animación': 'genres/animacion/', 
@@ -114,15 +129,14 @@ def section(item):
               'Terror': 'genres/terror/'
               }
 
-    return AlfaChannel.section(item, section_list=genres, **kwargs)
+    return itemlist
 
 
 def list_all(item):
     logger.info()
     itemlist = []
 
-    data = httptools.downloadpage(item.url + "%s" %item.pagina, encoding=encoding, canonical=canonical).data
-    logger.info("Intel11 %s" %data)
+    data = httptools.downloadpage(item.url + "%s" %item.pagina, canonical=canonical).data
     patron  = '(?ims)bdOz3.*?'
     patron += '<a href="([^"]+)".*?'
     patron += '<h3>([^<]+).*?'
@@ -208,9 +222,34 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
 def findvideos(item):
     logger.info()
+    itemlist = [];
 
-    data = httptools.downloadpage(host + item.url, encoding=encoding, canonical=canonical).data
+    data = httptools.downloadpage(host + item.url, canonical=canonical).data
+    patron  = '(?ims)type="application/json">(.*?)</script><script'
+    match = scrapertools.find_single_match(data, patron)
+    json_data = jsontools.load(match)["props"]["pageProps"]["post"]["players"]
+    for lang in json_data:
+        for info_url in json_data[lang]:
+            server = info_url["cyberlocker"]
+            if server in list_servers_black: continue
+            if server in list_serversx.keys(): server = list_serversx[server]
+            qlty = info_url["quality"]
+            url = info_url["result"]
+            #logger.info("%s %s %s %s" %(lang, server, qlty, url))
+            itemlist.append(Item(
+                            channel=item.channel,
+                            contentTitle=item.contentTitle,
+                            contentThumbnail=item.thumbnail,
+                            infoLabels=item.infoLabels,
+                            language=lang,
+                            title='%s' %server,
+                            action="play",
+                            url=url,
+                           ))
+    #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    scrapertools.printMatches(itemlist)
     
+    return itemlist
 
 
 def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
@@ -246,40 +285,17 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
 
 def play(item):
     logger.info()
-    
-    kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': -1, 'cf_assistant': False, 'follow_redirects': True, 
-              'headers': {'Referer': host}, 'CF': False, 'canonical': {}}
-    item.setMimeType = 'application/vnd.apple.mpegurl'
-
-    soup = AlfaChannel.create_soup(item.url, **kwargs)
-    if not soup or not soup.find("script"):
-        return []
-    soup = soup.find("script", string=re.compile('start.onclick')).string
-
-    item.url = scrapertools.find_single_match(str(soup), "url\s*=\s*'([^']+)'")
-    if item.url:
-        itemlist = servertools.get_servers_itemlist([item])
-    else:
-        itemlist = []
-
-    if item.server.lower() == "zplayer":
-        item.url += "|referer=%s" % host
-        
-        itemlist = [item]
-    
-    return itemlist
-
-
-def actualizar_titulos(item):
-    logger.info()
-    #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
-
-    return AlfaChannel.do_actualizar_titulos(item)
+    #item.thumbnail = item.contentThumbnail
+    data = httptools.downloadpage(item.url, encoding=encoding).data
+    patron = "var url = '([^']+)"
+    match = scrapertools.find_single_match(data, patron)
+    item.url = match
+    logger.info("Intel11 %s" %match)
+    return [item]
 
 
 def search(item, texto, **AHkwargs):
     logger.info()
-    kwargs.update(AHkwargs)
 
     try:
         texto = texto.replace(" ", "+")
