@@ -1,7 +1,7 @@
 {
   "id": "ennovelas",
   "name": "Ennovelas",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://w.ennovelas.net/wp-content/uploads/2022/04/cropped-Ennovelas-192x192.jpg",
