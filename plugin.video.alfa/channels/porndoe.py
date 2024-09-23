@@ -18,6 +18,7 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
+
 canonical = {
              'channel': 'porndoe', 
              'host': config.get_setting("current_host", 'porndoe', default=''), 
@@ -128,7 +129,6 @@ def lista(item):
     soup = create_soup(item.url)
     matches = soup.find_all('div', class_='video-item')
     for elem in matches:
-        # logger.error(elem)
         if "redirect" in elem.a['href']:
             continue
         url = elem.a['href']
@@ -170,7 +170,7 @@ def play(item):
     logger.info()
     itemlist = []
     
-    soup = create_soup(item.url).find('div', class_='vpp-section')
+    soup = create_soup(item.url).find('div', class_='player-left')
     pornstars = soup.find_all('a', href=re.compile("/pornstars-profile/[A-z0-9-]+"))
     for x , value in enumerate(pornstars):
         pornstars[x] = value.text.strip()

@@ -1,7 +1,7 @@
 {
   "id": "vivud",
   "name": "vivud",
-  "active": true,
+  "active": false,
   "adult": true,
   "language": ["*"],
   "thumbnail": "https://vivud.com/favicon-96x96.png",

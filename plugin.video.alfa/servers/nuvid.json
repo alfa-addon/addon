@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "((?:http|https)://www.pornlib.com/video/[A-z0-9-]+)",
+        "pattern": "(https://(?:www.|)pornlib.com/video/[A-z0-9-]+)",
         "url": "\\1"
       }
     ]

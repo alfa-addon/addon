@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://(?:streamtape|streamtapeadblock).(?:com|site|art|xyz|to)/(?:v|e)/(\\w+)",
+        "pattern": "https://(?:streamtape|streamtapeadblock|strtape).(?:com|cloud|art|xyz|to|\\w{2,4})/(?:v|e)/(\\w+)",
         "url": "https://streamtape.com/e/\\1"
       }
     ]

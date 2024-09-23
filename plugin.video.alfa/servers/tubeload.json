@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://emturbovid.com/t/[A-z0-9-]+(:?\\|Referer=[A-z0-9./:]+|))",
+        "pattern": "(https://(?:tubeload|redload).co/(?:e|f)/[A-z0-9]+)",
         "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "emturbovid",
-  "name": "emturbovid",
+  "id": "tubeload",
+  "name": "tubeload",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://turboviplay.com/frontend/images/logo1.png"
+  "thumbnail": "https://tubeload.co/images/Logo@2x.png"
 }
