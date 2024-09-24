@@ -103,16 +103,14 @@ def section(item):
     itemlist = []
     
     data = httptools.downloadpage(host + "_next/static/chunks/170-ffbd7aad7b82d5af.js", encoding="unicode_escape").data
-    logger.info("Intel11 %s" %data)
     data = data.decode('unicode_escape')
     patron = 'href:"(/genres/.+?)".+?children:"(.+?)"'
     logger.info("patron: %s" %(type(patron)))
     logger.info("data: %s" %type(data))
     matches = scrapertools.find_multiple_matches(data, patron)
-    scrapertools.printMatches(matches)
     
     for url, title in matches:
-        itemlist.append(Item(channel=item.channel, title=title, action='list_all', url=host+url, pagina=1,
+        itemlist.append(Item(channel=item.channel, title=title, action='list_all', url=host+url+"/page/", pagina=1,
                              thumbnail=get_thumb('episodes', auto=True) ))
 
     genres = {'Acción': 'genres/accion/', 
@@ -142,11 +140,12 @@ def list_all(item):
     patron += '<h3>([^<]+).*?'
     patron += '<span>([^<]+).*?'
     matches = scrapertools.find_multiple_matches(data, patron)
-    scrapertools.printMatches(matches)
     
     for url, title, annio in matches:
         idioma = "Latino"
         item.infoLabels['year'] = annio
+        #para los titulos que vienen como este: The killer&#x27;s game   | moll&#x27;s game
+        title = scrapertools.unescape(title)
         itemlist.append(item.clone(channel = item.channel,
                                    action = "findvideos",
                                    title = title,
@@ -247,7 +246,6 @@ def findvideos(item):
                             url=url,
                            ))
     #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    scrapertools.printMatches(itemlist)
     
     return itemlist
 
@@ -290,7 +288,6 @@ def play(item):
     patron = "var url = '([^']+)"
     match = scrapertools.find_single_match(data, patron)
     item.url = match
-    logger.info("Intel11 %s" %match)
     return [item]
 
 
