@@ -28,6 +28,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://(?:www.|)(?:udvl|sexng).com/video/[0-9-]+/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)adptube.com/videos/[A-z0-9-]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },

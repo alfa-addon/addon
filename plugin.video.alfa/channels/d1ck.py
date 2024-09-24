@@ -24,7 +24,7 @@ forced_proxy_opt = 'ProxySSL'
 
 # https://d1ck.co/   https://faphard.co/   https://f1ix.com/ https://pornrz.com/  https://pornn.co/
 # https://18yos.co/   https://boombj.com/  https://roleplayers.co/   https://teenanal.co/  https://wanktank.co/
-# https://amateurporntape.com/  https://amateurporngirlfriends.com/
+# https://amateurporntape.com/  https://amateurporngirlfriends.com/   https://sexng.com/
 
 canonical = {
              'channel': 'd1ck', 
@@ -75,7 +75,6 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
                                      channel=canonical['channel'], actualizar_titulos=True, url_replace=url_replace, debug=debug)
 
 
-
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -92,6 +91,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Pornrz" , action="submenu", url="https://pornrz.com/", chanel="pornrz", thumbnail="https://i.postimg.cc/LX19cG4m/pornrz.png"))
     itemlist.append(Item(channel=item.channel, title="Pornry" , action="submenu", url="https://pornry.com/", chanel="pornry", thumbnail="https://i.postimg.cc/cLrQL47G/pornry.png"))
     itemlist.append(Item(channel=item.channel, title="RolePlayers" , action="submenu", url="https://roleplayers.co/", chanel="roleplayers", thumbnail="https://i.postimg.cc/t4GM50XC/roleplayers.png"))
+    itemlist.append(Item(channel=item.channel, title="Sexng" , action="submenu", url="https://sexng.com/", chanel="sexng", thumbnail="https://i.postimg.cc/Kz89SDsk/sexng.png"))
     itemlist.append(Item(channel=item.channel, title="TeenAnal" , action="submenu", url="https://teenanal.co/", chanel="teenanal", thumbnail="https://i.postimg.cc/pLZM5VDt/teenanal.png"))
     itemlist.append(Item(channel=item.channel, title="TwistedNuts" , action="submenu", url="https://twistednuts.com/", chanel="twistednuts", thumbnail="https://i.postimg.cc/KcHwY4Bm/twistednuts.png"))
     itemlist.append(Item(channel=item.channel, title="Udvl" , action="submenu", url="https://udvl.com/", chanel="udvl", thumbnail="https://i.postimg.cc/h4HKfq00/udvl.png"))
@@ -154,12 +154,11 @@ def play(item):
     
     AlfaChannel.host = config.get_setting("current_host", item.chanel, default=host)
     AlfaChannel.canonical.update({'channel': item.chanel, 'host': AlfaChannel.host, 'host_alt': [AlfaChannel.host]})
-    
-    if "udvl" in item.url:
+    soup = AlfaChannel.create_soup(item.url, **kwargs).find('div', class_='player-holder')
+    if soup.find(id='kt_player'):
         url = item.url
     else:
-        soup = AlfaChannel.create_soup(item.url, **kwargs)
-        url = soup.find('div', class_='player-holder').iframe['src']
+        url = soup.iframe['src']
     itemlist.append(Item(channel=item.channel, action="play", title= "%s", contentTitle = item.contentTitle, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
