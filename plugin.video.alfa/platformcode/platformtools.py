@@ -311,7 +311,7 @@ def render_items(itemlist, parent_item):
 
     # Recorremos el itemlist
     categories_channel = []
-    if itemlist and not itemlist[0].module and itemlist[0].channel:
+    if itemlist and not itemlist[0].module and itemlist[0].channel and itemlist[0].channel != 'downloads':
         categories_channel = channeltools.get_channel_parameters(itemlist[0].channel.lower()).get('categories', [])
 
     temp_list = list()
@@ -2462,7 +2462,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
                 item.downloadProgress = 100  # ... si no, se da por terminada la monitorización
         item.downloadQueued = 0
         update_control(item, function='rar_control_mng')
-        config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
+        config.set_setting("downloads_RESTART_DOWNLOADS", True)  # Forzamos restart downloads
         if item.downloadStatus not in [3, 4, 5]: itemlist_refresh()
 
         # Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan

@@ -906,7 +906,7 @@ def reactivate_unrar(init=False, mute=True):
             if rar_control and len(rar_control['rar_files']) == 1:
                 ret = filetools.remove(filetools.join(save_path_videos, '_rar_control.json'), silent=True)
 
-    config.set_setting("torrent_paths_list", download_paths, channel="downloads")
+    config.set_setting("downloads_torrent_paths_list", str(download_paths))
     search_for_unrar_in_error(download_paths, init=init)    
 
 
