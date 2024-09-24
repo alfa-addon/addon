@@ -127,7 +127,6 @@ def peliculas(item):
     itemlist = []
     next = True
     data = httptools.downloadpage(item.url, canonical=canonical).data
-    logger.debug(data)
     patron  = '<a class="Ntooltip" href="([^"]+)">([^<]+)<span>.*?'
     patron += 'src="([^"]+)"></span></a>(.*?)<br'
     matches = scrapertools.find_multiple_matches(data, patron)
