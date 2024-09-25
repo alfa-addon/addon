@@ -795,7 +795,7 @@ def retry_alt(url, req, response_call, proxy_data, **opt):
     if not canonical['host_alt']:
         return url, response_call
     host_a = scrapertools.find_single_match(url, patron_host)
-    url = re.sub('\?__cpo\=.*?$', '', url)
+    url = re.sub(r'\?__cpo\=.*?$', '', url)
     if not host_a:
         return url, response_call
     

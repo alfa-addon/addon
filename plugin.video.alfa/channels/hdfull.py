@@ -30,9 +30,9 @@ assistant = False
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hd-full.info/", "https://hdfull.today/", "https://hdfull.quest/"], 
+             "host_alt": ["https://hdfull.blog/", "https://hdfull.today/", "https://hdfull.quest/"], 
              'host_verification': '%slogin', 
-             "host_black_list": ["https://hd-full.sbs/", "https://hd-full.life/", 
+             "host_black_list": ["https://hd-full.info/", "https://hd-full.sbs/", "https://hd-full.life/", 
                                  "https://hd-full.fit/", "https://hd-full.me/", "https://hd-full.vip/", 
                                  "https://hd-full.lol/", "https://hd-full.co/", "https://hd-full.biz/", 
                                  "https://hd-full.in/", "https://hd-full.im/", "https://hd-full.one/", 
@@ -954,7 +954,7 @@ def play(item):
         item.info = {item.url.split("###")[1].split(";")[0]: item.url.split("###")[1].split(";")[0]}
         item.url = item.url.split("###")[0]
     mediatype = '1' if item.contentType == 'tvshow' else '2' if item.contentType == 'movie' else '3' if item.contentType == 'episode' else '4'
-    if item.info:
+    if item.info and config.get_setting("videolibrary_mark_as_watched"):
         post = "target_id=%s&target_type=%s&target_status=1" % (list(item.info.keys())[0], mediatype)
         
         data = agrupa_datos(AlfaChannel.urljoin(host, "a/status"), post=post, hide_infobox=True)

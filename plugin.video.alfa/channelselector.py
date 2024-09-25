@@ -181,7 +181,7 @@ def getmainlist(view="thumb_"):
             title = '{} ({} {})'.format(get_string(30104), get_string(20000), addon_version),
             module = "help",
             action = "mainlist",
-            thumbnail = os.path.join(config.get_runtime_path(), "resources", 'Screenshot.jpg'),
+            thumbnail = os.path.join(config.get_runtime_path(), "resources", 'Screenshot.png'),
             category = get_string(30104),
             viewmode = "list"
         )
@@ -199,7 +199,7 @@ def getmainlist(view="thumb_"):
                 title = "[COLOR hotpink][B]Actualizar a versión[/B][/COLOR] [COLOR gold][B]%s[/B][/COLOR] (versión instalada: %s)" %  (versiones['plugin.video.alfa'], addon_version),
                 module = "channelselector",
                 action = "install_alfa",
-                thumbnail = os.path.join(config.get_runtime_path(), "resources", 'Screenshot.jpg'),
+                thumbnail = os.path.join(config.get_runtime_path(), "resources", 'Screenshot.png'),
                 category = get_string(30104),
                 viewmode = "list"
             )

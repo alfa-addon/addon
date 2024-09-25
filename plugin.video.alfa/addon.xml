@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon id="plugin.video.alfa" name="Alfa" version="3.9.29" provider-name="Alfa Addon">
+<addon id="plugin.video.alfa" name="Alfa" version="3.9.30" provider-name="Alfa Addon">
     <requires>
         <import addon="script.module.requests" />
         <import addon="script.module.beautifulsoup4" version="4.5.3" />
@@ -48,11 +48,12 @@
         <source>https://github.com/alfa-addon/addon</source>
         <news>
     [B]Estos son los cambios para esta versión:[/B]
-    • +18                                • Dixtotal
-    • Don Torrent                  • HDFull
-    • Mejortorrent                 • Pelitorrent
-    • Subtorrents                  • YesTorrent: Desactivado
-    • Yts</news>
+    • +18                 • Cuevana2español     • Don Torrent         
+    • Eztv                 • HDFull                          • Pelitorrent         
+    • Solo Latino
+
+    [B]Desactivados:[/B]
+    • AsiaLiveAction      • Dilo                       • Ennovelas</news>
         <assets>
             <icon>resources/icon.png</icon>
             <fanart>resources/fanart.jpg</fanart>

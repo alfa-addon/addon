@@ -1692,7 +1692,7 @@ def mark_torrent_as_watched():
 
     # Si en la actualización de la Videoteca no se ha completado, encolo las descargas AUTO pendientes
     try:
-        from channels import downloads
+        from modules import downloads
         item_dummy = Item()
         threading.Thread(target=downloads.download_auto, args=(item_dummy, True)).start()   # Encolamos las descargas automáticas
         if monitor and monitor.waitForAbort(5):
@@ -1748,8 +1748,8 @@ def restart_unfinished_downloads():
     global torrent_paths
     
     try:
-        config.set_setting("DOWNLOADER_in_use", False, "downloads")             # Marcamos Downloader como disponible
-        config.set_setting("RESTART_DOWNLOADS", False, "downloads")             # Marcamos restart downloads como disponible
+        config.set_setting("downloads_DOWNLOADER_in_use", False)                # Marcamos Downloader como disponible
+        config.set_setting("downloads_RESTART_DOWNLOADS", False)                # Marcamos restart downloads como disponible
         config.set_setting("UNRAR_in_use", False, server="torrent")             # Marcamos unRAR como disponible
         config.set_setting("CAPTURE_THRU_BROWSER_in_use", '', server="torrent") # Marcamos Capture_thru_browser como disponible
         init = True
@@ -1825,7 +1825,7 @@ def restart_unfinished_downloads():
                         
                         if item.downloadStatus in [1, 3]:
                             continue
-                        if item.server != 'torrent' and config.get_setting("DOWNLOADER_in_use", "downloads"):
+                        if item.server != 'torrent' and config.get_setting("downloads_DOWNLOADER_in_use"):
                             continue
                         if torr_client not in ['TORRENTER', 'QUASAR', 'ELEMENTUM', 'TORREST'] and item.downloadProgress != 0:
                             continue
@@ -1867,7 +1867,7 @@ def restart_unfinished_downloads():
                                     logger.info('RECUPERANDO descarga de %s: %s' % (torr_client, title))
                                     logger.info("RECUPERANDO: Status: %s | Progress: %s | Queued: %s | File: %s | Title: %s: %s" % \
                                             (item.downloadStatus, item.downloadProgress, item.downloadQueued, fichero, torr_client, title))
-                                    from channels import downloads
+                                    from modules import downloads
                                     threading.Thread(target=downloads.start_download, args=(item,)).start()     # Creamos un Thread independiente
                                     if monitor and monitor.waitForAbort(5):
                                         return
@@ -1898,9 +1898,9 @@ def restart_unfinished_downloads():
                         if xbmc.abortRequested: 
                             return
                         xbmc.sleep(5*1000)
-                    if config.get_setting("RESTART_DOWNLOADS", "downloads", default=False):    # ... a menos que se active externamente
-                        logger.info('RESTART_DOWNLOADS Activado externamente')
-                        config.set_setting("RESTART_DOWNLOADS", False, "downloads") 
+                    if config.get_setting("downloads_RESTART_DOWNLOADS", default=False):    # ... a menos que se active externamente
+                        logger.info('downloads_RESTART_DOWNLOADS Activado externamente')
+                        config.set_setting("downloads_RESTART_DOWNLOADS", False) 
                         break
     except Exception:
         logger.error(traceback.format_exc())

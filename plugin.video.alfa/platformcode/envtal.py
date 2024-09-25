@@ -329,9 +329,6 @@ def get_environment():
         torrent_id = config.get_setting("torrent_client", server="torrent", default=0)
         environment['torrentcli_option'] = str(torrent_id)
         torrent_options = platformtools.torrent_client_installed()
-        if lib_path != 'Inactivo':
-            torrent_options = [': MCT'] + torrent_options
-            torrent_options = [': BT'] + torrent_options
         environment['torrent_list'].append({'Torrent_opt': str(torrent_id), 'Libtorrent': lib_path, \
                                             'RAR_Auto': str(environment['torrentcli_rar']), \
                                             'RAR_backgr': str(environment['torrentcli_backgr']), \
@@ -344,9 +341,7 @@ def get_environment():
             cliente = dict()
             cliente['D_load_Path'] = ''
             cliente['Libre'] = '?'
-            cliente['Plug_in'] = scrapertools.find_single_match(torrent_option, ':\s*(\w+)')
-            if cliente['Plug_in'] not in ['BT', 'MCT']: cliente['Plug_in'] = cliente['Plug_in'].capitalize()
-            
+            cliente['Plug_in'] = scrapertools.find_single_match(torrent_option, ':\s*(\w+)').capitalize()
             cliente['D_load_Path'] = torrent_paths[cliente['Plug_in'].upper()]
             cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
             cliente['Buffer'] = str(torrent_paths[cliente['Plug_in'].upper()+'_buffer'])

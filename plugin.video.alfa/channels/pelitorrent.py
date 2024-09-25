@@ -360,7 +360,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
     for elem in matches_int:
         elem_json = {}
-        logger.error(elem)
+        #logger.error(elem)
 
         try:
             sxe = elem.find('span', class_='num-epi').get_text(strip=True).split('x')
