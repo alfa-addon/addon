@@ -329,7 +329,7 @@ def findvideos(item):
         player_url = player_url.replace("https://animekao.club/video/", "https://kaocentro.net/video/")
         
         if not player_url.startswith("https://re.") and not player_url.startswith("https://kaocentro.net/video/") \
-                                                    and not player_url.startswith("https://embedsito."):
+           and not player_url.startswith("https://embedsito.") and not player_url.startswith("https://xupalace.org"):
             urls = process_url(player_url)
             for url in urls:
                 if not url:
