@@ -10,13 +10,22 @@ from lib import jsunpack
 
 video_urls = []
 
+# forced_proxy_opt = 'ProxySSL'
+# kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 5, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'ignore_response_code': True, 'cf_assistant': False}
+kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 5, 'ignore_response_code': True, 'cf_assistant': False}
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    response = httptools.downloadpage(page_url)
+    
+    if "|Referer" in page_url or "|referer" in page_url:
+        page_url, referer = page_url.split("|")
+        referer = referer.replace('Referer=', '').replace('referer=', '')
+        kwargs['headers'] = {'Referer': referer}
+    response = httptools.downloadpage(page_url, **kwargs)
     global data
     data = response.data
-    if not response.sucess or "Not Found" in data or "File was deleted" in data or "is no longer available" in data:
+    if not response.sucess or "Not Found" in data or "File was deleted" in data \
+                           or "is no longer available" in data:
         return False, "[vidhide] El fichero no existe o ha sido borrado"
     return True, ""
 

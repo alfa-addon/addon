@@ -1,7 +1,7 @@
 {
   "id": "titsbox",
   "name": "titsbox",
-  "active": true,
+  "active": false,
   "adult": true,
   "language": ["*"],
   "thumbnail": "https://titsbox.com/android-chrome-192x192.png",

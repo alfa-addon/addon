@@ -15,8 +15,8 @@ from channelselector import get_thumb
 canonical = {
              'channel': 'gnula', 
              'host': config.get_setting("current_host", 'gnula', default=''), 
-             'host_alt': ["https://gnula.nu/"], 
-             'host_black_list': [], 
+             'host_alt': ["https://gnulahd.nu/"], 
+             'host_black_list': ["https://gnula.nu/"], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'CF_stat': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
@@ -127,8 +127,8 @@ def peliculas(item):
     itemlist = []
     next = True
     data = httptools.downloadpage(item.url, canonical=canonical).data
-    patron  = '<a class="Ntooltip" href="([^"]+)">([^<]+)<span><br[^<]+'
-    patron += '<img src="([^"]+)"></span></a>(.*?)<br'
+    patron  = '<a class="Ntooltip" href="([^"]+)">([^<]+)<span>.*?'
+    patron += 'src="([^"]+)"></span></a>(.*?)<br'
     matches = scrapertools.find_multiple_matches(data, patron)
     first = item.first
     last = first + 19

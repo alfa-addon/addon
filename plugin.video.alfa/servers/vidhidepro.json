@@ -6,6 +6,10 @@
       {
         "pattern": "https://vidhide(?:pro|pre|vip|).com/(?:f|v|embed|d|file)/([A-z0-9]+)",
         "url": "https://vidhidevip.com/v/\\1"
+      },
+      {
+        "pattern": "(https://stblion.xyz/(?:f|v|embed|d|file)/[A-z0-9]+(:?\\|Referer=[A-z0-9./:]+))",
+        "url": "\\1"
       }
     ]
   },
