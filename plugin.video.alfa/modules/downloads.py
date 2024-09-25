@@ -70,6 +70,13 @@ def mainlist(item):
     if item.remote_download: 
         remote_download = item.remote_download
         change_to_remote(item, lookup=True)
+    remote_download_dict = config.get_setting("downloads_remote_download", default={})
+    if remote_download_dict and not isinstance(remote_download_dict, dict):
+        try:
+            remote_download_dict = eval(remote_download_dict)
+        except Exception as e:
+            logger.error('"downloads_remote_download" ERROR: %s: %s' % (str(e), str(remote_download_dict)))
+            remote_download_dict = []
 
     # Lista de archivos
     for file in sorted(filetools.listdir(DOWNLOAD_LIST_PATH)):
@@ -224,8 +231,8 @@ def mainlist(item):
                                 contentType=item.contentType, contentChannel=item.contentChannel, thumbnail=get_thumb("folder.png"), 
                                 contentSerieName=item.contentSerieName, remote_download=remote_download, text_color="red"))
 
-    if config.get_setting("remote_download", "downloads", default={}) and HOST == 'Local':
-        for remote_domain, params in list(config.get_setting("remote_download", "downloads").items()):
+    if remote_download_dict and HOST == 'Local':
+        for remote_domain, params in list(remote_download_dict.items()):
             itemlist.insert(0, item.clone(action="change_to_remote", 
                                           title='[COLOR limegreen]Descargas Remotas en [/COLOR][COLOR gold][B]%s[/B][/COLOR]'
                                           % remote_domain.capitalize(), thumbnail=get_thumb("on_the_air.png"),  
@@ -341,13 +348,18 @@ def browser(item):
     
     torrent_dirs(item)
     torrent_paths = TORRENT_PATHS
+    torrent_paths_list = []
+    torrent_paths_list_seen = []
     if config.get_setting("downloads_show_torrent_paths", default=True):
         torrent_paths_list = config.get_setting("downloads_torrent_paths_list", default=[])
+        if torrent_paths_list and not isinstance(torrent_paths_list, list):
+            try:
+                torrent_paths_list = eval(torrent_paths_list)
+            except Exception as e:
+                logger.error('"downloads_torrent_paths_list" ERROR: %s: %s' % (str(e), str(torrent_paths_list)))
+                torrent_paths_list = []
         if HOST != 'Local':
             torrent_paths_list = [['%s' % torrent_paths['TORR_client'].lower(), '%s' % torrent_paths[torrent_paths['TORR_client'].upper()]]]
-    else:
-        torrent_paths_list = []
-    torrent_paths_list_seen = []
     contentPlot = '[COLOR limegreen]Idiomas: [/COLOR]%s\n[COLOR limegreen]Calidad: [/COLOR]%s\n\n'
     plot = '[COLOR gold][B]Tamaño:[/COLOR][/B] %s\n\n[COLOR gold][B]Ruta de descarga:[/COLOR][/B]\n\n %s'
     TITLE_VIDEO = "%s %s %s %s %s"
@@ -815,6 +827,12 @@ def download_auto(item, start_up=False):
     
     second_pass = False
     move_to_remote = config.get_setting("downloads_move_to_remote", default=[])
+    if move_to_remote and not isinstance(move_to_remote, list):
+        try:
+            move_to_remote = eval(move_to_remote)
+        except Exception as e:
+            logger.error('"downloads_move_to_remote" ERROR: %s: %s' % (str(e), str(move_to_remote)))
+            move_to_remote = []
     filelist = sorted(filetools.listdir(DOWNLOAD_LIST_PATH))
     
     for fichero in filelist:
@@ -1136,7 +1154,7 @@ def delete_torrent_session(item, delete_RAR=True, action='delete'):
     update_control(item.path, {"downloadStatus": item.downloadStatus, "downloadProgress": downloadProgress, "downloadQueued": 0,
                                 "downloadServer": {}, "url": item.url}, function='delete_torrent_session_aft')
     
-    config.set_setting("RESTART_DOWNLOADS", True, "downloads")                  # Forzamos restart downloads
+    config.set_setting("downloads_RESTART_DOWNLOADS", True)                     # Forzamos restart downloads
     
     return torr_data, deamon_url, index
 
@@ -1426,12 +1444,12 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                         logger.error('Size ERROR: %s: %s' % (play_item, size))
                         continue
                     play_items_torrent.append([play_item, size, quality])
-                
+
                 if play_items_torrent:
                     size_order = config.get_setting("torrent_quality", default=0)
                     if size_order:
                         play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it[1])))        # clasificamos
-                        if size_order == 1 and len(play_items_torrent) > 2:             # Tomamos la segunda calidad
+                        if size_order == 1 and len(play_items_torrent) > 2 and '4k' in play_items_torrent[0][2].lower():    # Tomamos calidad 2
                             play_items_torrent[0][1] = 0.0                              # Ponemos el de más calidad al final de la lista
                             play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it[1])))    # RE-clasificamos
                     else:
@@ -1509,7 +1527,7 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                 if play_item.contentChannel not in blocked_channels:
                     if size_order:
                         play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it.size_torr)))         # clasificamos
-                        if size_order == 1 and len(play_items_torrent) > 2:             # Tomamos la segunda calidad
+                        if size_order == 1 and len(play_items_torrent) > 2 and '4k' in play_items_torrent[0].quality.lower():   # Tomamos calidad 2
                             play_items_torrent[0].size_torr = 0.0                       # Ponemos el de más calidad al final de la lista
                             play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: (float(it.size_torr)))     # RE-clasificamos
                     else:
@@ -1517,7 +1535,7 @@ def sort_torrents(play_items, emergency_urls=False, channel='', torrent_info=[])
                 else:
                     if size_order:
                         play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: it.quality)                    # clasificamos
-                        if size_order == 1 and len(play_items_torrent) > 2:             # Tomamos la segunda calidad
+                        if size_order == 1 and len(play_items_torrent) > 2 and '4k' in play_items_torrent[0].quality.lower():   # Tomamos calidad 2
                             play_items_torrent[0].size_torr = 0.0                       # Ponemos el de más calidad al final de la lista
                             play_items_torrent = sorted(play_items_torrent, reverse=True, key=lambda it: it.quality)                # RE-clasificamos
                     else:
@@ -1545,7 +1563,7 @@ def download_from_url(url, item):
         return {"downloadStatus": STATUS_CODES.error}
 
     item.downloadQueued = 0
-    config.set_setting("DOWNLOADER_in_use", True, "downloads")                  # Marcamos Downloader en uso
+    config.set_setting("downloads_DOWNLOADER_in_use", True)                     # Marcamos Downloader en uso
     # Obtenemos la ruta de descarga y el nombre del archivo
     item.downloadFilename = item.downloadFilename.replace('/','-')
     item.downloadFilename = scrapertools.slugify(item.downloadFilename, strict=False)
@@ -1591,7 +1609,7 @@ def download_from_url(url, item):
     if status == STATUS_CODES.completed:
         move_to_library(item.clone(downloadFilename=file))
 
-    config.set_setting("DOWNLOADER_in_use", False, "downloads")                 # Marcamos Downloader como disponible
+    config.set_setting("downloads_DOWNLOADER_in_use", False)                    # Marcamos Downloader como disponible
     return {"downloadUrl": d.download_url, "downloadStatus": status, "downloadSize": d.size[0], "downloadQueued": 0, 
             "downloadProgress": d.progress, "downloadCompleted": d.downloaded[0], "downloadFilename": file}
 
@@ -1965,7 +1983,9 @@ def get_episodes(item):
     season = item.infoLabels['season']
     sesxepi = []
     event = False
-    channel_json = {}
+    channel_settings = filetools.join(config.get_data_path(), "settings_channels", item.contentChannel + "_data.json")
+    channel_json = jsontools.load(filetools.read(channel_settings)) if filetools.exists(channel_settings) else {}
+    Window_IsMedia = xbmc.getCondVisibility('Window.IsMedia')
     
     if item.infoLabels['tmdb_id'] and item.infoLabels['tmdb_id'] == null:
         event = True                                                            # Si viene de un canal de deportes o similar
@@ -1994,6 +2014,12 @@ def get_episodes(item):
 
     # Miramos si los episodio se van a mover a un site remoto, con lo que no pueden usar archivos locales
     move_to_remote = config.get_setting("downloads_move_to_remote", default=[])
+    if move_to_remote and not isinstance(move_to_remote, list):
+        try:
+            move_to_remote = eval(move_to_remote)
+        except Exception as e:
+            logger.error('"downloads_move_to_remote" ERROR: %s: %s' % (str(e), str(move_to_remote)))
+            move_to_remote = []
     for serie, address in move_to_remote:
         if serie.lower() in item.contentSerieName.lower():                      # Si está en la lista es que es remoto
             remote = True
@@ -2002,10 +2028,11 @@ def get_episodes(item):
     # El item que pretendemos descargar YA es un episodio
     if item.contentType == "episode" and (not item.sub_action or item.sub_action not in sub_action):
         episodes = [item.clone()]
-        if item.strm_path and not remote:
+        if item.strm_path and (not remote or Window_IsMedia == 0):
             episode_local = True
-            if xbmc.getCondVisibility('Window.IsMedia') == 1:
-                episode_sort = False
+            if Window_IsMedia == 0: remote = False
+            elif Window_IsMedia == 1: episode_sort = False
+                
 
     # El item es uma serie o temporada
     elif item.contentType in ["tvshow", "season"] or item.sub_action in sub_action:
@@ -2100,9 +2127,6 @@ def get_episodes(item):
             serie_listdir = sorted(filetools.listdir(serie_path))
             episodes = []
             episode_local = True
-            channel_settings = filetools.join(config.get_data_path(), "settings_channels", item.contentChannel + "_data.json")
-            if filetools.exists(channel_settings):
-                channel_json = jsontools.load(filetools.read(channel_settings))
 
             for file in serie_listdir:
                 if not file.endswith('.json'):
@@ -2147,7 +2171,7 @@ def get_episodes(item):
                 if item.btdigg: del item.btdigg
                 if item.quality != 'HDTV': item.quality = 'HDTV-720p'
                 
-            episodes = getattr(channel, item.contentAction)(item)                      # Si no viene de Videoteca, descargamos desde la web
+            episodes = getattr(channel, item.contentAction)(item)               # Si no viene de Videoteca, descargamos desde la web
 
     itemlist = []
 

@@ -25,10 +25,10 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'dontorrent', 
              'host': config.get_setting("current_host", 'dontorrent', default=''), 
-             'host_alt': ["https://dontorrent.email/", "https://elitedivx.net/", "https://lilatorrent.com/", 
+             'host_alt': ["https://dontorrent.exposed/", "https://elitedivx.net/", "https://lilatorrent.com/", 
                           "https://mastorrents.net/", "https://reinventorrent.org/", "https://todotorrents.org/", 
-                          "https://www13.dontorrent.link/", "https://tomadivx.net/"], 
-             'host_black_list': ["https://dontorrent.date/", 
+                          "https://www14.dontorrent.link/", "https://tomadivx.net/"], 
+             'host_black_list': ["https://dontorrent.education/", "https://dontorrent.email/", "https://dontorrent.date/", 
                                  "https://dontorrent.earth/", "https://dontorrent.cricket/", "https://dontorrent.dance/", 
                                  "https://dontorrent.cologne/", "https://dontorrent.city/", "https://dontorrent.esq/", 
                                  "https://dontorrent.cc/", "https://dontorrent.sbs/", "https://dontorrent.fyi/", 
@@ -745,7 +745,7 @@ def search(item, texto, **AHkwargs):
     try:
         if texto:
             if item.btdigg: item.btdigg = texto
-            item.url = item.referer = host + 'buscar/' + texto + '/page/1'
+            item.url = item.referer = host + 'buscar/' + texto
             item.c_type = "search"
             item.texto = texto
             return list_all(item)

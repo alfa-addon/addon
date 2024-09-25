@@ -799,8 +799,9 @@ def play(item):
     logger.info()
     # logger.debug("item:\n" + item.tostring('\n'))
 
+    module_type = 'modules' if item.contentChannel in ['downloads'] else 'channels'
     if item.contentChannel != "local" and item.channel_recovery != 'url':
-        channel = __import__('channels.%s' % item.contentChannel, fromlist=["channels.%s" % item.contentChannel])
+        channel = __import__('%s.%s' % (module_type, item.contentChannel), fromlist=["%s.%s" % (module_type, item.contentChannel)])
         if hasattr(channel, "play"):
             itemlist = getattr(channel, "play")(item)
 
