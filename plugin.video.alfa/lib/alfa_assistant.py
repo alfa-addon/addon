@@ -439,6 +439,9 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
         sucess = False
         code = response.code
         if DEBUG: logger.debug('A: servers: %s / age: %s' % (ASSISTANT_SERVERS, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2)))
+        if len(ASSISTANT_SERVERS) > 1:
+            del ASSISTANT_SERVERS[0]
+            change =  True
 
         for url in ASSISTANT_SERVERS[:]:
             logger.error('B: server: %s / age: %s / code: %s' % (url, round((ASSISTANT_SERVERS_AGE-time.time())/60, 2), str(code)))
