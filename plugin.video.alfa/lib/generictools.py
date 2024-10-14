@@ -3111,6 +3111,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                         window.setProperty("alfa_cached_btdigg_stat", 'CANCEL')
                         raise Exception("CANCEL")
 
+                torrent_params_save = copy.deepcopy(torrent_params)
                 for zzz in range(retries):
                     torrent_params = find_alternative_link(itemO, torrent_params=torrent_params, cache=disable_cache, use_assistant=use_assistant)
                     if torrent_params.get('find_alt_link_code', '200') == '200':
@@ -3119,6 +3120,9 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     if monitor.waitForAbort(1 * 60):
                         return
                     if cookies_cached: get_cached_files_('password', FORCED=True, cached=True)
+                    torrent_params = copy.deepcopy(torrent_params_save)
+                else:
+                    logger.error('## Error en BTDIGG: %s / %s' % (torrent_params.get('find_alt_link_code', ''), torrent_params))
                 if torrent_params.get('find_alt_link_code', '200') != '200':
                     x = 888888
                     cached[contentType] = []
@@ -3332,6 +3336,7 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                     window.setProperty("alfa_cached_btdigg_stat", 'CANCEL')
                                     raise Exception("CANCEL")
 
+                            torrent_params_save = copy.deepcopy(torrent_params)
                             for zzz in range(retries*2):
                                 torrent_params = find_alternative_link(item, torrent_params=torrent_params, 
                                                                        cache=disable_cache, use_assistant=use_assistant)
@@ -3341,6 +3346,9 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                 if monitor.waitForAbort(2 * 60):
                                     return
                                 if cookies_cached: get_cached_files_('password', FORCED=True, cached=True)
+                                torrent_params = copy.deepcopy(torrent_params_save)
+                            else:
+                                logger.error('## Error en BTDIGG: %s / %s' % (torrent_params.get('find_alt_link_code', ''), torrent_params))
                             if torrent_params.get('find_alt_link_code', '200') != '200':
                                 x = 888888
                                 if len(cached[contentType]) < int(len(cached['tvshow'])*0.85): cached[contentType] = {}
