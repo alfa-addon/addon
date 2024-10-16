@@ -369,14 +369,15 @@ def findvideos_matches(item, matches_int, langs, response, **AHkwargs):
         
         try:
             elem_json['url'] = base64.b64decode(elem.get("data-url", "") or elem.get("data-src", "")).decode('utf-8')
-            if "acortalink" in elem_json['url']:continue
+            # if "acortalink" in elem_json['url']:continue
             if elem.get("data-url", ""):
                 # if elem.get_text(strip=True).lower() != 'torrent': continue
                 elem_json['url'] = AlfaChannel.convert_url_base64(elem_json['url'], host)
+                if "mediafire" in elem_json['url']:continue
                 if elem_json['url'].startswith('http'):
                     elem_json['url'] = AlfaChannel.create_soup(elem_json['url']).find("div", id="btn_enlace").a.get("href", "")
 
-            elem_json['server'] = elem.get_text(strip=True).lower()
+            elem_json['server'] = elem.get_text(strip=True).lower().replace('utorrent', 'torrent')
             if elem_json['server'] in ["Cineplay", "Netu", "trailer", "Fembed", "acortalink"]: continue
             if elem_json['server'] in srv_ids:
                 elem_json['server'] = srv_ids[elem_json['server']]
