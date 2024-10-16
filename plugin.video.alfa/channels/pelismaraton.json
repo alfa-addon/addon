@@ -1,7 +1,7 @@
 {
   "id": "pelismaraton",
   "name": "PelisMaraton",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://pelismaraton.nu/icon/pelismaraton.png",
