@@ -117,6 +117,31 @@ def findvideos(item):
                                          verify_links=False, findvideos_proc=True, **kwargs)
 
 
+def play(item):
+    logger.info()
+    itemlist = []
+    
+    soup = AlfaChannel.create_soup(item.url, **kwargs)
+    if soup.find_all('a', href=re.compile(r"/actor/[a-z0-9-]+")):
+        pornstars = soup.find_all('a', href=re.compile(r"/actor/[a-z0-9-]+"))
+        for x, value in enumerate(pornstars):
+            pornstars[x] = value.get_text(strip=True)
+        pornstar = ' & '.join(pornstars)
+        pornstar = AlfaChannel.unify_custom('', item, {'play': pornstar})
+        lista = item.contentTitle.split('[/COLOR]')
+        pornstar = pornstar.replace('[/COLOR]', '')
+        # pornstar = ' %s' %pornstar
+        if AlfaChannel.color_setting.get('quality', '') in item.contentTitle:
+            lista.insert (2, pornstar)
+        else:
+            lista.insert (1, pornstar)
+        item.plot = '[/COLOR]'.join(lista)
+    
+    url = soup.find('meta', property='og:video:url')['content']
+    itemlist.append(["[eroticmv]", url])
+    
+    return itemlist
+
 def search(item, texto, **AHkwargs):
     logger.info()
     kwargs.update(AHkwargs)

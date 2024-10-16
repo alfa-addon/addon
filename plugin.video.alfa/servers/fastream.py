@@ -20,6 +20,9 @@ kwargs = {'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 0, 'ignore
 
 data = ''
 
+
+# https://fastream.to/embed-bh4hjrjmdp6i.html
+
 def test_video_exists(page_url):
     # if '|' in page_url:
         # page_url, referer = page_url.split("|", 1)
@@ -66,6 +69,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
     unpacked = jsunpack.unpack(packed)
+    logger.debug(unpacked)
     data = scrapertools.find_single_match(unpacked, "(?is)sources.+?\[(.+?)\]")
     
     m3u = scrapertools.find_single_match(data, 'file:"([^"]+)"')

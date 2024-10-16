@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon id="plugin.video.alfa" name="Alfa" version="3.9.26" provider-name="Alfa Addon">
+<addon id="plugin.video.alfa" name="Alfa" version="3.9.30" provider-name="Alfa Addon">
     <requires>
         <import addon="script.module.requests" />
         <import addon="script.module.beautifulsoup4" version="4.5.3" />
@@ -9,6 +9,7 @@
         <import addon="script.module.rijndael" />
         <import addon="script.module.brotlipython" />
         <import addon="script.module.requests-toolbelt" />
+        <import addon="script.module.futures" />
         <import addon="script.alfa-update-helper" optional="true" />
         <import addon="script.module.pyqrcode" optional="true" />
     </requires>
@@ -46,15 +47,13 @@
         <license>GNU GPL v3</license>
         <source>https://github.com/alfa-addon/addon</source>
         <news>
-            [B]Estos son los cambios para esta versión:[/B]
+    [B]Estos son los cambios para esta versión:[/B]
+    • +18                 • Cuevana2español     • Don Torrent         
+    • Eztv                 • HDFull                          • Pelitorrent         
+    • Solo Latino
 
-            [B]Arreglos[/B]
-            • +18                                  • CineCalidad                • Don Torrent
-            • Gran Torrent                  • HDFull                         • MiraPeliculas
-            • PelisPanda                      • YesTorrent
-
-            [B]Novedades[/B]
-            • Hack Torrent</news>
+    [B]Desactivados:[/B]
+    • AsiaLiveAction      • Dilo                       • Ennovelas</news>
         <assets>
             <icon>resources/icon.png</icon>
             <fanart>resources/fanart.jpg</fanart>

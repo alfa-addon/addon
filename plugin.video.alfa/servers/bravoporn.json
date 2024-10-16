@@ -84,6 +84,10 @@
         "url": "https://www.pornheed.com/embed/\\1"
       },
       {
+        "pattern": "https://(?:www.|)celebsnudeworld.com/([0-9]+)",
+        "url": "https://celebsnudeworld.com/embed/\\1"
+      },
+      {
         "pattern": "(https://(?:www.|)(?:anysex|fapality).com/[0-9]+/)",
         "url": "\\1"
       },
@@ -131,7 +135,7 @@
         "url": "https://\\1"
       },
       {
-        "pattern": "(https://(?:www.|)jizzberry.com/vids/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)jizzberry.com/(?:vids|video|videos)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {

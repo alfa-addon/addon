@@ -17,7 +17,7 @@ from core import scrapertools
 from core import jsontools
 from channelselector import get_thumb
 from platformcode import config, logger
-from channels import filtertools
+from modules import filtertools
 from modules import autoplay
 
 IDIOMAS = {"Subtitulado": "VOSE"}

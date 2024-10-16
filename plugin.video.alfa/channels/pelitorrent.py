@@ -26,8 +26,8 @@ forced_proxy_opt = 'ProxySSL'
 canonical = {
              'channel': 'pelitorrent', 
              'host': config.get_setting("current_host", 'pelitorrent', default=''), 
-             'host_alt': ["https://pelitorrent.com/"], 
-             'host_black_list': ["https://pelitorrent.xyz/", "https://www.pelitorrent.com/"], 
+             'host_alt': ["https://www.pelitorrent.com/"], 
+             'host_black_list': ["https://pelitorrent.com/", "https://pelitorrent.xyz/", "https://www.pelitorrent.com/"], 
              'pattern': "<link\s*rel='stylesheet'\s*id='menu-icons-extra-css'\s*href='([^']+)'", 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 
              'CF': False, 'CF_test': False, 'alfa_s': True
@@ -360,7 +360,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
 
     for elem in matches_int:
         elem_json = {}
-        logger.error(elem)
+        #logger.error(elem)
 
         try:
             sxe = elem.find('span', class_='num-epi').get_text(strip=True).split('x')

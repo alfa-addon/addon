@@ -1,7 +1,7 @@
 {
   "id": "animetiodonghua",
   "name": "Anime TioDonghua",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["vose"],
   "thumbnail": "https://anime.tiodonghua.com/wp-content/uploads/2023/07/Logotio123.png",

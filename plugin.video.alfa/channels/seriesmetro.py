@@ -10,7 +10,7 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 import re
 
 from bs4 import BeautifulSoup
-from channels import filtertools
+from modules import filtertools
 from modules import autoplay
 from core import httptools, scrapertools
 from core import servertools

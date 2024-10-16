@@ -1,7 +1,7 @@
 {
   "id": "dilo",
   "name": "Dilo",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://s22.postimg.cc/u6efsniqp/dilo.png",

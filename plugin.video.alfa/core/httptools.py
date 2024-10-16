@@ -609,6 +609,8 @@ def blocking_error(url, req, proxy_data, **opt):
             proxy = proxy_stat(opt.get('url_save', ''), proxy_data, **opt)
             print_DEBUG(url, proxy_data, label='BLOCKING', **opt)
             if proxy and 'ProxyWeb' in proxy: url += ' / %s' % opt.get('url_save', '')
+            if 'croxyproxy' in proxy_data.get('web_name', '') and code == '400':
+                update_alfa_domain_web_list(url, 'RESET', proxy_data, **opt)
             try:
                 if not CACHING_DOMAINS: logger.error('Error: %s, Url: %s, Datos: %s' % (code, url, data[:500]))
             except:
@@ -784,11 +786,20 @@ def retry_alt(url, req, response_call, proxy_data, **opt):
     if not canonical.get('host_alt', []) or not canonical.get('channel', []):
         return url, response_call
     
+    if opt.get('url_save') and opt['url_save'] in canonical['host_alt'] and str(req.status_code) != '400':
+        canonical['host_alt'].remove(opt['url_save'])
+    if str(req.status_code) == '400' and canonical['host_alt']:
+        if not PY3: from . import proxytools
+        else: from . import proxytools_py3 as proxytools
+        proxytools.add_domain_retried(obtain_domain(canonical['host_alt'][0], sub=True), proxy__type='ProxyWeb')
+    if not canonical['host_alt']:
+        return url, response_call
     host_a = scrapertools.find_single_match(url, patron_host)
+    url = re.sub(r'\?__cpo\=.*?$', '', url)
     if not host_a:
         return url, response_call
     
-    logger.error('ERROR 98: Web "%s" caída, reintentando...' % host_a)
+    logger.error('ERROR 98: Web "%s" caída, reintentando con %s' % (opt.get('url_save', host_a), canonical['host_alt']))
     config.set_setting('current_host', '', channel=canonical['channel'])        # Reseteamos el dominio
     
     try:
@@ -800,15 +811,18 @@ def retry_alt(url, req, response_call, proxy_data, **opt):
     for host_b in canonical['host_alt']:
         if host_b.rstrip('/') in url:
             continue
-        host = host_b
+        host = canonical['host'] = host_b
 
-        url_final = url.replace(host_a, host.rstrip('/'))
+        url_final = opt['url_save'] = url.replace(host_a, host.rstrip('/'))
         
         opt['count_retries_tot'] = 1
         if proxy_data.get('stat', '') and not 'Proxy Web' in proxy_data.get('stat', '') and not TEST_ON_AIR:
             opt['count_retries_tot'] = 2
         opt['retry_alt'] = False
         opt['ignore_response_code'] = True
+        if 'proxy' in opt: del opt['proxy']
+        if 'proxy_web' in opt: del opt['proxy_web']
+        if 'forced_proxy' in opt: del opt['forced_proxy']
         
         response = downloadpage(url_final, **opt)
         
@@ -818,6 +832,7 @@ def retry_alt(url, req, response_call, proxy_data, **opt):
                 url, response = reset_canonical(host_b, url, response, **opt)
             else:
                 host = response.host
+                if channel: channel.host = host
             break
     else:
         logger.error("ERROR 97: Webs caídas, ninguna Web alternativa encontrada")
@@ -1761,6 +1776,9 @@ def update_alfa_domain_web_list(url, code, proxy_data, **opt):
     global alfa_domain_web_list
 
     alfa_domain_web_list = {}
+    if str(code) == 'RESET' and window:
+        window.setProperty("alfa_domain_web_list", json.dumps(alfa_domain_web_list))
+        return
 
     if not ', Proxy Web' in proxy_data.get('stat', ''): return
     if window:

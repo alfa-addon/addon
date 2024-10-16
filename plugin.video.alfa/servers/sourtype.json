@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:www.|)(?:nonktube|udvl|leslez|teenxy|sunporno).com/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:nonktube|leslez|teenxy|sunporno).com/video(?:s|)/[0-9]+/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -12,7 +12,7 @@
         "url": "\\1"
       },
       {
-        "pattern": "(https://(?:www.|)(?:justporn|pulpo69).(?:com|net)/video/[A-z0-9-]+(?:/|))",
+        "pattern": "(https://(?:www.|)(?:justporn|pulpo69|publicsexhub).(?:com|net)/video/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -52,10 +52,6 @@
         "url": "\\1"
       },
       {
-        "pattern": "https://pornez.(?:cm|cam|net|site)/([A-z0-9-]+(?:/|))",
-        "url": "https://pornez.site/\\1"
-      },
-      {
         "pattern": "(https://(?:www.|)canalporno.com/ver/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
@@ -65,10 +61,6 @@
       },
       {
         "pattern": "(http://(?:www.|)incestflix.com/watch/[A-z0-9-]+(?:/|))",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://(?:www.|)eroticmv.com/[A-z0-9-]+(?:/|))",
         "url": "\\1"
       },
       {
@@ -131,8 +123,8 @@
         "pattern": "(https://(?:www.|)biguz.net/(?:watch.php|video/)\\?id=[0-9]+&name=[A-z0-9-]+)",
         "url": "\\1"
       },
-     {
-        "pattern": "(https://(?:www.|)pornovideow.com/content_video/[A-z0-9-]+(?:/|))",
+      {
+        "pattern": "(https://draftsex.porn/video/[A-z0-9-]+.html)",
         "url": "\\1"
       },
       {

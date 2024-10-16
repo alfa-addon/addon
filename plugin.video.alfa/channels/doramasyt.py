@@ -7,6 +7,7 @@ import sys
 import base64
 import re
 import traceback
+from os.path import basename
 
 PY3 = False
 if sys.version_info[0] >= 3:
@@ -15,13 +16,14 @@ if sys.version_info[0] >= 3:
     unichr = chr
     long = int
 
-from channels import filtertools
+from modules import filtertools
 from bs4 import BeautifulSoup
 from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
 from core import tmdb
+from core.jsontools import json
 from modules import autoplay
 from platformcode import config, logger
 from channelselector import get_thumb
@@ -53,6 +55,34 @@ def create_soup(url, referer=None, unescape=False, ignore_response_code=True):
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
     return soup
+
+
+def read_api(url):
+    logger.info()
+    
+    soup = create_soup(url)
+    
+    caplist = soup.find("section", class_="caplist")
+    url_pagination = caplist["data-ajax"]
+    serie_id = basename(url_pagination)
+    
+    post = dict()
+    post["_token"] = soup.find("meta", {"name":"csrf-token"})["content"]
+    post["p"] = '1'
+    
+    api_url = "https://www.doramasyt.com/ajax/caplist/" + serie_id
+    
+    referer = host
+
+    headers = {
+                'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'
+              }
+
+    response = httptools.downloadpage(api_url, headers=headers, post=post, referer=referer, ignore_response_code=True, hide_infobox=True)
+
+    if response.code != 200:
+        return False
+    return json.loads(response.data)
 
 
 def mainlist(item):
@@ -103,31 +133,30 @@ def list_all(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find_all("div", class_="col-lg-2 col-md-4 col-6")
+    matches = soup.find_all("li", class_="col mb-5 ficha_efecto")
 
     for elem in matches:
         try:
             season = 0
             url = elem.a["href"]
-            lang, title = clear_title(elem.find("p").text)
+            lang, title = clear_title(elem.find("h3").text)
 
             season = scrapertools.find_single_match(title, '(?i)\s*(\d+)\s*(?:st|nd|rd|th)\s+season')
             if not season:
-                season = scrapertools.find_single_match(title, '(?i)season\s*(\d+)')
+                season = scrapertools.find_single_match(title, '(?i)(?:season|temporada)\s*(\d+)')
             title = re.sub('(?i)\s*\d+\s*(?:st|nd|rd|th)\s+season', '', title)
-            title = re.sub('(?i)season\s*\d+', '', title)
+            title = re.sub('(?i)\s*(?:season|temporada)\s*\d+', '', title)
 
-            thumb = elem.img["src"]
+            thumb = elem.img["data-src"]
             year = c_type = ''
-            if elem.find("button", class_="btntwo"):
-                year = elem.find("button", class_="btntwo").text
-            if elem.find("button", class_="btnone"):
-                c_type = elem.find("button", class_="btnone").text.lower()
+            year = elem.find("span").text
+            if " · " in year:
+                c_type, year = elem.find("span").text.split(" · ", 1)
 
             new_item = Item(channel=item.channel, title=title, url=url, action="episodios", language=lang,
                             thumbnail=thumb, infoLabels={"year": year})
 
-            if c_type in ["live action", "pelicula"] or 'pelicula' in item.url:
+            if c_type.lower() in ["live action", "pelicula"] or 'pelicula' in item.url:
                 new_item.contentTitle = title
                 new_item.contentType = 'movie'
                 if not year: new_item.infoLabels['year'] = '-'
@@ -135,7 +164,6 @@ def list_all(item):
                 new_item.contentSerieName = title
                 new_item.contentType = 'tvshow'
                 if season: new_item.contentSeason = int(season)
-
         except:
             logger.error(elem)
             logger.error(traceback.format_exc())
@@ -179,29 +207,30 @@ def episodios(item):
     itemlist = list()
     infoLabels = item.infoLabels
 
-    soup = create_soup(item.url).find("div", class_="row jpage row-cols-md-5")
-    matches = soup.find_all("a")
-
-    for elem in matches:
-        url = elem["href"]
-        epi_num = scrapertools.find_single_match(url, "episodio-(\d+)")
-        infoLabels["season"] = item.contentSeason or 1
-        infoLabels["episode"] = epi_num
-        title = "1x%s - Episodio %s" %(epi_num, epi_num)
-
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos", language=item.language,
-                             infoLabels=infoLabels))
-
-    if item.contentTitle and len(itemlist) == 1:
-        return findvideos(itemlist[0])
-
-    tmdb.set_infoLabels_itemlist(itemlist, True)
-
-    if item.contentSerieName != '' and config.get_videolibrary_support() and len(itemlist) > 0 and not item.foldereps:
-        itemlist.append(
-            Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
-                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
-                 extra1='library'))
+    try:
+        caplist = read_api(item.url)
+        for elem in caplist["caps"]:
+            url = elem["url"]
+            infoLabels["season"] = item.contentSeason or 1
+            infoLabels["episode"] = int(elem["episodio"])
+            title = "{0}x{1} - Episodio {1}".format(infoLabels["season"], infoLabels["episode"])
+            
+            itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos", language=item.language,
+                                 infoLabels=infoLabels))
+        
+        if item.contentTitle and len(itemlist) == 1:
+            return findvideos(itemlist[0])
+        
+        tmdb.set_infoLabels_itemlist(itemlist, True)
+        
+        if item.contentSerieName != '' and config.get_videolibrary_support() and len(itemlist) > 0 and not item.foldereps:
+            itemlist.append(
+                Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
+                     action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
+                     extra1='library'))
+    except:
+        for line in sys.exc_info():
+            logger.error("%s" % line)
     
     return itemlist
 
@@ -212,7 +241,7 @@ def findvideos(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find_all("p", class_="play-video")
+    matches = soup.find_all("button", class_="play-video")
 
     for elem in matches:
         url = base64.b64decode(elem["data-player"]).decode("utf-8")
@@ -275,7 +304,7 @@ def clear_title(title):
     else:
         lang = 'VOSE'
 
-    title = re.sub(r'Audio|Latino|Castellano|\((.*?)\)', '', title)
+    title = re.sub(r'(?i)\s*(Audio|Latino|Castellano|\((.*?)\))', '', title)
     title = re.sub(r'\s:', ':', title)
 
     return lang, title

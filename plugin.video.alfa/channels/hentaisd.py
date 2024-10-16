@@ -15,7 +15,7 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from platformcode import config, logger
-from channels import filtertools
+from modules import filtertools
 from modules import autoplay
 from lib import jsunpack
 

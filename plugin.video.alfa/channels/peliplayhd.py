@@ -16,7 +16,7 @@ from platformcode import config, logger, platformtools
 from core.item import Item
 from core import httptools, scrapertools, jsontools, tmdb
 from core import servertools, channeltools
-from channels import filtertools
+from modules import filtertools
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 
@@ -34,7 +34,7 @@ canonical = {
 host = canonical['host'] or canonical['host_alt'][0]
 
 
-SERVER = {"fviplions": "Tiwikiwi", 'filelions': "Tiwikiwi", "sbbrisk": "Streamsb"}
+SERVER = {"fviplions": "Tiwikiwi", 'filelions': "Tiwikiwi", "sbbrisk": "Streamsb", "strwish": "Streamwish"}
           
 IDIOMAS = {"castellano": "CAST", "latino": "LAT", "ingles": "VOSE", "sub-es": "VOSE"}
 
@@ -42,7 +42,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = list(SERVER.values())
 
-__channel__='01pelis'
+__channel__='peliplayhd'
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', __channel__)
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', __channel__)
 try:
@@ -246,7 +246,6 @@ def episodios(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    
     soup = create_soup(item.url).find('section', class_='player')
     matches = soup.find_all('iframe')
     servers = soup.find_all('a')

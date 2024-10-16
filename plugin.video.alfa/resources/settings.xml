@@ -255,6 +255,8 @@
 
         <setting label="70015" type="lsep" />
         <setting id="downloads_show_torrent_paths" type="bool" label="70807" default="true" />
+        <setting id="downloads_move_to_remote" type="text" visible="false" />
+        <setting id="downloads_torrent_paths_list" type="text" visible="false" />
         <setting id="torrent_quality" type="enum" label="70808" lvalues="70785|70784|70241"
             default="0" />
         <setting id="downloads_block_size" label="70233" type="enum"
@@ -294,7 +296,7 @@
         <setting label="70810" type="lsep" />
         <setting id="assistant_flag_install" type="bool" label="80613" default="true" />
         <setting id="is_rooted_device" label="80616" type="labelenum"
-            values="check|rooted|no_rooted" default="check" />
+            values="check|rooted|no_rooted" default="no_rooted" />
         <setting id="assistant_auto_install" type="action" label="80614"
             action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAiZnVuY3Rpb24iLA0KICAgICJmb2xkZXIiOiAibGliIiwNCiAgICAiZnVuY3Rpb24iOiAiYWxmYV9hc3Npc3RhbnQiLA0KICAgICJtZXRob2QiOiAiaW5zdGFsbF9hbGZhX2Fzc2lzdGFudCIsDQogICAgIm9wdGlvbnMiOiAiYXV0byINCn0=)" />
         <setting id="assistant_manual_install" type="action" label="80615"

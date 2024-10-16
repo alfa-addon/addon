@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://emturbovid.com/t/[A-z0-9-]+)",
+        "pattern": "(https://emturbovid.com/t/[A-z0-9-]+(:?\\|Referer=[A-z0-9./:]+|))",
         "url": "\\1"
       }
     ]

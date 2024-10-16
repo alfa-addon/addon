@@ -128,11 +128,14 @@ def monkey_patch_modules(item):
         if item.module in content_modules:
             item.moduleContent = True
 
+    if item.contentChannel in modules:
+        item.contentModule = item.contentChannel
+
     return item
 
 
 def run(item=None):
-    from channels import downloads
+    from modules import downloads
     import channelselector
 
     logger.info()
@@ -216,9 +219,9 @@ def run(item=None):
             if os.path.exists(function_file):
                 try:
                     function = __import__('%s.%s' % (item.folder, item.function), None,
-                                         None, ["%s.%s" % (item.folder, item.function)])
+                                          None, ["%s.%s" % (item.folder, item.function)])
                 except ImportError:
-                    exec("import %s." + item.function + " as function")
+                    exec(("import %s." % item.folder) + item.function + " as function")
 
                 if function:
                     logger.info("Running function %s(%s) | %s" % (function.__name__, item.options, function.__file__))
@@ -338,7 +341,7 @@ def run(item=None):
                 # logger.debug("item_toPlay: " + "\n" + item.tostring('\n'))
 
                 # First checks if channel has a "play" function
-                if hasattr(module, 'play'):
+                if module and hasattr(module, 'play'):
                     logger.info("Executing channel 'play' method")
                     playlist = module.play(item)
                     b_favourite = item.isFavourite
@@ -367,7 +370,7 @@ def run(item=None):
             elif item.action == "findvideos":
                 from core import servertools
                 # First checks if channel has a "findvideos" function
-                if hasattr(module, 'findvideos'):
+                if module and hasattr(module, 'findvideos'):
                     itemlist = getattr(module, item.action)(item)
                     itemlist = servertools.filter_servers(itemlist)
 
@@ -402,7 +405,7 @@ def run(item=None):
 
             # Special action for downloading all episodes from a serie
             elif item.action == "download_all_episodes":
-                from channels import downloads
+                from modules import downloads
                 item.action = item.extra
                 del item.extra
                 downloads.save_download(item)
@@ -437,27 +440,39 @@ def run(item=None):
                 #  \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/
                 logger.info("Executing '%s' method" % item.action)
                 # Get itemlist from module.action
-                if hasattr(module, item.action):
+                if module and hasattr(module, item.action):
                     itemlist = getattr(module, item.action)(item)
 
                 # Run the method from the contentChannel
                 else:
+                    module_type = {
+                        "folder" : "modules" if item.contentModule else "channels",
+                        "type" : "module" if item.contentModule else "channel"
+                    }
+                    if item.contentModule: del item.contentModule
+
+                    logger.info("item.module")
+                    module_name = item.contentChannel
+                    module_package = '%s.%s' % (module_type["folder"], module_name)
                     module_file = os.path.join(config.get_runtime_path(),
-                                                'channels', item.contentChannel + ".py")
+                                               module_type['folder'], module_name + ".py")
                     module = None
+                    
                     if os.path.exists(module_file):
                         try:
-                            module = __import__('channels.%s' % item.contentChannel, None,
-                                                None, ["channels.%s" % item.contentChannel])
+                            module = __import__(module_package, None,
+                                                None, [module_package])
                         except ImportError:
-                            exec("import channels." + item.contentChannel + " as channel")
+                            exec("import " + module_package + " as module")
 
                     if not module:
-                        logger.error('Channel "%s" missing (%s: %s) or not imported: %s' \
-                                    % (item.contentChannel, module_file, os.path.exists(module_file), module))
+                        logger.error('%s "%s" missing (%s: %s) or not imported: %s' \
+                                    % (module_type['folder'], module_name, module_file, os.path.exists(module_file), module))
 
-                    logger.info("Running channel %s | %s" % (module.__name__, module.__file__))
-                    itemlist = getattr(module, item.action)(item)
+                    else:
+                        logger.info("Running %s %s | %s" % (module_type['type'], module.__name__ if module else module_name, 
+                                                            module.__file__ if module else module_file))
+                        itemlist = getattr(module, item.action)(item)
 
                 if config.get_setting('trakt_sync'):
                     from core import trakt_tools
@@ -620,7 +635,7 @@ def play_from_library(item):
     from time import sleep, time
     from modules import nextep
     from modules import autoplay
-    from channels import videolibrary
+    from modules import videolibrary
 
     # Intentamos reproducir una imagen (esto no hace nada y ademas no da error)
     xbmcplugin.setResolvedUrl(int(sys.argv[1]), True,
@@ -713,18 +728,41 @@ def play_from_library(item):
                         return
                     else:
                         item = videolibrary.play(itemlist[seleccion])[0]
+                        item = monkey_patch_modules(item)
                         if item.action == 'play':
                             platformtools.play_video(item)
+
                         else:
-                            channel_file = os.path.join(config.get_runtime_path(),
-                                                  'channels', item.contentChannel + ".py")
-                            channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
-                            if not channel:
-                                logger.error('Channel "%s" missing (%s: %s) or not imported: %s' \
-                                              % (item.contentChannel, channel_file, os.path.exists(channel_file), channel))
-                            if hasattr(channel, item.action):
-                                play_items = getattr(channel, item.action)(item.clone(action=item.action, 
-                                                     channel=item.contentChannel))
+                            module_type = {
+                                "folder" : "modules" if item.contentModule else "channels",
+                                "type" : "module" if item.contentModule else "channel"
+                            }
+                            if item.contentModule: del item.contentModule
+
+                            logger.info("item.%s" % module_type['type'])
+                            module_name = item.contentChannel
+                            module_package = '%s.%s' % (module_type["folder"], module_name)
+                            module_file = os.path.join(config.get_runtime_path(),
+                                                       module_type['folder'], module_name + ".py")
+                            module = None
+                            
+                            if os.path.exists(module_file):
+                                try:
+                                    module = __import__(module_package, None,
+                                                        None, [module_package])
+                                except ImportError:
+                                    exec("import " + module_package + " as module")
+
+                            if not module:
+                                logger.error('%s "%s" missing (%s: %s) or not imported: %s' \
+                                            % (module_type['folder'], module_name, module_file, os.path.exists(module_file), module))
+
+                            else:
+                                logger.info("Running %s %s | %s" % (module_type['type'], module.__name__ if module else module_name, 
+                                                                    module.__file__ if module else module_file))
+                                if hasattr(module, item.action):
+                                    play_items = getattr(module, item.action)(item.clone(action=item.action, channel=module_name, 
+                                                         module=module_name if module_type['type'] == 'module' else ''))
                             return
 
                     if (platformtools.is_playing() and item.action) or item.server == 'torrent' or autoplay.is_active(item.contentChannel):

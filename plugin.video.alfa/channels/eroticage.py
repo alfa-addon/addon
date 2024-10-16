@@ -13,33 +13,34 @@ from AlfaChannelHelper import DictionaryAdultChannel
 from AlfaChannelHelper import re, traceback, time, base64, xbmcgui
 from AlfaChannelHelper import Item, servertools, scrapertools, jsontools, get_thumb, config, logger, filtertools, autoplay
 
-IDIOMAS = AlfaChannelHelper.IDIOMAS_A
+IDIOMAS = {}
 list_language = list(set(IDIOMAS.values()))
-list_quality_movies = AlfaChannelHelper.LIST_QUALITY_MOVIES_A
+list_quality = []
+list_quality_movies = []
 list_quality_tvshow = []
-list_quality = list_quality_movies + list_quality_tvshow
-list_servers = AlfaChannelHelper.LIST_SERVERS_A
+list_servers = []
 forced_proxy_opt = 'ProxySSL'
 
-# https://www.erogarga.com  http://www.eroticage.net
+#  https://www.eroticage.net/  100    https://www.erogarga.com/  
 
 canonical = {
              'channel': 'eroticage', 
              'host': config.get_setting("current_host", 'eroticage', default=''), 
-             'host_alt': ["https://www.erogarga.com/"], 
+             'host_alt': ["https://www.eroticage.net/"], 
              'host_black_list': [], 
              'set_tls': True, 'set_tls_min': True, 'retries_cloudflare': 1, 'forced_proxy_ifnot_assistant': forced_proxy_opt, 'cf_assistant': False, 
              'CF': False, 'CF_test': False, 'alfa_s': True
             }
 host = canonical['host'] or canonical['host_alt'][0]
 
-timeout = 10
+timeout = 5
 kwargs = {}
 debug = config.get_setting('debug_report', default=False)
 movie_path = ''
 tv_path = ''
 language = []
 url_replace = []
+
 
 finds = {'find': dict([('find', [{'tag': ['div', 'main'], 'id': ['primary', 'main']}]),
                        ('find_all', [{'tag': ['article'], 'class': [re.compile(r"^post-\d+")]}])]), 
@@ -61,17 +62,8 @@ finds = {'find': dict([('find', [{'tag': ['div', 'main'], 'id': ['primary', 'mai
          'quality_clean': [['(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu', '']],
          'url_replace': [], 
          'profile_labels': {
-                            # 'list_all_title': dict([('find', [{'tag': ['h2']}]),
-                                                    # ('get_text', [{'tag': '', 'strip': True}])]),
-                            # 'list_all_thumbnail': {'find': [{'tag': ['video'], '@ARG': ['poster']}]},
-
-                            # 'list_all_stime': dict([('find', [{'tag': ['span'], 'itemprop': ['duration']}]),
-                                                    # ('get_text', [{'tag': '', 'strip': True}])]),
-                            # 'list_all_quality': dict([('find', [{'tag': ['span'], 'class': ['hd-video']}]),
-                                                      # ('get_text', [{'tag': '', 'strip': True}])]),
-                            # 'section_cantidad': dict([('find', [{'tag': ['span'], 'class': ['vids']}]),
-                                                      # ('get_text', [{'tag': '', 'strip': True, '@TEXT': '(\d+)'}])])
-                            },
+                            # 'list_all_thumbnail': {'find': [{'tag': ['img','video'], '@ARG': ['data-src','poster']}]},
+                           },
          'controls': {'url_base64': False, 'cnt_tot': 30, 'reverse': False, 'profile': 'default'},  ##'jump_page': True, ##Con last_page  aparecerá una línea por encima de la de control de página, permitiéndote saltar a la página que quieras
          'timeout': timeout}
 AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_path, movie_action='play', canonical=canonical, finds=finds, 
@@ -83,13 +75,34 @@ AlfaChannel = DictionaryAdultChannel(host, movie_path=movie_path, tv_path=tv_pat
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=host + "page/1/?filter=latest"))
-    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=host + "page/1/?filter=most-viewed"))
-    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=host + "page/1/?filter=popular"))
-    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=host + "page/1/?filter=longest"))
-    itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=host + "actors/page/1/", extra="PornStar"))
-    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=host + "categories/page/1/", extra="Categorias"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(Item(channel=item.channel, title="eroticage" , action="submenu", url= "https://www.eroticage.net/", chanel="eroticage", thumbnail = "https://i.postimg.cc/dVhYnmVg/eroticage-logo.jpg")) 
+    itemlist.append(Item(channel=item.channel, title="erogarga" , action="submenu", url= "https://www.erogarga.com/", chanel="erogarga", thumbnail = "https://i.postimg.cc/wvtXxBg1/erogarga.png"))
+    # itemlist.append(Item(channel=item.channel, title="" , action="submenu", url= "", chanel="", thumbnail = ""))
+    # itemlist.append(Item(channel=item.channel, title="" , action="submenu", url= "", chanel="", thumbnail = ""))
+    # itemlist.append(Item(channel=item.channel, title="" , action="submenu", url= "", chanel="", thumbnail = ""))
+    # itemlist.append(Item(channel=item.channel, title="" , action="submenu", url= "", chanel="", thumbnail = ""))
+    return itemlist
+
+
+def submenu(item):
+    logger.info()
+    itemlist = []
+    
+    config.set_setting("current_host", item.url, item.chanel)
+    AlfaChannel.host = item.url
+    AlfaChannel.canonical.update({'channel': item.chanel, 'host': AlfaChannel.host, 'host_alt': [AlfaChannel.host]})
+
+    itemlist.append(Item(channel=item.channel, title="Nuevos" , action="list_all", url=item.url + "page/1/?filter=latest", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas vistos" , action="list_all", url=item.url + "page/1/?filter=most-viewed", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mejor valorado" , action="list_all", url=item.url + "page/1/?filter=popular", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Mas largo" , action="list_all", url=item.url + "page/1/?filter=longest", chanel=item.chanel))
+    if "eroticage" in item.chanel:
+        itemlist.append(Item(channel=item.channel, title="Año" , action="section", url=item.url + "categories/", extra="año", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Pais" , action="section", url=item.url, extra="Pais", chanel=item.chanel))
+        itemlist.append(Item(channel=item.channel, title="Pornstars" , action="section", url=item.url + "actors/page/1/", extra="PornStar", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Categorias" , action="section", url=item.url + "tags/", extra="Categorias", chanel=item.chanel))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=item.url, chanel=item.chanel))
+    
     return itemlist
 
 
@@ -99,8 +112,11 @@ def section(item):
     findS = finds.copy()
     findS['url_replace'] = [['(\/(?:categories|channels|models|pornstars|actor)\/[^$]+$)', r'\1?filter=latest']]
     if item.extra == 'Categorias':
-        findS['categories'] = dict([('find', [{'tag': ['div'], 'class': ['tagcloud']}]),
+        findS['categories'] = dict([('find', [{'tag': ['div'], 'class': ['categories-list']}]),
                                     ('find_all', [{'tag': ['a'], 'class': ['tag-cloud-link']}])])
+    if item.extra == 'Pais':
+        findS['categories'] = dict([('find', [{'tag': ['li'], 'id': ['menu-item-4967']}]),
+                                    ('find_all', [{'tag': ['a'], 'href': True}])])
 
     return AlfaChannel.section(item, finds=findS, **kwargs)
 
@@ -108,7 +124,12 @@ def section(item):
 def list_all(item):
     logger.info()
     
-    return AlfaChannel.list_all(item, **kwargs)
+    findS = finds.copy()
+    if "eroticage" in item.chanel:
+        findS['controls']['cnt_tot'] = 25
+        findS['profile_labels']['list_all_thumbnail'] = {'find': [{'tag': ['img','video'], '@ARG': ['data-src','poster']}]}
+    
+    return AlfaChannel.list_all(item, finds=findS, **kwargs)
 
 
 def findvideos(item):

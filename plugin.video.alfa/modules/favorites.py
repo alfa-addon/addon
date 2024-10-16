@@ -12,10 +12,11 @@ else:
     import urllib                                                               # Usamos el nativo de PY2 que es más rápido
 
 import time
-
+import xbmc
 from core import filetools
 from core import scrapertools
 from core.item import Item
+from core.jsontools import json
 from platformcode import config, logger
 from platformcode import platformtools
 
@@ -33,9 +34,10 @@ def mainlist(item):
 
     for name, thumb, data in read_favourites():
         if "plugin://plugin.video.%s/?" % config.PLUGIN_NAME in data:
-            url = scrapertools.find_single_match(data, 'plugin://plugin.video.%s/\?([^;]*)' % config.PLUGIN_NAME) \
-                .replace("&quot", "")
-
+            # Windows usa la entidad html &quot; para las comillas, Android no. 
+            # Así que me aseguro de decodificar las comillas para normalizar.
+            data = data.replace("&quot;", '"')
+            url = scrapertools.find_single_match(data, 'plugin://plugin.video.%s/\?([^"]*)' % config.PLUGIN_NAME)
             item = Item().fromurl(url)
             item.title = name
             item.thumbnail = thumb
@@ -62,6 +64,7 @@ def mainlist(item):
 
 
 def read_favourites():
+    logger.info()
     favourites_list = []
     if filetools.exists(FAVOURITES_PATH):
         data = filetools.read(FAVOURITES_PATH)
@@ -77,6 +80,7 @@ def read_favourites():
 
 
 def save_favourites(favourites_list):
+    logger.info()
     raw = '<favourites>' + chr(10)
     for name, thumb, data in favourites_list:
         raw += '    <favourite name="%s" thumb="%s">%s</favourite>' % (name, thumb, data) + chr(10)
@@ -85,43 +89,70 @@ def save_favourites(favourites_list):
     return filetools.write(FAVOURITES_PATH, raw)
 
 
+def get_favourite(item):
+    logger.info()
+    fav_item = dict()
+    for favourite in get_favourites():
+        if favourite['title'] == item.from_title:
+            fav_item = favourite
+            break
+
+    return fav_item
+
+
+def add_remove_favourite(item):
+    logger.info()
+    # Comportamiento de Favourites.AddFavourite : Si existe el item se borra, si no existe se añade
+    if item.isFavourite:
+        favourite = get_favourite(item)
+    else:
+        favourite = {
+          "title": item.title,
+          "type": "window",
+          "window": "10025",
+          "windowparameter": "plugin://plugin.video.%s/?" % config.PLUGIN_NAME + item.tourl().replace('%3D','%3d'),
+          "thumbnail": item.thumbnail
+        }
+
+    request = {
+      "jsonrpc": "2.0",
+      "method": "Favourites.AddFavourite",
+      "params": favourite,
+      "id": 1
+    }
+
+    return json.loads(xbmc.executeJSONRPC(json.dumps(request)))
+
+
+def get_favourites():
+    logger.info()
+    request = {
+      "jsonrpc": "2.0",
+      "method": "Favourites.GetFavourites",
+      "params": {
+        "properties": ["path","window","windowparameter","thumbnail"]
+      },
+      "id": 1
+    }
+
+    return json.loads(xbmc.executeJSONRPC(json.dumps(request)))['result']['favourites']
+
+
 def addFavourite(item):
     logger.info()
-    # logger.debug(item.tostring('\n'))
-
-    # Si se llega aqui mediante el menu contextual, hay que recuperar los parametros action y channel
-    if item.from_action:
-        item.__dict__["action"] = item.__dict__.pop("from_action")
-    if item.from_channel:
-        item.__dict__["channel"] = item.__dict__.pop("from_channel")
-
-    favourites_list = read_favourites()
-    data = "ActivateWindow(10025,&quot;plugin://plugin.video.%s/?" % config.PLUGIN_NAME + item.tourl() + "&quot;,return)"
-    titulo = item.title.replace('"', "'")
-    favourites_list.append((titulo, item.thumbnail, data))
-
-    if save_favourites(favourites_list):
-        platformtools.dialog_ok(config.get_localized_string(30102), titulo,
+    response = add_remove_favourite(item)
+    if response['result'] == 'OK':
+        platformtools.dialog_ok(config.get_localized_string(30102), item.title,
                                 config.get_localized_string(30108))  # 'se ha añadido a favoritos'
 
 
 def delFavourite(item):
     logger.info()
-    # logger.debug(item.tostring('\n'))
-
-    if item.from_title:
-        item.title = item.from_title
-
-    favourites_list = read_favourites()
-    for fav in favourites_list[:]:
-        if fav[0] == item.title:
-            favourites_list.remove(fav)
-
-            if save_favourites(favourites_list):
-                platformtools.dialog_ok(config.get_localized_string(30102), item.title,
-                                        config.get_localized_string(30105).lower())  # 'Se ha quitado de favoritos'
-                platformtools.itemlist_refresh()
-            break
+    response = add_remove_favourite(item)
+    if response['result'] == 'OK':
+        platformtools.dialog_ok(config.get_localized_string(30102), item.from_title,
+                                config.get_localized_string(30105).lower())  # 'Se ha quitado de favoritos'
+        platformtools.itemlist_refresh()
 
 
 def renameFavourite(item):

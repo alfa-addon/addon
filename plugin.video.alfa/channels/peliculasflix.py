@@ -17,7 +17,7 @@ from platformcode import logger, config
 from channelselector import get_thumb
 from core.item import Item
 from modules import autoplay
-from channels import filtertools
+from modules import filtertools
 from core.jsontools import json
 
 canonical = {

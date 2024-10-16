@@ -17,7 +17,7 @@ from core import tmdb
 from platformcode import logger, config
 from channelselector import get_thumb
 from bs4 import BeautifulSoup
-from channels import filtertools
+from modules import filtertools
 from modules import autoplay
 import datetime
 

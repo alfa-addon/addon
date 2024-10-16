@@ -180,8 +180,8 @@ def init():
         except:                                                                 # Si hay problemas de threading, nos vamos
             logger.error(traceback.format_exc())
         
-        # LIBTORRENT: se descarga el binario de Libtorrent cada vez que se actualiza Alfa
-        update_libtorrent()
+        # unRAR: se descarga el binario de unRAR cada vez que se actualiza Alfa
+        update_unrar()
 
         # QUASAR: Preguntamos si se hacen modificaciones a Quasar
         if not filetools.exists(filetools.join(config.get_data_path(), "quasar.json")) \
@@ -293,13 +293,12 @@ def verify_script_alfa_update_helper(silent=True, emergency=False, github_url=''
     repos_dir = 'downloads/repos/'
     alfa_repo = ['repository.alfa-addon', '1.0.8', '*', '']
     alfa_helper = ['script.alfa-update-helper', '0.0.7', '*', '']
-    torrest_repo = ['repository.github', '0.0.8', '*', 'V']
-    torrest_addon = ['plugin.video.torrest', '0.0.17', '*', '']
+    torrest_repo = ['repository.github', '0.0.9', '*', 'V']
+    torrest_addon = ['plugin.video.torrest', '0.0.18', '*', '']
     futures_script = ['%sscript.module.futures' % repos_dir, '2.2.1', 'PY2', '']
     if emergency:
         alfa_repo[3] = 'F'
         alfa_helper[3] = 'F'
-        torrest_repo[3] = 'F'
     
     try:
         versiones = config.get_versions_from_repo()
@@ -380,7 +379,6 @@ def verify_script_alfa_update_helper(silent=True, emergency=False, github_url=''
     if versiones.get('addons_db', ''):
         
         repos = [(alfa_repo[0], alfa_repo[0]), (alfa_repo[0], ADDON_NAME), (alfa_repo[0], alfa_helper[0]), \
-                    (torrest_repo[0], torrest_repo[0]), (torrest_repo[0], torrest_addon[0]), \
                     ('repository.xbmc.org', futures_script[0].replace(repos_dir, ''))]
         try:
             for repo, addon in repos:
@@ -732,33 +730,19 @@ def update_external_addon(addon_name):
     return False
 
 
-def update_libtorrent():
+def update_unrar():
     logger.info()
-    
-    if not config.get_setting("mct_buffer", server="torrent", default="") \
-                               or isinstance(config.get_setting("mct_buffer", server="torrent"), int) \
-                               or isinstance(config.get_setting("bt_buffer", server="torrent"), int):
-        if not config.get_setting("torrent_client", server="torrent", default=0):
-            config.set_setting("torrent_client", 0, server="torrent")
-        config.set_setting("mct_buffer", "50", server="torrent")
-        if not config.get_setting("mct_download_path", server="torrent", default=""):
-            config.set_setting("mct_download_path", config.get_setting("downloadpath"), server="torrent")
+
+    if not config.get_setting("mct_rar_unpack", server="torrent", default=""):
+        config.set_setting("torrent_client", config.get_setting("torrent_client", server="torrent", default=0), server="torrent")
         config.set_setting("mct_background_download", config.get_setting("mct_background_download", server="torrent", default=True), server="torrent")
         config.set_setting("mct_rar_unpack", config.get_setting("mct_rar_unpack", server="torrent", default=True), server="torrent")
-        config.set_setting("bt_buffer", "50", server="torrent")
-        if not config.get_setting("bt_download_path", server="torrent", default=""):
-            config.set_setting("bt_download_path", config.get_setting("downloadpath"), server="torrent")
-        config.set_setting("mct_download_limit", config.get_setting("mct_download_limit", server="torrent", default=""), server="torrent")
         config.set_setting("magnet2torrent", config.get_setting("magnet2torrent", server="torrent", default=False), server="torrent")
-        
-    if not filetools.exists(filetools.join(config.get_setting("bt_download_path", server="torrent"), 'BT-torrents')):
-        filetools.mkdir(filetools.join(config.get_setting("bt_download_path", server="torrent"), 'BT-torrents'))
-    if not filetools.exists(filetools.join(config.get_setting("mct_download_path", server="torrent"), 'MCT-torrent-videos')):
-        filetools.mkdir(filetools.join(config.get_setting("mct_download_path", server="torrent"), 'MCT-torrent-videos'))
-        filetools.mkdir(filetools.join(config.get_setting("mct_download_path", server="torrent"), 'MCT-torrents'))
+        config.set_setting("allow_seeding", config.get_setting("allow_seeding", server="torrent", default=True), server="torrent")
+
     if not filetools.exists(ADDON_USERDATA_BIN_PATH):
         filetools.mkdir(ADDON_USERDATA_BIN_PATH)
-        
+
     if not filetools.exists(ADDON_CUSTOMCODE_JSON) or not config.get_setting("unrar_path", server="torrent", default="") \
                     or (not 'unrar' in str(filetools.listdir(ADDON_USERDATA_BIN_PATH)).lower() and \
                     ADDON_PLATFORM not in ["android", "atv2"]) or ADDON_PLATFORM in ["android", "atv2"]:
@@ -841,70 +825,7 @@ def update_libtorrent():
     if filetools.exists(filetools.join(config.get_data_path(), 'alfa-desktop-assistant.version')) \
                         and config.get_setting("assistant_mode") == "este":
         version_dict = open_alfa_assistant(getWebViewInfo=True, assistantLatestVersion=False, retry=True)
-    
-    # Ahora descargamos la última versión disponible de Libtorrent para esta plataforma
-    try:
-        # Saltamos plataformas no soportadas
-        if PY3 and (ADDON_PLATFORM in ['windows', 'xbox'] or ADDON_PLATFORM in ["android", "atv2"]):
-            config.set_setting("libtorrent_path", "", server="torrent")
-            config.set_setting("libtorrent_version", "ERROR/UNSUPPORTED", server="torrent")
-            return
-        
-        version_base = filetools.join(ADDON_PATH, 'lib', 'python_libtorrent')
-        libt_dir = filetools.listdir(filetools.join(ADDON_USERDATA_PATH, 'custom_code', 'lib'))
-        if 'libtorrent' in str(libt_dir) or (not 'libtorrent' in str(filetools.listdir(ADDON_USERDATA_BIN_PATH)) and \
-                    ADDON_PLATFORM not in ["android", "atv2"]):
-            for libt_file in libt_dir:
-                if 'libtorrent' in libt_file:
-                    filetools.remove(filetools.join(ADDON_USERDATA_PATH, 'custom_code', 'lib', libt_file), silent=True)
-            current_system = ''
-            current_version = ''
-        elif config.get_setting("libtorrent_version", server="torrent", default="") \
-                    and config.get_setting("libtorrent_path", server="torrent", default=""):
-            current_system, current_version = config.get_setting("libtorrent_version", server="torrent", default="/").split('/')
-        else:
-            current_system = ''
-            current_version = ''
-            
-        if '1.1.1' not in current_version and ('arm' in current_system or 'aarch64' in current_system): current_version = ''
 
-        version_base = filetools.join(version_base, current_system)
-        if current_version:
-            old_version = current_version
-            new_version = sorted(filetools.listdir(version_base))
-            new_version_alt = new_version[:]
-            if new_version:
-                for folder in new_version_alt:
-                    if not filetools.isdir(filetools.join(version_base, folder)):
-                        new_version.remove(folder)
-                if old_version != new_version[-1]:
-                    current_version = ''
-            else:
-                current_version = ''
-    except:
-        current_version = ''
-        logger.error(traceback.format_exc(1))
-    
-    custom_code_json = filetools.exists(ADDON_CUSTOMCODE_JSON)
-    if custom_code_json and current_version:
-        msg = 'Libtorrent_path: %s' % config.get_setting("libtorrent_path", server="torrent", default="")
-        if current_version not in msg:
-            msg += ' - Libtorrent_version: %s/%s' % (current_system, current_version)
-        logger.info(msg, force=True)
-        return
-
-    try:
-        logger.info('Libtorrent stored version: %s, %s' % (config.get_setting("libtorrent_version", \
-                            server="torrent", default=""), str(custom_code_json)), force=True)
-        from lib.python_libtorrent.python_libtorrent import get_libtorrent
-    except Exception as e:
-        logger.error(traceback.format_exc())
-        if not PY3:
-            e = unicode(str(e), "utf8", errors="replace").encode("utf8")
-        config.set_setting("libtorrent_path", "", server="torrent")
-        if not config.get_setting("libtorrent_error", server="torrent", default=''):
-            config.set_setting("libtorrent_error", str(e), server="torrent")
-    
     return
     
 
@@ -973,14 +894,9 @@ def reactivate_unrar(init=False, mute=True):
     download_paths = []
     
     for torr_client, save_path_videos in list(torrent_paths.items()):
-        if 'BT' not in torr_client and 'MCT' not in torr_client:
-            torr_client = torr_client.lower()
+        torr_client = torr_client.lower()
         if '_' not in torr_client and '_web' not in torr_client and save_path_videos \
                             and save_path_videos not in str(download_paths):
-            if 'BT' in torr_client or 'MCT' in torr_client:
-                save_path_videos = filetools.dirname(save_path_videos)
-                if save_path_videos in str(download_paths): 
-                    continue
             download_paths.append((torr_client, save_path_videos))              # Agregamos el path para este Cliente
 
             # Borramos archivos de control "zombies"
@@ -990,7 +906,7 @@ def reactivate_unrar(init=False, mute=True):
             if rar_control and len(rar_control['rar_files']) == 1:
                 ret = filetools.remove(filetools.join(save_path_videos, '_rar_control.json'), silent=True)
 
-    config.set_setting("torrent_paths_list", download_paths, channel="downloads")
+    config.set_setting("downloads_torrent_paths_list", str(download_paths))
     search_for_unrar_in_error(download_paths, init=init)    
 
 

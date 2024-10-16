@@ -30,9 +30,10 @@ assistant = False
 canonical = {
              'channel': 'hdfull', 
              'host': config.get_setting("current_host", 'hdfull', default=''), 
-             "host_alt": ["https://hd-full.fit/", "https://hdfull.today/", "https://hdfull.quest/"], 
+             "host_alt": ["https://hdfull.blog/", "https://hdfull.today/", "https://hdfull.quest/"], 
              'host_verification': '%slogin', 
-             "host_black_list": ["https://hd-full.me/", "https://hd-full.vip/", 
+             "host_black_list": ["https://hd-full.info/", "https://hd-full.sbs/", "https://hd-full.life/", 
+                                 "https://hd-full.fit/", "https://hd-full.me/", "https://hd-full.vip/", 
                                  "https://hd-full.lol/", "https://hd-full.co/", "https://hd-full.biz/", 
                                  "https://hd-full.in/", "https://hd-full.im/", "https://hd-full.one/", 
                                  "https://hdfull.icu/", "https://hdfull.sbs/", "https://hdfull.org/", 
@@ -516,7 +517,8 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 if elem_json['mediatype'] == 'tvshow' and not elem.get('shows', ''): continue
                 if elem_json['mediatype'] == 'movie' and not elem.get('movies', ''): continue
                 elem_json['title'] = elem.get('title', '')
-                elem_json['url'] = AlfaChannel.urljoin(host, 'lista/' + (elem.get('permalink', '') or elem.get('perma', '')))
+                elem_json['url'] = AlfaChannel.urljoin(host, 'lista/' + (elem.get('permalink', '') or elem.get('perma', '')) \
+                                                       + '-' + elem.get('id', '1'))
                 elem_json['list_info'] = {elem.get('id', '1'): elem.get('id', '1')}
                 elem_json['action'] = 'list_all'
                 elem_json['extra'] = 'listas_res'
@@ -564,7 +566,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 path = tv_path if elem_json['mediatype'] in ['tvshow', 'episode'] else movie_path if elem_json['mediatype'] == 'movie' else tv_path
 
                 if not elem.get('permalink', '') and not elem.get('perma', ''): continue
-                elem_json['url'] = AlfaChannel.urljoin(host, '%s/' % path + (elem.get('permalink', '') or elem.get('perma', '')))
+                elem_json['url'] = AlfaChannel.urljoin(host, '%s' % path + (elem.get('permalink', '') or elem.get('perma', '')))
                 if elem_json['mediatype'] == 'episode':
                     elem_json['url'] += '/temporada-%s/episodio-%s' % (elem.get('season', '1'), elem.get('episode', '00').zfill(2))
                 elem_json['info'] = {elem.get('id', '0'): elem.get('id', '0')}
@@ -598,7 +600,7 @@ def list_all_matches(item, matches_int, **AHkwargs):
                 elem_json['language'] = '*%s' % elem.get('languages', '')
 
                 if not elem.get('permalink', '') and not elem.get('perma', ''): continue
-                elem_json['url'] = AlfaChannel.urljoin(host, '%s/' % path + (elem.get('permalink', '') or elem.get('perma', '')))
+                elem_json['url'] = AlfaChannel.urljoin(host, '%s' % path + (elem.get('permalink', '') or elem.get('perma', '')))
                 elem_json['url'] += '/temporada-%s/episodio-%s' % (elem.get('season', '1'), elem.get('episode', '00').zfill(2))
                 elem_json['info'] = {elem.get('id', '0'): elem.get('show', {}).get('id', '0')}
 
@@ -724,14 +726,18 @@ def seasons_matches(item, matches_int, **AHkwargs):
             continue
 
         elem_json['title'] = item.contentSerieName
-        str_ = get_status(status, elem_json, mediatype='tvshow')
-        elem_json['plot_extend'] = str_.replace('[COLOR blue](Visto)[/COLOR]', '')
-        elem_json = add_context(elem_json, str_, mediatype='tvshow')
 
         matches.append(elem_json.copy())
 
     if matches: matches = sorted(matches, key=lambda elem_json: int(elem_json['season']))
     matches = find_hidden_seasons(item, matches, item.info)
+    for elem_json in matches:
+        str_ = get_status(status, elem_json, mediatype='tvshow')
+        if str_.replace('[COLOR blue](Visto)[/COLOR]', ''):
+            str_sea = get_status(status, elem_json, mediatype='season')
+            elem_json['playcount'] = 1 if 'Visto' in str_sea else 0
+        elem_json['plot_extend'] = str_.replace('[COLOR blue](Visto)[/COLOR]', '')
+        elem_json = add_context(elem_json, str_, mediatype='season')
 
     return matches
 
@@ -810,7 +816,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
             elem_json['language'] = '*%s' % elem.get('languages', '')
 
             if not elem.get('permalink', '') and not elem.get('perma', ''): continue
-            elem_json['url'] = AlfaChannel.urljoin(host, '%s/' % path + (elem.get('permalink', '') or elem.get('perma', '')))
+            elem_json['url'] = AlfaChannel.urljoin(host, '%s' % path + (elem.get('permalink', '') or elem.get('perma', '')))
             elem_json['url'] += '/temporada-%s/episodio-%s' % (elem.get('season', '1'), elem.get('episode', '00').zfill(2))
             elem_json['info'] = {elem.get('id', '0'): sid}
 
@@ -826,6 +832,7 @@ def episodesxseason_matches(item, matches_int, **AHkwargs):
         elem_json['plot_extend'] = str_.replace('[COLOR blue](Visto)[/COLOR]', '')
         elem_json['plot_extend_show'] = False
         elem_json['playcount'] = 1 if 'Visto' in str_ else 0
+        if elem.get('episode_list') or item.episode_list: elem_json['episode_list'] = elem.get('episode_list', {}).copy() or item.episode_list.copy()
         elem_json = add_context(elem_json, str_)
 
         matches.append(elem_json.copy())
@@ -947,7 +954,7 @@ def play(item):
         item.info = {item.url.split("###")[1].split(";")[0]: item.url.split("###")[1].split(";")[0]}
         item.url = item.url.split("###")[0]
     mediatype = '1' if item.contentType == 'tvshow' else '2' if item.contentType == 'movie' else '3' if item.contentType == 'episode' else '4'
-    if item.info:
+    if item.info and config.get_setting("videolibrary_mark_as_watched"):
         post = "target_id=%s&target_type=%s&target_status=1" % (list(item.info.keys())[0], mediatype)
         
         data = agrupa_datos(AlfaChannel.urljoin(host, "a/status"), post=post, hide_infobox=True)
@@ -1332,13 +1339,16 @@ def set_status__(item):
         agreg = 'Pelicula "%s"' % item.contentTitle
         mediatype = '2'
     else:
-        agreg = 'Serie "%s"' % item.contentSerieName
-        mediatype = '1' if item.contentType == 'tvshow' else '3' if item.contentType == 'episode' else '4'
+        agreg = 'Serie "%s"' % item.contentSerieName or item.contentTitle
+        mediatype = '1' if item.contentType == 'tvshow' else '3' if item.contentType in ['season', 'episode'] else '4'
+    header = item.contentSerieName or item.contentTitle
+
     if "###" in item.url:
         item.info = {item.url.split("###")[1].split(";")[0]: item.url.split("###")[1].split(";")[0]}
         item.url = item.url.split("###")[0]
     info = list(item.info.keys())[0] if item.info else ''
     info_show = list(item.info.values())[0] if item.info else ''
+    info_season = list(item.episode_list.values())[0] if item.episode_list else ''
     list_info = list(item.list_info.values())[0] if item.list_info else ''
 
     if "Abandonar" in item.title and item.list_info:
@@ -1355,6 +1365,20 @@ def set_status__(item):
         title = "[COLOR darkgrey][B]Abandonando %s[/B][/COLOR]"
         path = "/a/status"
         post = "target_id=%s&target_type=%s&target_status=0" % (info_show, mediatype)
+
+    elif "Marcar Visto Temporada" in item.title and info_season:
+        title = "[COLOR blue][B]Visto %s[/B][/COLOR]"
+        header = item.season_search or item.contentSerieName or item.contentTitle
+        agreg = '"Temporada %s de ' % (item.contentSeason or "'Especiales'") + '%s"' % header
+        path = "/a/status"
+        post = "target_id=%s&target_type=%s&target_status=1" % (info_season, mediatype)
+
+    elif "Visto Temporada" in item.title and info_season:
+        title = "[COLOR darkgrey][B]No Vista %s[/B][/COLOR]"
+        header = item.season_search or item.contentSerieName or item.contentTitle
+        agreg = '"Temporada %s de ' % (item.contentSeason or "'Especiales'") + '%s"' % header
+        path = "/a/status"
+        post = "target_id=%s&target_type=%s&target_status=0" % (info_season, mediatype)
 
     elif "Marcar Visto" in item.title:
         title = "[COLOR blue][B]Visto %s[/B][/COLOR]"
@@ -1413,12 +1437,12 @@ def set_status__(item):
 
     data = agrupa_datos(AlfaChannel.urljoin(host, path), post=post, hide_infobox=True)
     check_user_status(reset=True)
-    if debug: logger.debug('Post: %s' % post)
+    if debug: logger.debug('Post: %s; Title: %s' % (post, title % agreg))
 
     screen_refresh()
 
     title = title % agreg
-    dialog_ok(item.contentSerieName or item.contentTitle, title)
+    dialog_ok(header, title)
 
 def screen_refresh(item={}, replace=False):
 
@@ -1434,10 +1458,12 @@ def get_status(status, elem, mediatype=''):
         info = elem.get('info', {})
         list_info = list(elem.get('list_info', {}).values())[0] if elem.get('list_info', {}) else ''
         mediatype = elem.get('mediatype', mediatype)
+        season = elem.get('season', 0)
     else:
         info = elem.info or {}
         list_info = list(elem.list_info.values())[0] if elem.list_info else ''
         mediatype = elem.contentType or mediatype
+        season = elem.contentSeason or 0
 
     if debug: logger.debug('info: %s; list_info: %s; mediatype: %s' % (info, list_info, mediatype))
     if not status or not account or not mediatype or (not info and not list_info):
@@ -1452,6 +1478,9 @@ def get_status(status, elem, mediatype=''):
     elif mediatype == 'tvshow':
         mediatype = 'shows'
         state = state_shows.copy()
+    elif mediatype == 'season':
+        mediatype = 'seasons'
+        state = state_episodes.copy()
     elif mediatype == 'episode':
         mediatype = 'episodes'
         state = state_episodes.copy()
@@ -1468,6 +1497,32 @@ def get_status(status, elem, mediatype=''):
              or (list_info and list_info in status.get('status', {}).get(mediatype, '')):
         str2 = state[status['status'][mediatype][list(info.values())[0] if info else list_info]]
         if str2: str2 = " [COLOR %s](%s)[/COLOR]" % ('orange' if 'Siguiendo' in str2 else 'blue', str2)
+
+    if mediatype == 'seasons':
+        if info and list(info.values())[0] in status.get('status', {}).get('shows', ''):
+            path = '/a/episodes'
+            post = 'action=season&start=0&limit=0&show=%s&season=%s' % (list(info.values())[0], season if season else '')
+            epis = agrupa_datos(AlfaChannel.urljoin(host, path), json=True, post=post, hide_infobox=True)
+            if epis and not isinstance(epis, list): epis = ast.literal_eval(epis)
+
+            if epis and isinstance(epis, list):
+                season_list = ''
+                visto = '1'
+                for epi in epis:
+                    if epi.get('id'):
+                        season_list += '%s,' % epi['id']
+                        if status.get('status', {}).get('episodes', '').get(epi['id'], '0') == '0':
+                            visto = '0'
+
+                if season_list:
+                    if isinstance(elem, _dict):
+                        elem['episode_list'] = {season: season_list.rstrip(',')}
+                        if debug: logger.debug("elem['episode_list']: %s; %s" % (elem['episode_list'], visto))
+                    else:
+                        elem.episode_list = {season: season_list.rstrip(',')}
+                        if debug: logger.debug("elem.episode_list: %s; %s" % (elem.episode_list, visto))
+                    str2 = state[visto]
+                    str2 = " [COLOR %s](%s)[/COLOR]" % ('orange' if 'Siguiendo' in str2 else 'blue', str2)
             
     if mediatype == 'episodes':
         if info and list(info.values())[0] in status.get('favorites', {}).get('shows', ''):
@@ -1514,7 +1569,7 @@ def add_context(elem_json, str_, mediatype=''):
         context_dict['title'] = "[COLOR limegreen][B]Abandonar[/B][/COLOR]"
         elem_json['context'].append(context_dict.copy())
 
-    if elem_json.get('mediatype', mediatype) in ['movie', 'tvshow']:
+    if elem_json.get('mediatype', mediatype) in ['movie', 'tvshow', 'season']:
         if "Pendiente" in str_:
             context_dict['title'] = "[COLOR limegreen][B]Quitar de Pendientes[/B][/COLOR]"
             elem_json['context'].append(context_dict.copy())
@@ -1536,7 +1591,7 @@ def add_context(elem_json, str_, mediatype=''):
         context_dict['title'] = "[COLOR blue][B]Marcar Visto[/B][/COLOR]"
         elem_json['context'].append(context_dict.copy())
 
-    elif elem_json.get('mediatype', mediatype) == 'tvshow':
+    elif elem_json.get('mediatype', mediatype)  in ['tvshow', 'season']:
         if "Siguiendo" in str_ :
             context_dict['title'] = "[COLOR limegreen][B]Quitar de Seguir[/B][/COLOR]"
             elem_json['context'].append(context_dict.copy())
@@ -1550,6 +1605,13 @@ def add_context(elem_json, str_, mediatype=''):
         else:
             context_dict['title'] = "[COLOR orange][B]Agregar a Finalizadas[/B][/COLOR]"
             elem_json['context'].append(context_dict.copy())
+        
+        if elem_json.get('episode_list', '') and elem_json.get('mediatype', mediatype) in ['season']:
+            context_dict['title'] = "[COLOR limegreen][B]Marcar No Visto Temporada[/B][/COLOR]"
+            elem_json['context'].append(context_dict.copy())
+
+            context_dict['title'] = "[COLOR blue][B]Marcar Visto Temporada[/B][/COLOR]"
+            elem_json['context'].append(context_dict.copy())
 
     elif elem_json.get('mediatype', mediatype) == 'episode':
         context_dict['title'] = "[COLOR limegreen][B]Marcar No Visto[/B][/COLOR]"
@@ -1557,6 +1619,17 @@ def add_context(elem_json, str_, mediatype=''):
 
         context_dict['title'] = "[COLOR blue][B]Marcar Visto[/B][/COLOR]"
         elem_json['context'].append(context_dict.copy())
+
+        if elem_json.get('episode_list', ''):
+            context_dict['title'] = "[COLOR limegreen][B]Marcar No Visto Temporada[/B][/COLOR]"
+            context_dict['episode_list'] = elem_json['episode_list'].copy()
+            elem_json['context'].append(context_dict.copy())
+            del context_dict['episode_list']
+
+            context_dict['title'] = "[COLOR blue][B]Marcar Visto Temporada[/B][/COLOR]"
+            context_dict['episode_list'] = elem_json['episode_list'].copy()
+            elem_json['context'].append(context_dict.copy())
+            del context_dict['episode_list']
 
         if list(context_dict['info'].values())[0] != '0':                       # No funciona en "Para Ver"
             context_dict_show = context_dict.copy()
@@ -1628,8 +1701,8 @@ def find_hidden_seasons(item, matches, sid):
             data = agrupa_datos(url, post=post, json=True, force_check=False, force_login=False, alfa_s=True)
 
             if data and isinstance(data, list):
-                matches.append({'url': url_season + (str(high_season) if high_json_season > 0 else ''), 
-                                'season': high_season, 'info': {sid: sid}})
+                matches.append({'url': url_season + (str(high_season) if high_json_season > 0 else ''), 'info': {sid: sid}, 
+                                'title': item.contentSerieName or item.contentTitle, 'season': high_season})
                 if high_season > tmdb_season: item.infoLabels['number_of_seasons'] = high_season
 
     except Exception:

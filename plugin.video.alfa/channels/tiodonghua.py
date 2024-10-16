@@ -160,11 +160,10 @@ def list_all_matches(item, matches_int, **AHkwargs):
         try:
             if item.c_type == 'episodios':
                 spans = elem.find_all('span')
-                if re.search('(?i)(Youko|Bilibili|Tencent|Iqiyi)', spans[0].get_text(strip=True)): continue
-                season, episode = scrapertools.find_single_match(spans[1].get_text(strip=True), '^T(\d+)\s+E(\d+)')
+                season, episode = scrapertools.find_single_match(spans[0].get_text(strip=True), '^T(\d+)\s+E(\d+)')
                 elem_json['season'] = int(season or 1)
                 elem_json['episode'] = int(episode or 1)
-                elem_json['title'] = spans[2].get_text(strip=True)
+                elem_json['title'] = spans[1].get_text(strip=True)
                 elem_json['mediatype'] = 'episode'
                 elem_json['url'] = elem.find("a").get('href', '')
             elif item.c_type == 'search':

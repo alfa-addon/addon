@@ -82,7 +82,7 @@ finds = {'find': {'find_all': [{'tag': ['tr'], 'name': ['hover'], '@LIM': 500}]}
          'controls': {'min_temp': min_temp, 'url_base64': True, 'add_video_to_videolibrary': True, 'cnt_tot': 20,
                       'get_lang': False, 'reverse': False, 'videolab_status': True, 'tmdb_extended_info': True, 'seasons_search': False, 
                       'host_torrent': host_torrent, 'btdigg': False, 'duplicates': [], 'dup_list': 'title', 'dup_movies': True, 
-                      'join_dup_episodes': False, 'manage_torrents': True},
+                      'join_dup_episodes': False, 'manage_torrents': True, 'sort_findvideos': True},
          'timeout': timeout}
 AlfaChannel = DictionaryAllChannel(host, movie_path=movie_path, tv_path=tv_path, canonical=canonical, finds=finds, 
                                    idiomas=IDIOMAS, language=language, list_language=list_language, list_servers=list_servers, 
@@ -401,7 +401,7 @@ def findvideos_links(item, elem_in, elem_json):
                         elem_json['url'] = url.get('href', '')
                         if elem_json['url'].endswith('.torrent'): break
                     if elem_json.get('url'): elem_json['url'] = AlfaChannel.urljoin(host, elem_json['url'])
-                elif not elem_json.get('torrent_info'):
+                elif not elem_json.get('torrent_info') and not 'POST' in str(elem):
                     elem_json['torrent_info'] = elem_json['size'] = elem.get_text(strip=True)
 
             if x == 3 and not elem_json.get('torrent_info'):

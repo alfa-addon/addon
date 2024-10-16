@@ -25,7 +25,7 @@ from core import jsontools
 from core.item import Item
 from platformcode import config
 from platformcode import logger
-from channels import filtertools
+from modules import filtertools
 from modules import autoplay
 
 DEBUG = False
@@ -123,6 +123,7 @@ class AlfaChannelHelper:
         self.color_setting = unify.colors_file[UNIFY_PRESET]
         self.window = window
         self.Comment = None
+        self.SEARCH_CLEAN = '\¿|\?|\/|\$|\@|\<|\>|\.'
 
         self.httptools = httptools
         self.response = self.httptools.build_response(HTTPResponse=True)        # crea estructura vacía de response
@@ -168,7 +169,9 @@ class AlfaChannelHelper:
                     if self.host != self.domains_updated[self.channel].get('host_alt', [''])[0] or self.host != self.canonical['host_alt'][0] \
                                     or self.domains_updated[self.channel].get('host_alt', []) != self.canonical['host_alt'] \
                                     or self.domains_updated[self.channel].get('UPDATE_CANONICAL'):
-                        self.host = self.canonical['host'] = self.domains_updated[self.channel].get('host_alt', [self.canonical['host']])[0]
+                        self.host = self.canonical['host'] = self.domains_updated[self.channel].get('host_alt', ([self.canonical['host']] \
+                                                                                                    if self.canonical['host'] else []) \
+                                                                                                    or self.canonical['host_alt'])[0]
                         if config.get_setting("current_host", self.channel) != self.host:
                             config.set_setting("current_host", self.host, self.channel)
                             channel = __import__('channels.%s' % self.channel, None, None, ["channels.%s" % self.channel])
@@ -865,7 +868,7 @@ class AlfaChannelHelper:
         if self.DEBUG: logger.debug('find_LANGUAGE: %s' % language)
         return language
 
-    def convert_size(self, size):
+    def convert_size(self, size, silent=False):
         
         if isinstance(size, (str, unicode)): size = size.replace('[COLOR magenta][B]RAR-[/B][/COLOR]', '')
         s = 0
@@ -883,7 +886,7 @@ class AlfaChannelHelper:
         except Exception:
             if isinstance(size, float):  s = size
 
-        if self.DEBUG: logger.debug('SIZE: %s / %s' % (size, s))
+        if self.DEBUG and not silent: logger.debug('SIZE: %s / %s' % (size, s))
         return s
 
     def convert_time(self, seconds):
@@ -1499,14 +1502,14 @@ class DictionaryAllChannel(AlfaChannelHelper):
         self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
                                          and config.get_setting('find_alt_search', item.channel, default=False)
         #if self.btdigg: self.cnt_tot = finds_controls.get('cnt_tot', 20)
-        if item.texto: item.texto = item.texto.replace('%20', ' ').replace('+', ' ').strip()
+        if item.texto: item.texto = re.sub(self.SEARCH_CLEAN, '', item.texto).strip()
         if item.btdigg and item.c_type == 'search':
             if 'matches' in  AHkwargs: del AHkwargs['matches']
-            item.btdigg = item.season_search = item.texto
+            item.btdigg = item.season_search = item.texto.replace('%20', ' ').replace('+', ' ')
             item.texto = '%s%s' % (BTDIGG_URL_SEARCH, item.texto)
             item.matches = self.find_btdigg_list_all(item, matches, finds_controls.get('channel_alt', DOMAIN_ALT), **AHkwargs)
         elif item.c_type == 'search' and self.btdigg_search and ('|' in item.texto or '[' in item.texto):
-            item.season_search = item.texto
+            item.season_search = item.texto.replace('%20', ' ').replace('+', ' ')
             item.texto = item.texto.split('|')[0].strip() if '|' in item.texto else item.texto.split('[')[0].strip()
             item.url = item.url.replace(scrapertools.find_single_match(item.url, r'((?:\s|\+|%20)?[\[|\|].*?)(?:\/|\.|$)'), '')
             AHkwargs['url'] = item.url
@@ -1886,6 +1889,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
                 elif ('|' in item.season_search or '[' in item.season_search) and not '|' in new_item.season_search \
                                                                               and not '[' in new_item.season_search:
                     new_item.season_search += scrapertools.find_single_match(item.season_search, r'(\s*[\[|\|][^$]+$)')
+                new_item.season_search = re.sub(self.SEARCH_CLEAN, '', new_item.season_search)
                 if not isinstance(new_item.infoLabels['year'], int):
                     new_item.infoLabels['year'] = str(new_item.infoLabels['year']).replace('-', '')
                 if new_item.broadcast:
@@ -2144,6 +2148,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
         self.btdigg_search = self.btdigg and finds.get('controls', {}).get('btdigg_search', False) \
                                          and config.get_setting('find_alt_search', item.channel, default=False)
         btdigg_contentSeason = 1
+        if item.season_search: item.season_search = re.sub(self.SEARCH_CLEAN, '', item.season_search)
 
         AHkwargs = {'url': item.url, 'soup': soup, 'finds': finds, 'kwargs': kwargs, 'function': 'seasons'}
         AHkwargs['matches_post_list_all'] = kwargs.pop('matches_post_list_all', None)
@@ -2378,8 +2383,15 @@ class DictionaryAllChannel(AlfaChannelHelper):
         for elem in matches:
             elem['season'] = int(scrapertools.find_single_match(str(elem.get('season', '1')), r'\d+') or '1')
             if item.infoLabels['number_of_seasons'] and elem['season'] > item.infoLabels['number_of_seasons']:
-                logger.error('TEMPORADA ERRONEA: WEB: %s; TMDB: %s' % (elem['season'], item.infoLabels['number_of_seasons']))
-                if finds_controls.get('season_TMDB_limit', True) and not BTDIGG_URL_SEARCH in item.url: continue
+                config.set_setting('tmdb_cache_read', False)
+                item_temp = item.clone(contentSeason=elem['season'], contentType='season' if item.contentType != 'movie' else 'movie')
+                tmdb.set_infoLabels_item(item_temp, modo_grafico, idioma_busqueda=idioma_busqueda)
+                config.set_setting('tmdb_cache_read', True)
+                if item_temp.infoLabels['number_of_seasons'] and item_temp.infoLabels['number_of_seasons'] > item.infoLabels['number_of_seasons']:
+                    item.infoLabels['number_of_seasons'] = item_temp.infoLabels['number_of_seasons']
+                if item.infoLabels['number_of_seasons'] and elem['season'] > item.infoLabels['number_of_seasons']:
+                    logger.error('TEMPORADA ERRONEA: WEB: %s; TMDB: %s' % (elem['season'], item.infoLabels['number_of_seasons']))
+                    if finds_controls.get('season_TMDB_limit', True) and not BTDIGG_URL_SEARCH in item.url: continue
 
             elem['url'] = elem.get('url', item.url)
             if url_base64: elem['url'] = self.convert_url_base64(elem['url'], self.host, item=item)
@@ -2445,6 +2457,7 @@ class DictionaryAllChannel(AlfaChannelHelper):
             if elem.get('password', ''): new_item.password = elem['password']
             if 'matches_cached' in elem: new_item.matches_cached = elem['matches_cached'][:]
             if 'episode_list' in elem: new_item.episode_list = elem['episode_list'].copy()
+            if elem.get('playcount', 0): new_item.infoLabels['playcount'] = elem['playcount']
 
             new_item.url = self.do_url_replace(new_item.url, url_replace)
 

@@ -311,7 +311,7 @@ def render_items(itemlist, parent_item):
 
     # Recorremos el itemlist
     categories_channel = []
-    if itemlist and not itemlist[0].module and itemlist[0].channel:
+    if itemlist and not itemlist[0].module and itemlist[0].channel and itemlist[0].channel != 'downloads':
         categories_channel = channeltools.get_channel_parameters(itemlist[0].channel.lower()).get('categories', [])
 
     temp_list = list()
@@ -480,8 +480,8 @@ def render_items(itemlist, parent_item):
     elif parent_item.viewType:
         xbmcplugin.setContent(PLUGIN_HANDLE, parent_item.viewType)
 
-    elif parent_item.module in ["alfavorites", "favorites", "news", "search"]:
-        if parent_item.action != "mainlist" or parent_item.module == "favorites":
+    elif parent_item.module in ["alfavorites", "news", "search"]:
+        if parent_item.action != "mainlist":
             xbmcplugin.setContent(PLUGIN_HANDLE, "movies")
 
     elif not parent_item.module and parent_item.action != "mainlist":  # ... o segun el canal
@@ -1685,7 +1685,7 @@ def set_opcion(item, seleccion, opciones, video_urls):
 
     # "Descargar"
     elif config.get_localized_string(30153) in opciones[seleccion]:
-        from channels import downloads
+        from modules import downloads
         if item.contentType == "list" or item.contentType == "tvshow":
             item.contentType = "video"
         item.play_menu = True
@@ -1872,17 +1872,25 @@ def play_torrent(item, xlistitem, mediaurl):
 
     # Opciones disponibles para Reproducir torrents
     torrent_options = list()
-    torrent_options.append(["Cliente interno (necesario libtorrent) BT"])
-    torrent_options.append(["Cliente interno MCT (necesario libtorrent)"])
 
     torrent_options.extend(torrent_client_installed(show_tuple=True))
 
     torrent_client = config.get_setting("torrent_client", server="torrent", default=0)
-    if torrent_client > len(torrent_options): torrent_client = 0
+    if torrent_client > len(torrent_options):
+        if len(torrent_options) > 0:
+            if torrent_client > 2: torrent_client = torrent_client - 2
+            else: torrent_client = len(torrent_options)
+            if torrent_client > len(torrent_options): torrent_client = len(torrent_options)
+            config.set_setting("torrent_client", torrent_client, server="torrent")
+        else:
+            torrent_client = 0
+    if torrent_client == 0 and len(torrent_options) > 0 and item.sub_action == 'auto':
+        torrent_client = len(torrent_options)
 
-    if torrent_client and torrent_client - 1 <= len(torrent_options):
+    if len(torrent_options) > 0 and torrent_client - 1 <= len(torrent_options):
         if torrent_client == 0 and not scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
             seleccion = dialog_select(config.get_localized_string(70193), [opcion[0] for opcion in torrent_options])
+            if seleccion < 0: return
         elif torrent_client == 0 and scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
             t_client_dnl = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:').upper()
             for x, t_client in enumerate(torrent_options):
@@ -1894,8 +1902,13 @@ def play_torrent(item, xlistitem, mediaurl):
         else:
             seleccion = torrent_client - 1
     else:
-        if len(torrent_options) > 1 and not scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
+        if len(torrent_options) > 0 and not scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
             seleccion = dialog_select(config.get_localized_string(70193), [opcion[0] for opcion in torrent_options])
+            if seleccion < 0: return
+        elif len(torrent_options) == 0:
+            dialog_ok('Instale un gestor de torrents:', 
+                      '[COLOR hotpink]Alfa le recomienda el uso de [B]TORREST[/B][/COLOR]')
+            return
         elif scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:'):
             t_client_dnl = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:').upper()
             for x, t_client in enumerate(torrent_options):
@@ -1907,16 +1920,8 @@ def play_torrent(item, xlistitem, mediaurl):
         else:
             seleccion = 0
 
-    # Si Libtorrent ha dado error de inicialización, no se pueden usar los clientes internos
     TORREST_advise = config.get_setting("torrest_advise", server="torrent", default=False)
     UNRAR = config.get_setting("unrar_path", server="torrent", default="")
-    LIBTORRENT = config.get_setting("libtorrent_path", server="torrent", default='')
-    LIBTORRENT_in_use_local = False
-    LIBTORRENT_version = config.get_setting("libtorrent_version", server="torrent", default=1)
-    try:
-        LIBTORRENT_version = int(scrapertools.find_single_match(LIBTORRENT_version, '\/(\d+)\.\d+\.\d+'))
-    except:
-        LIBTORRENT_version = 1
     RAR_UNPACK = config.get_setting("mct_rar_unpack", server="torrent", default='')
     BACKGROUND_DOWNLOAD = config.get_setting("mct_background_download", server="torrent", default='')
     subtitle_path = config.get_kodi_setting("subtitles.custompath")
@@ -1952,13 +1957,6 @@ def play_torrent(item, xlistitem, mediaurl):
 
     torrent_paths = torrent_dirs()
     torr_client = scrapertools.find_single_match(torrent_options[seleccion][0], ':\s*(\w+)').lower()
-    # Descarga de torrents a local
-    if 'interno (necesario' in torrent_options[seleccion][0]:
-        torr_client = 'BT'
-    elif 'MCT' in torrent_options[seleccion][0]:
-        torr_client = 'MCT'
-    else:
-        torr_client = scrapertools.find_single_match(torrent_options[seleccion][0], ':\s*(\w+)').lower()
     torrent_port = torrent_paths.get(torr_client.upper() + '_port', 0)
     torrent_web = torrent_paths.get(torr_client.upper() + '_web', '')
     if not item.url_control:
@@ -1967,7 +1965,6 @@ def play_torrent(item, xlistitem, mediaurl):
     for i, alt_client in enumerate(torrent_options):
         if scrapertools.find_single_match(str(alt_client), ':\s*(\w+)').lower() in ['torrest', 'quasar']:
             torr_client_alt += [(scrapertools.find_single_match(str(alt_client), ':\s*(\w+)').lower(), i)]
-    if LIBTORRENT: torr_client_alt += [('BT', 0)]
     torr_client_alt = sorted(torr_client_alt, reverse=True)
 
     if not TORREST_advise and not 'torrest' in str(torr_client_alt) and torrent_paths.get('ELEMENTUM', '') != 'Memory':
@@ -1977,24 +1974,9 @@ def play_torrent(item, xlistitem, mediaurl):
         config.set_setting("torrest_advise", True, server="torrent")
         dialog_ok('Alfa te recomienda [COLOR gold]TORREST[/COLOR]', msg1, msg2, msg3)
 
-    # Si es Libtorrent y no está soportado, se ofrecen alternativas, si las hay...
-    if seleccion < 2 and not LIBTORRENT:
-        dialog_ok('Cliente Interno (LibTorrent):', 'Este gestor no está soportado en su dispositivo.', \
-                  'Error: [COLOR yellow]%s[/COLOR]' % config.get_setting("libtorrent_error", server="torrent",
-                                                                         default=''), \
-                  '[COLOR hotpink]Alfa le recomienda el uso de [B]TORREST[/B][/COLOR]')
-        if len(torrent_options) > 2:
-            seleccion = dialog_select(config.get_localized_string(70193), [opcion[0] for opcion in torrent_options])
-            if seleccion < 2:
-                return
-            torr_client = scrapertools.find_single_match(torrent_options[seleccion][0], ':\s*(\w+)').lower()
-        else:
-            item.downloadProgress = 100
-            update_control(item, function='play_torrent_no_libtorrent')
-            return
     # Si hay RAR y es Torrenter o Elementum con opción de Memoria, se ofrece la posibilidad ee otro Gestor temporalemente
-    elif seleccion > 1 and torr_client_alt and UNRAR and 'RAR-' in item.torrent_info and (
-            torr_client not in ['BT', 'MCT', 'quasar', 'elementum', 'torrest'] \
+    if torr_client_alt and UNRAR and 'RAR-' in item.torrent_info and (
+            torr_client not in ['quasar', 'elementum', 'torrest'] \
             or torrent_paths.get('ELEMENTUM', '') == 'Memory'):
 
         if dialog_yesno(torr_client, 'Este plugin externo no soporta extraer on-line archivos RAR', \
@@ -2008,7 +1990,7 @@ def play_torrent(item, xlistitem, mediaurl):
             update_control(item, function='play_torrent_no_rar')
             return
     # Si hay RAR y es Elementum, pero con opción de Memoria, se muestras los Ajustes de Elementum y se pide al usuario que cambie a "Usar Archivos"
-    elif seleccion > 1 and not torr_client_alt and UNRAR and 'RAR-' in item.torrent_info and "elementum" in \
+    elif not torr_client_alt and UNRAR and 'RAR-' in item.torrent_info and "elementum" in \
             torr_client and torrent_paths.get('ELEMENTUM', '') == 'Memory':
         if dialog_yesno(torr_client,
                         'Elementum con descarga en [COLOR yellow]Memoria[/COLOR] no soporta ' + \
@@ -2236,8 +2218,6 @@ def play_torrent(item, xlistitem, mediaurl):
                 if t_hash:
                     item.downloadServer = {"url": filetools.join(torrent_paths[torr_client.upper() + '_torrents'], \
                                                                  t_hash + '.torrent'), "server": item.server}
-                    if torr_client in ['BT', 'MCT']:
-                        filetools.write(item.downloadServer['url'], ' ')
                 if video_name:
                     item.downloadFilename = ':%s: %s' % (torr_client.upper(), video_name)
                 else:
@@ -2276,26 +2256,6 @@ def play_torrent(item, xlistitem, mediaurl):
                             torr_data, deamon_url, index = get_tclient_data(video_path, \
                                                                             torr_client, port=torrent_port,
                                                                             web=torrent_web, action='delete', item=item)
-                        elif torr_client in ['BT', 'MCT'] and 'url' in str(item.downloadServer):
-                            file_t = scrapertools.find_single_match(item.downloadServer['url'],
-                                                                      '\w+\.torrent$').upper()
-                            if file_t:
-                                filetools.remove(
-                                    filetools.join(torrent_paths[torr_client.upper() + '_torrents'], file_t))
-
-            # Comprobamos si Libtorrent está en uso por otra descarga.  Si lo está, ponemos esta petición en cola
-            if torr_client in ['BT', 'MCT']:
-                if config.get_setting("LIBTORRENT_in_use", server="torrent", default=False):
-                    LIBTORRENT_in_use_local = True
-                    item.downloadQueued = 1
-                    if item.downloadProgress != -1:
-                        item.downloadProgress = 0
-                    if item.downloadStatus == 5:
-                        dialog_notification("LIBTORRENT en USO",
-                                            "Descarga encolada.  Puedes seguir haciendo otras cosas...", time=10000)
-                elif LIBTORRENT_version < 99:
-                    config.set_setting("LIBTORRENT_in_use", True,
-                                       server="torrent")  # Marcamos Libtorrent como en uso, si es antiguo
 
             item.torr_folder = video_path
             update_control(item, function='play_torrent_crear_control')
@@ -2318,108 +2278,75 @@ def play_torrent(item, xlistitem, mediaurl):
                 logger.error(traceback.format_exc(1))
 
         try:
-            # Reproductor propio BT (libtorrent)
-            if seleccion == 0:
-                if not LIBTORRENT_in_use_local:
-                    if item.downloadProgress == -1:  # Si estaba pausado se resume
-                        item.downloadProgress = 1
-                        downloadProgress = -1
-                    update_control(item, function='play_torrent_BT_start')
-                    itemlist_refresh()
-                    from servers.torrent import bt_client
-                    bt_client(mediaurl, xlistitem, rar_files, subtitle=item.subtitle, password=password,
-                                      item=item)
-                    config.set_setting("LIBTORRENT_in_use", False,
-                                       server="torrent")  # Marcamos Libtorrent como disponible
-                    config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
-                    if item.downloadStatus not in [3, 4, 5]: itemlist_refresh()
+            from lib.alfa_assistant import is_alfa_installed
+            if xbmc.getCondVisibility("system.platform.android") and torr_client in ['quasar'] \
+                            and config.get_setting('assistant_binary', default=False) and not is_alfa_installed():
+                dialog_notification('Alfa Assistant es requerido', '%s lo requiere en esta versión de Android' \
+                                    % torr_client.capitalize(), time=10000)
+                logger.error('Alfa Assistant es requerido. %s lo requiere en esta versión de Android' % torr_client.capitalize())
+            mediaurl = urllib.quote_plus(item.url)
+            # Llamada con más parámetros para completar el título
+            if torr_client in ['quasar', 'elementum'] and item.infoLabels['tmdb_id']:
+                if item.contentType == 'episode' and "elementum" not in torr_client:
+                    mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (
+                        item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'],
+                        item.infoLabels['tmdb_id'])
+                elif item.contentType == 'movie':
+                    mediaurl += "&library=&tmdb=%s&type=movie" % (item.infoLabels['tmdb_id'])
 
-            # Reproductor propio MCT (libtorrent)
-            elif seleccion == 1:
-                if not LIBTORRENT_in_use_local:
-                    if item.downloadProgress == -1:  # Si estaba pausado se resume
-                        item.downloadProgress = 1
-                        downloadProgress = -1
-                    update_control(item, function='play_torrent_MCT_start')
-                    itemlist_refresh()
-                    from platformcode import mct
-                    mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=password, item=item)
-                    config.set_setting("LIBTORRENT_in_use", False,
-                                       server="torrent")  # Marcamos Libtorrent como disponible
-                    config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
-                    if item.downloadStatus not in [3, 4, 5]: itemlist_refresh()
+            result = False
+            # __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)  # Apunta settings del cliente torrent externo
+            save_path_videos = str(config.translatePath(torrent_paths[torr_client.upper()]))
 
-            # Plugins externos
-            else:
-                from lib.alfa_assistant import is_alfa_installed
-                if xbmc.getCondVisibility("system.platform.android") and torr_client in ['quasar'] \
-                                and config.get_setting('assistant_binary', default=False) and not is_alfa_installed():
-                    dialog_notification('Alfa Assistant es requerido', '%s lo requiere en esta versión de Android' \
-                                        % torr_client.capitalize(), time=10000)
-                    logger.error('Alfa Assistant es requerido. %s lo requiere en esta versión de Android' % torr_client.capitalize())
-                mediaurl = urllib.quote_plus(item.url)
-                # Llamada con más parámetros para completar el título
-                if torr_client in ['quasar', 'elementum'] and item.infoLabels['tmdb_id']:
-                    if item.contentType == 'episode' and "elementum" not in torr_client:
-                        mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (
-                            item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'],
-                            item.infoLabels['tmdb_id'])
-                    elif item.contentType == 'movie':
-                        mediaurl += "&library=&tmdb=%s&type=movie" % (item.infoLabels['tmdb_id'])
+            if torr_client == 'quasar' and 'cliente_torrent_Alfa' not in item.url:  # Quasar no copia el .torrent
+                ret = filetools.copy(item.url, filetools.join(save_path_videos, 'torrents', \
+                                                                filetools.basename(item.url)), silent=True)
 
-                result = False
-                # __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)  # Apunta settings del cliente torrent externo
-                save_path_videos = str(config.translatePath(torrent_paths[torr_client.upper()]))
+            if (torr_client in ['quasar', 'elementum', 'torrest'] and item.downloadFilename \
+                and (item.downloadStatus not in [5] or item.downloadProgress == -1 \
+                    or (item.url.startswith('magnet:') and torr_client not in ['elementum']))) \
+                    or (torr_client in ['quasar', 'elementum', 'torrest'] \
+                        and ('RAR-' in size or 'RAR-' in item.torrent_info) and BACKGROUND_DOWNLOAD):
 
-                if torr_client == 'quasar' and 'cliente_torrent_Alfa' not in item.url:  # Quasar no copia el .torrent
-                    ret = filetools.copy(item.url, filetools.join(save_path_videos, 'torrents', \
-                                                                  filetools.basename(item.url)), silent=True)
+                if item.downloadProgress == -1:  # Si estaba pausado se resume
+                    torr_folder = scrapertools.find_single_match(item.downloadFilename,
+                                                                    '(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$')
+                    if torr_folder.startswith('\\') or torr_folder.startswith('/'):
+                        torr_folder = torr_folder[1:]
+                    if filetools.dirname(torr_folder):
+                        torr_folder = filetools.dirname(torr_folder)
+                    item.downloadProgress = 1
+                    downloadProgress = -1
+                    result, deamon_url, index = get_tclient_data(torr_folder, \
+                                                                    torr_client, port=torrent_port,
+                                                                    web=torrent_web, action='resume', item=item)
+                if not result:  # Si es nuevo, o hay error en resume, se añade
+                    result = call_torrent_via_web(urllib.quote_plus(item.url), torr_client,
+                                                    oper=item.downloadStatus)
+                    downloadProgress = 1
+            if not result:  # Si falla todo, se usa el antiguo sistema
+                if torr_client == 'torrest':
+                    play_type = 'path'
+                    if mediaurl.startswith('magnet'): play_type = 'magnet'
+                    if mediaurl.startswith('http'): play_type = 'url'
+                    xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % \
+                                        (play_type, play_type, mediaurl) + ")")
+                else:
+                    xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
+            update_control(item, function='play_torrent_externos_start')
+            if item.downloadStatus not in [3, 4, 5]: itemlist_refresh()
 
-                if (torr_client in ['quasar', 'elementum', 'torrest'] and item.downloadFilename \
-                    and (item.downloadStatus not in [5] or item.downloadProgress == -1 \
-                        or (item.url.startswith('magnet:') and torr_client not in ['elementum']))) \
-                        or (torr_client in ['quasar', 'elementum', 'torrest'] \
-                            and ('RAR-' in size or 'RAR-' in item.torrent_info) and BACKGROUND_DOWNLOAD):
-
-                    if item.downloadProgress == -1:  # Si estaba pausado se resume
-                        torr_folder = scrapertools.find_single_match(item.downloadFilename,
-                                                                       '(?:^\:\w+\:\s*)?[\\\|\/]?(.*?)$')
-                        if torr_folder.startswith('\\') or torr_folder.startswith('/'):
-                            torr_folder = torr_folder[1:]
-                        if filetools.dirname(torr_folder):
-                            torr_folder = filetools.dirname(torr_folder)
-                        item.downloadProgress = 1
-                        downloadProgress = -1
-                        result, deamon_url, index = get_tclient_data(torr_folder, \
-                                                                     torr_client, port=torrent_port,
-                                                                     web=torrent_web, action='resume', item=item)
-                    if not result:  # Si es nuevo, o hay error en resume, se añade
-                        result = call_torrent_via_web(urllib.quote_plus(item.url), torr_client,
-                                                      oper=item.downloadStatus)
-                        downloadProgress = 1
-                if not result:  # Si falla todo, se usa el antiguo sistema
-                    if torr_client == 'torrest':
-                        play_type = 'path'
-                        if mediaurl.startswith('magnet'): play_type = 'magnet'
-                        if mediaurl.startswith('http'): play_type = 'url'
-                        xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % \
-                                            (play_type, play_type, mediaurl) + ")")
-                    else:
-                        xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
-                update_control(item, function='play_torrent_externos_start')
-                if item.downloadStatus not in [3, 4, 5]: itemlist_refresh()
-
-                # Si es un archivo RAR, monitorizamos el cliente Torrent hasta que haya descargado el archivo,
-                # y después lo extraemos, incluso con RAR's anidados y con contraseña
-                # rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password, size, rar_control)
-                if downloadProgress != -1:
-                    try:
-                        threading.Thread(target=rar_control_mng, args=(item, xlistitem, mediaurl, \
-                                                                       rar_files, torr_client, password, size,
-                                                                       rar_control)).start()  # Creamos un Thread independiente por .torrent
-                        time.sleep(3)  # Dejamos terminar la inicialización...
-                    except:  # Si hay problemas de threading, salimos
-                        logger.error(traceback.format_exc())
+            # Si es un archivo RAR, monitorizamos el cliente Torrent hasta que haya descargado el archivo,
+            # y después lo extraemos, incluso con RAR's anidados y con contraseña
+            # rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password, size, rar_control)
+            if downloadProgress != -1:
+                try:
+                    threading.Thread(target=rar_control_mng, args=(item, xlistitem, mediaurl, \
+                                                                    rar_files, torr_client, password, size,
+                                                                    rar_control)).start()  # Creamos un Thread independiente por .torrent
+                    time.sleep(3)  # Dejamos terminar la inicialización...
+                except:  # Si hay problemas de threading, salimos
+                    logger.error(traceback.format_exc())
 
             # Si hay subtítulos, los copiamos a la carpeta de descarga del torrent, para que esté junto al vídeo, por si hay repro fuera de Alfa
             for entry in rar_files:
@@ -2449,7 +2376,6 @@ def play_torrent(item, xlistitem, mediaurl):
                 if res: log("##### Subtítulo copiado junto a vídeo: %s" % str(dest_file))
 
         except Exception as e:
-            config.set_setting("LIBTORRENT_in_use", False, server="torrent")  # Marcamos Libtorrent como disponible
             logger.error(traceback.format_exc())
             dialog_ok('Error descargando .torrent', line1='Inténtelo de nuevo más tarde ... ',
                       line2='[COLOR yellow][B]%s[/B][/COLOR]' % str(e))
@@ -2536,7 +2462,7 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
                 item.downloadProgress = 100  # ... si no, se da por terminada la monitorización
         item.downloadQueued = 0
         update_control(item, function='rar_control_mng')
-        config.set_setting("RESTART_DOWNLOADS", True, "downloads")  # Forzamos restart downloads
+        config.set_setting("downloads_RESTART_DOWNLOADS", True)  # Forzamos restart downloads
         if item.downloadStatus not in [3, 4, 5]: itemlist_refresh()
 
         # Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan
