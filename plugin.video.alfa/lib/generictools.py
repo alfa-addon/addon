@@ -351,6 +351,8 @@ def clean_title(title, decode=True, htmlclean=True, torrent_info=False, convert=
                          .replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o')\
                          .replace('ú', 'u')
 
+            title = title.replace('"', '').replace("'", '')
+
             if strict:
                 title = title.replace('&ordf;', 'a').replace('&ordm;', 'o')\
                              .replace('ª', 'a').replace('º', 'o')
@@ -3117,6 +3119,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                     if torrent_params.get('find_alt_link_code', '200') == '200':
                         break
                     logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
+                    if 'Error PATRON' in torrent_params.get('find_alt_link_code', ''):
+                        break
                     if monitor.waitForAbort(1 * 60):
                         return
                     if cookies_cached: get_cached_files_('password', FORCED=True, cached=True)
@@ -3343,6 +3347,8 @@ def CACHING_find_btdigg_list_all_NEWS_from_BTDIGG_(options=None):
                                 if torrent_params.get('find_alt_link_code', '200') == '200':
                                     break
                                 logger.error('## Error en BTDIGG: %s' % torrent_params.get('find_alt_link_code', ''))
+                                if 'Error PATRON' in torrent_params.get('find_alt_link_code', ''):
+                                    break
                                 if monitor.waitForAbort(2 * 60):
                                     return
                                 if cookies_cached: get_cached_files_('password', FORCED=True, cached=True)
