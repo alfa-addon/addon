@@ -20,7 +20,7 @@ from platformcode import config, logger
 from modules import filtertools
 from modules import autoplay
 
-IDIOMAS = {'latino': 'LAT', 'castellano': 'CAST', 'subtitulado': 'VOSE'}
+IDIOMAS = {'lat': 'LAT', 'spain': 'CAST', 'sub': 'VOSE'}
 list_language = list(IDIOMAS.values())
 
 list_quality = []
@@ -261,21 +261,20 @@ def episodesxseasons(item):
 
 def findvideos(item):
     logger.info()
-
     itemlist = list()
     
-    data = httptools.downloadpage(item.url, canonical=canonical).data
-    
-    patron  = "go_to_player\('([^']+).*?"
-    patron += 'CGXRw">([^ ]+) '
-    patron += '- ([^<]+)'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    if not matches:
-        return itemlist
-    
-    for url, srv, lang in matches:
-        itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, server=srv,
-                             language=IDIOMAS.get(lang.lower(), "VOSE"), infoLabels=item.infoLabels))
+    soup = create_soup(item.url)
+    matches = soup.find_all("li", class_="open_submenu")
+    for elem in matches:
+        videos = elem.find_all("li", class_="clili")
+        lang = elem.img['src']
+        lang = scrapertools.find_single_match(lang, "images/(.*?).png")
+        for vid in videos:
+            url = vid['onclick'].replace("go_to_player('", "").replace("');", "")
+            srv = scrapertools.find_single_match(url, "server=(.*?)&")
+            if "filemoon" in srv or "filemooon" in srv: srv="tiwikiwi"
+            itemlist.append(Item(channel=item.channel, action='play', url=url, server=srv,
+                                 language=IDIOMAS.get(lang.lower(), lang), infoLabels=item.infoLabels))
 
     # Requerido para FilterTools
 
@@ -296,7 +295,7 @@ def findvideos(item):
 def play(item):
     logger.info()
 
-    #data = httptools.downloadpage(item.url).data
+    # data = httptools.downloadpage(item.url).url
     url = httptools.downloadpage(item.url, follow_redirects=False, canonical=canonical).headers.get("location", "")
     #url = scrapertools.find_single_match(data, 'location.href = "([^"]+)')
    
