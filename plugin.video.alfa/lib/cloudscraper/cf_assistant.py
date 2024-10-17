@@ -32,7 +32,7 @@ else:
     monitor = False                                                             # For Kodi < 14
 
 
-def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDelay=15, retry=False, blacklist=True, headers=None, 
+def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDelay=15, retry=False, blacklist=True, headers=None, Cookie={}, 
            retryIfTimeout=True, cache=True, clearWebCache=False, mute=True, alfa_s=True, elapsed=0, **kwargs):
     from lib import alfa_assistant
     global httptools
@@ -59,7 +59,7 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
         return get_source(url, resp, timeout=timeout, debug=debug, 
                           extraPostDelay=extraPostDelay, retry=retry, blacklist=blacklist, 
                           retryIfTimeout=retryIfTimeout, headers=opt.get('headers', headers), 
-                          cache=cache, mute=mute, alfa_s=alfa_s, httptools_obj=httptools, from_get_cl=True, **kwargs)
+                          cache=cache, mute=mute, alfa_s=alfa_s, httptools_obj=httptools, from_get_cl=True, Cookie=Cookie, **kwargs)
     
     if timeout < 15: timeout = 20
     if timeout + extraPostDelay > 35: timeout = 20
@@ -81,6 +81,8 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
     if not opt.get('cf_assistant', True) or not opt.get('canonical', {}).get('cf_assistant', True) or opt.get('cf_v2', False):
         resp.status_code = 403
         return resp
+
+    if Cookie: Cookie_send = setup_cookies(Cookie)
 
     domain_full = urlparse.urlparse(url).netloc
     domain = domain_full
@@ -225,7 +227,7 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
                 return get_cl(self, resp, timeout=timeout-5, extraPostDelay=extraPostDelay, 
                             debug=debug, CF_testing=CF_testing, retry=True, blacklist=blacklist, retryIfTimeout=False, 
                             cache=cache, clearWebCache=clearWebCache, 
-                            elapsed=elapsed, headers=headers, mute=mute, alfa_s=False, **kwargs)
+                            elapsed=elapsed, headers=headers, mute=mute, alfa_s=False, Cookie=Cookie, **kwargs)
         elif host == 'a':
             help_window.show_info('cf_2_01', wait=False)
 
@@ -242,7 +244,7 @@ def get_cl(self, resp, timeout=20, debug=False, CF_testing = False, extraPostDel
     return resp
 
 
-def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False, blacklist=True, headers=None, from_get_cl=False, 
+def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False, blacklist=True, headers=None, from_get_cl=False, Cookie={}, 
                retryIfTimeout=True, cache=False, clearWebCache=False, mute=True, alfa_s=True, elapsed=0, httptools_obj=None, **kwargs):
     from lib import alfa_assistant
     global httptools
@@ -259,6 +261,7 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
     security_error_blackout = (5 * 60) - expiration
     ua_headers = False
     host_name = httptools.obtain_domain(url, scheme=True)
+    urls_ignored = []
 
     if timeout < 0: timeout = 0.001
     if debug: alfa_s = False
@@ -314,6 +317,7 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
                          % ('OK' if isinstance(check_assistant, dict) else 'ERROR', str(time.time() - elapsed)))
             
         if check_assistant and isinstance(check_assistant, dict):
+            if Cookie: Cookie_send = setup_cookies(Cookie)
 
             if check_assistant.get('assistantLatestVersion') and check_assistant.get('assistantVersion'):
                 installed_version = check_assistant['assistantVersion'].split('.')
@@ -378,6 +382,7 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
                                                 and data_assistant['htmlSources'][0].get('url', ''):
                 for html_source in data_assistant['htmlSources']:
                     if html_source.get('url', '') != url:
+                        urls_ignored += [html_source.get('url', '')]
                         if not alfa_s: logger.debug('Url ignored: %s' % html_source.get('url', ''))
                         continue
                     if not alfa_s: logger.debug('Url accepted: %s' % html_source.get('url', ''))
@@ -406,6 +411,9 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
                         else:
                             freequent_data[1] += 'OK_R'
                         break
+
+                else:
+                    if not source and 'captcha' in str(urls_ignored): retry = True
                     
             if monitor and monitor.abortRequested():
                 logger.error("Cancelado por el usuario")
@@ -418,7 +426,7 @@ def get_source(url, resp, timeout=5, debug=False, extraPostDelay=5, retry=False,
                 return get_source(url, resp, timeout=timeout, debug=debug, extraPostDelay=extraPostDelay, 
                                   retry=True, blacklist=blacklist, retryIfTimeout=retryIfTimeout, 
                                   cache=cache, clearWebCache=clearWebCache, alfa_s=False, from_get_cl=from_get_cl, 
-                                  headers=headers, mute=mute, elapsed=elapsed, httptools_obj=httptools, **kwargs)
+                                  headers=headers, mute=mute, elapsed=elapsed, httptools_obj=httptools, Cookie=Cookie, **kwargs)
 
             domain_ = domain
             split_lst = domain.split(".")
@@ -518,6 +526,11 @@ def get_ua(data_assistant):
     config.set_setting('cf_assistant_ua', UA)
 
     return UA
+
+
+def setup_cookies(Cookie):
+
+    return(Cookie)
 
 
 def get_jscode(count, key, n_iframe, timeout=3):
