@@ -255,7 +255,7 @@ def findvideos(item):
     url = create_soup(item.url).find('div', class_='Video').iframe['src']
     url = create_soup(url).find('div', class_='Video').iframe['src']
     data = httptools.downloadpage(url).data
-    if "const dataLink =" in data:
+    if "dataLink" in data:
         data = scrapertools.find_single_match(data, "const dataLink = (.*?);")
         JSONData = json.load(data)
         for elem in JSONData:
@@ -265,9 +265,13 @@ def findvideos(item):
                 server = vid['servername']
                 if "filemoon" in server: server = "Tiwikiwi"
                 url = vid['link']
+                # IDIOMAS.get(lang.lower(), lang)
                 itemlist.append(Item(channel=item.channel, action='play', url=url, server=server,
                                      language=IDIOMAS.get(lang.lower(), lang), infoLabels=item.infoLabels))
     else:
+        IDIOMAS = {'0': 'LAT', '1': 'CAST', '2': 'VOSE'}
+        SERVER = {'dood': 'Doodstream', 'vidhide': 'Vidhidepro', 'vox': 'Voe', 'stape': 'Streamtape',
+                  'filemoon': 'Tiwikiwi', 'filemooon': 'Tiwikiwi', '1fichier': 'onefichier'}
         soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
         matches = soup.find('div', class_='OptionsLangDisp').find_all('li')
         for elem in matches:
@@ -275,22 +279,19 @@ def findvideos(item):
             url = scrapertools.find_single_match(url, "\('([^']+)'")
             lang = elem['data-lang']
             srv = elem.span.text.strip()
-            if "filemoon" in srv or "filemooon" in srv: srv="tiwikiwi"
-            itemlist.append(Item(channel=item.channel, action='play', url=url, server=srv,
+            server=SERVER.get(srv, srv)
+            itemlist.append(Item(channel=item.channel, action='play', url=url, server=server,
                                  language=IDIOMAS.get(lang.lower(), lang), infoLabels=item.infoLabels))
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_language)
-
+    
     # Requerido para AutoPlay
-
     autoplay.start(itemlist, item)
-
+    
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
                              url=item.url, action="add_pelicula_to_library", extra="findvideos",
                              contentTitle=item.contentTitle))
-
     return itemlist
 
 
