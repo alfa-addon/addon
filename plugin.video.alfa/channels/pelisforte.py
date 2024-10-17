@@ -62,15 +62,15 @@ def mainlist(item):
                          thumbnail=get_thumb("newest", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Castellano", action="list_all",
-                         url=host + "pelis/idiomas/castellano",
+                         url=host + "pelis/idiomas/castellano", extra = "CAST",
                          thumbnail=get_thumb("cast", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Latino", action="list_all",
-                         url=host + "pelis/idiomas/espanol-latino",
+                         url=host + "pelis/idiomas/espanol-latino", extra = "LAT",
                          thumbnail=get_thumb("lat", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="VOSE", action="list_all",
-                         url=host + "pelis/idiomas/subtituladas-p02",
+                         url=host + "pelis/idiomas/subtituladas-p02", extra = "VOSE",
                          thumbnail=get_thumb("vose", auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Sagas", action="section", url=host + "portal002",
@@ -120,9 +120,12 @@ def list_all(item):
         year = elem.find('span', class_='year').text.strip()
         if year == '':
             year = '-'
-            
+        
+        extra = ""
+        if item.extra: extra= item.extra
+        
         itemlist.append(Item(channel=item.channel, action = "findvideos", url=url, title=title, contentTitle = title, 
-                             thumbnail=thumbnail, infoLabels={"year": year}))
+                             thumbnail=thumbnail, extra=extra, infoLabels={"year": year}))
     
     tmdb.set_infoLabels(itemlist, True)
     
@@ -174,6 +177,7 @@ def findvideos(item):
     itemlist = []
     
     infoLabels = item.infoLabels
+    
     soup = create_soup(item.url).find('section', class_='player')
     matches = soup.find_all("iframe")
     servers = soup.find_all("span", class_="server")
@@ -191,8 +195,12 @@ def findvideos(item):
     
     itemlist = sorted(itemlist, key=lambda i: (i.language, i.server))
     
-    # Requerido para FilterTools
-    itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
+    if item.extra:
+        itemlist = [i for i in itemlist if i.language == item.extra]
+    else:
+        # Requerido para FilterTools
+        itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)
+    
     
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
