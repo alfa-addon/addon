@@ -2,17 +2,8 @@
 # --------------------------------------------------------
 # Conector lulustream By Alfa development Group
 # --------------------------------------------------------
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
-
 import re
-from core import httptools, jsontools
+from core import httptools
 from core import scrapertools
 from platformcode import logger
 
@@ -48,7 +39,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     url = scrapertools.find_single_match(data, 'sources: \[{file:"([^"]+)"')
     kwargs['headers'] = {"Referer": "https://%s/" %server, "Origin": "https://%s" %server}
     datos = httptools.downloadpage(url).data
-    if PY3 and isinstance(datos, bytes):
+    if isinstance(datos, bytes):
         datos = "".join(chr(x) for x in bytes(datos))
             
     if datos:
