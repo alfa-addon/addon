@@ -218,6 +218,8 @@ def submenu(item):
                                  url=host, thumbnail=get_thumb("search.png"), c_type="search", 
                                  category=categoria, plot=AlfaChannelHelper.PLOT_BTDIGG, btdigg=True))
 
+        itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
+                             thumbnail=get_thumb("setting_0.png")))
         itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality_tvshow, list_quality_movies)
 
         return itemlist

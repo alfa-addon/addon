@@ -498,6 +498,7 @@ def get_cached_files_(contentType, FORCED=False, cached=False):
     error = [error] if contentType in ['movie', 'tvshow', 'emergency'] else error
     cookies = []
     cookies_cached_exp = []
+    btdigg_cf_clearance = ''
 
     if contentType == 'password' and jsontools.load(window.getProperty("alfa_cached_passwords") or '{}').get('ERROR'):
         FORCED = False
@@ -518,8 +519,27 @@ def get_cached_files_(contentType, FORCED=False, cached=False):
     if contentType == 'password':
         cached_file_old = jsontools.load(window.getProperty("alfa_cached_passwords") or '{}')
         PASSWORDS = copy.deepcopy(cached_file) or PASSWORDS or copy.deepcopy(cached_file_old)
+        PASSWORDS['cookies']['cookies_expiration'] = cached_file_old.get('cookies', {}).get('cookies_expiration', '')
         cookies_cached_exp = PASSWORDS.get('cookies', {}).get('cookies_exp', [])[:] or cached_file_old.get('cookies', {}).get('cookies_exp', [])[:]
         cookies_cached = [] if cached_file else cookies_cached_exp[:]
+
+        if PASSWORDS.get('cookies', {}).get('cookies') and PASSWORDS.get('cookies', {}).get('btdigg_cf_clearance', {}).get('channel'):
+            btdigg_cf_clearance = config.get_setting('btdigg_cf_clearance', default='', 
+                                                     channel=PASSWORDS['cookies']['btdigg_cf_clearance']['channel'])
+            if btdigg_cf_clearance and PASSWORDS.get('cookies', {}).get('cookies'):
+                for cookie in PASSWORDS['cookies']['cookies']:
+                    if cookie.get('domain', '') == 'btdig.com' and cookie.get('name', '') == 'cf_clearance':
+                        if btdigg_cf_clearance not in str(cookies_cached_exp) and PASSWORDS['cookies']['cookies_expiration']: 
+                            PASSWORDS['cookies']['cookies_expiration'] = ''
+                        if not PASSWORDS['cookies']['cookies_expiration']:
+                            cookie['value'] = btdigg_cf_clearance
+                            PASSWORDS['cookies']['cookies_expiration'] = time.time() + cookie.get('expires', 86400)
+                        elif PASSWORDS['cookies']['cookies_expiration'] and PASSWORDS['cookies']['cookies_expiration'] > time.time():
+                            cookie['value'] = btdigg_cf_clearance
+                        else:
+                            PASSWORDS['cookies']['cookies_expiration'] = ''
+                            cookie['value'] = ''
+                            config.set_setting('btdigg_cf_clearance', '', channel=PASSWORDS['cookies']['btdigg_cf_clearance']['channel'])
 
         if PASSWORDS.get('cookies', {}).get('cookies') or PASSWORDS.get('cookies', {}).get('cookies_cached'):
             if DEBUG: 
@@ -531,9 +551,11 @@ def get_cached_files_(contentType, FORCED=False, cached=False):
                               cookies_cached_exp))
 
             cookies_cached = PASSWORDS['cookies'].pop('cookies', [])[:]
+            for x, cookie in enumerate(cookies_cached[:]):
+                if not cookie.get('value'): del cookies_cached[x]
+            if btdigg_cf_clearance: btdigg_cf_clearance = PASSWORDS['cookies'].pop('cookies_cached', [])
             cookies_cached.extend(PASSWORDS['cookies'].pop('cookies_cached', [])[:])
             PASSWORDS['cookies']['cookies_exp'] = cookies_cached[:]
-            #if cookies_cached and cookies_cached != cookies_cached_exp:
             if cookies_cached:
                 window.setProperty("alfa_btdigg_error_AGE", '')
                 if DEBUG: logger.debug('COOKIES: %s / %s' % (cookies_cached, PASSWORDS['cookies']))
